@@ -10,6 +10,9 @@ interface LayerState {
   /** Whether a layer has been generated (lazy generation tracking) */
   generated: Record<LayerId, boolean>;
 
+  /** Density per layer (0-100), controls element counts in generators */
+  density: Record<LayerId, number>;
+
   /** Toggle a layer's visibility */
   toggleLayer: (id: LayerId) => void;
 
@@ -18,6 +21,9 @@ interface LayerState {
 
   /** Mark a layer as generated */
   setGenerated: (id: LayerId) => void;
+
+  /** Set density for a layer (0-100) */
+  setDensity: (id: LayerId, value: number) => void;
 
   /** Reset all layers to default state */
   resetAll: () => void;
@@ -49,9 +55,15 @@ const defaultGenerated: Record<LayerId, boolean> = {
   10: false,
 };
 
+const defaultDensity: Record<LayerId, number> = {
+  1: 50, 2: 50, 3: 50, 4: 50, 5: 50,
+  6: 50, 7: 50, 8: 50, 9: 50, 10: 50,
+};
+
 export const useLayerStore = create<LayerState>()((set) => ({
   visibility: { ...defaultVisibility },
   generated: { ...defaultGenerated },
+  density: { ...defaultDensity },
 
   toggleLayer: (id) =>
     set((state) => ({
@@ -68,9 +80,15 @@ export const useLayerStore = create<LayerState>()((set) => ({
       generated: { ...state.generated, [id]: true },
     })),
 
+  setDensity: (id, value) =>
+    set((state) => ({
+      density: { ...state.density, [id]: value },
+    })),
+
   resetAll: () =>
     set({
       visibility: { ...defaultVisibility },
       generated: { ...defaultGenerated },
+      density: { ...defaultDensity },
     }),
 }));
