@@ -9,32 +9,12 @@ import { ArchitectureLayer } from "./layer-1-architecture";
 import { MEPLayer } from "./layer-2-mep";
 import { BASLayer } from "./layer-3-bas";
 import { TransportLayer } from "./layer-4-transport";
-
-/**
- * Placeholder layer generator for layers 5-10.
- * Returns an empty named THREE.Group. Plan 02 will replace these.
- */
-class PlaceholderLayer implements LayerGenerator {
-  private group: THREE.Group | null = null;
-  private readonly layerId: LayerId;
-
-  constructor(layerId: LayerId) {
-    this.layerId = layerId;
-  }
-
-  generate(_recipe: BuildingRecipe): THREE.Group {
-    this.dispose();
-    const group = new THREE.Group();
-    group.name = `layer-${this.layerId}-placeholder`;
-    this.group = group;
-    return group;
-  }
-
-  dispose(): void {
-    // Placeholder has no geometry to dispose
-    this.group = null;
-  }
-}
+import { SafetyLayer } from "./layer-5-safety";
+import { MediaLayer } from "./layer-6-media";
+import { MicrogridLayer } from "./layer-7-microgrid";
+import { TelecomLayer } from "./layer-8-telecom";
+import { WasteLayer } from "./layer-9-waste";
+import { EnvelopeLayer } from "./layer-10-envelope";
 
 /**
  * LayerManager manages the lifecycle of all 10 building system layers:
@@ -52,16 +32,17 @@ export class LayerManager {
     this.parentGroup = new THREE.Group();
     this.parentGroup.name = "building-layers";
 
-    // Real generators for layers 1-4
+    // All 10 layer generators
     this.generators.set(1, new ArchitectureLayer());
     this.generators.set(2, new MEPLayer());
     this.generators.set(3, new BASLayer());
     this.generators.set(4, new TransportLayer());
-
-    // Placeholder generators for layers 5-10 (Plan 02 replaces these)
-    for (let id = 5; id <= 10; id++) {
-      this.generators.set(id as LayerId, new PlaceholderLayer(id as LayerId));
-    }
+    this.generators.set(5, new SafetyLayer());
+    this.generators.set(6, new MediaLayer());
+    this.generators.set(7, new MicrogridLayer());
+    this.generators.set(8, new TelecomLayer());
+    this.generators.set(9, new WasteLayer());
+    this.generators.set(10, new EnvelopeLayer());
   }
 
   /**
