@@ -56,6 +56,13 @@ Plans:
 
 ### Phase 6: Interactive Configuration Panel
 **Goal:** Parameter adjustment panel that drives the procedural generator in real-time.
+**Plans:** 3 plans
+
+Plans:
+- [x] 06-01-PLAN.md -- Recipe override store + ConfigPanel shell with 4 tabs
+- [x] 06-02-PLAN.md -- BuildingTab and EnvelopeTab with slider controls
+- [ ] 06-03-PLAN.md -- Systems tab, Layers tab, live 3D feedback
+
 - Wall assembly: U-value slider + insulation layer presets
 - Window: U-value + SHGC + WWR sliders per orientation
 - HVAC system type dropdown + efficiency slider
@@ -84,4 +91,4 @@ Plans:
 ---
 
 **Priority order:** Phase 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
-**Current phase:** Phase 5 (in progress)
+**Current phase:** Phase 6 (in progress)
