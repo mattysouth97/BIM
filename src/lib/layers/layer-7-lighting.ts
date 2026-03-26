@@ -1,0 +1,229 @@
+// src/lib/layers/layer-7-lighting.ts
+// Layer 7: Electrical Lighting 조명
+// Glowing yellow/white ceiling fixture grids with simulated dimming,
+// daylight sensor nodes near windows.
+// Pure Three.js, no React.
+
+import * as THREE from "three";
+import type { BuildingRecipe } from "@/lib/procedural/types";
+import type { LayerGenerator } from "./types";
+
+const LIGHT_YELLOW = 0xfbbf24;
+
+// Fixture shader — emissiveIntensity animated by uTime for dimming simulation
+const fixtureVertexShader = /* glsl */ `
+  varying vec2 vUv;
+  varying vec3 vInstancePos;
+  void main() {
+    vUv = uv;
+    // Extract instance translation for per-fixture variation
+    vInstancePos = vec3(
+      instanceMatrix[3][0],
+      instanceMatrix[3][1],
+      instanceMatrix[3][2]
+    );
+    vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+  }
+`;
+
+const fixtureFragmentShader = /* glsl */ `
+  uniform float uTime;
+  uniform vec3 uColor;
+  varying vec2 vUv;
+  varying vec3 vInstancePos;
+
+  void main() {
+    // Per-fixture dimming phase based on spatial position
+    float phase = sin(vInstancePos.x * 0.5 + vInstancePos.z * 0.7) * 0.5 + 0.5;
+
+    // Simulate daylight-linked dimming: oscillates between 30% and 100%
+    float dimCycle = sin(uTime * 0.5 + phase * 3.14159) * 0.5 + 0.5;
+    float dimLevel = 0.3 + 0.7 * dimCycle;
+
+    // Soft glow from center
+    float centerDist = length(vUv - vec2(0.5));
+    float glow = 1.0 - smoothstep(0.0, 0.5, centerDist);
+
+    vec3 color = uColor * dimLevel;
+    float emissive = glow * dimLevel * 1.5;
+    vec3 finalColor = color + vec3(emissive);
+
+    float alpha = (0.4 + 0.6 * dimLevel) * (0.5 + 0.5 * glow);
+    gl_FragColor = vec4(finalColor, alpha);
+  }
+`;
+
+/**
+ * LightingLayer generates ceiling lighting infrastructure:
+ * - InstancedMesh of flat box fixtures on 2D ceiling grid per floor
+ * - ShaderMaterial with animated dimming (emissiveIntensity via uTime)
+ * - Daylight sensor nodes (small spheres) near window perimeter
+ * - Wiring conduit lines from fixtures to electrical panel
+ */
+export class LightingLayer implements LayerGenerator {
+  private group: THREE.Group | null = null;
+
+  generate(recipe: BuildingRecipe, density: number = 1.0): THREE.Group {
+    this.dispose();
+
+    const group = new THREE.Group();
+    group.name = "layer-7-lighting";
+
+    const { floors, footprintWidth, footprintDepth } = recipe;
+    const aboveFloors = floors.filter((f) => f.type === "above");
+    if (aboveFloors.length === 0) {
+      this.group = group;
+      return group;
+    }
+
+    const hw = footprintWidth / 2;
+    const hd = footprintDepth / 2;
+
+    // --- Fixture grid parameters ---
+    const fixtureW = 0.6;
+    const fixtureH = 0.02;
+    const fixtureD = 0.3;
+    const gridSpacingX = Math.max(1.5, 3.0 / density);
+    const gridSpacingZ = Math.max(1.5, 3.0 / density);
+
+    // Calculate grid positions (same for each floor)
+    const gridPositions: { x: number; z: number }[] = [];
+    const startX = -hw + 1.0;
+    const endX = hw - 1.0;
+    const startZ = -hd + 1.0;
+    const endZ = hd - 1.0;
+
+    for (let x = startX; x <= endX; x += gridSpacingX) {
+      for (let z = startZ; z <= endZ; z += gridSpacingZ) {
+        gridPositions.push({ x, z });
+      }
+    }
+
+    const fixturesPerFloor = gridPositions.length;
+    const totalFixtures = fixturesPerFloor * aboveFloors.length;
+
+    if (totalFixtures > 0) {
+      // --- InstancedMesh for all fixtures ---
+      const fixtureGeo = new THREE.BoxGeometry(fixtureW, fixtureH, fixtureD);
+      const fixtureMat = new THREE.ShaderMaterial({
+        vertexShader: fixtureVertexShader,
+        fragmentShader: fixtureFragmentShader,
+        uniforms: {
+          uTime: { value: 0 },
+          uColor: { value: new THREE.Color(LIGHT_YELLOW) },
+        },
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+      });
+
+      const fixtureIM = new THREE.InstancedMesh(fixtureGeo, fixtureMat, totalFixtures);
+      fixtureIM.userData = { type: "lighting-fixture" };
+
+      const mat4 = new THREE.Matrix4();
+      let idx = 0;
+
+      for (const floor of aboveFloors) {
+        const ceilingY = floor.y + floor.height - 0.2;
+
+        for (const gp of gridPositions) {
+          mat4.makeTranslation(gp.x, ceilingY, gp.z);
+          fixtureIM.setMatrixAt(idx++, mat4);
+        }
+      }
+
+      fixtureIM.count = idx;
+      fixtureIM.instanceMatrix.needsUpdate = true;
+      group.add(fixtureIM);
+    }
+
+    // --- Daylight sensor nodes near windows (perimeter) ---
+    const sensorGeo = new THREE.SphereGeometry(0.06, 8, 6);
+    const sensorMat = new THREE.MeshStandardMaterial({
+      color: 0xfde68a,
+      emissive: LIGHT_YELLOW,
+      emissiveIntensity: 0.8,
+      roughness: 0.3,
+      metalness: 0.2,
+    });
+
+    // Place sensors along perimeter at window midpoints, 4 per floor side
+    const sensorsPerSide = 4;
+    const totalSensors = aboveFloors.length * sensorsPerSide * 4; // 4 sides
+    const sensorIM = new THREE.InstancedMesh(sensorGeo, sensorMat, totalSensors);
+    sensorIM.userData = { type: "lighting-sensor" };
+
+    let sIdx = 0;
+    const sensorMat4 = new THREE.Matrix4();
+
+    for (const floor of aboveFloors) {
+      const sensorY = floor.y + floor.height - 0.4;
+
+      // Front and back walls (-Z and +Z)
+      for (let i = 0; i < sensorsPerSide; i++) {
+        const x = -hw + (i + 1) * (footprintWidth / (sensorsPerSide + 1));
+        // Front
+        sensorMat4.makeTranslation(x, sensorY, -hd + 0.3);
+        sensorIM.setMatrixAt(sIdx++, sensorMat4);
+        // Back
+        sensorMat4.makeTranslation(x, sensorY, hd - 0.3);
+        sensorIM.setMatrixAt(sIdx++, sensorMat4);
+      }
+
+      // Left and right walls (-X and +X)
+      for (let i = 0; i < sensorsPerSide; i++) {
+        const z = -hd + (i + 1) * (footprintDepth / (sensorsPerSide + 1));
+        // Left
+        sensorMat4.makeTranslation(-hw + 0.3, sensorY, z);
+        sensorIM.setMatrixAt(sIdx++, sensorMat4);
+        // Right
+        sensorMat4.makeTranslation(hw - 0.3, sensorY, z);
+        sensorIM.setMatrixAt(sIdx++, sensorMat4);
+      }
+    }
+
+    sensorIM.count = sIdx;
+    sensorIM.instanceMatrix.needsUpdate = true;
+    group.add(sensorIM);
+
+    // --- Electrical panel boxes (one per floor, near core) ---
+    const panelGeo = new THREE.BoxGeometry(0.4, 0.6, 0.15);
+    const panelMat = new THREE.MeshStandardMaterial({
+      color: 0x6b7280,
+      roughness: 0.4,
+      metalness: 0.6,
+    });
+    const panelIM = new THREE.InstancedMesh(panelGeo, panelMat, aboveFloors.length);
+    panelIM.userData = { type: "lighting-panel" };
+
+    for (let i = 0; i < aboveFloors.length; i++) {
+      const floor = aboveFloors[i];
+      const panelY = floor.y + floor.height * 0.5;
+      sensorMat4.makeTranslation(0.5, panelY, 0.5);
+      panelIM.setMatrixAt(i, sensorMat4);
+    }
+    panelIM.instanceMatrix.needsUpdate = true;
+    group.add(panelIM);
+
+    this.group = group;
+    return group;
+  }
+
+  dispose(): void {
+    if (!this.group) return;
+    this.group.traverse((obj) => {
+      if (obj instanceof THREE.Mesh || obj instanceof THREE.InstancedMesh) {
+        obj.geometry?.dispose();
+        const mat = obj.material;
+        if (Array.isArray(mat)) {
+          mat.forEach((m) => m.dispose());
+        } else if (mat) {
+          mat.dispose();
+        }
+      }
+    });
+    this.group = null;
+  }
+}
