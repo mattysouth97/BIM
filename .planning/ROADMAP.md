@@ -35,11 +35,11 @@ Plans:
 
 ### Phase 5: 10-Layer Building Systems Visualization
 **Goal:** Implement the 10-layer building systems framework. Each layer is independently toggleable and uses distinct visual language.
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 - [x] 05-01-PLAN.md -- Layer type system, Zustand store, generators 1-4, LayerManager
-- [ ] 05-02-PLAN.md -- Layer generators 5-10
+- [x] 05-02-PLAN.md -- Layer generators 5-10
 - [ ] 05-03-PLAN.md -- Layer toggle UI and scene integration
 - Layer 1: Architecture & Structure — semi-transparent wireframes, muted gray (existing geometry, adapted)
 - Layer 2: Standard MEP — solid pipes/boxes, red/blue thermal, yellow/orange power
