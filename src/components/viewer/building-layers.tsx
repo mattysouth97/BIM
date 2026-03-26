@@ -16,9 +16,11 @@ interface BuildingLayersProps {
 export function BuildingLayers({ recipe }: BuildingLayersProps) {
   const managerRef = useRef<LayerManager | null>(null);
   const recipeRef = useRef<BuildingRecipe>(recipe);
+  const prevDensityRef = useRef<Record<LayerId, number> | null>(null);
 
   const visibility = useLayerStore((s) => s.visibility);
   const generated = useLayerStore((s) => s.generated);
+  const density = useLayerStore((s) => s.density);
   const setGenerated = useLayerStore((s) => s.setGenerated);
 
   // Create or recreate LayerManager when recipe changes
@@ -54,6 +56,25 @@ export function BuildingLayers({ recipe }: BuildingLayersProps) {
       manager.setVisible(id, isVisible);
     }
   }, [visibility, generated, recipe, setGenerated]);
+
+  // Handle density changes: dispose + regenerate affected layers
+  useEffect(() => {
+    const manager = managerRef.current;
+    if (!manager || !prevDensityRef.current) {
+      prevDensityRef.current = { ...density };
+      return;
+    }
+
+    const prev = prevDensityRef.current;
+    for (const id of ALL_LAYER_IDS) {
+      if (prev[id] !== density[id] && visibility[id] && generated[id]) {
+        // Density changed for a visible, generated layer — regenerate
+        manager.disposeLayer(id);
+        manager.getOrGenerate(id, recipe);
+      }
+    }
+    prevDensityRef.current = { ...density };
+  }, [density, visibility, generated, recipe]);
 
   // Animation loop — update ShaderMaterial uniforms each frame
   useFrame((state) => {

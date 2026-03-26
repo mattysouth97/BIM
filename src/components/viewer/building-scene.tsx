@@ -13,6 +13,8 @@ import { generateBuildingGeometry, toRecipe, type FloorGeometry } from "@/lib/bu
 import { inferMaterialProperties } from "@/lib/material-inference";
 import { saveModel, loadModel } from "@/lib/model-storage";
 import { useMaterialStore } from "@/store/material-store";
+import { useRecipeStore } from "@/store/recipe-store";
+import { applyOverrides } from "@/lib/procedural/recipe";
 import { useBuildingFootprint } from "@/hooks/use-building-footprint";
 import { ProceduralBuildingModel } from "./procedural-building-model";
 import { BuildingLayers } from "./building-layers";
@@ -184,7 +186,21 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
     }
   }, [uploadedModel]);
 
-  const recipe = useMemo(() => toRecipe(geometry), [geometry]);
+  // Store base recipe and apply overrides from config panel
+  const setBaseRecipe = useRecipeStore((s) => s.setBaseRecipe);
+  const recipeOverrides = useRecipeStore((s) => s.overrides[buildingPk]);
+
+  const baseRecipe = useMemo(() => toRecipe(geometry), [geometry]);
+
+  // Register base recipe so config tabs can read effective values
+  useEffect(() => {
+    setBaseRecipe(buildingPk, baseRecipe);
+  }, [buildingPk, baseRecipe, setBaseRecipe]);
+
+  const recipe = useMemo(
+    () => recipeOverrides ? applyOverrides(baseRecipe, recipeOverrides) : baseRecipe,
+    [baseRecipe, recipeOverrides]
+  );
 
   const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 1.8;
 
@@ -237,7 +253,7 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
           {/* Model rendering */}
           {modelSource === "parametric" && (
             <>
-              <ProceduralBuildingModel geometry={geometry} onFloorSelect={setSelectedFloor} />
+              <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} />
               <BuildingLayers recipe={recipe} />
             </>
           )}

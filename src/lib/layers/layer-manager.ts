@@ -103,6 +103,26 @@ export class LayerManager {
     return this.parentGroup;
   }
 
+  /** Dispose a single layer and remove from cache (for regeneration) */
+  disposeLayer(id: LayerId): void {
+    const group = this.groups.get(id);
+    if (group) {
+      this.parentGroup.remove(group);
+      group.traverse((obj) => {
+        if (obj instanceof THREE.Mesh || obj instanceof THREE.InstancedMesh) {
+          obj.geometry?.dispose();
+          const mat = obj.material;
+          if (Array.isArray(mat)) {
+            mat.forEach((m) => m.dispose());
+          } else if (mat) {
+            mat.dispose();
+          }
+        }
+      });
+      this.groups.delete(id);
+    }
+  }
+
   /** Check if a layer has been generated */
   isGenerated(id: LayerId): boolean {
     return this.groups.has(id);

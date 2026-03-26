@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { BuildingTab } from "./config-tabs/building-tab";
 import { EnvelopeTab } from "./config-tabs/envelope-tab";
+import { SystemsTab } from "./config-tabs/systems-tab";
+import { LayersTab } from "./config-tabs/layers-tab";
 
 interface ConfigPanelProps {
   buildingPk: string;
@@ -114,15 +116,11 @@ export function ConfigPanel({
           </TabsContent>
 
           <TabsContent value="systems" className="mt-3">
-            <div className="text-xs text-muted-foreground">
-              {isKo ? "설비 시스템 설정" : "Building systems settings"}
-            </div>
+            <SystemsTab buildingPk={buildingPk} />
           </TabsContent>
 
           <TabsContent value="layers" className="mt-3">
-            <div className="text-xs text-muted-foreground">
-              {isKo ? "레이어 가시성" : "Layer visibility"}
-            </div>
+            <LayersTab buildingPk={buildingPk} />
           </TabsContent>
         </Tabs>
       </div>
