@@ -1,11 +1,20 @@
 "use client";
 
 import { create } from "zustand";
-import type { RecipeOverrides } from "@/lib/procedural/types";
+import type { BuildingRecipe, RecipeOverrides } from "@/lib/procedural/types";
 
 interface RecipeState {
+  // Base recipes keyed by building PK (set from toRecipe output)
+  baseRecipes: Record<string, BuildingRecipe>;
+
   // Recipe overrides keyed by building PK (mgmBldrgstPk)
   overrides: Record<string, RecipeOverrides>;
+
+  // Store the base recipe for a building
+  setBaseRecipe: (pk: string, recipe: BuildingRecipe) => void;
+
+  // Get the effective recipe (base merged with overrides)
+  getEffectiveRecipe: (pk: string) => BuildingRecipe | undefined;
 
   // Deep-set a value at a dot-separated path into overrides[pk]
   setOverride: (pk: string, path: string, value: unknown) => void;
@@ -24,7 +33,31 @@ interface RecipeState {
 }
 
 export const useRecipeStore = create<RecipeState>()((set, get) => ({
+  baseRecipes: {},
   overrides: {},
+
+  setBaseRecipe: (pk, recipe) =>
+    set((state) => ({
+      baseRecipes: { ...state.baseRecipes, [pk]: recipe },
+    })),
+
+  getEffectiveRecipe: (pk) => {
+    const base = get().baseRecipes[pk];
+    if (!base) return undefined;
+    const ov = get().overrides[pk];
+    if (!ov) return base;
+    // Merge top-level scalars + nested sections
+    return {
+      ...base,
+      ...(ov.footprintWidth !== undefined ? { footprintWidth: ov.footprintWidth } : {}),
+      ...(ov.footprintDepth !== undefined ? { footprintDepth: ov.footprintDepth } : {}),
+      ...(ov.wallThickness !== undefined ? { wallThickness: ov.wallThickness } : {}),
+      ...(ov.facade ? { facade: { ...base.facade, ...ov.facade } } : {}),
+      ...(ov.slab ? { slab: { ...base.slab, ...ov.slab } } : {}),
+      ...(ov.column ? { column: { ...base.column, ...ov.column } } : {}),
+      ...(ov.roof ? { roof: { ...base.roof, ...ov.roof } } : {}),
+    };
+  },
 
   setOverride: (pk, path, value) =>
     set((state) => {

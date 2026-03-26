@@ -58,7 +58,7 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
     ? env.walls.reduce((sum, w) => sum + w.uValue, 0) / env.walls.length
     : 0.5;
 
-  const setEnvelope = (path: string, value: number | string) =>
+  const setEnvelope = (path: string, value: unknown) =>
     overrideProperty(buildingPk, `envelope.${path}`, value);
 
   const handleInsulationPreset = (key: string) => {

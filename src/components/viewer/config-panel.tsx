@@ -13,6 +13,8 @@ import {
   Cog,
   Layers,
 } from "lucide-react";
+import { BuildingTab } from "./config-tabs/building-tab";
+import { EnvelopeTab } from "./config-tabs/envelope-tab";
 
 interface ConfigPanelProps {
   buildingPk: string;
@@ -104,15 +106,11 @@ export function ConfigPanel({
           </TabsList>
 
           <TabsContent value="building" className="mt-3">
-            <div className="text-xs text-muted-foreground">
-              {isKo ? "건물 형상 설정" : "Building geometry settings"}
-            </div>
+            <BuildingTab buildingPk={buildingPk} />
           </TabsContent>
 
           <TabsContent value="envelope" className="mt-3">
-            <div className="text-xs text-muted-foreground">
-              {isKo ? "외피 재료 속성" : "Envelope material properties"}
-            </div>
+            <EnvelopeTab buildingPk={buildingPk} />
           </TabsContent>
 
           <TabsContent value="systems" className="mt-3">
