@@ -5,9 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { useLayerStore } from "@/store/layer-store";
 import { LayerManager } from "@/lib/layers/layer-manager";
 import type { BuildingRecipe } from "@/lib/procedural/types";
-import type { LayerId } from "@/lib/layers/types";
-
-const ALL_LAYER_IDS: LayerId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+import { ALL_LAYER_IDS, type LayerId } from "@/lib/layers/types";
 
 interface BuildingLayersProps {
   recipe: BuildingRecipe;
