@@ -2,32 +2,32 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-03-26T15:20:33.331Z"
+status: Executing Phase 06
+last_updated: "2026-03-26T15:48:06.857Z"
 progress:
   total_phases: 8
   completed_phases: 5
-  total_plans: 12
-  completed_plans: 10
+  total_plans: 13
+  completed_plans: 11
 ---
 
 # Project State
 
 ## Current Phase
 
-Phase 5: 10-Layer Building Systems Visualization
+Phase 6: Interactive Configuration Panel
 
 ## Current Plan
 
-Plan 04 (next)
+Plan 02 (complete)
 
 ## Last Action
 
-Phase 5 Plan 03 executed: Layer toggle UI panel with 10 rows, BuildingLayers R3F component with lazy generation and useFrame animation, integrated into building-scene Canvas and ViewerOverlay toolbar.
+Phase 6 Plan 02 executed: BuildingTab and EnvelopeTab with slider controls for geometry, facade, structure, roof, wall/window U-values, SHGC, WWR, insulation presets, and airtightness.
 
 ## Last Session
 
-- Stopped at: Completed 05-03-PLAN.md
+- Stopped at: Completed 06-02-PLAN.md
 - Date: 2026-03-27
 
 ## Key Decisions
@@ -47,6 +47,7 @@ Phase 5 Plan 03 executed: Layer toggle UI panel with 10 rows, BuildingLayers R3F
 - BIM renderer: VSMShadowMap, solid #f5f5f5 bg, HemisphereLight + DirectionalLight, SAOPass AO
 - MeshStandardMaterial for all components
 - Era boundary: pre-2000 = weathered, 2000+ = clean
+- Extended RecipeOverrides with top-level scalars for building geometry controls
 
 ## Blockers
 
@@ -66,3 +67,4 @@ None currently.
 | 05    | 01   | 44s      | 3     | 7     |
 | 05    | 02   | 206s     | 3     | 7     |
 | 05    | 03   | 179s     | 3     | 4     |
+| 06    | 02   | 234s     | 3     | 8     |
