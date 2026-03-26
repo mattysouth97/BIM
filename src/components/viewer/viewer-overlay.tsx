@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   RotateCcw, ArrowUp, ArrowRight, ArrowDown, Maximize2,
-  Thermometer, Upload, ToggleLeft, ToggleRight, Layers,
+  Settings, Upload, ToggleLeft, ToggleRight, Layers,
 } from "lucide-react";
 
 interface ViewerOverlayProps {
@@ -16,8 +16,8 @@ interface ViewerOverlayProps {
   buildingName: string;
   era: BuildingEra;
   onViewChange: (view: "front" | "side" | "top" | "iso") => void;
-  onToggleMaterialPanel: () => void;
-  materialPanelOpen: boolean;
+  onToggleConfigPanel: () => void;
+  configPanelOpen: boolean;
   onToggleLayerPanel: () => void;
   layerPanelOpen: boolean;
   modelSource: "parametric" | "uploaded";
@@ -28,7 +28,7 @@ interface ViewerOverlayProps {
 
 export function ViewerOverlay({
   selectedFloor, buildingName, era, onViewChange,
-  onToggleMaterialPanel, materialPanelOpen,
+  onToggleConfigPanel, configPanelOpen,
   onToggleLayerPanel, layerPanelOpen,
   modelSource, hasUploadedModel, onToggleModelSource, onUploadClick,
 }: ViewerOverlayProps) {
@@ -66,15 +66,15 @@ export function ViewerOverlay({
           </Button>
         )}
 
-        {/* Material panel */}
+        {/* Configuration panel */}
         <Button
-          variant={materialPanelOpen ? "default" : "secondary"}
+          variant={configPanelOpen ? "default" : "secondary"}
           size="icon"
           className="h-8 w-8"
-          onClick={onToggleMaterialPanel}
-          title={isKo ? "재료 속성" : "Material Properties"}
+          onClick={onToggleConfigPanel}
+          title={isKo ? "설정" : "Configuration"}
         >
-          <Thermometer className="h-3.5 w-3.5" />
+          <Settings className="h-3.5 w-3.5" />
         </Button>
 
         {/* Layer panel */}

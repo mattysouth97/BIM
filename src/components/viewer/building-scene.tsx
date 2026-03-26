@@ -18,7 +18,7 @@ import { ProceduralBuildingModel } from "./procedural-building-model";
 import { BuildingLayers } from "./building-layers";
 import { SceneControls, type SceneControlsRef } from "./scene-controls";
 import { ViewerOverlay } from "./viewer-overlay";
-import { MaterialPanel } from "./material-panel";
+import { ConfigPanel } from "./config-panel";
 import { LayerPanel } from "./layer-panel";
 import { ModelUploader } from "./model-uploader";
 
@@ -115,7 +115,7 @@ interface BuildingSceneProps {
 
 export function BuildingScene({ title, floors }: BuildingSceneProps) {
   const [selectedFloor, setSelectedFloor] = useState<FloorGeometry | null>(null);
-  const [materialPanelOpen, setMaterialPanelOpen] = useState(false);
+  const [configPanelOpen, setConfigPanelOpen] = useState(false);
   const [layerPanelOpen, setLayerPanelOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [modelSource, setModelSource] = useState<ModelSource>("parametric");
@@ -267,8 +267,8 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
         buildingName={geometry.buildingName}
         era={geometry.era}
         onViewChange={handleViewChange}
-        onToggleMaterialPanel={() => setMaterialPanelOpen(!materialPanelOpen)}
-        materialPanelOpen={materialPanelOpen}
+        onToggleConfigPanel={() => setConfigPanelOpen(!configPanelOpen)}
+        configPanelOpen={configPanelOpen}
         onToggleLayerPanel={() => setLayerPanelOpen(!layerPanelOpen)}
         layerPanelOpen={layerPanelOpen}
         modelSource={modelSource}
@@ -277,10 +277,10 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
         onUploadClick={() => setUploadDialogOpen(true)}
       />
 
-      <MaterialPanel
+      <ConfigPanel
         buildingPk={buildingPk}
-        visible={materialPanelOpen}
-        onClose={() => setMaterialPanelOpen(false)}
+        visible={configPanelOpen}
+        onClose={() => setConfigPanelOpen(false)}
       />
 
       <LayerPanel
