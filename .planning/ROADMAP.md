@@ -8,15 +8,20 @@
 **Plans:** 1 plan
 
 Plans:
-- [ ] 01-01-PLAN.md — Dashboard layout with toolbar, full-viewport 3D, collapsible side panel
+- [x] 01-01-PLAN.md — Dashboard layout with toolbar, full-viewport 3D, collapsible side panel
 
 - Redesign building detail page: 3D viewer takes 70% of viewport
 - Collapsible side panel for metadata, material properties, configuration
 - Building header condensed to a toolbar bar
 - Responsive: panel collapses on mobile
 
-### Phase 2: Structural 3D Components (Walls, Slabs, Columns)
+### Phase 2: Structural 3D Components (Walls, Slabs, Columns) ✓
 **Goal:** Replace flat planes with dimensioned structural elements — walls with thickness, floor slabs, column grids.
+**Plans:** 1 plan
+
+Plans:
+- [x] 02-01-PLAN.md — Structural walls, slabs, columns with BIM renderer settings
+
 - Wall geometry with actual thickness (assembly layers: concrete + insulation + finish)
 - Floor slabs as thick elements (not flat planes)
 - Column grid generation from structural code
@@ -26,6 +31,12 @@ Plans:
 
 ### Phase 3: Better Textures + Materials
 **Goal:** Download and apply real PBR textures for concrete, brick, metal, glass. Structural clarity over photorealism.
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Download PBR texture sets and build texture loading system (getTextureSet + useTexturedMaterial hook)
+- [ ] 03-02-PLAN.md — Apply textured materials to all viewer components (walls, slabs, columns, roof, ground)
+
 - Download PBR texture sets from Poly Haven / AmbientCG (concrete, brick, metal, wood, glass)
 - Apply texture maps: base color, normal, roughness, metalness, AO
 - Material variation per era (weathered concrete for old buildings, clean panels for new)
@@ -67,4 +78,4 @@ Plans:
 ---
 
 **Priority order:** Phase 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
-**Current phase:** Phase 1 (planned)
+**Current phase:** Phase 3 (planned)
