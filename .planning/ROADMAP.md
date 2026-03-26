@@ -4,6 +4,12 @@
 
 ### Phase 1: Dashboard Layout Redesign
 **Goal:** Transform from page-per-building layout to a dashboard with full-viewport 3D as the primary interface.
+**Requirements:** DASH-LAYOUT, DASH-TOOLBAR, DASH-PANEL, DASH-RESPONSIVE
+**Plans:** 1 plan
+
+Plans:
+- [ ] 01-01-PLAN.md — Dashboard layout with toolbar, full-viewport 3D, collapsible side panel
+
 - Redesign building detail page: 3D viewer takes 70% of viewport
 - Collapsible side panel for metadata, material properties, configuration
 - Building header condensed to a toolbar bar
@@ -37,7 +43,7 @@
 
 ### Phase 5: Live Energy Calculation Engine
 **Goal:** As users modify building properties, energy metrics update in real-time.
-- Heat loss calculator from envelope properties (U-values × areas × ΔT)
+- Heat loss calculator from envelope properties (U-values x areas x dT)
 - Heating/cooling load estimation
 - Annual energy demand projection
 - Energy efficiency grade estimation (1+++ to 7)
@@ -60,5 +66,5 @@
 
 ---
 
-**Priority order:** Phase 1 → 2 → 3 → 4 → 5 → 6 → 7
-**Current phase:** Phase 1 (ready to plan)
+**Priority order:** Phase 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
+**Current phase:** Phase 1 (planned)
