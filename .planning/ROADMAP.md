@@ -29,12 +29,18 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — BuildingRecipe type system, era presets, and toRecipe() converter
-- [ ] 04-02-PLAN.md — ProceduralBuilding class with InstancedMesh facade, slabs, columns, roof
-- [ ] 04-03-PLAN.md — React wrapper integration, floor selection, scene wiring
+- [x] 04-01-PLAN.md — BuildingRecipe type system, era presets, and toRecipe() converter
+- [x] 04-02-PLAN.md — ProceduralBuilding class with InstancedMesh facade, slabs, columns, roof
+- [x] 04-03-PLAN.md — React wrapper integration, floor selection, scene wiring
 
 ### Phase 5: 10-Layer Building Systems Visualization
 **Goal:** Implement the 10-layer building systems framework. Each layer is independently toggleable and uses distinct visual language.
+**Plans:** 3 plans
+
+Plans:
+- [x] 05-01-PLAN.md -- Layer type system, Zustand store, generators 1-4, LayerManager
+- [ ] 05-02-PLAN.md -- Layer generators 5-10
+- [ ] 05-03-PLAN.md -- Layer toggle UI and scene integration
 - Layer 1: Architecture & Structure — semi-transparent wireframes, muted gray (existing geometry, adapted)
 - Layer 2: Standard MEP — solid pipes/boxes, red/blue thermal, yellow/orange power
 - Layer 3: BAS, IoT & Controls — floating green nodes, pulsing orbs, dashed connection lines
@@ -78,4 +84,4 @@ Plans:
 ---
 
 **Priority order:** Phase 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
-**Current phase:** Phase 4 (in progress)
+**Current phase:** Phase 5 (in progress)
