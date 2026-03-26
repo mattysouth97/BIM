@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 06
-last_updated: "2026-03-26T15:48:06.857Z"
+last_updated: "2026-03-27T08:35:19Z"
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -19,15 +19,15 @@ Phase 6: Interactive Configuration Panel
 
 ## Current Plan
 
-Plan 02 (complete)
+Plan 03 (complete)
 
 ## Last Action
 
-Phase 6 Plan 02 executed: BuildingTab and EnvelopeTab with slider controls for geometry, facade, structure, roof, wall/window U-values, SHGC, WWR, insulation presets, and airtightness.
+Phase 6 Plan 03 executed: SystemsTab (HVAC/lighting/occupancy/renewables), LayersTab (per-layer density sliders), and full 3D wiring of recipe overrides from store through applyOverrides to ProceduralBuildingModel and BuildingLayers.
 
 ## Last Session
 
-- Stopped at: Completed 06-02-PLAN.md
+- Stopped at: Completed 06-03-PLAN.md
 - Date: 2026-03-27
 
 ## Key Decisions
@@ -48,6 +48,9 @@ Phase 6 Plan 02 executed: BuildingTab and EnvelopeTab with slider controls for g
 - MeshStandardMaterial for all components
 - Era boundary: pre-2000 = weathered, 2000+ = clean
 - Extended RecipeOverrides with top-level scalars for building geometry controls
+- material-store overrideProperty for HVAC/lighting/occupancy/renewable controls
+- Layer density stored as Record<LayerId, number> in layer-store; regeneration via disposeLayer + getOrGenerate
+- Recipe override flow: useRecipeStore.overrides -> applyOverrides -> scene passes to ProceduralBuildingModel + BuildingLayers
 
 ## Blockers
 
@@ -69,3 +72,4 @@ None currently.
 | 05    | 03   | 179s     | 3     | 4     |
 | 06    | 01   | 344s     | 3     | 5     |
 | 06    | 02   | 234s     | 3     | 8     |
+| 06    | 03   | 262s     | 3     | 8     |
