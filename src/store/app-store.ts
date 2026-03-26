@@ -1,0 +1,52 @@
+"use client";
+
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+interface AppState {
+  // API Key
+  apiKey: string;
+  setApiKey: (key: string) => void;
+  clearApiKey: () => void;
+
+  // Language
+  language: "ko" | "en";
+  setLanguage: (lang: "ko" | "en") => void;
+
+  // Search state
+  lastSearchParams: Record<string, string> | null;
+  setLastSearchParams: (params: Record<string, string> | null) => void;
+
+  // Side panel
+  sidePanelOpen: boolean;
+  setSidePanelOpen: (open: boolean) => void;
+  toggleSidePanel: () => void;
+}
+
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      apiKey: "",
+      setApiKey: (key) => set({ apiKey: key }),
+      clearApiKey: () => set({ apiKey: "" }),
+
+      language: "ko",
+      setLanguage: (lang) => set({ language: lang }),
+
+      lastSearchParams: null,
+      setLastSearchParams: (params) => set({ lastSearchParams: params }),
+
+      sidePanelOpen: true,
+      setSidePanelOpen: (open) => set({ sidePanelOpen: open }),
+      toggleSidePanel: () => set((s) => ({ sidePanelOpen: !s.sidePanelOpen })),
+    }),
+    {
+      name: "korea-building-info-storage",
+      partialize: (state) => ({
+        apiKey: state.apiKey,
+        language: state.language,
+        sidePanelOpen: state.sidePanelOpen,
+      }),
+    }
+  )
+);
