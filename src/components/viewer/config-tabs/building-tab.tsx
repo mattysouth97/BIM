@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useAppStore } from "@/store/app-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { SliderRow } from "./slider-row";
@@ -21,8 +22,13 @@ export function BuildingTab({ buildingPk }: BuildingTabProps) {
   const isKo = useAppStore((s) => s.language) === "ko";
   const setOverride = useRecipeStore((s) => s.setOverride);
   const resetOverrides = useRecipeStore((s) => s.resetOverrides);
-  const overrides = useRecipeStore((s) => s.getOverrides(buildingPk));
-  const recipe = useRecipeStore((s) => s.getEffectiveRecipe(buildingPk));
+  const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
+  const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
+  const recipe = useMemo(
+    () => useRecipeStore.getState().getEffectiveRecipe(buildingPk),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [buildingPk, baseRecipe, overrides]
+  );
 
   if (!recipe) {
     return (
