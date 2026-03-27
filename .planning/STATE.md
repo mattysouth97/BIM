@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to plan
-last_updated: "2026-03-27T03:22:55.493Z"
+last_updated: "2026-03-27T03:27:59.705Z"
 progress:
   total_phases: 9
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 18
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State
@@ -19,15 +19,15 @@ Phase 8: Energy Calculation & ECO2 Export
 
 ## Current Plan
 
-Plan 01 (complete)
+Plan 02 (complete)
 
 ## Last Action
 
-Phase 8 Plan 01 executed: Energy calculation engine — heat loss, annual demand, energy grade, CO2 emissions with reactive Zustand hook.
+Phase 8 Plan 02 executed: Energy dashboard cards with grade badge, demand/CO2/heat-loss breakdown, and ECO2 JSON export/import.
 
 ## Last Session
 
-- Stopped at: Completed 08-01-PLAN.md
+- Stopped at: Completed 08-02-PLAN.md
 - Date: 2026-03-27
 
 ## Key Decisions
@@ -62,6 +62,7 @@ Phase 8 Plan 01 executed: Energy calculation engine — heat loss, annual demand
 - Annotation state in authoring-store (annotationMode, annotations array, sectionPosition)
 - Section cut via renderer.clippingPlanes with normalized 0-1 position slider
 - Degree-day method for energy demand; cooling = 60% of heating loss; useEnergyMetrics avoids getEffectiveRecipe via separate subscriptions
+- ECO2 export/import buttons co-located with energy cards; import shows parsed results via alert, not overriding live metrics
 
 ## Blockers
 
@@ -88,3 +89,4 @@ None currently.
 | 07    | 02   | 332s     | 3     | 9     |
 | 07    | 03   | 278s     | 3     | 8     |
 | 08    | 01   | 172s     | 3     | 6     |
+| Phase 08 P02 | 182s | 3 tasks | 4 files |
