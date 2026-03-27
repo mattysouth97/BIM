@@ -31,6 +31,7 @@ import { PropertiesPanel } from "./properties-panel";
 import { ComponentPalette } from "./component-palette";
 import { PlacedComponents } from "./placed-components";
 import { AnnotationTools } from "./annotation-tools";
+import { EnergyCards } from "./energy-cards";
 
 const IFCModel = lazy(() =>
   import("./ifc-loader").then((m) => ({ default: m.IFCModel }))
@@ -349,6 +350,11 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
         onToggleModelSource={handleToggleModelSource}
         onUploadClick={() => setUploadDialogOpen(true)}
       />
+
+      {/* Energy metric cards — bottom-left, visible when building loaded */}
+      {modelSource === "parametric" && (
+        <EnergyCards buildingPk={buildingPk} />
+      )}
 
       <ConfigPanel
         buildingPk={buildingPk}
