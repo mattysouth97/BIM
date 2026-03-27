@@ -3,31 +3,31 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to plan
-last_updated: "2026-03-27T03:16:21.442Z"
+last_updated: "2026-03-27T03:22:55.493Z"
 progress:
   total_phases: 9
   completed_phases: 7
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 18
+  completed_plans: 17
 ---
 
 # Project State
 
 ## Current Phase
 
-Phase 7: Energy Calculation & ECO2 Export
+Phase 8: Energy Calculation & ECO2 Export
 
 ## Current Plan
 
-Plan 03 (complete)
+Plan 01 (complete)
 
 ## Last Action
 
-Phase 7 Plan 03 executed: Measurement and annotation tools — dimension lines, area labels, level markers, section cut planes with Sprite-based CanvasTexture labels and clipping plane visualization.
+Phase 8 Plan 01 executed: Energy calculation engine — heat loss, annual demand, energy grade, CO2 emissions with reactive Zustand hook.
 
 ## Last Session
 
-- Stopped at: Completed 07-03-PLAN.md
+- Stopped at: Completed 08-01-PLAN.md
 - Date: 2026-03-27
 
 ## Key Decisions
@@ -61,6 +61,7 @@ Phase 7 Plan 03 executed: Measurement and annotation tools — dimension lines, 
 - THREE.Sprite + CanvasTexture for annotation text labels (not CSS2DRenderer)
 - Annotation state in authoring-store (annotationMode, annotations array, sectionPosition)
 - Section cut via renderer.clippingPlanes with normalized 0-1 position slider
+- Degree-day method for energy demand; cooling = 60% of heating loss; useEnergyMetrics avoids getEffectiveRecipe via separate subscriptions
 
 ## Blockers
 
@@ -86,3 +87,4 @@ None currently.
 | 07    | 01   | 298s     | 4     | 6     |
 | 07    | 02   | 332s     | 3     | 9     |
 | 07    | 03   | 278s     | 3     | 8     |
+| 08    | 01   | 172s     | 3     | 6     |
