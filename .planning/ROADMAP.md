@@ -70,17 +70,26 @@ Plans:
 - Changes feed back into procedural generator → live 3D update
 - Reset to Code Defaults per section
 
-### Phase 7: Energy Calculation + ECO2 Export
+### Phase 7: BIM Authoring Tools
+**Goal:** Transform viewer into an interactive BIM authoring environment with element-level editing, component library, and measurement tools — moving toward Revit-like functionality.
+- Element-level editing: click wall/slab/column → transform gizmo (translate/rotate/scale) + parametric properties panel
+- Component library: doors, windows (snap to walls), MEP fixtures (ties to 14-layer system), stairs & ramps
+- Measurement & annotation: dimension lines, area labels, section cuts, level markers
+- Three.js TransformControls for gizmo interaction
+- Drag-and-drop from component palette onto 3D scene
+- Undo/redo system for authoring operations
+
+### Phase 8: Energy Calculation + ECO2 Export
 **Goal:** Live energy metrics from building parameters, plus ECO2-compatible file export.
 - Heat loss calculator from envelope properties (U-values × areas × ΔT)
-- Heating/cooling load estimation
-- Annual energy demand projection
+- Annual energy demand projection (degree-day method)
 - Energy efficiency grade estimation (1+++ to 7)
-- Dashboard cards showing live energy metrics alongside 3D view
+- CO2 emissions estimate (Korean grid emission factor)
+- Floating energy metric cards on 3D view
 - ECO2 input file generator from material properties
-- Import ECO2 results for energy grade overlay on 3D model
+- Import ECO2 results for energy grade overlay
 
-### Phase 8: Energy Data Integration
+### Phase 9: Energy Data Integration
 **Goal:** Connect real energy consumption data from Korean government APIs.
 - 건축HUB 건물에너지정보 API (monthly electricity + gas per building)
 - 건축물 에너지효율등급 API (certified energy grades)
