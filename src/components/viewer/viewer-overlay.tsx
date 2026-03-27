@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import {
   RotateCcw, ArrowUp, ArrowRight, ArrowDown, Maximize2,
   Settings, Upload, ToggleLeft, ToggleRight, Layers,
+  Pencil, PencilOff, Move, RotateCcw as RotateIcon, Scaling,
 } from "lucide-react";
+import { useAuthoringStore, type TransformMode } from "@/store/authoring-store";
 
 interface ViewerOverlayProps {
   selectedFloor: FloorGeometry | null;
@@ -33,11 +35,62 @@ export function ViewerOverlay({
   modelSource, hasUploadedModel, onToggleModelSource, onUploadClick,
 }: ViewerOverlayProps) {
   const isKo = useAppStore((s) => s.language) === "ko";
+  const isAuthoring = useAuthoringStore((s) => s.isAuthoring);
+  const toggleAuthoring = useAuthoringStore((s) => s.toggleAuthoring);
+  const transformMode = useAuthoringStore((s) => s.transformMode);
+  const setTransformMode = useAuthoringStore((s) => s.setTransformMode);
 
   return (
     <>
       {/* Top right: controls */}
       <div className="absolute top-3 right-3 flex gap-1.5 z-10">
+        {/* Edit mode toggle */}
+        <Button
+          variant={isAuthoring ? "default" : "secondary"}
+          size="icon"
+          className="h-8 w-8"
+          onClick={toggleAuthoring}
+          title={isAuthoring ? (isKo ? "편집 모드 종료" : "Exit Edit Mode") : (isKo ? "편집 모드" : "Edit Mode")}
+        >
+          {isAuthoring ? <PencilOff className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
+        </Button>
+
+        {/* Transform mode buttons (visible in edit mode) */}
+        {isAuthoring && (
+          <>
+            <div className="w-px bg-border" />
+            <Button
+              variant={transformMode === "translate" ? "default" : "secondary"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setTransformMode("translate")}
+              title={`${isKo ? "이동" : "Move"} (G)`}
+            >
+              <Move className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant={transformMode === "rotate" ? "default" : "secondary"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setTransformMode("rotate")}
+              title={`${isKo ? "회전" : "Rotate"} (R)`}
+            >
+              <RotateIcon className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant={transformMode === "scale" ? "default" : "secondary"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setTransformMode("scale")}
+              title={`${isKo ? "크기" : "Scale"} (S)`}
+            >
+              <Scaling className="h-3.5 w-3.5" />
+            </Button>
+          </>
+        )}
+
+        <div className="w-px bg-border" />
+
         {/* Upload model */}
         <Button
           variant="secondary"

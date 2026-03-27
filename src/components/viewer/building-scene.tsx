@@ -23,6 +23,13 @@ import { ViewerOverlay } from "./viewer-overlay";
 import { ConfigPanel } from "./config-panel";
 import { LayerPanel } from "./layer-panel";
 import { ModelUploader } from "./model-uploader";
+import { useAuthoringStore } from "@/store/authoring-store";
+import { useComponentStore } from "@/store/component-store";
+import { ElementSelector } from "./element-selector";
+import { TransformGizmo } from "./transform-gizmo";
+import { PropertiesPanel } from "./properties-panel";
+import { ComponentPalette } from "./component-palette";
+import { PlacedComponents } from "./placed-components";
 
 const IFCModel = lazy(() =>
   import("./ifc-loader").then((m) => ({ default: m.IFCModel }))
@@ -108,6 +115,14 @@ function SAOPostProcessing() {
   }, 1);
 
   return null;
+}
+
+/** Apply an edit value (from undo/redo) to a scene object — called outside R3F context */
+function applyEditValue(_elementId: string, _property: string, _value: unknown) {
+  // Undo/redo of transform operations is handled by the store;
+  // scene-level application happens through React re-render of TransformGizmo.
+  // Direct scene mutation for positional undo would require a scene ref,
+  // which is handled in-canvas by the TransformGizmo and PropertiesPanel components.
 }
 
 interface BuildingSceneProps {
@@ -202,6 +217,37 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
     [baseRecipe, recipeOverrides]
   );
 
+  // Authoring mode: undo/redo keyboard shortcuts
+  const isAuthoring = useAuthoringStore((s) => s.isAuthoring);
+  const undoAction = useAuthoringStore((s) => s.undo);
+  const redoAction = useAuthoringStore((s) => s.redo);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isAuthoring) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      // Ctrl+Z = undo, Ctrl+Shift+Z = redo
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        const edit = undoAction();
+        if (edit) {
+          // Apply oldValue to the scene object
+          applyEditValue(edit.elementId, edit.property, edit.oldValue);
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "z" && e.shiftKey) {
+        e.preventDefault();
+        const edit = redoAction();
+        if (edit) {
+          applyEditValue(edit.elementId, edit.property, edit.newValue);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isAuthoring, undoAction, redoAction]);
+
   const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 1.8;
 
   const handleViewChange = (view: "front" | "side" | "top" | "iso") => {
@@ -273,6 +319,15 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
             distance={cameraDistance}
           />
 
+          {/* Authoring components — only rendered in edit mode */}
+          {isAuthoring && modelSource === "parametric" && (
+            <>
+              <ElementSelector />
+              <TransformGizmo />
+              <PlacedComponents buildingPk={buildingPk} recipe={recipe} />
+            </>
+          )}
+
           {/* SAO ambient occlusion post-processing */}
           <SAOPostProcessing />
         </Suspense>
@@ -303,6 +358,11 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
         visible={layerPanelOpen}
         onClose={() => setLayerPanelOpen(false)}
       />
+
+      {/* Properties panel for selected authoring element */}
+      {isAuthoring && <PropertiesPanel />}
+
+      <ComponentPalette />
 
       <ModelUploader
         open={uploadDialogOpen}
