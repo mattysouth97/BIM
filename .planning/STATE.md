@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing
-last_updated: "2026-03-27T01:03:22.000Z"
+last_updated: "2026-03-27T05:24:07.000Z"
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 16
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -19,15 +19,15 @@ Phase 7: Energy Calculation & ECO2 Export
 
 ## Current Plan
 
-Plan 01 (complete)
+Plan 02 (complete)
 
 ## Last Action
 
-Phase 7 Plan 01 executed: Authoring store with undo/redo, element selector with raycasting highlight, TransformControls gizmo, properties panel, and edit mode toggle in viewer toolbar.
+Phase 7 Plan 02 executed: Component library with Korean standard door/window/MEP/stair presets, 4 procedural geometry generators, component palette UI with drag-to-place, and R3F scene integration.
 
 ## Last Session
 
-- Stopped at: Completed 07-01-PLAN.md
+- Stopped at: Completed 07-02-PLAN.md
 - Date: 2026-03-27
 
 ## Key Decisions
@@ -54,6 +54,10 @@ Phase 7 Plan 01 executed: Authoring store with undo/redo, element selector with 
 - Authoring store: useAuthoringStore with isAuthoring gate, command pattern undo/redo
 - Emissive highlight selection (blue #2196f3) over wireframe overlay
 - Custom events for TransformControls/OrbitControls coordination
+- ComponentPreset pattern: id/name/nameKo/category/dimensions/metadata with Korean standard sizes
+- Generator-per-category: pure Three.js generators returning THREE.Group for door/window/MEP/stair
+- MEP presets bound to LayerId (5=ventilation, 7=lighting, 10=BAS, 13=safety)
+- Non-persisted component-store for placed instances (authoring session state)
 
 ## Blockers
 
@@ -77,3 +81,4 @@ None currently.
 | 06    | 02   | 234s     | 3     | 8     |
 | 06    | 03   | 262s     | 3     | 8     |
 | 07    | 01   | 298s     | 4     | 6     |
+| 07    | 02   | 332s     | 3     | 9     |
