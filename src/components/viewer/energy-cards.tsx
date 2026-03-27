@@ -3,10 +3,12 @@
 // src/components/viewer/energy-cards.tsx
 // Floating energy metric cards overlaid on the 3D viewer (bottom-left).
 // Shows energy grade, annual demand, CO2 emissions, and heat loss breakdown.
+// When actual energy data is available, shows modeled vs actual comparison with delta indicators.
 
 import { useRef, useEffect, useCallback } from "react";
 import { useAppStore } from "@/store/app-store";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
+import { useActualEnergy } from "@/hooks/use-actual-energy";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,7 +36,7 @@ const GRADE_NAME_KO: Record<EnergyGrade, string> = {
   "7": "7등급",
 };
 
-/** Animated number display — smoothly transitions to new value */
+/** Animated number display -- smoothly transitions to new value */
 function AnimatedValue({
   value,
   decimals = 1,
@@ -90,6 +92,46 @@ function AnimatedValue({
   );
 }
 
+/** Delta indicator with color coding */
+function DeltaIndicator({
+  modeled,
+  actual,
+  suffix = "",
+  decimals = 1,
+  isKo,
+}: {
+  modeled: number;
+  actual: number;
+  suffix?: string;
+  decimals?: number;
+  isKo: boolean;
+}) {
+  const delta = modeled - actual;
+  // Green when modeled <= actual (conservative estimate), red when modeled > actual (optimistic)
+  const isConservative = delta <= 0;
+  const color = isConservative ? "text-green-600" : "text-red-500";
+  const sign = delta > 0 ? "+" : "";
+  const label = isKo ? "\u0394" : "\u0394";
+
+  return (
+    <span className={`text-[10px] font-medium tabular-nums ${color}`}>
+      {label}
+      {sign}
+      {delta.toFixed(decimals)}
+      {suffix}
+    </span>
+  );
+}
+
+/** Small badge indicating actual data presence */
+function ActualDataBadge({ isKo }: { isKo: boolean }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-700 text-[8px] font-medium px-1.5 py-0.5 leading-none">
+      {isKo ? "실측 데이터" : "Actual data"}
+    </span>
+  );
+}
+
 function SkeletonCards() {
   return (
     <div className="flex flex-col gap-2">
@@ -103,6 +145,7 @@ function SkeletonCards() {
 export function EnergyCards({ buildingPk }: EnergyCardsProps) {
   const isKo = useAppStore((s) => s.language) === "ko";
   const metrics = useEnergyMetrics(buildingPk);
+  const actual = useActualEnergy(buildingPk);
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
   const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
   const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
@@ -158,7 +201,6 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
         const text = reader.result as string;
         const result = parseECO2Result(text);
         if (result) {
-          // Display imported grade info via alert (non-blocking info)
           const gradeLabel = isKo
             ? `등급: ${result.grade}, 수요: ${result.demand.toFixed(1)} kWh/m2yr, CO2: ${result.co2.toFixed(1)} kgCO2/m2yr`
             : `Grade: ${result.grade}, Demand: ${result.demand.toFixed(1)} kWh/m2yr, CO2: ${result.co2.toFixed(1)} kgCO2/m2yr`;
@@ -192,6 +234,9 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
   }
 
   const { grade, gradeColor, demand, co2, heatLoss } = metrics;
+  const hasActual = actual.dataAvailable;
+  const hasActualGrade = actual.grade !== null;
+  const hasActualDemand = actual.certifiedDemand !== null && actual.certifiedDemand > 0;
 
   // Tree equivalent: 1 tree absorbs ~22 kg CO2/yr
   const treeEquivalent = co2.co2PerSqm > 0 ? co2.co2PerSqm / 22 : 0;
@@ -205,8 +250,20 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
 
   return (
     <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2 pointer-events-auto">
+      {/* Actual data badge */}
+      {hasActual && (
+        <div className="flex items-center gap-1.5">
+          <ActualDataBadge isKo={isKo} />
+          {actual.isLoading && (
+            <span className="text-[9px] text-muted-foreground animate-pulse">
+              {isKo ? "로딩..." : "Loading..."}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Card 1: Energy Grade */}
-      <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-52">
+      <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-56">
         <p className="text-[10px] text-muted-foreground mb-1">
           {isKo ? "에너지효율등급" : "Energy Grade"}
         </p>
@@ -217,20 +274,55 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
           >
             {grade}
           </span>
-          <span className="text-xs text-muted-foreground">
-            {isKo ? GRADE_NAME_KO[grade] : `Grade ${grade}`}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground">
+              {isKo
+                ? `${GRADE_NAME_KO[grade]} (모델)`
+                : `Grade ${grade} (modeled)`}
+            </span>
+            {hasActualGrade ? (
+              <span className="text-xs font-medium text-blue-600">
+                {isKo
+                  ? `실측: ${actual.grade}등급`
+                  : `Actual: ${actual.grade}`}
+              </span>
+            ) : hasActual ? (
+              <span className="text-[9px] text-muted-foreground/60 italic">
+                {isKo ? "등급 데이터 없음" : "No grade data"}
+              </span>
+            ) : null}
+          </div>
         </div>
       </div>
 
       {/* Card 2: Annual Energy Demand */}
-      <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-52">
+      <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-56">
         <p className="text-[10px] text-muted-foreground mb-1">
           {isKo ? "연간 에너지 수요" : "Annual Energy Demand"}
         </p>
         <p className="text-sm font-semibold tabular-nums">
           <AnimatedValue value={demand.demandPerSqm} suffix=" kWh/m\u00B2\u00B7yr" />
         </p>
+        {hasActualDemand ? (
+          <div className="mt-0.5 flex items-center gap-2 text-[10px]">
+            <span className="text-muted-foreground">
+              {isKo ? "실측" : "Actual"}{" "}
+              <span className="font-medium text-blue-600 tabular-nums">
+                {actual.certifiedDemand!.toFixed(1)}
+              </span>
+            </span>
+            <DeltaIndicator
+              modeled={demand.demandPerSqm}
+              actual={actual.certifiedDemand!}
+              suffix=" kWh/m\u00B2\u00B7yr"
+              isKo={isKo}
+            />
+          </div>
+        ) : hasActual ? (
+          <p className="text-[9px] text-muted-foreground/60 italic mt-0.5">
+            {isKo ? "실측 수요 데이터 없음" : "No actual demand data"}
+          </p>
+        ) : null}
         <div className="mt-1 flex gap-3 text-[10px] text-muted-foreground">
           <span>
             {isKo ? "난방" : "Heat"}{" "}
@@ -254,13 +346,38 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
       </div>
 
       {/* Card 3: CO2 Emissions */}
-      <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-52">
+      <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-56">
         <p className="text-[10px] text-muted-foreground mb-1">
           {isKo ? "CO\u2082 배출량" : "CO\u2082 Emissions"}
         </p>
         <p className="text-sm font-semibold tabular-nums">
           <AnimatedValue value={co2.co2PerSqm} suffix=" kgCO\u2082/m\u00B2\u00B7yr" />
         </p>
+        {hasActualDemand ? (() => {
+          // Estimate actual CO2 from actual demand using same emission factor ratio
+          // CO2 factor: modeled CO2/demand ratio applied to actual demand
+          const co2Factor =
+            demand.demandPerSqm > 0
+              ? co2.co2PerSqm / demand.demandPerSqm
+              : 0;
+          const actualCo2 = actual.certifiedDemand! * co2Factor;
+          return (
+            <div className="mt-0.5 flex items-center gap-2 text-[10px]">
+              <span className="text-muted-foreground">
+                {isKo ? "실측 추정" : "Est. actual"}{" "}
+                <span className="font-medium text-blue-600 tabular-nums">
+                  {actualCo2.toFixed(1)}
+                </span>
+              </span>
+              <DeltaIndicator
+                modeled={co2.co2PerSqm}
+                actual={actualCo2}
+                suffix=" kgCO\u2082"
+                isKo={isKo}
+              />
+            </div>
+          );
+        })() : null}
         <p className="text-[10px] text-muted-foreground mt-0.5">
           {isKo ? "\u2248 " : "\u2248 "}
           {treeEquivalent.toFixed(1)}{" "}
@@ -268,8 +385,8 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
         </p>
       </div>
 
-      {/* Card 4: Heat Loss */}
-      <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-52">
+      {/* Card 4: Heat Loss (no actual comparison) */}
+      <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-56">
         <p className="text-[10px] text-muted-foreground mb-1">
           {isKo ? "열손실" : "Heat Loss"}
         </p>
