@@ -30,6 +30,7 @@ import { TransformGizmo } from "./transform-gizmo";
 import { PropertiesPanel } from "./properties-panel";
 import { ComponentPalette } from "./component-palette";
 import { PlacedComponents } from "./placed-components";
+import { AnnotationTools } from "./annotation-tools";
 
 const IFCModel = lazy(() =>
   import("./ifc-loader").then((m) => ({ default: m.IFCModel }))
@@ -325,6 +326,7 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
               <ElementSelector />
               <TransformGizmo />
               <PlacedComponents buildingPk={buildingPk} recipe={recipe} />
+              <AnnotationTools recipe={recipe} />
             </>
           )}
 

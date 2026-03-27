@@ -10,8 +10,9 @@ import {
   RotateCcw, ArrowUp, ArrowRight, ArrowDown, Maximize2,
   Settings, Upload, ToggleLeft, ToggleRight, Layers,
   Pencil, PencilOff, Move, RotateCcw as RotateIcon, Scaling,
+  Ruler, Square, AlignHorizontalDistributeCenter, Scissors, Trash2,
 } from "lucide-react";
-import { useAuthoringStore, type TransformMode } from "@/store/authoring-store";
+import { useAuthoringStore, type AnnotationMode } from "@/store/authoring-store";
 
 interface ViewerOverlayProps {
   selectedFloor: FloorGeometry | null;
@@ -39,6 +40,17 @@ export function ViewerOverlay({
   const toggleAuthoring = useAuthoringStore((s) => s.toggleAuthoring);
   const transformMode = useAuthoringStore((s) => s.transformMode);
   const setTransformMode = useAuthoringStore((s) => s.setTransformMode);
+  const annotationMode = useAuthoringStore((s) => s.annotationMode);
+  const setAnnotationMode = useAuthoringStore((s) => s.setAnnotationMode);
+  const clearAnnotations = useAuthoringStore((s) => s.clearAnnotations);
+  const sectionPosition = useAuthoringStore((s) => s.sectionPosition);
+  const setSectionPosition = useAuthoringStore((s) => s.setSectionPosition);
+  const sectionAxis = useAuthoringStore((s) => s.sectionAxis);
+  const setSectionAxis = useAuthoringStore((s) => s.setSectionAxis);
+
+  const toggleAnnotation = (mode: AnnotationMode) => {
+    setAnnotationMode(annotationMode === mode ? "none" : mode);
+  };
 
   return (
     <>
@@ -85,6 +97,55 @@ export function ViewerOverlay({
               title={`${isKo ? "크기" : "Scale"} (S)`}
             >
               <Scaling className="h-3.5 w-3.5" />
+            </Button>
+
+            <div className="w-px bg-border" />
+
+            {/* Annotation tool buttons */}
+            <Button
+              variant={annotationMode === "dimension" ? "default" : "secondary"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => toggleAnnotation("dimension")}
+              title={isKo ? "치수선" : "Dimension"}
+            >
+              <Ruler className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant={annotationMode === "area" ? "default" : "secondary"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => toggleAnnotation("area")}
+              title={isKo ? "면적 레이블" : "Area Label"}
+            >
+              <Square className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant={annotationMode === "level" ? "default" : "secondary"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => toggleAnnotation("level")}
+              title={isKo ? "층고 마커" : "Level Markers"}
+            >
+              <AlignHorizontalDistributeCenter className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant={annotationMode === "section" ? "default" : "secondary"}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => toggleAnnotation("section")}
+              title={isKo ? "단면 절단" : "Section Cut"}
+            >
+              <Scissors className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8"
+              onClick={clearAnnotations}
+              title={isKo ? "주석 지우기" : "Clear Annotations"}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </>
         )}
@@ -196,6 +257,40 @@ export function ViewerOverlay({
             <span>{isKo ? "구조" : "Structure"}</span>
             <span className="font-medium text-foreground">{selectedFloor.structure || "-"}</span>
           </div>
+        </div>
+      )}
+
+      {/* Section cut slider (visible when section mode active in edit mode) */}
+      {isAuthoring && annotationMode === "section" && (
+        <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-10 rounded-lg border bg-card/95 backdrop-blur p-3 shadow-lg flex items-center gap-3">
+          <span className="text-xs font-medium whitespace-nowrap">
+            {isKo ? "단면 위치" : "Section Position"}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              className={`text-[10px] px-1.5 py-0.5 rounded ${sectionAxis === "x" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+              onClick={() => setSectionAxis("x")}
+            >
+              X
+            </button>
+            <button
+              className={`text-[10px] px-1.5 py-0.5 rounded ${sectionAxis === "z" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+              onClick={() => setSectionAxis("z")}
+            >
+              Z
+            </button>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={Math.round(sectionPosition * 100)}
+            onChange={(e) => setSectionPosition(Number(e.target.value) / 100)}
+            className="w-48 h-1.5 accent-primary"
+          />
+          <span className="text-[10px] text-muted-foreground w-8">
+            {Math.round(sectionPosition * 100)}%
+          </span>
         </div>
       )}
 
