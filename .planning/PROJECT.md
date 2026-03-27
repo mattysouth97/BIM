@@ -46,5 +46,23 @@ The goal is NOT photorealistic rendering — it's **structural unambiguity**. Ev
 - ECO2 (desktop energy evaluation — future export)
 - Korean Building Energy Code (inference engine)
 
+## Current Milestone: v2.0 Advanced BIM Authoring
+
+**Goal:** Transform the procedural viewer into a full BIM authoring environment with floor plan editing, precision tools, and structural analysis visualization.
+
+**Target features:**
+- Floor plan editor: 2D drawing → 3D extrusion, room boundaries, wall placement, door/window insertion
+- Snap & align tools: grid snapping, axis constraints, alignment guides, edge/vertex snapping
+- Structural analysis visualization: load paths, stress visualization, structural member sizing guides
+
+## Completed Milestones
+- v1.0: Procedural BIM Viewer with Multi-Layer Building Systems (9 phases)
+
 ## Tech Stack
 Next.js 16 + React 19 + TypeScript + Three.js 0.183 + React Three Fiber 9 + shadcn/ui + Tailwind CSS v4 + Zustand + TanStack Query
+
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+*Last updated: 2026-03-28*
