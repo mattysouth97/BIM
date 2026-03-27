@@ -13,6 +13,15 @@ export interface ElementEdit {
 
 export type AuthoringElementType = "wall" | "slab" | "column" | "roof" | "component" | null;
 export type TransformMode = "translate" | "rotate" | "scale";
+export type AnnotationMode = "none" | "dimension" | "area" | "level" | "section";
+
+/** Stored annotation descriptor */
+export interface AnnotationEntry {
+  id: string;
+  type: AnnotationMode;
+  /** Serializable data for recreation (e.g. start/end points, area value) */
+  data: Record<string, unknown>;
+}
 
 interface AuthoringState {
   selectedElementId: string | null;
@@ -22,6 +31,12 @@ interface AuthoringState {
   redoHistory: ElementEdit[];
   isAuthoring: boolean;
 
+  // Annotation state
+  annotationMode: AnnotationMode;
+  annotations: AnnotationEntry[];
+  sectionPosition: number; // 0-1 normalized position along axis
+  sectionAxis: "x" | "z";
+
   selectElement: (id: string | null, type: AuthoringElementType) => void;
   setTransformMode: (mode: TransformMode) => void;
   pushEdit: (edit: ElementEdit) => void;
@@ -29,6 +44,14 @@ interface AuthoringState {
   redo: () => ElementEdit | undefined;
   toggleAuthoring: () => void;
   clearSelection: () => void;
+
+  // Annotation actions
+  setAnnotationMode: (mode: AnnotationMode) => void;
+  addAnnotation: (annotation: AnnotationEntry) => void;
+  removeAnnotation: (id: string) => void;
+  clearAnnotations: () => void;
+  setSectionPosition: (pos: number) => void;
+  setSectionAxis: (axis: "x" | "z") => void;
 }
 
 export const useAuthoringStore = create<AuthoringState>()((set, get) => ({
@@ -38,6 +61,11 @@ export const useAuthoringStore = create<AuthoringState>()((set, get) => ({
   editHistory: [],
   redoHistory: [],
   isAuthoring: false,
+
+  annotationMode: "none",
+  annotations: [],
+  sectionPosition: 0.5,
+  sectionAxis: "x",
 
   selectElement: (id, type) =>
     set({ selectedElementId: id, selectedElementType: type }),
@@ -81,4 +109,22 @@ export const useAuthoringStore = create<AuthoringState>()((set, get) => ({
 
   clearSelection: () =>
     set({ selectedElementId: null, selectedElementType: null }),
+
+  setAnnotationMode: (mode) =>
+    set({ annotationMode: mode }),
+
+  addAnnotation: (annotation) =>
+    set((state) => ({ annotations: [...state.annotations, annotation] })),
+
+  removeAnnotation: (id) =>
+    set((state) => ({ annotations: state.annotations.filter((a) => a.id !== id) })),
+
+  clearAnnotations: () =>
+    set({ annotations: [], annotationMode: "none" }),
+
+  setSectionPosition: (pos) =>
+    set({ sectionPosition: pos }),
+
+  setSectionAxis: (axis) =>
+    set({ sectionAxis: axis }),
 }));
