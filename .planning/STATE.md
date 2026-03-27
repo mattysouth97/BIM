@@ -2,32 +2,32 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-last_updated: "2026-03-27T03:29:02.052Z"
+status: Executing
+last_updated: "2026-03-27T12:00:00.000Z"
 progress:
   total_phases: 9
   completed_phases: 8
-  total_plans: 18
-  completed_plans: 18
+  total_plans: 19
+  completed_plans: 19
 ---
 
 # Project State
 
 ## Current Phase
 
-Phase 8: Energy Calculation & ECO2 Export
+Phase 9: Energy Data Integration
 
 ## Current Plan
 
-Plan 02 (complete)
+Plan 01 (complete)
 
 ## Last Action
 
-Phase 8 Plan 02 executed: Energy dashboard cards with grade badge, demand/CO2/heat-loss breakdown, and ECO2 JSON export/import.
+Phase 9 Plan 01 executed: Korean energy API proxy routes, actual energy data hook, and modeled vs actual comparison in energy cards.
 
 ## Last Session
 
-- Stopped at: Completed 08-02-PLAN.md
+- Stopped at: Completed 09-01-PLAN.md
 - Date: 2026-03-27
 
 ## Key Decisions
@@ -63,6 +63,9 @@ Phase 8 Plan 02 executed: Energy dashboard cards with grade badge, demand/CO2/he
 - Section cut via renderer.clippingPlanes with normalized 0-1 position slider
 - Degree-day method for energy demand; cooling = 60% of heating loss; useEnergyMetrics avoids getEffectiveRecipe via separate subscriptions
 - ECO2 export/import buttons co-located with energy cards; import shows parsed results via alert, not overriding live metrics
+- Separate API routes per energy service (different base URLs from bldrgst)
+- useEffect+useState for actual energy hook (not react-query) per project convention
+- CO2 actual estimated via ratio (modeled CO2/demand) applied to certified demand
 
 ## Blockers
 
@@ -90,3 +93,4 @@ None currently.
 | 07    | 03   | 278s     | 3     | 8     |
 | 08    | 01   | 172s     | 3     | 6     |
 | Phase 08 P02 | 182s | 3 tasks | 4 files |
+| 09    | 01   | 239s     | 3     | 6     |
