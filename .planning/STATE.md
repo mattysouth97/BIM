@@ -2,32 +2,32 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-last_updated: "2026-03-26T16:00:13.800Z"
+status: Executing
+last_updated: "2026-03-27T01:03:22.000Z"
 progress:
   total_phases: 8
   completed_phases: 6
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 16
+  completed_plans: 14
 ---
 
 # Project State
 
 ## Current Phase
 
-Phase 6: Interactive Configuration Panel
+Phase 7: Energy Calculation & ECO2 Export
 
 ## Current Plan
 
-Plan 03 (complete)
+Plan 01 (complete)
 
 ## Last Action
 
-Phase 6 Plan 03 executed: SystemsTab (HVAC/lighting/occupancy/renewables), LayersTab (per-layer density sliders), and full 3D wiring of recipe overrides from store through applyOverrides to ProceduralBuildingModel and BuildingLayers.
+Phase 7 Plan 01 executed: Authoring store with undo/redo, element selector with raycasting highlight, TransformControls gizmo, properties panel, and edit mode toggle in viewer toolbar.
 
 ## Last Session
 
-- Stopped at: Completed 06-03-PLAN.md
+- Stopped at: Completed 07-01-PLAN.md
 - Date: 2026-03-27
 
 ## Key Decisions
@@ -51,6 +51,9 @@ Phase 6 Plan 03 executed: SystemsTab (HVAC/lighting/occupancy/renewables), Layer
 - material-store overrideProperty for HVAC/lighting/occupancy/renewable controls
 - Layer density stored as Record<LayerId, number> in layer-store; regeneration via disposeLayer + getOrGenerate
 - Recipe override flow: useRecipeStore.overrides -> applyOverrides -> scene passes to ProceduralBuildingModel + BuildingLayers
+- Authoring store: useAuthoringStore with isAuthoring gate, command pattern undo/redo
+- Emissive highlight selection (blue #2196f3) over wireframe overlay
+- Custom events for TransformControls/OrbitControls coordination
 
 ## Blockers
 
@@ -73,3 +76,4 @@ None currently.
 | 06    | 01   | 344s     | 3     | 5     |
 | 06    | 02   | 234s     | 3     | 8     |
 | 06    | 03   | 262s     | 3     | 8     |
+| 07    | 01   | 298s     | 4     | 6     |
