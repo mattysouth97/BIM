@@ -58,6 +58,10 @@ Plans:
 ### Phase 13: Structural Analysis Visualization
 **Goal:** Visual structural analysis overlay showing load paths, stress levels, and member sizing. Engineering feedback layer for the GX team.
 **Requirements:** STRUCT-01, STRUCT-02, STRUCT-03, STRUCT-04
+**Plans:** 2 plans
+Plans:
+- [ ] 13-01-PLAN.md — KBC 2016 structural codes + LayerId 15 extension
+- [ ] 13-02-PLAN.md — Structural layer generator + hover tooltip
 - Load path arrows: animated arrows from roof → columns → foundation
 - Stress color coding: green (safe) → yellow (moderate) → red (over-stressed) per member
 - Simplified load calculation: dead load + live load per floor, column tributary area
@@ -68,7 +72,7 @@ Plans:
 ---
 
 **Priority order:** Phase 10 → 10.1 → 11 → 12 → 13
-**Current phase:** Phase 12 (planned)
+**Current phase:** Phase 13 (planned)
 
 ## Progress
 
@@ -77,5 +81,5 @@ Plans:
 | 10 | Complete | 1/1 | 2026-03-28 |
 | 10.1 | 3/3 | Complete    | 2026-03-28 |
 | 11 | 3/3 | Complete    | 2026-03-28 |
-| 12 | 2/2 | Complete   | 2026-03-28 |
-| 13 | Not started | 0 | — |
+| 12 | 2/2 | Complete    | 2026-03-28 |
+| 13 | Planned | 0/2 | — |
