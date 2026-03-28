@@ -22,19 +22,19 @@ describe("useLayerStore", () => {
   it("default: only layer 1 is visible", () => {
     const { visibility } = useLayerStore.getState();
     expect(visibility[1]).toBe(true);
-    for (let id = 2; id <= 14; id++) {
+    for (let id = 2; id <= 15; id++) {
       expect(visibility[id as LayerId]).toBe(false);
     }
   });
 
-  it("all 14 layers have default entries", () => {
+  it("all 15 layers have default entries", () => {
     const { visibility, generated, density } = useLayerStore.getState();
     for (const id of ALL_LAYER_IDS) {
       expect(visibility[id]).toBeDefined();
       expect(generated[id]).toBeDefined();
       expect(density[id]).toBeDefined();
     }
-    expect(ALL_LAYER_IDS).toHaveLength(14);
+    expect(ALL_LAYER_IDS).toHaveLength(15);
   });
 
   it("toggleLayer flips visibility", () => {
