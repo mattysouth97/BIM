@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: Ready to plan
-last_updated: "2026-03-28T00:41:24.196Z"
+status: Executing Phase 11
+last_updated: "2026-03-28T01:35:14Z"
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 7
+  completed_plans: 5
 ---
 
 # Project State
 
 ## Current Phase
 
-Phase 10: 2D Plan View Engine
+Phase 11: Room Boundaries + 3D Extrusion
 
 ## Current Plan
 
@@ -23,11 +23,12 @@ Plan 01 (complete)
 
 ## Last Action
 
-Phase 10 Plan 01 executed: Plan view camera with orthographic toggle, grid overlay, and two-point wall drawing tool.
+Phase 11 Plan 01 executed: Room detection algorithm (buildWallGraph, detectRooms, polygonArea, polygonCentroid, projectOntoWall), room-types.ts with Korean labels, plan-store extended with Opening/Room interfaces and 8 new actions. Dependencies three-bvh-csg + three-mesh-bvh installed.
 
 ## Last Session
 
-- Stopped at: Completed 10-01-PLAN.md
+- Stopped at: Completed 11-01-PLAN.md
+- Date: 2026-03-28
 - Date: 2026-03-28
 
 ## Key Decisions
@@ -70,6 +71,9 @@ Phase 10 Plan 01 executed: Plan view camera with orthographic toggle, grid overl
 - OrthographicCamera swapped via useThree().set() for plan/3D mode toggle
 - Walls stored as start/end XZ coordinates, rendered as flat boxes in 2D and extruded boxes in 3D
 - THREE.Line wrapped in primitive component to avoid R3F JSX type collision with SVG
+- CW winding (negative shoelace) = interior room faces; CCW = outer boundary excluded
+- Most-clockwise DFS face extraction produces interior rooms as CW, outer as CCW
+- copyFloor uses crypto.randomUUID() for new IDs when duplicating walls/openings
 
 ## Blockers
 
@@ -99,6 +103,7 @@ None currently.
 | Phase 08 P02 | 182s | 3 tasks | 4 files |
 | 09    | 01   | 239s     | 3     | 6     |
 | 10    | 01   | 319s     | 3     | 7     |
+| 11    | 01   | 270s     | 2     | 7     |
 | Phase 10.1 P01 | 5min | 3 tasks | 12 files |
 | Phase 10.1 P02 | 6min | 2 tasks | 7 files |
 | Phase 10.1 P03 | 249s | 2 tasks | 4 files |
