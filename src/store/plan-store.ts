@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import type { RoomType } from "@/lib/plan/room-types";
 
 export interface WallSegment {
   id: string;
@@ -11,12 +12,35 @@ export interface WallSegment {
   floor: number;
 }
 
+export interface Opening {
+  id: string;
+  wallId: string;
+  t: number;        // 0-1 parametric offset along wall
+  presetId: string; // ComponentPreset id (door-900, window-1200, etc.)
+  floor: number;
+}
+
+export interface Room {
+  id: string;
+  polygon: [number, number][];
+  area: number;
+  centroid: [number, number];
+  type: RoomType;
+  floor: number;
+}
+
 interface PlanState {
   walls: WallSegment[];
   viewMode: "3d" | "plan";
   drawingWall: { start: [number, number] } | null;
   activeFloor: number;
   gridSize: number; // meters, default 0.5
+
+  openings: Opening[];
+  rooms: Room[];
+  floorHeights: Record<number, number>; // floor index -> height in meters, default 3.0
+  floorCount: number;                    // starts at 1
+  drawingMode: "wall" | "opening" | null; // replaces implicit wall-only behavior
 
   addWall: (wall: WallSegment) => void;
   removeWall: (id: string) => void;
@@ -25,6 +49,15 @@ interface PlanState {
   cancelDrawing: () => void;
   setActiveFloor: (n: number) => void;
   setGridSize: (n: number) => void;
+
+  addOpening: (o: Opening) => void;
+  removeOpening: (id: string) => void;
+  setRooms: (rooms: Room[]) => void;
+  setRoomType: (roomId: string, type: RoomType) => void;
+  setFloorHeight: (floor: number, height: number) => void;
+  setFloorCount: (n: number) => void;
+  copyFloor: (from: number, to: number) => void;
+  setDrawingMode: (mode: "wall" | "opening" | null) => void;
 }
 
 export const usePlanStore = create<PlanState>()((set) => ({
@@ -33,6 +66,12 @@ export const usePlanStore = create<PlanState>()((set) => ({
   drawingWall: null,
   activeFloor: 0,
   gridSize: 0.5,
+
+  openings: [],
+  rooms: [],
+  floorHeights: {},
+  floorCount: 1,
+  drawingMode: null,
 
   addWall: (wall) =>
     set((state) => ({ walls: [...state.walls, wall] })),
@@ -54,4 +93,43 @@ export const usePlanStore = create<PlanState>()((set) => ({
 
   setGridSize: (n) =>
     set({ gridSize: n }),
+
+  addOpening: (o) =>
+    set((state) => ({ openings: [...state.openings, o] })),
+
+  removeOpening: (id) =>
+    set((state) => ({ openings: state.openings.filter((o) => o.id !== id) })),
+
+  setRooms: (rooms) =>
+    set({ rooms }),
+
+  setRoomType: (roomId, type) =>
+    set((state) => ({
+      rooms: state.rooms.map((r) =>
+        r.id === roomId ? { ...r, type } : r
+      ),
+    })),
+
+  setFloorHeight: (floor, height) =>
+    set((state) => ({ floorHeights: { ...state.floorHeights, [floor]: height } })),
+
+  setFloorCount: (n) =>
+    set({ floorCount: n }),
+
+  copyFloor: (from, to) =>
+    set((state) => {
+      const newWalls = state.walls
+        .filter((w) => w.floor === from)
+        .map((w) => ({ ...w, id: crypto.randomUUID(), floor: to }));
+      const newOpenings = state.openings
+        .filter((o) => o.floor === from)
+        .map((o) => ({ ...o, id: crypto.randomUUID(), floor: to }));
+      return {
+        walls: [...state.walls, ...newWalls],
+        openings: [...state.openings, ...newOpenings],
+      };
+    }),
+
+  setDrawingMode: (mode) =>
+    set({ drawingMode: mode }),
 }));
