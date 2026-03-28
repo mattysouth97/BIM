@@ -2,33 +2,32 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: Executing Phase 12
-last_updated: "2026-03-28T04:43:31Z"
+status: Executing Phase 13
+last_updated: "2026-03-28T05:12:56.307Z"
 progress:
   total_phases: 5
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
+  completed_phases: 4
+  total_plans: 11
+  completed_plans: 10
 ---
 
 # Project State
 
 ## Current Phase
 
-Phase 12: Snap Alignment System
+Phase 13: Structural Analysis Visualization
 
 ## Current Plan
 
-Plan 02 (complete)
+Plan 01 (complete)
 
 ## Last Action
 
-Phase 12 Plan 02 executed: Axis constraint functions (applyAxisConstraint, detectAlignments), AlignmentGuides R3F component (colored dashed lines: red=X, green=Z, magenta=alignments), plan-store axisConstraint state, wall-drawer keyboard shortcuts (Shift/X/Y/S), snap toolbar UI with ON/OFF toggle and grid/vertex/edge checkboxes, axis lock info card.
+Phase 13 Plan 01 executed: KBC 2016 structural codes library (8 exports: load tables, column load/capacity calc, sizing lookup, stress colors, column positions), LayerId extended to 15, StructuralAnalysisLayer stub, layer-store and DENSITY_LABELS updated, pnpm build clean, 25 tests passing.
 
 ## Last Session
 
-- Stopped at: Completed 12-02-PLAN.md
-- Date: 2026-03-28
+- Stopped at: Completed 13-01-PLAN.md
 - Date: 2026-03-28
 
 ## Key Decisions
@@ -85,6 +84,9 @@ Phase 12 Plan 02 executed: Axis constraint functions (applyAxisConstraint, detec
 - Y key maps to Z axis (Y = vertical in 2D plan view = Z in 3D XZ space)
 - usePlanStore.getState() in keyboard handlers to avoid stale closure on axisConstraint
 - Alignment detection deduplicates by axis+value key (millimeter precision bucketing)
+- KBC 2016 f'c=25 MPa for RC column capacity; stress thresholds green<60%, yellow 60-85%, red>85%
+- getColumnPositions mirrors structure-generator.ts verbatim to prevent structural overlay position drift
+- Layer 15 orange #f97316 (engineering analysis distinct from safety red / power yellow)
 
 ## Blockers
 
@@ -122,3 +124,4 @@ None currently.
 | Phase 11 P03 | 257s | 2 tasks | 4 files |
 | Phase 12 P01 | 222 | 2 tasks | 5 files |
 | Phase 12 P02 | 229s | 2 tasks | 5 files |
+| Phase 13 P01 | 227s | 2 tasks | 7 files |
