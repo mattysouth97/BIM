@@ -6,9 +6,9 @@ status: Executing Phase 13
 last_updated: "2026-03-28T05:12:56.307Z"
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -19,15 +19,15 @@ Phase 13: Structural Analysis Visualization
 
 ## Current Plan
 
-Plan 01 (complete)
+Plan 02 (complete)
 
 ## Last Action
 
-Phase 13 Plan 01 executed: KBC 2016 structural codes library (8 exports: load tables, column load/capacity calc, sizing lookup, stress colors, column positions), LayerId extended to 15, StructuralAnalysisLayer stub, layer-store and DENSITY_LABELS updated, pnpm build clean, 25 tests passing.
+Phase 13 Plan 02 executed: Full StructuralAnalysisLayer (stress-colored InstancedMesh columns, animated ShaderMaterial load-path arrows, foundation disc markers), StructuralTooltip R3F component with raycaster hover, mounted in building-scene.tsx. 9 unit tests passing, pnpm build clean.
 
 ## Last Session
 
-- Stopped at: Completed 13-01-PLAN.md
+- Stopped at: Completed 13-02-PLAN.md
 - Date: 2026-03-28
 
 ## Key Decisions
@@ -87,6 +87,8 @@ Phase 13 Plan 01 executed: KBC 2016 structural codes library (8 exports: load ta
 - KBC 2016 f'c=25 MPa for RC column capacity; stress thresholds green<60%, yellow 60-85%, red>85%
 - getColumnPositions mirrors structure-generator.ts verbatim to prevent structural overlay position drift
 - Layer 15 orange #f97316 (engineering analysis distinct from safety red / power yellow)
+- StructuralAnalysisLayer arrows use individual Mesh per arrow (not InstancedMesh) — shared ShaderMaterial with uTime pulse, auto-updated by LayerManager
+- StructuralTooltip raycaster throttled to every 3rd useFrame for hover performance
 
 ## Blockers
 
@@ -125,3 +127,4 @@ None currently.
 | Phase 12 P01 | 222 | 2 tasks | 5 files |
 | Phase 12 P02 | 229s | 2 tasks | 5 files |
 | Phase 13 P01 | 227s | 2 tasks | 7 files |
+| Phase 13 P02 | 165s | 2 tasks | 4 files |

@@ -23,7 +23,7 @@
 - [x] **QA-07**: BIM geometry verified against known Korean apartment typologies
 
 ## Structural Analysis Visualization
-- [ ] **STRUCT-01**: Display load path arrows from roof through columns to foundation
+- [x] **STRUCT-01**: Display load path arrows from roof through columns to foundation
 - [x] **STRUCT-02**: Color-code structural members by stress level (green→yellow→red)
 - [x] **STRUCT-03**: Show structural member sizing recommendations based on span and load
 - [x] **STRUCT-04**: Toggle structural analysis overlay on/off independently
