@@ -50,8 +50,9 @@ created: 2026-03-28
 
 ## Wave 0 Requirements
 
-- [ ] `src/lib/__tests__/room-detection.test.ts` — stubs for PLAN-02 room detection
-- [ ] `src/store/__tests__/plan-store-rooms.test.ts` — stubs for room/opening store actions
+- [ ] `src/lib/plan/room-detector.test.ts` — stubs for PLAN-02 room detection (created in Plan 01 Task 1)
+- [ ] `src/store/__tests__/plan-store.test.ts` — extended with room/opening store action tests (created in Plan 01 Task 2)
+- [ ] Install: `pnpm add three-bvh-csg three-mesh-bvh` (done in Plan 01 Task 1)
 
 *Existing test infrastructure from Phase 10.1 covers framework setup.*
 
