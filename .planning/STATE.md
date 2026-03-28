@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: Executing Phase 11
-last_updated: "2026-03-28T01:35:14Z"
+last_updated: "2026-03-28T01:40:40.760Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -19,16 +19,15 @@ Phase 11: Room Boundaries + 3D Extrusion
 
 ## Current Plan
 
-Plan 01 (complete)
+Plan 02 (complete)
 
 ## Last Action
 
-Phase 11 Plan 01 executed: Room detection algorithm (buildWallGraph, detectRooms, polygonArea, polygonCentroid, projectOntoWall), room-types.ts with Korean labels, plan-store extended with Opening/Room interfaces and 8 new actions. Dependencies three-bvh-csg + three-mesh-bvh installed.
+Phase 11 Plan 02 executed: RoomFills R3F component with ShapeGeometry + Sprite labels and room type cycling, FloorSlabs for multi-floor 3D extrusion, dynamic floor selector with copy-floor and per-floor height input, drawing mode gate on WallDrawer, RoomFills and FloorSlabs mounted in building-scene.tsx.
 
 ## Last Session
 
-- Stopped at: Completed 11-01-PLAN.md
-- Date: 2026-03-28
+- Stopped at: Completed 11-02-PLAN.md
 - Date: 2026-03-28
 
 ## Key Decisions
@@ -74,6 +73,8 @@ Phase 11 Plan 01 executed: Room detection algorithm (buildWallGraph, detectRooms
 - CW winding (negative shoelace) = interior room faces; CCW = outer boundary excluded
 - Most-clockwise DFS face extraction produces interior rooms as CW, outer as CCW
 - copyFloor uses crypto.randomUUID() for new IDs when duplicating walls/openings
+- WallDrawer isActive gated on drawingMode==='wall' to prevent accidental drawing in opening mode
+- FloorSlabs use cumulative Y stacking for variable-height floors; RoomFills plan-only, FloorSlabs 3D-only
 
 ## Blockers
 
@@ -107,3 +108,4 @@ None currently.
 | Phase 10.1 P01 | 5min | 3 tasks | 12 files |
 | Phase 10.1 P02 | 6min | 2 tasks | 7 files |
 | Phase 10.1 P03 | 249s | 2 tasks | 4 files |
+| Phase 11 P02 | 158s | 2 tasks | 5 files |
