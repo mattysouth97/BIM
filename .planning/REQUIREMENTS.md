@@ -17,10 +17,10 @@
 - [x] **QA-01**: Test infrastructure installed (Vitest + testing-library + Playwright)
 - [x] **QA-02**: Unit tests for energy calculations verify against Korean benchmark values
 - [x] **QA-03**: Unit tests for procedural generators verify correct dimensions per era/structure
-- [ ] **QA-04**: E2E test covers search → 3D view → config → energy update flow
+- [x] **QA-04**: E2E test covers search → 3D view → config → energy update flow
 - [x] **QA-05**: Error boundaries prevent full-page crashes from R3F/API failures
 - [x] **QA-06**: Config panel inputs validated (min/max enforcement, impossible values blocked)
-- [ ] **QA-07**: BIM geometry verified against known Korean apartment typologies
+- [x] **QA-07**: BIM geometry verified against known Korean apartment typologies
 
 ## Structural Analysis Visualization
 - [ ] **STRUCT-01**: Display load path arrows from roof through columns to foundation
