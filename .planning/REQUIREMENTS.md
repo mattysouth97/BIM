@@ -8,8 +8,8 @@
 - [x] **PLAN-05**: User can switch between 3D perspective and 2D plan view
 
 ## Snap & Align Tools
-- [ ] **SNAP-01**: Elements snap to grid (configurable grid size)
-- [ ] **SNAP-02**: Elements snap to edges and vertices of nearby elements
+- [x] **SNAP-01**: Elements snap to grid (configurable grid size)
+- [x] **SNAP-02**: Elements snap to edges and vertices of nearby elements
 - [ ] **SNAP-03**: Axis constraints lock movement to X, Y, or Z axis
 - [ ] **SNAP-04**: Alignment guides show when elements are aligned
 

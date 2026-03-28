@@ -2,32 +2,32 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: Executing Phase 11
-last_updated: "2026-03-28T01:40:40.760Z"
+status: Executing Phase 12
+last_updated: "2026-03-28T04:38:34.822Z"
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 3
+  total_plans: 9
+  completed_plans: 8
 ---
 
 # Project State
 
 ## Current Phase
 
-Phase 11: Room Boundaries + 3D Extrusion
+Phase 12: Snap Alignment System
 
 ## Current Plan
 
-Plan 03 (complete)
+Plan 01 (complete)
 
 ## Last Action
 
-Phase 11 Plan 03 executed: OpeningDrawer R3F component with wall-snap placement, door arc sweep symbol, window parallel line symbol, three-bvh-csg Wall3D CSG subtraction for 3D wall holes, opening preset selector in ViewerOverlay, OpeningDrawer mounted in building-scene.tsx.
+Phase 12 Plan 01 executed: Pure snap engine (grid/vertex/edge) with vertex>edge>grid priority, plan-store snap state fields, SnapIndicator R3F component (ring dot + dashed crosshairs), wall-drawer snap integration on start/end points, opening-drawer t-grid snap.
 
 ## Last Session
 
-- Stopped at: Completed 11-03-PLAN.md
+- Stopped at: Completed 12-01-PLAN.md
 - Date: 2026-03-28
 
 ## Key Decisions
@@ -79,6 +79,8 @@ Phase 11 Plan 03 executed: OpeningDrawer R3F component with wall-snap placement,
 - latestSnapRef + React state pattern: click handler reads ref (no stale closure), state drives preview re-render
 - CSG sill heights: doors at baseY+0 (floor), windows at baseY+0.9m; opening BoxGeometry thickness +0.02 prevents coplanar artifacts
 - OpeningDrawer and WallDrawer are peer R3F components both mounted in building-scene.tsx, sharing plan-store
+- snap-engine.ts dependency-free: inlines projectOntoSegment rather than importing from room-detector.ts for isolation
+- opening snap uses t-grid: parametric t snapped to gridSize/wallLength steps; wall-proximity remains primary mechanism
 
 ## Blockers
 
@@ -114,3 +116,4 @@ None currently.
 | Phase 10.1 P03 | 249s | 2 tasks | 4 files |
 | Phase 11 P02 | 158s | 2 tasks | 5 files |
 | Phase 11 P03 | 257s | 2 tasks | 4 files |
+| Phase 12 P01 | 222 | 2 tasks | 5 files |

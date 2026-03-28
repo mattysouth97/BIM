@@ -44,9 +44,9 @@ Plans:
 ### Phase 12: Snap & Alignment System
 **Goal:** Precision editing tools for BIM authoring — grid snapping, vertex/edge snapping, axis constraints, and alignment guides.
 **Requirements:** SNAP-01, SNAP-02, SNAP-03, SNAP-04
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 12-01-PLAN.md — Snap engine + grid/vertex/edge snapping + wall-drawer integration
+- [x] 12-01-PLAN.md — Snap engine + grid/vertex/edge snapping + wall-drawer integration
 - [ ] 12-02-PLAN.md — Axis constraints + alignment guides + snap toolbar UI
 - Configurable grid snapping (0.1m, 0.5m, 1m presets)
 - Edge/vertex proximity snapping with configurable tolerance
@@ -77,5 +77,5 @@ Plans:
 | 10 | Complete | 1/1 | 2026-03-28 |
 | 10.1 | 3/3 | Complete    | 2026-03-28 |
 | 11 | 3/3 | Complete    | 2026-03-28 |
-| 12 | Planned | 2 plans | — |
+| 12 | 1/2 | In Progress|  |
 | 13 | Not started | 0 | — |
