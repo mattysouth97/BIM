@@ -8,8 +8,17 @@ import { Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
 import { usePlanStore, type WallSegment, type Opening } from "@/store/plan-store";
 import { useAuthoringStore } from "@/store/authoring-store";
 import { DOOR_PRESETS, WINDOW_PRESETS } from "@/lib/components/component-types";
-import { computeSnap, type SnapResult, type SnapConfig } from "@/lib/plan/snap-engine";
+import {
+  computeSnap,
+  applyAxisConstraint,
+  detectAlignments,
+  type SnapResult,
+  type SnapConfig,
+  type AxisConstraint,
+  type AlignmentGuide,
+} from "@/lib/plan/snap-engine";
 import { SnapIndicator } from "./snap-indicator";
+import { AlignmentGuides } from "./alignment-guides";
 
 const GROUND_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const WALL_COLOR_2D = 0x333333;
@@ -53,6 +62,8 @@ export function WallDrawer() {
   const vertexSnapEnabled = usePlanStore((s) => s.vertexSnapEnabled);
   const edgeSnapEnabled = usePlanStore((s) => s.edgeSnapEnabled);
   const proximityTolerance = usePlanStore((s) => s.proximityTolerance);
+  const axisConstraint = usePlanStore((s) => s.axisConstraint);
+  const setAxisConstraint = usePlanStore((s) => s.setAxisConstraint);
   const isAuthoring = useAuthoringStore((s) => s.isAuthoring);
 
   const { camera, gl } = useThree();
@@ -63,6 +74,8 @@ export function WallDrawer() {
   const [drawLength, setDrawLength] = useState<number>(0);
   const [tooltipPos, setTooltipPos] = useState<[number, number, number]>([0, 0, 0]);
   const [currentSnap, setCurrentSnap] = useState<SnapResult | null>(null);
+  const [alignments, setAlignments] = useState<AlignmentGuide[]>([]);
+  const [resolvedAxis, setResolvedAxis] = useState<"x" | "z" | null>(null);
 
   const snapConfig: SnapConfig = useMemo(
     () => ({
@@ -115,10 +128,15 @@ export function WallDrawer() {
           snap.type !== "none" ? snap.point : point;
         startDrawing(snappedPoint);
       } else {
-        // Apply snap to end point
+        // Apply snap to end point, then apply axis constraint
         const snap = computeSnap(point[0], point[1], floorWalls, snapConfig);
-        const endPoint: [number, number] =
+        let endPoint: [number, number] =
           snap.type !== "none" ? snap.point : point;
+
+        const currentConstraint = usePlanStore.getState().axisConstraint;
+        if (currentConstraint !== "none") {
+          endPoint = applyAxisConstraint(drawingWall.start, endPoint, currentConstraint);
+        }
 
         const dx = endPoint[0] - drawingWall.start[0];
         const dz = endPoint[1] - drawingWall.start[1];
@@ -175,6 +193,47 @@ export function WallDrawer() {
     };
   }, [isActive, drawingWall, cancelDrawing, gl]);
 
+  // Keyboard shortcuts for axis constraints and snap toggle
+  // Only register when drawingMode === "wall" to avoid conflicts
+  useEffect(() => {
+    if (!isActive) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent triggering if focus is in an input/textarea
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) return;
+
+      if (e.key === "Shift") {
+        setAxisConstraint("auto");
+      } else if (e.key === "x" || e.key === "X") {
+        const current = usePlanStore.getState().axisConstraint;
+        setAxisConstraint(current === "x" ? "none" : "x");
+      } else if (e.key === "y" || e.key === "Y") {
+        // Y key maps to Z axis in XZ plan view
+        const current = usePlanStore.getState().axisConstraint;
+        setAxisConstraint(current === "z" ? "none" : "z");
+      } else if (e.key === "s" || e.key === "S") {
+        const current = usePlanStore.getState().snapEnabled;
+        usePlanStore.getState().setSnapEnabled(!current);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Shift") {
+        setAxisConstraint("none");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [isActive, setAxisConstraint]);
+
   // Track mouse position for preview line
   useEffect(() => {
     if (!isActive || !drawingWall) return;
@@ -185,8 +244,26 @@ export function WallDrawer() {
         const floorWalls = walls.filter((w) => w.floor === activeFloor);
         const snap = computeSnap(point[0], point[1], floorWalls, snapConfig);
         setCurrentSnap(snap.type !== "none" ? snap : null);
-        const snappedPoint: [number, number] =
+        let snappedPoint: [number, number] =
           snap.type !== "none" ? snap.point : point;
+
+        // Apply axis constraint if active
+        const currentConstraint = usePlanStore.getState().axisConstraint;
+        if (currentConstraint !== "none") {
+          // Determine resolved axis for "auto" mode visualization (before constraining)
+          if (currentConstraint === "auto") {
+            const rawPoint = snap.type !== "none" ? snap.point : point;
+            const rdx = Math.abs(rawPoint[0] - drawingWall.start[0]);
+            const rdz = Math.abs(rawPoint[1] - drawingWall.start[1]);
+            setResolvedAxis(rdx >= rdz ? "x" : "z");
+          } else {
+            setResolvedAxis(currentConstraint === "x" ? "x" : "z");
+          }
+          snappedPoint = applyAxisConstraint(drawingWall.start, snappedPoint, currentConstraint);
+        } else {
+          setResolvedAxis(null);
+        }
+
         cursorWorldPos.current = snappedPoint;
         const dx = snappedPoint[0] - drawingWall.start[0];
         const dz = snappedPoint[1] - drawingWall.start[1];
@@ -198,6 +275,10 @@ export function WallDrawer() {
           0.3,
           (drawingWall.start[1] + snappedPoint[1]) / 2,
         ]);
+
+        // Detect alignments on the current constrained cursor point
+        const guides = detectAlignments(snappedPoint, floorWalls, 0.05);
+        setAlignments(guides);
       }
     };
 
@@ -225,6 +306,16 @@ export function WallDrawer() {
     <group>
       {/* Snap indicator — shows at active snap point during drawing */}
       {isActive && <SnapIndicator snapResult={currentSnap} />}
+
+      {/* Axis constraint lines and alignment guides */}
+      {isActive && drawingWall && (
+        <AlignmentGuides
+          constraint={axisConstraint}
+          constraintOrigin={drawingWall.start}
+          constraintDirection={resolvedAxis}
+          alignments={alignments}
+        />
+      )}
 
       {/* Preview line while drawing */}
       {isActive && drawingWall && <PreviewLine ref={previewLineRef} />}

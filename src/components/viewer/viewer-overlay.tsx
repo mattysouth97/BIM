@@ -66,6 +66,14 @@ export function ViewerOverlay({
   const copyFloor = usePlanStore((s) => s.copyFloor);
   const drawingMode = usePlanStore((s) => s.drawingMode);
   const setDrawingMode = usePlanStore((s) => s.setDrawingMode);
+  const snapEnabled = usePlanStore((s) => s.snapEnabled);
+  const setSnapEnabled = usePlanStore((s) => s.setSnapEnabled);
+  const gridSnapEnabled = usePlanStore((s) => s.gridSnapEnabled);
+  const setGridSnapEnabled = usePlanStore((s) => s.setGridSnapEnabled);
+  const vertexSnapEnabled = usePlanStore((s) => s.vertexSnapEnabled);
+  const setVertexSnapEnabled = usePlanStore((s) => s.setVertexSnapEnabled);
+  const edgeSnapEnabled = usePlanStore((s) => s.edgeSnapEnabled);
+  const setEdgeSnapEnabled = usePlanStore((s) => s.setEdgeSnapEnabled);
 
   const selectedPresetId = useOpeningPreset((s) => s.presetId);
   const setSelectedPresetId = useOpeningPreset((s) => s.setPresetId);
@@ -416,6 +424,54 @@ export function ViewerOverlay({
             </div>
           </div>
 
+          {/* Snap Controls */}
+          <div className="rounded-lg border bg-card/95 backdrop-blur p-2 shadow-lg">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-medium text-muted-foreground">
+                {isKo ? "스냅" : "Snap"} (S)
+              </span>
+              <button
+                className={`text-[10px] px-1.5 py-0.5 rounded ${
+                  snapEnabled ? "bg-primary text-primary-foreground" : "bg-muted"
+                }`}
+                onClick={() => setSnapEnabled(!snapEnabled)}
+              >
+                {snapEnabled ? "ON" : "OFF"}
+              </button>
+            </div>
+            {snapEnabled && (
+              <div className="flex flex-col gap-0.5 mt-1">
+                <label className="flex items-center gap-1 text-[10px]">
+                  <input
+                    type="checkbox"
+                    checked={gridSnapEnabled}
+                    onChange={(e) => setGridSnapEnabled(e.target.checked)}
+                    className="w-3 h-3"
+                  />
+                  {isKo ? "격자" : "Grid"}
+                </label>
+                <label className="flex items-center gap-1 text-[10px]">
+                  <input
+                    type="checkbox"
+                    checked={vertexSnapEnabled}
+                    onChange={(e) => setVertexSnapEnabled(e.target.checked)}
+                    className="w-3 h-3"
+                  />
+                  {isKo ? "꼭짓점" : "Vertex"}
+                </label>
+                <label className="flex items-center gap-1 text-[10px]">
+                  <input
+                    type="checkbox"
+                    checked={edgeSnapEnabled}
+                    onChange={(e) => setEdgeSnapEnabled(e.target.checked)}
+                    className="w-3 h-3"
+                  />
+                  {isKo ? "모서리" : "Edge"}
+                </label>
+              </div>
+            )}
+          </div>
+
           {/* Drawing mode toggle */}
           {isAuthoring && (
             <div className="rounded-lg border bg-card/95 backdrop-blur p-2 shadow-lg">
@@ -464,6 +520,20 @@ export function ViewerOverlay({
                   ? (isKo ? "두 번째 점 클릭" : "Click second point")
                   : (isKo ? "벽 그리기: 시작점 클릭" : "Draw Wall: click start")}
               </span>
+            </div>
+          )}
+
+          {/* Axis lock info — visible during wall drawing mode */}
+          {isAuthoring && drawingMode === "wall" && (
+            <div className="rounded-lg border bg-card/95 backdrop-blur p-2 shadow-lg">
+              <span className="text-[10px] font-medium text-muted-foreground block mb-1">
+                {isKo ? "축 제한" : "Axis Lock"}
+              </span>
+              <div className="flex gap-1">
+                <span className="text-[10px] text-muted-foreground">
+                  {isKo ? "Shift: 자동 · X/Y: 축 고정" : "Shift: auto · X/Y: lock axis"}
+                </span>
+              </div>
             </div>
           )}
 
