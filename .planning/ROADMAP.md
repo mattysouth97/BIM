@@ -30,6 +30,11 @@
 ### Phase 11: Room Boundaries + 3D Extrusion
 **Goal:** Detect enclosed spaces from drawn walls, label them as rooms, and auto-extrude 2D plans to 3D building geometry.
 **Requirements:** PLAN-02, PLAN-03, PLAN-04
+**Plans:** 3 plans
+Plans:
+- [ ] 11-01-PLAN.md — Store extension + room detection algorithm + unit tests
+- [ ] 11-02-PLAN.md — Room fills visualization + floor slabs + multi-floor management
+- [ ] 11-03-PLAN.md — Door/window placement with CSG wall openings
 - Room detection algorithm: find enclosed polygons from wall graph
 - Room labels with area calculation (m²)
 - Auto-extrusion: 2D walls → 3D walls with configurable floor height
@@ -59,7 +64,7 @@
 ---
 
 **Priority order:** Phase 10 → 10.1 → 11 → 12 → 13
-**Current phase:** Phase 10.1 (not started)
+**Current phase:** Phase 11 (planned)
 
 ## Progress
 
@@ -67,6 +72,6 @@
 |-------|--------|-------|------|
 | 10 | Complete | 1/1 | 2026-03-28 |
 | 10.1 | 3/3 | Complete    | 2026-03-28 |
-| 11 | Not started | 0 | — |
+| 11 | Planned | 0/3 | — |
 | 12 | Not started | 0 | — |
 | 13 | Not started | 0 | — |
