@@ -1,11 +1,11 @@
 # Requirements — v2.0 Advanced BIM Authoring
 
 ## Floor Plan Editor
-- [ ] **PLAN-01**: User can draw walls in 2D plan view by clicking start/end points
+- [x] **PLAN-01**: User can draw walls in 2D plan view by clicking start/end points
 - [ ] **PLAN-02**: User can create room boundaries from enclosed wall segments
 - [ ] **PLAN-03**: Drawn 2D plan extrudes to 3D geometry automatically
 - [ ] **PLAN-04**: User can place doors and windows on walls in plan view
-- [ ] **PLAN-05**: User can switch between 3D perspective and 2D plan view
+- [x] **PLAN-05**: User can switch between 3D perspective and 2D plan view
 
 ## Snap & Align Tools
 - [ ] **SNAP-01**: Elements snap to grid (configurable grid size)

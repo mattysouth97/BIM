@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: advanced-bim-authoring
-status: Defining requirements
-last_updated: "2026-03-27T03:37:00.545Z"
+status: Executing
+last_updated: "2026-03-28T00:08:25Z"
 progress:
-  total_phases: 9
+  total_phases: 10
   completed_phases: 9
-  total_plans: 19
-  completed_plans: 19
+  total_plans: 20
+  completed_plans: 20
 ---
 
 # Project State
 
 ## Current Phase
 
-Phase 9: Energy Data Integration
+Phase 10: 2D Plan View Engine
 
 ## Current Plan
 
@@ -23,12 +23,12 @@ Plan 01 (complete)
 
 ## Last Action
 
-Phase 9 Plan 01 executed: Korean energy API proxy routes, actual energy data hook, and modeled vs actual comparison in energy cards.
+Phase 10 Plan 01 executed: Plan view camera with orthographic toggle, grid overlay, and two-point wall drawing tool.
 
 ## Last Session
 
-- Stopped at: Completed 09-01-PLAN.md
-- Date: 2026-03-27
+- Stopped at: Completed 10-01-PLAN.md
+- Date: 2026-03-28
 
 ## Key Decisions
 
@@ -66,6 +66,10 @@ Phase 9 Plan 01 executed: Korean energy API proxy routes, actual energy data hoo
 - Separate API routes per energy service (different base URLs from bldrgst)
 - useEffect+useState for actual energy hook (not react-query) per project convention
 - CO2 actual estimated via ratio (modeled CO2/demand) applied to certified demand
+- Separate plan-store (usePlanStore) for plan view concerns, not extending authoring-store
+- OrthographicCamera swapped via useThree().set() for plan/3D mode toggle
+- Walls stored as start/end XZ coordinates, rendered as flat boxes in 2D and extruded boxes in 3D
+- THREE.Line wrapped in primitive component to avoid R3F JSX type collision with SVG
 
 ## Blockers
 
@@ -94,3 +98,4 @@ None currently.
 | 08    | 01   | 172s     | 3     | 6     |
 | Phase 08 P02 | 182s | 3 tasks | 4 files |
 | 09    | 01   | 239s     | 3     | 6     |
+| 10    | 01   | 319s     | 3     | 7     |

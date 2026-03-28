@@ -49,7 +49,7 @@
 
 | Phase | Status | Plans | Date |
 |-------|--------|-------|------|
-| 10 | Not started | 0 | — |
+| 10 | 1/1 | Complete   | 2026-03-28 |
 | 11 | Not started | 0 | — |
 | 12 | Not started | 0 | — |
 | 13 | Not started | 0 | — |
