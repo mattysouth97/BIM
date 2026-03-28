@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { useAppStore } from "@/store/app-store";
 import { useMaterialStore } from "@/store/material-store";
 import { SliderRow } from "./slider-row";
@@ -47,6 +48,25 @@ export function SystemsTab({ buildingPk }: SystemsTabProps) {
   const isKo = useAppStore((s) => s.language) === "ko";
   const overrideProperty = useMaterialStore((s) => s.overrideProperty);
   const properties = useMaterialStore((s) => s.properties[buildingPk]);
+
+  /* ── Validation callbacks ── */
+  const validateHeatingEff = useCallback(
+    (v: number) =>
+      v < 50 ? (isKo ? "최소 효율 미만" : "Below minimum efficiency") : null,
+    [isKo]
+  );
+  const validateCOP = useCallback(
+    (v: number) =>
+      v < 1.5 ? (isKo ? "최소 COP 미만" : "Below minimum COP") :
+      v > 8.0 ? (isKo ? "최대 COP 초과" : "Exceeds maximum COP") : null,
+    [isKo]
+  );
+  const validateLPD = useCallback(
+    (v: number) =>
+      v < 2 ? (isKo ? "최소 조명밀도 미만" : "Below minimum LPD") :
+      v > 30 ? (isKo ? "최대 조명밀도 초과" : "Exceeds maximum LPD") : null,
+    [isKo]
+  );
 
   if (!properties) {
     return (
@@ -135,22 +155,24 @@ export function SystemsTab({ buildingPk }: SystemsTabProps) {
           <SliderRow
             label={isKo ? "난방 효율" : "Heating Efficiency"}
             value={Math.round(hvac.heating.efficiency * 100)}
-            min={60}
-            max={98}
+            min={50}
+            max={100}
             step={1}
             unit="%"
             decimals={0}
             onChange={(val) => set("hvac.heating.efficiency", val / 100)}
+            validate={validateHeatingEff}
           />
           <SliderRow
             label={isKo ? "냉방 COP" : "Cooling COP"}
             value={hvac.cooling.efficiency}
-            min={2.0}
-            max={6.0}
+            min={1.5}
+            max={8.0}
             step={0.1}
             unit=""
             decimals={1}
             onChange={(val) => set("hvac.cooling.efficiency", val)}
+            validate={validateCOP}
           />
         </div>
       </section>
@@ -164,12 +186,13 @@ export function SystemsTab({ buildingPk }: SystemsTabProps) {
           <SliderRow
             label={isKo ? "조명밀도 (LPD)" : "Lighting Power Density"}
             value={lighting.lightingPowerDensity}
-            min={5}
-            max={25}
+            min={2}
+            max={30}
             step={0.5}
             unit="W/m²"
             decimals={1}
             onChange={(val) => set("lighting.lightingPowerDensity", val)}
+            validate={validateLPD}
           />
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
@@ -264,7 +287,7 @@ export function SystemsTab({ buildingPk }: SystemsTabProps) {
             label={isKo ? "태양광 패널 면적" : "Solar Panel Area"}
             value={renewable.solarPV.area}
             min={0}
-            max={500}
+            max={10000}
             step={10}
             unit="m²"
             decimals={0}

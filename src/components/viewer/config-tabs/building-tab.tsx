@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useAppStore } from "@/store/app-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { SliderRow } from "./slider-row";
@@ -54,6 +54,35 @@ export function BuildingTab({ buildingPk }: BuildingTabProps) {
 
   const roofType = (overrides?.roof?.type as string) ?? recipe.roof.type;
 
+  /* ── Validation callbacks ── */
+  const validateFootprint = useCallback(
+    (v: number) => (v < 4 ? (isKo ? "일반적인 최소값 미만" : "Below typical minimum") : null),
+    [isKo]
+  );
+  const validateFloorHeight = useCallback(
+    (v: number) => (v < 2.2 ? (isKo ? "건축법 최소 층고(2.2m) 미만" : "Below Korean code minimum (2.2m)") : null),
+    [isKo]
+  );
+  const validateWindowRatio = useCallback(
+    (v: number) =>
+      v > 80
+        ? (isKo ? "한국 건축법 창면적비 제한(80%) 초과" : "Exceeds Korean code limit (80%)")
+        : v > 60
+          ? (isKo ? "건축법 기준 초과 가능" : "May exceed Korean code limit")
+          : null,
+    [isKo]
+  );
+  const validateColumnSpacing = useCallback(
+    (v: number) =>
+      v < 2 ? (isKo ? "최소 기둥 간격 미만" : "Below minimum column spacing") : null,
+    [isKo]
+  );
+  const validateColumnSize = useCallback(
+    (v: number) =>
+      v < 0.15 ? (isKo ? "최소 기둥 크기 미만" : "Below minimum column size") : null,
+    [isKo]
+  );
+
   return (
     <div className="space-y-5 p-3">
       {/* ── Geometry ── */}
@@ -65,28 +94,31 @@ export function BuildingTab({ buildingPk }: BuildingTabProps) {
           <SliderRow
             label={isKo ? "가로 폭" : "Footprint Width"}
             value={v("footprintWidth", recipe.footprintWidth)}
-            min={4} max={50} step={0.5} unit="m"
+            min={2} max={100} step={0.5} unit="m"
             onChange={(val) => set("footprintWidth", val)}
+            validate={validateFootprint}
           />
           <SliderRow
             label={isKo ? "세로 깊이" : "Footprint Depth"}
             value={v("footprintDepth", recipe.footprintDepth)}
-            min={4} max={50} step={0.5} unit="m"
+            min={2} max={100} step={0.5} unit="m"
             onChange={(val) => set("footprintDepth", val)}
+            validate={validateFootprint}
           />
           <SliderRow
             label={isKo ? "층수" : "Floor Count"}
             value={v("floorCount", recipe.floors.length)}
-            min={1} max={30} step={1} unit=""
+            min={1} max={50} step={1} unit=""
             decimals={0}
             onChange={(val) => set("floorCount", val)}
           />
           <SliderRow
             label={isKo ? "층고" : "Floor Height"}
             value={v("floorHeight", recipe.floors[0]?.height ?? 3.0)}
-            min={2.5} max={5.0} step={0.1} unit="m"
+            min={2.2} max={6.0} step={0.1} unit="m"
             decimals={1}
             onChange={(val) => set("floorHeight", val)}
+            validate={validateFloorHeight}
           />
         </div>
       </section>
@@ -100,9 +132,10 @@ export function BuildingTab({ buildingPk }: BuildingTabProps) {
           <SliderRow
             label={isKo ? "창면적비" : "Window Ratio"}
             value={v("facade.windowRatio", recipe.facade.windowRatio) * 100}
-            min={10} max={80} step={5} unit="%"
+            min={0} max={80} step={5} unit="%"
             decimals={0}
             onChange={(val) => set("facade.windowRatio", val / 100)}
+            validate={validateWindowRatio}
           />
           <SliderRow
             label={isKo ? "멀리온 깊이" : "Mullion Depth"}
@@ -142,15 +175,17 @@ export function BuildingTab({ buildingPk }: BuildingTabProps) {
           <SliderRow
             label={isKo ? "기둥 간격" : "Column Spacing"}
             value={v("column.spacing", recipe.column.spacing)}
-            min={3} max={10} step={0.5} unit="m"
+            min={2} max={15} step={0.5} unit="m"
             decimals={1}
             onChange={(val) => set("column.spacing", val)}
+            validate={validateColumnSpacing}
           />
           <SliderRow
             label={isKo ? "기둥 크기" : "Column Size"}
             value={v("column.size", recipe.column.size)}
-            min={0.2} max={0.8} step={0.05} unit="m"
+            min={0.15} max={1.2} step={0.05} unit="m"
             onChange={(val) => set("column.size", val)}
+            validate={validateColumnSize}
           />
           <SliderRow
             label={isKo ? "슬래브 두께" : "Slab Thickness"}
@@ -161,7 +196,7 @@ export function BuildingTab({ buildingPk }: BuildingTabProps) {
           <SliderRow
             label={isKo ? "벽 두께" : "Wall Thickness"}
             value={v("wallThickness", recipe.wallThickness)}
-            min={0.1} max={0.5} step={0.02} unit="m"
+            min={0.05} max={1.0} step={0.02} unit="m"
             onChange={(val) => set("wallThickness", val)}
           />
         </div>

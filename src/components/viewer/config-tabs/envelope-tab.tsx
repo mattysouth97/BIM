@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { useAppStore } from "@/store/app-store";
 import { useMaterialStore } from "@/store/material-store";
 import { SliderRow } from "./slider-row";
@@ -41,6 +42,30 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
   const properties = useMaterialStore((s) => s.properties[buildingPk]);
   const overrideProperty = useMaterialStore((s) => s.overrideProperty);
   const setProperties = useMaterialStore((s) => s.setProperties);
+
+  /* ── Validation callbacks ── */
+  const validateWallU = useCallback(
+    (v: number) =>
+      v > 2.5
+        ? (isKo ? "대부분 지역의 건축법 기준 초과" : "Exceeds Korean code limit for most zones")
+        : null,
+    [isKo]
+  );
+  const validateSHGC = useCallback(
+    (v: number) =>
+      v > 0.95 ? (isKo ? "최대값 초과" : "Exceeds maximum") :
+      v < 0.05 ? (isKo ? "최소값 미만" : "Below minimum") : null,
+    [isKo]
+  );
+  const validateWWR = useCallback(
+    (v: number) =>
+      v > 80
+        ? (isKo ? "한국 건축법 WWR 제한(80%) 초과" : "Exceeds Korean code WWR limit (80%)")
+        : v > 60
+          ? (isKo ? "건축법 기준 초과 가능" : "May exceed Korean code limit")
+          : null,
+    [isKo]
+  );
 
   if (!properties) {
     return (
@@ -143,7 +168,8 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
           <SliderRow
             label={isKo ? "벽체 열관류율" : "Wall U-value"}
             value={wallU}
-            min={0.12} max={2.5} step={0.01} unit="W/(m²K)"
+            min={0.1} max={5.0} step={0.01} unit="W/(m²K)"
+            validate={validateWallU}
             onChange={(val) => {
               env.walls.forEach((_, i) => {
                 overrideProperty(buildingPk, `envelope.walls.${i}.uValue`, val);
@@ -181,21 +207,23 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
           <SliderRow
             label={isKo ? "창호 열관류율" : "Window U-value"}
             value={env.windows.uValue}
-            min={0.8} max={5.0} step={0.1} unit="W/(m²K)"
+            min={0.5} max={6.0} step={0.1} unit="W/(m²K)"
             decimals={1}
             onChange={(val) => setEnvelope("windows.uValue", val)}
           />
           <SliderRow
             label="SHGC"
             value={env.windows.shgc}
-            min={0.1} max={0.9} step={0.05} unit=""
+            min={0.05} max={0.95} step={0.05} unit=""
             onChange={(val) => setEnvelope("windows.shgc", val)}
+            validate={validateSHGC}
           />
           <SliderRow
             label={isKo ? "창면적비 (WWR)" : "WWR"}
             value={env.windows.windowToWallRatio.S * 100}
-            min={10} max={80} step={5} unit="%"
+            min={0} max={80} step={5} unit="%"
             decimals={0}
+            validate={validateWWR}
             onChange={(val) => {
               const ratio = val / 100;
               setEnvelope("windows.windowToWallRatio", {

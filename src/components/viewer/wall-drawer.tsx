@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useMemo, forwardRef } from "react";
+import { useRef, useEffect, useCallback, useMemo, useState, forwardRef } from "react";
 import * as THREE from "three";
 import { useThree, useFrame } from "@react-three/fiber";
+import { Html } from "@react-three/drei";
 import { usePlanStore, type WallSegment } from "@/store/plan-store";
 import { useAuthoringStore } from "@/store/authoring-store";
 
@@ -10,6 +11,9 @@ const GROUND_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const WALL_COLOR_2D = 0x333333;
 const WALL_COLOR_3D = 0xd4d4d4;
 const PREVIEW_COLOR = 0x3b82f6; // blue
+const REJECT_COLOR = 0xef4444; // red — wall too short
+const MIN_WALL_LENGTH = 0.5; // meters
+const MAX_WALL_WARN = 50; // meters — warn but allow
 
 /**
  * Interactive wall drawing tool.
@@ -33,8 +37,12 @@ export function WallDrawer() {
   const mousePos = useRef(new THREE.Vector2());
   const cursorWorldPos = useRef<[number, number]>([0, 0]);
   const previewLineRef = useRef<THREE.Line | null>(null);
+  const [drawLength, setDrawLength] = useState<number>(0);
+  const [tooltipPos, setTooltipPos] = useState<[number, number, number]>([0, 0, 0]);
 
   const isActive = viewMode === "plan" && isAuthoring;
+  const isTooShort = drawingWall !== null && drawLength < MIN_WALL_LENGTH;
+  const isTooLong = drawingWall !== null && drawLength > MAX_WALL_WARN;
 
   // Raycast to ground plane to get world XZ coordinates
   const getGroundPoint = useCallback(
@@ -65,6 +73,15 @@ export function WallDrawer() {
       if (!drawingWall) {
         startDrawing(point);
       } else {
+        const dx = point[0] - drawingWall.start[0];
+        const dz = point[1] - drawingWall.start[1];
+        const length = Math.sqrt(dx * dx + dz * dz);
+
+        // Reject walls shorter than minimum length
+        if (length < MIN_WALL_LENGTH) {
+          return; // Do nothing — tooltip already shows "too short"
+        }
+
         const wall: WallSegment = {
           id: crypto.randomUUID(),
           start: drawingWall.start,
@@ -75,6 +92,7 @@ export function WallDrawer() {
         };
         addWall(wall);
         cancelDrawing();
+        setDrawLength(0);
       }
     };
 
@@ -115,8 +133,18 @@ export function WallDrawer() {
 
     const handleMouseMove = (e: MouseEvent) => {
       const point = getGroundPoint(e.clientX, e.clientY);
-      if (point) {
+      if (point && drawingWall) {
         cursorWorldPos.current = point;
+        const dx = point[0] - drawingWall.start[0];
+        const dz = point[1] - drawingWall.start[1];
+        const len = Math.sqrt(dx * dx + dz * dz);
+        setDrawLength(len);
+        // Midpoint for tooltip
+        setTooltipPos([
+          (drawingWall.start[0] + point[0]) / 2,
+          0.3,
+          (drawingWall.start[1] + point[1]) / 2,
+        ]);
       }
     };
 
@@ -125,7 +153,7 @@ export function WallDrawer() {
     return () => canvas.removeEventListener("mousemove", handleMouseMove);
   }, [isActive, drawingWall, getGroundPoint, gl]);
 
-  // Update preview line position each frame
+  // Update preview line position each frame + color feedback
   useFrame(() => {
     if (!previewLineRef.current || !drawingWall) return;
     const geom = previewLineRef.current.geometry as THREE.BufferGeometry;
@@ -133,12 +161,36 @@ export function WallDrawer() {
     positions.setXYZ(0, drawingWall.start[0], 0.05, drawingWall.start[1]);
     positions.setXYZ(1, cursorWorldPos.current[0], 0.05, cursorWorldPos.current[1]);
     positions.needsUpdate = true;
+
+    // Change line color when wall is too short
+    const mat = previewLineRef.current.material as THREE.LineDashedMaterial;
+    const targetColor = isTooShort ? REJECT_COLOR : PREVIEW_COLOR;
+    mat.color.setHex(targetColor);
   });
 
   return (
     <group>
       {/* Preview line while drawing */}
       {isActive && drawingWall && <PreviewLine ref={previewLineRef} />}
+
+      {/* Measurement tooltip while drawing */}
+      {isActive && drawingWall && drawLength > 0.01 && (
+        <Html position={tooltipPos} center style={{ pointerEvents: "none" }}>
+          <div
+            className={`rounded px-2 py-0.5 text-xs font-mono shadow-md whitespace-nowrap ${
+              isTooShort
+                ? "bg-red-500 text-white"
+                : isTooLong
+                  ? "bg-amber-500 text-white"
+                  : "bg-zinc-800 text-white"
+            }`}
+          >
+            {drawLength.toFixed(2)}m
+            {isTooShort && " (too short)"}
+            {isTooLong && " (very long)"}
+          </div>
+        </Html>
+      )}
 
       {/* Render walls */}
       {walls.map((wall) =>
