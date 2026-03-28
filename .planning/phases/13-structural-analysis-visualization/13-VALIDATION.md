@@ -2,8 +2,8 @@
 phase: 13
 slug: structural-analysis-visualization
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-28
 ---
 
@@ -38,21 +38,33 @@ created: 2026-03-28
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 13-01-01 | 01 | 1 | STRUCT-01, STRUCT-02 | unit | `pnpm test --run` | ❌ W0 | ⬜ pending |
-| 13-01-02 | 01 | 1 | STRUCT-03 | unit | `pnpm test --run` | ❌ W0 | ⬜ pending |
-| 13-02-01 | 02 | 2 | STRUCT-01, STRUCT-02 | build | `pnpm build` | ✅ | ⬜ pending |
-| 13-02-02 | 02 | 2 | STRUCT-04 | build | `pnpm build` | ✅ | ⬜ pending |
+| 13-01-01 | 01 | 1 | STRUCT-02, STRUCT-03 | unit (TDD) | `pnpm vitest run src/lib/__tests__/structural-codes.test.ts` | Created in task | pending |
+| 13-01-02 | 01 | 1 | STRUCT-04 | build | `pnpm build` | N/A (type/store changes) | pending |
+| 13-02-01 | 02 | 2 | STRUCT-01, STRUCT-02 | unit (TDD) | `pnpm vitest run src/lib/layers/__tests__/layer-15-structural.test.ts` | Created in task | pending |
+| 13-02-02 | 02 | 2 | STRUCT-03, STRUCT-04 | build | `pnpm build` | N/A (R3F component) | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `src/lib/__tests__/structural-analysis.test.ts` — stubs for load calculation and stress level functions
-- [ ] `src/lib/__tests__/structural-codes.test.ts` — stubs for Korean code sizing table lookups
+- [x] `src/lib/__tests__/structural-codes.test.ts` — created by Plan 01 Task 1 (TDD task writes tests first)
+- [x] `src/lib/layers/__tests__/layer-15-structural.test.ts` — created by Plan 02 Task 1 (TDD task writes tests first)
 
-*Existing test infrastructure from Phase 10.1 covers framework setup.*
+*Both Wave 0 test files are created within their respective TDD tasks (tests written before implementation).*
+
+---
+
+## Nyquist Sampling Continuity
+
+Consecutive task verify sequence:
+1. 13-01-T1: `pnpm vitest run src/lib/__tests__/structural-codes.test.ts` (unit test)
+2. 13-01-T2: `pnpm build` (build)
+3. 13-02-T1: `pnpm vitest run src/lib/layers/__tests__/layer-15-structural.test.ts` (unit test) -- breaks the build-only chain
+4. 13-02-T2: `pnpm build` (build)
+
+No 3 consecutive tasks use only `pnpm build` as verify.
 
 ---
 
@@ -69,11 +81,11 @@ created: 2026-03-28
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** ready
