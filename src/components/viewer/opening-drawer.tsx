@@ -7,6 +7,7 @@ import { create } from "zustand";
 import { usePlanStore } from "@/store/plan-store";
 import { useAuthoringStore } from "@/store/authoring-store";
 import { projectOntoWall } from "@/lib/plan/room-detector";
+import { type SnapConfig } from "@/lib/plan/snap-engine";
 import {
   DOOR_PRESETS,
   WINDOW_PRESETS,
@@ -242,6 +243,20 @@ export function OpeningDrawer() {
       const preset = findPreset(presetId);
       const presetWidth = preset?.width ?? 0.9;
 
+      // Build snap config for opening placement
+      // Openings use wall-proximity snap (projectOntoWall) as primary mechanism,
+      // so vertex/edge snapping from the general engine is disabled.
+      // Only grid snap is used — applied to the parametric t value along the wall.
+      const storeState = usePlanStore.getState();
+      const openingSnapConfig: SnapConfig = {
+        enabled: storeState.snapEnabled,
+        gridSnap: storeState.gridSnapEnabled,
+        vertexSnap: false,
+        edgeSnap: false,
+        gridSize: storeState.gridSize,
+        proximityTolerance: storeState.proximityTolerance,
+      };
+
       let bestSnap: SnapInfo | null = null;
       let bestDist = SNAP_THRESHOLD;
 
@@ -261,11 +276,32 @@ export function OpeningDrawer() {
             wall.end[1] - wall.start[1],
             wall.end[0] - wall.start[0]
           );
+
+          // Snap the parametric t to grid increments along the wall length
+          const dx = wall.end[0] - wall.start[0];
+          const dz = wall.end[1] - wall.start[1];
+          const wallLength = Math.sqrt(dx * dx + dz * dz);
+          let snappedT = proj.t;
+          if (
+            openingSnapConfig.enabled &&
+            openingSnapConfig.gridSnap &&
+            wallLength > 0
+          ) {
+            const tStep = openingSnapConfig.gridSize / wallLength;
+            snappedT = Math.round(proj.t / tStep) * tStep;
+            // Clamp to [0, 1]
+            snappedT = Math.max(0, Math.min(1, snappedT));
+          }
+
+          // Compute world position for the snapped t value
+          const swx = wall.start[0] + snappedT * dx;
+          const swz = wall.start[1] + snappedT * dz;
+
           bestSnap = {
             wallId: wall.id,
-            t: proj.t,
-            wx: proj.wx,
-            wz: proj.wz,
+            t: snappedT,
+            wx: swx,
+            wz: swz,
             angle,
             presetWidth,
           };

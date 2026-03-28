@@ -8,6 +8,8 @@ import { Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
 import { usePlanStore, type WallSegment, type Opening } from "@/store/plan-store";
 import { useAuthoringStore } from "@/store/authoring-store";
 import { DOOR_PRESETS, WINDOW_PRESETS } from "@/lib/components/component-types";
+import { computeSnap, type SnapResult, type SnapConfig } from "@/lib/plan/snap-engine";
+import { SnapIndicator } from "./snap-indicator";
 
 const GROUND_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const WALL_COLOR_2D = 0x333333;
@@ -44,7 +46,13 @@ export function WallDrawer() {
   const startDrawing = usePlanStore((s) => s.startDrawing);
   const cancelDrawing = usePlanStore((s) => s.cancelDrawing);
   const activeFloor = usePlanStore((s) => s.activeFloor);
+  const gridSize = usePlanStore((s) => s.gridSize);
   const drawingMode = usePlanStore((s) => s.drawingMode);
+  const snapEnabled = usePlanStore((s) => s.snapEnabled);
+  const gridSnapEnabled = usePlanStore((s) => s.gridSnapEnabled);
+  const vertexSnapEnabled = usePlanStore((s) => s.vertexSnapEnabled);
+  const edgeSnapEnabled = usePlanStore((s) => s.edgeSnapEnabled);
+  const proximityTolerance = usePlanStore((s) => s.proximityTolerance);
   const isAuthoring = useAuthoringStore((s) => s.isAuthoring);
 
   const { camera, gl } = useThree();
@@ -54,6 +62,19 @@ export function WallDrawer() {
   const previewLineRef = useRef<THREE.Line | null>(null);
   const [drawLength, setDrawLength] = useState<number>(0);
   const [tooltipPos, setTooltipPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [currentSnap, setCurrentSnap] = useState<SnapResult | null>(null);
+
+  const snapConfig: SnapConfig = useMemo(
+    () => ({
+      enabled: snapEnabled,
+      gridSnap: gridSnapEnabled,
+      vertexSnap: vertexSnapEnabled,
+      edgeSnap: edgeSnapEnabled,
+      gridSize,
+      proximityTolerance,
+    }),
+    [snapEnabled, gridSnapEnabled, vertexSnapEnabled, edgeSnapEnabled, gridSize, proximityTolerance]
+  );
 
   const isActive = viewMode === "plan" && isAuthoring && drawingMode === "wall";
   const isTooShort = drawingWall !== null && drawLength < MIN_WALL_LENGTH;
@@ -85,11 +106,22 @@ export function WallDrawer() {
       const point = getGroundPoint(e.clientX, e.clientY);
       if (!point) return;
 
+      const floorWalls = walls.filter((w) => w.floor === activeFloor);
+
       if (!drawingWall) {
-        startDrawing(point);
+        // Apply snap to start point
+        const snap = computeSnap(point[0], point[1], floorWalls, snapConfig);
+        const snappedPoint: [number, number] =
+          snap.type !== "none" ? snap.point : point;
+        startDrawing(snappedPoint);
       } else {
-        const dx = point[0] - drawingWall.start[0];
-        const dz = point[1] - drawingWall.start[1];
+        // Apply snap to end point
+        const snap = computeSnap(point[0], point[1], floorWalls, snapConfig);
+        const endPoint: [number, number] =
+          snap.type !== "none" ? snap.point : point;
+
+        const dx = endPoint[0] - drawingWall.start[0];
+        const dz = endPoint[1] - drawingWall.start[1];
         const length = Math.sqrt(dx * dx + dz * dz);
 
         // Reject walls shorter than minimum length
@@ -100,13 +132,14 @@ export function WallDrawer() {
         const wall: WallSegment = {
           id: crypto.randomUUID(),
           start: drawingWall.start,
-          end: point,
+          end: endPoint,
           thickness: 0.2,
           height: 3.0,
           floor: activeFloor,
         };
         addWall(wall);
         cancelDrawing();
+        setCurrentSnap(null);
         setDrawLength(0);
       }
     };
@@ -114,7 +147,7 @@ export function WallDrawer() {
     const canvas = gl.domElement;
     canvas.addEventListener("click", handleClick);
     return () => canvas.removeEventListener("click", handleClick);
-  }, [isActive, drawingWall, startDrawing, addWall, cancelDrawing, activeFloor, getGroundPoint, gl]);
+  }, [isActive, drawingWall, startDrawing, addWall, cancelDrawing, activeFloor, getGroundPoint, gl, walls, snapConfig]);
 
   // Right-click and Escape to cancel
   useEffect(() => {
@@ -149,16 +182,21 @@ export function WallDrawer() {
     const handleMouseMove = (e: MouseEvent) => {
       const point = getGroundPoint(e.clientX, e.clientY);
       if (point && drawingWall) {
-        cursorWorldPos.current = point;
-        const dx = point[0] - drawingWall.start[0];
-        const dz = point[1] - drawingWall.start[1];
+        const floorWalls = walls.filter((w) => w.floor === activeFloor);
+        const snap = computeSnap(point[0], point[1], floorWalls, snapConfig);
+        setCurrentSnap(snap.type !== "none" ? snap : null);
+        const snappedPoint: [number, number] =
+          snap.type !== "none" ? snap.point : point;
+        cursorWorldPos.current = snappedPoint;
+        const dx = snappedPoint[0] - drawingWall.start[0];
+        const dz = snappedPoint[1] - drawingWall.start[1];
         const len = Math.sqrt(dx * dx + dz * dz);
         setDrawLength(len);
         // Midpoint for tooltip
         setTooltipPos([
-          (drawingWall.start[0] + point[0]) / 2,
+          (drawingWall.start[0] + snappedPoint[0]) / 2,
           0.3,
-          (drawingWall.start[1] + point[1]) / 2,
+          (drawingWall.start[1] + snappedPoint[1]) / 2,
         ]);
       }
     };
@@ -166,7 +204,7 @@ export function WallDrawer() {
     const canvas = gl.domElement;
     canvas.addEventListener("mousemove", handleMouseMove);
     return () => canvas.removeEventListener("mousemove", handleMouseMove);
-  }, [isActive, drawingWall, getGroundPoint, gl]);
+  }, [isActive, drawingWall, getGroundPoint, gl, walls, activeFloor, snapConfig]);
 
   // Update preview line position each frame + color feedback
   useFrame(() => {
@@ -185,6 +223,9 @@ export function WallDrawer() {
 
   return (
     <group>
+      {/* Snap indicator — shows at active snap point during drawing */}
+      {isActive && <SnapIndicator snapResult={currentSnap} />}
+
       {/* Preview line while drawing */}
       {isActive && drawingWall && <PreviewLine ref={previewLineRef} />}
 
