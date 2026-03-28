@@ -5,11 +5,11 @@
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 
-/** Layer identifier — 14 systems covering all building infrastructure */
-export type LayerId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
+/** Layer identifier — 15 systems covering all building infrastructure + structural analysis */
+export type LayerId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
 
 /** All valid layer IDs for iteration */
-export const ALL_LAYER_IDS: LayerId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+export const ALL_LAYER_IDS: LayerId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
 /** Configuration metadata for each layer */
 export interface LayerConfig {
@@ -179,6 +179,17 @@ export const LAYER_CONFIGS: Record<LayerId, LayerConfig> = {
     animated: true,
     zebLoad: false,
     description: "Solar PV, BESS, backup generators — glowing batteries with bi-directional flow",
+  },
+  15: {
+    id: 15,
+    name: "Structural Analysis",
+    nameKo: "구조 해석",
+    category: "Engineering",
+    color: "#f97316",
+    icon: "construction",
+    animated: true,
+    zebLoad: false,
+    description: "Load path arrows, stress color coding, member sizing — KBC 2016 structural overlay",
   },
 };
 

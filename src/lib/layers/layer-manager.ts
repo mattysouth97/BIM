@@ -20,6 +20,7 @@ import { TelecomLayer } from "./layer-11-telecom";
 import { TransportLayer } from "./layer-12-transport";
 import { SafetyLayer } from "./layer-13-safety";
 import { MicrogridLayer } from "./layer-14-microgrid";
+import { StructuralAnalysisLayer } from "./layer-15-structural";
 
 /**
  * LayerManager manages the lifecycle of all 14 building system layers:
@@ -52,6 +53,7 @@ export class LayerManager {
     this.generators.set(12, new TransportLayer());
     this.generators.set(13, new SafetyLayer());
     this.generators.set(14, new MicrogridLayer());
+    this.generators.set(15, new StructuralAnalysisLayer());
   }
 
   getOrGenerate(id: LayerId, recipe: BuildingRecipe, density?: number): THREE.Group {

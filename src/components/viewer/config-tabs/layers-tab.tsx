@@ -26,6 +26,7 @@ const DENSITY_LABELS: Record<LayerId, { ko: string; en: string }> = {
   12: { ko: "엘리베이터 수", en: "Elevator Count" },
   13: { ko: "방화구역 수", en: "Fire Zone Count" },
   14: { ko: "PV 패널 수", en: "PV Panel Count" },
+  15: { ko: "분석 밀도", en: "Analysis Density" },
 };
 
 export function LayersTab({ buildingPk: _buildingPk }: LayersTabProps) {
