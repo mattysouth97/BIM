@@ -32,6 +32,7 @@ import { ComponentPalette } from "./component-palette";
 import { PlacedComponents } from "./placed-components";
 import { AnnotationTools } from "./annotation-tools";
 import { EnergyCards } from "./energy-cards";
+import { ErrorBoundary, ViewerErrorBoundary } from "@/components/error-boundary";
 import { PlanView } from "./plan-view";
 import { PlanGrid } from "./plan-grid";
 import { WallDrawer } from "./wall-drawer";
@@ -261,6 +262,7 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
 
   return (
     <div className="relative h-full w-full overflow-hidden">
+      <ViewerErrorBoundary>
       <Canvas
         camera={{
           position: [cameraDistance * 0.7, geometry.totalHeight * 0.6 + cameraDistance * 0.3, cameraDistance * 0.7],
@@ -347,6 +349,7 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
           <SAOPostProcessing />
         </Suspense>
       </Canvas>
+      </ViewerErrorBoundary>
 
       <ViewerOverlay
         selectedFloor={modelSource === "parametric" ? selectedFloor : null}
@@ -365,14 +368,18 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
 
       {/* Energy metric cards — bottom-left, visible when building loaded */}
       {modelSource === "parametric" && (
-        <EnergyCards buildingPk={buildingPk} />
+        <ErrorBoundary>
+          <EnergyCards buildingPk={buildingPk} />
+        </ErrorBoundary>
       )}
 
-      <ConfigPanel
-        buildingPk={buildingPk}
-        visible={configPanelOpen}
-        onClose={() => setConfigPanelOpen(false)}
-      />
+      <ErrorBoundary>
+        <ConfigPanel
+          buildingPk={buildingPk}
+          visible={configPanelOpen}
+          onClose={() => setConfigPanelOpen(false)}
+        />
+      </ErrorBoundary>
 
       <LayerPanel
         visible={layerPanelOpen}
@@ -380,9 +387,15 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
       />
 
       {/* Properties panel for selected authoring element */}
-      {isAuthoring && <PropertiesPanel />}
+      {isAuthoring && (
+        <ErrorBoundary>
+          <PropertiesPanel />
+        </ErrorBoundary>
+      )}
 
-      <ComponentPalette />
+      <ErrorBoundary>
+        <ComponentPalette />
+      </ErrorBoundary>
 
       <ModelUploader
         open={uploadDialogOpen}
