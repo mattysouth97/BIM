@@ -46,23 +46,35 @@ The goal is NOT photorealistic rendering — it's **structural unambiguity**. Ev
 - ECO2 (desktop energy evaluation — future export)
 - Korean Building Energy Code (inference engine)
 
-## Current Milestone: v2.0 Advanced BIM Authoring
+## Current State
 
-**Goal:** Transform the procedural viewer into a full BIM authoring environment with floor plan editing, precision tools, and structural analysis visualization.
+Shipped v2.0 Advanced BIM Authoring with 25,500+ LOC TypeScript across 173 files.
 
-**Target features:**
-- Floor plan editor: 2D drawing → 3D extrusion, room boundaries, wall placement, door/window insertion
-- Snap & align tools: grid snapping, axis constraints, alignment guides, edge/vertex snapping
-- Structural analysis visualization: load paths, stress visualization, structural member sizing guides
+**Capabilities delivered in v2.0:**
+- 2D plan view with orthographic camera toggle and wall drawing tools
+- Room detection algorithm (DFS cycle detection) with labeled room fills
+- Door/window placement with wall-snap and CSG boolean wall openings
+- Multi-floor support with per-floor height, copy-floor, floor slabs
+- Precision editing: grid/vertex/edge snapping, axis constraints, alignment guides
+- Structural analysis overlay: animated load path arrows, stress-colored columns, sizing tooltips
+- Test infrastructure: 181 unit tests + 7 E2E tests, error boundaries, input validation
+- BIM accuracy verified against Korean building typologies and energy benchmarks
+
+**Known tech debt (from v2.0 audit):**
+- Structural overlay reads API BuildingRecipe, not user-drawn plan walls
+- StructuralTooltip allocates Raycaster per-frame (performance concern)
+- REQUIREMENTS.md traceability table was never updated during execution
+- Plan-view components share outer ViewerErrorBoundary (no per-component boundaries)
 
 ## Completed Milestones
+- v2.0: Advanced BIM Authoring (5 phases, 11 plans — shipped 2026-03-28)
 - v1.0: Procedural BIM Viewer with Multi-Layer Building Systems (9 phases)
 
 ## Tech Stack
-Next.js 16 + React 19 + TypeScript + Three.js 0.183 + React Three Fiber 9 + shadcn/ui + Tailwind CSS v4 + Zustand + TanStack Query
+Next.js 16 + React 19 + TypeScript + Three.js 0.183 + React Three Fiber 9 + shadcn/ui + Tailwind CSS v4 + Zustand + TanStack Query + three-bvh-csg + Vitest + Playwright
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
-*Last updated: 2026-03-28*
+*Last updated: 2026-03-28 after v2.0 milestone*
