@@ -11,7 +11,7 @@ import {
   Settings, Upload, ToggleLeft, ToggleRight, Layers,
   Pencil, PencilOff, Move, RotateCcw as RotateIcon, Scaling,
   Ruler, Square, AlignHorizontalDistributeCenter, Scissors, Trash2,
-  Grid3x3, PenTool,
+  Grid3x3, PenTool, Copy, DoorOpen,
 } from "lucide-react";
 import { useAuthoringStore, type AnnotationMode } from "@/store/authoring-store";
 import { usePlanStore } from "@/store/plan-store";
@@ -57,6 +57,13 @@ export function ViewerOverlay({
   const gridSize = usePlanStore((s) => s.gridSize);
   const setGridSize = usePlanStore((s) => s.setGridSize);
   const drawingWall = usePlanStore((s) => s.drawingWall);
+  const floorCount = usePlanStore((s) => s.floorCount);
+  const setFloorCount = usePlanStore((s) => s.setFloorCount);
+  const floorHeights = usePlanStore((s) => s.floorHeights);
+  const setFloorHeight = usePlanStore((s) => s.setFloorHeight);
+  const copyFloor = usePlanStore((s) => s.copyFloor);
+  const drawingMode = usePlanStore((s) => s.drawingMode);
+  const setDrawingMode = usePlanStore((s) => s.setDrawingMode);
 
   const toggleAnnotation = (mode: AnnotationMode) => {
     setAnnotationMode(annotationMode === mode ? "none" : mode);
@@ -329,8 +336,8 @@ export function ViewerOverlay({
             <span className="text-[10px] font-medium text-muted-foreground block mb-1">
               {isKo ? "활성 층" : "Active Floor"}
             </span>
-            <div className="flex gap-1">
-              {[0, 1, 2, 3, 4].map((fl) => (
+            <div className="flex gap-1 flex-wrap">
+              {Array.from({ length: floorCount }, (_, i) => i).map((fl) => (
                 <button
                   key={fl}
                   className={`text-[10px] px-1.5 py-0.5 rounded ${
@@ -340,10 +347,46 @@ export function ViewerOverlay({
                   }`}
                   onClick={() => setActiveFloor(fl)}
                 >
-                  {fl === 0 ? (isKo ? "1F" : "1F") : `${fl + 1}F`}
+                  {`${fl + 1}F`}
                 </button>
               ))}
             </div>
+
+            {/* Per-floor height input */}
+            <div className="flex items-center gap-1 mt-1.5">
+              <span className="text-[10px] text-muted-foreground">
+                {isKo ? "층고" : "Height"}
+              </span>
+              <input
+                type="number"
+                min={2.0}
+                max={6.0}
+                step={0.1}
+                value={floorHeights[activeFloor] ?? 3.0}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  if (!isNaN(val)) {
+                    setFloorHeight(activeFloor, Math.min(6.0, Math.max(2.0, val)));
+                  }
+                }}
+                className="w-14 text-[10px] px-1 py-0.5 rounded border bg-background"
+              />
+              <span className="text-[10px] text-muted-foreground">m</span>
+            </div>
+
+            {/* Copy Floor button */}
+            <button
+              className="mt-1.5 flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-muted hover:bg-muted/80 w-full"
+              onClick={() => {
+                copyFloor(activeFloor, floorCount);
+                setFloorCount(floorCount + 1);
+                setActiveFloor(floorCount);
+              }}
+              title={isKo ? "현재 층 복사" : "Copy Current Floor"}
+            >
+              <Copy className="h-3 w-3" />
+              {isKo ? "층 복사" : "Copy Floor"}
+            </button>
           </div>
 
           {/* Grid size toggle */}
@@ -368,8 +411,47 @@ export function ViewerOverlay({
             </div>
           </div>
 
-          {/* Wall draw indicator */}
+          {/* Drawing mode toggle */}
           {isAuthoring && (
+            <div className="rounded-lg border bg-card/95 backdrop-blur p-2 shadow-lg">
+              <span className="text-[10px] font-medium text-muted-foreground block mb-1">
+                {isKo ? "그리기 모드" : "Drawing Mode"}
+              </span>
+              <div className="flex gap-1">
+                <button
+                  className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${
+                    drawingMode === "wall"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80"
+                  }`}
+                  onClick={() =>
+                    setDrawingMode(drawingMode === "wall" ? null : "wall")
+                  }
+                  title={isKo ? "벽 그리기" : "Draw Wall"}
+                >
+                  <PenTool className="h-3 w-3" />
+                  {isKo ? "벽" : "Wall"}
+                </button>
+                <button
+                  className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${
+                    drawingMode === "opening"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80"
+                  }`}
+                  onClick={() =>
+                    setDrawingMode(drawingMode === "opening" ? null : "opening")
+                  }
+                  title={isKo ? "개구부 배치" : "Place Opening"}
+                >
+                  <DoorOpen className="h-3 w-3" />
+                  {isKo ? "개구부" : "Opening"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Wall draw status indicator */}
+          {isAuthoring && drawingMode === "wall" && (
             <div className="rounded-lg border bg-card/95 backdrop-blur p-2 shadow-lg flex items-center gap-1.5">
               <PenTool className="h-3 w-3 text-blue-500" />
               <span className="text-[10px] font-medium">

@@ -30,6 +30,7 @@ export function WallDrawer() {
   const startDrawing = usePlanStore((s) => s.startDrawing);
   const cancelDrawing = usePlanStore((s) => s.cancelDrawing);
   const activeFloor = usePlanStore((s) => s.activeFloor);
+  const drawingMode = usePlanStore((s) => s.drawingMode);
   const isAuthoring = useAuthoringStore((s) => s.isAuthoring);
 
   const { camera, gl } = useThree();
@@ -40,7 +41,7 @@ export function WallDrawer() {
   const [drawLength, setDrawLength] = useState<number>(0);
   const [tooltipPos, setTooltipPos] = useState<[number, number, number]>([0, 0, 0]);
 
-  const isActive = viewMode === "plan" && isAuthoring;
+  const isActive = viewMode === "plan" && isAuthoring && drawingMode === "wall";
   const isTooShort = drawingWall !== null && drawLength < MIN_WALL_LENGTH;
   const isTooLong = drawingWall !== null && drawLength > MAX_WALL_WARN;
 

@@ -36,6 +36,8 @@ import { ErrorBoundary, ViewerErrorBoundary } from "@/components/error-boundary"
 import { PlanView } from "./plan-view";
 import { PlanGrid } from "./plan-grid";
 import { WallDrawer } from "./wall-drawer";
+import { RoomFills } from "./room-fills";
+import { FloorSlabs } from "./floor-slab";
 
 const IFCModel = lazy(() =>
   import("./ifc-loader").then((m) => ({ default: m.IFCModel }))
@@ -344,6 +346,8 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
           />
           <PlanGrid />
           <WallDrawer />
+          <RoomFills />
+          <FloorSlabs />
 
           {/* SAO ambient occlusion post-processing */}
           <SAOPostProcessing />
