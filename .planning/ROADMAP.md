@@ -11,6 +11,22 @@
 - Walls render in both 2D (thick lines) and 3D (extruded geometry)
 - View mode toggle button in toolbar (3D/Plan)
 
+### Phase 10.1: QA Testing & BIM Accuracy Verification
+**Goal:** Establish test infrastructure, add unit/integration/E2E tests for all existing code (Phases 1-10), add error boundaries and input validation, and verify BIM geometry accuracy against Korean building benchmarks.
+**Requirements:** None (quality gate — all existing requirements benefit)
+- Test infrastructure: Vitest + @testing-library/react + happy-dom + Playwright
+- Unit tests: energy calculations (heat-loss, annual-demand, energy-grade, CO2) against benchmark values
+- Unit tests: procedural generators (recipe.ts, facade-generator, structure-generator) — correct dimensions per era/structure
+- Unit tests: korean-building-codes.ts — wall layer thicknesses, U-value calculations
+- Unit tests: Zustand stores (recipe-store, material-store, plan-store, authoring-store, layer-store, component-store)
+- Integration tests: API proxy routes, config panel → store → energy recalculation chain
+- E2E tests (Playwright): search → 3D view → toggle layers → plan view → draw wall → export ECO2
+- Error boundaries: React ErrorBoundary around Canvas, ConfigPanel, EnergyCards
+- Input validation: config slider min/max enforcement, wall drawing dimensional limits
+- BIM accuracy: compare procedural output against known Korean apartment typologies
+- Energy accuracy: verify calculations against published Korean building energy benchmarks
+- All future phases MUST include tests as part of plan execution
+
 ### Phase 11: Room Boundaries + 3D Extrusion
 **Goal:** Detect enclosed spaces from drawn walls, label them as rooms, and auto-extrude 2D plans to 3D building geometry.
 **Requirements:** PLAN-02, PLAN-03, PLAN-04
@@ -42,14 +58,15 @@
 
 ---
 
-**Priority order:** Phase 10 → 11 → 12 → 13
-**Current phase:** Phase 10 (not started)
+**Priority order:** Phase 10 → 10.1 → 11 → 12 → 13
+**Current phase:** Phase 10.1 (not started)
 
 ## Progress
 
 | Phase | Status | Plans | Date |
 |-------|--------|-------|------|
-| 10 | 1/1 | Complete    | 2026-03-28 |
+| 10 | Complete | 1/1 | 2026-03-28 |
+| 10.1 | Not started | 0 | — |
 | 11 | Not started | 0 | — |
 | 12 | Not started | 0 | — |
 | 13 | Not started | 0 | — |
