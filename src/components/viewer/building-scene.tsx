@@ -39,6 +39,7 @@ import { WallDrawer } from "./wall-drawer";
 import { RoomFills } from "./room-fills";
 import { FloorSlabs } from "./floor-slab";
 import { OpeningDrawer } from "./opening-drawer";
+import { StructuralTooltip } from "./structural-tooltip";
 
 const IFCModel = lazy(() =>
   import("./ifc-loader").then((m) => ({ default: m.IFCModel }))
@@ -311,6 +312,7 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
             <>
               <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} />
               <BuildingLayers recipe={recipe} />
+              <StructuralTooltip />
             </>
           )}
           {modelSource === "uploaded" && uploadedModel && (
