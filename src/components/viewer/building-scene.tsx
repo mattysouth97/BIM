@@ -38,6 +38,7 @@ import { PlanGrid } from "./plan-grid";
 import { WallDrawer } from "./wall-drawer";
 import { RoomFills } from "./room-fills";
 import { FloorSlabs } from "./floor-slab";
+import { OpeningDrawer } from "./opening-drawer";
 
 const IFCModel = lazy(() =>
   import("./ifc-loader").then((m) => ({ default: m.IFCModel }))
@@ -348,6 +349,7 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
           <WallDrawer />
           <RoomFills />
           <FloorSlabs />
+          <OpeningDrawer />
 
           {/* SAO ambient occlusion post-processing */}
           <SAOPostProcessing />

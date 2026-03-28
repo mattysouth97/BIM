@@ -4,12 +4,25 @@ import { useRef, useEffect, useCallback, useMemo, useState, forwardRef } from "r
 import * as THREE from "three";
 import { useThree, useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
-import { usePlanStore, type WallSegment } from "@/store/plan-store";
+import { Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
+import { usePlanStore, type WallSegment, type Opening } from "@/store/plan-store";
 import { useAuthoringStore } from "@/store/authoring-store";
+import { DOOR_PRESETS, WINDOW_PRESETS } from "@/lib/components/component-types";
 
 const GROUND_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const WALL_COLOR_2D = 0x333333;
 const WALL_COLOR_3D = 0xd4d4d4;
+
+/** Shared CSG evaluator — reused across walls for efficiency */
+const csgEvaluator = new Evaluator();
+
+/** Look up a preset by id from door and window preset arrays */
+function lookupPreset(presetId: string) {
+  return (
+    DOOR_PRESETS.find((p) => p.id === presetId) ??
+    WINDOW_PRESETS.find((p) => p.id === presetId)
+  );
+}
 const PREVIEW_COLOR = 0x3b82f6; // blue
 const REJECT_COLOR = 0xef4444; // red — wall too short
 const MIN_WALL_LENGTH = 0.5; // meters
@@ -25,6 +38,7 @@ const MAX_WALL_WARN = 50; // meters — warn but allow
 export function WallDrawer() {
   const viewMode = usePlanStore((s) => s.viewMode);
   const walls = usePlanStore((s) => s.walls);
+  const openings = usePlanStore((s) => s.openings);
   const drawingWall = usePlanStore((s) => s.drawingWall);
   const addWall = usePlanStore((s) => s.addWall);
   const startDrawing = usePlanStore((s) => s.startDrawing);
@@ -198,7 +212,11 @@ export function WallDrawer() {
         viewMode === "plan" ? (
           <Wall2D key={wall.id} wall={wall} />
         ) : (
-          <Wall3D key={wall.id} wall={wall} />
+          <Wall3D
+            key={wall.id}
+            wall={wall}
+            wallOpenings={openings.filter((o) => o.wallId === wall.id)}
+          />
         )
       )}
     </group>
@@ -265,8 +283,8 @@ function Wall2D({ wall }: { wall: WallSegment }) {
   );
 }
 
-/** 3D wall representation: extruded box */
-function Wall3D({ wall }: { wall: WallSegment }) {
+/** 3D wall representation: extruded box, with CSG subtraction for openings */
+function Wall3D({ wall, wallOpenings }: { wall: WallSegment; wallOpenings: Opening[] }) {
   const dx = wall.end[0] - wall.start[0];
   const dz = wall.end[1] - wall.start[1];
   const length = Math.sqrt(dx * dx + dz * dz);
@@ -277,6 +295,65 @@ function Wall3D({ wall }: { wall: WallSegment }) {
 
   if (length < 0.01) return null;
 
+  // CSG mesh: computed when there are openings on this wall
+  const csgMesh = useMemo(() => {
+    if (wallOpenings.length === 0) return null;
+
+    try {
+      const wallMat = new THREE.MeshStandardMaterial({
+        color: WALL_COLOR_3D,
+        roughness: 0.7,
+      });
+
+      // Wall brush — positioned at world origin initially, then moved to match wall transform
+      const wallGeom = new THREE.BoxGeometry(length, wall.height, wall.thickness);
+      const wallBrush = new Brush(wallGeom, wallMat);
+      wallBrush.position.set(cx, baseY + wall.height / 2, cz);
+      wallBrush.rotation.set(0, -angle, 0);
+      wallBrush.updateMatrixWorld();
+
+      let currentBrush: Brush = wallBrush;
+
+      for (const opening of wallOpenings) {
+        const preset = lookupPreset(opening.presetId);
+        if (!preset) continue;
+
+        // Opening world position along wall centerline
+        const owx = wall.start[0] + opening.t * (wall.end[0] - wall.start[0]);
+        const owz = wall.start[1] + opening.t * (wall.end[1] - wall.start[1]);
+
+        // Sill height: 0.1m for doors (floor level), 0.9m for windows
+        const sillHeight = preset.category === "door" ? 0.0 : 0.9;
+        const openingCenterY = baseY + sillHeight + preset.height / 2;
+
+        // Opening box: slightly wider in thickness (+0.02) to avoid coplanar faces
+        const openingGeom = new THREE.BoxGeometry(
+          preset.width,
+          preset.height,
+          wall.thickness + 0.02
+        );
+        const openingBrush = new Brush(openingGeom);
+        openingBrush.position.set(owx, openingCenterY, owz);
+        openingBrush.rotation.set(0, -angle, 0);
+        openingBrush.updateMatrixWorld();
+
+        const result = csgEvaluator.evaluate(currentBrush, openingBrush, SUBTRACTION);
+        currentBrush = result;
+      }
+
+      return currentBrush;
+    } catch (err) {
+      console.warn("[Wall3D] CSG failed, falling back to plain geometry", err);
+      return null;
+    }
+  }, [wall, wallOpenings, cx, cz, baseY, length, angle]);
+
+  // If CSG succeeded, render it via primitive
+  if (wallOpenings.length > 0 && csgMesh) {
+    return <primitive object={csgMesh} castShadow receiveShadow />;
+  }
+
+  // Fallback: plain box geometry (no openings, or CSG error)
   return (
     <mesh
       position={[cx, baseY + wall.height / 2, cz]}

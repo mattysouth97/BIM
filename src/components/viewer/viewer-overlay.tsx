@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { useAuthoringStore, type AnnotationMode } from "@/store/authoring-store";
 import { usePlanStore } from "@/store/plan-store";
+import { useOpeningPreset } from "./opening-drawer";
+import { DOOR_PRESETS, WINDOW_PRESETS } from "@/lib/components/component-types";
 
 interface ViewerOverlayProps {
   selectedFloor: FloorGeometry | null;
@@ -64,6 +66,9 @@ export function ViewerOverlay({
   const copyFloor = usePlanStore((s) => s.copyFloor);
   const drawingMode = usePlanStore((s) => s.drawingMode);
   const setDrawingMode = usePlanStore((s) => s.setDrawingMode);
+
+  const selectedPresetId = useOpeningPreset((s) => s.presetId);
+  const setSelectedPresetId = useOpeningPreset((s) => s.setPresetId);
 
   const toggleAnnotation = (mode: AnnotationMode) => {
     setAnnotationMode(annotationMode === mode ? "none" : mode);
@@ -458,6 +463,59 @@ export function ViewerOverlay({
                 {drawingWall
                   ? (isKo ? "두 번째 점 클릭" : "Click second point")
                   : (isKo ? "벽 그리기: 시작점 클릭" : "Draw Wall: click start")}
+              </span>
+            </div>
+          )}
+
+          {/* Opening preset selector — visible when drawingMode === "opening" */}
+          {isAuthoring && drawingMode === "opening" && (
+            <div className="rounded-lg border bg-card/95 backdrop-blur p-2 shadow-lg">
+              <span className="text-[10px] font-medium text-muted-foreground block mb-1">
+                {isKo ? "문/창 프리셋" : "Door/Window Preset"}
+              </span>
+              <div className="flex flex-col gap-0.5">
+                {DOOR_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded text-left ${
+                      selectedPresetId === preset.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80"
+                    }`}
+                    onClick={() => setSelectedPresetId(preset.id)}
+                    title={preset.name}
+                  >
+                    <DoorOpen className="h-3 w-3 shrink-0" />
+                    {isKo ? preset.nameKo : preset.name}
+                    <span className="ml-auto text-[9px] opacity-70">{preset.width}m</span>
+                  </button>
+                ))}
+                {WINDOW_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded text-left ${
+                      selectedPresetId === preset.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80"
+                    }`}
+                    onClick={() => setSelectedPresetId(preset.id)}
+                    title={preset.name}
+                  >
+                    <Square className="h-3 w-3 shrink-0" />
+                    {isKo ? preset.nameKo : preset.name}
+                    <span className="ml-auto text-[9px] opacity-70">{preset.width}m</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Opening placement status indicator */}
+          {isAuthoring && drawingMode === "opening" && (
+            <div className="rounded-lg border bg-card/95 backdrop-blur p-2 shadow-lg flex items-center gap-1.5">
+              <DoorOpen className="h-3 w-3 text-blue-500" />
+              <span className="text-[10px] font-medium">
+                {isKo ? "벽 근처 클릭 — 개구부 배치" : "Click near a wall to place opening"}
               </span>
             </div>
           )}
