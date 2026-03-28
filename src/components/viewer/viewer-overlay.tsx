@@ -11,8 +11,10 @@ import {
   Settings, Upload, ToggleLeft, ToggleRight, Layers,
   Pencil, PencilOff, Move, RotateCcw as RotateIcon, Scaling,
   Ruler, Square, AlignHorizontalDistributeCenter, Scissors, Trash2,
+  Grid3x3, PenTool,
 } from "lucide-react";
 import { useAuthoringStore, type AnnotationMode } from "@/store/authoring-store";
+import { usePlanStore } from "@/store/plan-store";
 
 interface ViewerOverlayProps {
   selectedFloor: FloorGeometry | null;
@@ -48,14 +50,39 @@ export function ViewerOverlay({
   const sectionAxis = useAuthoringStore((s) => s.sectionAxis);
   const setSectionAxis = useAuthoringStore((s) => s.setSectionAxis);
 
+  const viewMode = usePlanStore((s) => s.viewMode);
+  const setViewMode = usePlanStore((s) => s.setViewMode);
+  const activeFloor = usePlanStore((s) => s.activeFloor);
+  const setActiveFloor = usePlanStore((s) => s.setActiveFloor);
+  const gridSize = usePlanStore((s) => s.gridSize);
+  const setGridSize = usePlanStore((s) => s.setGridSize);
+  const drawingWall = usePlanStore((s) => s.drawingWall);
+
   const toggleAnnotation = (mode: AnnotationMode) => {
     setAnnotationMode(annotationMode === mode ? "none" : mode);
   };
+
+  const gridSizeOptions = [0.1, 0.5, 1.0];
 
   return (
     <>
       {/* Top right: controls */}
       <div className="absolute top-3 right-3 flex gap-1.5 z-10">
+        {/* Plan view toggle */}
+        <Button
+          variant={viewMode === "plan" ? "default" : "secondary"}
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => setViewMode(viewMode === "plan" ? "3d" : "plan")}
+          title={viewMode === "plan"
+            ? (isKo ? "3D 뷰로 전환" : "Switch to 3D View")
+            : (isKo ? "평면도 뷰" : "Plan View")}
+        >
+          <Grid3x3 className="h-3.5 w-3.5" />
+        </Button>
+
+        <div className="w-px bg-border" />
+
         {/* Edit mode toggle */}
         <Button
           variant={isAuthoring ? "default" : "secondary"}
@@ -294,9 +321,72 @@ export function ViewerOverlay({
         </div>
       )}
 
+      {/* Plan view controls — floor selector + grid size */}
+      {viewMode === "plan" && (
+        <div className="absolute top-14 right-3 z-10 flex flex-col gap-1.5">
+          {/* Active floor selector */}
+          <div className="rounded-lg border bg-card/95 backdrop-blur p-2 shadow-lg">
+            <span className="text-[10px] font-medium text-muted-foreground block mb-1">
+              {isKo ? "활성 층" : "Active Floor"}
+            </span>
+            <div className="flex gap-1">
+              {[0, 1, 2, 3, 4].map((fl) => (
+                <button
+                  key={fl}
+                  className={`text-[10px] px-1.5 py-0.5 rounded ${
+                    activeFloor === fl
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80"
+                  }`}
+                  onClick={() => setActiveFloor(fl)}
+                >
+                  {fl === 0 ? (isKo ? "1F" : "1F") : `${fl + 1}F`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Grid size toggle */}
+          <div className="rounded-lg border bg-card/95 backdrop-blur p-2 shadow-lg">
+            <span className="text-[10px] font-medium text-muted-foreground block mb-1">
+              {isKo ? "격자 크기" : "Grid Size"}
+            </span>
+            <div className="flex gap-1">
+              {gridSizeOptions.map((gs) => (
+                <button
+                  key={gs}
+                  className={`text-[10px] px-1.5 py-0.5 rounded ${
+                    gridSize === gs
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80"
+                  }`}
+                  onClick={() => setGridSize(gs)}
+                >
+                  {gs}m
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Wall draw indicator */}
+          {isAuthoring && (
+            <div className="rounded-lg border bg-card/95 backdrop-blur p-2 shadow-lg flex items-center gap-1.5">
+              <PenTool className="h-3 w-3 text-blue-500" />
+              <span className="text-[10px] font-medium">
+                {drawingWall
+                  ? (isKo ? "두 번째 점 클릭" : "Click second point")
+                  : (isKo ? "벽 그리기: 시작점 클릭" : "Draw Wall: click start")}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Bottom right: instructions */}
       <div className="absolute bottom-3 right-3 z-10 text-[10px] text-muted-foreground/60">
-        {isKo ? "클릭: 층 선택 · 드래그: 회전 · 스크롤: 줌" : "Click: select floor · Drag: rotate · Scroll: zoom"}
+        {viewMode === "plan"
+          ? (isKo ? "클릭: 벽 그리기 · 스크롤: 줌 · ESC: 취소" : "Click: draw wall · Scroll: zoom · ESC: cancel")
+          : (isKo ? "클릭: 층 선택 · 드래그: 회전 · 스크롤: 줌" : "Click: select floor · Drag: rotate · Scroll: zoom")}
       </div>
     </>
   );

@@ -32,6 +32,9 @@ import { ComponentPalette } from "./component-palette";
 import { PlacedComponents } from "./placed-components";
 import { AnnotationTools } from "./annotation-tools";
 import { EnergyCards } from "./energy-cards";
+import { PlanView } from "./plan-view";
+import { PlanGrid } from "./plan-grid";
+import { WallDrawer } from "./wall-drawer";
 
 const IFCModel = lazy(() =>
   import("./ifc-loader").then((m) => ({ default: m.IFCModel }))
@@ -330,6 +333,15 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
               <AnnotationTools recipe={recipe} />
             </>
           )}
+
+          {/* Plan view: camera, grid, wall drawing */}
+          <PlanView
+            buildingHeight={geometry.totalHeight}
+            buildingWidth={geometry.footprintWidth}
+            buildingDepth={geometry.footprintDepth}
+          />
+          <PlanGrid />
+          <WallDrawer />
 
           {/* SAO ambient occlusion post-processing */}
           <SAOPostProcessing />
