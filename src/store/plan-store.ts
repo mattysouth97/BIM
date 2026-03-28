@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import type { RoomType } from "@/lib/plan/room-types";
+import type { AxisConstraint } from "@/lib/plan/snap-engine";
 
 export interface WallSegment {
   id: string;
@@ -49,6 +50,9 @@ interface PlanState {
   edgeSnapEnabled: boolean;     // edge snapping, default true
   proximityTolerance: number;   // snap proximity in meters, default 0.3
 
+  // Axis constraint
+  axisConstraint: AxisConstraint; // default "none"
+
   addWall: (wall: WallSegment) => void;
   removeWall: (id: string) => void;
   setViewMode: (mode: "3d" | "plan") => void;
@@ -71,6 +75,7 @@ interface PlanState {
   setVertexSnapEnabled: (v: boolean) => void;
   setEdgeSnapEnabled: (v: boolean) => void;
   setProximityTolerance: (v: number) => void;
+  setAxisConstraint: (c: AxisConstraint) => void;
 }
 
 export const usePlanStore = create<PlanState>()((set) => ({
@@ -92,6 +97,9 @@ export const usePlanStore = create<PlanState>()((set) => ({
   vertexSnapEnabled: true,
   edgeSnapEnabled: true,
   proximityTolerance: 0.3,
+
+  // Axis constraint default
+  axisConstraint: "none",
 
   addWall: (wall) =>
     set((state) => ({ walls: [...state.walls, wall] })),
@@ -158,4 +166,5 @@ export const usePlanStore = create<PlanState>()((set) => ({
   setVertexSnapEnabled: (v) => set({ vertexSnapEnabled: v }),
   setEdgeSnapEnabled: (v) => set({ edgeSnapEnabled: v }),
   setProximityTolerance: (v) => set({ proximityTolerance: v }),
+  setAxisConstraint: (c) => set({ axisConstraint: c }),
 }));

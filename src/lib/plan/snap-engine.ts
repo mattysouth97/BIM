@@ -11,6 +11,15 @@
 
 export type SnapType = "grid" | "vertex" | "edge" | "none";
 
+export type AxisConstraint = "none" | "x" | "z" | "auto";
+
+export interface AlignmentGuide {
+  axis: "x" | "z";             // which axis the alignment is on
+  value: number;                // the X or Z coordinate of the alignment
+  fromPoint: [number, number];  // the current point
+  toPoint: [number, number];    // the existing wall endpoint it aligns with
+}
+
 export interface SnapResult {
   type: SnapType;
   point: [number, number]; // snapped x, z
@@ -219,4 +228,112 @@ export function computeSnap(
   }
 
   return noSnap;
+}
+
+// ---------------------------------------------------------------------------
+// applyAxisConstraint — constrain cursor to X or Z axis from a start point
+// ---------------------------------------------------------------------------
+
+/**
+ * Apply axis constraint to a cursor position relative to a drawing start point.
+ *
+ * - "none"  → return currentPoint unchanged
+ * - "x"     → lock Z to startPoint[1], allow X movement
+ * - "z"     → lock X to startPoint[0], allow Z movement
+ * - "auto"  → detect dominant axis (whichever delta is larger) and apply accordingly
+ */
+export function applyAxisConstraint(
+  startPoint: [number, number],
+  currentPoint: [number, number],
+  constraint: AxisConstraint
+): [number, number] {
+  if (constraint === "none") return currentPoint;
+  if (constraint === "x") return [currentPoint[0], startPoint[1]];
+  if (constraint === "z") return [startPoint[0], currentPoint[1]];
+  // "auto": pick the dominant axis
+  const dx = Math.abs(currentPoint[0] - startPoint[0]);
+  const dz = Math.abs(currentPoint[1] - startPoint[1]);
+  if (dx >= dz) {
+    // Dominant = X axis: lock Z
+    return [currentPoint[0], startPoint[1]];
+  } else {
+    // Dominant = Z axis: lock X
+    return [startPoint[0], currentPoint[1]];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// detectAlignments — find wall endpoints collinear with the given point
+// ---------------------------------------------------------------------------
+
+/**
+ * Detect alignment guides: existing wall endpoints that share an X or Z
+ * coordinate with the given point within the given tolerance.
+ *
+ * Returns one guide per unique axis+value pair (closest endpoint wins).
+ */
+export function detectAlignments(
+  point: [number, number],
+  walls: SnapWall[],
+  tolerance = 0.05
+): AlignmentGuide[] {
+  // Collect all unique endpoints
+  const endpoints: [number, number][] = [];
+  for (const wall of walls) {
+    endpoints.push(wall.start, wall.end);
+  }
+
+  // Maps to track best (closest) guide per axis+value key
+  const bestX = new Map<number, { dist: number; endpoint: [number, number] }>();
+  const bestZ = new Map<number, { dist: number; endpoint: [number, number] }>();
+
+  for (const ep of endpoints) {
+    const fullDist = Math.sqrt((ep[0] - point[0]) ** 2 + (ep[1] - point[1]) ** 2);
+    // Skip the point itself
+    if (fullDist < 1e-6) continue;
+
+    // Check X-axis alignment: same X coordinate (vertical guide line)
+    const dxAbs = Math.abs(ep[0] - point[0]);
+    if (dxAbs < tolerance) {
+      const key = Math.round(ep[0] * 1000); // bucket by millimeter precision
+      const existing = bestX.get(key);
+      if (!existing || dxAbs < existing.dist) {
+        bestX.set(key, { dist: dxAbs, endpoint: ep });
+      }
+    }
+
+    // Check Z-axis alignment: same Z coordinate (horizontal guide line)
+    const dzAbs = Math.abs(ep[1] - point[1]);
+    if (dzAbs < tolerance) {
+      const key = Math.round(ep[1] * 1000);
+      const existing = bestZ.get(key);
+      if (!existing || dzAbs < existing.dist) {
+        bestZ.set(key, { dist: dzAbs, endpoint: ep });
+      }
+    }
+  }
+
+  const guides: AlignmentGuide[] = [];
+
+  for (const [key, { endpoint }] of bestX.entries()) {
+    const xValue = key / 1000;
+    guides.push({
+      axis: "x",
+      value: xValue,
+      fromPoint: point,
+      toPoint: endpoint,
+    });
+  }
+
+  for (const [key, { endpoint }] of bestZ.entries()) {
+    const zValue = key / 1000;
+    guides.push({
+      axis: "z",
+      value: zValue,
+      fromPoint: point,
+      toPoint: endpoint,
+    });
+  }
+
+  return guides;
 }
