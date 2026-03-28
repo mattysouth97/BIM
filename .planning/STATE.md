@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: Executing Phase 12
-last_updated: "2026-03-28T04:38:34.822Z"
+last_updated: "2026-03-28T04:43:31Z"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -19,15 +19,16 @@ Phase 12: Snap Alignment System
 
 ## Current Plan
 
-Plan 01 (complete)
+Plan 02 (complete)
 
 ## Last Action
 
-Phase 12 Plan 01 executed: Pure snap engine (grid/vertex/edge) with vertex>edge>grid priority, plan-store snap state fields, SnapIndicator R3F component (ring dot + dashed crosshairs), wall-drawer snap integration on start/end points, opening-drawer t-grid snap.
+Phase 12 Plan 02 executed: Axis constraint functions (applyAxisConstraint, detectAlignments), AlignmentGuides R3F component (colored dashed lines: red=X, green=Z, magenta=alignments), plan-store axisConstraint state, wall-drawer keyboard shortcuts (Shift/X/Y/S), snap toolbar UI with ON/OFF toggle and grid/vertex/edge checkboxes, axis lock info card.
 
 ## Last Session
 
-- Stopped at: Completed 12-01-PLAN.md
+- Stopped at: Completed 12-02-PLAN.md
+- Date: 2026-03-28
 - Date: 2026-03-28
 
 ## Key Decisions
@@ -81,6 +82,9 @@ Phase 12 Plan 01 executed: Pure snap engine (grid/vertex/edge) with vertex>edge>
 - OpeningDrawer and WallDrawer are peer R3F components both mounted in building-scene.tsx, sharing plan-store
 - snap-engine.ts dependency-free: inlines projectOntoSegment rather than importing from room-detector.ts for isolation
 - opening snap uses t-grid: parametric t snapped to gridSize/wallLength steps; wall-proximity remains primary mechanism
+- Y key maps to Z axis (Y = vertical in 2D plan view = Z in 3D XZ space)
+- usePlanStore.getState() in keyboard handlers to avoid stale closure on axisConstraint
+- Alignment detection deduplicates by axis+value key (millimeter precision bucketing)
 
 ## Blockers
 
@@ -117,3 +121,4 @@ None currently.
 | Phase 11 P02 | 158s | 2 tasks | 5 files |
 | Phase 11 P03 | 257s | 2 tasks | 4 files |
 | Phase 12 P01 | 222 | 2 tasks | 5 files |
+| Phase 12 P02 | 229s | 2 tasks | 5 files |

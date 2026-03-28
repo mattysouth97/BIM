@@ -10,8 +10,8 @@
 ## Snap & Align Tools
 - [x] **SNAP-01**: Elements snap to grid (configurable grid size)
 - [x] **SNAP-02**: Elements snap to edges and vertices of nearby elements
-- [ ] **SNAP-03**: Axis constraints lock movement to X, Y, or Z axis
-- [ ] **SNAP-04**: Alignment guides show when elements are aligned
+- [x] **SNAP-03**: Axis constraints lock movement to X, Y, or Z axis
+- [x] **SNAP-04**: Alignment guides show when elements are aligned
 
 ## QA & BIM Accuracy
 - [x] **QA-01**: Test infrastructure installed (Vitest + testing-library + Playwright)
