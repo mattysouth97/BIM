@@ -18,8 +18,8 @@
 - [x] **QA-02**: Unit tests for energy calculations verify against Korean benchmark values
 - [x] **QA-03**: Unit tests for procedural generators verify correct dimensions per era/structure
 - [ ] **QA-04**: E2E test covers search → 3D view → config → energy update flow
-- [ ] **QA-05**: Error boundaries prevent full-page crashes from R3F/API failures
-- [ ] **QA-06**: Config panel inputs validated (min/max enforcement, impossible values blocked)
+- [x] **QA-05**: Error boundaries prevent full-page crashes from R3F/API failures
+- [x] **QA-06**: Config panel inputs validated (min/max enforcement, impossible values blocked)
 - [ ] **QA-07**: BIM geometry verified against known Korean apartment typologies
 
 ## Structural Analysis Visualization
