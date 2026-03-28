@@ -42,6 +42,13 @@ interface PlanState {
   floorCount: number;                    // starts at 1
   drawingMode: "wall" | "opening" | null; // replaces implicit wall-only behavior
 
+  // Snap configuration
+  snapEnabled: boolean;         // master snap toggle, default true
+  gridSnapEnabled: boolean;     // grid snapping, default true
+  vertexSnapEnabled: boolean;   // vertex snapping, default true
+  edgeSnapEnabled: boolean;     // edge snapping, default true
+  proximityTolerance: number;   // snap proximity in meters, default 0.3
+
   addWall: (wall: WallSegment) => void;
   removeWall: (id: string) => void;
   setViewMode: (mode: "3d" | "plan") => void;
@@ -58,6 +65,12 @@ interface PlanState {
   setFloorCount: (n: number) => void;
   copyFloor: (from: number, to: number) => void;
   setDrawingMode: (mode: "wall" | "opening" | null) => void;
+
+  setSnapEnabled: (v: boolean) => void;
+  setGridSnapEnabled: (v: boolean) => void;
+  setVertexSnapEnabled: (v: boolean) => void;
+  setEdgeSnapEnabled: (v: boolean) => void;
+  setProximityTolerance: (v: number) => void;
 }
 
 export const usePlanStore = create<PlanState>()((set) => ({
@@ -72,6 +85,13 @@ export const usePlanStore = create<PlanState>()((set) => ({
   floorHeights: {},
   floorCount: 1,
   drawingMode: null,
+
+  // Snap defaults
+  snapEnabled: true,
+  gridSnapEnabled: true,
+  vertexSnapEnabled: true,
+  edgeSnapEnabled: true,
+  proximityTolerance: 0.3,
 
   addWall: (wall) =>
     set((state) => ({ walls: [...state.walls, wall] })),
@@ -132,4 +152,10 @@ export const usePlanStore = create<PlanState>()((set) => ({
 
   setDrawingMode: (mode) =>
     set({ drawingMode: mode }),
+
+  setSnapEnabled: (v) => set({ snapEnabled: v }),
+  setGridSnapEnabled: (v) => set({ gridSnapEnabled: v }),
+  setVertexSnapEnabled: (v) => set({ vertexSnapEnabled: v }),
+  setEdgeSnapEnabled: (v) => set({ edgeSnapEnabled: v }),
+  setProximityTolerance: (v) => set({ proximityTolerance: v }),
 }));
