@@ -8,7 +8,7 @@ progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State
@@ -19,15 +19,15 @@ Phase 11: Room Boundaries + 3D Extrusion
 
 ## Current Plan
 
-Plan 02 (complete)
+Plan 03 (complete)
 
 ## Last Action
 
-Phase 11 Plan 02 executed: RoomFills R3F component with ShapeGeometry + Sprite labels and room type cycling, FloorSlabs for multi-floor 3D extrusion, dynamic floor selector with copy-floor and per-floor height input, drawing mode gate on WallDrawer, RoomFills and FloorSlabs mounted in building-scene.tsx.
+Phase 11 Plan 03 executed: OpeningDrawer R3F component with wall-snap placement, door arc sweep symbol, window parallel line symbol, three-bvh-csg Wall3D CSG subtraction for 3D wall holes, opening preset selector in ViewerOverlay, OpeningDrawer mounted in building-scene.tsx.
 
 ## Last Session
 
-- Stopped at: Completed 11-02-PLAN.md
+- Stopped at: Completed 11-03-PLAN.md
 - Date: 2026-03-28
 
 ## Key Decisions
@@ -75,6 +75,10 @@ Phase 11 Plan 02 executed: RoomFills R3F component with ShapeGeometry + Sprite l
 - copyFloor uses crypto.randomUUID() for new IDs when duplicating walls/openings
 - WallDrawer isActive gated on drawingMode==='wall' to prevent accidental drawing in opening mode
 - FloorSlabs use cumulative Y stacking for variable-height floors; RoomFills plan-only, FloorSlabs 3D-only
+- useOpeningPreset as exported Zustand store from opening-drawer.tsx enables overlay+R3F preset sharing without prop drilling
+- latestSnapRef + React state pattern: click handler reads ref (no stale closure), state drives preview re-render
+- CSG sill heights: doors at baseY+0 (floor), windows at baseY+0.9m; opening BoxGeometry thickness +0.02 prevents coplanar artifacts
+- OpeningDrawer and WallDrawer are peer R3F components both mounted in building-scene.tsx, sharing plan-store
 
 ## Blockers
 
@@ -109,3 +113,4 @@ None currently.
 | Phase 10.1 P02 | 6min | 2 tasks | 7 files |
 | Phase 10.1 P03 | 249s | 2 tasks | 4 files |
 | Phase 11 P02 | 158s | 2 tasks | 5 files |
+| Phase 11 P03 | 257s | 2 tasks | 4 files |
