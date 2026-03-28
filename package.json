@@ -35,6 +35,8 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "three": "^0.183.2",
+    "three-bvh-csg": "^0.0.18",
+    "three-mesh-bvh": "^0.9.9",
     "three-stdlib": "^2.36.1",
     "web-ifc": "^0.0.77",
     "zod": "^4.3.6",

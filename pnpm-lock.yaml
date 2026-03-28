@@ -74,6 +74,12 @@ importers:
       three:
         specifier: ^0.183.2
         version: 0.183.2
+      three-bvh-csg:
+        specifier: ^0.0.18
+        version: 0.0.18(three-mesh-bvh@0.9.9(three@0.183.2))(three@0.183.2)
+      three-mesh-bvh:
+        specifier: ^0.9.9
+        version: 0.9.9(three@0.183.2)
       three-stdlib:
         specifier: ^2.36.1
         version: 2.36.1(three@0.183.2)
@@ -3282,8 +3288,19 @@ packages:
     resolution: {integrity: sha512-1MOpMXuhGzGL5TTCZFItxCc0AARf1EZFQkGqMm7ERKj8+Hgr5oLvJOVFcC+lRmR8hCe2S3jC4T5D7Vg/d7/fhA==}
     engines: {node: '>=6'}
 
+  three-bvh-csg@0.0.18:
+    resolution: {integrity: sha512-M3GCZMmGFgASGuDf+YMamM83nVlD/vdwzVHcYbFxgW+g1S7/nKPiuY00YVHOMbjmJPh8mLevGZL65ItHUuGt2w==}
+    peerDependencies:
+      three: '>=0.179.0'
+      three-mesh-bvh: '>=0.9.7'
+
   three-mesh-bvh@0.8.3:
     resolution: {integrity: sha512-4G5lBaF+g2auKX3P0yqx+MJC6oVt6sB5k+CchS6Ob0qvH0YIhuUk1eYr7ktsIpY+albCqE80/FVQGV190PmiAg==}
+    peerDependencies:
+      three: '>= 0.159.0'
+
+  three-mesh-bvh@0.9.9:
+    resolution: {integrity: sha512-FJKitcjvbALmeQRK+Sc+nLGorCpkrZBrbgJZFzhdyWboak37DZikn46hvQkNqSbJPm227ahYmS6k3N/GXaAyXw==}
     peerDependencies:
       three: '>= 0.159.0'
 
@@ -6997,7 +7014,16 @@ snapshots:
 
   tapable@2.3.2: {}
 
+  three-bvh-csg@0.0.18(three-mesh-bvh@0.9.9(three@0.183.2))(three@0.183.2):
+    dependencies:
+      three: 0.183.2
+      three-mesh-bvh: 0.9.9(three@0.183.2)
+
   three-mesh-bvh@0.8.3(three@0.183.2):
+    dependencies:
+      three: 0.183.2
+
+  three-mesh-bvh@0.9.9(three@0.183.2):
     dependencies:
       three: 0.183.2
 
