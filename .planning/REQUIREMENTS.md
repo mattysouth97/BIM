@@ -89,29 +89,29 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LAYOUT-01 | — | Pending |
-| LAYOUT-02 | — | Pending |
-| LAYOUT-03 | — | Pending |
-| FLOW-01 | — | Pending |
-| FLOW-02 | — | Pending |
-| FLOW-03 | — | Pending |
-| CTX-01 | — | Pending |
-| CTX-02 | — | Pending |
-| CTX-03 | — | Pending |
-| DISC-01 | — | Pending |
-| DISC-02 | — | Pending |
-| DISC-03 | — | Pending |
-| UNDO-01 | — | Pending |
-| UNDO-02 | — | Pending |
-| ENRG-01 | — | Pending |
-| ENRG-02 | — | Pending |
-| ENRG-03 | — | Pending |
+| LAYOUT-01 | Phase 15 | Pending |
+| LAYOUT-02 | Phase 15 | Pending |
+| LAYOUT-03 | Phase 15 | Pending |
+| FLOW-01 | Phase 17 | Pending |
+| FLOW-02 | Phase 16 | Pending |
+| FLOW-03 | Phase 18 | Pending |
+| CTX-01 | Phase 17 | Pending |
+| CTX-02 | Phase 16 | Pending |
+| CTX-03 | Phase 16 | Pending |
+| DISC-01 | Phase 17 | Pending |
+| DISC-02 | Phase 17 | Pending |
+| DISC-03 | Phase 18 | Pending |
+| UNDO-01 | Phase 17 | Pending |
+| UNDO-02 | Phase 17 | Pending |
+| ENRG-01 | Phase 18 | Pending |
+| ENRG-02 | Phase 18 | Pending |
+| ENRG-03 | Phase 18 | Pending |
 
 **Coverage:**
 - v3.0 requirements: 17 total
-- Mapped to phases: 0
-- Unmapped: 17 ⚠️
+- Mapped to phases: 17
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-30*
-*Last updated: 2026-03-30 after initial definition*
+*Last updated: 2026-03-30 after v3.0 roadmap creation*
