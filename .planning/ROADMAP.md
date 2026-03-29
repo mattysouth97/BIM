@@ -56,7 +56,11 @@
   3. A `Command` interface and `CommandHistory` class exist in `src/lib/undo/` with `execute()`, `undo()`, and `redo()` methods (no UI wired yet)
   4. A `stages.ts` file defines the DAG prerequisite guards (e.g., "Assemble requires a building to be selected")
   5. All 7 existing Playwright E2E tests continue to pass against the unchanged UI
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 14-01-PLAN.md — Workflow stage FSM store + DAG guards (stages.ts + workflow-store.ts)
+- [ ] 14-02-PLAN.md — Workspace panel layout persistence store (workspace-store.ts)
+- [ ] 14-03-PLAN.md — Command pattern interface + CommandHistory class (src/lib/undo/)
 
 ### Phase 15: Workspace Shell Layout
 **Goal**: Users see the 3D viewport as the dominant element of the screen with dockable panels around it that can be resized and collapsed
@@ -120,7 +124,7 @@
 | 11 | v2.0 | 3/3 | Complete | 2026-03-28 |
 | 12 | v2.0 | 2/2 | Complete | 2026-03-28 |
 | 13 | v2.0 | 2/2 | Complete | 2026-03-28 |
-| 14. Workflow State Foundation | v3.0 | 0/TBD | Not started | - |
+| 14. Workflow State Foundation | v3.0 | 0/3 | Planning complete | - |
 | 15. Workspace Shell Layout | v3.0 | 0/TBD | Not started | - |
 | 16. Contextual Toolbar Migration | v3.0 | 0/TBD | Not started | - |
 | 17. Panel Content + Workflow Stepper | v3.0 | 0/TBD | Not started | - |
