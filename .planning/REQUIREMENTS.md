@@ -1,57 +1,117 @@
-# Requirements — v2.0 Advanced BIM Authoring
+# Requirements: Korea BIM Energy Management System
 
-## Floor Plan Editor
-- [x] **PLAN-01**: User can draw walls in 2D plan view by clicking start/end points
-- [x] **PLAN-02**: User can create room boundaries from enclosed wall segments
-- [x] **PLAN-03**: Drawn 2D plan extrudes to 3D geometry automatically
-- [x] **PLAN-04**: User can place doors and windows on walls in plan view
-- [x] **PLAN-05**: User can switch between 3D perspective and 2D plan view
+**Defined:** 2026-03-30
+**Core Value:** Structurally accurate 3D building visualization with intuitive guided authoring for energy simulation
 
-## Snap & Align Tools
-- [x] **SNAP-01**: Elements snap to grid (configurable grid size)
-- [x] **SNAP-02**: Elements snap to edges and vertices of nearby elements
-- [x] **SNAP-03**: Axis constraints lock movement to X, Y, or Z axis
-- [x] **SNAP-04**: Alignment guides show when elements are aligned
+## v3.0 Requirements
 
-## QA & BIM Accuracy
-- [x] **QA-01**: Test infrastructure installed (Vitest + testing-library + Playwright)
-- [x] **QA-02**: Unit tests for energy calculations verify against Korean benchmark values
-- [x] **QA-03**: Unit tests for procedural generators verify correct dimensions per era/structure
-- [x] **QA-04**: E2E test covers search → 3D view → config → energy update flow
-- [x] **QA-05**: Error boundaries prevent full-page crashes from R3F/API failures
-- [x] **QA-06**: Config panel inputs validated (min/max enforcement, impossible values blocked)
-- [x] **QA-07**: BIM geometry verified against known Korean apartment typologies
+Requirements for UX Workflow Overhaul milestone. Each maps to roadmap phases.
 
-## Structural Analysis Visualization
-- [x] **STRUCT-01**: Display load path arrows from roof through columns to foundation
-- [x] **STRUCT-02**: Color-code structural members by stress level (green→yellow→red)
-- [x] **STRUCT-03**: Show structural member sizing recommendations based on span and load
-- [x] **STRUCT-04**: Toggle structural analysis overlay on/off independently
+### Workspace Layout
 
-## Future Requirements (Deferred)
-- Multi-building site layout
-- IFC round-trip import/export
-- Collaborative editing
-- Furniture library
+- [ ] **LAYOUT-01**: User sees a viewport-dominant layout with the 3D view as the primary element and panels docked around it
+- [ ] **LAYOUT-02**: User can resize left, right, and bottom dock panels by dragging
+- [ ] **LAYOUT-03**: User can collapse/expand dock panels to maximize viewport space
+
+### Workflow Pipeline
+
+- [ ] **FLOW-01**: User sees a guided authoring stepper showing 5 stages: Select Building → Assemble → Configure → Analyze → Export
+- [ ] **FLOW-02**: User sees a persistent mode indicator showing the current tool/action (e.g., "Draw Wall", "Place Door")
+- [ ] **FLOW-03**: User sees a status bar with contextual one-line prompts (e.g., "Click to place — Escape to cancel")
+
+### Contextual UI
+
+- [ ] **CTX-01**: User clicks a wall, component, or room and the right panel immediately shows its properties
+- [ ] **CTX-02**: User sees toolbar items that change based on the current workflow stage
+- [ ] **CTX-03**: Existing viewer-overlay.tsx is decomposed into stage-keyed toolbar configs
+
+### Discoverability
+
+- [ ] **DISC-01**: User can browse floors, rooms, and components in a tree outliner panel
+- [ ] **DISC-02**: User can drag components from a filtered catalog (door/window/MEP/stair) into the scene
+- [ ] **DISC-03**: First-time users see a guided onboarding tour highlighting key UI areas
+
+### Undo/Redo
+
+- [ ] **UNDO-01**: User can undo/redo authoring actions with Ctrl+Z / Ctrl+Y across wall drawing, component placement, and material edits
+- [ ] **UNDO-02**: Compound operations (e.g., draw wall + auto-detect rooms) undo as a single step
+
+### Energy Feedback
+
+- [ ] **ENRG-01**: User sees a persistent energy status bar showing live kWh/m² as properties change
+- [ ] **ENRG-02**: User sees inline delta annotations on property sliders showing energy impact of changes
+- [ ] **ENRG-03**: Energy calculations use regional climate data (not Seoul-only HDD)
+
+## v3.1+ Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### UX Polish
+
+- **KEYS-01**: Centralized keyboard shortcut system via react-hotkeys-hook with scope isolation
+- **INFER-01**: Korean building code inference values surfaced as "suggested" badges user can accept or override
+- **EXPORT-01**: Export-readiness checklist showing ECO2 field completeness
+- **PERSIST-01**: Workspace panel layout saved to localStorage across sessions
+- **SYNC-01**: Dual-view 2D/3D live sync with shared geometry store
+
+## Validated (from previous milestones)
+
+### v2.0 — Advanced BIM Authoring
+- ✓ **PLAN-01**: User can draw walls in 2D plan view — v2.0 Phase 11
+- ✓ **PLAN-02**: User can create room boundaries from enclosed wall segments — v2.0 Phase 11
+- ✓ **PLAN-03**: Drawn 2D plan extrudes to 3D geometry automatically — v2.0 Phase 11
+- ✓ **PLAN-04**: User can place doors and windows on walls in plan view — v2.0 Phase 11
+- ✓ **PLAN-05**: User can switch between 3D perspective and 2D plan view — v2.0 Phase 11
+- ✓ **SNAP-01**: Elements snap to grid — v2.0 Phase 12
+- ✓ **SNAP-02**: Elements snap to edges and vertices — v2.0 Phase 12
+- ✓ **SNAP-03**: Axis constraints lock movement — v2.0 Phase 12
+- ✓ **SNAP-04**: Alignment guides show — v2.0 Phase 12
+- ✓ **STRUCT-01–04**: Structural analysis overlay — v2.0 Phase 13
+- ✓ **QA-01–07**: Test infrastructure and BIM accuracy — v2.0 Phases 10, 10.1
 
 ## Out of Scope
-- Photorealistic rendering (project principle: structural clarity)
-- Full FEA simulation (simplified structural viz only)
-- Cloud storage/sync
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Grasshopper-style node graph | GX team are auditors, not parametric designers; use sliders instead |
+| Revit-style multi-tab ribbon | Cognitive overhead for 20 tools; contextual toolbar is sufficient |
+| Photorealistic rendering | Conflicts with PROJECT.md structural clarity goal |
+| Real-time collaboration | CRDT infrastructure for zero current-user benefit |
+| AI geometry generation | Undermines ground-truth Korean ledger data validity |
+| Free-form mesh sculpting | Not a mesh editor; unrepresentable in IFC |
+| Full FEA simulation | Simplified structural viz only |
 
 ## Traceability
-| REQ-ID | Phase | Plan | Status |
-|--------|-------|------|--------|
-| PLAN-01 | TBD | TBD | Pending |
-| PLAN-02 | TBD | TBD | Pending |
-| PLAN-03 | TBD | TBD | Pending |
-| PLAN-04 | TBD | TBD | Pending |
-| PLAN-05 | TBD | TBD | Pending |
-| SNAP-01 | TBD | TBD | Pending |
-| SNAP-02 | TBD | TBD | Pending |
-| SNAP-03 | TBD | TBD | Pending |
-| SNAP-04 | TBD | TBD | Pending |
-| STRUCT-01 | TBD | TBD | Pending |
-| STRUCT-02 | TBD | TBD | Pending |
-| STRUCT-03 | TBD | TBD | Pending |
-| STRUCT-04 | TBD | TBD | Pending |
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| LAYOUT-01 | — | Pending |
+| LAYOUT-02 | — | Pending |
+| LAYOUT-03 | — | Pending |
+| FLOW-01 | — | Pending |
+| FLOW-02 | — | Pending |
+| FLOW-03 | — | Pending |
+| CTX-01 | — | Pending |
+| CTX-02 | — | Pending |
+| CTX-03 | — | Pending |
+| DISC-01 | — | Pending |
+| DISC-02 | — | Pending |
+| DISC-03 | — | Pending |
+| UNDO-01 | — | Pending |
+| UNDO-02 | — | Pending |
+| ENRG-01 | — | Pending |
+| ENRG-02 | — | Pending |
+| ENRG-03 | — | Pending |
+
+**Coverage:**
+- v3.0 requirements: 17 total
+- Mapped to phases: 0
+- Unmapped: 17 ⚠️
+
+---
+*Requirements defined: 2026-03-30*
+*Last updated: 2026-03-30 after initial definition*
