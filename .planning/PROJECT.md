@@ -46,6 +46,17 @@ The goal is NOT photorealistic rendering — it's **structural unambiguity**. Ev
 - ECO2 (desktop energy evaluation — future export)
 - Korean Building Energy Code (inference engine)
 
+## Current Milestone: v3.0 UX Workflow Overhaul
+
+**Goal:** Redesign the post-selection authoring experience into a guided-but-flexible workspace, benchmarked against BIM authoring tools, web 3D editors, and node/flow-based tools.
+
+**Target features:**
+- Benchmark research: Revit, ArchiCAD, SketchUp, Blender, Spline, Vectary, ShapeDiver, Grasshopper, Dynamo workflows and documentation
+- Guided authoring pipeline: clear step-by-step flow from building selection → assembly → customization → placement → transformation
+- Flexible workspace: users can rearrange, skip steps, and access tools freely
+- Contextual UI: toolbars, panels, and prompts that adapt to the current authoring stage
+- Improved discoverability: users naturally find the next action without reading docs
+
 ## Current State
 
 Shipped v2.0 Advanced BIM Authoring with 25,500+ LOC TypeScript across 173 files.
@@ -77,4 +88,4 @@ Next.js 16 + React 19 + TypeScript + Three.js 0.183 + React Three Fiber 9 + shad
 
 This document evolves at phase transitions and milestone boundaries.
 
-*Last updated: 2026-03-28 after v2.0 milestone*
+*Last updated: 2026-03-30 after v3.0 milestone start*
