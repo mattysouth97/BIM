@@ -29,6 +29,11 @@ interface WorkspaceState {
   leftDockSize: number; // default 18, min 12, max 28
   rightDockSize: number; // default 22, min 16, max 35
 
+  // Panel open states (extracted from building-scene.tsx local state per D-06)
+  configPanelOpen: boolean;
+  layerPanelOpen: boolean;
+  uploadDialogOpen: boolean;
+
   // Actions
   toggleLeftDock: () => void;
   toggleRightDock: () => void;
@@ -39,6 +44,11 @@ interface WorkspaceState {
   setLeftDockSize: (size: number) => void;
   setRightDockSize: (size: number) => void;
   resetLayout: () => void;
+  toggleConfigPanel: () => void;
+  toggleLayerPanel: () => void;
+  setConfigPanelOpen: (open: boolean) => void;
+  setLayerPanelOpen: (open: boolean) => void;
+  setUploadDialogOpen: (open: boolean) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -51,6 +61,9 @@ const defaults = {
   bottomShelfOpen: true,
   leftDockSize: LEFT_DOCK_DEFAULT,
   rightDockSize: RIGHT_DOCK_DEFAULT,
+  configPanelOpen: false,
+  layerPanelOpen: false,
+  uploadDialogOpen: false,
 };
 
 // ---------------------------------------------------------------------------
@@ -79,6 +92,12 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set({ rightDockSize: Math.min(RIGHT_DOCK_MAX, Math.max(RIGHT_DOCK_MIN, size)) }),
 
       resetLayout: () => set({ ...defaults }),
+
+      toggleConfigPanel: () => set((s) => ({ configPanelOpen: !s.configPanelOpen })),
+      toggleLayerPanel: () => set((s) => ({ layerPanelOpen: !s.layerPanelOpen })),
+      setConfigPanelOpen: (open) => set({ configPanelOpen: open }),
+      setLayerPanelOpen: (open) => set({ layerPanelOpen: open }),
+      setUploadDialogOpen: (open) => set({ uploadDialogOpen: open }),
     }),
     {
       name: "bim-workspace-layout",
