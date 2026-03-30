@@ -104,7 +104,13 @@ Plans:
   4. User can drag a door, window, MEP element, or stair from the component catalog in the left dock and drop it into the 3D scene
   5. User presses Ctrl+Z and the last wall draw, component placement, or material edit is undone; pressing Ctrl+Y redoes it
   6. User draws a wall that triggers auto room detection; pressing Ctrl+Z undoes both the wall and the room detection as a single step
-**Plans**: TBD
+**Plans:** 5 plans
+Plans:
+- [ ] 17-01-PLAN.md — Install stepperize + create WorkflowStepper breadcrumb component
+- [ ] 17-02-PLAN.md — Selection store + properties panel in right dock
+- [ ] 17-03-PLAN.md — Undo/redo command classes + keyboard shortcut hook
+- [ ] 17-04-PLAN.md — Scene outliner tree + component catalog in left dock
+- [ ] 17-05-PLAN.md — Build verification + visual checkpoint
 **UI hint**: yes
 
 ### Phase 18: Guidance + Energy Feedback
@@ -132,5 +138,5 @@ Plans:
 | 14. Workflow State Foundation | v3.0 | 3/3 | Complete    | 2026-03-30 |
 | 15. Workspace Shell Layout | v3.0 | 2/2 | Complete    | 2026-03-30 |
 | 16. Contextual Toolbar Migration | v3.0 | 3/3 | Complete   | 2026-03-30 |
-| 17. Panel Content + Workflow Stepper | v3.0 | 0/TBD | Not started | - |
+| 17. Panel Content + Workflow Stepper | v3.0 | 0/5 | Not started | - |
 | 18. Guidance + Energy Feedback | v3.0 | 0/TBD | Not started | - |
