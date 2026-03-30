@@ -4,6 +4,7 @@ import { useRef, useMemo, useCallback, useEffect } from "react";
 import * as THREE from "three";
 import { useThree, useFrame } from "@react-three/fiber";
 import { useComponentStore } from "@/store/component-store";
+import { useSelectionStore } from "@/store/selection-store";
 import type { ComponentPreset, PlacedComponent } from "@/lib/components/component-types";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import { generateDoor } from "@/lib/components/door-generator";
@@ -76,6 +77,10 @@ function PlacedComponentMesh({ component }: { component: PlacedComponent }) {
       ref={groupRef}
       position={component.position}
       rotation={component.rotation}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        useSelectionStore.getState().select("component", component.instanceId, component.buildingPk);
+      }}
     />
   );
 }
@@ -245,12 +250,14 @@ interface PlacedComponentsProps {
   recipe: BuildingRecipe;
 }
 
+const EMPTY_PLACED: never[] = [];
+
 /**
  * R3F component that renders all placed components and provides
  * click-to-place functionality via DragPreview.
  */
 export function PlacedComponents({ buildingPk, recipe }: PlacedComponentsProps) {
-  const placed = useComponentStore((s) => s.placed[buildingPk] ?? s.placed["__current__"] ?? []);
+  const placed = useComponentStore((s) => s.placed[buildingPk] ?? s.placed["__current__"] ?? EMPTY_PLACED);
 
   return (
     <>

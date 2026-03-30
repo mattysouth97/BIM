@@ -7,6 +7,7 @@ import { Html } from "@react-three/drei";
 import { Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
 import { usePlanStore, type WallSegment, type Opening } from "@/store/plan-store";
 import { useAuthoringStore } from "@/store/authoring-store";
+import { useSelectionStore } from "@/store/selection-store";
 import { DOOR_PRESETS, WINDOW_PRESETS } from "@/lib/components/component-types";
 import {
   computeSnap,
@@ -395,6 +396,8 @@ const PreviewLine = forwardRef<THREE.Line>(function PreviewLine(_props, ref) {
 
 /** 2D wall representation: thick line (actually a thin box at ground level) */
 function Wall2D({ wall }: { wall: WallSegment }) {
+  const isSelected = useSelectionStore((s) => s.selectedId === wall.id);
+
   const dx = wall.end[0] - wall.start[0];
   const dz = wall.end[1] - wall.start[1];
   const length = Math.sqrt(dx * dx + dz * dz);
@@ -408,15 +411,20 @@ function Wall2D({ wall }: { wall: WallSegment }) {
     <mesh
       position={[cx, 0.02, cz]}
       rotation={[0, -angle, 0]}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        useSelectionStore.getState().select("wall", wall.id);
+      }}
     >
       <boxGeometry args={[length, 0.02, wall.thickness]} />
-      <meshBasicMaterial color={WALL_COLOR_2D} />
+      <meshBasicMaterial color={isSelected ? 0x3b82f6 : WALL_COLOR_2D} />
     </mesh>
   );
 }
 
 /** 3D wall representation: extruded box, with CSG subtraction for openings */
 function Wall3D({ wall, wallOpenings }: { wall: WallSegment; wallOpenings: Opening[] }) {
+  const isSelected = useSelectionStore((s) => s.selectedId === wall.id);
   const dx = wall.end[0] - wall.start[0];
   const dz = wall.end[1] - wall.start[1];
   const length = Math.sqrt(dx * dx + dz * dz);
@@ -480,9 +488,18 @@ function Wall3D({ wall, wallOpenings }: { wall: WallSegment; wallOpenings: Openi
     }
   }, [wall, wallOpenings, cx, cz, baseY, length, angle]);
 
-  // If CSG succeeded, render it via primitive
+  // If CSG succeeded, render it via primitive wrapped in a clickable group
   if (wallOpenings.length > 0 && csgMesh) {
-    return <primitive object={csgMesh} castShadow receiveShadow />;
+    return (
+      <group
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          useSelectionStore.getState().select("wall", wall.id);
+        }}
+      >
+        <primitive object={csgMesh} castShadow receiveShadow />
+      </group>
+    );
   }
 
   // Fallback: plain box geometry (no openings, or CSG error)
@@ -492,9 +509,18 @@ function Wall3D({ wall, wallOpenings }: { wall: WallSegment; wallOpenings: Openi
       rotation={[0, -angle, 0]}
       castShadow
       receiveShadow
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        useSelectionStore.getState().select("wall", wall.id);
+      }}
     >
       <boxGeometry args={[length, wall.height, wall.thickness]} />
-      <meshStandardMaterial color={WALL_COLOR_3D} roughness={0.7} />
+      <meshStandardMaterial
+        color={WALL_COLOR_3D}
+        roughness={0.7}
+        emissive={isSelected ? "#3b82f6" : "#000000"}
+        emissiveIntensity={isSelected ? 0.15 : 0}
+      />
     </mesh>
   );
 }

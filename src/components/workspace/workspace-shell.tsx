@@ -18,6 +18,7 @@ import {
 import { useHydration } from "@/hooks/use-hydration";
 import { DockCollapseButton } from "./dock-collapse-button";
 import { WorkflowStepper } from "./workflow-stepper";
+import { PropertiesPanel } from "./properties-panel";
 import type { Layout } from "react-resizable-panels";
 
 // Stable panel IDs for layout persistence
@@ -150,10 +151,12 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
                 onClick={toggleRightDock}
               />
               <span className="text-xs font-medium text-muted-foreground">
-                Right dock (Phase 17)
+                Properties
               </span>
             </div>
-            <div className="flex-1 overflow-auto p-2" />
+            <div className="flex-1 overflow-auto">
+              <PropertiesPanel />
+            </div>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
