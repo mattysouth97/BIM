@@ -27,8 +27,8 @@ Requirements for UX Workflow Overhaul milestone. Each maps to roadmap phases.
 
 ### Discoverability
 
-- [ ] **DISC-01**: User can browse floors, rooms, and components in a tree outliner panel
-- [ ] **DISC-02**: User can drag components from a filtered catalog (door/window/MEP/stair) into the scene
+- [x] **DISC-01**: User can browse floors, rooms, and components in a tree outliner panel
+- [x] **DISC-02**: User can drag components from a filtered catalog (door/window/MEP/stair) into the scene
 - [ ] **DISC-03**: First-time users see a guided onboarding tour highlighting key UI areas
 
 ### Undo/Redo
@@ -98,8 +98,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CTX-01 | Phase 17 | Complete |
 | CTX-02 | Phase 16 | Complete |
 | CTX-03 | Phase 16 | Complete |
-| DISC-01 | Phase 17 | Pending |
-| DISC-02 | Phase 17 | Pending |
+| DISC-01 | Phase 17 | Complete |
+| DISC-02 | Phase 17 | Complete |
 | DISC-03 | Phase 18 | Pending |
 | UNDO-01 | Phase 17 | Complete |
 | UNDO-02 | Phase 17 | Complete |

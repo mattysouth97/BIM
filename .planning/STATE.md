@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: UX Workflow Overhaul
 status: executing
-stopped_at: Phase 17 Plan 03 (17-03) complete. Plan 04 of 5 next.
-last_updated: "2026-03-30T05:56:37.688Z"
+stopped_at: Phase 17 Plan 04 (17-04) complete. Plan 05 of 5 next.
+last_updated: "2026-03-30T06:00:57.428Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 17 (Panel Content + Workflow Stepper) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-03-30
 
@@ -60,6 +60,7 @@ Progress: [██████████] 100%
 | Phase 17-panel-content-workflow-stepper P01 | 8 | 2 tasks | 3 files |
 | Phase 17-panel-content-workflow-stepper P02 | 245 | 2 tasks | 6 files |
 | Phase 17-panel-content-workflow-stepper P03 | 12 | 2 tasks | 8 files |
+| Phase 17-panel-content-workflow-stepper P04 | 129 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Progress: [██████████] 100%
 - [Phase 17-panel-content-workflow-stepper]: WallSegment.thermalConductivity added as optional field with default 0.5 W/m·K per D-06
 - [Phase 17-panel-content-workflow-stepper]: commandHistory singleton exported from use-undo-shortcut.ts — single global undo stack shared by all authoring tools
 - [Phase 17-panel-content-workflow-stepper]: beginCompound/execute/commitCompound pattern used for wall+room atomic undo (not CompoundCommand constructor)
+- [Phase 17-panel-content-workflow-stepper]: SceneOutliner shows placed components under Floor 1 only (no floor property on PlacedComponent) — avoids duplication across floors
+- [Phase 17-panel-content-workflow-stepper]: buildingPk='' placeholder in WorkspaceShell left dock — wired to actual PK in future integration phase
 
 ### Pending Todos
 
@@ -105,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T05:56:37.685Z
-Stopped at: Phase 17 Plan 03 (17-03) complete. Plan 04 of 5 next.
+Last session: 2026-03-30T06:00:57.425Z
+Stopped at: Phase 17 Plan 04 (17-04) complete. Plan 05 of 5 next.
 Resume file: None
