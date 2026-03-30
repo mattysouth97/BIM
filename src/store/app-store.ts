@@ -21,6 +21,10 @@ interface AppState {
   sidePanelOpen: boolean;
   setSidePanelOpen: (open: boolean) => void;
   toggleSidePanel: () => void;
+
+  // Onboarding tour
+  hasSeenTour: boolean;
+  setHasSeenTour: (seen: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -39,6 +43,9 @@ export const useAppStore = create<AppState>()(
       sidePanelOpen: true,
       setSidePanelOpen: (open) => set({ sidePanelOpen: open }),
       toggleSidePanel: () => set((s) => ({ sidePanelOpen: !s.sidePanelOpen })),
+
+      hasSeenTour: false,
+      setHasSeenTour: (seen) => set({ hasSeenTour: seen }),
     }),
     {
       name: "korea-building-info-storage",
@@ -46,6 +53,7 @@ export const useAppStore = create<AppState>()(
         apiKey: state.apiKey,
         language: state.language,
         sidePanelOpen: state.sidePanelOpen,
+        hasSeenTour: state.hasSeenTour,
       }),
     }
   )
