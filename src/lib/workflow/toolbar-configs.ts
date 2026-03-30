@@ -360,3 +360,53 @@ export const TOOLBAR_CONFIGS: Record<WorkflowStage, ToolbarGroup[]> = {
   analyze:   ANALYZE_GROUPS,
   export:    EXPORT_GROUPS,
 };
+
+// ---------------------------------------------------------------------------
+// TOOLBAR_ACTIONS — dispatch registry (no React, no store imports)
+// ---------------------------------------------------------------------------
+
+/**
+ * Describes how to dispatch an action for a ToolbarItem.
+ * Store resolution is handled by the renderer component at runtime.
+ */
+export interface ToolbarActionDescriptor {
+  /** Store to call getState() on — resolved by the renderer */
+  store: "authoring" | "plan" | "workspace";
+  /** Method name on the store */
+  method: string;
+  /** Arguments to pass — empty array for toggles, specific value for setters */
+  args?: unknown[];
+  /** For toggles: the method to call when already active (e.g., reset to default) */
+  toggleOff?: { method: string; args?: unknown[] };
+}
+
+/**
+ * Maps ToolbarItem `id` strings to their action descriptors.
+ * Items not in this map either use prop-based handlers (see PROP_ACTION_ITEMS)
+ * or have no action (e.g., separators).
+ */
+export const TOOLBAR_ACTIONS: Record<string, ToolbarActionDescriptor> = {
+  "assemble-edit-toggle":           { store: "authoring", method: "toggleAuthoring" },
+  "assemble-transform-translate":   { store: "authoring", method: "setTransformMode", args: ["translate"] },
+  "assemble-transform-rotate":      { store: "authoring", method: "setTransformMode", args: ["rotate"] },
+  "assemble-transform-scale":       { store: "authoring", method: "setTransformMode", args: ["scale"] },
+  "assemble-draw-wall":             { store: "plan", method: "setDrawingMode", args: ["wall"], toggleOff: { method: "setDrawingMode", args: [null] } },
+  "assemble-draw-opening":          { store: "plan", method: "setDrawingMode", args: ["opening"], toggleOff: { method: "setDrawingMode", args: [null] } },
+  "assemble-annotation-dimension":  { store: "authoring", method: "setAnnotationMode", args: ["dimension"], toggleOff: { method: "setAnnotationMode", args: ["none"] } },
+  "assemble-annotation-area":       { store: "authoring", method: "setAnnotationMode", args: ["area"], toggleOff: { method: "setAnnotationMode", args: ["none"] } },
+  "assemble-annotation-level":      { store: "authoring", method: "setAnnotationMode", args: ["level"], toggleOff: { method: "setAnnotationMode", args: ["none"] } },
+  "assemble-annotation-section":    { store: "authoring", method: "setAnnotationMode", args: ["section"], toggleOff: { method: "setAnnotationMode", args: ["none"] } },
+  "assemble-annotation-clear":      { store: "authoring", method: "clearAnnotations" },
+  "configure-config-panel":         { store: "workspace", method: "toggleConfigPanel" },
+  "configure-layer-panel":          { store: "workspace", method: "toggleLayerPanel" },
+  "analyze-layer-panel":            { store: "workspace", method: "toggleLayerPanel" },
+};
+
+/**
+ * Item IDs whose actions come from ContextualToolbarProps, not store calls.
+ * The renderer must use the corresponding prop handler instead of TOOLBAR_ACTIONS.
+ */
+export const PROP_ACTION_ITEMS = new Set([
+  "assemble-upload", "assemble-model-toggle",
+  "configure-upload", "configure-model-toggle",
+]);
