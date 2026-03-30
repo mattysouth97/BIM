@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import type { FloorGeometry } from "@/lib/building-geometry";
 import type { BuildingEra } from "@/lib/material-types";
 import { formatArea } from "@/lib/constants";
@@ -7,14 +8,21 @@ import { useAppStore } from "@/store/app-store";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useAuthoringStore, type AnnotationMode } from "@/store/authoring-store";
 import { usePlanStore } from "@/store/plan-store";
+import { useWorkspaceStore } from "@/store/workspace-store";
 import { useOpeningPreset } from "@/components/viewer/opening-drawer";
 import { DOOR_PRESETS, WINDOW_PRESETS } from "@/lib/components/component-types";
-import { TOOLBAR_CONFIGS, GLOBAL_ITEMS } from "@/lib/workflow/toolbar-configs";
+import {
+  TOOLBAR_CONFIGS,
+  TOOLBAR_ACTIONS,
+  PROP_ACTION_ITEMS,
+  type ToolbarGroup,
+  type ToolbarItem,
+} from "@/lib/workflow/toolbar-configs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   RotateCcw, ArrowUp, ArrowRight, ArrowDown, Maximize2,
-  Settings, Upload, ToggleLeft, ToggleRight, Layers,
+  Upload, ToggleLeft, ToggleRight,
   Pencil, PencilOff, Move, RotateCcw as RotateIcon, Scaling,
   Ruler, Square, AlignHorizontalDistributeCenter, Scissors, Trash2,
   Grid3x3, PenTool, Copy, DoorOpen, MousePointer,
@@ -42,6 +50,280 @@ export interface ContextualToolbarProps {
   era?: BuildingEra;
   /** Selected floor info */
   selectedFloor?: FloorGeometry | null;
+}
+
+// ---------------------------------------------------------------------------
+// StoreMap — live state snapshot for condition evaluation
+// ---------------------------------------------------------------------------
+
+interface StoreMap {
+  authoring: {
+    isAuthoring: boolean;
+    transformMode: string;
+    annotationMode: string;
+  };
+  plan: {
+    drawingMode: string | null;
+    viewMode: string;
+  };
+}
+
+// ---------------------------------------------------------------------------
+// PropActions — prop-based handlers for PROP_ACTION_ITEMS
+// ---------------------------------------------------------------------------
+
+interface PropActions {
+  modelSource?: "parametric" | "uploaded";
+  hasUploadedModel?: boolean;
+  onToggleModelSource?: () => void;
+  onUploadClick?: () => void;
+  onToggleConfigPanel?: () => void;
+  configPanelOpen?: boolean;
+  onToggleLayerPanel?: () => void;
+  layerPanelOpen?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// resolveCondition — evaluate activeWhen/visibleWhen expressions
+// ---------------------------------------------------------------------------
+
+/**
+ * Evaluates a condition expression like "authoring.isAuthoring" or
+ * "plan.drawingMode===wall" against live store state + props.
+ */
+function resolveCondition(
+  expr: string | undefined,
+  stores: StoreMap,
+  props: PropActions,
+): boolean {
+  if (!expr) return false;
+
+  // Handle prop-based conditions
+  if (expr === "configPanelOpen") return !!props.configPanelOpen;
+  if (expr === "layerPanelOpen") return !!props.layerPanelOpen;
+  if (expr === "hasUploadedModel") return !!props.hasUploadedModel;
+  if (expr === "modelSource===uploaded") return props.modelSource === "uploaded";
+
+  // Parse "store.field===value" or "store.field" (truthy check)
+  const eqIdx = expr.indexOf("===");
+  if (eqIdx !== -1) {
+    const path = expr.slice(0, eqIdx);
+    const expected = expr.slice(eqIdx + 3);
+    const dotIdx = path.indexOf(".");
+    if (dotIdx === -1) return false;
+    const storeName = path.slice(0, dotIdx) as keyof StoreMap;
+    const field = path.slice(dotIdx + 1);
+    const storeObj = stores[storeName] as Record<string, unknown> | undefined;
+    if (!storeObj) return false;
+    return String(storeObj[field]) === expected;
+  }
+
+  // Truthy check: "authoring.isAuthoring" or "plan.viewMode"
+  const dotIdx = expr.indexOf(".");
+  if (dotIdx === -1) return false;
+  const storeName = expr.slice(0, dotIdx) as keyof StoreMap;
+  const field = expr.slice(dotIdx + 1);
+  const storeObj = stores[storeName] as Record<string, unknown> | undefined;
+  if (!storeObj) return false;
+  return !!storeObj[field];
+}
+
+// ---------------------------------------------------------------------------
+// dispatchAction — dispatch a TOOLBAR_ACTIONS descriptor via store.getState()
+// ---------------------------------------------------------------------------
+
+function dispatchAction(
+  item: ToolbarItem,
+  isActive: boolean,
+  stores: StoreMap,
+  props: PropActions,
+): void {
+  // Prop-based items
+  if (PROP_ACTION_ITEMS.has(item.id)) {
+    if (item.id === "assemble-upload" || item.id === "configure-upload") {
+      props.onUploadClick?.();
+    } else if (item.id === "assemble-model-toggle" || item.id === "configure-model-toggle") {
+      props.onToggleModelSource?.();
+    }
+    return;
+  }
+
+  const descriptor = TOOLBAR_ACTIONS[item.id];
+  if (!descriptor) return;
+
+  // Determine which store reference to call getState() on
+  const storeRef =
+    descriptor.store === "authoring" ? useAuthoringStore :
+    descriptor.store === "plan" ? usePlanStore :
+    useWorkspaceStore;
+
+  const state = storeRef.getState() as unknown as Record<string, unknown>;
+
+  // For items with toggleOff: if currently active, dispatch toggleOff instead
+  if (isActive && descriptor.toggleOff) {
+    const offMethod = state[descriptor.toggleOff.method];
+    if (typeof offMethod === "function") {
+      (offMethod as (...a: unknown[]) => void)(...(descriptor.toggleOff.args ?? []));
+    }
+    return;
+  }
+
+  const method = state[descriptor.method];
+  if (typeof method === "function") {
+    (method as (...a: unknown[]) => void)(...(descriptor.args ?? []));
+  }
+
+  // Special case: workspace panel toggles also need to update local prop state
+  // (configPanelOpen / layerPanelOpen are mirrored via props from building-scene)
+  if (descriptor.store === "workspace" && descriptor.method === "toggleConfigPanel") {
+    props.onToggleConfigPanel?.();
+  } else if (descriptor.store === "workspace" && descriptor.method === "toggleLayerPanel") {
+    props.onToggleLayerPanel?.();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ToolbarItemRenderer — renders a single ToolbarItem
+// ---------------------------------------------------------------------------
+
+function ToolbarItemRenderer({
+  item,
+  isKo,
+  stores,
+  props,
+}: {
+  item: ToolbarItem;
+  isKo: boolean;
+  stores: StoreMap;
+  props: PropActions;
+}) {
+  if (item.type === "separator") {
+    return <VerticalDivider />;
+  }
+
+  // Visibility check
+  if (item.visibleWhen && !resolveCondition(item.visibleWhen, stores, props)) {
+    return null;
+  }
+
+  // Special rendering for model-toggle items (uses dynamic icon based on state)
+  if (item.id === "assemble-model-toggle" || item.id === "configure-model-toggle") {
+    if (!props.hasUploadedModel) return null;
+    const isUploaded = props.modelSource === "uploaded";
+    return (
+      <Button
+        variant={isUploaded ? "default" : "ghost"}
+        size="icon"
+        className="h-7 w-7"
+        onClick={() => props.onToggleModelSource?.()}
+        title={isUploaded
+          ? (isKo ? "추정 모델로 전환" : "Switch to Parametric")
+          : (isKo ? "업로드 모델로 전환" : "Switch to Uploaded")}
+      >
+        {isUploaded
+          ? <ToggleRight className="h-3.5 w-3.5" />
+          : <ToggleLeft className="h-3.5 w-3.5" />}
+      </Button>
+    );
+  }
+
+  // Special rendering for edit-toggle (uses PencilOff icon when active)
+  if (item.id === "assemble-edit-toggle") {
+    const isActive = resolveCondition(item.activeWhen, stores, props);
+    const Icon = isActive ? PencilOff : Pencil;
+    return (
+      <Button
+        variant={isActive ? "default" : "ghost"}
+        size="icon"
+        className="h-7 w-7"
+        onClick={() => dispatchAction(item, isActive, stores, props)}
+        title={isActive
+          ? (isKo ? "편집 모드 종료" : "Exit Edit Mode")
+          : (isKo ? item.labelKo : item.labelEn)}
+      >
+        <Icon className="h-3.5 w-3.5" />
+      </Button>
+    );
+  }
+
+  const isActive = resolveCondition(item.activeWhen, stores, props);
+  const Icon = item.icon;
+
+  return (
+    <Button
+      variant={isActive ? "default" : "ghost"}
+      size="icon"
+      className="h-7 w-7"
+      onClick={() => dispatchAction(item, isActive, stores, props)}
+      title={isKo ? item.labelKo : item.labelEn}
+    >
+      {Icon && <Icon className="h-3.5 w-3.5" />}
+    </Button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ToolbarGroupRenderer — renders a ToolbarGroup's items
+// ---------------------------------------------------------------------------
+
+function ToolbarGroupRenderer({
+  group,
+  isKo,
+  stores,
+  props,
+}: {
+  group: ToolbarGroup;
+  isKo: boolean;
+  stores: StoreMap;
+  props: PropActions;
+}) {
+  return (
+    <>
+      {group.items.map((item) => (
+        <ToolbarItemRenderer
+          key={item.id}
+          item={item}
+          isKo={isKo}
+          stores={stores}
+          props={props}
+        />
+      ))}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// StageToolbar — renders all groups for the current stage via TOOLBAR_CONFIGS
+// ---------------------------------------------------------------------------
+
+function StageToolbar({
+  stage,
+  isKo,
+  stores,
+  props,
+}: {
+  stage: string;
+  isKo: boolean;
+  stores: StoreMap;
+  props: PropActions;
+}) {
+  const groups = TOOLBAR_CONFIGS[stage as keyof typeof TOOLBAR_CONFIGS] ?? [];
+  if (groups.length === 0) return null;
+  return (
+    <>
+      {groups.map((group, i) => (
+        <React.Fragment key={group.id}>
+          {i > 0 && <VerticalDivider />}
+          <ToolbarGroupRenderer
+            group={group}
+            isKo={isKo}
+            stores={stores}
+            props={props}
+          />
+        </React.Fragment>
+      ))}
+    </>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -173,29 +455,30 @@ function GlobalToolbarSection({
 }
 
 // ---------------------------------------------------------------------------
-// AssembleToolbar — all authoring controls for the assemble stage
+// ContextualToolbar — main export
 // ---------------------------------------------------------------------------
 
-function AssembleToolbar({
-  isKo,
+export function ContextualToolbar({
+  onViewChange,
+  onToggleConfigPanel,
+  configPanelOpen,
+  onToggleLayerPanel,
+  layerPanelOpen,
   modelSource,
   hasUploadedModel,
   onToggleModelSource,
   onUploadClick,
-}: {
-  isKo: boolean;
-  modelSource?: "parametric" | "uploaded";
-  hasUploadedModel?: boolean;
-  onToggleModelSource?: () => void;
-  onUploadClick?: () => void;
-}) {
+  buildingName,
+  era,
+  selectedFloor,
+}: ContextualToolbarProps) {
+  const isKo = useAppStore((s) => s.language) === "ko";
+  const stage = useWorkflowStore((s) => s.stage);
+
+  // Assemble live store state snapshot for condition evaluation
   const isAuthoring = useAuthoringStore((s) => s.isAuthoring);
-  const toggleAuthoring = useAuthoringStore((s) => s.toggleAuthoring);
   const transformMode = useAuthoringStore((s) => s.transformMode);
-  const setTransformMode = useAuthoringStore((s) => s.setTransformMode);
   const annotationMode = useAuthoringStore((s) => s.annotationMode);
-  const setAnnotationMode = useAuthoringStore((s) => s.setAnnotationMode);
-  const clearAnnotations = useAuthoringStore((s) => s.clearAnnotations);
   const sectionPosition = useAuthoringStore((s) => s.sectionPosition);
   const setSectionPosition = useAuthoringStore((s) => s.setSectionPosition);
   const sectionAxis = useAuthoringStore((s) => s.sectionAxis);
@@ -213,7 +496,6 @@ function AssembleToolbar({
   const setFloorHeight = usePlanStore((s) => s.setFloorHeight);
   const copyFloor = usePlanStore((s) => s.copyFloor);
   const drawingMode = usePlanStore((s) => s.drawingMode);
-  const setDrawingMode = usePlanStore((s) => s.setDrawingMode);
   const snapEnabled = usePlanStore((s) => s.snapEnabled);
   const setSnapEnabled = usePlanStore((s) => s.setSnapEnabled);
   const gridSnapEnabled = usePlanStore((s) => s.gridSnapEnabled);
@@ -228,139 +510,79 @@ function AssembleToolbar({
 
   const gridSizeOptions = [0.1, 0.5, 1.0];
 
-  const toggleAnnotation = (mode: AnnotationMode) => {
-    setAnnotationMode(annotationMode === mode ? "none" : mode);
+  // Live store map for condition resolution
+  const stores: StoreMap = {
+    authoring: { isAuthoring, transformMode, annotationMode },
+    plan: { drawingMode, viewMode },
+  };
+
+  // Prop-based action handlers for PROP_ACTION_ITEMS
+  const propActions: PropActions = {
+    modelSource,
+    hasUploadedModel,
+    onToggleModelSource,
+    onUploadClick,
+    onToggleConfigPanel,
+    configPanelOpen,
+    onToggleLayerPanel,
+    layerPanelOpen,
   };
 
   return (
-    <>
-      {/* Edit mode toggle */}
-      <Button
-        variant={isAuthoring ? "default" : "ghost"}
-        size="icon"
-        className="h-7 w-7"
-        onClick={toggleAuthoring}
-        title={isAuthoring ? (isKo ? "편집 모드 종료" : "Exit Edit Mode") : (isKo ? "편집 모드" : "Edit Mode")}
-      >
-        {isAuthoring ? <PencilOff className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
-      </Button>
+    // Relative positioning container so plan-view sub-panels can use absolute positioning
+    <div className="relative">
+      {/* Fixed-height toolbar strip — h-10 (40px) */}
+      <div className="h-10 shrink-0 border-b bg-background/95 backdrop-blur flex items-center px-2 gap-1 z-20">
 
-      {/* Transform & annotation tools — only when authoring */}
-      {isAuthoring && (
-        <>
-          <VerticalDivider />
+        {/* Left: mode indicator badge (D-03) */}
+        <ModeIndicatorBadge isKo={isKo} />
 
-          {/* Transform mode */}
-          <Button
-            variant={transformMode === "translate" ? "default" : "ghost"}
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setTransformMode("translate")}
-            title={`${isKo ? "이동" : "Move"} (G)`}
-          >
-            <Move className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant={transformMode === "rotate" ? "default" : "ghost"}
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setTransformMode("rotate")}
-            title={`${isKo ? "회전" : "Rotate"} (R)`}
-          >
-            <RotateIcon className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant={transformMode === "scale" ? "default" : "ghost"}
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setTransformMode("scale")}
-            title={`${isKo ? "크기" : "Scale"} (S)`}
-          >
-            <Scaling className="h-3.5 w-3.5" />
-          </Button>
+        {/* Building info badges — always visible when building loaded */}
+        {buildingName && (
+          <>
+            <VerticalDivider />
+            <Badge variant="secondary" className="text-xs h-6">
+              {buildingName}
+            </Badge>
+            {era && (
+              <Badge variant="outline" className="text-[10px] text-muted-foreground h-6">
+                {era === "pre-1970" ? "~1970" : era}
+              </Badge>
+            )}
+            {/* Model source display badge (viewer-overlay lines 280-287) */}
+            {modelSource && (
+              <Badge
+                variant={modelSource === "uploaded" ? "default" : "outline"}
+                className="text-[10px] text-muted-foreground h-6"
+              >
+                {modelSource === "uploaded"
+                  ? (isKo ? "건축 모델" : "Architectural Model")
+                  : (isKo ? "추정 형상" : "Estimated Geometry")}
+              </Badge>
+            )}
+          </>
+        )}
 
-          <VerticalDivider />
+        <VerticalDivider />
 
-          {/* Annotation tools */}
-          <Button
-            variant={annotationMode === "dimension" ? "default" : "ghost"}
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => toggleAnnotation("dimension")}
-            title={isKo ? "치수선" : "Dimension"}
-          >
-            <Ruler className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant={annotationMode === "area" ? "default" : "ghost"}
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => toggleAnnotation("area")}
-            title={isKo ? "면적 레이블" : "Area Label"}
-          >
-            <Square className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant={annotationMode === "level" ? "default" : "ghost"}
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => toggleAnnotation("level")}
-            title={isKo ? "층고 마커" : "Level Markers"}
-          >
-            <AlignHorizontalDistributeCenter className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant={annotationMode === "section" ? "default" : "ghost"}
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => toggleAnnotation("section")}
-            title={isKo ? "단면 절단" : "Section Cut"}
-          >
-            <Scissors className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={clearAnnotations}
-            title={isKo ? "주석 지우기" : "Clear Annotations"}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </>
-      )}
+        {/* Center: Stage-specific toolbar groups — data-driven from TOOLBAR_CONFIGS[stage] */}
+        <StageToolbar
+          stage={stage}
+          isKo={isKo}
+          stores={stores}
+          props={propActions}
+        />
 
-      {/* Model upload + toggle */}
-      <VerticalDivider />
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-7 w-7"
-        onClick={onUploadClick}
-        title={isKo ? "3D 모델 업로드" : "Upload 3D Model"}
-      >
-        <Upload className="h-3.5 w-3.5" />
-      </Button>
-      {hasUploadedModel && (
-        <Button
-          variant={modelSource === "uploaded" ? "default" : "ghost"}
-          size="icon"
-          className="h-7 w-7"
-          onClick={onToggleModelSource}
-          title={modelSource === "uploaded"
-            ? (isKo ? "추정 모델로 전환" : "Switch to Parametric")
-            : (isKo ? "업로드 모델로 전환" : "Switch to Uploaded")}
-        >
-          {modelSource === "uploaded"
-            ? <ToggleRight className="h-3.5 w-3.5" />
-            : <ToggleLeft className="h-3.5 w-3.5" />}
-        </Button>
-      )}
+        {/* Spacer */}
+        <div className="flex-1" />
 
-      {/* --- Plan-view popover sub-panels (rendered as overlay panels) --- */}
+        {/* Right: Global controls — always visible (D-04) */}
+        <GlobalToolbarSection onViewChange={onViewChange} isKo={isKo} />
+      </div>
 
+      {/* Plan-view overlay panels — rendered below the toolbar strip (absolute positioned) */}
       {/* Section cut slider — appears as bottom overlay when section mode active */}
-      {isAuthoring && annotationMode === "section" && (
+      {stage === "assemble" && isAuthoring && annotationMode === "section" && (
         <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-20 rounded-lg border bg-card/95 backdrop-blur p-3 shadow-lg flex items-center gap-3">
           <span className="text-xs font-medium whitespace-nowrap">
             {isKo ? "단면 위치" : "Section Position"}
@@ -394,7 +616,7 @@ function AssembleToolbar({
       )}
 
       {/* Plan view sub-panel: floor selector + grid size + snap controls + drawing mode + opening presets */}
-      {viewMode === "plan" && (
+      {stage === "assemble" && viewMode === "plan" && (
         <div className="absolute top-10 right-3 z-20 flex flex-col gap-1.5">
           {/* Active floor selector */}
           <div className="rounded-lg border bg-card/95 backdrop-blur p-2 shadow-lg">
@@ -537,7 +759,10 @@ function AssembleToolbar({
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted hover:bg-muted/80"
                   }`}
-                  onClick={() => setDrawingMode(drawingMode === "wall" ? null : "wall")}
+                  onClick={() => {
+                    const { setDrawingMode } = usePlanStore.getState();
+                    setDrawingMode(drawingMode === "wall" ? null : "wall");
+                  }}
                   title={isKo ? "벽 그리기" : "Draw Wall"}
                 >
                   <PenTool className="h-3 w-3" />
@@ -549,7 +774,10 @@ function AssembleToolbar({
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted hover:bg-muted/80"
                   }`}
-                  onClick={() => setDrawingMode(drawingMode === "opening" ? null : "opening")}
+                  onClick={() => {
+                    const { setDrawingMode } = usePlanStore.getState();
+                    setDrawingMode(drawingMode === "opening" ? null : "opening");
+                  }}
                   title={isKo ? "개구부 배치" : "Place Opening"}
                 >
                   <DoorOpen className="h-3 w-3" />
@@ -637,216 +865,6 @@ function AssembleToolbar({
           )}
         </div>
       )}
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// ConfigureToolbar
-// ---------------------------------------------------------------------------
-
-function ConfigureToolbar({
-  isKo,
-  onToggleConfigPanel,
-  configPanelOpen,
-  onToggleLayerPanel,
-  layerPanelOpen,
-  modelSource,
-  hasUploadedModel,
-  onToggleModelSource,
-  onUploadClick,
-}: {
-  isKo: boolean;
-  onToggleConfigPanel?: () => void;
-  configPanelOpen?: boolean;
-  onToggleLayerPanel?: () => void;
-  layerPanelOpen?: boolean;
-  modelSource?: "parametric" | "uploaded";
-  hasUploadedModel?: boolean;
-  onToggleModelSource?: () => void;
-  onUploadClick?: () => void;
-}) {
-  return (
-    <>
-      <Button
-        variant={configPanelOpen ? "default" : "ghost"}
-        size="icon"
-        className="h-7 w-7"
-        onClick={onToggleConfigPanel}
-        title={isKo ? "설정" : "Configuration"}
-      >
-        <Settings className="h-3.5 w-3.5" />
-      </Button>
-      <Button
-        variant={layerPanelOpen ? "default" : "ghost"}
-        size="icon"
-        className="h-7 w-7"
-        onClick={onToggleLayerPanel}
-        title={isKo ? "건물 시스템 레이어" : "Building Layers"}
-      >
-        <Layers className="h-3.5 w-3.5" />
-      </Button>
-
-      <VerticalDivider />
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-7 w-7"
-        onClick={onUploadClick}
-        title={isKo ? "3D 모델 업로드" : "Upload 3D Model"}
-      >
-        <Upload className="h-3.5 w-3.5" />
-      </Button>
-      {hasUploadedModel && (
-        <Button
-          variant={modelSource === "uploaded" ? "default" : "ghost"}
-          size="icon"
-          className="h-7 w-7"
-          onClick={onToggleModelSource}
-          title={modelSource === "uploaded"
-            ? (isKo ? "추정 모델로 전환" : "Switch to Parametric")
-            : (isKo ? "업로드 모델로 전환" : "Switch to Uploaded")}
-        >
-          {modelSource === "uploaded"
-            ? <ToggleRight className="h-3.5 w-3.5" />
-            : <ToggleLeft className="h-3.5 w-3.5" />}
-        </Button>
-      )}
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// AnalyzeToolbar
-// ---------------------------------------------------------------------------
-
-function AnalyzeToolbar({
-  isKo,
-  onToggleLayerPanel,
-  layerPanelOpen,
-}: {
-  isKo: boolean;
-  onToggleLayerPanel?: () => void;
-  layerPanelOpen?: boolean;
-}) {
-  return (
-    <Button
-      variant={layerPanelOpen ? "default" : "ghost"}
-      size="icon"
-      className="h-7 w-7"
-      onClick={onToggleLayerPanel}
-      title={isKo ? "건물 시스템 레이어" : "Building Layers"}
-    >
-      <Layers className="h-3.5 w-3.5" />
-    </Button>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// ContextualToolbar — main export
-// ---------------------------------------------------------------------------
-
-export function ContextualToolbar({
-  onViewChange,
-  onToggleConfigPanel,
-  configPanelOpen,
-  onToggleLayerPanel,
-  layerPanelOpen,
-  modelSource,
-  hasUploadedModel,
-  onToggleModelSource,
-  onUploadClick,
-  buildingName,
-  era,
-  selectedFloor,
-}: ContextualToolbarProps) {
-  const isKo = useAppStore((s) => s.language) === "ko";
-  const stage = useWorkflowStore((s) => s.stage);
-
-  // Suppress TypeScript unused warning for TOOLBAR_CONFIGS — imported for its
-  // stage-keyed structure; stage-specific rendering is done inline below.
-  void TOOLBAR_CONFIGS;
-  void GLOBAL_ITEMS;
-
-  return (
-    // Relative positioning container so plan-view sub-panels can use absolute positioning
-    <div className="relative">
-      {/* Fixed-height toolbar strip — h-10 (40px) */}
-      <div className="h-10 shrink-0 border-b bg-background/95 backdrop-blur flex items-center px-2 gap-1 z-20">
-
-        {/* Left: mode indicator badge (D-03) */}
-        <ModeIndicatorBadge isKo={isKo} />
-
-        {/* Building info badges — always visible when building loaded */}
-        {buildingName && (
-          <>
-            <VerticalDivider />
-            <Badge variant="secondary" className="text-xs h-6">
-              {buildingName}
-            </Badge>
-            {era && (
-              <Badge variant="outline" className="text-[10px] text-muted-foreground h-6">
-                {era === "pre-1970" ? "~1970" : era}
-              </Badge>
-            )}
-            {/* Model source display badge (viewer-overlay lines 280-287) */}
-            {modelSource && (
-              <Badge
-                variant={modelSource === "uploaded" ? "default" : "outline"}
-                className="text-[10px] text-muted-foreground h-6"
-              >
-                {modelSource === "uploaded"
-                  ? (isKo ? "건축 모델" : "Architectural Model")
-                  : (isKo ? "추정 형상" : "Estimated Geometry")}
-              </Badge>
-            )}
-          </>
-        )}
-
-        <VerticalDivider />
-
-        {/* Center: Stage-specific toolbar groups */}
-        {stage === "assemble" && (
-          <AssembleToolbar
-            isKo={isKo}
-            modelSource={modelSource}
-            hasUploadedModel={hasUploadedModel}
-            onToggleModelSource={onToggleModelSource}
-            onUploadClick={onUploadClick}
-          />
-        )}
-
-        {stage === "configure" && (
-          <ConfigureToolbar
-            isKo={isKo}
-            onToggleConfigPanel={onToggleConfigPanel}
-            configPanelOpen={configPanelOpen}
-            onToggleLayerPanel={onToggleLayerPanel}
-            layerPanelOpen={layerPanelOpen}
-            modelSource={modelSource}
-            hasUploadedModel={hasUploadedModel}
-            onToggleModelSource={onToggleModelSource}
-            onUploadClick={onUploadClick}
-          />
-        )}
-
-        {stage === "analyze" && (
-          <AnalyzeToolbar
-            isKo={isKo}
-            onToggleLayerPanel={onToggleLayerPanel}
-            layerPanelOpen={layerPanelOpen}
-          />
-        )}
-
-        {/* stage === "select" and stage === "export" — global only, no extra tools */}
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Right: Global controls — always visible (D-04) */}
-        <GlobalToolbarSection onViewChange={onViewChange} isKo={isKo} />
-      </div>
 
       {/* Bottom left: floor info card — absolute within viewport */}
       {selectedFloor && (
