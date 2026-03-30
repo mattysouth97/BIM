@@ -5,6 +5,8 @@ import * as THREE from "three";
 import { useThree, useFrame } from "@react-three/fiber";
 import { useComponentStore } from "@/store/component-store";
 import { useSelectionStore } from "@/store/selection-store";
+import { commandHistory } from "@/hooks/use-undo-shortcut";
+import { PlaceComponentCommand } from "@/lib/undo/commands/component-commands";
 import type { ComponentPreset, PlacedComponent } from "@/lib/components/component-types";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import { generateDoor } from "@/lib/components/door-generator";
@@ -93,7 +95,6 @@ function DragPreview({ recipe }: { recipe: BuildingRecipe }) {
   const groupRef = useRef<THREE.Group>(null);
   const { raycaster, camera, scene, gl } = useThree();
   const dragging = useComponentStore((s) => s.dragging);
-  const placeComponent = useComponentStore((s) => s.placeComponent);
   const setDragging = useComponentStore((s) => s.setDragging);
 
   const generatedGroup = useMemo(() => {
@@ -212,7 +213,7 @@ function DragPreview({ recipe }: { recipe: BuildingRecipe }) {
       };
 
       // buildingPk is set by the parent wrapper
-      placeComponent("__current__", comp);
+      commandHistory.execute(new PlaceComponentCommand("__current__", comp));
       setDragging(null);
     };
 
@@ -222,7 +223,7 @@ function DragPreview({ recipe }: { recipe: BuildingRecipe }) {
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerdown", onPointerDown);
     };
-  }, [dragging, camera, raycaster, scene, gl, recipe, placeComponent, setDragging, groundPlane]);
+  }, [dragging, camera, raycaster, scene, gl, recipe, setDragging, groundPlane]);
 
   // Update preview position each frame
   useFrame(() => {

@@ -16,6 +16,7 @@ import {
   RIGHT_DOCK_DEFAULT,
 } from "@/store/workspace-store";
 import { useHydration } from "@/hooks/use-hydration";
+import { useUndoShortcut } from "@/hooks/use-undo-shortcut";
 import { DockCollapseButton } from "./dock-collapse-button";
 import { WorkflowStepper } from "./workflow-stepper";
 import { PropertiesPanel } from "./properties-panel";
@@ -32,6 +33,7 @@ interface WorkspaceShellProps {
 
 export function WorkspaceShell({ children }: WorkspaceShellProps) {
   const hydrated = useHydration();
+  useUndoShortcut();
 
   const leftDockOpen = useWorkspaceStore((s) => s.leftDockOpen);
   const rightDockOpen = useWorkspaceStore((s) => s.rightDockOpen);

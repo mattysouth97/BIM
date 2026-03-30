@@ -8,6 +8,8 @@ import { Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
 import { usePlanStore, type WallSegment, type Opening } from "@/store/plan-store";
 import { useAuthoringStore } from "@/store/authoring-store";
 import { useSelectionStore } from "@/store/selection-store";
+import { commandHistory } from "@/hooks/use-undo-shortcut";
+import { AddWallCommand, SetRoomsCommand } from "@/lib/undo/commands/plan-commands";
 import { DOOR_PRESETS, WINDOW_PRESETS } from "@/lib/components/component-types";
 import {
   computeSnap,
@@ -52,7 +54,6 @@ export function WallDrawer() {
   const walls = usePlanStore((s) => s.walls);
   const openings = usePlanStore((s) => s.openings);
   const drawingWall = usePlanStore((s) => s.drawingWall);
-  const addWall = usePlanStore((s) => s.addWall);
   const startDrawing = usePlanStore((s) => s.startDrawing);
   const cancelDrawing = usePlanStore((s) => s.cancelDrawing);
   const activeFloor = usePlanStore((s) => s.activeFloor);
@@ -156,7 +157,19 @@ export function WallDrawer() {
           height: 3.0,
           floor: activeFloor,
         };
-        addWall(wall);
+        // Snapshot rooms before wall addition (room detection runs synchronously inside addWall)
+        const roomsBefore = usePlanStore.getState().rooms.slice();
+
+        // Use compound command so wall + resulting room changes undo as one step (per D-10)
+        commandHistory.beginCompound();
+        const addCmd = new AddWallCommand(wall);
+        commandHistory.execute(addCmd);
+        // Room detection may have updated rooms inside addWall — snapshot after
+        const roomsAfter = usePlanStore.getState().rooms.slice();
+        const roomsCmd = new SetRoomsCommand(roomsBefore, roomsAfter);
+        commandHistory.execute(roomsCmd);
+        commandHistory.commitCompound("Draw wall");
+
         cancelDrawing();
         setCurrentSnap(null);
         setDrawLength(0);
@@ -166,7 +179,7 @@ export function WallDrawer() {
     const canvas = gl.domElement;
     canvas.addEventListener("click", handleClick);
     return () => canvas.removeEventListener("click", handleClick);
-  }, [isActive, drawingWall, startDrawing, addWall, cancelDrawing, activeFloor, getGroundPoint, gl, walls, snapConfig]);
+  }, [isActive, drawingWall, startDrawing, cancelDrawing, activeFloor, getGroundPoint, gl, walls, snapConfig]);
 
   // Right-click and Escape to cancel
   useEffect(() => {
