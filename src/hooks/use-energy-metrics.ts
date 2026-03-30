@@ -30,8 +30,11 @@ export interface EnergyMetrics {
  * Reactively compute energy metrics for a building.
  * Subscribes to material and recipe stores; recalculates on any slider/config change.
  * Returns null if materials or recipe data is not yet available.
+ *
+ * @param buildingPk - Building primary key for store lookups
+ * @param sigunguCd - Optional 법정동 code (e.g. "5110000000") — used to look up regional HDD/CDD
  */
-export function useEnergyMetrics(buildingPk: string): EnergyMetrics | null {
+export function useEnergyMetrics(buildingPk: string, sigunguCd?: string): EnergyMetrics | null {
   // Subscribe to individual store slices to avoid infinite loop from getEffectiveRecipe
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
   const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
@@ -71,7 +74,7 @@ export function useEnergyMetrics(buildingPk: string): EnergyMetrics | null {
   const metrics = useMemo<EnergyMetrics | null>(() => {
     if (!materials || !effectiveRecipe) return null;
 
-    const climate = getClimateData();
+    const climate = getClimateData(sigunguCd);
     const heatLoss = calculateHeatLoss(materials, effectiveRecipe, climate);
     const demand = calculateAnnualDemand(
       heatLoss,
@@ -88,7 +91,7 @@ export function useEnergyMetrics(buildingPk: string): EnergyMetrics | null {
     const co2 = calculateCO2(demand, totalFloorArea);
 
     return { heatLoss, demand, grade, gradeColor, co2 };
-  }, [materials, effectiveRecipe]);
+  }, [materials, effectiveRecipe, sigunguCd]);
 
   return metrics;
 }
