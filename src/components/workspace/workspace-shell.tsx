@@ -17,6 +17,7 @@ import {
 } from "@/store/workspace-store";
 import { useHydration } from "@/hooks/use-hydration";
 import { useUndoShortcut } from "@/hooks/use-undo-shortcut";
+import { useOnboardingTour } from "@/hooks/use-onboarding-tour";
 import { DockCollapseButton } from "./dock-collapse-button";
 import { WorkflowStepper } from "./workflow-stepper";
 import { PropertiesPanel } from "./properties-panel";
@@ -38,6 +39,7 @@ interface WorkspaceShellProps {
 export function WorkspaceShell({ children }: WorkspaceShellProps) {
   const hydrated = useHydration();
   useUndoShortcut();
+  useOnboardingTour();
 
   const leftDockOpen = useWorkspaceStore((s) => s.leftDockOpen);
   const rightDockOpen = useWorkspaceStore((s) => s.rightDockOpen);
@@ -72,7 +74,9 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
   return (
     <div className="flex h-full w-full flex-col">
       {/* Workflow stepper — horizontal breadcrumb at the very top, above toolbar */}
-      <WorkflowStepper />
+      <div data-tour="stepper">
+        <WorkflowStepper />
+      </div>
 
       {/* Main resizable panel group */}
       <ResizablePanelGroup
@@ -88,7 +92,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
           maxSize={LEFT_DOCK_MAX}
           className={leftDockOpen ? undefined : "hidden"}
         >
-          <div className="flex h-full flex-col border-r bg-background pointer-events-auto">
+          <div data-tour="left-dock" className="flex h-full flex-col border-r bg-background pointer-events-auto">
             <div className="flex items-center justify-between border-b px-3 py-2">
               <span className="text-xs font-medium text-muted-foreground">
                 Scene
@@ -114,7 +118,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         />
 
         {/* Center viewport — always visible, takes remaining space */}
-        <ResizablePanel id={CENTER_ID} className="relative">
+        <ResizablePanel id={CENTER_ID} className="relative" data-tour="viewport">
           {/* Re-expand buttons for collapsed docks */}
           {!leftDockOpen && (
             <div className="absolute left-0 top-1/2 z-10 -translate-y-1/2 pointer-events-auto">
@@ -153,7 +157,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
           maxSize={RIGHT_DOCK_MAX}
           className={rightDockOpen ? undefined : "hidden"}
         >
-          <div className="flex h-full flex-col border-l bg-background pointer-events-auto">
+          <div data-tour="right-dock" className="flex h-full flex-col border-l bg-background pointer-events-auto">
             <div className="flex items-center justify-between border-b px-3 py-2">
               <DockCollapseButton
                 side="right"
