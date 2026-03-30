@@ -40,7 +40,7 @@
 
 - [x] **Phase 14: Workflow State Foundation** — FSM store, workspace store, command interface skeleton (completed 2026-03-29)
 - [x] **Phase 15: Workspace Shell Layout** — Viewport-dominant dock layout with resizable panels (completed 2026-03-30)
-- [ ] **Phase 16: Contextual Toolbar Migration** — Stage-keyed toolbar configs replacing viewer-overlay.tsx
+- [x] **Phase 16: Contextual Toolbar Migration** — Stage-keyed toolbar configs replacing viewer-overlay.tsx (completed 2026-03-30)
 - [ ] **Phase 17: Panel Content + Workflow Stepper** — Filled dock panels, stepper nav, undo/redo, component catalog
 - [ ] **Phase 18: Guidance + Energy Feedback** — Status bar, onboarding tour, live energy display
 
@@ -87,10 +87,10 @@ Plans:
   3. A persistent mode indicator badge is visible at all times showing the current tool or action (e.g., "Draw Wall", "Select", "Place Door")
   4. All previously working toolbar buttons continue to function correctly after migration
   5. All 7 existing Playwright E2E tests pass against the new toolbar implementation
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 16-01-PLAN.md — Create toolbar-configs.ts data + contextual-toolbar.tsx component
-- [ ] 16-02-PLAN.md — Wire toolbar into BuildingScene, extract panel state, delete viewer-overlay.tsx
+- [x] 16-02-PLAN.md — Wire toolbar into BuildingScene, extract panel state, delete viewer-overlay.tsx
 
 ### Phase 17: Panel Content + Workflow Stepper
 **Goal**: Users can navigate the authoring pipeline through a visible stepper, interact with contextual property panels, browse the scene hierarchy, drag components from a catalog, and undo/redo their actions
@@ -130,6 +130,6 @@ Plans:
 | 13 | v2.0 | 2/2 | Complete | 2026-03-28 |
 | 14. Workflow State Foundation | v3.0 | 3/3 | Complete    | 2026-03-30 |
 | 15. Workspace Shell Layout | v3.0 | 2/2 | Complete    | 2026-03-30 |
-| 16. Contextual Toolbar Migration | v3.0 | 1/2 | In Progress|  |
+| 16. Contextual Toolbar Migration | v3.0 | 2/2 | Complete   | 2026-03-30 |
 | 17. Panel Content + Workflow Stepper | v3.0 | 0/TBD | Not started | - |
 | 18. Guidance + Energy Feedback | v3.0 | 0/TBD | Not started | - |
