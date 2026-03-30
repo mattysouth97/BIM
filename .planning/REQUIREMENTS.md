@@ -39,7 +39,7 @@ Requirements for UX Workflow Overhaul milestone. Each maps to roadmap phases.
 ### Energy Feedback
 
 - [x] **ENRG-01**: User sees a persistent energy status bar showing live kWh/m² as properties change
-- [ ] **ENRG-02**: User sees inline delta annotations on property sliders showing energy impact of changes
+- [x] **ENRG-02**: User sees inline delta annotations on property sliders showing energy impact of changes
 - [x] **ENRG-03**: Energy calculations use regional climate data (not Seoul-only HDD)
 
 ## v3.1+ Requirements
@@ -104,7 +104,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UNDO-01 | Phase 17 | Complete |
 | UNDO-02 | Phase 17 | Complete |
 | ENRG-01 | Phase 18 | Complete |
-| ENRG-02 | Phase 18 | Pending |
+| ENRG-02 | Phase 18 | Complete |
 | ENRG-03 | Phase 18 | Complete |
 
 **Coverage:**

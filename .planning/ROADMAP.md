@@ -42,7 +42,7 @@
 - [x] **Phase 15: Workspace Shell Layout** — Viewport-dominant dock layout with resizable panels (completed 2026-03-30)
 - [x] **Phase 16: Contextual Toolbar Migration** — Stage-keyed toolbar configs replacing viewer-overlay.tsx (gap closure in progress) (completed 2026-03-30)
 - [x] **Phase 17: Panel Content + Workflow Stepper** — Filled dock panels, stepper nav, undo/redo, component catalog (completed 2026-03-30)
-- [ ] **Phase 18: Guidance + Energy Feedback** — Status bar, onboarding tour, live energy display
+- [x] **Phase 18: Guidance + Energy Feedback** — Status bar, onboarding tour, live energy display (completed 2026-03-30)
 
 ## Phase Details
 
@@ -123,11 +123,11 @@ Plans:
   3. A persistent energy status bar shows live kWh/m² that updates within one second of any property change in the configure panel
   4. Property sliders in the configure panel display an inline delta annotation (e.g., "+4.2 kWh/m²") showing the energy impact of the pending change before it is committed
   5. Energy calculations use heating/cooling degree days for the building's actual region (not Seoul HDD defaults); buildings in Busan, Daegu, and Incheon show different baseline kWh/m² values
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 18-01-PLAN.md — Regional climate data + status bar (prompts + energy display)
-- [ ] 18-02-PLAN.md — driver.js onboarding tour
-- [ ] 18-03-PLAN.md — Energy delta annotations on property sliders
+- [x] 18-02-PLAN.md — driver.js onboarding tour
+- [x] 18-03-PLAN.md — Energy delta annotations on property sliders
 **UI hint**: yes
 
 ## Progress
@@ -143,4 +143,4 @@ Plans:
 | 15. Workspace Shell Layout | v3.0 | 2/2 | Complete    | 2026-03-30 |
 | 16. Contextual Toolbar Migration | v3.0 | 3/3 | Complete   | 2026-03-30 |
 | 17. Panel Content + Workflow Stepper | v3.0 | 5/5 | Complete    | 2026-03-30 |
-| 18. Guidance + Energy Feedback | v3.0 | 1/3 | In Progress|  |
+| 18. Guidance + Energy Feedback | v3.0 | 3/3 | Complete   | 2026-03-30 |

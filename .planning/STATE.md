@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: UX Workflow Overhaul
-status: executing
-stopped_at: Completed 18-01-PLAN.md
-last_updated: "2026-03-30T07:52:46.445Z"
+status: verifying
+stopped_at: Completed 18-03-PLAN.md
+last_updated: "2026-03-30T07:57:50.750Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 16
-  completed_plans: 14
+  completed_plans: 16
   percent: 100
 ---
 
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 18 (Guidance + Energy Feedback) — EXECUTING
-Plan: 2 of 3
-Status: Ready to execute
+Plan: 3 of 3
+Status: Phase complete — ready for verification
 Last activity: 2026-03-30
 
 Progress: [██████████] 100%
@@ -63,6 +63,8 @@ Progress: [██████████] 100%
 | Phase 17-panel-content-workflow-stepper P04 | 129 | 2 tasks | 3 files |
 | Phase 17-panel-content-workflow-stepper P05 | 5 | 2 tasks | 0 files |
 | Phase 18-guidance-energy-feedback P01 | 8 | 2 tasks | 4 files |
+| Phase 18-guidance-energy-feedback P03 | 3 | 2 tasks | 2 files |
+| Phase 18-guidance-energy-feedback P02 | 195 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -100,6 +102,10 @@ Progress: [██████████] 100%
 - [Phase 17-panel-content-workflow-stepper]: Build passes with zero type errors — all Phase 17 components compile correctly and all import wiring verified
 - [Phase 18-guidance-energy-feedback]: REGIONAL_CLIMATE table uses 2-digit sido prefix as key — matches GROUND_TEMPERATURES pattern in korean-building-codes.ts
 - [Phase 18-guidance-energy-feedback]: StatusBar uses buildingPk='' placeholder in WorkspaceShell — same pattern as SceneOutliner, wired in integration phase
+- [Phase 18-guidance-energy-feedback]: useEnergyDelta stores snapshot in useRef (no re-render on snapshot) with useState bool for hasSnapshot to trigger useMemo delta recompute
+- [Phase 18-guidance-energy-feedback]: Energy delta annotation placed inline next to Label (not below input) to keep input row uncluttered while keeping annotation contextually adjacent to the property
+- [Phase 18-guidance-energy-feedback]: driver.js dynamically imported inside useEffect — avoids SSR errors, skips library load for returning users
+- [Phase 18-guidance-energy-feedback]: hasSeenTour persisted in partialize — tour never replays after first completion, survives page reloads
 
 ### Pending Todos
 
@@ -113,6 +119,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T07:52:46.439Z
-Stopped at: Completed 18-01-PLAN.md
+Last session: 2026-03-30T07:57:43.019Z
+Stopped at: Completed 18-03-PLAN.md
 Resume file: None
