@@ -17,6 +17,7 @@ import {
 } from "@/store/workspace-store";
 import { useHydration } from "@/hooks/use-hydration";
 import { DockCollapseButton } from "./dock-collapse-button";
+import { WorkflowStepper } from "./workflow-stepper";
 import type { Layout } from "react-resizable-panels";
 
 // Stable panel IDs for layout persistence
@@ -63,6 +64,9 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
 
   return (
     <div className="flex h-full w-full flex-col">
+      {/* Workflow stepper — horizontal breadcrumb at the very top, above toolbar */}
+      <WorkflowStepper />
+
       {/* Main resizable panel group */}
       <ResizablePanelGroup
         orientation="horizontal"
