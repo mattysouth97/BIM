@@ -22,6 +22,7 @@ import { WorkflowStepper } from "./workflow-stepper";
 import { PropertiesPanel } from "./properties-panel";
 import { SceneOutliner } from "./scene-outliner";
 import { ComponentCatalog } from "./component-catalog";
+import { StatusBar } from "./status-bar";
 import { Separator } from "@/components/ui/separator";
 import type { Layout } from "react-resizable-panels";
 
@@ -172,10 +173,8 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
 
       {/* Bottom shelf — collapsible div below the panel group */}
       {bottomShelfOpen && (
-        <div className="h-10 shrink-0 border-t bg-muted/30 flex items-center px-4">
-          <span className="text-xs text-muted-foreground">
-            Status bar (Phase 18)
-          </span>
+        <div className="h-10 shrink-0 border-t bg-muted/30">
+          <StatusBar buildingPk="" />
         </div>
       )}
     </div>
