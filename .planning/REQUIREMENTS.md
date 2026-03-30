@@ -21,7 +21,7 @@ Requirements for UX Workflow Overhaul milestone. Each maps to roadmap phases.
 
 ### Contextual UI
 
-- [ ] **CTX-01**: User clicks a wall, component, or room and the right panel immediately shows its properties
+- [x] **CTX-01**: User clicks a wall, component, or room and the right panel immediately shows its properties
 - [x] **CTX-02**: User sees toolbar items that change based on the current workflow stage
 - [x] **CTX-03**: Existing viewer-overlay.tsx is decomposed into stage-keyed toolbar configs
 
@@ -33,8 +33,8 @@ Requirements for UX Workflow Overhaul milestone. Each maps to roadmap phases.
 
 ### Undo/Redo
 
-- [ ] **UNDO-01**: User can undo/redo authoring actions with Ctrl+Z / Ctrl+Y across wall drawing, component placement, and material edits
-- [ ] **UNDO-02**: Compound operations (e.g., draw wall + auto-detect rooms) undo as a single step
+- [x] **UNDO-01**: User can undo/redo authoring actions with Ctrl+Z / Ctrl+Y across wall drawing, component placement, and material edits
+- [x] **UNDO-02**: Compound operations (e.g., draw wall + auto-detect rooms) undo as a single step
 
 ### Energy Feedback
 
@@ -95,14 +95,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FLOW-01 | Phase 17 | Complete |
 | FLOW-02 | Phase 16 | Complete |
 | FLOW-03 | Phase 18 | Pending |
-| CTX-01 | Phase 17 | Pending |
+| CTX-01 | Phase 17 | Complete |
 | CTX-02 | Phase 16 | Complete |
 | CTX-03 | Phase 16 | Complete |
 | DISC-01 | Phase 17 | Pending |
 | DISC-02 | Phase 17 | Pending |
 | DISC-03 | Phase 18 | Pending |
-| UNDO-01 | Phase 17 | Pending |
-| UNDO-02 | Phase 17 | Pending |
+| UNDO-01 | Phase 17 | Complete |
+| UNDO-02 | Phase 17 | Complete |
 | ENRG-01 | Phase 18 | Pending |
 | ENRG-02 | Phase 18 | Pending |
 | ENRG-03 | Phase 18 | Pending |

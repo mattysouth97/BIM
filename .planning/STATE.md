@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: UX Workflow Overhaul
 status: executing
-stopped_at: Phase 17 Plan 02 (17-02) complete. Plan 03 of 5 next.
-last_updated: "2026-03-30T05:50:07.500Z"
+stopped_at: Phase 17 Plan 03 (17-03) complete. Plan 04 of 5 next.
+last_updated: "2026-03-30T05:56:37.688Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 13
-  completed_plans: 10
+  completed_plans: 11
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 17 (Panel Content + Workflow Stepper) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-03-30
 
@@ -59,6 +59,7 @@ Progress: [██████████] 100%
 | Phase 16-contextual-toolbar-migration P03 | 20 | 2 tasks | 2 files |
 | Phase 17-panel-content-workflow-stepper P01 | 8 | 2 tasks | 3 files |
 | Phase 17-panel-content-workflow-stepper P02 | 245 | 2 tasks | 6 files |
+| Phase 17-panel-content-workflow-stepper P03 | 12 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,8 @@ Progress: [██████████] 100%
 - [Phase 17-panel-content-workflow-stepper]: WorkflowStepper uses defineStepper() for type-safe step defs but drives visual state from useWorkflowStore — stepperize navigation state intentionally unused (DAG model)
 - [Phase 17-panel-content-workflow-stepper]: Selection store is NOT persisted — transient, resets on page load
 - [Phase 17-panel-content-workflow-stepper]: WallSegment.thermalConductivity added as optional field with default 0.5 W/m·K per D-06
+- [Phase 17-panel-content-workflow-stepper]: commandHistory singleton exported from use-undo-shortcut.ts — single global undo stack shared by all authoring tools
+- [Phase 17-panel-content-workflow-stepper]: beginCompound/execute/commitCompound pattern used for wall+room atomic undo (not CompoundCommand constructor)
 
 ### Pending Todos
 
@@ -102,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T05:50:07.497Z
-Stopped at: Phase 17 Plan 02 (17-02) complete. Plan 03 of 5 next.
+Last session: 2026-03-30T05:56:37.685Z
+Stopped at: Phase 17 Plan 03 (17-03) complete. Plan 04 of 5 next.
 Resume file: None
