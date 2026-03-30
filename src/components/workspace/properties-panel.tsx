@@ -5,11 +5,13 @@ import { MousePointerClick, Ruler, Box, Component } from "lucide-react";
 import { useSelectionStore } from "@/store/selection-store";
 import { usePlanStore } from "@/store/plan-store";
 import { useComponentStore } from "@/store/component-store";
+import { useEnergyDelta } from "@/hooks/use-energy-delta";
 import { ROOM_TYPES, type RoomType } from "@/lib/plan/room-types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -22,9 +24,16 @@ import {
 // Wall properties editor
 // ─────────────────────────────────────────────────────────────────────────────
 
-function WallProperties({ wallId }: { wallId: string }) {
+function WallProperties({
+  wallId,
+  buildingPk,
+}: {
+  wallId: string;
+  buildingPk: string | null;
+}) {
   const wall = usePlanStore((s) => s.walls.find((w) => w.id === wallId));
   const updateWall = usePlanStore((s) => s.updateWall);
+  const energyDelta = useEnergyDelta(buildingPk ?? "");
 
   if (!wall) {
     return (
@@ -96,17 +105,32 @@ function WallProperties({ wallId }: { wallId: string }) {
         />
       </div>
 
-      {/* Editable: thermal conductivity */}
+      {/* Editable: thermal conductivity — energy-affecting slider with delta annotation */}
       <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">
-          Thermal Conductivity (W/m·K)
-        </Label>
+        <div className="flex items-center gap-1">
+          <Label className="text-xs text-muted-foreground">
+            Thermal Conductivity (W/m·K)
+          </Label>
+          {energyDelta.demandDelta !== null && (
+            <span
+              className={cn(
+                "text-[10px] font-medium tabular-nums ml-2 transition-opacity duration-300",
+                energyDelta.isImprovement ? "text-green-600" : "text-amber-600"
+              )}
+            >
+              {energyDelta.demandDelta > 0 ? "+" : ""}
+              {energyDelta.demandDelta.toFixed(1)} kWh/m²
+            </span>
+          )}
+        </div>
         <Input
           type="number"
           min={0.01}
           max={10}
           step={0.01}
           value={conductivity}
+          onFocus={() => energyDelta.snapshot()}
+          onPointerDown={() => energyDelta.snapshot()}
           onChange={(e) => {
             const v = parseFloat(e.target.value);
             if (!isNaN(v) && v > 0) updateWall(wall.id, { thermalConductivity: v });
@@ -368,7 +392,7 @@ export function PropertiesPanel() {
   }
 
   if (selectedType === "wall") {
-    return <WallProperties wallId={selectedId} />;
+    return <WallProperties wallId={selectedId} buildingPk={buildingPk} />;
   }
 
   if (selectedType === "room") {
