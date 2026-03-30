@@ -11,6 +11,8 @@ export interface WallSegment {
   thickness: number; // meters, default 0.2
   height: number; // meters, default 3.0
   floor: number;
+  /** Thermal conductivity W/m·K — default 0.5 */
+  thermalConductivity?: number;
 }
 
 export interface Opening {
@@ -55,6 +57,7 @@ interface PlanState {
 
   addWall: (wall: WallSegment) => void;
   removeWall: (id: string) => void;
+  updateWall: (id: string, patch: Partial<WallSegment>) => void;
   setViewMode: (mode: "3d" | "plan") => void;
   startDrawing: (start: [number, number]) => void;
   cancelDrawing: () => void;
@@ -106,6 +109,11 @@ export const usePlanStore = create<PlanState>()((set) => ({
 
   removeWall: (id) =>
     set((state) => ({ walls: state.walls.filter((w) => w.id !== id) })),
+
+  updateWall: (id, patch) =>
+    set((state) => ({
+      walls: state.walls.map((w) => (w.id === id ? { ...w, ...patch } : w)),
+    })),
 
   setViewMode: (mode) =>
     set({ viewMode: mode, drawingWall: null }),
