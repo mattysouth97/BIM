@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: UX Workflow Overhaul
-status: verifying
-stopped_at: Completed 17-05-PLAN.md — Phase 17 complete
-last_updated: "2026-03-30T06:11:33.560Z"
+status: executing
+stopped_at: Completed 18-01-PLAN.md
+last_updated: "2026-03-30T07:52:46.445Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 16
+  completed_plans: 14
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** Structurally accurate 3D building visualization with intuitive guided authoring for energy simulation
-**Current focus:** Phase 17 — Panel Content + Workflow Stepper
+**Current focus:** Phase 18 — Guidance + Energy Feedback
 
 ## Current Position
 
-Phase: 18
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 18 (Guidance + Energy Feedback) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-03-30
 
 Progress: [██████████] 100%
@@ -62,6 +62,7 @@ Progress: [██████████] 100%
 | Phase 17-panel-content-workflow-stepper P03 | 12 | 2 tasks | 8 files |
 | Phase 17-panel-content-workflow-stepper P04 | 129 | 2 tasks | 3 files |
 | Phase 17-panel-content-workflow-stepper P05 | 5 | 2 tasks | 0 files |
+| Phase 18-guidance-energy-feedback P01 | 8 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,8 @@ Progress: [██████████] 100%
 - [Phase 17-panel-content-workflow-stepper]: SceneOutliner shows placed components under Floor 1 only (no floor property on PlacedComponent) — avoids duplication across floors
 - [Phase 17-panel-content-workflow-stepper]: buildingPk='' placeholder in WorkspaceShell left dock — wired to actual PK in future integration phase
 - [Phase 17-panel-content-workflow-stepper]: Build passes with zero type errors — all Phase 17 components compile correctly and all import wiring verified
+- [Phase 18-guidance-energy-feedback]: REGIONAL_CLIMATE table uses 2-digit sido prefix as key — matches GROUND_TEMPERATURES pattern in korean-building-codes.ts
+- [Phase 18-guidance-energy-feedback]: StatusBar uses buildingPk='' placeholder in WorkspaceShell — same pattern as SceneOutliner, wired in integration phase
 
 ### Pending Todos
 
@@ -110,6 +113,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T06:06:16.322Z
-Stopped at: Completed 17-05-PLAN.md — Phase 17 complete
+Last session: 2026-03-30T07:52:46.439Z
+Stopped at: Completed 18-01-PLAN.md
 Resume file: None

@@ -123,9 +123,9 @@ Plans:
   3. A persistent energy status bar shows live kWh/m² that updates within one second of any property change in the configure panel
   4. Property sliders in the configure panel display an inline delta annotation (e.g., "+4.2 kWh/m²") showing the energy impact of the pending change before it is committed
   5. Energy calculations use heating/cooling degree days for the building's actual region (not Seoul HDD defaults); buildings in Busan, Daegu, and Incheon show different baseline kWh/m² values
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 Plans:
-- [ ] 18-01-PLAN.md — Regional climate data + status bar (prompts + energy display)
+- [x] 18-01-PLAN.md — Regional climate data + status bar (prompts + energy display)
 - [ ] 18-02-PLAN.md — driver.js onboarding tour
 - [ ] 18-03-PLAN.md — Energy delta annotations on property sliders
 **UI hint**: yes
@@ -143,4 +143,4 @@ Plans:
 | 15. Workspace Shell Layout | v3.0 | 2/2 | Complete    | 2026-03-30 |
 | 16. Contextual Toolbar Migration | v3.0 | 3/3 | Complete   | 2026-03-30 |
 | 17. Panel Content + Workflow Stepper | v3.0 | 5/5 | Complete    | 2026-03-30 |
-| 18. Guidance + Energy Feedback | v3.0 | 0/3 | Not started | - |
+| 18. Guidance + Energy Feedback | v3.0 | 1/3 | In Progress|  |

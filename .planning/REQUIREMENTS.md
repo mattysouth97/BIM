@@ -17,7 +17,7 @@ Requirements for UX Workflow Overhaul milestone. Each maps to roadmap phases.
 
 - [x] **FLOW-01**: User sees a guided authoring stepper showing 5 stages: Select Building → Assemble → Configure → Analyze → Export
 - [x] **FLOW-02**: User sees a persistent mode indicator showing the current tool/action (e.g., "Draw Wall", "Place Door")
-- [ ] **FLOW-03**: User sees a status bar with contextual one-line prompts (e.g., "Click to place — Escape to cancel")
+- [x] **FLOW-03**: User sees a status bar with contextual one-line prompts (e.g., "Click to place — Escape to cancel")
 
 ### Contextual UI
 
@@ -38,9 +38,9 @@ Requirements for UX Workflow Overhaul milestone. Each maps to roadmap phases.
 
 ### Energy Feedback
 
-- [ ] **ENRG-01**: User sees a persistent energy status bar showing live kWh/m² as properties change
+- [x] **ENRG-01**: User sees a persistent energy status bar showing live kWh/m² as properties change
 - [ ] **ENRG-02**: User sees inline delta annotations on property sliders showing energy impact of changes
-- [ ] **ENRG-03**: Energy calculations use regional climate data (not Seoul-only HDD)
+- [x] **ENRG-03**: Energy calculations use regional climate data (not Seoul-only HDD)
 
 ## v3.1+ Requirements
 
@@ -94,7 +94,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LAYOUT-03 | Phase 15 | Complete |
 | FLOW-01 | Phase 17 | Complete |
 | FLOW-02 | Phase 16 | Complete |
-| FLOW-03 | Phase 18 | Pending |
+| FLOW-03 | Phase 18 | Complete |
 | CTX-01 | Phase 17 | Complete |
 | CTX-02 | Phase 16 | Complete |
 | CTX-03 | Phase 16 | Complete |
@@ -103,9 +103,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DISC-03 | Phase 18 | Pending |
 | UNDO-01 | Phase 17 | Complete |
 | UNDO-02 | Phase 17 | Complete |
-| ENRG-01 | Phase 18 | Pending |
+| ENRG-01 | Phase 18 | Complete |
 | ENRG-02 | Phase 18 | Pending |
-| ENRG-03 | Phase 18 | Pending |
+| ENRG-03 | Phase 18 | Complete |
 
 **Coverage:**
 - v3.0 requirements: 17 total
