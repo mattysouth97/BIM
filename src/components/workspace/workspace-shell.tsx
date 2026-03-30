@@ -20,6 +20,9 @@ import { useUndoShortcut } from "@/hooks/use-undo-shortcut";
 import { DockCollapseButton } from "./dock-collapse-button";
 import { WorkflowStepper } from "./workflow-stepper";
 import { PropertiesPanel } from "./properties-panel";
+import { SceneOutliner } from "./scene-outliner";
+import { ComponentCatalog } from "./component-catalog";
+import { Separator } from "@/components/ui/separator";
 import type { Layout } from "react-resizable-panels";
 
 // Stable panel IDs for layout persistence
@@ -87,7 +90,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
           <div className="flex h-full flex-col border-r bg-background pointer-events-auto">
             <div className="flex items-center justify-between border-b px-3 py-2">
               <span className="text-xs font-medium text-muted-foreground">
-                Left dock (Phase 17)
+                Scene
               </span>
               <DockCollapseButton
                 side="left"
@@ -95,7 +98,11 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
                 onClick={toggleLeftDock}
               />
             </div>
-            <div className="flex-1 overflow-auto p-2" />
+            <div className="flex-1 overflow-auto">
+              <SceneOutliner buildingPk="" />
+              <Separator />
+              <ComponentCatalog />
+            </div>
           </div>
         </ResizablePanel>
 
