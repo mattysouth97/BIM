@@ -4,7 +4,7 @@ milestone: v3.0
 milestone_name: UX Workflow Overhaul
 status: verifying
 stopped_at: Completed 15-02-PLAN.md — WorkspaceShell wired into building detail page
-last_updated: "2026-03-30T03:06:26.816Z"
+last_updated: "2026-03-30T03:09:50.427Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 5
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Position
 
-Phase: 15 (Workspace Shell Layout) — EXECUTING
-Plan: 2 of 2
+Phase: 16
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-03-30
 

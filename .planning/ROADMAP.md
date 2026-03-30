@@ -127,7 +127,7 @@ Plans:
 | 12 | v2.0 | 2/2 | Complete | 2026-03-28 |
 | 13 | v2.0 | 2/2 | Complete | 2026-03-28 |
 | 14. Workflow State Foundation | v3.0 | 3/3 | Complete    | 2026-03-30 |
-| 15. Workspace Shell Layout | v3.0 | 2/2 | Complete   | 2026-03-30 |
+| 15. Workspace Shell Layout | v3.0 | 2/2 | Complete    | 2026-03-30 |
 | 16. Contextual Toolbar Migration | v3.0 | 0/TBD | Not started | - |
 | 17. Panel Content + Workflow Stepper | v3.0 | 0/TBD | Not started | - |
 | 18. Guidance + Energy Feedback | v3.0 | 0/TBD | Not started | - |
