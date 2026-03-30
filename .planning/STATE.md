@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: UX Workflow Overhaul
 status: verifying
-stopped_at: Completed 16-02-PLAN.md — viewer-overlay.tsx deleted, ContextualToolbar wired
-last_updated: "2026-03-30T03:45:16.501Z"
+stopped_at: Completed 16-03-PLAN.md — TOOLBAR_CONFIGS[stage] wired into contextual-toolbar.tsx
+last_updated: "2026-03-30T04:02:08.603Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 8
+  completed_plans: 8
   percent: 100
 ---
 
@@ -56,6 +56,7 @@ Progress: [██████████] 100%
 | Phase 15-workspace-shell-layout P02 | 5 | 1 tasks | 1 files |
 | Phase 16-contextual-toolbar-migration P01 | 230 | 2 tasks | 2 files |
 | Phase 16-contextual-toolbar-migration P02 | 8 | 4 tasks | 3 files |
+| Phase 16-contextual-toolbar-migration P03 | 20 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,8 @@ Progress: [██████████] 100%
 - [Phase 16-contextual-toolbar-migration]: TOOLBAR_CONFIGS select and export stages are empty arrays — GlobalToolbarSection covers all stages without duplication
 - [Phase 16-contextual-toolbar-migration]: Panel state extracted to workspace-store, not persisted — resets on page load by design
 - [Phase 16-contextual-toolbar-migration]: BuildingScene uses flex-col layout: ContextualToolbar strip above, viewport div fills remaining space
+- [Phase 16-contextual-toolbar-migration]: TOOLBAR_CONFIGS[stage] is the live rendering driver for toolbar strip buttons — data-driven contract established
+- [Phase 16-contextual-toolbar-migration]: Store dispatch uses getState() pattern per D-07 — no store imports in toolbar-configs.ts
 
 ### Pending Todos
 
@@ -93,6 +96,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T03:45:16.499Z
-Stopped at: Completed 16-02-PLAN.md — viewer-overlay.tsx deleted, ContextualToolbar wired
+Last session: 2026-03-30T04:02:08.601Z
+Stopped at: Completed 16-03-PLAN.md — TOOLBAR_CONFIGS[stage] wired into contextual-toolbar.tsx
 Resume file: None
