@@ -9,9 +9,9 @@ Requirements for UX Workflow Overhaul milestone. Each maps to roadmap phases.
 
 ### Workspace Layout
 
-- [ ] **LAYOUT-01**: User sees a viewport-dominant layout with the 3D view as the primary element and panels docked around it
-- [ ] **LAYOUT-02**: User can resize left, right, and bottom dock panels by dragging
-- [ ] **LAYOUT-03**: User can collapse/expand dock panels to maximize viewport space
+- [x] **LAYOUT-01**: User sees a viewport-dominant layout with the 3D view as the primary element and panels docked around it
+- [x] **LAYOUT-02**: User can resize left, right, and bottom dock panels by dragging
+- [x] **LAYOUT-03**: User can collapse/expand dock panels to maximize viewport space
 
 ### Workflow Pipeline
 
@@ -89,9 +89,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LAYOUT-01 | Phase 15 | Pending |
-| LAYOUT-02 | Phase 15 | Pending |
-| LAYOUT-03 | Phase 15 | Pending |
+| LAYOUT-01 | Phase 15 | Complete |
+| LAYOUT-02 | Phase 15 | Complete |
+| LAYOUT-03 | Phase 15 | Complete |
 | FLOW-01 | Phase 17 | Pending |
 | FLOW-02 | Phase 16 | Pending |
 | FLOW-03 | Phase 18 | Pending |
