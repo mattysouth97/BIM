@@ -15,7 +15,7 @@ Requirements for UX Workflow Overhaul milestone. Each maps to roadmap phases.
 
 ### Workflow Pipeline
 
-- [ ] **FLOW-01**: User sees a guided authoring stepper showing 5 stages: Select Building → Assemble → Configure → Analyze → Export
+- [x] **FLOW-01**: User sees a guided authoring stepper showing 5 stages: Select Building → Assemble → Configure → Analyze → Export
 - [x] **FLOW-02**: User sees a persistent mode indicator showing the current tool/action (e.g., "Draw Wall", "Place Door")
 - [ ] **FLOW-03**: User sees a status bar with contextual one-line prompts (e.g., "Click to place — Escape to cancel")
 
@@ -92,7 +92,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LAYOUT-01 | Phase 15 | Complete |
 | LAYOUT-02 | Phase 15 | Complete |
 | LAYOUT-03 | Phase 15 | Complete |
-| FLOW-01 | Phase 17 | Pending |
+| FLOW-01 | Phase 17 | Complete |
 | FLOW-02 | Phase 16 | Complete |
 | FLOW-03 | Phase 18 | Pending |
 | CTX-01 | Phase 17 | Pending |

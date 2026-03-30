@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: UX Workflow Overhaul
-status: verifying
-stopped_at: Phase 16 gap closure (16-03) executed. Needs re-verification then phase completion. Phases 17-18 remain.
-last_updated: "2026-03-30T04:03:04.419Z"
+status: executing
+stopped_at: Phase 17 Plan 01 (17-01) complete. Plan 02 of 5 next.
+last_updated: "2026-03-30T04:29:16.929Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 13
+  completed_plans: 9
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** Structurally accurate 3D building visualization with intuitive guided authoring for energy simulation
-**Current focus:** Phase 16 — Contextual Toolbar Migration
+**Current focus:** Phase 17 — Panel Content + Workflow Stepper
 
 ## Current Position
 
-Phase: 16 (Contextual Toolbar Migration) — EXECUTING
-Plan: 2 of 2
-Status: Phase complete — ready for verification
+Phase: 17 (Panel Content + Workflow Stepper) — EXECUTING
+Plan: 2 of 5
+Status: Ready to execute
 Last activity: 2026-03-30
 
 Progress: [██████████] 100%
@@ -57,6 +57,7 @@ Progress: [██████████] 100%
 | Phase 16-contextual-toolbar-migration P01 | 230 | 2 tasks | 2 files |
 | Phase 16-contextual-toolbar-migration P02 | 8 | 4 tasks | 3 files |
 | Phase 16-contextual-toolbar-migration P03 | 20 | 2 tasks | 2 files |
+| Phase 17-panel-content-workflow-stepper P01 | 8 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Progress: [██████████] 100%
 - [Phase 16-contextual-toolbar-migration]: BuildingScene uses flex-col layout: ContextualToolbar strip above, viewport div fills remaining space
 - [Phase 16-contextual-toolbar-migration]: TOOLBAR_CONFIGS[stage] is the live rendering driver for toolbar strip buttons — data-driven contract established
 - [Phase 16-contextual-toolbar-migration]: Store dispatch uses getState() pattern per D-07 — no store imports in toolbar-configs.ts
+- [Phase 17-panel-content-workflow-stepper]: stepperize package is scoped as @stepperize/react (v6.1.0) — plan references bare name stepperize which is not on npm
+- [Phase 17-panel-content-workflow-stepper]: WorkflowStepper uses defineStepper() for type-safe step defs but drives visual state from useWorkflowStore — stepperize navigation state intentionally unused (DAG model)
 
 ### Pending Todos
 
@@ -96,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T04:03:04.416Z
-Stopped at: Phase 16 gap closure (16-03) executed. Needs re-verification then phase completion. Phases 17-18 remain.
-Resume file: .planning/phases/16-contextual-toolbar-migration/16-03-SUMMARY.md
+Last session: 2026-03-30T04:29:16.926Z
+Stopped at: Phase 17 Plan 01 (17-01) complete. Plan 02 of 5 next.
+Resume file: None
