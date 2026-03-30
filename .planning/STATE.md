@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: UX Workflow Overhaul
-status: executing
-stopped_at: Completed 15-01-PLAN.md — WorkspaceShell with resizable docks
-last_updated: "2026-03-30T03:03:22.979Z"
+status: verifying
+stopped_at: Completed 15-02-PLAN.md — WorkspaceShell wired into building detail page
+last_updated: "2026-03-30T03:06:26.816Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
   percent: 100
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 Phase: 15 (Workspace Shell Layout) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-30
 
 Progress: [██████████] 100%
@@ -53,6 +53,7 @@ Progress: [██████████] 100%
 | Phase 14-workflow-state-foundation P01 | 15 | 1 tasks | 4 files |
 | Phase 14-workflow-state-foundation P03 | 2 | 1 tasks | 3 files |
 | Phase 15-workspace-shell-layout P01 | 15 | 2 tasks | 5 files |
+| Phase 15-workspace-shell-layout P02 | 5 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,8 @@ Progress: [██████████] 100%
 - [Phase 14-workflow-state-foundation]: Nested beginCompound() throws an error (no nesting allowed) — simpler than TransactionGroup nesting
 - [Phase 15-workspace-shell-layout]: react-resizable-panels v4 uses Group/Panel/Separator (not PanelGroup/PanelResizeHandle) — resizable.tsx adapted for v4 API with stable panel IDs for onLayoutChanged
 - [Phase 15-workspace-shell-layout]: Dock collapse uses className=hidden (not conditional JSX) — panels stay mounted to preserve size on re-expand
+- [Phase 15-workspace-shell-layout]: DashboardPanel removed from page.tsx — recap/areas data fetching also removed, content migrates to Phase 17 dock slots
+- [Phase 15-workspace-shell-layout]: WorkspaceShell page pattern: toolbar h-12 outside, WorkspaceShell wraps viewport content as children
 
 ### Pending Todos
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T03:03:22.976Z
-Stopped at: Completed 15-01-PLAN.md — WorkspaceShell with resizable docks
+Last session: 2026-03-30T03:06:26.813Z
+Stopped at: Completed 15-02-PLAN.md — WorkspaceShell wired into building detail page
 Resume file: None

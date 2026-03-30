@@ -39,7 +39,7 @@
 **Milestone Goal:** Redesign the post-selection authoring experience into a guided-but-flexible IDE-style workspace with viewport-dominant layout, contextual toolbars, dockable panels, workflow stepper, undo/redo, and live energy feedback.
 
 - [x] **Phase 14: Workflow State Foundation** — FSM store, workspace store, command interface skeleton (completed 2026-03-29)
-- [ ] **Phase 15: Workspace Shell Layout** — Viewport-dominant dock layout with resizable panels
+- [x] **Phase 15: Workspace Shell Layout** — Viewport-dominant dock layout with resizable panels (completed 2026-03-30)
 - [ ] **Phase 16: Contextual Toolbar Migration** — Stage-keyed toolbar configs replacing viewer-overlay.tsx
 - [ ] **Phase 17: Panel Content + Workflow Stepper** — Filled dock panels, stepper nav, undo/redo, component catalog
 - [ ] **Phase 18: Guidance + Energy Feedback** — Status bar, onboarding tour, live energy display
@@ -72,10 +72,10 @@ Plans:
   3. User can drag the divider between the viewport and the right dock to resize them
   4. User can click a collapse button on the left dock to hide it entirely and reclaim the space for the viewport
   5. User can click a collapse button on the right dock to hide it entirely; clicking again restores it to its previous size
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 15-01-PLAN.md — Install react-resizable-panels + create WorkspaceShell component
-- [ ] 15-02-PLAN.md — Wire WorkspaceShell into building detail page + visual verification
+- [x] 15-02-PLAN.md — Wire WorkspaceShell into building detail page + visual verification
 
 ### Phase 16: Contextual Toolbar Migration
 **Goal**: The toolbar reflects the current workflow stage and viewer-overlay.tsx no longer exists as a monolith
@@ -127,7 +127,7 @@ Plans:
 | 12 | v2.0 | 2/2 | Complete | 2026-03-28 |
 | 13 | v2.0 | 2/2 | Complete | 2026-03-28 |
 | 14. Workflow State Foundation | v3.0 | 3/3 | Complete    | 2026-03-30 |
-| 15. Workspace Shell Layout | v3.0 | 1/2 | In Progress|  |
+| 15. Workspace Shell Layout | v3.0 | 2/2 | Complete   | 2026-03-30 |
 | 16. Contextual Toolbar Migration | v3.0 | 0/TBD | Not started | - |
 | 17. Panel Content + Workflow Stepper | v3.0 | 0/TBD | Not started | - |
 | 18. Guidance + Energy Feedback | v3.0 | 0/TBD | Not started | - |
