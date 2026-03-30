@@ -14,12 +14,16 @@ import { inferMaterialProperties } from "@/lib/material-inference";
 import { saveModel, loadModel } from "@/lib/model-storage";
 import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
+import { useWorkspaceStore } from "@/store/workspace-store";
 import { applyOverrides } from "@/lib/procedural/recipe";
 import { useBuildingFootprint } from "@/hooks/use-building-footprint";
+import { useAppStore } from "@/store/app-store";
+import { usePlanStore } from "@/store/plan-store";
+import { formatArea } from "@/lib/constants";
 import { ProceduralBuildingModel } from "./procedural-building-model";
 import { BuildingLayers } from "./building-layers";
 import { SceneControls, type SceneControlsRef } from "./scene-controls";
-import { ViewerOverlay } from "./viewer-overlay";
+import { ContextualToolbar } from "@/components/workspace/contextual-toolbar";
 import { ConfigPanel } from "./config-panel";
 import { LayerPanel } from "./layer-panel";
 import { ModelUploader } from "./model-uploader";
@@ -142,10 +146,15 @@ interface BuildingSceneProps {
 
 export function BuildingScene({ title, floors }: BuildingSceneProps) {
   const [selectedFloor, setSelectedFloor] = useState<FloorGeometry | null>(null);
-  const [configPanelOpen, setConfigPanelOpen] = useState(false);
-  const [layerPanelOpen, setLayerPanelOpen] = useState(false);
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [modelSource, setModelSource] = useState<ModelSource>("parametric");
+
+  // Panel open state — extracted to workspace-store per D-06
+  const configPanelOpen = useWorkspaceStore((s) => s.configPanelOpen);
+  const layerPanelOpen = useWorkspaceStore((s) => s.layerPanelOpen);
+  const uploadDialogOpen = useWorkspaceStore((s) => s.uploadDialogOpen);
+  const setConfigPanelOpen = useWorkspaceStore((s) => s.setConfigPanelOpen);
+  const setLayerPanelOpen = useWorkspaceStore((s) => s.setLayerPanelOpen);
+  const setUploadDialogOpen = useWorkspaceStore((s) => s.setUploadDialogOpen);
   const [uploadedModel, setUploadedModel] = useState<{
     buffer: ArrayBuffer;
     fileName: string;
@@ -258,6 +267,9 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isAuthoring, undoAction, redoAction]);
 
+  const isKo = useAppStore((s) => s.language) === "ko";
+  const viewMode = usePlanStore((s) => s.viewMode);
+
   const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 1.8;
 
   const handleViewChange = (view: "front" | "side" | "top" | "iso") => {
@@ -265,7 +277,25 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
   };
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
+    <div className="relative h-full w-full overflow-hidden flex flex-col">
+      {/* Contextual toolbar strip — replaces ViewerOverlay */}
+      <ContextualToolbar
+        onViewChange={handleViewChange}
+        onToggleConfigPanel={() => setConfigPanelOpen(!configPanelOpen)}
+        configPanelOpen={configPanelOpen}
+        onToggleLayerPanel={() => setLayerPanelOpen(!layerPanelOpen)}
+        layerPanelOpen={layerPanelOpen}
+        modelSource={modelSource}
+        hasUploadedModel={!!uploadedModel}
+        onToggleModelSource={handleToggleModelSource}
+        onUploadClick={() => setUploadDialogOpen(true)}
+        buildingName={geometry.buildingName}
+        era={geometry.era}
+        selectedFloor={modelSource === "parametric" ? selectedFloor : null}
+      />
+
+      {/* 3D Canvas — fills remaining space */}
+      <div className="relative flex-1 min-h-0">
       <ViewerErrorBoundary>
       <Canvas
         camera={{
@@ -359,20 +389,32 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
       </Canvas>
       </ViewerErrorBoundary>
 
-      <ViewerOverlay
-        selectedFloor={modelSource === "parametric" ? selectedFloor : null}
-        buildingName={geometry.buildingName}
-        era={geometry.era}
-        onViewChange={handleViewChange}
-        onToggleConfigPanel={() => setConfigPanelOpen(!configPanelOpen)}
-        configPanelOpen={configPanelOpen}
-        onToggleLayerPanel={() => setLayerPanelOpen(!layerPanelOpen)}
-        layerPanelOpen={layerPanelOpen}
-        modelSource={modelSource}
-        hasUploadedModel={!!uploadedModel}
-        onToggleModelSource={handleToggleModelSource}
-        onUploadClick={() => setUploadDialogOpen(true)}
-      />
+      {/* Floor info overlay — bottom-left, kept as viewport overlay */}
+      {selectedFloor && modelSource === "parametric" && (
+        <div className="absolute bottom-3 left-3 z-10 rounded-lg border bg-card/95 backdrop-blur p-3 shadow-lg max-w-xs">
+          <p className="text-sm font-semibold">
+            {selectedFloor.label}
+            <span className="ml-2 text-xs font-normal text-muted-foreground">
+              ({selectedFloor.type === "below" ? (isKo ? "지하" : "Underground") : (isKo ? "지상" : "Above ground")})
+            </span>
+          </p>
+          <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+            <span>{isKo ? "면적" : "Area"}</span>
+            <span className="font-medium text-foreground">{formatArea(selectedFloor.area)}</span>
+            <span>{isKo ? "용도" : "Use"}</span>
+            <span className="font-medium text-foreground">{selectedFloor.use || "-"}</span>
+            <span>{isKo ? "구조" : "Structure"}</span>
+            <span className="font-medium text-foreground">{selectedFloor.structure || "-"}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Instructions text — bottom-right */}
+      <div className="absolute bottom-3 right-3 z-10 text-[10px] text-muted-foreground/60">
+        {viewMode === "plan"
+          ? (isKo ? "클릭: 벽 그리기 · 스크롤: 줌 · ESC: 취소" : "Click: draw wall · Scroll: zoom · ESC: cancel")
+          : (isKo ? "클릭: 층 선택 · 드래그: 회전 · 스크롤: 줌" : "Click: select floor · Drag: rotate · Scroll: zoom")}
+      </div>
 
       {/* Energy metric cards — bottom-left, visible when building loaded */}
       {modelSource === "parametric" && (
@@ -410,6 +452,7 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
         onOpenChange={setUploadDialogOpen}
         onFileLoaded={handleFileLoaded}
       />
+      </div>
     </div>
   );
 }
