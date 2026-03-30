@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: UX Workflow Overhaul
-status: verifying
-stopped_at: Completed 15-02-PLAN.md — WorkspaceShell wired into building detail page
-last_updated: "2026-03-30T03:09:50.427Z"
+status: executing
+stopped_at: Completed 16-01-PLAN.md — toolbar-configs.ts and contextual-toolbar.tsx created
+last_updated: "2026-03-30T03:39:27.727Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** Structurally accurate 3D building visualization with intuitive guided authoring for energy simulation
-**Current focus:** Phase 15 — Workspace Shell Layout
+**Current focus:** Phase 16 — Contextual Toolbar Migration
 
 ## Current Position
 
-Phase: 16
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 16 (Contextual Toolbar Migration) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-30
 
 Progress: [██████████] 100%
@@ -54,6 +54,7 @@ Progress: [██████████] 100%
 | Phase 14-workflow-state-foundation P03 | 2 | 1 tasks | 3 files |
 | Phase 15-workspace-shell-layout P01 | 15 | 2 tasks | 5 files |
 | Phase 15-workspace-shell-layout P02 | 5 | 1 tasks | 1 files |
+| Phase 16-contextual-toolbar-migration P01 | 230 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Progress: [██████████] 100%
 - [Phase 15-workspace-shell-layout]: Dock collapse uses className=hidden (not conditional JSX) — panels stay mounted to preserve size on re-expand
 - [Phase 15-workspace-shell-layout]: DashboardPanel removed from page.tsx — recap/areas data fetching also removed, content migrates to Phase 17 dock slots
 - [Phase 15-workspace-shell-layout]: WorkspaceShell page pattern: toolbar h-12 outside, WorkspaceShell wraps viewport content as children
+- [Phase 16-contextual-toolbar-migration]: Plan-view sub-panels use absolute positioning below toolbar strip (h-10) rather than inline toolbar items — preserves fixed height and matches viewer-overlay.tsx positional patterns
+- [Phase 16-contextual-toolbar-migration]: TOOLBAR_CONFIGS select and export stages are empty arrays — GlobalToolbarSection covers all stages without duplication
 
 ### Pending Todos
 
@@ -87,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-30T03:06:26.813Z
-Stopped at: Completed 15-02-PLAN.md — WorkspaceShell wired into building detail page
+Last session: 2026-03-30T03:39:27.724Z
+Stopped at: Completed 16-01-PLAN.md — toolbar-configs.ts and contextual-toolbar.tsx created
 Resume file: None

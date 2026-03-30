@@ -16,14 +16,14 @@ Requirements for UX Workflow Overhaul milestone. Each maps to roadmap phases.
 ### Workflow Pipeline
 
 - [ ] **FLOW-01**: User sees a guided authoring stepper showing 5 stages: Select Building → Assemble → Configure → Analyze → Export
-- [ ] **FLOW-02**: User sees a persistent mode indicator showing the current tool/action (e.g., "Draw Wall", "Place Door")
+- [x] **FLOW-02**: User sees a persistent mode indicator showing the current tool/action (e.g., "Draw Wall", "Place Door")
 - [ ] **FLOW-03**: User sees a status bar with contextual one-line prompts (e.g., "Click to place — Escape to cancel")
 
 ### Contextual UI
 
 - [ ] **CTX-01**: User clicks a wall, component, or room and the right panel immediately shows its properties
-- [ ] **CTX-02**: User sees toolbar items that change based on the current workflow stage
-- [ ] **CTX-03**: Existing viewer-overlay.tsx is decomposed into stage-keyed toolbar configs
+- [x] **CTX-02**: User sees toolbar items that change based on the current workflow stage
+- [x] **CTX-03**: Existing viewer-overlay.tsx is decomposed into stage-keyed toolbar configs
 
 ### Discoverability
 
@@ -93,11 +93,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LAYOUT-02 | Phase 15 | Complete |
 | LAYOUT-03 | Phase 15 | Complete |
 | FLOW-01 | Phase 17 | Pending |
-| FLOW-02 | Phase 16 | Pending |
+| FLOW-02 | Phase 16 | Complete |
 | FLOW-03 | Phase 18 | Pending |
 | CTX-01 | Phase 17 | Pending |
-| CTX-02 | Phase 16 | Pending |
-| CTX-03 | Phase 16 | Pending |
+| CTX-02 | Phase 16 | Complete |
+| CTX-03 | Phase 16 | Complete |
 | DISC-01 | Phase 17 | Pending |
 | DISC-02 | Phase 17 | Pending |
 | DISC-03 | Phase 18 | Pending |
