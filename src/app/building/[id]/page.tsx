@@ -4,7 +4,7 @@ import { use, lazy, Suspense } from "react";
 import { decodeBuildingId } from "@/lib/constants";
 import { useBuildingDetail } from "@/hooks/use-building-detail";
 import { BuildingToolbar } from "@/components/building/building-toolbar";
-import { DashboardPanel } from "@/components/building/dashboard-panel";
+import { WorkspaceShell } from "@/components/workspace/workspace-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 
@@ -40,9 +40,7 @@ export default function BuildingDetailPage({
     });
 
   const titleData = title?.items?.[0] ?? null;
-  const recapData = recap?.items?.[0] ?? null;
   const floorsData = floors?.items ?? [];
-  const areasData = areas?.items ?? [];
 
   // Prepare export data from floors
   const exportData = floorsData.map((f) => ({
@@ -68,49 +66,37 @@ export default function BuildingDetailPage({
         loading={isLoading}
       />
 
-      {/* Main content area */}
-      <div className="flex flex-1 min-h-0">
-        {/* 3D Viewer area */}
-        <main className="flex-1 relative min-w-0">
-          {/* Error overlay */}
-          {isError && (
-            <div className="absolute top-0 inset-x-0 z-10 m-3">
-              <div className="rounded-lg border border-destructive/50 bg-destructive/10 backdrop-blur p-3 text-sm text-destructive">
-                데이터를 불러오는 중 오류가 발생했습니다. (Error loading data.)
-                {errors
-                  .filter(Boolean)
-                  .map((e, i) => (
-                    <p key={i} className="mt-1 text-xs opacity-75">
-                      {e?.message}
-                    </p>
-                  ))}
-              </div>
+      {/* Workspace shell — viewport-dominant resizable layout */}
+      <WorkspaceShell>
+        {/* Error overlay */}
+        {isError && (
+          <div className="absolute top-0 inset-x-0 z-10 m-3">
+            <div className="rounded-lg border border-destructive/50 bg-destructive/10 backdrop-blur p-3 text-sm text-destructive">
+              데이터를 불러오는 중 오류가 발생했습니다. (Error loading data.)
+              {errors
+                .filter(Boolean)
+                .map((e, i) => (
+                  <p key={i} className="mt-1 text-xs opacity-75">
+                    {e?.message}
+                  </p>
+                ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* 3D Viewer */}
-          {titleData ? (
-            <Suspense fallback={<ViewerSkeleton />}>
-              <BuildingScene title={titleData} floors={floorsData} />
-            </Suspense>
-          ) : isLoading ? (
-            <ViewerSkeleton />
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-              건물 데이터를 불러올 수 없습니다. (No building data available.)
-            </div>
-          )}
-        </main>
-
-        {/* Side panel */}
-        <DashboardPanel
-          title={titleData}
-          recap={recapData}
-          floors={floorsData}
-          areas={areasData}
-          loading={isLoading}
-        />
-      </div>
+        {/* 3D Viewer */}
+        {titleData ? (
+          <Suspense fallback={<ViewerSkeleton />}>
+            <BuildingScene title={titleData} floors={floorsData} />
+          </Suspense>
+        ) : isLoading ? (
+          <ViewerSkeleton />
+        ) : (
+          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+            건물 데이터를 불러올 수 없습니다. (No building data available.)
+          </div>
+        )}
+      </WorkspaceShell>
     </div>
   );
 }
