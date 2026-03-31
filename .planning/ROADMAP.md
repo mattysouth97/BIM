@@ -143,4 +143,4 @@ Plans:
 | 15. Workspace Shell Layout | v3.0 | 2/2 | Complete    | 2026-03-30 |
 | 16. Contextual Toolbar Migration | v3.0 | 3/3 | Complete   | 2026-03-30 |
 | 17. Panel Content + Workflow Stepper | v3.0 | 5/5 | Complete    | 2026-03-30 |
-| 18. Guidance + Energy Feedback | v3.0 | 3/3 | Complete   | 2026-03-30 |
+| 18. Guidance + Energy Feedback | v3.0 | 3/3 | Complete    | 2026-03-31 |
