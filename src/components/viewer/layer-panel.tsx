@@ -1,10 +1,11 @@
 "use client";
 
+import { Fragment, useState } from "react";
 import { useLayerStore } from "@/store/layer-store";
-import { LAYER_CONFIGS, ALL_LAYER_IDS } from "@/lib/layers/types";
+import { LAYER_CONFIGS, ALL_LAYER_IDS, MEP_SUB_IDS, MEP_SUB_CONFIGS } from "@/lib/layers/types";
 import { useAppStore } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 
 interface LayerPanelProps {
   visible: boolean;
@@ -14,15 +15,21 @@ interface LayerPanelProps {
 export function LayerPanel({ visible, onClose }: LayerPanelProps) {
   const visibility = useLayerStore((s) => s.visibility);
   const toggleLayer = useLayerStore((s) => s.toggleLayer);
+  const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
+  const toggleMepSub = useLayerStore((s) => s.toggleMepSub);
   const isKo = useAppStore((s) => s.language) === "ko";
+
+  const [mepExpanded, setMepExpanded] = useState(false);
 
   if (!visible) return null;
 
   return (
-    <div className="absolute right-4 top-16 z-20 w-80 max-h-[520px] overflow-y-auto rounded-lg border bg-card/95 backdrop-blur shadow-lg animate-in slide-in-from-right-4 duration-200">
+    <div className="absolute right-4 top-16 z-20 w-72 rounded-lg border bg-card/95 backdrop-blur shadow-lg animate-in slide-in-from-right-4 duration-200">
       {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-card/95 px-4 py-2.5">
-        <span className="text-sm font-semibold">{isKo ? "건물 시스템 레이어" : "Building Systems"}</span>
+      <div className="flex items-center justify-between border-b px-4 py-2.5">
+        <span className="text-sm font-semibold">
+          {isKo ? "디지털 트윈 레이어" : "Digital Twin Layers"}
+        </span>
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose}>
           <X className="h-3.5 w-3.5" />
         </Button>
@@ -35,38 +42,70 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
           const active = visibility[id];
 
           return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => toggleLayer(id)}
-              className="flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-left text-xs transition-colors hover:bg-accent/50"
-            >
-              {/* Colored dot */}
-              <span
-                className="size-2.5 shrink-0 rounded-full border-2 transition-colors"
-                style={{
-                  borderColor: config.color,
-                  backgroundColor: active ? config.color : "transparent",
-                }}
-              />
+            <Fragment key={id}>
+              <button
+                type="button"
+                onClick={() => toggleLayer(id)}
+                className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-accent/50"
+              >
+                {/* Colored dot */}
+                <span
+                  className="mt-0.5 size-2.5 shrink-0 rounded-full border-2 transition-colors"
+                  style={{
+                    borderColor: config.color,
+                    backgroundColor: active ? config.color : "transparent",
+                  }}
+                />
 
-              {/* Layer name */}
-              <span className={`flex-1 ${active ? "font-medium" : "text-muted-foreground"}`}>
-                {isKo ? config.nameKo : config.name}
-              </span>
-
-              {/* ZEB badge */}
-              {config.zebLoad && (
-                <span className="text-[9px] px-1 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                  ZEB
+                {/* Layer name + description */}
+                <span className="flex-1 min-w-0">
+                  <span className={`block ${active ? "font-medium" : "text-muted-foreground"}`}>
+                    {isKo ? config.nameKo : config.name}
+                  </span>
+                  <span className="block text-[10px] text-muted-foreground leading-tight mt-0.5 truncate">
+                    {config.description}
+                  </span>
                 </span>
-              )}
 
-              {/* Animated indicator */}
-              {config.animated && active && (
-                <span className="text-xs opacity-60" title="Animated">~</span>
-              )}
-            </button>
+                {/* Chevron for MEP row only */}
+                {id === "mep" && (
+                  <ChevronDown
+                    className={`ml-auto h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-150 ${
+                      mepExpanded ? "" : "-rotate-90"
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMepExpanded((prev) => !prev);
+                    }}
+                  />
+                )}
+              </button>
+
+              {/* MEP sub-toggle rows — only shown when mepExpanded */}
+              {id === "mep" && mepExpanded && MEP_SUB_IDS.map((subId) => {
+                const subConfig = MEP_SUB_CONFIGS[subId];
+                const subActive = mepSubVisibility[subId];
+                return (
+                  <button
+                    key={subId}
+                    type="button"
+                    onClick={() => toggleMepSub(subId)}
+                    className="flex w-full items-start gap-3 rounded-md pl-8 pr-3 py-1.5 text-left text-xs transition-colors hover:bg-accent/50"
+                  >
+                    <span
+                      className="mt-0.5 size-2 shrink-0 rounded-full border-2 transition-colors"
+                      style={{
+                        borderColor: subConfig.color,
+                        backgroundColor: subActive ? subConfig.color : "transparent",
+                      }}
+                    />
+                    <span className={subActive ? "font-medium" : "text-muted-foreground"}>
+                      {isKo ? subConfig.nameKo : subConfig.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </Fragment>
           );
         })}
       </div>
