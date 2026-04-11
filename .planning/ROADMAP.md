@@ -148,7 +148,10 @@ Plans:
   2. A coordinate round-trip (WGS84 → local → WGS84) for a point 2km from the origin produces less than 1m of error, verifiable via a unit test
   3. The VWorld API key is read from `VWORLD_API_KEY` environment variable; the proxy route throws a 500 with a clear error message if the variable is unset, rather than sending a hardcoded key
   4. Coordinate assertions in `gis-transform.ts` throw a typed error if input coordinates are outside the Korean peninsula bounding box
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 19-01-PLAN.md — proj4 site-specific TM projection module + vitest round-trip accuracy test
+- [ ] 19-02-PLAN.md — Parameterize VWorld domain env var in footprint proxy
 
 ### Phase 20: Footprint Extrusion
 **Goal**: Users see their selected building rendered with the real cadastral polygon shape extruded to the correct height, with existing facade materials and concave polygon support
