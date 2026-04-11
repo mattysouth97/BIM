@@ -16,7 +16,7 @@ import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import { applyOverrides } from "@/lib/procedural/recipe";
-import { useBuildingFootprint } from "@/hooks/use-building-footprint";
+import { Loader2 } from "lucide-react";
 import { createSceneProjection } from "@/lib/gis/gis-transform";
 import { useAppStore } from "@/store/app-store";
 import { formatArea } from "@/lib/constants";
@@ -201,12 +201,17 @@ interface BuildingSceneProps {
    * Pre-fetched footprint data from the page level (hoisted out of BuildingScene
    * so both ledger and footprint fetches start simultaneously at page mount).
    * When provided, BuildingScene uses this instead of fetching internally.
-   * Plan 02 will remove the internal useBuildingFootprint call.
    */
   footprintData?: FootprintResult;
+  /**
+   * When true, shows a loading overlay covering the Canvas.
+   * Set to true while either ledger or footprint data is still in flight.
+   * Overlay disappears automatically when this becomes false.
+   */
+  isCompositeLoading?: boolean;
 }
 
-export function BuildingScene({ title, floors, campusData, footprintData: footprintDataProp }: BuildingSceneProps) {
+export function BuildingScene({ title, floors, campusData, footprintData: footprintDataProp, isCompositeLoading }: BuildingSceneProps) {
   const [selectedFloor, setSelectedFloor] = useState<FloorGeometry | null>(null);
   const [modelSource, setModelSource] = useState<ModelSource>("parametric");
   const [activeCampusBuilding, setActiveCampusBuilding] = useState<string | null>(null);
@@ -227,15 +232,10 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
 
   const buildingPk = String(title.mgmBldrgstPk || "unknown");
 
-  const address = title.platPlcNm || title.newPlatPlc || "";
-  // When footprintDataProp is provided by the page (hoisted fetch), use it directly.
-  // Fall back to internal fetch so BuildingScene remains self-contained until Plan 02
-  // removes the internal call entirely.
-  const { data: footprintDataInternal } = useBuildingFootprint(
-    footprintDataProp !== undefined ? undefined : address
-  );
-  const footprintData = footprintDataProp ?? footprintDataInternal;
-  const footprintPolygon = footprintData?.polygon ?? undefined;
+  // Footprint data is provided by the page (hoisted parallel fetch).
+  // If absent (e.g. component used standalone), footprintPolygon stays undefined
+  // and ProceduralBuildingModel renders a rectangular box automatically.
+  const footprintPolygon = footprintDataProp?.polygon ?? undefined;
 
   const geometry = useMemo(() => {
     const geo = generateBuildingGeometry(title, floors);
@@ -366,6 +366,15 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
 
       {/* 3D Canvas — fills remaining space */}
       <div className="relative flex-1 min-h-0">
+      {/* Composite loading overlay — visible while ledger or footprint fetch is in flight */}
+      {isCompositeLoading && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="size-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">건물 데이터 로딩 중…</p>
+          </div>
+        </div>
+      )}
       <ViewerErrorBoundary>
       <Canvas
         camera={{

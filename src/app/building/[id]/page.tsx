@@ -101,6 +101,7 @@ export default function BuildingDetailPage({
               title={titleData}
               floors={floorsData}
               footprintData={footprintResult.data}
+              isCompositeLoading={compositeLoading}
             />
           </Suspense>
         ) : isLoading ? (
