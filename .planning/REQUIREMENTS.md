@@ -21,7 +21,7 @@ Requirements for GIS-Composite Realistic Drafts milestone.
 
 ### Composite Pipeline
 
-- [ ] **CP-01**: Building selection triggers parallel fetch of building ledger data and VWorld footprint polygon
+- [x] **CP-01**: Building selection triggers parallel fetch of building ledger data and VWorld footprint polygon
 - [ ] **CP-02**: 3D composite renders within 3 seconds of building selection (excluding network latency)
 
 ## v4.1 Requirements
@@ -53,7 +53,7 @@ Deferred to next minor release. Tracked but not in current roadmap.
 | FP-01 | Phase 20 | Complete |
 | FP-02 | Phase 20 | Complete |
 | FP-03 | Phase 20 | Complete |
-| CP-01 | Phase 21 | Pending |
+| CP-01 | Phase 21 | Complete |
 | CP-02 | Phase 21 | Pending |
 
 **Coverage:**

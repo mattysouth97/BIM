@@ -180,9 +180,9 @@ Plans:
   2. The 3D composite scene (footprint extruded with facade) renders within 3 seconds of the parallel fetches completing, measured from the moment data arrives to first paint
   3. If the VWorld footprint fetch fails or returns no polygon, the system gracefully falls back to the existing rectangular procedural model rather than showing an error state
   4. A loading indicator is visible during the fetch and disappears once the composite renders
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 21-01-PLAN.md — useCompositeBuilding hook + parallel fetch wiring in building/[id]/page.tsx
+- [x] 21-01-PLAN.md — useCompositeBuilding hook + parallel fetch wiring in building/[id]/page.tsx
 - [ ] 21-02-PLAN.md — BuildingScene prop-driven footprint, loading overlay, visual checkpoint
 
 ## Progress
@@ -201,4 +201,4 @@ Plans:
 | 18. Guidance + Energy Feedback | v3.0 | 3/3 | Complete | 2026-03-31 |
 | 19. Coordinate System Foundation | v4.0 | 2/2 | Complete   | 2026-04-11 |
 | 20. Footprint Extrusion | v4.0 | 3/3 | Complete   | 2026-04-11 |
-| 21. Composite Pipeline | v4.0 | 0/2 | In progress | - |
+| 21. Composite Pipeline | v4.0 | 1/2 | In Progress|  |

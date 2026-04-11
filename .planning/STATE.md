@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: GIS-Composite Realistic Drafts
-status: completed
-stopped_at: Completed 20-03-PLAN.md (polygon extrusion integration — human-verify checkpoint)
-last_updated: "2026-04-12T20:30:00.000Z"
-last_activity: 2026-04-12 — Completed 20-03-PLAN.md (polygon slab + facade generators wired, awaiting human visual verify)
+status: verifying
+stopped_at: Completed 21-01-PLAN.md (parallel footprint fetch hoist — useCompositeBuilding + footprintData prop)
+last_updated: "2026-04-11T20:49:39Z"
+last_activity: 2026-04-12 — Completed 21-01-PLAN.md (useCompositeBuilding hook + page-level footprint hoist)
 progress:
   total_phases: 8
-  completed_phases: 6
-  total_plans: 21
-  completed_plans: 21
-  percent: 19
+  completed_phases: 7
+  total_plans: 23
+  completed_plans: 23
+  percent: 96
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 
 ## Current Position
 
-Phase: 20 of 21 (Footprint Extrusion)
-Plan: 03 (complete — awaiting human-verify checkpoint)
-Status: Phase 20 plan 03 complete — polygon extrusion wired into all three procedural generators; human visual verify required
-Last activity: 2026-04-12 — Completed 20-03-PLAN.md (polygon slab + facade + procedural-building integration)
+Phase: 21 of 21 (Composite Pipeline)
+Plan: 01 (complete)
+Status: Phase 21 plan 01 complete — useCompositeBuilding hook created; footprint fetch hoisted to page level; footprintData threaded as prop to BuildingScene
+Last activity: 2026-04-12 — Completed 21-01-PLAN.md (useCompositeBuilding hook + page-level footprint hoist)
 
-Progress: [█░░░░░░░░░] 14%
+Progress: [██████████] 96%
 
 ## Performance Metrics
 
@@ -60,6 +60,10 @@ Progress: [█░░░░░░░░░] 14%
 - [Phase 20-03]: generateSlabs() return type widened to InstancedMesh|Group — Group for polygon path (one Mesh per floor), InstancedMesh preserved for rectangular fallback
 - [Phase 20-03]: getPolygonFaces() uses side:'front' for all polygon edges — prevents 0.6× side-ratio reduction applied to rectangular "left"/"right" faces
 - [Phase 20-03]: generateColumns() and generateRoof() unchanged — rectangular bbox variants acceptable for v4.0; polygon variants deferred to v4.1 per ARCHITECTURE.md
+- [Phase 21-01]: useCompositeBuilding fires 4 ledger + 1 footprint query in a single useQueries call; footprint enabled only when address provided
+- [Phase 21-01]: isError covers ledger queries only (0-3); footprint errors are soft and surface via footprintData.error instead
+- [Phase 21-01]: BuildingScene keeps internal useBuildingFootprint as fallback (disabled when footprintData prop supplied) — full removal in Plan 02
+- [Phase 21-01]: FootprintResult type declared locally in building-scene.tsx to avoid cross-module coupling until Plan 02 consolidates types
 
 ### Pending Todos
 
@@ -72,6 +76,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-12T20:30:00.000Z
-Stopped at: Completed 20-03-PLAN.md (polygon extrusion integration — awaiting human-verify checkpoint)
+Last session: 2026-04-11T20:49:39Z
+Stopped at: Completed 21-01-PLAN.md (parallel footprint fetch hoist — useCompositeBuilding + footprintData prop)
 Resume file: None
