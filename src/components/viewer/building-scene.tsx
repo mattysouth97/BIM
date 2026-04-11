@@ -17,9 +17,14 @@ import { useRecipeStore } from "@/store/recipe-store";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import { applyOverrides } from "@/lib/procedural/recipe";
 import { useBuildingFootprint } from "@/hooks/use-building-footprint";
+import { createSceneProjection } from "@/lib/gis/gis-transform";
 import { useAppStore } from "@/store/app-store";
-import { usePlanStore } from "@/store/plan-store";
 import { formatArea } from "@/lib/constants";
+import type { CampusData } from "@/lib/campus/campus-types";
+import { computeSiteLayout } from "@/lib/campus/site-layout";
+import { getCampusBuildingConfigs } from "@/lib/campus/campus-scene";
+import type { FootprintOutline } from "./ground-plane";
+import { GroundPlane } from "./ground-plane";
 import { ProceduralBuildingModel } from "./procedural-building-model";
 import { BuildingLayers } from "./building-layers";
 import { SceneControls, type SceneControlsRef } from "./scene-controls";
@@ -27,22 +32,8 @@ import { ContextualToolbar } from "@/components/workspace/contextual-toolbar";
 import { ConfigPanel } from "./config-panel";
 import { LayerPanel } from "./layer-panel";
 import { ModelUploader } from "./model-uploader";
-import { useAuthoringStore } from "@/store/authoring-store";
-import { useComponentStore } from "@/store/component-store";
-import { ElementSelector } from "./element-selector";
-import { TransformGizmo } from "./transform-gizmo";
-import { PropertiesPanel } from "./properties-panel";
-import { ComponentPalette } from "./component-palette";
-import { PlacedComponents } from "./placed-components";
-import { AnnotationTools } from "./annotation-tools";
 import { EnergyCards } from "./energy-cards";
 import { ErrorBoundary, ViewerErrorBoundary } from "@/components/error-boundary";
-import { PlanView } from "./plan-view";
-import { PlanGrid } from "./plan-grid";
-import { WallDrawer } from "./wall-drawer";
-import { RoomFills } from "./room-fills";
-import { FloorSlabs } from "./floor-slab";
-import { OpeningDrawer } from "./opening-drawer";
 import { StructuralTooltip } from "./structural-tooltip";
 
 const IFCModel = lazy(() =>
@@ -63,6 +54,7 @@ function SceneSetup() {
 
   // Solid neutral background for BIM visualization
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     scene.background = new THREE.Color(0xf5f5f5);
   }, [scene]);
 
@@ -73,6 +65,7 @@ function SceneSetup() {
     if (envMap) {
       const pmrem = new THREE.PMREMGenerator(gl);
       const processed = pmrem.fromEquirectangular(envMap);
+      // eslint-disable-next-line react-hooks/immutability
       scene.environment = processed.texture;
       // Do NOT set scene.background to envMap — keep solid color
       pmrem.dispose();
@@ -131,22 +124,80 @@ function SAOPostProcessing() {
   return null;
 }
 
-/** Apply an edit value (from undo/redo) to a scene object — called outside R3F context */
-function applyEditValue(_elementId: string, _property: string, _value: unknown) {
-  // Undo/redo of transform operations is handled by the store;
-  // scene-level application happens through React re-render of TransformGizmo.
-  // Direct scene mutation for positional undo would require a scene ref,
-  // which is handled in-canvas by the TransformGizmo and PropertiesPanel components.
+// ─── Campus rendering ────────────────────────────────────────────────────────
+
+interface CampusSceneContentProps {
+  campusData: CampusData;
+  onBuildingSelect?: (buildingPk: string | null) => void;
+  activeBuildingPk?: string | null;
 }
+
+/**
+ * Renders all campus buildings on a shared ground plane.
+ * Each building is independently clickable.
+ */
+function CampusSceneContent({ campusData, onBuildingSelect, activeBuildingPk }: CampusSceneContentProps) {
+  const siteLayout = useMemo(() => computeSiteLayout(campusData), [campusData]);
+  const buildingConfigs = useMemo(() => getCampusBuildingConfigs(siteLayout), [siteLayout]);
+
+  // Collect footprint outlines for ground-plane markings
+  const footprintOutlines = useMemo<FootprintOutline[]>(() => {
+    return buildingConfigs
+      .filter((c) => c.footprintVertices && c.footprintVertices.length >= 3)
+      .map((c) => ({
+        vertices: c.footprintVertices!,
+        offsetX: 0,
+        offsetZ: 0,
+      }));
+  }, [buildingConfigs]);
+
+  const handleBuildingClick = useCallback((pk: string) => {
+    if (onBuildingSelect) {
+      onBuildingSelect(activeBuildingPk === pk ? null : pk);
+    }
+  }, [onBuildingSelect, activeBuildingPk]);
+
+  return (
+    <>
+      {/* Shared campus ground plane */}
+      <GroundPlane
+        siteWidth={siteLayout.extents.width}
+        siteDepth={siteLayout.extents.depth}
+        campusExtents={siteLayout.extents}
+        footprintOutlines={footprintOutlines}
+      />
+
+      {/* One building per config, positioned at its campus coordinate */}
+      {buildingConfigs.map((config) => (
+        <group
+          key={config.key}
+          position={[config.worldPosition.x, config.worldPosition.y, config.worldPosition.z]}
+          onClick={() => handleBuildingClick(config.key)}
+        >
+          <ProceduralBuildingModel
+            geometry={config.geometry}
+            recipeOverride={config.recipe}
+            hideGroundPlane
+          />
+        </group>
+      ))}
+    </>
+  );
+}
+
+// ─── Single-building scene ────────────────────────────────────────────────────
 
 interface BuildingSceneProps {
   title: BrTitleInfo;
   floors: BrFloorInfo[];
+  /** When provided, renders all campus buildings instead of a single building */
+  campusData?: CampusData;
 }
 
-export function BuildingScene({ title, floors }: BuildingSceneProps) {
+export function BuildingScene({ title, floors, campusData }: BuildingSceneProps) {
   const [selectedFloor, setSelectedFloor] = useState<FloorGeometry | null>(null);
   const [modelSource, setModelSource] = useState<ModelSource>("parametric");
+  const [activeCampusBuilding, setActiveCampusBuilding] = useState<string | null>(null);
 
   // Panel open state — extracted to workspace-store per D-06
   const configPanelOpen = useWorkspaceStore((s) => s.configPanelOpen);
@@ -170,13 +221,38 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
 
   const geometry = useMemo(() => {
     const geo = generateBuildingGeometry(title, floors);
-    if (footprintPolygon && footprintPolygon.length >= 3) {
-      geo.footprintPolygon = footprintPolygon as [number, number][];
-      const xs = footprintPolygon.map(p => p[0]);
-      const zs = footprintPolygon.map(p => p[1]);
-      geo.footprintWidth = Math.max(...xs) - Math.min(...xs);
-      geo.footprintDepth = Math.max(...zs) - Math.min(...zs);
+
+    if (footprintPolygon && footprintPolygon.length >= 1 && footprintPolygon[0].length >= 3) {
+      try {
+        // footprintPolygon is number[][][] — WGS84 rings [[lng, lat], ...]
+        const outerRing = footprintPolygon[0];
+
+        // Compute polygon centroid in WGS84 for scene origin
+        const centroidLng = outerRing.reduce((s, p) => s + p[0], 0) / outerRing.length;
+        const centroidLat = outerRing.reduce((s, p) => s + p[1], 0) / outerRing.length;
+
+        // Create site-specific TM projection centered on polygon centroid
+        const proj = createSceneProjection(centroidLng, centroidLat);
+
+        // Project all rings from WGS84 to local [x, z] meters
+        const localRings: [number, number][][] = footprintPolygon.map((ring) =>
+          ring.map(([lng, lat]) => proj.project(lng, lat) as [number, number])
+        );
+
+        geo.footprintPolygon = localRings;
+
+        // Compute bounding box from projected outer ring for footprintWidth/footprintDepth
+        const outerLocal = localRings[0];
+        const xs = outerLocal.map((p) => p[0]);
+        const zs = outerLocal.map((p) => p[1]);
+        geo.footprintWidth = Math.max(...xs) - Math.min(...xs);
+        geo.footprintDepth = Math.max(...zs) - Math.min(...zs);
+      } catch (err) {
+        console.warn("[GIS] Footprint projection failed, falling back to rectangular:", err);
+        // geo.footprintPolygon remains undefined — rectangular fallback is automatic
+      }
     }
+
     return geo;
   }, [title, floors, footprintPolygon]);
 
@@ -236,41 +312,21 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
     [baseRecipe, recipeOverrides]
   );
 
-  // Authoring mode: undo/redo keyboard shortcuts
-  const isAuthoring = useAuthoringStore((s) => s.isAuthoring);
-  const undoAction = useAuthoringStore((s) => s.undo);
-  const redoAction = useAuthoringStore((s) => s.redo);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isAuthoring) return;
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
-      // Ctrl+Z = undo, Ctrl+Shift+Z = redo
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
-        e.preventDefault();
-        const edit = undoAction();
-        if (edit) {
-          // Apply oldValue to the scene object
-          applyEditValue(edit.elementId, edit.property, edit.oldValue);
-        }
-      } else if ((e.ctrlKey || e.metaKey) && e.key === "z" && e.shiftKey) {
-        e.preventDefault();
-        const edit = redoAction();
-        if (edit) {
-          applyEditValue(edit.elementId, edit.property, edit.newValue);
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isAuthoring, undoAction, redoAction]);
-
   const isKo = useAppStore((s) => s.language) === "ko";
-  const viewMode = usePlanStore((s) => s.viewMode);
 
   const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 1.8;
+
+  // Campus camera: position far enough to see all buildings
+  const campusSiteLayout = useMemo(
+    () => campusData ? computeSiteLayout(campusData) : null,
+    [campusData]
+  );
+  const campusCameraDistance = campusSiteLayout
+    ? Math.max(campusSiteLayout.extents.width, campusSiteLayout.extents.depth) * 1.2
+    : cameraDistance;
+
+  const activeCameraDistance = campusData ? campusCameraDistance : cameraDistance;
+  const activeTotalHeight = campusData ? 20 : geometry.totalHeight;
 
   const handleViewChange = (view: "front" | "side" | "top" | "iso") => {
     controlsRef.current?.setView(view);
@@ -285,10 +341,6 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
         configPanelOpen={configPanelOpen}
         onToggleLayerPanel={() => setLayerPanelOpen(!layerPanelOpen)}
         layerPanelOpen={layerPanelOpen}
-        modelSource={modelSource}
-        hasUploadedModel={!!uploadedModel}
-        onToggleModelSource={handleToggleModelSource}
-        onUploadClick={() => setUploadDialogOpen(true)}
         buildingName={geometry.buildingName}
         era={geometry.era}
         selectedFloor={modelSource === "parametric" ? selectedFloor : null}
@@ -299,10 +351,14 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
       <ViewerErrorBoundary>
       <Canvas
         camera={{
-          position: [cameraDistance * 0.7, geometry.totalHeight * 0.6 + cameraDistance * 0.3, cameraDistance * 0.7],
-          fov: 35,
+          position: [
+            activeCameraDistance * 0.7,
+            activeTotalHeight * 0.6 + activeCameraDistance * 0.3,
+            activeCameraDistance * 0.7,
+          ],
+          fov: campusData ? 45 : 35,
           near: 0.1,
-          far: cameraDistance * 10,
+          far: activeCameraDistance * 10,
         }}
         gl={{
           antialias: true,
@@ -337,15 +393,23 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
             shadow-radius={4}
           />
 
-          {/* Model rendering */}
-          {modelSource === "parametric" && (
-            <>
-              <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} />
-              <BuildingLayers recipe={recipe} />
-              <StructuralTooltip />
-            </>
+          {/* Model rendering — campus mode or single-building mode */}
+          {campusData ? (
+            <CampusSceneContent
+              campusData={campusData}
+              activeBuildingPk={activeCampusBuilding}
+              onBuildingSelect={setActiveCampusBuilding}
+            />
+          ) : (
+            modelSource === "parametric" && (
+              <>
+                <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} />
+                <BuildingLayers />
+                <StructuralTooltip />
+              </>
+            )
           )}
-          {modelSource === "uploaded" && uploadedModel && (
+          {!campusData && modelSource === "uploaded" && uploadedModel && (
             <Suspense fallback={null}>
               {uploadedModel.fileType === "ifc" ? (
                 <IFCModel fileBuffer={uploadedModel.buffer} />
@@ -357,31 +421,9 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
 
           <SceneControls
             ref={controlsRef}
-            targetHeight={geometry.totalHeight}
-            distance={cameraDistance}
+            targetHeight={activeTotalHeight}
+            distance={activeCameraDistance}
           />
-
-          {/* Authoring components — only rendered in edit mode */}
-          {isAuthoring && modelSource === "parametric" && (
-            <>
-              <ElementSelector />
-              <TransformGizmo />
-              <PlacedComponents buildingPk={buildingPk} recipe={recipe} />
-              <AnnotationTools recipe={recipe} />
-            </>
-          )}
-
-          {/* Plan view: camera, grid, wall drawing */}
-          <PlanView
-            buildingHeight={geometry.totalHeight}
-            buildingWidth={geometry.footprintWidth}
-            buildingDepth={geometry.footprintDepth}
-          />
-          <PlanGrid />
-          <WallDrawer />
-          <RoomFills />
-          <FloorSlabs />
-          <OpeningDrawer />
 
           {/* SAO ambient occlusion post-processing */}
           <SAOPostProcessing />
@@ -411,9 +453,7 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
 
       {/* Instructions text — bottom-right */}
       <div className="absolute bottom-3 right-3 z-10 text-[10px] text-muted-foreground/60">
-        {viewMode === "plan"
-          ? (isKo ? "클릭: 벽 그리기 · 스크롤: 줌 · ESC: 취소" : "Click: draw wall · Scroll: zoom · ESC: cancel")
-          : (isKo ? "클릭: 층 선택 · 드래그: 회전 · 스크롤: 줌" : "Click: select floor · Drag: rotate · Scroll: zoom")}
+        {isKo ? "클릭: 층 선택 · 드래그: 회전 · 스크롤: 줌" : "Click: select floor · Drag: rotate · Scroll: zoom"}
       </div>
 
       {/* Energy metric cards — bottom-left, visible when building loaded */}
@@ -435,17 +475,6 @@ export function BuildingScene({ title, floors }: BuildingSceneProps) {
         visible={layerPanelOpen}
         onClose={() => setLayerPanelOpen(false)}
       />
-
-      {/* Properties panel for selected authoring element */}
-      {isAuthoring && (
-        <ErrorBoundary>
-          <PropertiesPanel />
-        </ErrorBoundary>
-      )}
-
-      <ErrorBoundary>
-        <ComponentPalette />
-      </ErrorBoundary>
 
       <ModelUploader
         open={uploadDialogOpen}
