@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: GIS-Composite Realistic Drafts
 status: completed
-stopped_at: Completed 19-01-PLAN.md (proj4 gis-transform)
-last_updated: "2026-04-11T20:08:23.117Z"
-last_activity: 2026-04-12 — Completed 19-02-PLAN.md (VWorld domain parameterization)
+stopped_at: Completed 20-02-PLAN.md (footprint pipeline WGS84 upgrade)
+last_updated: "2026-04-12T06:00:00.000Z"
+last_activity: 2026-04-12 — Completed 20-02-PLAN.md (extractPolygon raw WGS84 + proj4 client projection)
 progress:
   total_phases: 8
   completed_phases: 6
-  total_plans: 18
-  completed_plans: 18
-  percent: 10
+  total_plans: 21
+  completed_plans: 20
+  percent: 14
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 
 ## Current Position
 
-Phase: 19 of 21 (Coordinate System Foundation)
-Plan: 02 (complete)
-Status: Phase 19 complete — ready for Phase 20
-Last activity: 2026-04-12 — Completed 19-02-PLAN.md (VWorld domain parameterization)
+Phase: 20 of 21 (Footprint Extrusion)
+Plan: 01 (complete)
+Status: Phase 20 plan 01 complete — earcut-extrude utility built and tested
+Last activity: 2026-04-12 — Completed 20-01-PLAN.md (earcut extrudePolygon TDD)
 
-Progress: [█░░░░░░░░░] 10%
+Progress: [█░░░░░░░░░] 13%
 
 ## Performance Metrics
 
@@ -52,6 +52,8 @@ Progress: [█░░░░░░░░░] 10%
 - v4.0 start: VWorld 3D building API permanently closed (July 2019) — synthesize LOD1 context from 2D footprints + buldHg height
 - v4.0 start: Only 2 new npm packages needed: proj4 + earcut — no second WebGL context, no CesiumJS/Mapbox
 - [Phase 19]: Used site-specific TM (not EPSG:5179) centered on building centroid — keeps Three.js coords under 100m with no manual subtraction
+- [Phase 20-01]: earcut 3.x exports flatten as named export — `import earcut, { flatten as earcutFlatten } from "earcut"`, not `earcut.flatten()`
+- [Phase 20-01]: earcut returns CW winding in XZ plane (viewed from +Y) — bottom cap uses raw indices (downward normal), top cap reverses them (upward normal)
 
 ### Pending Todos
 
@@ -64,6 +66,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-11T20:08:23.005Z
-Stopped at: Completed 19-01-PLAN.md (proj4 gis-transform)
+Last session: 2026-04-12T05:25:00.000Z
+Stopped at: Completed 20-01-PLAN.md (earcut-extrude pure utility)
 Resume file: None
