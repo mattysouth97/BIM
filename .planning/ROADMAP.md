@@ -60,7 +60,7 @@
 
 **Milestone Goal:** Expand the MEP layer into individually addressable utility sub-systems, expose energy distribution visually on the 3D model, and surface inferred equipment specifications — giving GX energy auditors per-system observability without requiring IoT or sub-metered data.
 
-- [ ] **Phase 22: MEP Sub-Layer Foundation** - Split the single MEP group into 4 independently togglable utility sub-layers
+- [x] **Phase 22: MEP Sub-Layer Foundation** - Split the single MEP group into 4 independently togglable utility sub-layers (completed 2026-04-11)
 - [ ] **Phase 23: Per-Floor Energy Model** - Extend the energy calculation engine to produce per-floor kWh/m² and system-level attribution
 - [ ] **Phase 24: Energy Breakdown Dashboard** - Chart showing HVAC/lighting/DHW/plug attribution with amber estimated labels
 - [ ] **Phase 25: Energy Consumption Heatmap** - Color-coded floor planes on the 3D building keyed to Korean energy grade thresholds
@@ -81,7 +81,7 @@
 **Plans**: 3 plans
 Plans:
 - [x] 22-01-PLAN.md — Type system + store (MepSubLayerId, MEP_SUB_CONFIGS, layer-store persist + mepSubVisibility slice)
-- [ ] 22-02-PLAN.md — Scene graph wiring (mep-coordinator sub-groups, LayerManager.setMepSubVisible, BuildingLayers useEffect)
+- [x] 22-02-PLAN.md — Scene graph wiring (mep-coordinator sub-groups, LayerManager.setMepSubVisible, BuildingLayers useEffect)
 - [x] 22-03-PLAN.md — Layer panel UI (expandable chevron + 4 indented sub-toggle rows with colors and bilingual labels)
 **UI hint**: yes
 
@@ -149,7 +149,7 @@ Plans:
 | 19. Coordinate System Foundation | v4.0 | 2/2 | Complete | 2026-04-11 |
 | 20. Footprint Extrusion | v4.0 | 3/3 | Complete | 2026-04-11 |
 | 21. Composite Pipeline | v4.0 | 2/2 | Complete | 2026-04-12 |
-| 22. MEP Sub-Layer Foundation | v5.0 | 2/3 | In Progress|  |
+| 22. MEP Sub-Layer Foundation | v5.0 | 3/3 | Complete   | 2026-04-11 |
 | 23. Per-Floor Energy Model | v5.0 | 0/? | Not started | - |
 | 24. Energy Breakdown Dashboard | v5.0 | 0/? | Not started | - |
 | 25. Energy Consumption Heatmap | v5.0 | 0/? | Not started | - |
