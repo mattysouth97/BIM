@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Instantly generate realistic building drafts by compositing Korean government data with VWorld GIS layers
-**Current focus:** Phase 19 — Coordinate System Foundation (2 of 2 plans complete)
+**Current focus:** Phase 20 — Footprint Extrusion (2 of 3 plans complete)
 
 ## Current Position
 
 Phase: 20 of 21 (Footprint Extrusion)
-Plan: 01 (complete)
-Status: Phase 20 plan 01 complete — earcut-extrude utility built and tested
-Last activity: 2026-04-12 — Completed 20-01-PLAN.md (earcut extrudePolygon TDD)
+Plan: 02 (complete)
+Status: Phase 20 plan 02 complete — VWorld footprint pipeline upgraded to raw WGS84 rings + proj4 client projection
+Last activity: 2026-04-12 — Completed 20-02-PLAN.md (extractPolygon raw WGS84 + proj4 client projection)
 
-Progress: [█░░░░░░░░░] 13%
+Progress: [█░░░░░░░░░] 14%
 
 ## Performance Metrics
 
@@ -54,6 +54,9 @@ Progress: [█░░░░░░░░░] 13%
 - [Phase 19]: Used site-specific TM (not EPSG:5179) centered on building centroid — keeps Three.js coords under 100m with no manual subtraction
 - [Phase 20-01]: earcut 3.x exports flatten as named export — `import earcut, { flatten as earcutFlatten } from "earcut"`, not `earcut.flatten()`
 - [Phase 20-01]: earcut returns CW winding in XZ plane (viewed from +Y) — bottom cap uses raw indices (downward normal), top cap reverses them (upward normal)
+- [Phase 20-02]: extractPolygon() now returns raw WGS84 [lng,lat] rings — equirectangular projection removed from server route entirely
+- [Phase 20-02]: footprintPolygon type is [number,number][][] (GeoJSON-style rings) throughout the pipeline — first ring outer, subsequent holes
+- [Phase 20-02]: earcut@3 ships no TypeScript declarations and @types/earcut doesn't exist — added src/types/earcut.d.ts module declaration
 
 ### Pending Todos
 
@@ -66,6 +69,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-12T05:25:00.000Z
-Stopped at: Completed 20-01-PLAN.md (earcut-extrude pure utility)
+Last session: 2026-04-12T06:00:00.000Z
+Stopped at: Completed 20-02-PLAN.md (footprint pipeline WGS84 upgrade)
 Resume file: None

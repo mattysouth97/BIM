@@ -9,13 +9,13 @@ Requirements for GIS-Composite Realistic Drafts milestone.
 
 ### GIS Foundation
 
-- [ ] **GIS-01**: User's building renders with real cadastral footprint polygon shape instead of rectangular box
-- [ ] **GIS-02**: Coordinate transforms accurately convert WGS84/EPSG:5179 to local Three.js coordinates with <1m error at 2km radius
+- [x] **GIS-01**: User's building renders with real cadastral footprint polygon shape instead of rectangular box
+- [x] **GIS-02**: Coordinate transforms accurately convert WGS84/EPSG:5179 to local Three.js coordinates with <1m error at 2km radius
 - [ ] **GIS-03**: VWorld API key is configured via environment variable, not hardcoded
 
 ### Footprint Extrusion
 
-- [ ] **FP-01**: User can see their selected building extruded from the actual cadastral polygon with correct floor heights
+- [x] **FP-01**: User can see their selected building extruded from the actual cadastral polygon with correct floor heights
 - [ ] **FP-02**: Concave and L-shaped cadastral polygons render correctly (earcut triangulation)
 - [ ] **FP-03**: Existing procedural facade/material system works on polygon-based buildings (not just rectangular)
 
@@ -47,10 +47,10 @@ Deferred to next minor release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GIS-01 | Phase 20 | Pending |
-| GIS-02 | Phase 19 | Pending |
+| GIS-01 | Phase 20 | Complete |
+| GIS-02 | Phase 19 | Complete |
 | GIS-03 | Phase 19 | Pending |
-| FP-01 | Phase 20 | Pending |
+| FP-01 | Phase 20 | Complete |
 | FP-02 | Phase 20 | Pending |
 | FP-03 | Phase 20 | Pending |
 | CP-01 | Phase 21 | Pending |
