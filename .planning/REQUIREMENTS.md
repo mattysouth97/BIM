@@ -16,8 +16,8 @@ Requirements for GIS-Composite Realistic Drafts milestone.
 ### Footprint Extrusion
 
 - [x] **FP-01**: User can see their selected building extruded from the actual cadastral polygon with correct floor heights
-- [ ] **FP-02**: Concave and L-shaped cadastral polygons render correctly (earcut triangulation)
-- [ ] **FP-03**: Existing procedural facade/material system works on polygon-based buildings (not just rectangular)
+- [x] **FP-02**: Concave and L-shaped cadastral polygons render correctly (earcut triangulation)
+- [x] **FP-03**: Existing procedural facade/material system works on polygon-based buildings (not just rectangular)
 
 ### Composite Pipeline
 
@@ -51,8 +51,8 @@ Deferred to next minor release. Tracked but not in current roadmap.
 | GIS-02 | Phase 19 | Complete |
 | GIS-03 | Phase 19 | Pending |
 | FP-01 | Phase 20 | Complete |
-| FP-02 | Phase 20 | Pending |
-| FP-03 | Phase 20 | Pending |
+| FP-02 | Phase 20 | Complete |
+| FP-03 | Phase 20 | Complete |
 | CP-01 | Phase 21 | Pending |
 | CP-02 | Phase 21 | Pending |
 

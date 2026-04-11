@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: GIS-Composite Realistic Drafts
 status: completed
-stopped_at: Completed 20-02-PLAN.md (footprint pipeline WGS84 upgrade)
-last_updated: "2026-04-12T06:00:00.000Z"
-last_activity: 2026-04-12 — Completed 20-02-PLAN.md (extractPolygon raw WGS84 + proj4 client projection)
+stopped_at: Completed 20-03-PLAN.md (polygon extrusion integration — human-verify checkpoint)
+last_updated: "2026-04-12T20:30:00.000Z"
+last_activity: 2026-04-12 — Completed 20-03-PLAN.md (polygon slab + facade generators wired, awaiting human visual verify)
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 21
-  completed_plans: 20
-  percent: 14
+  completed_plans: 21
+  percent: 19
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Instantly generate realistic building drafts by compositing Korean government data with VWorld GIS layers
-**Current focus:** Phase 20 — Footprint Extrusion (2 of 3 plans complete)
+**Current focus:** Phase 20 — Footprint Extrusion (3 of 3 plans complete — awaiting human visual verify at checkpoint)
 
 ## Current Position
 
 Phase: 20 of 21 (Footprint Extrusion)
-Plan: 02 (complete)
-Status: Phase 20 plan 02 complete — VWorld footprint pipeline upgraded to raw WGS84 rings + proj4 client projection
-Last activity: 2026-04-12 — Completed 20-02-PLAN.md (extractPolygon raw WGS84 + proj4 client projection)
+Plan: 03 (complete — awaiting human-verify checkpoint)
+Status: Phase 20 plan 03 complete — polygon extrusion wired into all three procedural generators; human visual verify required
+Last activity: 2026-04-12 — Completed 20-03-PLAN.md (polygon slab + facade + procedural-building integration)
 
 Progress: [█░░░░░░░░░] 14%
 
@@ -57,6 +57,9 @@ Progress: [█░░░░░░░░░] 14%
 - [Phase 20-02]: extractPolygon() now returns raw WGS84 [lng,lat] rings — equirectangular projection removed from server route entirely
 - [Phase 20-02]: footprintPolygon type is [number,number][][] (GeoJSON-style rings) throughout the pipeline — first ring outer, subsequent holes
 - [Phase 20-02]: earcut@3 ships no TypeScript declarations and @types/earcut doesn't exist — added src/types/earcut.d.ts module declaration
+- [Phase 20-03]: generateSlabs() return type widened to InstancedMesh|Group — Group for polygon path (one Mesh per floor), InstancedMesh preserved for rectangular fallback
+- [Phase 20-03]: getPolygonFaces() uses side:'front' for all polygon edges — prevents 0.6× side-ratio reduction applied to rectangular "left"/"right" faces
+- [Phase 20-03]: generateColumns() and generateRoof() unchanged — rectangular bbox variants acceptable for v4.0; polygon variants deferred to v4.1 per ARCHITECTURE.md
 
 ### Pending Todos
 
@@ -69,6 +72,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-12T06:00:00.000Z
-Stopped at: Completed 20-02-PLAN.md (footprint pipeline WGS84 upgrade)
+Last session: 2026-04-12T20:30:00.000Z
+Stopped at: Completed 20-03-PLAN.md (polygon extrusion integration — awaiting human-verify checkpoint)
 Resume file: None

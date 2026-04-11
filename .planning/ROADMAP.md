@@ -50,7 +50,7 @@
 **Milestone Goal:** Instantly generate realistic building drafts by compositing Korean government building data with VWorld GIS layers — real cadastral footprint polygons, correct coordinate transforms, and a parallel fetch pipeline that composites within 3 seconds of building selection.
 
 - [x] **Phase 19: Coordinate System Foundation** — proj4 transform layer, VWorld API key via env var, coordinate assertions
-- [ ] **Phase 20: Footprint Extrusion** — Real cadastral polygon as building base, earcut triangulation, facade system on polygon buildings
+- [x] **Phase 20: Footprint Extrusion** — Real cadastral polygon as building base, earcut triangulation, facade system on polygon buildings (completed 2026-04-11)
 - [ ] **Phase 21: Composite Pipeline** — Parallel fetch orchestration, 3-second composite performance gate
 
 ## Phase Details
@@ -167,7 +167,7 @@ Plans:
 Plans:
 - [x] 20-01-PLAN.md — earcut install + extrudePolygon() pure utility with TDD (concave polygon triangulation)
 - [x] 20-02-PLAN.md — Upgrade footprint route to WGS84 rings + proj4 projection wiring in building-scene.tsx
-- [ ] 20-03-PLAN.md — Wire polygon geometry into structure/facade/procedural-building generators + visual checkpoint
+- [x] 20-03-PLAN.md — Wire polygon geometry into structure/facade/procedural-building generators + visual checkpoint
 **UI hint**: yes
 
 ### Phase 21: Composite Pipeline
@@ -195,5 +195,5 @@ Plans:
 | 17. Panel Content + Workflow Stepper | v3.0 | 5/5 | Complete | 2026-03-30 |
 | 18. Guidance + Energy Feedback | v3.0 | 3/3 | Complete | 2026-03-31 |
 | 19. Coordinate System Foundation | v4.0 | 2/2 | Complete   | 2026-04-11 |
-| 20. Footprint Extrusion | v4.0 | 2/3 | In Progress|  |
+| 20. Footprint Extrusion | v4.0 | 3/3 | Complete   | 2026-04-11 |
 | 21. Composite Pipeline | v4.0 | 0/TBD | Not started | - |
