@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: GIS-Composite Realistic Drafts
 status: verifying
-stopped_at: Completed 21-01-PLAN.md (parallel footprint fetch hoist — useCompositeBuilding + footprintData prop)
-last_updated: "2026-04-11T20:49:39Z"
-last_activity: 2026-04-12 — Completed 21-01-PLAN.md (useCompositeBuilding hook + page-level footprint hoist)
+stopped_at: Completed 21-02-PLAN.md (BuildingScene prop wiring + composite loading overlay) — awaiting human-verify checkpoint
+last_updated: "2026-04-11T20:54:21Z"
+last_activity: 2026-04-12 — Completed 21-02-PLAN.md (remove internal footprint fetch, add Loader2 overlay)
 progress:
   total_phases: 8
   completed_phases: 7
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 21 of 21 (Composite Pipeline)
-Plan: 01 (complete)
-Status: Phase 21 plan 01 complete — useCompositeBuilding hook created; footprint fetch hoisted to page level; footprintData threaded as prop to BuildingScene
-Last activity: 2026-04-12 — Completed 21-01-PLAN.md (useCompositeBuilding hook + page-level footprint hoist)
+Plan: 02 (complete — awaiting human-verify checkpoint)
+Status: Phase 21 plan 02 complete — BuildingScene reads footprintData from prop only; internal useBuildingFootprint removed; composite loading overlay added
+Last activity: 2026-04-12 — Completed 21-02-PLAN.md (remove internal footprint fetch, add Loader2 overlay)
 
 Progress: [██████████] 96%
 
@@ -64,6 +64,9 @@ Progress: [██████████] 96%
 - [Phase 21-01]: isError covers ledger queries only (0-3); footprint errors are soft and surface via footprintData.error instead
 - [Phase 21-01]: BuildingScene keeps internal useBuildingFootprint as fallback (disabled when footprintData prop supplied) — full removal in Plan 02
 - [Phase 21-01]: FootprintResult type declared locally in building-scene.tsx to avoid cross-module coupling until Plan 02 consolidates types
+- [Phase 21-02]: BuildingScene no longer fetches footprint internally — all data flows via footprintData prop from page level
+- [Phase 21-02]: isCompositeLoading is optional so BuildingScene remains self-contained in campus/standalone contexts
+- [Phase 21-02]: Loading overlay uses absolute inset-0 z-20 above Canvas — disappears when isCompositeLoading becomes false
 
 ### Pending Todos
 
@@ -76,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-11T20:49:39Z
-Stopped at: Completed 21-01-PLAN.md (parallel footprint fetch hoist — useCompositeBuilding + footprintData prop)
+Last session: 2026-04-11T20:54:21Z
+Stopped at: Completed 21-02-PLAN.md (BuildingScene prop wiring + composite loading overlay) — awaiting human-verify checkpoint
 Resume file: None
