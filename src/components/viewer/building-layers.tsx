@@ -4,75 +4,39 @@ import { useRef, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useLayerStore } from "@/store/layer-store";
 import { LayerManager } from "@/lib/layers/layer-manager";
-import type { BuildingRecipe } from "@/lib/procedural/types";
-import { ALL_LAYER_IDS, type LayerId } from "@/lib/layers/types";
+import { ALL_LAYER_IDS, MEP_SUB_IDS } from "@/lib/layers/types";
 
-interface BuildingLayersProps {
-  recipe: BuildingRecipe;
-}
-
-export function BuildingLayers({ recipe }: BuildingLayersProps) {
+export function BuildingLayers() {
   const managerRef = useRef<LayerManager | null>(null);
-  const recipeRef = useRef<BuildingRecipe>(recipe);
-  const prevDensityRef = useRef<Record<LayerId, number> | null>(null);
 
   const visibility = useLayerStore((s) => s.visibility);
-  const generated = useLayerStore((s) => s.generated);
-  const density = useLayerStore((s) => s.density);
-  const setGenerated = useLayerStore((s) => s.setGenerated);
+  const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
 
-  // Create or recreate LayerManager when recipe changes
-  if (!managerRef.current) {
+  // Create LayerManager once
+  if (managerRef.current == null) {
     managerRef.current = new LayerManager();
   }
 
-  // Handle recipe change: dispose old manager and create new one
-  useEffect(() => {
-    if (recipeRef.current !== recipe && managerRef.current) {
-      managerRef.current.dispose();
-      managerRef.current = new LayerManager();
-      recipeRef.current = recipe;
-      // Reset generated flags since we have a new manager
-      useLayerStore.getState().resetAll();
-    }
-  }, [recipe]);
-
-  // Sync visibility and lazy-generate layers
+  // Sync visibility state to Three.js groups
   useEffect(() => {
     const manager = managerRef.current;
     if (!manager) return;
-
     for (const id of ALL_LAYER_IDS) {
-      const isVisible = visibility[id];
-
-      if (isVisible && !generated[id]) {
-        // Lazy generate on first visibility
-        manager.getOrGenerate(id, recipe);
-        setGenerated(id);
-      }
-
-      manager.setVisible(id, isVisible);
+      manager.setVisible(id, visibility[id]);
     }
-  }, [visibility, generated, recipe, setGenerated]);
+  }, [visibility]);
 
-  // Handle density changes: dispose + regenerate affected layers
+  // Sync MEP sub-layer visibility to Three.js sub-groups.
+  // Depends on both mepSubVisibility AND visibility so that when the main MEP toggle
+  // goes off→on (Three.js re-shows all children), sub-group states are immediately
+  // re-applied, preventing the "all show" bug documented in 22-RESEARCH.md Pitfall 2.
   useEffect(() => {
     const manager = managerRef.current;
-    if (!manager || !prevDensityRef.current) {
-      prevDensityRef.current = { ...density };
-      return;
+    if (!manager) return;
+    for (const subId of MEP_SUB_IDS) {
+      manager.setMepSubVisible(subId, mepSubVisibility[subId]);
     }
-
-    const prev = prevDensityRef.current;
-    for (const id of ALL_LAYER_IDS) {
-      if (prev[id] !== density[id] && visibility[id] && generated[id]) {
-        // Density changed for a visible, generated layer — regenerate
-        manager.disposeLayer(id);
-        manager.getOrGenerate(id, recipe);
-      }
-    }
-    prevDensityRef.current = { ...density };
-  }, [density, visibility, generated, recipe]);
+  }, [mepSubVisibility, visibility]);
 
   // Animation loop — update ShaderMaterial uniforms each frame
   useFrame((state) => {
@@ -87,6 +51,7 @@ export function BuildingLayers({ recipe }: BuildingLayersProps) {
     };
   }, []);
 
+  // eslint-disable-next-line react-hooks/refs
   const parentGroup = managerRef.current?.getParentGroup();
   if (!parentGroup) return null;
 
