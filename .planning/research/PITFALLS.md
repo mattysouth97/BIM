@@ -1,243 +1,254 @@
 # Pitfalls Research
 
-**Domain:** Guided authoring workflow UX retrofitted onto existing 3D BIM editor (Next.js + R3F + Zustand)
-**Researched:** 2026-03-30
-**Confidence:** HIGH (code-grounded) / MEDIUM (web-validated patterns)
+**Domain:** GIS compositing added to an existing Three.js BIM viewer (footprint extrusion, terrain, ortho tiles, coordinate transforms, context buildings) — Korean spatial data
+**Researched:** 2026-04-03
+**Confidence:** HIGH (code-grounded on existing codebase) / MEDIUM (web-validated Three.js GIS patterns) / LOW (VWorld-specific undocumented limits)
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Uncoordinated Multi-Store Mode Explosion
+### Pitfall 1: Equirectangular Approximation Breaks at District Scale
 
 **What goes wrong:**
-The project already has 7 Zustand stores (`authoring-store`, `plan-store`, `component-store`, `layer-store`, `recipe-store`, `material-store`, `app-store`) each with their own boolean "mode" flags. As the guided workflow adds more stages (select → assemble → customize → place → transform), new booleans get sprinkled across stores: `isAuthoring`, `drawingMode`, `viewMode`, `annotationMode`, `transformMode`. Within months you have 10+ independent mode flags that can produce illegal combinations — e.g. `drawingMode === "wall"` while `annotationMode === "section"` while `isAuthoring === false`. Components start adding local guards (`if (isAuthoring && drawingMode === 'wall' && annotationMode === 'none')`) that nobody can reason about. The viewer-overlay.tsx already shows early signs of this: it reads from both `useAuthoringStore` and `usePlanStore` independently with no single source of truth for "current stage."
+The existing `extractPolygon()` in `src/app/api/vworld/footprint/route.ts` converts WGS84 `[lng, lat]` to local meters using an equirectangular approximation (`metersPerDegreeLng = 111320 * cos(lat)`). For a single cadastral parcel (< 200m across) this is accurate to sub-centimeter. But when loading surrounding context buildings, terrain tiles, or ortho tiles over a 500m–2km radius, the approximation accumulates error. At 1km from the centroid in Seoul (lat ~37.5°), the longitudinal error is ~2m per 1km; at 2km it is ~8m, enough to visually misalign context buildings from their ortho tile position. The user sees buildings floating 5–10m from their satellite image footprints.
 
 **Why it happens:**
-Zustand makes adding new slices frictionless. Each feature developer adds the flag they need to the nearest-looking store. No coordination layer enforces mutual exclusivity. The problem is invisible until you hit a bug where two modes are simultaneously active.
+Equirectangular works fine for a single parcel but does not account for meridian convergence (longitude degrees shrink near poles) or ellipsoidal curvature over larger distances. Developers extend a parcel-level approach to scene-level use without revalidating accuracy at the new radius.
 
 **How to avoid:**
-Introduce a single `workflowStore` (or a `WorkflowOrchestrator` actor) as the sole source of the current workflow stage. All other stores read from this to determine what's legal. Use an explicit finite state: `type WorkflowStage = "idle" | "assembling" | "customizing" | "placing" | "transforming"`. Illegal combinations become type errors. If the full transition logic becomes complex, use XState v5's lightweight actor model — a single state machine that coordinates cross-store transitions without replacing Zustand everywhere.
+Use a proper local-tangent-plane (LTP) projection for all GIS-to-3D transforms. For the Korean peninsula (EPSG:5179, GRS80 ellipsoid), the correct approach is:
+1. Pick a scene origin (the queried building centroid) in WGS84.
+2. Convert all GIS coordinates to ECEF (Earth-Centered Earth-Fixed) using the GRS80 ellipsoid.
+3. Apply the ECEF-to-LTP rotation matrix centered on the origin.
+4. Use the resulting local East-North-Up (ENU) coordinates directly as Three.js `x, y, z`.
+
+Alternatively, use `proj4js` with a site-specific TM (Transverse Mercator) projection centered on the building: define a custom CRS with `+lat_0=<centroid_lat> +lon_0=<centroid_lng> +proj=tmerc +units=m` and convert all GeoJSON through it. This eliminates the cos(lat) approximation error entirely.
+
+The simpler equirectangular approach is acceptable only if the scene radius stays under 300m — document this limit explicitly.
 
 **Warning signs:**
-- A component imports from 3+ stores just to determine "what mode am I in?"
-- A bug report where "doing X while Y is active breaks Z"
-- `viewer-overlay.tsx` props list grows beyond 12 items
-- Tests must set 4+ store flags to reproduce a scenario
+- Context buildings visually offset from ortho tile imagery by more than 2m
+- Cadastral polygon vertices misalign with visible parcel boundaries on the satellite layer
+- Buildings on the east/west edge of the scene are more misaligned than those near center
 
 **Phase to address:**
-Phase 1 (Workflow State Foundation) — Define the stage enum and WorkflowOrchestrator before any UI is built. This is a prerequisite, not a refactor.
+Phase 1 (Coordinate System Foundation) — Establish the projection strategy before any GIS geometry is added to the scene. Retrofitting is expensive because every GIS-to-3D transform must be updated.
 
 ---
 
-### Pitfall 2: viewer-overlay.tsx Monolith Growth
+### Pitfall 2: Three.js Float32 Precision Jitter from Korean Projected Coordinates
 
 **What goes wrong:**
-`viewer-overlay.tsx` is already 603 lines rendering toolbar buttons, section sliders, floor selectors, snap controls, drawing mode toggles, and opening preset pickers — all in one file with 20+ store subscriptions via individual `useAuthoringStore`/`usePlanStore` calls. Adding contextual toolbars for the new workflow stages (assembling, placing, etc.) to the same file will push it past 1200 lines. At that point: (a) every store change triggers reconciliation of the entire overlay tree, (b) adding a new tool requires understanding 600 lines of context, (c) the component becomes untestable as a unit.
+EPSG:5179 (KGD2002 Unified CS) coordinates for Seoul are in the range `(950000, 1950000)` meters (Easting, Northing). If these are passed directly to Three.js `mesh.position.set(950000, 0, 1950000)`, the GPU operates in float32, which has ~7 significant digits of precision. At coordinate magnitude ~10^6, position precision degrades to ~0.1m. The scene will show visible vertex jitter on building edges, shadow artifacts, and SAOPass occlusion halos that flicker because depth buffer resolution is consumed by the large coordinate magnitude.
 
 **Why it happens:**
-Overlay components are easy to extend — you just add an `{isAuthoring && <NewButton />}` block. There's no visible cost until the file is already unmaintainable.
+Developers familiar with GIS tools (which work in float64) assume Three.js handles large coordinates. WebGL shaders and vertex buffers use float32. The problem is invisible in isolation (a single building looks fine) but appears when comparing relative positions of two objects at 950000m vs 951000m — both get rounded to the nearest 0.1m.
 
 **How to avoid:**
-Decompose the overlay into a toolbar registry pattern before adding new toolbars. Each workflow stage owns its toolbar fragment: `<AssemblingToolbar />`, `<PlacingToolbar />`, `<TransformToolbar />`. The orchestrator component renders the correct fragment based on `workflowStage`. Each fragment has its own store subscriptions, its own test file, and its own props surface. The current viewer-overlay.tsx is the warning that this decomposition should happen in Phase 1 alongside the workflow state refactor.
+Always subtract a scene origin from all GIS coordinates before sending to Three.js. The origin should be the centroid of the queried building. All scene objects are positioned in local ENU coordinates (meters relative to origin). The origin's WGS84 position is stored separately for any coordinate round-trips. Never put raw projected coordinates (EPSG:5174/5179 Easting/Northing) into Three.js position values. Keep coordinates in the range ±5000m from origin — at that magnitude, float32 gives 0.001m precision, which is sufficient for BIM.
 
 **Warning signs:**
-- viewer-overlay.tsx exceeds 400 lines
-- New toolbar buttons are added as inline JSX directly in the return block
-- Prop drilling through `onToggleX` / `xOpen` booleans from the parent page
+- Terrain mesh edges show visible zigzag pattern or step artifacts
+- SAOPass produces halos that flicker on building corners at scene edges
+- `mesh.position.x` values exceed 10,000 in the Three.js inspector
 
 **Phase to address:**
-Phase 1 (Workflow State Foundation) — Decompose the overlay as part of the same structural refactor that introduces the workflow stage enum.
+Phase 1 (Coordinate System Foundation) — The local-origin convention must be defined as an invariant before any GIS geometry is added. All subsequent phases must adhere to it.
 
 ---
 
-### Pitfall 3: R3F Canvas / HTML Panel Event Boundary Conflicts
+### Pitfall 3: EPSG:5179 vs EPSG:4326 Axis Order Inversion with proj4js
 
 **What goes wrong:**
-The R3F canvas receives all pointer events by default. When floating HTML panels (shadcn sheets, dialogs, popovers) overlap the canvas, pointer events pass through to the canvas unless explicitly blocked. Two failure modes appear: (1) clicking a button in a panel also fires a ray into the scene and selects/deselects a 3D object; (2) OrbitControls inside the canvas receives drag events that were intended for a panel drag handle, causing the camera to spin while the user tries to resize a panel. The Three.js issue tracker has documented OrbitControls using `stopPropagation` aggressively which blocks DOM bubbling in unpredictable ways (issue #21339).
+Korean projected systems (EPSG:5174, EPSG:5179) use Northing-Easting axis order in the official EPSG registry. The VWorld API returns coordinates in `[longitude, latitude]` order (GeoJSON convention, which is `[x, y]`). When converting between these CRS using `proj4js`, axis order inversion is a silent bug: the library returns `[Easting, Northing]` for EPSG:5179 but the data may have been provided in `[Northing, Easting]` from some VWorld endpoints. The resulting swap of ~950km (Northing) into the Easting slot places the building 1000km from its correct position, often in the ocean.
 
 **Why it happens:**
-R3F's event system is a separate reconciler from the DOM. HTML elements overlaid via CSS `z-index` do not automatically block R3F raycasting. Developers assume DOM z-index = event z-index, which is false.
+proj4js uses `[x, y]` regardless of whether the authority definition specifies Northing-Easting. VWorld's Data API (`/req/data`) returns GeoJSON where coordinates are always `[longitude, latitude]` = `[x, y]` per RFC7946. But VWorld's older WFS endpoint returns GML where axis order follows the EPSG definition, which for EPSG:5179 is `[Northing, Easting]`. If code handles one endpoint and is reused for another, the swap goes undetected until a coordinate is visually inspected.
 
 **How to avoid:**
-- Set `pointer-events: none` on the canvas container and `pointer-events: auto` only on the canvas itself when no HTML panel is active over it.
-- When a panel opens over the viewport, disable the R3F event system: use the `events` prop on `<Canvas events={{ enabled: false }}>` or toggle it programmatically via the `eventManager` from `useThree()`.
-- For OrbitControls: always use `makeDefault` from `@react-three/drei` and set `enabled={!isPanelOpen}` to prevent camera movement while panels are active.
-- Apply `e.stopPropagation()` at the HTML panel root's `onPointerDown` to prevent synthetic events reaching the canvas.
+- For VWorld's JSON Data API (`/req/data` with `crs=EPSG:4326`): always request `crs=EPSG:4326` and parse coordinates as `[longitude, latitude]`. Never change this — always work in WGS84 through the VWorld API layer.
+- If EPSG:5179 or EPSG:5174 coordinates appear (e.g., from a WFS response), explicitly swap to `[Easting, Northing]` before passing to proj4js. Add an assertion: `if (easting < 100000 || easting > 1500000) throw new Error('Axis order suspect: Easting out of Korean range')`.
+- The existing `fetchByPNU` and `fetchByBBox` already request `crs=EPSG:4326` — maintain this invariant for all new VWorld calls.
 
 **Warning signs:**
-- Clicking a dialog close button also triggers object selection in the scene
-- Camera rotates when user drags a resizable panel handle
-- `pointerover` fires on 3D objects while cursor is visually over a panel
+- Converted coordinates place buildings in the Yellow Sea or East Sea
+- `proj4('EPSG:5179', 'EPSG:4326', [coord])` returns longitude values outside 124–132°E
 
 **Phase to address:**
-Phase 2 (Workspace Layout) — Must be solved before any panel/canvas overlap is added. Write an integration test that verifies a click on a panel does not fire a scene pick event.
+Phase 1 (Coordinate System Foundation) — Centralize all CRS conversion in a single `gis-transform.ts` module with assertions, instead of ad-hoc conversion in each component.
 
 ---
 
-### Pitfall 4: Keyboard Shortcut Conflicts Between Canvas and HTML Inputs
+### Pitfall 4: Three.js `ShapeGeometry` Fails on Complex Cadastral Polygons
 
 **What goes wrong:**
-Blender-style shortcuts (`G` = move, `R` = rotate, `S` = scale, `ESC` = cancel) registered as `keydown` listeners on `window` or `document` fire even when focus is inside a text input, number input, or search field in an HTML panel. A user typing "Strength" in a material property field triggers the scale tool on every `S` keypress. Similarly, `ESC` to dismiss a dropdown also cancels the current drawing operation.
+Korean cadastral parcels frequently have: (a) concave vertices from L-shaped or irregular lots, (b) interior holes where roads or easements cut through, (c) near-collinear vertices from digitization artifacts, and occasionally (d) self-touching rings where two parcel boundaries share a point. Three.js `ShapeGeometry` and `ExtrudeGeometry` use a simple ear-clipping triangulator internally. It produces incorrect triangulations for concave polygons with holes and throws a console warning `"Probably Hole outside Shape!"` for polygons where the hole vertices are collinear with the outer ring. The extruded building footprint then shows missing faces, inverted triangles, or black holes.
 
 **Why it happens:**
-Canvas keyboard listeners are added globally because the R3F canvas has no reliable focus model — it's a `<canvas>` element that doesn't receive native keyboard focus. Developers add `window.addEventListener('keydown', ...)` and forget to gate on focus context.
+Three.js's built-in triangulator handles only simple polygons reliably. The Three.js issue tracker documents this as a known limitation (issue #11957, issue #3386). Cadastral data is not clean geometric data — it is surveyed administrative data with artifacts that violate the simple-polygon assumption.
 
 **How to avoid:**
-- Always check `document.activeElement` before acting on canvas shortcuts: if `activeElement` is an `INPUT`, `TEXTAREA`, or `[contenteditable]`, suppress the shortcut.
-- Use a centralized `useKeyboardShortcuts` hook that enforces this check and is the only place shortcuts are registered.
-- For the canvas focus model: add `tabIndex={0}` to the canvas wrapper div and listen there rather than on `window`. The shortcut handler only fires if the canvas wrapper or one of its 3D children has focus.
-- Document all shortcuts in a keyboard shortcut registry (a plain object) so conflicts are visible before they ship.
+Use `earcut` (npm: `earcut`, ~3KB) as a replacement triangulator. Earcut handles concave polygons, holes, and self-touching vertices correctly for practical geographic data. The workflow:
+1. Receive GeoJSON `Polygon` or `MultiPolygon` from VWorld.
+2. Flatten using `earcut.flatten(geojsonCoords)` to get `vertices[]`, `holes[]`, `dimensions`.
+3. Run `earcut(vertices, holes, dimensions)` to get a triangle index array.
+4. Build a `THREE.BufferGeometry` manually: set `position` attribute from the vertices, set `index` from earcut output.
+5. Extrude using a custom approach: create top and bottom faces from earcut output, then generate side quads from consecutive edge pairs.
+
+Pre-process the polygon to remove duplicate/near-collinear vertices before passing to earcut: vertices within 0.05m of each other should be merged.
 
 **Warning signs:**
-- `S` key while typing in a properties panel changes the transform mode
-- `ESC` closes a dialog AND cancels a wall draw simultaneously
-- Multiple `useEffect(() => { window.addEventListener('keydown', ...) })` calls across different components
+- Console logs `"Probably Hole outside Shape!"` during building footprint creation
+- Extruded building has visual holes (missing triangles) in the floor or roof caps
+- `ExtrudeGeometry` produces a flat result for an L-shaped parcel
 
 **Phase to address:**
-Phase 1 (Workflow State Foundation) — The keyboard shortcut registry should be established before any shortcuts are wired.
+Phase 2 (Footprint Extrusion) — Earcut must be the default triangulator from day one. Do not attempt to fix Three.js `ShapeGeometry` output — replace it.
 
 ---
 
-### Pitfall 5: Undo/Redo Scope Fragmentation
+### Pitfall 5: Terrain Mesh and Building Foundation Misalignment
 
 **What goes wrong:**
-`authoring-store.ts` has a per-element `editHistory: ElementEdit[]` undo stack tracking property changes. `plan-store.ts` has no undo at all — drawing a wall is not undoable. `component-store.ts` has no undo. When the guided workflow adds more actions (place component, assign material, set wall height, add annotation), each developer decides independently whether to wire undo. The result: some actions are undoable, others are not, and `Ctrl+Z` produces inconsistent behavior that erodes user trust more than having no undo at all.
+DEM (Digital Elevation Model) data gives the terrain height at each sample point. When a building footprint is extruded and placed on terrain, the extrusion starts at `y = 0` (local flat ground) while the DEM mesh has a non-zero height at that location. The building appears to float above the terrain or sink into it. This is especially visible for sloped sites — a 10-storey building on a 3m grade change will have its first floor either 3m in the air or buried 3m underground depending on which reference the extrusion uses.
 
 **Why it happens:**
-The current undo system is scoped to element property edits only. New action categories are added to different stores that don't participate in the history stack.
+The procedural building system currently assumes a flat ground plane (existing `GroundPlane` component, `y = -0.02`). The system was never designed to account for terrain variation. When terrain is added, developers add the terrain mesh but forget to update the building's base Y position to match the terrain height at the footprint centroid.
 
 **How to avoid:**
-Define a single command pattern interface before the workflow UX ships: `interface Command { execute(): void; undo(): void; label: string; }`. Every user-initiated action that mutates shared state goes through this interface. The `workflowStore` (or a dedicated `historyStore`) holds a single linear command stack. All stores expose mutation methods that accept `Command` objects rather than direct setters. This is a non-trivial refactor of existing stores — it needs a dedicated phase before workflow UI is layered on top.
+- Sample the DEM at the building footprint centroid to get the base elevation `h_base`.
+- Set the extruded footprint mesh `position.y = h_base`.
+- For the procedural building itself, pass `groundElevation: h_base` into the recipe and shift all floor `y` values up by `h_base`.
+- If the terrain has significant slope across the footprint (more than 1m variation between footprint corners), use the minimum corner elevation as `h_base` and model a foundation plinth to cover the gap. Do not use the centroid average for sloped sites.
 
 **Warning signs:**
-- `Ctrl+Z` undoes a material change but not a wall draw
-- Users report "undo doesn't work for [feature X]"
-- Different stores have separate `history` arrays
+- Building hovers above the terrain mesh in the rendered scene
+- The ground plane `y = -0.02` is visible between the building base and the terrain surface
+- Building floor 0 is partially clipped into the terrain mesh
 
 **Phase to address:**
-Phase 1 (Workflow State Foundation) — Define the command interface. Phase 3 (Contextual Toolbars) — Verify every new action goes through it.
+Phase 3 (Terrain Integration) — Define the `groundElevation` contract as part of the terrain phase, not as an afterthought in the building rendering phase.
 
 ---
 
-### Pitfall 6: "Guided but Flexible" Becoming Neither
+### Pitfall 6: VWorld WMTS Tile Loading Blocking the React Render Loop
 
 **What goes wrong:**
-The stated design goal is "guided-but-flexible" — users see a clear step flow but can skip steps or access tools freely. In practice, the guided rail and the free-access tools end up competing. The guided stepper enforces a linear sequence; power users bypass it and leave the workflow in an intermediate state the UI wasn't designed for (e.g., a component is placed before assembly is complete). The contextual UI then shows wrong tools because the stage doesn't match the actual model state. The result is a UX that is restrictive for experts (they feel railroaded) and confusing for novices (the guide gets bypassed and they're lost).
+Ortho satellite tiles (VWorld WMTS) are loaded as `HTMLImageElement` or fetched as blobs, then assigned to `THREE.Texture`. If this is done synchronously inside a React component or a `useEffect` without proper async management, large tile loads (256x256 PNG ×16 tiles for a 500m scene context) block the JS event loop during decode. The 3D scene freezes for 200–800ms when a new building is selected. Alternatively, if all 16 tiles are requested simultaneously without queuing, VWorld's server returns HTTP 429 (rate limit exceeded) for burst requests above 5–10 concurrent calls.
 
 **Why it happens:**
-Guided wizards are designed for linear processes. BIM authoring is inherently non-linear. Retrofitting a linear guide onto a non-linear tool without explicit "escape hatch" design produces tension.
+Tile loading appears straightforward (`new THREE.TextureLoader().load(url)`). The default `TextureLoader` fires all requests simultaneously. There is no built-in queue, no rate-limit backoff, and no tile priority system.
 
 **How to avoid:**
-- Model the workflow as a DAG (directed acyclic graph) of stages, not a linear list. Stages have prerequisites (can't place if nothing is assembled) but not strict order.
-- The guided stepper shows the recommended path, but each stage shows its status (complete/incomplete/skippable) rather than blocking navigation.
-- "Expert mode" is not a separate mode — it's just the same UI with the guided stepper collapsed. The toolbars remain the same.
-- Never disable a tool because the user is "in the wrong stage." Instead, show a tooltip explaining the prerequisite.
+- Use a tile request queue that limits concurrency to 4 simultaneous requests (matches browser's HTTP/1.1 per-origin limit and VWorld's practical burst tolerance).
+- Use `THREE.Cache.enabled = true` to cache decoded textures across building selections.
+- Implement a tile eviction strategy: track which tiles are more than 1km from the current building centroid and call `texture.dispose()` on them.
+- For the initial implementation, load tiles as `<img>` elements (browser cache applies automatically) rather than fetched blobs. This gives free HTTP caching with `cache-control` headers.
+- Never load ortho tiles synchronously; always load in a `useEffect` with an `AbortController` that cancels pending loads when the component unmounts or the building changes.
 
 **Warning signs:**
-- A "Skip" button is added to the stepper that bypasses validation
-- Power users report feeling slowed down by the new workflow
-- A "back" button is needed because the linear flow goes in the wrong direction
+- 3D scene freezes for > 200ms when a new building is selected
+- Browser network tab shows 16+ simultaneous requests to `api.vworld.kr`
+- VWorld returns `429 Too Many Requests` intermittently
 
 **Phase to address:**
-Phase 2 (Workspace Layout) — The stage model must be DAG-based from the start. Do not implement a linear wizard and iterate — the DAG shape must be designed upfront.
+Phase 4 (Ortho Tile Integration) — Build the tile queue as a utility before any tiles are loaded. The queue is a prerequisite, not an optimization.
 
 ---
 
-### Pitfall 7: Panel Resize Triggering 3D Scene Re-renders
+### Pitfall 7: SAOPass Performance Collapse with Added GIS Geometry
 
 **What goes wrong:**
-When a resizable panel (e.g. a properties panel or a component palette) is dragged, if the panel size is stored in React state (or a Zustand store that components subscribe to), every pixel of drag motion triggers a React re-render. In a scene with 7+ draw calls and post-processing (SAOPass), this causes the R3F render loop to compete with React's reconciler at 60fps during drag. The result: stuttering panels, dropped frames, or the panel "jumping" after drag ends.
+The existing scene has ~7 draw calls (procedural building InstancedMesh). Adding GIS layers introduces: a terrain mesh with 64×64 vertices, 16+ ortho tile planes, 50–200 context building boxes, and a ground ortho plane. SAOPass is a screen-space effect whose cost scales with scene depth complexity (number of overlapping depth samples). Adding 200+ context buildings roughly triples SAOPass sample count, dropping from the current ~60fps to 20–35fps on integrated graphics, which is the GX team's most common hardware.
 
 **Why it happens:**
-`react-resizable-panels` calls `onLayoutChange` on every pointer move. If this callback updates React state, all subscribers re-render. The panel and the 3D scene are inadvertently coupled through shared state.
+SAOPass's kernel radius and sample count are configured for a simple 7-draw-call scene. Nobody recalibrates when the scene becomes more complex. The post-processing pipeline runs at full resolution by default.
 
 **How to avoid:**
-- Use `react-resizable-panels`' own internal state for panel sizes — do not lift panel sizes into a Zustand store unless persistence across sessions is required.
-- If persistence is needed, use `onLayoutChanged` (not `onLayoutChange`) which fires only when drag completes, not on every pointer move.
-- Keep the R3F canvas in a separate render tree subtree that is not subscribed to panel size state. Use CSS `flex` or `grid` to let the canvas fill available space rather than reading panel sizes as React props.
-- The canvas should use `style={{ width: '100%', height: '100%' }}` inside its container — the container resizes, the canvas fills it, Three.js handles the resize via `ResizeObserver` internally.
+- Reduce SAOPass kernel radius when GIS layers are active: change `saoKernelRadius` from `50` to `25` when context buildings are present.
+- Run SAOPass at half resolution: add `saoPass.setSize(size.width / 2, size.height / 2)` when context building count > 50.
+- Context buildings should use `castShadow = false` and `receiveShadow = false` — they are backdrop elements, not accurate shadows.
+- Consider replacing SAOPass with N8AO (a lighter SSAO implementation) once GIS layers are added: N8AO provides comparable quality at 30–50% the cost of SAOPass on complex scenes.
+- Expose a "performance mode" toggle that disables post-processing entirely when GIS context is active on low-end hardware.
 
 **Warning signs:**
-- Dragging a panel causes the 3D scene frame rate to drop
-- `onLayoutChange` callback updates a Zustand store
-- The canvas has hardcoded pixel width/height that must be recalculated on panel resize
+- Frame rate drops below 30fps after adding context buildings
+- Scene performance degrades proportionally to context building count
+- `renderer.info.render.calls` exceeds 100 in the browser inspector
 
 **Phase to address:**
-Phase 2 (Workspace Layout) — Establish the panel/canvas size isolation pattern before any panels are made resizable.
+Phase 5 (Context Buildings) — Benchmark SAOPass performance against context building count before shipping. Establish a maximum count threshold (recommend 150 boxes) beyond which LOD or culling reduces geometry.
 
 ---
 
-### Pitfall 8: Contextual Toolbar Instability (Shift on Context Change)
+### Pitfall 8: VWorld API Domain Restriction Breaks Production
 
 **What goes wrong:**
-When the workflow stage changes, the contextual toolbar swaps its content. If the toolbar has a static outer container but dynamic inner buttons, users experience a jarring layout jump — buttons disappear and reappear in different positions. Worse: if the new context adds more buttons than the previous one, the toolbar overflows and wraps to a second row, pushing the canvas down by a pixel row and invalidating all absolute-positioned overlay elements (floor info badge, view presets, etc.). The existing viewer-overlay.tsx uses `absolute top-3 right-3` positioning, meaning any toolbar height change breaks the layout.
+VWorld API keys are registered against specific domains. The existing code in `route.ts` passes `domain: "localhost"` in the request. This works in development but returns `401 Unauthorized` or an empty response in production because `localhost` does not match the production domain. Since the API call is server-side (Next.js API route), the domain must match the server's outbound identity as registered in the VWorld developer portal, not the user's browser domain.
 
 **Why it happens:**
-Contextual toolbars are designed with the assumption that "the toolbar size is approximately stable." BIM tools have wildly different toolbar densities per mode — edit mode has 12 buttons, view mode has 4. If the container is not explicitly sized, it collapses and re-expands on context changes.
+The `domain` parameter is easy to overlook during development because `localhost` always works for the developer. The distinction between client-side CORS domain and server-side API key domain registration is non-obvious.
 
 **How to avoid:**
-- Fix the toolbar container height. The largest context determines the container height. Unused slots are invisible but the container height is stable.
-- Alternatively, use a "strip plus overflow menu" pattern: a fixed-width strip shows the primary 4-5 tools for the current context; additional tools are in a `...` overflow menu.
-- Do not mix `absolute` positioned overlays with `flow` positioned toolbars in the same layout layer. Either all overlays are absolutely positioned (fixed dimensions assumed) or the canvas container is a proper flexbox layout.
-- The Substance 3D Painter pattern (static sections right, context-sensitive section left, but same height always) is the safest approach.
+- Register the production domain in the VWorld developer portal before deployment.
+- Parameterize the domain: `const domain = process.env.VWORLD_DOMAIN ?? "localhost"` and set `VWORLD_DOMAIN` in production environment variables.
+- Test the full fetch pipeline against the production domain before any GIS milestone is considered complete — not just on localhost.
+- Note: the hardcoded API key `98E6A75B-9FA2-3B97-A78F-A80434D6BF59` in `route.ts` is a shared/demo key. Before production deployment, issue a project-specific key from the VWorld developer portal and move it to an environment variable.
 
 **Warning signs:**
-- Adding a new authoring tool shifts all other overlay elements by a row
-- The canvas viewport "jumps" when switching between workflow stages
-- CSS contains `calc(100% - Xpx)` where X is a hardcoded toolbar height
+- GIS features work on `localhost` but fail silently (return empty polygons) in staging or production
+- VWorld returns `SERVICE_ERROR` status rather than `OK` in production but not in development
 
 **Phase to address:**
-Phase 3 (Contextual Toolbars) — Before any contextual swap logic, establish and test toolbar height stability.
+Phase 2 (Footprint Extrusion) — Fix the domain parameterization at the same time the VWorld integration is extended. Production credentials are a prerequisite for any demo.
 
 ---
 
-### Pitfall 9: Breaking Existing Power-User Workflows During Transition
+### Pitfall 9: MultiPolygon and Holes Silently Ignored from VWorld GeoJSON
 
 **What goes wrong:**
-v2.0 shipped with 181 unit tests and 7 E2E tests. The power users (GX team) have learned the current layout: edit mode toggle top-right, plan view toggle top-right, floor selector appears when in plan mode. The v3.0 UX overhaul moves these controls into a guided workflow stepper with different spatial anchors. Existing keyboard shortcuts change. The floor selector moves from the viewport overlay to a sidebar panel. Users who developed muscle memory for v2.0 encounter "regression" even though the features are still there — they're just in different places.
+The existing `extractPolygon()` takes only `geometry.coordinates[0][0]` — the outer ring of the first polygon in a MultiPolygon. For most simple rectangular parcels this is correct. But some Korean cadastral records return `MultiPolygon` (a parcel split by a road) or `Polygon` with interior rings (a parcel with a public right-of-way cut out). The current code silently discards all additional polygons and all holes. The rendered footprint then covers areas it should not (the road cutout is filled in) or misses secondary parcel sections entirely.
 
 **Why it happens:**
-UX redesigns prioritize the new user journey but underweight the cost to existing users who have internalized the current layout. In enterprise tools (which this is — GX team daily use), layout regressions are high cost.
+The initial implementation handled the common case (single rectangular parcel, outer ring only). The edge cases were not tested against real data containing holes or multi-part parcels.
 
 **How to avoid:**
-- Audit the current v2.0 control locations before designing v3.0 positions. Map each control to its new location explicitly.
-- Run the existing 7 E2E tests against the v3.0 layout to detect regressions immediately.
-- For any control that moves, add a "where did X go?" hint the first time the user opens v3.0. This is a one-time tooltip, not a persistent guide.
-- Do not remove keyboard shortcuts — add new ones. Old shortcuts should continue to work even if new alternatives exist.
-- The transition plan should include a "v3.0 migration" note in CLAUDE.md listing changed control locations for the team.
+- Parse the GeoJSON geometry type explicitly: handle both `Polygon` and `MultiPolygon`.
+- For `Polygon`: extract the outer ring (`coordinates[0]`) and all hole rings (`coordinates[1..]`).
+- For `MultiPolygon`: process each polygon separately; the first polygon is the "primary" footprint, secondary polygons are ancillary parts.
+- Pass hole rings to the earcut triangulator as holes (the `holes` array argument).
+- Test against PNU codes known to have holes: parcels adjacent to public roads in dense urban areas (Seoul Jongno, Jung-gu) commonly have right-of-way easements recorded as interior rings.
 
 **Warning signs:**
-- E2E tests start failing because selectors for existing controls can't be found
-- A team member reports "edit mode button is gone" (it moved, not removed)
-- Shortcuts are deleted from the keyboard registry when controls are relocated
+- Rendered footprint polygon covers a visible road or alleyway
+- `geometry.coordinates.length > 1` for a `Polygon` type in VWorld response
 
 **Phase to address:**
-Phase 1 (Workflow State Foundation) — Conduct the control location audit before any UI is moved. Phase 5 (Verification) — Run E2E regression suite against final layout.
+Phase 2 (Footprint Extrusion) — Write a test with a known complex PNU that returns a polygon with holes before implementing the extrusion pipeline.
 
 ---
 
-### Pitfall 10: Drag-and-Drop from Component Palette to 3D Scene Misfires
+### Pitfall 10: Ortho Tile Seam Lines and UV Bleeding
 
 **What goes wrong:**
-`component-store.ts` has a `dragging: ComponentPreset | null` field. The component palette (HTML DOM) fires `dragstart`, the 3D canvas (WebGL) has no native drag event — it only has pointer events. The handoff requires: (1) detecting that a drag from HTML ended over the canvas; (2) raycasting to find the drop position; (3) creating the placed component. The failure modes are: drag ends outside the canvas (no drop event), drag ends on an HTML panel that overlaps the canvas (two drop handlers fire), or the `pointerup` event that triggers the drop also triggers an object click (selects something instead of placing).
+When assembling multiple WMTS tiles into a ground plane, each tile is a separate `PlaneGeometry` with its own texture. At the tile boundaries, a 1–2 pixel seam line appears because: (a) texture filtering samples the edge pixel of adjacent tiles, which have different content; (b) floating-point UV coordinates at tile edges are not exactly 0.0 or 1.0 due to precision, causing sub-pixel bleeding. The assembled ortho ground looks like a grid of tiles rather than a seamless satellite image.
 
 **Why it happens:**
-HTML drag-and-drop and Three.js pointer events are different systems. Bridging them requires explicit coordination that is non-obvious.
+UV coordinates for tiles are typically computed as `0.0` to `1.0` within each tile geometry. At zoom level 18 (standard for building-scale work), one tile covers ~76m in Seoul. Assembling 4×4 tiles covers ~300m. At this scale, a 2-pixel seam every 76m is clearly visible.
 
 **How to avoid:**
-- Use pointer events exclusively, not HTML5 drag-and-drop API. On `pointerdown` of a palette item, set `dragging` in the store; on `pointerup` on the canvas, check `dragging` and perform the placement. This keeps everything in one event system.
-- Set `pointer-events: none` on all HTML elements during a drag operation (except the canvas) so the `pointerup` reliably lands on the canvas.
-- Use a `isDraggingComponent` flag in `workflowStore` to suppress the canvas's normal click-to-select behavior during a drag operation.
-- After placement, clear `dragging` synchronously in the `pointerup` handler before any other handlers run.
+- Inset the UV coordinates slightly: instead of `[0, 1]`, use `[0.5/256, 255.5/256]` (half-texel inset per side). This prevents the edge texel of one tile sampling into adjacent tile space.
+- Set `texture.minFilter = THREE.LinearFilter` (not `LinearMipmapLinearFilter`) to prevent mipmap level switching at tile boundaries.
+- Use `texture.generateMipmaps = false` for tile textures — mipmaps at tile edges always produce seams.
+- Alternatively, stitch tiles into a single canvas texture using `CanvasRenderingContext2D.drawImage()` before uploading to Three.js. One 1024×1024 canvas texture covering a 4×4 tile grid has no seam lines and uses fewer draw calls than 16 separate plane geometries.
 
 **Warning signs:**
-- Components placed in the wrong position because drop coordinates are offset
-- "Double placement" bug — component appears twice on drop
-- Drag-selecting a camera orbit at the same time as placing a component
+- Visible grid lines on the satellite image ground plane at tile boundaries
+- Lines become more visible when the camera is at a low angle (glancing view)
 
 **Phase to address:**
-Phase 4 (Component Placement) — This is specific to the placement workflow and should have dedicated integration tests.
+Phase 4 (Ortho Tile Integration) — UV inset or canvas-stitching must be part of the initial tile rendering implementation, not a later visual polish step.
 
 ---
 
@@ -247,57 +258,73 @@ Shortcuts that seem reasonable but create long-term problems.
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Adding boolean flags to existing stores for new modes | No new files, quick to ship | Illegal state combinations multiply; reasoning cost explodes | Never for workflow-level modes; acceptable for ephemeral UI state (e.g. `isTooltipOpen`) |
-| Extending `viewer-overlay.tsx` with more conditional sections | Keeps all toolbar code in one place | File becomes unmaintainable; every change risks regressions across all modes | Never beyond current size; already needs decomposition |
-| Using `window.addEventListener` for keyboard shortcuts | Works anywhere in the tree | Fires in text inputs; no central conflict detection; hard to clean up | Never — use a centralized hook |
-| Storing panel sizes in Zustand | Enables persistence, feels "consistent" | Couples panel drag events to React renders; causes 3D frame drops | Only if persistence is needed; use `onLayoutChanged` not `onLayoutChange` |
-| Implementing workflow as a linear stepper with `currentStep: number` | Simple to reason about initially | Can't model non-linear BIM authoring; breaks when users skip or revisit steps | Never for BIM workflows; linear steppers are for onboarding, not authoring |
-| Lazy-loading panels as they're first opened | Reduces initial bundle | First-open latency in a tool users open dozens of times daily is jarring | Only for rarely-used panels (e.g. an export dialog); not for core authoring panels |
+| Reusing `extractPolygon()` equirectangular approximation for large scene radius | No new math, reuses existing code | Coordinate misalignment grows with scene radius; context buildings float off satellite imagery | Only if scene radius stays < 300m; document this limit |
+| Hard-coding `domain: "localhost"` in VWorld requests | Works immediately in dev | Silent 401 failure in production; GIS features appear broken after deployment | Never — parameterize from environment variable immediately |
+| Using `THREE.ShapeGeometry` for footprint extrusion | Zero new dependencies | Triangulation failures on concave/hole cadastral polygons; invisible bugs on complex parcels | Never for cadastral data — use earcut unconditionally |
+| Loading all WMTS tiles simultaneously without a queue | Simpler fetch code | VWorld rate-limit errors (429); scene freeze during decode; tile memory not managed | Never — implement a 4-concurrent queue before any tile loading |
+| Context buildings as separate Mesh objects (one per building) | Simplest rendering code | 200+ draw calls destroys SAOPass and frame rate | Acceptable for < 20 context buildings; use InstancedMesh beyond 20 |
+| Placing building at `y = 0` regardless of terrain | Matches existing GroundPlane assumption | Building floats above or sinks into terrain on any non-flat site | Only in placeholder phases before terrain integration exists |
+| Running SAOPass at full resolution with GIS layers | Visual quality maintained | Frame rate collapse on integrated graphics; 35fps with 100+ context buildings | Only acceptable if GIS layers are togglable and SAO is disabled when they are active |
 
 ---
 
 ## Integration Gotchas
 
-Common mistakes when connecting the new UX layer to existing subsystems.
+Common mistakes when connecting GIS layers to the existing system.
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| R3F Canvas + HTML panels | Panels absorb clicks intended for canvas OR canvas absorbs clicks intended for panels | Explicitly manage `pointer-events` CSS and R3F `eventManager.enabled` based on panel open state |
-| Zustand stores + new workflow orchestrator | WorkflowOrchestrator reads from stores to decide stage; stores don't know about the orchestrator | The orchestrator is the authority; stores expose methods the orchestrator calls; stores never determine stage |
-| Undo/redo + new command types | New actions bypass the command pattern and directly mutate store state | All user-initiated mutations go through `historyStore.execute(command)` |
-| shadcn `Sheet`/`Dialog` + canvas focus | Opening a Sheet doesn't blur the canvas wrapper, so canvas shortcuts keep firing | On Sheet open, explicitly blur the canvas wrapper div and re-focus on Sheet close |
-| `react-resizable-panels` + Three.js renderer size | Renderer size is set on mount and never updated when panels resize | Use `ResizeObserver` on the canvas container; call `renderer.setSize()` or use R3F's `gl.setSize()` on container size change |
-| VWorld footprint data + plan-store walls | VWorld polygon is used to initialize the 3D scene; user-drawn walls in plan-store are separate; they diverge silently | When the user switches from parametric to plan-draw mode, copy the VWorld footprint into plan-store walls as the starting geometry, not as a separate rendering layer |
+| VWorld Data API | Request non-`4326` CRS (e.g., `EPSG:5179`) and pass coordinates directly to Three.js | Always request `crs=EPSG:4326`; convert to local ENU coordinates in `gis-transform.ts` |
+| VWorld Data API | Accessing `geometry.coordinates[0][0]` for both `Polygon` and `MultiPolygon` types | Check `geometry.type`; handle `Polygon` and `MultiPolygon` paths separately; extract holes from inner rings |
+| VWorld WMTS tiles | Requesting tiles with the domain registered key on `localhost` | Register a separate production domain key; use `VWORLD_DOMAIN` env variable in the Next.js proxy route |
+| Three.js + cadastral polygons | `new THREE.ShapeGeometry(shape)` for cadastral data | Use `earcut` for triangulation; pre-process to remove duplicate vertices |
+| Terrain DEM + procedural building | Building stays at `y = 0` after terrain is added | Sample DEM at footprint centroid; pass `groundElevation` to `BuildingRecipe`; shift all `FloorSpec.y` values |
+| InstancedMesh (existing) + terrain mesh | SAOPass degrades silently as scene complexity grows | Profile SAOPass cost with target context building count before shipping; add performance mode toggle |
+| SAOPass + tile planes | Ortho tile plane geometry receives incorrect AO (occludes itself because it is horizontal) | Set `material.aoMapIntensity = 0` on tile planes, or exclude tile plane layer from SAOPass depth test via render layers |
+| Three.js float32 + Korean projected coordinates | Position values > 100,000 passed directly to mesh | Enforce local-origin convention; assert coordinate magnitude < 10,000 in debug builds |
 
 ---
 
 ## Performance Traps
 
-Patterns that work in development but degrade under real conditions.
+Patterns that work at small scale but degrade under real GIS data.
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| React state updates driving animation loop | Frame rate drops to match React reconciler speed (~16ms React overhead per frame) | Mutate Three.js object refs directly in `useFrame`; never call `setState` or Zustand setters inside `useFrame` | Immediately — even 1 state update per frame causes jank |
-| `StructuralTooltip` allocating `Raycaster` per frame | CPU spike; tooltip lag | Allocate `Raycaster` once outside `useFrame` via `useMemo`; already documented as known debt in v2.0 audit | At ~20+ structural elements in the scene |
-| `onLayoutChange` (not `onLayoutChanged`) updating store | Panel drag causes 60 re-renders/second; scene frame drops | Use `onLayoutChanged` for persistence; accept imperative CSS updates during drag | During any panel resize |
-| Component palette rendering all available components eagerly | Initial load slow; memory pressure | Virtualize the component list (TanStack Virtual or windowing); render only what's in viewport | At ~50+ components in the palette |
-| Multiple Zustand stores each with `shallow` comparisons on large slices | Excessive re-renders when unrelated state changes | Use fine-grained selectors: `useStore(s => s.specificField)` not `useStore(s => s.wholeSlice, shallow)` | As stores grow beyond ~10 fields |
-| SAOPass enabled during panel animations | GPU stall when SAOPass re-renders while CSS transition runs | Disable post-processing during panel open/close animations; re-enable after `transitionend` | Noticeable on integrated graphics; always present on mobile |
+| One `Mesh` per context building | Frame rate collapses as context buildings are added | Use `InstancedMesh` for LOD1 boxes; all context buildings share one geometry and one draw call | > 20 context buildings |
+| All WMTS tiles loaded simultaneously | VWorld 429 errors; scene freeze on building change | 4-concurrent tile request queue with abort-on-change | > 4 concurrent tile requests to VWorld |
+| Tile textures never disposed | GPU memory grows unbounded across building selections | LRU cache with max 32 tile textures; call `texture.dispose()` on eviction | After ~5 building selections with 16 tiles each (~100MB GPU texture memory) |
+| SAOPass at full resolution with terrain + context buildings | < 30fps on integrated graphics | Halve SAOPass resolution when GIS layers active; or disable SAOPass in "context view" mode | > 50 context buildings in scene |
+| Loading full DEM raster for large area | Memory spike (a 1km² DEM at 1m resolution = 1M floats = 4MB) | Sample DEM at building footprint vertices only; fetch a small bounding box tile (64×64 samples max) | Any DEM load larger than 256×256 samples |
+| Earcut processing large polygons each frame | CPU spike if polygon changes each frame | Process polygon once on building selection; cache `BufferGeometry`; only re-process when polygon changes | Polygons with > 500 vertices processed per render |
+
+---
+
+## Security Mistakes
+
+Domain-specific security issues beyond general web security.
+
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Hardcoded VWorld API key in `route.ts` | Key is visible in version control; anyone with repo access can exhaust quota | Move to `process.env.VWORLD_API_KEY`; rotate the current hardcoded key |
+| VWorld key in client-side code | Key exposed in browser; can be scraped and abused | Keep all VWorld calls in Next.js API routes (already done); never import the key in any `src/` client file |
+| Passing raw user-supplied PNU to VWorld without validation | PNU injection into VWorld `attrFilter` query string | Validate PNU format (19 digits, numeric) before use: `/^\d{19}$/.test(pnu)` |
+| No size limit on VWorld GeoJSON responses | A malformed or unexpected API response with large coordinates array could cause unbounded polygon processing | Cap polygon vertex count at 2000 in `extractPolygon()`; discard if exceeded |
 
 ---
 
 ## UX Pitfalls
 
-Common user experience mistakes specific to this domain.
+Common user experience mistakes in the GIS compositing domain.
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Showing all tools at once (no progressive disclosure) | Cognitive overload; new GX team members don't know where to start | Show only the tools relevant to the current workflow stage; use the stage-based contextual toolbar pattern |
-| Disabled buttons with no explanation | User doesn't understand why a tool is greyed out | Replace disabled buttons with enabled buttons that show a tooltip explaining the prerequisite when clicked |
-| Mode indicator not visible at all times | User loses track of current mode; unexpected behavior when clicking | Persistent stage badge in viewport — always visible, always current, single source of truth |
-| Undoable and non-undoable actions mixed silently | User presses Ctrl+Z expecting to undo a wall draw, but only the last material change is undone | Either make all authoring actions undoable or clearly mark non-undoable actions with a warning before they execute |
-| Panels that close on outside click while the user is working in the canvas | User rotates the camera and the properties panel closes | Panels should not close on canvas pointer events; close on explicit close button or `Escape` only |
-| Step labels that use internal terminology ("Assembling", "Recipe") | GX team members who are not developers don't understand the workflow stages | Use domain language: "Select Building" → "Configure Structure" → "Set Materials" → "Place on Map" |
+| Showing satellite tiles before the building renders | User sees a satellite image with no building; looks like a bug | Load building geometry first; fade in satellite tiles after the building is visible |
+| Mismatched zoom level between ortho tiles and building scale | Ortho tiles are blurry/pixelated for small buildings; tiles at wrong zoom show wrong scale | Use zoom level 18 (1m/px) for buildings < 10,000m² footprint; zoom 17 for larger sites |
+| Context buildings with same color as the queried building | User cannot tell which building is the one they searched for | Use a distinct accent color (or slight glow outline via `outlinePass`) for the primary queried building |
+| Terrain scale distortion | Terrain looks unrealistically mountainous if the vertical exaggeration is wrong | Do not apply vertical exaggeration to DEM; use 1:1 scale; Korean urban terrain rarely exceeds 30m variation at building scale |
+| GIS layers always on, with no toggle | Satellite imagery competes with PBR materials of the building model | Provide a "Satellite view / BIM view" toggle; the existing layer panel (`layer-panel.tsx`) is the right home for this control |
+| Loading spinner blocks the entire viewer | User cannot rotate or inspect the building model while GIS data loads | Load GIS layers progressively without blocking the existing 3D scene; show a subtle progress indicator on the layer panel |
 
 ---
 
@@ -305,14 +332,14 @@ Common user experience mistakes specific to this domain.
 
 Things that appear complete but are missing critical pieces.
 
-- [ ] **Workflow state machine:** Often missing illegal state prevention — verify that `drawingMode === 'wall'` while `annotationMode === 'section'` is structurally impossible, not just guarded by conditionals.
-- [ ] **Contextual toolbar:** Often missing height-stability test — verify that switching between all workflow stages does not change the toolbar container height or shift any `absolute`-positioned overlay elements.
-- [ ] **Keyboard shortcuts:** Often missing input-focus guard — verify that pressing `G`, `R`, `S`, `ESC` inside any text input or number field in any panel has no effect on the 3D scene.
-- [ ] **Panel/canvas event isolation:** Often missing during drag operations — verify that dragging a component from the palette over an open properties panel does not trigger the panel's hover/click handlers.
-- [ ] **Undo coverage:** Often missing for plan-store mutations — verify that `Ctrl+Z` undoes wall draws, opening placements, and floor height changes, not just element property edits.
-- [ ] **Existing E2E tests:** Often broken by control relocation — verify all 7 existing Playwright tests pass against the new layout before merge.
-- [ ] **Mobile/touch:** Often missing pointer-event logic for touch — verify that `pointerdown`/`pointerup` based drag-and-drop works on touch devices (relevant for future field use on tablets).
-- [ ] **SAOPass post-processing during transitions:** Often causes visual artifact — verify that panel open/close animations do not produce SAOPass flicker by disabling post-processing during transitions.
+- [ ] **Coordinate transform:** Often missing for context buildings — verify that context buildings from VWorld align with ortho tile imagery at 500m from scene center, not just the primary building.
+- [ ] **Polygon holes:** Often missing — verify that the footprint extrusion for a parcel with an interior hole (road easement) shows a hole in the extruded mesh, not a filled solid.
+- [ ] **Production domain:** Often missing — verify that VWorld API calls succeed from the production hostname (not just `localhost`) before any GIS milestone is considered done.
+- [ ] **Float32 precision:** Often missing — verify that building positions show no vertex jitter by placing scene objects 2000m apart from origin and checking for visual artifacts.
+- [ ] **Tile disposal:** Often missing — verify that selecting 10 different buildings in sequence does not grow GPU texture memory (monitor `renderer.info.memory.textures`).
+- [ ] **SAOPass performance:** Often missing — verify that adding 100 context buildings does not drop frame rate below 30fps on the GX team's hardware (typically Intel integrated graphics).
+- [ ] **VWorld API key in env:** Often missing — verify `process.env.VWORLD_API_KEY` is the source of the key in `route.ts`, not a hardcoded string.
+- [ ] **Terrain base elevation:** Often missing — verify that the building base sits flush with the terrain surface at the footprint centroid, not at the default `y = -0.02` ground plane.
 
 ---
 
@@ -322,13 +349,14 @@ When pitfalls occur despite prevention, how to recover.
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Uncoordinated mode explosion | HIGH | Introduce `workflowStore` enum; audit all `isX` / `xMode` booleans; migrate one store at a time; requires 2-3 days and careful testing |
-| viewer-overlay.tsx monolith | MEDIUM | Extract toolbar fragments one at a time without changing behavior; test each extraction; 1 day per fragment |
-| Canvas/panel event conflicts | MEDIUM | Add `pointer-events` CSS and R3F `eventManager` toggle; write integration tests; 1 day to fix, 1 day to test |
-| Keyboard shortcut conflicts | LOW | Add `document.activeElement` guard to the shortcut hook; 2-4 hours |
-| Panel resize causing frame drops | LOW | Switch `onLayoutChange` to `onLayoutChanged`; verify no Zustand setters called during drag; 2-4 hours |
-| Undo fragmentation | HIGH | Requires retrofitting command pattern across all stores; do not attempt mid-milestone; defer to a dedicated undo hardening phase |
-| Existing E2E regressions | MEDIUM | Update selectors, do not change test intent; if a test must change behavior, that is a regression, not a "test update" |
+| Equirectangular error at scene scale | MEDIUM | Add `proj4js` with a site-specific TM CRS; update `gis-transform.ts`; re-test all GIS layers; 1–2 days |
+| Float32 jitter | MEDIUM | Subtract scene origin from all position values; affects terrain, tiles, and context buildings; 1 day to update all geometry builders |
+| Axis order inversion (EPSG:5179) | LOW | Add axis-swap assertion in `gis-transform.ts`; fix the transform; 2–4 hours |
+| ShapeGeometry triangulation failure | LOW | Swap to `earcut` triangulator; replace the extrusion pipeline; 4–8 hours |
+| VWorld 429 rate limit errors | LOW | Add a 4-concurrent tile queue utility; 4–8 hours |
+| Production domain 401 | LOW | Register production domain in VWorld portal; add env var; 1–2 hours |
+| SAOPass performance collapse | MEDIUM | Reduce SAOPass resolution; add performance mode toggle; recalibrate `saoKernelRadius`; 4–8 hours |
+| GPU texture memory leak | LOW | Add LRU eviction with `texture.dispose()`; 2–4 hours |
 
 ---
 
@@ -338,37 +366,41 @@ How roadmap phases should address these pitfalls.
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Uncoordinated mode explosion | Phase 1: Workflow State Foundation | All mode flags are derivable from a single `workflowStage` enum; no component imports from 3+ stores for mode determination |
-| viewer-overlay.tsx monolith | Phase 1: Workflow State Foundation | File is decomposed into stage-scoped toolbar fragments; no fragment exceeds 200 lines |
-| Canvas/panel event conflicts | Phase 2: Workspace Layout | Click on any HTML panel does not select/deselect a 3D object; camera does not move while a panel drag handle is being used |
-| Keyboard shortcut conflicts | Phase 1: Workflow State Foundation | All shortcuts registered in one centralized hook; pressing any shortcut inside an `<input>` has no effect |
-| Undo/redo fragmentation | Phase 1: Workflow State Foundation (interface) + Phase 3: Contextual Toolbars (implementation) | `Ctrl+Z` in a test can undo the last 5 actions regardless of which store they touched |
-| "Guided but flexible" tension | Phase 2: Workspace Layout | Stages are DAG-modeled; each stage shows status not blocker; expert users can reach any tool from any stage |
-| Panel resize frame drops | Phase 2: Workspace Layout | Dragging panel handle during scene animation: frame rate does not drop below scene baseline |
-| Contextual toolbar layout shift | Phase 3: Contextual Toolbars | Switching between all stages in E2E: zero pixel shift in absolute-positioned overlays |
-| Breaking existing workflows | Phase 1 (audit) + Phase 5 (verification) | All 7 existing E2E tests pass; v2.0 control location audit document exists and maps each control to v3.0 location |
-| Drag-and-drop misfires | Phase 4: Component Placement | Integration test: drag from palette, drop on canvas, exactly one component placed at correct position |
+| Equirectangular approximation at scale | Phase 1: Coordinate System Foundation | Context buildings align with ortho tiles at 500m from scene center (< 1m visual error) |
+| Float32 precision jitter | Phase 1: Coordinate System Foundation | No vertex jitter visible with objects at ±2000m from origin |
+| EPSG:5179 axis order inversion | Phase 1: Coordinate System Foundation | Assertion fires in test if coordinate is outside Korean bounds after conversion |
+| ShapeGeometry triangulation failures | Phase 2: Footprint Extrusion | L-shaped and hole-bearing cadastral polygons extrude without missing faces |
+| MultiPolygon and holes silently ignored | Phase 2: Footprint Extrusion | Test with known hole-bearing PNU; rendered footprint has correct interior hole |
+| VWorld production domain | Phase 2: Footprint Extrusion | VWorld API calls succeed from staging hostname |
+| VWorld hardcoded API key | Phase 2: Footprint Extrusion | `process.env.VWORLD_API_KEY` used; no key string in any `.ts` source file |
+| Terrain and building misalignment | Phase 3: Terrain Integration | Building base is flush with terrain at footprint centroid; no floating or sunken building |
+| Tile loading blocking render loop | Phase 4: Ortho Tile Integration | 16-tile load does not freeze scene; no 429 errors from VWorld |
+| Tile seam lines and UV bleeding | Phase 4: Ortho Tile Integration | Assembled tile ground plane shows no visible grid seams at any camera angle |
+| Tile GPU memory leak | Phase 4: Ortho Tile Integration | 10 sequential building selections do not grow `renderer.info.memory.textures` beyond 40 |
+| SAOPass performance collapse | Phase 5: Context Buildings | 100 context building scene runs at ≥ 30fps on Intel integrated graphics |
+| Context InstancedMesh draw call explosion | Phase 5: Context Buildings | Scene with 150 context buildings has ≤ 10 draw calls |
 
 ---
 
 ## Sources
 
-- React Three Fiber Events Documentation: https://r3f.docs.pmnd.rs/api/events
-- R3F/Three.js OrbitControls stopPropagation issue: https://github.com/mrdoob/three.js/issues/21339
-- react-resizable-panels performance (onLayoutChange vs onLayoutChanged): https://github.com/bvaughn/react-resizable-panels/issues/29
-- R3F performance guide: https://r3f.docs.pmnd.rs/advanced/scaling-performance
-- XState vs Zustand for workflow orchestration (2025): https://makersden.io/blog/react-state-management-in-2025
-- CKEditor contextual toolbar design patterns: https://github.com/ckeditor/ckeditor5-design/issues/99
-- NN/g contextual menus: https://www.nngroup.com/articles/contextual-menus/
-- IxDF Progressive Disclosure: https://ixdf.org/literature/topics/progressive-disclosure
-- Blender mode confusion (Object Mode vs Edit Mode): https://vagon.io/blog/object-mode-vs-edit-mode-in-blender
-- Revit beginner mistakes (BIM UX anti-patterns): https://www.bimpure.com/blog/13-beginner-mistakes-to-avoid-in-revit
-- R3F HTML overlay best practices: https://github.com/pmndrs/react-three-fiber/discussions/1536
-- Substance 3D Painter toolbar reference: https://helpx.adobe.com/substance-3d-painter/interface/toolbars.html
-- Three.js 100 performance tips: https://www.utsubo.com/blog/threejs-best-practices-100-tips
-- Code review of `src/components/viewer/viewer-overlay.tsx` (603 lines, 20+ store subscriptions)
-- Code review of `src/store/authoring-store.ts`, `plan-store.ts`, `component-store.ts` (no cross-store coordination layer)
+- Three.js forum: Non-simple/self-intersecting polygon troubles — https://discourse.threejs.org/t/non-simple-self-intersecting-polygon-troubles/8951
+- Three.js issue #11957: Hole outside Shape error in ExtrudeGeometry — https://github.com/mrdoob/three.js/issues/11957
+- Three.js issue #3386: Holes in contours cause triangulation failure — https://github.com/mrdoob/three.js/issues/3386
+- Three.js forum: Large coordinates float32 jitter — https://discourse.threejs.org/t/large-coordinates/50621
+- Three.js forum: Floating point precision — https://discourse.threejs.org/t/how-does-threejs-deal-with-precision-errors/26344
+- Three.js forum: SAOPass FPS drop — https://discourse.threejs.org/t/saopass-fps-drop-other-questions/28109
+- Three.js issue #19566: InstancedMesh + SSAO issues — https://github.com/mrdoob/three.js/issues/19566
+- mapbox/earcut: Polygon triangulation for WebGL — https://github.com/mapbox/earcut
+- EPSG:5179 KGD2002 / Unified CS definition — https://epsg.io/5179
+- proj4js axis order behavior — https://github.com/proj4js/proj4js
+- VWorld API sample repository — https://github.com/V-world/V-world_API_sample
+- VWorld Spatial Information Platform (MDPI 2019) — https://www.mdpi.com/2079-9292/8/12/1411
+- Codebase review: `src/app/api/vworld/footprint/route.ts` (equirectangular approximation, hardcoded domain and key)
+- Codebase review: `src/lib/procedural/types.ts` (`BuildingRecipe` has no `groundElevation` field — gap identified)
+- Codebase review: `src/components/viewer/ground-plane.tsx` (flat `y = -0.02` assumption)
+- Codebase review: `src/components/viewer/building-scene.tsx` (SAOPass configured for 7 draw calls; no GIS layer awareness)
 
 ---
-*Pitfalls research for: Guided authoring workflow UX retrofit — Korean BIM Energy Management System (v3.0)*
-*Researched: 2026-03-30*
+*Pitfalls research for: GIS compositing — Korean BIM Energy Management System (v4.0)*
+*Researched: 2026-04-03*

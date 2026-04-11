@@ -1,8 +1,8 @@
 # Architecture Research
 
-**Domain:** BIM Energy Management — UX Workflow Overhaul (v3.0)
-**Researched:** 2026-03-30
-**Confidence:** HIGH (based on direct codebase audit + verified library research)
+**Domain:** GIS compositing added to an existing Three.js/R3F BIM viewer — Korean spatial data (v4.0)
+**Researched:** 2026-04-12
+**Confidence:** HIGH (grounded in direct codebase audit of existing files)
 
 ---
 
@@ -11,528 +11,479 @@
 ### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    Next.js App Router Shell                          │
-│  app/building/[id]/page.tsx  (BuildingToolbar + DashboardPanel)      │
-├─────────────────────────────────────────────────────────────────────┤
-│                    Workspace Layout Layer (NEW)                      │
-│  ┌───────────────┐  ┌──────────────────────┐  ┌─────────────────┐   │
-│  │ WorkspaceShell│  │ContextualToolbarStrip│  │ WorkflowStepper │   │
-│  │ (panel splits)│  │  (stage-aware)       │  │  (pipeline nav) │   │
-│  └───────┬───────┘  └──────────┬───────────┘  └────────┬────────┘   │
-│          │                     │                        │            │
-├──────────┼─────────────────────┼────────────────────────┼────────────┤
-│          │           Viewport + Authoring Layer          │            │
-│  ┌───────▼────────────────────────────────────────────┐ │            │
-│  │  BuildingScene (R3F Canvas)                        │ │            │
-│  │  ├── SceneSetup / SAOPostProcessing                │ │            │
-│  │  ├── ProceduralBuildingModel / BuildingLayers       │ │            │
-│  │  ├── PlanView / WallDrawer / RoomFills              │ │            │
-│  │  └── Authoring: ElementSelector / TransformGizmo   │ │            │
-│  └─────────────────────────────────────────────────────┘ │            │
-├─────────────────────────────────────────────────────────┼────────────┤
-│                    Panel Slot System (NEW)               │            │
-│  ┌──────────────┐ ┌──────────────┐ ┌────────────────┐   │            │
-│  │  LeftDock    │ │  RightDock   │ │  BottomSheet   │   │            │
-│  │  (Layers,    │ │  (Config,    │ │  (EnergyCards, │   │            │
-│  │  Components) │ │  Properties) │ │  StatusBar)    │   │            │
-│  └──────────────┘ └──────────────┘ └────────────────┘   │            │
-├─────────────────────────────────────────────────────────────────────┤
-│                    Zustand Store Layer                               │
-│  ┌──────────────┐ ┌──────────────┐ ┌─────────────┐ ┌────────────┐  │
-│  │ workflow-    │ │ authoring-   │ │  plan-store │ │workspace-  │  │
-│  │ store (NEW)  │ │ store        │ │             │ │store (NEW) │  │
-│  └──────────────┘ └──────────────┘ └─────────────┘ └────────────┘  │
-│  ┌──────────────┐ ┌──────────────┐ ┌─────────────┐ ┌────────────┐  │
-│  │material-store│ │ recipe-store │ │component-   │ │ layer-store│  │
-│  │              │ │              │ │ store       │ │            │  │
-│  └──────────────┘ └──────────────┘ └─────────────┘ └────────────┘  │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          React UI Layer                                  │
+│  BuildingScene.tsx — R3F Canvas host + GIS composite orchestrator        │
+├───────────────────────────┬─────────────────────────────────────────────┤
+│    GIS Data Hooks (NEW)    │         Existing BIM Hooks                  │
+│  useGisComposite()         │  useBuildingFootprint()  [EXISTS]           │
+│  (useQueries parallel)     │  useRecipeStore          [EXISTS]           │
+│                            │  useMaterialStore        [EXISTS]           │
+│                            │  useWorkspaceStore       [EXISTS]           │
+├───────────────────────────┴─────────────────────────────────────────────┤
+│                     R3F Scene Graph (single Canvas)                      │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────────┐   │
+│  │  SatelliteGround  │  │ ContextBuildings  │  │  ProceduralBldgModel │   │
+│  │  PlaneGeometry    │  │  InstancedMesh    │  │  (EXISTS, unchanged) │   │
+│  │  + WMS texture    │  │  LOD1 gray boxes  │  │                      │   │
+│  │  (NEW)            │  │  (NEW)            │  │                      │   │
+│  └──────────────────┘  └──────────────────┘  └──────────────────────┘   │
+│  ┌──────────────────┐  ┌──────────────────┐                              │
+│  │  ZoningOverlay    │  │  GroundPlane      │                             │
+│  │  ShapeGeometry    │  │  (EXISTS,         │                             │
+│  │  semi-transparent │  │  BIM mode only)   │                             │
+│  │  (NEW)            │  │                  │                             │
+│  └──────────────────┘  └──────────────────┘                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│                     Coordinate Foundation (NEW)                           │
+│              src/lib/gis/gis-transform.ts                                │
+│   proj4js site-specific TM — all GIS layers share one local origin       │
+├────────────────────┬────────────────────────────────────────────────────┤
+│  Next.js API Routes│                                                     │
+│  /api/vworld/      │  footprint/route.ts      [EXISTS — modified]        │
+│                    │  satellite/route.ts       [NEW]                     │
+│                    │  context-buildings/route.ts [NEW]                   │
+│                    │  zoning/route.ts           [NEW]                    │
+└────────────────────┴────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
-| Component | Responsibility | Status |
-|-----------|----------------|--------|
-| `WorkspaceShell` | Manages resizable panel splits, slot registration, workspace save/restore | NEW |
-| `WorkflowStepper` | Renders the 5-stage pipeline breadcrumb/nav, validates stage completion, handles transitions | NEW |
-| `ContextualToolbarStrip` | Replaces current `viewer-overlay.tsx` top-right icon row; renders tool groups based on `workflowStore.stage` | REPLACES viewer-overlay.tsx |
-| `workflow-store` | FSM: current stage, completion flags, transition guards, persist to localStorage | NEW |
-| `workspace-store` | Panel layout state, dock positions, collapsed states, persist to localStorage | NEW |
-| `BuildingScene` | R3F Canvas owner; receives props from WorkspaceShell rather than managing its own panel state | MODIFIED (state extraction) |
-| `ConfigPanel` | Material/envelope/HVAC config; becomes a routable dock slot, not an overlay | MODIFIED (slot-aware) |
-| `LayerPanel` | Building system layers; becomes a dock slot | MODIFIED (slot-aware) |
-| `PropertiesPanel` | Selected element properties; moves to right dock | MODIFIED (slot-aware) |
-| `ComponentPalette` | BIM component library; moves to left dock | MODIFIED (slot-aware) |
-| `EnergyCards` | Live energy metrics; moves to bottom shelf | MODIFIED (slot-aware) |
-| `NodeGraphPanel` | Optional: visual property graph (ReactFlow); placed in right dock when stage = "configure" | NEW (optional) |
+| Component / Module | Responsibility | Status |
+|--------------------|---------------|--------|
+| `src/lib/gis/gis-transform.ts` | All WGS84 → local ENU coordinate math. Stores scene origin. Exposes `setSceneOrigin()`, `toLocal(lng, lat)`, `polygonToLocal()`. Single source of truth for coordinate projection — centralizes the bug surface for axis-order and float32 issues. | NEW |
+| `src/lib/gis/earcut-extrude.ts` | GeoJSON Polygon/MultiPolygon → `THREE.BufferGeometry` via earcut. Handles outer rings + interior holes. Replaces Three.js `ShapeGeometry`/`ExtrudeGeometry` for any cadastral data. | NEW |
+| `src/app/api/vworld/satellite/route.ts` | Server-side WMS GetMap proxy. Fetches a single JPEG from VWorld covering the scene bbox. Returns image bytes. Same Next.js Route Handler pattern as existing `footprint/route.ts`. | NEW |
+| `src/app/api/vworld/context-buildings/route.ts` | Server-side proxy for cadastral bbox query (`LP_PA_CBND_BUBUN` with `geomFilter`). Returns `[{pnu, polygon, buldHg, flrCnt}]`. Derives height from `buldHg` with fallback `flrCnt × 3m`. | NEW |
+| `src/app/api/vworld/zoning/route.ts` | Server-side WFS proxy for VWorld zoning layers (`LT_C_UQ111`–`LT_C_UQ114`). Returns GeoJSON FeatureCollection of zoning polygons for a bbox. | NEW |
+| `src/components/viewer/satellite-ground.tsx` | R3F component. `PlaneGeometry` sized to WMS bbox, textured with the satellite JPEG via `THREE.CanvasTexture`. Sets `material.aoMapIntensity = 0` and assigns ground to layer 1 to prevent SAOPass self-occlusion on horizontal surfaces. Replaces `GroundPlane` when `stage === 'gis-composite'`. | NEW |
+| `src/components/viewer/context-buildings.tsx` | R3F component. Single `InstancedMesh` of gray LOD1 box extrusions. All context buildings share one geometry and one draw call. `castShadow = false`, `receiveShadow = false`. | NEW |
+| `src/components/viewer/zoning-overlay.tsx` | R3F component. Semi-transparent `ShapeGeometry` mesh per zoning classification. Toggle visibility via layer panel. | NEW |
+| `src/hooks/use-gis-composite.ts` | `useQueries` orchestrator. Fires satellite, context-buildings, and zoning requests in parallel on building selection. Returns `{satellite, contextBuildings, zoning, isLoading}`. Each layer resolves and renders independently — a failed fetch does not block other layers. | NEW |
+| `src/lib/procedural/procedural-building.ts` | EXISTS. Core generation logic unchanged. When `recipe.footprintPolygon` is present, cap faces (top/bottom) use `earcut-extrude.ts` instead of `THREE.ShapeGeometry`. Facade/slab/column InstancedMesh generators use `footprintWidth`/`footprintDepth` and are unaffected. | MODIFIED (cap extrusion path only) |
+| `src/components/viewer/building-scene.tsx` | EXISTS. Add GIS composite rendering branch. When `workflowStore.stage === 'gis-composite'`, render `SatelliteGround + ContextBuildings + ZoningOverlay`. Scale back SAOPass `saoKernelRadius` (50 → 25) when context buildings are active; halve SAOPass resolution when count > 50. | MODIFIED |
+| `src/app/api/vworld/footprint/route.ts` | EXISTS. Two surgical changes: (1) replace hardcoded `domain: "localhost"` with `process.env.VWORLD_DOMAIN ?? "localhost"`; (2) extend `extractPolygon()` to handle `Polygon` interior holes and `MultiPolygon` geometry types. Existing callers unaffected. | MODIFIED |
+| `src/store/workflow-store.ts` | EXISTS. Add `'gis-composite'` to the `WorkflowStage` type union as a pre-stage before `'select'`. Wire transition: `'gis-composite'` → `'select'` on "BIM Mode" click. GIS scene components are unmounted on this transition. | MODIFIED |
 
 ---
 
 ## Recommended Project Structure
 
+New files only — existing folders unchanged.
+
 ```
 src/
-├── app/
-│   └── building/[id]/
-│       └── page.tsx               # Thin shell — passes data to WorkspaceShell
-├── components/
-│   ├── workspace/                 # NEW: workspace layer
-│   │   ├── workspace-shell.tsx    # Root layout: top toolbar + main splits + docks
-│   │   ├── workflow-stepper.tsx   # Pipeline breadcrumb (5 stages)
-│   │   ├── contextual-toolbar.tsx # Stage-aware toolbar (replaces viewer-overlay)
-│   │   ├── left-dock.tsx          # Collapsible left panel (layers, palette)
-│   │   ├── right-dock.tsx         # Collapsible right panel (config, properties)
-│   │   ├── bottom-shelf.tsx       # Status bar + energy cards
-│   │   └── dock-slot.tsx          # Generic slot wrapper (title, collapse, resize)
-│   ├── viewer/                    # EXISTING: R3F components — no structural change
-│   │   ├── building-scene.tsx     # MODIFIED: remove internal panel open state
-│   │   ├── viewer-overlay.tsx     # DEPRECATED: absorb into contextual-toolbar.tsx
-│   │   └── ...
-│   ├── building/                  # EXISTING: data display cards
-│   └── ui/                        # EXISTING: shadcn primitives
-├── store/
-│   ├── workflow-store.ts          # NEW: FSM stage machine
-│   ├── workspace-store.ts         # NEW: panel layout persistence
-│   ├── authoring-store.ts         # EXISTING: no change
-│   ├── plan-store.ts              # EXISTING: no change
-│   ├── material-store.ts          # EXISTING: no change
-│   ├── recipe-store.ts            # EXISTING: no change
-│   ├── component-store.ts         # EXISTING: no change
-│   └── layer-store.ts             # EXISTING: no change
-└── lib/
-    └── workflow/
-        ├── stages.ts              # NEW: stage definitions, valid transitions, guards
-        └── toolbar-configs.ts     # NEW: per-stage toolbar item arrays
+├── app/api/vworld/
+│   ├── footprint/route.ts          # EXISTS — parameterize domain env var, fix polygon holes
+│   ├── satellite/route.ts          # NEW — VWorld WMS GetMap proxy
+│   ├── context-buildings/route.ts  # NEW — cadastral bbox + height proxy
+│   └── zoning/route.ts             # NEW — WFS LT_C_UQ111-114 proxy
+│
+├── lib/gis/                        # NEW folder — coordinate system + geometry utilities
+│   ├── gis-transform.ts            # proj4js ENU projection, local origin subtraction
+│   └── earcut-extrude.ts           # GeoJSON Polygon → THREE.BufferGeometry via earcut
+│
+├── lib/procedural/                 # EXISTS — minimal changes
+│   ├── types.ts                    # footprintPolygon already present; add groundElevation?: number
+│   ├── procedural-building.ts      # cap extrusion → earcut-extrude when polygon present
+│   └── ...                         # facade/structure generators: no changes
+│
+├── components/viewer/
+│   ├── satellite-ground.tsx        # NEW — PlaneGeometry + WMS texture
+│   ├── context-buildings.tsx       # NEW — InstancedMesh LOD1 context
+│   ├── zoning-overlay.tsx          # NEW — semi-transparent zoning polygons
+│   ├── building-scene.tsx          # MODIFIED — GIS stage branch + SAOPass scaling
+│   └── ground-plane.tsx            # EXISTS — unchanged, used in BIM mode only
+│
+└── hooks/
+    └── use-gis-composite.ts        # NEW — useQueries parallel fetch orchestrator
 ```
 
 ### Structure Rationale
 
-- **`workspace/`:** New directory separates "workspace chrome" from "3D viewport" and "data cards". All panel management lives here, not in building-scene.tsx.
-- **`workflow/`:** Stage definitions as pure data. Toolbar configs keyed by stage. Zero coupling to React — testable in isolation.
-- **`store/workflow-store.ts`:** Centralizes pipeline state. Single source of truth for "what authoring stage is active" — toolbar, stepper, and panels all read from it.
-- **`store/workspace-store.ts`:** Separate from workflow-store because panel layout is a UX preference (persisted), not a workflow guard (not persisted between buildings).
+- **`src/lib/gis/`** is isolated from `src/lib/procedural/`. Coordinate math is a cross-cutting concern shared by all GIS layers; keeping it out of the building generation pipeline prevents `procedural-building.ts` from depending on projection code.
+- **New API routes mirror `footprint/route.ts` exactly** — same Next.js Route Handler pattern, same `VWORLD_API_KEY` env var, same CORS handling. No new proxy patterns introduced.
+- **New R3F components are sibling scene children**, not modifications to `ProceduralBuildingModel` or `BuildingLayers`. GIS layers compose with the existing scene tree; they do not wrap or replace it.
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: Zustand-as-FSM (Workflow State Machine)
+### Pattern 1: Local-Origin ENU Coordinate System (Phase 1 — Must Come First)
 
-**What:** Implement the 5-stage authoring pipeline as a Zustand store with explicit allowed-transition logic. No XState dependency — the codebase already uses Zustand heavily and the state graph is shallow.
+**What:** One scene origin (the queried building centroid in WGS84) is set when a building is selected. All GIS coordinates from all layers are converted to local East-North-Up meters relative to this origin using a site-specific Transverse Mercator projection via `proj4js`. The result is float32-safe values in the range ±5000m. The origin is stored in `gis-transform.ts` as module state for the current session.
 
-**When to use:** When you have fewer than ~10 states and transitions are mostly linear. Introducing XState for a 5-stage linear pipeline adds ~50KB gzip and a new mental model with minimal benefit.
-
-**Trade-offs:** Less formal than XState (no visual state chart), but zero new dependencies and consistent with existing stores. Sufficient for this use case.
+**Why this is Phase 1:** Every subsequent GIS layer depends on correct coordinate conversion. A bug here misaligns all layers. Retrofitting after Phases 2–5 requires touching every geometry builder. The equirectangular approximation in the existing `extractPolygon()` accumulates ~8m error at 2km — acceptable for single parcel use, but not for multi-layer compositing. `gis-transform.ts` must be the single source of truth before any GIS component is built.
 
 **Example:**
 ```typescript
-// src/store/workflow-store.ts
-export type WorkflowStage =
-  | "select"       // Building chosen, data loading
-  | "assemble"     // Wall drawing, floor layout
-  | "configure"    // Material props, envelope, HVAC
-  | "analyze"      // Structural overlay, energy cards
-  | "export";      // ECO2 export, report
+// src/lib/gis/gis-transform.ts
+import proj4 from "proj4";
 
-export type StageCompletion = Record<WorkflowStage, boolean>;
+let _proj: proj4.Converter | null = null;
 
-interface WorkflowState {
-  stage: WorkflowStage;
-  completion: StageCompletion;
-  setStage: (next: WorkflowStage) => void;
-  canAdvance: () => boolean;
-  advance: () => void;
-  retreat: () => void;
+export function setSceneOrigin(lng: number, lat: number): void {
+  // Site-specific TM centered on building — eliminates equirectangular error
+  const def = `+proj=tmerc +lat_0=${lat} +lon_0=${lng} +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs`;
+  _proj = proj4("EPSG:4326", def);
 }
 
-const STAGE_ORDER: WorkflowStage[] = [
-  "select", "assemble", "configure", "analyze", "export"
-];
+export function toLocal(lng: number, lat: number): [number, number] {
+  if (!_proj) throw new Error("setSceneOrigin must be called before toLocal");
+  const [e, n] = _proj.forward([lng, lat]);
+  // Debug guard: values > 10000m from origin indicate likely axis-order bug
+  if (process.env.NODE_ENV !== "production") {
+    if (Math.abs(e) > 10000 || Math.abs(n) > 10000)
+      console.warn(`toLocal: suspicious magnitude [${e}, ${n}] — check axis order`);
+  }
+  return [e, n]; // Three.js convention: [x, z]
+}
 
-const ADVANCE_GUARDS: Partial<Record<WorkflowStage, (s: WorkflowState) => boolean>> = {
-  select:    () => true,    // always can leave select (building loaded by page)
-  assemble:  () => true,    // flexible: users can skip drawing
-  configure: () => true,
-  analyze:   () => true,
-};
-
-export const useWorkflowStore = create<WorkflowState>()(
-  persist(
-    (set, get) => ({
-      stage: "select",
-      completion: { select: false, assemble: false, configure: false, analyze: false, export: false },
-
-      setStage: (next) => set({ stage: next }),
-
-      canAdvance: () => {
-        const { stage } = get();
-        const guard = ADVANCE_GUARDS[stage];
-        return guard ? guard(get()) : false;
-      },
-
-      advance: () => {
-        const { stage } = get();
-        const idx = STAGE_ORDER.indexOf(stage);
-        if (idx < STAGE_ORDER.length - 1) set({ stage: STAGE_ORDER[idx + 1] });
-      },
-
-      retreat: () => {
-        const { stage } = get();
-        const idx = STAGE_ORDER.indexOf(stage);
-        if (idx > 0) set({ stage: STAGE_ORDER[idx - 1] });
-      },
-    }),
-    {
-      name: "bim-workflow-state",
-      partialize: (s) => ({ stage: s.stage, completion: s.completion }),
-    }
-  )
-);
+export function polygonToLocal(ring: number[][]): [number, number][] {
+  return ring.map(([lng, lat]) => toLocal(lng, lat));
+}
 ```
 
-### Pattern 2: Stage-Keyed Toolbar Configuration
+### Pattern 2: Earcut Extrusion for Cadastral Polygons
 
-**What:** Define toolbar item groups as pure data arrays keyed by `WorkflowStage`. `ContextualToolbarStrip` reads the current stage from `workflowStore` and renders the matching group. No conditional JSX branches in the toolbar component itself.
+**What:** Any cadastral polygon (outer ring + optional holes) is triangulated with `earcut` (~3KB) and assembled into a `THREE.BufferGeometry` manually. `THREE.ShapeGeometry` and `THREE.ExtrudeGeometry` are not used for cadastral data.
 
-**When to use:** When toolbar content changes substantially between stages (≥3 different item sets). Avoids growing `viewer-overlay.tsx`'s 600-line conditional ladder further.
+**When to use:** Primary building footprint cap faces; context building footprints if earcut-per-building is chosen over the simpler centroid-box approach. Zoning shapes use `THREE.ShapeGeometry` (simpler administrative boundaries, rarely have holes).
 
-**Trade-offs:** Toolbar items must be serializable descriptors (id, icon, label, action). Complex items that need render hooks need a registry pattern rather than plain data.
+**Why mandatory:** Korean cadastral records commonly have concave vertices (L-shaped lots), interior holes (road easements recorded as inner rings), and near-collinear digitization artifacts. Three.js's built-in triangulator produces incorrect geometry for these cases — it logs `"Probably Hole outside Shape!"` and renders missing triangles silently.
 
 **Example:**
 ```typescript
-// src/lib/workflow/toolbar-configs.ts
-export interface ToolbarItem {
-  id: string;
-  icon: LucideIcon;
-  labelKo: string;
-  labelEn: string;
-  action: string;          // dispatched to a command registry
-  activeWhen?: string;     // store selector path for active state
-  group: "left" | "right" | "view";
-}
+// src/lib/gis/earcut-extrude.ts
+import earcut from "earcut";
+import * as THREE from "three";
 
-export const TOOLBAR_CONFIGS: Record<WorkflowStage, ToolbarItem[]> = {
-  select:    [...viewPresetItems],
-  assemble:  [...viewPresetItems, ...drawingModeItems, ...snapItems],
-  configure: [...viewPresetItems, ...annotationItems],
-  analyze:   [...viewPresetItems, ...structuralLayerItems],
-  export:    [...viewPresetItems, ...exportItems],
-};
+export function extrudePolygon(
+  outerRing: [number, number][],   // local ENU [x, z] coords
+  holes: [number, number][][],     // inner rings in same space
+  height: number
+): THREE.BufferGeometry {
+  // Build flat arrays for earcut: vertices as [x, z] pairs
+  const allRings = [outerRing, ...holes];
+  const flatVerts: number[] = [];
+  const holeIndices: number[] = [];
+  let offset = 0;
+  for (let i = 0; i < allRings.length; i++) {
+    if (i > 0) holeIndices.push(offset);
+    for (const [x, z] of allRings[i]) { flatVerts.push(x, z); offset++; }
+  }
+  const triangles = earcut(flatVerts, holeIndices, 2);
+  // Build top cap, bottom cap, and side quads from triangles + ring edges
+  // ... returns BufferGeometry with position + normal + index attributes
+}
 ```
 
-### Pattern 3: Dock Slot System (No External Library)
+### Pattern 3: InstancedMesh for Context Buildings (Single Draw Call)
 
-**What:** Build a minimal panel dock system using `react-resizable-panels` (already available via shadcn's ResizablePanelGroup). Panels register themselves as slots; `WorkspaceShell` decides physical placement. Panel state (open/collapsed/size) lives in `workspace-store`.
+**What:** All LOD1 context buildings share one `InstancedMesh` with a unit `BoxGeometry`. Per-instance `Matrix4` encodes position (footprint centroid) and scale (width × height × depth). Material is flat gray `MeshStandardMaterial`. No shadows on any instance.
 
-**When to use:** When you need 2–3 dockable side panels with collapse, without requiring full IDE-style floating/drag-and-drop docking. The BIM tool needs left + right + bottom panels, all fixed position — not arbitrary floating.
+**Why:** 100–200 context buildings as individual `Mesh` objects = 100–200 draw calls. That alone would roughly triple scene complexity and collapse SAOPass frame rate on Intel integrated graphics (the GX team's most common hardware). InstancedMesh keeps it at one draw call regardless of count.
 
-**Trade-offs:** Simpler than Dockview or FlexLayout. Loses arbitrary reordering. Acceptable because the target users (GX team) want consistent panel positions, not custom workspace tiling.
+**Key implementation detail:** `mesh.instanceMatrix.needsUpdate = true` must be called after all `setMatrixAt()` calls — this is the same invariant as the existing `structure-generator.ts`.
 
 **Example:**
 ```typescript
-// src/components/workspace/workspace-shell.tsx
-// Uses ResizablePanelGroup from shadcn (wraps react-resizable-panels)
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+// src/components/viewer/context-buildings.tsx
+const geo = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
+const mat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#c8c8c8", roughness: 0.9 }), []);
+const meshRef = useRef<THREE.InstancedMesh>(null);
 
-export function WorkspaceShell({ buildingPk, title, floors }: WorkspaceShellProps) {
-  const leftOpen = useWorkspaceStore((s) => s.leftDockOpen);
-  const rightOpen = useWorkspaceStore((s) => s.rightDockOpen);
+useEffect(() => {
+  if (!meshRef.current) return;
+  contextBuildings.forEach((b, i) => {
+    const m = new THREE.Matrix4().compose(
+      new THREE.Vector3(b.cx, b.height / 2, b.cz),
+      new THREE.Quaternion(),
+      new THREE.Vector3(b.width, b.height, b.depth)
+    );
+    meshRef.current!.setMatrixAt(i, m);
+  });
+  meshRef.current.instanceMatrix.needsUpdate = true;
+}, [contextBuildings]);
 
-  return (
-    <div className="flex flex-col h-dvh">
-      <WorkflowStepper />
-      <ContextualToolbarStrip buildingPk={buildingPk} />
-      <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
-        {leftOpen && (
-          <>
-            <ResizablePanel defaultSize={18} minSize={12} maxSize={28}>
-              <LeftDock buildingPk={buildingPk} />
-            </ResizablePanel>
-            <ResizableHandle />
-          </>
-        )}
-        <ResizablePanel className="relative">
-          <BuildingScene title={title} floors={floors} />
-        </ResizablePanel>
-        {rightOpen && (
-          <>
-            <ResizableHandle />
-            <ResizablePanel defaultSize={22} minSize={16} maxSize={35}>
-              <RightDock buildingPk={buildingPk} />
-            </ResizablePanel>
-          </>
-        )}
-      </ResizablePanelGroup>
-      <BottomShelf buildingPk={buildingPk} />
-    </div>
-  );
-}
+return <instancedMesh ref={meshRef} args={[geo, mat, contextBuildings.length]}
+  castShadow={false} receiveShadow={false} />;
 ```
 
-### Pattern 4: Stage-Conditional Panel Content (Right Dock)
+### Pattern 4: Parallel Fetch with useQueries
 
-**What:** The right dock renders different content based on `workflowStore.stage`. In "assemble" → `PropertiesPanel`. In "configure" → `ConfigPanel` (tabbed). In "analyze" → read-only energy summary. No routing or remounting — use conditional rendering inside the dock.
+**What:** `useGisComposite` fires all VWorld data requests simultaneously using TanStack Query's `useQueries`. Each layer is an independent query with its own key, loading state, and error. Layers render as they resolve. A failed satellite fetch does not block context buildings.
 
-**When to use:** When panel content transitions are driven by workflow stage, not by user navigation. Avoids URL-based routing for panel slots (adding complexity with no benefit for a single-building workspace).
+**Why:** Sequential fetching would take 3× longer (each VWorld call is 300–800ms). A single `Promise.all` would fail entirely if any layer fails. `useQueries` gives independent retry, caching (30min staleTime), and progressive rendering per layer — matching the existing `useBuildingFootprint` pattern.
 
-**Trade-offs:** Shared panel slot means unmounting/remounting on stage change. Mitigate with `key` prop to preserve scroll position within stage, and `display:none` trick for panels that should survive stage switch (e.g., layers panel is always visible regardless of stage).
+```typescript
+// src/hooks/use-gis-composite.ts
+export function useGisComposite(origin: { lng: number; lat: number } | null) {
+  const results = useQueries({
+    queries: origin ? [
+      { queryKey: ["gis-satellite", origin], queryFn: () => fetchSatellite(origin), staleTime: 30 * 60 * 1000 },
+      { queryKey: ["gis-context", origin],   queryFn: () => fetchContextBuildings(origin), staleTime: 30 * 60 * 1000 },
+      { queryKey: ["gis-zoning", origin],    queryFn: () => fetchZoning(origin), staleTime: 30 * 60 * 1000 },
+    ] : [],
+  });
+  return {
+    satellite:        results[0],
+    contextBuildings: results[1],
+    zoning:           results[2],
+    isLoading:        results.some(r => r.isLoading),
+  };
+}
+```
 
 ---
 
 ## Data Flow
 
-### Workflow Transition Flow
+### GIS Composite Activation Flow
 
 ```
-User clicks "Next Stage" in WorkflowStepper
+User selects building (address resolved in BldRgstHubService search)
     ↓
-workflowStore.advance()
+useBuildingFootprint(address) resolves [EXISTS — already cached]
     ↓
-stage: "assemble" → "configure"
+footprint centroid extracted → gis-transform.setSceneOrigin(lng, lat)  [NEW]
     ↓
-ContextualToolbarStrip re-reads TOOLBAR_CONFIGS["configure"]
+useGisComposite(origin) fires  [NEW]
+    ↓ (three queries in parallel, independent)
+    ├─ fetchSatellite   → /api/vworld/satellite   → VWorld WMS GetMap
+    ├─ fetchContextBldgs → /api/vworld/context-buildings → VWorld Data API (bbox)
+    └─ fetchZoning      → /api/vworld/zoning       → VWorld WFS
+    ↓ (each resolves independently; scene populated progressively)
+    ├─ SatelliteGround mounts:  PlaneGeometry + CanvasTexture (JPEG bytes)
+    ├─ ContextBuildings mounts: InstancedMesh (polygon centroids + heights → toLocal())
+    └─ ZoningOverlay mounts:    ShapeGeometry (zoning polygons → polygonToLocal())
     ↓
-RightDock reads stage → renders ConfigPanel (replacing PropertiesPanel)
+workflowStore.stage === 'gis-composite': all three GIS layers visible
     ↓
-WorkflowStepper highlights step 3, dims step 2
+User clicks "BIM Mode" button
+    ↓
+workflowStore.stage → 'select': GIS components unmount, ProceduralBuildingModel activates
 ```
 
-### Panel State Flow
+### Coordinate Transform Chain
 
 ```
-User collapses right dock
+VWorld API response (always requested as crs=EPSG:4326 → GeoJSON [lng, lat])
     ↓
-RightDock calls workspaceStore.setRightDockOpen(false)
+gis-transform.toLocal(lng, lat) [proj4js site-specific TM]
     ↓
-WorkspaceShell removes ResizablePanel for right dock
+[x, z] in local ENU meters — float32-safe (magnitude < ±5000m for any urban scene)
     ↓
-BuildingScene panel gets full width (ResizablePanelGroup reflows)
+earcut-extrude.ts or direct Vector3 assignment
     ↓
-workspaceStore persists to localStorage (persist middleware)
+THREE.BufferGeometry / InstancedMesh transform
     ↓
-Next session: right dock starts collapsed
+Three.js scene graph
 ```
 
-### Recipe / Material Live Update Flow (existing, unchanged)
+### Building Footprint → Extrusion (Existing Pipeline Change)
 
-```
-User edits wall U-value in ConfigPanel
-    ↓
-recipeStore.setOverride(pk, "facade.uValue", 1.2)
-    ↓
-BuildingScene re-reads recipeOverrides → recomputes recipe via useMemo
-    ↓
-ProceduralBuildingModel receives new recipe prop → R3F re-renders
-    ↓
-EnergyCards re-computes from updated material properties
-```
+Current state in `building-scene.tsx`:
+1. `useBuildingFootprint(address)` fetches polygon (equirectangular [x,z] from centroid) — continues working
+2. `geometry.footprintPolygon` is set on `FloorGeometry`; `footprintWidth`/`footprintDepth` are derived from it
+3. `toRecipe(geometry)` propagates `footprintPolygon` into `BuildingRecipe` — the field already exists in `types.ts`
+4. `ProceduralBuilding.generate()` currently uses `footprintWidth`/`footprintDepth` for all geometry
 
-### Key Data Flows
+**Required change:** In `procedural-building.ts`, when `recipe.footprintPolygon` is present, use `earcut-extrude.ts` for the top/bottom cap faces. The facade-generator and structure-generator continue to use `footprintWidth`/`footprintDepth` for InstancedMesh — those are unchanged.
 
-1. **Workflow stage → toolbar:** `workflowStore.stage` → `TOOLBAR_CONFIGS[stage]` → `ContextualToolbarStrip` renders filtered items
-2. **Workflow stage → right dock content:** `workflowStore.stage` → `RightDock` conditional render switch
-3. **Building data → scene:** `page.tsx` fetches via `useBuildingDetail`, passes `title` + `floors` down to `WorkspaceShell` → `BuildingScene` (no store for this — prop drilling is correct for server-fetched data)
-4. **Panel size → persistence:** `workspace-store` persists `leftDockSize`, `rightDockSize`, `bottomShelfOpen` via Zustand `persist` middleware to `localStorage`
+**Scope:** This change touches only the cap generation path inside `ProceduralBuilding.generate()`. The existing rectangular fallback stays for when `footprintPolygon` is absent (campus mode, or when VWorld lookup failed).
 
 ---
 
-## New Components Inventory
+## New vs Modified Files: Complete Reference
 
-### New (must build from scratch)
+### New Files
 
-| Component / File | Replaces / Adds | Priority |
-|------------------|-----------------|----------|
-| `src/store/workflow-store.ts` | New store | P0 — everything depends on this |
-| `src/store/workspace-store.ts` | New store | P0 — panels depend on this |
-| `src/lib/workflow/stages.ts` | New: stage definitions, order, guards | P0 |
-| `src/lib/workflow/toolbar-configs.ts` | New: per-stage toolbar item arrays | P1 |
-| `src/components/workspace/workspace-shell.tsx` | New: root layout | P0 |
-| `src/components/workspace/workflow-stepper.tsx` | New: pipeline nav | P1 |
-| `src/components/workspace/contextual-toolbar.tsx` | Replaces `viewer-overlay.tsx` | P1 |
-| `src/components/workspace/left-dock.tsx` | New: left panel host | P1 |
-| `src/components/workspace/right-dock.tsx` | New: right panel host | P1 |
-| `src/components/workspace/bottom-shelf.tsx` | New: status/energy host | P2 |
-| `src/components/workspace/dock-slot.tsx` | New: generic slot wrapper | P1 |
+| File | Purpose | Phase |
+|------|---------|-------|
+| `src/lib/gis/gis-transform.ts` | proj4js ENU projection, scene origin management, `toLocal()`, `polygonToLocal()`, debug assertions | 1 — must exist before all others |
+| `src/lib/gis/earcut-extrude.ts` | GeoJSON Polygon/MultiPolygon → `THREE.BufferGeometry` via earcut, handles outer rings + holes | 2 |
+| `src/app/api/vworld/satellite/route.ts` | WMS GetMap proxy — returns satellite JPEG bytes for a bbox | 3 |
+| `src/app/api/vworld/context-buildings/route.ts` | Cadastral bbox query with `size=100` + height attribute extraction | 4 |
+| `src/app/api/vworld/zoning/route.ts` | WFS `LT_C_UQ111`–`LT_C_UQ114` proxy — returns GeoJSON zoning polygons | 5 |
+| `src/hooks/use-gis-composite.ts` | `useQueries` parallel fetch orchestrator; add queries incrementally as routes are built | 3 (grow across phases) |
+| `src/components/viewer/satellite-ground.tsx` | R3F PlaneGeometry + WMS texture; SAOPass layer exclusion | 3 |
+| `src/components/viewer/context-buildings.tsx` | R3F InstancedMesh LOD1 gray boxes | 4 |
+| `src/components/viewer/zoning-overlay.tsx` | R3F semi-transparent zoning polygon meshes | 5 |
 
-### Modified (refactor required)
+### Modified Files
 
-| Component | Change Required | Risk |
-|-----------|-----------------|------|
-| `src/app/building/[id]/page.tsx` | Replace direct `BuildingScene` render with `WorkspaceShell`; pass toolbar/panel state down | LOW — thin file (116 lines) |
-| `src/components/viewer/building-scene.tsx` | Remove internal `configPanelOpen`, `layerPanelOpen`, `uploadDialogOpen` local state; receive panel-open flags from `workspace-store` or props from WorkspaceShell | MEDIUM — 415 lines, multiple state extractions |
-| `src/components/viewer/viewer-overlay.tsx` | Extract toolbar items to `toolbar-configs.ts`, delete file after `contextual-toolbar.tsx` absorbs functionality | HIGH — 600 lines, must migrate carefully |
-| `src/components/viewer/config-panel.tsx` | Remove `visible` prop pattern; render unconditionally inside RightDock slot | LOW — slot handles visibility |
-| `src/components/viewer/layer-panel.tsx` | Same as config-panel: remove visibility prop | LOW |
-| `src/components/viewer/properties-panel.tsx` | Move into RightDock slot | LOW |
-| `src/components/viewer/component-palette.tsx` | Move into LeftDock slot | LOW |
-| `src/components/viewer/energy-cards.tsx` | Move into BottomShelf | LOW |
+| File | What Changes | Risk |
+|------|-------------|------|
+| `src/app/api/vworld/footprint/route.ts` | (1) `domain` from `VWORLD_DOMAIN` env var (currently hardcoded `"localhost"`); (2) `extractPolygon()` extended to handle `Polygon` interior holes (`coordinates[1..]`) and `MultiPolygon` first-part extraction | LOW — additive; existing callers unaffected |
+| `src/lib/procedural/types.ts` | Add `groundElevation?: number` to `BuildingRecipe` (for future terrain phase). No breaking change — optional field. | LOW |
+| `src/lib/procedural/procedural-building.ts` | When `recipe.footprintPolygon` is present, use `earcut-extrude.ts` for top/bottom cap faces. Facade/slab/column generators: no change. Rectangular fallback stays for missing-polygon case. | MEDIUM — touches cap generation; polygon path must be tested against concave parcels |
+| `src/components/viewer/building-scene.tsx` | (1) Call `setSceneOrigin()` when footprint centroid resolves; (2) mount GIS layer components when `stage === 'gis-composite'`; (3) reduce `saoKernelRadius` 50 → 25 when GIS layers active; (4) halve SAOPass resolution when context building count > 50 | MEDIUM — touches SAOPass config and scene composition |
+| `src/store/workflow-store.ts` | Add `'gis-composite'` to `WorkflowStage` union. Prepend to `STAGE_ORDER` before `'select'`. Wire transition back to `'select'` on "BIM Mode" action. | LOW — additive to existing FSM |
 
-### Untouched (no changes needed)
+### Untouched Files
 
-- All R3F scene components: `ProceduralBuildingModel`, `BuildingLayers`, `PlanView`, `WallDrawer`, `RoomFills`, `FloorSlabs`, `OpeningDrawer`, `AnnotationTools`, `StructuralTooltip`, `ElementSelector`, `TransformGizmo`
-- All existing Zustand stores: `authoring-store`, `plan-store`, `material-store`, `recipe-store`, `component-store`, `layer-store`
-- All data hooks, API proxies, lib utilities
+These files require no changes for v4.0 GIS compositing:
 
----
-
-## Build Order (dependency-first)
-
-### Phase 1 — Foundation (no UI, no integration)
-**Build first because everything else reads these.**
-
-1. `src/lib/workflow/stages.ts` — Stage enum, order array, guard functions
-2. `src/store/workflow-store.ts` — FSM store (reads stages.ts)
-3. `src/store/workspace-store.ts` — Panel layout store (independent)
-4. `src/lib/workflow/toolbar-configs.ts` — Per-stage toolbar descriptors (reads stages.ts)
-
-### Phase 2 — Workspace Shell
-**Structural layout, no content yet. Validates ResizablePanel integration.**
-
-5. `src/components/workspace/dock-slot.tsx` — Generic slot (title bar, collapse button, resize)
-6. `src/components/workspace/workspace-shell.tsx` — Root layout with ResizablePanelGroup
-7. Update `src/app/building/[id]/page.tsx` — Use WorkspaceShell instead of raw BuildingScene
-
-At end of Phase 2: page renders, 3D viewport is full-width (docks empty), no regression.
-
-### Phase 3 — Contextual Toolbar
-**Migrates viewer-overlay.tsx to the new stage-aware system.**
-
-8. `src/components/workspace/contextual-toolbar.tsx` — Reads workflow-store.stage + toolbar-configs
-9. Extract state from `building-scene.tsx`: remove `configPanelOpen`/`layerPanelOpen`/`uploadDialogOpen` local state; route these through workspace-store
-10. Remove `viewer-overlay.tsx` after toolbar parity confirmed
-
-At end of Phase 3: toolbar works, stage switching changes toolbar groups, no panel content yet.
-
-### Phase 4 — Panel Slots
-**Move existing panels into dock slots.**
-
-11. `src/components/workspace/left-dock.tsx` — Hosts LayerPanel + ComponentPalette
-12. `src/components/workspace/right-dock.tsx` — Hosts ConfigPanel / PropertiesPanel (stage-conditional)
-13. `src/components/workspace/bottom-shelf.tsx` — Hosts EnergyCards + status bar
-14. Modify panel components: remove `visible` prop, render unconditionally inside slots
-
-At end of Phase 4: full workspace with docks. Panels collapsible. Layout persists.
-
-### Phase 5 — Workflow Stepper
-**Add guided pipeline navigation on top of functional workspace.**
-
-15. `src/components/workspace/workflow-stepper.tsx` — Breadcrumb/step nav, reads workflow-store
-16. Wire stage transitions to panel content switches (right dock re-renders per stage)
-17. Completion flags: mark stages complete when user takes key actions (e.g., "configure" = complete when at least one override set in recipe-store)
-
-### Phase 6 — Node Graph (optional, deferred)
-**Only if configuring building properties as a visual graph is prioritized.**
-
-18. Install `@xyflow/react` (ReactFlow v12)
-19. `src/components/workspace/node-graph-panel.tsx` — Property nodes for facade/envelope/HVAC
-20. Wire node outputs to `recipeStore.setOverride()` — same as existing ConfigPanel sliders
+- `src/lib/procedural/facade-generator.ts` — InstancedMesh facade uses `footprintWidth`/`footprintDepth`, not the polygon
+- `src/lib/procedural/structure-generator.ts` — Same; slab/column InstancedMesh unchanged
+- `src/lib/procedural/recipe.ts` — Recipe factory; no GIS concerns
+- `src/lib/pbr-materials.ts` — PBR material configs; context buildings use flat gray, not PBR
+- `src/components/viewer/ground-plane.tsx` — Remains active in BIM mode (`stage !== 'gis-composite'`); not shown in GIS composite mode
+- All Zustand stores except `workflow-store.ts`
+- All existing `src/app/api/bldrgst/` routes — building ledger data source unchanged
 
 ---
 
-## Integration Points
+## Build Order
 
-### Existing Stores — No Breaking Changes
+The coordinate system is a hard dependency of every other GIS feature. Build order must respect this:
 
-The workflow-store and workspace-store are additive. All existing stores (`authoring-store`, `plan-store`, etc.) are unchanged. The BuildingScene R3F component is modified to *read* panel state from workspace-store rather than holding it in local `useState`, but the R3F scene tree is unaffected.
+### Phase 1: Coordinate System Foundation
 
-### viewer-overlay.tsx Migration
+**Produces:** `src/lib/gis/gis-transform.ts`
 
-This is the highest-risk migration. The 600-line file contains:
-- Top-right icon row (toolbar buttons): migrate to `contextual-toolbar.tsx`
-- Top-left badges (building name, era): migrate to `workspace-shell.tsx` top bar
-- Bottom-left floor info card: migrate to `bottom-shelf.tsx`
-- Right-side plan view controls: migrate to `left-dock.tsx` under plan mode
-- Section cut slider: migrate to contextual-toolbar as a conditional sub-row
+Build first, before any API route or R3F component. Includes `setSceneOrigin()`, `toLocal()`, `polygonToLocal()`, and debug-mode magnitude assertions. Pure utility module — no React, no Three.js, testable with Vitest using known Seoul coordinates.
 
-Recommended approach: build `contextual-toolbar.tsx` in parallel, verify parity via side-by-side render test, then delete `viewer-overlay.tsx` in a single commit.
+**Verification gate:** Unit test confirms that a WGS84 point 500m east of the origin converts to approximately `[500, 0]` with less than 0.5m error. A coordinate with raw EPSG:5179 magnitude (~950000) triggers the debug warning (confirming the guard works).
 
-### ResizablePanelGroup Constraint
+**Also in Phase 1:** Extend `extractPolygon()` in `footprint/route.ts` to handle `Polygon` holes and `MultiPolygon`. Parameterize `domain` from `VWORLD_DOMAIN` env var. These are low-risk fixes that unblock all downstream phases.
 
-`react-resizable-panels` (used by shadcn's Resizable primitives) requires the panel group to be a CSS flex/grid container with defined height. The existing `h-dvh` layout in `building/[id]/page.tsx` satisfies this. However, conditional panel mounting (show/hide left dock) must use `display:none` via the `hidden` prop on `ResizablePanel`, not conditional rendering, or the panel group will re-measure and animate a jump. Check shadcn Resizable docs before implementation.
+### Phase 2: Footprint Extrusion with Earcut
 
-**Confidence:** MEDIUM — react-resizable-panels v0.0.x had an API change in v1.0 (the `hidden` prop was added in v1.0). Verify version in `package.json` before building dock collapse logic.
+**Produces:** `src/lib/gis/earcut-extrude.ts`, modified `procedural-building.ts`
 
-### Building Scene State Extraction
+Depends on Phase 1 for coordinate input. Replaces the building cap extrusion path with earcut. `BuildingRecipe.footprintPolygon` already exists as an optional field — this phase wires it to real geometry.
 
-`building-scene.tsx` owns three pieces of state that must move out:
+**Implementation note:** For Phase 2, the footprint polygon from `useBuildingFootprint()` arrives in equirectangular [x,z] meters (centroid-relative). This is sub-centimeter accurate for a single parcel (diameter < 200m) and does not require `gis-transform.ts`. Upgrade to `gis-transform.ts` projection in Phase 3 when satellite alignment requires the shared origin.
 
-| Local state | Moves to |
-|-------------|----------|
-| `configPanelOpen` | `workspace-store.rightDockOpen` |
-| `layerPanelOpen` | `workspace-store.leftDockOpen` |
-| `uploadDialogOpen` | `workspace-store.uploadDialogOpen` |
+**Verification gate:** An L-shaped cadastral parcel (concave polygon) extrudes without missing faces. A parcel with an interior ring (road easement) shows the hole in the extruded mesh. Test PNU: use a parcel in Jongno-gu or Jung-gu (dense urban; common road easements).
 
-The remaining local state (`selectedFloor`, `modelSource`, `uploadedModel`) stays local to `BuildingScene` — it is viewport-specific, not workspace layout.
+### Phase 3: Satellite Ground Plane
 
-### Authoring Store + Workflow Store Relationship
+**Produces:** `src/app/api/vworld/satellite/route.ts`, `src/components/viewer/satellite-ground.tsx`, `src/hooks/use-gis-composite.ts` (satellite query only)
 
-`authoring-store.isAuthoring` (boolean toggle) maps to the "assemble" workflow stage. These two should remain separate stores (different concerns: `isAuthoring` is a fine-grained 3D viewport mode; `workflowStore.stage` is the coarse pipeline position). The contextual-toolbar reads both: it shows authoring tools when `stage === "assemble" && isAuthoring`.
+Depends on Phase 1 (`setSceneOrigin` establishes the bbox for the WMS request). The satellite proxy fetches one WMS `GetMap` JPEG for a 600m × 600m area around the building centroid. `SatelliteGround` renders a `PlaneGeometry` scaled to the bbox with the image as a `THREE.CanvasTexture`.
+
+**SAOPass detail:** Set `material.aoMapIntensity = 0` on the satellite ground material. The horizontal surface has nearly-zero normals relative to the SAOPass kernel — it will self-occlude (render dark) unless excluded. Assign the ground to `layers.set(1)` and configure SAOPass to exclude layer 1 from its depth pass.
+
+**Verification gate:** Satellite image appears as the ground texture. No dark vignette on the satellite surface from SAOPass. Satellite bbox aligns visually with the building footprint polygon.
+
+### Phase 4: Context Buildings (LOD1)
+
+**Produces:** `src/app/api/vworld/context-buildings/route.ts`, `src/components/viewer/context-buildings.tsx`, updated `use-gis-composite.ts`
+
+Hardest phase. The context-buildings proxy queries `LP_PA_CBND_BUBUN` with a 200m bbox, extracts per-feature centroid + `buldHg` (with `flrCnt × 3m` fallback), and returns a list. The R3F component assembles a single `InstancedMesh` from this list using `gis-transform.toLocal()` for each centroid.
+
+**Simplification option:** Instead of earcut per context-building footprint, use each building's bbox centroid and `(maxX-minX) × (maxZ-minZ)` dimensions to scale the unit box. This is faster to build and visually acceptable for LOD1 context. Reserve earcut for the primary building (Phase 2) only.
+
+**SAOPass action required here:** In `building-scene.tsx`, track context building count. When count > 50: set `saoKernelRadius = 25`. When count > 100: call `saoPass.setSize(size.width / 2, size.height / 2)`. Add a "Performance Mode" toggle to the layer panel that disables SAOPass entirely when GIS composite is active.
+
+**Verification gate:** 100 context buildings render at ≥ 30fps on Intel integrated graphics. `renderer.info.render.calls` ≤ 10 with 150 context buildings present. Context buildings align with satellite imagery within 2m visual error at 300m from scene center.
+
+### Phase 5: Zoning Overlay + Workflow Stage Transition
+
+**Produces:** `src/app/api/vworld/zoning/route.ts`, `src/components/viewer/zoning-overlay.tsx`, updated `use-gis-composite.ts`, modified `workflow-store.ts`
+
+Lowest-risk phase. Zoning overlay is independent of all other GIS layers. Add the `'gis-composite'` stage to `workflow-store.ts` here — wire the stage so that: entering `'gis-composite'` activates GIS layers, transitioning to `'select'` unmounts them and activates `ProceduralBuildingModel`.
+
+**Verification gate:** Zoning polygons appear as colored semi-transparent overlays aligned with satellite ground. Toggle button in layer panel hides/shows them without scene freeze. Stage transition from `'gis-composite'` to `'select'` removes all GIS geometry cleanly.
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Embedding Workflow State in BuildingScene
+### Anti-Pattern 1: Routing Context Buildings Through ProceduralBuilding
 
-**What people do:** Put `currentStage` state inside `BuildingScene` alongside the R3F Canvas, since "that's where the toolbar is."
+**What people do:** Use `ProceduralBuilding` class (or its `BuildingRecipe` pipeline) to generate context buildings, because that's the existing pattern for the target building.
 
-**Why it's wrong:** `BuildingScene` is deeply nested in R3F context. Lifting workflow state up to an R3F component prevents other non-3D panels (right dock, stepper) from reading it without prop-drilling through the Canvas boundary.
+**Why it's wrong:** `ProceduralBuilding` generates InstancedMesh facades with era-based PBR materials, curtain wall configs, mixed-use sections, structural columns, and roof geometry — 7 draw calls per building. Applied to 100–200 context buildings, that is 700–1400 draw calls plus recipe construction overhead per building. Frame rate collapses and the visual result is incorrect (context buildings should be visually subordinate gray boxes).
 
-**Do this instead:** `workflow-store` is a Zustand store — any component at any depth in the tree reads it directly. WorkspaceShell (parent of BuildingScene) and ContextualToolbar (sibling) both read it with no prop drilling.
+**Do this instead:** Context buildings are a single `InstancedMesh` of a unit box, scaled per building. One draw call total. `ProceduralBuilding` is exclusively for the target building.
 
-### Anti-Pattern 2: Per-Panel Visibility Props
+### Anti-Pattern 2: Sequential GIS Data Fetching
 
-**What people do:** Pass `visible={configPanelOpen}` to panels and return `null` when invisible (current pattern in `config-panel.tsx` and `layer-panel.tsx`).
+**What people do:** Await footprint → then fetch satellite → then fetch context buildings → then fetch zoning. Natural when incrementally adding features.
 
-**Why it's wrong:** Panel components should not know about their own visibility. The slot (dock) controls visibility. Panels rendering `null` lose their internal scroll position and form state on every open/close cycle, causing jarring UX.
+**Why it's wrong:** Each VWorld call takes 300–800ms. Sequential fetching: 1.2–3.2s of serial wait before any GIS layer renders. Users see a blank screen for longer than the composite takes to fully load.
 
-**Do this instead:** Panels render unconditionally. The dock slot component wraps them with `display:none` via CSS (or `hidden` attribute) when collapsed. The panel's internal state (active tab, scroll position) survives.
+**Do this instead:** `useQueries` fires all requests simultaneously. Set scene origin immediately when footprint centroid resolves. Render each layer as its query resolves. The scene populates progressively.
 
-### Anti-Pattern 3: Copying viewer-overlay.tsx Conditionals Into Contextual Toolbar
+### Anti-Pattern 3: Passing Raw Korean Projected Coordinates to Three.js
 
-**What people do:** Copy the existing chain of `{isAuthoring && (...)}` and `{viewMode === "plan" && (...)}` conditionals verbatim into the new toolbar component.
+**What people do:** Some VWorld WFS responses use EPSG:5179 (Northing/Easting magnitude ~10^6). Developers pass these directly to `mesh.position.set(950000, 0, 1950000)`.
 
-**Why it's wrong:** The current `viewer-overlay.tsx` is a 600-line accumulation of ad-hoc conditions. Copying it perpetuates the same structure with a new filename. The toolbar becomes unmaintainable as more stages are added.
+**Why it's wrong:** Three.js GPU buffers use float32. At 10^6 magnitude, float32 precision degrades to ±0.1m. Vertex jitter is visible on building edges, SAOPass halos flicker on corners, and shadow map aliasing appears.
 
-**Do this instead:** Use the `TOOLBAR_CONFIGS` pattern (Pattern 2 above). Each stage declaratively defines its item list. The toolbar component is a thin renderer, not a decision tree.
+**Do this instead:** Always subtract scene origin via `gis-transform.toLocal()` before any Three.js position assignment. Enforce with the debug-mode magnitude assertion in `gis-transform.ts`.
 
-### Anti-Pattern 4: XState for a 5-Stage Linear Pipeline
+### Anti-Pattern 4: Embedding a Second WebGL Context (Mapbox / CesiumJS)
 
-**What people do:** Install XState v5 (new major API) to get a "proper" state machine for the workflow.
+**What people do:** Reach for Mapbox GL JS or CesiumJS to handle GIS natively, since they are the standard tools.
 
-**Why it's wrong:** XState v5 introduces the actor model (new concept for the team), adds ~25KB gzip, requires wrapping components with `useMachine`, and provides formal visualization that is only valuable when state graphs are complex (≥15 states, parallel regions, history states). A 5-stage linear pipeline with simple guards is fully handled by Zustand with an array-based transition function.
+**Why it's wrong:** Two WebGL contexts on one page compete for GPU memory. Context loss occurs on lower-end hardware. Camera synchronization between Mapbox mercator and Three.js ENU requires coordinate system math. Each library adds 300–500KB bundle size.
 
-**Do this instead:** `STAGE_ORDER` array + `advance()`/`retreat()` functions in `workflow-store.ts`. Testable with Vitest, zero new dependencies.
+**Do this instead:** Fetch VWorld data through Next.js proxy routes. Render in the existing Three.js/R3F canvas. No second rendering engine.
+
+### Anti-Pattern 5: Using THREE.ShapeGeometry for Cadastral Data
+
+**What people do:** Convert the polygon to a `THREE.Shape` and pass to `THREE.ShapeGeometry` or `THREE.ExtrudeGeometry` — the documented Three.js approach for polygon extrusion.
+
+**Why it's wrong:** Three.js's built-in triangulator handles only simple convex-ish polygons reliably. Korean cadastral records contain concave vertices (L-shaped lots), interior holes (road easements), and near-collinear digitization artifacts. The result is missing faces, inverted triangles, or the `"Probably Hole outside Shape!"` warning with silent rendering errors.
+
+**Do this instead:** Use `earcut` for all cadastral triangulation. It handles concave polygons and holes correctly for real-world geographic data.
+
+---
+
+## Integration Points
+
+### External Services
+
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| VWorld Data API (`/req/data`) | Next.js Route Handler proxy. Client never calls VWorld directly. `VWORLD_API_KEY` env var. `VWORLD_DOMAIN` env var. | Always request `crs=EPSG:4326`. Never return raw EPSG:5179 coordinates to the client. |
+| VWorld WMS (`/req/wms`) | Next.js Route Handler proxy. Single `GetMap` request returning JPEG bytes. | One image per building selection. Not tile streaming. |
+| VWorld WFS (`/req/wfs`) | Next.js Route Handler proxy. Returns GeoJSON FeatureCollection. | `outputFormat=application/json`. Zoning layers `LT_C_UQ111`–`LT_C_UQ114`. |
+| data.go.kr BldRgstHubService | EXISTS — unchanged. Building ledger remains the recipe source. | `floorAboveCnt` provides context-building height fallback when `buldHg` is absent. |
+
+### Internal Boundaries
+
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| `gis-transform.ts` ↔ all GIS components | Direct import. Module-level origin state set once per building selection. | All subsequent coordinate calls are stateless functions. No React context needed. |
+| `earcut-extrude.ts` ↔ `procedural-building.ts` | Direct import. `extrudePolygon(outerRing, holes, height)` returns `BufferGeometry`. | Only called for cap faces. Facade/structure generators are not affected. |
+| `use-gis-composite.ts` ↔ GIS R3F components | React props. Hook returns resolved data; components accept data as props. | Components do not hold their own query state — cleaner for testing. |
+| `workflowStore.stage` ↔ `building-scene.tsx` | Zustand subscription. Scene reads `stage` to determine which layers to mount. | GIS layers unmount on `'select'` transition — clean disposal of InstancedMesh and textures. |
+| `SatelliteGround` ↔ `SAOPass` | Three.js render layers. Ground plane on `layers.set(1)`. SAOPass excludes layer 1 from depth. | Prevents SAOPass self-occlusion darkening the horizontal satellite surface (known Three.js SSAO artifact). |
+| `ContextBuildings` (count) ↔ `SAOPostProcessing` | React state / prop in `building-scene.tsx`. Context building count controls `saoKernelRadius` and SAOPass resolution. | SAOPass is configured at scene level in `SAOPostProcessing` component — must read count via shared state or ref. |
 
 ---
 
 ## Scaling Considerations
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| v3.0 scope (current) | WorkspaceShell + 3 dock slots + workflow-store. No ReactFlow node graph. |
-| v4.0 (node graph) | Add `@xyflow/react` as opt-in panel in RightDock when stage = "configure". Node graph outputs write to recipeStore — same API as sliders. |
-| Multi-building workspace | Add building tabs in WorkspaceShell header. `workspace-store` keyed by `buildingPk`. `workflow-store` keyed by `buildingPk`. |
-
-### Scaling Priorities
-
-1. **First bottleneck:** `building-scene.tsx` state extraction (configPanelOpen, layerPanelOpen). If rushed, creates circular prop-drilling. Fix early in Phase 3.
-2. **Second bottleneck:** `viewer-overlay.tsx` deletion. Keeping both in parallel temporarily is fine; keeping both permanently creates two competing toolbars. Set a hard deadline to delete the old file.
+| Concern | Single building | 10 sequential selections | Campus mode (50+ buildings) |
+|---------|----------------|--------------------------|------------------------------|
+| GIS fetch load | 3 parallel VWorld calls, ~1–2s | TanStack Query caches by `origin` key — re-selecting same building is instant | GIS composite queries per-building; share same satellite bbox if buildings are close |
+| Draw calls | +3 draw calls total (satellite, context InstancedMesh, zoning) | Same 3 draw calls regardless of context building count | InstancedMesh scales to 500 instances before LOD is needed |
+| SAOPass | Reduce `saoKernelRadius` when > 50 context buildings. Half-res when > 100. | Per-building performance mode toggle in layer panel | For campus + GIS simultaneously: disable SAOPass, consider N8AO (lighter alternative, 30–50% cheaper on complex scenes) |
+| GPU texture memory | 1 satellite JPEG ~200–400KB GPU. | TanStack Query `staleTime=30min` caches data; Three.js texture needs explicit `texture.dispose()` on building change | LRU eviction: dispose satellite texture when building selection changes. Monitor `renderer.info.memory.textures`. |
 
 ---
 
 ## Sources
 
-- Direct codebase audit: `src/store/` (7 stores), `src/components/viewer/building-scene.tsx`, `src/components/viewer/viewer-overlay.tsx`, `src/app/building/[id]/page.tsx`
-- [react-resizable-panels](https://github.com/bvaughn/react-resizable-panels) — shadcn Resizable primitives (already in project via shadcn)
-- [Dockview](https://dockview.dev/) — evaluated for dock system; rejected (overkill for 3-panel layout, ~100KB)
-- [XState v5](https://stately.ai/docs/xstate) — evaluated for FSM; rejected for this scope (see Anti-Pattern 4)
-- [@xyflow/react (ReactFlow)](https://reactflow.dev) — deferred to Phase 6 / v4.0
-- [State Management Trends in React 2025](https://makersden.io/blog/react-state-management-in-2025) — confirms Zustand vs XState decision boundary
-- v2.0 Milestone Audit: `.planning/milestones/v2.0-MILESTONE-AUDIT.md` — tech debt items directly informing migration priorities
+- Codebase: `src/app/api/vworld/footprint/route.ts` — `extractPolygon()` equirectangular pattern, hardcoded `domain: "localhost"`, VWorld Data API structure — HIGH confidence
+- Codebase: `src/lib/procedural/types.ts` — `BuildingRecipe.footprintPolygon?: [number, number][]` already present — HIGH confidence
+- Codebase: `src/components/viewer/building-scene.tsx` — SAOPass `saoKernelRadius: 50`, scene structure, campus/single-building branching, `useBuildingFootprint` usage — HIGH confidence
+- Codebase: `src/hooks/use-building-footprint.ts` — `useQuery` pattern, `staleTime` 30min — HIGH confidence
+- PITFALLS.md: Equirectangular error (Pitfall 1), Float32 precision (Pitfall 2), EPSG axis order (Pitfall 3), ShapeGeometry failure (Pitfall 4), SAOPass collapse (Pitfall 7) — HIGH confidence (research-validated)
+- FEATURES.md: VWorld 3D API permanently closed, `useQueries` parallel fetch pattern, InstancedMesh for LOD1, feature dependency graph — HIGH confidence
+- Three.js InstancedMesh docs: https://threejs.org/docs/pages/InstancedMesh.html — HIGH confidence
+- Three.js issues #11957, #3386: ShapeGeometry triangulation failures — HIGH confidence
+- mapbox/earcut: https://github.com/mapbox/earcut — HIGH confidence
+- proj4js: https://github.com/proj4js/proj4js — HIGH confidence (site-specific TM approach)
 
 ---
 
-*Architecture research for: Korean BIM Energy Management System — v3.0 UX Workflow Overhaul*
-*Researched: 2026-03-30*
+*Architecture research for: GIS-Composite Realistic Drafts — Korean BIM Energy Management System v4.0*
+*Researched: 2026-04-12*
