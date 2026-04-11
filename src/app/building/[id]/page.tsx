@@ -2,7 +2,8 @@
 
 import { use, lazy, Suspense } from "react";
 import { decodeBuildingId } from "@/lib/constants";
-import { useBuildingDetail } from "@/hooks/use-building-detail";
+import { useCompositeBuilding } from "@/hooks/use-composite-building";
+import { useBuildingFootprint } from "@/hooks/use-building-footprint";
 import { BuildingToolbar } from "@/components/building/building-toolbar";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,7 +32,7 @@ export default function BuildingDetailPage({
   const buildingId = decodeBuildingId(id);
 
   const { title, recap, floors, areas, isLoading, isError, errors } =
-    useBuildingDetail({
+    useCompositeBuilding({
       sigunguCd: buildingId.sigunguCd,
       bjdongCd: buildingId.bjdongCd,
       platGbCd: buildingId.platGbCd,
@@ -41,6 +42,15 @@ export default function BuildingDetailPage({
 
   const titleData = title?.items?.[0] ?? null;
   const floorsData = floors?.items ?? [];
+
+  // Derive address from title once it resolves and fire footprint fetch at page level.
+  // This hoists the footprint fetch out of BuildingScene so its result can be passed
+  // as a prop — enabling footprint data to be available before BuildingScene mounts.
+  const address = titleData?.platPlcNm || titleData?.newPlatPlc || undefined;
+  const footprintResult = useBuildingFootprint(address);
+
+  // Composite loading: ledger OR footprint still pending
+  const compositeLoading = isLoading || footprintResult.isLoading;
 
   // Prepare export data from floors
   const exportData = floorsData.map((f) => ({
@@ -63,7 +73,7 @@ export default function BuildingDetailPage({
         title={titleData}
         exportData={exportData}
         exportFilename={exportFilename}
-        loading={isLoading}
+        loading={compositeLoading}
       />
 
       {/* Workspace shell — viewport-dominant resizable layout */}
@@ -87,7 +97,11 @@ export default function BuildingDetailPage({
         {/* 3D Viewer */}
         {titleData ? (
           <Suspense fallback={<ViewerSkeleton />}>
-            <BuildingScene title={titleData} floors={floorsData} />
+            <BuildingScene
+              title={titleData}
+              floors={floorsData}
+              footprintData={footprintResult.data}
+            />
           </Suspense>
         ) : isLoading ? (
           <ViewerSkeleton />

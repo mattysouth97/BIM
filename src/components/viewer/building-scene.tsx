@@ -187,14 +187,26 @@ function CampusSceneContent({ campusData, onBuildingSelect, activeBuildingPk }: 
 
 // ─── Single-building scene ────────────────────────────────────────────────────
 
+interface FootprintResult {
+  polygon: number[][][] | null;
+  error: string | null;
+}
+
 interface BuildingSceneProps {
   title: BrTitleInfo;
   floors: BrFloorInfo[];
   /** When provided, renders all campus buildings instead of a single building */
   campusData?: CampusData;
+  /**
+   * Pre-fetched footprint data from the page level (hoisted out of BuildingScene
+   * so both ledger and footprint fetches start simultaneously at page mount).
+   * When provided, BuildingScene uses this instead of fetching internally.
+   * Plan 02 will remove the internal useBuildingFootprint call.
+   */
+  footprintData?: FootprintResult;
 }
 
-export function BuildingScene({ title, floors, campusData }: BuildingSceneProps) {
+export function BuildingScene({ title, floors, campusData, footprintData: footprintDataProp }: BuildingSceneProps) {
   const [selectedFloor, setSelectedFloor] = useState<FloorGeometry | null>(null);
   const [modelSource, setModelSource] = useState<ModelSource>("parametric");
   const [activeCampusBuilding, setActiveCampusBuilding] = useState<string | null>(null);
@@ -216,7 +228,13 @@ export function BuildingScene({ title, floors, campusData }: BuildingSceneProps)
   const buildingPk = String(title.mgmBldrgstPk || "unknown");
 
   const address = title.platPlcNm || title.newPlatPlc || "";
-  const { data: footprintData } = useBuildingFootprint(address);
+  // When footprintDataProp is provided by the page (hoisted fetch), use it directly.
+  // Fall back to internal fetch so BuildingScene remains self-contained until Plan 02
+  // removes the internal call entirely.
+  const { data: footprintDataInternal } = useBuildingFootprint(
+    footprintDataProp !== undefined ? undefined : address
+  );
+  const footprintData = footprintDataProp ?? footprintDataInternal;
   const footprintPolygon = footprintData?.polygon ?? undefined;
 
   const geometry = useMemo(() => {
