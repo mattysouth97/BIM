@@ -11,7 +11,7 @@ Requirements for GIS-Composite Realistic Drafts milestone.
 
 - [x] **GIS-01**: User's building renders with real cadastral footprint polygon shape instead of rectangular box
 - [x] **GIS-02**: Coordinate transforms accurately convert WGS84/EPSG:5179 to local Three.js coordinates with <1m error at 2km radius
-- [ ] **GIS-03**: VWorld API key is configured via environment variable, not hardcoded
+- [x] **GIS-03**: VWorld API key is configured via environment variable, not hardcoded
 
 ### Footprint Extrusion
 
@@ -22,7 +22,7 @@ Requirements for GIS-Composite Realistic Drafts milestone.
 ### Composite Pipeline
 
 - [x] **CP-01**: Building selection triggers parallel fetch of building ledger data and VWorld footprint polygon
-- [ ] **CP-02**: 3D composite renders within 3 seconds of building selection (excluding network latency)
+- [x] **CP-02**: 3D composite renders within 3 seconds of building selection (excluding network latency)
 
 ## v4.1 Requirements
 
