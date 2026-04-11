@@ -163,7 +163,11 @@ Plans:
   3. The extruded building respects per-floor heights from the building ledger data (not a uniform extrusion)
   4. The procedural facade system (era-based textures, PBR materials, mullions, panels) applies correctly to polygon-based buildings, not just rectangular ones
   5. A building with a known cadastral polygon renders visually correct in the 3D scene — verifiable by comparing to a satellite reference
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 20-01-PLAN.md — earcut install + extrudePolygon() pure utility with TDD (concave polygon triangulation)
+- [ ] 20-02-PLAN.md — Upgrade footprint route to WGS84 rings + proj4 projection wiring in building-scene.tsx
+- [ ] 20-03-PLAN.md — Wire polygon geometry into structure/facade/procedural-building generators + visual checkpoint
 **UI hint**: yes
 
 ### Phase 21: Composite Pipeline
@@ -191,5 +195,5 @@ Plans:
 | 17. Panel Content + Workflow Stepper | v3.0 | 5/5 | Complete | 2026-03-30 |
 | 18. Guidance + Energy Feedback | v3.0 | 3/3 | Complete | 2026-03-31 |
 | 19. Coordinate System Foundation | v4.0 | 2/2 | Complete   | 2026-04-11 |
-| 20. Footprint Extrusion | v4.0 | 0/TBD | Not started | - |
+| 20. Footprint Extrusion | v4.0 | 0/3 | Not started | - |
 | 21. Composite Pipeline | v4.0 | 0/TBD | Not started | - |
