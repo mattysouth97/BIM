@@ -80,9 +80,9 @@
   4. Toggling sub-layers does not trigger a full-scene re-render (ALL_LAYER_IDS remains at 5 entries)
 **Plans**: 3 plans
 Plans:
-- [ ] 22-01-PLAN.md — Type system + store (MepSubLayerId, MEP_SUB_CONFIGS, layer-store persist + mepSubVisibility slice)
+- [x] 22-01-PLAN.md — Type system + store (MepSubLayerId, MEP_SUB_CONFIGS, layer-store persist + mepSubVisibility slice)
 - [ ] 22-02-PLAN.md — Scene graph wiring (mep-coordinator sub-groups, LayerManager.setMepSubVisible, BuildingLayers useEffect)
-- [ ] 22-03-PLAN.md — Layer panel UI (expandable chevron + 4 indented sub-toggle rows with colors and bilingual labels)
+- [x] 22-03-PLAN.md — Layer panel UI (expandable chevron + 4 indented sub-toggle rows with colors and bilingual labels)
 **UI hint**: yes
 
 ### Phase 23: Per-Floor Energy Model
@@ -149,7 +149,7 @@ Plans:
 | 19. Coordinate System Foundation | v4.0 | 2/2 | Complete | 2026-04-11 |
 | 20. Footprint Extrusion | v4.0 | 3/3 | Complete | 2026-04-11 |
 | 21. Composite Pipeline | v4.0 | 2/2 | Complete | 2026-04-12 |
-| 22. MEP Sub-Layer Foundation | v5.0 | 0/3 | Planned | - |
+| 22. MEP Sub-Layer Foundation | v5.0 | 2/3 | In Progress|  |
 | 23. Per-Floor Energy Model | v5.0 | 0/? | Not started | - |
 | 24. Energy Breakdown Dashboard | v5.0 | 0/? | Not started | - |
 | 25. Energy Consumption Heatmap | v5.0 | 0/? | Not started | - |

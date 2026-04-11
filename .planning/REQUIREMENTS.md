@@ -9,7 +9,7 @@ Requirements for Energy Systems Observability & Control milestone.
 
 ### MEP Sub-Layer System
 
-- [ ] **MEP-01**: User can toggle 4 individual utility sub-layers (electrical, HVAC, lighting, plumbing/DHW) independently in the layer panel
+- [x] **MEP-01**: User can toggle 4 individual utility sub-layers (electrical, HVAC, lighting, plumbing/DHW) independently in the layer panel
 - [ ] **MEP-02**: Toggling a sub-layer shows/hides only that utility system's 3D objects while other sub-layers remain visible
 
 ### Energy Analytics
@@ -58,7 +58,7 @@ Deferred to next minor release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MEP-01 | Phase 22 | Pending |
+| MEP-01 | Phase 22 | Complete |
 | MEP-02 | Phase 22 | Pending |
 | EA-01 | Phase 23 | Pending |
 | EA-02 | Phase 24 | Pending |

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Energy Systems Observability & Control
-status: in-progress
-stopped_at: "22-01"
-last_updated: "2026-04-12"
-last_activity: 2026-04-12
+status: executing
+stopped_at: Completed 22-03-PLAN.md
+last_updated: "2026-04-11T23:57:39.366Z"
+last_activity: 2026-04-11
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 1
-  completed_plans: 1
-  percent: 5
+  total_plans: 3
+  completed_plans: 2
+  percent: 67
 ---
 
 # Project State
@@ -26,15 +26,16 @@ See: .planning/PROJECT.md (updated 2026-04-12)
 ## Current Position
 
 Phase: 22 of 27 (MEP Sub-Layer Foundation)
-Plan: 1 of 3
-Status: In progress
-Last activity: 2026-04-12 — 22-01 complete (MepSubLayerId types + layer-store persist)
+Plan: 3 of 3
+Status: Ready to execute
+Last activity: 2026-04-11
 
 Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 1 (v5.0)
 - Average duration: ~15 min
 - Total execution time: ~15 min
@@ -46,6 +47,7 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 | 22 (1/3) | 1 | ~15 min | ~15 min |
 
 *Updated after each plan completion*
+| Phase 22-mep-sub-layer-foundation P03 | 5 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -59,6 +61,7 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 - 22-01: layer-9-waste maps to mep-dhw (CONTEXT.md mis-numbered it as "layer-8-special-waste"; layer-8 is layer-8-media)
 - 22-01: partialize persists only mepSubVisibility — visibility/generated/density remain runtime-only (reset on reload)
 - 22-01: defaultMepSubVisibility uses inline Object.fromEntries (buildDefault<T> helper iterates ALL_LAYER_IDS not MEP_SUB_IDS)
+- [Phase 22-mep-sub-layer-foundation]: Fragment wrapper in ALL_LAYER_IDS map() to support adjacent MEP sub-row siblings; ChevronDown stopPropagation decouples expand from toggleLayer; mepExpanded is local useState (not persisted)
 
 ### Pending Todos
 
@@ -70,6 +73,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-12
-Stopped at: Completed 22-01-PLAN.md (MepSubLayerId types + layer-store persist)
+Last session: 2026-04-11T23:57:39.363Z
+Stopped at: Completed 22-03-PLAN.md
 Resume file: None
