@@ -190,6 +190,6 @@ Plans:
 | 16. Contextual Toolbar Migration | v3.0 | 3/3 | Complete | 2026-03-30 |
 | 17. Panel Content + Workflow Stepper | v3.0 | 5/5 | Complete | 2026-03-30 |
 | 18. Guidance + Energy Feedback | v3.0 | 3/3 | Complete | 2026-03-31 |
-| 19. Coordinate System Foundation | v4.0 | 2/2 | Complete | 2026-04-12 |
+| 19. Coordinate System Foundation | v4.0 | 2/2 | Complete   | 2026-04-11 |
 | 20. Footprint Extrusion | v4.0 | 0/TBD | Not started | - |
 | 21. Composite Pipeline | v4.0 | 0/TBD | Not started | - |
