@@ -49,7 +49,7 @@
 
 **Milestone Goal:** Instantly generate realistic building drafts by compositing Korean government building data with VWorld GIS layers — real cadastral footprint polygons, correct coordinate transforms, and a parallel fetch pipeline that composites within 3 seconds of building selection.
 
-- [ ] **Phase 19: Coordinate System Foundation** — proj4 transform layer, VWorld API key via env var, coordinate assertions
+- [x] **Phase 19: Coordinate System Foundation** — proj4 transform layer, VWorld API key via env var, coordinate assertions
 - [ ] **Phase 20: Footprint Extrusion** — Real cadastral polygon as building base, earcut triangulation, facade system on polygon buildings
 - [ ] **Phase 21: Composite Pipeline** — Parallel fetch orchestration, 3-second composite performance gate
 
@@ -150,8 +150,8 @@ Plans:
   4. Coordinate assertions in `gis-transform.ts` throw a typed error if input coordinates are outside the Korean peninsula bounding box
 **Plans**: 2 plans
 Plans:
-- [ ] 19-01-PLAN.md — proj4 site-specific TM projection module + vitest round-trip accuracy test
-- [ ] 19-02-PLAN.md — Parameterize VWorld domain env var in footprint proxy
+- [x] 19-01-PLAN.md — proj4 site-specific TM projection module + vitest round-trip accuracy test
+- [x] 19-02-PLAN.md — Parameterize VWorld domain env var in footprint proxy
 
 ### Phase 20: Footprint Extrusion
 **Goal**: Users see their selected building rendered with the real cadastral polygon shape extruded to the correct height, with existing facade materials and concave polygon support
@@ -190,6 +190,6 @@ Plans:
 | 16. Contextual Toolbar Migration | v3.0 | 3/3 | Complete | 2026-03-30 |
 | 17. Panel Content + Workflow Stepper | v3.0 | 5/5 | Complete | 2026-03-30 |
 | 18. Guidance + Energy Feedback | v3.0 | 3/3 | Complete | 2026-03-31 |
-| 19. Coordinate System Foundation | v4.0 | 0/TBD | Not started | - |
+| 19. Coordinate System Foundation | v4.0 | 2/2 | Complete | 2026-04-12 |
 | 20. Footprint Extrusion | v4.0 | 0/TBD | Not started | - |
 | 21. Composite Pipeline | v4.0 | 0/TBD | Not started | - |
