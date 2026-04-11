@@ -1,489 +1,810 @@
 # Architecture Research
 
-**Domain:** GIS compositing added to an existing Three.js/R3F BIM viewer — Korean spatial data (v4.0)
+**Domain:** Energy Systems Observability & Control — v5.0 integration with existing Three.js BIM viewer
 **Researched:** 2026-04-12
-**Confidence:** HIGH (grounded in direct codebase audit of existing files)
+**Confidence:** HIGH (all integration points verified against actual codebase files)
 
 ---
 
-## Standard Architecture
+## Context
 
-### System Overview
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          React UI Layer                                  │
-│  BuildingScene.tsx — R3F Canvas host + GIS composite orchestrator        │
-├───────────────────────────┬─────────────────────────────────────────────┤
-│    GIS Data Hooks (NEW)    │         Existing BIM Hooks                  │
-│  useGisComposite()         │  useBuildingFootprint()  [EXISTS]           │
-│  (useQueries parallel)     │  useRecipeStore          [EXISTS]           │
-│                            │  useMaterialStore        [EXISTS]           │
-│                            │  useWorkspaceStore       [EXISTS]           │
-├───────────────────────────┴─────────────────────────────────────────────┤
-│                     R3F Scene Graph (single Canvas)                      │
-│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────────┐   │
-│  │  SatelliteGround  │  │ ContextBuildings  │  │  ProceduralBldgModel │   │
-│  │  PlaneGeometry    │  │  InstancedMesh    │  │  (EXISTS, unchanged) │   │
-│  │  + WMS texture    │  │  LOD1 gray boxes  │  │                      │   │
-│  │  (NEW)            │  │  (NEW)            │  │                      │   │
-│  └──────────────────┘  └──────────────────┘  └──────────────────────┘   │
-│  ┌──────────────────┐  ┌──────────────────┐                              │
-│  │  ZoningOverlay    │  │  GroundPlane      │                             │
-│  │  ShapeGeometry    │  │  (EXISTS,         │                             │
-│  │  semi-transparent │  │  BIM mode only)   │                             │
-│  │  (NEW)            │  │                  │                             │
-│  └──────────────────┘  └──────────────────┘                              │
-├─────────────────────────────────────────────────────────────────────────┤
-│                     Coordinate Foundation (NEW)                           │
-│              src/lib/gis/gis-transform.ts                                │
-│   proj4js site-specific TM — all GIS layers share one local origin       │
-├────────────────────┬────────────────────────────────────────────────────┤
-│  Next.js API Routes│                                                     │
-│  /api/vworld/      │  footprint/route.ts      [EXISTS — modified]        │
-│                    │  satellite/route.ts       [NEW]                     │
-│                    │  context-buildings/route.ts [NEW]                   │
-│                    │  zoning/route.ts           [NEW]                    │
-└────────────────────┴────────────────────────────────────────────────────┘
-```
-
-### Component Responsibilities
-
-| Component / Module | Responsibility | Status |
-|--------------------|---------------|--------|
-| `src/lib/gis/gis-transform.ts` | All WGS84 → local ENU coordinate math. Stores scene origin. Exposes `setSceneOrigin()`, `toLocal(lng, lat)`, `polygonToLocal()`. Single source of truth for coordinate projection — centralizes the bug surface for axis-order and float32 issues. | NEW |
-| `src/lib/gis/earcut-extrude.ts` | GeoJSON Polygon/MultiPolygon → `THREE.BufferGeometry` via earcut. Handles outer rings + interior holes. Replaces Three.js `ShapeGeometry`/`ExtrudeGeometry` for any cadastral data. | NEW |
-| `src/app/api/vworld/satellite/route.ts` | Server-side WMS GetMap proxy. Fetches a single JPEG from VWorld covering the scene bbox. Returns image bytes. Same Next.js Route Handler pattern as existing `footprint/route.ts`. | NEW |
-| `src/app/api/vworld/context-buildings/route.ts` | Server-side proxy for cadastral bbox query (`LP_PA_CBND_BUBUN` with `geomFilter`). Returns `[{pnu, polygon, buldHg, flrCnt}]`. Derives height from `buldHg` with fallback `flrCnt × 3m`. | NEW |
-| `src/app/api/vworld/zoning/route.ts` | Server-side WFS proxy for VWorld zoning layers (`LT_C_UQ111`–`LT_C_UQ114`). Returns GeoJSON FeatureCollection of zoning polygons for a bbox. | NEW |
-| `src/components/viewer/satellite-ground.tsx` | R3F component. `PlaneGeometry` sized to WMS bbox, textured with the satellite JPEG via `THREE.CanvasTexture`. Sets `material.aoMapIntensity = 0` and assigns ground to layer 1 to prevent SAOPass self-occlusion on horizontal surfaces. Replaces `GroundPlane` when `stage === 'gis-composite'`. | NEW |
-| `src/components/viewer/context-buildings.tsx` | R3F component. Single `InstancedMesh` of gray LOD1 box extrusions. All context buildings share one geometry and one draw call. `castShadow = false`, `receiveShadow = false`. | NEW |
-| `src/components/viewer/zoning-overlay.tsx` | R3F component. Semi-transparent `ShapeGeometry` mesh per zoning classification. Toggle visibility via layer panel. | NEW |
-| `src/hooks/use-gis-composite.ts` | `useQueries` orchestrator. Fires satellite, context-buildings, and zoning requests in parallel on building selection. Returns `{satellite, contextBuildings, zoning, isLoading}`. Each layer resolves and renders independently — a failed fetch does not block other layers. | NEW |
-| `src/lib/procedural/procedural-building.ts` | EXISTS. Core generation logic unchanged. When `recipe.footprintPolygon` is present, cap faces (top/bottom) use `earcut-extrude.ts` instead of `THREE.ShapeGeometry`. Facade/slab/column InstancedMesh generators use `footprintWidth`/`footprintDepth` and are unaffected. | MODIFIED (cap extrusion path only) |
-| `src/components/viewer/building-scene.tsx` | EXISTS. Add GIS composite rendering branch. When `workflowStore.stage === 'gis-composite'`, render `SatelliteGround + ContextBuildings + ZoningOverlay`. Scale back SAOPass `saoKernelRadius` (50 → 25) when context buildings are active; halve SAOPass resolution when count > 50. | MODIFIED |
-| `src/app/api/vworld/footprint/route.ts` | EXISTS. Two surgical changes: (1) replace hardcoded `domain: "localhost"` with `process.env.VWORLD_DOMAIN ?? "localhost"`; (2) extend `extractPolygon()` to handle `Polygon` interior holes and `MultiPolygon` geometry types. Existing callers unaffected. | MODIFIED |
-| `src/store/workflow-store.ts` | EXISTS. Add `'gis-composite'` to the `WorkflowStage` type union as a pre-stage before `'select'`. Wire transition: `'gis-composite'` → `'select'` on "BIM Mode" click. GIS scene components are unmounted on this transition. | MODIFIED |
+This document covers ONLY the new architecture needed for v5.0. The existing architecture (5-layer
+system, BuildingLayers, LayerManager, useEnergyMetrics, material-store override pattern,
+structural-tooltip raycasting) is documented as integration context, not re-researched.
 
 ---
 
-## Recommended Project Structure
-
-New files only — existing folders unchanged.
+## System Overview
 
 ```
-src/
-├── app/api/vworld/
-│   ├── footprint/route.ts          # EXISTS — parameterize domain env var, fix polygon holes
-│   ├── satellite/route.ts          # NEW — VWorld WMS GetMap proxy
-│   ├── context-buildings/route.ts  # NEW — cadastral bbox + height proxy
-│   └── zoning/route.ts             # NEW — WFS LT_C_UQ111-114 proxy
-│
-├── lib/gis/                        # NEW folder — coordinate system + geometry utilities
-│   ├── gis-transform.ts            # proj4js ENU projection, local origin subtraction
-│   └── earcut-extrude.ts           # GeoJSON Polygon → THREE.BufferGeometry via earcut
-│
-├── lib/procedural/                 # EXISTS — minimal changes
-│   ├── types.ts                    # footprintPolygon already present; add groundElevation?: number
-│   ├── procedural-building.ts      # cap extrusion → earcut-extrude when polygon present
-│   └── ...                         # facade/structure generators: no changes
-│
-├── components/viewer/
-│   ├── satellite-ground.tsx        # NEW — PlaneGeometry + WMS texture
-│   ├── context-buildings.tsx       # NEW — InstancedMesh LOD1 context
-│   ├── zoning-overlay.tsx          # NEW — semi-transparent zoning polygons
-│   ├── building-scene.tsx          # MODIFIED — GIS stage branch + SAOPass scaling
-│   └── ground-plane.tsx            # EXISTS — unchanged, used in BIM mode only
-│
-└── hooks/
-    └── use-gis-composite.ts        # NEW — useQueries parallel fetch orchestrator
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  UI Layer (React components)                                                      │
+│                                                                                   │
+│  ┌──────────────────┐  ┌────────────────────┐  ┌───────────────────────────┐    │
+│  │  LayerPanel       │  │  EnergyBreakdown   │  │  EquipmentControlPanel    │    │
+│  │  (extended with   │  │  Chart (NEW)       │  │  (NEW — in config tab)    │    │
+│  │  MEP sub-toggles) │  │                    │  │                           │    │
+│  └────────┬──────────┘  └────────┬───────────┘  └─────────────┬─────────────┘    │
+│           │                      │                             │                  │
+├───────────┼──────────────────────┼─────────────────────────────┼──────────────────┤
+│  Hook Layer                      │                             │                  │
+│                                  │                             │                  │
+│  ┌───────────────────────────────▼─────────────────────────────▼──────────────┐  │
+│  │  useEnergyMetrics (existing)  ←── useMemo[baseRecipe + overrides]          │  │
+│  │  useEnergyBreakdown (NEW)     ←── extends calculateAnnualDemand()          │  │
+│  │  useScenarioEnergy (NEW)      ←── merges equipmentOverrides into calc pipe │  │
+│  └────────────────────────────────────────────────────────────────────────────┘  │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│  Store Layer                                                                      │
+│                                                                                   │
+│  ┌──────────────────┐  ┌──────────────────────┐  ┌──────────────────────────┐   │
+│  │  layer-store      │  │  recipe-store         │  │  workflow-store           │   │
+│  │  (existing)       │  │  (existing)           │  │  (existing)              │   │
+│  │  + mepSubVis      │  │  + scenarioOverrides  │  │  + scenarioActive        │   │
+│  │    Record<MepSub  │  │    (NEW slice)        │  │  + activeScenarioId      │   │
+│  │    LayerId, bool> │  │                       │  │  + equipmentOverrides    │   │
+│  │  + toggleMepSub   │  │                       │  │  (NEW slice)             │   │
+│  └────────┬──────────┘  └──────────┬────────────┘  └──────────┬───────────────┘   │
+├───────────┼─────────────────────────┼────────────────────────────┼──────────────────┤
+│  Three.js / Engine Layer            │                            │                  │
+│                                     │                            │                  │
+│  ┌──────────────────────────────────▼────────────────────────────▼────────────┐    │
+│  │  LayerManager (existing)                                                    │    │
+│  │  - getGroup("mep") → has 4 named child THREE.Groups after v5.0             │    │
+│  │    ├── "sub-mep-electrical"  ← layer-1-shell + electrical parts             │    │
+│  │    ├── "sub-mep-hvac"        ← layer-3-cooling + layer-4 + layer-5         │    │
+│  │    ├── "sub-mep-lighting"    ← layer-7-lighting                             │    │
+│  │    └── "sub-mep-dhw"         ← layer-6-dhw                                 │    │
+│  │  - setMepSubVisible(id, visible) (NEW method)                               │    │
+│  │                                                                              │    │
+│  │  EnergyHeatmapMesh (NEW — pure Three.js)                                    │    │
+│  │  - One THREE.Mesh per floor inside existing "energy-zones" group            │    │
+│  │  - vertexColors: true, Float32BufferAttribute color buffer                  │    │
+│  │  - Receives perFloor kWh/m² array; rebuilds on change                      │    │
+│  │                                                                              │    │
+│  │  EquipmentTooltip (NEW — R3F)                                                │    │
+│  │  - Extends structural-tooltip.tsx raycasting pattern                        │    │
+│  │  - Traverses mep sub-groups; reads userData.type + userData.floorNo        │    │
+│  │  - Raycaster allocated via useRef (fixes known structural-tooltip perf bug) │    │
+│  └──────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                      │
+│  Energy Engine (src/lib/energy/)                                                     │
+│  calculateAnnualDemand()   ← extended with optional perFloor + equipmentOverrides   │
+│  calculateSystemBreakdown() (NEW) → SystemBreakdown: hvac/lighting/dhw/plug        │
+│  inferEquipmentSpecs()      (NEW) → EquipmentSpec[] from BuildingRecipe             │
+└──────────────────────────────────────────────────────────────────────────────────────┘
 ```
-
-### Structure Rationale
-
-- **`src/lib/gis/`** is isolated from `src/lib/procedural/`. Coordinate math is a cross-cutting concern shared by all GIS layers; keeping it out of the building generation pipeline prevents `procedural-building.ts` from depending on projection code.
-- **New API routes mirror `footprint/route.ts` exactly** — same Next.js Route Handler pattern, same `VWORLD_API_KEY` env var, same CORS handling. No new proxy patterns introduced.
-- **New R3F components are sibling scene children**, not modifications to `ProceduralBuildingModel` or `BuildingLayers`. GIS layers compose with the existing scene tree; they do not wrap or replace it.
 
 ---
 
-## Architectural Patterns
+## Integration Points with Existing Layer System
 
-### Pattern 1: Local-Origin ENU Coordinate System (Phase 1 — Must Come First)
+### 1. MEP Sub-Layer Split: Minimal Surgical Change
 
-**What:** One scene origin (the queried building centroid in WGS84) is set when a building is selected. All GIS coordinates from all layers are converted to local East-North-Up meters relative to this origin using a site-specific Transverse Mercator projection via `proj4js`. The result is float32-safe values in the range ±5000m. The origin is stored in `gis-transform.ts` as module state for the current session.
+The `LayerId` union stays at 5 entries. `ALL_LAYER_IDS` stays at 5 entries. The `LayerManager`
+`groups` Map stays at 5 entries. The MEP sub-layer system is a **parallel structure on top** — not
+a replacement.
 
-**Why this is Phase 1:** Every subsequent GIS layer depends on correct coordinate conversion. A bug here misaligns all layers. Retrofitting after Phases 2–5 requires touching every geometry builder. The equirectangular approximation in the existing `extractPolygon()` accumulates ~8m error at 2km — acceptable for single parcel use, but not for multi-layer compositing. `gis-transform.ts` must be the single source of truth before any GIS component is built.
+**What changes in `src/lib/layers/types.ts` (additive only):**
 
-**Example:**
 ```typescript
-// src/lib/gis/gis-transform.ts
-import proj4 from "proj4";
+export type MepSubLayerId =
+  | "mep-electrical"
+  | "mep-hvac"
+  | "mep-lighting"
+  | "mep-dhw";
 
-let _proj: proj4.Converter | null = null;
+export const MEP_SUB_IDS: MepSubLayerId[] = [
+  "mep-electrical", "mep-hvac", "mep-lighting", "mep-dhw",
+];
 
-export function setSceneOrigin(lng: number, lat: number): void {
-  // Site-specific TM centered on building — eliminates equirectangular error
-  const def = `+proj=tmerc +lat_0=${lat} +lon_0=${lng} +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs`;
-  _proj = proj4("EPSG:4326", def);
+export const MEP_SUB_CONFIGS: Record<MepSubLayerId, { name: string; nameKo: string; color: string }> = {
+  "mep-electrical": { name: "Electrical",    nameKo: "전기",      color: "#f59e0b" },
+  "mep-hvac":       { name: "HVAC",          nameKo: "냉난방환기", color: "#3b82f6" },
+  "mep-lighting":   { name: "Lighting",      nameKo: "조명",      color: "#fbbf24" },
+  "mep-dhw":        { name: "DHW/Plumbing",  nameKo: "급탕/배관", color: "#22c55e" },
+};
+```
+
+**What changes in `src/store/layer-store.ts` (additive slice):**
+
+```typescript
+// Add to LayerState interface:
+mepSubVisibility: Record<MepSubLayerId, boolean>;
+toggleMepSub: (id: MepSubLayerId) => void;
+setMepSubVisible: (id: MepSubLayerId, visible: boolean) => void;
+
+// Add to initial state:
+mepSubVisibility: Object.fromEntries(MEP_SUB_IDS.map(id => [id, true])) as Record<MepSubLayerId, boolean>,
+```
+
+**What changes in `src/lib/layers/layer-manager.ts` (one new method):**
+
+```typescript
+// Add to LayerManager class — does NOT touch existing setVisible() or groups Map:
+setMepSubVisible(subId: MepSubLayerId, visible: boolean): void {
+  const mepGroup = this.groups.get("mep");
+  if (!mepGroup) return;
+  const child = mepGroup.getObjectByName(`sub-${subId}`);
+  if (child) child.visible = visible;
 }
+```
 
-export function toLocal(lng: number, lat: number): [number, number] {
-  if (!_proj) throw new Error("setSceneOrigin must be called before toLocal");
-  const [e, n] = _proj.forward([lng, lat]);
-  // Debug guard: values > 10000m from origin indicate likely axis-order bug
-  if (process.env.NODE_ENV !== "production") {
-    if (Math.abs(e) > 10000 || Math.abs(n) > 10000)
-      console.warn(`toLocal: suspicious magnitude [${e}, ${n}] — check axis order`);
+**What changes in `src/components/viewer/building-layers.tsx` (one new useEffect):**
+
+```typescript
+// Existing visibility loop (ALL_LAYER_IDS) is UNCHANGED.
+// Add a second useEffect for mepSubVisibility:
+const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
+useEffect(() => {
+  const manager = managerRef.current;
+  if (!manager) return;
+  for (const subId of MEP_SUB_IDS) {
+    manager.setMepSubVisible(subId, mepSubVisibility[subId]);
   }
-  return [e, n]; // Three.js convention: [x, z]
-}
+}, [mepSubVisibility]);
+```
 
-export function polygonToLocal(ring: number[][]): [number, number][] {
-  return ring.map(([lng, lat]) => toLocal(lng, lat));
+**New file: `src/lib/layers/mep-coordinator.ts`**
+
+Orchestrates sub-group assignment. Called during MEP layer generation (replacing direct add to mep
+group). Assigns generator output into named child groups:
+
+```
+mep (THREE.Group, name: "layer-mep")
+├── sub-mep-electrical  ← layer-1-shell generator output
+├── sub-mep-hvac        ← layer-3-cooling + layer-4-heating + layer-5-ventilation
+├── sub-mep-lighting    ← layer-7-lighting
+└── sub-mep-dhw         ← layer-6-dhw
+(layers 8–14 added directly to mep group — future "advanced systems" section)
+```
+
+`disposeLayer("mep")` in LayerManager already traverses all children recursively — sub-groups are
+disposed correctly without any change to the existing dispose logic.
+
+---
+
+### 2. Energy Heatmap: New Geometry in Existing `energy-zones` Group
+
+The `energy-zones` THREE.Group exists in LayerManager and is visibility-toggled by the existing
+`visibility["energy-zones"]` flag. The heatmap geometry lives entirely inside this group.
+
+**New file: `src/lib/layers/energy-heatmap-mesh.ts`**
+
+```typescript
+// Creates one THREE.Mesh per floor inside the energy-zones group.
+// Pure Three.js — no React.
+
+export function buildEnergyHeatmap(
+  floors: FloorSpec[],
+  perFloorKwh: number[],   // kWh/m² per floor, index matches floors array order
+  recipe: BuildingRecipe
+): THREE.Group {
+  const group = new THREE.Group();
+  group.name = "energy-heatmap";
+
+  const aboveFloors = floors.filter(f => f.type === "above");
+  aboveFloors.forEach((floor, i) => {
+    const kwh = perFloorKwh[i] ?? 0;
+    const geo = new THREE.PlaneGeometry(recipe.footprintWidth, recipe.footprintDepth, 2, 2);
+    geo.rotateX(-Math.PI / 2);  // horizontal plane
+    // Build vertex color buffer from kWh/m² scalar
+    const colors = new Float32Array(geo.attributes.position.count * 3);
+    const c = kwhmToColor(kwh);
+    for (let v = 0; v < geo.attributes.position.count; v++) {
+      colors[v * 3]     = c.r;
+      colors[v * 3 + 1] = c.g;
+      colors[v * 3 + 2] = c.b;
+    }
+    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    const mat = new THREE.MeshBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.55,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.y = floor.y + 0.02;  // just above slab surface
+    mesh.userData = { type: "energy-heatmap-floor", floorNo: floor.floorNo };
+    group.add(mesh);
+  });
+  return group;
 }
 ```
 
-### Pattern 2: Earcut Extrusion for Cadastral Polygons
+**Color mapping (no external library):**
 
-**What:** Any cadastral polygon (outer ring + optional holes) is triangulated with `earcut` (~3KB) and assembled into a `THREE.BufferGeometry` manually. `THREE.ShapeGeometry` and `THREE.ExtrudeGeometry` are not used for cadastral data.
+`kwhmToColor()` linearly interpolates between 7 grade anchor points aligned with existing
+`getGradeColor()` in `energy-grade.ts`:
 
-**When to use:** Primary building footprint cap faces; context building footprints if earcut-per-building is chosen over the simpler centroid-box approach. Zoning shapes use `THREE.ShapeGeometry` (simpler administrative boundaries, rarely have holes).
+| kWh/m² | Color | Korean Grade |
+|--------|-------|-------------|
+| 60     | `#3b82f6` (blue) | 1+++ |
+| 90     | `#22c55e` (green) | 1++ |
+| 120    | `#84cc16` | 1+ |
+| 160    | `#eab308` (yellow) | 1 |
+| 200    | `#f97316` (orange) | 2 |
+| 260    | `#ef4444` (red) | 3+ |
+| 320+   | `#dc2626` (dark red) | 7 |
 
-**Why mandatory:** Korean cadastral records commonly have concave vertices (L-shaped lots), interior holes (road easements recorded as inner rings), and near-collinear digitization artifacts. Three.js's built-in triangulator produces incorrect geometry for these cases — it logs `"Probably Hole outside Shape!"` and renders missing triangles silently.
+**Integration in `building-layers.tsx`:**
 
-**Example:**
 ```typescript
-// src/lib/gis/earcut-extrude.ts
-import earcut from "earcut";
-import * as THREE from "three";
-
-export function extrudePolygon(
-  outerRing: [number, number][],   // local ENU [x, z] coords
-  holes: [number, number][][],     // inner rings in same space
-  height: number
-): THREE.BufferGeometry {
-  // Build flat arrays for earcut: vertices as [x, z] pairs
-  const allRings = [outerRing, ...holes];
-  const flatVerts: number[] = [];
-  const holeIndices: number[] = [];
-  let offset = 0;
-  for (let i = 0; i < allRings.length; i++) {
-    if (i > 0) holeIndices.push(offset);
-    for (const [x, z] of allRings[i]) { flatVerts.push(x, z); offset++; }
-  }
-  const triangles = earcut(flatVerts, holeIndices, 2);
-  // Build top cap, bottom cap, and side quads from triangles + ring edges
-  // ... returns BufferGeometry with position + normal + index attributes
-}
-```
-
-### Pattern 3: InstancedMesh for Context Buildings (Single Draw Call)
-
-**What:** All LOD1 context buildings share one `InstancedMesh` with a unit `BoxGeometry`. Per-instance `Matrix4` encodes position (footprint centroid) and scale (width × height × depth). Material is flat gray `MeshStandardMaterial`. No shadows on any instance.
-
-**Why:** 100–200 context buildings as individual `Mesh` objects = 100–200 draw calls. That alone would roughly triple scene complexity and collapse SAOPass frame rate on Intel integrated graphics (the GX team's most common hardware). InstancedMesh keeps it at one draw call regardless of count.
-
-**Key implementation detail:** `mesh.instanceMatrix.needsUpdate = true` must be called after all `setMatrixAt()` calls — this is the same invariant as the existing `structure-generator.ts`.
-
-**Example:**
-```typescript
-// src/components/viewer/context-buildings.tsx
-const geo = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
-const mat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#c8c8c8", roughness: 0.9 }), []);
-const meshRef = useRef<THREE.InstancedMesh>(null);
+const floorDemands = useEnergyBreakdown(buildingPk);  // NEW hook
 
 useEffect(() => {
-  if (!meshRef.current) return;
-  contextBuildings.forEach((b, i) => {
-    const m = new THREE.Matrix4().compose(
-      new THREE.Vector3(b.cx, b.height / 2, b.cz),
-      new THREE.Quaternion(),
-      new THREE.Vector3(b.width, b.height, b.depth)
-    );
-    meshRef.current!.setMatrixAt(i, m);
-  });
-  meshRef.current.instanceMatrix.needsUpdate = true;
-}, [contextBuildings]);
-
-return <instancedMesh ref={meshRef} args={[geo, mat, contextBuildings.length]}
-  castShadow={false} receiveShadow={false} />;
+  if (!floorDemands || !managerRef.current || !recipe) return;
+  const energyGroup = managerRef.current.getGroup("energy-zones");
+  // Remove previous heatmap (dispose geometry/material):
+  const old = energyGroup.getObjectByName("energy-heatmap");
+  if (old) {
+    old.traverse(o => {
+      if (o instanceof THREE.Mesh) { o.geometry.dispose(); (o.material as THREE.Material).dispose(); }
+    });
+    energyGroup.remove(old);
+  }
+  const heatmap = buildEnergyHeatmap(recipe.floors, floorDemands.perFloor, recipe);
+  energyGroup.add(heatmap);
+}, [floorDemands, recipe]);
 ```
 
-### Pattern 4: Parallel Fetch with useQueries
+`disposeLayer("energy-zones")` in LayerManager already handles full traversal cleanup — no
+additional dispose logic needed.
 
-**What:** `useGisComposite` fires all VWorld data requests simultaneously using TanStack Query's `useQueries`. Each layer is an independent query with its own key, loading state, and error. Layers render as they resolve. A failed satellite fetch does not block context buildings.
+---
 
-**Why:** Sequential fetching would take 3× longer (each VWorld call is 300–800ms). A single `Promise.all` would fail entirely if any layer fails. `useQueries` gives independent retry, caching (30min staleTime), and progressive rendering per layer — matching the existing `useBuildingFootprint` pattern.
+### 3. Equipment Info Panel: Extend `structural-tooltip.tsx` Pattern
+
+`StructuralTooltip` implements the complete raycasting pattern:
+- `useEffect` on `gl.domElement` for pointermove → normalized mouse coords in `useRef`
+- `useFrame` throttled every 3rd frame
+- `raycaster.intersectObject(mesh, false)` → `hit.instanceId`
+- `mesh.userData` for labels
+- `<Html position={hit.point}>` popup
+
+**New component: `src/components/viewer/equipment-tooltip.tsx`**
+
+Key differences from `StructuralTooltip`:
+
+1. Traverses mep group's named sub-groups (`sub-mep-*`) rather than a single named group
+2. Reads `userData.type` + `userData.floorNo` from the hit object (already set by all layer
+   generators — e.g. `{ type: "cooling-branch", floorNo: 3 }`)
+3. Looks up `EquipmentSpec` via `inferEquipmentSpecs(buildingPk, componentType, floorNo)` — a pure
+   function, no async
+4. Renders a richer card (type, efficiency grade, approx install year, estimated kWh/yr) instead of
+   a single label string
+5. Skips raycasting against sub-groups whose `mepSubVisibility[id]` is false
+
+**Critical fix — allocate Raycaster via `useRef`, not inside `useFrame`:**
+
+The existing `StructuralTooltip` allocates `new THREE.Raycaster()` inside `useFrame` (known tech
+debt, noted in PROJECT.md). All new raycasting components must allocate once:
 
 ```typescript
-// src/hooks/use-gis-composite.ts
-export function useGisComposite(origin: { lng: number; lat: number } | null) {
-  const results = useQueries({
-    queries: origin ? [
-      { queryKey: ["gis-satellite", origin], queryFn: () => fetchSatellite(origin), staleTime: 30 * 60 * 1000 },
-      { queryKey: ["gis-context", origin],   queryFn: () => fetchContextBuildings(origin), staleTime: 30 * 60 * 1000 },
-      { queryKey: ["gis-zoning", origin],    queryFn: () => fetchZoning(origin), staleTime: 30 * 60 * 1000 },
-    ] : [],
-  });
-  return {
-    satellite:        results[0],
-    contextBuildings: results[1],
-    zoning:           results[2],
-    isLoading:        results.some(r => r.isLoading),
-  };
+// WRONG (StructuralTooltip's known defect — do not copy):
+useFrame(() => {
+  const raycaster = new THREE.Raycaster(); // heap allocation every frame
+});
+
+// CORRECT for EquipmentTooltip:
+const raycasterRef = useRef(new THREE.Raycaster());
+useFrame(() => {
+  raycasterRef.current.setFromCamera(mouse.current, camera);
+  const hits = raycasterRef.current.intersectObjects(targets, true);
+});
+```
+
+---
+
+### 4. Energy Breakdown Dashboard: New Chart Component
+
+**New file: `src/components/viewer/energy-breakdown-chart.tsx`**
+
+Uses shadcn `<ChartContainer>` wrapping Recharts `<BarChart>`. Install: `pnpm add recharts@^3.8.1`
+and `npx shadcn@latest add chart`.
+
+Data source: `useEnergyBreakdown(buildingPk)` → `SystemBreakdown`.
+
+Positioned below existing `EnergyCards` or in a new "breakdown" tab in the config panel.
+`EnergyCards` itself is not modified.
+
+---
+
+### 5. Equipment Control: New Slices in Existing Stores
+
+Equipment control state goes into `workflow-store.ts` (same lifecycle as workflow stages — transient,
+not persisted). Scenario overrides go into `recipe-store.ts` (same data shape as existing
+`overrides[pk]`).
+
+**New slice in `src/store/workflow-store.ts`:**
+
+```typescript
+// Scenario mode
+scenarioActive: boolean;
+activeScenarioId: string | null;
+equipmentOverrides: Record<string, EquipmentControlState>;  // key: equipmentId
+enterScenarioMode: (scenarioId: string) => void;
+exitScenarioMode: () => void;
+setEquipmentOverride: (equipmentId: string, state: EquipmentControlState) => void;
+clearEquipmentOverrides: () => void;
+
+// IMPORTANT: partialize must exclude equipmentOverrides (transient state):
+partialize: (state) => ({
+  stage: state.stage,
+  completion: state.completion,
+  // scenarioActive, equipmentOverrides intentionally excluded
+})
+```
+
+**New slice in `src/store/recipe-store.ts`:**
+
+```typescript
+// Scenario recipe overrides — isolated from committed overrides[pk]
+scenarioOverrides: Record<string, Record<string, RecipeOverrides>>;
+// key: buildingPk → scenarioId → RecipeOverrides
+setScenarioOverride: (pk: string, scenarioId: string, path: string, value: unknown) => void;
+clearScenario: (pk: string, scenarioId: string) => void;
+```
+
+`scenarioOverrides` is NEVER merged back into `overrides[pk]`. Undo/redo history never touches
+scenario state.
+
+---
+
+## New Components
+
+| Component | File | Category | Primary Dependency |
+|-----------|------|----------|--------------------|
+| `EnergyBreakdownChart` | `src/components/viewer/energy-breakdown-chart.tsx` | React UI | `useEnergyBreakdown`, shadcn chart + recharts |
+| `EquipmentTooltip` | `src/components/viewer/equipment-tooltip.tsx` | R3F | `useLayerStore(mepSubVis)`, `inferEquipmentSpecs` |
+| `MepSubLayerToggles` | inside `src/components/viewer/layer-panel.tsx` | React UI | `useLayerStore(mepSubVis)` |
+| `ScenarioModeBanner` | `src/components/viewer/scenario-mode-banner.tsx` | React UI | `useWorkflowStore(scenarioActive)` |
+| `EquipmentControlPanel` | `src/components/workspace/equipment-control-panel.tsx` | React UI | `useWorkflowStore`, `useScenarioEnergy` |
+
+---
+
+## New vs Modified Files
+
+### Modified (surgical additions — no rewrites)
+
+| File | Change | Risk |
+|------|--------|------|
+| `src/lib/layers/types.ts` | Add `MepSubLayerId` union, `MEP_SUB_IDS`, `MEP_SUB_CONFIGS` | LOW — additive, no existing consumer breaks |
+| `src/lib/layers/layer-manager.ts` | Add `setMepSubVisible()` method | LOW — new method, existing API unchanged |
+| `src/store/layer-store.ts` | Add `mepSubVisibility` + toggle actions | LOW — additive slice, existing selectors unaffected |
+| `src/store/workflow-store.ts` | Add scenario + equipment override slice; update `partialize` to exclude transient state | LOW — additive; `partialize` update is mandatory to prevent stale scenario across reloads |
+| `src/store/recipe-store.ts` | Add `scenarioOverrides` slice | LOW — isolated from existing `overrides` record |
+| `src/components/viewer/building-layers.tsx` | Add `useEffect` for `mepSubVisibility` sync; add heatmap rebuild `useEffect` | LOW — existing loop unchanged |
+| `src/components/viewer/layer-panel.tsx` | Add expandable MEP sub-rows section | LOW — purely additive UI |
+| `src/lib/energy/annual-demand.ts` | Add optional `options?: { returnPerFloor?, equipmentOverrides? }` parameter | MEDIUM — function signature extends; all existing callers pass no options, return type unchanged |
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| `src/lib/layers/mep-coordinator.ts` | Assigns MEP generator output to named `sub-mep-*` child groups inside the mep THREE.Group |
+| `src/lib/layers/energy-heatmap-mesh.ts` | Pure Three.js: floor-plane meshes with vertex color buffer from kWh/m² scalar |
+| `src/lib/energy/system-breakdown.ts` | `calculateSystemBreakdown()` — extends demand calc with HVAC/lighting/DHW/plug attribution using ASHRAE building-type ratios |
+| `src/lib/energy/equipment-specs.ts` | `inferEquipmentSpecs()` — derives `EquipmentSpec[]` from `BuildingRecipe` + ledger data (no user input required) |
+| `src/hooks/use-energy-breakdown.ts` | React hook: `useMemo` over `calculateSystemBreakdown()`; returns `SystemBreakdown` with `perFloor` array |
+| `src/hooks/use-scenario-energy.ts` | Reactive hook: merges `effectiveRecipe` + `equipmentOverrides` → scenario energy delta vs baseline |
+| `src/components/viewer/energy-breakdown-chart.tsx` | shadcn `<ChartContainer>` + Recharts `<BarChart>` for HVAC/lighting/DHW/plug breakdown |
+| `src/components/viewer/equipment-tooltip.tsx` | R3F raycasting tooltip for MEP mesh objects — extends structural-tooltip pattern with Raycaster `useRef` fix |
+| `src/components/viewer/scenario-mode-banner.tsx` | Amber overlay banner: "시나리오 모드 — 실제 데이터가 아님" shown when `scenarioActive = true` |
+| `src/components/workspace/equipment-control-panel.tsx` | On/off toggles + HVAC setpoint sliders for selected equipment in scenario mode |
+
+---
+
+## New Data Models
+
+### `EquipmentSpec` (`src/lib/energy/equipment-specs.ts`)
+
+```typescript
+export type EnergyDataSource = "modeled" | "actual" | "estimated-ratio";
+
+export interface EquipmentSpec {
+  equipmentId: string;               // e.g. "hvac-floor-3"
+  subLayer: MepSubLayerId;           // which sub-system owns this equipment
+  componentType: string;             // userData.type from Three.js object (e.g. "cooling-branch")
+  floorNo: number | null;            // null = building-wide equipment
+  displayName: string;               // Korean label: "냉방기 (3층)"
+  capacityKw: number | null;         // inferred from floor area + building use type
+  efficiencyGrade: EnergyGrade | null; // Korean 1+++~7 using existing energy-grade.ts
+  estimatedAnnualKwh: number | null; // from SystemBreakdown.hvac / floor count
+  installYear: number | null;        // inferred from building permit year (approvalDate in ledger)
+  dataSource: EnergyDataSource;      // always "estimated-ratio" for inferred data
 }
 ```
+
+### `SystemBreakdown` (`src/lib/energy/system-breakdown.ts`)
+
+```typescript
+export interface SystemBreakdown {
+  hvac: number;       // kWh/yr — heating + cooling (from existing AnnualDemand)
+  lighting: number;   // kWh/yr — ASHRAE ratio estimate by building use type
+  dhw: number;        // kWh/yr — domestic hot water, ASHRAE ratio estimate
+  plugLoads: number;  // kWh/yr — equipment + appliances, ASHRAE ratio estimate
+  total: number;      // sum of all systems
+  perFloor: number[]; // kWh/m² per floor (index = above-floors array order)
+  dataSource: EnergyDataSource; // "estimated-ratio" for lighting/dhw/plug; "modeled" for hvac
+}
+```
+
+ASHRAE 90.1 system attribution ratios by Korean building use type:
+
+| Use Type (mainPurpsCd) | HVAC | Lighting | DHW | Plug |
+|------------------------|------|----------|-----|------|
+| 업무시설 (office)       | 40%  | 35%      | 7%  | 18%  |
+| 공동주택 (residential)  | 50%  | 7%       | 25% | 18%  |
+| 판매시설 (retail)       | 45%  | 40%      | 3%  | 12%  |
+| Default                 | 42%  | 28%      | 12% | 18%  |
+
+All non-HVAC values carry `dataSource: "estimated-ratio"` and are labeled accordingly in all UI.
+
+### `EquipmentControlState` (in `workflow-store.ts`)
+
+```typescript
+interface EquipmentControlState {
+  enabled: boolean;          // on/off toggle
+  setpointDelta?: number;    // HVAC only — °C offset from base setpoint (e.g. +2, -3)
+}
+```
+
+---
+
+## `calculateAnnualDemand` Extension (Backward-Compatible)
+
+Existing signature (unchanged for all current callers):
+```typescript
+calculateAnnualDemand(
+  heatLoss: HeatLossResult,
+  materials: MaterialProperties,
+  recipe: BuildingRecipe,
+  climate: ClimateData
+): AnnualDemand
+```
+
+Extended signature (new params are optional — existing callers unaffected):
+```typescript
+calculateAnnualDemand(
+  heatLoss: HeatLossResult,
+  materials: MaterialProperties,
+  recipe: BuildingRecipe,
+  climate: ClimateData,
+  options?: {
+    returnPerFloor?: boolean;
+    equipmentOverrides?: Record<string, EquipmentControlState>;
+  }
+): AnnualDemand & { perFloor?: number[] }
+```
+
+When `equipmentOverrides["mep-hvac"]?.enabled === false`: `coolingCOP` and `heatingEfficiency`
+reduced to 0.01 (near-zero) so demand spikes to show "what if HVAC is off" impact.
+
+When `setpointDelta` is set: `designDeltaT` is adjusted proportionally before degree-day
+multiplication.
 
 ---
 
 ## Data Flow
 
-### GIS Composite Activation Flow
+### Flow 1: MEP Sub-Layer Toggle
 
 ```
-User selects building (address resolved in BldRgstHubService search)
-    ↓
-useBuildingFootprint(address) resolves [EXISTS — already cached]
-    ↓
-footprint centroid extracted → gis-transform.setSceneOrigin(lng, lat)  [NEW]
-    ↓
-useGisComposite(origin) fires  [NEW]
-    ↓ (three queries in parallel, independent)
-    ├─ fetchSatellite   → /api/vworld/satellite   → VWorld WMS GetMap
-    ├─ fetchContextBldgs → /api/vworld/context-buildings → VWorld Data API (bbox)
-    └─ fetchZoning      → /api/vworld/zoning       → VWorld WFS
-    ↓ (each resolves independently; scene populated progressively)
-    ├─ SatelliteGround mounts:  PlaneGeometry + CanvasTexture (JPEG bytes)
-    ├─ ContextBuildings mounts: InstancedMesh (polygon centroids + heights → toLocal())
-    └─ ZoningOverlay mounts:    ShapeGeometry (zoning polygons → polygonToLocal())
-    ↓
-workflowStore.stage === 'gis-composite': all three GIS layers visible
-    ↓
-User clicks "BIM Mode" button
-    ↓
-workflowStore.stage → 'select': GIS components unmount, ProceduralBuildingModel activates
+User clicks lighting sub-toggle in LayerPanel
+    |
+    v
+useLayerStore.toggleMepSub("mep-lighting")
+    |
+    v  (Zustand subscription fires in BuildingLayers)
+useEffect([mepSubVisibility])
+    |
+    v
+managerRef.current.setMepSubVisible("mep-lighting", false)
+    |
+    v
+LayerManager.getGroup("mep").getObjectByName("sub-mep-lighting").visible = false
+    |
+    v
+Three.js renderer skips the child group — immediate, no React re-render in R3F
 ```
 
-### Coordinate Transform Chain
+### Flow 2: Per-Floor Heatmap Rebuild
 
 ```
-VWorld API response (always requested as crs=EPSG:4326 → GeoJSON [lng, lat])
-    ↓
-gis-transform.toLocal(lng, lat) [proj4js site-specific TM]
-    ↓
-[x, z] in local ENU meters — float32-safe (magnitude < ±5000m for any urban scene)
-    ↓
-earcut-extrude.ts or direct Vector3 assignment
-    ↓
-THREE.BufferGeometry / InstancedMesh transform
-    ↓
-Three.js scene graph
+Material slider changes (wall U-value, HVAC efficiency, etc.)
+    |
+    v
+useEnergyBreakdown(pk) [useMemo] recomputes
+    |
+    v  (calls calculateAnnualDemand with returnPerFloor:true, then ASHRAE ratios)
+SystemBreakdown.perFloor: number[] — new array reference
+    |
+    v  (useEffect deps: [floorDemands, recipe] fires in BuildingLayers)
+Old "energy-heatmap" group disposed from energy-zones group
+New EnergyHeatmapMesh built: PlaneGeometry per floor, vertex colors from kwhmToColor()
+Added to LayerManager.getGroup("energy-zones")
+    |
+    v
+Three.js renders updated vertex-colored floor planes — reflects new material values
 ```
 
-### Building Footprint → Extrusion (Existing Pipeline Change)
+### Flow 3: Equipment Info on Hover
 
-Current state in `building-scene.tsx`:
-1. `useBuildingFootprint(address)` fetches polygon (equirectangular [x,z] from centroid) — continues working
-2. `geometry.footprintPolygon` is set on `FloorGeometry`; `footprintWidth`/`footprintDepth` are derived from it
-3. `toRecipe(geometry)` propagates `footprintPolygon` into `BuildingRecipe` — the field already exists in `types.ts`
-4. `ProceduralBuilding.generate()` currently uses `footprintWidth`/`footprintDepth` for all geometry
+```
+User moves mouse over cooling pipe in 3D viewport
+    |
+    v
+EquipmentTooltip.useFrame (throttled every 3rd frame)
+    |
+    v
+raycasterRef.current.setFromCamera(mouse.current, camera)
+raycaster.intersectObjects([...visible mep sub-group children], true)
+    |
+    v  (hit found)
+componentType = hit.object.userData.type    // "cooling-branch"
+floorNo      = hit.object.userData.floorNo  // 3
+    |
+    v
+inferEquipmentSpecs(buildingPk, componentType, floorNo) → EquipmentSpec
+    |
+    v
+setHovered({ position: hit.point, spec })
+    |
+    v
+<Html position={hovered.position}><EquipmentInfoCard spec={spec} /></Html>
+```
 
-**Required change:** In `procedural-building.ts`, when `recipe.footprintPolygon` is present, use `earcut-extrude.ts` for the top/bottom cap faces. The facade-generator and structure-generator continue to use `footprintWidth`/`footprintDepth` for InstancedMesh — those are unchanged.
+### Flow 4: Equipment Control → Energy Impact
 
-**Scope:** This change touches only the cap generation path inside `ProceduralBuilding.generate()`. The existing rectangular fallback stays for when `footprintPolygon` is absent (campus mode, or when VWorld lookup failed).
+```
+User toggles HVAC off in EquipmentControlPanel (scenario mode)
+    |
+    v
+useWorkflowStore.setEquipmentOverride("mep-hvac", { enabled: false })
+    |
+    v  (useScenarioEnergy subscribes to equipmentOverrides)
+scenarioInputs = { ...baseInputs, coolingCOP: 0.01, heatingEfficiency: 0.01 }
+    |
+    v
+calculateAnnualDemand(heatLoss, scenarioMaterials, recipe, climate, { equipmentOverrides })
+    |
+    v
+scenarioDemand.demandPerSqm >> baseline (HVAC is the largest load component)
+    |
+    v
+StatusBar + EnergyCards re-render with scenario values
+ScenarioModeBanner appears: "시나리오 모드 — 실제 데이터가 아님"
+Delta vs baseline shown in amber in energy cards
+```
 
 ---
 
-## New vs Modified Files: Complete Reference
+## Architectural Patterns
 
-### New Files
+### Pattern 1: Additive Store Slices — Do Not Add New Store Files
 
-| File | Purpose | Phase |
-|------|---------|-------|
-| `src/lib/gis/gis-transform.ts` | proj4js ENU projection, scene origin management, `toLocal()`, `polygonToLocal()`, debug assertions | 1 — must exist before all others |
-| `src/lib/gis/earcut-extrude.ts` | GeoJSON Polygon/MultiPolygon → `THREE.BufferGeometry` via earcut, handles outer rings + holes | 2 |
-| `src/app/api/vworld/satellite/route.ts` | WMS GetMap proxy — returns satellite JPEG bytes for a bbox | 3 |
-| `src/app/api/vworld/context-buildings/route.ts` | Cadastral bbox query with `size=100` + height attribute extraction | 4 |
-| `src/app/api/vworld/zoning/route.ts` | WFS `LT_C_UQ111`–`LT_C_UQ114` proxy — returns GeoJSON zoning polygons | 5 |
-| `src/hooks/use-gis-composite.ts` | `useQueries` parallel fetch orchestrator; add queries incrementally as routes are built | 3 (grow across phases) |
-| `src/components/viewer/satellite-ground.tsx` | R3F PlaneGeometry + WMS texture; SAOPass layer exclusion | 3 |
-| `src/components/viewer/context-buildings.tsx` | R3F InstancedMesh LOD1 gray boxes | 4 |
-| `src/components/viewer/zoning-overlay.tsx` | R3F semi-transparent zoning polygon meshes | 5 |
+**What:** New state goes into existing stores as new fields, not new store files.
 
-### Modified Files
+**Why:** `use-energy-metrics.ts` explicitly documents: "Avoids `getEffectiveRecipe` in Zustand
+selector to prevent infinite loops. Instead subscribes to `baseRecipes[pk]` and `overrides[pk]`
+separately." Every new store creates a new subscription chain. Adding more stores risks
+infinite render loops from object reference churn across stores.
 
-| File | What Changes | Risk |
-|------|-------------|------|
-| `src/app/api/vworld/footprint/route.ts` | (1) `domain` from `VWORLD_DOMAIN` env var (currently hardcoded `"localhost"`); (2) `extractPolygon()` extended to handle `Polygon` interior holes (`coordinates[1..]`) and `MultiPolygon` first-part extraction | LOW — additive; existing callers unaffected |
-| `src/lib/procedural/types.ts` | Add `groundElevation?: number` to `BuildingRecipe` (for future terrain phase). No breaking change — optional field. | LOW |
-| `src/lib/procedural/procedural-building.ts` | When `recipe.footprintPolygon` is present, use `earcut-extrude.ts` for top/bottom cap faces. Facade/slab/column generators: no change. Rectangular fallback stays for missing-polygon case. | MEDIUM — touches cap generation; polygon path must be tested against concave parcels |
-| `src/components/viewer/building-scene.tsx` | (1) Call `setSceneOrigin()` when footprint centroid resolves; (2) mount GIS layer components when `stage === 'gis-composite'`; (3) reduce `saoKernelRadius` 50 → 25 when GIS layers active; (4) halve SAOPass resolution when context building count > 50 | MEDIUM — touches SAOPass config and scene composition |
-| `src/store/workflow-store.ts` | Add `'gis-composite'` to `WorkflowStage` union. Prepend to `STAGE_ORDER` before `'select'`. Wire transition back to `'select'` on "BIM Mode" action. | LOW — additive to existing FSM |
+**Rule:** `mepSubVisibility` → `layer-store`. `equipmentOverrides` → `workflow-store`.
+`scenarioOverrides` → `recipe-store`. Zero new store files.
 
-### Untouched Files
+### Pattern 2: Per-Frame Raycasting with useRef-Allocated Raycaster
 
-These files require no changes for v4.0 GIS compositing:
+**What:** Allocate `THREE.Raycaster` once via `useRef`, call `setFromCamera` inside `useFrame`.
 
-- `src/lib/procedural/facade-generator.ts` — InstancedMesh facade uses `footprintWidth`/`footprintDepth`, not the polygon
-- `src/lib/procedural/structure-generator.ts` — Same; slab/column InstancedMesh unchanged
-- `src/lib/procedural/recipe.ts` — Recipe factory; no GIS concerns
-- `src/lib/pbr-materials.ts` — PBR material configs; context buildings use flat gray, not PBR
-- `src/components/viewer/ground-plane.tsx` — Remains active in BIM mode (`stage !== 'gis-composite'`); not shown in GIS composite mode
-- All Zustand stores except `workflow-store.ts`
-- All existing `src/app/api/bldrgst/` routes — building ledger data source unchanged
+**Why:** `structural-tooltip.tsx` allocates `new THREE.Raycaster()` inside `useFrame` per frame —
+this is a documented performance concern in PROJECT.md. All new raycasting components fix this.
+
+### Pattern 3: Separate Geometry for Energy Visualization
+
+**What:** Energy heatmap uses its own `THREE.Mesh` objects in the `energy-zones` group, never
+sharing geometry with structural or envelope layers.
+
+**Why:** Structural slabs use InstancedMesh. `setColorAt` on that InstancedMesh cannot express a
+spatial gradient across a face, requires full buffer re-upload on every energy recalc, and
+entangles structural visual state with energy data state. Separate floor-plane meshes with vertex
+colors in `energy-zones` are independent — the heatmap persists even when the structure layer is
+hidden.
+
+### Pattern 4: Scenario State Isolated from Committed State
+
+**What:** `equipmentOverrides` and `scenarioOverrides` are never merged into `overrides[pk]`
+(material edits). They are never persisted. Undo/redo never applies to them.
+
+**Why:** `recipe-store.overrides[pk]` feeds both 3D model geometry and ECO2 export. Contaminating
+it with scenario hypotheses would corrupt both. Transient scenario state must not survive page
+reload — the amber banner is the only visual signal that values are non-actual; without it,
+persisted scenario values would silently mislead users.
+
+### Pattern 5: Energy Calculations in useMemo, Never in Render or useFrame
+
+**What:** All calls to `calculateAnnualDemand()`, `calculateSystemBreakdown()` happen inside
+`useMemo` with explicit deps arrays, never in render functions or `useFrame`.
+
+**Why:** These are synchronous CPU functions (50–200ms). `use-energy-metrics.ts` demonstrates the
+correct pattern. Calling them in `useFrame` drops scene fps to <5. Calling in render body causes
+redundant recalculation on unrelated re-renders.
 
 ---
 
-## Build Order
+## Recommended Build Order
 
-The coordinate system is a hard dependency of every other GIS feature. Build order must respect this:
+Respects the dependency graph. Each phase has clear exit criteria and can be validated
+independently before the next phase starts.
 
-### Phase 1: Coordinate System Foundation
+### Phase 1: MEP Sub-Layer Foundation (architectural prerequisite)
 
-**Produces:** `src/lib/gis/gis-transform.ts`
+Files touched: `types.ts`, `layer-store.ts`, `layer-manager.ts`, `building-layers.tsx`,
+`layer-panel.tsx` (sub-toggle UI), `mep-coordinator.ts` (new)
 
-Build first, before any API route or R3F component. Includes `setSceneOrigin()`, `toLocal()`, `polygonToLocal()`, and debug-mode magnitude assertions. Pure utility module — no React, no Three.js, testable with Vitest using known Seoul coordinates.
+Exit criteria: Each sub-toggle independently shows/hides the correct 3D geometry. Existing 5-layer
+visibility toggles still work unchanged.
 
-**Verification gate:** Unit test confirms that a WGS84 point 500m east of the origin converts to approximately `[500, 0]` with less than 0.5m error. A coordinate with raw EPSG:5179 magnitude (~950000) triggers the debug warning (confirming the guard works).
+No energy calculations touched in this phase.
 
-**Also in Phase 1:** Extend `extractPolygon()` in `footprint/route.ts` to handle `Polygon` holes and `MultiPolygon`. Parameterize `domain` from `VWORLD_DOMAIN` env var. These are low-risk fixes that unblock all downstream phases.
+### Phase 2: Per-Floor Energy Model + System Breakdown (engine, no UI)
 
-### Phase 2: Footprint Extrusion with Earcut
+Files touched: `annual-demand.ts` (optional extension), `system-breakdown.ts` (new),
+`use-energy-breakdown.ts` (new)
 
-**Produces:** `src/lib/gis/earcut-extrude.ts`, modified `procedural-building.ts`
+Exit criteria: `useEnergyBreakdown(pk)` returns `SystemBreakdown` with `perFloor` array and
+HVAC/lighting/DHW/plug split. All non-HVAC values carry `dataSource: "estimated-ratio"`.
 
-Depends on Phase 1 for coordinate input. Replaces the building cap extrusion path with earcut. `BuildingRecipe.footprintPolygon` already exists as an optional field — this phase wires it to real geometry.
+### Phase 3: Energy Breakdown Dashboard
 
-**Implementation note:** For Phase 2, the footprint polygon from `useBuildingFootprint()` arrives in equirectangular [x,z] meters (centroid-relative). This is sub-centimeter accurate for a single parcel (diameter < 200m) and does not require `gis-transform.ts`. Upgrade to `gis-transform.ts` projection in Phase 3 when satellite alignment requires the shared origin.
+Files touched: `energy-breakdown-chart.tsx` (new), integration into config panel tabs.
+Requires `pnpm add recharts@^3.8.1` and `npx shadcn@latest add chart`.
 
-**Verification gate:** An L-shaped cadastral parcel (concave polygon) extrudes without missing faces. A parcel with an interior ring (road easement) shows the hole in the extruded mesh. Test PNU: use a parcel in Jongno-gu or Jung-gu (dense urban; common road easements).
+Exit criteria: Bar chart renders HVAC/lighting/DHW/plug breakdown. Updates when material sliders
+change (via `useEnergyBreakdown` subscription). `estimated-ratio` label visible in tooltip.
 
-### Phase 3: Satellite Ground Plane
+Depends on: Phase 2.
 
-**Produces:** `src/app/api/vworld/satellite/route.ts`, `src/components/viewer/satellite-ground.tsx`, `src/hooks/use-gis-composite.ts` (satellite query only)
+### Phase 4: Energy Consumption Heatmap
 
-Depends on Phase 1 (`setSceneOrigin` establishes the bbox for the WMS request). The satellite proxy fetches one WMS `GetMap` JPEG for a 600m × 600m area around the building centroid. `SatelliteGround` renders a `PlaneGeometry` scaled to the bbox with the image as a `THREE.CanvasTexture`.
+Files touched: `energy-heatmap-mesh.ts` (new), `building-layers.tsx` (heatmap rebuild
+`useEffect`).
 
-**SAOPass detail:** Set `material.aoMapIntensity = 0` on the satellite ground material. The horizontal surface has nearly-zero normals relative to the SAOPass kernel — it will self-occlude (render dark) unless excluded. Assign the ground to `layers.set(1)` and configure SAOPass to exclude layer 1 from its depth pass.
+Exit criteria: `energy-zones` layer shows color-gradient floor planes. Colors update reactively
+when material sliders change. `disposeLayer("energy-zones")` + manual heatmap child disposal runs
+correctly before rebuild.
 
-**Verification gate:** Satellite image appears as the ground texture. No dark vignette on the satellite surface from SAOPass. Satellite bbox aligns visually with the building footprint polygon.
+Depends on: Phase 2 (`perFloor` array from `useEnergyBreakdown`).
 
-### Phase 4: Context Buildings (LOD1)
+### Phase 5: Equipment Info Panel
 
-**Produces:** `src/app/api/vworld/context-buildings/route.ts`, `src/components/viewer/context-buildings.tsx`, updated `use-gis-composite.ts`
+Files touched: `equipment-specs.ts` (new), `equipment-tooltip.tsx` (new R3F component).
 
-Hardest phase. The context-buildings proxy queries `LP_PA_CBND_BUBUN` with a 200m bbox, extracts per-feature centroid + `buldHg` (with `flrCnt × 3m` fallback), and returns a list. The R3F component assembles a single `InstancedMesh` from this list using `gis-transform.toLocal()` for each centroid.
+Exit criteria: Hovering a cooling pipe or lighting fixture shows an info card with inferred specs.
+`dataSource: "estimated-ratio"` label visible on all estimated values. Raycaster uses `useRef`
+allocation pattern.
 
-**Simplification option:** Instead of earcut per context-building footprint, use each building's bbox centroid and `(maxX-minX) × (maxZ-minZ)` dimensions to scale the unit box. This is faster to build and visually acceptable for LOD1 context. Reserve earcut for the primary building (Phase 2) only.
+Depends on: Phase 1 (MEP sub-groups must have `userData.type` + `userData.floorNo` on objects —
+already set by existing layer generators, e.g. `{ type: "cooling-branch", floorNo: 3 }`).
 
-**SAOPass action required here:** In `building-scene.tsx`, track context building count. When count > 50: set `saoKernelRadius = 25`. When count > 100: call `saoPass.setSize(size.width / 2, size.height / 2)`. Add a "Performance Mode" toggle to the layer panel that disables SAOPass entirely when GIS composite is active.
+### Phase 6: Equipment Control + Scenario Store (capstone)
 
-**Verification gate:** 100 context buildings render at ≥ 30fps on Intel integrated graphics. `renderer.info.render.calls` ≤ 10 with 150 context buildings present. Context buildings align with satellite imagery within 2m visual error at 300m from scene center.
+Files touched: `workflow-store.ts` (scenario slice + `partialize` update), `recipe-store.ts`
+(scenarioOverrides slice), `use-scenario-energy.ts` (new), `equipment-control-panel.tsx` (new),
+`scenario-mode-banner.tsx` (new).
 
-### Phase 5: Zoning Overlay + Workflow Stage Transition
+Exit criteria: Toggling HVAC off in scenario mode visibly raises kWh/m² in status bar and energy
+cards. Amber banner displays. Exiting scenario mode restores baseline. Equipment state NOT in
+persisted state after reload.
 
-**Produces:** `src/app/api/vworld/zoning/route.ts`, `src/components/viewer/zoning-overlay.tsx`, updated `use-gis-composite.ts`, modified `workflow-store.ts`
+Depends on: Phase 2 (`calculateAnnualDemand` options extension for `equipmentOverrides`),
+Phase 5 (EquipmentSpec provides `equipmentId` for control targets).
 
-Lowest-risk phase. Zoning overlay is independent of all other GIS layers. Add the `'gis-composite'` stage to `workflow-store.ts` here — wire the stage so that: entering `'gis-composite'` activates GIS layers, transitioning to `'select'` unmounts them and activates `ProceduralBuildingModel`.
+---
 
-**Verification gate:** Zoning polygons appear as colored semi-transparent overlays aligned with satellite ground. Toggle button in layer panel hides/shows them without scene freeze. Stage transition from `'gis-composite'` to `'select'` removes all GIS geometry cleanly.
+## Existing Shell Integration Map
+
+```
+workspace-shell.tsx (existing — no changes needed)
+|
++-- building-scene.tsx (existing R3F Canvas)
+|   +-- BuildingLayers (existing) ← MODIFIED: +mepSubVis sync, +heatmap rebuild
+|   +-- EquipmentTooltip (NEW R3F) ← inserted alongside BuildingLayers
+|   +-- ScenarioModeBanner (NEW) ← Html overlay inside Canvas or absolute positioned
+|
++-- layer-panel.tsx (existing sidebar) ← MODIFIED: MEP expandable sub-rows
++-- energy-cards.tsx (existing bottom-left) ← UNCHANGED
++-- energy-breakdown-chart.tsx (NEW) ← below energy-cards or in new config tab
+|
++-- config-tabs/ (existing right panel)
+    +-- building-tab.tsx (existing — unchanged)
+    +-- layers-tab.tsx (existing) ← MODIFIED: renders MepSubLayerToggles
+    +-- equipment-tab.tsx (NEW) ← houses EquipmentControlPanel (Phase 6)
+```
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Routing Context Buildings Through ProceduralBuilding
+### Anti-Pattern 1: Adding New Zustand Stores for Energy Observability State
 
-**What people do:** Use `ProceduralBuilding` class (or its `BuildingRecipe` pipeline) to generate context buildings, because that's the existing pattern for the target building.
+**What people do:** Create `useEquipmentStore`, `useScenarioStore`, `useHeatmapStore` as new files.
 
-**Why it's wrong:** `ProceduralBuilding` generates InstancedMesh facades with era-based PBR materials, curtain wall configs, mixed-use sections, structural columns, and roof geometry — 7 draw calls per building. Applied to 100–200 context buildings, that is 700–1400 draw calls plus recipe construction overhead per building. Frame rate collapses and the visual result is incorrect (context buildings should be visually subordinate gray boxes).
+**Why it's wrong:** `use-energy-metrics.ts` documents the infinite loop risk explicitly. Each new
+store subscription that feeds into energy calculations risks object reference churn across render
+cycles. The codebase already has 7 stores; adding more for tightly coupled state increases that risk.
 
-**Do this instead:** Context buildings are a single `InstancedMesh` of a unit box, scaled per building. One draw call total. `ProceduralBuilding` is exclusively for the target building.
+**Do this instead:** `mepSubVisibility` → `layer-store`. `equipmentOverrides` → `workflow-store`.
+`scenarioOverrides` → `recipe-store`. Zero new store files for v5.0.
 
-### Anti-Pattern 2: Sequential GIS Data Fetching
+### Anti-Pattern 2: Coloring Structural InstancedMesh for Heatmap
 
-**What people do:** Await footprint → then fetch satellite → then fetch context buildings → then fetch zoning. Natural when incrementally adding features.
+**What people do:** Call `slabMesh.setColorAt(floorIndex, kwhmColor)` on the structural slab
+InstancedMesh to show energy intensity per floor.
 
-**Why it's wrong:** Each VWorld call takes 300–800ms. Sequential fetching: 1.2–3.2s of serial wait before any GIS layer renders. Users see a blank screen for longer than the composite takes to fully load.
+**Why it's wrong:** Cannot express a continuous gradient across a face. Requires full
+`instanceColor` buffer re-upload on every energy recalculation. Hides when the structure layer is
+toggled off — but the heatmap should be independently controllable via the `energy-zones` layer.
 
-**Do this instead:** `useQueries` fires all requests simultaneously. Set scene origin immediately when footprint centroid resolves. Render each layer as its query resolves. The scene populates progressively.
+**Do this instead:** Separate `THREE.Mesh` floor planes with `vertexColors: true` in the
+`energy-zones` group. Independent visibility, independent disposal, independent color buffer.
 
-### Anti-Pattern 3: Passing Raw Korean Projected Coordinates to Three.js
+### Anti-Pattern 3: Calling Energy Calculations in useFrame or Render Body
 
-**What people do:** Some VWorld WFS responses use EPSG:5179 (Northing/Easting magnitude ~10^6). Developers pass these directly to `mesh.position.set(950000, 0, 1950000)`.
+**What people do:** Call `calculateAnnualDemand()` in `useFrame` to keep heatmap "live," or call
+it in a component render function for "simplicity."
 
-**Why it's wrong:** Three.js GPU buffers use float32. At 10^6 magnitude, float32 precision degrades to ±0.1m. Vertex jitter is visible on building edges, SAOPass halos flicker on corners, and shadow map aliasing appears.
+**Why it's wrong:** 50–200ms synchronous CPU call in `useFrame` = <5 fps. In render body =
+recalculates on every unrelated re-render. Both are observable frame-rate regressions.
 
-**Do this instead:** Always subtract scene origin via `gis-transform.toLocal()` before any Three.js position assignment. Enforce with the debug-mode magnitude assertion in `gis-transform.ts`.
+**Do this instead:** `useEnergyBreakdown` hook using `useMemo` with explicit deps. Heatmap rebuilds
+only when `floorDemands` reference changes, which happens only when the underlying material/recipe
+deps change.
 
-### Anti-Pattern 4: Embedding a Second WebGL Context (Mapbox / CesiumJS)
+### Anti-Pattern 4: Persisting Scenario / Equipment State
 
-**What people do:** Reach for Mapbox GL JS or CesiumJS to handle GIS natively, since they are the standard tools.
+**What people do:** Include `equipmentOverrides` or `scenarioActive` in Zustand `persist`
+`partialize`.
 
-**Why it's wrong:** Two WebGL contexts on one page compete for GPU memory. Context loss occurs on lower-end hardware. Camera synchronization between Mapbox mercator and Three.js ENU requires coordinate system math. Each library adds 300–500KB bundle size.
+**Why it's wrong:** The amber `ScenarioModeBanner` is the only signal that displayed values are
+hypothetical. If scenario state persists across reload, users see modified energy projections
+without the banner context — the data appears to be the actual building state.
 
-**Do this instead:** Fetch VWorld data through Next.js proxy routes. Render in the existing Three.js/R3F canvas. No second rendering engine.
+**Do this instead:** Explicitly exclude from `partialize`. Scenario state is transient. On reload,
+users start from the committed baseline.
 
-### Anti-Pattern 5: Using THREE.ShapeGeometry for Cadastral Data
+### Anti-Pattern 5: Copying the Raycaster-per-Frame Pattern from StructuralTooltip
 
-**What people do:** Convert the polygon to a `THREE.Shape` and pass to `THREE.ShapeGeometry` or `THREE.ExtrudeGeometry` — the documented Three.js approach for polygon extrusion.
+**What people do:** Copy `structural-tooltip.tsx` verbatim, including `new THREE.Raycaster()` inside
+`useFrame`.
 
-**Why it's wrong:** Three.js's built-in triangulator handles only simple convex-ish polygons reliably. Korean cadastral records contain concave vertices (L-shaped lots), interior holes (road easements), and near-collinear digitization artifacts. The result is missing faces, inverted triangles, or the `"Probably Hole outside Shape!"` warning with silent rendering errors.
+**Why it's wrong:** Per-frame heap allocation. Documented performance concern in PROJECT.md.
 
-**Do this instead:** Use `earcut` for all cadastral triangulation. It handles concave polygons and holes correctly for real-world geographic data.
-
----
-
-## Integration Points
-
-### External Services
-
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| VWorld Data API (`/req/data`) | Next.js Route Handler proxy. Client never calls VWorld directly. `VWORLD_API_KEY` env var. `VWORLD_DOMAIN` env var. | Always request `crs=EPSG:4326`. Never return raw EPSG:5179 coordinates to the client. |
-| VWorld WMS (`/req/wms`) | Next.js Route Handler proxy. Single `GetMap` request returning JPEG bytes. | One image per building selection. Not tile streaming. |
-| VWorld WFS (`/req/wfs`) | Next.js Route Handler proxy. Returns GeoJSON FeatureCollection. | `outputFormat=application/json`. Zoning layers `LT_C_UQ111`–`LT_C_UQ114`. |
-| data.go.kr BldRgstHubService | EXISTS — unchanged. Building ledger remains the recipe source. | `floorAboveCnt` provides context-building height fallback when `buldHg` is absent. |
-
-### Internal Boundaries
-
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| `gis-transform.ts` ↔ all GIS components | Direct import. Module-level origin state set once per building selection. | All subsequent coordinate calls are stateless functions. No React context needed. |
-| `earcut-extrude.ts` ↔ `procedural-building.ts` | Direct import. `extrudePolygon(outerRing, holes, height)` returns `BufferGeometry`. | Only called for cap faces. Facade/structure generators are not affected. |
-| `use-gis-composite.ts` ↔ GIS R3F components | React props. Hook returns resolved data; components accept data as props. | Components do not hold their own query state — cleaner for testing. |
-| `workflowStore.stage` ↔ `building-scene.tsx` | Zustand subscription. Scene reads `stage` to determine which layers to mount. | GIS layers unmount on `'select'` transition — clean disposal of InstancedMesh and textures. |
-| `SatelliteGround` ↔ `SAOPass` | Three.js render layers. Ground plane on `layers.set(1)`. SAOPass excludes layer 1 from depth. | Prevents SAOPass self-occlusion darkening the horizontal satellite surface (known Three.js SSAO artifact). |
-| `ContextBuildings` (count) ↔ `SAOPostProcessing` | React state / prop in `building-scene.tsx`. Context building count controls `saoKernelRadius` and SAOPass resolution. | SAOPass is configured at scene level in `SAOPostProcessing` component — must read count via shared state or ref. |
-
----
-
-## Scaling Considerations
-
-| Concern | Single building | 10 sequential selections | Campus mode (50+ buildings) |
-|---------|----------------|--------------------------|------------------------------|
-| GIS fetch load | 3 parallel VWorld calls, ~1–2s | TanStack Query caches by `origin` key — re-selecting same building is instant | GIS composite queries per-building; share same satellite bbox if buildings are close |
-| Draw calls | +3 draw calls total (satellite, context InstancedMesh, zoning) | Same 3 draw calls regardless of context building count | InstancedMesh scales to 500 instances before LOD is needed |
-| SAOPass | Reduce `saoKernelRadius` when > 50 context buildings. Half-res when > 100. | Per-building performance mode toggle in layer panel | For campus + GIS simultaneously: disable SAOPass, consider N8AO (lighter alternative, 30–50% cheaper on complex scenes) |
-| GPU texture memory | 1 satellite JPEG ~200–400KB GPU. | TanStack Query `staleTime=30min` caches data; Three.js texture needs explicit `texture.dispose()` on building change | LRU eviction: dispose satellite texture when building selection changes. Monitor `renderer.info.memory.textures`. |
+**Do this instead:** `const raycasterRef = useRef(new THREE.Raycaster())`. Call
+`raycasterRef.current.setFromCamera(...)` inside `useFrame`. This is the fix, not the pattern.
 
 ---
 
 ## Sources
 
-- Codebase: `src/app/api/vworld/footprint/route.ts` — `extractPolygon()` equirectangular pattern, hardcoded `domain: "localhost"`, VWorld Data API structure — HIGH confidence
-- Codebase: `src/lib/procedural/types.ts` — `BuildingRecipe.footprintPolygon?: [number, number][]` already present — HIGH confidence
-- Codebase: `src/components/viewer/building-scene.tsx` — SAOPass `saoKernelRadius: 50`, scene structure, campus/single-building branching, `useBuildingFootprint` usage — HIGH confidence
-- Codebase: `src/hooks/use-building-footprint.ts` — `useQuery` pattern, `staleTime` 30min — HIGH confidence
-- PITFALLS.md: Equirectangular error (Pitfall 1), Float32 precision (Pitfall 2), EPSG axis order (Pitfall 3), ShapeGeometry failure (Pitfall 4), SAOPass collapse (Pitfall 7) — HIGH confidence (research-validated)
-- FEATURES.md: VWorld 3D API permanently closed, `useQueries` parallel fetch pattern, InstancedMesh for LOD1, feature dependency graph — HIGH confidence
-- Three.js InstancedMesh docs: https://threejs.org/docs/pages/InstancedMesh.html — HIGH confidence
-- Three.js issues #11957, #3386: ShapeGeometry triangulation failures — HIGH confidence
-- mapbox/earcut: https://github.com/mapbox/earcut — HIGH confidence
-- proj4js: https://github.com/proj4js/proj4js — HIGH confidence (site-specific TM approach)
+- `src/lib/layers/types.ts` — `LayerId` union (5 entries confirmed), `ALL_LAYER_IDS`, `LAYER_CONFIGS` — HIGH confidence (Read)
+- `src/lib/layers/layer-manager.ts` — `LayerManager` class, `COMPONENT_TO_LAYER` mapping, `setVisible()`, `disposeLayer()` — HIGH confidence (Read)
+- `src/store/layer-store.ts` — `LayerState` shape, `Record<LayerId, boolean>` visibility — HIGH confidence (Read)
+- `src/store/workflow-store.ts` — 3-stage workflow (`search|twin|report`), `persist` shape with `partialize` — HIGH confidence (Read)
+- `src/store/recipe-store.ts` — `overrides` record, `setOverride()` dot-path pattern, isolated from `getEffectiveRecipe` — HIGH confidence (Read)
+- `src/store/material-store.ts` — `overrideProperty()` pattern, `selectedElement` shape — HIGH confidence (Read)
+- `src/hooks/use-energy-metrics.ts` — subscription topology, infinite-loop prevention comment, `useMemo` pattern for effectiveRecipe — HIGH confidence (Read)
+- `src/lib/energy/annual-demand.ts` — function signature, degree-day model, `coolingCOP`/`heatingEfficiency` paths — HIGH confidence (Read)
+- `src/components/viewer/structural-tooltip.tsx` — raycasting pattern (pointermove handler, useFrame throttle, Html popup, per-frame Raycaster allocation noted as defect) — HIGH confidence (Read)
+- `src/components/viewer/energy-cards.tsx` — `useEnergyMetrics` consumption, `<Skeleton>` pattern, ECO2 integration — HIGH confidence (Read)
+- `src/lib/layers/layer-3-cooling.ts` — generator pattern: `userData.type`, `userData.floorNo`, ShaderMaterial `uTime`, dispose pattern — HIGH confidence (Read)
+- `src/lib/layers/layer-7-lighting.ts` — InstancedMesh pattern, `userData.type`, named component types — HIGH confidence (Read)
+- `src/components/viewer/building-layers.tsx` — `useRef<LayerManager>`, dual useEffect pattern, `useFrame` for animations — HIGH confidence (Read)
+- PROJECT.md — `StructuralTooltip` Raycaster-per-frame known tech debt — HIGH confidence (Read)
 
 ---
 
-*Architecture research for: GIS-Composite Realistic Drafts — Korean BIM Energy Management System v4.0*
+*Architecture research for: Korean BIM EMS v5.0 — Energy Systems Observability & Control*
 *Researched: 2026-04-12*
