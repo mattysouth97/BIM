@@ -90,14 +90,14 @@ function SAOPostProcessing() {
     composer.addPass(renderPass);
 
     const saoPass = new SAOPass(scene, camera);
-    saoPass.params.saoBias = 0.5;
-    saoPass.params.saoIntensity = 0.015;
-    saoPass.params.saoScale = 5;
-    saoPass.params.saoKernelRadius = 50;
+    saoPass.params.saoBias = 1.0;
+    saoPass.params.saoIntensity = 0.004;
+    saoPass.params.saoScale = 2;
+    saoPass.params.saoKernelRadius = 15;
     saoPass.params.saoMinResolution = 0;
     saoPass.params.saoBlur = true;
-    saoPass.params.saoBlurRadius = 8;
-    saoPass.params.saoBlurStdDev = 4;
+    saoPass.params.saoBlurRadius = 12;
+    saoPass.params.saoBlurStdDev = 6;
     saoPass.params.saoBlurDepthCutoff = 0.01;
     composer.addPass(saoPass);
 
@@ -453,7 +453,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           />
 
           {/* SAO ambient occlusion post-processing */}
-          <SAOPostProcessing />
+          {/* SAOPostProcessing disabled — causes dark halos on polygon geometry */}
         </Suspense>
       </Canvas>
       </ViewerErrorBoundary>
