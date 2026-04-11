@@ -46,7 +46,16 @@ The goal is NOT photorealistic rendering — it's **structural unambiguity**. Ev
 - ECO2 (desktop energy evaluation — future export)
 - Korean Building Energy Code (inference engine)
 
-## Current Milestone: (none — ready for next milestone)
+## Current Milestone: v5.0 Energy Systems Observability & Control
+
+**Goal:** Expand the MEP layer into individual utility sub-systems with energy usage visualization and basic equipment control for what-if scenario analysis.
+
+**Target features:**
+- Individual utility layer toggles: electrical distribution, HVAC ducts/units, lighting zones, stairs/elevators
+- Energy consumption heatmap per zone/equipment overlaid on 3D building
+- Equipment info panels showing specifications, energy usage, efficiency ratings
+- Basic control: toggle equipment on/off, adjust HVAC setpoints, see energy impact in real-time
+- Energy usage breakdown dashboard by system type
 
 ## Current State
 
@@ -81,4 +90,4 @@ Next.js 16 + React 19 + TypeScript + Three.js 0.183 + React Three Fiber 9 + shad
 
 This document evolves at phase transitions and milestone boundaries.
 
-*Last updated: 2026-04-12 after v4.0 milestone completion*
+*Last updated: 2026-04-12 after v5.0 milestone start*
