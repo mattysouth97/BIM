@@ -58,21 +58,21 @@ Deferred to next minor release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MEP-01 | — | Pending |
-| MEP-02 | — | Pending |
-| EA-01 | — | Pending |
-| EA-02 | — | Pending |
-| EA-03 | — | Pending |
-| EQ-01 | — | Pending |
-| EQ-02 | — | Pending |
-| STD-01 | — | Pending |
-| STD-02 | — | Pending |
+| MEP-01 | Phase 22 | Pending |
+| MEP-02 | Phase 22 | Pending |
+| EA-01 | Phase 23 | Pending |
+| EA-02 | Phase 24 | Pending |
+| EA-03 | Phase 25 | Pending |
+| EQ-01 | Phase 26 | Pending |
+| EQ-02 | Phase 26 | Pending |
+| STD-01 | Phase 26 | Pending |
+| STD-02 | Phase 27 | Pending |
 
 **Coverage:**
 - v5.0 requirements: 9 total
-- Mapped to phases: 0
-- Unmapped: 9 (awaiting roadmap)
+- Mapped to phases: 9
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-12*
-*Last updated: 2026-04-12 after v5.0 milestone definition*
+*Last updated: 2026-04-12 after v5.0 roadmap creation*
