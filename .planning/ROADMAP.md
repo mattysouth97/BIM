@@ -50,7 +50,8 @@
 **Milestone Goal:** Instantly generate realistic building drafts by compositing Korean government building data with VWorld GIS layers — real cadastral footprint polygons, correct coordinate transforms, and a parallel fetch pipeline that composites within 3 seconds of building selection.
 
 - [x] **Phase 19: Coordinate System Foundation** — proj4 transform layer, VWorld API key via env var, coordinate assertions
-- [x] **Phase 20: Footprint Extrusion** — Real cadastral polygon as building base, earcut triangulation, facade system on polygon buildings (completed 2026-04-11)
+- [x] **Phase 20: Footprint Extrusion** — Real cadastral polygon as building base, earcut triangulation, facade system on polygon buildings
+ (completed 2026-04-11)
 - [ ] **Phase 21: Composite Pipeline** — Parallel fetch orchestration, 3-second composite performance gate
 
 ## Phase Details
@@ -179,6 +180,10 @@ Plans:
   2. The 3D composite scene (footprint extruded with facade) renders within 3 seconds of the parallel fetches completing, measured from the moment data arrives to first paint
   3. If the VWorld footprint fetch fails or returns no polygon, the system gracefully falls back to the existing rectangular procedural model rather than showing an error state
   4. A loading indicator is visible during the fetch and disappears once the composite renders
+**Plans:** 2 plans
+Plans:
+- [ ] 21-01-PLAN.md — useCompositeBuilding hook + parallel fetch wiring in building/[id]/page.tsx
+- [ ] 21-02-PLAN.md — BuildingScene prop-driven footprint, loading overlay, visual checkpoint
 
 ## Progress
 
@@ -196,4 +201,4 @@ Plans:
 | 18. Guidance + Energy Feedback | v3.0 | 3/3 | Complete | 2026-03-31 |
 | 19. Coordinate System Foundation | v4.0 | 2/2 | Complete   | 2026-04-11 |
 | 20. Footprint Extrusion | v4.0 | 3/3 | Complete   | 2026-04-11 |
-| 21. Composite Pipeline | v4.0 | 0/TBD | Not started | - |
+| 21. Composite Pipeline | v4.0 | 0/2 | In progress | - |
