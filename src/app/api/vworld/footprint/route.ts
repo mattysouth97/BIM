@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function fetchByPNU(pnu: string, apiKey: string): Promise<number[][] | null> {
+async function fetchByPNU(pnu: string, apiKey: string): Promise<number[][][] | null> {
   const url = new URL(VWORLD_DATA_URL);
   url.searchParams.set("service", "data");
   url.searchParams.set("request", "GetFeature");
@@ -132,7 +132,7 @@ async function fetchByPNU(pnu: string, apiKey: string): Promise<number[][] | nul
   return extractPolygon(data);
 }
 
-async function fetchByBBox(lat: number, lng: number, apiKey: string): Promise<number[][] | null> {
+async function fetchByBBox(lat: number, lng: number, apiKey: string): Promise<number[][][] | null> {
   // Search in a ~50m bounding box around the point
   const delta = 0.0005; // ~50m
   const bbox = `BOX(${lng - delta},${lat - delta},${lng + delta},${lat + delta})`;
@@ -211,7 +211,7 @@ async function geocodeAddress(address: string, apiKey: string): Promise<{ lat: n
   return null;
 }
 
-function extractPolygon(data: unknown): number[][] | null {
+function extractPolygon(data: unknown): number[][][] | null {
   try {
     const response = data as {
       response?: {
@@ -235,28 +235,25 @@ function extractPolygon(data: unknown): number[][] | null {
     if (!features || features.length === 0) return null;
 
     const geometry = features[0].geometry;
-    if (!geometry || !geometry.coordinates) return null;
+    if (!geometry?.coordinates) return null;
 
-    // MultiPolygon: coordinates[polygon][ring][point][lng,lat]
-    // We take the first polygon's outer ring
-    const outerRing = geometry.coordinates[0]?.[0];
-    if (!outerRing || outerRing.length < 3) return null;
+    // Handle both Polygon and MultiPolygon (VWorld returns MultiPolygon for cadastral parcels)
+    let rings: number[][][];
+    if (geometry.type === "MultiPolygon") {
+      // Take all rings from the first polygon part (largest parcel)
+      rings = (geometry.coordinates[0] as number[][][]) ?? [];
+    } else {
+      // Polygon: coordinates is [outerRing, ...holes]
+      rings = geometry.coordinates as unknown as number[][][];
+    }
 
-    // Convert [lng, lat] to [x, z] in meters relative to centroid
-    // This creates a local coordinate system centered on the polygon
-    const centroidLng = outerRing.reduce((s, p) => s + p[0], 0) / outerRing.length;
-    const centroidLat = outerRing.reduce((s, p) => s + p[1], 0) / outerRing.length;
+    // Filter degenerate rings (< 3 points)
+    rings = rings.filter((ring) => ring.length >= 3);
+    if (rings.length === 0) return null;
 
-    // Convert to meters using simple equirectangular projection
-    const metersPerDegreeLat = 111320;
-    const metersPerDegreeLng = 111320 * Math.cos(centroidLat * Math.PI / 180);
-
-    const polygon = outerRing.map(([lng, lat]) => [
-      (lng - centroidLng) * metersPerDegreeLng,
-      (lat - centroidLat) * metersPerDegreeLat,
-    ]);
-
-    return polygon;
+    // Return raw WGS84 [lng, lat] rings — NO equirectangular projection here.
+    // Projection is handled client-side via gis-transform.ts (proj4).
+    return rings;
   } catch {
     return null;
   }
