@@ -46,17 +46,7 @@ The goal is NOT photorealistic rendering — it's **structural unambiguity**. Ev
 - ECO2 (desktop energy evaluation — future export)
 - Korean Building Energy Code (inference engine)
 
-## Current Milestone: v4.0 GIS-Composite Realistic Drafts
-
-**Goal:** Instantly generate realistic building drafts by compositing Korean government building data with VWorld GIS layers — real footprints, surrounding context, terrain, and aerial imagery.
-
-**Target features:**
-- Real cadastral footprint polygon as building base shape (replacing rectangular box)
-- Surrounding LOD1 context buildings from VWorld for spatial awareness
-- Terrain/elevation integration so buildings sit on correct ground plane
-- Satellite/aerial orthophoto ground plane texture
-- Zoning/land-use overlay visualization
-- Parallel data fetch pipeline: address → instant composite render
+## Current Milestone: (none — ready for next milestone)
 
 ## Current State
 
@@ -79,6 +69,7 @@ Shipped v2.0 Advanced BIM Authoring with 25,500+ LOC TypeScript across 173 files
 - Plan-view components share outer ViewerErrorBoundary (no per-component boundaries)
 
 ## Completed Milestones
+- v4.0: GIS-Composite Realistic Drafts (3 phases, 7 plans — shipped 2026-04-12)
 - v3.0: UX Workflow Overhaul (5 phases, 16 plans — shipped 2026-04-03)
 - v2.0: Advanced BIM Authoring (5 phases, 11 plans — shipped 2026-03-28)
 - v1.0: Procedural BIM Viewer with Multi-Layer Building Systems (9 phases)
@@ -90,4 +81,4 @@ Next.js 16 + React 19 + TypeScript + Three.js 0.183 + React Three Fiber 9 + shad
 
 This document evolves at phase transitions and milestone boundaries.
 
-*Last updated: 2026-04-03 after v4.0 milestone start*
+*Last updated: 2026-04-12 after v4.0 milestone completion*

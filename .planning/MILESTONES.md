@@ -1,5 +1,19 @@
 # Milestones
 
+## v4.0 GIS-Composite Realistic Drafts (Shipped: 2026-04-12)
+
+**Phases completed:** 3 phases, 7 plans
+
+**Key accomplishments:**
+
+- Real cadastral footprint extrusion: buildings render with actual VWorld polygon shapes (L-shaped, irregular) instead of rectangular boxes
+- proj4 coordinate foundation: site-specific TM projection with <1m accuracy at 2km, solving float32 precision with Korean EPSG:5179
+- earcut polygon triangulation: concave and holed polygons triangulate correctly, replacing Three.js ShapeGeometry
+- Parallel data fetch: building ledger + VWorld footprint fire simultaneously via useQueries with graceful rectangular fallback
+- Facade system on polygon buildings: era-based PBR textures, mullions, panels work on N-sided buildings
+
+---
+
 ## v3.0 UX Workflow Overhaul (Shipped: 2026-04-03)
 
 **Phases completed:** 5 phases, 16 plans
