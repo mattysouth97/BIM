@@ -2,9 +2,10 @@
 
 ## Milestones
 
-- 🚧 **v3.0 UX Workflow Overhaul** — Phases 14-18 (in progress)
+- ✅ **v3.0 UX Workflow Overhaul** — Phases 14-18 (shipped 2026-03-31)
 - ✅ **v2.0 Advanced BIM Authoring** — Phases 10-13 (shipped 2026-03-28) — [Archive](milestones/v2.0-ROADMAP.md)
 - ✅ **v1.0 Procedural BIM Viewer** — Phases 1-9 (shipped 2026-03-26)
+- 🚧 **v4.0 GIS-Composite Realistic Drafts** — Phases 19-21 (in progress)
 
 ## Phases
 
@@ -34,15 +35,23 @@
 
 </details>
 
-### 🚧 v3.0 UX Workflow Overhaul (In Progress)
+### ✅ v3.0 UX Workflow Overhaul (Shipped 2026-03-31)
 
 **Milestone Goal:** Redesign the post-selection authoring experience into a guided-but-flexible IDE-style workspace with viewport-dominant layout, contextual toolbars, dockable panels, workflow stepper, undo/redo, and live energy feedback.
 
 - [x] **Phase 14: Workflow State Foundation** — FSM store, workspace store, command interface skeleton (completed 2026-03-29)
 - [x] **Phase 15: Workspace Shell Layout** — Viewport-dominant dock layout with resizable panels (completed 2026-03-30)
-- [x] **Phase 16: Contextual Toolbar Migration** — Stage-keyed toolbar configs replacing viewer-overlay.tsx (gap closure in progress) (completed 2026-03-30)
+- [x] **Phase 16: Contextual Toolbar Migration** — Stage-keyed toolbar configs replacing viewer-overlay.tsx (completed 2026-03-30)
 - [x] **Phase 17: Panel Content + Workflow Stepper** — Filled dock panels, stepper nav, undo/redo, component catalog (completed 2026-03-30)
-- [x] **Phase 18: Guidance + Energy Feedback** — Status bar, onboarding tour, live energy display (completed 2026-03-30)
+- [x] **Phase 18: Guidance + Energy Feedback** — Status bar, onboarding tour, live energy display (completed 2026-03-31)
+
+### 🚧 v4.0 GIS-Composite Realistic Drafts (In Progress)
+
+**Milestone Goal:** Instantly generate realistic building drafts by compositing Korean government building data with VWorld GIS layers — real cadastral footprint polygons, correct coordinate transforms, and a parallel fetch pipeline that composites within 3 seconds of building selection.
+
+- [ ] **Phase 19: Coordinate System Foundation** — proj4 transform layer, VWorld API key via env var, coordinate assertions
+- [ ] **Phase 20: Footprint Extrusion** — Real cadastral polygon as building base, earcut triangulation, facade system on polygon buildings
+- [ ] **Phase 21: Composite Pipeline** — Parallel fetch orchestration, 3-second composite performance gate
 
 ## Phase Details
 
@@ -130,6 +139,40 @@ Plans:
 - [x] 18-03-PLAN.md — Energy delta annotations on property sliders
 **UI hint**: yes
 
+### Phase 19: Coordinate System Foundation
+**Goal**: All GIS coordinate transforms are accurate to <1m at 2km radius using proj4 with proper EPSG:5179 projection, and the VWorld API key is managed via environment variable
+**Depends on**: Phase 18
+**Requirements**: GIS-02, GIS-03
+**Success Criteria** (what must be TRUE):
+  1. `gis-transform.ts` converts between WGS84 and EPSG:5179 using proj4, with a local origin subtraction that keeps Three.js Float32 coordinates under 100m magnitude
+  2. A coordinate round-trip (WGS84 → local → WGS84) for a point 2km from the origin produces less than 1m of error, verifiable via a unit test
+  3. The VWorld API key is read from `VWORLD_API_KEY` environment variable; the proxy route throws a 500 with a clear error message if the variable is unset, rather than sending a hardcoded key
+  4. Coordinate assertions in `gis-transform.ts` throw a typed error if input coordinates are outside the Korean peninsula bounding box
+**Plans**: TBD
+
+### Phase 20: Footprint Extrusion
+**Goal**: Users see their selected building rendered with the real cadastral polygon shape extruded to the correct height, with existing facade materials and concave polygon support
+**Depends on**: Phase 19
+**Requirements**: GIS-01, FP-01, FP-02, FP-03
+**Success Criteria** (what must be TRUE):
+  1. After selecting a building, the 3D model's base footprint matches the cadastral polygon from VWorld — L-shaped, irregular, or rectilinear — rather than a rectangular box
+  2. An L-shaped or concave cadastral polygon triangulates correctly via earcut and renders without visual holes or inverted faces
+  3. The extruded building respects per-floor heights from the building ledger data (not a uniform extrusion)
+  4. The procedural facade system (era-based textures, PBR materials, mullions, panels) applies correctly to polygon-based buildings, not just rectangular ones
+  5. A building with a known cadastral polygon renders visually correct in the 3D scene — verifiable by comparing to a satellite reference
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 21: Composite Pipeline
+**Goal**: Building selection triggers a parallel fetch of building ledger data and VWorld footprint polygon, and the composite 3D scene renders within 3 seconds of selection (excluding network latency)
+**Depends on**: Phase 20
+**Requirements**: CP-01, CP-02
+**Success Criteria** (what must be TRUE):
+  1. Selecting a building in the search results fires both the 건축물대장 ledger fetch and the VWorld footprint fetch simultaneously (observable via browser Network tab: both requests start at the same timestamp)
+  2. The 3D composite scene (footprint extruded with facade) renders within 3 seconds of the parallel fetches completing, measured from the moment data arrives to first paint
+  3. If the VWorld footprint fetch fails or returns no polygon, the system gracefully falls back to the existing rectangular procedural model rather than showing an error state
+  4. A loading indicator is visible during the fetch and disappears once the composite renders
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -139,8 +182,11 @@ Plans:
 | 11 | v2.0 | 3/3 | Complete | 2026-03-28 |
 | 12 | v2.0 | 2/2 | Complete | 2026-03-28 |
 | 13 | v2.0 | 2/2 | Complete | 2026-03-28 |
-| 14. Workflow State Foundation | v3.0 | 3/3 | Complete    | 2026-03-30 |
-| 15. Workspace Shell Layout | v3.0 | 2/2 | Complete    | 2026-03-30 |
-| 16. Contextual Toolbar Migration | v3.0 | 3/3 | Complete   | 2026-03-30 |
-| 17. Panel Content + Workflow Stepper | v3.0 | 5/5 | Complete    | 2026-03-30 |
-| 18. Guidance + Energy Feedback | v3.0 | 3/3 | Complete    | 2026-03-31 |
+| 14. Workflow State Foundation | v3.0 | 3/3 | Complete | 2026-03-30 |
+| 15. Workspace Shell Layout | v3.0 | 2/2 | Complete | 2026-03-30 |
+| 16. Contextual Toolbar Migration | v3.0 | 3/3 | Complete | 2026-03-30 |
+| 17. Panel Content + Workflow Stepper | v3.0 | 5/5 | Complete | 2026-03-30 |
+| 18. Guidance + Energy Feedback | v3.0 | 3/3 | Complete | 2026-03-31 |
+| 19. Coordinate System Foundation | v4.0 | 0/TBD | Not started | - |
+| 20. Footprint Extrusion | v4.0 | 0/TBD | Not started | - |
+| 21. Composite Pipeline | v4.0 | 0/TBD | Not started | - |

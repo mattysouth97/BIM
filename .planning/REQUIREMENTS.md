@@ -63,4 +63,4 @@ Deferred to next minor release. Tracked but not in current roadmap.
 
 ---
 *Requirements defined: 2026-04-12*
-*Last updated: 2026-04-12 after v4.0 milestone definition*
+*Last updated: 2026-04-12 after v4.0 roadmap creation*
