@@ -34,10 +34,14 @@ export interface ColumnConfig {
 
 /** Roof geometry parameters */
 export interface RoofConfig {
-  type: "flat" | "gable" | "other";
+  type: "flat" | "gable" | "hip" | "sawtooth" | "other";
   flatThickness: number;
   gableHeight: number;
   hipInset: number;
+  /** Number of sawtooth ridges (factory clerestory roofs) */
+  sawtoothCount?: number;
+  /** Height of each sawtooth ridge */
+  sawtoothHeight?: number;
 }
 
 /** Material references for each building element (PBR configs, not Three.js objects) */
@@ -65,7 +69,12 @@ export interface FloorSpec {
 export interface BuildingRecipe {
   footprintWidth: number;
   footprintDepth: number;
-  footprintPolygon?: [number, number][];
+  /**
+   * GeoJSON-style polygon rings in local [x, z] meter coordinates (post-projection).
+   * First ring is the outer boundary; subsequent rings are interior holes.
+   * Consumed by earcut-extrude.ts for cap triangulation and facade edge generation.
+   */
+  footprintPolygon?: [number, number][][];
   floors: FloorSpec[];
   totalHeight: number;
   wallThickness: number;
@@ -81,6 +90,50 @@ export interface BuildingRecipe {
   siteDepth: number;
   buildingName: string;
   address: string;
+  /** Curtain wall parameters (modern offices) */
+  curtainWall?: CurtainWallConfig;
+  /** Factory zone layout (factory/warehouse buildings) */
+  factoryZones?: FactoryZone[];
+  /** Mixed-use vertical sections with per-section facade */
+  sections?: BuildingSection[];
+}
+
+/** Factory building zone descriptors */
+export type FactoryZoneType = "process" | "office" | "warehouse" | "loading-dock";
+
+export interface FactoryZone {
+  type: FactoryZoneType;
+  /** Fraction of building footprint this zone occupies (0-1) */
+  footprintFraction: number;
+  /** Per-side window ratios [front, back, left, right] */
+  windowRatios: [number, number, number, number];
+  /** Floor height override for this zone (meters) */
+  floorHeight: number;
+}
+
+/** Curtain wall extension for modern office facades */
+export interface CurtainWallConfig {
+  enabled: boolean;
+  /** Mullion width for curtain wall grid (thinner than punched window) */
+  mullionWidth: number;
+  /** Glass tint color (blue-green for curtain wall) */
+  glassTint: string;
+  /** Glass opacity override */
+  glassOpacity: number;
+}
+
+/** A vertical section of a mixed-use building with its own sub-recipe */
+export interface BuildingSection {
+  /** First floor number in this section (1-based) */
+  startFloor: number;
+  /** Last floor number in this section (inclusive) */
+  endFloor: number;
+  /** Use code for this section */
+  mainPurpsCd: string;
+  /** Facade config override for this section */
+  facade: FacadeConfig;
+  /** Optional curtain wall config for this section */
+  curtainWall?: CurtainWallConfig;
 }
 
 /** Partial overrides for user customization (from config panel) */
@@ -94,4 +147,5 @@ export type RecipeOverrides = Partial<{
   slab: Partial<SlabConfig>;
   column: Partial<ColumnConfig>;
   roof: Partial<RoofConfig>;
+  curtainWall: Partial<CurtainWallConfig>;
 }>;
