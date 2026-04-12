@@ -1,407 +1,509 @@
 "use client";
 
-import React from "react";
-import { MousePointerClick, Ruler, Box, Component } from "lucide-react";
-import { useSelectionStore } from "@/store/selection-store";
-import { usePlanStore } from "@/store/plan-store";
-import { useComponentStore } from "@/store/component-store";
-import { useEnergyDelta } from "@/hooks/use-energy-delta";
-import { ROOM_TYPES, type RoomType } from "@/lib/plan/room-types";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import React, { useMemo, useState } from "react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { useAppStore } from "@/store/app-store";
+import { useMaterialStore } from "@/store/material-store";
+import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import { useRecipeStore } from "@/store/recipe-store";
+import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
+import { useActualEnergy } from "@/hooks/use-actual-energy";
+import { assessFidelity } from "@/lib/fidelity/fidelity-assessor";
+import { generateUpgradeChecklist } from "@/lib/fidelity/upgrade-checklist";
+import { FidelityBadge } from "@/components/twin/fidelity-badge";
+import { FidelityDetailPanel } from "@/components/twin/fidelity-detail-panel";
+import { calibrateEnergy } from "@/lib/energy/calibration";
+import { compareToBenchmark } from "@/lib/energy/benchmark-comparison";
+import {
+  scoreGreenCertification,
+  type BuildingCertificationInput,
+} from "@/lib/compliance/green-certification";
+import type { CertificationVersion } from "@/lib/compliance/certification-types";
+import {
+  calculateEfficiencyRating,
+  GRADE_LABELS,
+} from "@/lib/compliance/efficiency-rating";
+import { Loader2 } from "lucide-react";
+import { EquipmentInfoPanel } from "./equipment-info-panel";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Wall properties editor
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Grade color map for efficiency rating ────────────────────────────────────
 
-function WallProperties({
-  wallId,
-  buildingPk,
-}: {
-  wallId: string;
-  buildingPk: string | null;
-}) {
-  const wall = usePlanStore((s) => s.walls.find((w) => w.id === wallId));
-  const updateWall = usePlanStore((s) => s.updateWall);
-  const energyDelta = useEnergyDelta(buildingPk ?? "");
+const EFFICIENCY_GRADE_COLORS: Record<string, string> = {
+  "1+++": "#16a34a",
+  "1++": "#22c55e",
+  "1+": "#4ade80",
+  "1": "#86efac",
+  "2": "#facc15",
+  "3": "#fb923c",
+  "4": "#f97316",
+  "5": "#ef4444",
+  "6": "#dc2626",
+  "7": "#991b1b",
+};
 
-  if (!wall) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground text-xs p-4">
-        <span>Wall not found.</span>
-      </div>
-    );
-  }
+const CERTIFICATION_GRADE_LABELS: Record<string, { en: string; ko: string }> = {
+  excellent: { en: "Excellent (최우수)", ko: "최우수 (Excellent)" },
+  best: { en: "Best (우수)", ko: "우수 (Best)" },
+  good: { en: "Good (우량)", ko: "우량 (Good)" },
+  general: { en: "General (일반)", ko: "일반 (General)" },
+  "not-assessable": { en: "Not Assessable", ko: "평가 불가" },
+};
 
-  const dx = wall.end[0] - wall.start[0];
-  const dz = wall.end[1] - wall.start[1];
-  const length = Math.sqrt(dx * dx + dz * dz);
-  const conductivity = wall.thermalConductivity ?? 0.5;
-
-  return (
-    <div className="flex flex-col gap-4 p-3">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <Ruler className="h-4 w-4 text-primary shrink-0" />
-        <span className="text-sm font-semibold">Wall</span>
-        <Badge variant="secondary" className="text-xs ml-auto">
-          Floor {wall.floor + 1}
-        </Badge>
-      </div>
-
-      <Separator />
-
-      {/* Read-only: length */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">Length (m)</Label>
-        <Input
-          readOnly
-          value={length.toFixed(3)}
-          className="h-8 text-xs bg-muted/30"
-        />
-      </div>
-
-      {/* Editable: thickness */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">Thickness (m)</Label>
-        <Input
-          type="number"
-          min={0.05}
-          max={2}
-          step={0.05}
-          value={wall.thickness}
-          onChange={(e) => {
-            const v = parseFloat(e.target.value);
-            if (!isNaN(v) && v > 0) updateWall(wall.id, { thickness: v });
-          }}
-          className="h-8 text-xs"
-        />
-      </div>
-
-      {/* Editable: height */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">Height (m)</Label>
-        <Input
-          type="number"
-          min={0.5}
-          max={50}
-          step={0.1}
-          value={wall.height}
-          onChange={(e) => {
-            const v = parseFloat(e.target.value);
-            if (!isNaN(v) && v > 0) updateWall(wall.id, { height: v });
-          }}
-          className="h-8 text-xs"
-        />
-      </div>
-
-      {/* Editable: thermal conductivity — energy-affecting slider with delta annotation */}
-      <div className="grid gap-1.5">
-        <div className="flex items-center gap-1">
-          <Label className="text-xs text-muted-foreground">
-            Thermal Conductivity (W/m·K)
-          </Label>
-          {energyDelta.demandDelta !== null && (
-            <span
-              className={cn(
-                "text-[10px] font-medium tabular-nums ml-2 transition-opacity duration-300",
-                energyDelta.isImprovement ? "text-green-600" : "text-amber-600"
-              )}
-            >
-              {energyDelta.demandDelta > 0 ? "+" : ""}
-              {energyDelta.demandDelta.toFixed(1)} kWh/m²
-            </span>
-          )}
-        </div>
-        <Input
-          type="number"
-          min={0.01}
-          max={10}
-          step={0.01}
-          value={conductivity}
-          onFocus={() => energyDelta.snapshot()}
-          onPointerDown={() => energyDelta.snapshot()}
-          onChange={(e) => {
-            const v = parseFloat(e.target.value);
-            if (!isNaN(v) && v > 0) updateWall(wall.id, { thermalConductivity: v });
-          }}
-          className="h-8 text-xs"
-        />
-      </div>
-
-      {/* Read-only: floor */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">Floor</Label>
-        <Input
-          readOnly
-          value={`Floor ${wall.floor + 1}`}
-          className="h-8 text-xs bg-muted/30"
-        />
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Room properties editor
-// ─────────────────────────────────────────────────────────────────────────────
-
-function RoomProperties({ roomId }: { roomId: string }) {
-  const room = usePlanStore((s) => s.rooms.find((r) => r.id === roomId));
-  const setRoomType = usePlanStore((s) => s.setRoomType);
-
-  if (!room) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground text-xs p-4">
-        <span>Room not found.</span>
-      </div>
-    );
-  }
-
-  const roomMeta = ROOM_TYPES[room.type];
-
-  return (
-    <div className="flex flex-col gap-4 p-3">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <Box className="h-4 w-4 text-primary shrink-0" />
-        <span className="text-sm font-semibold">Room</span>
-        <Badge variant="secondary" className="text-xs ml-auto">
-          Floor {room.floor + 1}
-        </Badge>
-      </div>
-
-      <Separator />
-
-      {/* Room type selector */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">Room Type</Label>
-        <Select
-          value={room.type}
-          onValueChange={(v) => setRoomType(room.id, v as RoomType)}
-        >
-          <SelectTrigger className="h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {(Object.keys(ROOM_TYPES) as RoomType[]).map((key) => (
-              <SelectItem key={key} value={key} className="text-xs">
-                {ROOM_TYPES[key].name} ({ROOM_TYPES[key].nameKo})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Read-only: area */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">Area (m²)</Label>
-        <Input
-          readOnly
-          value={room.area.toFixed(2)}
-          className="h-8 text-xs bg-muted/30"
-        />
-      </div>
-
-      {/* Read-only: floor */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">Floor</Label>
-        <Input
-          readOnly
-          value={`Floor ${room.floor + 1}`}
-          className="h-8 text-xs bg-muted/30"
-        />
-      </div>
-
-      {/* Current type badge */}
-      <div className="flex items-center gap-2">
-        <Label className="text-xs text-muted-foreground">Display Name</Label>
-        <Badge variant="outline" className="text-xs">
-          {roomMeta.name} / {roomMeta.nameKo}
-        </Badge>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Component properties editor
-// ─────────────────────────────────────────────────────────────────────────────
-
-function ComponentProperties({
-  instanceId,
-  buildingPk,
-}: {
-  instanceId: string;
-  buildingPk: string | null;
-}) {
-  const pk = buildingPk ?? "__current__";
-  const component = useComponentStore(
-    (s) =>
-      (s.placed[pk] ?? s.placed["__current__"] ?? []).find(
-        (c) => c.instanceId === instanceId
-      )
-  );
-  const updatePosition = useComponentStore((s) => s.updatePosition);
-
-  if (!component) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground text-xs p-4">
-        <span>Component not found.</span>
-      </div>
-    );
-  }
-
-  const [px, py, pz] = component.position;
-  const [_rx, ry, _rz] = component.rotation;
-
-  return (
-    <div className="flex flex-col gap-4 p-3">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <Component className="h-4 w-4 text-primary shrink-0" />
-        <span className="text-sm font-semibold truncate">{component.presetId}</span>
-      </div>
-
-      <Separator />
-
-      {/* Read-only: preset id */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">Preset</Label>
-        <Input
-          readOnly
-          value={component.presetId}
-          className="h-8 text-xs bg-muted/30"
-        />
-      </div>
-
-      {/* Editable: position x */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">Position X (m)</Label>
-        <Input
-          type="number"
-          step={0.1}
-          value={px}
-          onChange={(e) => {
-            const v = parseFloat(e.target.value);
-            if (!isNaN(v)) {
-              updatePosition(pk, instanceId, [v, py, pz]);
-            }
-          }}
-          className="h-8 text-xs"
-        />
-      </div>
-
-      {/* Editable: position y */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">Position Y (m)</Label>
-        <Input
-          type="number"
-          step={0.1}
-          value={py}
-          onChange={(e) => {
-            const v = parseFloat(e.target.value);
-            if (!isNaN(v)) {
-              updatePosition(pk, instanceId, [px, v, pz]);
-            }
-          }}
-          className="h-8 text-xs"
-        />
-      </div>
-
-      {/* Editable: position z */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">Position Z (m)</Label>
-        <Input
-          type="number"
-          step={0.1}
-          value={pz}
-          onChange={(e) => {
-            const v = parseFloat(e.target.value);
-            if (!isNaN(v)) {
-              updatePosition(pk, instanceId, [px, py, v]);
-            }
-          }}
-          className="h-8 text-xs"
-        />
-      </div>
-
-      {/* Editable: rotation y */}
-      <div className="grid gap-1.5">
-        <Label className="text-xs text-muted-foreground">Rotation Y (rad)</Label>
-        <Input
-          type="number"
-          step={0.1}
-          value={ry}
-          onChange={(e) => {
-            const v = parseFloat(e.target.value);
-            if (!isNaN(v)) {
-              // component-store only has updatePosition, so we use it for position
-              // Rotation update would require an additional store action
-              // For now, display only (rotation editing requires updateRotation)
-            }
-          }}
-          readOnly
-          className="h-8 text-xs bg-muted/30"
-        />
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty state
-// ─────────────────────────────────────────────────────────────────────────────
-
-function EmptySelection() {
-  return (
-    <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground p-4">
-      <MousePointerClick className="h-8 w-8 opacity-40" />
-      <p className="text-xs text-center leading-relaxed">
-        Select an element in the viewport to view and edit its properties.
-      </p>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main PropertiesPanel
-// ─────────────────────────────────────────────────────────────────────────────
+const PERFORMANCE_COLORS: Record<string, string> = {
+  excellent: "text-green-600",
+  good: "text-green-500",
+  average: "text-yellow-600",
+  "below-average": "text-orange-500",
+  poor: "text-red-500",
+};
 
 /**
  * Properties panel — renders in the right dock of WorkspaceShell.
- * Reads selection from useSelectionStore and displays the appropriate editor.
+ * Shows analytics dashboard with fidelity, calibration, benchmark,
+ * certification, and efficiency rating for the current building.
  */
 export function PropertiesPanel() {
-  const selectedType = useSelectionStore((s) => s.selectedType);
-  const selectedId = useSelectionStore((s) => s.selectedId);
-  const buildingPk = useSelectionStore((s) => s.buildingPk);
+  const isKo = useAppStore((s) => s.language) === "ko";
 
-  if (!selectedType || !selectedId) {
-    return <EmptySelection />;
+  const buildingPk = useActiveBuildingPk();
+
+  const materials = useMaterialStore((s) => s.properties[buildingPk]);
+  const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
+  const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
+  const metrics = useEnergyMetrics(buildingPk);
+  const actual = useActualEnergy(buildingPk);
+  const actualData = actual.data ?? [];
+  const hasActual = actualData.length > 0;
+
+  const [certVersion, setCertVersion] =
+    useState<CertificationVersion>("2024");
+
+  // Derive effective recipe (same pattern as energy-cards)
+  const effectiveRecipe = useMemo(() => {
+    if (!baseRecipe) return undefined;
+    if (!overrides) return baseRecipe;
+    return {
+      ...baseRecipe,
+      ...(overrides.footprintWidth !== undefined
+        ? { footprintWidth: overrides.footprintWidth }
+        : {}),
+      ...(overrides.footprintDepth !== undefined
+        ? { footprintDepth: overrides.footprintDepth }
+        : {}),
+      ...(overrides.wallThickness !== undefined
+        ? { wallThickness: overrides.wallThickness }
+        : {}),
+      ...(overrides.facade
+        ? { facade: { ...baseRecipe.facade, ...overrides.facade } }
+        : {}),
+      ...(overrides.slab
+        ? { slab: { ...baseRecipe.slab, ...overrides.slab } }
+        : {}),
+      ...(overrides.column
+        ? { column: { ...baseRecipe.column, ...overrides.column } }
+        : {}),
+      ...(overrides.roof
+        ? { roof: { ...baseRecipe.roof, ...overrides.roof } }
+        : {}),
+    };
+  }, [baseRecipe, overrides]);
+
+  // ── Fidelity assessment ──────────────────────────────────────────────────
+
+  const fidelityReport = useMemo(() => {
+    return assessFidelity({
+      hasPublicData: !!materials,
+      hasFloorData: !!effectiveRecipe,
+      hasFootprint: !!effectiveRecipe,
+      hasEnergyBills: hasActual,
+      hasFloorPlans: false,
+      hasEquipmentSchedule: false,
+      hasIfcModel: materials?.source === "ifc-model",
+      hasSensorData: false,
+    });
+  }, [materials, effectiveRecipe, hasActual]);
+
+  const upgradeChecklist = useMemo(
+    () => generateUpgradeChecklist(fidelityReport),
+    [fidelityReport]
+  );
+
+  // ── Calibration ──────────────────────────────────────────────────────────
+
+  const calibration = useMemo(() => {
+    if (!metrics || !hasActual || actualData.length === 0) return null;
+    const mostRecent = actualData.reduce((a, b) => (b.year > a.year ? b : a));
+    if (mostRecent.total_kwh <= 0) return null;
+
+    return calibrateEnergy(
+      {
+        heating: metrics.demand.heatingDemand,
+        cooling: metrics.demand.coolingDemand,
+        lighting: metrics.demand.totalDemand * 0.15, // lighting estimate
+        dhw: metrics.demand.totalDemand * 0.1, // DHW estimate
+        total: metrics.demand.totalDemand,
+      },
+      {
+        electric_kwh: mostRecent.electric_kwh ?? 0,
+        gas_kwh: mostRecent.gas_kwh ?? 0,
+        total_kwh: mostRecent.total_kwh,
+      }
+    );
+  }, [metrics, hasActual, actualData]);
+
+  // ── Benchmark comparison ─────────────────────────────────────────────────
+
+  const benchmark = useMemo(() => {
+    if (!metrics) return null;
+    // Derive use type and era from material properties
+    const useType =
+      materials?.occupancy?.occupancyDensity !== undefined &&
+      materials.occupancy.occupancyDensity > 0.1
+        ? "residential"
+        : "office";
+    const codeYear = materials?.codeYear ?? 2000;
+    const era =
+      codeYear >= 2020
+        ? "2020+"
+        : codeYear >= 2010
+          ? "2010s"
+          : codeYear >= 2000
+            ? "2000s"
+            : codeYear >= 1990
+              ? "1990s"
+              : "pre-1990";
+    return compareToBenchmark(metrics.demand.demandPerSqm, useType, era);
+  }, [metrics, materials]);
+
+  // ── Green Certification ──────────────────────────────────────────────────
+
+  const certification = useMemo(() => {
+    if (!materials || !metrics) return null;
+    const avgWallU =
+      materials.envelope.walls.reduce((sum, w) => sum + w.uValue, 0) /
+      Math.max(materials.envelope.walls.length, 1);
+
+    const input: BuildingCertificationInput = {
+      wallUValue: avgWallU,
+      windowUValue: materials.envelope.windows.uValue,
+      roofUValue: materials.envelope.roof.uValue,
+      energyGrade: metrics.grade,
+      primaryEnergyDemand: metrics.demand.demandPerSqm,
+      renewableCapacity: materials.renewable?.solarPV?.capacity ?? 0,
+      windowToWallRatio:
+        materials.envelope.windows.windowToWallRatio?.S ?? 0.3,
+      structureCode: undefined,
+    };
+    return scoreGreenCertification(input, certVersion);
+  }, [materials, metrics, certVersion]);
+
+  // ── Efficiency Rating ────────────────────────────────────────────────────
+
+  const efficiencyRating = useMemo(() => {
+    if (!metrics || !effectiveRecipe || !materials) return null;
+    const totalArea =
+      effectiveRecipe.footprintWidth *
+      effectiveRecipe.footprintDepth *
+      effectiveRecipe.floors.length;
+    if (totalArea <= 0) return null;
+
+    // Derive delivered energy from demand breakdown
+    const isRes =
+      materials?.occupancy?.occupancyDensity !== undefined &&
+      materials.occupancy.occupancyDensity > 0.1;
+    return calculateEfficiencyRating(
+      {
+        electric: metrics.demand.coolingDemand + metrics.demand.totalDemand * 0.15,
+        gas: metrics.demand.heatingDemand + metrics.demand.totalDemand * 0.1,
+        districtHeating: 0,
+        districtCooling: 0,
+        renewable: 0,
+      },
+      totalArea,
+      isRes ? "residential" : "non-residential"
+    );
+  }, [metrics, effectiveRecipe, materials]);
+
+  // ── No data state ────────────────────────────────────────────────────────
+
+  if (!buildingPk || !materials) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground p-4">
+        <Loader2 className="h-8 w-8 opacity-40 animate-spin" />
+        <p className="text-xs text-center leading-relaxed">
+          {isKo
+            ? "건물 데이터를 불러오는 중..."
+            : "Loading building data..."}
+        </p>
+      </div>
+    );
   }
 
-  if (selectedType === "wall") {
-    return <WallProperties wallId={selectedId} buildingPk={buildingPk} />;
-  }
+  return (
+    <div className="h-full overflow-y-auto">
+      {/* Equipment info panel — appears above analytics accordion when a MEP mesh is clicked */}
+      <EquipmentInfoPanel />
+      <Accordion
+        type="multiple"
+        defaultValue={["fidelity", "benchmark", "efficiency"]}
+        className="px-3"
+      >
+        {/* ── Section 1: Twin Fidelity ─────────────────────────────────── */}
+        <AccordionItem value="fidelity">
+          <AccordionTrigger className="text-xs font-semibold py-3">
+            {isKo ? "트윈 충실도" : "Twin Fidelity"}
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-3">
+              <FidelityBadge
+                level={fidelityReport.level}
+                completeness={fidelityReport.completeness}
+              />
+              <FidelityDetailPanel
+                report={fidelityReport}
+                checklist={upgradeChecklist}
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-  if (selectedType === "room") {
-    return <RoomProperties roomId={selectedId} />;
-  }
+        {/* ── Section 2: Energy Calibration (conditional) ──────────────── */}
+        {hasActual && calibration && (
+          <AccordionItem value="calibration">
+            <AccordionTrigger className="text-xs font-semibold py-3">
+              {isKo ? "에너지 보정" : "Energy Calibration"}
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-2 text-xs">
+                {/* Overall delta */}
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {isKo ? "전체 차이" : "Overall Delta"}
+                  </span>
+                  <span
+                    className={`font-semibold tabular-nums ${
+                      calibration.overallDelta > 0
+                        ? "text-red-500"
+                        : calibration.overallDelta < -5
+                          ? "text-green-600"
+                          : "text-yellow-600"
+                    }`}
+                  >
+                    {calibration.overallDelta > 0 ? "+" : ""}
+                    {calibration.overallDelta.toFixed(1)}%
+                  </span>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {calibration.overallDelta > 0
+                    ? isKo
+                      ? `예측보다 ${Math.abs(calibration.overallDelta).toFixed(0)}% 더 적게 사용`
+                      : `${Math.abs(calibration.overallDelta).toFixed(0)}% less than predicted`
+                    : isKo
+                      ? `예측보다 ${Math.abs(calibration.overallDelta).toFixed(0)}% 더 많이 사용`
+                      : `${Math.abs(calibration.overallDelta).toFixed(0)}% more than predicted`}
+                </p>
 
-  if (selectedType === "component") {
-    return <ComponentProperties instanceId={selectedId} buildingPk={buildingPk} />;
-  }
+                {/* Largest discrepancy */}
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {isKo ? "최대 차이 항목" : "Largest Discrepancy"}
+                  </span>
+                  <Badge variant="secondary" className="text-[10px]">
+                    {calibration.largestDiscrepancy}
+                  </Badge>
+                </div>
 
-  return <EmptySelection />;
+                {/* Insight */}
+                <p className="text-[10px] text-muted-foreground/80 italic leading-relaxed border-t pt-2 mt-1">
+                  {calibration.insight}
+                </p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+
+        {/* ── Section 3: Benchmark Comparison ──────────────────────────── */}
+        {benchmark && (
+          <AccordionItem value="benchmark">
+            <AccordionTrigger className="text-xs font-semibold py-3">
+              {isKo ? "벤치마크 비교" : "Benchmark Comparison"}
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-2 text-xs">
+                {/* Percentile */}
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {isKo ? "백분위" : "Percentile"}
+                  </span>
+                  <span className="font-semibold tabular-nums">
+                    {Math.round(benchmark.percentile)}
+                    {isKo ? "번째 백분위" : "th percentile"}
+                  </span>
+                </div>
+
+                {/* Performance tier */}
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {isKo ? "성능 등급" : "Performance Tier"}
+                  </span>
+                  <span
+                    className={`font-semibold capitalize ${
+                      PERFORMANCE_COLORS[benchmark.performance] ?? ""
+                    }`}
+                  >
+                    {benchmark.performance}
+                  </span>
+                </div>
+
+                {/* Peer group context */}
+                <div className="flex items-center gap-1 flex-wrap">
+                  <Badge variant="outline" className="text-[10px]">
+                    {benchmark.peerGroup.useType}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px]">
+                    {benchmark.peerGroup.era}
+                  </Badge>
+                </div>
+
+                {/* Insight */}
+                <p className="text-[10px] text-muted-foreground/80 italic leading-relaxed border-t pt-2 mt-1">
+                  {benchmark.insight}
+                </p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+
+        {/* ── Section 4: Green Certification ───────────────────────────── */}
+        {certification && (
+          <AccordionItem value="certification">
+            <AccordionTrigger className="text-xs font-semibold py-3">
+              {isKo ? "녹색건축물 인증" : "Green Certification"}
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-2 text-xs">
+                {/* Score */}
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {isKo ? "획득 점수" : "Earned Points"}
+                  </span>
+                  <span className="font-semibold tabular-nums">
+                    {certification.earnedPoints.toFixed(1)} /{" "}
+                    {certification.assessableMaxPoints}
+                  </span>
+                </div>
+
+                {/* Grade */}
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {isKo ? "등급" : "Grade"}
+                  </span>
+                  <Badge
+                    variant={
+                      certification.grade === "excellent" ||
+                      certification.grade === "best"
+                        ? "default"
+                        : "secondary"
+                    }
+                    className="text-[10px]"
+                  >
+                    {isKo
+                      ? CERTIFICATION_GRADE_LABELS[certification.grade]?.ko
+                      : CERTIFICATION_GRADE_LABELS[certification.grade]?.en}
+                  </Badge>
+                </div>
+
+                {/* Version toggle */}
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {isKo ? "기준 버전" : "Version"}
+                  </span>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setCertVersion("pre-2024")}
+                      className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
+                        certVersion === "pre-2024"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      Pre-2024
+                    </button>
+                    <button
+                      onClick={() => setCertVersion("2024")}
+                      className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
+                        certVersion === "2024"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      2024
+                    </button>
+                  </div>
+                </div>
+
+                {/* Disclaimer */}
+                <p className="text-[10px] text-muted-foreground/70 italic leading-relaxed border-t pt-2 mt-1">
+                  {certification.disclaimer}
+                </p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+
+        {/* ── Section 5: Energy Efficiency Rating ──────────────────────── */}
+        {efficiencyRating && (
+          <AccordionItem value="efficiency">
+            <AccordionTrigger className="text-xs font-semibold py-3">
+              {isKo ? "에너지효율등급" : "Efficiency Rating"}
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-2 text-xs">
+                {/* Grade prominently */}
+                <div className="flex items-center gap-3">
+                  <span
+                    className="inline-flex items-center justify-center rounded-md text-white font-bold text-lg px-3 py-1 min-w-[3.5rem]"
+                    style={{
+                      backgroundColor:
+                        EFFICIENCY_GRADE_COLORS[efficiencyRating.grade] ??
+                        "#6b7280",
+                    }}
+                  >
+                    {efficiencyRating.grade}
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium">
+                      {GRADE_LABELS[efficiencyRating.grade]}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {isKo
+                        ? "건축물 에너지효율등급"
+                        : "Building Energy Efficiency"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Primary energy demand */}
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {isKo ? "1차 에너지 수요" : "Primary Energy Demand"}
+                  </span>
+                  <span className="font-semibold tabular-nums">
+                    {efficiencyRating.primaryEnergyPerArea.toFixed(1)} kWh/m
+                    {"\u00B2"}{"\u00B7"}yr
+                  </span>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+      </Accordion>
+    </div>
+  );
 }

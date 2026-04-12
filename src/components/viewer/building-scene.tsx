@@ -35,6 +35,7 @@ import { ModelUploader } from "./model-uploader";
 import { EnergyCards } from "./energy-cards";
 import { ErrorBoundary, ViewerErrorBoundary } from "@/components/error-boundary";
 import { StructuralTooltip } from "./structural-tooltip";
+import { EquipmentClickHandler } from "./equipment-click-handler";
 
 const IFCModel = lazy(() =>
   import("./ifc-loader").then((m) => ({ default: m.IFCModel }))
@@ -433,6 +434,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
                 <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} />
                 <BuildingLayers buildingPk={buildingPk} />
                 <StructuralTooltip />
+                <EquipmentClickHandler />
               </>
             )
           )}
