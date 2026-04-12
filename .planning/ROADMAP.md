@@ -63,7 +63,7 @@
 - [x] **Phase 22: MEP Sub-Layer Foundation** - Split the single MEP group into 4 independently togglable utility sub-layers (completed 2026-04-11)
 - [x] **Phase 23: Per-Floor Energy Model** - Extend the energy calculation engine to produce per-floor kWh/m² and system-level attribution (completed 2026-04-12)
 - [ ] **Phase 24: Energy Breakdown Dashboard** - Chart showing HVAC/lighting/DHW/plug attribution with amber estimated labels
-- [ ] **Phase 25: Energy Consumption Heatmap** - Color-coded floor planes on the 3D building keyed to Korean energy grade thresholds
+- [x] **Phase 25: Energy Consumption Heatmap** - Color-coded floor planes on the 3D building keyed to Korean energy grade thresholds (completed 2026-04-12)
 - [ ] **Phase 26: Equipment Info Panel** - Click-to-inspect MEP objects showing inferred specs and Korean efficiency grades
 - [ ] **Phase 27: ECO2 Sub-System Export** - Extend ECO2 export with sub-system data fields (HVAC type, lighting density, DHW system)
 
@@ -125,7 +125,7 @@ Plans:
   4. Heatmap geometry lives on separate THREE.Mesh floor planes, not on the structural InstancedMesh
 **Plans**: 1 plan
 Plans:
-- [ ] 25-01-PLAN.md — energy-heatmap-builder.ts (Vitest-driven) + BuildingLayers buildingPk prop + useEffect rebuild + visual checkpoint
+- [x] 25-01-PLAN.md — energy-heatmap-builder.ts (Vitest-driven) + BuildingLayers buildingPk prop + useEffect rebuild + visual checkpoint
 **UI hint**: yes
 
 ### Phase 26: Equipment Info Panel
@@ -163,6 +163,6 @@ Plans:
 | 22. MEP Sub-Layer Foundation | v5.0 | 3/3 | Complete   | 2026-04-11 |
 | 23. Per-Floor Energy Model | v5.0 | 2/2 | Complete   | 2026-04-12 |
 | 24. Energy Breakdown Dashboard | v5.0 | 0/2 | In Progress | - |
-| 25. Energy Consumption Heatmap | v5.0 | 0/1 | Not started | - |
+| 25. Energy Consumption Heatmap | v5.0 | 1/1 | Complete   | 2026-04-12 |
 | 26. Equipment Info Panel | v5.0 | 0/2 | Not started | - |
 | 27. ECO2 Sub-System Export | v5.0 | 0/? | Not started | - |
