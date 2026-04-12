@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Energy Systems Observability & Control
 status: verifying
-stopped_at: Completed 24-energy-breakdown-dashboard-24-01-PLAN.md
-last_updated: "2026-04-12T00:32:00.677Z"
+stopped_at: Completed 26-equipment-info-panel-01-PLAN.md
+last_updated: "2026-04-12T00:35:28.249Z"
 last_activity: 2026-04-12
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 10
-  completed_plans: 7
-  percent: 70
+  completed_plans: 8
+  percent: 80
 ---
 
 # Project State
@@ -53,6 +53,7 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 | Phase 23-per-floor-energy-model P02 | 178 | 2 tasks | 2 files |
 | Phase 25-energy-consumption-heatmap P01 | 5 | 2 tasks | 4 files |
 | Phase 24-energy-breakdown-dashboard P01 | 25 | 3 tasks | 5 files |
+| Phase 26-equipment-info-panel P01 | 315s | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 - [Phase 24-energy-breakdown-dashboard]: LabelList formatter typed as full RenderableText union — recharts 3.x LabelFormatter is stricter than plan's (v: number) annotation
 - [Phase 24-energy-breakdown-dashboard]: useMemo placed before null guard to satisfy React Rules of Hooks — plan early-return-first ordering corrected
 - [Phase 24-energy-breakdown-dashboard]: chartConfig uses hsl(var(--chart-N)) colors; ChartStyle injects --color-{key} CSS vars at runtime for Cell fills
+- [Phase 26-equipment-info-panel]: EquipmentEfficiencyGrade (1|2|3|4|5) is a distinct union from EnergyGrade (1+++…7) with zero cross-import (D-04 enforced)
+- [Phase 26-equipment-info-panel]: SelectedEquipmentInfo is plain JSON with no THREE.* fields; selection-store imports no three (D-05 enforced)
+- [Phase 26-equipment-info-panel]: clearSelection() updated to also clear selectedEquipment (composite clear)
 
 ### Pending Todos
 
@@ -91,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-12T00:32:00.673Z
-Stopped at: Completed 24-energy-breakdown-dashboard-24-01-PLAN.md
+Last session: 2026-04-12T00:35:28.246Z
+Stopped at: Completed 26-equipment-info-panel-01-PLAN.md
 Resume file: None

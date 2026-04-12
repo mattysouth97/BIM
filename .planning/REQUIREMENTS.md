@@ -20,12 +20,12 @@ Requirements for Energy Systems Observability & Control milestone.
 
 ### Equipment Interaction
 
-- [ ] **EQ-01**: User can click on MEP sub-layer objects to see an equipment info panel with inferred specs (type, capacity, efficiency grade, approximate age)
-- [ ] **EQ-02**: Equipment data is inferred from building recipe + ledger data and clearly labeled as "estimated" (not metered)
+- [x] **EQ-01**: User can click on MEP sub-layer objects to see an equipment info panel with inferred specs (type, capacity, efficiency grade, approximate age)
+- [x] **EQ-02**: Equipment data is inferred from building recipe + ledger data and clearly labeled as "estimated" (not metered)
 
 ### Standards & Export
 
-- [ ] **STD-01**: Equipment info panels display Korean energy label grades (1~5등급) using Korean standards (KS B 6364 for HVAC, KSC IEC 62301 for electrical)
+- [x] **STD-01**: Equipment info panels display Korean energy label grades (1~5등급) using Korean standards (KS B 6364 for HVAC, KSC IEC 62301 for electrical)
 - [ ] **STD-02**: ECO2 export includes sub-system data fields (HVAC type, lighting density, DHW system) extending the existing envelope-only export
 
 ## v5.x Requirements
@@ -63,9 +63,9 @@ Deferred to next minor release. Tracked but not in current roadmap.
 | EA-01 | Phase 23 | Complete |
 | EA-02 | Phase 24 | Complete |
 | EA-03 | Phase 25 | Complete |
-| EQ-01 | Phase 26 | Pending |
-| EQ-02 | Phase 26 | Pending |
-| STD-01 | Phase 26 | Pending |
+| EQ-01 | Phase 26 | Complete |
+| EQ-02 | Phase 26 | Complete |
+| STD-01 | Phase 26 | Complete |
 | STD-02 | Phase 27 | Pending |
 
 **Coverage:**

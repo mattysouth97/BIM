@@ -139,7 +139,7 @@ Plans:
   4. The raycaster used for hit detection is allocated once via useRef, not per-frame
 **Plans**: 2 plans
 Plans:
-- [ ] 26-01-PLAN.md — equipment-specs.ts module (EquipmentSpec, EquipmentEfficiencyGrade 1~5등급, era-based inference, KS B 6364 / KSC IEC 62301 grade tables) + selection-store SelectedEquipmentInfo extension
+- [x] 26-01-PLAN.md — equipment-specs.ts module (EquipmentSpec, EquipmentEfficiencyGrade 1~5등급, era-based inference, KS B 6364 / KSC IEC 62301 grade tables) + selection-store SelectedEquipmentInfo extension
 - [ ] 26-02-PLAN.md — EquipmentClickHandler (useRef Raycaster + pointerup + MEP sub-group filter) + EquipmentInfoPanel in right dock (amber 추정 labels) + human verification checkpoint
 **UI hint**: yes
 
@@ -164,5 +164,5 @@ Plans:
 | 23. Per-Floor Energy Model | v5.0 | 2/2 | Complete   | 2026-04-12 |
 | 24. Energy Breakdown Dashboard | v5.0 | 1/2 | In Progress|  |
 | 25. Energy Consumption Heatmap | v5.0 | 1/1 | Complete   | 2026-04-12 |
-| 26. Equipment Info Panel | v5.0 | 0/2 | Not started | - |
+| 26. Equipment Info Panel | v5.0 | 1/2 | In Progress|  |
 | 27. ECO2 Sub-System Export | v5.0 | 0/? | Not started | - |
