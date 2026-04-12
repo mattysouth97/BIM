@@ -5,16 +5,43 @@
 // Pure Three.js, no React.
 
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import type { DhwParams } from "./mep-equipment-params";
+import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
 
 const DHW_ORANGE = 0xf97316;
 const PIPE_RADIUS = 0.05;
 const PIPE_SEGMENTS = 8;
 
 /**
+ * Build merged DHW tank geometry: main cylinder body + top/bottom pipe stubs + side outlet.
+ * Merged geometry has significantly more vertices than a plain CylinderGeometry.
+ */
+function buildTankGeometry(p: DhwParams): THREE.BufferGeometry {
+  const body = new THREE.CylinderGeometry(p.tankRadius, p.tankRadius, p.tankHeight, 16);
+
+  // Top pipe stub (vertical cylinder protruding up)
+  const topPipe = new THREE.CylinderGeometry(0.06, 0.06, 0.3, 8);
+  topPipe.translate(0, p.tankHeight / 2 + 0.15, 0);
+
+  // Bottom pipe stub (vertical cylinder protruding down)
+  const bottomPipe = new THREE.CylinderGeometry(0.06, 0.06, 0.3, 8);
+  bottomPipe.translate(0, -(p.tankHeight / 2 + 0.15), 0);
+
+  // Side outlet (horizontal pipe on +X face, mid-height)
+  const sidePipe = new THREE.CylinderGeometry(0.05, 0.05, 0.35, 8);
+  sidePipe.rotateZ(Math.PI / 2);
+  sidePipe.translate(p.tankRadius + 0.175, 0, 0);
+
+  return mergeGeometries([body, topPipe, bottomPipe, sidePipe]);
+}
+
+/**
  * DHWLayer generates domestic hot water distribution:
- * - Hot water storage tank as CylinderGeometry at basement
+ * - Hot water storage tank (merged cylinder + pipe stubs) at basement
+ * - Optional pump housing (horizontal cylinder + motor box) next to tank
  * - Thick vertical risers in core shaft (CylinderGeometry)
  * - Horizontal branches restricted to restroom/kitchen zones
  *   (1/3 and 2/3 of depth, near perimeter walls)
@@ -23,8 +50,17 @@ const PIPE_SEGMENTS = 8;
 export class DHWLayer implements LayerGenerator {
   private group: THREE.Group | null = null;
 
-  generate(recipe: BuildingRecipe, _density: number = 1.0): THREE.Group {
+  generate(
+    recipe: BuildingRecipe,
+    _density: number = 1.0,
+    equipParams: Partial<DhwParams> = {}
+  ): THREE.Group {
     this.dispose();
+
+    const dhwParams: DhwParams = {
+      ...DEFAULT_MEP_EQUIPMENT_PARAMS.dhw,
+      ...equipParams,
+    };
 
     const group = new THREE.Group();
     group.name = "layer-6-dhw";
@@ -50,10 +86,7 @@ export class DHWLayer implements LayerGenerator {
       opacity: 0.85,
     });
 
-    // --- Hot water storage tank at basement ---
-    const tankRadius = 0.6;
-    const tankHeight = 1.8;
-    const tankGeo = new THREE.CylinderGeometry(tankRadius, tankRadius, tankHeight, 16);
+    // --- Tank material ---
     const tankMat = new THREE.MeshStandardMaterial({
       color: 0xea580c,
       emissive: DHW_ORANGE,
@@ -61,17 +94,42 @@ export class DHWLayer implements LayerGenerator {
       roughness: 0.5,
       metalness: 0.4,
     });
+
+    // Basement Y position for tank base
+    const basementY = -(dhwParams.tankHeight / 2);
+
+    // --- Hot water storage tank at basement (merged geometry with pipe stubs) ---
+    const tankGeo = buildTankGeometry(dhwParams);
     const tank = new THREE.Mesh(tankGeo, tankMat);
-    tank.position.set(0.8, -tankHeight / 2, 0.5);
+    tank.position.set(0.8, basementY, 0.5);
     tank.userData = { type: "dhw-storage-tank" };
     group.add(tank);
 
-    // Secondary tank (recirculation)
-    const tank2Geo = new THREE.CylinderGeometry(tankRadius * 0.7, tankRadius * 0.7, tankHeight * 0.8, 12);
+    // Secondary tank (recirculation) — left as-is, good silhouette already
+    const tank2Geo = new THREE.CylinderGeometry(
+      dhwParams.tankRadius * 0.7,
+      dhwParams.tankRadius * 0.7,
+      dhwParams.tankHeight * 0.8,
+      12
+    );
     const tank2 = new THREE.Mesh(tank2Geo, tankMat);
-    tank2.position.set(-0.8, -tankHeight * 0.4, 0.5);
+    tank2.position.set(-0.8, -(dhwParams.tankHeight * 0.4), 0.5);
     tank2.userData = { type: "dhw-recirc-tank" };
     group.add(tank2);
+
+    // --- Pump housing (NEW) — horizontal pump cylinder + motor box ---
+    if (dhwParams.showPump) {
+      const pumpBody = new THREE.CylinderGeometry(0.18, 0.18, 0.5, 12);
+      pumpBody.rotateZ(Math.PI / 2);
+      const motor = new THREE.BoxGeometry(0.3, 0.25, 0.25);
+      motor.translate(0.4, 0, 0);
+      const pumpGeo = mergeGeometries([pumpBody, motor]);
+      const pumpMesh = new THREE.Mesh(pumpGeo, tankMat);
+      pumpMesh.userData = { type: "dhw-pump" };
+      // Position next to storage tank (+X side, at basement level)
+      pumpMesh.position.set(0.8 + dhwParams.tankRadius + 0.6, basementY + 0.18, 0.5);
+      group.add(pumpMesh);
+    }
 
     // --- Vertical risers in core shaft (strict CylinderGeometry) ---
     // Two risers: supply and return, slightly offset in core
@@ -146,7 +204,7 @@ export class DHWLayer implements LayerGenerator {
 
     // --- Connection pipe from tanks to risers ---
     const connectCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.8, -tankHeight * 0.3, 0.5),
+      new THREE.Vector3(0.8, -dhwParams.tankHeight * 0.3, 0.5),
       new THREE.Vector3(0.5, -0.2, 0.3),
       new THREE.Vector3(riserPositions[0].x, 0.1, riserPositions[0].z),
     ]);

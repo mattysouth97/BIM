@@ -5,8 +5,11 @@
 // Pure Three.js, no React.
 
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import type { LightingFixtureParams, ElectricalPanelParams } from "./mep-equipment-params";
+import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
 
 const LIGHT_YELLOW = 0xfbbf24;
 
@@ -55,17 +58,75 @@ const fixtureFragmentShader = /* glsl */ `
 `;
 
 /**
+ * Build merged lighting fixture geometry: main housing body + optional diffuser face on bottom.
+ * The diffuser panel is slightly wider than the body and sits flush on the emitting face.
+ */
+function buildFixtureGeometry(p: LightingFixtureParams): THREE.BufferGeometry {
+  const body = new THREE.BoxGeometry(p.width, p.height, p.depth);
+
+  if (!p.showDiffuserFace) return body;
+
+  // Diffuser panel — slightly wider, thin, on the BOTTOM face (light-emitting side)
+  const diffuser = new THREE.BoxGeometry(p.width * 1.1, 0.015, p.depth * 1.1);
+  diffuser.translate(0, -(p.height / 2 + 0.0075), 0);
+
+  return mergeGeometries([body, diffuser]);
+}
+
+/**
+ * Build merged electrical panel geometry: cabinet box + optional door outline on front face
+ * + optional breaker strip.
+ */
+function buildPanelGeometry(p: ElectricalPanelParams): THREE.BufferGeometry {
+  const cabinet = new THREE.BoxGeometry(p.width, p.height, p.depth);
+  const pieces: THREE.BufferGeometry[] = [cabinet];
+
+  if (p.showDoorOutline) {
+    // Door panel — slightly inset rectangle on +Z face, thin extrusion
+    const door = new THREE.BoxGeometry(p.width * 0.88, p.height * 0.9, 0.015);
+    door.translate(0, 0, p.depth / 2 + 0.0075);
+    pieces.push(door);
+  }
+
+  if (p.showBreakerGrid) {
+    // Simple horizontal breaker strip — single thin bar on door face
+    // (Full breaker grid is not worth the geometry cost — keep silhouette subtle)
+    const strip = new THREE.BoxGeometry(p.width * 0.7, 0.03, 0.02);
+    strip.translate(0, 0, p.depth / 2 + 0.016);
+    pieces.push(strip);
+  }
+
+  return mergeGeometries(pieces);
+}
+
+/**
  * LightingLayer generates ceiling lighting infrastructure:
- * - InstancedMesh of flat box fixtures on 2D ceiling grid per floor
+ * - InstancedMesh of fixture boxes (height 0.10m default, with diffuser face) on 2D ceiling grid per floor
  * - ShaderMaterial with animated dimming (emissiveIntensity via uTime)
  * - Daylight sensor nodes (small spheres) near window perimeter
- * - Wiring conduit lines from fixtures to electrical panel
+ * - Electrical panel InstancedMesh with door outline geometry (one per floor)
  */
 export class LightingLayer implements LayerGenerator {
   private group: THREE.Group | null = null;
 
-  generate(recipe: BuildingRecipe, density: number = 1.0): THREE.Group {
+  generate(
+    recipe: BuildingRecipe,
+    density: number = 1.0,
+    equipParams: {
+      fixture?: Partial<LightingFixtureParams>;
+      panel?: Partial<ElectricalPanelParams>;
+    } = {}
+  ): THREE.Group {
     this.dispose();
+
+    const fixtureParams: LightingFixtureParams = {
+      ...DEFAULT_MEP_EQUIPMENT_PARAMS.lightingFixture,
+      ...equipParams.fixture,
+    };
+    const panelParams: ElectricalPanelParams = {
+      ...DEFAULT_MEP_EQUIPMENT_PARAMS.electricalPanel,
+      ...equipParams.panel,
+    };
 
     const group = new THREE.Group();
     group.name = "layer-7-lighting";
@@ -81,9 +142,6 @@ export class LightingLayer implements LayerGenerator {
     const hd = footprintDepth / 2;
 
     // --- Fixture grid parameters ---
-    const fixtureW = 0.6;
-    const fixtureH = 0.02;
-    const fixtureD = 0.3;
     const gridSpacingX = Math.max(1.5, 3.0 / density);
     const gridSpacingZ = Math.max(1.5, 3.0 / density);
 
@@ -104,8 +162,8 @@ export class LightingLayer implements LayerGenerator {
     const totalFixtures = fixturesPerFloor * aboveFloors.length;
 
     if (totalFixtures > 0) {
-      // --- InstancedMesh for all fixtures ---
-      const fixtureGeo = new THREE.BoxGeometry(fixtureW, fixtureH, fixtureD);
+      // --- InstancedMesh for all fixtures — merged geometry with diffuser face ---
+      const fixtureGeo = buildFixtureGeometry(fixtureParams);
       const fixtureMat = new THREE.ShaderMaterial({
         vertexShader: fixtureVertexShader,
         fragmentShader: fixtureFragmentShader,
@@ -188,8 +246,8 @@ export class LightingLayer implements LayerGenerator {
     sensorIM.instanceMatrix.needsUpdate = true;
     group.add(sensorIM);
 
-    // --- Electrical panel boxes (one per floor, near core) ---
-    const panelGeo = new THREE.BoxGeometry(0.4, 0.6, 0.15);
+    // --- Electrical panel boxes (one per floor, near core) — merged geometry with door outline ---
+    const panelGeo = buildPanelGeometry(panelParams);
     const panelMat = new THREE.MeshStandardMaterial({
       color: 0x6b7280,
       roughness: 0.4,
