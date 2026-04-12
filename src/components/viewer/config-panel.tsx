@@ -12,11 +12,13 @@ import {
   Thermometer,
   Cog,
   Layers,
+  BarChart2,
 } from "lucide-react";
 import { BuildingTab } from "./config-tabs/building-tab";
 import { EnvelopeTab } from "./config-tabs/envelope-tab";
 import { SystemsTab } from "./config-tabs/systems-tab";
 import { LayersTab } from "./config-tabs/layers-tab";
+import { EnergyBreakdownChart } from "./energy-breakdown-chart";
 
 interface ConfigPanelProps {
   buildingPk: string;
@@ -105,6 +107,10 @@ export function ConfigPanel({
               <Layers className="h-3.5 w-3.5" />
               {isKo ? "레이어" : "Layers"}
             </TabsTrigger>
+            <TabsTrigger value="energy" className="gap-1 text-xs">
+              <BarChart2 className="h-3.5 w-3.5" />
+              {isKo ? "에너지" : "Energy"}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="building" className="mt-3">
@@ -121,6 +127,10 @@ export function ConfigPanel({
 
           <TabsContent value="layers" className="mt-3">
             <LayersTab buildingPk={buildingPk} />
+          </TabsContent>
+
+          <TabsContent value="energy" className="mt-3">
+            <EnergyBreakdownChart buildingPk={buildingPk} />
           </TabsContent>
         </Tabs>
       </div>
