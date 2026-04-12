@@ -5,8 +5,11 @@
 // Pure Three.js, no React.
 
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import type { ChillerParams } from "./mep-equipment-params";
+import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
 
 const COOL_BLUE = 0x3b82f6;
 const PIPE_RADIUS = 0.04;
@@ -14,8 +17,40 @@ const PIPE_SEGMENTS = 8;
 const SPLINE_DIVISIONS = 48;
 
 /**
+ * Builds a merged chiller plant geometry:
+ * - Body: BoxGeometry (main chiller cabinet)
+ * - Grille: thinner BoxGeometry translated to +Z face (condenser grille)
+ * - PipeA: CylinderGeometry rotated Z (supply stub at -Y offset)
+ * - PipeB: CylinderGeometry rotated Z (return stub at +Y offset)
+ *
+ * mergeGeometries called once — NOT in animation loop.
+ * Pitfall 3: all primitives are standard (Box/Cylinder) — merge compatible.
+ * Pitfall 4: each sub-geometry is a new instance — never shared + translated.
+ */
+export function buildChillerGeometry(p: ChillerParams): THREE.BufferGeometry {
+  const body = new THREE.BoxGeometry(p.bodyWidth, p.bodyHeight, p.bodyDepth);
+
+  // Condenser grille on front (+Z) face — thin box slightly protruding
+  const grille = new THREE.BoxGeometry(p.bodyWidth * 0.9, p.bodyHeight * 0.9, 0.08);
+  grille.translate(0, 0, p.bodyDepth / 2 + 0.04);
+
+  // Supply pipe stub — horizontal cylinder at -Y on +X face
+  const pipeA = new THREE.CylinderGeometry(p.pipeStubRadius, p.pipeStubRadius, 0.4, 8);
+  pipeA.rotateZ(Math.PI / 2);
+  pipeA.translate(p.bodyWidth / 2 + 0.2, -p.bodyHeight * 0.3, 0);
+
+  // Return pipe stub — horizontal cylinder at +Y on +X face
+  const pipeB = new THREE.CylinderGeometry(p.pipeStubRadius * 0.8, p.pipeStubRadius * 0.8, 0.4, 8);
+  pipeB.rotateZ(Math.PI / 2);
+  pipeB.translate(p.bodyWidth / 2 + 0.2, p.bodyHeight * 0.3, 0);
+
+  return mergeGeometries([body, grille, pipeA, pipeB]);
+}
+
+/**
  * CoolingLayer generates chilled-water distribution piping:
- * - Central chiller plant box at roof or basement
+ * - Central chiller plant at roof level (merged geometry: body + grille + 2 pipe stubs)
+ * - Optional cooling tower if showCoolingTower === true
  * - Vertical riser splines from plant down/up through core shaft
  * - Horizontal ceiling grid branches per floor via CatmullRomCurve3
  * - Animated point particles flowing along spline paths
@@ -23,7 +58,11 @@ const SPLINE_DIVISIONS = 48;
 export class CoolingLayer implements LayerGenerator {
   private group: THREE.Group | null = null;
 
-  generate(recipe: BuildingRecipe, density: number = 1.0): THREE.Group {
+  generate(
+    recipe: BuildingRecipe,
+    density: number = 1.0,
+    equipParams: Partial<ChillerParams> = {}
+  ): THREE.Group {
     this.dispose();
 
     const group = new THREE.Group();
@@ -36,10 +75,16 @@ export class CoolingLayer implements LayerGenerator {
       return group;
     }
 
-    const hw = footprintWidth / 2;
-    const hd = footprintDepth / 2;
+    // Merge equipParams overrides with defaults
+    const chillerParams: ChillerParams = {
+      ...DEFAULT_MEP_EQUIPMENT_PARAMS.chiller,
+      ...equipParams,
+    };
+
     const coreX = 0; // Core shaft at center
     const coreZ = 0;
+    const hw = footprintWidth / 2;
+    const hd = footprintDepth / 2;
 
     // --- Pipe material (emissive blue) ---
     const pipeMat = new THREE.MeshStandardMaterial({
@@ -52,11 +97,8 @@ export class CoolingLayer implements LayerGenerator {
       opacity: 0.85,
     });
 
-    // --- Central chiller plant box (roof level) ---
-    const plantW = footprintWidth * 0.2;
-    const plantD = footprintDepth * 0.15;
-    const plantH = 1.5;
-    const plantGeo = new THREE.BoxGeometry(plantW, plantH, plantD);
+    // --- Central chiller plant (roof level) — merged multi-primitive geometry ---
+    const chillerGeo = buildChillerGeometry(chillerParams);
     const plantMat = new THREE.MeshStandardMaterial({
       color: 0x2563eb,
       emissive: COOL_BLUE,
@@ -64,10 +106,45 @@ export class CoolingLayer implements LayerGenerator {
       roughness: 0.6,
       metalness: 0.4,
     });
-    const plant = new THREE.Mesh(plantGeo, plantMat);
-    plant.position.set(coreX, totalHeight + plantH / 2, coreZ);
+    const plant = new THREE.Mesh(chillerGeo, plantMat);
+    plant.position.set(coreX, totalHeight + chillerParams.bodyHeight / 2, coreZ);
+    // Pitfall 2: userData on the Mesh, NOT on the BufferGeometry
     plant.userData = { type: "cooling-plant" };
     group.add(plant);
+
+    // --- Optional cooling tower (showCoolingTower === true) ---
+    if (chillerParams.showCoolingTower) {
+      const towerBodyGeo = new THREE.CylinderGeometry(
+        chillerParams.bodyWidth * 0.3,
+        chillerParams.bodyWidth * 0.35,
+        chillerParams.bodyHeight * 0.8,
+        12
+      );
+      const fanRingGeo = new THREE.TorusGeometry(
+        chillerParams.bodyWidth * 0.28,
+        0.06,
+        6,
+        16
+      );
+      fanRingGeo.rotateX(Math.PI / 2);
+      fanRingGeo.translate(0, chillerParams.bodyHeight * 0.4 + 0.08, 0);
+      const towerGeo = mergeGeometries([towerBodyGeo, fanRingGeo]);
+      const towerMat = new THREE.MeshStandardMaterial({
+        color: 0x1d4ed8,
+        emissive: 0x1d4ed8,
+        emissiveIntensity: 0.2,
+        roughness: 0.5,
+        metalness: 0.3,
+      });
+      const tower = new THREE.Mesh(towerGeo, towerMat);
+      tower.position.set(
+        coreX + chillerParams.bodyWidth * 0.5 + 2.0,
+        totalHeight + chillerParams.bodyHeight * 0.4,
+        coreZ
+      );
+      tower.userData = { type: "cooling-tower" };
+      group.add(tower);
+    }
 
     // --- Vertical riser from plant down through core shaft ---
     const riserCurve = new THREE.CatmullRomCurve3([
