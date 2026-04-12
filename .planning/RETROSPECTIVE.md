@@ -2,6 +2,55 @@
 
 Living document tracking what worked, what didn't, and patterns across milestones.
 
+## Milestone: v5.0 — Energy Systems Observability & Control
+
+**Shipped:** 2026-04-12
+**Phases:** 7 (22-28) | **Plans:** 16
+
+### What Was Built
+- 4 togglable MEP utility sub-layers + persisted visibility
+- Per-floor energy model with system-level attribution (ASHRAE 90.1 ratios)
+- Energy breakdown dashboard (recharts BarChart) + amber estimated badges
+- Energy consumption heatmap on 3D building (Korean grade colors)
+- Equipment info panel with click selection + Korean efficiency grades + useRef Raycaster (no per-frame alloc)
+- ECO2 export extended with sub-system fields
+- Distinct procedural 3D models for chiller/boiler/AHU/DHW/lighting (mergeGeometries + InstancedMesh)
+- Equipment configuration tab with reactive procedural parameter sliders
+
+### What Worked
+- Parallel agent execution after Phase 22 — 4 researchers + 4 planners + 4 executors ran simultaneously where files didn't conflict
+- Comprehensive front-loaded research before planning (3 of 4 v5.0 research files pre-existed) sped up decomposition
+- TypeScript discriminated unions for "estimated" vs "actual" data — caught at compile time
+- Reusing existing patterns (mergeGeometries from layer-5, useMemo from use-energy-metrics, Zustand persist) kept implementation consistent
+- The autonomous workflow's discuss → plan → execute pipeline worked smoothly when files were read before edit
+
+### What Was Inefficient
+- **Critical gap discovered late:** MEP layer generators (CoolingLayer, HeatingLayer, etc.) existed in code but were NEVER invoked in production until Phase 28 gap-wiring. Phases 22, 26 were "completed" with empty geometry — not detected until visual verification. Process improvement: phases that introduce generators MUST verify integration as part of that phase, not assume downstream phases will wire them.
+- **Snapshot caching bug from getter-based selectors:** `useEquipmentStore((s) => s.getParams(pk))` returns new JSON.parse object each render → infinite loop. Pattern to avoid: never call store getters that return new references inside React selectors. Use `s.params[pk] ?? STABLE_DEFAULT`.
+- **Background agent Write-vs-Edit confusion:** Plan 28-02 worker hit a Read-before-Edit hook when using Write to overwrite read files, stalled mid-task. Required retry with explicit Edit tool guidance.
+- **Phase 24 Plan 24-02 was a human-verify checkpoint with no SUMMARY** until forced by audit — checkpoint plans should auto-generate trivial summaries.
+
+### Patterns Established
+- **MepSubLayerId as parallel type, not extending LayerId** — prevents cross-subscriber re-render cascades
+- **EnergyDataSource discriminated union** as single source of truth for data provenance (re-exported, not re-defined)
+- **useRef Raycaster** at component top level (not per-frame) — fixed the structural-tooltip anti-pattern
+- **mergeGeometries + InstancedMesh** combo for procedural equipment — keeps draw calls under budget
+- **Zustand store divergence on missing pk:** equipment-store.overrideParam initializes from defaults (vs material-store which silently drops) — prevents data loss
+- **Dual-dependency useEffect for visibility sync:** depend on both child state AND parent state to handle parent-toggle restore
+
+### Key Lessons
+- **Defined ≠ wired.** Generator/utility code with no production integration is dead code. Verify integration as the FIRST phase that uses it, not the last.
+- **Selector returning a new object every render = guaranteed infinite loop.** React's useSyncExternalStore enforces stable snapshots.
+- **Background agent failures need explicit recovery instructions** — when Write blocks, fallback to Edit needs to be in the prompt, not hoped for.
+- **Procedural model design follows structural clarity, not photorealism** — recognizable silhouettes (cylinder + flue = boiler) suffice. Lighting fixtures need ≥0.08m height to be visible at scene distance.
+
+### Cost Observations
+- Sessions: 1 (with mid-session GSD update from 1.30.0 → 1.34.2)
+- Model mix: opus for planners, sonnet for researchers + executors
+- Notable: 4-6 parallel agents at once kept wall time low; gap-wiring phase added ~15 min but unblocked all downstream phases
+
+---
+
 ## Milestone: v4.0 — GIS-Composite Realistic Drafts
 
 **Shipped:** 2026-04-12

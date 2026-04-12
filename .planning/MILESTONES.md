@@ -1,5 +1,24 @@
 # Milestones
 
+## v5.0 Energy Systems Observability & Control (Shipped: 2026-04-12)
+
+**Phases completed:** 7 phases (22-28), 16 plans
+
+**Key accomplishments:**
+
+- **MEP sub-layer system:** 4 independently togglable utility sub-layers (electrical/HVAC/lighting/DHW) with persisted visibility state and bilingual labels in expandable layer panel
+- **Per-floor energy model:** New calculateSystemBreakdown engine returns per-floor kWh/m² + ASHRAE 90.1 system attribution (HVAC/lighting/DHW/plug) with EnergyDataSource discriminated union
+- **Energy breakdown dashboard:** Horizontal recharts BarChart in 5th ConfigPanel "Energy" tab with amber "estimated" badges as TypeScript rendering invariant
+- **Energy consumption heatmap:** Per-floor color planes on 3D building keyed to Korean energy grade (1+++ to 7) — separate THREE.Mesh per floor with vertex colors
+- **Equipment info panel:** Click any MEP object to inspect inferred specs with Korean efficiency grade (1~5등급) per KS B 6364/KSC IEC 62301; raycaster allocated once via useRef (fixed structural-tooltip per-frame defect)
+- **ECO2 sub-system export:** Extended ECO2 export with HVAC type, lighting power density, DHW system fields tagged "estimated-inferred"
+- **Distinct procedural MEP equipment:** Visually distinct chiller (cylinder + compressor + pipes), boiler (with flue), AHU (merged duct stubs + TorusGeometry fan ring), DHW tank (with pumps), lighting fixtures (10cm + diffuser face) — InstancedMesh + mergeGeometries keep <10 draw calls per sub-layer
+- **Equipment configuration tab:** New Equipment tab with SliderRow controls for procedural parameters across 6 equipment categories — scene updates in real time via reactive Zustand store
+
+**Critical mid-milestone gap fix:** MEP layer generators (CoolingLayer, HeatingLayer, etc.) existed but were never invoked in production. Wired into BuildingLayers via setupMepSubGroups + assignToSubGroup — enabled all Phase 22/26/28 features to actually function.
+
+---
+
 ## v4.0 GIS-Composite Realistic Drafts (Shipped: 2026-04-12)
 
 **Phases completed:** 3 phases, 7 plans

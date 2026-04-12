@@ -46,38 +46,32 @@ The goal is NOT photorealistic rendering — it's **structural unambiguity**. Ev
 - ECO2 (desktop energy evaluation — future export)
 - Korean Building Energy Code (inference engine)
 
-## Current Milestone: v5.0 Energy Systems Observability & Control
+## Current Milestone: (none — planning next)
 
-**Goal:** Expand the MEP layer into individual utility sub-systems with energy usage visualization and basic equipment control for what-if scenario analysis.
-
-**Target features:**
-- Individual utility layer toggles: electrical distribution, HVAC ducts/units, lighting zones, stairs/elevators
-- Energy consumption heatmap per zone/equipment overlaid on 3D building
-- Equipment info panels showing specifications, energy usage, efficiency ratings
-- Basic control: toggle equipment on/off, adjust HVAC setpoints, see energy impact in real-time
-- Energy usage breakdown dashboard by system type
+v5.0 shipped 2026-04-12. Next milestone goals will be defined via `/gsd-new-milestone`.
 
 ## Current State
 
-Shipped v2.0 Advanced BIM Authoring with 25,500+ LOC TypeScript across 173 files.
+Shipped v5.0 Energy Systems Observability & Control — 7 phases, 16 plans, 10/10 requirements satisfied.
 
-**Capabilities delivered in v2.0:**
-- 2D plan view with orthographic camera toggle and wall drawing tools
-- Room detection algorithm (DFS cycle detection) with labeled room fills
-- Door/window placement with wall-snap and CSG boolean wall openings
-- Multi-floor support with per-floor height, copy-floor, floor slabs
-- Precision editing: grid/vertex/edge snapping, axis constraints, alignment guides
-- Structural analysis overlay: animated load path arrows, stress-colored columns, sizing tooltips
-- Test infrastructure: 181 unit tests + 7 E2E tests, error boundaries, input validation
-- BIM accuracy verified against Korean building typologies and energy benchmarks
+**Capabilities delivered in v5.0:**
+- 4 individually togglable MEP utility sub-layers (electrical, HVAC, lighting, DHW)
+- Per-floor energy model with system-level attribution (HVAC/lighting/DHW/plug)
+- Energy breakdown dashboard with horizontal recharts BarChart and amber estimated badges
+- Energy consumption heatmap on 3D building (Korean grade color scale)
+- Equipment info panel — click any MEP object for inferred specs + Korean efficiency grade (1~5등급)
+- ECO2 export extended with sub-system data fields
+- Distinct procedural 3D models for chiller/boiler/AHU/DHW/lighting/electrical equipment
+- Equipment configuration tab with real-time procedural parameter sliders
+- Critical gap fix: MEP layer generators wired into BuildingLayers (were defined but never invoked)
 
-**Known tech debt (from v2.0 audit):**
-- Structural overlay reads API BuildingRecipe, not user-drawn plan walls
-- StructuralTooltip allocates Raycaster per-frame (performance concern)
-- REQUIREMENTS.md traceability table was never updated during execution
-- Plan-view components share outer ViewerErrorBoundary (no per-component boundaries)
+**Known tech debt (from v5.0 audit):**
+- MEP density slider in LayersTab is non-functional (BuildingLayers hardcodes density=1.0)
+- All v5.0 phases lack Nyquist VALIDATION.md (discovery only, not blocking)
+- perFloor uses uniform distribution (not per-floor metered data) — by design
 
 ## Completed Milestones
+- v5.0: Energy Systems Observability & Control (7 phases, 16 plans — shipped 2026-04-12)
 - v4.0: GIS-Composite Realistic Drafts (3 phases, 7 plans — shipped 2026-04-12)
 - v3.0: UX Workflow Overhaul (5 phases, 16 plans — shipped 2026-04-03)
 - v2.0: Advanced BIM Authoring (5 phases, 11 plans — shipped 2026-03-28)
@@ -90,4 +84,4 @@ Next.js 16 + React 19 + TypeScript + Three.js 0.183 + React Three Fiber 9 + shad
 
 This document evolves at phase transitions and milestone boundaries.
 
-*Last updated: 2026-04-12 after v5.0 milestone start*
+*Last updated: 2026-04-12 after v5.0 milestone shipped*
