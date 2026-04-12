@@ -26,7 +26,7 @@ Requirements for Energy Systems Observability & Control milestone.
 ### Standards & Export
 
 - [x] **STD-01**: Equipment info panels display Korean energy label grades (1~5등급) using Korean standards (KS B 6364 for HVAC, KSC IEC 62301 for electrical)
-- [ ] **STD-02**: ECO2 export includes sub-system data fields (HVAC type, lighting density, DHW system) extending the existing envelope-only export
+- [x] **STD-02**: ECO2 export includes sub-system data fields (HVAC type, lighting density, DHW system) extending the existing envelope-only export
 
 ### Equipment Geometry
 
@@ -70,7 +70,7 @@ Deferred to next minor release. Tracked but not in current roadmap.
 | EQ-01 | Phase 26 | Complete |
 | EQ-02 | Phase 26 | Complete |
 | STD-01 | Phase 26 | Complete |
-| STD-02 | Phase 27 | Pending |
+| STD-02 | Phase 27 | Complete |
 | EQUIP-01 | Phase 28 | Pending |
 
 **Coverage:**

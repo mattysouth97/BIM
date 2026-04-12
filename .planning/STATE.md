@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Energy Systems Observability & Control
 status: verifying
-stopped_at: Completed 26-equipment-info-panel/26-02-PLAN.md
-last_updated: "2026-04-12T00:41:19.289Z"
+stopped_at: Completed 27-eco2-sub-system-export/27-01-PLAN.md
+last_updated: "2026-04-12T00:51:15.531Z"
 last_activity: 2026-04-12
 progress:
   total_phases: 7
-  completed_phases: 4
-  total_plans: 10
-  completed_plans: 9
-  percent: 90
+  completed_phases: 5
+  total_plans: 11
+  completed_plans: 10
+  percent: 91
 ---
 
 # Project State
@@ -55,6 +55,7 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 | Phase 24-energy-breakdown-dashboard P01 | 25 | 3 tasks | 5 files |
 | Phase 26-equipment-info-panel P01 | 315s | 2 tasks | 4 files |
 | Phase 26-equipment-info-panel P02 | 420 | 2 tasks | 4 files |
+| Phase 27-eco2-sub-system-export P01 | 8 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,9 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 - [Phase 26-equipment-info-panel]: Raycaster allocated via useRef at component top level — fixes structural-tooltip.tsx per-frame allocation defect (Pitfall 1)
 - [Phase 26-equipment-info-panel]: pointerup + 5px movement gate used — camera drag does not trigger MEP selection (D-02)
 - [Phase 26-equipment-info-panel]: EquipmentInfoPanel uses equipment-specs EQUIPMENT_GRADE_COLORS (1~5 scale) — never EFFICIENCY_GRADE_COLORS from properties-panel (1+++~7 scale) (D-04 / Pitfall 3)
+- [Phase 27-eco2-sub-system-export]: Reused EnergyDataSource union from system-breakdown.ts for subSystems provenance — no new vocabulary
+- [Phase 27-eco2-sub-system-export]: subSystems is additive-optional on ECO2ExtraOptions — all existing 3-arg callers compile unchanged
+- [Phase 27-eco2-sub-system-export]: buildSubSystems reads materials verbatim, not re-derived from era (Pitfall 2 guard)
 
 ### Pending Todos
 
@@ -99,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-12T00:41:19.286Z
-Stopped at: Completed 26-equipment-info-panel/26-02-PLAN.md
+Last session: 2026-04-12T00:51:15.528Z
+Stopped at: Completed 27-eco2-sub-system-export/27-01-PLAN.md
 Resume file: None
