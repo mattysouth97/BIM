@@ -12,7 +12,7 @@ import { useActualEnergy } from "@/hooks/use-actual-energy";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { generateECO2Input, downloadECO2File } from "@/lib/energy/eco2-export";
+import { generateECO2Input, downloadECO2File, buildSubSystems } from "@/lib/energy/eco2-export";
 import { parseECO2Result } from "@/lib/energy/eco2-import";
 import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
@@ -182,7 +182,8 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
 
   const handleExport = useCallback(() => {
     if (!materials || !effectiveRecipe || !metrics) return;
-    const content = generateECO2Input(materials, effectiveRecipe, metrics);
+    const subSystems = buildSubSystems(materials);
+    const content = generateECO2Input(materials, effectiveRecipe, metrics, { subSystems });
     const fileName = `eco2-input-${buildingPk.slice(0, 8)}.json`;
     downloadECO2File(content, fileName);
   }, [materials, effectiveRecipe, metrics, buildingPk]);
@@ -234,9 +235,11 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
   }
 
   const { grade, gradeColor, demand, co2, heatLoss } = metrics;
-  const hasActual = actual.dataAvailable;
-  const hasActualGrade = actual.grade !== null;
-  const hasActualDemand = actual.certifiedDemand !== null && actual.certifiedDemand > 0;
+  const actualData = actual.data ?? [];
+  const hasActual = actualData.length > 0;
+  // Grade and certified demand are not available from the consumption API
+  const hasActualGrade = false;
+  const hasActualDemand = false;
 
   // Tree equivalent: 1 tree absorbs ~22 kg CO2/yr
   const treeEquivalent = co2.co2PerSqm > 0 ? co2.co2PerSqm / 22 : 0;
@@ -259,6 +262,7 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
               {isKo ? "로딩..." : "Loading..."}
             </span>
           )}
+
         </div>
       )}
 
@@ -280,13 +284,7 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
                 ? `${GRADE_NAME_KO[grade]} (모델)`
                 : `Grade ${grade} (modeled)`}
             </span>
-            {hasActualGrade ? (
-              <span className="text-xs font-medium text-blue-600">
-                {isKo
-                  ? `실측: ${actual.grade}등급`
-                  : `Actual: ${actual.grade}`}
-              </span>
-            ) : hasActual ? (
+            {hasActualGrade ? null : hasActual ? (
               <span className="text-[9px] text-muted-foreground/60 italic">
                 {isKo ? "등급 데이터 없음" : "No grade data"}
               </span>
@@ -303,22 +301,7 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
         <p className="text-sm font-semibold tabular-nums">
           <AnimatedValue value={demand.demandPerSqm} suffix=" kWh/m\u00B2\u00B7yr" />
         </p>
-        {hasActualDemand ? (
-          <div className="mt-0.5 flex items-center gap-2 text-[10px]">
-            <span className="text-muted-foreground">
-              {isKo ? "실측" : "Actual"}{" "}
-              <span className="font-medium text-blue-600 tabular-nums">
-                {actual.certifiedDemand!.toFixed(1)}
-              </span>
-            </span>
-            <DeltaIndicator
-              modeled={demand.demandPerSqm}
-              actual={actual.certifiedDemand!}
-              suffix=" kWh/m\u00B2\u00B7yr"
-              isKo={isKo}
-            />
-          </div>
-        ) : hasActual ? (
+        {hasActual ? (
           <p className="text-[9px] text-muted-foreground/60 italic mt-0.5">
             {isKo ? "실측 수요 데이터 없음" : "No actual demand data"}
           </p>
@@ -353,31 +336,7 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
         <p className="text-sm font-semibold tabular-nums">
           <AnimatedValue value={co2.co2PerSqm} suffix=" kgCO\u2082/m\u00B2\u00B7yr" />
         </p>
-        {hasActualDemand ? (() => {
-          // Estimate actual CO2 from actual demand using same emission factor ratio
-          // CO2 factor: modeled CO2/demand ratio applied to actual demand
-          const co2Factor =
-            demand.demandPerSqm > 0
-              ? co2.co2PerSqm / demand.demandPerSqm
-              : 0;
-          const actualCo2 = actual.certifiedDemand! * co2Factor;
-          return (
-            <div className="mt-0.5 flex items-center gap-2 text-[10px]">
-              <span className="text-muted-foreground">
-                {isKo ? "실측 추정" : "Est. actual"}{" "}
-                <span className="font-medium text-blue-600 tabular-nums">
-                  {actualCo2.toFixed(1)}
-                </span>
-              </span>
-              <DeltaIndicator
-                modeled={co2.co2PerSqm}
-                actual={actualCo2}
-                suffix=" kgCO\u2082"
-                isKo={isKo}
-              />
-            </div>
-          );
-        })() : null}
+        {null}
         <p className="text-[10px] text-muted-foreground mt-0.5">
           {isKo ? "\u2248 " : "\u2248 "}
           {treeEquivalent.toFixed(1)}{" "}

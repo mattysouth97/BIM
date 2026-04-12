@@ -4,6 +4,48 @@
 import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { EnergyMetrics } from "@/hooks/use-energy-metrics";
+import type { AnnualConsumption } from "@/lib/energy/consumption-normalizer";
+import type { PrimaryEnergyResult } from "@/lib/energy/primary-energy";
+import type { BenchmarkResult } from "@/lib/energy/benchmark-comparison";
+import type { EnergyDataSource } from "@/lib/energy/system-breakdown";
+
+export interface RetrofitScenario {
+  description: string;
+  energySaving: number;
+  costSaving: number;
+}
+
+/**
+ * Phase 27: Inferred sub-system data fields for ECO2 auditors (STD-02).
+ * Fields read verbatim from materials — not re-derived from era.
+ * dataSource uses EnergyDataSource from system-breakdown.ts (NOT EquipmentDataSource).
+ * TODO: verify HVAC system type string mapping against KS F 1900 section field codes
+ *       (standard is behind KSA paywall — GX auditor validation required).
+ */
+export interface ECO2SubSystems {
+  hvac: {
+    heatingSystemType: string;       // from materials.hvac.heating.systemType
+    coolingSystemType: string;       // from materials.hvac.cooling.systemType
+    heatingFuelType: string;         // from materials.hvac.heating.fuelType
+    heatingEfficiency: number;       // COP or %
+    coolingEfficiency: number;       // COP
+    dhwSystemType: string;           // from materials.hvac.dhw.systemType
+    dhwEfficiency: number;           // from materials.hvac.dhw.efficiency
+    dataSource: EnergyDataSource;
+    standardRef: "KS B 6364";
+  };
+  lighting: {
+    lightingPowerDensity_Wm2: number; // from materials.lighting.lightingPowerDensity (W/m²)
+    lampType: string;                 // from materials.lighting.lampType
+    controlType: string;              // from materials.lighting.controlType
+    dataSource: EnergyDataSource;
+    standardRef: "KSC IEC 62301";
+  };
+  metadata: {
+    inferenceNote: string;       // human-readable provenance warning
+    inferenceTimestamp: string;  // ISO-8601
+  };
+}
 
 interface ECO2InputData {
   version: string;
@@ -85,6 +127,33 @@ interface ECO2InputData {
     co2PerSqm_kgCO2: number;
     heatLossBreakdown: { element: string; heatLoss_W: number; percentage: number }[];
   };
+  /** Actual measured consumption data when available */
+  actualConsumption?: AnnualConsumption[];
+  /** Ratio of actual to predicted energy (actual / predicted). >1 means building uses more than predicted. */
+  calibrationRatio?: number;
+  /** Primary energy values using Korean MOTIE/KEMCO conversion factors */
+  primaryEnergy?: PrimaryEnergyResult;
+  /** Where this building ranks vs peer buildings (0–100 percentile) */
+  benchmarkPercentile?: number;
+  /** Top retrofit scenarios ordered by energy saving potential */
+  retrofitScenarios?: RetrofitScenario[];
+  /** Phase 27: inferred sub-system data fields for ECO2 auditors (STD-02) */
+  subSystems?: ECO2SubSystems;
+}
+
+export interface ECO2ExtraOptions {
+  /** Actual measured consumption records (from consumption-normalizer) */
+  actualConsumption?: AnnualConsumption[];
+  /** Actual / predicted ratio from calibration */
+  calibrationRatio?: number;
+  /** Primary energy breakdown using Korean conversion factors */
+  primaryEnergy?: PrimaryEnergyResult;
+  /** Benchmark result containing percentile */
+  benchmarkResult?: BenchmarkResult;
+  /** Top 3 retrofit scenarios ordered by energy saving potential */
+  retrofitScenarios?: RetrofitScenario[];
+  /** Phase 27: inferred sub-system data fields (HVAC type, LPD, DHW) — STD-02 */
+  subSystems?: ECO2SubSystems;
 }
 
 /**
@@ -93,7 +162,8 @@ interface ECO2InputData {
 export function generateECO2Input(
   materials: MaterialProperties,
   recipe: BuildingRecipe,
-  metrics: EnergyMetrics
+  metrics: EnergyMetrics,
+  extra?: ECO2ExtraOptions
 ): string {
   const totalFloorArea =
     recipe.footprintWidth * recipe.footprintDepth * recipe.floors.length;
@@ -193,9 +263,59 @@ export function generateECO2Input(
         percentage: totalHL > 0 ? (el.heatLoss / totalHL) * 100 : 0,
       })),
     },
+    ...(extra?.actualConsumption !== undefined && {
+      actualConsumption: extra.actualConsumption,
+    }),
+    ...(extra?.calibrationRatio !== undefined && {
+      calibrationRatio: extra.calibrationRatio,
+    }),
+    ...(extra?.primaryEnergy !== undefined && {
+      primaryEnergy: extra.primaryEnergy,
+    }),
+    ...(extra?.benchmarkResult !== undefined && {
+      benchmarkPercentile: extra.benchmarkResult.percentile,
+    }),
+    ...(extra?.retrofitScenarios !== undefined && {
+      retrofitScenarios: extra.retrofitScenarios.slice(0, 3),
+    }),
+    ...(extra?.subSystems !== undefined && {
+      subSystems: extra.subSystems,
+    }),
   };
 
   return JSON.stringify(data, null, 2);
+}
+
+/**
+ * Build the ECO2 sub-systems block from materials.
+ * Pure synchronous helper — reads materials.hvac.* and materials.lighting.* verbatim.
+ * No era re-derivation (Pitfall 2 guard). Stamps dataSource: "estimated-inferred" (STD-02).
+ */
+export function buildSubSystems(materials: MaterialProperties): ECO2SubSystems {
+  return {
+    hvac: {
+      heatingSystemType:   materials.hvac.heating.systemType,
+      coolingSystemType:   materials.hvac.cooling.systemType,
+      heatingFuelType:     materials.hvac.heating.fuelType,
+      heatingEfficiency:   materials.hvac.heating.efficiency,
+      coolingEfficiency:   materials.hvac.cooling.efficiency,
+      dhwSystemType:       materials.hvac.dhw.systemType,
+      dhwEfficiency:       materials.hvac.dhw.efficiency,
+      dataSource:          "estimated-inferred",
+      standardRef:         "KS B 6364",
+    },
+    lighting: {
+      lightingPowerDensity_Wm2: materials.lighting.lightingPowerDensity,
+      lampType:                 materials.lighting.lampType,
+      controlType:              materials.lighting.controlType,
+      dataSource:               "estimated-inferred",
+      standardRef:              "KSC IEC 62301",
+    },
+    metadata: {
+      inferenceNote:      "Fields inferred from building era and Korean building codes (KS B 6364, KSC IEC 62301). Not measured data.",
+      inferenceTimestamp: new Date().toISOString(),
+    },
+  };
 }
 
 /**
