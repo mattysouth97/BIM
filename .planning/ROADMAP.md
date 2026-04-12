@@ -56,7 +56,7 @@
 
 </details>
 
-### 🚧 v5.0 Energy Systems Observability & Control (Phases 22-27)
+### 🚧 v5.0 Energy Systems Observability & Control (Phases 22-28)
 
 **Milestone Goal:** Expand the MEP layer into individually addressable utility sub-systems, expose energy distribution visually on the 3D model, and surface inferred equipment specifications — giving GX energy auditors per-system observability without requiring IoT or sub-metered data.
 
@@ -64,8 +64,9 @@
 - [x] **Phase 23: Per-Floor Energy Model** - Extend the energy calculation engine to produce per-floor kWh/m² and system-level attribution (completed 2026-04-12)
 - [ ] **Phase 24: Energy Breakdown Dashboard** - Chart showing HVAC/lighting/DHW/plug attribution with amber estimated labels
 - [x] **Phase 25: Energy Consumption Heatmap** - Color-coded floor planes on the 3D building keyed to Korean energy grade thresholds (completed 2026-04-12)
-- [ ] **Phase 26: Equipment Info Panel** - Click-to-inspect MEP objects showing inferred specs and Korean efficiency grades
+- [x] **Phase 26: Equipment Info Panel** - Click-to-inspect MEP objects showing inferred specs and Korean efficiency grades (completed 2026-04-12)
 - [ ] **Phase 27: ECO2 Sub-System Export** - Extend ECO2 export with sub-system data fields (HVAC type, lighting density, DHW system)
+- [ ] **Phase 28: Procedural 3D Models for MEP Equipment** - Distinct 3D geometry for all 기계설비 with configurable procedural parameters
 
 ## Phase Details
 
@@ -140,7 +141,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 26-01-PLAN.md — equipment-specs.ts module (EquipmentSpec, EquipmentEfficiencyGrade 1~5등급, era-based inference, KS B 6364 / KSC IEC 62301 grade tables) + selection-store SelectedEquipmentInfo extension
-- [ ] 26-02-PLAN.md — EquipmentClickHandler (useRef Raycaster + pointerup + MEP sub-group filter) + EquipmentInfoPanel in right dock (amber 추정 labels) + human verification checkpoint
+- [x] 26-02-PLAN.md — EquipmentClickHandler (useRef Raycaster + pointerup + MEP sub-group filter) + EquipmentInfoPanel in right dock (amber 추정 labels) + human verification checkpoint
 **UI hint**: yes
 
 ### Phase 27: ECO2 Sub-System Export
@@ -153,6 +154,19 @@ Plans:
   3. The existing envelope-only ECO2 export for buildings without sub-system data is unchanged and still valid
 **Plans**: TBD
 
+### Phase 28: Procedural 3D Models for MEP Equipment
+**Goal**: Users see distinct, recognizable 3D models for each piece of mechanical equipment (기계설비) — HVAC units (AHU, chillers, boilers, VRF heads, fan coils), electrical panels, lighting fixtures, DHW tanks/pumps — with configurable procedural parameters (size, count, spacing, detail level) that update the scene in real time
+**Depends on**: Phase 26 (equipment-specs.ts userData.type mapping)
+**Requirements**: EQUIP-01 (new — see REQUIREMENTS.md)
+**Success Criteria** (what must be TRUE):
+  1. Each MEP sub-type renders a visually distinct procedural 3D model (AHU ≠ chiller ≠ fan coil ≠ boiler ≠ lighting fixture ≠ electrical panel ≠ DHW tank)
+  2. Users can adjust procedural parameters (size, count, spacing, LOD) per equipment type in the config panel and see the scene update in real time
+  3. Equipment models remain recognizable at typical camera distances without requiring photorealistic detail (structural clarity principle)
+  4. All equipment models use InstancedMesh where appropriate to maintain <10 draw calls per sub-layer
+  5. Existing Phase 22 sub-layer toggling + Phase 26 click selection continue to work with the new models
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -164,5 +178,5 @@ Plans:
 | 23. Per-Floor Energy Model | v5.0 | 2/2 | Complete   | 2026-04-12 |
 | 24. Energy Breakdown Dashboard | v5.0 | 1/2 | In Progress|  |
 | 25. Energy Consumption Heatmap | v5.0 | 1/1 | Complete   | 2026-04-12 |
-| 26. Equipment Info Panel | v5.0 | 1/2 | In Progress|  |
+| 26. Equipment Info Panel | v5.0 | 2/2 | Complete   | 2026-04-12 |
 | 27. ECO2 Sub-System Export | v5.0 | 0/? | Not started | - |

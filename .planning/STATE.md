@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Energy Systems Observability & Control
 status: verifying
-stopped_at: Completed 26-equipment-info-panel-01-PLAN.md
-last_updated: "2026-04-12T00:35:28.249Z"
+stopped_at: Completed 26-equipment-info-panel/26-02-PLAN.md
+last_updated: "2026-04-12T00:41:19.289Z"
 last_activity: 2026-04-12
 progress:
-  total_phases: 6
-  completed_phases: 3
+  total_phases: 7
+  completed_phases: 4
   total_plans: 10
-  completed_plans: 8
-  percent: 80
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
@@ -54,6 +54,7 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 | Phase 25-energy-consumption-heatmap P01 | 5 | 2 tasks | 4 files |
 | Phase 24-energy-breakdown-dashboard P01 | 25 | 3 tasks | 5 files |
 | Phase 26-equipment-info-panel P01 | 315s | 2 tasks | 4 files |
+| Phase 26-equipment-info-panel P02 | 420 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 - [Phase 26-equipment-info-panel]: EquipmentEfficiencyGrade (1|2|3|4|5) is a distinct union from EnergyGrade (1+++…7) with zero cross-import (D-04 enforced)
 - [Phase 26-equipment-info-panel]: SelectedEquipmentInfo is plain JSON with no THREE.* fields; selection-store imports no three (D-05 enforced)
 - [Phase 26-equipment-info-panel]: clearSelection() updated to also clear selectedEquipment (composite clear)
+- [Phase 26-equipment-info-panel]: Raycaster allocated via useRef at component top level — fixes structural-tooltip.tsx per-frame allocation defect (Pitfall 1)
+- [Phase 26-equipment-info-panel]: pointerup + 5px movement gate used — camera drag does not trigger MEP selection (D-02)
+- [Phase 26-equipment-info-panel]: EquipmentInfoPanel uses equipment-specs EQUIPMENT_GRADE_COLORS (1~5 scale) — never EFFICIENCY_GRADE_COLORS from properties-panel (1+++~7 scale) (D-04 / Pitfall 3)
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-12T00:35:28.246Z
-Stopped at: Completed 26-equipment-info-panel-01-PLAN.md
+Last session: 2026-04-12T00:41:19.286Z
+Stopped at: Completed 26-equipment-info-panel/26-02-PLAN.md
 Resume file: None
