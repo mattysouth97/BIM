@@ -13,10 +13,12 @@ import {
   Cog,
   Layers,
   BarChart2,
+  Wrench,
 } from "lucide-react";
 import { BuildingTab } from "./config-tabs/building-tab";
 import { EnvelopeTab } from "./config-tabs/envelope-tab";
 import { SystemsTab } from "./config-tabs/systems-tab";
+import { EquipmentTab } from "./config-tabs/equipment-tab";
 import { LayersTab } from "./config-tabs/layers-tab";
 import { EnergyBreakdownChart } from "./energy-breakdown-chart";
 
@@ -103,6 +105,10 @@ export function ConfigPanel({
               <Cog className="h-3.5 w-3.5" />
               {isKo ? "설비" : "Systems"}
             </TabsTrigger>
+            <TabsTrigger value="equipment" className="gap-1 text-xs">
+              <Wrench className="h-3.5 w-3.5" />
+              {isKo ? "장비" : "Equipment"}
+            </TabsTrigger>
             <TabsTrigger value="layers" className="gap-1 text-xs">
               <Layers className="h-3.5 w-3.5" />
               {isKo ? "레이어" : "Layers"}
@@ -123,6 +129,10 @@ export function ConfigPanel({
 
           <TabsContent value="systems" className="mt-3">
             <SystemsTab buildingPk={buildingPk} />
+          </TabsContent>
+
+          <TabsContent value="equipment" className="mt-3">
+            <EquipmentTab buildingPk={buildingPk} />
           </TabsContent>
 
           <TabsContent value="layers" className="mt-3">
