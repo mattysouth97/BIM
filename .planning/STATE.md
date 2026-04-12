@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Energy Systems Observability & Control
 status: verifying
-stopped_at: Completed 22-02-PLAN.md
-last_updated: "2026-04-11T23:58:21.684Z"
-last_activity: 2026-04-11
+stopped_at: Completed 23-01-PLAN.md
+last_updated: "2026-04-12T00:13:39.616Z"
+last_activity: 2026-04-12
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 100
+  total_plans: 5
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-12)
 Phase: 22 of 27 (MEP Sub-Layer Foundation)
 Plan: 3 of 3
 Status: Phase complete — ready for verification
-Last activity: 2026-04-11
+Last activity: 2026-04-12
 
 Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 
@@ -49,6 +49,7 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 *Updated after each plan completion*
 | Phase 22-mep-sub-layer-foundation P03 | 5 | 1 tasks | 1 files |
 | Phase 22-mep-sub-layer-foundation P02 | 12 | 2 tasks | 3 files |
+| Phase 23-per-floor-energy-model P01 | 195 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 - [Phase 22-mep-sub-layer-foundation]: Fragment wrapper in ALL_LAYER_IDS map() to support adjacent MEP sub-row siblings; ChevronDown stopPropagation decouples expand from toggleLayer; mepExpanded is local useState (not persisted)
 - [Phase 22-mep-sub-layer-foundation]: setMepSubVisible uses getObjectByName (not groups Map) — sub-groups need no separate tracking in LayerManager
 - [Phase 22-mep-sub-layer-foundation]: BuildingLayers second useEffect depends on [mepSubVisibility, visibility] to restore sub-states after MEP off->on toggle
+- [Phase 23-per-floor-energy-model]: EnergyDataSource = actual | estimated-ratio | estimated-inferred (CONTEXT.md D4 — modeled variant from RESEARCH.md superseded)
+- [Phase 23-per-floor-energy-model]: HVAC anchored to calculateAnnualDemand().totalDemand; others scaled so total = hvac / hvac_ratio
+- [Phase 23-per-floor-energy-model]: SYSTEM_RATIOS keyed by 2-char mainPurpsCd prefix; office ratios 55/25/10/10 per CONTEXT.md D6
 
 ### Pending Todos
 
@@ -76,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-11T23:58:21.680Z
-Stopped at: Completed 22-02-PLAN.md
+Last session: 2026-04-12T00:13:39.613Z
+Stopped at: Completed 23-01-PLAN.md
 Resume file: None

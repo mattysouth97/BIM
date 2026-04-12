@@ -96,7 +96,7 @@ Plans:
   4. The hook result is stable across camera movement (no recalculation during useFrame/render)
 **Plans**: 2 plans
 Plans:
-- [ ] 23-01-PLAN.md — Core engine: calculateSystemBreakdown + EnergyDataSource type + SYSTEM_RATIOS (prefix match) + Vitest coverage
+- [x] 23-01-PLAN.md — Core engine: calculateSystemBreakdown + EnergyDataSource type + SYSTEM_RATIOS (prefix match) + Vitest coverage
 - [ ] 23-02-PLAN.md — useEnergyBreakdown hook (two nested useMemo, Pitfall 1 stability guard) + renderHook tests
 
 ### Phase 24: Energy Breakdown Dashboard
@@ -153,7 +153,7 @@ Plans:
 | 20. Footprint Extrusion | v4.0 | 3/3 | Complete | 2026-04-11 |
 | 21. Composite Pipeline | v4.0 | 2/2 | Complete | 2026-04-12 |
 | 22. MEP Sub-Layer Foundation | v5.0 | 3/3 | Complete   | 2026-04-11 |
-| 23. Per-Floor Energy Model | v5.0 | 0/2 | Not started | - |
+| 23. Per-Floor Energy Model | v5.0 | 1/2 | In Progress|  |
 | 24. Energy Breakdown Dashboard | v5.0 | 0/? | Not started | - |
 | 25. Energy Consumption Heatmap | v5.0 | 0/? | Not started | - |
 | 26. Equipment Info Panel | v5.0 | 0/? | Not started | - |

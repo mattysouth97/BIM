@@ -10,11 +10,11 @@ Requirements for Energy Systems Observability & Control milestone.
 ### MEP Sub-Layer System
 
 - [x] **MEP-01**: User can toggle 4 individual utility sub-layers (electrical, HVAC, lighting, plumbing/DHW) independently in the layer panel
-- [ ] **MEP-02**: Toggling a sub-layer shows/hides only that utility system's 3D objects while other sub-layers remain visible
+- [x] **MEP-02**: Toggling a sub-layer shows/hides only that utility system's 3D objects while other sub-layers remain visible
 
 ### Energy Analytics
 
-- [ ] **EA-01**: Energy calculation engine produces per-floor kWh/m² estimates (not just building total)
+- [x] **EA-01**: Energy calculation engine produces per-floor kWh/m² estimates (not just building total)
 - [ ] **EA-02**: Energy breakdown dashboard displays system-level distribution (HVAC, lighting, plug loads, DHW) as a chart with percentage attribution
 - [ ] **EA-03**: Energy consumption heatmap color-codes building floors by kWh/m² intensity on the 3D geometry (green-to-red gradient)
 
@@ -59,8 +59,8 @@ Deferred to next minor release. Tracked but not in current roadmap.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | MEP-01 | Phase 22 | Complete |
-| MEP-02 | Phase 22 | Pending |
-| EA-01 | Phase 23 | Pending |
+| MEP-02 | Phase 22 | Complete |
+| EA-01 | Phase 23 | Complete |
 | EA-02 | Phase 24 | Pending |
 | EA-03 | Phase 25 | Pending |
 | EQ-01 | Phase 26 | Pending |
