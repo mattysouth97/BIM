@@ -46,9 +46,19 @@ The goal is NOT photorealistic rendering — it's **structural unambiguity**. Ev
 - ECO2 (desktop energy evaluation — future export)
 - Korean Building Energy Code (inference engine)
 
-## Current Milestone: (none — planning next)
+## Current Milestone: v6.0 Audit Deliverables
 
-v5.0 shipped 2026-04-12. Next milestone goals will be defined via `/gsd-new-milestone`.
+**Goal:** Ship visible BIM features that make the tool feel professional for GX auditors — wire annotations + auto-generated views (plan/elevation/section) + schedules + PDF sheet export + undo/redo + stable element IDs. Part 1 of 5-milestone Revit-benchmarked uplift (v6.0 → v9.0).
+
+**Target features:**
+- Ctrl+Z / Ctrl+Shift+Z undo across all authoring actions (port unmerged worktree code)
+- Stable ElementId on every wall/slab/column/window/door/MEP instance
+- Store-backed annotations with undo (wire existing stubs: dimension-line, area-label, level-marker, section-cut)
+- Auto-generated plan/elevation/section views from single 3D model via view-engine
+- Live, filterable schedule tables (Wall, Window/Door, MEP, Room) with CSV export
+- A1/A3 sheet composition with Korean title block → PDF export
+
+**Reference:** Full v6.0 → v9.0 roadmap at `.planning/v6-to-v9-ROADMAP-BENCHMARK.md`
 
 ## Current State
 
