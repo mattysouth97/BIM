@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Energy Systems Observability & Control
 status: verifying
-stopped_at: Completed 23-01-PLAN.md
-last_updated: "2026-04-12T00:13:39.616Z"
+stopped_at: Completed 23-per-floor-energy-model-23-02-PLAN.md
+last_updated: "2026-04-12T00:19:33.129Z"
 last_activity: 2026-04-12
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 5
-  completed_plans: 4
-  percent: 80
+  completed_phases: 2
+  total_plans: 6
+  completed_plans: 5
+  percent: 83
 ---
 
 # Project State
@@ -50,6 +50,7 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 | Phase 22-mep-sub-layer-foundation P03 | 5 | 1 tasks | 1 files |
 | Phase 22-mep-sub-layer-foundation P02 | 12 | 2 tasks | 3 files |
 | Phase 23-per-floor-energy-model P01 | 195 | 2 tasks | 2 files |
+| Phase 23-per-floor-energy-model P02 | 178 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,9 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 - [Phase 23-per-floor-energy-model]: EnergyDataSource = actual | estimated-ratio | estimated-inferred (CONTEXT.md D4 — modeled variant from RESEARCH.md superseded)
 - [Phase 23-per-floor-energy-model]: HVAC anchored to calculateAnnualDemand().totalDemand; others scaled so total = hvac / hvac_ratio
 - [Phase 23-per-floor-energy-model]: SYSTEM_RATIOS keyed by 2-char mainPurpsCd prefix; office ratios 55/25/10/10 per CONTEXT.md D6
+- [Phase 23-per-floor-energy-model]: Override-merge block kept byte-identical to use-energy-metrics.ts lines 56-83 with SYNC NOTE comment
+- [Phase 23-per-floor-energy-model]: @testing-library/react already installed — no new devDependency required for renderHook tests
+- [Phase 23-per-floor-energy-model]: Stability test uses === referential equality to guard Phase 25 60fps heatmap rebuild
 
 ### Pending Todos
 
@@ -80,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-12T00:13:39.613Z
-Stopped at: Completed 23-01-PLAN.md
+Last session: 2026-04-12T00:19:33.126Z
+Stopped at: Completed 23-per-floor-energy-model-23-02-PLAN.md
 Resume file: None

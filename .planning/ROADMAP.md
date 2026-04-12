@@ -61,7 +61,7 @@
 **Milestone Goal:** Expand the MEP layer into individually addressable utility sub-systems, expose energy distribution visually on the 3D model, and surface inferred equipment specifications — giving GX energy auditors per-system observability without requiring IoT or sub-metered data.
 
 - [x] **Phase 22: MEP Sub-Layer Foundation** - Split the single MEP group into 4 independently togglable utility sub-layers (completed 2026-04-11)
-- [ ] **Phase 23: Per-Floor Energy Model** - Extend the energy calculation engine to produce per-floor kWh/m² and system-level attribution
+- [x] **Phase 23: Per-Floor Energy Model** - Extend the energy calculation engine to produce per-floor kWh/m² and system-level attribution (completed 2026-04-12)
 - [ ] **Phase 24: Energy Breakdown Dashboard** - Chart showing HVAC/lighting/DHW/plug attribution with amber estimated labels
 - [ ] **Phase 25: Energy Consumption Heatmap** - Color-coded floor planes on the 3D building keyed to Korean energy grade thresholds
 - [ ] **Phase 26: Equipment Info Panel** - Click-to-inspect MEP objects showing inferred specs and Korean efficiency grades
@@ -97,7 +97,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 23-01-PLAN.md — Core engine: calculateSystemBreakdown + EnergyDataSource type + SYSTEM_RATIOS (prefix match) + Vitest coverage
-- [ ] 23-02-PLAN.md — useEnergyBreakdown hook (two nested useMemo, Pitfall 1 stability guard) + renderHook tests
+- [x] 23-02-PLAN.md — useEnergyBreakdown hook (two nested useMemo, Pitfall 1 stability guard) + renderHook tests
 
 ### Phase 24: Energy Breakdown Dashboard
 **Goal**: Users can see how building energy consumption is distributed across HVAC, lighting, DHW, and plug loads in a chart that updates when material properties change
@@ -153,7 +153,7 @@ Plans:
 | 20. Footprint Extrusion | v4.0 | 3/3 | Complete | 2026-04-11 |
 | 21. Composite Pipeline | v4.0 | 2/2 | Complete | 2026-04-12 |
 | 22. MEP Sub-Layer Foundation | v5.0 | 3/3 | Complete   | 2026-04-11 |
-| 23. Per-Floor Energy Model | v5.0 | 1/2 | In Progress|  |
+| 23. Per-Floor Energy Model | v5.0 | 2/2 | Complete   | 2026-04-12 |
 | 24. Energy Breakdown Dashboard | v5.0 | 0/? | Not started | - |
 | 25. Energy Consumption Heatmap | v5.0 | 0/? | Not started | - |
 | 26. Equipment Info Panel | v5.0 | 0/? | Not started | - |
