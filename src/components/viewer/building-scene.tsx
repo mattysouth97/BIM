@@ -431,7 +431,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             modelSource === "parametric" && (
               <>
                 <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} />
-                <BuildingLayers />
+                <BuildingLayers buildingPk={buildingPk} />
                 <StructuralTooltip />
               </>
             )
