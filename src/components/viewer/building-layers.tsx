@@ -33,6 +33,7 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
 
   const visibility = useLayerStore((s) => s.visibility);
   const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
+  const density = useLayerStore((s) => s.density);
 
   // Heatmap data — call hooks unconditionally (Rules of Hooks); gate downstream work with pk check
   const pk = buildingPk ?? "";
@@ -154,45 +155,49 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     // (Re)create the 4 named sub-groups — idempotent
     setupMepSubGroups(mepGroup);
 
+    // Convert density from store scale (0-100) to generator scale (0.0-1.0).
+    // Fall back to 1.0 (full density) when the store value is undefined.
+    const mepDensity = (density.mep ?? 100) / 100;
+
     // Instantiate generators and generate geometry
     const coolingOutput = new CoolingLayer().generate(
       effectiveRecipe,
-      1.0,
+      mepDensity,
       equipmentParams.chiller
     );
     assignToSubGroup(mepGroup, coolingOutput.name, coolingOutput);
 
     const heatingOutput = new HeatingLayer().generate(
       effectiveRecipe,
-      1.0,
+      mepDensity,
       equipmentParams.boiler
     );
     assignToSubGroup(mepGroup, heatingOutput.name, heatingOutput);
 
     const ventOutput = new VentilationLayer().generate(
       effectiveRecipe,
-      1.0,
+      mepDensity,
       equipmentParams.ahu
     );
     assignToSubGroup(mepGroup, ventOutput.name, ventOutput);
 
     const dhwOutput = new DHWLayer().generate(
       effectiveRecipe,
-      1.0,
+      mepDensity,
       equipmentParams.dhw
     );
     assignToSubGroup(mepGroup, dhwOutput.name, dhwOutput);
 
     const lightingOutput = new LightingLayer().generate(
       effectiveRecipe,
-      1.0,
+      mepDensity,
       {
         fixture: equipmentParams.lightingFixture,
         panel: equipmentParams.electricalPanel,
       }
     );
     assignToSubGroup(mepGroup, lightingOutput.name, lightingOutput);
-  }, [effectiveRecipe, equipmentParams]);
+  }, [effectiveRecipe, equipmentParams, density]);
 
   // Animation loop — update ShaderMaterial uniforms each frame
   useFrame((state) => {
