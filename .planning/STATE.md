@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Energy Systems Observability & Control
 status: verifying
-stopped_at: Completed 28-procedural-mep-equipment-models-04-PLAN.md
-last_updated: "2026-04-12T01:13:06.012Z"
+stopped_at: Completed 28-procedural-mep-equipment-models-02-PLAN.md
+last_updated: "2026-04-12T01:15:05.719Z"
 last_activity: 2026-04-12
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 16
-  completed_plans: 14
-  percent: 88
+  completed_plans: 15
+  percent: 94
 ---
 
 # Project State
@@ -59,6 +59,7 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 | Phase 28-procedural-mep-equipment-models P01 | 12 | 2 tasks | 4 files |
 | Phase 28-procedural-mep-equipment-models P03 | 15 | 1 tasks | 2 files |
 | Phase 28-procedural-mep-equipment-models P04 | 287 | 2 tasks | 4 files |
+| Phase 28-procedural-mep-equipment-models P02 | 14 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,8 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 - [Phase 28-03]: instanceMatrix.needsUpdate is write-only setter — test via version increment
 - [Phase 28-procedural-mep-equipment-models]: buildTankGeometry merges 4 sub-geometries (body+topPipe+bottomPipe+sidePipe); pump housing placed at tankRadius+0.6 offset on +X
 - [Phase 28-procedural-mep-equipment-models]: instanceMatrix.needsUpdate is write-only in Three.js; tests verify count>0 instead of reading flag back
+- [Phase 28-procedural-mep-equipment-models]: instanceMatrix.needsUpdate is write-only in Three.js — test .version >= 1 instead
+- [Phase 28-procedural-mep-equipment-models]: Chiller as single Mesh (count=1 per building); VRF + fan coil as InstancedMesh for per-floor draw-call budget
 
 ### Pending Todos
 
@@ -111,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-12T01:13:06.008Z
-Stopped at: Completed 28-procedural-mep-equipment-models-04-PLAN.md
+Last session: 2026-04-12T01:15:05.715Z
+Stopped at: Completed 28-procedural-mep-equipment-models-02-PLAN.md
 Resume file: None

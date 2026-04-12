@@ -66,7 +66,7 @@
 - [x] **Phase 25: Energy Consumption Heatmap** - Color-coded floor planes on the 3D building keyed to Korean energy grade thresholds (completed 2026-04-12)
 - [x] **Phase 26: Equipment Info Panel** - Click-to-inspect MEP objects showing inferred specs and Korean efficiency grades (completed 2026-04-12)
 - [x] **Phase 27: ECO2 Sub-System Export** - Extend ECO2 export with sub-system data fields (HVAC type, lighting density, DHW system) (completed 2026-04-12)
-- [ ] **Phase 28: Procedural 3D Models for MEP Equipment** - Distinct 3D geometry for all 기계설비 with configurable procedural parameters
+- [x] **Phase 28: Procedural 3D Models for MEP Equipment** - Distinct 3D geometry for all 기계설비 with configurable procedural parameters (completed 2026-04-12)
 
 ## Phase Details
 
@@ -169,7 +169,7 @@ Plans:
 **Plans**: 5 plans
 Plans:
 - [x] 28-01-PLAN.md — Foundation: MepEquipmentParams types + DEFAULT_MEP_EQUIPMENT_PARAMS + equipment-store (Zustand, per-buildingPk, overrideParam nested-path)
-- [ ] 28-02-PLAN.md — HVAC generators upgrade: chiller (body + grille + pipe stubs) + boiler (cylinder + flue) + VRF head IM + fan coil IM in layer-3/4
+- [x] 28-02-PLAN.md — HVAC generators upgrade: chiller (body + grille + pipe stubs) + boiler (cylinder + flue) + VRF head IM + fan coil IM in layer-3/4
 - [x] 28-03-PLAN.md — Ventilation generator upgrade: merged AHU geometry (body + duct stubs + TorusGeometry fan ring) replacing floating duct Meshes in layer-5
 - [x] 28-04-PLAN.md — DHW + Lighting upgrades: tank pipe stubs + pump housing (layer-6) + fixture ≥0.08m with diffuser face + panel door outline (layer-7)
 - [x] 28-05-PLAN.md — Equipment tab UI: new config-tabs/equipment-tab.tsx with 6 sections of SliderRow + checkboxes + bilingual labels + human-verify checkpoint
@@ -188,4 +188,4 @@ Plans:
 | 25. Energy Consumption Heatmap | v5.0 | 1/1 | Complete   | 2026-04-12 |
 | 26. Equipment Info Panel | v5.0 | 2/2 | Complete   | 2026-04-12 |
 | 27. ECO2 Sub-System Export | v5.0 | 1/1 | Complete   | 2026-04-12 |
-| 28. Procedural 3D Models for MEP Equipment | v5.0 | 4/5 | In Progress|  |
+| 28. Procedural 3D Models for MEP Equipment | v5.0 | 5/5 | Complete   | 2026-04-12 |
