@@ -1,25 +1,32 @@
 # Feature Research
 
-**Domain:** GIS-Composite 3D Building Draft Generation — Web-based BIM viewer with Korean government spatial data
-**Researched:** 2026-04-03
-**Confidence:** HIGH (VWorld API endpoints verified against live codebase proxy; Three.js patterns verified against existing procedural building system; MEDIUM for terrain complexity, LOW for VWorld LOD1 height data availability)
+**Domain:** Energy Systems Observability & Control — BIM viewer with utility sub-layers, energy heatmap, equipment panels, and what-if scenario analysis
+**Researched:** 2026-04-12
+**Confidence:** HIGH (grounded in existing codebase layer system, energy hooks, store shapes) / MEDIUM (BEMS industry patterns from web research)
 
 ---
 
 ## Context: What This Research Covers
 
-This is a v4.0 feature research document specifically for the GIS compositing milestone. The existing v3.0 UX overhaul features (guided workflow, docked panels, contextual toolbar) are treated as already built and not re-researched here.
+This is v5.0 feature research. The following are already built and NOT re-researched:
 
-The six new capabilities to evaluate:
+- 5-layer system (envelope, structure, mep, energy-zones, retrofit-targets) with `LayerId` union type, `layer-store.ts`, and `LayerManager`
+- Energy calculation engine (`heat-loss.ts`, `annual-demand.ts`, `co2-emissions.ts`, `energy-grade.ts`, `climate-data.ts`)
+- Material property panel with slider delta annotations (`use-energy-delta.ts`)
+- Live kWh/m² status bar
+- Energy cards (grade, demand, CO2, heat loss) with actual vs modeled comparison
+- Building ledger integration and actual consumption fetch (`use-actual-energy.ts`)
 
-1. Real cadastral footprint polygon replacing the rectangular building base
-2. Surrounding LOD1 context buildings from VWorld
-3. Terrain/elevation integration
-4. Satellite/aerial orthophoto ground plane texture
-5. Zoning/land-use overlay
-6. Parallel data fetch pipeline: address → instant composite render
+The six new capabilities to scope for v5.0:
 
-**Important constraint discovered during research:** VWorld's 3D building model Open API was closed in 2019 due to national security regulations. LOD1 context buildings must be synthesized from VWorld's 2D building data (footprint + height attribute from `getBuildingUse` or cadastral WFS) rather than fetched as pre-built 3D geometry. This fundamentally changes the architecture of feature #2.
+1. Individual utility sub-layers replacing the single MEP layer
+2. Energy consumption heatmap on 3D building geometry
+3. Equipment info panels (specs, usage, efficiency ratings)
+4. Basic equipment control (toggle on/off, HVAC setpoints, see energy impact)
+5. Energy breakdown dashboard by system type
+6. What-if scenario analysis
+
+**Critical codebase constraint discovered:** The `LayerId` type is a string union (`"envelope" | "structure" | "mep" | "energy-zones" | "retrofit-targets"`). The `layer-store.ts` uses `Record<LayerId, boolean>` for visibility. Expanding MEP into sub-layers requires extending this union type, the store, and the `LayerManager`. However, 15 individual sub-layer generator files already exist (`layer-3-cooling.ts` through `layer-14-microgrid.ts`) but are all collapsed under `"mep"` in `COMPONENT_TO_LAYER`. The generator infrastructure is partially done — the store/type layer is the gap.
 
 ---
 
@@ -27,118 +34,111 @@ The six new capabilities to evaluate:
 
 ### Table Stakes (Users Expect These)
 
-Features that any GIS-composite 3D viewer is expected to have. Missing these = the tool feels like a toy or a tech demo, not a professional tool.
+Features a GX energy auditor assumes exist in any energy observability tool. Missing these = the tool feels like a generic 3D viewer, not an energy audit platform.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| **Real parcel footprint as building base** | Every GIS tool (Mapbox, CesiumJS, QGIS 3D) uses the actual cadastral polygon, not a box. A rectangular approximation looks amateurish next to any professional reference. The existing `footprint/route.ts` proxy already fetches the polygon — it just is not yet used as the building base mesh. | MEDIUM | VWorld `LP_PA_CBND_BUBUN` dataset is already proxied. Requires replacing `BoxGeometry` in `procedural-building.ts` with `ExtrudeGeometry` from the cadastral polygon. The polygon is already returned as `[x,z]` meter-space coordinates relative to centroid — directly usable with `THREE.Shape`. |
-| **Satellite/orthophoto ground plane** | Mapbox, Google Maps 3D, and CesiumJS all show aerial imagery as the ground texture. Users searching a Korean building address expect to recognize the neighborhood context from aerial imagery. A flat gray ground plane reads as "prototype" not "product." | MEDIUM | VWorld WMTS provides aerial/satellite imagery at `https://api.vworld.kr/req/wmts/1.0.0/{key}/Satellite/{z}/{y}/{x}.jpeg`. Tile bounds for a ~500m radius around the building centroid can be stitched into a `PlaneGeometry` with a `THREE.CanvasTexture` or fetched as a single WMS GetMap image for a fixed bbox. Single-image WMS is simpler and avoids tile stitching complexity. |
-| **Surrounding context buildings** | Revit's site tools, Mapbox 3D Buildings layer, and SketchUp's geo-location all show neighboring buildings to establish scale and spatial context. Without context, a single building floating on an empty plane gives no sense of urban density or shadowing relationship. | HIGH | VWorld 3D API is closed (as of 2019, confirmed). Alternative: use VWorld `getBuildingUse` NED API with bbox to get neighboring buildings' footprints + height (`buldHg`), then extrude with `ExtrudeGeometry`. Height data confidence: MEDIUM — VWorld's `buldHg` field exists but coverage may vary. Fallback: infer height from `groundFloorCo` (floor count) × 3m. |
-| **Coordinate-space accuracy** | Users need to trust that what they see matches the real world. A building that renders 50m from its actual parcel boundary destroys trust. This is the foundational accuracy requirement. | LOW | The existing `extractPolygon()` in `footprint/route.ts` uses equirectangular projection (meters from centroid). This is accurate to ~0.1% error within a 500m radius — sufficient for LOD1 context. Use same projection for all GIS layers to guarantee alignment. |
-| **Loading state with progressive reveal** | Google Maps, Mapbox, and CesiumJS all show a progressive load: base map appears first, then buildings, then detail. Users expect visual feedback that data is loading, not a blank screen for 2-3 seconds. | LOW | TanStack Query (already in stack) provides `isLoading`/`isFetching` states. Show a flat satellite texture immediately (fastest data), then fade in building extrusions as geometry resolves. |
-| **Camera anchored to building** | The camera must frame the target building after composite generation. In Mapbox and CesiumJS, "fly to" is standard after data loads. | LOW | Compute bounding box of the cadastral footprint polygon → `camera.fitSphere()` or equivalent R3F camera control. The `footprint/route.ts` polygon is already in local meter-space, so bounds are trivially computed. |
+| **MEP sub-layer toggles** (electrical, HVAC, lighting, plumbing) | Every professional BEMS tool (Facilio, EnergyCAP, CIM) segments utility systems. An auditor needs to isolate "lighting only" or "HVAC only" to understand system-level consumption. A single undifferentiated MEP toggle hides this. | MEDIUM | 15 sub-layer generator files already exist. The gap is `LayerId` union extension + `layer-store.ts` `Record<LayerId, ...>` upgrade. Must preserve backward compat with existing `"mep"` references or rename to `"mep-all"` group. Core architecture change — must be first in the milestone. |
+| **Energy consumption heatmap** | Industry standard for energy audits: color-encode floors or zones by consumption intensity (kWh/m²). Seen in every serious BEMS dashboard. Without spatial context, energy numbers are abstract. Auditors use heatmaps to immediately see "which floor is the problem." | HIGH | The `energy-zones` layer exists but currently shows uniform zone fills, not consumption-weighted color. Requires per-zone kWh/m² data mapped to a gradient (e.g., green → red). The `calculateAnnualDemand()` currently returns building-total, not per-zone — need per-floor/per-zone breakdown. Fragment shader or vertex color approach on the envelope mesh. |
+| **System-level energy breakdown** | GX auditors always ask "what percentage of energy is HVAC vs lighting vs plug loads?" before recommending retrofits. Without a breakdown chart, the kWh/m² number is unactionable. Standard in EnergyCAP, Wattsense, Facilio dashboards. | MEDIUM | The existing `calculateAnnualDemand()` returns `heatingDemand` + `coolingDemand` but does not break out lighting, plug loads, DHW, or elevators. Requires extending the energy model with system-category attribution. Can start with estimated splits (ASHRAE standard ratios by building type) before real sub-metering data exists. |
+| **Equipment info panel on click/hover** | Clicking on an HVAC unit, electrical panel, or lighting circuit and getting a popup with specs (capacity, efficiency rating, age, energy use) is the baseline interaction for any equipment-aware tool. Users expect "click the thing, see its data." | MEDIUM | Requires a raycasting hit-test on MEP sub-layer objects, plus a data model for equipment properties (`EquipmentSpec`: type, capacity, efficiency, installYear, annualKwh). The `structural-tooltip.tsx` already implements raycasting + hover popup — the pattern exists. New: equipment data source (inferred from building recipe + ledger data, not user-entered). |
+| **Loading state / progressive reveal** | When the layer or heatmap data is computing, users need to see progress, not a stale or blank state. Standard expectation from any data-heavy dashboard. | LOW | Existing skeleton/loading patterns from energy-cards.tsx. Heatmap computation may take 100-500ms on large buildings — show a "computing..." indicator on the zone layer. |
 
 ### Differentiators (Competitive Advantage)
 
-Features that make this composite viewer specific to the Korean GX energy-audit use case, not just a generic 3D map viewer.
+Features specific to the Korean GX energy audit use case that commercial BEMS tools do not offer.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Address → instant composite in under 3 seconds** | Commercial tools (Mapbox, CesiumJS) require manual layer configuration and data setup. This tool should produce a complete composite render automatically from a single address lookup — no user-initiated layer controls. The GX team's workflow is search-first; every extra click is a barrier. | HIGH | Requires parallel data fetch pipeline: `Promise.allSettled([fetchFootprint, fetchSatellite, fetchContextBuildings, fetchZoning])` — all requests fire simultaneously on address resolution. The composite scene is built from whatever resolves first; missing layers degrade gracefully. Critical path: footprint polygon (fastest) → satellite imagery (medium) → context buildings (slowest). |
-| **Zoning/land-use overlay toggle** | Korean building energy codes depend on zoning (도시지역, 관리지역, 농림지역). GX energy auditors need to verify that energy compliance rules match the actual zoning classification. No other consumer GIS tool surfaces Korean zoning data in a 3D building context. | MEDIUM | VWorld provides `LT_C_UQ111` (도시지역), `LT_C_UQ112` (관리지역), `LT_C_UQ113` (농림지역), `LT_C_UQ114` (자연환경보전지역) as WFS layers. Render as colored semi-transparent `ShapeGeometry` overlaid on the ground plane. Toggle button in the composite toolbar. |
-| **Target building differentiated from context** | Context buildings should clearly read as "background" — they provide spatial awareness but must not compete visually with the target building being analyzed. Professional tools (Revit site context, SketchUp geo-location) use grayscale/muted context and highlighted target. | LOW | Target building: full PBR material pipeline from existing `pbr-materials.ts` + era-based facade. Context buildings: flat `MeshStandardMaterial({ color: '#c8c8c8', roughness: 0.9 })` with low opacity. Zero new code — material differentiation in the scene assembly logic. |
-| **Seamless transition from GIS composite to BIM authoring** | The composite view is the entry point, not the final state. After reviewing the GIS context, users should be able to "switch to BIM mode" which transitions the view from context buildings to the detailed internal model. This closes the gap between GIS awareness and energy authoring. | MEDIUM | The `workflowStore.stage` FSM already controls what's shown. Add a `gis-composite` pre-stage before `select`. Transitioning to `select` fades out context geometry and activates the detailed procedural building. The same R3F canvas handles both — context buildings are added/removed from the scene graph, not re-rendered in a separate view. |
-| **Building ledger data auto-linked to footprint** | The data.go.kr building ledger (floor count, structure type, permitted year, area) is already fetched. Surfacing these attributes as annotations over the GIS footprint — e.g., a label showing "RC 1994 15F 건물" over the cadastral polygon — provides instant spatial + semantic context without user interaction. | LOW | An R3F `<Html>` label anchored to the footprint centroid. The building ledger data is already in TanStack Query cache from the search step. Zero new data fetching. |
-| **Terrain-aware building placement** | Korean topography varies significantly — hillside buildings, riverside lots, sloped sites. Placing buildings on a flat plane misleads energy auditors about shading and wind exposure. Terrain-aware placement shows the building on its actual slope. | HIGH | VWorld provides terrain DEM data. Implementation: fetch DEM elevation value at building centroid, sample ~5×5 grid of elevation points around the site, generate a `PlaneGeometry` with vertex displacement. Complexity is in the coordinate-to-tile-to-elevation lookup. Defer to a secondary feature. |
+| **Live what-if scenario analysis** | Toggle a sub-system off, adjust an HVAC setpoint, and see the energy impact update in real time on the heatmap and breakdown dashboard — without committing the change. This "shadow simulation" mode is what makes the tool useful for retrofit planning, not just monitoring. Commercial BEMS tools (Facilio, EnergyCAP) show historical data; they do not let you simulate "what if I replaced these fan coil units?" | HIGH | Builds on existing `use-energy-metrics.ts` + material store override pattern. The delta annotation system (already built for sliders) is the foundation. Key new piece: scenario state store (separate from committed material-store) that holds equipment override hypotheses and feeds the energy engine without modifying persistent state. |
+| **Equipment control linked to energy impact** | Toggling a sub-system or changing a setpoint immediately updates the kWh/m² projection in the status bar and energy cards. The causal chain (control → energy model → display) is explicit and visual. No other tool in the GX team's workflow connects equipment state to energy calculation. | HIGH | The energy calculation engine is already reactive to material-store changes. The same pattern extends to equipment state: `useEquipmentStore` → `calculateAnnualDemand()` with equipment overrides → existing display hooks. The key challenge is modeling "HVAC off" in `annual-demand.ts` (currently assumes all systems operational). |
+| **Korean building code attribution** | Equipment efficiency ratings displayed using Korean standards (KS B 6364 for HVAC, KSC IEC 62301 for electrical) and Korean energy label grades (1~5등급). Auditors are familiar with Korean certification labels, not SEER/EER. No commercial BEMS tool does this for Korean buildings. | LOW | The existing `energy-grade.ts` already implements Korean 1+++~7 grade system. Extend to per-equipment grades. Data inferred from `structureType` + `approvalDate` in building ledger — same inference pattern as PBR material selection. |
+| **Sub-system heatmap by floor** | The heatmap is not just "hot building / cold building" — it shows per-floor energy intensity broken down by sub-system. The HVAC layer heatmap shows which floors have the most HVAC load; the lighting layer shows lighting density. This is not available in any standard web-based BIM tool. | HIGH | Requires per-floor, per-system energy estimates. Can be synthesized from building geometry (floor height, area, occupancy type) + system type ratios. Not actual sub-metered data — modeled estimates clearly labeled as such. The `energy-zones` layer already color-codes floors; extend to accept a system filter. |
+| **ECO2 export with sub-system breakdown** | When the GX team finalizes an audit, they export to ECO2 (Korea's official energy evaluation software). Currently the export (`eco2-export.ts`) sends envelope data only. Adding sub-system data (HVAC type, lighting density, DHW system) makes the ECO2 input file more complete, reducing manual re-entry. | MEDIUM | `generateECO2Input()` in `eco2-export.ts` already handles envelope. Extend the ECO2 schema to include `systemData` fields. Complexity: Korean ECO2 input format for system data (KS F 1900 standard) needs verification — flag for phase research. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| **Full Mapbox/CesiumJS integration** | Looks like the obvious solution — these are the industry-standard GIS rendering engines. The app "could just embed Mapbox." | Mapbox GL JS and CesiumJS each introduce a 300-500KB dependency, a second WebGL context competing with the existing Three.js canvas, and a completely different camera/coordinate system requiring complex synchronization. The existing Three.js stack can do everything needed for LOD1 context rendering. Two WebGL contexts on a single page is a known source of GPU memory pressure and context-loss bugs. | Fetch data from VWorld (cadastral, satellite WMS, zoning WFS) using the existing proxy pattern, render everything in the existing Three.js/R3F canvas. No second rendering engine. |
-| **Full-resolution satellite texture streaming with tile cache** | Tile-based streaming looks better (higher resolution) and is how Mapbox does it. | Stitching multiple WMTS tiles into a seamless Three.js texture requires coordinate transform math, seam handling, and a tile management system. For a ~300m site context view, a single WMS GetMap request at sufficient resolution (1024×1024) is indistinguishable from tile streaming and requires zero tile management. The complexity of tile streaming is not justified for fixed-viewport context rendering. | One WMS GetMap request per composite load, fetched server-side through the existing proxy pattern. Upgrade to tile streaming only if users need to pan/zoom the satellite context (not a current requirement). |
-| **Real-time 3D terrain mesh from DEM** | Terrain looks impressive and the VWorld DEM exists. | Terrain geometry requires: DEM tile fetching, RGB-encoded elevation decoding, mesh generation, and correct vertical scale. This is a significant engineering task, is not required for energy compliance analysis, and may actually distort the building's energy context (shadowing from terrain is rarely modeled in Korean ECO2 methodology). | Flat ground plane as default. Show the site elevation in the building info overlay (fetched from a single DEM point, not a mesh). Defer full terrain mesh to a later milestone if shadow analysis is requested. |
-| **Context building LOD2/LOD3 textures from VWorld** | High-quality context buildings make the render look more photorealistic and more like Google Earth. | VWorld's 3D data API was permanently closed in 2019. Attempting to reconstruct the scrapped XDO format is unsupported and violates the data access terms. LOD1 box extrusions provide correct spatial context (scale, density, shadow volumes) which is all that's needed for energy analysis. | Gray box LOD1 extrusions for all context buildings. The target building has full PBR materials — that contrast is the correct visual hierarchy. |
-| **Interactive map layer controls (show/hide layers at will)** | GIS professionals expect to toggle all layers, adjust transparency, reorder layers like in QGIS. | The GX team are energy auditors, not GIS operators. Full layer controls add UI complexity for features 90% of users never need. Satellite and zoning are the only two toggleable layers needed. | One toggle for satellite texture (on/off), one toggle for zoning overlay (on/off). Both in the contextual toolbar. No layer panel. |
-| **Address geocoding fallback to Google Maps / Kakao** | VWorld geocoding sometimes fails for rural addresses or newly registered parcels. Using Kakao Maps API as a fallback seems prudent. | Adding Kakao or Google as a secondary geocoder introduces a dependency with commercial licensing terms. It also creates ambiguity about which geocoder produced the result. | Use the existing VWorld address geocoder. If VWorld geocoding fails, surface an error with the "copy address to search manually" affordance. Do not silently fall back to a different coordinate system. |
+| **Real-time IoT sensor data feed** | "Real buildings have sensors — show actual sensor readings on the 3D model." Sounds like the natural evolution of the heatmap. | IoT integration (MQTT, BACnet, Modbus, REST polling) requires live infrastructure, authentication per building, and radically different data freshness assumptions. The GX team audits buildings they do not operate — they have no IoT access. Adding real-time feeds addresses a use case (facility management) that is not the GX team's job. | Show modeled energy estimates (already computed by the engine) clearly labeled as "modeled." Display actual consumption from `use-actual-energy.ts` (annual totals from data.go.kr) when available. Do not build a real-time data pipeline. |
+| **Full equipment scheduling editor** | "Let users set HVAC schedules (7am-10pm weekdays), see annual impact." Scheduling is the next logical step after setpoint control. | Equipment scheduling requires modeling 8760-hour simulation (hourly granularity for a full year). The existing `calculateAnnualDemand()` uses HDD/CDD degree-day approximation, not hourly simulation. Replacing the engine to support schedules is a separate milestone. Partial schedule support (e.g., only weekday/weekend split) would be misleading — the model accuracy does not support it. | Simple on/off toggle per sub-system + setpoint adjustment. Model the energy difference using degree-day scaling. Flag full scheduling as a future ECO2-integration milestone. |
+| **Multi-building portfolio comparison** | "Compare this building's heatmap against 10 others in the portfolio." Portfolio view is the natural scale-up after per-building analysis. | Portfolio comparison requires a building database, cross-building normalization (different floor areas, use types, climates), and a fundamentally different UI paradigm (list/grid vs single 3D viewer). This is a separate product surface, not a feature of the single-building viewer. | The `benchmark-comparison.ts` and `benchmark-database.ts` already compare against building type benchmarks. Surface this in the energy breakdown dashboard (e.g., "your HVAC use is 23% above benchmark for RC office buildings"). Defer portfolio UI to a future milestone. |
+| **Photorealistic equipment 3D models** | "Show a realistic AHU or VRF unit in the 3D scene." Looks impressive and helps non-technical stakeholders. | Photorealistic equipment meshes (LOD2/LOD3) require asset libraries (GLTF files for each equipment type) or procedural modeling of HVAC units. These assets do not exist and are not in the current stack. Rendering them correctly requires shadow casting, collision, and placement logic. This is a 3D content production problem, not a code problem. | Stylized InstancedMesh representations (simple box/cylinder primitives in system colors) following the existing procedural building pattern. The structural clarity over photorealism principle from PROJECT.md applies here. |
+| **Per-equipment metered consumption from utility bills** | "Parse electricity bills and show per-circuit consumption on the 3D model." Utility bill parsing gives real data not model estimates. | Utility bill formats (PDF/CSV) vary by Korean utility provider (KEPCO, various district heating operators). Parsing is brittle. The `consumption-normalizer.ts` already handles the data.go.kr energy API which provides building-level actuals — further sub-metering from bills requires on-site data collection that the GX team does not have for audit buildings. | Use the existing `use-actual-energy.ts` total for reality-grounding. Use modeled sub-system breakdown (clearly labeled as estimated). Add a "flag for sub-metering" annotation if a zone's modeled consumption deviates significantly from actual. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[Cadastral footprint polygon]
-    └──required by──> [Real parcel footprint as building base]
-    └──required by──> [Context buildings extrusion] (centroid + bbox derived from footprint)
-    └──required by──> [Camera anchor to building] (bounds from polygon)
-    └──required by──> [Building ledger label overlay] (centroid from polygon)
-    └──already built──> VWorld LP_PA_CBND_BUBUN proxy in footprint/route.ts
+[MEP sub-layer type extension]
+    └──required by──> [Individual utility sub-layer toggles]
+    └──required by──> [Equipment info panel] (needs sub-layer raycasting scope)
+    └──required by──> [Sub-system heatmap by floor] (needs system-specific energy attribution)
+    └──required by──> [Equipment control] (controls target specific sub-layers)
+    └──ALREADY PARTIALLY BUILT──> 15 generator files in src/lib/layers/
 
-[VWorld satellite WMS proxy]
-    └──required by──> [Satellite/orthophoto ground plane]
-    └──NOT built──> New proxy route needed (parallel to footprint/route.ts)
+[Per-floor / per-system energy model]
+    └──required by──> [Energy consumption heatmap]
+    └──required by──> [Energy breakdown dashboard]
+    └──required by──> [Sub-system heatmap by floor]
+    └──depends on──>  [calculateAnnualDemand()] (ALREADY BUILT — needs per-zone extension)
 
-[VWorld getBuildingUse NED API or cadastral WFS bbox query]
-    └──required by──> [Context buildings with height]
-    └──NOT built──> New proxy route for bbox-based building lookup
+[Scenario / equipment state store]
+    └──required by──> [What-if scenario analysis]
+    └──required by──> [Equipment control → energy impact]
+    └──depends on──>  [material-store override pattern] (ALREADY BUILT — same architecture)
+    └──depends on──>  [MEP sub-layer type extension]
 
-[THREE.ExtrudeGeometry from polygon]
-    └──required by──> [Real parcel footprint as building base]
-    └──required by──> [Context buildings extrusion]
-    └──depends on──>  [THREE.Shape from coordinate array] (standard Three.js API)
+[Equipment data model]
+    └──required by──> [Equipment info panel]
+    └──required by──> [Equipment control]
+    └──required by──> [Korean building code attribution]
+    └──depends on──>  [BuildingRecipe + building ledger data] (ALREADY IN STACK)
 
-[Parallel fetch pipeline]
-    └──required by──> [Address → instant composite render]
-    └──depends on──>  [TanStack Query] (ALREADY IN STACK)
-    └──depends on──>  [All VWorld proxy routes]
+[Energy breakdown data]
+    └──required by──> [Energy breakdown dashboard]
+    └──required by──> [ECO2 export with sub-system data]
+    └──depends on──>  [Per-floor / per-system energy model]
 
-[Zoning WFS proxy]
-    └──required by──> [Zoning/land-use overlay]
-    └──NOT built──> New proxy route for LT_C_UQ111-114
-
-[workflowStore GIS pre-stage]
-    └──required by──> [Seamless GIS-to-BIM transition]
-    └──depends on──>  [workflowStore FSM] (ALREADY BUILT in v3.0)
-
-[DEM elevation proxy]
-    └──required by──> [Terrain-aware building placement]
-    └──NOT built──> New proxy route; complexity HIGH — defer
+[Raycasting on MEP sub-layer meshes]
+    └──required by──> [Equipment info panel]
+    └──PATTERN EXISTS──> structural-tooltip.tsx (Raycaster + hover popup)
 ```
 
 ### Dependency Notes
 
-- **Footprint polygon is already fetched.** The `footprint/route.ts` proxy is live. What is not built is using the polygon as the `ExtrudeGeometry` base. This is the highest-value, lowest-risk feature.
-- **VWorld 3D building API is permanently closed.** Context buildings require construction from 2D data (footprint + height). This changes the architecture from "stream 3D models" to "fetch 2D features + extrude in the browser."
-- **Satellite imagery requires a new proxy route** but follows the exact same Next.js route pattern as `footprint/route.ts`. The WMS endpoint is known: `https://api.vworld.kr/req/wms`.
-- **Context buildings are the hardest feature.** The bbox-based building query (to find all buildings near a coordinate) requires either VWorld WFS `LP_PA_CBND_BUBUN` with a geometry filter OR the NED `getBuildingUse` API, both of which return per-parcel data that must be iterated. Performance matters: a 300m radius can contain 50-200 buildings.
-- **Zoning overlay depends on no other feature** — it is entirely independent of the other layers and can be built in isolation.
-- **Terrain is the only feature with no known VWorld API path** — DEM is available but requires tile-coordinate math. Defer.
+- **MEP sub-layer type extension is the foundation.** Every other v5.0 feature either directly requires or is enhanced by having distinct sub-layer ids. This must ship first. The 15 individual generator files are already written — the architectural debt is the `LayerId` union and the store `Record<LayerId, ...>` shape.
+- **Per-zone energy model is the second dependency.** The heatmap and breakdown dashboard both need floor/zone-level energy estimates, which `calculateAnnualDemand()` does not currently produce. This is a pure engine extension — no UI needed before it's usable by other features.
+- **Scenario store can reuse the material-store override pattern exactly.** The delta annotation system (slider → delta display) proves the reactive architecture works. The scenario store is the same pattern applied to equipment state instead of material properties.
+- **Equipment info panel and control are independent of the heatmap** — they share the scenario store but do not depend on zone coloring being complete.
+- **What-if analysis is the capstone feature** — it integrates sub-layers, equipment control, and the energy engine into a coherent user flow.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v4.0 core)
+### Launch With (v5.0 core)
 
-Minimum viable GIS composite that delivers "instant realistic draft" value to the GX team.
+Minimum viable energy observability that delivers actionable insight to the GX team.
 
-- [ ] **Real cadastral footprint as building base** — This alone eliminates the primary visual failure of v3.0 (rectangular box). The polygon is already fetched; wire it to `ExtrudeGeometry`. Highest value-to-cost ratio of any v4.0 feature.
-- [ ] **Satellite/orthophoto ground plane** — Without aerial context, the user cannot confirm the building is the correct one. This is the spatial reference that makes the composite "feel real." A single WMS GetMap call returns a texture usable immediately.
-- [ ] **Parallel fetch pipeline** — Auto-fire all VWorld data requests on building selection, compose what resolves. Users should never need to click "load context" — it happens automatically. This requires coordinating TanStack Query calls, not building a new framework.
-- [ ] **Context buildings (LOD1 gray box)** — Even crude box extrusions from adjacent footprints establish spatial scale. The GX team needs to verify that the target building is not shadowed by taller neighbors — this requires context geometry, not textures. Implementation is the hardest of the MVP features; use fallback inferred height (floor count × 3m) if `buldHg` is unavailable.
-- [ ] **Building ledger label overlay** — The building's address, floor count, structure type, and permitted year as an anchored HTML label. Zero new data fetching; reuses the already-loaded building ledger result.
+- [ ] **MEP sub-layer toggles (electrical, HVAC, lighting, plumbing/DHW)** — The single MEP toggle is the most-cited limitation. Splitting into 4 primary sub-layers (not all 15) is the 80/20: electrical distribution, HVAC (cooling + heating + ventilation grouped), lighting, and DHW/plumbing. The existing generator files cover these. Essential for scoping any equipment-level analysis.
+- [ ] **Energy breakdown dashboard (bar/donut by system type)** — Even with modeled estimates and ASHRAE-derived system ratios, a breakdown chart answers "what should we retrofit first?" immediately. No new data source needed — extend `calculateAnnualDemand()` with system attribution using building type ratios. The breakdown feeds the heatmap and the scenario analysis.
+- [ ] **Energy consumption heatmap (per-floor, building-total)** — Color-coded floors by kWh/m² intensity using the existing `energy-zones` layer as the rendering surface. Start with building-total (not per-system) heatmap. The existing floor zone geometry is the canvas; only the color mapping logic is new.
+- [ ] **Equipment info panel (click → specs popup)** — Click on an HVAC zone or electrical zone and see inferred specs (type, efficiency grade, approximate age from ledger permit date). Uses the structural-tooltip raycasting pattern. Equipment data is inferred, not user-entered — clearly labeled as estimated.
 
-### Add After Validation (v4.x)
+### Add After Validation (v5.x)
 
-- [ ] **Zoning/land-use overlay toggle** — Add when GX team needs to verify zoning classification against energy compliance rules. Trigger: a user asks "what zoning is this building in?"
-- [ ] **GIS-to-BIM transition animation** — Add after composite and BIM modes are both stable. Trigger: user feedback that switching between the two views is jarring.
-- [ ] **Context building count/radius control** — Default 200m radius is correct for most urban sites. Trigger: user complaints about too many or too few context buildings.
+- [ ] **Basic equipment control (on/off toggle + HVAC setpoint)** — Add once info panels are validated. The scenario store architecture is a prerequisite. Trigger: GX team asks "what happens if we shut down this AHU?"
+- [ ] **What-if scenario analysis (compare baseline vs modified)** — Add when equipment control is stable. Requires scenario store + energy engine integration. Trigger: GX team uses equipment toggles and asks to save/compare scenarios.
+- [ ] **Sub-system heatmap filter** (show HVAC heatmap vs lighting heatmap) — Add after baseline heatmap is validated. Trigger: GX team needs to compare system-specific floor loads.
+- [ ] **ECO2 export with sub-system breakdown** — Add when system data model is stable. Flag for research: verify Korean ECO2 input schema for system data fields (KS F 1900).
 
-### Future Consideration (v4.x+)
+### Future Consideration (v5.x+)
 
-- [ ] **Terrain-aware building placement** — Defer until shadow analysis is a GX team requirement. HIGH complexity, LOW immediate value for compliance-focused use cases.
-- [ ] **Dynamic satellite tile streaming with pan/zoom** — Defer until users need to navigate beyond the ~300m context radius. Single WMS image is sufficient for static composite view.
-- [ ] **LOD2 context buildings from third-party data** — If VWorld ever re-opens its 3D API or a Korean LOD2 dataset becomes available (e.g., OpenStreetMap buildings with roof types), upgrade context from LOD1 to LOD2. Not actionable in 2026.
+- [ ] **All 15 sub-layer toggles individually** — Telecom, media, waste, microgrid, safety are low-priority for energy audits. Expose only after the 4 primary sub-systems are validated.
+- [ ] **Per-equipment setpoint scheduler** — Requires 8760-hour simulation engine. Defer until ECO2 integration milestone.
+- [ ] **Portfolio comparison across buildings** — Separate product surface. Defer to Digital Twin platform milestone.
 
 ---
 
@@ -146,92 +146,80 @@ Minimum viable GIS composite that delivers "instant realistic draft" value to th
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Real cadastral footprint as building base | HIGH | LOW | P1 |
-| Satellite/orthophoto ground plane | HIGH | LOW | P1 |
-| Parallel fetch pipeline (auto-composite) | HIGH | MEDIUM | P1 |
-| Context buildings LOD1 gray box | HIGH | HIGH | P1 |
-| Building ledger label overlay | MEDIUM | LOW | P1 |
-| Zoning/land-use overlay toggle | MEDIUM | MEDIUM | P2 |
-| Target vs. context visual differentiation | MEDIUM | LOW | P2 |
-| GIS-to-BIM workflow stage transition | HIGH | MEDIUM | P2 |
-| Camera fly-to on composite load | MEDIUM | LOW | P2 |
-| Progressive loading / skeleton states | MEDIUM | LOW | P2 |
-| Terrain-aware building placement | LOW | HIGH | P3 |
-| Satellite tile streaming (pan/zoom) | LOW | HIGH | P3 |
-| LOD2 context buildings | LOW | HIGH | P3 |
+| MEP sub-layer toggles (4 primary) | HIGH | MEDIUM | P1 |
+| Energy breakdown dashboard | HIGH | MEDIUM | P1 |
+| Per-floor energy heatmap | HIGH | HIGH | P1 |
+| Equipment info panel (inferred specs) | HIGH | MEDIUM | P1 |
+| Equipment on/off toggle + energy impact | HIGH | HIGH | P2 |
+| HVAC setpoint control + energy delta | HIGH | HIGH | P2 |
+| What-if scenario store + compare view | HIGH | HIGH | P2 |
+| Sub-system heatmap filter | MEDIUM | MEDIUM | P2 |
+| Korean building code grade attribution | MEDIUM | LOW | P2 |
+| ECO2 export sub-system data | MEDIUM | MEDIUM | P3 |
+| All 15 sub-layer toggles | LOW | LOW | P3 |
+| Equipment scheduling | LOW | HIGH | P3 |
 
 **Priority key:**
-- P1: Must have for v4.0 — core "instant composite draft" thesis
-- P2: Should have, add when P1 features are validated by GX team
-- P3: Future milestone — high complexity or blocked by external data availability
-
----
-
-## VWorld Data Layer Reference
-
-Confirmed available for this project (user has VWorld account, API key already in codebase):
-
-| Dataset / Endpoint | Purpose | Notes |
-|--------------------|---------|-------|
-| `LP_PA_CBND_BUBUN` (Data API) | Cadastral footprint polygon | Already proxied in `src/app/api/vworld/footprint/route.ts`. Supports PNU filter and bbox filter. |
-| VWorld WMS `Satellite` layer | Aerial orthophoto ground texture | WMTS URL: `https://api.vworld.kr/req/wmts/1.0.0/{key}/Satellite/{z}/{y}/{x}.jpeg`. For static bbox texture, use WMS GetMap instead. |
-| VWorld WMS `Base` layer | Street map overlay (optional debug) | Same WMTS pattern with `Base` layer name. |
-| `getBuildingUse` NED API | Per-parcel building height (`buldHg`), floor count | `https://api.vworld.kr/ned/data/getBuildingUse?pnu={pnu}`. Returns height and floor count. PNU-based — need to iterate per building in bbox. |
-| `LT_C_UQ111` (WFS) | 도시지역 zoning polygon | WFS at `https://api.vworld.kr/req/wfs`. Returns GeoJSON polygons for zoning districts. |
-| `LT_C_UQ112` (WFS) | 관리지역 zoning polygon | Same WFS endpoint, different typeName. |
-| `LT_C_UQ113` (WFS) | 농림지역 zoning polygon | Same WFS endpoint. |
-| `LT_C_UQ114` (WFS) | 자연환경보전지역 zoning polygon | Same WFS endpoint. |
-
-**Confirmed closed / unavailable:**
-- VWorld 3D building geometry API (XDO format) — permanently closed July 2019 for national security reasons. LOD1 context buildings must be synthesized from 2D data.
+- P1: Must have for v5.0 — core "energy observability" thesis
+- P2: Should have, add once P1 features are validated
+- P3: Future milestone or blocked on external schema verification
 
 ---
 
 ## Existing Codebase Integration Points
 
-Dependencies on what is already built in v3.0:
-
-| Feature | Existing Asset | How It's Used |
-|---------|---------------|---------------|
-| Footprint polygon → building base | `src/app/api/vworld/footprint/route.ts` | Already returns `[x,z]` meter-space polygon array. Wire to `THREE.Shape` → `THREE.ExtrudeGeometry` in `procedural-building.ts` to replace `BoxGeometry` base. |
-| Context building extrusion | `src/lib/procedural/structure-generator.ts` (InstancedMesh pattern) | Context buildings are NOT the same procedural system — they are simple gray boxes. Use `THREE.ExtrudeGeometry` + `THREE.MeshStandardMaterial` directly. Do NOT route through `ProceduralBuilding` (that's for the target building only). |
-| PBR material differentiation | `src/lib/pbr-materials.ts` | Target building: full PBR pipeline (unchanged). Context buildings: flat gray `MeshStandardMaterial`. This contrast is the correct visual hierarchy without any new code. |
-| Parallel fetch coordination | TanStack Query v5 (`useQueries` or `Promise.allSettled`) | Already in the stack. Use `useQueries` to fire all VWorld requests in parallel and merge results. Each GIS layer is a separate query key so they resolve independently and can be individually retried. |
-| Data proxy pattern | `src/app/api/bldrgst/` and `src/app/api/vworld/footprint/route.ts` | New VWorld proxy routes follow identical Next.js `Route Handler` pattern. Add `src/app/api/vworld/satellite/route.ts`, `src/app/api/vworld/context-buildings/route.ts`, `src/app/api/vworld/zoning/route.ts`. |
-| Building ledger data | `src/lib/api-client.ts` + TanStack Query | Building ledger (floor count, structure type, era) is already in cache when the composite renders. Label overlay reads from this cache with no new fetch. |
-| Scene coordinate system | `src/app/api/vworld/footprint/route.ts` `extractPolygon()` | All GIS features must use the same equirectangular projection (meters from building centroid in EPSG:4326). The footprint proxy already establishes this origin. Satellite tile bounds, context building footprints, and zoning polygons all use the same centroid as origin. |
-| Workflow stage integration | `src/store/workflow-store.ts` | Add `"gis-composite"` as a pre-stage before `"select"`. The composite view is active in this stage; transitioning to `"select"` fades out context geometry. |
+| Feature | Existing Asset | Gap |
+|---------|---------------|-----|
+| MEP sub-layer toggles | 15 generator files in `src/lib/layers/`, `LayerManager`, `layer-store.ts` | `LayerId` union must be extended; `layer-store.ts` `Record<LayerId, ...>` must widen; `LayerPanel` UI needs sub-layer rows |
+| Energy heatmap | `energy-zones` layer in `LayerManager`, `calculateAnnualDemand()` | Per-floor demand breakdown not yet produced; color mapping from kWh/m² to gradient not implemented |
+| Equipment info panel | `structural-tooltip.tsx` raycasting pattern | Equipment data model (`EquipmentSpec`) not defined; raycasting must scope to MEP sub-layer objects only |
+| Breakdown dashboard | `energy-cards.tsx`, `calculateAnnualDemand()` (heating + cooling already split) | System category attribution (lighting, DHW, plug loads) not in energy model; chart component not built |
+| Equipment control | `material-store.ts` override pattern, `use-energy-delta.ts` | `useEquipmentStore` not built; `calculateAnnualDemand()` does not accept equipment-off flags |
+| What-if scenarios | `useEnergyMetrics` reactive pipeline | Scenario isolation store (hypotheses vs committed state) not built |
 
 ---
 
-## Competitor Feature Analysis
+## Phase Ordering Rationale
 
-| Feature | Mapbox GL JS 3D | CesiumJS | Google Maps 3D | Our Approach |
-|---------|-----------------|----------|----------------|--------------|
-| Building footprint accuracy | OpenStreetMap or Mapbox data | OpenStreetMap or 3D Tiles | Google's proprietary dataset | VWorld cadastral `LP_PA_CBND_BUBUN` — official Korean government data, highest accuracy for Korean addresses |
-| Context building source | Mapbox 3D Buildings layer (vector tiles) | Cesium OSM Buildings (3D Tiles) | Photogrammetry LOD2 | VWorld 2D building data + client-side extrusion; LOD1 only but Korea-accurate |
-| Satellite imagery | Mapbox Satellite tiles | Bing Maps by default | Google Satellite | VWorld Satellite WMTS — Korean government imagery, consistent resolution |
-| Terrain | Mapbox Terrain-DEM tiles (automatic) | Cesium World Terrain | Google terrain | Manual DEM fetch (P3 feature) — flat ground for v4.0 |
-| Zoning data | Not available in standard layers | Not available in standard layers | Not available | VWorld WFS `LT_C_UQ111-114` — unique differentiator |
-| Time to composite | ~1-2s (tile streaming, requires Mapbox account) | ~2-3s (massive library, slower cold start) | N/A (proprietary) | Target <3s — single-image WMS + parallel VWorld API calls via Next.js proxy |
-| Integration with BIM authoring | None (map viewer only) | None (geospatial renderer only) | None | Seamless: same Three.js canvas, same workflowStore stage machine, one scene |
+The feature dependency graph implies this phase order for v5.0:
+
+1. **MEP sub-layer type extension + store** — Architectural foundation. Blocks every other feature. Low UI risk; pure type/store/LayerManager work.
+2. **Per-floor/per-system energy model extension** — Engine work with no UI. Unblocks heatmap and breakdown simultaneously.
+3. **Energy breakdown dashboard** — First visible deliverable. Uses extended energy model. Validates the system attribution approach with GX team before building control features.
+4. **Energy consumption heatmap** — Second visible deliverable. Uses per-floor energy model on existing zone geometry.
+5. **Equipment info panel** — Raycasting on MEP meshes + inferred spec display. Validates the equipment data model before control is added.
+6. **Equipment control + scenario store** — Adds mutation on top of the validated info panel. The scenario store is the capstone architectural piece.
+7. **What-if comparison view** — Integrates everything. Deferred to v5.x if time is limited.
+
+---
+
+## BEMS Industry Reference
+
+What commercial tools show in their energy dashboards (verified against Facilio, EnergyCAP, Wattsense, CIM.io descriptions — MEDIUM confidence):
+
+| Capability | Commercial BEMS Standard | Our Approach |
+|------------|--------------------------|-------------|
+| System-level energy breakdown | Bar chart or pie chart by HVAC/lighting/plug loads — standard in all BEMS dashboards | Extend `calculateAnnualDemand()` with system attribution; display in new breakdown card |
+| Spatial energy visualization | Floor plan heatmap (2D) is industry standard; 3D heatmap is rare and more compelling | 3D heatmap on existing building geometry — differentiator vs any commercial tool |
+| Equipment control | Real-time BACnet/Modbus control — requires facility operator role | Simulated "what-if" control — appropriate for auditor role without facility access |
+| Historical trending | Time-series charts of consumption — standard | Existing `use-actual-energy.ts` provides 3 years of monthly actuals; surface in breakdown dashboard |
+| Alerts/anomaly detection | Threshold alerts — requires persistent monitoring | Not in scope for v5.0; flag for Digital Twin platform milestone |
 
 ---
 
 ## Sources
 
-- VWorld LP_PA_CBND_BUBUN cadastral API: `src/app/api/vworld/footprint/route.ts` (live in codebase) — HIGH confidence
-- VWorld 3D API closure (2019): [vw-lab.com](https://www.vw-lab.com/53) — MEDIUM confidence (Korean-language blog, single source, but consistent with absence of any 3D API documentation post-2019)
-- VWorld WMTS satellite layer URL pattern: [vworld.kr WMTS reference](https://vworld.kr/dev/v4dv_wmtsguide_s001.do), confirmed against known tile URL structure `{key}/Satellite/{z}/{y}/{x}` — MEDIUM confidence (page required login to view full spec)
-- VWorld getBuildingUse NED API with `buldHg` field: [qquack.org OpenAPI guide](https://qquack.org/excel/openapi-buildinginfo/) — MEDIUM confidence (third-party docs)
-- VWorld WFS zoning layers LT_C_UQ111-114: [PublicDataReader VworldData.md](https://github.com/WooilJeong/PublicDataReader/blob/main/assets/docs/vworld/VworldData.md) — MEDIUM confidence
-- VWorld WMS/WFS API reference: [vworld.kr WMS/WFS guide](https://www.vworld.kr/dev/v4dv_wmsguide2_s001.do) — MEDIUM confidence (accessed structure, not full layer list)
-- LOD1 generation by extrusion: [3dfier docs](https://tudelft3d.github.io/3dfier/generate_lod1.html), [3D city models Wikipedia](https://en.wikipedia.org/wiki/3D_city_models) — HIGH confidence (established GIS practice)
-- Three.js ExtrudeGeometry for polygon extrusion: [three.js docs](https://threejs.org/docs/pages/ExtrudeGeometry.html) — HIGH confidence
-- InstancedMesh performance for context buildings: [three.js InstancedMesh docs](https://threejs.org/docs/pages/InstancedMesh.html), existing codebase `structure-generator.ts` — HIGH confidence
-- Mapbox 2s load time for 3D buildings: [LogRocket Cesium vs Mapbox](https://blog.logrocket.com/cesium-vs-mapbox-which-mapping-service-is-best/) — LOW confidence (single benchmark, not reproducible in this context)
-- three-geo library for satellite terrain: [w3reality/three-geo](https://github.com/w3reality/three-geo) — HIGH confidence (library exists but Mapbox DEM dependency makes it inappropriate for VWorld-only integration)
+- Existing codebase: `src/lib/layers/types.ts` (5-layer `LayerId` union), `src/store/layer-store.ts` (`Record<LayerId, boolean>` shape), `src/lib/layers/layer-manager.ts` (`COMPONENT_TO_LAYER` mapping) — HIGH confidence
+- Existing codebase: `src/lib/energy/` (14 files — heat-loss, annual-demand, co2, grade, climate, calibration, benchmark) — HIGH confidence
+- Existing codebase: `src/hooks/use-energy-metrics.ts`, `src/hooks/use-actual-energy.ts`, `src/components/viewer/energy-cards.tsx` — HIGH confidence
+- Existing codebase: `src/components/viewer/structural-tooltip.tsx` (raycasting pattern) — HIGH confidence (verified via ls)
+- [Facilio BEMS overview](https://facilio.com/learn/building-energy-management-system/) — MEDIUM confidence (marketing page, not technical spec)
+- [EnergyCAP building energy monitoring guide](https://www.energycap.com/blog/building-energy-monitoring/) — MEDIUM confidence
+- [Wattsense BEMS guide](https://www.wattsense.com/blog/building-management/bems/) — MEDIUM confidence
+- [CIM.io BEMS overview](https://www.cim.io/blog/building-energy-management-systems-bems) — MEDIUM confidence
+- PROJECT.md: "structural clarity over photorealism" principle, v5.0 milestone target features — HIGH confidence
 
 ---
-*Feature research for: Korean BIM Energy Management System — v4.0 GIS-Composite Realistic Drafts*
-*Researched: 2026-04-03*
+
+*Feature research for: Korean BIM Energy Management System — v5.0 Energy Systems Observability & Control*
+*Researched: 2026-04-12*

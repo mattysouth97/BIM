@@ -49,7 +49,11 @@ function CheckboxRow({
 
 export function EquipmentTab({ buildingPk }: EquipmentTabProps) {
   const isKo = useAppStore((s) => s.language) === "ko";
-  const params = useEquipmentStore((s) => s.getParams(buildingPk));
+  // Subscribe to params record directly (stable reference); fall back to module-level default.
+  // DO NOT call s.getParams(buildingPk) — it creates a new object via JSON.parse every render,
+  // triggering React's "getSnapshot should be cached" warning and infinite-loop risk.
+  const params =
+    useEquipmentStore((s) => s.params[buildingPk]) ?? DEFAULT_MEP_EQUIPMENT_PARAMS;
   const overrideParam = useEquipmentStore((s) => s.overrideParam);
   const setParams = useEquipmentStore((s) => s.setParams);
 
