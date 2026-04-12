@@ -137,7 +137,8 @@ export class LayerManager {
         if (
           obj instanceof THREE.Mesh ||
           obj instanceof THREE.InstancedMesh ||
-          obj instanceof THREE.Points
+          obj instanceof THREE.Points ||
+          obj instanceof THREE.Line  // VentilationLayer airflow trails use Line + ShaderMaterial
         ) {
           const mat = obj.material;
           if (
