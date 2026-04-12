@@ -180,3 +180,4 @@ Plans:
 | 25. Energy Consumption Heatmap | v5.0 | 1/1 | Complete   | 2026-04-12 |
 | 26. Equipment Info Panel | v5.0 | 2/2 | Complete   | 2026-04-12 |
 | 27. ECO2 Sub-System Export | v5.0 | 0/? | Not started | - |
+| 28. Procedural 3D Models for MEP Equipment | v5.0 | 0/? | Not started | - |
