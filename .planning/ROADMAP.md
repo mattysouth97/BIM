@@ -108,7 +108,10 @@ Plans:
   2. Every estimated-ratio value in the chart carries a visible amber "estimated" label — no unlabeled estimates
   3. The chart updates reactively when the user adjusts any material property slider
   4. The chart does not re-render during camera rotation (verified via React DevTools profiler)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 24-01-PLAN.md — Install recharts + shadcn chart, build EnergyBreakdownChart, wire as 5th ConfigPanel tab
+- [ ] 24-02-PLAN.md — React.memo hardening + human-verify checkpoint (SC1/SC2/SC3/SC4 incl. profiler)
 **UI hint**: yes
 
 ### Phase 25: Energy Consumption Heatmap
@@ -154,7 +157,7 @@ Plans:
 | 21. Composite Pipeline | v4.0 | 2/2 | Complete | 2026-04-12 |
 | 22. MEP Sub-Layer Foundation | v5.0 | 3/3 | Complete   | 2026-04-11 |
 | 23. Per-Floor Energy Model | v5.0 | 2/2 | Complete   | 2026-04-12 |
-| 24. Energy Breakdown Dashboard | v5.0 | 0/? | Not started | - |
+| 24. Energy Breakdown Dashboard | v5.0 | 0/2 | In Progress | - |
 | 25. Energy Consumption Heatmap | v5.0 | 0/? | Not started | - |
 | 26. Equipment Info Panel | v5.0 | 0/? | Not started | - |
 | 27. ECO2 Sub-System Export | v5.0 | 0/? | Not started | - |
