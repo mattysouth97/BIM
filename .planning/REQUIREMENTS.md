@@ -15,7 +15,7 @@ Requirements for Energy Systems Observability & Control milestone.
 ### Energy Analytics
 
 - [x] **EA-01**: Energy calculation engine produces per-floor kWh/m² estimates (not just building total)
-- [ ] **EA-02**: Energy breakdown dashboard displays system-level distribution (HVAC, lighting, plug loads, DHW) as a chart with percentage attribution
+- [x] **EA-02**: Energy breakdown dashboard displays system-level distribution (HVAC, lighting, plug loads, DHW) as a chart with percentage attribution
 - [x] **EA-03**: Energy consumption heatmap color-codes building floors by kWh/m² intensity on the 3D geometry (green-to-red gradient)
 
 ### Equipment Interaction
@@ -61,7 +61,7 @@ Deferred to next minor release. Tracked but not in current roadmap.
 | MEP-01 | Phase 22 | Complete |
 | MEP-02 | Phase 22 | Complete |
 | EA-01 | Phase 23 | Complete |
-| EA-02 | Phase 24 | Pending |
+| EA-02 | Phase 24 | Complete |
 | EA-03 | Phase 25 | Complete |
 | EQ-01 | Phase 26 | Pending |
 | EQ-02 | Phase 26 | Pending |
