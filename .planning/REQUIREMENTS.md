@@ -30,7 +30,7 @@ Requirements for Energy Systems Observability & Control milestone.
 
 ### Equipment Geometry
 
-- [ ] **EQUIP-01**: Each piece of MEP equipment (기계설비) renders as a distinct, recognizable procedural 3D model with configurable parameters (size, count, spacing, LOD) that update in real time
+- [x] **EQUIP-01**: Each piece of MEP equipment (기계설비) renders as a distinct, recognizable procedural 3D model with configurable parameters (size, count, spacing, LOD) that update in real time
 
 ## v5.x Requirements
 
@@ -71,7 +71,7 @@ Deferred to next minor release. Tracked but not in current roadmap.
 | EQ-02 | Phase 26 | Complete |
 | STD-01 | Phase 26 | Complete |
 | STD-02 | Phase 27 | Complete |
-| EQUIP-01 | Phase 28 | Pending |
+| EQUIP-01 | Phase 28 | Complete |
 
 **Coverage:**
 - v5.0 requirements: 10 total

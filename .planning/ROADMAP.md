@@ -168,7 +168,7 @@ Plans:
   5. Existing Phase 22 sub-layer toggling + Phase 26 click selection continue to work with the new models
 **Plans**: 5 plans
 Plans:
-- [ ] 28-01-PLAN.md — Foundation: MepEquipmentParams types + DEFAULT_MEP_EQUIPMENT_PARAMS + equipment-store (Zustand, per-buildingPk, overrideParam nested-path)
+- [x] 28-01-PLAN.md — Foundation: MepEquipmentParams types + DEFAULT_MEP_EQUIPMENT_PARAMS + equipment-store (Zustand, per-buildingPk, overrideParam nested-path)
 - [ ] 28-02-PLAN.md — HVAC generators upgrade: chiller (body + grille + pipe stubs) + boiler (cylinder + flue) + VRF head IM + fan coil IM in layer-3/4
 - [ ] 28-03-PLAN.md — Ventilation generator upgrade: merged AHU geometry (body + duct stubs + TorusGeometry fan ring) replacing floating duct Meshes in layer-5
 - [ ] 28-04-PLAN.md — DHW + Lighting upgrades: tank pipe stubs + pump housing (layer-6) + fixture ≥0.08m with diffuser face + panel door outline (layer-7)
@@ -188,4 +188,4 @@ Plans:
 | 25. Energy Consumption Heatmap | v5.0 | 1/1 | Complete   | 2026-04-12 |
 | 26. Equipment Info Panel | v5.0 | 2/2 | Complete   | 2026-04-12 |
 | 27. ECO2 Sub-System Export | v5.0 | 1/1 | Complete   | 2026-04-12 |
-| 28. Procedural 3D Models for MEP Equipment | v5.0 | 0/5 | Planned | - |
+| 28. Procedural 3D Models for MEP Equipment | v5.0 | 1/5 | In Progress|  |

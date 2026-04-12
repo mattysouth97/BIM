@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v5.0
 milestone_name: Energy Systems Observability & Control
 status: verifying
-stopped_at: Completed 27-eco2-sub-system-export/27-01-PLAN.md
-last_updated: "2026-04-12T00:51:15.531Z"
+stopped_at: Completed 28-procedural-mep-equipment-models/28-01-PLAN.md
+last_updated: "2026-04-12T01:05:41.569Z"
 last_activity: 2026-04-12
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 11
-  completed_plans: 10
-  percent: 91
+  total_plans: 16
+  completed_plans: 11
+  percent: 69
 ---
 
 # Project State
@@ -56,6 +56,7 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 | Phase 26-equipment-info-panel P01 | 315s | 2 tasks | 4 files |
 | Phase 26-equipment-info-panel P02 | 420 | 2 tasks | 4 files |
 | Phase 27-eco2-sub-system-export P01 | 8 | 3 tasks | 3 files |
+| Phase 28-procedural-mep-equipment-models P01 | 12 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
 - [Phase 27-eco2-sub-system-export]: Reused EnergyDataSource union from system-breakdown.ts for subSystems provenance — no new vocabulary
 - [Phase 27-eco2-sub-system-export]: subSystems is additive-optional on ECO2ExtraOptions — all existing 3-arg callers compile unchanged
 - [Phase 27-eco2-sub-system-export]: buildSubSystems reads materials verbatim, not re-derived from era (Pitfall 2 guard)
+- [Phase 28-procedural-mep-equipment-models]: overrideParam initializes from DEFAULT on missing pk — prevents silent write drops unlike material-store pattern
+- [Phase 28-procedural-mep-equipment-models]: No persist middleware in equipment-store — params are session-local era-derived defaults, persisting causes stale override regression
 
 ### Pending Todos
 
@@ -103,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-12T00:51:15.528Z
-Stopped at: Completed 27-eco2-sub-system-export/27-01-PLAN.md
+Last session: 2026-04-12T01:05:41.565Z
+Stopped at: Completed 28-procedural-mep-equipment-models/28-01-PLAN.md
 Resume file: None
