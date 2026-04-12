@@ -172,7 +172,7 @@ Plans:
 - [ ] 28-02-PLAN.md — HVAC generators upgrade: chiller (body + grille + pipe stubs) + boiler (cylinder + flue) + VRF head IM + fan coil IM in layer-3/4
 - [ ] 28-03-PLAN.md — Ventilation generator upgrade: merged AHU geometry (body + duct stubs + TorusGeometry fan ring) replacing floating duct Meshes in layer-5
 - [ ] 28-04-PLAN.md — DHW + Lighting upgrades: tank pipe stubs + pump housing (layer-6) + fixture ≥0.08m with diffuser face + panel door outline (layer-7)
-- [ ] 28-05-PLAN.md — Equipment tab UI: new config-tabs/equipment-tab.tsx with 6 sections of SliderRow + checkboxes + bilingual labels + human-verify checkpoint
+- [x] 28-05-PLAN.md — Equipment tab UI: new config-tabs/equipment-tab.tsx with 6 sections of SliderRow + checkboxes + bilingual labels + human-verify checkpoint
 **UI hint**: yes
 
 ## Progress
@@ -188,4 +188,4 @@ Plans:
 | 25. Energy Consumption Heatmap | v5.0 | 1/1 | Complete   | 2026-04-12 |
 | 26. Equipment Info Panel | v5.0 | 2/2 | Complete   | 2026-04-12 |
 | 27. ECO2 Sub-System Export | v5.0 | 1/1 | Complete   | 2026-04-12 |
-| 28. Procedural 3D Models for MEP Equipment | v5.0 | 1/5 | In Progress|  |
+| 28. Procedural 3D Models for MEP Equipment | v5.0 | 2/5 | In Progress|  |
