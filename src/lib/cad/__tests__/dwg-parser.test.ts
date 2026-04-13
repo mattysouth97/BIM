@@ -156,4 +156,44 @@ describe("parseDwgFile", () => {
       result.warnings.some((w) => w.includes("Unrecognised DWG version")),
     ).toBe(true);
   });
+
+  it("retries WASM load after a previous failure (cache reset)", async () => {
+    const dxfText = [
+      "0", "SECTION", "2", "HEADER",
+      "9", "$INSUNITS", "70", "6",
+      "0", "ENDSEC",
+      "0", "SECTION", "2", "ENTITIES",
+      "0", "LWPOLYLINE",
+      "8", "WALL",
+      "90", "4", "70", "1",
+      "10", "0", "20", "0",
+      "10", "12", "20", "0",
+      "10", "12", "20", "10",
+      "10", "0", "20", "10",
+      "0", "ENDSEC",
+      "0", "EOF",
+    ].join("\n");
+
+    // First call: server fallback returns 501
+    globalThis.fetch = vi.fn().mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({ error: "not available", hint: "Export as DXF." }),
+        { status: 501, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const file1 = makeFile("a.dwg", headerBuffer("AC1032", 512));
+    const result1 = await parseDwgFile(file1);
+    expect(result1.candidates).toEqual([]);
+
+    // Second call: server returns valid DXF (simulating a retry scenario)
+    globalThis.fetch = vi.fn().mockResolvedValueOnce(
+      new Response(dxfText, { status: 200 }),
+    );
+
+    const file2 = makeFile("b.dwg", headerBuffer("AC1032", 512));
+    const result2 = await parseDwgFile(file2);
+    expect(result2.candidates).toHaveLength(1);
+    expect(result2.candidates[0].layer).toBe("WALL");
+  });
 });

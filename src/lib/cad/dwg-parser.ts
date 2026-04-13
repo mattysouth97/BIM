@@ -1,8 +1,9 @@
 // src/lib/cad/dwg-parser.ts
 // Client-side DWG → DXF conversion using the libdxfrw WASM module.
 //
-// Converts DWG binary data to DXF text entirely in the browser, then pipes
-// the result through parseDxfText() so the rest of the pipeline (unit
+// Converts DWG binary data to DXF text entirely in the browser via
+// fileHandler.fileImport() + fileHandler.fileExport(), then pipes the
+// result through parseDxfText() so the rest of the pipeline (unit
 // conversion, candidate ranking, area filtering) stays the same.
 //
 // The WASM module (~1.4 MB) is lazy-loaded on first use and cached.
@@ -49,7 +50,7 @@ export function readDwgHeader(buffer: ArrayBuffer): DwgHeaderInfo | null {
 }
 
 // ---------------------------------------------------------------------------
-// WASM module lazy-loading
+// WASM module lazy-loading (resets on failure so next upload retries)
 // ---------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,28 +58,40 @@ let wasmModulePromise: Promise<any> | null = null;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getWasmModule(): Promise<any> {
-  if (!wasmModulePromise) {
-    wasmModulePromise = (async () => {
-      // The emscripten JS loader is served from public/wasm/ alongside the
-      // .wasm binary.  We load it as a <script> to avoid webpack trying to
-      // bundle/transform the emscripten output, then call the factory with
-      // locateFile so it finds the .wasm via HTTP.
-      if (typeof window !== "undefined") {
-        await loadScript("/wasm/libdxfrw.js");
-        // After loading, `createModule` is available as a global.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const createModule = (window as any).createModule;
-        if (typeof createModule !== "function") {
-          throw new Error("libdxfrw WASM loader did not expose createModule");
-        }
-        return createModule({
-          locateFile: (name: string) => `/wasm/${name}`,
-        });
-      }
-      throw new Error("DWG WASM conversion is only available in the browser");
-    })();
+  if (wasmModulePromise) return wasmModulePromise;
+
+  wasmModulePromise = (async () => {
+    if (typeof window === "undefined") {
+      throw new Error("DWG WASM conversion requires a browser environment");
+    }
+
+    await loadScript("/wasm/libdxfrw.js");
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const factory = (window as any).createModule;
+    if (typeof factory !== "function") {
+      throw new Error(
+        "libdxfrw WASM loader did not expose createModule global",
+      );
+    }
+
+    const mod = await factory({
+      locateFile: (name: string) => `/wasm/${name}`,
+    });
+
+    if (typeof mod.DRW_FileHandler !== "object" || !mod.DRW_FileHandler) {
+      throw new Error("WASM module loaded but DRW_FileHandler is missing");
+    }
+
+    return mod;
+  })();
+
+  try {
+    return await wasmModulePromise;
+  } catch (err) {
+    wasmModulePromise = null;
+    throw err;
   }
-  return wasmModulePromise;
 }
 
 function loadScript(src: string): Promise<void> {
@@ -90,7 +103,7 @@ function loadScript(src: string): Promise<void> {
     const script = document.createElement("script");
     script.src = src;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
     document.head.appendChild(script);
   });
 }
@@ -106,8 +119,8 @@ export interface ParseDwgOptions {
 /**
  * Convert a DWG file to `ParsedDxf` using the client-side WASM converter.
  *
- * Flow: validate header → load WASM (lazy) → DWG→DXF via libdxfrw →
- *       parseDxfText().
+ * Flow: validate header → load WASM (lazy) → DWG→DXF via libdxfrw
+ *       fileImport/fileExport → parseDxfText().
  *
  * Falls back to the server route `/api/cad/convert` if the WASM module
  * cannot be loaded (e.g. SSR context or script-loading failure).
@@ -144,11 +157,10 @@ export async function parseDwgFile(
       const parsed = parseDxfText(dxfText);
       return { ...parsed, warnings: [...warnings, ...parsed.warnings] };
     }
-    warnings.push("WASM converter returned empty DXF output.");
+    warnings.push("DWG read succeeded but DXF export returned empty output.");
   } catch (err) {
-    warnings.push(
-      `Client-side DWG conversion unavailable: ${err instanceof Error ? err.message : String(err)}`,
-    );
+    const msg = err instanceof Error ? err.message : String(err);
+    warnings.push(`Client-side DWG conversion failed: ${msg}`);
   }
 
   // --- Fallback: server round-trip ----------------------------------------
@@ -170,6 +182,14 @@ export async function parseDwgFile(
 // Conversion strategies
 // ---------------------------------------------------------------------------
 
+/**
+ * Convert DWG binary to DXF text using the libdxfrw WASM module.
+ *
+ * Uses the fileImport/fileExport path (matching the library's own
+ * convert-button example) — NOT DRW_DwgR.read() which is the
+ * entity-inspection path and does not set the internal writer state
+ * needed by fileExport.
+ */
 async function convertDwgToDxf(buffer: ArrayBuffer): Promise<string | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mod: any = await getWasmModule();
@@ -179,11 +199,11 @@ async function convertDwgToDxf(buffer: ArrayBuffer): Promise<string | null> {
   handler.database = database;
 
   try {
-    const dwg = new mod.DRW_DwgR(buffer);
-    const ok: boolean = dwg.read(handler, false);
-    dwg.delete();
+    const imported: boolean = handler.fileImport(buffer, database, false, false);
 
-    if (!ok) return null;
+    if (!imported) {
+      throw new Error("fileImport returned false — DWG may be corrupted or use unsupported features");
+    }
 
     const dxfText: string = handler.fileExport(
       mod.DRW_Version.AC1021,
