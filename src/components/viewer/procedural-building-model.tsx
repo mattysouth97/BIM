@@ -1,19 +1,23 @@
 "use client";
 
-import { useMemo, useEffect, useRef, useCallback } from "react";
-import { useThree } from "@react-three/fiber";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import * as THREE from "three";
 import type { BuildingGeometry, FloorGeometry } from "@/lib/building-geometry";
 import { toRecipe } from "@/lib/building-geometry";
 import { ProceduralBuilding } from "@/lib/procedural/procedural-building";
 import type { BuildingRecipe, FloorSpec } from "@/lib/procedural/types";
 import { GroundPlane } from "./ground-plane";
+import { useLayerStore } from "@/store/layer-store";
+import { InfoEdges } from "./info-edges";
+import { useOutlineHover } from "@/hooks/use-outline-hover";
 
 interface ProceduralBuildingModelProps {
   geometry: BuildingGeometry;
   /** If provided, use this recipe instead of computing from geometry */
   recipeOverride?: BuildingRecipe;
   onFloorSelect?: (floor: FloorGeometry | null) => void;
+  /** When true, suppresses the GroundPlane rendered beneath the building (for campus mode) */
+  hideGroundPlane?: boolean;
 }
 
 /** Convert a FloorSpec back to a FloorGeometry for compatibility with existing UI */
@@ -21,16 +25,38 @@ function floorSpecToGeometry(spec: FloorSpec, geo: BuildingGeometry): FloorGeome
   return geo.floors.find(f => f.floorNo === spec.floorNo) ?? null;
 }
 
-export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelect }: ProceduralBuildingModelProps) {
-  const { scene } = useThree();
+/**
+ * Collect informational meshes from a group for edge overlay rendering.
+ * Criteria (skip InstancedMesh — EdgesGeometry degrades for instanced):
+ *   - Plain THREE.Mesh only
+ *   - userData.type === "slab" OR name starts with "facade" OR userData.informational === true
+ */
+function collectInformationalMeshes(group: THREE.Group): THREE.Mesh[] {
+  const result: THREE.Mesh[] = [];
+  group.traverse((obj) => {
+    if (!(obj instanceof THREE.Mesh) || obj instanceof THREE.InstancedMesh) return;
+    const ud = obj.userData;
+    if (
+      ud?.type === "slab" ||
+      obj.name.startsWith("facade") ||
+      ud?.informational === true
+    ) {
+      result.push(obj);
+    }
+  });
+  return result;
+}
+
+export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelect, hideGroundPlane }: ProceduralBuildingModelProps) {
   const builderRef = useRef<ProceduralBuilding | null>(null);
   const groupRef = useRef<THREE.Group | null>(null);
   const selectedRef = useRef<number | null>(null);
+  const [group, setGroup] = useState<THREE.Group | null>(null);
 
   const baseRecipe = useMemo(() => toRecipe(geometry), [geometry]);
   const recipe = recipeOverride ?? baseRecipe;
 
-  // Generate building geometry
+  // Generate building geometry — setGroup triggers re-render so <primitive> picks it up
   useEffect(() => {
     // Clean up previous
     if (groupRef.current && groupRef.current.parent) {
@@ -41,18 +67,47 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
     }
 
     const builder = new ProceduralBuilding(recipe);
-    const group = builder.generate();
+    const g = builder.generate();
 
     builderRef.current = builder;
-    groupRef.current = group;
+    groupRef.current = g;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGroup(g);
 
-    // Add to the parent group (scene will pick this up via the primitive)
     return () => {
       builder.dispose();
       builderRef.current = null;
       groupRef.current = null;
+      setGroup(null);
     };
   }, [recipe]);
+
+  // Sync Digital Twin layer visibility to named mesh groups.
+  // Depends on `group` state so it re-runs after building generation completes.
+  const layerVisibility = useLayerStore((s) => s.visibility);
+  useEffect(() => {
+    if (!group) return;
+
+    group.traverse((child) => {
+      const n = child.name;
+
+      // Envelope layer: facade panels, glass, mullions, parapet, roof
+      if (
+        n === "facade" ||
+        n.startsWith("facade-section-") ||
+        n === "roof"
+      ) {
+        child.visible = layerVisibility["envelope"] ?? true;
+      }
+
+      // Structure layer: floor slabs and columns
+      if (n === "slabs" || n === "columns") {
+        child.visible = layerVisibility["structure"] ?? true;
+      }
+
+      // MEP / energy-zones / retrofit-targets: no geometry yet — no-op
+    });
+  }, [group, layerVisibility]);
 
   // Floor selection via raycaster on slab instances
   const handleClick = useCallback((event: THREE.Event & { instanceId?: number; object?: THREE.Object3D }) => {
@@ -78,17 +133,30 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
     }
   }, [geometry, onFloorSelect]);
 
-  const group = useMemo(() => {
-    if (!builderRef.current) return null;
-    return builderRef.current.getGroup();
-  }, [recipe]);
+  // Collect informational meshes after group is generated
+  const informationalMeshes = useMemo<THREE.Mesh[]>(() => {
+    if (!group) return [];
+    return collectInformationalMeshes(group);
+  }, [group]);
+
+  const { onPointerOver, onPointerOut } = useOutlineHover();
 
   return (
     <>
-      <GroundPlane siteWidth={geometry.siteWidth} siteDepth={geometry.siteDepth} era={geometry.era} />
-      {group && (
-        <primitive object={group} onClick={handleClick} />
+      {!hideGroundPlane && (
+        <GroundPlane siteWidth={geometry.siteWidth} siteDepth={geometry.siteDepth} era={geometry.era} />
       )}
+      {group && (
+        <primitive
+          object={group}
+          onClick={handleClick}
+          onPointerOver={onPointerOver}
+          onPointerOut={onPointerOut}
+        />
+      )}
+      {informationalMeshes.map((mesh, i) => (
+        <InfoEdges key={i} mesh={mesh} />
+      ))}
     </>
   );
 }

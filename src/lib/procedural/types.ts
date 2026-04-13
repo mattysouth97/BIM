@@ -140,6 +140,13 @@ export interface BuildingSection {
 export type RecipeOverrides = Partial<{
   footprintWidth: number;
   footprintDepth: number;
+  /**
+   * GeoJSON-style polygon rings ([outer, ...holes]) in local [x, z] meter
+   * coordinates. When set (e.g., parsed from an uploaded CAD file), the
+   * procedural pipeline consumes this polygon instead of the rectangular
+   * footprintWidth × footprintDepth box.
+   */
+  footprintPolygon: [number, number][][];
   floorCount: number;
   floorHeight: number;
   wallThickness: number;

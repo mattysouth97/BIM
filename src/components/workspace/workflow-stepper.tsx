@@ -11,11 +11,10 @@ import { cn } from "@/lib/utils";
 
 // Define stepperize steps matching STAGE_ORDER
 const { steps } = defineStepper(
-  { id: "select", title: STAGE_LABELS.select.en },
-  { id: "assemble", title: STAGE_LABELS.assemble.en },
-  { id: "configure", title: STAGE_LABELS.configure.en },
-  { id: "analyze", title: STAGE_LABELS.analyze.en },
-  { id: "export", title: STAGE_LABELS.export.en }
+  { id: "search", title: STAGE_LABELS.search.en },
+  { id: "upload", title: STAGE_LABELS.upload.en },
+  { id: "twin",   title: STAGE_LABELS.twin.en },
+  { id: "report", title: STAGE_LABELS.report.en }
 );
 
 export function WorkflowStepper() {

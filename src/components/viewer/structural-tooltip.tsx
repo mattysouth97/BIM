@@ -5,7 +5,6 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useLayerStore } from "@/store/layer-store";
-import { usePlanStore } from "@/store/plan-store";
 
 /**
  * StructuralTooltip — R3F component that shows a hover tooltip over structural
@@ -18,9 +17,7 @@ import { usePlanStore } from "@/store/plan-store";
  * Hidden in plan view mode (orthographic 2D) per design spec.
  */
 export function StructuralTooltip() {
-  const isVisible = useLayerStore((s) => s.visibility[15]);
-  const viewMode = usePlanStore((s) => s.viewMode);
-
+  const isVisible = useLayerStore((s) => s.visibility["structure"]);
   const [hovered, setHovered] = useState<{
     position: THREE.Vector3;
     label: string;
@@ -54,7 +51,7 @@ export function StructuralTooltip() {
     frameCount.current = (frameCount.current + 1) % 3;
     if (frameCount.current !== 0) return;
 
-    if (!isVisible || viewMode === "plan") {
+    if (!isVisible) {
       setHovered(null);
       return;
     }
@@ -105,7 +102,7 @@ export function StructuralTooltip() {
     setHovered(null);
   });
 
-  if (!isVisible || !hovered || viewMode === "plan") {
+  if (!isVisible || !hovered) {
     return null;
   }
 

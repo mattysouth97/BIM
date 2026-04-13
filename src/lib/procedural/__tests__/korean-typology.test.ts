@@ -192,10 +192,10 @@ describe("Korean Building Typology Benchmarks", () => {
       expect(recipe.era).toBe("2020+");
     });
 
-    it("window ratio 50-60% for office (curtain wall facade)", () => {
-      // WINDOW_RATIOS["2020+"].office = 0.55
-      expect(recipe.facade.windowRatio).toBeGreaterThanOrEqual(0.5);
-      expect(recipe.facade.windowRatio).toBeLessThanOrEqual(0.6);
+    it("window ratio 65-75% for office (curtain wall facade)", () => {
+      // 2020+ offices get curtain wall with high window ratio
+      expect(recipe.facade.windowRatio).toBeGreaterThanOrEqual(0.65);
+      expect(recipe.facade.windowRatio).toBeLessThanOrEqual(0.75);
     });
 
     it("steel structure has wider column spacing (9m)", () => {
@@ -206,10 +206,10 @@ describe("Korean Building Typology Benchmarks", () => {
       expect(recipe.slab.thickness).toBe(0.15);
     });
 
-    it("facade has modern window dimensions for 2020+ era", () => {
+    it("facade has curtain wall dimensions for 2020+ era", () => {
       expect(recipe.facade.windowWidth).toBe(1.8);
-      expect(recipe.facade.windowHeight).toBe(2.0);
-      expect(recipe.facade.mullionDepth).toBe(0.10);
+      expect(recipe.facade.windowHeight).toBe(2.4);
+      expect(recipe.facade.mullionDepth).toBe(0.06);
     });
   });
 
@@ -284,10 +284,10 @@ describe("Korean Building Typology Benchmarks", () => {
       expect(recipe.facade.windowRatio).toBe(0.15);
     });
 
-    it("2020+ steel office has large windows and high window ratio", () => {
+    it("2020+ steel office has large windows and high window ratio (curtain wall)", () => {
       const recipe = getRecipe("13", "2020+", "14000");
       expect(recipe.facade.windowWidth).toBe(1.8);
-      expect(recipe.facade.windowRatio).toBe(0.55);
+      expect(recipe.facade.windowRatio).toBe(0.7);
     });
 
     it("1990s masonry residential has moderate windows", () => {

@@ -19,73 +19,72 @@ describe("useLayerStore", () => {
     useLayerStore.getState().resetAll();
   });
 
-  it("default: only layer 1 is visible", () => {
+  it("default: all 5 layers are visible", () => {
     const { visibility } = useLayerStore.getState();
-    expect(visibility[1]).toBe(true);
-    for (let id = 2; id <= 15; id++) {
-      expect(visibility[id as LayerId]).toBe(false);
+    for (const id of ALL_LAYER_IDS) {
+      expect(visibility[id]).toBe(true);
     }
   });
 
-  it("all 15 layers have default entries", () => {
+  it("all 5 layers have default entries", () => {
     const { visibility, generated, density } = useLayerStore.getState();
     for (const id of ALL_LAYER_IDS) {
       expect(visibility[id]).toBeDefined();
       expect(generated[id]).toBeDefined();
       expect(density[id]).toBeDefined();
     }
-    expect(ALL_LAYER_IDS).toHaveLength(15);
+    expect(ALL_LAYER_IDS).toHaveLength(5);
   });
 
   it("toggleLayer flips visibility", () => {
-    expect(useLayerStore.getState().visibility[1]).toBe(true);
-    useLayerStore.getState().toggleLayer(1);
-    expect(useLayerStore.getState().visibility[1]).toBe(false);
-    useLayerStore.getState().toggleLayer(1);
-    expect(useLayerStore.getState().visibility[1]).toBe(true);
+    expect(useLayerStore.getState().visibility["envelope"]).toBe(true);
+    useLayerStore.getState().toggleLayer("envelope");
+    expect(useLayerStore.getState().visibility["envelope"]).toBe(false);
+    useLayerStore.getState().toggleLayer("envelope");
+    expect(useLayerStore.getState().visibility["envelope"]).toBe(true);
   });
 
-  it("toggleLayer makes invisible layer visible", () => {
-    expect(useLayerStore.getState().visibility[3]).toBe(false);
-    useLayerStore.getState().toggleLayer(3);
-    expect(useLayerStore.getState().visibility[3]).toBe(true);
+  it("toggleLayer hides a visible layer", () => {
+    expect(useLayerStore.getState().visibility["mep"]).toBe(true);
+    useLayerStore.getState().toggleLayer("mep");
+    expect(useLayerStore.getState().visibility["mep"]).toBe(false);
   });
 
   it("setDensity updates density for specific layer", () => {
-    useLayerStore.getState().setDensity(5, 75);
-    expect(useLayerStore.getState().density[5]).toBe(75);
+    useLayerStore.getState().setDensity("structure", 75);
+    expect(useLayerStore.getState().density["structure"]).toBe(75);
     // Other layers unchanged
-    expect(useLayerStore.getState().density[1]).toBe(50);
+    expect(useLayerStore.getState().density["envelope"]).toBe(50);
   });
 
   it("setLayerVisible sets explicit visibility", () => {
-    useLayerStore.getState().setLayerVisible(7, true);
-    expect(useLayerStore.getState().visibility[7]).toBe(true);
-    useLayerStore.getState().setLayerVisible(7, false);
-    expect(useLayerStore.getState().visibility[7]).toBe(false);
+    useLayerStore.getState().setLayerVisible("energy-zones", false);
+    expect(useLayerStore.getState().visibility["energy-zones"]).toBe(false);
+    useLayerStore.getState().setLayerVisible("energy-zones", true);
+    expect(useLayerStore.getState().visibility["energy-zones"]).toBe(true);
   });
 
   it("setGenerated marks layer as generated", () => {
-    expect(useLayerStore.getState().generated[3]).toBe(false);
-    useLayerStore.getState().setGenerated(3);
-    expect(useLayerStore.getState().generated[3]).toBe(true);
+    expect(useLayerStore.getState().generated["retrofit-targets"]).toBe(false);
+    useLayerStore.getState().setGenerated("retrofit-targets");
+    expect(useLayerStore.getState().generated["retrofit-targets"]).toBe(true);
   });
 
   it("resetAll returns to defaults", () => {
     // Modify several things
-    useLayerStore.getState().toggleLayer(1);
-    useLayerStore.getState().toggleLayer(5);
-    useLayerStore.getState().setDensity(3, 90);
-    useLayerStore.getState().setGenerated(7);
+    useLayerStore.getState().toggleLayer("envelope");
+    useLayerStore.getState().toggleLayer("mep");
+    useLayerStore.getState().setDensity("structure", 90);
+    useLayerStore.getState().setGenerated("energy-zones");
 
     // Reset
     useLayerStore.getState().resetAll();
 
     // Verify defaults
-    expect(useLayerStore.getState().visibility[1]).toBe(true);
-    expect(useLayerStore.getState().visibility[5]).toBe(false);
-    expect(useLayerStore.getState().density[3]).toBe(50);
-    expect(useLayerStore.getState().generated[7]).toBe(false);
+    expect(useLayerStore.getState().visibility["envelope"]).toBe(true);
+    expect(useLayerStore.getState().visibility["mep"]).toBe(true);
+    expect(useLayerStore.getState().density["structure"]).toBe(50);
+    expect(useLayerStore.getState().generated["energy-zones"]).toBe(false);
   });
 
   it("default density is 50 for all layers", () => {

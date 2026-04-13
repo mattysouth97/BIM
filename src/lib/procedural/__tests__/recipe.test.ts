@@ -147,4 +147,24 @@ describe("applyOverrides", () => {
     expect(result.slab.thickness).toBe(0.3);
     expect(result.slab.overhang).toBe(base.slab.overhang);
   });
+
+  it("propagates footprintPolygon override to output recipe", () => {
+    const base = makeBaseRecipe();
+    const polygon: [number, number][][] = [[[-5, -5], [5, -5], [5, 5], [-5, 5]]];
+    const result = applyOverrides(base, { footprintPolygon: polygon });
+    expect(result.footprintPolygon).toEqual(polygon);
+  });
+
+  it("preserves base footprintPolygon when override omits it", () => {
+    const base = makeBaseRecipe();
+    // base has no footprintPolygon set — should remain undefined
+    const result = applyOverrides(base, { footprintWidth: 12 });
+    expect(result.footprintPolygon).toBeUndefined();
+
+    // base with a pre-existing polygon — should be preserved unchanged
+    const existingPolygon: [number, number][][] = [[[0, 0], [10, 0], [10, 10], [0, 10]]];
+    const baseWithPolygon = { ...base, footprintPolygon: existingPolygon };
+    const result2 = applyOverrides(baseWithPolygon, { footprintWidth: 12 });
+    expect(result2.footprintPolygon).toEqual(existingPolygon);
+  });
 });

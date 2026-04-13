@@ -36,12 +36,12 @@ describe("useWorkspaceStore", () => {
     expect(useWorkspaceStore.getState().bottomShelfOpen).toBe(true);
   });
 
-  it("initial state: leftDockSize is 18", () => {
-    expect(useWorkspaceStore.getState().leftDockSize).toBe(18);
+  it("initial state: leftDockSize is 28", () => {
+    expect(useWorkspaceStore.getState().leftDockSize).toBe(28);
   });
 
-  it("initial state: rightDockSize is 22", () => {
-    expect(useWorkspaceStore.getState().rightDockSize).toBe(22);
+  it("initial state: rightDockSize is 30", () => {
+    expect(useWorkspaceStore.getState().rightDockSize).toBe(30);
   });
 
   // ---------------------------------------------------------------------------
@@ -106,23 +106,23 @@ describe("useWorkspaceStore", () => {
   // Clamping
   // ---------------------------------------------------------------------------
 
-  it("setLeftDockSize clamps to min 12 when value is below range", () => {
+  it("setLeftDockSize clamps to min 15 when value is below range", () => {
     useWorkspaceStore.getState().setLeftDockSize(5);
     expect(useWorkspaceStore.getState().leftDockSize).toBe(LEFT_DOCK_MIN);
   });
 
-  it("setLeftDockSize clamps to max 28 when value is above range", () => {
-    useWorkspaceStore.getState().setLeftDockSize(50);
+  it("setLeftDockSize clamps to max 100 when value is above range", () => {
+    useWorkspaceStore.getState().setLeftDockSize(150);
     expect(useWorkspaceStore.getState().leftDockSize).toBe(LEFT_DOCK_MAX);
   });
 
-  it("setRightDockSize clamps to min 16 when value is below range", () => {
+  it("setRightDockSize clamps to min 18 when value is below range", () => {
     useWorkspaceStore.getState().setRightDockSize(5);
     expect(useWorkspaceStore.getState().rightDockSize).toBe(RIGHT_DOCK_MIN);
   });
 
-  it("setRightDockSize clamps to max 35 when value is above range", () => {
-    useWorkspaceStore.getState().setRightDockSize(60);
+  it("setRightDockSize clamps to max 100 when value is above range", () => {
+    useWorkspaceStore.getState().setRightDockSize(150);
     expect(useWorkspaceStore.getState().rightDockSize).toBe(RIGHT_DOCK_MAX);
   });
 
@@ -153,27 +153,27 @@ describe("useWorkspaceStore", () => {
   // Constants
   // ---------------------------------------------------------------------------
 
-  it("exports LEFT_DOCK_MIN = 12", () => {
-    expect(LEFT_DOCK_MIN).toBe(12);
+  it("exports LEFT_DOCK_MIN = 15", () => {
+    expect(LEFT_DOCK_MIN).toBe(15);
   });
 
-  it("exports LEFT_DOCK_MAX = 28", () => {
-    expect(LEFT_DOCK_MAX).toBe(28);
+  it("exports LEFT_DOCK_MAX = 100", () => {
+    expect(LEFT_DOCK_MAX).toBe(100);
   });
 
-  it("exports LEFT_DOCK_DEFAULT = 18", () => {
-    expect(LEFT_DOCK_DEFAULT).toBe(18);
+  it("exports LEFT_DOCK_DEFAULT = 28", () => {
+    expect(LEFT_DOCK_DEFAULT).toBe(28);
   });
 
-  it("exports RIGHT_DOCK_MIN = 16", () => {
-    expect(RIGHT_DOCK_MIN).toBe(16);
+  it("exports RIGHT_DOCK_MIN = 18", () => {
+    expect(RIGHT_DOCK_MIN).toBe(18);
   });
 
-  it("exports RIGHT_DOCK_MAX = 35", () => {
-    expect(RIGHT_DOCK_MAX).toBe(35);
+  it("exports RIGHT_DOCK_MAX = 100", () => {
+    expect(RIGHT_DOCK_MAX).toBe(100);
   });
 
-  it("exports RIGHT_DOCK_DEFAULT = 22", () => {
-    expect(RIGHT_DOCK_DEFAULT).toBe(22);
+  it("exports RIGHT_DOCK_DEFAULT = 30", () => {
+    expect(RIGHT_DOCK_DEFAULT).toBe(30);
   });
 });

@@ -36,6 +36,7 @@ import { EnergyCards } from "./energy-cards";
 import { ErrorBoundary, ViewerErrorBoundary } from "@/components/error-boundary";
 import { StructuralTooltip } from "./structural-tooltip";
 import { EquipmentClickHandler } from "./equipment-click-handler";
+import { ScenePostProcessing } from "./outline-post-processing";
 
 const IFCModel = lazy(() =>
   import("./ifc-loader").then((m) => ({ default: m.IFCModel }))
@@ -454,8 +455,8 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             distance={activeCameraDistance}
           />
 
-          {/* SAO ambient occlusion post-processing */}
-          {/* SAOPostProcessing disabled — causes dark halos on polygon geometry */}
+          {/* Outline + post-processing (OutlinePass-based, SAOPass scaffold kept inside) */}
+          <ScenePostProcessing />
         </Suspense>
       </Canvas>
       </ViewerErrorBoundary>

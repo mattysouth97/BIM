@@ -30,31 +30,7 @@ export function BuildingTab({ buildingPk }: BuildingTabProps) {
     [buildingPk, baseRecipe, overrides]
   );
 
-  if (!recipe) {
-    return (
-      <div className="p-4 text-sm text-muted-foreground">
-        {isKo ? "건물 데이터를 불러오는 중..." : "Loading building data..."}
-      </div>
-    );
-  }
-
-  const set = (path: string, value: number | string) =>
-    setOverride(buildingPk, path, value);
-
-  // Helper to read a value — prefer overrides, fallback to recipe
-  const v = (path: string, fallback: number): number => {
-    const parts = path.split(".");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let obj: any = overrides;
-    for (const p of parts) {
-      obj = obj?.[p];
-    }
-    return typeof obj === "number" ? obj : fallback;
-  };
-
-  const roofType = (overrides?.roof?.type as string) ?? recipe.roof.type;
-
-  /* ── Validation callbacks ── */
+  /* ── Validation callbacks — must be above any early return ── */
   const validateFootprint = useCallback(
     (v: number) => (v < 4 ? (isKo ? "일반적인 최소값 미만" : "Below typical minimum") : null),
     [isKo]
@@ -82,6 +58,30 @@ export function BuildingTab({ buildingPk }: BuildingTabProps) {
       v < 0.15 ? (isKo ? "최소 기둥 크기 미만" : "Below minimum column size") : null,
     [isKo]
   );
+
+  if (!recipe) {
+    return (
+      <div className="p-4 text-sm text-muted-foreground">
+        {isKo ? "건물 데이터를 불러오는 중..." : "Loading building data..."}
+      </div>
+    );
+  }
+
+  const set = (path: string, value: number | string) =>
+    setOverride(buildingPk, path, value);
+
+  // Helper to read a value — prefer overrides, fallback to recipe
+  const v = (path: string, fallback: number): number => {
+    const parts = path.split(".");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let obj: any = overrides;
+    for (const p of parts) {
+      obj = obj?.[p];
+    }
+    return typeof obj === "number" ? obj : fallback;
+  };
+
+  const roofType = (overrides?.roof?.type as string) ?? recipe.roof.type;
 
   return (
     <div className="space-y-5 p-3">
