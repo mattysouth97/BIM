@@ -5,7 +5,6 @@ import { readDwgHeader, parseDwgFile, DWG_VERSIONS } from "../dwg-parser";
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Build an ArrayBuffer whose first bytes are the given ASCII string. */
 function headerBuffer(ascii: string, totalSize = 64): ArrayBuffer {
   const buf = new ArrayBuffer(totalSize);
   const view = new Uint8Array(buf);
@@ -20,7 +19,7 @@ function makeFile(name: string, buffer: ArrayBuffer): File {
 }
 
 // ---------------------------------------------------------------------------
-// readDwgHeader
+// readDwgHeader — pure binary validation (no WASM needed)
 // ---------------------------------------------------------------------------
 
 describe("readDwgHeader", () => {
@@ -57,7 +56,7 @@ describe("readDwgHeader", () => {
 });
 
 // ---------------------------------------------------------------------------
-// parseDwgFile — integration with fetch
+// parseDwgFile — integration tests with mocked WASM / fetch
 // ---------------------------------------------------------------------------
 
 describe("parseDwgFile", () => {
@@ -78,7 +77,28 @@ describe("parseDwgFile", () => {
     expect(result.warnings.some((w) => w.includes("valid DWG"))).toBe(true);
   });
 
-  it("returns parsed candidates when the server returns DXF text", async () => {
+  it("falls back to server and surfaces server error as warning", async () => {
+    // WASM won't load in vitest (no window.document), so it falls back to
+    // the server route.  Mock the server to return an error.
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: "DWG conversion is not yet available",
+          hint: "Export as DXF.",
+        }),
+        { status: 501, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const file = makeFile("plan.dwg", headerBuffer("AC1032", 512));
+    const result = await parseDwgFile(file);
+    expect(result.candidates).toEqual([]);
+    expect(
+      result.warnings.some((w) => w.includes("Export as DXF")),
+    ).toBe(true);
+  });
+
+  it("parses server DXF response into candidates on fallback", async () => {
     const dxfText = [
       "0", "SECTION", "2", "HEADER",
       "9", "$INSUNITS", "70", "6",
@@ -107,27 +127,7 @@ describe("parseDwgFile", () => {
     expect(result.candidates[0].areaSqm).toBeCloseTo(300, 0);
   });
 
-  it("returns server error hint as a warning on non-OK response", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          error: "DWG conversion is not yet available",
-          hint: "Export the DWG as DXF in your CAD tool.",
-        }),
-        { status: 501, headers: { "content-type": "application/json" } },
-      ),
-    );
-
-    const file = makeFile("plan.dwg", headerBuffer("AC1032", 512));
-    const result = await parseDwgFile(file);
-
-    expect(result.candidates).toEqual([]);
-    expect(
-      result.warnings.some((w) => w.includes("Export the DWG as DXF")),
-    ).toBe(true);
-  });
-
-  it("includes an unrecognised-version warning alongside server results", async () => {
+  it("includes an unrecognised-version warning alongside results", async () => {
     const dxfText = [
       "0", "SECTION", "2", "HEADER",
       "9", "$INSUNITS", "70", "6",
@@ -155,19 +155,5 @@ describe("parseDwgFile", () => {
     expect(
       result.warnings.some((w) => w.includes("Unrecognised DWG version")),
     ).toBe(true);
-  });
-
-  it("respects a custom convertUrl option", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue(
-      new Response("0\nEOF\n", { status: 200 }),
-    );
-
-    const file = makeFile("plan.dwg", headerBuffer("AC1032", 64));
-    await parseDwgFile(file, { convertUrl: "/custom/convert" });
-
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      "/custom/convert",
-      expect.objectContaining({ method: "POST" }),
-    );
   });
 });
