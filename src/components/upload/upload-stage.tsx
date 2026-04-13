@@ -13,6 +13,7 @@ import {
   type FootprintCandidate,
   type Polygon2D,
 } from "@/lib/cad/dxf-parser";
+import { parseDwgFile } from "@/lib/cad/dwg-parser";
 import { FootprintPreview } from "./footprint-preview";
 import { LayerPicker } from "./layer-picker";
 import { PdfTracer } from "./pdf-tracer";
@@ -117,27 +118,35 @@ export function UploadStage() {
           const buf = await file.arrayBuffer();
           setStatus({ kind: "pdf-tracing", pdfBytes: buf });
         } else {
-          // .dwg — round-trip through the server conversion route.
-          const form = new FormData();
-          form.set("file", file);
-          const res = await fetch("/api/cad/convert", {
-            method: "POST",
-            body: form,
-          });
-          if (res.ok) {
-            const dxfText = await res.text();
-            ingestDxf(dxfText);
-          } else {
-            const body = await res.json().catch(() => ({}));
+          // .dwg — validate header client-side, then round-trip through server.
+          const parsed = await parseDwgFile(file);
+          if (parsed.candidates.length === 0) {
             setStatus({
               kind: "error",
-              message: body?.hint ??
-                body?.error ??
+              message:
+                parsed.warnings[parsed.warnings.length - 1] ??
                 t(
                   "DWG 변환에 실패했습니다. .dxf로 내보내어 다시 업로드하세요.",
                   "DWG conversion failed. Export as .dxf and upload again.",
-                  isKo
+                  isKo,
                 ),
+            });
+            return;
+          }
+          if (parsed.candidates.length === 1) {
+            const c = parsed.candidates[0];
+            setStatus({
+              kind: "ready",
+              polygon: c.polygon,
+              layer: c.layer,
+              areaSqm: c.areaSqm,
+              warnings: parsed.warnings,
+            });
+          } else {
+            setStatus({
+              kind: "needs-pick",
+              candidates: parsed.candidates,
+              warnings: parsed.warnings,
             });
           }
         }
