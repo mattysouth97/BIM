@@ -1,0 +1,481 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1776098982390,
+  "projectRoot": "C:\\Users\\Nam\\BIM",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "16.2.1",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "19.2.4",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.4",
+        "category": "frontend"
+      },
+      {
+        "name": "@playwright/test",
+        "version": "1.58.2",
+        "category": "testing"
+      },
+      {
+        "name": "vitest",
+        "version": "4.1.2",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "pnpm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "pnpm build",
+    "testCommand": "pnpm test",
+    "lintCommand": "pnpm lint",
+    "devCommand": "pnpm dev",
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "eslint",
+      "test": "vitest run",
+      "test:watch": "vitest",
+      "test:coverage": "vitest run --coverage",
+      "test:e2e": "playwright test"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": true,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "public",
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 0,
+      "lastAccessed": 1776098982369,
+      "keyFiles": []
+    },
+    "e2e": {
+      "path": "e2e",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1776098982374,
+      "keyFiles": [
+        "building-flow.spec.ts",
+        "plan-view.spec.ts"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 5,
+      "lastAccessed": 1776098982374,
+      "keyFiles": [
+        "file.svg",
+        "globe.svg",
+        "next.svg",
+        "vercel.svg",
+        "window.svg"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1776098982374,
+      "keyFiles": []
+    },
+    "src\\app": {
+      "path": "src\\app",
+      "purpose": "Application code",
+      "fileCount": 4,
+      "lastAccessed": 1776098982375,
+      "keyFiles": [
+        "favicon.ico",
+        "globals.css",
+        "layout.tsx"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 2,
+      "lastAccessed": 1776098982376,
+      "keyFiles": [
+        "error-boundary.tsx",
+        "providers.tsx"
+      ]
+    },
+    "src\\data": {
+      "path": "src\\data",
+      "purpose": "Data files",
+      "fileCount": 3,
+      "lastAccessed": 1776098982376,
+      "keyFiles": [
+        "bjdong-codes.json",
+        "region-codes.json",
+        "use-type-codes.json"
+      ]
+    },
+    "src\\lib": {
+      "path": "src\\lib",
+      "purpose": "Library code",
+      "fileCount": 14,
+      "lastAccessed": 1776098982376,
+      "keyFiles": [
+        "api-client.ts",
+        "api-proxy.ts",
+        "building-geometry.ts"
+      ]
+    },
+    "src\\types": {
+      "path": "src\\types",
+      "purpose": "Type definitions",
+      "fileCount": 1,
+      "lastAccessed": 1776098982377,
+      "keyFiles": [
+        "earcut.d.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "",
+      "accessCount": 126,
+      "lastAccessed": 1776087871859,
+      "type": "directory"
+    },
+    {
+      "path": ".planning\\ROADMAP.md",
+      "accessCount": 99,
+      "lastAccessed": 1775961647419,
+      "type": "file"
+    },
+    {
+      "path": "src",
+      "accessCount": 60,
+      "lastAccessed": 1776087869814,
+      "type": "directory"
+    },
+    {
+      "path": "src\\lib\\procedural\\types.ts",
+      "accessCount": 43,
+      "lastAccessed": 1776033702235,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\layers\\types.ts",
+      "accessCount": 33,
+      "lastAccessed": 1775977885822,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\vworld\\footprint\\route.ts",
+      "accessCount": 33,
+      "lastAccessed": 1776025453748,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\layers\\layer-manager.ts",
+      "accessCount": 31,
+      "lastAccessed": 1775960494210,
+      "type": "file"
+    },
+    {
+      "path": ".planning\\PROJECT.md",
+      "accessCount": 29,
+      "lastAccessed": 1775961417722,
+      "type": "file"
+    },
+    {
+      "path": "src\\hooks\\use-energy-metrics.ts",
+      "accessCount": 27,
+      "lastAccessed": 1775957813474,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\procedural\\recipe.ts",
+      "accessCount": 25,
+      "lastAccessed": 1776033709578,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\workspace\\properties-panel.tsx",
+      "accessCount": 23,
+      "lastAccessed": 1776033712357,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\energy\\eco2-export.ts",
+      "accessCount": 22,
+      "lastAccessed": 1776033680843,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\workspace\\scene-outliner.tsx",
+      "accessCount": 21,
+      "lastAccessed": 1776033702321,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\workspace\\contextual-toolbar.tsx",
+      "accessCount": 20,
+      "lastAccessed": 1776033799443,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\material-types.ts",
+      "accessCount": 19,
+      "lastAccessed": 1776033698353,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\energy\\annual-demand.ts",
+      "accessCount": 18,
+      "lastAccessed": 1775961661362,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\workspace\\status-bar.tsx",
+      "accessCount": 17,
+      "lastAccessed": 1776033711861,
+      "type": "file"
+    },
+    {
+      "path": "src\\store\\workflow-store.ts",
+      "accessCount": 15,
+      "lastAccessed": 1776012272739,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\energy\\energy-grade.ts",
+      "accessCount": 15,
+      "lastAccessed": 1776033688444,
+      "type": "file"
+    },
+    {
+      "path": ".planning\\research\\FEATURES.md",
+      "accessCount": 14,
+      "lastAccessed": 1775951784934,
+      "type": "file"
+    },
+    {
+      "path": "CLAUDE.md",
+      "accessCount": 13,
+      "lastAccessed": 1775961691086,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\workflow\\stages.ts",
+      "accessCount": 13,
+      "lastAccessed": 1776012271961,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\procedural\\facade-generator.ts",
+      "accessCount": 13,
+      "lastAccessed": 1776028877117,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\procedural\\structure-generator.ts",
+      "accessCount": 13,
+      "lastAccessed": 1776029221922,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\material-inference.ts",
+      "accessCount": 12,
+      "lastAccessed": 1776033697293,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\workflow\\toolbar-configs.ts",
+      "accessCount": 11,
+      "lastAccessed": 1776012278795,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\workspace\\workflow-stepper.tsx",
+      "accessCount": 10,
+      "lastAccessed": 1776033712474,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\types.ts",
+      "accessCount": 9,
+      "lastAccessed": 1775960296519,
+      "type": "file"
+    },
+    {
+      "path": ".planning\\research\\SUMMARY.md",
+      "accessCount": 8,
+      "lastAccessed": 1775950255761,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\energy\\climate-data.ts",
+      "accessCount": 8,
+      "lastAccessed": 1775961675885,
+      "type": "file"
+    },
+    {
+      "path": "src\\store\\workspace-store.ts",
+      "accessCount": 7,
+      "lastAccessed": 1776033712715,
+      "type": "file"
+    },
+    {
+      "path": "src\\store\\__tests__\\workflow-store.test.ts",
+      "accessCount": 6,
+      "lastAccessed": 1776012281300,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\energy\\consumption\\route.ts",
+      "accessCount": 5,
+      "lastAccessed": 1775915633253,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\bldrgst\\title\\route.ts",
+      "accessCount": 5,
+      "lastAccessed": 1776025453215,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\layers\\__tests__\\layer-15-structural.test.ts",
+      "accessCount": 4,
+      "lastAccessed": 1775956024410,
+      "type": "file"
+    },
+    {
+      "path": ".planning\\milestones\\v2.0-ROADMAP.md",
+      "accessCount": 3,
+      "lastAccessed": 1775960273118,
+      "type": "file"
+    },
+    {
+      "path": ".planning\\codebase\\INTEGRATIONS.md",
+      "accessCount": 2,
+      "lastAccessed": 1775328114576,
+      "type": "file"
+    },
+    {
+      "path": ".planning\\codebase\\ARCHITECTURE.md",
+      "accessCount": 2,
+      "lastAccessed": 1775328114837,
+      "type": "file"
+    },
+    {
+      "path": ".planning\\codebase\\STRUCTURE.md",
+      "accessCount": 2,
+      "lastAccessed": 1775328115099,
+      "type": "file"
+    },
+    {
+      "path": ".planning\\codebase\\CONCERNS.md",
+      "accessCount": 2,
+      "lastAccessed": 1775328154355,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\weather\\route.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775333080614,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\export.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775960313416,
+      "type": "file"
+    },
+    {
+      "path": ".planning\\milestones\\v2.0-MILESTONE-AUDIT.md",
+      "accessCount": 1,
+      "lastAccessed": 1775327963648,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\constants.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775328131898,
+      "type": "file"
+    },
+    {
+      "path": ".planning\\milestones\\v2.0-phases\\13-structural-analysis-visualization\\13-02-SUMMARY.md",
+      "accessCount": 1,
+      "lastAccessed": 1775328158162,
+      "type": "file"
+    },
+    {
+      "path": "src\\store\\authoring-store.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775328550288,
+      "type": "file"
+    },
+    {
+      "path": "src\\store\\plan-store.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775328550295,
+      "type": "file"
+    },
+    {
+      "path": "src\\store\\component-store.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775328550646,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\viewer\\properties-panel.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775331080689,
+      "type": "file"
+    },
+    {
+      "path": "src\\components\\viewer\\floor-slab.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775331085136,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

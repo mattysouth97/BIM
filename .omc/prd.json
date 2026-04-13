@@ -1,0 +1,72 @@
+{
+  "project": "CAD Upload Workflow — Footprint-Driven Draft Building",
+  "planRef": ".omc/plans/cad-upload-workflow-plan.md",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Extend workflow + recipe types for upload stage and footprintPolygon override",
+      "priority": 1,
+      "passes": true,
+      "evidence": "39/39 vitest tests pass in src/lib/workflow + src/store"
+    },
+    {
+      "id": "US-002",
+      "title": "DXF parser module with unit conversion and footprint candidate extraction",
+      "priority": 2,
+      "passes": true,
+      "evidence": "13/13 vitest tests pass; dxf-parser@1.1.2 added"
+    },
+    {
+      "id": "US-003",
+      "title": "DWG→DXF conversion API route with validation and bounded error path",
+      "priority": 3,
+      "passes": true,
+      "evidence": "5/5 vitest tests pass; /api/cad/convert route present in build output"
+    },
+    {
+      "id": "US-004",
+      "title": "UploadStage component with dropzone, layer picker, and recipe-store integration",
+      "priority": 4,
+      "passes": true,
+      "evidence": "7/7 upload-stage tests pass (including multi-candidate two-step confirm, PDF tracer mount, DWG 501 surface)"
+    },
+    {
+      "id": "US-005",
+      "title": "Wire UploadStage into WorkspaceShell and toolbar config",
+      "priority": 5,
+      "passes": true,
+      "evidence": "UploadStage rendered when stage==='upload'; stepper renders 4 pills; panels gated to twin stage; pnpm build green"
+    },
+    {
+      "id": "US-006",
+      "title": "Integration sanity — build, lint, tests all green",
+      "priority": 6,
+      "passes": true,
+      "evidence": "pnpm build exit 0 (Next.js 16 + Turbopack + tsc); pnpm lint 0 errors; 161 vitest tests pass"
+    },
+    {
+      "id": "US-007",
+      "title": "Fix applyOverrides footprintPolygon propagation (Architect blocker #1)",
+      "priority": 7,
+      "passes": true,
+      "evidence": "applyOverrides in src/lib/procedural/recipe.ts:222 now spreads footprintPolygon; 2 regression tests added to src/lib/procedural/__tests__/recipe.test.ts"
+    },
+    {
+      "id": "US-008",
+      "title": "Fix LayerPicker dead-code and two-step confirm (Architect blocker #2)",
+      "priority": 8,
+      "passes": true,
+      "evidence": "UploadStage now holds pendingLayer state; LayerPicker exposes onPreview + onConfirm; multi-candidate regression test added and passes"
+    },
+    {
+      "id": "US-009",
+      "title": "Add PDF upload support with interactive polygon tracer (user request)",
+      "priority": 9,
+      "passes": true,
+      "evidence": "pdfjs-dist@5.6.205 installed; src/lib/cad/pdf-to-polygon.ts (pure) with 7 tests; src/components/upload/pdf-tracer.tsx renders PDF page on canvas, captures click vertices, scale calibration via real-world width input; UploadStage handles .pdf extension; build + 161 tests pass"
+    }
+  ],
+  "createdAt": "2026-04-13",
+  "completedAt": "2026-04-13",
+  "notes": "DWG conversion still returns 501 with DXF-export hint (LibreDWG wasm not shipped). DXF and PDF paths are fully functional end-to-end. PDF requires user to trace outline + enter approximate real-world width for scale calibration."
+}

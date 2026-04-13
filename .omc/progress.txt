@@ -1,0 +1,21 @@
+Ralph session — CAD Upload Workflow plan
+Started: 2026-04-13
+
+US-001 (workflow + recipe types) — COMPLETE
+  - Extended WorkflowStage union: added "upload" between "search" and "twin"
+  - Added STAGE_LABELS entry { ko: "도면 업로드", en: "Upload CAD" }
+  - Added STAGE_GUARDS signature with optional StageGuardContext { footprintPolygon? }
+  - Upload guard returns true only when rings[0].length >= 3
+  - Extended RecipeOverrides with optional footprintPolygon: [number,number][][]
+  - Extended recipe-store.getEffectiveRecipe to merge footprintPolygon override
+  - Extended workflow-store: initialCompletion.upload = false, canAdvance/advance accept ctx, advance is now guarded
+  - Updated src/lib/workflow/__tests__/stages.test.ts for 4 stages + upload guard cases
+  - Updated src/store/__tests__/workflow-store.test.ts for upload stage + guard
+  - Added "upload" key to STAGE_HINTS in status-bar.tsx
+  - Added "upload" key to TOOLBAR_CONFIGS in toolbar-configs.ts (empty groups)
+  - Verification: 39/39 tests pass in workflow + store test files
+
+Learnings:
+  - Workflow-stepper.tsx uses stepperize defineStepper with 3 steps hard-coded — need to update in US-005 to include "upload"
+  - RecipeOverrides footprintPolygon mirrors BuildingRecipe.footprintPolygon type exactly ([number,number][][])
+  - STAGE_GUARDS signature change required modifying advance() to also respect guards (previously only search→twin was checked)

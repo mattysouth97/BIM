@@ -1,0 +1,401 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e9]:
+          - heading "건축물대장" [level=1] [ref=e10]
+          - generic [ref=e11]: Building Ledger
+      - generic [ref=e12]:
+        - button "KO" [ref=e13]:
+          - img
+          - text: KO
+        - button "Toggle theme" [ref=e14]:
+          - img
+          - generic [ref=e15]: Toggle theme
+        - button "API Key settings" [ref=e16]:
+          - img
+          - generic [ref=e17]: API Key settings
+  - main [ref=e18]:
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - link "검색" [ref=e22] [cursor=pointer]:
+            - /url: /
+            - img [ref=e23]
+            - generic [ref=e25]: 검색
+          - generic [ref=e95]: 유달아파트
+          - generic [ref=e96]: 공동주택
+        - generic [ref=e28]:
+          - button "내보내기 (Export)" [ref=e29]:
+            - img
+            - text: 내보내기 (Export)
+          - button "Switch to English" [ref=e30]:
+            - img
+          - button "패널 열기" [ref=e31]:
+            - img
+      - generic [ref=e32]:
+        - generic [ref=e34]:
+          - button "Search" [ref=e97]:
+            - img [ref=e98]
+            - generic [ref=e100]: Search
+          - img [ref=e101]
+          - button "Twin (current)" [ref=e103]:
+            - img [ref=e104]
+            - generic [ref=e106]: Twin
+          - img [ref=e107]
+          - button "Report" [ref=e109]:
+            - img [ref=e110]
+            - generic [ref=e112]: Report
+        - generic [ref=e35]:
+          - generic [ref=e113]:
+            - generic [ref=e115]:
+              - generic [ref=e116]:
+                - img
+                - text: 선택
+              - generic [ref=e118]: 유달아파트
+              - generic [ref=e119]: 1970-1989
+              - button "속성" [ref=e121]:
+                - img
+              - button "건물 시스템 레이어" [ref=e122]:
+                - img
+              - generic [ref=e123]:
+                - button "앞면" [ref=e124]:
+                  - img
+                - button "측면" [ref=e125]:
+                  - img
+                - button "위" [ref=e126]:
+                  - img
+                - button "등각" [ref=e127]:
+                  - img
+                - button "뷰 초기화" [ref=e128]:
+                  - img
+            - generic [ref=e129]:
+              - generic [ref=e133]: "클릭: 층 선택 · 드래그: 회전 · 스크롤: 줌"
+              - generic [ref=e134]:
+                - generic [ref=e135]:
+                  - paragraph [ref=e136]: 에너지효율등급
+                  - generic [ref=e137]:
+                    - generic [ref=e138]: 1+++
+                    - generic [ref=e140]: 1+++등급 (모델)
+                - generic [ref=e141]:
+                  - paragraph [ref=e142]: 연간 에너지 수요
+                  - paragraph [ref=e143]: 29.2 kWh/m\u00B2\u00B7yr
+                  - generic [ref=e144]:
+                    - generic [ref=e145]:
+                      - text: 난방
+                      - generic [ref=e146]: 323.5 MWh
+                    - generic [ref=e147]:
+                      - text: 냉방
+                      - generic [ref=e148]: 6.2 MWh
+                - generic [ref=e149]:
+                  - paragraph [ref=e150]: CO₂ 배출량
+                  - paragraph [ref=e151]: 13.4 kgCO\u2082/m\u00B2\u00B7yr
+                  - paragraph [ref=e152]: ≈ 0.6 그루 나무/m² 필요
+                - generic [ref=e153]:
+                  - paragraph [ref=e154]: 열손실
+                  - paragraph [ref=e155]: 78,132 W
+                  - generic [ref=e156]:
+                    - generic [ref=e157]:
+                      - text: 벽
+                      - generic [ref=e158]: 44%
+                    - generic [ref=e159]:
+                      - text: 창
+                      - generic [ref=e160]: 40%
+                    - generic [ref=e161]:
+                      - text: 지붕
+                      - generic [ref=e162]: 13%
+                    - generic [ref=e163]:
+                      - text: 바닥
+                      - generic [ref=e164]: 3%
+                - generic [ref=e165]:
+                  - button "ECO2 내보내기" [ref=e166]:
+                    - img
+                    - text: ECO2 내보내기
+                  - button "ECO2 가져오기" [ref=e167]:
+                    - img
+                    - text: ECO2 가져오기
+              - generic [ref=e220]:
+                - generic [ref=e221]:
+                  - generic [ref=e222]:
+                    - img [ref=e223]
+                    - generic [ref=e226]: 설정
+                  - generic [ref=e227]:
+                    - generic [ref=e228]: 사용자 입력
+                    - button [ref=e229]:
+                      - img
+                - generic [ref=e231]:
+                  - tablist [ref=e232]:
+                    - tab "건물" [selected] [ref=e233]:
+                      - img
+                      - text: 건물
+                    - tab "외피" [ref=e234]:
+                      - img
+                      - text: 외피
+                    - tab "설비" [ref=e235]:
+                      - img
+                      - text: 설비
+                    - tab "레이어" [ref=e236]:
+                      - img
+                      - text: 레이어
+                  - tabpanel "건물" [ref=e237]:
+                    - generic [ref=e238]:
+                      - generic [ref=e239]:
+                        - heading "형상" [level=4] [ref=e240]
+                        - generic [ref=e241]:
+                          - generic [ref=e242]:
+                            - generic [ref=e243]:
+                              - generic [ref=e244]: 가로 폭
+                              - generic [ref=e245]: 29.10 m
+                            - generic "가로 폭" [ref=e246]:
+                              - slider [ref=e250]
+                          - generic [ref=e251]:
+                            - generic [ref=e252]:
+                              - generic [ref=e253]: 세로 깊이
+                              - generic [ref=e254]: 19.40 m
+                            - generic "세로 깊이" [ref=e255]:
+                              - slider [ref=e259]
+                          - generic [ref=e260]:
+                            - generic [ref=e261]:
+                              - generic [ref=e262]: 층수
+                              - generic [ref=e263]: "20"
+                            - generic "층수" [ref=e264]:
+                              - slider [ref=e268]
+                          - generic [ref=e269]:
+                            - generic [ref=e270]:
+                              - generic [ref=e271]: 층고
+                              - generic [ref=e272]: 2.7 m
+                            - generic "층고" [ref=e273]:
+                              - slider [ref=e277]
+                      - generic [ref=e278]:
+                        - heading "파사드" [level=4] [ref=e279]
+                        - generic [ref=e280]:
+                          - generic [ref=e281]:
+                            - generic [ref=e282]:
+                              - generic [ref=e283]: 창면적비
+                              - generic [ref=e284]: 20 %
+                            - generic "창면적비" [ref=e285]:
+                              - slider [ref=e289]
+                          - generic [ref=e290]:
+                            - generic [ref=e291]:
+                              - generic [ref=e292]: 멀리온 깊이
+                              - generic [ref=e293]: 0.04 m
+                            - generic "멀리온 깊이" [ref=e294]:
+                              - slider [ref=e298]
+                          - generic [ref=e299]:
+                            - generic [ref=e300]:
+                              - generic [ref=e301]: 창대 높이
+                              - generic [ref=e302]: 0.85 m
+                            - generic "창대 높이" [ref=e303]:
+                              - slider [ref=e307]
+                          - generic [ref=e308]:
+                            - generic [ref=e309]:
+                              - generic [ref=e310]: 솔리드 패널 비율
+                              - generic [ref=e311]: 15 %
+                            - generic "솔리드 패널 비율" [ref=e312]:
+                              - slider [ref=e316]
+                          - generic [ref=e317]:
+                            - generic [ref=e318]:
+                              - generic [ref=e319]: 파라펫 높이
+                              - generic [ref=e320]: 0.3 m
+                            - generic "파라펫 높이" [ref=e321]:
+                              - slider [ref=e325]
+                      - generic [ref=e326]:
+                        - heading "구조" [level=4] [ref=e327]
+                        - generic [ref=e328]:
+                          - generic [ref=e329]:
+                            - generic [ref=e330]:
+                              - generic [ref=e331]: 기둥 간격
+                              - generic [ref=e332]: 6.0 m
+                            - generic "기둥 간격" [ref=e333]:
+                              - slider [ref=e337]
+                          - generic [ref=e338]:
+                            - generic [ref=e339]:
+                              - generic [ref=e340]: 기둥 크기
+                              - generic [ref=e341]: 0.60 m
+                            - generic "기둥 크기" [ref=e342]:
+                              - slider [ref=e346]
+                          - generic [ref=e347]:
+                            - generic [ref=e348]:
+                              - generic [ref=e349]: 슬래브 두께
+                              - generic [ref=e350]: 0.20 m
+                            - generic "슬래브 두께" [ref=e351]:
+                              - slider [ref=e355]
+                          - generic [ref=e356]:
+                            - generic [ref=e357]:
+                              - generic [ref=e358]: 벽 두께
+                              - generic [ref=e359]: 0.33 m
+                            - generic "벽 두께" [ref=e360]:
+                              - slider [ref=e364]
+                      - generic [ref=e365]:
+                        - heading "지붕" [level=4] [ref=e366]
+                        - generic [ref=e367]:
+                          - generic [ref=e368]:
+                            - generic [ref=e370]: 지붕 유형
+                            - combobox [ref=e371]:
+                              - generic: 박공지붕
+                              - img
+                          - generic [ref=e372]:
+                            - generic [ref=e373]:
+                              - generic [ref=e374]: 박공 높이
+                              - generic [ref=e375]: 3.0 m
+                            - generic "박공 높이" [ref=e376]:
+                              - slider [ref=e380]
+                      - button "기본값 복원" [ref=e381]:
+                        - img
+                        - text: 기본값 복원
+              - generic [ref=e382]:
+                - generic [ref=e383]:
+                  - generic [ref=e384]: 디지털 트윈 레이어
+                  - button [ref=e385]:
+                    - img
+                - generic [ref=e386]:
+                  - button "외피 Walls, roof, windows, doors — thermal boundary visualization" [active] [ref=e387]:
+                    - generic [ref=e389]:
+                      - generic [ref=e390]: 외피
+                      - generic [ref=e391]: Walls, roof, windows, doors — thermal boundary visualization
+                  - button "구조 Columns, slabs, foundation — load-bearing elements" [ref=e392]:
+                    - generic [ref=e394]:
+                      - generic [ref=e395]: 구조
+                      - generic [ref=e396]: Columns, slabs, foundation — load-bearing elements
+                  - button "기계전기설비 All MEP systems (pipes, ducts, electrical) — building services overview" [ref=e397]:
+                    - generic [ref=e399]:
+                      - generic [ref=e400]: 기계전기설비
+                      - generic [ref=e401]: All MEP systems (pipes, ducts, electrical) — building services overview
+                  - button "에너지 존 Floor-level energy zones, heat loss coloring — energy audit visualization" [ref=e402]:
+                    - generic [ref=e404]:
+                      - generic [ref=e405]: 에너지 존
+                      - generic [ref=e406]: Floor-level energy zones, heat loss coloring — energy audit visualization
+                  - button "개선 대상 Highlighted elements recommended for upgrade — retrofit recommendation overlay" [ref=e407]:
+                    - generic [ref=e409]:
+                      - generic [ref=e410]: 개선 대상
+                      - generic [ref=e411]: Highlighted elements recommended for upgrade — retrofit recommendation overlay
+          - generic [ref=e39]:
+            - generic [ref=e40]:
+              - generic [ref=e41]:
+                - img [ref=e42]
+                - generic [ref=e49]: Scene
+              - button [ref=e51]:
+                - img
+            - generic [ref=e53]:
+              - img [ref=e54]
+              - paragraph [ref=e58]: 건물을 선택하면 개선 권장사항을 확인할 수 있습니다
+              - paragraph [ref=e59]: Select a building to view retrofit recommendations
+          - generic [ref=e60]:
+            - generic [ref=e61]:
+              - generic [ref=e62]:
+                - img [ref=e63]
+                - generic [ref=e70]: Properties
+              - button [ref=e72]:
+                - img
+            - generic [ref=e168]:
+              - generic [ref=e169]:
+                - heading "트윈 충실도" [level=3] [ref=e170]:
+                  - button "트윈 충실도" [expanded] [ref=e171]:
+                    - text: 트윈 충실도
+                    - img
+                - region "트윈 충실도" [ref=e172]:
+                  - generic [ref=e174]:
+                    - generic [ref=e176]:
+                      - text: L1 · Public Data
+                      - generic [ref=e177]: 44%
+                    - generic [ref=e180]:
+                      - heading "L1 · Public Data 44%" [level=3] [ref=e181]:
+                        - button "L1 · Public Data 44%" [expanded] [ref=e182]:
+                          - generic [ref=e185]:
+                            - text: L1 · Public Data
+                            - generic [ref=e186]: 44%
+                          - img
+                      - region "L1 · Public Data 44%" [ref=e412]:
+                        - generic [ref=e413]:
+                          - generic [ref=e414]:
+                            - generic [ref=e415]: Data Categories
+                            - paragraph [ref=e416]: 4 of 9 sources available · 44% complete
+                          - generic [ref=e417]:
+                            - list [ref=e418]:
+                              - listitem [ref=e419]:
+                                - generic [ref=e420]:
+                                  - generic [ref=e421]: –
+                                  - generic [ref=e422]: Building Geometry
+                                - generic [ref=e423]: Missing
+                              - listitem [ref=e424]:
+                                - generic [ref=e425]:
+                                  - generic [ref=e426]: –
+                                  - generic [ref=e427]: Structure Codes
+                                - generic [ref=e428]: Missing
+                              - listitem [ref=e429]:
+                                - generic [ref=e430]:
+                                  - generic [ref=e431]: –
+                                  - generic [ref=e432]: Permit Date
+                                - generic [ref=e433]: Missing
+                              - listitem [ref=e434]:
+                                - generic [ref=e435]:
+                                  - generic [ref=e436]: –
+                                  - generic [ref=e437]: Energy Consumption
+                                - generic [ref=e438]: Missing
+                              - listitem [ref=e439]:
+                                - generic [ref=e440]:
+                                  - generic [ref=e441]: –
+                                  - generic [ref=e442]: Floor Plans
+                                - generic [ref=e443]: Missing
+                              - listitem [ref=e444]:
+                                - generic [ref=e445]:
+                                  - generic [ref=e446]: –
+                                  - generic [ref=e447]: Equipment Schedule
+                                - generic [ref=e448]: Missing
+                              - listitem [ref=e449]:
+                                - generic [ref=e450]:
+                                  - generic [ref=e451]: –
+                                  - generic [ref=e452]: IFC Model
+                                - generic [ref=e453]: Missing
+                              - listitem [ref=e454]:
+                                - generic [ref=e455]:
+                                  - generic [ref=e456]: –
+                                  - generic [ref=e457]: Sensor Data
+                                - generic [ref=e458]: Missing
+                            - generic [ref=e459]:
+                              - paragraph [ref=e460]: 3 actions needed to reach Level 2
+                              - button "Upgrade to Level 2" [ref=e461]
+              - generic [ref=e187]:
+                - heading "벤치마크 비교" [level=3] [ref=e188]:
+                  - button "벤치마크 비교" [expanded] [ref=e189]:
+                    - text: 벤치마크 비교
+                    - img
+                - region "벤치마크 비교" [ref=e190]:
+                  - generic [ref=e192]:
+                    - generic [ref=e193]:
+                      - generic [ref=e194]: 백분위
+                      - generic [ref=e195]: 7번째 백분위
+                    - generic [ref=e196]:
+                      - generic [ref=e197]: 성능 등급
+                      - generic [ref=e198]: excellent
+                    - generic [ref=e199]:
+                      - generic [ref=e200]: office
+                      - generic [ref=e201]: 2020+
+                    - paragraph [ref=e202]: This building is in the 7th percentile — significantly more efficient than 93% of similar 2020+ office buildings nationwide.
+              - heading "녹색건축물 인증" [level=3] [ref=e204]:
+                - button "녹색건축물 인증" [ref=e205]:
+                  - text: 녹색건축물 인증
+                  - img
+              - generic [ref=e206]:
+                - heading "에너지효율등급" [level=3] [ref=e207]:
+                  - button "에너지효율등급" [expanded] [ref=e208]:
+                    - text: 에너지효율등급
+                    - img
+                - region "에너지효율등급" [ref=e209]:
+                  - generic [ref=e211]:
+                    - generic [ref=e212]:
+                      - generic [ref=e213]: 1+++
+                      - generic [ref=e214]:
+                        - generic [ref=e215]: 1+++등급 (제로에너지수준)
+                        - generic [ref=e216]: 건축물 에너지효율등급
+                    - generic [ref=e217]:
+                      - generic [ref=e218]: 1차 에너지 수요
+                      - generic [ref=e219]: 48.3 kWh/m²·yr
+        - generic [ref=e79]:
+          - generic [ref=e82]: 디지털 트윈을 확인하고 설정하세요
+          - generic [ref=e84]: 건물 데이터 없음
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e90] [cursor=pointer]:
+    - img [ref=e91]
+  - alert [ref=e94]

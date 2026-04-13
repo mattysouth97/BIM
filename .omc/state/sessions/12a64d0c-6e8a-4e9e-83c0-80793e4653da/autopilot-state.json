@@ -1,0 +1,11 @@
+{
+  "active": false,
+  "completed_at": "2026-04-13T14:33:00.000Z",
+  "reason": "user invoked /cancel; brainstorming flow took precedence over autopilot expansion. Spec written to docs/superpowers/specs/2026-04-13-cad-upload-unification-design.md",
+  "_meta": {
+    "mode": "autopilot",
+    "sessionId": "12a64d0c-6e8a-4e9e-83c0-80793e4653da",
+    "updatedAt": "2026-04-13T14:34:33.248Z",
+    "updatedBy": "state_write_tool"
+  }
+}

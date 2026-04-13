@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "threejs-builder",
+  "owner": "cooksaw",
+  "repo": "claude-skills",
+  "path": "plugins/threejs-builder/skills/threejs-builder",
+  "branch": "main",
+  "sha": "1a45ab12eb20a0fa4d8fb753d1fc96ea6ca5e6f0",
+  "source": "manual"
+}

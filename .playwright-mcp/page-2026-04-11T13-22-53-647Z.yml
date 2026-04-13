@@ -1,0 +1,64 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e9]:
+          - heading "건축물대장" [level=1] [ref=e10]
+          - generic [ref=e11]: Building Ledger
+      - generic [ref=e12]:
+        - button "KO" [ref=e13]:
+          - img
+          - text: KO
+        - button "Toggle theme" [ref=e14]:
+          - img
+          - generic [ref=e15]: Toggle theme
+        - button "API Key settings" [ref=e16]:
+          - img
+          - generic [ref=e17]: API Key settings
+  - main [ref=e18]:
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - link "검색" [ref=e22] [cursor=pointer]:
+          - /url: /
+          - img [ref=e23]
+          - generic [ref=e25]: 검색
+        - generic [ref=e28]:
+          - button "내보내기 (Export)" [ref=e29]:
+            - img
+            - text: 내보내기 (Export)
+          - button "Switch to English" [ref=e30]:
+            - img
+          - button "패널 열기" [ref=e31]:
+            - img
+      - generic [ref=e32]:
+        - generic [ref=e35]:
+          - img [ref=e37]
+          - generic [ref=e39]:
+            - generic [ref=e40]:
+              - generic [ref=e41]:
+                - img [ref=e42]
+                - generic [ref=e49]: Scene
+              - button [ref=e51]:
+                - img
+            - generic [ref=e53]:
+              - img [ref=e54]
+              - paragraph [ref=e58]: 건물을 선택하면 개선 권장사항을 확인할 수 있습니다
+              - paragraph [ref=e59]: Select a building to view retrofit recommendations
+          - generic [ref=e60]:
+            - generic [ref=e61]:
+              - generic [ref=e62]:
+                - img [ref=e63]
+                - generic [ref=e70]: Properties
+              - button [ref=e72]:
+                - img
+            - generic [ref=e74]:
+              - img [ref=e75]
+              - paragraph [ref=e77]: 건물 데이터를 불러오는 중...
+        - generic [ref=e79]:
+          - generic [ref=e82]: 디지털 트윈을 확인하고 설정하세요
+          - generic [ref=e84]: 건물 데이터 없음
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e90] [cursor=pointer]:
+    - img [ref=e91]
+  - alert [ref=e94]

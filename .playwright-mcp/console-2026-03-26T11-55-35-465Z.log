@@ -1,0 +1,199 @@
+[     255ms] [ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <RootLayout>
+      <html lang="ko" className="geist_a715..." suppressHydrationWarning={true}>
+        ...
+          <QueryClientProvider client={{}}>
+            <J attribute="class" defaultTheme="system" enableSystem={true}>
+              <V attribute="class" defaultTheme="system" enableSystem={true}>
+                <script>
+                <Header>
+                  <header className="sticky top...">
+                    <div className="mx-auto fl...">
+                      <div>
+                      <div className="flex items...">
+                        <Button>
+                        <Button variant="ghost" size="icon" onClick={function toggleTheme} title="Light mode">
+                          <button
+                            data-slot="button"
+                            data-variant="ghost"
+                            data-size="icon"
+                            className={"inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm fon..."}
+                            onClick={function toggleTheme}
++                           title="Light mode"
+-                           title="Dark mode"
+                          >
+                        ...
+                ...
+                ...
+ @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[     660ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[    1250ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[    1731ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[   17676ms] [ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <RootLayout>
+      <html lang="ko" className="geist_a715..." suppressHydrationWarning={true}>
+        ...
+          <QueryClientProvider client={{}}>
+            <J attribute="class" defaultTheme="system" enableSystem={true}>
+              <V attribute="class" defaultTheme="system" enableSystem={true}>
+                <script>
+                <Header>
+                  <header className="sticky top...">
+                    <div className="mx-auto fl...">
+                      <div>
+                      <div className="flex items...">
+                        <Button>
+                        <Button variant="ghost" size="icon" onClick={function toggleTheme} title="Light mode">
+                          <button
+                            data-slot="button"
+                            data-variant="ghost"
+                            data-size="icon"
+                            className={"inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm fon..."}
+                            onClick={function toggleTheme}
++                           title="Light mode"
+-                           title="Dark mode"
+                          >
+                        ...
+                ...
+                ...
+ @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[   19895ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[   20239ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[   66329ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[   66378ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[   70031ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[   71193ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[   86491ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[  106043ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[  131214ms] [ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <RootLayout>
+      <html lang="ko" className="geist_a715..." suppressHydrationWarning={true}>
+        ...
+          <QueryClientProvider client={{}}>
+            <J attribute="class" defaultTheme="system" enableSystem={true}>
+              <V attribute="class" defaultTheme="system" enableSystem={true}>
+                <script>
+                <Header>
+                  <header className="sticky top...">
+                    <div className="mx-auto fl...">
+                      <div>
+                      <div className="flex items...">
+                        <Button>
+                        <Button variant="ghost" size="icon" onClick={function toggleTheme} title="Light mode">
+                          <button
+                            data-slot="button"
+                            data-variant="ghost"
+                            data-size="icon"
+                            className={"inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm fon..."}
+                            onClick={function toggleTheme}
++                           title="Light mode"
+-                           title="Dark mode"
+                          >
+                        ...
+                ...
+                ...
+ @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  132128ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[  132530ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/wasm/web-ifc.wasm:0
+[  132531ms] [ERROR] wasm streaming compile failed: TypeError: Failed to execute 'compile' on 'WebAssembly': HTTP status code is not ok @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  132531ms] [ERROR] falling back to ArrayBuffer instantiation @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  132542ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/wasm/web-ifc.wasm:0
+[  132542ms] [ERROR] wasm streaming compile failed: TypeError: Failed to execute 'compile' on 'WebAssembly': HTTP status code is not ok @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  132543ms] [ERROR] falling back to ArrayBuffer instantiation @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  132550ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/wasm/web-ifc.wasm:0
+[  132551ms] [ERROR] failed to asynchronously prepare wasm: both async and sync fetching of the wasm failed @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  132551ms] [ERROR] Aborted(both async and sync fetching of the wasm failed) @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  132559ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/wasm/web-ifc.wasm:0
+[  132559ms] [ERROR] failed to asynchronously prepare wasm: both async and sync fetching of the wasm failed @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  132560ms] [ERROR] Aborted(both async and sync fetching of the wasm failed) @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  133107ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[  223038ms] [ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <RootLayout>
+      <html lang="ko" className="geist_a715..." suppressHydrationWarning={true}>
+        ...
+          <QueryClientProvider client={{}}>
+            <J attribute="class" defaultTheme="system" enableSystem={true}>
+              <V attribute="class" defaultTheme="system" enableSystem={true}>
+                <script>
+                <Header>
+                  <header className="sticky top...">
+                    <div className="mx-auto fl...">
+                      <div>
+                      <div className="flex items...">
+                        <Button>
+                        <Button variant="ghost" size="icon" onClick={function toggleTheme} title="Light mode">
+                          <button
+                            data-slot="button"
+                            data-variant="ghost"
+                            data-size="icon"
+                            className={"inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm fon..."}
+                            onClick={function toggleTheme}
++                           title="Light mode"
+-                           title="Dark mode"
+                          >
+                        ...
+                ...
+                ...
+ @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  223590ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[  224079ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/http:/localhost:3000/wasm/web-ifc.wasm:0
+[  224079ms] [ERROR] wasm streaming compile failed: TypeError: Failed to execute 'compile' on 'WebAssembly': HTTP status code is not ok @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  224080ms] [ERROR] falling back to ArrayBuffer instantiation @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  224090ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/http:/localhost:3000/wasm/web-ifc.wasm:0
+[  224090ms] [ERROR] wasm streaming compile failed: TypeError: Failed to execute 'compile' on 'WebAssembly': HTTP status code is not ok @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  224090ms] [ERROR] falling back to ArrayBuffer instantiation @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  224098ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/http:/localhost:3000/wasm/web-ifc.wasm:0
+[  224098ms] [ERROR] failed to asynchronously prepare wasm: both async and sync fetching of the wasm failed @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  224099ms] [ERROR] Aborted(both async and sync fetching of the wasm failed) @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  224114ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/_next/static/chunks/http:/localhost:3000/wasm/web-ifc.wasm:0
+[  224114ms] [ERROR] failed to asynchronously prepare wasm: both async and sync fetching of the wasm failed @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  224114ms] [ERROR] Aborted(both async and sync fetching of the wasm failed) @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[  224583ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
