@@ -64,7 +64,8 @@ export function PdfTracer({
           import.meta.url
         ).toString();
 
-        const loadingTask = pdfjs.getDocument({ data: new Uint8Array(pdfBytes) });
+        const dataCopy = pdfBytes.slice(0);
+        const loadingTask = pdfjs.getDocument({ data: new Uint8Array(dataCopy) });
         const pdf = await loadingTask.promise;
         if (cancelled) return;
 
