@@ -292,3 +292,82 @@ describe("parseDxfText — edge cases", () => {
     expect(result.warnings.length).toBeGreaterThan(0);
   });
 });
+
+describe("parseDxfText — BIM_OUTLINE layer priority", () => {
+  function buildBimOutlinePriorityFixture(outlineLayerName: string): string {
+    // Two closed LWPOLYLINE rectangles — the BIM_OUTLINE one is SMALLER so
+    // area-ranking alone would pick the other. BIM_OUTLINE must still win.
+    return dxf([
+      [0, "SECTION"], [2, "HEADER"],
+      [9, "$INSUNITS"], [70, 6], // meters
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "ENTITIES"],
+      // Larger ring on a non-BIM layer (40 × 30 = 1200 m²)
+      [0, "LWPOLYLINE"],
+      [8, "RANDOM"],
+      [90, 4], [70, 1],
+      [10, 0],  [20, 0],
+      [10, 40], [20, 0],
+      [10, 40], [20, 30],
+      [10, 0],  [20, 30],
+      // BIM_OUTLINE ring (15 × 10 = 150 m² — smaller than the decoy)
+      [0, "LWPOLYLINE"],
+      [8, outlineLayerName],
+      [90, 4], [70, 1],
+      [10, 100], [20, 100],
+      [10, 115], [20, 100],
+      [10, 115], [20, 110],
+      [10, 100], [20, 110],
+      [0, "ENDSEC"],
+      [0, "EOF"],
+    ]);
+  }
+
+  it("ranks BIM_OUTLINE first even when another ring has a larger area", () => {
+    const text = buildBimOutlinePriorityFixture("BIM_OUTLINE");
+    const result = parseDxfText(text);
+    expect(result.candidates[0].layer).toBe("BIM_OUTLINE");
+    expect(result.candidates[0].areaSqm).toBeCloseTo(150, 3);
+    expect(result.candidates[1].layer).toBe("RANDOM");
+  });
+
+  it("matches BIM_OUTLINE case-insensitively", () => {
+    const text = buildBimOutlinePriorityFixture("bim_outline");
+    const result = parseDxfText(text);
+    expect(result.candidates[0].layer.toLowerCase()).toBe("bim_outline");
+  });
+
+  it("also matches hyphenated BIM-OUTLINE", () => {
+    const text = buildBimOutlinePriorityFixture("BIM-OUTLINE");
+    const result = parseDxfText(text);
+    expect(result.candidates[0].layer).toBe("BIM-OUTLINE");
+  });
+
+  it("falls back to area ranking when BIM_OUTLINE layer is absent", () => {
+    const text = buildBimOutlinePriorityFixture("FOOTPRINT");
+    const result = parseDxfText(text);
+    // RANDOM (1200 m²) is larger than FOOTPRINT (150 m²) and should win.
+    expect(result.candidates[0].layer).toBe("RANDOM");
+  });
+
+  it("rejects under-threshold BIM_OUTLINE rings like any other (no special bypass)", () => {
+    // A 2×2 BIM_OUTLINE ring = 4 m², below MIN_AREA_SQM=10, must be filtered.
+    const text = dxf([
+      [0, "SECTION"], [2, "HEADER"],
+      [9, "$INSUNITS"], [70, 6],
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "ENTITIES"],
+      [0, "LWPOLYLINE"],
+      [8, "BIM_OUTLINE"],
+      [90, 4], [70, 1],
+      [10, 0], [20, 0],
+      [10, 2], [20, 0],
+      [10, 2], [20, 2],
+      [10, 0], [20, 2],
+      [0, "ENDSEC"],
+      [0, "EOF"],
+    ]);
+    const result = parseDxfText(text);
+    expect(result.candidates).toEqual([]);
+  });
+});

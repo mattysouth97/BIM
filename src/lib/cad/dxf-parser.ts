@@ -79,6 +79,16 @@ const MIN_AREA_SQM = 10;
 const MAX_REASONABLE_AREA_SQM = 10_000_000; // 10 km²
 
 /**
+ * Reserved DXF layer name for the building outline.
+ *
+ * When a candidate matches this pattern (case-insensitive, optional
+ * hyphen/underscore), it is promoted above area-ranked peers so the upload UI
+ * can skip the layer picker. Matches: BIM_OUTLINE, bim_outline, BIM-OUTLINE,
+ * BIMOUTLINE.
+ */
+export const BIM_OUTLINE_PATTERN = /^bim[_-]?outline$/i;
+
+/**
  * Parse a DXF text payload and extract footprint polygon candidates.
  *
  * @param text - DXF file contents as a string.
@@ -208,8 +218,17 @@ export function parseDxfText(text: string): ParsedDxf {
     });
   }
 
-  // Rank by area descending — the outer footprint is usually the largest ring.
-  candidates.sort((a, b) => b.areaSqm - a.areaSqm);
+  // Rank by BIM_OUTLINE layer convention first (case-insensitive, optional
+  // hyphen/underscore), then by area descending for ties and non-BIM layers.
+  // A well-authored DXF names its building outline `BIM_OUTLINE` so the
+  // upload-stage can skip the layer picker entirely.
+  candidates.sort((a, b) => {
+    const aIsOutline = BIM_OUTLINE_PATTERN.test(a.layer);
+    const bIsOutline = BIM_OUTLINE_PATTERN.test(b.layer);
+    if (aIsOutline && !bIsOutline) return -1;
+    if (bIsOutline && !aIsOutline) return 1;
+    return b.areaSqm - a.areaSqm;
+  });
 
   return { candidates, unitScaleToMeters, warnings };
 }
