@@ -4,9 +4,12 @@
 //
 // The PDF tracer component captures vertex clicks in canvas pixel coordinates.
 // Canvas Y grows downward; world Z we want grows upward (matches our three.js
-// convention of footprint in the XZ plane). Scale is calibrated from a single
-// user-entered value: the approximate real-world width of the building in
-// meters, which we map to the polygon's bounding-box X-extent in pixels.
+// convention of footprint in the XZ plane).
+//
+// Scale is resolved from one of two inputs:
+//   1. `metersPerPixel` — pre-computed scale from a two-point ruler (preferred).
+//   2. `realWorldWidthMeters` — legacy guess mapped to the polygon bbox width.
+// `metersPerPixel` wins when both are provided.
 
 import type { Polygon2D } from "./dxf-parser";
 
