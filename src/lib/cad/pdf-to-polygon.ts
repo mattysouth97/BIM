@@ -21,9 +21,14 @@ export interface PdfToPolygonInput {
   points: PixelPoint[];
   /**
    * Real-world width of the traced polygon's bounding box, in meters.
-   * Used to compute pixels-per-meter scale. Must be > 0.
+   * Legacy calibration path; mutually exclusive with `metersPerPixel`.
    */
-  realWorldWidthMeters: number;
+  realWorldWidthMeters?: number;
+  /**
+   * Pre-computed scale from a two-point ruler. Overrides
+   * `realWorldWidthMeters` when provided. Must be > 0.
+   */
+  metersPerPixel?: number;
 }
 
 export interface PdfToPolygonResult {
@@ -46,9 +51,8 @@ export interface PdfToPolygonResult {
  * degenerate bbox, or non-positive scale).
  */
 export function pdfToPolygon(input: PdfToPolygonInput): PdfToPolygonResult | null {
-  const { points, realWorldWidthMeters } = input;
+  const { points } = input;
   if (points.length < 3) return null;
-  if (!(realWorldWidthMeters > 0)) return null;
 
   // Bounding box in pixel space.
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -62,7 +66,17 @@ export function pdfToPolygon(input: PdfToPolygonInput): PdfToPolygonResult | nul
   const heightPx = maxY - minY;
   if (widthPx <= 0 || heightPx <= 0) return null;
 
-  const metersPerPixel = realWorldWidthMeters / widthPx;
+  // Resolve scale. metersPerPixel wins if both are provided.
+  let metersPerPixel: number;
+  if (typeof input.metersPerPixel === "number") {
+    if (!(input.metersPerPixel > 0)) return null;
+    metersPerPixel = input.metersPerPixel;
+  } else if (typeof input.realWorldWidthMeters === "number") {
+    if (!(input.realWorldWidthMeters > 0)) return null;
+    metersPerPixel = input.realWorldWidthMeters / widthPx;
+  } else {
+    return null;
+  }
 
   // Convert each point:
   //   world X = (p.x - centerX) * metersPerPixel

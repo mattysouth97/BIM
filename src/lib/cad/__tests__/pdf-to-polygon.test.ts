@@ -106,3 +106,50 @@ describe("pdfToPolygon", () => {
     expect(result.areaSqm).toBeCloseTo(76, 1);
   });
 });
+
+describe("pdfToPolygon — metersPerPixel calibration (two-point ruler)", () => {
+  it("accepts metersPerPixel directly and scales the polygon", () => {
+    // 100×80 pixel rectangle with metersPerPixel=0.1 → 10×8 m = 80 m²
+    const result = pdfToPolygon({
+      points: [
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+        { x: 100, y: 80 },
+        { x: 0, y: 80 },
+      ],
+      metersPerPixel: 0.1,
+    })!;
+    expect(result).not.toBeNull();
+    expect(result.metersPerPixel).toBeCloseTo(0.1, 9);
+    expect(result.areaSqm).toBeCloseTo(80, 3);
+  });
+
+  it("returns null when metersPerPixel is not positive", () => {
+    const pts = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 80 },
+      { x: 0, y: 80 },
+    ];
+    expect(pdfToPolygon({ points: pts, metersPerPixel: 0 })).toBeNull();
+    expect(pdfToPolygon({ points: pts, metersPerPixel: -0.1 })).toBeNull();
+  });
+
+  it("centers polygon at bbox origin in the metersPerPixel path", () => {
+    const result = pdfToPolygon({
+      points: [
+        { x: 50, y: 50 },
+        { x: 150, y: 50 },
+        { x: 150, y: 130 },
+        { x: 50, y: 130 },
+      ],
+      metersPerPixel: 0.1,
+    })!;
+    const xs = result.polygon.map(([x]) => x);
+    const zs = result.polygon.map(([, z]) => z);
+    expect(Math.min(...xs)).toBeCloseTo(-5, 6);
+    expect(Math.max(...xs)).toBeCloseTo(5, 6);
+    expect(Math.min(...zs)).toBeCloseTo(-4, 6);
+    expect(Math.max(...zs)).toBeCloseTo(4, 6);
+  });
+});
