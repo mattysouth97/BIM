@@ -20,7 +20,7 @@
 
 **Milestone Goal:** Ship a portfolio energy-prediction data product for the Korean building stock. Phase 35 proves the end-to-end pipeline on one region; later phases add attribution, coverage, live simulation, and observed-data fine-tuning.
 
-- [ ] **Phase 35: Portfolio Forecasting Thin Slice** — Versioned Parquet releases, read-only prediction API, thin explorer page. One region, ≥50 buildings, release v0.1.0. Plan: `.omc/plans/v7-prediction-phase35-portfolio-thin-slice.md`
+- [ ] **Phase 35: Portfolio Forecasting Thin Slice** — Versioned Parquet releases, read-only prediction API, thin explorer page. One region, ≥50 buildings, release v0.1.0. Tasks 1–3 shipped; 4–12 pending. Plan: `.omc/plans/consensus-v7-phase35-portfolio.md`
 - [ ] **Phase 36: Attribution + Multi-Region + Blob Storage** — SHAP per-building attribution, coverage expansion, release storage migration to object storage, production corpus-growth endpoint
 - [ ] **Phase 37: Live Simulation Hooks** — Browser-side on-demand calcs wired to the 3D viewer (separate v7 track; depends on Phase 35)
 - [ ] **Phase 38: Twin-Generation Upgrade** — Improve twin inference fidelity using feature importances surfaced by Phase 36 model

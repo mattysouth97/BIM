@@ -2,8 +2,22 @@
 
 **Date:** 2026-04-24
 **Milestone:** v7.0 Prediction (Phases 35–40 TBD)
-**Status:** Revised after consensus review (Architect + Critic) — awaiting Critic re-approval
+**Status:** Consensus-approved. Tasks 1–3 shipped. Tasks 4–12 pending.
 **Mode:** Short RALPLAN-DR
+
+---
+
+## Progress (for autopilot pickup)
+
+- ✅ **Task 1** — Roadmap + plan commit. Commit `624db0e`.
+- ✅ **Task 2** — `PortfolioFeatureVector` type + schema + `.gitattributes`. Commit `5769fc5`. 8/8 tests pass, build + lint green. Spec review ✅; quality review ⚠️ APPROVED_WITH_SUGGESTIONS (4 minor nits, non-blocking).
+- ✅ **Task 3** — `extractFeatures` + Node CLI wrapper + `FootprintGeometry` type. Commit `4ab85cb`. 17 extractor tests + 4 CLI smoke tests = 21 tests, all passing. Build + lint green. No spec/quality review run before context pivot — should be picked up by autopilot's Phase 4 validation at the end of the run.
+- ⏳ **Task 4** — next. Python project bootstrap + feature-schema round-trip.
+- ⏳ **Tasks 5–12** — pending per original plan.
+
+**Autopilot instruction:** start Phase 2 execution at Task 4. Tasks 1–3 are frozen; do NOT re-execute or re-verify. Treat commits `624db0e`, `5769fc5`, `4ab85cb` as the starting state.
+
+**Baseline coverage for Task 3 artifact** (for downstream self-improve loop): 91.66% statements coverage on `src/lib/portfolio/feature-extractor.ts`. Recorded at `.omc/self-improve/tracking/baseline.json`.
 
 ---
 
@@ -151,14 +165,14 @@ A12. `pnpm test && pnpm lint && pnpm build` all pass. No regressions.
 
 **Task ordering note:** the validation gate (Task 7) comes **before** all packaging work (Tasks 8–12). If Task 7's Kendall tau gate (below) fails, Tasks 8–12 are cancelled and Phase 35 ships as "training infrastructure only" with a decision memo (see Gate Protocol in Risks section).
 
-### Task 1: Roadmap + plan commit
-Land roadmap update and this plan file. No code.
+### ~~Task 1~~ ✅ SHIPPED — Roadmap + plan commit
+Commit `624db0e`. Skip.
 
-### Task 2: `PortfolioFeatureVector` type + schema
-15–20 public-data-only fields. TS interface + `FEATURE_SCHEMA as const`. Field count / types / order / group-whitelist tests. Add `*.parquet binary` and `*.onnx binary` to `.gitattributes` in this task.
+### ~~Task 2~~ ✅ SHIPPED — `PortfolioFeatureVector` type + schema
+Commit `5769fc5`. Skip. See `src/lib/portfolio/features.ts` for the 20-field contract.
 
-### Task 3: `extractFeatures` pure function + Node CLI wrapper
-TDD: 9 fixtures (3 eras × 3 use types) with expected feature vectors. Uses `BuildingRecord` (`src/lib/types.ts`) and a `FootprintGeometry` type (newly defined in `src/lib/portfolio/types.ts`; pre-fetched — the extractor does not call any API). Also creates `scripts/extract-features.mjs` CLI wrapper: stdin JSON in, stdout JSON out, `--batch` for JSONL. CLI has its own smoke test.
+### ~~Task 3~~ ✅ SHIPPED — `extractFeatures` + Node CLI wrapper
+Commit `4ab85cb`. Skip. See `src/lib/portfolio/feature-extractor.ts` and `scripts/extract-features.mjs`. `FootprintGeometry` type lives at `src/lib/portfolio/types.ts`. Task 3 reviews were not run in-session due to context pivot; Phase 4 validation at end of autopilot run will cover them.
 
 ### Task 4: Python project bootstrap + feature-schema round-trip
 `ml/portfolio/` with uv, deps (`pandas`, `xgboost`, `onnxmltools`, `onnx`, `pydantic`, `pytest`, `numpy`). `scripts/export-feature-schema.mjs` writes `public/releases/latest/schema.json`. `ml/portfolio/schema.py::load_schema()` validates. pytest: `test_schema.py` asserts the loaded schema matches the committed JSON. npm script added.
