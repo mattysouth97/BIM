@@ -1,0 +1,28 @@
+{
+  "si_claude_setting": true,
+  "number_of_agents": 3,
+  "number_of_max_critics": 3,
+  "current_repo_url": "",
+  "fork_url": "",
+  "upstream_url": "",
+  "target_branch": "feat/digital-twin-pivot",
+  "benchmark_command": "node scripts/self-improve-benchmark.mjs",
+  "benchmark_format": "json",
+  "benchmark_direction": "higher_is_better",
+  "max_iterations": 5,
+  "plateau_threshold": 0.5,
+  "plateau_window": 2,
+  "target_value": null,
+  "primary_metric": "coverage_pct",
+  "sealed_files": [
+    "src/lib/portfolio/features.ts",
+    "src/lib/portfolio/__tests__/feature-extractor.test.ts",
+    "src/lib/portfolio/__tests__/extract-features-cli.test.ts",
+    "scripts/extract-features.mjs",
+    "scripts/self-improve-benchmark.mjs"
+  ],
+  "regression_threshold": 0.5,
+  "circuit_breaker_threshold": 3,
+  "auto_push": false,
+  "auto_pr": false
+}
