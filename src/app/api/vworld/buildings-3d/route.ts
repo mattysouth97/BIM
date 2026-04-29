@@ -17,13 +17,17 @@ import { NextRequest, NextResponse } from "next/server";
 const VWORLD_DATA_URL = "https://api.vworld.kr/req/data";
 const VWORLD_DOMAIN = process.env.VWORLD_DOMAIN ?? "localhost";
 
-// Fallback chain — first match wins. Picked from the most commonly-published
-// VWorld building polygon datasets. If the API key only has access to one,
-// the others fail silently and we land on the working one.
+// Fallback chain — first match wins. Order verified empirically against this
+// repo's API key (deep-dive trace 2026-04-29):
+//   LT_C_SPBD          → confirmed working, returns real building polygons
+//   LT_C_USABDLT_PG    → returns "ERROR" (likely not in our key tier)
+//   LT_C_AISBLDG       → returns "ERROR" (likely not in our key tier)
+// LT_C_SPBD is therefore primary. The other two stay in the chain only as
+// future-proofing in case VWorld changes tier coverage.
 const DEFAULT_DATASETS = [
-  "LT_C_USABDLT_PG", // 건물통합정보 폴리곤 (most commonly available)
-  "LT_C_AISBLDG",    // 건물 물리적 정보
-  "LT_C_SPBD",       // 건물통합정보 간략화 폴리곤
+  "LT_C_SPBD",       // 건물통합정보 간략화 폴리곤 — verified working
+  "LT_C_USABDLT_PG", // 건물통합정보 폴리곤 (fallback)
+  "LT_C_AISBLDG",    // 건물 물리적 정보 (fallback)
 ] as const;
 
 const ENV_DATASETS = (process.env.VWORLD_3D_DATASETS ?? "")
