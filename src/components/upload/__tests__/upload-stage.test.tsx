@@ -171,46 +171,29 @@ describe("UploadStage", () => {
     expect(useWorkflowStore.getState().stage).toBe("upload");
   });
 
-  it("rejects DWG with the server's DXF-export hint (mocked 501)", async () => {
+  it("rejects DWG with invalid AC-version header (client-side guard)", async () => {
+    // 32 zero bytes — no valid `ACxxxx` magic. parseDwgFile rejects this
+    // client-side before any WASM load or server round-trip, so the user
+    // sees the missing-header warning and the workflow stays on upload.
     const file = new File([new Uint8Array(32)], "plan.dwg", {
       type: "application/acad",
     });
 
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          error: "DWG conversion is not yet available on this server",
-          hint: "Export the DWG as DXF in your CAD tool (AutoCAD: File → Save As → AutoCAD DXF) and upload the .dxf file.",
-        }),
-        { status: 501, headers: { "Content-Type": "application/json" } }
-      )
-    );
-    vi.stubGlobal("fetch", fetchMock);
+    render(<UploadStage />);
+    const input = screen.getByTestId("upload-file-input") as HTMLInputElement;
+    Object.defineProperty(input, "files", {
+      value: [file],
+      configurable: true,
+    });
+    fireEvent.change(input);
 
-    try {
-      render(<UploadStage />);
-      const input = screen.getByTestId("upload-file-input") as HTMLInputElement;
-      Object.defineProperty(input, "files", {
-        value: [file],
-        configurable: true,
-      });
-      fireEvent.change(input);
+    await waitFor(() => {
+      expect(screen.getByRole("alert").textContent ?? "").toMatch(
+        /AC[\s‑\-]?version|valid DWG|\.dxf/i
+      );
+    });
 
-      await waitFor(() => {
-        expect(fetchMock).toHaveBeenCalledWith(
-          "/api/cad/convert",
-          expect.objectContaining({ method: "POST" })
-        );
-      });
-
-      await waitFor(() => {
-        expect(screen.getByRole("alert").textContent).toMatch(/\.dxf/i);
-      });
-
-      expect(useWorkflowStore.getState().stage).toBe("upload");
-    } finally {
-      vi.unstubAllGlobals();
-    }
+    expect(useWorkflowStore.getState().stage).toBe("upload");
   });
 
   it("accepts .pdf and transitions to the PDF tracing UI", async () => {

@@ -13,7 +13,11 @@ import { calculateHeatLoss } from "../../heat-loss";
 import { calculateAnnualDemand } from "../../annual-demand";
 import { SEOUL_CLIMATE } from "../../climate-data";
 
-describe("golden corpus generator (run once to emit JSON)", () => {
+describe.skip("golden corpus generator (run once to emit JSON)", () => {
+  // Skipped in CI: this is a fixture-emission script, not a test of behavior.
+  // Run manually with `pnpm vitest run src/lib/energy/__tests__/fixtures/generate-corpus.test.ts --testNamePattern="generates golden-corpus"`
+  // after temporarily removing `.skip`. `fileURLToPath(import.meta.url)` also
+  // fails under the project's vitest setup, so this is a "node-only" tool.
   it("generates golden-corpus.json with 20 samples", () => {
     const samples = generateGoldenCorpus();
 
