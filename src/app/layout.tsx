@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Fraunces, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { Header } from "@/components/layout/header";
 import "./globals.css";
@@ -11,6 +11,20 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+// Editorial serif used for the Twin-stage release identity, hero numbers, and
+// panel titles. Variable axes enable instrument-grade precision glyphs.
+const fraunces = Fraunces({
+  variable: "--font-display-release",
+  subsets: ["latin"],
+  axes: ["opsz", "SOFT", "WONK"],
+});
+
+// Distinctive data-feed mono — used for metric readouts on the Twin stage.
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono-data",
   subsets: ["latin"],
 });
 
@@ -28,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
