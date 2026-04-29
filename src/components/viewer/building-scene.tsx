@@ -602,6 +602,8 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             vworldAvailable={
               !vworldQuery.isLoading && (vworldQuery.data?.buildings.length ?? 0) > 0
             }
+            vworldDataset={vworldQuery.data?.dataset}
+            vworldError={vworldQuery.data?.error ?? (vworldQuery.error instanceof Error ? vworldQuery.error.message : null)}
           />
         </ErrorBoundary>
       )}

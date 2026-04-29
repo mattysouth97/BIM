@@ -1,8 +1,13 @@
 // src/app/api/vworld/buildings-3d/route.ts
-// Server-side proxy for VWorld's building-outline dataset (LT_C_SPBD — simple
-// building polygons). Returns per-building footprint rings plus floor-count
-// attributes so the viewer can extrude real geometry at the highest level of
-// detail available in the public dataset.
+// Server-side proxy for VWorld building-outline datasets. Tries a fallback
+// chain of likely dataset IDs (the precise one available depends on the
+// API key's permissions) and returns the first non-empty result. Returns
+// per-building footprint rings plus floor-count attributes so the viewer
+// can extrude real geometry at the highest level of detail available in
+// the public dataset.
+//
+// Override the dataset list at runtime with `?dataset=ID` (single) or
+// `VWORLD_3D_DATASETS=ID1,ID2,...` env var (chain).
 //
 // Cadastral parcels (LP_PA_CBND_BUBUN) give us site boundaries — this route
 // provides building geometry itself, with height inferred from floor counts.
@@ -11,7 +16,21 @@ import { NextRequest, NextResponse } from "next/server";
 
 const VWORLD_DATA_URL = "https://api.vworld.kr/req/data";
 const VWORLD_DOMAIN = process.env.VWORLD_DOMAIN ?? "localhost";
-const BUILDINGS_DATASET = "LT_C_SPBD"; // 건물통합정보 간략화 폴리곤
+
+// Fallback chain — first match wins. Picked from the most commonly-published
+// VWorld building polygon datasets. If the API key only has access to one,
+// the others fail silently and we land on the working one.
+const DEFAULT_DATASETS = [
+  "LT_C_USABDLT_PG", // 건물통합정보 폴리곤 (most commonly available)
+  "LT_C_AISBLDG",    // 건물 물리적 정보
+  "LT_C_SPBD",       // 건물통합정보 간략화 폴리곤
+] as const;
+
+const ENV_DATASETS = (process.env.VWORLD_3D_DATASETS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter((s) => s.length > 0);
+
 const STOREY_HEIGHT_M = 3.3;
 
 export interface VWorldBuilding3D {
@@ -40,21 +59,76 @@ export interface VWorldBuildings3DResponse {
   fetchedAt: string;
 }
 
+function resolveDatasets(searchParams: URLSearchParams): readonly string[] {
+  const explicit = searchParams.get("dataset");
+  if (explicit && explicit.trim().length > 0) return [explicit.trim()];
+  if (ENV_DATASETS.length > 0) return ENV_DATASETS;
+  return DEFAULT_DATASETS;
+}
+
+async function fetchDataset(opts: {
+  apiKey: string;
+  dataset: string;
+  bbox: string;
+  size: number;
+}): Promise<{ buildings: VWorldBuilding3D[]; error: string | null }> {
+  const url = new URL(VWORLD_DATA_URL);
+  url.searchParams.set("service", "data");
+  url.searchParams.set("request", "GetFeature");
+  url.searchParams.set("data", opts.dataset);
+  url.searchParams.set("key", opts.apiKey);
+  url.searchParams.set("domain", VWORLD_DOMAIN);
+  url.searchParams.set("crs", "EPSG:4326");
+  url.searchParams.set("geomFilter", opts.bbox);
+  url.searchParams.set("size", String(opts.size));
+  url.searchParams.set("format", "json");
+  url.searchParams.set("geometry", "true");
+  url.searchParams.set("attribute", "true");
+
+  try {
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(15_000) });
+    if (!res.ok) {
+      return { buildings: [], error: `${opts.dataset}: HTTP ${res.status}` };
+    }
+    const data = await res.json();
+    // Surface VWorld's own status text when present (e.g. NOT_FOUND / KEY_INVALID).
+    const status = (data as { response?: { status?: string } })?.response?.status;
+    if (status && status !== "OK") {
+      return { buildings: [], error: `${opts.dataset}: ${status}` };
+    }
+    const buildings = extractBuildings(data);
+    return { buildings, error: null };
+  } catch (err) {
+    return {
+      buildings: [],
+      error: `${opts.dataset}: ${err instanceof Error ? err.message : "request failed"}`,
+    };
+  }
+}
+
 export async function GET(request: NextRequest) {
   const apiKey = process.env.VWORLD_API_KEY;
+  const { searchParams } = request.nextUrl;
+  const datasets = resolveDatasets(searchParams);
+  const debug = searchParams.get("debug") === "true";
+
+  const baseResp = (
+    overrides: Partial<VWorldBuildings3DResponse>,
+  ): VWorldBuildings3DResponse => ({
+    buildings: [],
+    error: null,
+    dataset: datasets[0] ?? "",
+    fetchedAt: new Date().toISOString(),
+    ...overrides,
+  });
+
   if (!apiKey) {
     return NextResponse.json<VWorldBuildings3DResponse>(
-      {
-        buildings: [],
-        error: "VWORLD_API_KEY environment variable is not set",
-        dataset: BUILDINGS_DATASET,
-        fetchedAt: new Date().toISOString(),
-      },
-      { status: 500 }
+      baseResp({ error: "VWORLD_API_KEY environment variable is not set" }),
+      { status: 500 },
     );
   }
 
-  const { searchParams } = request.nextUrl;
   const lat = searchParams.get("lat");
   const lng = searchParams.get("lng");
   const radiusM = parseFloat(searchParams.get("radiusM") ?? "120");
@@ -62,74 +136,46 @@ export async function GET(request: NextRequest) {
 
   if (!lat || !lng) {
     return NextResponse.json<VWorldBuildings3DResponse>(
-      {
-        buildings: [],
-        error: "lat and lng are required query parameters",
-        dataset: BUILDINGS_DATASET,
-        fetchedAt: new Date().toISOString(),
-      },
-      { status: 400 }
+      baseResp({ error: "lat and lng are required query parameters" }),
+      { status: 400 },
     );
   }
 
   const latNum = parseFloat(lat);
   const lngNum = parseFloat(lng);
-
-  // Approximate degree delta for the requested radius. One degree of latitude
-  // ≈ 111 km; longitude compensated by cos(lat).
   const latDelta = radiusM / 111_000;
   const lngDelta = radiusM / (111_000 * Math.cos((latNum * Math.PI) / 180));
+  const bbox = `BOX(${lngNum - lngDelta},${latNum - latDelta},${lngNum + lngDelta},${latNum + latDelta})`;
 
-  const minLng = lngNum - lngDelta;
-  const minLat = latNum - latDelta;
-  const maxLng = lngNum + lngDelta;
-  const maxLat = latNum + latDelta;
-  const bbox = `BOX(${minLng},${minLat},${maxLng},${maxLat})`;
+  const attempts: Array<{ dataset: string; error: string | null; count: number }> = [];
 
-  const url = new URL(VWORLD_DATA_URL);
-  url.searchParams.set("service", "data");
-  url.searchParams.set("request", "GetFeature");
-  url.searchParams.set("data", BUILDINGS_DATASET);
-  url.searchParams.set("key", apiKey);
-  url.searchParams.set("domain", VWORLD_DOMAIN);
-  url.searchParams.set("crs", "EPSG:4326");
-  url.searchParams.set("geomFilter", bbox);
-  url.searchParams.set("size", String(size));
-  url.searchParams.set("format", "json");
-  url.searchParams.set("geometry", "true");
-  url.searchParams.set("attribute", "true");
-
-  try {
-    const res = await fetch(url.toString(), {
-      signal: AbortSignal.timeout(15_000),
-    });
-
-    if (!res.ok) {
+  for (const dataset of datasets) {
+    const r = await fetchDataset({ apiKey, dataset, bbox, size });
+    attempts.push({ dataset, error: r.error, count: r.buildings.length });
+    if (r.buildings.length > 0) {
       return NextResponse.json<VWorldBuildings3DResponse>({
-        buildings: [],
-        error: `VWorld HTTP ${res.status}`,
-        dataset: BUILDINGS_DATASET,
+        buildings: r.buildings,
+        error: null,
+        dataset,
         fetchedAt: new Date().toISOString(),
-      });
+        ...(debug ? { _attempts: attempts } as Record<string, unknown> : {}),
+      } as VWorldBuildings3DResponse);
     }
-
-    const data = await res.json();
-    const buildings = extractBuildings(data);
-
-    return NextResponse.json<VWorldBuildings3DResponse>({
-      buildings,
-      error: null,
-      dataset: BUILDINGS_DATASET,
-      fetchedAt: new Date().toISOString(),
-    });
-  } catch (err) {
-    return NextResponse.json<VWorldBuildings3DResponse>({
-      buildings: [],
-      error: err instanceof Error ? err.message : "VWorld request failed",
-      dataset: BUILDINGS_DATASET,
-      fetchedAt: new Date().toISOString(),
-    });
   }
+
+  // None of the datasets returned features. Surface the chain of attempts so
+  // the user sees which datasets were tried and why each failed/was empty.
+  const errorSummary = attempts
+    .map((a) => `${a.dataset}: ${a.error ?? "0 features"}`)
+    .join(" | ");
+
+  return NextResponse.json<VWorldBuildings3DResponse>({
+    buildings: [],
+    error: `No buildings from any dataset · ${errorSummary}`,
+    dataset: datasets[datasets.length - 1] ?? "",
+    fetchedAt: new Date().toISOString(),
+    ...(debug ? { _attempts: attempts } as Record<string, unknown> : {}),
+  } as VWorldBuildings3DResponse);
 }
 
 function extractBuildings(raw: unknown): VWorldBuilding3D[] {

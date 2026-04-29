@@ -18,6 +18,8 @@ interface GeometrySourceToggleProps {
     available: boolean;
     buildingCount?: number;
     dataset?: string;
+    /** Most-recent error from the VWorld 3D route, if any. Surfaced inline. */
+    error?: string | null;
   };
 }
 
@@ -137,20 +139,31 @@ export function GeometrySourceToggle({ vworldStatus }: GeometrySourceToggleProps
 
             {/* VWorld 3D status indicator (shown on the real-geometry option) */}
             {isReal && vworldStatus && (
-              <div className="ml-4 flex flex-col items-end leading-tight border-l border-[#24282d] pl-4">
+              <div className="ml-4 flex flex-col items-end leading-tight border-l border-[#24282d] pl-4 max-w-[260px]">
                 <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-[0.16em]">
-                  buildings
+                  {vworldStatus.error ? "error" : "buildings"}
                 </span>
-                <span
-                  className={cn(
-                    "text-[11px] tabular-nums font-mono",
-                    vworldStatus.available ? "text-zinc-100" : "text-zinc-500"
-                  )}
-                >
-                  {vworldStatus.available
-                    ? vworldStatus.buildingCount?.toLocaleString() ?? "0"
-                    : "—"}
-                </span>
+                {vworldStatus.error ? (
+                  <span
+                    className="text-[10px] font-mono text-[#f4a765] truncate w-full text-right"
+                    title={vworldStatus.error}
+                  >
+                    {vworldStatus.error.length > 56
+                      ? vworldStatus.error.slice(0, 56) + "…"
+                      : vworldStatus.error}
+                  </span>
+                ) : (
+                  <span
+                    className={cn(
+                      "text-[11px] tabular-nums font-mono",
+                      vworldStatus.available ? "text-zinc-100" : "text-zinc-500",
+                    )}
+                  >
+                    {vworldStatus.available
+                      ? vworldStatus.buildingCount?.toLocaleString() ?? "0"
+                      : "—"}
+                  </span>
+                )}
               </div>
             )}
           </button>

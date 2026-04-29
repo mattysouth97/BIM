@@ -28,6 +28,10 @@ interface TwinStageOverlayProps {
   vworldBuildingCount: number | undefined;
   /** Whether the VWorld 3D route returned at least one building. */
   vworldAvailable: boolean;
+  /** Dataset that successfully returned (or last attempted) — for the toggle. */
+  vworldDataset: string | undefined;
+  /** Most-recent error from the VWorld 3D route. */
+  vworldError: string | null | undefined;
 }
 
 function toBuildingRecord(title: BrTitleInfo): BuildingRecord {
@@ -59,6 +63,8 @@ export function TwinStageOverlay({
   footprintGeometry,
   vworldBuildingCount,
   vworldAvailable,
+  vworldDataset,
+  vworldError,
 }: TwinStageOverlayProps) {
   const router = useRouter();
   const release = usePredictionRelease();
@@ -107,7 +113,8 @@ export function TwinStageOverlay({
         vworldStatus={{
           available: vworldAvailable,
           buildingCount: vworldBuildingCount,
-          dataset: "LT_C_SPBD",
+          dataset: vworldDataset,
+          error: vworldError,
         }}
       />
 
@@ -116,7 +123,7 @@ export function TwinStageOverlay({
         <div
           className="pointer-events-none absolute right-4 bottom-24 z-20 text-[10px] font-mono text-zinc-500 tracking-[0.14em] uppercase animate-[twin-slide-up_520ms_cubic-bezier(0.2,0.7,0.2,1)_both]"
         >
-          source · vworld.kr/LT_C_SPBD · radius 120m
+          source · vworld.kr/{vworldDataset ?? "—"} · radius 140m
         </div>
       )}
     </>
