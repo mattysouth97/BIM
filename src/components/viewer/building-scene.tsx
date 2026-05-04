@@ -37,9 +37,6 @@ import { ErrorBoundary, ViewerErrorBoundary } from "@/components/error-boundary"
 import { StructuralTooltip } from "./structural-tooltip";
 import { EquipmentClickHandler } from "./equipment-click-handler";
 import { ScenePostProcessing } from "./outline-post-processing";
-import { VWorldBuildingModel } from "./vworld-building-model";
-import { useGeometrySourceStore } from "@/store/geometry-source-store";
-import { useVWorldBuildings3D } from "@/hooks/use-vworld-buildings-3d";
 import { TwinStageOverlay } from "@/components/twin/twin-stage-overlay";
 import type { FootprintGeometry } from "@/lib/portfolio/types";
 
@@ -239,9 +236,6 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
 
   const buildingPk = String(title.mgmBldrgstPk || "unknown");
 
-  // ── Geometry source: procedural (era recipes) vs VWorld 3D (real polygons)
-  const geometrySource = useGeometrySourceStore((s) => s.source);
-
   // Footprint data is provided by the page (hoisted parallel fetch).
   // If absent (e.g. component used standalone), footprintPolygon stays undefined
   // and ProceduralBuildingModel renders a rectangular box automatically.
@@ -283,17 +277,6 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
 
     return geo;
   }, [title, floors, footprintPolygon]);
-
-  // ── WGS-84 centroid of the footprint (drives VWorld 3D neighbourhood query)
-  const wgsCentroid = useMemo(() => {
-    if (!footprintPolygon || footprintPolygon.length === 0 || footprintPolygon[0].length < 3) {
-      return null;
-    }
-    const ring = footprintPolygon[0];
-    const lng = ring.reduce((s, p) => s + p[0], 0) / ring.length;
-    const lat = ring.reduce((s, p) => s + p[1], 0) / ring.length;
-    return { lng, lat };
-  }, [footprintPolygon]);
 
   // ── Portfolio-feature-vector geometry shape (area / perimeter / aspect)
   // Used by the TwinStageOverlay to derive the 20-field feature vector.
@@ -345,33 +328,6 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
       aspectRatio,
     };
   }, [footprintPolygon]);
-
-  // ── VWorld 3D buildings neighbourhood (LT_C_SPBD)
-  const vworldQuery = useVWorldBuildings3D({
-    lat: wgsCentroid?.lat ?? null,
-    lng: wgsCentroid?.lng ?? null,
-    radiusM: 140,
-    size: 24,
-  });
-  const vworldBuildings = vworldQuery.data?.buildings ?? [];
-  // Select the focus building as the one whose centroid is closest to ours.
-  const focusVWorldId = useMemo(() => {
-    if (!wgsCentroid || vworldBuildings.length === 0) return undefined;
-    let best: string | undefined;
-    let bestDist = Infinity;
-    for (const b of vworldBuildings) {
-      const outer = b.polygon[0];
-      if (!outer || outer.length === 0) continue;
-      const cx = outer.reduce((s, p) => s + p[0], 0) / outer.length;
-      const cy = outer.reduce((s, p) => s + p[1], 0) / outer.length;
-      const d = Math.hypot(cx - wgsCentroid.lng, cy - wgsCentroid.lat);
-      if (d < bestDist) {
-        bestDist = d;
-        best = b.id;
-      }
-    }
-    return best;
-  }, [wgsCentroid, vworldBuildings]);
 
   const setProperties = useMaterialStore((s) => s.setProperties);
   const existingProps = useMaterialStore((s) => s.properties[buildingPk]);
@@ -528,20 +484,12 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             />
           ) : (
             modelSource === "parametric" && (
-              geometrySource === "vworld-3d" && wgsCentroid && vworldBuildings.length > 0 ? (
-                <VWorldBuildingModel
-                  buildings={vworldBuildings}
-                  origin={wgsCentroid}
-                  focusId={focusVWorldId}
-                />
-              ) : (
-                <>
-                  <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} />
-                  <BuildingLayers buildingPk={buildingPk} />
-                  <StructuralTooltip />
-                  <EquipmentClickHandler />
-                </>
-              )
+              <>
+                <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} />
+                <BuildingLayers buildingPk={buildingPk} />
+                <StructuralTooltip />
+                <EquipmentClickHandler />
+              </>
             )
           )}
           {!campusData && modelSource === "uploaded" && uploadedModel && (
@@ -592,18 +540,12 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
       </div>
 
       {/* Twin-stage data-product overlay — release rail, prediction readout,
-          feature vector, geometry source toggle. Only for single-building mode. */}
+          feature vector. Only for single-building mode. */}
       {!campusData && (
         <ErrorBoundary>
           <TwinStageOverlay
             title={title}
             footprintGeometry={portfolioFootprint}
-            vworldBuildingCount={vworldBuildings.length}
-            vworldAvailable={
-              !vworldQuery.isLoading && (vworldQuery.data?.buildings.length ?? 0) > 0
-            }
-            vworldDataset={vworldQuery.data?.dataset}
-            vworldError={vworldQuery.data?.error ?? (vworldQuery.error instanceof Error ? vworldQuery.error.message : null)}
           />
         </ErrorBoundary>
       )}

@@ -10,7 +10,6 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { BrTitleInfo, BuildingRecord } from "@/lib/types";
 import { usePredictionRelease } from "@/hooks/use-prediction-release";
-import { useGeometrySourceStore } from "@/store/geometry-source-store";
 import { extractFeatures } from "@/lib/portfolio/feature-extractor";
 import type { FootprintGeometry } from "@/lib/portfolio/types";
 import type { PortfolioFeatureVector } from "@/lib/portfolio/features";
@@ -18,20 +17,11 @@ import { derivePreviewPrediction } from "@/lib/twin/preview-prediction";
 import { ReleaseRail } from "./release-rail";
 import { PredictionReadout } from "./prediction-readout";
 import { FeatureVectorPanel } from "./feature-vector-panel";
-import { GeometrySourceToggle } from "./geometry-source-toggle";
 
 interface TwinStageOverlayProps {
   title: BrTitleInfo;
   /** Pre-projected footprint geometry info (area/perimeter/aspect) from VWorld. */
   footprintGeometry: FootprintGeometry | null;
-  /** Number of VWorld 3D buildings loaded near this building, for the toggle status. */
-  vworldBuildingCount: number | undefined;
-  /** Whether the VWorld 3D route returned at least one building. */
-  vworldAvailable: boolean;
-  /** Dataset that successfully returned (or last attempted) — for the toggle. */
-  vworldDataset: string | undefined;
-  /** Most-recent error from the VWorld 3D route. */
-  vworldError: string | null | undefined;
 }
 
 function toBuildingRecord(title: BrTitleInfo): BuildingRecord {
@@ -61,14 +51,9 @@ function toBuildingRecord(title: BrTitleInfo): BuildingRecord {
 export function TwinStageOverlay({
   title,
   footprintGeometry,
-  vworldBuildingCount,
-  vworldAvailable,
-  vworldDataset,
-  vworldError,
 }: TwinStageOverlayProps) {
   const router = useRouter();
   const release = usePredictionRelease();
-  const geometrySource = useGeometrySourceStore((s) => s.source);
 
   // Derive the feature vector if we have the footprint geometry. If the user
   // is on a twin before the VWorld footprint resolves, the feature panel
@@ -108,24 +93,6 @@ export function TwinStageOverlay({
         calibration={release.data?.calibration}
         schemaVersion={release.data?.manifest.featureSchemaVersion}
       />
-
-      <GeometrySourceToggle
-        vworldStatus={{
-          available: vworldAvailable,
-          buildingCount: vworldBuildingCount,
-          dataset: vworldDataset,
-          error: vworldError,
-        }}
-      />
-
-      {/* Source hint — shown when the user is on VWorld view */}
-      {geometrySource === "vworld-3d" && (
-        <div
-          className="pointer-events-none absolute right-4 bottom-24 z-20 text-[10px] font-mono text-zinc-500 tracking-[0.14em] uppercase animate-[twin-slide-up_520ms_cubic-bezier(0.2,0.7,0.2,1)_both]"
-        >
-          source · vworld.kr/{vworldDataset ?? "—"} · radius 140m
-        </div>
-      )}
     </>
   );
 }

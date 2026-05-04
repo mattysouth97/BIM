@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1776098982390,
-  "projectRoot": "C:\\Users\\Nam\\BIM",
+  "lastScanned": 1777859715055,
+  "projectRoot": "c:\\Users\\Nam\\BIM",
   "techStack": {
     "languages": [
       {
@@ -52,7 +52,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "pnpm build",
+    "buildCommand": "pnpm build 2>&1 | tail -25",
     "testCommand": "pnpm test",
     "lintCommand": "pnpm lint",
     "devCommand": "pnpm dev",
@@ -79,24 +79,39 @@
     "mainDirectories": [
       "docs",
       "public",
+      "scripts",
       "src"
     ],
     "gitBranches": null
   },
   "customNotes": [],
   "directoryMap": {
+    "coverage": {
+      "path": "coverage",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1777859715016,
+      "keyFiles": []
+    },
+    "CUsersNamBIMsrclibportfolio__tests__": {
+      "path": "CUsersNamBIMsrclibportfolio__tests__",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1777859715025,
+      "keyFiles": []
+    },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 0,
-      "lastAccessed": 1776098982369,
+      "lastAccessed": 1777859715025,
       "keyFiles": []
     },
     "e2e": {
       "path": "e2e",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1776098982374,
+      "lastAccessed": 1777859715026,
       "keyFiles": [
         "building-flow.spec.ts",
         "plan-view.spec.ts"
@@ -106,7 +121,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 5,
-      "lastAccessed": 1776098982374,
+      "lastAccessed": 1777859715026,
       "keyFiles": [
         "file.svg",
         "globe.svg",
@@ -115,18 +130,28 @@
         "window.svg"
       ]
     },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 2,
+      "lastAccessed": 1777859715027,
+      "keyFiles": [
+        "extract-features.mjs",
+        "self-improve-benchmark.mjs"
+      ]
+    },
     "src": {
       "path": "src",
       "purpose": "Source code",
       "fileCount": 0,
-      "lastAccessed": 1776098982374,
+      "lastAccessed": 1777859715027,
       "keyFiles": []
     },
     "src\\app": {
       "path": "src\\app",
       "purpose": "Application code",
       "fileCount": 4,
-      "lastAccessed": 1776098982375,
+      "lastAccessed": 1777859715029,
       "keyFiles": [
         "favicon.ico",
         "globals.css",
@@ -137,7 +162,7 @@
       "path": "src\\components",
       "purpose": "UI components",
       "fileCount": 2,
-      "lastAccessed": 1776098982376,
+      "lastAccessed": 1777859715030,
       "keyFiles": [
         "error-boundary.tsx",
         "providers.tsx"
@@ -147,7 +172,7 @@
       "path": "src\\data",
       "purpose": "Data files",
       "fileCount": 3,
-      "lastAccessed": 1776098982376,
+      "lastAccessed": 1777859715030,
       "keyFiles": [
         "bjdong-codes.json",
         "region-codes.json",
@@ -158,7 +183,7 @@
       "path": "src\\lib",
       "purpose": "Library code",
       "fileCount": 14,
-      "lastAccessed": 1776098982376,
+      "lastAccessed": 1777859715030,
       "keyFiles": [
         "api-client.ts",
         "api-proxy.ts",
@@ -169,7 +194,7 @@
       "path": "src\\types",
       "purpose": "Type definitions",
       "fileCount": 1,
-      "lastAccessed": 1776098982377,
+      "lastAccessed": 1777859715031,
       "keyFiles": [
         "earcut.d.ts"
       ]
@@ -177,303 +202,57 @@
   },
   "hotPaths": [
     {
-      "path": "",
-      "accessCount": 126,
-      "lastAccessed": 1776087871859,
-      "type": "directory"
-    },
-    {
-      "path": ".planning\\ROADMAP.md",
-      "accessCount": 99,
-      "lastAccessed": 1775961647419,
+      "path": "src\\components\\twin\\twin-stage-overlay.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1777860300507,
       "type": "file"
     },
     {
       "path": "src",
-      "accessCount": 60,
-      "lastAccessed": 1776087869814,
+      "accessCount": 2,
+      "lastAccessed": 1777859875552,
       "type": "directory"
     },
     {
-      "path": "src\\lib\\procedural\\types.ts",
-      "accessCount": 43,
-      "lastAccessed": 1776033702235,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\layers\\types.ts",
-      "accessCount": 33,
-      "lastAccessed": 1775977885822,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\api\\vworld\\footprint\\route.ts",
-      "accessCount": 33,
-      "lastAccessed": 1776025453748,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\layers\\layer-manager.ts",
-      "accessCount": 31,
-      "lastAccessed": 1775960494210,
-      "type": "file"
-    },
-    {
-      "path": ".planning\\PROJECT.md",
-      "accessCount": 29,
-      "lastAccessed": 1775961417722,
-      "type": "file"
-    },
-    {
-      "path": "src\\hooks\\use-energy-metrics.ts",
-      "accessCount": 27,
-      "lastAccessed": 1775957813474,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\procedural\\recipe.ts",
-      "accessCount": 25,
-      "lastAccessed": 1776033709578,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\workspace\\properties-panel.tsx",
-      "accessCount": 23,
-      "lastAccessed": 1776033712357,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\energy\\eco2-export.ts",
-      "accessCount": 22,
-      "lastAccessed": 1776033680843,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\workspace\\scene-outliner.tsx",
-      "accessCount": 21,
-      "lastAccessed": 1776033702321,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\workspace\\contextual-toolbar.tsx",
-      "accessCount": 20,
-      "lastAccessed": 1776033799443,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\material-types.ts",
-      "accessCount": 19,
-      "lastAccessed": 1776033698353,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\energy\\annual-demand.ts",
-      "accessCount": 18,
-      "lastAccessed": 1775961661362,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\workspace\\status-bar.tsx",
-      "accessCount": 17,
-      "lastAccessed": 1776033711861,
-      "type": "file"
-    },
-    {
-      "path": "src\\store\\workflow-store.ts",
-      "accessCount": 15,
-      "lastAccessed": 1776012272739,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\energy\\energy-grade.ts",
-      "accessCount": 15,
-      "lastAccessed": 1776033688444,
-      "type": "file"
-    },
-    {
-      "path": ".planning\\research\\FEATURES.md",
-      "accessCount": 14,
-      "lastAccessed": 1775951784934,
-      "type": "file"
-    },
-    {
-      "path": "CLAUDE.md",
-      "accessCount": 13,
-      "lastAccessed": 1775961691086,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\workflow\\stages.ts",
-      "accessCount": 13,
-      "lastAccessed": 1776012271961,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\procedural\\facade-generator.ts",
-      "accessCount": 13,
-      "lastAccessed": 1776028877117,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\procedural\\structure-generator.ts",
-      "accessCount": 13,
-      "lastAccessed": 1776029221922,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\material-inference.ts",
-      "accessCount": 12,
-      "lastAccessed": 1776033697293,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\workflow\\toolbar-configs.ts",
-      "accessCount": 11,
-      "lastAccessed": 1776012278795,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\workspace\\workflow-stepper.tsx",
-      "accessCount": 10,
-      "lastAccessed": 1776033712474,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\types.ts",
-      "accessCount": 9,
-      "lastAccessed": 1775960296519,
-      "type": "file"
-    },
-    {
-      "path": ".planning\\research\\SUMMARY.md",
-      "accessCount": 8,
-      "lastAccessed": 1775950255761,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\energy\\climate-data.ts",
-      "accessCount": 8,
-      "lastAccessed": 1775961675885,
-      "type": "file"
-    },
-    {
-      "path": "src\\store\\workspace-store.ts",
-      "accessCount": 7,
-      "lastAccessed": 1776033712715,
-      "type": "file"
-    },
-    {
-      "path": "src\\store\\__tests__\\workflow-store.test.ts",
-      "accessCount": 6,
-      "lastAccessed": 1776012281300,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\api\\energy\\consumption\\route.ts",
-      "accessCount": 5,
-      "lastAccessed": 1775915633253,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\api\\bldrgst\\title\\route.ts",
-      "accessCount": 5,
-      "lastAccessed": 1776025453215,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\layers\\__tests__\\layer-15-structural.test.ts",
-      "accessCount": 4,
-      "lastAccessed": 1775956024410,
-      "type": "file"
-    },
-    {
-      "path": ".planning\\milestones\\v2.0-ROADMAP.md",
-      "accessCount": 3,
-      "lastAccessed": 1775960273118,
-      "type": "file"
-    },
-    {
-      "path": ".planning\\codebase\\INTEGRATIONS.md",
-      "accessCount": 2,
-      "lastAccessed": 1775328114576,
-      "type": "file"
-    },
-    {
-      "path": ".planning\\codebase\\ARCHITECTURE.md",
-      "accessCount": 2,
-      "lastAccessed": 1775328114837,
-      "type": "file"
-    },
-    {
-      "path": ".planning\\codebase\\STRUCTURE.md",
-      "accessCount": 2,
-      "lastAccessed": 1775328115099,
-      "type": "file"
-    },
-    {
-      "path": ".planning\\codebase\\CONCERNS.md",
-      "accessCount": 2,
-      "lastAccessed": 1775328154355,
-      "type": "file"
-    },
-    {
-      "path": "src\\app\\api\\weather\\route.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775333080614,
-      "type": "file"
-    },
-    {
-      "path": "src\\lib\\export.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775960313416,
-      "type": "file"
-    },
-    {
-      "path": ".planning\\milestones\\v2.0-MILESTONE-AUDIT.md",
+      "path": "src\\lib\\retrofit\\retrofit-types.ts",
       "accessCount": 1,
-      "lastAccessed": 1775327963648,
+      "lastAccessed": 1777859896516,
       "type": "file"
     },
     {
-      "path": "src\\lib\\constants.ts",
+      "path": "src\\lib\\retrofit\\cost-database.ts",
       "accessCount": 1,
-      "lastAccessed": 1775328131898,
+      "lastAccessed": 1777859896831,
       "type": "file"
     },
     {
-      "path": ".planning\\milestones\\v2.0-phases\\13-structural-analysis-visualization\\13-02-SUMMARY.md",
+      "path": "src\\lib\\retrofit\\envelope-retrofits.ts",
       "accessCount": 1,
-      "lastAccessed": 1775328158162,
+      "lastAccessed": 1777859897352,
       "type": "file"
     },
     {
-      "path": "src\\store\\authoring-store.ts",
+      "path": "src\\lib\\retrofit\\hvac-retrofits.ts",
       "accessCount": 1,
-      "lastAccessed": 1775328550288,
+      "lastAccessed": 1777860317870,
       "type": "file"
     },
     {
-      "path": "src\\store\\plan-store.ts",
+      "path": "src\\lib\\retrofit\\lighting-retrofits.ts",
       "accessCount": 1,
-      "lastAccessed": 1775328550295,
+      "lastAccessed": 1777860318330,
       "type": "file"
     },
     {
-      "path": "src\\store\\component-store.ts",
+      "path": "src\\lib\\retrofit\\solar-potential.ts",
       "accessCount": 1,
-      "lastAccessed": 1775328550646,
+      "lastAccessed": 1777860319209,
       "type": "file"
     },
     {
-      "path": "src\\components\\viewer\\properties-panel.tsx",
+      "path": "src\\lib\\retrofit\\retrofit-report.ts",
       "accessCount": 1,
-      "lastAccessed": 1775331080689,
-      "type": "file"
-    },
-    {
-      "path": "src\\components\\viewer\\floor-slab.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1775331085136,
+      "lastAccessed": 1777860319233,
       "type": "file"
     }
   ],
