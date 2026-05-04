@@ -1,97 +1,93 @@
 "use client";
 
 // src/components/twin/twin-stage-overlay.tsx
-// Composes the data-product surface that overlays the 3D viewport on the Twin
-// stage. Pulls the release manifest + calibration from /releases/<version>/
-// and derives the per-twin feature vector + preview prediction purely from
-// building-ledger + footprint data — no user inputs, no editable sliders.
+// Composes the CAPEX/ROI investment-scenario surface that overlays the 3D
+// viewport on the Twin stage. Pulls retrofit candidates + knapsack
+// selection via `useRetrofitScenario`, lets the user drive the CAPEX
+// budget via the bottom-center slider, and surfaces results in the
+// scenario rail (top), ROI readout (left), and retrofit manifest (right).
 
-import { useMemo } from "react";
-import { useRouter } from "next/navigation";
-import type { BrTitleInfo, BuildingRecord } from "@/lib/types";
-import { usePredictionRelease } from "@/hooks/use-prediction-release";
-import { extractFeatures } from "@/lib/portfolio/feature-extractor";
+import { useMemo, useState } from "react";
+import type { BrTitleInfo } from "@/lib/types";
 import type { FootprintGeometry } from "@/lib/portfolio/types";
-import type { PortfolioFeatureVector } from "@/lib/portfolio/features";
-import { derivePreviewPrediction } from "@/lib/twin/preview-prediction";
-import { ReleaseRail } from "./release-rail";
-import { PredictionReadout } from "./prediction-readout";
-import { FeatureVectorPanel } from "./feature-vector-panel";
+import { useRetrofitScenario } from "@/hooks/use-retrofit-scenario";
+import { ScenarioRail } from "./scenario-rail";
+import { RoiReadout } from "./roi-readout";
+import { RetrofitManifest } from "./retrofit-manifest";
+import { CapexInput } from "./capex-input";
 
 interface TwinStageOverlayProps {
   title: BrTitleInfo;
-  /** Pre-projected footprint geometry info (area/perimeter/aspect) from VWorld. */
+  /** Pre-projected footprint geometry info (area/perimeter/aspect). */
   footprintGeometry: FootprintGeometry | null;
 }
 
-function toBuildingRecord(title: BrTitleInfo): BuildingRecord {
-  return {
-    pk: title.mgmBldrgstPk ?? "",
-    name: title.bldNm ?? "",
-    address: title.platPlcNm ?? title.newPlatPlc ?? "",
-    useCode: title.mainPurpsCd ?? "",
-    useName: title.mainPurpsCdNm ?? "",
-    structureCode: title.strctCd ?? "",
-    structureName: title.strctCdNm ?? "",
-    floorsAbove: title.grndFlrCnt ?? 0,
-    floorsBelow: title.ugrndFlrCnt ?? 0,
-    totalArea: title.totArea ?? 0,
-    buildingArea: title.archArea ?? 0,
-    siteArea: title.platArea ?? 0,
-    coverageRatio: title.bcRat ?? 0,
-    floorAreaRatio: title.vlRat ?? 0,
-    approvalDate: title.useAprDay ?? "",
-    permitDate: title.pmsDay ?? "",
-    constructionDate: title.stcnsDay ?? "",
-    roofType: title.roofCdNm ?? "",
-    height: title.heit ?? 0,
-  };
+const DEFAULT_CAPEX_KRW = 250_000_000; // ₩2.5억 default scenario
+
+/** Roof typology heuristic from the title's roof code name. */
+function inferRoofType(roofCdNm: string | undefined): "flat" | "gable" | "hip" | "sawtooth" {
+  const code = (roofCdNm ?? "").toLowerCase();
+  if (code.includes("평") || code.includes("flat")) return "flat";
+  if (code.includes("박공") || code.includes("gable")) return "gable";
+  if (code.includes("우진") || code.includes("hip")) return "hip";
+  return "flat";
 }
 
-export function TwinStageOverlay({
-  title,
-  footprintGeometry,
-}: TwinStageOverlayProps) {
-  const router = useRouter();
-  const release = usePredictionRelease();
+export function TwinStageOverlay({ title, footprintGeometry }: TwinStageOverlayProps) {
+  const [capexBudgetKrw, setCapexBudgetKrw] = useState(DEFAULT_CAPEX_KRW);
 
-  // Derive the feature vector if we have the footprint geometry. If the user
-  // is on a twin before the VWorld footprint resolves, the feature panel
-  // displays — marks individual fields.
-  const features: PortfolioFeatureVector | null = useMemo(() => {
-    if (!footprintGeometry) return null;
-    const record = toBuildingRecord(title);
-    return extractFeatures(record, footprintGeometry);
-  }, [title, footprintGeometry]);
+  // Derive scenario inputs from title + footprint geometry.
+  const buildingPk = String(title.mgmBldrgstPk ?? "unknown");
+  const totalFloorArea = title.totArea ?? 0;
+  const footprintArea = footprintGeometry?.areaSqm ?? title.archArea ?? 0;
+  const sidoPrefix = String(title.sigunguCd ?? "11").slice(0, 2);
+  const roofType = inferRoofType(title.roofCdNm);
 
-  // Derive the preview prediction.
-  const prediction = useMemo(() => {
-    if (!features || !release.data) return null;
-    return derivePreviewPrediction(
-      features,
-      release.data.manifest,
-      release.data.calibration
-    );
-  }, [features, release.data]);
+  const scenario = useRetrofitScenario({
+    buildingPk,
+    capexBudgetKrw,
+    totalFloorArea,
+    footprintArea,
+    roofType,
+    sidoPrefix,
+  });
+
+  const selectedIds = useMemo(
+    () => new Set(scenario.selection?.selected.map((m) => m.id) ?? []),
+    [scenario.selection],
+  );
+
+  const summary = useMemo(() => {
+    if (!scenario.selection) return undefined;
+    const sel = scenario.selection.selected.length;
+    const total = scenario.allMeasures.length;
+    return `${sel}/${total} measures`;
+  }, [scenario.selection, scenario.allMeasures.length]);
 
   return (
     <>
-      <ReleaseRail
-        manifest={release.data?.manifest}
-        calibration={release.data?.calibration}
-        isLoading={release.isLoading}
-        onOpenReleaseExplorer={() => router.push("/releases")}
+      <ScenarioRail
+        capexBudgetKrw={capexBudgetKrw}
+        selection={scenario.selection}
+        assumptions={scenario.assumptions}
+        totalCandidateMeasures={scenario.allMeasures.length}
       />
 
-      <PredictionReadout
-        prediction={prediction}
-        isLoading={release.isLoading || !features}
+      <RoiReadout
+        selection={scenario.selection}
+        assumptions={scenario.assumptions}
+        isLoading={!scenario.selection && scenario.allMeasures.length === 0}
       />
 
-      <FeatureVectorPanel
-        features={features}
-        calibration={release.data?.calibration}
-        schemaVersion={release.data?.manifest.featureSchemaVersion}
+      <RetrofitManifest
+        measures={scenario.allMeasures}
+        selectedIds={selectedIds}
+      />
+
+      <CapexInput
+        value={capexBudgetKrw}
+        onChange={setCapexBudgetKrw}
+        summary={summary}
       />
     </>
   );
