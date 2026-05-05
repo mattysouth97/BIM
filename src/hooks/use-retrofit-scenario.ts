@@ -23,7 +23,11 @@ import {
   type EconomicAssumptions,
   type BudgetSelection,
 } from "@/lib/retrofit/economic-model";
-import { DEFAULT_ECONOMIC_ASSUMPTIONS } from "@/lib/retrofit/cost-database";
+import {
+  DEFAULT_ECONOMIC_ASSUMPTIONS,
+  KOREAN_GR_PRESETS,
+  type ProgramTrack,
+} from "@/lib/retrofit/cost-database";
 import { SEOUL_CLIMATE, REGIONAL_CLIMATE } from "@/lib/energy/climate-data";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
 
@@ -50,7 +54,18 @@ export interface RetrofitScenarioInputs {
   annualCoolingDemand?: number;
   /** Feed-in tariff (KRW/kWh) for solar. Defaults to 130. */
   feedInTariffKrw?: number;
-  /** Override the default economic assumptions for this scenario. */
+  /**
+   * 그린리모델링 사업 program track to apply. Default `"none"` (unsubsidised).
+   * Public tracks apply 50/70% category-level CAPEX subsidy; private tracks
+   * apply interest-rate buy-down via `financingMix` (WACC adjustment).
+   * If `assumptions` is also provided, it wins over the preset.
+   */
+  programTrack?: ProgramTrack;
+  /**
+   * Explicit economic assumptions; overrides `programTrack`. Use for
+   * sensitivity analysis (custom discount rate, escalation, etc.) when the
+   * built-in presets don't fit.
+   */
   assumptions?: EconomicAssumptions;
 }
 
@@ -93,8 +108,17 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     annualHeatingDemand,
     annualCoolingDemand,
     feedInTariffKrw = 130,
-    assumptions = DEFAULT_ECONOMIC_ASSUMPTIONS,
+    programTrack = "none",
+    assumptions: assumptionsOverride,
   } = inputs;
+
+  // Resolve effective assumptions: explicit override > program-track preset >
+  // unsubsidized default. Memoised so identity is stable across renders when
+  // only the unrelated inputs change.
+  const assumptions = useMemo<EconomicAssumptions>(() => {
+    if (assumptionsOverride) return assumptionsOverride;
+    return KOREAN_GR_PRESETS[programTrack] ?? DEFAULT_ECONOMIC_ASSUMPTIONS;
+  }, [assumptionsOverride, programTrack]);
 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
 

@@ -37,16 +37,117 @@ export const ENERGY_ESCALATION = {
  *   discountRate          = 5%   — KCEM/MOTIE green-retrofit project hurdle
  *   energyEscalation      — historical (see `ENERGY_ESCALATION`)
  *   analysisHorizonYears  = 20   — Korean energy retrofit norm
- *   subsidyRatio          = none — pure unsubsidised analysis by default
+ *   subsidy               = none — pure unsubsidised analysis by default
  *
- * Override at the call site for project-specific contexts (e.g. apply
- * 그린리모델링 50% to envelope measure IDs when evaluating eligible buildings).
+ * Use `KOREAN_GR_*` presets below to apply 그린리모델링 program parameters.
  */
 export const DEFAULT_ECONOMIC_ASSUMPTIONS: EconomicAssumptions = {
   discountRate: 0.05,
   energyEscalation: { ...ENERGY_ESCALATION },
   analysisHorizonYears: 20,
 };
+
+// ───────────────────────────────────────────────────────────────────────────
+// 그린리모델링 사업 (Green Remodeling Support Project) presets
+//
+// Sourced from the D₁ research dossier at
+// docs/superpowers/research/2026-04-30-green-remodeling.md. The program is
+// TWO tracks with different economic effects:
+//
+//   공공건축물 (public): direct CAPEX subsidy — 50% (Seoul + central govt)
+//                         or 70% (other local govt). Applied per-category
+//                         to envelope/HVAC/lighting; renewable (solar PV)
+//                         is routed through the SEPARATE 신재생에너지 보급
+//                         사업 program and NOT subsidized here by default.
+//
+//   민간건축물 (private): interest-rate buy-down on the retrofit loan, NOT
+//                         a CAPEX grant. Drops the effective discount rate
+//                         on the financed portion via WACC. Default
+//                         debtFraction = 0.7 (typical Korean retrofit LTV).
+//                         Tier 1 base = 4.5pp; Tier 3 high-perf = 5.5pp.
+//
+// 2026 program parameters (program restarted in March 2026 after 2024 hiatus).
+// ───────────────────────────────────────────────────────────────────────────
+
+/**
+ * 공공건축물 그린리모델링 — 서울특별시 + 중앙·공공 (50% direct subsidy).
+ * Applied to envelope/HVAC/lighting. Renewable not auto-subsidized.
+ */
+export const KOREAN_GR_PUBLIC_SEOUL_OR_CENTRAL: EconomicAssumptions = {
+  discountRate: 0.05,
+  energyEscalation: { ...ENERGY_ESCALATION },
+  analysisHorizonYears: 20,
+  subsidyByCategory: {
+    envelope: 0.5,
+    hvac: 0.5,
+    lighting: 0.5,
+    // renewable intentionally absent — separate program (신재생에너지 보급)
+  },
+};
+
+/**
+ * 공공건축물 그린리모델링 — 그 외 지방자치단체 (70% direct subsidy).
+ */
+export const KOREAN_GR_PUBLIC_LOCAL: EconomicAssumptions = {
+  discountRate: 0.05,
+  energyEscalation: { ...ENERGY_ESCALATION },
+  analysisHorizonYears: 20,
+  subsidyByCategory: {
+    envelope: 0.7,
+    hvac: 0.7,
+    lighting: 0.7,
+  },
+};
+
+/**
+ * 민간건축물 그린리모델링 — Tier 1 base interest support (4.5pp on 70% LTV).
+ *
+ * Effective WACC ≈ 0.7 × max(0, 0.055 − 0.045) + 0.3 × 0.05
+ *                ≈ 0.007 + 0.015 = 2.2%.
+ *
+ * Korean commercial retrofit loans run ~5.5% in 2025–2026; 4.5pp support
+ * brings the financed-portion rate to ~1%. Equity portion still uses 5%.
+ */
+export const KOREAN_GR_PRIVATE_BASE: EconomicAssumptions = {
+  discountRate: 0.05,
+  energyEscalation: { ...ENERGY_ESCALATION },
+  analysisHorizonYears: 20,
+  financingMix: {
+    debtFraction: 0.7,
+    loanRatePreSubsidy: 0.055,
+    interestSupportPp: 0.045,
+  },
+};
+
+/**
+ * 민간건축물 그린리모델링 — Tier 3 high-performance interest support
+ * (5.5pp on 70% LTV). Triggered by ≥30% energy improvement OR vulnerable
+ * household status (low-income / multi-child / elderly / newlywed).
+ *
+ * Effective WACC ≈ 0.7 × 0 + 0.3 × 0.05 = 1.5% — the financed portion
+ * effectively becomes interest-free.
+ */
+export const KOREAN_GR_PRIVATE_HIGH_PERF: EconomicAssumptions = {
+  discountRate: 0.05,
+  energyEscalation: { ...ENERGY_ESCALATION },
+  analysisHorizonYears: 20,
+  financingMix: {
+    debtFraction: 0.7,
+    loanRatePreSubsidy: 0.055,
+    interestSupportPp: 0.055,
+  },
+};
+
+/** Map preset names to assumptions for the UI track selector. */
+export const KOREAN_GR_PRESETS = {
+  none: DEFAULT_ECONOMIC_ASSUMPTIONS,
+  "public-seoul-or-central": KOREAN_GR_PUBLIC_SEOUL_OR_CENTRAL,
+  "public-local": KOREAN_GR_PUBLIC_LOCAL,
+  "private-base": KOREAN_GR_PRIVATE_BASE,
+  "private-high-perf": KOREAN_GR_PRIVATE_HIGH_PERF,
+} as const;
+
+export type ProgramTrack = keyof typeof KOREAN_GR_PRESETS;
 
 /** Electricity price (KRW/kWh) — Korean commercial rate 2024 */
 export const ENERGY_PRICES = {

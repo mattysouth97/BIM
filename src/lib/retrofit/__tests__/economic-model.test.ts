@@ -8,8 +8,15 @@ import {
   projectCashFlow,
   computeFinancials,
   selectMeasuresForBudget,
+  effectiveDiscountRate,
   type EconomicAssumptions,
 } from "../economic-model";
+import {
+  KOREAN_GR_PUBLIC_SEOUL_OR_CENTRAL,
+  KOREAN_GR_PUBLIC_LOCAL,
+  KOREAN_GR_PRIVATE_BASE,
+  KOREAN_GR_PRIVATE_HIGH_PERF,
+} from "../cost-database";
 import type { RetrofitMeasure } from "../retrofit-types";
 
 const ASSUMPTIONS: EconomicAssumptions = {
@@ -271,5 +278,146 @@ describe("selectMeasuresForBudget", () => {
     // Year 1 = sum of year-1 savings of selected measures (no escalation yet)
     const expectedYear1 = result.selected.reduce((s, m) => s + m.annualCostSaving, 0);
     expect(result.aggregateCashFlow[0]).toBeCloseTo(expectedYear1, 0);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────
+// D₂: effectiveDiscountRate (WACC) + financingMix
+// ──────────────────────────────────────────────────────────────────────────
+
+describe("effectiveDiscountRate", () => {
+  it("returns the raw discountRate when no financingMix is set", () => {
+    expect(effectiveDiscountRate(ASSUMPTIONS)).toBeCloseTo(0.05, 9);
+  });
+
+  it("returns the raw discountRate when debtFraction is 0", () => {
+    const a: EconomicAssumptions = {
+      ...ASSUMPTIONS,
+      financingMix: { debtFraction: 0, loanRatePreSubsidy: 0.055, interestSupportPp: 0.045 },
+    };
+    expect(effectiveDiscountRate(a)).toBeCloseTo(0.05, 9);
+  });
+
+  it("computes WACC correctly for the 그린리모델링 private-base preset", () => {
+    // 0.7 × max(0, 0.055 − 0.045) + 0.3 × 0.05 = 0.7 × 0.01 + 0.015 = 0.022
+    expect(effectiveDiscountRate(KOREAN_GR_PRIVATE_BASE)).toBeCloseTo(0.022, 6);
+  });
+
+  it("floors the loan portion at 0 when interestSupport ≥ loanRate (private high-perf)", () => {
+    // 0.7 × max(0, 0.055 − 0.055) + 0.3 × 0.05 = 0 + 0.015 = 0.015
+    expect(effectiveDiscountRate(KOREAN_GR_PRIVATE_HIGH_PERF)).toBeCloseTo(0.015, 6);
+  });
+
+  it("clamps debtFraction to [0, 1]", () => {
+    const over: EconomicAssumptions = {
+      ...ASSUMPTIONS,
+      financingMix: { debtFraction: 1.5, loanRatePreSubsidy: 0.055, interestSupportPp: 0.045 },
+    };
+    // Treated as 100% debt: max(0, 0.055 − 0.045) = 0.01
+    expect(effectiveDiscountRate(over)).toBeCloseTo(0.01, 6);
+
+    const under: EconomicAssumptions = {
+      ...ASSUMPTIONS,
+      financingMix: { debtFraction: -0.5, loanRatePreSubsidy: 0.055, interestSupportPp: 0.045 },
+    };
+    // Treated as 0% debt: pure equity discount
+    expect(effectiveDiscountRate(under)).toBeCloseTo(0.05, 6);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────
+// D₂: subsidyByCategory (per-category default with per-id override)
+// ──────────────────────────────────────────────────────────────────────────
+
+describe("subsidyByCategory", () => {
+  it("applies the category default when no per-id override exists", () => {
+    const m = makeMeasure({ id: "envelope-wall-insulation", category: "envelope" });
+    const a: EconomicAssumptions = {
+      ...ASSUMPTIONS,
+      subsidyByCategory: { envelope: 0.5 },
+    };
+    const fin = computeFinancials(m, a);
+    expect(fin.effectiveCapex).toBeCloseTo(5_000_000, 0); // 50% of 10M
+  });
+
+  it("per-id subsidyRatio overrides category default", () => {
+    const m = makeMeasure({ id: "envelope-wall-insulation", category: "envelope" });
+    const a: EconomicAssumptions = {
+      ...ASSUMPTIONS,
+      subsidyByCategory: { envelope: 0.5 },
+      subsidyRatio: { "envelope-wall-insulation": 0.8 },
+    };
+    const fin = computeFinancials(m, a);
+    expect(fin.effectiveCapex).toBeCloseTo(2_000_000, 0); // 80% subsidy via id wins
+  });
+
+  it("category not in map → no subsidy on that measure", () => {
+    const solar = makeMeasure({ id: "solar-pv-flat", category: "renewable" });
+    const a: EconomicAssumptions = {
+      ...ASSUMPTIONS,
+      subsidyByCategory: { envelope: 0.5, hvac: 0.5 }, // no renewable
+    };
+    const fin = computeFinancials(solar, a);
+    expect(fin.effectiveCapex).toBeCloseTo(10_000_000, 0); // unsubsidized
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────
+// D₂: 그린리모델링 named presets behave as the dossier specifies
+// ──────────────────────────────────────────────────────────────────────────
+
+describe("그린리모델링 presets (KOREAN_GR_*)", () => {
+  const ENVELOPE = makeMeasure({
+    id: "envelope-wall-insulation",
+    category: "envelope",
+    estimatedCost: 100_000_000,
+    annualCostSaving: 5_000_000,
+  });
+  const SOLAR = makeMeasure({
+    id: "solar-pv-flat",
+    category: "renewable",
+    estimatedCost: 50_000_000,
+    annualCostSaving: 6_000_000,
+  });
+
+  it("public-Seoul applies 50% CAPEX subsidy to envelope", () => {
+    const fin = computeFinancials(ENVELOPE, KOREAN_GR_PUBLIC_SEOUL_OR_CENTRAL);
+    expect(fin.effectiveCapex).toBeCloseTo(50_000_000, 0);
+  });
+
+  it("public-local applies 70% CAPEX subsidy to envelope", () => {
+    const fin = computeFinancials(ENVELOPE, KOREAN_GR_PUBLIC_LOCAL);
+    expect(fin.effectiveCapex).toBeCloseTo(30_000_000, 0);
+  });
+
+  it("public-Seoul does NOT subsidize solar (renewable not in map)", () => {
+    // The dossier finding: solar PV routes through 신재생에너지 보급사업,
+    // not 그린리모델링. The preset must leave solar at full CAPEX.
+    const fin = computeFinancials(SOLAR, KOREAN_GR_PUBLIC_SEOUL_OR_CENTRAL);
+    expect(fin.effectiveCapex).toBeCloseTo(50_000_000, 0); // unchanged
+  });
+
+  it("private-base reduces effective discount rate to 2.2%, no CAPEX subsidy", () => {
+    const fin = computeFinancials(ENVELOPE, KOREAN_GR_PRIVATE_BASE);
+    expect(fin.effectiveCapex).toBeCloseTo(100_000_000, 0); // no subsidy
+    // NPV at 2.2% should be HIGHER than at 5% (the equity-only rate).
+    const equityOnly = computeFinancials(ENVELOPE, ASSUMPTIONS);
+    expect(fin.npv).toBeGreaterThan(equityOnly.npv);
+  });
+
+  it("private-high-perf produces strictly higher NPV than private-base", () => {
+    // High-perf zeroes out the financed-portion rate; base leaves a 1% residual.
+    const base = computeFinancials(ENVELOPE, KOREAN_GR_PRIVATE_BASE);
+    const high = computeFinancials(ENVELOPE, KOREAN_GR_PRIVATE_HIGH_PERF);
+    expect(high.npv).toBeGreaterThan(base.npv);
+  });
+
+  it("public-Seoul beats private-base for high-CAPEX measures", () => {
+    // 50% direct CAPEX grant is generally more valuable than a 4.5pp interest
+    // buy-down on a 70% LTV. Confirms the dossier's intuition that the right
+    // track depends on building ownership.
+    const publicSeoul = computeFinancials(ENVELOPE, KOREAN_GR_PUBLIC_SEOUL_OR_CENTRAL);
+    const privateBase = computeFinancials(ENVELOPE, KOREAN_GR_PRIVATE_BASE);
+    expect(publicSeoul.npv).toBeGreaterThan(privateBase.npv);
   });
 });

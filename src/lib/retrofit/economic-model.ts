@@ -23,12 +23,30 @@
 //   horizon           = 20 years (Korean energy-retrofit norm)
 //   subsidy           = 0% by default; per-measure override via subsidyRatio
 
-import type { RetrofitMeasure } from "./retrofit-types";
+import type { RetrofitMeasure, RetrofitCategory } from "./retrofit-types";
 
 export type Fuel = "electricity" | "gas" | "districtHeating";
 
+/**
+ * Financing structure for the 그린리모델링 민간건축물 이자지원사업
+ * (Green Remodeling private-building interest-support track) and any
+ * future loan-financed retrofit programs.
+ *
+ * The interest-support buy-down reduces the EFFECTIVE DISCOUNT RATE on
+ * the financed portion of CAPEX, NOT the CAPEX itself. WACC blends the
+ * subsidized loan rate with the equity discount rate.
+ */
+export interface FinancingMix {
+  /** Fraction of effective CAPEX financed via subsidized loan (0..1). */
+  debtFraction: number;
+  /** Pre-subsidy nominal loan rate, fraction (e.g., 0.055 for 5.5%). */
+  loanRatePreSubsidy: number;
+  /** Interest-support buy-down, percentage points (e.g., 0.045 for 4.5pp). */
+  interestSupportPp: number;
+}
+
 export interface EconomicAssumptions {
-  /** Discount rate, fraction (0.05 = 5%). */
+  /** Equity / hurdle discount rate, fraction (0.05 = 5%). */
   discountRate: number;
   /** Annual nominal escalation per fuel, fraction (0.05 = 5%/yr). */
   energyEscalation: { electricity: number; gas: number; districtHeating: number };
@@ -36,9 +54,51 @@ export interface EconomicAssumptions {
   analysisHorizonYears: number;
   /**
    * Per-measure subsidy ratio. Key = measure.id, value = fraction (0..1).
+   * Most specific override; takes precedence over `subsidyByCategory`.
    * Effective CAPEX = estimatedCost × (1 - ratio). Default 0 if absent.
    */
   subsidyRatio?: Record<string, number>;
+  /**
+   * Per-category subsidy default. Applied when no `subsidyRatio[id]` exists.
+   * Used by the 공공건축물 그린리모델링 presets to apply 50% / 70% across
+   * envelope/HVAC/lighting while leaving renewable (solar PV → separate
+   * 신재생에너지 보급사업) unsubsidized.
+   */
+  subsidyByCategory?: Partial<Record<RetrofitCategory, number>>;
+  /**
+   * Loan financing + interest-support structure (그린리모델링 민간 track).
+   * When present, the effective discount rate becomes a WACC blending the
+   * subsidized loan rate with `discountRate`. Absent = pure-equity analysis.
+   */
+  financingMix?: FinancingMix;
+}
+
+/**
+ * Resolve the effective discount rate to use for NPV / discounted-payback
+ * computations. Collapses `(discountRate, financingMix)` into a single
+ * weighted-average rate (WACC) so downstream math doesn't have to know
+ * about the financing structure.
+ *
+ *   no financingMix       → discountRate (pure equity)
+ *   debtFraction = 0      → discountRate (no subsidized loan portion)
+ *   debtFraction = 1      → max(0, loanRate − interestSupport) (full loan)
+ *   else                  → debtFraction × effectiveLoanRate
+ *                         + (1 − debtFraction) × discountRate
+ *
+ * Floors the loan portion at 0 — interest support cannot make the loan
+ * pay you back; if the buy-down ≥ loan rate, the financed portion is
+ * effectively interest-free.
+ */
+export function effectiveDiscountRate(assumptions: EconomicAssumptions): number {
+  const { discountRate, financingMix } = assumptions;
+  if (!financingMix) return discountRate;
+  const debtFraction = Math.min(1, Math.max(0, financingMix.debtFraction));
+  if (debtFraction === 0) return discountRate;
+  const effectiveLoanRate = Math.max(
+    0,
+    financingMix.loanRatePreSubsidy - financingMix.interestSupportPp,
+  );
+  return debtFraction * effectiveLoanRate + (1 - debtFraction) * discountRate;
 }
 
 export interface MeasureFinancials {
@@ -206,19 +266,42 @@ export function computeDiscountedPayback(
 }
 
 /**
- * Apply a measure's subsidy fraction (from assumptions.subsidyRatio[id])
- * to its CAPEX. Default subsidy is 0% — pure unsubsidised analysis.
+ * Resolve the subsidy ratio for a measure. Lookup priority:
+ *   1. `subsidyRatio[measure.id]` — explicit per-measure override
+ *   2. `subsidyByCategory[measure.category]` — category default (used by
+ *      the 공공건축물 그린리모델링 presets)
+ *   3. 0 — unsubsidised
+ */
+function resolveSubsidyRatio(
+  measure: RetrofitMeasure,
+  assumptions: EconomicAssumptions,
+): number {
+  const idRatio = assumptions.subsidyRatio?.[measure.id];
+  if (typeof idRatio === "number") return idRatio;
+  const catRatio = assumptions.subsidyByCategory?.[measure.category];
+  if (typeof catRatio === "number") return catRatio;
+  return 0;
+}
+
+/**
+ * Apply the resolved subsidy fraction to a measure's CAPEX.
+ * Default subsidy is 0% — pure unsubsidised analysis.
  */
 function applyEffectiveCapex(
   measure: RetrofitMeasure,
   assumptions: EconomicAssumptions,
 ): number {
-  const ratio = assumptions.subsidyRatio?.[measure.id] ?? 0;
+  const ratio = resolveSubsidyRatio(measure, assumptions);
   return measure.estimatedCost * (1 - ratio);
 }
 
 /**
  * Compute full financial enrichment for a single measure.
+ *
+ * Uses `effectiveDiscountRate(assumptions)` everywhere — that helper
+ * collapses any optional `financingMix` into a WACC, so a measure's
+ * NPV / IRR / discounted-payback all reflect the program's interest-
+ * support buy-down when one is configured.
  */
 export function computeFinancials(
   measure: RetrofitMeasure,
@@ -226,13 +309,10 @@ export function computeFinancials(
 ): MeasureFinancials {
   const effectiveCapex = applyEffectiveCapex(measure, assumptions);
   const { cashFlow, resolvedFuel } = projectCashFlow(measure, assumptions);
-  const npv = computeNpv(effectiveCapex, cashFlow, assumptions.discountRate);
+  const rate = effectiveDiscountRate(assumptions);
+  const npv = computeNpv(effectiveCapex, cashFlow, rate);
   const irr = computeIrr(effectiveCapex, cashFlow);
-  const discountedPayback = computeDiscountedPayback(
-    effectiveCapex,
-    cashFlow,
-    assumptions.discountRate,
-  );
+  const discountedPayback = computeDiscountedPayback(effectiveCapex, cashFlow, rate);
   return {
     npv,
     irr,
@@ -357,7 +437,7 @@ export function selectMeasuresForBudget(
   const discountedPayback = computeDiscountedPayback(
     totalEffectiveCapex,
     aggregateCashFlow,
-    assumptions.discountRate,
+    effectiveDiscountRate(assumptions),
   );
 
   return {
