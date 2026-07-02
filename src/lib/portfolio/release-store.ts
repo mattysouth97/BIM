@@ -45,6 +45,13 @@ export interface ReleaseStore {
 
 const RELEASES_DIR = () => path.join(process.cwd(), "public", "releases");
 
+/** Allowlist for release version strings — "latest" or word chars/dot/dash. Blocks path traversal. */
+const VERSION_PATTERN = /^[\w.-]+$/;
+
+function isValidVersion(version: string): boolean {
+  return version === "latest" || VERSION_PATTERN.test(version);
+}
+
 async function readJsonFile<T>(filePath: string): Promise<T | null> {
   try {
     const raw = await fs.readFile(filePath, "utf-8");
@@ -81,6 +88,7 @@ export class StaticFileReleaseStore implements ReleaseStore {
   }
 
   async getManifest(version: string | "latest"): Promise<ReleaseManifest | null> {
+    if (!isValidVersion(version)) return null;
     const resolved = await this.resolveVersion(version);
     if (!resolved) return null;
     return readJsonFile<ReleaseManifest>(path.join(this.releasesDir, resolved, "manifest.json"));
@@ -92,10 +100,14 @@ export class StaticFileReleaseStore implements ReleaseStore {
   }
 
   async getCalibration(version: string): Promise<CalibrationJson | null> {
+    if (!isValidVersion(version)) return null;
     return readJsonFile<CalibrationJson>(path.join(this.releasesDir, version, "calibration.json"));
   }
 
   async getPredictions(version: string | "latest", bjdongCd: string): Promise<PredictionsResult> {
+    if (!isValidVersion(version)) {
+      return { status: "data-unavailable", reason: "Invalid release version" };
+    }
     const resolved = await this.resolveVersion(version);
     if (!resolved) {
       return { status: "data-unavailable", reason: "No release has been published yet" };

@@ -178,4 +178,52 @@ describe("StaticFileReleaseStore", () => {
     const calibration = await store.getCalibration("v0.1.0");
     expect(calibration?.metrics.kendallTau).toBe(0.672);
   });
+
+  // ─── Version allowlist — rejects path-traversal-shaped version strings ────
+
+  it("getManifest rejects a version containing path traversal characters", async () => {
+    await writeJson(path.join(dir, "manifest.json"), { latest: "v0.1.0", history: ["v0.1.0"] });
+    const store = new StaticFileReleaseStore(dir);
+    const manifest = await store.getManifest("../../etc/passwd");
+    expect(manifest).toBeNull();
+  });
+
+  it("getManifest accepts 'latest' as a version value", async () => {
+    await writeJson(path.join(dir, "manifest.json"), { latest: "v0.1.0", history: ["v0.1.0"] });
+    await writeJson(path.join(dir, "v0.1.0", "manifest.json"), {
+      version: "v0.1.0",
+      generatedAt: "2026-04-22T00:00:00Z",
+      featureSchemaVersion: "1.0.0",
+    });
+    const store = new StaticFileReleaseStore(dir);
+    const manifest = await store.getManifest("latest");
+    expect(manifest?.version).toBe("v0.1.0");
+  });
+
+  it("getCalibration rejects a version containing path separators", async () => {
+    const store = new StaticFileReleaseStore(dir);
+    const calibration = await store.getCalibration("../secrets");
+    expect(calibration).toBeNull();
+  });
+
+  it("getCalibration rejects a version containing a null byte", async () => {
+    const store = new StaticFileReleaseStore(dir);
+    const calibration = await store.getCalibration("v0.1.0 ");
+    expect(calibration).toBeNull();
+  });
+
+  it("getPredictions returns data-unavailable for a version containing path traversal characters", async () => {
+    const store = new StaticFileReleaseStore(dir);
+    const result = await store.getPredictions("../../etc/passwd", "1111010100");
+    expect(result.status).toBe("data-unavailable");
+    if (result.status === "data-unavailable") {
+      expect(result.reason).toMatch(/invalid/i);
+    }
+  });
+
+  it("getPredictions returns data-unavailable for a version containing a slash", async () => {
+    const store = new StaticFileReleaseStore(dir);
+    const result = await store.getPredictions("v0.1.0/../other", "1111010100");
+    expect(result.status).toBe("data-unavailable");
+  });
 });

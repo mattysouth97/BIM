@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
-import type { PortfolioFeatureVector } from "@/lib/portfolio/features";
+import { FEATURE_SCHEMA, type PortfolioFeatureVector } from "@/lib/portfolio/features";
 import type { ECO2ImportResult } from "@/lib/energy/eco2-import";
 
 interface Eco2ImportRequestBody {
@@ -24,11 +24,23 @@ interface Eco2ImportRequestBody {
   eco2Result: ECO2ImportResult;
 }
 
+const FEATURE_FIELD_NAMES = FEATURE_SCHEMA.fields.map((f) => f.name);
+
 function isValidFeatureVector(value: unknown): value is PortfolioFeatureVector {
   if (!value || typeof value !== "object") return false;
-  return Object.values(value as Record<string, unknown>).every(
-    (v) => typeof v === "number" && Number.isFinite(v)
-  );
+  const record = value as Record<string, unknown>;
+  const keys = Object.keys(record);
+
+  // Every schema field must be present and a finite number.
+  for (const name of FEATURE_FIELD_NAMES) {
+    const v = record[name];
+    if (typeof v !== "number" || !Number.isFinite(v)) return false;
+  }
+
+  // No unknown keys allowed.
+  if (keys.length !== FEATURE_FIELD_NAMES.length) return false;
+
+  return true;
 }
 
 function isValidEco2Result(value: unknown): value is ECO2ImportResult {
@@ -45,17 +57,42 @@ function getCorpusPath(): string {
   return path.join(process.cwd(), "ml", "portfolio", "corpus", "predictions.jsonl");
 }
 
+const MAX_BODY_BYTES = 64 * 1024;
+const BUILDING_PK_PATTERN = /^[A-Za-z0-9-]+$/;
+
+/** Constant-time key comparison — avoids leaking key length/content via timing. */
+function safeKeyEquals(provided: string, expected: string): boolean {
+  const providedBuf = Buffer.from(provided, "utf-8");
+  const expectedBuf = Buffer.from(expected, "utf-8");
+  if (providedBuf.length !== expectedBuf.length) return false;
+  return crypto.timingSafeEqual(providedBuf, expectedBuf);
+}
+
+function isValidBuildingPk(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.length > 0 &&
+    value.length <= 64 &&
+    BUILDING_PK_PATTERN.test(value)
+  );
+}
+
 export async function POST(request: NextRequest) {
-  if (process.env.NODE_ENV !== "development") {
+  if (process.env.NODE_ENV !== "development" || process.env.VERCEL === "1") {
     return NextResponse.json(
       { error: "eco2-imports is a local-dev-only endpoint" },
       { status: 503 }
     );
   }
 
+  const contentLength = request.headers.get("content-length");
+  if (contentLength && Number(contentLength) > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: "Request body exceeds 64 KB limit" }, { status: 413 });
+  }
+
   const providedKey = request.headers.get("x-corpus-key");
   const expectedKey = process.env.CORPUS_API_KEY;
-  if (!expectedKey || !providedKey || providedKey !== expectedKey) {
+  if (!expectedKey || !providedKey || !safeKeyEquals(providedKey, expectedKey)) {
     return NextResponse.json({ error: "Invalid or missing x-corpus-key" }, { status: 401 });
   }
 
@@ -66,8 +103,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Request body must be valid JSON" }, { status: 400 });
   }
 
-  if (!body?.buildingPk || typeof body.buildingPk !== "string") {
-    return NextResponse.json({ error: "Missing field: buildingPk" }, { status: 400 });
+  if (!isValidBuildingPk(body?.buildingPk)) {
+    return NextResponse.json({ error: "Missing or invalid field: buildingPk" }, { status: 400 });
   }
   if (!isValidFeatureVector(body.featureVector)) {
     return NextResponse.json({ error: "Missing or invalid field: featureVector" }, { status: 400 });

@@ -10,7 +10,7 @@ import type { PredictionsResult } from "@/lib/portfolio/types";
 
 function makeRequest(bjdongCd: string, ip = "203.0.113.1"): NextRequest {
   const req = new Request(`http://localhost/api/v1/predictions/${bjdongCd}`, {
-    headers: { "x-forwarded-for": ip },
+    headers: { "x-vercel-forwarded-for": ip },
   });
   return req as unknown as NextRequest;
 }
@@ -72,7 +72,7 @@ describe("GET /api/v1/predictions/[bjdongCd]", () => {
     expect(res.status).toBe(404);
   });
 
-  it("returns 503 when no release is published", async () => {
+  it("returns 503 when no release is published, without leaking internal detail", async () => {
     __setReleaseStoreForTests(
       makeFakeStore({ status: "data-unavailable", reason: "No release has been published yet" })
     );
@@ -82,7 +82,9 @@ describe("GET /api/v1/predictions/[bjdongCd]", () => {
     });
     expect(res.status).toBe(503);
     const body = await res.json();
-    expect(body.error).toBe("release-data-unavailable");
+    expect(body).toEqual({ error: "release-data-unavailable" });
+    expect(body.detail).toBeUndefined();
+    expect(body.reason).toBeUndefined();
   });
 
   it("returns 429 after exceeding 60 requests/min from the same IP", async () => {
@@ -96,5 +98,41 @@ describe("GET /api/v1/predictions/[bjdongCd]", () => {
       });
     }
     expect(lastRes!.status).toBe(429);
+  });
+
+  it("prefers x-vercel-forwarded-for over x-real-ip for client IP derivation", async () => {
+    __setReleaseStoreForTests(makeFakeStore({ status: "unknown-region" }));
+
+    const req = new Request("http://localhost/api/v1/predictions/1111010100", {
+      headers: {
+        "x-vercel-forwarded-for": "203.0.113.20",
+        "x-real-ip": "198.51.100.20",
+      },
+    }) as unknown as NextRequest;
+
+    const res = await GET(req, { params: Promise.resolve({ bjdongCd: "1111010100" }) });
+    expect(res.status).toBe(404);
+  });
+
+  it("falls back to x-real-ip when x-vercel-forwarded-for is absent", async () => {
+    __setReleaseStoreForTests(makeFakeStore({ status: "unknown-region" }));
+
+    const req = new Request("http://localhost/api/v1/predictions/1111010100", {
+      headers: { "x-real-ip": "198.51.100.21" },
+    }) as unknown as NextRequest;
+
+    const res = await GET(req, { params: Promise.resolve({ bjdongCd: "1111010100" }) });
+    expect(res.status).toBe(404);
+  });
+
+  it("ignores raw x-forwarded-for and falls back to 'unknown' bucket when no trusted IP header is present", async () => {
+    __setReleaseStoreForTests(makeFakeStore({ status: "unknown-region" }));
+
+    const req = new Request("http://localhost/api/v1/predictions/1111010100", {
+      headers: { "x-forwarded-for": "1.2.3.4" },
+    }) as unknown as NextRequest;
+
+    const res = await GET(req, { params: Promise.resolve({ bjdongCd: "1111010100" }) });
+    expect(res.status).toBe(404);
   });
 });

@@ -23,10 +23,15 @@ function makeFeatureVector() {
 }
 
 function makeRequest(body: unknown, headers: Record<string, string> = {}): NextRequest {
+  const payload = JSON.stringify(body);
   const req = new Request("http://localhost/api/v1/eco2-imports", {
     method: "POST",
-    body: JSON.stringify(body),
-    headers: { "content-type": "application/json", ...headers },
+    body: payload,
+    headers: {
+      "content-type": "application/json",
+      "content-length": String(Buffer.byteLength(payload, "utf-8")),
+      ...headers,
+    },
   });
   return req as unknown as NextRequest;
 }
@@ -54,6 +59,49 @@ describe("POST /api/v1/eco2-imports", () => {
       makeRequest({ buildingPk: "pk-1", featureVector: makeFeatureVector(), eco2Result: { grade: "3", demand: 100, co2: 10 } })
     );
     expect(res.status).toBe(503);
+  });
+
+  it("returns 503 when VERCEL=1 even if NODE_ENV is development (belt-and-suspenders gate)", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("VERCEL", "1");
+    vi.stubEnv("CORPUS_API_KEY", "secret-key");
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      makeRequest(
+        { buildingPk: "pk-1", featureVector: makeFeatureVector(), eco2Result: { grade: "3", demand: 100, co2: 10 } },
+        { "x-corpus-key": "secret-key" }
+      )
+    );
+    expect(res.status).toBe(503);
+  });
+
+  it("returns 413 when content-length exceeds the 64 KB body cap", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("CORPUS_API_KEY", "secret-key");
+    const { POST } = await import("../route");
+
+    // happy-dom's Request/Headers recompute content-length from the actual
+    // body and ignore an explicitly-set override, so a real Request can't
+    // exercise the oversized-declared-length path. The route only calls
+    // request.headers.get(...) and request.json(), so a minimal stand-in
+    // that matches that surface is sufficient and reliable here.
+    const oversizedHeaders = new Headers({
+      "content-type": "application/json",
+      "x-corpus-key": "secret-key",
+      "content-length": String(64 * 1024 + 1),
+    });
+    const fakeReq = {
+      headers: oversizedHeaders,
+      json: async () => ({
+        buildingPk: "pk-1",
+        featureVector: makeFeatureVector(),
+        eco2Result: { grade: "3", demand: 100, co2: 10 },
+      }),
+    } as unknown as NextRequest;
+
+    const res = await POST(fakeReq);
+    expect(res.status).toBe(413);
   });
 
   it("returns 401 in development without a matching x-corpus-key", async () => {
@@ -112,6 +160,91 @@ describe("POST /api/v1/eco2-imports", () => {
     const { POST } = await import("../route");
 
     const res = await POST(makeRequest({ buildingPk: "pk-1" }, { "x-corpus-key": "secret-key" }));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 for a buildingPk containing invalid characters", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("CORPUS_API_KEY", "secret-key");
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      makeRequest(
+        {
+          buildingPk: "pk-1; DROP TABLE",
+          featureVector: makeFeatureVector(),
+          eco2Result: { grade: "3", demand: 100, co2: 10 },
+        },
+        { "x-corpus-key": "secret-key" }
+      )
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 for a buildingPk longer than 64 characters", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("CORPUS_API_KEY", "secret-key");
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      makeRequest(
+        {
+          buildingPk: "a".repeat(65),
+          featureVector: makeFeatureVector(),
+          eco2Result: { grade: "3", demand: 100, co2: 10 },
+        },
+        { "x-corpus-key": "secret-key" }
+      )
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 for an empty buildingPk", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("CORPUS_API_KEY", "secret-key");
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      makeRequest(
+        { buildingPk: "", featureVector: makeFeatureVector(), eco2Result: { grade: "3", demand: 100, co2: 10 } },
+        { "x-corpus-key": "secret-key" }
+      )
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 for a featureVector missing a required schema field", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("CORPUS_API_KEY", "secret-key");
+    const { POST } = await import("../route");
+
+    const { climateZoneCode: _omit, ...incompleteVector } = makeFeatureVector();
+    void _omit;
+
+    const res = await POST(
+      makeRequest(
+        {
+          buildingPk: "pk-1",
+          featureVector: incompleteVector,
+          eco2Result: { grade: "3", demand: 100, co2: 10 },
+        },
+        { "x-corpus-key": "secret-key" }
+      )
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 for an empty-object featureVector", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("CORPUS_API_KEY", "secret-key");
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      makeRequest(
+        { buildingPk: "pk-1", featureVector: {}, eco2Result: { grade: "3", demand: 100, co2: 10 } },
+        { "x-corpus-key": "secret-key" }
+      )
+    );
     expect(res.status).toBe(400);
   });
 });

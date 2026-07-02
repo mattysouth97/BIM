@@ -27,13 +27,27 @@ interface Bucket {
   windowStart: number;
 }
 
+const MAX_BUCKETS = 10_000;
+
 const buckets = new Map<string, Bucket>();
+
+/** Sweep expired buckets to bound memory once the map grows large. */
+function evictExpiredBuckets(now: number): void {
+  for (const [key, bucket] of buckets) {
+    if (now - bucket.windowStart >= RATE_LIMIT_WINDOW_MS) {
+      buckets.delete(key);
+    }
+  }
+}
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const bucket = buckets.get(ip);
 
   if (!bucket || now - bucket.windowStart >= RATE_LIMIT_WINDOW_MS) {
+    if (!bucket && buckets.size > MAX_BUCKETS) {
+      evictExpiredBuckets(now);
+    }
     buckets.set(ip, { count: 1, windowStart: now });
     return true;
   }
@@ -47,9 +61,11 @@ function checkRateLimit(ip: string): boolean {
 }
 
 function getClientIp(request: NextRequest): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return request.headers.get("x-real-ip") ?? "unknown";
+  const vercelForwarded = request.headers.get("x-vercel-forwarded-for");
+  if (vercelForwarded) return vercelForwarded.split(",")[0].trim();
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+  return "unknown";
 }
 
 // Injectable for tests — default is the production StaticFileReleaseStore.
@@ -101,9 +117,7 @@ export async function GET(
         { status: 404 }
       );
     case "data-unavailable":
-      return NextResponse.json(
-        { error: "release-data-unavailable", detail: result.reason },
-        { status: 503 }
-      );
+      console.warn(`[predictions] release-data-unavailable: ${result.reason}`);
+      return NextResponse.json({ error: "release-data-unavailable" }, { status: 503 });
   }
 }
