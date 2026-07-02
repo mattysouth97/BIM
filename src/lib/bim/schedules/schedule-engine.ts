@@ -100,7 +100,7 @@ export function runSchedule(
       );
 
   // Step 3 — Sort.
-  let sortedRows = [...filteredRows];
+  const sortedRows = [...filteredRows];
   if (definition.sortBy) {
     const descending = definition.sortBy.startsWith("-");
     const colId = descending

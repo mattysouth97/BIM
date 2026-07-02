@@ -17,6 +17,7 @@ import type { HeatLossResult } from "@/lib/energy/heat-loss";
 import type { AnnualDemand } from "@/lib/energy/annual-demand";
 import type { EnergyGrade } from "@/lib/energy/energy-grade";
 import type { CO2Result } from "@/lib/energy/co2-emissions";
+import type { AnnualConsumption } from "@/lib/energy/consumption-normalizer";
 
 export interface EnergyMetrics {
   heatLoss: HeatLossResult;
@@ -24,6 +25,12 @@ export interface EnergyMetrics {
   grade: EnergyGrade;
   gradeColor: string;
   co2: CO2Result;
+  /**
+   * Percentage difference between predicted annual demand and most recent actual consumption.
+   * Positive = predicted exceeds actual; negative = actual exceeds predicted.
+   * null when no actual consumption data is available.
+   */
+  predictedVsActualDelta: number | null;
 }
 
 /**
@@ -33,8 +40,13 @@ export interface EnergyMetrics {
  *
  * @param buildingPk - Building primary key for store lookups
  * @param sigunguCd - Optional 법정동 code (e.g. "5110000000") — used to look up regional HDD/CDD
+ * @param actualConsumption - Optional actual annual consumption from useActualEnergy hook
  */
-export function useEnergyMetrics(buildingPk: string, sigunguCd?: string): EnergyMetrics | null {
+export function useEnergyMetrics(
+  buildingPk: string,
+  sigunguCd?: string,
+  actualConsumption?: AnnualConsumption[]
+): EnergyMetrics | null {
   // Subscribe to individual store slices to avoid infinite loop from getEffectiveRecipe
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
   const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
@@ -90,8 +102,20 @@ export function useEnergyMetrics(buildingPk: string, sigunguCd?: string): Energy
       effectiveRecipe.floors.length;
     const co2 = calculateCO2(demand, totalFloorArea);
 
-    return { heatLoss, demand, grade, gradeColor, co2 };
-  }, [materials, effectiveRecipe, sigunguCd]);
+    // Compute predicted vs actual delta using most recent actual year
+    let predictedVsActualDelta: number | null = null;
+    if (actualConsumption && actualConsumption.length > 0) {
+      const mostRecent = actualConsumption.reduce((a, b) =>
+        b.year > a.year ? b : a
+      );
+      if (mostRecent.total_kwh > 0) {
+        predictedVsActualDelta =
+          ((demand.totalDemand - mostRecent.total_kwh) / mostRecent.total_kwh) * 100;
+      }
+    }
+
+    return { heatLoss, demand, grade, gradeColor, co2, predictedVsActualDelta };
+  }, [materials, effectiveRecipe, sigunguCd, actualConsumption]);
 
   return metrics;
 }

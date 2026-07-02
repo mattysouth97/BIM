@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
  */
 
 const BASE_URL =
-  "https://apis.data.go.kr/1613000/BdEnergyUseService/getBdEnergyUse";
+  "	https://apis.data.go.kr/1613000/BldEngyHubService";
 
 const PARAMS = ["mgmBldrgstPk", "year", "numOfRows", "pageNo"] as const;
 

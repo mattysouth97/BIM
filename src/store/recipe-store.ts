@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import type { BuildingRecipe, RecipeOverrides } from "@/lib/procedural/types";
+import { mergeRecipeOverrides } from "@/lib/procedural/recipe";
 
 interface RecipeState {
   // Base recipes keyed by building PK (set from toRecipe output)
@@ -46,17 +47,7 @@ export const useRecipeStore = create<RecipeState>()((set, get) => ({
     if (!base) return undefined;
     const ov = get().overrides[pk];
     if (!ov) return base;
-    // Merge top-level scalars + nested sections
-    return {
-      ...base,
-      ...(ov.footprintWidth !== undefined ? { footprintWidth: ov.footprintWidth } : {}),
-      ...(ov.footprintDepth !== undefined ? { footprintDepth: ov.footprintDepth } : {}),
-      ...(ov.wallThickness !== undefined ? { wallThickness: ov.wallThickness } : {}),
-      ...(ov.facade ? { facade: { ...base.facade, ...ov.facade } } : {}),
-      ...(ov.slab ? { slab: { ...base.slab, ...ov.slab } } : {}),
-      ...(ov.column ? { column: { ...base.column, ...ov.column } } : {}),
-      ...(ov.roof ? { roof: { ...base.roof, ...ov.roof } } : {}),
-    };
+    return mergeRecipeOverrides(base, ov);
   },
 
   setOverride: (pk, path, value) =>

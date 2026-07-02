@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agent worktrees — not part of the main source
+    ".claude/worktrees/**",
+    // Vendored emscripten-generated WASM glue — not linted
+    "public/**",
   ]),
 ]);
 

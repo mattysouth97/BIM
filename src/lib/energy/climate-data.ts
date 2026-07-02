@@ -1,6 +1,8 @@
 // src/lib/energy/climate-data.ts
 // Climate data for Korean cities — used in heat loss and energy demand calculations.
 
+import type { WeatherSummary } from "./weather-processor";
+
 export interface ClimateData {
   /** Heating Degree Days (base 18°C) */
   hdd: number;
@@ -56,21 +58,46 @@ export const REGIONAL_CLIMATE: Record<string, { hdd: number; cdd: number }> = {
  * Accepts an optional sigunguCd (법정동 code) to look up regional HDD/CDD.
  * Extracts the 2-digit sido prefix and returns regional data if found,
  * falling back to Seoul defaults for unknown regions.
+ *
+ * When dynamicWeather is provided and its dataCompleteness is >= 0.9,
+ * the observed HDD/CDD values replace the static table values.
+ * This allows callers to transparently use live data when available.
  */
-export function getClimateData(sigunguCd?: string): ClimateData {
+export function getClimateData(
+  sigunguCd?: string,
+  dynamicWeather?: WeatherSummary,
+): ClimateData {
+  // Resolve base static values for the region
+  let hdd: number;
+  let cdd: number;
+
   if (sigunguCd) {
     const prefix = sigunguCd.slice(0, 2);
     const regional = REGIONAL_CLIMATE[prefix];
     if (regional) {
-      return {
-        hdd: regional.hdd,
-        cdd: regional.cdd,
-        winterDesignTemp: SEOUL_CLIMATE.winterDesignTemp,
-        summerDesignTemp: SEOUL_CLIMATE.summerDesignTemp,
-        indoorTemp: SEOUL_CLIMATE.indoorTemp,
-        indoorCoolTemp: SEOUL_CLIMATE.indoorCoolTemp,
-      };
+      hdd = regional.hdd;
+      cdd = regional.cdd;
+    } else {
+      hdd = SEOUL_CLIMATE.hdd;
+      cdd = SEOUL_CLIMATE.cdd;
     }
+  } else {
+    hdd = SEOUL_CLIMATE.hdd;
+    cdd = SEOUL_CLIMATE.cdd;
   }
-  return SEOUL_CLIMATE;
+
+  // Override with dynamic observed data when completeness is sufficient
+  if (dynamicWeather && dynamicWeather.dataCompleteness >= 0.9) {
+    hdd = dynamicWeather.hdd;
+    cdd = dynamicWeather.cdd;
+  }
+
+  return {
+    hdd,
+    cdd,
+    winterDesignTemp: SEOUL_CLIMATE.winterDesignTemp,
+    summerDesignTemp: SEOUL_CLIMATE.summerDesignTemp,
+    indoorTemp: SEOUL_CLIMATE.indoorTemp,
+    indoorCoolTemp: SEOUL_CLIMATE.indoorCoolTemp,
+  };
 }

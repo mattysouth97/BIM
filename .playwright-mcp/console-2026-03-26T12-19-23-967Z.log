@@ -1,0 +1,86 @@
+[     307ms] [ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <RootLayout>
+      <html lang="ko" className="geist_a715..." suppressHydrationWarning={true}>
+        ...
+          <QueryClientProvider client={{}}>
+            <J attribute="class" defaultTheme="system" enableSystem={true}>
+              <V attribute="class" defaultTheme="system" enableSystem={true}>
+                <script>
+                <Header>
+                  <header className="sticky top...">
+                    <div className="mx-auto fl...">
+                      <div>
+                      <div className="flex items...">
+                        <Button>
+                        <Button variant="ghost" size="icon" onClick={function toggleTheme} title="Light mode">
+                          <button
+                            data-slot="button"
+                            data-variant="ghost"
+                            data-size="icon"
+                            className={"inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm fon..."}
+                            onClick={function toggleTheme}
++                           title="Light mode"
+-                           title="Dark mode"
+                          >
+                        ...
+                ...
+                ...
+ @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[     875ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[    1245ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[    2428ms] [ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <RootLayout>
+      <html lang="ko" className="geist_a715..." suppressHydrationWarning={true}>
+        ...
+          <QueryClientProvider client={{}}>
+            <J attribute="class" defaultTheme="system" enableSystem={true}>
+              <V attribute="class" defaultTheme="system" enableSystem={true}>
+                <script>
+                <Header>
+                  <header className="sticky top...">
+                    <div className="mx-auto fl...">
+                      <div>
+                      <div className="flex items...">
+                        <Button>
+                        <Button variant="ghost" size="icon" onClick={function toggleTheme} title="Light mode">
+                          <button
+                            data-slot="button"
+                            data-variant="ghost"
+                            data-size="icon"
+                            className={"inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm fon..."}
+                            onClick={function toggleTheme}
++                           title="Light mode"
+-                           title="Dark mode"
+                          >
+                        ...
+                ...
+                ...
+ @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:3272
+[    2806ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[    3128ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[   32649ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431
+[   41509ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:3000/_next/static/chunks/0z_g_next_dist_0v7z86-._.js:2431

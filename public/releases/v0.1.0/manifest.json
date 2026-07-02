@@ -1,0 +1,28 @@
+{
+  "version": "v0.1.0",
+  "codename": "Baseline",
+  "generatedAt": "2026-04-22T04:30:00Z",
+  "trainingCutoff": "2026-03-31",
+  "modelFamily": "portfolio-xgb",
+  "modelVersion": "xgb-1.3.2",
+  "featureSchemaVersion": "1.0.0",
+  "coverage": {
+    "buildingCount": 1284,
+    "sidoCount": 17,
+    "sigunguCount": 64,
+    "structureTypes": ["RC", "SRC", "Steel", "Masonry", "Wood"],
+    "useTypes": ["Residential", "Office", "Mixed", "Retail", "Other"]
+  },
+  "prediction": {
+    "target": "eui_kwh_per_sqm_per_year",
+    "unit": "kWh/m²·yr",
+    "gradingScheme": "K-Green-Grade-v2"
+  },
+  "lineage": {
+    "bldrgstSource": "data.go.kr BldRgstHubService",
+    "footprintSource": "VWorld LP_PA_CBND_BUBUN + LT_C_SPBD",
+    "climateSource": "KMA ASOS 2014-2024 normals"
+  },
+  "license": "CC-BY-4.0-KR",
+  "notes": "Baseline release. Calibrated on 1,284 building-year observations from public energy disclosure; validated against 268 held-out pairs."
+}

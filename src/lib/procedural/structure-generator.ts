@@ -267,7 +267,7 @@ export function generateRoof(recipe: BuildingRecipe): THREE.Mesh {
     shape.closePath();
     geo = new THREE.ExtrudeGeometry(shape, { depth: footprintDepth, bevelEnabled: false });
     geo.center();
-    y = totalHeight;
+    y = totalHeight + roof.gableHeight / 2;
   } else if (roof.type === "hip") {
     geo = generateHipGeometry(footprintWidth, footprintDepth, roof.gableHeight, roof.hipInset);
     y = totalHeight;

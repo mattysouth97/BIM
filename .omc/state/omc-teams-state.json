@@ -1,0 +1,11 @@
+{
+  "active": false,
+  "current_phase": "complete",
+  "task_description": "Aborted: psmux+Windows incompatible with omc team shell detection. Switching to native teams.",
+  "_meta": {
+    "mode": "omc-teams",
+    "sessionId": null,
+    "updatedAt": "2026-04-04T19:27:43.114Z",
+    "updatedBy": "state_write_tool"
+  }
+}

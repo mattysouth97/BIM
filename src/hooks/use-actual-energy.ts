@@ -1,108 +1,69 @@
 "use client";
 
 // src/hooks/use-actual-energy.ts
-// Hook for fetching actual energy data from Korean energy APIs.
-// Uses useEffect + useState (no SWR/react-query) per project convention.
-// Returns graceful fallback when APIs have no data for a building.
+// TanStack Query hook for fetching actual energy consumption data.
+// Fetches 3 years of monthly records from /api/energy/consumption,
+// normalizes them into annual kWh via consumption-normalizer.
+// Returns empty array when building has no energy data (common for older/smaller buildings).
 
-import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAppStore } from "@/store/app-store";
 import {
-  fetchEnergyConsumption,
-  fetchEnergyGrade,
-  computeAnnualKwh,
-  type MonthlyConsumption,
-  type EnergyGradeResult,
-} from "@/lib/energy-api-client";
+  normalizeConsumption,
+  type MonthlyConsumptionRecord,
+  type AnnualConsumption,
+} from "@/lib/energy/consumption-normalizer";
 
-export interface ActualEnergy {
-  /** Certified energy grade (e.g. "1+", "2") or null */
-  grade: string | null;
-  /** Certified primary energy demand in kWh/m2yr or null */
-  certifiedDemand: number | null;
-  /** Monthly electricity (kWh) + gas (MJ) consumption or null */
-  monthlyConsumption: MonthlyConsumption[] | null;
-  /** Sum of annual electricity + gas (converted to kWh) or null */
-  totalAnnualKwh: number | null;
-  /** true only if at least one API returned usable data */
-  dataAvailable: boolean;
-  /** true while fetching */
-  isLoading: boolean;
+export type { AnnualConsumption };
+
+interface ConsumptionApiResponse {
+  items: MonthlyConsumptionRecord[];
+  totalCount: number;
 }
 
-const EMPTY: ActualEnergy = {
-  grade: null,
-  certifiedDemand: null,
-  monthlyConsumption: null,
-  totalAnnualKwh: null,
-  dataAvailable: false,
-  isLoading: false,
-};
+async function fetchConsumptionYears(
+  pk: string,
+  years: number[]
+): Promise<AnnualConsumption[]> {
+  const apiKey = useAppStore.getState().apiKey;
+  if (!apiKey) return [];
 
-// Simple in-memory cache to avoid refetching on re-renders
-const cache = new Map<string, ActualEnergy>();
+  const requests = years.map(async (year) => {
+    const url = new URL("/api/energy/consumption", window.location.origin);
+    url.searchParams.set("mgmBldrgstPk", pk);
+    url.searchParams.set("year", String(year));
+    url.searchParams.set("numOfRows", "36");
 
-/**
- * Fetch actual energy data for a building from Korean energy APIs.
- * Returns dataAvailable: false when building has no energy data (common).
- */
-export function useActualEnergy(buildingPk: string): ActualEnergy {
-  const [state, setState] = useState<ActualEnergy>(() => {
-    const cached = cache.get(buildingPk);
-    if (cached) return cached;
-    return { ...EMPTY, isLoading: true };
+    const res = await fetch(url.toString(), {
+      headers: { "x-api-key": apiKey },
+    });
+
+    if (!res.ok) return [];
+
+    const data: ConsumptionApiResponse = await res.json();
+    return data.items ?? [];
   });
 
-  // Track current pk to avoid stale updates
-  const pkRef = useRef(buildingPk);
-  pkRef.current = buildingPk;
+  const results = await Promise.all(requests);
+  const allRecords = results.flat();
 
-  useEffect(() => {
-    // If cached, skip fetch
-    if (cache.has(buildingPk)) {
-      setState(cache.get(buildingPk)!);
-      return;
-    }
+  return normalizeConsumption(allRecords);
+}
 
-    let cancelled = false;
-    setState({ ...EMPTY, isLoading: true });
+/**
+ * Fetch 3 years of actual energy consumption for a building.
+ * Returns AnnualConsumption[] normalized to kWh per year.
+ * Returns empty array when building has no energy data.
+ */
+export function useActualEnergy(mgmBldrgstPk: string) {
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear - 1, currentYear - 2, currentYear - 3];
 
-    async function load() {
-      // Fetch grade and consumption in parallel
-      const [gradeResult, consumptionResult] = await Promise.all([
-        fetchEnergyGrade(buildingPk).catch((): EnergyGradeResult | null => null),
-        fetchEnergyConsumption(buildingPk).catch(() => null),
-      ]);
-
-      if (cancelled || pkRef.current !== buildingPk) return;
-
-      const hasGrade = gradeResult !== null;
-      const hasConsumption =
-        consumptionResult !== null &&
-        consumptionResult.monthly.length > 0;
-
-      const result: ActualEnergy = {
-        grade: gradeResult?.grade ?? null,
-        certifiedDemand: gradeResult?.demand ?? null,
-        monthlyConsumption: hasConsumption
-          ? consumptionResult!.monthly
-          : null,
-        totalAnnualKwh: hasConsumption
-          ? computeAnnualKwh(consumptionResult!.monthly)
-          : null,
-        dataAvailable: hasGrade || hasConsumption,
-        isLoading: false,
-      };
-
-      cache.set(buildingPk, result);
-      setState(result);
-    }
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [buildingPk]);
-
-  return state;
+  return useQuery<AnnualConsumption[]>({
+    queryKey: ["energy", "consumption", mgmBldrgstPk, years],
+    queryFn: () => fetchConsumptionYears(mgmBldrgstPk, years),
+    enabled: !!mgmBldrgstPk,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    placeholderData: [],
+  });
 }

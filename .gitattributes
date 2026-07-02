@@ -1,0 +1,3 @@
+# v7.0 Prediction — Parquet + ONNX release artifacts are binary
+*.parquet binary
+*.onnx binary

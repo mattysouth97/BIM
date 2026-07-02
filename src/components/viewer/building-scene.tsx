@@ -36,6 +36,9 @@ import { EnergyCards } from "./energy-cards";
 import { ErrorBoundary, ViewerErrorBoundary } from "@/components/error-boundary";
 import { StructuralTooltip } from "./structural-tooltip";
 import { EquipmentClickHandler } from "./equipment-click-handler";
+import { ScenePostProcessing } from "./outline-post-processing";
+import { TwinStageOverlay } from "@/components/twin/twin-stage-overlay";
+import type { FootprintGeometry } from "@/lib/portfolio/types";
 
 const IFCModel = lazy(() =>
   import("./ifc-loader").then((m) => ({ default: m.IFCModel }))
@@ -275,6 +278,57 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     return geo;
   }, [title, floors, footprintPolygon]);
 
+  // ── Portfolio-feature-vector geometry shape (area / perimeter / aspect)
+  // Used by the TwinStageOverlay to derive the 20-field feature vector.
+  const portfolioFootprint = useMemo<FootprintGeometry | null>(() => {
+    if (!footprintPolygon || footprintPolygon.length === 0 || footprintPolygon[0].length < 3) {
+      return null;
+    }
+    const outer = footprintPolygon[0];
+    // Project to local metres for accurate area/perimeter.
+    const lng0 = outer.reduce((s, p) => s + p[0], 0) / outer.length;
+    const lat0 = outer.reduce((s, p) => s + p[1], 0) / outer.length;
+    let proj;
+    try {
+      proj = createSceneProjection(lng0, lat0);
+    } catch {
+      return null;
+    }
+    const localOuter: Array<[number, number]> = outer.map(
+      ([lng, lat]) => proj!.project(lng, lat) as [number, number]
+    );
+
+    // Shoelace area
+    let areaAcc = 0;
+    for (let i = 0; i < localOuter.length; i++) {
+      const [x1, z1] = localOuter[i];
+      const [x2, z2] = localOuter[(i + 1) % localOuter.length];
+      areaAcc += x1 * z2 - x2 * z1;
+    }
+    const areaSqm = Math.abs(areaAcc) / 2;
+
+    // Perimeter
+    let perimeterM = 0;
+    for (let i = 0; i < localOuter.length; i++) {
+      const [x1, z1] = localOuter[i];
+      const [x2, z2] = localOuter[(i + 1) % localOuter.length];
+      perimeterM += Math.hypot(x2 - x1, z2 - z1);
+    }
+
+    const xs = localOuter.map((p) => p[0]);
+    const zs = localOuter.map((p) => p[1]);
+    const w = Math.max(...xs) - Math.min(...xs);
+    const d = Math.max(...zs) - Math.min(...zs);
+    const aspectRatio = w === 0 || d === 0 ? 1 : Math.max(w, d) / Math.min(w, d);
+
+    return {
+      outerRing: outer as Array<[number, number]>,
+      areaSqm,
+      perimeterM,
+      aspectRatio,
+    };
+  }, [footprintPolygon]);
+
   const setProperties = useMaterialStore((s) => s.setProperties);
   const existingProps = useMaterialStore((s) => s.properties[buildingPk]);
 
@@ -454,8 +508,8 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             distance={activeCameraDistance}
           />
 
-          {/* SAO ambient occlusion post-processing */}
-          {/* SAOPostProcessing disabled — causes dark halos on polygon geometry */}
+          {/* Outline + post-processing (OutlinePass-based, SAOPass scaffold kept inside) */}
+          <ScenePostProcessing />
         </Suspense>
       </Canvas>
       </ViewerErrorBoundary>
@@ -484,6 +538,17 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
       <div className="absolute bottom-3 right-3 z-10 text-[10px] text-muted-foreground/60">
         {isKo ? "클릭: 층 선택 · 드래그: 회전 · 스크롤: 줌" : "Click: select floor · Drag: rotate · Scroll: zoom"}
       </div>
+
+      {/* Twin-stage data-product overlay — release rail, prediction readout,
+          feature vector. Only for single-building mode. */}
+      {!campusData && (
+        <ErrorBoundary>
+          <TwinStageOverlay
+            title={title}
+            footprintGeometry={portfolioFootprint}
+          />
+        </ErrorBoundary>
+      )}
 
       {/* Energy metric cards — bottom-left, visible when building loaded */}
       {modelSource === "parametric" && (

@@ -7,13 +7,13 @@ import { persist } from "zustand/middleware";
 // Size constants (exported for downstream use by WorkspaceShell in Phase 15)
 // ---------------------------------------------------------------------------
 
-export const LEFT_DOCK_MIN = 12;
-export const LEFT_DOCK_MAX = 28;
-export const LEFT_DOCK_DEFAULT = 18;
+export const LEFT_DOCK_MIN = 15;
+export const LEFT_DOCK_MAX = 100;
+export const LEFT_DOCK_DEFAULT = 28;
 
-export const RIGHT_DOCK_MIN = 16;
-export const RIGHT_DOCK_MAX = 35;
-export const RIGHT_DOCK_DEFAULT = 22;
+export const RIGHT_DOCK_MIN = 18;
+export const RIGHT_DOCK_MAX = 100;
+export const RIGHT_DOCK_DEFAULT = 30;
 
 // ---------------------------------------------------------------------------
 // State interface

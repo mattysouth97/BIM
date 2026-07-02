@@ -1,0 +1,123 @@
+// src/lib/retrofit/retrofit-report.ts
+// Assembles individual retrofit measures into a prioritized, cumulative report.
+
+import type { RetrofitMeasure } from '@/lib/retrofit/retrofit-types';
+import type { EconomicAssumptions } from '@/lib/retrofit/economic-model';
+import { computeFinancials } from '@/lib/retrofit/economic-model';
+
+export interface CumulativeSaving {
+  measureId: string;
+  description: string;
+  cumulativeInvestment: number;
+  cumulativeAnnualSaving: number;
+  cumulativePayback: number;
+}
+
+export interface RetrofitReport {
+  measures: RetrofitMeasure[];
+  summary: {
+    totalInvestment: number;        // KRW
+    totalAnnualSaving: number;      // kWh/year
+    totalAnnualCostSaving: number;  // KRW/year
+    totalCO2Reduction: number;      // tCO2/year
+    portfolioPayback: number;       // years (total cost / total annual cost saving)
+    /**
+     * Sum of per-measure NPV when the report was assembled with
+     * EconomicAssumptions. Absent for legacy callers.
+     */
+    portfolioNpv?: number;
+    /** Sum of effective CAPEX (post-subsidy) when assumptions are provided. */
+    portfolioEffectiveCapex?: number;
+  };
+  byCategory: {
+    envelope: RetrofitMeasure[];
+    hvac: RetrofitMeasure[];
+    lighting: RetrofitMeasure[];
+    renewable: RetrofitMeasure[];
+  };
+  cumulativeSavings: CumulativeSaving[]; // ordered by payback (shortest first)
+}
+
+/**
+ * Assembles all retrofit measures into a prioritized report.
+ * Measures are sorted by payback period (shortest first).
+ * Cumulative savings show the progressive effect of adopting measures in order.
+ *
+ * When `assumptions` is provided, each measure is enriched with NPV/IRR/
+ * cash-flow via `computeFinancials`, and the summary gains `portfolioNpv` +
+ * `portfolioEffectiveCapex`. When omitted, the report falls back to the
+ * pre-existing simple-payback view (no NPV, no escalation, no subsidy).
+ */
+export function assembleRetrofitReport(
+  measures: RetrofitMeasure[],
+  assumptions?: EconomicAssumptions,
+): RetrofitReport {
+  // Enrich with financials when assumptions are provided.
+  const enriched: RetrofitMeasure[] = assumptions
+    ? measures.map((m) => ({ ...m, financials: computeFinancials(m, assumptions) }))
+    : measures;
+
+  measures = enriched;
+  // Sort by payback, shortest first
+  const sorted = [...measures].sort((a, b) => a.paybackYears - b.paybackYears);
+
+  // Group by category
+  const byCategory: RetrofitReport['byCategory'] = {
+    envelope: sorted.filter((m) => m.category === 'envelope'),
+    hvac: sorted.filter((m) => m.category === 'hvac'),
+    lighting: sorted.filter((m) => m.category === 'lighting'),
+    renewable: sorted.filter((m) => m.category === 'renewable'),
+  };
+
+  // Portfolio summary
+  const totalInvestment = sorted.reduce((sum, m) => sum + m.estimatedCost, 0);
+  const totalAnnualSaving = sorted.reduce((sum, m) => sum + m.annualEnergySaving, 0);
+  const totalAnnualCostSaving = sorted.reduce((sum, m) => sum + m.annualCostSaving, 0);
+  const totalCO2Reduction = sorted.reduce((sum, m) => sum + m.co2Reduction, 0);
+  const portfolioPayback =
+    totalAnnualCostSaving > 0 ? totalInvestment / totalAnnualCostSaving : 0;
+
+  // Cumulative savings: running totals ordered by payback
+  let runCost = 0;
+  let runSaving = 0;
+  const cumulativeSavings: CumulativeSaving[] = sorted.map((m) => {
+    runCost += m.estimatedCost;
+    runSaving += m.annualCostSaving;
+    const cumulativePayback = runSaving > 0 ? runCost / runSaving : 0;
+    return {
+      measureId: m.id,
+      description: m.description,
+      cumulativeInvestment: runCost,
+      cumulativeAnnualSaving: runSaving,
+      cumulativePayback,
+    };
+  });
+
+  // Optional NPV / effective-capex aggregation when financials are present.
+  let portfolioNpv: number | undefined;
+  let portfolioEffectiveCapex: number | undefined;
+  if (sorted.length > 0 && sorted[0].financials) {
+    portfolioNpv = 0;
+    portfolioEffectiveCapex = 0;
+    for (const m of sorted) {
+      if (!m.financials) continue;
+      portfolioNpv += m.financials.npv;
+      portfolioEffectiveCapex += m.financials.effectiveCapex;
+    }
+  }
+
+  return {
+    measures: sorted,
+    summary: {
+      totalInvestment,
+      totalAnnualSaving,
+      totalAnnualCostSaving,
+      totalCO2Reduction,
+      portfolioPayback,
+      ...(portfolioNpv !== undefined ? { portfolioNpv } : {}),
+      ...(portfolioEffectiveCapex !== undefined ? { portfolioEffectiveCapex } : {}),
+    },
+    byCategory,
+    cumulativeSavings,
+  };
+}

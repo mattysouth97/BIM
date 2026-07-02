@@ -1,0 +1,16 @@
+{
+  "recorded_at": "2026-04-24T05:37:00Z",
+  "target_file": "src/lib/portfolio/feature-extractor.ts",
+  "primary_metric": "coverage_pct",
+  "benchmark_direction": "higher_is_better",
+  "baseline_score": 91.66,
+  "baseline_constraints": {
+    "preserved_tests_exit": 0,
+    "all_portfolio_tests_exit": 0,
+    "build_exit": 0,
+    "lint_exit": 0
+  },
+  "commit_sha_at_baseline": "4ab85cb",
+  "benchmark_command": "node scripts/self-improve-benchmark.mjs",
+  "notes": "Single-run baseline. Deterministic benchmark (coverage is a static measurement, no variance between runs). Skill spec prescribes 3x validation; skipped for determinism + context economy."
+}

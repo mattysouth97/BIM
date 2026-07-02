@@ -1,0 +1,96 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`eco2-hvac-codes — mapping table snapshot > matches the recorded snapshot (fails CI if the table changes silently) 1`] = `
+{
+  "cooling": {
+    "central-chiller": {
+      "code": "CLG-CHILLER",
+      "labelKo": "중앙 냉동기",
+    },
+    "none": {
+      "code": "CLG-NONE",
+      "labelKo": "냉방설비 없음",
+    },
+    "split": {
+      "code": "CLG-SPLIT",
+      "labelKo": "분리형 에어컨",
+    },
+    "vrf": {
+      "code": "CLG-VRF",
+      "labelKo": "가변냉매유량(VRF)",
+    },
+  },
+  "dhw": {
+    "electric": {
+      "code": "DHW-ELEC",
+      "labelKo": "전기온수기",
+    },
+    "gas-boiler": {
+      "code": "DHW-GASB",
+      "labelKo": "가스보일러",
+    },
+    "heat-pump": {
+      "code": "DHW-HP",
+      "labelKo": "히트펌프 급탕",
+    },
+    "solar-thermal": {
+      "code": "DHW-SOLAR",
+      "labelKo": "태양열 급탕",
+    },
+  },
+  "heating": {
+    "central": {
+      "code": "HTG-CEN",
+      "labelKo": "중앙난방",
+    },
+    "district": {
+      "code": "HTG-DST",
+      "labelKo": "지역난방",
+    },
+    "individual": {
+      "code": "HTG-IND",
+      "labelKo": "개별난방",
+    },
+  },
+  "heatingFuel": {
+    "district-heat": {
+      "code": "FUEL-DST",
+      "labelKo": "지역난방열",
+    },
+    "electric": {
+      "code": "FUEL-ELEC",
+      "labelKo": "전기",
+    },
+    "gas": {
+      "code": "FUEL-GAS",
+      "labelKo": "가스",
+    },
+    "heat-pump": {
+      "code": "FUEL-HP",
+      "labelKo": "히트펌프",
+    },
+    "oil": {
+      "code": "FUEL-OIL",
+      "labelKo": "유류",
+    },
+  },
+  "ventilation": {
+    "heat-recovery": {
+      "code": "VENT-HRV",
+      "labelKo": "열회수환기",
+    },
+    "mechanical-exhaust": {
+      "code": "VENT-EXH",
+      "labelKo": "기계배기",
+    },
+    "mechanical-supply": {
+      "code": "VENT-SUP",
+      "labelKo": "기계급기",
+    },
+    "natural": {
+      "code": "VENT-NAT",
+      "labelKo": "자연환기",
+    },
+  },
+}
+`;

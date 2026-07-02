@@ -6,18 +6,12 @@ import {
 } from "../stages";
 
 describe("STAGE_ORDER", () => {
-  it("has exactly 5 elements", () => {
-    expect(STAGE_ORDER).toHaveLength(5);
+  it("has exactly 4 elements", () => {
+    expect(STAGE_ORDER).toHaveLength(4);
   });
 
-  it("contains the 5 expected stages in order", () => {
-    expect(STAGE_ORDER).toEqual([
-      "select",
-      "assemble",
-      "configure",
-      "analyze",
-      "export",
-    ]);
+  it("contains the 4 expected stages in order", () => {
+    expect(STAGE_ORDER).toEqual(["search", "upload", "twin", "report"]);
   });
 });
 
@@ -30,37 +24,65 @@ describe("STAGE_LABELS", () => {
     }
   });
 
-  it('STAGE_LABELS["select"].ko === "건물 선택"', () => {
-    expect(STAGE_LABELS["select"].ko).toBe("건물 선택");
+  it('STAGE_LABELS["search"].ko === "건물 검색"', () => {
+    expect(STAGE_LABELS["search"].ko).toBe("건물 검색");
   });
 
-  it('STAGE_LABELS["select"].en === "Select Building"', () => {
-    expect(STAGE_LABELS["select"].en).toBe("Select Building");
+  it('STAGE_LABELS["search"].en === "Search"', () => {
+    expect(STAGE_LABELS["search"].en).toBe("Search");
+  });
+
+  it('STAGE_LABELS["upload"].ko === "도면 업로드"', () => {
+    expect(STAGE_LABELS["upload"].ko).toBe("도면 업로드");
+  });
+
+  it('STAGE_LABELS["upload"].en === "Upload CAD"', () => {
+    expect(STAGE_LABELS["upload"].en).toBe("Upload CAD");
+  });
+
+  it('STAGE_LABELS["twin"].en === "Twin"', () => {
+    expect(STAGE_LABELS["twin"].en).toBe("Twin");
+  });
+
+  it('STAGE_LABELS["report"].en === "Report"', () => {
+    expect(STAGE_LABELS["report"].en).toBe("Report");
   });
 });
 
 describe("STAGE_GUARDS", () => {
-  it('STAGE_GUARDS["select"] is a function returning true', () => {
-    expect(typeof STAGE_GUARDS["select"]).toBe("function");
-    expect(STAGE_GUARDS["select"]!()).toBe(true);
+  it('STAGE_GUARDS["search"] is a function returning true', () => {
+    expect(typeof STAGE_GUARDS["search"]).toBe("function");
+    expect(STAGE_GUARDS["search"]!()).toBe(true);
   });
 
-  it('STAGE_GUARDS["assemble"] is a function returning true', () => {
-    expect(typeof STAGE_GUARDS["assemble"]).toBe("function");
-    expect(STAGE_GUARDS["assemble"]!()).toBe(true);
+  it('STAGE_GUARDS["upload"] returns false without a footprintPolygon', () => {
+    expect(typeof STAGE_GUARDS["upload"]).toBe("function");
+    expect(STAGE_GUARDS["upload"]!()).toBe(false);
+    expect(STAGE_GUARDS["upload"]!({})).toBe(false);
+    expect(STAGE_GUARDS["upload"]!({ footprintPolygon: [] })).toBe(false);
   });
 
-  it('STAGE_GUARDS["configure"] is a function returning true', () => {
-    expect(typeof STAGE_GUARDS["configure"]).toBe("function");
-    expect(STAGE_GUARDS["configure"]!()).toBe(true);
+  it('STAGE_GUARDS["upload"] returns true when a polygon with >=3 vertices is supplied', () => {
+    const polygon: [number, number][][] = [[
+      [-5, -5],
+      [ 5, -5],
+      [ 5,  5],
+      [-5,  5],
+    ]];
+    expect(STAGE_GUARDS["upload"]!({ footprintPolygon: polygon })).toBe(true);
   });
 
-  it('STAGE_GUARDS["analyze"] is a function returning true', () => {
-    expect(typeof STAGE_GUARDS["analyze"]).toBe("function");
-    expect(STAGE_GUARDS["analyze"]!()).toBe(true);
+  it('STAGE_GUARDS["upload"] returns false for a degenerate polygon with <3 vertices', () => {
+    const polygon: [number, number][][] = [[[0, 0], [1, 1]]];
+    expect(STAGE_GUARDS["upload"]!({ footprintPolygon: polygon })).toBe(false);
   });
 
-  it('STAGE_GUARDS["export"] is undefined (terminal stage)', () => {
-    expect(STAGE_GUARDS["export"]).toBeUndefined();
+  it('STAGE_GUARDS["twin"] is a function returning true', () => {
+    expect(typeof STAGE_GUARDS["twin"]).toBe("function");
+    expect(STAGE_GUARDS["twin"]!()).toBe(true);
+  });
+
+  it('STAGE_GUARDS["report"] is undefined (terminal stage)', () => {
+    expect(STAGE_GUARDS["report"]).toBeUndefined();
   });
 });

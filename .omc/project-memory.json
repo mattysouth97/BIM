@@ -1,0 +1,260 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1777859715055,
+  "projectRoot": "c:\\Users\\Nam\\BIM",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "16.2.1",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "19.2.4",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.4",
+        "category": "frontend"
+      },
+      {
+        "name": "@playwright/test",
+        "version": "1.58.2",
+        "category": "testing"
+      },
+      {
+        "name": "vitest",
+        "version": "4.1.2",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "pnpm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "pnpm build 2>&1 | tail -25",
+    "testCommand": "pnpm test",
+    "lintCommand": "pnpm lint",
+    "devCommand": "pnpm dev",
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "eslint",
+      "test": "vitest run",
+      "test:watch": "vitest",
+      "test:coverage": "vitest run --coverage",
+      "test:e2e": "playwright test"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": true,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "public",
+      "scripts",
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "coverage": {
+      "path": "coverage",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1777859715016,
+      "keyFiles": []
+    },
+    "CUsersNamBIMsrclibportfolio__tests__": {
+      "path": "CUsersNamBIMsrclibportfolio__tests__",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1777859715025,
+      "keyFiles": []
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 0,
+      "lastAccessed": 1777859715025,
+      "keyFiles": []
+    },
+    "e2e": {
+      "path": "e2e",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1777859715026,
+      "keyFiles": [
+        "building-flow.spec.ts",
+        "plan-view.spec.ts"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 5,
+      "lastAccessed": 1777859715026,
+      "keyFiles": [
+        "file.svg",
+        "globe.svg",
+        "next.svg",
+        "vercel.svg",
+        "window.svg"
+      ]
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 2,
+      "lastAccessed": 1777859715027,
+      "keyFiles": [
+        "extract-features.mjs",
+        "self-improve-benchmark.mjs"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1777859715027,
+      "keyFiles": []
+    },
+    "src\\app": {
+      "path": "src\\app",
+      "purpose": "Application code",
+      "fileCount": 4,
+      "lastAccessed": 1777859715029,
+      "keyFiles": [
+        "favicon.ico",
+        "globals.css",
+        "layout.tsx"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 2,
+      "lastAccessed": 1777859715030,
+      "keyFiles": [
+        "error-boundary.tsx",
+        "providers.tsx"
+      ]
+    },
+    "src\\data": {
+      "path": "src\\data",
+      "purpose": "Data files",
+      "fileCount": 3,
+      "lastAccessed": 1777859715030,
+      "keyFiles": [
+        "bjdong-codes.json",
+        "region-codes.json",
+        "use-type-codes.json"
+      ]
+    },
+    "src\\lib": {
+      "path": "src\\lib",
+      "purpose": "Library code",
+      "fileCount": 14,
+      "lastAccessed": 1777859715030,
+      "keyFiles": [
+        "api-client.ts",
+        "api-proxy.ts",
+        "building-geometry.ts"
+      ]
+    },
+    "src\\types": {
+      "path": "src\\types",
+      "purpose": "Type definitions",
+      "fileCount": 1,
+      "lastAccessed": 1777859715031,
+      "keyFiles": [
+        "earcut.d.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src\\components\\twin\\twin-stage-overlay.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1777860300507,
+      "type": "file"
+    },
+    {
+      "path": "src",
+      "accessCount": 2,
+      "lastAccessed": 1777859875552,
+      "type": "directory"
+    },
+    {
+      "path": "src\\lib\\retrofit\\retrofit-types.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777859896516,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\retrofit\\cost-database.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777859896831,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\retrofit\\envelope-retrofits.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777859897352,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\retrofit\\hvac-retrofits.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777860317870,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\retrofit\\lighting-retrofits.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777860318330,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\retrofit\\solar-potential.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777860319209,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\retrofit\\retrofit-report.ts",
+      "accessCount": 1,
+      "lastAccessed": 1777860319233,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

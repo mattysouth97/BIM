@@ -10,6 +10,7 @@ import type {
   RoofConfig,
   MaterialRefs,
   RecipeOverrides,
+  CurtainWallConfig,
 } from "./types";
 import { WINDOW_RATIOS } from "@/lib/korean-building-codes";
 import {
@@ -18,6 +19,7 @@ import {
   WINDOW_MATERIAL,
   ROOF_MATERIALS,
 } from "@/lib/pbr-materials";
+import { getFactoryRecipe } from "./factory-recipe";
 
 /** Facade window dimensions by era (meters) — replicated from wall-geometry.ts WIN table */
 const FACADE_WINDOW_DIMS: Record<BuildingEra, { w: number; h: number; sill: number; spacing: number }> = {
@@ -65,6 +67,42 @@ function getFacadeConfig(era: BuildingEra, mainPurpsCd: string): FacadeConfig {
   };
 }
 
+/**
+ * Office-specific facade config: curtain wall for post-2000, punched window for pre-2000.
+ * Also handles podium treatment (ground floor retail with higher floor height / larger openings).
+ */
+function getOfficeConfig(era: BuildingEra, mainPurpsCd: string): {
+  facade: FacadeConfig;
+  curtainWall?: CurtainWallConfig;
+} {
+  const baseFacade = getFacadeConfig(era, mainPurpsCd);
+  const isModern = era === "2020+" || era === "2010-2019" || era === "2000-2009";
+
+  if (isModern) {
+    // Curtain wall facade: high window ratio, thin mullions
+    const curtainFacade: FacadeConfig = {
+      ...baseFacade,
+      windowRatio: Math.max(baseFacade.windowRatio, 0.70),
+      mullionWidth: 0.03,
+      mullionDepth: baseFacade.mullionDepth * 0.6, // Thinner structural mullions
+      sillHeight: 0.4, // Lower sill for floor-to-ceiling glass
+      windowHeight: Math.min(baseFacade.windowHeight * 1.2, 2.8),
+      solidPanelChance: 0.03, // Almost no solid panels
+      cornerInset: 0.03,
+    };
+    const curtainWall: CurtainWallConfig = {
+      enabled: true,
+      mullionWidth: 0.03,
+      glassTint: "#88BBCC", // Slight blue-green tint
+      glassOpacity: 0.45,
+    };
+    return { facade: curtainFacade, curtainWall };
+  }
+
+  // Pre-2000 offices: punched-window facade (use default config)
+  return { facade: baseFacade };
+}
+
 function getSlabConfig(strctCd: string): SlabConfig {
   const thickness = ["13"].includes(strctCd) ? 0.15
     : ["22", "23", "24", "25"].includes(strctCd) ? 0.25
@@ -83,18 +121,50 @@ function getColumnConfig(strctCd: string, large = false): ColumnConfig {
   return { spacing, size, inset: 0 }; // inset computed in toRecipe when wallThickness is known
 }
 
-function getRoofConfig(): RoofConfig {
+function getRoofConfig(mainPurpsCd?: string, era?: BuildingEra): RoofConfig {
+  const useCategory = mainPurpsCd ? getUseCategory(mainPurpsCd) : "default";
+  const isOld = era === "pre-1970" || era === "1970-1989" || era === "1990-1999";
+
+  // Factory: sawtooth for older factories, flat for warehouses/modern
+  if (useCategory === "factory") {
+    if (mainPurpsCd === "18000") {
+      return { type: "flat", flatThickness: 0.4, gableHeight: 3.0, hipInset: 0.4 };
+    }
+    if (isOld) {
+      return {
+        type: "sawtooth", flatThickness: 0.3, gableHeight: 2.5, hipInset: 0.4,
+        sawtoothCount: 4, sawtoothHeight: 2.0,
+      };
+    }
+    return { type: "flat", flatThickness: 0.4, gableHeight: 3.0, hipInset: 0.4 };
+  }
+
+  // Residential pre-2000: gable or hip depending on era
+  if (useCategory === "residential" && isOld) {
+    if (era === "pre-1970") {
+      return { type: "hip", flatThickness: 0.3, gableHeight: 2.5, hipInset: 0.35 };
+    }
+    return { type: "gable", flatThickness: 0.3, gableHeight: 3.0, hipInset: 0.4 };
+  }
+
+  // Institutional / default older buildings: hip roof
+  if (useCategory === "default" && isOld) {
+    return { type: "hip", flatThickness: 0.3, gableHeight: 2.8, hipInset: 0.35 };
+  }
+
+  // Commercial and modern buildings: flat (default, correct)
   return { type: "flat", flatThickness: 0.3, gableHeight: 3.0, hipInset: 0.4 };
 }
 
-function getMaterialRefs(strctCd: string, mainPurpsCd: string, era: BuildingEra): MaterialRefs {
+function getMaterialRefs(strctCd: string, mainPurpsCd: string, era: BuildingEra, roofType?: string): MaterialRefs {
+  const roofMatKey = roofType === "gable" || roofType === "hip" || roofType === "sawtooth" ? "gable" : "flat";
   return {
     wall: getPBRMaterial(strctCd, mainPurpsCd, era),
     glass: WINDOW_MATERIAL,
     mullion: { color: "#808890", roughness: 0.4, metalness: 0.6 },
     slab: getPBRMaterial(strctCd, undefined, era),
     column: getPBRMaterial(strctCd, undefined, era),
-    roof: ROOF_MATERIALS["flat"],
+    roof: ROOF_MATERIALS[roofMatKey] || ROOF_MATERIALS["flat"],
     groundFloor: getGroundFloorMaterial(mainPurpsCd),
   };
 }
@@ -102,6 +172,7 @@ function getMaterialRefs(strctCd: string, mainPurpsCd: string, era: BuildingEra)
 /**
  * Build a recipe from structure code, era, and use code.
  * This produces sensible defaults for all generation parameters.
+ * Routes to specialized builders for factory and office types.
  */
 export function getRecipe(
   strctCd: string,
@@ -109,27 +180,63 @@ export function getRecipe(
   mainPurpsCd: string,
   large = false,
 ) {
+  const useCategory = getUseCategory(mainPurpsCd);
+
+  // Factory/warehouse: dedicated recipe with large spans, minimal glazing
+  if (useCategory === "factory") {
+    return getFactoryRecipe(strctCd, era, mainPurpsCd);
+  }
+
+  const roof = getRoofConfig(mainPurpsCd, era);
+
+  // Office: curtain wall for modern, punched window for older
+  if (useCategory === "office") {
+    const officeConfig = getOfficeConfig(era, mainPurpsCd);
+    return {
+      facade: officeConfig.facade,
+      slab: getSlabConfig(strctCd),
+      column: getColumnConfig(strctCd, large),
+      roof,
+      materials: getMaterialRefs(strctCd, mainPurpsCd, era, roof.type),
+      ...(officeConfig.curtainWall ? { curtainWall: officeConfig.curtainWall } : {}),
+    };
+  }
+
   return {
     facade: getFacadeConfig(era, mainPurpsCd),
     slab: getSlabConfig(strctCd),
     column: getColumnConfig(strctCd, large),
-    roof: getRoofConfig(),
-    materials: getMaterialRefs(strctCd, mainPurpsCd, era),
+    roof,
+    materials: getMaterialRefs(strctCd, mainPurpsCd, era, roof.type),
   };
 }
 
 /**
- * Merge user overrides into a recipe immutably.
+ * Single source of truth for merging RecipeOverrides into a BuildingRecipe.
+ *
+ * Called by both `applyOverrides` (here) and `useRecipeStore.getEffectiveRecipe`
+ * (src/store/recipe-store.ts). Keeping the merge shape in one function prevents
+ * drift — historically, adding `footprintPolygon` to only one of the two sites
+ * broke the CAD upload workflow (the 3D viewport consumed the other site).
  */
-export function applyOverrides(recipe: BuildingRecipe, overrides: RecipeOverrides): BuildingRecipe {
+export function mergeRecipeOverrides(
+  recipe: BuildingRecipe,
+  overrides: RecipeOverrides
+): BuildingRecipe {
   return {
     ...recipe,
     ...(overrides.footprintWidth !== undefined ? { footprintWidth: overrides.footprintWidth } : {}),
     ...(overrides.footprintDepth !== undefined ? { footprintDepth: overrides.footprintDepth } : {}),
+    ...(overrides.footprintPolygon !== undefined ? { footprintPolygon: overrides.footprintPolygon } : {}),
     ...(overrides.wallThickness !== undefined ? { wallThickness: overrides.wallThickness } : {}),
-    facade: { ...recipe.facade, ...overrides.facade },
-    slab: { ...recipe.slab, ...overrides.slab },
-    column: { ...recipe.column, ...overrides.column },
-    roof: { ...recipe.roof, ...overrides.roof },
+    ...(overrides.facade ? { facade: { ...recipe.facade, ...overrides.facade } } : {}),
+    ...(overrides.slab ? { slab: { ...recipe.slab, ...overrides.slab } } : {}),
+    ...(overrides.column ? { column: { ...recipe.column, ...overrides.column } } : {}),
+    ...(overrides.roof ? { roof: { ...recipe.roof, ...overrides.roof } } : {}),
   };
+}
+
+/** @deprecated Prefer `mergeRecipeOverrides`. Kept as an alias for existing callers. */
+export function applyOverrides(recipe: BuildingRecipe, overrides: RecipeOverrides): BuildingRecipe {
+  return mergeRecipeOverrides(recipe, overrides);
 }

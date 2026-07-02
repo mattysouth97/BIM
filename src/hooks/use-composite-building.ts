@@ -74,7 +74,7 @@ export function useCompositeBuilding(
       },
       {
         queryKey: ["buildings", "floors", params],
-        queryFn: () => getFloorInfo(params),
+        queryFn: () => getFloorInfo({ ...params, numOfRows: 500 }),
         enabled,
       },
       {

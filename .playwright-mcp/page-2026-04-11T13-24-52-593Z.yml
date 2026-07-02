@@ -1,0 +1,340 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e9]:
+          - heading "건축물대장" [level=1] [ref=e10]
+          - generic [ref=e11]: Building Ledger
+      - generic [ref=e12]:
+        - button "KO" [ref=e13]:
+          - img
+          - text: KO
+        - button "Toggle theme" [ref=e14]:
+          - img
+          - generic [ref=e15]: Toggle theme
+        - button "API Key settings" [ref=e16]:
+          - img
+          - generic [ref=e17]: API Key settings
+  - main [ref=e18]:
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - link "검색" [ref=e22] [cursor=pointer]:
+            - /url: /
+            - img [ref=e23]
+            - generic [ref=e25]: 검색
+          - generic [ref=e95]: 유달아파트
+          - generic [ref=e96]: 공동주택
+        - generic [ref=e28]:
+          - button "내보내기 (Export)" [ref=e29]:
+            - img
+            - text: 내보내기 (Export)
+          - button "Switch to English" [ref=e30]:
+            - img
+          - button "패널 열기" [ref=e31]:
+            - img
+      - generic [ref=e32]:
+        - generic [ref=e34]:
+          - button "Search" [ref=e97]:
+            - img [ref=e98]
+            - generic [ref=e100]: Search
+          - img [ref=e101]
+          - button "Twin" [ref=e462]:
+            - img [ref=e104]
+            - generic [ref=e106]: Twin
+          - img [ref=e107]
+          - button "Report (current)" [active] [ref=e463]:
+            - img [ref=e110]
+            - generic [ref=e112]: Report
+        - generic [ref=e35]:
+          - generic [ref=e464]:
+            - generic [ref=e465]:
+              - generic [ref=e466]:
+                - button "에너지 감사" [ref=e467]
+                - button "준법 인증" [ref=e468]
+              - generic [ref=e469]:
+                - button "CSV" [ref=e470]:
+                  - img
+                  - text: CSV
+                - button "JSON" [ref=e471]:
+                  - img
+                  - text: JSON
+                - button "PDF" [ref=e472]:
+                  - img
+                  - text: PDF
+            - generic [ref=e475]:
+              - generic [ref=e476]:
+                - generic [ref=e477]:
+                  - heading "Energy Audit Report" [level=2] [ref=e478]
+                  - paragraph [ref=e479]: 유달아파트 —
+                  - generic [ref=e480]:
+                    - generic [ref=e481]: Fidelity Level 1
+                    - generic [ref=e482]: 8 sections
+                - button "Download PDF" [ref=e483]:
+                  - img
+                  - text: Download PDF
+              - generic [ref=e484]:
+                - generic [ref=e485]:
+                  - generic [ref=e487]:
+                    - generic [ref=e488]:
+                      - generic [ref=e489]: Building Overview
+                      - paragraph [ref=e490]: 건물 개요
+                    - generic [ref=e491]: "1"
+                  - generic [ref=e493]:
+                    - generic [ref=e494]:
+                      - term [ref=e495]: Address
+                      - definition [ref=e496]
+                    - generic [ref=e497]:
+                      - term [ref=e498]: Use Type
+                      - definition [ref=e499]: "02000"
+                    - generic [ref=e500]:
+                      - term [ref=e501]: Era
+                      - definition [ref=e502]: "1983"
+                    - generic [ref=e503]:
+                      - term [ref=e504]: Gross Floor Area
+                      - definition [ref=e505]: 11,290.8 m²
+                    - generic [ref=e506]:
+                      - term [ref=e507]: Floors
+                      - definition [ref=e508]: 20F
+                - generic [ref=e509]:
+                  - generic [ref=e511]:
+                    - generic [ref=e512]:
+                      - generic [ref=e513]: Twin Fidelity Summary
+                      - paragraph [ref=e514]: 디지털 트윈 충실도
+                    - generic [ref=e515]: "2"
+                  - generic [ref=e517]:
+                    - generic [ref=e518]:
+                      - term [ref=e519]: Fidelity Level
+                      - definition [ref=e520]: Level 1 — Public data only (Korean Building Ledger)
+                    - generic [ref=e521]:
+                      - term [ref=e522]: Data Sources Used
+                      - definition [ref=e523]: Korean Building Ledger (건축물대장)
+                - generic [ref=e524]:
+                  - generic [ref=e526]:
+                    - generic [ref=e527]:
+                      - generic [ref=e528]: Envelope Analysis
+                      - paragraph [ref=e529]: 외피 분석
+                    - generic [ref=e530]: "3"
+                  - generic [ref=e532]:
+                    - generic [ref=e533]:
+                      - term [ref=e534]: Wall U-value (W/m²·K)
+                      - definition [ref=e535]: 1.1 (exceeds standard 0.1 by +0.9)
+                    - generic [ref=e536]:
+                      - term [ref=e537]: Roof U-value (W/m²·K)
+                      - definition [ref=e538]: 0.6 (exceeds standard 0.1 by +0.5)
+                    - generic [ref=e539]:
+                      - term [ref=e540]: Window U-value (W/m²·K)
+                      - definition [ref=e541]: 3.8 (exceeds standard 1.0 by +2.8)
+                    - generic [ref=e542]:
+                      - term [ref=e543]: Airtightness (ACH)
+                      - definition [ref=e544]: "10.00"
+                - generic [ref=e545]:
+                  - generic [ref=e547]:
+                    - generic [ref=e548]:
+                      - generic [ref=e549]: Energy Performance
+                      - paragraph [ref=e550]: 에너지 성능
+                    - generic [ref=e551]: "4"
+                  - generic [ref=e553]:
+                    - generic [ref=e554]:
+                      - term [ref=e555]: Heating Demand
+                      - definition [ref=e556]: 28.7 kWh/m²/yr
+                    - generic [ref=e557]:
+                      - term [ref=e558]: Cooling Demand
+                      - definition [ref=e559]: 0.5 kWh/m²/yr
+                    - generic [ref=e560]:
+                      - term [ref=e561]: Total Demand
+                      - definition [ref=e562]: 29.2 kWh/m²/yr
+                    - generic [ref=e563]:
+                      - term [ref=e564]: Energy Grade
+                      - definition [ref=e565]: 1+++
+                    - generic [ref=e566]:
+                      - term [ref=e567]: Demand per m²
+                      - definition [ref=e568]: 29.2 kWh/m²/yr
+                - generic [ref=e569]:
+                  - generic [ref=e571]:
+                    - generic [ref=e572]:
+                      - generic [ref=e573]: Heat Loss Breakdown
+                      - paragraph [ref=e574]: 열손실 분포
+                    - generic [ref=e575]: "5"
+                  - generic [ref=e577]:
+                    - generic [ref=e578]:
+                      - term [ref=e579]: Walls
+                      - definition [ref=e580]: 45.2%
+                    - generic [ref=e581]:
+                      - term [ref=e582]: Roof
+                      - definition [ref=e583]: 13.5%
+                    - generic [ref=e584]:
+                      - term [ref=e585]: Windows
+                      - definition [ref=e586]: 41.3%
+                    - generic [ref=e587]:
+                      - term [ref=e588]: Floor
+                      - definition [ref=e589]: 0.0%
+                    - generic [ref=e590]:
+                      - term [ref=e591]: Ventilation
+                      - definition [ref=e592]: 0.0%
+                - generic [ref=e593]:
+                  - generic [ref=e595]:
+                    - generic [ref=e596]:
+                      - generic [ref=e597]: CO₂ Emissions
+                      - paragraph [ref=e598]: 이산화탄소 배출량
+                    - generic [ref=e599]: "6"
+                  - generic [ref=e601]:
+                    - generic [ref=e602]:
+                      - term [ref=e603]: Total Annual CO₂
+                      - definition [ref=e604]: 151.5 tCO₂/yr
+                    - generic [ref=e605]:
+                      - term [ref=e606]: CO₂ per m²
+                      - definition [ref=e607]: 13.41 kgCO₂/m²/yr
+                - generic [ref=e608]:
+                  - generic [ref=e610]:
+                    - generic [ref=e611]:
+                      - generic [ref=e612]: Benchmark Comparison
+                      - paragraph [ref=e613]: 벤치마크 비교
+                    - generic [ref=e614]: "7"
+                  - generic [ref=e616]:
+                    - generic [ref=e617]:
+                      - term [ref=e618]: Peer Percentile
+                      - definition [ref=e619]: 7th percentile
+                    - generic [ref=e620]:
+                      - term [ref=e621]: Performance
+                      - definition [ref=e622]: excellent
+                    - generic [ref=e623]:
+                      - term [ref=e624]: Insight
+                      - definition [ref=e625]: This building is in the 7th percentile — significantly more efficient than 93% of similar 2020+ office buildings nationwide.
+                - generic [ref=e626]:
+                  - generic [ref=e628]:
+                    - generic [ref=e629]:
+                      - generic [ref=e630]: Retrofit Recommendations
+                      - paragraph [ref=e631]: 개보수 권장 사항
+                    - generic [ref=e632]: "8"
+                  - paragraph [ref=e634]: No retrofit analysis available. Upgrade to Fidelity Level 2 or higher to unlock retrofit recommendations.
+          - generic [ref=e39]:
+            - generic [ref=e40]:
+              - generic [ref=e41]:
+                - img [ref=e42]
+                - generic [ref=e49]: Scene
+              - button [ref=e51]:
+                - img
+            - generic [ref=e53]:
+              - img [ref=e54]
+              - paragraph [ref=e58]: 건물을 선택하면 개선 권장사항을 확인할 수 있습니다
+              - paragraph [ref=e59]: Select a building to view retrofit recommendations
+          - generic [ref=e60]:
+            - generic [ref=e61]:
+              - generic [ref=e62]:
+                - img [ref=e63]
+                - generic [ref=e70]: Properties
+              - button [ref=e72]:
+                - img
+            - generic [ref=e168]:
+              - generic [ref=e169]:
+                - heading "트윈 충실도" [level=3] [ref=e170]:
+                  - button "트윈 충실도" [expanded] [ref=e171]:
+                    - text: 트윈 충실도
+                    - img
+                - region "트윈 충실도" [ref=e172]:
+                  - generic [ref=e174]:
+                    - generic [ref=e176]:
+                      - text: L1 · Public Data
+                      - generic [ref=e177]: 44%
+                    - generic [ref=e180]:
+                      - heading "L1 · Public Data 44%" [level=3] [ref=e181]:
+                        - button "L1 · Public Data 44%" [expanded] [ref=e182]:
+                          - generic [ref=e185]:
+                            - text: L1 · Public Data
+                            - generic [ref=e186]: 44%
+                          - img
+                      - region "L1 · Public Data 44%" [ref=e412]:
+                        - generic [ref=e413]:
+                          - generic [ref=e414]:
+                            - generic [ref=e415]: Data Categories
+                            - paragraph [ref=e416]: 4 of 9 sources available · 44% complete
+                          - generic [ref=e417]:
+                            - list [ref=e418]:
+                              - listitem [ref=e419]:
+                                - generic [ref=e420]:
+                                  - generic [ref=e421]: –
+                                  - generic [ref=e422]: Building Geometry
+                                - generic [ref=e423]: Missing
+                              - listitem [ref=e424]:
+                                - generic [ref=e425]:
+                                  - generic [ref=e426]: –
+                                  - generic [ref=e427]: Structure Codes
+                                - generic [ref=e428]: Missing
+                              - listitem [ref=e429]:
+                                - generic [ref=e430]:
+                                  - generic [ref=e431]: –
+                                  - generic [ref=e432]: Permit Date
+                                - generic [ref=e433]: Missing
+                              - listitem [ref=e434]:
+                                - generic [ref=e435]:
+                                  - generic [ref=e436]: –
+                                  - generic [ref=e437]: Energy Consumption
+                                - generic [ref=e438]: Missing
+                              - listitem [ref=e439]:
+                                - generic [ref=e440]:
+                                  - generic [ref=e441]: –
+                                  - generic [ref=e442]: Floor Plans
+                                - generic [ref=e443]: Missing
+                              - listitem [ref=e444]:
+                                - generic [ref=e445]:
+                                  - generic [ref=e446]: –
+                                  - generic [ref=e447]: Equipment Schedule
+                                - generic [ref=e448]: Missing
+                              - listitem [ref=e449]:
+                                - generic [ref=e450]:
+                                  - generic [ref=e451]: –
+                                  - generic [ref=e452]: IFC Model
+                                - generic [ref=e453]: Missing
+                              - listitem [ref=e454]:
+                                - generic [ref=e455]:
+                                  - generic [ref=e456]: –
+                                  - generic [ref=e457]: Sensor Data
+                                - generic [ref=e458]: Missing
+                            - generic [ref=e459]:
+                              - paragraph [ref=e460]: 3 actions needed to reach Level 2
+                              - button "Upgrade to Level 2" [ref=e461]
+              - generic [ref=e187]:
+                - heading "벤치마크 비교" [level=3] [ref=e188]:
+                  - button "벤치마크 비교" [expanded] [ref=e189]:
+                    - text: 벤치마크 비교
+                    - img
+                - region "벤치마크 비교" [ref=e190]:
+                  - generic [ref=e192]:
+                    - generic [ref=e193]:
+                      - generic [ref=e194]: 백분위
+                      - generic [ref=e195]: 7번째 백분위
+                    - generic [ref=e196]:
+                      - generic [ref=e197]: 성능 등급
+                      - generic [ref=e198]: excellent
+                    - generic [ref=e199]:
+                      - generic [ref=e200]: office
+                      - generic [ref=e201]: 2020+
+                    - paragraph [ref=e202]: This building is in the 7th percentile — significantly more efficient than 93% of similar 2020+ office buildings nationwide.
+              - heading "녹색건축물 인증" [level=3] [ref=e204]:
+                - button "녹색건축물 인증" [ref=e205]:
+                  - text: 녹색건축물 인증
+                  - img
+              - generic [ref=e206]:
+                - heading "에너지효율등급" [level=3] [ref=e207]:
+                  - button "에너지효율등급" [expanded] [ref=e208]:
+                    - text: 에너지효율등급
+                    - img
+                - region "에너지효율등급" [ref=e209]:
+                  - generic [ref=e211]:
+                    - generic [ref=e212]:
+                      - generic [ref=e213]: 1+++
+                      - generic [ref=e214]:
+                        - generic [ref=e215]: 1+++등급 (제로에너지수준)
+                        - generic [ref=e216]: 건축물 에너지효율등급
+                    - generic [ref=e217]:
+                      - generic [ref=e218]: 1차 에너지 수요
+                      - generic [ref=e219]: 48.3 kWh/m²·yr
+        - generic [ref=e79]:
+          - generic [ref=e82]: 보고서를 생성하고 데이터를 내보내세요
+          - generic [ref=e84]: 건물 데이터 없음
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e90] [cursor=pointer]:
+    - img [ref=e91]
+  - alert [ref=e94]

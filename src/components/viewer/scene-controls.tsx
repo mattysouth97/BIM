@@ -4,7 +4,6 @@ import { useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { useRef, useCallback, useImperativeHandle, forwardRef } from "react";
 import * as THREE from "three";
-import { usePlanStore } from "@/store/plan-store";
 
 export interface SceneControlsRef {
   setView: (view: "front" | "side" | "top" | "iso") => void;
@@ -20,9 +19,6 @@ export const SceneControls = forwardRef<SceneControlsRef, SceneControlsProps>(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const controlsRef = useRef<any>(null);
     const { camera } = useThree();
-    const viewMode = usePlanStore((s) => s.viewMode);
-    const isPlan = viewMode === "plan";
-
     const setView = useCallback(
       (view: "front" | "side" | "top" | "iso") => {
         const target = new THREE.Vector3(0, targetHeight / 2, 0);
@@ -54,8 +50,8 @@ export const SceneControls = forwardRef<SceneControlsRef, SceneControlsProps>(
         maxDistance={distance * 4}
         enableDamping
         dampingFactor={0.1}
-        enableRotate={!isPlan}
-        enableZoom={!isPlan}
+        enableRotate
+        enableZoom
       />
     );
   }

@@ -1,0 +1,78 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e9]:
+          - heading "건축물대장" [level=1] [ref=e10]
+          - generic [ref=e11]: Building Ledger
+      - generic [ref=e12]:
+        - button "KO" [ref=e13]:
+          - img
+          - text: KO
+        - button "Toggle theme" [ref=e14]:
+          - img
+          - generic [ref=e15]: Toggle theme
+        - button "API Key settings" [ref=e16]:
+          - img
+          - generic [ref=e17]: API Key settings
+  - main [ref=e18]:
+    - generic [ref=e19]:
+      - generic [ref=e21]:
+        - img [ref=e23]
+        - heading "건축물대장 조회" [level=2] [ref=e27]
+        - paragraph [ref=e28]: 공공데이터포털 API를 활용하여 전국 건축물대장 정보를 조회하세요.
+      - generic [ref=e29]:
+        - generic [ref=e30]: 캠퍼스 모드
+        - button "캠퍼스 모드 OFF" [ref=e31]:
+          - img
+          - text: 캠퍼스 모드 OFF
+      - generic [ref=e32]:
+        - tablist [ref=e34]:
+          - tab "지역 검색" [selected] [ref=e35]:
+            - img
+            - text: 지역 검색
+          - tab "주소 검색" [ref=e36]:
+            - img
+            - text: 주소 검색
+        - tabpanel "지역 검색" [ref=e37]:
+          - generic [ref=e38]:
+            - generic [ref=e39]:
+              - heading "지역 검색 (Region Search)" [level=3] [ref=e40]
+              - paragraph [ref=e41]: 시/도, 시/군/구, 법정동을 선택하여 건축물 목록을 조회합니다.
+            - generic [ref=e42]:
+              - generic [ref=e43]:
+                - generic [ref=e44]: 시/도
+                - combobox [ref=e45]:
+                  - generic: 시/도 선택
+                  - img
+                - combobox [ref=e46]
+              - generic [ref=e47]:
+                - generic [ref=e48]: 시/군/구
+                - combobox [disabled] [ref=e49]:
+                  - generic: 시/도를 먼저 선택
+                  - img
+                - combobox [disabled] [ref=e50]
+              - generic [ref=e51]:
+                - generic [ref=e52]: 법정동
+                - combobox [disabled] [ref=e53]:
+                  - generic: 시/군/구를 먼저 선택
+                  - img
+                - combobox [disabled] [ref=e54]
+              - generic [ref=e55]:
+                - generic [ref=e56]: 건물 용도
+                - combobox [ref=e57]:
+                  - generic: 전체
+                  - img
+                - combobox [ref=e58]
+              - generic [ref=e59]:
+                - generic [ref=e60]: 결과 수
+                - combobox [ref=e61]:
+                  - img
+                - combobox [ref=e62]
+            - button "검색" [ref=e64]:
+              - img
+              - text: 검색
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e70] [cursor=pointer]:
+    - img [ref=e71]

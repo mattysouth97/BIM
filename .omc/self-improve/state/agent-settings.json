@@ -1,0 +1,14 @@
+{
+  "trust_confirmed": true,
+  "si_setting_goal": true,
+  "si_setting_benchmark": true,
+  "si_setting_harness": true,
+  "iterations": 0,
+  "best_score": 91.66,
+  "current_milestone": "M1",
+  "current_phase": null,
+  "plateau_consecutive_count": 0,
+  "circuit_breaker_count": 0,
+  "status": "idle",
+  "goal_slug": "feature_extractor_coverage_quality"
+}

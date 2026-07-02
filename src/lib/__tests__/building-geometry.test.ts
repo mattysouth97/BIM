@@ -13,11 +13,11 @@ function makeTitle(overrides?: Partial<BrTitleInfo>): BrTitleInfo {
     strctCdNm: "RC",
     roofCd: "1",
     roofCdNm: "평지붕",
-    grndFlrCnt: "15",
-    ugrndFlrCnt: "2",
-    archArea: "84",
-    platArea: "200",
-    heit: "43.5",
+    grndFlrCnt: 15,
+    ugrndFlrCnt: 2,
+    archArea: 84,
+    platArea: 200,
+    heit: 43.5,
     pmsDay: "20150301",
     ...overrides,
   } as BrTitleInfo;
@@ -37,13 +37,13 @@ describe("generateBuildingGeometry", () => {
   });
 
   it("totalHeight matches heit field", () => {
-    const title = makeTitle({ heit: "43.5" });
+    const title = makeTitle({ heit: 43.5 });
     const geo = generateBuildingGeometry(title, []);
     expect(geo.totalHeight).toBe(43.5);
   });
 
   it("footprint dimensions are positive and reasonable", () => {
-    const title = makeTitle({ archArea: "84" });
+    const title = makeTitle({ archArea: 84 });
     const geo = generateBuildingGeometry(title, []);
 
     expect(geo.footprintWidth).toBeGreaterThan(0);
@@ -64,7 +64,7 @@ describe("generateBuildingGeometry", () => {
   });
 
   it("handles zero heit by calculating from floor count", () => {
-    const title = makeTitle({ heit: "0", grndFlrCnt: "5" });
+    const title = makeTitle({ heit: 0, grndFlrCnt: 5 });
     const geo = generateBuildingGeometry(title, []);
     // Should calculate height from floor count * era floor height
     expect(geo.totalHeight).toBeGreaterThan(10);
@@ -92,7 +92,7 @@ describe("toRecipe", () => {
   });
 
   it("totalHeight equals sum-like check from floors", () => {
-    const title = makeTitle({ heit: "43.5", grndFlrCnt: "15" });
+    const title = makeTitle({ heit: 43.5, grndFlrCnt: 15 });
     const geo = generateBuildingGeometry(title, []);
     const recipe = toRecipe(geo);
 

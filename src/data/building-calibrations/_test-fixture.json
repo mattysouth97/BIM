@@ -1,0 +1,15 @@
+{
+  "buildingId": "_test-fixture",
+  "pnu": "_test-fixture",
+  "geometricLOD": "L3",
+  "notes": "Test fixture for building-calibration-loader.test.ts — not a real building.",
+  "overrides": [
+    {
+      "field": "walls.uValue",
+      "inferredValue": 0.47,
+      "overrideValue": 0.28,
+      "source": "permit-drawing-A3 sheet 4 insulation schedule",
+      "hypothesisForInference": "if material-inference.ts could read insulation-thickness from permit OCR, it would produce ~0.28 for this era+structure"
+    }
+  ]
+}

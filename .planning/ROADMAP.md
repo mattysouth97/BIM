@@ -2,6 +2,7 @@
 
 ## Milestones
 
+- 🚧 **v7.0 Prediction** — Phases 35-40 (in progress, parallel to v6.0)
 - 🚧 **v6.0 Audit Deliverables** — Phases 29-34 (in progress)
 - ✅ **v5.0 Energy Systems Observability & Control** — Phases 22-28 (shipped 2026-04-12) — [Archive](milestones/v5.0-ROADMAP.md)
 - ✅ **v4.0 GIS-Composite Realistic Drafts** — Phases 19-21 (shipped 2026-04-12) — [Archive](milestones/v4.0-ROADMAP.md)
@@ -10,6 +11,21 @@
 - ✅ **v1.0 Procedural BIM Viewer** — Phases 1-9 (shipped 2026-03-26)
 
 **Future roadmap:** v7.0 Semantic Substrate → v8.0 Parametric + Collab → v8.5 Visualization → v9.0 Parity + Korean Differentiation. See `.planning/v6-to-v9-ROADMAP-BENCHMARK.md` for full 3-year plan.
+
+**Vision pivot (2026-04-24):** The product is reframed as a **data product** — portfolio energy forecasting for the Korean building stock, delivered as immutable versioned Parquet releases with a read-only API and calibration reports. v7.0 introduces this stack parallel to v6.0, which continues unchanged. Phase 35 ships the first release (`v0.1.0`) covering one region, proving the end-to-end pipeline.
+
+**Note:** The "Future roadmap" line above refers to the older "v7.0 Semantic Substrate" plan which is superseded by v7.0 Prediction as of 2026-04-24. The semantic-substrate work is reclassified as v8.x+.
+
+### 🚧 v7.0 Prediction (Phases 35-40) — parallel to v6.0
+
+**Milestone Goal:** Ship a portfolio energy-prediction data product for the Korean building stock. Phase 35 proves the end-to-end pipeline on one region; later phases add attribution, coverage, live simulation, and observed-data fine-tuning.
+
+- [ ] **Phase 35: Portfolio Forecasting Thin Slice** — Versioned Parquet releases, read-only prediction API, thin explorer page. One region, ≥50 buildings, release v0.1.0. Tasks 1–3 shipped; 4–12 pending. Plan: `.omc/plans/consensus-v7-phase35-portfolio.md`
+- [ ] **Phase 36: Attribution + Multi-Region + Blob Storage** — SHAP per-building attribution, coverage expansion, release storage migration to object storage, production corpus-growth endpoint
+- [ ] **Phase 37: Live Simulation Hooks** — Browser-side on-demand calcs wired to the 3D viewer (separate v7 track; depends on Phase 35)
+- [ ] **Phase 38: Twin-Generation Upgrade** — Improve twin inference fidelity using feature importances surfaced by Phase 36 model
+- [ ] **Phase 39: KEPCO Observed-Data Fine-Tune** — Integrate real meter data to fine-tune the ECO2-only base model (license/privacy blockers may slip this to v7.x)
+- [ ] **Phase 40: Uncertainty + Confidence Surfaces** — Prediction intervals, feature-level sensitivity, model-confidence badges
 
 ### 🚧 v6.0 Audit Deliverables (Phases 29-34)
 

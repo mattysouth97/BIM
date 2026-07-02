@@ -6,44 +6,48 @@ import {
   WorkflowStage,
   STAGE_ORDER,
   STAGE_GUARDS,
+  type StageGuardContext,
 } from "@/lib/workflow/stages";
 
 interface WorkflowState {
   stage: WorkflowStage;
   completion: Record<WorkflowStage, boolean>;
   setStage: (next: WorkflowStage) => void;
-  canAdvance: () => boolean;
-  advance: () => void;
+  canAdvance: (ctx?: StageGuardContext) => boolean;
+  advance: (ctx?: StageGuardContext) => void;
   retreat: () => void;
   markComplete: (stage: WorkflowStage) => void;
   resetWorkflow: () => void;
 }
 
 const initialCompletion: Record<WorkflowStage, boolean> = {
-  select: false,
-  assemble: false,
-  configure: false,
-  analyze: false,
-  export: false,
+  search: false,
+  upload: false,
+  twin:   false,
+  report: false,
 };
 
 export const useWorkflowStore = create<WorkflowState>()(
   persist(
     (set, get) => ({
-      stage: "select",
+      stage: "search",
       completion: { ...initialCompletion },
 
       setStage: (next) => set({ stage: next }),
 
-      canAdvance: () => {
+      canAdvance: (ctx) => {
         const current = get().stage;
         const guard = STAGE_GUARDS[current];
         if (!guard) return false; // terminal stage
-        return guard();
+        return guard(ctx);
       },
 
-      advance: () => {
+      advance: (ctx) => {
         const current = get().stage;
+        const guard = STAGE_GUARDS[current];
+        if (guard && !guard(ctx)) {
+          return; // guard blocks advance
+        }
         const idx = STAGE_ORDER.indexOf(current);
         if (idx < STAGE_ORDER.length - 1) {
           set({ stage: STAGE_ORDER[idx + 1] });
@@ -67,7 +71,7 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       resetWorkflow: () =>
         set({
-          stage: "select",
+          stage: "search",
           completion: { ...initialCompletion },
         }),
     }),
