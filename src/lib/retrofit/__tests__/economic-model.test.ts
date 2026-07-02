@@ -16,6 +16,8 @@ import {
   KOREAN_GR_PUBLIC_LOCAL,
   KOREAN_GR_PRIVATE_BASE,
   KOREAN_GR_PRIVATE_HIGH_PERF,
+  KOREAN_GR_PRIVATE_TIER2,
+  suggestPrivateTrack,
 } from "../cost-database";
 import type { RetrofitMeasure } from "../retrofit-types";
 
@@ -419,5 +421,49 @@ describe("그린리모델링 presets (KOREAN_GR_*)", () => {
     const publicSeoul = computeFinancials(ENVELOPE, KOREAN_GR_PUBLIC_SEOUL_OR_CENTRAL);
     const privateBase = computeFinancials(ENVELOPE, KOREAN_GR_PRIVATE_BASE);
     expect(publicSeoul.npv).toBeGreaterThan(privateBase.npv);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// D₂.5: private-tier suggestion + Tier 2 preset
+// ---------------------------------------------------------------------------
+
+describe("suggestPrivateTrack (D₂.5)", () => {
+  it("suggests base tier below 20% improvement", () => {
+    expect(suggestPrivateTrack(0)).toBe("private-base");
+    expect(suggestPrivateTrack(0.19)).toBe("private-base");
+  });
+
+  it("suggests tier 2 for 20–30% improvement", () => {
+    expect(suggestPrivateTrack(0.2)).toBe("private-tier2");
+    expect(suggestPrivateTrack(0.299)).toBe("private-tier2");
+  });
+
+  it("suggests high-perf tier at ≥30% improvement", () => {
+    expect(suggestPrivateTrack(0.3)).toBe("private-high-perf");
+    expect(suggestPrivateTrack(0.85)).toBe("private-high-perf");
+  });
+
+  it("degrades to base tier on any non-finite or negative input", () => {
+    expect(suggestPrivateTrack(Number.NaN)).toBe("private-base");
+    expect(suggestPrivateTrack(-1)).toBe("private-base");
+    expect(suggestPrivateTrack(Number.POSITIVE_INFINITY)).toBe("private-base");
+  });
+});
+
+describe("KOREAN_GR_PRIVATE_TIER2 preset", () => {
+  it("computes WACC of 2.55% (4.0pp support on 70% LTV)", () => {
+    // 0.7 × max(0, 0.055 − 0.040) + 0.3 × 0.05 = 0.0105 + 0.015
+    expect(effectiveDiscountRate(KOREAN_GR_PRIVATE_TIER2)).toBeCloseTo(0.0255, 6);
+  });
+
+  it("sits between base (4.5pp) and high-perf (5.5pp) in effective rate", () => {
+    const base = effectiveDiscountRate(KOREAN_GR_PRIVATE_BASE);
+    const tier2 = effectiveDiscountRate(KOREAN_GR_PRIVATE_TIER2);
+    const high = effectiveDiscountRate(KOREAN_GR_PRIVATE_HIGH_PERF);
+    // Higher pp support → lower effective rate; Tier 2 (4.0pp) has the
+    // HIGHEST rate of the three per the 2026 program table.
+    expect(high).toBeLessThan(base);
+    expect(base).toBeLessThan(tier2);
   });
 });

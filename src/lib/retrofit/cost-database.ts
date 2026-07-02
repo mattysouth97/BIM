@@ -120,6 +120,24 @@ export const KOREAN_GR_PRIVATE_BASE: EconomicAssumptions = {
 };
 
 /**
+ * 민간건축물 그린리모델링 — Tier 2 interest support (4.0pp on 70% LTV).
+ * Triggered by ≥20% energy performance improvement OR window energy
+ * grade ≥3 (residential). Note the 2026 program table: Tier 2's rate
+ * (4.0pp) is LOWER than the base tier (4.5pp) — the base tier exists to
+ * encourage entry-level retrofits below the 20% threshold.
+ */
+export const KOREAN_GR_PRIVATE_TIER2: EconomicAssumptions = {
+  discountRate: 0.05,
+  energyEscalation: { ...ENERGY_ESCALATION },
+  analysisHorizonYears: 20,
+  financingMix: {
+    debtFraction: 0.7,
+    loanRatePreSubsidy: 0.055,
+    interestSupportPp: 0.04,
+  },
+};
+
+/**
  * 민간건축물 그린리모델링 — Tier 3 high-performance interest support
  * (5.5pp on 70% LTV). Triggered by ≥30% energy improvement OR vulnerable
  * household status (low-income / multi-child / elderly / newlywed).
@@ -144,10 +162,31 @@ export const KOREAN_GR_PRESETS = {
   "public-seoul-or-central": KOREAN_GR_PUBLIC_SEOUL_OR_CENTRAL,
   "public-local": KOREAN_GR_PUBLIC_LOCAL,
   "private-base": KOREAN_GR_PRIVATE_BASE,
+  "private-tier2": KOREAN_GR_PRIVATE_TIER2,
   "private-high-perf": KOREAN_GR_PRIVATE_HIGH_PERF,
 } as const;
 
 export type ProgramTrack = keyof typeof KOREAN_GR_PRESETS;
+
+/**
+ * D₂.5 — suggest the private-track tier from the scenario's energy
+ * performance improvement vs baseline (dossier §6):
+ *
+ *   ≥30% → Tier 3 (5.5pp), ≥20% → Tier 2 (4.0pp), else base (4.5pp).
+ *
+ * This is a SUGGESTION for the UI, never an auto-switch: track choice
+ * stays with the user (public vs private depends on ownership we don't
+ * have in the building record, and tier eligibility has non-energy
+ * criteria — window grade, household status — we can't see).
+ */
+export function suggestPrivateTrack(improvementFraction: number): ProgramTrack {
+  if (!Number.isFinite(improvementFraction) || improvementFraction < 0) {
+    return "private-base";
+  }
+  if (improvementFraction >= 0.3) return "private-high-perf";
+  if (improvementFraction >= 0.2) return "private-tier2";
+  return "private-base";
+}
 
 /** Electricity price (KRW/kWh) — Korean commercial rate 2024 */
 export const ENERGY_PRICES = {

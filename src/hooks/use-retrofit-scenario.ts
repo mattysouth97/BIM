@@ -26,6 +26,7 @@ import {
 import {
   DEFAULT_ECONOMIC_ASSUMPTIONS,
   KOREAN_GR_PRESETS,
+  suggestPrivateTrack,
   type ProgramTrack,
 } from "@/lib/retrofit/cost-database";
 import { SEOUL_CLIMATE, REGIONAL_CLIMATE } from "@/lib/energy/climate-data";
@@ -76,6 +77,14 @@ export interface RetrofitScenario {
   selection: BudgetSelection | null;
   /** The economic assumptions used (for display in the UI). */
   assumptions: EconomicAssumptions;
+  /**
+   * D₂.5 — selected-scenario energy saving as a fraction of the baseline
+   * annual demand (heating + cooling + lighting). Drives the private-tier
+   * suggestion; 0 when nothing is selected or baseline is unknown.
+   */
+  energyImprovementFraction: number;
+  /** GR private-track tier the improvement fraction qualifies for (UI hint only). */
+  suggestedPrivateTrack: ProgramTrack;
 }
 
 /**
@@ -225,5 +234,32 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     return selectMeasuresForBudget(allMeasures, capexBudgetKrw, assumptions);
   }, [allMeasures, capexBudgetKrw, assumptions]);
 
-  return { allMeasures: enriched, selection, assumptions };
+  // D₂.5 — improvement vs baseline for the GR private-tier suggestion.
+  // Baseline mirrors the demand fallbacks used for measure generation above.
+  const energyImprovementFraction = useMemo(() => {
+    if (!selection || !materials || totalFloorArea <= 0) return 0;
+    const heatingDemand = annualHeatingDemand ?? totalFloorArea * 120;
+    const coolingDemand = annualCoolingDemand ?? totalFloorArea * 30;
+    const lightingDemand =
+      (materials.lighting.lightingPowerDensity * totalFloorArea * annualOperatingHours) / 1000;
+    const baseline = heatingDemand + coolingDemand + lightingDemand;
+    if (baseline <= 0) return 0;
+    const saved = selection.selected.reduce((s, m) => s + m.annualEnergySaving, 0);
+    return saved / baseline;
+  }, [
+    selection,
+    materials,
+    totalFloorArea,
+    annualHeatingDemand,
+    annualCoolingDemand,
+    annualOperatingHours,
+  ]);
+
+  return {
+    allMeasures: enriched,
+    selection,
+    assumptions,
+    energyImprovementFraction,
+    suggestedPrivateTrack: suggestPrivateTrack(energyImprovementFraction),
+  };
 }

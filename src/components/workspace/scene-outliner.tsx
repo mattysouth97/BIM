@@ -90,6 +90,7 @@ const TRACK_BADGE_LABELS: Record<ProgramTrack, string | null> = {
   "public-seoul-or-central": "공공 50%",
   "public-local": "공공 70%",
   "private-base": "민간 4.5%p",
+  "private-tier2": "민간 4.0%p",
   "private-high-perf": "민간 5.5%p",
 };
 

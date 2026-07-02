@@ -11,6 +11,13 @@ import type { ProgramTrack } from "@/lib/retrofit/cost-database";
 interface ProgramTrackSelectorProps {
   value: ProgramTrack;
   onChange: (track: ProgramTrack) => void;
+  /**
+   * D₂.5 — private tier the current scenario's energy improvement
+   * qualifies for. Renders a "추천" hint on that chip; never auto-switches
+   * (tier eligibility has criteria we can't see: ownership, window grade,
+   * household status).
+   */
+  suggestedTrack?: ProgramTrack;
 }
 
 const TRACK_OPTIONS: { track: ProgramTrack; label: string; detail: string }[] = [
@@ -18,10 +25,11 @@ const TRACK_OPTIONS: { track: ProgramTrack; label: string; detail: string }[] = 
   { track: "public-seoul-or-central", label: "공공 서울·중앙", detail: "CAPEX 50%" },
   { track: "public-local", label: "공공 지자체", detail: "CAPEX 70%" },
   { track: "private-base", label: "민간 기본", detail: "이자 4.5%p" },
+  { track: "private-tier2", label: "민간 2단계", detail: "이자 4.0%p" },
   { track: "private-high-perf", label: "민간 고성능", detail: "이자 5.5%p" },
 ];
 
-export function ProgramTrackSelector({ value, onChange }: ProgramTrackSelectorProps) {
+export function ProgramTrackSelector({ value, onChange, suggestedTrack }: ProgramTrackSelectorProps) {
   return (
     <div
       className={cn(
@@ -42,6 +50,7 @@ export function ProgramTrackSelector({ value, onChange }: ProgramTrackSelectorPr
       </span>
       {TRACK_OPTIONS.map(({ track, label, detail }) => {
         const active = track === value;
+        const suggested = track === suggestedTrack && !active;
         return (
           <button
             key={track}
@@ -54,10 +63,14 @@ export function ProgramTrackSelector({ value, onChange }: ProgramTrackSelectorPr
               active
                 ? "bg-cyan-50 text-cyan-700 border border-cyan-300 dark:bg-cyan-950 dark:text-cyan-300 dark:border-cyan-800"
                 : "text-muted-foreground border border-transparent hover:text-foreground hover:bg-muted",
+              suggested && "border-dashed border-emerald-400",
             )}
           >
             <span className="text-[10px] font-medium leading-tight whitespace-nowrap">
               {label}
+              {suggested && (
+                <span className="ml-1 text-[8px] font-semibold text-emerald-600">추천</span>
+              )}
             </span>
             <span
               className={cn(

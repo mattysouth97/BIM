@@ -95,7 +95,11 @@ export function TwinStageOverlay({ title, footprintGeometry }: TwinStageOverlayP
         totalCandidateMeasures={scenario.allMeasures.length}
       />
 
-      <ProgramTrackSelector value={programTrack} onChange={setProgramTrack} />
+      <ProgramTrackSelector
+        value={programTrack}
+        onChange={setProgramTrack}
+        suggestedTrack={scenario.suggestedPrivateTrack}
+      />
 
       <RoiReadout
         selection={scenario.selection}
