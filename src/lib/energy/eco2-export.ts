@@ -8,6 +8,11 @@ import type { AnnualConsumption } from "@/lib/energy/consumption-normalizer";
 import type { PrimaryEnergyResult } from "@/lib/energy/primary-energy";
 import type { BenchmarkResult } from "@/lib/energy/benchmark-comparison";
 import type { EnergyDataSource } from "@/lib/energy/system-breakdown";
+import {
+  getHeatingSystemTypeCode,
+  getCoolingSystemTypeCode,
+  getDhwSystemTypeCode,
+} from "@/lib/energy/eco2-hvac-codes";
 
 export interface RetrofitScenario {
   description: string;
@@ -19,8 +24,11 @@ export interface RetrofitScenario {
  * Phase 27: Inferred sub-system data fields for ECO2 auditors (STD-02).
  * Fields read verbatim from materials — not re-derived from era.
  * dataSource uses EnergyDataSource from system-breakdown.ts (NOT EquipmentDataSource).
- * TODO: verify HVAC system type string mapping against KS F 1900 section field codes
- *       (standard is behind KSA paywall — GX auditor validation required).
+ *
+ * HVAC system type string → ECO2/KS F 1900-style code mapping is provided by
+ * src/lib/energy/eco2-hvac-codes.ts (heatingSystemTypeCode/coolingSystemTypeCode/
+ * dhwSystemTypeCode below). PROVISIONAL — pending GX auditor sign-off (plan
+ * risk R3); KS F 1900 is paywalled. Unknown values resolve to "UNKNOWN".
  */
 export interface ECO2SubSystems {
   hvac: {
@@ -31,6 +39,12 @@ export interface ECO2SubSystems {
     coolingEfficiency: number;       // COP
     dhwSystemType: string;           // from materials.hvac.dhw.systemType
     dhwEfficiency: number;           // from materials.hvac.dhw.efficiency
+    /** Provisional ECO2/KS F 1900-style code for heatingSystemType (see eco2-hvac-codes.ts) */
+    heatingSystemTypeCode: string;
+    /** Provisional ECO2/KS F 1900-style code for coolingSystemType (see eco2-hvac-codes.ts) */
+    coolingSystemTypeCode: string;
+    /** Provisional ECO2/KS F 1900-style code for dhwSystemType (see eco2-hvac-codes.ts) */
+    dhwSystemTypeCode: string;
     dataSource: EnergyDataSource;
     standardRef: "KS B 6364";
   };
@@ -301,6 +315,9 @@ export function buildSubSystems(materials: MaterialProperties): ECO2SubSystems {
       coolingEfficiency:   materials.hvac.cooling.efficiency,
       dhwSystemType:       materials.hvac.dhw.systemType,
       dhwEfficiency:       materials.hvac.dhw.efficiency,
+      heatingSystemTypeCode: getHeatingSystemTypeCode(materials.hvac.heating.systemType).code,
+      coolingSystemTypeCode: getCoolingSystemTypeCode(materials.hvac.cooling.systemType).code,
+      dhwSystemTypeCode:     getDhwSystemTypeCode(materials.hvac.dhw.systemType).code,
       dataSource:          "estimated-inferred",
       standardRef:         "KS B 6364",
     },

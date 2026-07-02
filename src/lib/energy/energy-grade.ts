@@ -85,6 +85,44 @@ export function getGradeColor(grade: EnergyGrade): string {
   return GRADE_COLORS[grade] ?? "#999999";
 }
 
+/** Korean label (e.g. "1등급") → EnergyGrade bucket. Mirrors GRADE_LABELS in compliance/efficiency-rating.ts. */
+const KOREAN_LABEL_TO_GRADE: Record<string, EnergyGrade> = {
+  "1+++등급": "1+++",
+  "1++등급": "1++",
+  "1+등급": "1+",
+  "1등급": "1",
+  "2등급": "2",
+  "3등급": "3",
+  "4등급": "4",
+  "5등급": "5",
+  "6등급": "6",
+  "7등급": "7",
+};
+
+/**
+ * Normalize either an EnergyGrade enum value or its original Korean label
+ * (e.g. "1등급", or the fuller "1+++등급 (제로에너지수준)" form used in
+ * compliance/efficiency-rating.ts GRADE_LABELS) to the same EnergyGrade
+ * bucket. Returns null when the input matches neither form — callers should
+ * treat that as a data-quality gap, not silently default a grade.
+ */
+export function normalizeEnergyGrade(input: string): EnergyGrade | null {
+  const trimmed = input.trim();
+  if ((GRADE_ORDER as string[]).includes(trimmed)) {
+    return trimmed as EnergyGrade;
+  }
+  if (trimmed in KOREAN_LABEL_TO_GRADE) {
+    return KOREAN_LABEL_TO_GRADE[trimmed];
+  }
+  // Fall back to matching the leading "N등급" token, tolerating trailing
+  // annotations like " (제로에너지수준)" seen in GRADE_LABELS.
+  const match = trimmed.match(/^(1\+\+\+|1\+\+|1\+|[1-7])등급/);
+  if (match) {
+    return KOREAN_LABEL_TO_GRADE[`${match[1]}등급`] ?? null;
+  }
+  return null;
+}
+
 /**
  * Return a combined grading result with delivered-energy grade and, optionally,
  * the official primary-energy grade when primary energy data is provided.
