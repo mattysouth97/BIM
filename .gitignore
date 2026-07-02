@@ -42,3 +42,12 @@ next-env.d.ts
 
 # claude worktrees
 .claude/worktrees/
+
+.vercel
+
+# v7.0 Prediction — ml/portfolio Python pipeline (Phase 35)
+ml/portfolio/.venv/
+ml/portfolio/__pycache__/
+ml/portfolio/corpus/*.jsonl
+ml/portfolio/data/training.csv
+!ml/portfolio/corpus/.gitkeep

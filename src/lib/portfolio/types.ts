@@ -1,8 +1,8 @@
 // src/lib/portfolio/types.ts
 // Supporting types for the v7.0 Prediction Data Product (Phase 35).
 //
-// Only FootprintGeometry is defined here for Task 3.
-// PredictionRow, ReleaseManifest, CalibrationJson will be added in Phase 35 Task 9/8.
+// FootprintGeometry — Task 3.
+// PredictionRow, ReleaseManifest, CalibrationJson — Task 9.
 
 /**
  * Pre-fetched footprint geometry for a building. Produced by the v4.0
@@ -19,3 +19,90 @@ export interface FootprintGeometry {
   /** Long-axis / short-axis of oriented bounding box. >= 1. */
   aspectRatio: number;
 }
+
+/**
+ * One row of a published prediction release. Shape mirrors the Parquet
+ * schema described in the data dictionary — see
+ * public/releases/v0.1.0/data-dictionary.md "Prediction output fields".
+ */
+export interface PredictionRow {
+  /** 10-digit 법정동 code the building belongs to */
+  bjdongCd: string;
+  /** 건축물대장 PK (mgmBldrgstPk) */
+  buildingPk: string;
+  /** Predicted primary energy use intensity, kWh/m²·yr */
+  predictedEuiKwhPerSqmYr: number;
+  /** K-Green-Grade-v2 predicted energy grade */
+  predictedGrade: string;
+  /** Model artifact version used for inference */
+  modelVersion: string;
+  /** ISO-8601 timestamp the row was generated */
+  generatedAt: string;
+}
+
+/** Per-release manifest metadata — written by ml/portfolio/generate_release.py. */
+export interface ReleaseManifest {
+  version: string;
+  codename?: string;
+  generatedAt: string;
+  trainingCutoff?: string;
+  modelFamily?: string;
+  modelVersion?: string;
+  featureSchemaVersion?: string;
+  coverage?: {
+    buildingCount: number;
+    sidoCount?: number;
+    sigunguCount?: number;
+    structureTypes?: string[];
+    useTypes?: string[];
+  };
+  prediction?: {
+    target: string;
+    unit: string;
+    gradingScheme?: string;
+  };
+  lineage?: Record<string, string>;
+  license?: string;
+  notes?: string;
+}
+
+/** Top-level latest-release pointer at public/releases/manifest.json. */
+export interface LatestReleasePointer {
+  latest: string;
+  history: string[];
+}
+
+/** Machine-readable calibration report — public/releases/<version>/calibration.json. */
+export interface CalibrationJson {
+  version: string;
+  tier?: string;
+  tierLabel?: string;
+  metrics: {
+    mape: number;
+    cvRmse?: number;
+    rmse?: number;
+    kendallTau: number;
+    spearmanRho?: number;
+    r2?: number;
+    medianAbsError?: number;
+    medianAbsErrorUnit?: string;
+  };
+  confidence?: Record<string, number>;
+  holdout?: {
+    buildingCount: number;
+    observationCount?: number;
+    splitStrategy?: string;
+  };
+  segmentPerformance?: Array<{ segment: string; mape: number; count: number }>;
+  featureImportance?: Array<{ name: string; rank: number; gain: number }>;
+  sampleSize?: number;
+  heldOutMethod?: string;
+  perEra?: unknown[];
+  knownLimitations?: string[];
+}
+
+/** Result of a ReleaseStore.getPredictions() call — always honest about absence. */
+export type PredictionsResult =
+  | { status: "ok"; rows: PredictionRow[]; releaseVersion: string; schemaVersion: string; generatedAt: string }
+  | { status: "unknown-region" }
+  | { status: "data-unavailable"; reason: string };

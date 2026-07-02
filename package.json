@@ -10,7 +10,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "export:feature-schema": "node scripts/export-feature-schema.mjs",
+    "ci:check": "node scripts/ci-check-plan.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

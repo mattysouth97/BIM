@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://bim.example/releases/portfolio-feature-vector.schema.json",
+  "title": "PortfolioFeatureVector",
+  "description": "v7.0 Prediction Data Product — feature vector derivable solely from public data (건축물대장 + footprint geometry + era priors). Schema version tracks src/lib/portfolio/features.ts FEATURE_SCHEMA.version.",
+  "type": "object",
+  "version": "1.0.0",
+  "properties": {
+    "gfaSqm": {
+      "type": "number",
+      "description": "Gross floor area",
+      "x-unit": "m^2",
+      "x-group": "bldrgst"
+    },
+    "floorCountAbove": {
+      "type": "number",
+      "description": "Above-grade storey count",
+      "x-unit": "floors",
+      "x-group": "bldrgst"
+    },
+    "floorCountBelow": {
+      "type": "number",
+      "description": "Below-grade storey count",
+      "x-unit": "floors",
+      "x-group": "bldrgst"
+    },
+    "buildingHeightM": {
+      "type": "number",
+      "description": "Total above-grade height",
+      "x-unit": "m",
+      "x-group": "bldrgst"
+    },
+    "constructionYear": {
+      "type": "number",
+      "description": "Four-digit construction year",
+      "x-unit": "year",
+      "x-group": "bldrgst"
+    },
+    "structureTypeCode": {
+      "type": "number",
+      "description": "Encoded structure type: 0=masonry, 1=concrete, 2=steel, 3=wood, 4=other",
+      "x-unit": "enum",
+      "x-group": "bldrgst"
+    },
+    "useTypeCode": {
+      "type": "number",
+      "description": "Encoded use type: 0=residential, 1=office, 2=mixed, 3=retail, 4=other",
+      "x-unit": "enum",
+      "x-group": "bldrgst"
+    },
+    "mainPurpsCode": {
+      "type": "number",
+      "description": "Main-purpose subclassification numeric code from Korean building ledger",
+      "x-unit": "code",
+      "x-group": "bldrgst"
+    },
+    "bcRat": {
+      "type": "number",
+      "description": "Building coverage ratio (건폐율), 0–1",
+      "x-unit": "ratio",
+      "x-group": "bldrgst"
+    },
+    "vlRat": {
+      "type": "number",
+      "description": "Floor area ratio (용적률), can exceed 1",
+      "x-unit": "ratio",
+      "x-group": "bldrgst"
+    },
+    "platAreaSqm": {
+      "type": "number",
+      "description": "Plot area",
+      "x-unit": "m^2",
+      "x-group": "bldrgst"
+    },
+    "footprintAreaSqm": {
+      "type": "number",
+      "description": "Ground-floor footprint area",
+      "x-unit": "m^2",
+      "x-group": "geometry"
+    },
+    "aspectRatio": {
+      "type": "number",
+      "description": "Long-axis divided by short-axis (≥1)",
+      "x-unit": "unitless",
+      "x-group": "geometry"
+    },
+    "perimeterM": {
+      "type": "number",
+      "description": "Footprint perimeter",
+      "x-unit": "m",
+      "x-group": "geometry"
+    },
+    "compactness": {
+      "type": "number",
+      "description": "4π·A / P² — isoperimetric compactness (0–1, 1=circle)",
+      "x-unit": "unitless",
+      "x-group": "geometry"
+    },
+    "wallUValuePrior": {
+      "type": "number",
+      "description": "Wall U-value prior from era lookup table",
+      "x-unit": "W/m^2K",
+      "x-group": "era_prior"
+    },
+    "windowUValuePrior": {
+      "type": "number",
+      "description": "Window U-value prior from era lookup table",
+      "x-unit": "W/m^2K",
+      "x-group": "era_prior"
+    },
+    "windowShgcPrior": {
+      "type": "number",
+      "description": "Window solar heat gain coefficient prior, 0–1",
+      "x-unit": "unitless",
+      "x-group": "era_prior"
+    },
+    "lightingPowerDensityPrior": {
+      "type": "number",
+      "description": "Lighting power density prior from era lookup table",
+      "x-unit": "W/m^2",
+      "x-group": "era_prior"
+    },
+    "climateZoneCode": {
+      "type": "number",
+      "description": "Climate zone: 0=central, 1=southern, 2=jeju",
+      "x-unit": "enum",
+      "x-group": "location"
+    }
+  },
+  "required": [
+    "gfaSqm",
+    "floorCountAbove",
+    "floorCountBelow",
+    "buildingHeightM",
+    "constructionYear",
+    "structureTypeCode",
+    "useTypeCode",
+    "mainPurpsCode",
+    "bcRat",
+    "vlRat",
+    "platAreaSqm",
+    "footprintAreaSqm",
+    "aspectRatio",
+    "perimeterM",
+    "compactness",
+    "wallUValuePrior",
+    "windowUValuePrior",
+    "windowShgcPrior",
+    "lightingPowerDensityPrior",
+    "climateZoneCode"
+  ],
+  "additionalProperties": false
+}
