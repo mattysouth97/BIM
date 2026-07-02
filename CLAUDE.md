@@ -21,6 +21,9 @@
     - `facade-generator.ts` — InstancedMesh glass/mullions/panels (4 draw calls)
     - `structure-generator.ts` — InstancedMesh slabs + columns (2 draw calls)
     - `procedural-building.ts` — ProceduralBuilding class composing all generators (7 draw calls total)
+  - `src/lib/cad/` — CAD footprint ingest (DXF parse, DWG→DXF WASM conversion, PDF tracing) — see `src/lib/cad/README.md`
+  - `src/lib/retrofit/` — Retrofit measures + DCF economic model (NPV/IRR, knapsack, 그린리모델링 presets)
+  - `src/store/scenario-store.ts` — Shared CAPEX/ROI scenario state (budget, program track, building inputs)
   - `src/lib/pbr-materials.ts` — PBR texture mapping per structure type + era
   - `src/lib/korean-building-codes.ts` — Structure codes, use type codes, wall layer data
   - `src/lib/api-proxy.ts` — Server-side fetch to data.go.kr, returns `{data, error}`

@@ -371,3 +371,23 @@ describe("parseDxfText — BIM_OUTLINE layer priority", () => {
     expect(result.candidates).toEqual([]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Shipped QA fixture — docs/samples/sample-footprint.dxf must always parse.
+// ---------------------------------------------------------------------------
+
+describe("docs/samples/sample-footprint.dxf", () => {
+  it("parses to a single 20×12m BIM_OUTLINE candidate", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const { join } = await import("node:path");
+    const text = await readFile(
+      join(process.cwd(), "docs", "samples", "sample-footprint.dxf"),
+      "utf8",
+    );
+    const result = parseDxfText(text);
+    expect(result.candidates).toHaveLength(1);
+    const candidate = result.candidates[0];
+    expect(candidate.layer).toBe("BIM_OUTLINE");
+    expect(candidate.areaSqm).toBeCloseTo(240, 0);
+  });
+});
