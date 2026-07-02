@@ -244,7 +244,15 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
       (materials.lighting.lightingPowerDensity * totalFloorArea * annualOperatingHours) / 1000;
     const baseline = heatingDemand + coolingDemand + lightingDemand;
     if (baseline <= 0) return 0;
-    const saved = selection.selected.reduce((s, m) => s + m.annualEnergySaving, 0);
+    // Exclude renewable: solar annualEnergySaving is FULL generation
+    // (self-consumption + grid feed-in), and exported energy does not
+    // improve the building's own performance — counting it would suggest
+    // GR tiers the building doesn't qualify for. Knapsack/ROI still use
+    // full generation; only this eligibility input excludes it.
+    const saved = selection.selected.reduce(
+      (s, m) => (m.category === "renewable" ? s : s + m.annualEnergySaving),
+      0,
+    );
     return saved / baseline;
   }, [
     selection,

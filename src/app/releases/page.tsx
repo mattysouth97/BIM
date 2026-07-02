@@ -185,10 +185,12 @@ export default async function ReleasesPage() {
             </li>
             <li className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-muted-foreground" />
-              <a href={`${artifactBase}/calibration.md`} className="text-primary hover:underline">
-                calibration.md
-              </a>
-              {!calibration && <span className="text-xs text-muted-foreground">(pending)</span>}
+              {/* calibration.md is a Task-8 release-generator artifact — not
+                  produced yet; only the machine-readable calibration.json
+                  shipped with v0.1.0. Render as pending, not a dead link. */}
+              <span className="text-muted-foreground">
+                calibration.md <span className="italic">(pending — see calibration.json)</span>
+              </span>
             </li>
             <li className="flex items-center gap-2">
               <FileJson className="h-4 w-4 text-muted-foreground" />

@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-24
 **Milestone:** v7.0 Prediction (Phases 35–40 TBD)
-**Status:** 2026-07-02: Tasks 1-3 + 8-11 SHIPPED (release bundle docs, ReleaseStore, /api/v1/predictions + eco2-imports, /releases explorer, CI guards via pnpm ci:check). Tasks 4-7 (Python ml pipeline) BLOCKED: no Python runtime on this host + training dataset/model exist only offline; predictions.parquet pending upload of the offline artifact — all runtime surfaces degrade honestly until it lands.
+**Status:** 2026-07-02: Tasks 1-3 + 9-11 SHIPPED (ReleaseStore, /api/v1/predictions + eco2-imports, /releases explorer, CI guards via pnpm ci:check). Tasks 4-8 (Python ml pipeline + release generator) BLOCKED: no Python runtime on this host + training dataset/model exist only offline; predictions.parquet pending upload of the offline artifact — all runtime surfaces degrade honestly until it lands.
 **Mode:** Short RALPLAN-DR
 
 ---
