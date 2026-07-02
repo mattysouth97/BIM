@@ -2,7 +2,7 @@
 
 **Version:** 1.1
 **Date:** 2026-04-05
-**Status:** APPROVED -- 2026-04-05
+**Status:** COMPLETE -- 2026-07-02 audit: 31/32 tasks shipped. Deliberate deviations: (1.4) layer system rebuilt as 15 building-systems layers (BAS/telecom/MEP/microgrid) instead of the proposed 5 groups — richer taxonomy, working + tested, kept; (1.5) undo system now fully deleted; (3.2) office curtain-wall shipped in src/lib/procedural. VWorld 3D surface superseded by CAPEX/ROI simulator pivot (f62eaa4).
 **Scope:** Full product pivot from BIM Authoring Tool to Automated Digital Twin Platform
 
 ---

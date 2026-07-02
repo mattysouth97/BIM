@@ -1,6 +1,6 @@
 # CAD Upload Workflow — Footprint-Driven Draft Building
 
-**Status:** Draft
+**Status:** COMPLETE -- 2026-07-02: Steps 1-8 shipped incl. docs (src/lib/cad/README.md), QA fixture (docs/samples/sample-footprint.dxf + regression test), CLAUDE.md entry.
 **Owner:** GX Team
 **Date:** 2026-04-13
 **Mode:** direct (plan skill)

@@ -4,6 +4,7 @@
 **Scope:** Wire ~60 backend library/engine files into the existing UI
 **Complexity:** HIGH (18 unwired modules across 3 workflow stages)
 **Parallel Tasks:** 5 independent tasks (non-overlapping files)
+**Status:** COMPLETE -- 2026-07-02 audit: I1-I5 all shipped and wired; I2f weather HDD/CDD section added to PropertiesPanel.
 
 ---
 

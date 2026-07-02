@@ -5,6 +5,7 @@
 - Scope: ONE showcase building, architecturally portfolio-ready
 - Primary acceptance bar: predicted ECO2 grade == certified 에너지아이 grade (C1)
 - **Version: v2 (Architect iteration 2 — minimum-change revisions applied)**
+- **Status 2026-07-02: unblocked scaffolding SHIPPED (GeometricLOD + OverrideRationale types, building-calibration-loader + registry, eco2-hvac-codes provisional mapping wired into eco2-export, energy-grade normalization + tests). Steps 1, 5, 5.5, 6 remain EXTERNALLY BLOCKED on GX team: showcase building selection (R1) and KS F 1900 auditor sign-off (R3).**
 
 ---
 
