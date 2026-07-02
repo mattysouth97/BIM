@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { ElementRegistry } from "../element-registry";
 import { createElementId } from "../element-id";
+import type { ElementId } from "../element-id";
 import type { ElementRecord } from "../element-record";
 
 // ---------------------------------------------------------------------------
@@ -14,7 +15,10 @@ function makeRecord(
   userData: Record<string, any> = {}
 ): ElementRecord {
   return {
-    id: createElementId(kind),
+    // createElementId returns a kind-specific branded id (e.g. WallId); widen
+    // to the generic ElementId brand via `unknown` since the branded literals
+    // don't structurally overlap.
+    id: createElementId(kind) as unknown as ElementId,
     kind,
     buildingPk,
     userData,

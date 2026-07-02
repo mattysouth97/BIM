@@ -7,6 +7,20 @@ import { StructuralAnalysisLayer } from "../layer-15-structural";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 
 // ---------------------------------------------------------------------------
+// Helper: find the structural-column InstancedMesh (traverses entire group)
+// ---------------------------------------------------------------------------
+
+function findStructuralColumnMesh(group: THREE.Group): THREE.InstancedMesh | undefined {
+  let found: THREE.InstancedMesh | undefined;
+  group.traverse((obj) => {
+    if (obj instanceof THREE.InstancedMesh && obj.userData.type === "structural-column") {
+      found = obj;
+    }
+  });
+  return found;
+}
+
+// ---------------------------------------------------------------------------
 // Mock recipe fixture — 3 above-ground floors, 4-column grid
 // ---------------------------------------------------------------------------
 
@@ -21,7 +35,7 @@ function makeRecipe(): BuildingRecipe {
     ],
     totalHeight: 9.0,
     wallThickness: 0.2,
-    era: "2000s",
+    era: "2000-2009",
     strctCd: "21",
     mainPurpsCd: "02000",
     column: { spacing: 6, size: 0.4, inset: 1 },
@@ -45,13 +59,13 @@ function makeRecipe(): BuildingRecipe {
     buildingName: "Test Building",
     address: "Seoul, Korea",
     materials: {
-      wall: { color: 0xcccccc, roughness: 0.8, metalness: 0.1 },
-      glass: { color: 0x88aacc, roughness: 0.1, metalness: 0.0, transparent: true, opacity: 0.4 },
-      mullion: { color: 0x888888, roughness: 0.4, metalness: 0.6 },
-      slab: { color: 0xaaaaaa, roughness: 0.9, metalness: 0.0 },
-      column: { color: 0x999999, roughness: 0.8, metalness: 0.0 },
-      roof: { color: 0x888888, roughness: 0.7, metalness: 0.1 },
-      groundFloor: { color: 0xbbbbbb, roughness: 0.9, metalness: 0.0 },
+      wall: { color: "#cccccc", roughness: 0.8, metalness: 0.1 },
+      glass: { color: "#88aacc", roughness: 0.1, metalness: 0.0, transparent: true, opacity: 0.4 },
+      mullion: { color: "#888888", roughness: 0.4, metalness: 0.6 },
+      slab: { color: "#aaaaaa", roughness: 0.9, metalness: 0.0 },
+      column: { color: "#999999", roughness: 0.8, metalness: 0.0 },
+      roof: { color: "#888888", roughness: 0.7, metalness: 0.1 },
+      groundFloor: { color: "#bbbbbb", roughness: 0.9, metalness: 0.0 },
     },
   };
 }
@@ -115,30 +129,20 @@ describe("StructuralAnalysisLayer", () => {
     // innerW=10, innerD=8, colsX=3, colsZ=2 → positions = 6
     // Actually let's just count what we get and check it equals floors * positions
     const aboveFloors = recipe.floors.filter((f) => f.type === "above");
-    let instancedMesh: THREE.InstancedMesh | null = null;
-    group.traverse((obj) => {
-      if (obj instanceof THREE.InstancedMesh && obj.userData.type === "structural-column") {
-        instancedMesh = obj;
-      }
-    });
-    expect(instancedMesh).not.toBeNull();
+    const instancedMesh = findStructuralColumnMesh(group);
+    expect(instancedMesh).not.toBeUndefined();
     // The count should equal aboveFloors.length * columnPositions.length
     // For this recipe: 3 above floors * column grid positions
-    expect((instancedMesh as THREE.InstancedMesh).count).toBeGreaterThan(0);
+    expect(instancedMesh!.count).toBeGreaterThan(0);
     // Verify the count is a multiple of aboveFloors.length
-    expect((instancedMesh as THREE.InstancedMesh).count % aboveFloors.length).toBe(0);
+    expect(instancedMesh!.count % aboveFloors.length).toBe(0);
   });
 
   it("7. InstancedMesh has userData.sizingLabels array with length === instanceCount", () => {
     const group = layer.generate(recipe);
-    let instancedMesh: THREE.InstancedMesh | null = null;
-    group.traverse((obj) => {
-      if (obj instanceof THREE.InstancedMesh && obj.userData.type === "structural-column") {
-        instancedMesh = obj;
-      }
-    });
-    expect(instancedMesh).not.toBeNull();
-    const mesh = instancedMesh as THREE.InstancedMesh;
+    const instancedMesh = findStructuralColumnMesh(group);
+    expect(instancedMesh).not.toBeUndefined();
+    const mesh = instancedMesh!;
     expect(Array.isArray(mesh.userData.sizingLabels)).toBe(true);
     expect(mesh.userData.sizingLabels.length).toBe(mesh.count);
   });
