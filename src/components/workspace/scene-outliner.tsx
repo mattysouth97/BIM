@@ -2,13 +2,19 @@
 
 // src/components/workspace/scene-outliner.tsx
 // Retrofit Recommendations panel — "Twin Insights" left dock.
-// Generates and displays prioritised retrofit measures from envelope, HVAC,
-// lighting, and solar generators using inferred material/recipe data.
+//
+// D₃ unification: measures come from `useRetrofitScenario` — the SAME hook
+// (and the same scenario-store inputs, budget, and 그린리모델링 track) that
+// drives the Twin-stage overlay — so both surfaces always agree. When the
+// Twin overlay hasn't published ledger-derived inputs yet (e.g. standalone
+// usage), floor areas fall back to the recipe-store geometry.
 
 import { useMemo } from "react";
 import { useMaterialStore } from "@/store/material-store";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import { useRecipeStore } from "@/store/recipe-store";
+import { useScenarioStore } from "@/store/scenario-store";
+import { useRetrofitScenario } from "@/hooks/use-retrofit-scenario";
 import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
@@ -16,13 +22,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { generateEnvelopeRetrofits, KOREAN_2020_TARGET_U_VALUES } from "@/lib/retrofit/envelope-retrofits";
-import { generateHvacRetrofits } from "@/lib/retrofit/hvac-retrofits";
-import { generateLightingRetrofits } from "@/lib/retrofit/lighting-retrofits";
-import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
 import { assembleRetrofitReport } from "@/lib/retrofit/retrofit-report";
 import type { RetrofitMeasure, RetrofitCategory } from "@/lib/retrofit/retrofit-types";
-import { Sun, Thermometer, Lightbulb, Building2 } from "lucide-react";
+import type { ProgramTrack } from "@/lib/retrofit/cost-database";
+import { Sun, Thermometer, Lightbulb, Building2, CheckCircle2 } from "lucide-react";
 
 interface SceneOutlinerProps {
   /** Optional override — if omitted, derives from the material store. */
@@ -32,13 +35,15 @@ interface SceneOutlinerProps {
 // ── Formatting helpers ────────────────────────────────────────────────────────
 
 function formatKRW(value: number): string {
-  if (value >= 100_000_000) {
-    return `₩${(value / 100_000_000).toFixed(1)}억`;
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 100_000_000) {
+    return `${sign}₩${(abs / 100_000_000).toFixed(1)}억`;
   }
-  if (value >= 10_000) {
-    return `₩${(value / 10_000).toFixed(0)}만`;
+  if (abs >= 10_000) {
+    return `${sign}₩${(abs / 10_000).toFixed(0)}만`;
   }
-  return `₩${value.toLocaleString()}`;
+  return `${sign}₩${abs.toLocaleString()}`;
 }
 
 function formatKWh(value: number): string {
@@ -80,6 +85,14 @@ const CATEGORY_COLORS: Record<RetrofitCategory, string> = {
   renewable: "bg-green-100 text-green-700",
 };
 
+const TRACK_BADGE_LABELS: Record<ProgramTrack, string | null> = {
+  none: null,
+  "public-seoul-or-central": "공공 50%",
+  "public-local": "공공 70%",
+  "private-base": "민간 4.5%p",
+  "private-high-perf": "민간 5.5%p",
+};
+
 // ── Priority badge ────────────────────────────────────────────────────────────
 
 function priorityFromPayback(paybackYears: number): "high" | "medium" | "low" {
@@ -108,9 +121,10 @@ const PRIORITY_BADGE: Record<"high" | "medium" | "low", string> = {
 
 // ── Individual measure card ───────────────────────────────────────────────────
 
-function MeasureCard({ measure }: { measure: RetrofitMeasure }) {
+function MeasureCard({ measure, selected }: { measure: RetrofitMeasure; selected: boolean }) {
   const priority = priorityFromPayback(measure.paybackYears);
   const paybackFinite = Number.isFinite(measure.paybackYears) && measure.paybackYears < 999;
+  const npv = measure.financials?.npv;
 
   return (
     <div
@@ -124,10 +138,18 @@ function MeasureCard({ measure }: { measure: RetrofitMeasure }) {
           />
           <p className="text-xs font-medium leading-tight truncate">{measure.name}</p>
         </div>
-        <span
-          className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${PRIORITY_BADGE[priority]}`}
-        >
-          {PRIORITY_LABEL[priority]}
+        <span className="flex items-center gap-1 shrink-0">
+          {selected && (
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-cyan-100 text-cyan-700">
+              <CheckCircle2 className="h-2.5 w-2.5" />
+              예산 내
+            </span>
+          )}
+          <span
+            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${PRIORITY_BADGE[priority]}`}
+          >
+            {PRIORITY_LABEL[priority]}
+          </span>
         </span>
       </div>
       <p className="text-[10px] text-muted-foreground mt-1 leading-tight line-clamp-2">
@@ -153,10 +175,21 @@ function MeasureCard({ measure }: { measure: RetrofitMeasure }) {
           </span>
         </span>
         <span className="text-muted-foreground">
-          CO₂:{" "}
-          <span className="font-medium text-foreground">
-            {measure.co2Reduction.toFixed(2)} tCO₂/yr
-          </span>
+          {npv !== undefined ? (
+            <>
+              NPV:{" "}
+              <span className={`font-medium ${npv >= 0 ? "text-foreground" : "text-orange-600"}`}>
+                {formatKRW(npv)}
+              </span>
+            </>
+          ) : (
+            <>
+              CO₂:{" "}
+              <span className="font-medium text-foreground">
+                {measure.co2Reduction.toFixed(2)} tCO₂/yr
+              </span>
+            </>
+          )}
         </span>
       </div>
     </div>
@@ -168,9 +201,11 @@ function MeasureCard({ measure }: { measure: RetrofitMeasure }) {
 function CategorySection({
   category,
   measures,
+  selectedIds,
 }: {
   category: RetrofitCategory;
   measures: RetrofitMeasure[];
+  selectedIds: Set<string>;
 }) {
   if (measures.length === 0) return null;
 
@@ -196,7 +231,7 @@ function CategorySection({
       </AccordionTrigger>
       <AccordionContent className="px-2 pb-2 pt-0">
         {measures.map((m) => (
-          <MeasureCard key={m.id} measure={m} />
+          <MeasureCard key={m.id} measure={m} selected={selectedIds.has(m.id)} />
         ))}
       </AccordionContent>
     </AccordionItem>
@@ -212,103 +247,60 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
   const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
   const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
 
-  // Derive effective recipe (same pattern as use-energy-metrics.ts)
-  const effectiveRecipe = useMemo(() => {
-    if (!baseRecipe) return undefined;
-    if (!overrides) return baseRecipe;
+  const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
+  const programTrack = useScenarioStore((s) => s.programTrack);
+  const publishedInputs = useScenarioStore((s) => s.buildingInputs);
+
+  // Recipe-derived fallback geometry, used only when the Twin overlay hasn't
+  // published ledger-derived inputs for this building.
+  const fallbackAreas = useMemo(() => {
+    if (!baseRecipe) return null;
+    const footprintWidth = overrides?.footprintWidth ?? baseRecipe.footprintWidth;
+    const footprintDepth = overrides?.footprintDepth ?? baseRecipe.footprintDepth;
+    const floorCount = baseRecipe.floors.length || 1;
+    const footprintArea = footprintWidth * footprintDepth;
     return {
-      ...baseRecipe,
-      ...(overrides.footprintWidth !== undefined ? { footprintWidth: overrides.footprintWidth } : {}),
-      ...(overrides.footprintDepth !== undefined ? { footprintDepth: overrides.footprintDepth } : {}),
-      ...(overrides.wallThickness !== undefined ? { wallThickness: overrides.wallThickness } : {}),
-      ...(overrides.facade ? { facade: { ...baseRecipe.facade, ...overrides.facade } } : {}),
-      ...(overrides.slab ? { slab: { ...baseRecipe.slab, ...overrides.slab } } : {}),
-      ...(overrides.column ? { column: { ...baseRecipe.column, ...overrides.column } } : {}),
-      ...(overrides.roof ? { roof: { ...baseRecipe.roof, ...overrides.roof } } : {}),
+      footprintArea,
+      totalFloorArea: footprintArea * floorCount,
     };
   }, [baseRecipe, overrides]);
 
+  // Prefer the shared ledger-derived inputs (guaranteed to match the Twin
+  // overlay); fall back to recipe geometry otherwise.
+  const inputsMatch = publishedInputs?.buildingPk === buildingPk;
+  const totalFloorArea = inputsMatch
+    ? publishedInputs.totalFloorArea
+    : fallbackAreas?.totalFloorArea ?? 0;
+  const footprintArea = inputsMatch
+    ? publishedInputs.footprintArea
+    : fallbackAreas?.footprintArea ?? 0;
+
+  const scenario = useRetrofitScenario({
+    buildingPk,
+    capexBudgetKrw,
+    totalFloorArea,
+    footprintArea,
+    roofType: inputsMatch ? publishedInputs.roofType : "flat",
+    sidoPrefix: inputsMatch ? publishedInputs.sidoPrefix : undefined,
+    programTrack,
+  });
+
+  const selectedIds = useMemo(
+    () => new Set(scenario.selection?.selected.map((m) => m.id) ?? []),
+    [scenario.selection],
+  );
+
+  // Aggregate the unified measure list for the header/footer summary.
   const report = useMemo(() => {
-    if (!materials || !effectiveRecipe) return null;
+    if (scenario.allMeasures.length === 0) return null;
+    return assembleRetrofitReport(scenario.allMeasures);
+  }, [scenario.allMeasures]);
 
-    const floorCount = effectiveRecipe.floors.length || 1;
-    const footprintArea = effectiveRecipe.footprintWidth * effectiveRecipe.footprintDepth;
-    const totalFloorArea = footprintArea * floorCount;
-    const perFloorArea = footprintArea;
-
-    // Envelope U-values from material properties
-    const wallU = materials.envelope.walls[0]?.uValue ?? 0.5;
-    const roofU = materials.envelope.roof.uValue ?? 0.3;
-    const windowU = materials.envelope.windows.uValue ?? 2.0;
-    const floorU = materials.envelope.groundFloor.uValue ?? 0.4;
-
-    // Surface areas — derived from geometry
-    const wallHeight = 3.0; // typical floor-to-floor
-    const perimeterApprox =
-      2 * (effectiveRecipe.footprintWidth + effectiveRecipe.footprintDepth);
-    const grossWallArea = perimeterApprox * wallHeight * floorCount;
-    const wwr = materials.envelope.windows.windowToWallRatio.S ?? 0.3;
-    const windowArea = grossWallArea * wwr;
-    const netWallArea = grossWallArea - windowArea;
-
-    const envelopeMeasures = generateEnvelopeRetrofits(
-      { wall: wallU, roof: roofU, window: windowU, floor: floorU },
-      KOREAN_2020_TARGET_U_VALUES,
-      {
-        wall: netWallArea,
-        roof: perFloorArea,
-        window: windowArea,
-        floor: perFloorArea,
-      },
-      3000, // HDD — Seoul average (°C·days/yr)
-      materials.hvac.heating.efficiency
-    );
-
-    // HVAC — age not in material types, estimate from code year
-    const codeYear = materials.codeYear ?? 2000;
-    const systemAge = new Date().getFullYear() - codeYear;
-    const hvacMeasures = generateHvacRetrofits(
-      {
-        heatingType: materials.hvac.heating.systemType,
-        heatingEfficiency: materials.hvac.heating.efficiency,
-        coolingType: materials.hvac.cooling.systemType,
-        coolingEfficiency: materials.hvac.cooling.efficiency,
-        age: systemAge,
-      },
-      totalFloorArea,
-      // Estimate annual heating/cooling demand from area (kWh) — rough proxy
-      totalFloorArea * 60, // ~60 kWh/m²·yr heating
-      totalFloorArea * 30  // ~30 kWh/m²·yr cooling
-    );
-
-    const lightingLPD = materials.lighting.lightingPowerDensity ?? 12;
-    const lightingMeasures = generateLightingRetrofits(
-      lightingLPD,
-      totalFloorArea,
-      2500 // operating hours/yr — office default
-    );
-
-    const solarMeasure = calculateSolarPotential(
-      perFloorArea,
-      "flat",
-      "seoul",
-      80, // feed-in tariff KRW/kWh (Korean REC average)
-      140
-    );
-
-    const allMeasures = [
-      ...envelopeMeasures,
-      ...hvacMeasures,
-      ...lightingMeasures,
-      solarMeasure,
-    ];
-
-    return assembleRetrofitReport(allMeasures);
-  }, [materials, effectiveRecipe]);
+  const trackBadge = TRACK_BADGE_LABELS[programTrack];
 
   // ── No building selected ──────────────────────────────────────────────────
 
-  if (!materials || !effectiveRecipe) {
+  if (!materials || totalFloorArea <= 0) {
     return (
       <div className="p-4 flex flex-col items-center justify-center h-full min-h-[200px]">
         <Building2 className="h-8 w-8 text-muted-foreground/40 mb-2" />
@@ -344,7 +336,14 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
     <div className="flex flex-col h-full overflow-hidden">
       {/* ── Header ── */}
       <div className="px-3 pt-3 pb-2 border-b shrink-0">
-        <p className="text-xs font-semibold mb-1.5">개선 권장사항</p>
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-xs font-semibold">개선 권장사항</p>
+          {trackBadge && (
+            <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-cyan-300 text-cyan-700">
+              그린리모델링 {trackBadge}
+            </Badge>
+          )}
+        </div>
         <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
           <span className="text-muted-foreground">
             총 투자비
@@ -382,17 +381,19 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
           defaultValue={openCategories}
           className="w-full"
         >
-          <CategorySection category="envelope" measures={byCategory.envelope} />
-          <CategorySection category="hvac" measures={byCategory.hvac} />
-          <CategorySection category="lighting" measures={byCategory.lighting} />
-          <CategorySection category="renewable" measures={byCategory.renewable} />
+          <CategorySection category="envelope" measures={byCategory.envelope} selectedIds={selectedIds} />
+          <CategorySection category="hvac" measures={byCategory.hvac} selectedIds={selectedIds} />
+          <CategorySection category="lighting" measures={byCategory.lighting} selectedIds={selectedIds} />
+          <CategorySection category="renewable" measures={byCategory.renewable} selectedIds={selectedIds} />
         </Accordion>
       </div>
 
       {/* ── Footer summary ── */}
       <div className="px-3 py-2 border-t bg-muted/30 shrink-0">
         <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-          <span>{report.measures.length}개 권장사항</span>
+          <span>
+            {report.measures.length}개 권장사항 · 예산 내 {selectedIds.size}개
+          </span>
           <Badge variant="outline" className="text-[9px] h-4 px-1.5">
             2020+ 기준
           </Badge>
