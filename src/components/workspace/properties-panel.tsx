@@ -14,6 +14,7 @@ import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
+import { useWeatherData } from "@/hooks/use-weather-data";
 import { assessFidelity } from "@/lib/fidelity/fidelity-assessor";
 import { generateUpgradeChecklist } from "@/lib/fidelity/upgrade-checklist";
 import { FidelityBadge } from "@/components/twin/fidelity-badge";
@@ -80,6 +81,9 @@ export function PropertiesPanel() {
   const actual = useActualEnergy(buildingPk);
   const actualData = actual.data ?? [];
   const hasActual = actualData.length > 0;
+  // KMA ASOS weather (previous year, Seoul station default). Disabled
+  // without an API key; the section below renders only on success.
+  const weather = useWeatherData();
 
   const [certVersion, setCertVersion] =
     useState<CertificationVersion>("2024");
@@ -322,6 +326,52 @@ export function PropertiesPanel() {
                 {/* Insight */}
                 <p className="text-[10px] text-muted-foreground/80 italic leading-relaxed border-t pt-2 mt-1">
                   {calibration.insight}
+                </p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+
+        {/* ── Section 2b: Weather (conditional — needs KMA data) ───────── */}
+        {weather.data && (
+          <AccordionItem value="weather">
+            <AccordionTrigger className="text-xs font-semibold py-3">
+              {isKo ? "기상 데이터" : "Weather Data"}
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {isKo ? "난방도일 (HDD 18.3°C)" : "Heating Degree Days (18.3°C)"}
+                  </span>
+                  <span className="font-semibold tabular-nums">
+                    {weather.data.hdd.toFixed(0)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {isKo ? "냉방도일 (CDD 24°C)" : "Cooling Degree Days (24°C)"}
+                  </span>
+                  <span className="font-semibold tabular-nums">
+                    {weather.data.cdd.toFixed(0)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">
+                    {isKo ? "연평균 기온" : "Mean Temperature"}
+                  </span>
+                  <span className="font-medium tabular-nums">
+                    {weather.data.avgTemp.toFixed(1)}°C
+                  </span>
+                </div>
+                <p className="text-[10px] text-muted-foreground/80 border-t pt-2 mt-1">
+                  {isKo
+                    ? `${weather.data.year}년 KMA ASOS 서울 관측 기준`
+                    : `${weather.data.year} KMA ASOS observations (Seoul station)`}
+                  {weather.data.dataCompleteness < 0.9 &&
+                    (isKo
+                      ? ` · 데이터 완전성 ${(weather.data.dataCompleteness * 100).toFixed(0)}% — 신뢰도 낮음`
+                      : ` · ${(weather.data.dataCompleteness * 100).toFixed(0)}% complete — low reliability`)}
                 </p>
               </div>
             </AccordionContent>
