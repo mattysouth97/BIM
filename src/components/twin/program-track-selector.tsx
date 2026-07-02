@@ -27,9 +27,9 @@ export function ProgramTrackSelector({ value, onChange }: ProgramTrackSelectorPr
       className={cn(
         "pointer-events-auto absolute left-1/2 -translate-x-1/2 top-[76px] z-20",
         "flex items-center gap-1.5 px-2.5 py-1.5",
-        "rounded-sm border border-[#24282d]/80",
-        "bg-[#0b0d10]/88 backdrop-blur-md",
-        "shadow-[0_12px_40px_-24px_rgba(0,0,0,0.9)]",
+        "rounded-lg border border-border",
+        "bg-card/95 backdrop-blur-md",
+        "shadow-md",
         "select-none",
         "animate-[twin-slide-in_560ms_cubic-bezier(0.2,0.7,0.2,1)_both]",
       )}
@@ -37,7 +37,7 @@ export function ProgramTrackSelector({ value, onChange }: ProgramTrackSelectorPr
       role="radiogroup"
       aria-label="그린리모델링 지원 트랙"
     >
-      <span className="text-[9px] tracking-[0.18em] uppercase text-zinc-500 font-mono pr-1.5 border-r border-[#24282d]/80">
+      <span className="text-[10px] font-medium text-muted-foreground pr-2 border-r border-border">
         그린리모델링
       </span>
       {TRACK_OPTIONS.map(({ track, label, detail }) => {
@@ -50,10 +50,10 @@ export function ProgramTrackSelector({ value, onChange }: ProgramTrackSelectorPr
             aria-checked={active}
             onClick={() => onChange(track)}
             className={cn(
-              "flex flex-col items-start px-2 py-0.5 rounded-sm transition-colors",
+              "flex flex-col items-start px-2 py-0.5 rounded-md transition-colors",
               active
-                ? "bg-[#8de6f3]/12 text-[#8de6f3] border border-[#8de6f3]/40"
-                : "text-zinc-400 border border-transparent hover:text-zinc-100 hover:bg-[#15171c]",
+                ? "bg-cyan-50 text-cyan-700 border border-cyan-300 dark:bg-cyan-950 dark:text-cyan-300 dark:border-cyan-800"
+                : "text-muted-foreground border border-transparent hover:text-foreground hover:bg-muted",
             )}
           >
             <span className="text-[10px] font-medium leading-tight whitespace-nowrap">
@@ -61,8 +61,8 @@ export function ProgramTrackSelector({ value, onChange }: ProgramTrackSelectorPr
             </span>
             <span
               className={cn(
-                "text-[8px] font-mono leading-tight whitespace-nowrap",
-                active ? "text-[#8de6f3]/70" : "text-zinc-600",
+                "text-[8px] tabular-nums leading-tight whitespace-nowrap",
+                active ? "text-cyan-600 dark:text-cyan-400" : "text-muted-foreground/60",
               )}
             >
               {detail}

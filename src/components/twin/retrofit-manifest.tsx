@@ -5,6 +5,8 @@
 // (envelope / hvac / lighting / renewable). Each row shows CAPEX, NPV,
 // IRR, discounted payback, and a "selected" marker when the measure is
 // part of the knapsack-optimal subset within the user's CAPEX budget.
+// D₄: white-card Korean-label aesthetic + KICT 2024 cost-basis footnote
+// (dossier §5 action item).
 
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -21,24 +23,24 @@ const CATEGORY_META: Record<
   { label: string; accent: string; description: string }
 > = {
   envelope: {
-    label: "Envelope",
-    accent: "#8de6f3",
-    description: "Walls · Roof · Windows · Floor",
+    label: "외피 단열",
+    accent: "#ea580c", // orange-600 — matches SceneOutliner category hues
+    description: "벽체 · 지붕 · 창호 · 바닥",
   },
   hvac: {
     label: "HVAC",
-    accent: "#fcd58a",
-    description: "Heating · Cooling · Ventilation",
+    accent: "#2563eb", // blue-600
+    description: "난방 · 냉방 · 환기",
   },
   lighting: {
-    label: "Lighting",
-    accent: "#c2f58a",
-    description: "LED · Smart controls",
+    label: "조명",
+    accent: "#d97706", // amber-600
+    description: "LED · 스마트 제어",
   },
   renewable: {
-    label: "Renewable",
-    accent: "#f4a765",
-    description: "Solar PV · Roof potential",
+    label: "신재생",
+    accent: "#16a34a", // green-600
+    description: "태양광 · 지붕 잠재량",
   },
 };
 
@@ -63,7 +65,7 @@ function formatPercent(n: number | null | undefined, decimals = 1): string {
 
 function formatYears(years: number | undefined): string {
   if (years === undefined || !Number.isFinite(years)) return "—";
-  return `${years.toFixed(1)}y`;
+  return `${years.toFixed(1)}년`;
 }
 
 export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProps) {
@@ -116,37 +118,34 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
       className={cn(
         "pointer-events-auto absolute right-4 top-20 bottom-28 z-20 w-[380px]",
         "flex flex-col",
-        "rounded-sm border border-[#24282d]/80",
-        "bg-[#0b0d10]/88 backdrop-blur-md",
-        "shadow-[0_12px_48px_-24px_rgba(0,0,0,0.9)]",
+        "rounded-lg border border-border",
+        "bg-card/95 backdrop-blur-md",
+        "shadow-lg",
         "select-none overflow-hidden",
         "animate-[twin-slide-in_560ms_cubic-bezier(0.2,0.7,0.2,1)_both]",
       )}
       data-twin-feature-vector
     >
-      <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-[#24282d]/70">
+      <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-border">
         <div className="flex flex-col leading-tight">
-          <span className="text-[9px] tracking-[0.22em] uppercase text-zinc-500 font-mono">
-            retrofit manifest
+          <span className="text-[10px] font-medium text-muted-foreground">
+            개선 후보 목록
           </span>
-          <span
-            className="text-[15px] font-semibold text-zinc-50 tracking-tight"
-            style={{ fontFamily: "var(--font-display-release)" }}
-          >
-            {measures.length} candidate measures
+          <span className="text-[15px] font-semibold text-foreground tracking-tight">
+            후보 {measures.length}개
           </span>
         </div>
-        <span className="text-[9px] tracking-[0.14em] font-mono text-[#8de6f3] uppercase">
-          {selectedIds.size} selected
+        <span className="text-[10px] font-semibold text-cyan-700 dark:text-cyan-400">
+          {selectedIds.size}개 예산 내 선택
         </span>
       </div>
 
-      <div className="flex items-stretch border-b border-[#24282d]/70 font-mono">
+      <div className="flex items-stretch border-b border-border">
         <GroupTab
-          label="All"
+          label="전체"
           active={activeGroup === "all"}
           onClick={() => setActiveGroup("all")}
-          accent="#d4d7dc"
+          accent="#64748b"
           count={counts.all}
         />
         {CATEGORY_ORDER.map((g) => (
@@ -175,12 +174,12 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
                     style={{ backgroundColor: meta.accent }}
                   />
                   <span
-                    className="text-[10px] font-semibold tracking-[0.18em] uppercase"
+                    className="text-[10px] font-semibold"
                     style={{ color: meta.accent }}
                   >
                     {meta.label}
                   </span>
-                  <span className="text-[9px] font-mono text-zinc-500 ml-auto">
+                  <span className="text-[9px] text-muted-foreground ml-auto">
                     {meta.description}
                   </span>
                 </header>
@@ -195,20 +194,20 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
                       <li
                         key={m.id}
                         className={cn(
-                          "relative px-2 py-1.5 rounded-sm border transition-colors",
+                          "relative px-2 py-1.5 rounded-md border transition-colors",
                           isSelected
-                            ? "border-[#8de6f3]/35 bg-[#8de6f3]/[0.04]"
-                            : "border-transparent hover:bg-[#12161a]",
+                            ? "border-cyan-300 bg-cyan-50/60 dark:border-cyan-800 dark:bg-cyan-950/40"
+                            : "border-transparent hover:bg-muted/60",
                         )}
                       >
                         {fin && (
                           <div
-                            className="absolute inset-y-0 left-0 rounded-sm opacity-30 pointer-events-none"
+                            className="absolute inset-y-0 left-0 rounded-md opacity-20 pointer-events-none"
                             style={{
                               width: `${npvFraction * 100}%`,
                               background: `linear-gradient(90deg, ${
-                                npv >= 0 ? meta.accent : "#f4a765"
-                              }28 0%, transparent 100%)`,
+                                npv >= 0 ? meta.accent : "#ea580c"
+                              }40 0%, transparent 100%)`,
                             }}
                             aria-hidden="true"
                           />
@@ -219,40 +218,40 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
                             <span
                               className={cn(
                                 "shrink-0 inline-block w-[6px] h-[6px] rounded-sm",
-                                isSelected ? "bg-[#8de6f3]" : "bg-[#33393f]",
+                                isSelected ? "bg-cyan-600" : "bg-border",
                               )}
-                              title={isSelected ? "Selected within budget" : "Not selected"}
+                              title={isSelected ? "예산 내 선택됨" : "미선택"}
                             />
                             <span
-                              className="text-[12px] text-zinc-100 truncate"
+                              className="text-[12px] text-foreground truncate"
                               title={m.description}
                             >
                               {m.name}
                             </span>
                           </div>
-                          <span className="text-[10.5px] font-mono tabular-nums text-zinc-300 shrink-0">
+                          <span className="text-[10.5px] tabular-nums text-foreground/70 shrink-0">
                             ₩{formatKrw(m.estimatedCost)}
                           </span>
                         </div>
 
-                        <div className="relative grid grid-cols-3 gap-2 mt-1 text-[10px] font-mono tabular-nums text-zinc-400">
+                        <div className="relative grid grid-cols-3 gap-2 mt-1 text-[10px] tabular-nums text-muted-foreground">
                           <span>
                             NPV{" "}
                             <span
                               className={cn(
-                                "tabular-nums",
-                                npv >= 0 ? "text-[#8de6f3]" : "text-[#f4a765]",
+                                "tabular-nums font-medium",
+                                npv >= 0 ? "text-emerald-600" : "text-orange-600",
                               )}
                             >
                               ₩{formatKrw(npv)}
                             </span>
                           </span>
                           <span>
-                            IRR <span className="text-zinc-200">{formatPercent(fin?.irr, 0)}</span>
+                            IRR <span className="text-foreground/80">{formatPercent(fin?.irr, 0)}</span>
                           </span>
                           <span className="text-right">
-                            payback{" "}
-                            <span className="text-zinc-200">{formatYears(fin?.discountedPayback)}</span>
+                            회수{" "}
+                            <span className="text-foreground/80">{formatYears(fin?.discountedPayback)}</span>
                           </span>
                         </div>
                       </li>
@@ -265,21 +264,25 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
         )}
 
         {measures.length === 0 && (
-          <div className="px-4 py-6 text-[11px] text-zinc-500 font-mono text-center">
-            No retrofit measures detected for this building.<br />
-            Material data may not be loaded yet.
+          <div className="px-4 py-6 text-[11px] text-muted-foreground text-center">
+            분석 가능한 개선 후보가 없습니다.
+            <br />
+            자재 데이터가 아직 로드되지 않았을 수 있습니다.
           </div>
         )}
       </div>
 
-      <div className="px-4 py-2 border-t border-[#24282d]/70 bg-[#0a0c0f]/70">
-        <div className="flex items-center justify-between text-[9px] font-mono text-zinc-500 tracking-[0.14em] uppercase">
-          <span>NPV bar · gain-normalised</span>
-          <span className="flex items-center gap-1.5 text-zinc-400">
-            <span className="inline-block w-1.5 h-1.5 rounded-sm bg-[#8de6f3]" />
-            <span>selected</span>
+      <div className="px-4 py-2 border-t border-border bg-muted/40">
+        <div className="flex items-center justify-between text-[9px] text-muted-foreground">
+          <span>NPV 막대 · 최대값 대비</span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-1.5 h-1.5 rounded-sm bg-cyan-600" />
+            <span>예산 내 선택</span>
           </span>
         </div>
+        <p className="text-[9px] text-muted-foreground/70 mt-0.5">
+          단가는 KICT 2024 기준 추정치로, 실제 입찰가와 다를 수 있습니다.
+        </p>
       </div>
     </div>
   );
@@ -298,17 +301,19 @@ function GroupTab({ label, active, onClick, accent, count }: GroupTabProps) {
       type="button"
       onClick={onClick}
       className={cn(
-        "flex-1 flex flex-col items-center gap-0.5 py-2 px-1 border-r border-[#24282d]/70 last:border-r-0",
-        "transition-colors text-[10px] tracking-[0.12em] uppercase",
-        active ? "bg-[#12161a] text-zinc-50" : "text-zinc-500 hover:text-zinc-300",
+        "flex-1 flex flex-col items-center gap-0.5 py-2 px-1 border-r border-border last:border-r-0",
+        "transition-colors text-[10px]",
+        active
+          ? "bg-muted text-foreground font-semibold"
+          : "text-muted-foreground hover:text-foreground",
       )}
     >
       <span
         className="h-[2px] w-6 rounded-full transition-opacity"
         style={{ backgroundColor: accent, opacity: active ? 1 : 0.25 }}
       />
-      <span>{label}</span>
-      <span className="text-[9px] tabular-nums text-zinc-500 font-mono">{count}</span>
+      <span className="whitespace-nowrap">{label}</span>
+      <span className="text-[9px] tabular-nums text-muted-foreground">{count}</span>
     </button>
   );
 }

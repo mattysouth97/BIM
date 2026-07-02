@@ -2,8 +2,8 @@
 
 // src/components/twin/capex-input.tsx
 // Bottom-center CAPEX budget input. Slider snaps to ₩100M tiers up to ₩2B,
-// with manual numeric input for precise values. Replaces the geometry-source
-// toggle that sat in the same position in the v7 layout.
+// with manual numeric input for precise values. D₄: white-card
+// slider-with-readout aesthetic on semantic tokens.
 
 import { useId } from "react";
 import { cn } from "@/lib/utils";
@@ -60,23 +60,20 @@ export function CapexInput({
       className={cn(
         "pointer-events-auto absolute left-1/2 -translate-x-1/2 bottom-4 z-20",
         "flex items-stretch gap-4 px-5 py-3",
-        "rounded-sm border border-[#24282d]/80",
-        "bg-[#0b0d10]/90 backdrop-blur-md",
-        "shadow-[0_12px_40px_-20px_rgba(0,0,0,0.85)]",
+        "rounded-lg border border-border",
+        "bg-card/95 backdrop-blur-md",
+        "shadow-lg",
         "select-none",
         "animate-[twin-slide-up_520ms_cubic-bezier(0.2,0.7,0.2,1)_both]",
       )}
       data-twin-capex-input
     >
       {/* Label column */}
-      <div className="flex flex-col items-start justify-center pr-4 border-r border-[#24282d]/80 min-w-[100px]">
-        <span className="text-[9px] tracking-[0.22em] uppercase text-zinc-500 font-mono">
-          CAPEX budget
-        </span>
-        <span
-          className="text-[18px] font-semibold tabular-nums text-zinc-50 leading-tight"
-          style={{ fontFamily: "var(--font-display-release)" }}
-        >
+      <div className="flex flex-col items-start justify-center pr-4 border-r border-border min-w-[100px]">
+        <label htmlFor={sliderId} className="text-[10px] font-medium text-muted-foreground">
+          투자 예산 (CAPEX)
+        </label>
+        <span className="text-[18px] font-semibold tabular-nums text-foreground leading-tight">
           ₩{formatKrw(value)}
         </span>
       </div>
@@ -93,29 +90,29 @@ export function CapexInput({
           onChange={(e) => onChange(Number(e.target.value))}
           className={cn(
             "w-full h-1 cursor-pointer appearance-none",
-            "bg-[#24282d] rounded-full outline-none",
+            "bg-border rounded-full outline-none",
             "[&::-webkit-slider-thumb]:appearance-none",
-            "[&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3",
+            "[&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5",
             "[&::-webkit-slider-thumb]:rounded-full",
-            "[&::-webkit-slider-thumb]:bg-[#8de6f3]",
-            "[&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(141,230,243,0.7)]",
+            "[&::-webkit-slider-thumb]:bg-cyan-600",
+            "[&::-webkit-slider-thumb]:shadow-sm",
             "[&::-webkit-slider-thumb]:cursor-pointer",
-            "[&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3",
+            "[&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5",
             "[&::-moz-range-thumb]:rounded-full",
-            "[&::-moz-range-thumb]:bg-[#8de6f3] [&::-moz-range-thumb]:border-none",
+            "[&::-moz-range-thumb]:bg-cyan-600 [&::-moz-range-thumb]:border-none",
           )}
         />
-        <div className="flex items-center justify-between text-[9px] font-mono text-zinc-500">
+        <div className="flex items-center justify-between text-[9px] tabular-nums">
           {tickMarks.map((tick) => (
             <button
               key={tick}
               type="button"
               onClick={() => onChange(tick)}
               className={cn(
-                "px-1 py-0.5 rounded-sm transition-colors hover:text-zinc-200",
+                "px-1 py-0.5 rounded-sm transition-colors hover:text-foreground",
                 Math.abs(value - tick) < step / 2
-                  ? "text-[#8de6f3]"
-                  : "text-zinc-500",
+                  ? "text-cyan-600 font-semibold"
+                  : "text-muted-foreground",
               )}
             >
               {formatKrw(tick)}
@@ -125,9 +122,9 @@ export function CapexInput({
       </div>
 
       {/* Numeric input + summary column */}
-      <div className="flex flex-col items-end justify-center gap-1 pl-4 border-l border-[#24282d]/80 min-w-[140px]">
-        <label htmlFor={numericId} className="text-[9px] tracking-[0.18em] uppercase text-zinc-500 font-mono">
-          exact (만 KRW)
+      <div className="flex flex-col items-end justify-center gap-1 pl-4 border-l border-border min-w-[140px]">
+        <label htmlFor={numericId} className="text-[10px] font-medium text-muted-foreground">
+          직접 입력 (만원)
         </label>
         <input
           id={numericId}
@@ -141,13 +138,13 @@ export function CapexInput({
             if (Number.isFinite(v) && v >= 0) onChange(v * KRW_MAN);
           }}
           className={cn(
-            "w-full text-right text-[12px] font-mono tabular-nums text-zinc-100",
-            "bg-[#15171c] border border-[#24282d] rounded-sm px-2 py-0.5",
-            "focus:border-[#8de6f3] focus:outline-none",
+            "w-full text-right text-[12px] tabular-nums text-foreground",
+            "bg-background border border-input rounded-md px-2 py-0.5",
+            "focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring",
           )}
         />
         {summary && (
-          <span className="text-[9px] font-mono text-zinc-400 truncate max-w-full">
+          <span className="text-[9px] text-muted-foreground truncate max-w-full">
             {summary}
           </span>
         )}

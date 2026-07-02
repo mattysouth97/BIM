@@ -1,10 +1,11 @@
 "use client";
 
 // src/components/twin/scenario-rail.tsx
-// Top masthead — replaces the v7 "release rail." Shows the active investment
-// scenario at-a-glance: budget, NPV, IRR, discounted payback, the count of
-// selected measures, and the live discount-rate / horizon assumptions.
-// Editorial layout preserved from the v7 release rail.
+// Top masthead. Shows the active investment scenario at-a-glance: budget,
+// NPV, discounted payback, effective CAPEX, horizon, and the live energy
+// escalation assumptions. D₄: white-card Korean-label aesthetic (semantic
+// tokens so the theme toggle keeps working) replacing the dark editorial
+// rail.
 
 import { cn } from "@/lib/utils";
 import type { BudgetSelection, EconomicAssumptions } from "@/lib/retrofit/economic-model";
@@ -35,7 +36,7 @@ function formatPercent(n: number, decimals = 1): string {
 
 function formatYears(years: number): string {
   if (!Number.isFinite(years)) return "—";
-  return `${years.toFixed(1)}yr`;
+  return `${years.toFixed(1)}년`;
 }
 
 export function ScenarioRail({
@@ -56,76 +57,64 @@ export function ScenarioRail({
       className={cn(
         "pointer-events-auto absolute left-4 right-4 top-2 z-20",
         "flex items-stretch",
-        "rounded-sm border border-[#24282d]/80",
-        "bg-[#0b0d10]/88 backdrop-blur-md",
-        "shadow-[0_12px_48px_-24px_rgba(0,0,0,0.9)]",
+        "rounded-lg border border-border",
+        "bg-card/95 backdrop-blur-md",
+        "shadow-lg",
         "overflow-hidden select-none",
         "animate-[twin-slide-in_560ms_cubic-bezier(0.2,0.7,0.2,1)_both]",
       )}
       data-twin-rail
     >
-      <div className="flex flex-col justify-center px-5 py-2.5 border-r border-[#24282d]/80 min-w-[260px]">
-        <span className="text-[9px] tracking-[0.22em] uppercase text-[#8de6f3] font-mono">
-          investment scenario
+      <div className="flex flex-col justify-center px-5 py-2.5 border-r border-border min-w-[240px]">
+        <span className="text-[10px] font-medium text-muted-foreground">
+          투자 시나리오
         </span>
-        <span
-          className="text-[18px] font-semibold tracking-tight text-zinc-50 leading-tight"
-          style={{ fontFamily: "var(--font-display-release)" }}
-        >
-          CAPEX → ROI · live
+        <span className="text-[16px] font-semibold tracking-tight text-foreground leading-tight">
+          CAPEX → ROI 시뮬레이션
         </span>
-        <span className="text-[10px] font-mono text-zinc-500 tracking-wide">
-          {selectedCount} of {totalCandidateMeasures} measures · {formatPercent(utilisation, 0)} of ₩{(capexBudgetKrw / KRW_EOK).toFixed(1)}억 used
+        <span className="text-[10px] text-muted-foreground tabular-nums">
+          {selectedCount}/{totalCandidateMeasures}개 선택 · 예산 ₩
+          {(capexBudgetKrw / KRW_EOK).toFixed(1)}억 중 {formatPercent(utilisation, 0)} 사용
         </span>
       </div>
 
-      <Cell label="NPV" sublabel={`@ ${formatPercent(assumptions.discountRate, 0)} discount`}>
+      <Cell label="NPV" sublabel={`할인율 ${formatPercent(assumptions.discountRate, 0)}`}>
         <span
           className={cn(
-            "text-[20px] font-semibold tabular-nums tracking-tight",
-            npvPositive ? "text-[#8de6f3]" : "text-[#f4a765]",
+            "text-[19px] font-semibold tabular-nums tracking-tight",
+            npvPositive ? "text-emerald-600" : "text-orange-600",
           )}
-          style={{ fontFamily: "var(--font-display-release)" }}
         >
           {formatKrwBig(npv)}
         </span>
       </Cell>
 
-      <Cell label="payback" sublabel="discounted">
-        <span
-          className="text-[20px] font-semibold tabular-nums tracking-tight text-zinc-50"
-          style={{ fontFamily: "var(--font-display-release)" }}
-        >
+      <Cell label="회수기간" sublabel="할인 기준">
+        <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
           {formatYears(payback)}
         </span>
       </Cell>
 
-      <Cell label="effective CAPEX" sublabel="post-subsidy">
-        <span
-          className="text-[20px] font-semibold tabular-nums tracking-tight text-zinc-50"
-          style={{ fontFamily: "var(--font-display-release)" }}
-        >
+      <Cell label="실효 투자비" sublabel="보조금 반영">
+        <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
           {formatKrwBig(effectiveCapex)}
         </span>
       </Cell>
 
-      <Cell label="horizon" sublabel="DCF window">
-        <span
-          className="text-[20px] font-semibold tabular-nums tracking-tight text-zinc-50"
-          style={{ fontFamily: "var(--font-display-release)" }}
-        >
-          {assumptions.analysisHorizonYears}yr
+      <Cell label="분석 기간" sublabel="DCF 기준">
+        <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
+          {assumptions.analysisHorizonYears}년
         </span>
       </Cell>
 
-      <div className="flex flex-col justify-center px-4 py-2.5 min-w-[140px]">
-        <span className="text-[9px] tracking-[0.18em] uppercase text-zinc-500 font-mono">
-          energy escalation
+      <div className="flex flex-col justify-center px-4 py-2.5 min-w-[132px]">
+        <span className="text-[10px] font-medium text-muted-foreground">
+          에너지 가격 상승률
         </span>
-        <div className="text-[10px] font-mono tabular-nums text-zinc-300 leading-tight pt-0.5">
-          <div>elec {formatPercent(assumptions.energyEscalation.electricity, 1)}</div>
-          <div>gas {formatPercent(assumptions.energyEscalation.gas, 1)}</div>
-          <div>district {formatPercent(assumptions.energyEscalation.districtHeating, 1)}</div>
+        <div className="text-[10px] tabular-nums text-foreground/80 leading-tight pt-0.5">
+          <div>전기 {formatPercent(assumptions.energyEscalation.electricity, 1)}</div>
+          <div>가스 {formatPercent(assumptions.energyEscalation.gas, 1)}</div>
+          <div>지역난방 {formatPercent(assumptions.energyEscalation.districtHeating, 1)}</div>
         </div>
       </div>
     </div>
@@ -140,13 +129,13 @@ interface CellProps {
 
 function Cell({ label, sublabel, children }: CellProps) {
   return (
-    <div className="flex flex-col justify-center px-5 py-2.5 border-r border-[#24282d]/80 min-w-[150px]">
-      <span className="text-[9px] tracking-[0.22em] uppercase text-zinc-500 font-mono leading-none mb-1">
+    <div className="flex flex-col justify-center px-5 py-2.5 border-r border-border min-w-[130px]">
+      <span className="text-[10px] font-medium text-muted-foreground leading-none mb-1">
         {label}
       </span>
       {children}
       {sublabel && (
-        <span className="text-[9px] font-mono text-zinc-500 tracking-wide mt-0.5">
+        <span className="text-[9px] text-muted-foreground/70 mt-0.5">
           {sublabel}
         </span>
       )}

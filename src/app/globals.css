@@ -158,7 +158,7 @@
   }
 }
 
-/* Custom scrollbar for the feature-vector panel (webkit). */
+/* Custom scrollbar for the retrofit-manifest panel (webkit). */
 .twin-scroll::-webkit-scrollbar {
   width: 6px;
 }
@@ -166,19 +166,9 @@
   background: transparent;
 }
 .twin-scroll::-webkit-scrollbar-thumb {
-  background: rgba(141, 230, 243, 0.18);
+  background: var(--border);
   border-radius: 3px;
 }
 .twin-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(141, 230, 243, 0.35);
-}
-
-/* Hairline calibration-grid backdrop for overlay panels. */
-[data-twin-rail],
-[data-twin-prediction],
-[data-twin-feature-vector] {
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 48px 48px;
+  background: var(--muted-foreground);
 }
