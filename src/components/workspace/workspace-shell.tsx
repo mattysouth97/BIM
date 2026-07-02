@@ -4,7 +4,6 @@ import React from "react";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useHydration } from "@/hooks/use-hydration";
-import { useUndoShortcut } from "@/hooks/use-undo-shortcut";
 import { useOnboardingTour } from "@/hooks/use-onboarding-tour";
 import { useEditorKeybinds } from "@/hooks/use-editor-keybinds";
 import { FloatingPanel } from "./floating-panel";
@@ -23,7 +22,6 @@ interface WorkspaceShellProps {
 
 export function WorkspaceShell({ children }: WorkspaceShellProps) {
   const hydrated = useHydration();
-  useUndoShortcut();
   useOnboardingTour();
   useEditorKeybinds();
 
