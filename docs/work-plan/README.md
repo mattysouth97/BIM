@@ -70,9 +70,9 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | [P2-15](./items/P2-15-i18n-numeric-idiom-and-remaining-isko.md) | i18n tail — localize Korean numeric idiom (억/만/년) + migrate remaining isKo sites (P2-06 follow-up) | ux | M | UC-01, 05–08 | ⬜ |
 | [P2-07](./items/P2-07-persistence-hardening.md) | Harden persisted stores — versioning, API-key policy, building-scoped annotations | state | M | UC-04, 05, 06 | ✅ |
 | [P2-16](./items/P2-16-annotation-scope-and-stage-recovery.md) | Building-scope persisted annotations + workflow stage recovery after reload (P2-07 follow-up) | state | M | UC-04, UC-05 | ⬜ |
-| [P2-08](./items/P2-08-dead-code-doc-drift.md) | Delete dead code, fix doc drift, remove stray artifacts | infra | M | UC-05 | ⬜ |
-| [P2-09](./items/P2-09-e2e-rewrite.md) | Rewrite e2e suite around the real user journey with mocked APIs | infra | M | UC-01, 03, 05, 08 | ⬜ |
-| [P2-10](./items/P2-10-financial-model-refinements.md) | Financial model refinements — loan-term buy-down, rate honesty, solar fixes, sourced costs | retrofit | L | UC-06, 07, 08 | ⬜ |
+| [P2-08](./items/P2-08-dead-code-doc-drift.md) | Delete dead code, fix doc drift, remove stray artifacts | infra | M | UC-05 | ✅ |
+| [P2-09](./items/P2-09-e2e-rewrite.md) | Rewrite e2e suite around the real user journey with mocked APIs | infra | M | UC-01, 03, 05, 08 | ✅ |
+| [P2-10](./items/P2-10-financial-model-refinements.md) | Financial model refinements — loan-term buy-down, rate honesty, solar fixes, sourced costs | retrofit | L | UC-06, 07, 08 | ✅ |
 | [P2-11](./items/P2-11-geometric-fidelity-data-correctness.md) | Geometric fidelity — data correctness fixes (parcels, curves, slabs, shadows, AA) | viewer | M | UC-04, UC-05 | ⬜ |
 | [P2-12](./items/P2-12-geometric-fidelity-dead-features.md) | Geometric fidelity — wire dead fidelity features (PBR, slab detail, calibration registry, honest badges) | viewer | L | UC-05 | ⬜ |
 | [P2-13](./items/P2-13-geometric-fidelity-ifc-path-validation.md) | Geometric fidelity — IFC high-accuracy path, unified slab pipeline, validation loop | viewer | L | UC-04, UC-05 | ⬜ |
