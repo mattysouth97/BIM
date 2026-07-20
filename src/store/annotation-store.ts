@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { versionedMigrate } from "./persist-migrate";
 import { persist } from "zustand/middleware";
 import type {
   AnnotationInstance,
@@ -103,6 +104,8 @@ export const useAnnotationStore = create<AnnotationState>()(
     }),
     {
       name: "bim-annotation-store",
+      version: 1, // P2-07: initial version stamp
+      migrate: versionedMigrate,
       // Only persist the annotations array — UI selection state is ephemeral
       partialize: (state) => ({
         annotations: state.annotations,

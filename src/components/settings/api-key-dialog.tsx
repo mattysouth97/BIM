@@ -161,6 +161,13 @@ export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
             </div>
           )}
 
+          {/* P2-07: explicit API-key storage policy. */}
+          <p className="text-xs text-muted-foreground">
+            {isKo
+              ? "API 키는 이 브라우저의 로컬 저장소(localStorage)에만 저장되며 서버로 전송·기록되지 않습니다. 공용 컴퓨터에서는 사용 후 삭제하세요."
+              : "Your API key is stored only in this browser's localStorage — never sent to or logged by our server. Clear it after use on shared computers."}
+          </p>
+
           {/* Action buttons */}
           <div className="flex gap-2">
             <Button

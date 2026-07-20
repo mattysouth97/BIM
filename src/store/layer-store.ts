@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { versionedMigrate } from "./persist-migrate";
 import { persist } from "zustand/middleware";
 import type { LayerId, MepSubLayerId } from "@/lib/layers/types";
 import { ALL_LAYER_IDS, MEP_SUB_IDS } from "@/lib/layers/types";
@@ -104,6 +105,8 @@ export const useLayerStore = create<LayerState>()(
     }),
     {
       name: "bim-layer-store",
+      version: 1, // P2-07: initial version stamp
+      migrate: versionedMigrate,
       partialize: (s) => ({
         mepSubVisibility: s.mepSubVisibility,
       }),

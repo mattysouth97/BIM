@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { versionedMigrate } from "./persist-migrate";
 import { persist } from "zustand/middleware";
 
 interface AppState {
@@ -49,6 +50,8 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "korea-building-info-storage",
+      version: 1, // P2-07: initial version stamp
+      migrate: versionedMigrate,
       partialize: (state) => ({
         apiKey: state.apiKey,
         language: state.language,

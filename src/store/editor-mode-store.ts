@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { versionedMigrate } from "./persist-migrate";
 import { persist } from "zustand/middleware";
 
 // ---------------------------------------------------------------------------
@@ -92,6 +93,8 @@ export const useEditorModeStore = create<EditorModeState>()(
     }),
     {
       name: "editor-mode-store",
+      version: 1, // P2-07: initial version stamp
+      migrate: versionedMigrate,
       // Only persist currentMode and perObjectModeMemory.
       // previousMode is transient — no need to restore across sessions.
       partialize: (state) => ({

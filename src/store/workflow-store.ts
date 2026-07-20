@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { versionedMigrate } from "./persist-migrate";
 import { persist } from "zustand/middleware";
 import {
   WorkflowStage,
@@ -94,6 +95,8 @@ export const useWorkflowStore = create<WorkflowState>()(
     }),
     {
       name: "bim-workflow-state",
+      version: 1, // P2-07: initial version stamp
+      migrate: versionedMigrate,
       partialize: (state) => ({
         stage: state.stage,
         completion: state.completion,

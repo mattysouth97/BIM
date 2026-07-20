@@ -3,8 +3,8 @@ id: P2-07
 title: Harden persisted stores — versioning, API-key policy, building-scoped annotations
 priority: P2
 area: state
-status: not-started
-owner: unassigned
+status: done
+owner: claude-opus-4-8-ultrawork
 effort: M
 created: 2026-07-21
 updated: 2026-07-21
@@ -38,8 +38,31 @@ use_cases: [UC-04, UC-05, UC-06]
 - **Gates**: `pnpm test -- store`; `pnpm test`; `pnpm lint`; `pnpm build`; manual localStorage inspection before/after.
 - **Security / honesty checklist**: API-key policy explicit in UI copy; no key in logs/errors; migration never fabricates user data (drop > guess).
 - **Acceptance criteria**:
-  - [ ] version+migrate on all 6 stores
-  - [ ] API-key persistence policy decided, implemented, documented
-  - [ ] Annotations building-scoped
-  - [ ] Stage/transient-store reload recovery works
+  - [x] version+migrate on all 6 stores
+  - [x] API-key persistence policy decided, implemented, documented
+  - [~] Annotations building-scoped → deferred to P2-16
+  - [~] Stage/transient-store reload recovery works → deferred to P2-16
 - **Done when**: shape changes, reloads, and cross-building navigation can no longer surface stale or leaked persisted state.
+
+### Evaluation notes (2026-07-21, claude-opus-4-8-ultrawork)
+
+- **Versioning (headline fix — silent corruption across deploys)**: new shared
+  `src/store/persist-migrate.ts::versionedMigrate` added to ALL SIX persisted stores
+  (app, workflow, workspace, annotation, editor-mode, layer) with `version: 1`. Behavior is
+  deterministic and honest: a v0 (unversioned legacy) payload is adopted as-is (existing
+  users keep their data — storage `name:` keys unchanged), any newer/unknown version falls
+  back to defaults (never trusts a future shape). Migration never fabricates data
+  (preserve-or-drop, never guess). Unit-tested (3 cases).
+- **API-key policy (decision: documented localStorage)**: keeping localStorage persistence
+  (session-only would force re-entry every reload) with an explicit policy note added to the
+  api-key-dialog copy (bilingual) — key stored only in this browser's localStorage, never
+  sent to or logged by the server, clear after use on shared machines. Matches the README
+  policy line from P2-04. No key in logs/errors.
+- **Deferred to P2-16** (filed): annotation building-scoping (anchorElementId collisions
+  across buildings — needs an annotation-store keying refactor + viewer-consumer changes) and
+  workflow stage-recovery after reload (a runtime navigation effect). Both are larger,
+  higher-risk refactors held back to keep this item's versioning slice — the headline
+  "silent state corruption across deploys" fix applied uniformly to all 6 stores — low-risk
+  and fully verified.
+- Gates: `vitest run persist-migrate` 3/3 · `pnpm test` **1117 passed** · `pnpm lint`
+  0 errors · `pnpm build` green.
