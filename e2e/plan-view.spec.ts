@@ -1,52 +1,54 @@
 import { test, expect } from "@playwright/test";
+import { TITLE_RESPONSE, EMPTY_LEDGER } from "./fixtures/ledger";
 
-// Plan view E2E tests — verify DOM-level toggle behavior.
-// WebGL/Three.js camera state cannot be tested in headless Playwright;
-// unit tests in procedural/__tests__ cover 3D logic.
+// P2-09 — the old plan-view spec had an always-true `else` branch: when the
+// viewer didn't render (which is ALWAYS, given the invalid test-id it used) it
+// fell through to `expect(body).toBeVisible()` and passed. That branch is gone.
+//
+// The plan/3D toggle is WebGL-dependent: it only exists once the R3F canvas
+// mounts, and headless software GL does not reliably mount an R3F scene in CI.
+// Rather than hide that behind an always-true branch, this is an EXPLICIT skip
+// with a reason (the 3D/plan geometry logic is covered by unit tests in
+// src/lib/procedural/__tests__). Remove the skip to run it locally with a GPU.
+
+function mockLedger(page: import("@playwright/test").Page) {
+  return Promise.all([
+    page.route("**/api/bldrgst/title**", (route) =>
+      route.fulfill({ contentType: "application/json", body: JSON.stringify(TITLE_RESPONSE) }),
+    ),
+    ...["recap", "floors", "areas", "basis", "jijugu"].map((ep) =>
+      page.route(`**/api/bldrgst/${ep}**`, (route) =>
+        route.fulfill({ contentType: "application/json", body: JSON.stringify(EMPTY_LEDGER) }),
+      ),
+    ),
+    page.route("**/api/vworld/footprint**", (route) =>
+      route.fulfill({ contentType: "application/json", body: JSON.stringify({ polygon: null, error: null }) }),
+    ),
+  ]);
+}
 
 test.describe("Plan View", () => {
-  test("plan view toggle button exists on building page", async ({ page }) => {
-    await page.goto("/building/test-id");
-    await page.waitForTimeout(3000);
+  test.skip(
+    ({ browserName }) => browserName === "chromium",
+    "WebGL/R3F canvas does not reliably mount under headless software GL; 3D + plan geometry is unit-tested in src/lib/procedural/__tests__. Run locally with a GPU to exercise the toggle.",
+  );
 
-    // Look for a plan view button or toggle in the UI
-    // It may be labeled "Plan", "2D", or have a grid icon
+  test("plan/3D toggle round-trips without crashing", async ({ page }) => {
+    await mockLedger(page);
+    await page.goto("/building/11110-10100-0-0001-0000");
+
+    const canvas = page.locator("canvas");
+    // No silent else: if the viewer never mounts, this FAILS loudly.
+    await expect(canvas).toBeVisible({ timeout: 20000 });
+
     const planButton = page
       .getByRole("button", { name: /plan|2d|평면/i })
       .or(page.locator("button").filter({ hasText: /plan|2d|평면/i }))
       .first();
+    await expect(planButton).toBeVisible({ timeout: 5000 });
 
-    // If the page loaded with data and the viewer rendered, the button should exist
-    // If not (test-id is invalid), we just verify the page didn't crash
-    const pageContent = await page.content();
-    if (pageContent.includes("canvas") || pageContent.includes("viewer")) {
-      // Viewer rendered — plan button should exist
-      await expect(planButton).toBeVisible({ timeout: 5000 });
-
-      // Click plan view toggle
-      await planButton.click();
-      await page.waitForTimeout(500);
-
-      // Click again to return to 3D
-      await planButton.click();
-      await page.waitForTimeout(500);
-
-      // Page should still be stable (no crash)
-      await expect(page.locator("body")).toBeVisible();
-    } else {
-      // Building didn't load (expected with test-id) — just verify no crash
-      await expect(page.locator("body")).toBeVisible();
-    }
-  });
-
-  test("building page canvas element present when viewer loads", async ({ page }) => {
-    await page.goto("/building/test-id");
-    await page.waitForTimeout(3000);
-
-    // If Three.js viewer loaded, there should be a canvas element
-    // With invalid test-id this may not render, which is acceptable
-    const body = await page.content();
-    // The page should have some rendered content
-    expect(body.length).toBeGreaterThan(100);
+    await planButton.click();
+    await planButton.click();
+    await expect(canvas).toBeVisible();
   });
 });
