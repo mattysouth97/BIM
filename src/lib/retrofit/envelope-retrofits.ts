@@ -3,7 +3,7 @@
 // All formulas per Korean energy assessment methodology.
 
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
-import { RETROFIT_COSTS, ENERGY_PRICES, CO2_FACTORS } from "@/lib/retrofit/cost-database";
+import { RETROFIT_COSTS, ENERGY_PRICES, CO2_FACTORS, MEASURE_LIFETIMES } from "@/lib/retrofit/cost-database";
 
 /** 2020+ Korean building energy standard target U-values (W/m²K) */
 export const KOREAN_2020_TARGET_U_VALUES = {
@@ -62,6 +62,7 @@ export function generateEnvelopeRetrofits(
 
     measures.push({
       id: 'envelope-wall-insulation',
+      lifetimeYears: MEASURE_LIFETIMES['envelope-wall-insulation'], // P1-02
       name: 'Wall Insulation Upgrade',
       category: 'envelope',
       description: 'Add external wall insulation to meet 2020+ Korean energy standard (U ≤ 0.15 W/m²K)',
@@ -82,6 +83,7 @@ export function generateEnvelopeRetrofits(
 
     measures.push({
       id: 'envelope-roof-insulation',
+      lifetimeYears: MEASURE_LIFETIMES['envelope-roof-insulation'], // P1-02
       name: 'Roof Insulation Upgrade',
       category: 'envelope',
       description: 'Upgrade roof insulation to meet 2020+ Korean energy standard (U ≤ 0.15 W/m²K)',
@@ -103,6 +105,7 @@ export function generateEnvelopeRetrofits(
 
     measures.push({
       id: 'envelope-window-replacement',
+      lifetimeYears: MEASURE_LIFETIMES['envelope-window-replacement'], // P1-02
       name: 'High-Performance Window Replacement',
       category: 'envelope',
       description: 'Replace windows with high-performance glazing (Low-E, triple or double-pane) to meet 2020+ standard (U ≤ 0.9 W/m²K)',
@@ -124,6 +127,7 @@ export function generateEnvelopeRetrofits(
 
     measures.push({
       id: 'envelope-floor-insulation',
+      lifetimeYears: MEASURE_LIFETIMES['envelope-floor-insulation'], // P1-02
       name: 'Ground Floor Insulation Upgrade',
       category: 'envelope',
       description: 'Upgrade ground floor insulation to meet 2020+ Korean energy standard (U ≤ 0.18 W/m²K)',

@@ -215,6 +215,46 @@ describe("computeFinancials", () => {
 // selectMeasuresForBudget — knapsack
 // ──────────────────────────────────────────────────────────────────────────
 
+describe("projectCashFlow lifetime truncation (P1-02)", () => {
+  it("zero-pads years beyond lifetimeYears, keeping vector length = horizon", () => {
+    const m = makeMeasure({ id: "lighting-led", lifetimeYears: 15, annualCostSaving: 1_000_000 });
+    const { cashFlow } = projectCashFlow(m, flatAssumptions(0.05, 20));
+
+    expect(cashFlow).toHaveLength(20);
+    for (let t = 0; t < 15; t++) expect(cashFlow[t]).toBe(1_000_000);
+    for (let t = 15; t < 20; t++) expect(cashFlow[t]).toBe(0);
+  });
+
+  it("NPV is strictly lower and discounted payback ≥ for the shorter lifetime", () => {
+    const short = makeMeasure({ id: "short", lifetimeYears: 15 });
+    const long = makeMeasure({ id: "long" }); // absent ⇒ full horizon
+    const a = flatAssumptions(0.05, 20);
+
+    const finShort = computeFinancials(short, a);
+    const finLong = computeFinancials(long, a);
+    expect(finShort.npv).toBeLessThan(finLong.npv);
+    expect(finShort.discountedPayback).toBeGreaterThanOrEqual(finLong.discountedPayback);
+  });
+
+  it("lifetime longer than the horizon behaves exactly like absent", () => {
+    const over = makeMeasure({ id: "envelope-wall-insulation", lifetimeYears: 30 });
+    const absent = makeMeasure({ id: "no-lifetime" });
+    const a = flatAssumptions(0.05, 20);
+
+    expect(projectCashFlow(over, a).cashFlow).toEqual(projectCashFlow(absent, a).cashFlow);
+  });
+
+  it("knapsack still aggregates truncated measures with full-length cash flows", () => {
+    const m1 = makeMeasure({ id: "m1", lifetimeYears: 10, estimatedCost: 3_000_000, annualCostSaving: 600_000 });
+    const m2 = makeMeasure({ id: "m2", estimatedCost: 4_000_000, annualCostSaving: 700_000 });
+    const result = selectMeasuresForBudget([m1, m2], 10_000_000, ASSUMPTIONS);
+
+    expect(result.aggregateCashFlow).toHaveLength(20);
+    // Beyond m1's 10-yr life only m2's stream remains (escalated).
+    expect(result.aggregateCashFlow[15]).toBeGreaterThan(0);
+  });
+});
+
 describe("selectMeasuresForBudget", () => {
   it("returns empty selection for zero budget", () => {
     const result = selectMeasuresForBudget(

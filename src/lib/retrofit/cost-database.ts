@@ -14,6 +14,27 @@ export const RETROFIT_COSTS = {
 } as const;
 
 /**
+ * P1-02 — useful equipment life per measure id (years). Cash flow truncates
+ * at `min(lifetimeYears, analysisHorizonYears)`. Values are engineering
+ * estimates anchored to the ASHRAE Equipment Life Expectancy table (ASHRAE
+ * Handbook — HVAC Applications, Ch. 37 "Owning and Operating Costs") and
+ * common manufacturer-rated lives; none is an official Korean standard —
+ * labeled honestly per entry.
+ */
+export const MEASURE_LIFETIMES: Record<string, number> = {
+  "lighting-led": 15, // LED fixture rated life ~50k h ÷ 2,500-4,000 h/yr — engineering estimate
+  "lighting-led-smart": 15, // controls ≤ fixtures; governed by fixture life — engineering estimate
+  "hvac-boiler-upgrade": 15, // ASHRAE: steel water-tube boilers ~24 yr, packaged commercial ~15 yr — conservative
+  "hvac-heat-pump": 20, // ASHRAE: air-to-air heat pumps ~15 yr; modern VRF-class units ~20 — engineering estimate
+  "hvac-hrv": 15, // ASHRAE: heat-recovery ventilators/air-side economizers ~15 yr
+  "envelope-wall-insulation": 30, // insulation outlives the 20-yr horizon ⇒ intentionally no truncation
+  "envelope-roof-insulation": 30, // same — no truncation at 20 yr
+  "envelope-floor-insulation": 30, // same — no truncation at 20 yr
+  "envelope-window-replacement": 25, // IGU service life 20-30 yr — engineering estimate; ≥ horizon ⇒ no truncation
+  "solar-pv": 25, // panel performance warranty norm (80% @ 25 yr); applies to all solar-pv-<roof> ids
+};
+
+/**
  * Annual nominal energy-price escalation rates for Korean fuels.
  *
  * Sourced from 2020–2024 actuals:

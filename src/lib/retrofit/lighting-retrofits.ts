@@ -2,7 +2,7 @@
 // Lighting retrofit recommendations based on lighting power density and usage hours.
 
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
-import { ENERGY_PRICES, CO2_FACTORS } from "@/lib/retrofit/cost-database";
+import { ENERGY_PRICES, CO2_FACTORS, MEASURE_LIFETIMES } from "@/lib/retrofit/cost-database";
 
 /** LED fixture installation cost per m² (KRW) */
 const LED_FIXTURE_COST_PER_SQM = 45_000;
@@ -38,6 +38,7 @@ export function generateLightingRetrofits(
 
     measures.push({
       id: "lighting-led-smart",
+      lifetimeYears: MEASURE_LIFETIMES["lighting-led-smart"], // P1-02
       name: "LED 조명 + 스마트 제어 시스템",
       category: "lighting",
       estimatedCost: totalCost,
@@ -65,6 +66,7 @@ export function generateLightingRetrofits(
 
     measures.push({
       id: "lighting-led",
+      lifetimeYears: MEASURE_LIFETIMES["lighting-led"], // P1-02
       name: "LED 조명 교체",
       category: "lighting",
       estimatedCost: totalCost,

@@ -2,7 +2,7 @@
 // HVAC retrofit recommendations based on system efficiency, age, and energy demand.
 
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
-import { ENERGY_PRICES, CO2_FACTORS } from "@/lib/retrofit/cost-database";
+import { ENERGY_PRICES, CO2_FACTORS, MEASURE_LIFETIMES } from "@/lib/retrofit/cost-database";
 
 /** Cost per m² for each HVAC measure (KRW) */
 const BOILER_UPGRADE_COST_PER_SQM = 2_500_000 / 100;
@@ -46,6 +46,7 @@ export function generateHvacRetrofits(
 
     measures.push({
       id: "hvac-boiler-upgrade",
+      lifetimeYears: MEASURE_LIFETIMES["hvac-boiler-upgrade"], // P1-02
       name: "고효율 보일러 교체",
       category: "hvac",
       conflictGroup: "heating-plant", // P1-01: exclusive with heat-pump conversion
@@ -80,6 +81,7 @@ export function generateHvacRetrofits(
 
     measures.push({
       id: "hvac-heat-pump",
+      lifetimeYears: MEASURE_LIFETIMES["hvac-heat-pump"], // P1-02
       name: "히트펌프 시스템 전환",
       category: "hvac",
       conflictGroup: "heating-plant", // P1-01: exclusive with boiler upgrade
@@ -103,6 +105,7 @@ export function generateHvacRetrofits(
 
   measures.push({
     id: "hvac-hrv",
+    lifetimeYears: MEASURE_LIFETIMES["hvac-hrv"], // P1-02
     name: "열회수환기장치(HRV) 설치",
     category: "hvac",
     estimatedCost: hrvTotalCost,

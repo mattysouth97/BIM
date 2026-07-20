@@ -163,9 +163,15 @@ export function projectCashFlow(
   const fuel = resolveFuel(measure);
   const escalation = assumptions.energyEscalation[fuel];
   const horizon = assumptions.analysisHorizonYears;
+  // P1-02: savings stop at the equipment's useful life; the vector stays
+  // horizon-length (zero-padded tail) so aggregation/indexing is unchanged.
+  // TODO(P1-02-followup): replacement CAPEX, O&M costs, and salvage value
+  // would extend the model here — deliberately out of scope for now.
+  const years = Math.min(measure.lifetimeYears ?? horizon, horizon);
   const cashFlow: number[] = new Array(horizon);
   for (let t = 1; t <= horizon; t++) {
-    cashFlow[t - 1] = measure.annualCostSaving * Math.pow(1 + escalation, t - 1);
+    cashFlow[t - 1] =
+      t <= years ? measure.annualCostSaving * Math.pow(1 + escalation, t - 1) : 0;
   }
   return { cashFlow, resolvedFuel: fuel };
 }

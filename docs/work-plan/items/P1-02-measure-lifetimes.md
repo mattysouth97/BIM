@@ -3,8 +3,8 @@ id: P1-02
 title: Add measure lifetimes, truncate cash flows, and add generator-level savings-formula tests
 priority: P1
 area: retrofit
-status: not-started
-owner: unassigned
+status: done
+owner: claude-fable-5-ultrawork
 effort: M
 created: 2026-07-21
 updated: 2026-07-21
@@ -72,9 +72,25 @@ use_cases: [UC-06, UC-07]
   - Phantom savings eliminated, not hidden: UI/report consumers see the same truncated numbers (no separate "optimistic" path left reachable).
   - Test expectations computed from the formulas by hand in the test file (not copied from implementation output) — state the arithmetic in comments.
 - **Acceptance criteria**:
-  - [ ] `RetrofitMeasure.lifetimeYears?` exists with doc comment.
-  - [ ] `MEASURE_LIFETIMES` in cost-database.ts with per-entry source comments; all 10 generator measures annotated.
-  - [ ] `projectCashFlow` truncates and zero-pads; NPV/IRR/payback respect it with no special-casing.
-  - [ ] Three new generator test files exist and pin every savings formula + branch boundary.
-  - [ ] All gates green.
+  - [x] `RetrofitMeasure.lifetimeYears?` exists with doc comment.
+  - [x] `MEASURE_LIFETIMES` in cost-database.ts with per-entry source comments; all 10 generator measures annotated.
+  - [x] `projectCashFlow` truncates and zero-pads; NPV/IRR/payback respect it with no special-casing.
+  - [x] Three new generator test files exist and pin every savings formula + branch boundary.
+  - [x] All gates green.
 - **Done when**: A 15-yr LED measure shows zero cash flow in years 16–20, its NPV drops accordingly, and every savings formula feeding the model is locked by a hand-computed unit test.
+
+### Evaluation notes (2026-07-21, claude-fable-5-ultrawork)
+
+- Implemented exactly as designed: optional `lifetimeYears` (absent ⇒ legacy full horizon);
+  `MEASURE_LIFETIMES` in cost-database (ASHRAE Equipment Life Expectancy table + rated-life
+  engineering estimates, honestly labeled per entry — no invented Korean standard);
+  `projectCashFlow` truncates at `min(lifetime, horizon)` with zero-padded tail (vector
+  length unchanged) + `TODO(P1-02-followup)` naming O&M/replacement/salvage; all 10
+  generator measures annotated (solar uses one shared `"solar-pv"` key for the 4 roof-type
+  ids, commented).
+- 3 new generator test suites with hand-computed expectations (arithmetic in comments) +
+  boundary assertions (η=0.85, η=0.7, age=15/16, LPD 15/10/9.9); 4 truncation tests in
+  economic-model. No existing expectations needed updating (prior tests use hand-built
+  measures without lifetimes ⇒ legacy behavior preserved).
+- Gates: targeted retrofit+hooks 127/127 · `pnpm test` **1044 passed / 1 skipped** ·
+  `pnpm lint` 0 errors · `pnpm build` green.

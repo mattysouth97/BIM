@@ -37,6 +37,12 @@ export interface RetrofitMeasure {
    */
   conflictGroup?: string;
   /**
+   * P1-02 — useful equipment life in years; cash flow truncates at
+   * `min(lifetimeYears, analysisHorizonYears)`. Absent ⇒ full horizon
+   * (legacy behavior for external/custom measures).
+   */
+  lifetimeYears?: number;
+  /**
    * Discounted-cash-flow enrichment. Populated by `assembleRetrofitReport`
    * when called with `EconomicAssumptions`. Absent on raw measures emitted
    * by the per-category generators.

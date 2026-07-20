@@ -2,6 +2,7 @@
 // Solar PV potential assessment for Korean buildings.
 
 import type { RetrofitMeasure } from '@/lib/retrofit/retrofit-types';
+import { MEASURE_LIFETIMES } from '@/lib/retrofit/cost-database';
 
 export interface SolarPVResult extends RetrofitMeasure {
   systemSizeKWp: number;
@@ -63,6 +64,8 @@ export function calculateSolarPotential(
   return {
     // RetrofitMeasure fields
     id: `solar-pv-${roofType}`,
+    // P1-02: one shared "solar-pv" lifetime applies to all roof variants.
+    lifetimeYears: MEASURE_LIFETIMES['solar-pv'],
     category: 'renewable',
     name: `Solar PV (${roofType} roof, ${systemSizeKWp.toFixed(1)} kWp)`,
     description: `Solar PV system (${roofType} roof, ${systemSizeKWp.toFixed(1)} kWp)`,
