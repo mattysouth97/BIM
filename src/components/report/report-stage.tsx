@@ -33,6 +33,7 @@ import type { CertificationVersion } from "@/lib/compliance/certification-types"
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Download, FileJson, Sheet } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -332,6 +333,7 @@ export function ReportStage() {
       downloadBlob(blob, `energy-audit-${buildingPk.slice(0, 8)}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
+      toast.error(isKo ? "PDF 생성에 실패했습니다." : "PDF generation failed. Please try again.");
     } finally {
       setPdfLoading(false);
     }
@@ -352,6 +354,7 @@ export function ReportStage() {
       downloadBlob(blob, `compliance-${buildingPk.slice(0, 8)}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
+      toast.error(isKo ? "PDF 생성에 실패했습니다." : "PDF generation failed. Please try again.");
     } finally {
       setPdfLoading(false);
     }
