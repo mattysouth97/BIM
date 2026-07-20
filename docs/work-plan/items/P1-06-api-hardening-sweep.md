@@ -3,8 +3,8 @@ id: P1-06
 title: API hardening sweep — traversal, error contracts, proxy factory, batch caps, zod
 priority: P1
 area: api
-status: not-started
-owner: unassigned
+status: done
+owner: claude-opus-4-8-ultrawork
 effort: L
 created: 2026-07-21
 updated: 2026-07-21
@@ -193,14 +193,40 @@ series, in order.
   - Batch mode cannot be used to amplify load beyond 10 upstream calls.
   - `truncated`/`failedCodes` reflect reality — never hard-coded `false`/`[]`.
 - **Acceptance criteria**:
-  - [ ] (a) basename+allowlist on upload filename; 60 s execFile timeout.
-  - [ ] (b) vworld: 400/502/503 per contract; NaN validation; `truncated` flag;
+  - [x] (a) basename+allowlist on upload filename; 60 s execFile timeout.
+  - [x] (b) vworld: 400/502/503 per contract; NaN validation; `truncated` flag;
         no silent null-on-failure.
-  - [ ] (c) five routes collapsed onto `createDataGoKrProxy`; numOfRows clamp.
-  - [ ] (d) batch cap 10 codes, `Promise.all`, truncation + failure reporting.
-  - [ ] (e) tab removed; doc comment corrected.
-  - [ ] (f) zod schemas validate query params on all touched routes.
-  - [ ] New tests pass; full suite, lint, build green.
+  - [x] (c) five routes collapsed onto `createDataGoKrProxy`; numOfRows clamp.
+  - [x] (d) batch cap 10 codes, `Promise.all`, truncation + failure reporting.
+  - [x] (e) tab removed; doc comment corrected.
+  - [x] (f) zod schemas validate query params on all touched routes.
+  - [x] New tests pass; full suite, lint, build green.
 - **Done when**: all six sub-items land with non-200 error contracts, bounded
   fan-out, and one proxy factory — verified by the new route tests and the
   fitness greps above.
+
+### Evaluation notes (2026-07-21, claude-opus-4-8-ultrawork)
+
+- **(a)** `SAFE_DWG_NAME_PATTERN` + `basename` equality check reject traversal/separators
+  with 400 *before* any fs work (early, testable without a converter); both `execFileAsync`
+  calls carry `{ timeout: 60_000 }`; sanitized `safeName` used for input/output paths.
+- **(b)** Missing env key → **503** (was 500); NaN/blank bbox → **400** (zod `finiteCoord`,
+  tightened to reject `""` which coerces to 0); upstream failure → **502** (helpers now
+  `throw` on `!res.ok` instead of masking as `null`/`[]`); campus payload gains
+  `truncated = footprints.length >= 20`. Single-mode "no parcel found" still a legitimate
+  200 `{ polygon: null, error: null }`. Clients already handled `!res.ok` → safe.
+- **(c)** New `src/app/api/bldrgst/_factory.ts` (`createDataGoKrProxy`, zod param schema,
+  `numOfRows` clamp to [1,100]); all 5 routes now **4 lines** each.
+- **(d)** Title batch capped at `MAX_BATCH_CODES = 10`, `Promise.all` fan-out (worst case one
+  15 s timeout, not N×), `truncated` + `failedCodes[]` reported, 20-item cap preserved.
+- **(e)** Leading TAB stripped from `BASE_URL`; doc comment corrected to `BldEngyHubService`;
+  route also gained zod param validation + numOfRows clamp.
+- **(f)** zod query validation on the bldrgst factory, vworld bbox, and consumption routes;
+  cad/convert validates via the multipart-filename allowlist (no query params).
+- Test-infra note: route unit tests must construct a real `NextRequest` (plain `Request`
+  cast leaves `.nextUrl` undefined); `vi.mock` factory var moved into `vi.hoisted`.
+- Gates: `vitest run src/app/api` 75/75 · fitness greps all clean (5×4-line routes,
+  Promise.all, 0 tabs, zod ×3 families, no leaked `file.name` path joins) · `pnpm test`
+  **1079 passed / 1 skipped** · `pnpm lint` 0 errors · `pnpm build` green.
+- **P0-01 sequencing honored** — twin-data security landed first; this sweep reuses the same
+  fail-closed / non-200 contract philosophy.

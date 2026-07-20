@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 /**
- * Proxy to data.go.kr Building Energy Use API (건물에너지정보).
- * Base: https://apis.data.go.kr/1613000/BdEnergyUseService/getBdEnergyUse
+ * Proxy to data.go.kr Building Energy Hub API (건물에너지정보).
+ * P1-06 (e): doc corrected to the service actually called (BldEngyHubService)
+ * and the leading TAB stripped from the BASE_URL literal.
  */
 
-const BASE_URL =
-  "	https://apis.data.go.kr/1613000/BldEngyHubService";
+const BASE_URL = "https://apis.data.go.kr/1613000/BldEngyHubService";
 
-const PARAMS = ["mgmBldrgstPk", "year", "numOfRows", "pageNo"] as const;
+/** P1-06 (f): validated query params; numOfRows clamped to [1, 100]. */
+const MAX_NUM_OF_ROWS = 100;
+const positiveInt = z.string().regex(/^\d+$/, "must be a positive integer");
+const consumptionParamsSchema = z.object({
+  mgmBldrgstPk: z.string().optional(),
+  year: z.string().optional(),
+  numOfRows: positiveInt.optional(),
+  pageNo: positiveInt.optional(),
+});
 
 export async function GET(request: NextRequest) {
   const apiKey = request.headers.get("x-api-key");
@@ -20,18 +29,28 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = request.nextUrl;
-  const url = new URL(BASE_URL);
+  const raw: Record<string, string> = {};
+  for (const key of ["mgmBldrgstPk", "year", "numOfRows", "pageNo"]) {
+    const value = searchParams.get(key);
+    if (value != null) raw[key] = value;
+  }
+  const parsed = consumptionParamsSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid query parameters", issues: parsed.error.issues.map((i) => ({ path: i.path, message: i.message })) },
+      { status: 400 },
+    );
+  }
 
+  const url = new URL(BASE_URL);
   url.searchParams.set("serviceKey", apiKey);
   url.searchParams.set("_type", "json");
 
-  for (const key of PARAMS) {
-    const value = searchParams.get(key);
-    if (value != null) url.searchParams.set(key, value);
-  }
-
-  if (!searchParams.get("numOfRows")) url.searchParams.set("numOfRows", "12");
-  if (!searchParams.get("pageNo")) url.searchParams.set("pageNo", "1");
+  if (parsed.data.mgmBldrgstPk) url.searchParams.set("mgmBldrgstPk", parsed.data.mgmBldrgstPk);
+  if (parsed.data.year) url.searchParams.set("year", parsed.data.year);
+  const numOfRows = Math.min(Number(parsed.data.numOfRows ?? 12), MAX_NUM_OF_ROWS);
+  url.searchParams.set("numOfRows", String(numOfRows));
+  url.searchParams.set("pageNo", String(Number(parsed.data.pageNo ?? 1)));
 
   try {
     const response = await fetch(url.toString(), {

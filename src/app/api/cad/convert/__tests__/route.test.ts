@@ -95,4 +95,31 @@ describe("POST /api/cad/convert", () => {
     const body = await res.json();
     expect(body.dwgVersion).toBe("AC1015");
   });
+
+  // P1-06 (a) — traversal filename rejected before any filesystem work.
+  it("rejects a path-traversal filename with 400", async () => {
+    const form = new FormData();
+    form.set("file", makeDwgFile("../../evil.dwg", 1024));
+    const res = await POST(makeRequest(form));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/filename/i);
+  });
+
+  it("rejects a filename with path separators", async () => {
+    for (const bad of ["a/b.dwg", "a\\b.dwg"]) {
+      const form = new FormData();
+      form.set("file", makeDwgFile(bad, 1024));
+      const res = await POST(makeRequest(form));
+      expect(res.status).toBe(400);
+    }
+  });
+
+  it("accepts a plain slug filename (regression: valid names still pass)", async () => {
+    const form = new FormData();
+    form.set("file", makeDwgFile("floor-plan_01.dwg", 1024));
+    const res = await POST(makeRequest(form));
+    // No converter configured ⇒ 501, but it got PAST filename validation.
+    expect(res.status).toBe(501);
+  });
 });

@@ -1,7 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 const VWORLD_DATA_URL = "https://api.vworld.kr/req/data";
 const VWORLD_DOMAIN = process.env.VWORLD_DOMAIN ?? "localhost";
+
+/** Campus mode requests this many parcels; used to derive the truncated flag. */
+const CAMPUS_BBOX_SIZE = 20;
+
+/** A finite-number coordinate parsed from a query string (rejects NaN/blank). */
+const finiteCoord = z
+  .string()
+  .refine((s) => s.trim() !== "" && Number.isFinite(Number(s)), "must be a finite number")
+  .transform((s) => Number(s));
+
+const bboxSchema = z.object({
+  minLng: finiteCoord,
+  minLat: finiteCoord,
+  maxLng: finiteCoord,
+  maxLat: finiteCoord,
+});
 
 /**
  * Proxy route to fetch building footprint polygons from VWorld.
@@ -24,9 +41,10 @@ const VWORLD_DOMAIN = process.env.VWORLD_DOMAIN ?? "localhost";
 export async function GET(request: NextRequest) {
   const apiKey = process.env.VWORLD_API_KEY;
   if (!apiKey) {
+    // P1-06 (b): server misconfiguration → 503, not 500.
     return NextResponse.json(
-      { polygon: null, error: "VWORLD_API_KEY environment variable is not set" },
-      { status: 500 }
+      { polygon: null, error: "VWorld API is not configured on this server" },
+      { status: 503 }
     );
   }
 
@@ -35,32 +53,36 @@ export async function GET(request: NextRequest) {
 
   // ── Campus bbox mode: return all footprints within a bounding box ───────────
   if (bboxMode) {
-    const minLng = searchParams.get("minLng");
-    const minLat = searchParams.get("minLat");
-    const maxLng = searchParams.get("maxLng");
-    const maxLat = searchParams.get("maxLat");
-
-    if (!minLng || !minLat || !maxLng || !maxLat) {
+    const parsed = bboxSchema.safeParse({
+      minLng: searchParams.get("minLng") ?? "",
+      minLat: searchParams.get("minLat") ?? "",
+      maxLng: searchParams.get("maxLng") ?? "",
+      maxLat: searchParams.get("maxLat") ?? "",
+    });
+    if (!parsed.success) {
+      // P1-06 (b): bad/NaN bbox params → 400, not a BOX(NaN,...) query.
       return NextResponse.json(
-        { footprints: [], error: "bboxMode requires minLng, minLat, maxLng, maxLat" },
+        {
+          footprints: [],
+          error: "bboxMode requires finite minLng, minLat, maxLng, maxLat",
+          issues: parsed.error.issues.map((i) => ({ path: i.path, message: i.message })),
+        },
         { status: 400 }
       );
     }
 
     try {
-      const footprints = await fetchByExplicitBBox(
-        parseFloat(minLng),
-        parseFloat(minLat),
-        parseFloat(maxLng),
-        parseFloat(maxLat),
-        apiKey
-      );
-      return NextResponse.json({ footprints, error: null });
+      const { minLng, minLat, maxLng, maxLat } = parsed.data;
+      const footprints = await fetchByExplicitBBox(minLng, minLat, maxLng, maxLat, apiKey);
+      // truncated: we requested CAMPUS_BBOX_SIZE — a full page means more may exist.
+      const truncated = footprints.length >= CAMPUS_BBOX_SIZE;
+      return NextResponse.json({ footprints, error: null, truncated });
     } catch (err) {
-      return NextResponse.json({
-        footprints: [],
-        error: err instanceof Error ? err.message : "VWorld API error",
-      });
+      // P1-06 (b): upstream failure → 502, never HTTP 200 with error set.
+      return NextResponse.json(
+        { footprints: [], error: err instanceof Error ? err.message : "VWorld API error" },
+        { status: 502 }
+      );
     }
   }
 
@@ -100,16 +122,14 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (!polygonData) {
-      return NextResponse.json({ polygon: null, error: null });
-    }
-
-    return NextResponse.json({ polygon: polygonData, error: null });
+    // No parcel found is a legitimate 200 with polygon: null.
+    return NextResponse.json({ polygon: polygonData ?? null, error: null });
   } catch (err) {
-    return NextResponse.json({
-      polygon: null,
-      error: err instanceof Error ? err.message : "VWorld API error",
-    });
+    // P1-06 (b): upstream failure → 502, never HTTP 200 with error set.
+    return NextResponse.json(
+      { polygon: null, error: err instanceof Error ? err.message : "VWorld API error" },
+      { status: 502 }
+    );
   }
 }
 
@@ -126,7 +146,8 @@ async function fetchByPNU(pnu: string, apiKey: string): Promise<number[][][] | n
   url.searchParams.set("format", "json");
 
   const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
-  if (!res.ok) return null;
+  // P1-06 (b): upstream non-OK is a FAILURE (→ 502), distinct from "found nothing".
+  if (!res.ok) throw new Error(`VWorld responded ${res.status}`);
 
   const data = await res.json();
   return extractPolygon(data);
@@ -149,7 +170,7 @@ async function fetchByBBox(lat: number, lng: number, apiKey: string): Promise<nu
   url.searchParams.set("format", "json");
 
   const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
-  if (!res.ok) return null;
+  if (!res.ok) throw new Error(`VWorld responded ${res.status}`);
 
   const data = await res.json();
   return extractPolygon(data);
@@ -177,7 +198,7 @@ async function fetchByExplicitBBox(
   url.searchParams.set("format", "json");
 
   const res = await fetch(url.toString(), { signal: AbortSignal.timeout(15000) });
-  if (!res.ok) return [];
+  if (!res.ok) throw new Error(`VWorld responded ${res.status}`);
 
   const data = await res.json();
   return extractFootprintList(data);
