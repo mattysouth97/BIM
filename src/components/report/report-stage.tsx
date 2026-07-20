@@ -11,6 +11,12 @@ import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
+import { useScenarioStore } from "@/store/scenario-store";
+import { useRetrofitScenario } from "@/hooks/use-retrofit-scenario";
+import {
+  buildScenarioPortfolioSummary,
+  deriveFidelityLevel,
+} from "@/lib/report/scenario-summary";
 import { EnergyAuditPreview } from "@/components/report/energy-audit-preview";
 import { CompliancePreview } from "@/components/report/compliance-preview";
 import { buildComplianceReportSections } from "@/lib/report/templates/compliance-report";
@@ -92,6 +98,32 @@ export function ReportStage() {
   const actualData = actual.data ?? [];
   const hasActual = actualData.length > 0;
 
+  // ── Retrofit scenario (read-only consumer of the twin-stage state) ───────
+  // Same store + hook the simulator uses, so exported financials can never
+  // drift from what the UI shows. Inputs published for a different building
+  // (stale) are ignored — the report then renders its no-analysis state.
+  const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
+  const programTrack = useScenarioStore((s) => s.programTrack);
+  const scenarioInputs = useScenarioStore((s) => s.buildingInputs);
+  const scenarioApplies =
+    scenarioInputs !== null && scenarioInputs.buildingPk === buildingPk;
+
+  const scenario = useRetrofitScenario({
+    buildingPk,
+    capexBudgetKrw,
+    // Zero areas when no matching scenario ⇒ no measures ⇒ null selection.
+    totalFloorArea: scenarioApplies ? scenarioInputs.totalFloorArea : 0,
+    footprintArea: scenarioApplies ? scenarioInputs.footprintArea : 0,
+    roofType: scenarioApplies ? scenarioInputs.roofType : "flat",
+    sidoPrefix: scenarioApplies ? scenarioInputs.sidoPrefix : undefined,
+    programTrack,
+  });
+
+  const portfolio = useMemo(
+    () => (scenarioApplies ? buildScenarioPortfolioSummary(scenario.selection) : null),
+    [scenarioApplies, scenario.selection]
+  );
+
   // Derive effective recipe (same pattern as properties-panel)
   const effectiveRecipe = useMemo(() => {
     if (!baseRecipe) return undefined;
@@ -142,6 +174,10 @@ export function ReportStage() {
       }
     );
   }, [metrics, hasActual, actualData]);
+
+  // ── Honest fidelity tier (never hardcoded; P0-02) ────────────────────────
+  // 3 = calibration exists · 2 = actual energy rows present · 1 = public data.
+  const fidelityLevel = deriveFidelityLevel(calibration !== undefined, hasActual);
 
   // ── Benchmark (optional) ─────────────────────────────────────────────────
   const benchmark = useMemo(() => {
@@ -235,8 +271,12 @@ export function ReportStage() {
         area: totalArea,
         floors: effectiveRecipe.floors.length,
       },
-      fidelityLevel: 1,
-      dataSources: ["Korean Building Ledger (건축물대장)"],
+      fidelityLevel,
+      dataSources: [
+        "Korean Building Ledger (건축물대장)",
+        ...(hasActual ? ["Actual energy consumption (실측 에너지)"] : []),
+        ...(calibration ? ["Model calibration (모델 보정)"] : []),
+      ],
       envelope: {
         wallU: avgWallU,
         roofU: materials.envelope.roof.uValue,
@@ -276,6 +316,18 @@ export function ReportStage() {
             insight: benchmark.insight,
           }
         : undefined,
+      retrofitSummary: portfolio
+        ? {
+            totalInvestment: portfolio.totalInvestment,
+            totalAnnualSaving: portfolio.totalAnnualSavingKwh,
+            payback: portfolio.payback,
+            topMeasures: portfolio.topMeasures,
+            npv: portfolio.npv,
+            irr: portfolio.irr,
+            discountedPayback: portfolio.discountedPayback,
+            effectiveCapex: portfolio.effectiveCapex,
+          }
+        : undefined,
     };
   }, [
     metrics,
@@ -286,6 +338,10 @@ export function ReportStage() {
     totalArea,
     calibration,
     benchmark,
+    portfolio,
+    fidelityLevel,
+    hasActual,
+    baseRecipe?.mainPurpsCd,
   ]);
 
   // ── Compliance input ─────────────────────────────────────────────────────
@@ -324,10 +380,22 @@ export function ReportStage() {
       const { pdf } = await import("@react-pdf/renderer");
       const { ReportPDF } = await import("@/lib/report/pdf-renderer");
       const reportData = assembleEnergyAuditReport(
-        { name: buildingName, address: buildingAddress, fidelityLevel: 1 },
+        { name: buildingName, address: buildingAddress, fidelityLevel },
         metrics,
         calibration ?? undefined,
-        benchmark ?? undefined
+        benchmark ?? undefined,
+        portfolio
+          ? {
+              totalInvestment: portfolio.totalInvestment,
+              totalAnnualSaving: portfolio.totalAnnualSavingKwh,
+              payback: portfolio.payback,
+              topMeasures: portfolio.topMeasures,
+              npv: portfolio.npv,
+              irr: portfolio.irr,
+              discountedPayback: portfolio.discountedPayback,
+              effectiveCapex: portfolio.effectiveCapex,
+            }
+          : undefined
       );
       const blob = await pdf(<ReportPDF data={reportData} />).toBlob();
       downloadBlob(blob, `energy-audit-${buildingPk.slice(0, 8)}.pdf`);
@@ -346,7 +414,7 @@ export function ReportStage() {
       const { pdf } = await import("@react-pdf/renderer");
       const { ReportPDF } = await import("@/lib/report/pdf-renderer");
       const reportData = assembleComplianceReport(
-        { name: buildingName, address: buildingAddress, fidelityLevel: 1 },
+        { name: buildingName, address: buildingAddress, fidelityLevel },
         certification,
         efficiencyRating
       );
@@ -384,8 +452,16 @@ export function ReportStage() {
         roofU: materials.envelope.roof.uValue,
         windowU: materials.envelope.windows.uValue,
         airtightness: materials.envelope.airtightness.ach50,
-        fidelityLevel: 1,
+        fidelityLevel,
         dataQualityScore: 60,
+        ...(portfolio
+          ? {
+              retrofitNpvKrw: portfolio.npv,
+              retrofitEffectiveCapexKrw: portfolio.effectiveCapex,
+              retrofitDiscountedPaybackYears: portfolio.discountedPayback,
+              retrofitAnnualSavingKwh: portfolio.totalAnnualSavingKwh,
+            }
+          : {}),
       },
     ]);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -407,6 +483,8 @@ export function ReportStage() {
       materials,
       energyMetrics: metrics,
       benchmarkResult: benchmark ?? undefined,
+      // Explicit null = no scenario published (never a silent omission).
+      retrofitFinancials: portfolio,
     });
     const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
     downloadBlob(blob, `twin-export-${buildingPk.slice(0, 8)}.json`);

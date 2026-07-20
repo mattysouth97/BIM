@@ -27,7 +27,8 @@ describe('assembleRetrofitReport', () => {
     expect(report.summary.totalAnnualSaving).toBe(0);
     expect(report.summary.totalAnnualCostSaving).toBe(0);
     expect(report.summary.totalCO2Reduction).toBe(0);
-    expect(report.summary.portfolioPayback).toBe(0);
+    // P0-02 honesty: no measures ⇒ no payback claim (null, not a fabricated 0).
+    expect(report.summary.portfolioPayback).toBeNull();
     expect(report.byCategory.envelope).toHaveLength(0);
     expect(report.byCategory.hvac).toHaveLength(0);
     expect(report.byCategory.lighting).toHaveLength(0);
@@ -126,6 +127,36 @@ describe('assembleRetrofitReport', () => {
 
     expect(report.summary.totalAnnualSaving).toBe(3000);
     expect(report.summary.totalCO2Reduction).toBeCloseTo(1.377, 5);
+  });
+
+  it('returns null paybacks (never 0) when total annual cost saving is zero', () => {
+    const measures: RetrofitMeasure[] = [
+      makeMeasure({ id: 'dead-1', estimatedCost: 1_000_000, annualCostSaving: 0, paybackYears: 99 }),
+      makeMeasure({ id: 'dead-2', estimatedCost: 2_000_000, annualCostSaving: 0, paybackYears: 99 }),
+    ];
+
+    const report = assembleRetrofitReport(measures);
+
+    expect(report.summary.portfolioPayback).toBeNull();
+    for (const cum of report.cumulativeSavings) {
+      expect(cum.cumulativePayback).toBeNull();
+    }
+    // Nulls survive JSON serialization; Infinity would silently corrupt exports.
+    expect(JSON.stringify(report)).not.toContain('Infinity');
+  });
+
+  it('still aggregates portfolioNpv and portfolioEffectiveCapex when assumptions are provided', async () => {
+    const { DEFAULT_ECONOMIC_ASSUMPTIONS } = await import('@/lib/retrofit/cost-database');
+    const measures: RetrofitMeasure[] = [
+      makeMeasure({ id: 'a', estimatedCost: 2_000_000, annualCostSaving: 400_000, paybackYears: 5 }),
+      makeMeasure({ id: 'b', estimatedCost: 3_000_000, annualCostSaving: 300_000, paybackYears: 10 }),
+    ];
+
+    const report = assembleRetrofitReport(measures, DEFAULT_ECONOMIC_ASSUMPTIONS);
+
+    expect(report.summary.portfolioNpv).toBeTypeOf('number');
+    expect(report.summary.portfolioEffectiveCapex).toBeTypeOf('number');
+    expect(report.summary.portfolioEffectiveCapex).toBeGreaterThan(0);
   });
 
   it('does not mutate the input array order', () => {

@@ -8,6 +8,7 @@ import type { EnergyMetrics } from "@/hooks/use-energy-metrics";
 import type { RetrofitScenario } from "@/lib/energy/eco2-export";
 import type { BenchmarkResult } from "@/lib/energy/benchmark-comparison";
 import type { PrimaryEnergyResult } from "@/lib/energy/primary-energy";
+import type { ScenarioPortfolioSummary } from "@/lib/report/scenario-summary";
 
 export interface FidelityReport {
   level: number;
@@ -43,6 +44,12 @@ export interface TwinExportData {
   primaryEnergy?: PrimaryEnergyResult;
   /** Retrofit improvement scenarios (optional) */
   retrofitRecommendations?: RetrofitScenario[];
+  /**
+   * P0-02 — active-scenario portfolio financials (NPV/IRR/payback/effective
+   * CAPEX), identical to what the simulator UI displays. `null` = no scenario
+   * was published for this building (explicit, not an omission).
+   */
+  retrofitFinancials?: ScenarioPortfolioSummary | null;
   /** Benchmark comparison result (optional) */
   benchmarkResult?: BenchmarkResult;
   /** Data fidelity report (optional) */

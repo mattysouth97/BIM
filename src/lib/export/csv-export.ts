@@ -23,6 +23,12 @@ export interface BuildingExportData {
   airtightness: number;
   fidelityLevel: number;
   dataQualityScore: number;
+  // P0-02 — retrofit scenario financials (optional; absent ⇒ empty cells,
+  // never fabricated zeros).
+  retrofitNpvKrw?: number;
+  retrofitEffectiveCapexKrw?: number;
+  retrofitDiscountedPaybackYears?: number | null;
+  retrofitAnnualSavingKwh?: number;
 }
 
 const HEADERS: (keyof BuildingExportData)[] = [
@@ -43,6 +49,10 @@ const HEADERS: (keyof BuildingExportData)[] = [
   "airtightness",
   "fidelityLevel",
   "dataQualityScore",
+  "retrofitNpvKrw",
+  "retrofitEffectiveCapexKrw",
+  "retrofitDiscountedPaybackYears",
+  "retrofitAnnualSavingKwh",
 ];
 
 /**
@@ -71,7 +81,8 @@ export function generateBuildingCSV(buildings: BuildingExportData[]): string {
   }
 
   const dataRows = buildings.map((b) =>
-    HEADERS.map((key) => escapeField(b[key])).join(",")
+    // Absent/null optional fields render as explicit empty cells.
+    HEADERS.map((key) => escapeField(b[key] ?? "")).join(",")
   );
 
   return BOM + [headerRow, ...dataRows].join("\n") + "\n";

@@ -50,8 +50,17 @@ export interface EnergyAuditInput {
   retrofitSummary?: {
     totalInvestment: number;
     totalAnnualSaving: number;
-    payback: number;
+    /** Simple payback, years. `null` when annual cost saving ≤ 0 — rendered as N/A. */
+    payback: number | null;
     topMeasures: { description: string; payback: number }[];
+    /** Portfolio NPV (KRW), when the scenario carries DCF financials. */
+    npv?: number | null;
+    /** Portfolio IRR (fraction). `null` = no positive root — rendered as N/A. */
+    irr?: number | null;
+    /** Discounted payback, years. `null` = never recovered — rendered as N/A. */
+    discountedPayback?: number | null;
+    /** Subsidy-adjusted CAPEX (KRW). */
+    effectiveCapex?: number;
   };
 }
 
@@ -228,11 +237,23 @@ export function buildEnergyAuditSections(input: EnergyAuditInput): ReportSection
 
   // Section 8: Retrofit Recommendations (conditional)
   if (input.retrofitSummary) {
-    const { totalInvestment, totalAnnualSaving, payback, topMeasures } = input.retrofitSummary;
+    const {
+      totalInvestment,
+      totalAnnualSaving,
+      payback,
+      topMeasures,
+      npv,
+      irr,
+      discountedPayback,
+      effectiveCapex,
+    } = input.retrofitSummary;
+    // Honesty: null/non-finite payback ⇒ 'N/A' — never a 0-year claim.
+    const fmtPayback = (p: number | null): string =>
+      p !== null && Number.isFinite(p) ? `${fmt(p, 1)} yr` : 'N/A';
     const measureRows: string[][] = topMeasures.slice(0, 3).map((m, i) => [
       `${i + 1}`,
       m.description,
-      `${fmt(m.payback, 1)} yr`,
+      fmtPayback(m.payback),
     ]);
     sections.push({
       title: 'Retrofit Recommendations',
@@ -243,8 +264,20 @@ export function buildEnergyAuditSections(input: EnergyAuditInput): ReportSection
         rows: [
           ...measureRows,
           ['', 'Total Portfolio Investment', `${(totalInvestment / 1_000_000).toFixed(1)}M KRW`],
+          ...(effectiveCapex !== undefined
+            ? [['', 'Effective CAPEX (subsidy-adjusted)', `${(effectiveCapex / 1_000_000).toFixed(1)}M KRW`]]
+            : []),
           ['', 'Annual Energy Saving', `${fmt(totalAnnualSaving)} kWh/yr`],
-          ['', 'Portfolio Payback', `${fmt(payback, 1)} yr`],
+          ...(npv !== undefined && npv !== null
+            ? [['', 'Portfolio NPV', `${(npv / 1_000_000).toFixed(1)}M KRW`]]
+            : []),
+          ...(irr !== undefined
+            ? [['', 'Portfolio IRR', irr !== null ? `${fmt(irr * 100, 1)}%` : 'N/A']]
+            : []),
+          ...(discountedPayback !== undefined
+            ? [['', 'Discounted Payback', fmtPayback(discountedPayback)]]
+            : []),
+          ['', 'Portfolio Payback', fmtPayback(payback)],
         ],
       },
     });

@@ -10,7 +10,8 @@ export interface CumulativeSaving {
   description: string;
   cumulativeInvestment: number;
   cumulativeAnnualSaving: number;
-  cumulativePayback: number;
+  /** Years; `null` when cumulative annual cost saving is 0 (no payback claim). */
+  cumulativePayback: number | null;
 }
 
 export interface RetrofitReport {
@@ -20,7 +21,12 @@ export interface RetrofitReport {
     totalAnnualSaving: number;      // kWh/year
     totalAnnualCostSaving: number;  // KRW/year
     totalCO2Reduction: number;      // tCO2/year
-    portfolioPayback: number;       // years (total cost / total annual cost saving)
+    /**
+     * Years (total cost / total annual cost saving). `null` when total annual
+     * cost saving ≤ 0 — never a fabricated 0 ("instant payback") and never
+     * Infinity (not JSON-serializable).
+     */
+    portfolioPayback: number | null;
     /**
      * Sum of per-measure NPV when the report was assembled with
      * EconomicAssumptions. Absent for legacy callers.
@@ -75,7 +81,7 @@ export function assembleRetrofitReport(
   const totalAnnualCostSaving = sorted.reduce((sum, m) => sum + m.annualCostSaving, 0);
   const totalCO2Reduction = sorted.reduce((sum, m) => sum + m.co2Reduction, 0);
   const portfolioPayback =
-    totalAnnualCostSaving > 0 ? totalInvestment / totalAnnualCostSaving : 0;
+    totalAnnualCostSaving > 0 ? totalInvestment / totalAnnualCostSaving : null;
 
   // Cumulative savings: running totals ordered by payback
   let runCost = 0;
@@ -83,7 +89,7 @@ export function assembleRetrofitReport(
   const cumulativeSavings: CumulativeSaving[] = sorted.map((m) => {
     runCost += m.estimatedCost;
     runSaving += m.annualCostSaving;
-    const cumulativePayback = runSaving > 0 ? runCost / runSaving : 0;
+    const cumulativePayback = runSaving > 0 ? runCost / runSaving : null;
     return {
       measureId: m.id,
       description: m.description,

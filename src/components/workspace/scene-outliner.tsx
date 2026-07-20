@@ -326,8 +326,13 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
   }
 
   const { summary, byCategory } = report;
-  const portfolioPaybackOk =
-    summary.portfolioPayback > 0 && Number.isFinite(summary.portfolioPayback);
+  // P0-02: portfolioPayback is now number | null (null = no honest claim).
+  const portfolioPayback =
+    summary.portfolioPayback !== null &&
+    summary.portfolioPayback > 0 &&
+    Number.isFinite(summary.portfolioPayback)
+      ? summary.portfolioPayback
+      : null;
 
   const openCategories = (
     Object.keys(byCategory) as RetrofitCategory[]
@@ -361,8 +366,8 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
           <span className="text-muted-foreground">
             포트폴리오 회수
             <span className="block font-medium text-foreground">
-              {portfolioPaybackOk
-                ? `${summary.portfolioPayback.toFixed(1)}년`
+              {portfolioPayback !== null
+                ? `${portfolioPayback.toFixed(1)}년`
                 : "—"}
             </span>
           </span>

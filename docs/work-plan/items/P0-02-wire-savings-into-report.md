@@ -3,8 +3,8 @@ id: P0-02
 title: Wire scenario savings (NPV/IRR/payback) into report outputs
 priority: P0
 area: report
-status: not-started
-owner: unassigned
+status: done
+owner: claude-fable-5-ultrawork
 effort: M
 created: 2026-07-21
 updated: 2026-07-21
@@ -111,9 +111,34 @@ use_cases: [UC-06, UC-08]
   - `fidelityLevel` derives from actual data availability; nothing hardcoded.
   - Numbers in the report are the same store/hook values the simulator UI displays (no re-derivation drift).
 - **Acceptance criteria**:
-  - [ ] `ReportStage` consumes `useScenarioStore`/`useRetrofitScenario`; energy-audit section 8 shows real measures when a selection exists.
-  - [ ] PDF/CSV/JSON carry NPV, IRR, discounted payback, effective CAPEX when available.
-  - [ ] Zero-savings payback renders as `N/A`/`회수 불가` in all renderers.
-  - [ ] `fidelityLevel` honestly reflects data tier in preview, PDF, and CSV.
-  - [ ] All new + existing tests, lint, build green.
+  - [x] `ReportStage` consumes `useScenarioStore`/`useRetrofitScenario`; energy-audit section 8 shows real measures when a selection exists.
+  - [x] PDF/CSV/JSON carry NPV, IRR, discounted payback, effective CAPEX when available.
+  - [x] Zero-savings payback renders as `N/A`/`회수 불가` in all renderers.
+  - [x] `fidelityLevel` honestly reflects data tier in preview, PDF, and CSV.
+  - [x] All new + existing tests, lint, build green.
 - **Done when**: An exported energy-audit PDF for a building with an active scenario shows the same financials as the twin-stage simulator, and zero-savings cases never print a 0-year payback.
+
+### Evaluation notes (2026-07-21, claude-fable-5-ultrawork)
+
+- New pure module `src/lib/report/scenario-summary.ts`: `buildScenarioPortfolioSummary`
+  (BudgetSelection → JSON-safe portfolio financials; Infinity→null at the boundary; portfolio
+  IRR via exported `computeIrr` on the aggregate cash flow) and `deriveFidelityLevel`
+  (3=calibration, 2=actual rows, 1=public). All four export surfaces consume it — no drift.
+- `portfolioPayback`/`cumulativePayback` → `number | null`; template + engine render null as
+  `N/A`/`회수 불가`; engine PDF gains a Retrofit Recommendations section (table w/ NPV, IRR,
+  discounted payback, effective CAPEX) or an explicit no-analysis text. CSV: 4 additive
+  retrofit columns (absent ⇒ empty cells). JSON: `retrofitFinancials` (explicit `null` when
+  no scenario). Stale scenario (different buildingPk) is ignored — fallback branch renders.
+- Gates: targeted `vitest run retrofit-report scenario-summary energy-audit-template
+  report-engine csv-export` 31/31 · `pnpm test` 970 passed / 1 skipped · `pnpm lint`
+  0 errors · `pnpm build` green.
+- **Deviations**:
+  1. `src/components/workspace/scene-outliner.tsx` (outside may-touch) received a minimal
+     null-safe guard — unavoidable compile fallout of the mandated `number | null` type
+     change; rendered behavior identical ("—" for no-claim payback).
+  2. The named component test `report-stage.test.tsx` was **replaced** by pure-module tests:
+     the derivation logic was extracted to `scenario-summary.ts` (AFF-4 spirit — math in lib,
+     component only wires), so `buildScenarioPortfolioSummary`/`deriveFidelityLevel` are
+     covered directly; the component now contains no derivation logic worth mocking 6 stores
+     to reach. 3. Portfolio IRR uses `computeIrr(effectiveCapex, aggregateCashFlow)` —
+     calling the exported engine function, engine itself untouched.
