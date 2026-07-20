@@ -130,28 +130,42 @@ export default async function ReleasesPage() {
           <CardHeader>
             <CardTitle>Calibration against ECO2</CardTitle>
             <CardDescription>
-              {calibration.tierLabel ?? calibration.tier ?? "Held-out validation"}
+              {calibration.tierLabel ?? calibration.tier ?? "Not validated"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <p className="text-xs text-muted-foreground">MAPE</p>
-                <p className="text-lg font-semibold">
-                  {(calibration.metrics.mape * 100).toFixed(1)}%
+            {/* P2-05: show accuracy metrics ONLY for a genuinely validated
+                release. A schema-only release (validated === false / no
+                metrics) states plainly that no validation was performed —
+                never a fabricated number. */}
+            {calibration.validated !== false && calibration.metrics ? (
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">MAPE</p>
+                  <p className="text-lg font-semibold">
+                    {(calibration.metrics.mape * 100).toFixed(1)}%
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Kendall tau</p>
+                  <p className="text-lg font-semibold">{calibration.metrics.kendallTau.toFixed(3)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Held-out sample</p>
+                  <p className="text-lg font-semibold">
+                    {calibration.holdout?.buildingCount?.toLocaleString() ?? "-"} buildings
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Badge variant="outline">Schema preview — not validated</Badge>
+                <p className="text-sm text-muted-foreground">
+                  {calibration.notes ??
+                    "No model has been trained or validated for this release. Accuracy metrics are intentionally omitted — publishing unverifiable numbers would be dishonest."}
                 </p>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Kendall tau</p>
-                <p className="text-lg font-semibold">{calibration.metrics.kendallTau.toFixed(3)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Held-out sample</p>
-                <p className="text-lg font-semibold">
-                  {calibration.holdout?.buildingCount?.toLocaleString() ?? "-"} buildings
-                </p>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       )}

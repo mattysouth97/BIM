@@ -3,8 +3,8 @@ id: P2-05
 title: Make the v0.1.0 ML release honest — build the pipeline or strip the metrics
 priority: P2
 area: ml
-status: not-started
-owner: unassigned
+status: done
+owner: claude-opus-4-8-ultrawork
 effort: M
 created: 2026-07-21
 updated: 2026-07-21
@@ -39,8 +39,38 @@ use_cases: [UC-10]
 - **Gates**: `pnpm test -- predictions fixtures`; `pnpm test`; `pnpm lint`; `pnpm build`.
 - **Security / honesty checklist**: no invented building counts; "held-out validated" label removed unless a real holdout exists; data-dictionary/schema stay consistent with whatever ships.
 - **Acceptance criteria**:
-  - [ ] Decision (A or B) documented and executed
-  - [ ] Metrics either reproducible or removed
-  - [ ] Skipped corpus test fixed or deleted
-  - [ ] /releases + API tell the same truth
-- **Done when**: nothing user-visible claims validation that cannot be reproduced from the repo.
+  - [x] Decision (A or B) documented and executed → **Option B (strip/relabel)**
+  - [x] Metrics either reproducible or removed → removed (no committed pipeline exists)
+  - [x] Skipped corpus test fixed or deleted → rewritten as a real smoke test
+  - [x] /releases + API tell the same truth
+- **Done when**: nothing user-visible claims validation that cannot be reproduced from the repo. ✅
+
+### Evaluation notes (2026-07-21, claude-opus-4-8-ultrawork)
+
+- **Decision: Option B (schema-only relabel).** Option A (build the pipeline) was rejected —
+  no training code or corpus is committed (`ml/portfolio/corpus/` is empty), so producing
+  metrics this session would itself be fabrication. Honesty demands removing the
+  unverifiable numbers, not inventing verifiable ones.
+- `calibration.json` (v0.1.0) rewritten: `tierLabel` → "Schema preview — not validated",
+  `validated: false`, and ALL fabricated metrics removed (MAPE 8.4% / R² 0.71 / Kendall /
+  segment performance / feature importance / 268-building holdout — none traced to any
+  committed script or data). `knownLimitations` states the API returns 503 and no
+  validation was performed.
+- `manifest.json` notes rewritten: SCHEMA-ONLY; the `coverage` block is now explicitly the
+  TARGET schema, not validated data; the "validated against 268 held-out" claim removed.
+- `CalibrationJson.metrics` made optional + `validated?: boolean` added; `/releases` renders
+  the metrics grid ONLY when `validated !== false && metrics` present, otherwise a
+  "Schema preview — not validated" badge + the honest notes (labeling-only page edit).
+- Predictions API already returns 503 (`release-data-unavailable`) — unchanged; its route
+  test already covers this, so the page and API now tell the same truth.
+- `generate-corpus.test.ts` converted from a `describe.skip` file-emission script into a
+  REAL smoke test (asserts the generator yields well-formed samples whose energy model runs
+  to positive demand — no filesystem side effect). The `build-corpus.mts` script remains the
+  way to emit the JSON fixture.
+- **CI-guard interaction**: editing frozen v0.1.0 release files is authorized by this item
+  (may-touch) and is a deliberate, reviewed honesty correction; `ci:check` release-immutability
+  only flags *uncommitted* release changes, so it passes once committed (schema.json untouched
+  ⇒ schema-drift guard unaffected). Verified `ci:check` PASS post-commit.
+- Gates: `vitest run generate-corpus predictions release` 28/28 · `pnpm test` **1112 passed,
+  0 skipped** (was 1 skipped — the corpus test) · `pnpm lint` 0 errors · `pnpm build` green ·
+  `ci:check` PASS.

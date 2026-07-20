@@ -1,45 +1,11 @@
 {
   "version": "v0.1.0",
-  "tier": "B",
-  "tierLabel": "Calibrated · held-out validated",
-  "metrics": {
-    "mape": 0.084,
-    "medianAbsError": 14.2,
-    "medianAbsErrorUnit": "kWh/m²·yr",
-    "rmse": 22.8,
-    "kendallTau": 0.672,
-    "spearmanRho": 0.814,
-    "r2": 0.71
-  },
-  "confidence": {
-    "p10_multiplier": 0.86,
-    "p90_multiplier": 1.19,
-    "intervalCoverage": 0.82
-  },
-  "holdout": {
-    "buildingCount": 268,
-    "observationCount": 804,
-    "splitStrategy": "by-sigungu-leaveout"
-  },
-  "segmentPerformance": [
-    { "segment": "Residential / pre-1990", "mape": 0.097, "count": 62 },
-    { "segment": "Residential / 1990–2009", "mape": 0.081, "count": 94 },
-    { "segment": "Residential / 2010+", "mape": 0.063, "count": 48 },
-    { "segment": "Office / pre-1990", "mape": 0.112, "count": 14 },
-    { "segment": "Office / 1990–2009", "mape": 0.086, "count": 22 },
-    { "segment": "Office / 2010+", "mape": 0.059, "count": 19 },
-    { "segment": "Retail / all", "mape": 0.134, "count": 9 }
-  ],
-  "featureImportance": [
-    { "name": "gfaSqm", "rank": 1, "gain": 0.184 },
-    { "name": "constructionYear", "rank": 2, "gain": 0.142 },
-    { "name": "wallUValuePrior", "rank": 3, "gain": 0.118 },
-    { "name": "useTypeCode", "rank": 4, "gain": 0.092 },
-    { "name": "climateZoneCode", "rank": 5, "gain": 0.081 },
-    { "name": "windowShgcPrior", "rank": 6, "gain": 0.066 },
-    { "name": "floorCountAbove", "rank": 7, "gain": 0.054 },
-    { "name": "compactness", "rank": 8, "gain": 0.049 },
-    { "name": "buildingHeightM", "rank": 9, "gain": 0.038 },
-    { "name": "footprintAreaSqm", "rank": 10, "gain": 0.031 }
+  "tier": "schema-preview",
+  "tierLabel": "Schema preview — not validated",
+  "validated": false,
+  "notes": "P2-05 honesty correction: no model has been trained or validated for this release. Accuracy metrics (MAPE, R2, Kendall tau, held-out sample, segment performance, feature importance) are intentionally omitted — no training code or corpus is committed to the repository, so any such numbers would be unverifiable. This artifact defines the calibration SCHEMA only. A validated release requires a reproducible pipeline (see docs/work-plan item P2-05, Option A / Phase 36).",
+  "knownLimitations": [
+    "No predictions artifact is published; the predictions API returns 503 (release-data-unavailable).",
+    "No held-out validation has been performed against ECO2 or any ground truth."
   ]
 }
