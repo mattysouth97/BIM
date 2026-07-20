@@ -9,7 +9,7 @@ Assumes the receiving AI agent runs with the repo root as its workspace (`C:\Use
 - Recommended order (respects the sequencing constraints in `docs/work-plan/README.md`):
   - **Wave 1 (P0):** P0-01 → P0-04 → P0-03 → P0-02 → P0-05
   - **Wave 2 (P1):** P1-04 → P1-08 → P1-05 → P1-01 → P1-02 → P1-03 → P1-06 → P1-07
-  - **Wave 3 (P2):** P2-01 → P2-02 → P2-03 → P2-04 → P2-05 → P2-06 → P2-07 → P2-09 → P2-10 → P2-08 (P2-08 always last)
+  - **Wave 3 (P2):** P2-01 → P2-02 → P2-03 → P2-04 → P2-05 → P2-06 → P2-07 → P2-09 → P2-10 → P2-11 → P2-12 → P2-13 → P2-08 (P2-08 always last)
 
 ---
 
@@ -28,7 +28,7 @@ EVALUATE → TRACK).
 EXECUTION ORDER (respect the sequencing constraints in docs/work-plan/README.md):
 Wave 1 (P0): P0-01, P0-04, P0-03, P0-02, P0-05
 Wave 2 (P1): P1-04, P1-08, P1-05, P1-01, P1-02, P1-03, P1-06, P1-07
-Wave 3 (P2): P2-01, P2-02, P2-03, P2-04, P2-05, P2-06, P2-07, P2-09, P2-10, P2-08
+Wave 3 (P2): P2-01, P2-02, P2-03, P2-04, P2-05, P2-06, P2-07, P2-09, P2-10, P2-11, P2-12, P2-13, P2-08
 
 FOR EACH ITEM, in strict order:
 1. Read docs/work-plan/items/<ID>-*.md fully, then its §2 context-pack files, then
@@ -111,7 +111,10 @@ Heed AGENTS.md: verify Next.js APIs against node_modules/next/dist/docs/.
 | 20 | `Execute work item P2-07 (harden persisted stores — versioning, API-key policy, building-scoped annotations).` |
 | 21 | `Execute work item P2-09 (rewrite the e2e suite around the real user journey with mocked APIs).` |
 | 22 | `Execute work item P2-10 (financial model refinements — loan-term buy-down, rate honesty, solar fixes, sourced costs).` |
-| 23 | `Execute work item P2-08 (delete dead code, fix doc drift, remove stray artifacts) — always run LAST.` |
+| 23 | `Execute work item P2-11 (geometric fidelity — parcel/curve/slab data correctness, shadow scaling, antialiasing).` |
+| 24 | `Execute work item P2-12 (geometric fidelity — wire dead PBR materials, slab detail, calibration registry, honest fidelity badges).` |
+| 25 | `Execute work item P2-13 (geometric fidelity — IFC high-accuracy path, unified slab instancing, ledger-fact validation loop).` |
+| 26 | `Execute work item P2-08 (delete dead code, fix doc drift, remove stray artifacts) — always run LAST.` |
 
 ---
 
