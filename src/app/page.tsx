@@ -245,12 +245,12 @@ export default function Home() {
             <Building2 className="h-8 w-8 text-primary" />
           </div>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            {isKo ? "건축물대장 조회" : "Building Ledger Lookup"}
+            {isKo ? "그린리모델링 투자 시뮬레이터" : "GreenRetrofit Simulator"}
           </h2>
           <p className="max-w-lg text-muted-foreground">
             {isKo
-              ? "공공데이터포털 API를 활용하여 전국 건축물대장 정보를 조회하세요."
-              : "Look up building ledger records across Korea using the data.go.kr API."}
+              ? "건축물대장 데이터를 3D 디지털 트윈으로 변환하고, 단열·설비·태양광 개보수의 에너지 절감과 투자 회수(NPV·IRR·회수기간)를 시뮬레이션하세요. 먼저 건물을 검색하여 시작합니다."
+              : "Turn building-ledger data into a 3D digital twin and simulate the energy savings and investment return (NPV, IRR, payback) of envelope, HVAC, and solar retrofits. Start by searching for a building."}
           </p>
         </div>
       </section>

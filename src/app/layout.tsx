@@ -29,9 +29,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "건축물대장 | Building Ledger",
+  title: "그린리모델링 시뮬레이터 | GreenRetrofit Simulator",
   description:
-    "한국 건축물대장 정보 조회 서비스 - Korea Building Ledger information lookup powered by data.go.kr",
+    "한국 건축물대장 데이터를 3D 디지털 트윈으로 변환하고 에너지 개보수 투자 회수(NPV·IRR·회수기간)를 시뮬레이션합니다 — Korean building-ledger data into 3D digital twins with energy-retrofit ROI simulation, powered by data.go.kr.",
 };
 
 export default function RootLayout({
