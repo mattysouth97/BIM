@@ -10,6 +10,12 @@ export default defineConfig({
       provider: "v8",
       include: ["src/**/*.ts", "src/**/*.tsx"],
       exclude: ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.d.ts"],
+      // P0-05: floors set at the measured 2026-07-21 baseline (52.78% lines /
+      // 57.54% functions — below the 70% target). Ratchet upward via P1-09;
+      // never lower these to make a change pass.
+      thresholds: {
+        "src/lib/**": { lines: 52, functions: 57 },
+      },
     },
   },
   resolve: {

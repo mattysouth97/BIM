@@ -1,0 +1,46 @@
+# P0-05 — four-step gate on every PR and push to main:
+# lint → test (with coverage floors) → build → plan guards.
+# Hermetic: no secrets, read-only token, only major-pinned first-party +
+# pnpm actions.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Repo has no packageManager field — pin pnpm explicitly (lockfile v9.0).
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test (with coverage thresholds)
+        run: pnpm test:coverage
+
+      - name: Build
+        run: pnpm build
+
+      - name: Plan guards (schema drift, explorer purity, release immutability)
+        run: pnpm ci:check

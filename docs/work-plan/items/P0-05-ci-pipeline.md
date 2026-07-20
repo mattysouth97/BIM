@@ -3,8 +3,8 @@ id: P0-05
 title: Add GitHub Actions CI, coverage thresholds, and close the release-guard hole
 priority: P0
 area: infra
-status: not-started
-owner: unassigned
+status: done
+owner: claude-fable-5-ultrawork
 effort: M
 created: 2026-07-21
 updated: 2026-07-21
@@ -93,9 +93,35 @@ use_cases: [UC-01, UC-05, UC-06, UC-07, UC-08]
   - Guard output must not leak absolute CI paths into committed artifacts (stdout/stderr only, as today).
   - Coverage threshold reflects an honestly measured baseline — record the measured number in the PR description.
 - **Acceptance criteria**:
-  - [ ] `.github/workflows/ci.yml` runs lint + test + build + ci:check on PRs and pushes to `main` with pnpm caching.
-  - [ ] `vitest.config.ts` enforces `src/lib` lines/functions thresholds (≥ 70 or measured floor with a filed ratchet follow-up).
-  - [ ] Guard (c) detects untracked files under `public/releases/v*/` while preserving the CHANGELOG exemption.
-  - [ ] All three mandatory probes documented in the PR.
-  - [ ] Local full gate green; first real CI run green.
+  - [x] `.github/workflows/ci.yml` runs lint + test + build + ci:check on PRs and pushes to `main` with pnpm caching.
+  - [x] `vitest.config.ts` enforces `src/lib` lines/functions thresholds (≥ 70 or measured floor with a filed ratchet follow-up).
+  - [x] Guard (c) detects untracked files under `public/releases/v*/` while preserving the CHANGELOG exemption.
+  - [x] All three mandatory probes documented in the PR.
+  - [ ] Local full gate green (✔); first real CI run green (pending push — cannot be verified locally).
 - **Done when**: A PR that breaks a test or drops an untracked file into `public/releases/v*/` is visibly red in GitHub, and the four-step gate runs automatically on every PR and main push.
+
+### Evaluation notes (2026-07-21, claude-fable-5-ultrawork)
+
+- Workflow `.github/workflows/ci.yml`: checkout@v4 → pnpm/action-setup@v4 (version 10) →
+  setup-node@v4 (node 22, pnpm cache) → frozen-lockfile install → lint → **test:coverage**
+  (runs the full suite AND enforces floors, covering BDD 1+5 in one step) → build → ci:check.
+  `permissions: contents: read`, zero secrets.
+- **Measured baseline (honest)**: `src/lib/**` = **52.78% lines / 57.54% functions** — below
+  the 70 target, so floors set at **52/57** and ratchet item **P1-09** filed
+  (`items/P1-09-coverage-ratchet.md`) listing the zero-coverage hotspots.
+- Guard (c) now unions `git diff --name-only HEAD` with
+  `git ls-files --others --exclude-standard` (quoted-path handling included).
+- **Mandatory probes (recorded)**:
+  1. Untracked `public/releases/v-probe/evil.json` → `ci:check` exit 1 (FAIL reported);
+     deleted → exit 0. ✔
+  2. Thresholds at 100 → `test:coverage` exit 1 (printed actuals 52.78/57.54); at 52/57 →
+     exit 0. ✔
+  3. Full local gate: lint 0 errors · test 971 (via coverage run) · build green ·
+     ci:check clean-tree PASS. ✔ Bonus probe: untracked `CHANGELOG.md` in a release dir →
+     exempt, exit 0. ✔
+- Deviations: `packageManager` field NOT added to package.json (optional per may-touch;
+  avoided interfering with the maintainer's broken local pnpm shim setup — CI pins
+  pnpm 10 via action instead). Workflow YAML validated by eye only (no actionlint locally);
+  GitHub validates on first push. Optional `node --test` guard test skipped per item text.
+- **Post-merge follow-up**: first CI run + intentional-red throwaway PR remain to be
+  observed on GitHub after push.
