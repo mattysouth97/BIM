@@ -3,8 +3,8 @@ id: P1-05
 title: Fix benchmark unit mismatch and retire dual grading scales
 priority: P1
 area: energy
-status: not-started
-owner: unassigned
+status: done
+owner: claude-fable-5-ultrawork
 effort: M
 created: 2026-07-21
 updated: 2026-07-21
@@ -180,15 +180,37 @@ use_cases: [UC-03, UC-08]
   - Where actual consumption data is absent, keep null paths — never synthesize
     a grade.
 - **Acceptance criteria**:
-  - [ ] `compareToBenchmark` receives primary kWh/m² at both call sites
+  - [x] `compareToBenchmark` receives primary kWh/m² at both call sites
         (`report-stage.tsx`, `properties-panel.tsx`).
-  - [ ] One shared fuel-split helper; one shared building-type helper.
-  - [ ] `metrics.grade` (or its replacement) is the official
+  - [x] One shared fuel-split helper; one shared building-type helper.
+  - [x] `metrics.grade` (or its replacement) is the official
         `calculateEfficiencyRating` grade; identical across status bar,
         properties panel, report, PDF.
-  - [ ] Legacy delivered-energy grade no longer rendered in any user-facing
+  - [x] Legacy delivered-energy grade no longer rendered in any user-facing
         component; `energy-grade.ts` documented as internal color ramp.
-  - [ ] New/updated tests pass; full suite, lint, build green.
+  - [x] New/updated tests pass; full suite, lint, build green.
 - **Done when**: a building's benchmark band and displayed grade are both
   computed from primary energy via the official tables, and only one grading
   scale is visible anywhere in the UI.
+
+### Evaluation notes (2026-07-21, claude-fable-5-ultrawork)
+
+- New `src/lib/energy/delivered-from-demand.ts`: `deliveredFromDemand` (fuel split kept
+  verbatim from report-stage), `isResidentialOccupancy`, `buildingTypeFromMaterials` —
+  now the only implementations (three divergent copies removed).
+- `useEnergyMetrics.grade` is the official `calculateEfficiencyRating` grade (type
+  `EfficiencyGrade`, literal-compatible with the legacy union so every consumer —
+  status bar, PDF engine, ECO2 export, certification input — compiled without shape
+  churn); new `metrics.primaryEnergyPerArea` backs both grade and benchmark. Zero/neg
+  floor area now returns null (no fabricated "1+++").
+- Both benchmark call sites pass `metrics.primaryEnergyPerArea`. **Additional in-scope
+  fix found during implementation**: `BuildingCertificationInput.primaryEnergyDemand`
+  was receiving *delivered* `demandPerSqm` in both panels — same unit-mismatch class;
+  now receives the primary intensity (noted here as it slightly shifts G-SEED scores
+  toward honesty).
+- `energy-grade.ts` re-headed as "internal color scale — NOT the official rating";
+  heatmap keeps it as its color ramp per the constraint; `getGradeColor` reused for
+  badge colors only.
+- Gates: targeted `delivered-from-demand use-energy-metrics` 11/11 · fitness greps 0
+  matches (getEnergyGrade in UI paths; demandPerSqm→benchmark) · `pnpm test`
+  **1012 passed / 1 skipped** · `pnpm lint` 0 errors · `pnpm build` green.

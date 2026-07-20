@@ -11,19 +11,31 @@ import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { getClimateData } from "@/lib/energy/climate-data";
 import { calculateHeatLoss } from "@/lib/energy/heat-loss";
 import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
-import { getEnergyGrade, getGradeColor } from "@/lib/energy/energy-grade";
+import { getGradeColor } from "@/lib/energy/energy-grade";
 import { calculateCO2 } from "@/lib/energy/co2-emissions";
+import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
+import {
+  deliveredFromDemand,
+  buildingTypeFromMaterials,
+} from "@/lib/energy/delivered-from-demand";
 import type { HeatLossResult } from "@/lib/energy/heat-loss";
 import type { AnnualDemand } from "@/lib/energy/annual-demand";
-import type { EnergyGrade } from "@/lib/energy/energy-grade";
+import type { EfficiencyGrade } from "@/lib/compliance/efficiency-rating";
 import type { CO2Result } from "@/lib/energy/co2-emissions";
 import type { AnnualConsumption } from "@/lib/energy/consumption-normalizer";
 
 export interface EnergyMetrics {
   heatLoss: HeatLossResult;
   demand: AnnualDemand;
-  grade: EnergyGrade;
+  /**
+   * P1-05: the OFFICIAL MOTIE/KEMCO primary-energy grade
+   * (calculateEfficiencyRating), residential/non-residential aware. The
+   * legacy delivered-energy scale is no longer user-facing.
+   */
+  grade: EfficiencyGrade;
   gradeColor: string;
+  /** Primary energy intensity backing the grade + benchmark. kWh/m²·yr. */
+  primaryEnergyPerArea: number;
   co2: CO2Result;
   /**
    * Percentage difference between predicted annual demand and most recent actual consumption.
@@ -55,6 +67,14 @@ export function useEnergyMetrics(
   const metrics = useMemo<EnergyMetrics | null>(() => {
     if (!materials || !effectiveRecipe) return null;
 
+    const totalFloorArea =
+      effectiveRecipe.footprintWidth *
+      effectiveRecipe.footprintDepth *
+      effectiveRecipe.floors.length;
+    // P1-05 honesty: without a positive floor area no per-area intensity or
+    // grade can exist — return null rather than fabricate a "1+++" rating.
+    if (totalFloorArea <= 0) return null;
+
     const climate = getClimateData(sigunguCd);
     const heatLoss = calculateHeatLoss(materials, effectiveRecipe, climate);
     const demand = calculateAnnualDemand(
@@ -63,12 +83,15 @@ export function useEnergyMetrics(
       effectiveRecipe,
       climate
     );
-    const grade = getEnergyGrade(demand.demandPerSqm);
+    // P1-05: official primary-energy rating — one computation path shared
+    // with the compliance report.
+    const rating = calculateEfficiencyRating(
+      deliveredFromDemand(demand),
+      totalFloorArea,
+      buildingTypeFromMaterials(materials)
+    );
+    const grade = rating.grade;
     const gradeColor = getGradeColor(grade);
-    const totalFloorArea =
-      effectiveRecipe.footprintWidth *
-      effectiveRecipe.footprintDepth *
-      effectiveRecipe.floors.length;
     const co2 = calculateCO2(demand, totalFloorArea);
 
     // Compute predicted vs actual delta using most recent actual year
@@ -83,7 +106,15 @@ export function useEnergyMetrics(
       }
     }
 
-    return { heatLoss, demand, grade, gradeColor, co2, predictedVsActualDelta };
+    return {
+      heatLoss,
+      demand,
+      grade,
+      gradeColor,
+      primaryEnergyPerArea: rating.primaryEnergyPerArea,
+      co2,
+      predictedVsActualDelta,
+    };
   }, [materials, effectiveRecipe, sigunguCd, actualConsumption]);
 
   return metrics;

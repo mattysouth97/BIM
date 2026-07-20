@@ -50,7 +50,7 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | [P1-02](./items/P1-02-measure-lifetimes.md) | Add measure lifetimes, truncate cash flows, add generator-level tests | retrofit | M | UC-06, UC-07 | ⬜ |
 | [P1-03](./items/P1-03-fuel-aware-pricing.md) | Thread heating fuel type into envelope/HVAC generators; price district heating | retrofit | M | UC-06, UC-07 | ⬜ |
 | [P1-04](./items/P1-04-fix-system-ratios-use-codes.md) | Correct SYSTEM_RATIOS use-code keys against the real MOLIT 용도코드 table | energy | S | UC-03, UC-06 | ✅ |
-| [P1-05](./items/P1-05-benchmark-units-grading-scale.md) | Fix benchmark unit mismatch and retire dual grading scales | energy | M | UC-03, UC-08 | ⬜ |
+| [P1-05](./items/P1-05-benchmark-units-grading-scale.md) | Fix benchmark unit mismatch and retire dual grading scales | energy | M | UC-03, UC-08 | ✅ |
 | [P1-06](./items/P1-06-api-hardening-sweep.md) | API hardening sweep — traversal, error contracts, proxy factory, batch caps, zod | api | L | UC-01, 02, 04 | ⬜ |
 | [P1-07](./items/P1-07-a11y-chart-repair.md) | Accessibility and chart repair — Tab hijack, keyboard-inert rows, black bars | ux | M | UC-01, 03, 05, 06 | ⬜ |
 | [P1-08](./items/P1-08-state-consistency.md) | State consistency — one effective-recipe hook, guard-aware stepper, active building | state | L | UC-05, 06, 08 | ✅ |
@@ -99,4 +99,5 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | 2026-07-21 | P0-05 | GitHub Actions CI (lint/test:coverage/build/ci:check); src/lib floors at measured 52/57 baseline (P1-09 ratchet filed); guard (c) now catches untracked release files | claude-fable-5-ultrawork |
 | 2026-07-21 | P1-04 | SYSTEM_RATIOS re-keyed to MOLIT truth (01/02 residential, 07 retail, 14 office; 11/13 → honest fallback); office hours 12000→14000; cross-module consistency oracle test | claude-fable-5-ultrawork |
 | 2026-07-21 | P1-08 | useEffectiveRecipe replaces SIX hand-copied merges (polygon overrides now reach all consumers); active-building store + sigunguCd parity; guard-aware stepper with lock reasons | claude-fable-5-ultrawork |
+| 2026-07-21 | P1-05 | Benchmark + grade now computed in PRIMARY energy via official MOTIE/KEMCO tables (one path); legacy scale demoted to heatmap color ramp; certification input unit fixed | claude-fable-5-ultrawork |
 | 2026-07-21 | P2-11, P2-12, P2-13 | Added geometric-fidelity track (data correctness / dead-feature wiring / IFC path + validation loop) from rendering-accuracy review; dashboard, sequencing, and execution prompts updated | orchestrator |

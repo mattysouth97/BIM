@@ -1,11 +1,13 @@
 // src/lib/energy/energy-grade.ts
-// Korean building energy efficiency rating (건축물 에너지효율등급).
-// Scale: 1+++ (best) to 7 (worst), based on kWh/m²·yr.
+// ⚠️ INTERNAL COLOR SCALE — NOT the official rating (P1-05).
 //
-// Two grading modes:
-//   - Delivered energy grade (getEnergyGrade): legacy, uses delivered kWh/m²·yr
-//   - Primary energy grade (primaryEnergyGrade in EnergyGradeResult): uses
-//     official primary energy per 건축물 에너지효율등급 인증 기준 (MOTIE/KEMCO)
+// `getEnergyGrade` buckets DELIVERED kWh/m²·yr on a legacy scale and exists
+// only as a continuous color ramp for the 3D heatmap
+// (src/lib/layers/energy-heatmap-builder.ts). The user-facing grade is the
+// official MOTIE/KEMCO PRIMARY-energy rating from
+// src/lib/compliance/efficiency-rating.ts (calculateEfficiencyRating),
+// surfaced via useEnergyMetrics().grade. Do NOT render getEnergyGrade output
+// in any UI component, report, or export.
 
 import type { EfficiencyGrade } from "@/lib/compliance/efficiency-rating";
 

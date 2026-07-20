@@ -34,6 +34,11 @@ import {
 } from "@/lib/compliance/efficiency-rating";
 import { calibrateEnergy } from "@/lib/energy/calibration";
 import { compareToBenchmark } from "@/lib/energy/benchmark-comparison";
+import {
+  deliveredFromDemand,
+  buildingTypeFromMaterials,
+  isResidentialOccupancy,
+} from "@/lib/energy/delivered-from-demand";
 import type { EnergyAuditInput } from "@/lib/report/templates/energy-audit";
 import type { ComplianceReportInput } from "@/lib/report/templates/compliance-report";
 import type { CertificationVersion } from "@/lib/compliance/certification-types";
@@ -158,13 +163,11 @@ export function ReportStage() {
   const fidelityLevel = deriveFidelityLevel(calibration !== undefined, hasActual);
 
   // ── Benchmark (optional) ─────────────────────────────────────────────────
+  // P1-05: the benchmark dataset is PRIMARY energy — compare the derived
+  // primary intensity, not delivered demand (which sat ~2-3 bands too low).
   const benchmark = useMemo(() => {
     if (!metrics) return undefined;
-    const useType =
-      materials?.occupancy?.occupancyDensity !== undefined &&
-      materials.occupancy.occupancyDensity > 0.1
-        ? "residential"
-        : "office";
+    const useType = isResidentialOccupancy(materials) ? "residential" : "office";
     const codeYear = materials?.codeYear ?? 2000;
     const era =
       codeYear >= 2020
@@ -176,7 +179,7 @@ export function ReportStage() {
             : codeYear >= 1990
               ? "1990s"
               : "pre-1990";
-    return compareToBenchmark(metrics.demand.demandPerSqm, useType, era);
+    return compareToBenchmark(metrics.primaryEnergyPerArea, useType, era);
   }, [metrics, materials]);
 
   // ── Green Certification ──────────────────────────────────────────────────
@@ -190,7 +193,8 @@ export function ReportStage() {
       windowUValue: materials.envelope.windows.uValue,
       roofUValue: materials.envelope.roof.uValue,
       energyGrade: metrics.grade,
-      primaryEnergyDemand: metrics.demand.demandPerSqm,
+      // P1-05: this field is PRIMARY energy — was mislabeled with delivered.
+      primaryEnergyDemand: metrics.primaryEnergyPerArea,
       renewableCapacity: materials.renewable?.solarPV?.capacity ?? 0,
       windowToWallRatio: materials.envelope.windows.windowToWallRatio?.S ?? 0.3,
       structureCode: undefined,
@@ -206,19 +210,12 @@ export function ReportStage() {
       effectiveRecipe.footprintDepth *
       effectiveRecipe.floors.length;
     if (totalArea <= 0) return undefined;
-    const isRes =
-      materials?.occupancy?.occupancyDensity !== undefined &&
-      materials.occupancy.occupancyDensity > 0.1;
+    // P1-05: shared fuel-split + building-type helpers — same computation
+    // path as metrics.grade, so the two can never disagree.
     return calculateEfficiencyRating(
-      {
-        electric: metrics.demand.coolingDemand + metrics.demand.totalDemand * 0.15,
-        gas: metrics.demand.heatingDemand + metrics.demand.totalDemand * 0.1,
-        districtHeating: 0,
-        districtCooling: 0,
-        renewable: 0,
-      },
+      deliveredFromDemand(metrics.demand),
       totalArea,
-      isRes ? "residential" : "non-residential"
+      buildingTypeFromMaterials(materials)
     );
   }, [metrics, effectiveRecipe, materials]);
 
