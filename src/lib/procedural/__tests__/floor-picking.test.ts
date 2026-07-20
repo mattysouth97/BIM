@@ -74,24 +74,30 @@ describe("ProceduralBuilding.getFloorByFloorNo", () => {
   });
 });
 
-describe("resolvePickedFloor — polygon Group path (no instanceId)", () => {
-  it("resolves a real slab child mesh via userData.floorNo", () => {
+// P2-13: polygon path now returns InstancedMesh (unified slab pipeline).
+// Selection on polygon buildings now goes through the InstancedMesh path
+// (instanceId → instanceToFloor map), same as the rectangular path.
+describe("resolvePickedFloor — polygon InstancedMesh path (P2-13)", () => {
+  it("polygon slabs are now InstancedMesh (not Group)", () => {
     const builder = new ProceduralBuilding(makeRecipe({ footprintPolygon: TRIANGLE }));
     builder.generate();
 
     const slabs = builder.getSlabMesh();
-    expect(slabs).toBeInstanceOf(THREE.Group);
-    const child = (slabs as THREE.Group).children.find(
-      (c) => c.userData.floorNo === 3
-    );
-    expect(child).toBeDefined();
+    expect(slabs).toBeInstanceOf(THREE.InstancedMesh);
+  });
 
-    const spec = resolvePickedFloor({ object: child! }, builder);
+  it("resolves a polygon slab via instanceId (same flow as rectangular)", () => {
+    const builder = new ProceduralBuilding(makeRecipe({ footprintPolygon: TRIANGLE }));
+    builder.generate();
+
+    const slabs = builder.getSlabMesh()!;
+    // instanceId 2 = third floor (floorNo 3)
+    const spec = resolvePickedFloor({ object: slabs, instanceId: 2 }, builder);
     expect(spec).not.toBeNull();
     expect(spec!.floorNo).toBe(3);
   });
 
-  it("resolves a synthetic slab object with userData floorNo", () => {
+  it("resolves a synthetic slab object with userData floorNo (fallback path)", () => {
     const builder = new ProceduralBuilding(makeRecipe({ footprintPolygon: TRIANGLE }));
     builder.generate();
 
@@ -111,7 +117,7 @@ describe("resolvePickedFloor — polygon Group path (no instanceId)", () => {
     expect(resolvePickedFloor({}, builder)).toBeNull();
   });
 
-  it("returns null for a slab object with missing or invalid floorNo", () => {
+  it("returns null for a slab object with missing or invalid floorNo (fallback path)", () => {
     const builder = new ProceduralBuilding(makeRecipe({ footprintPolygon: TRIANGLE }));
     builder.generate();
 
@@ -171,7 +177,7 @@ describe("getFloorFromInstanceId regression (existing callers unchanged)", () =>
     expect(builder.getFloorFromInstanceId(99)).toBeNull();
   });
 
-  it("still resolves polygon group child indices", () => {
+  it("resolves polygon InstancedMesh instances via instanceToFloor (P2-13 unified path)", () => {
     const builder = new ProceduralBuilding(makeRecipe({ footprintPolygon: TRIANGLE }));
     builder.generate();
 

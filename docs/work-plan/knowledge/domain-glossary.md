@@ -107,6 +107,23 @@
   building-calibration-loader.ts`): `true` when a floor's height is zero (AFF-6 unavailable
   data) or when a partial calibration exists but does not cover that floor. `false` when the
   height is a non-zero recipe default (best available) or a calibrated measurement.
+- **accuracy-path routing** — explicit precedence ordering for footprint geometry sources:
+  IFC (measured BIM) > DXF (exact CAD) > DWG (converted CAD) > PDF (traced) > procedural
+  rectangle (era guess). Implemented in `resolveAccuracyPath()`
+  (`src/lib/cad/ingest-result.ts`). The winning source is recorded in the ingest result's
+  `source` + `confidence` fields so the fidelity badge can display the correct provenance.
+- **IFC ingest source** — `IngestSource = "ifc"` in `src/lib/cad/ingest-result.ts`:
+  the BIM-sourced footprint path. Paired with `IngestConfidence = "measured"` (highest
+  accuracy tier). Produced by `ifcResult()` and selected first by `resolveAccuracyPath()`.
+- **IfcSession** — singleton `{ api, closeModel }` returned by `getSharedIfcApi()`
+  (`src/lib/ifc/ifc-session.ts`). One `IfcAPI` + `Init` call per browser session; concurrent
+  callers share the same promise. `disposeIfcSession()` resets the singleton (used in tests
+  and on unmount to release the WASM heap).
+- **LedgerValidationResult** — output of `validateAgainstLedger()` (`src/lib/validation/
+  ledger-validator.ts`): `{ valid: boolean, warnings: LedgerWarning[] }`. Each `LedgerWarning`
+  carries `field`, `divergencePct`, and a `message` stating the exact magnitude.
+  Checks: gross area (`totArea`), above-ground floors (`grndFlrCnt`), below-ground floors
+  (`ugrndFlrCnt`). Zero ledger fields are skipped (AFF-6 zero = unavailable). Threshold ±15%.
 
 ## Governance
 

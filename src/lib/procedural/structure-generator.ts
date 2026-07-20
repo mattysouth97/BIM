@@ -25,35 +25,47 @@ function pbrToMaterial(config: PBRMaterialConfig): THREE.MeshStandardMaterial {
  * Generate instanced slab geometry for all floors.
  * Each slab instance gets a floor mapping in userData for raycaster selection.
  *
- * When recipe.footprintPolygon is present, returns a THREE.Group of per-floor
- * extruded polygon meshes (one Mesh per floor) instead of a single InstancedMesh.
+ * P2-13 WP3 — Polygon path now returns ONE InstancedMesh (not a Group of per-floor
+ * Meshes). All floors share the same extruded polygon geometry; per-instance
+ * matrix transforms encode each floor's Y position. This bounds draw calls to the
+ * same budget as the rectangular path and preserves P0-04 floor selection via
+ * userData.instanceToFloor.
+ *
  * The rectangular InstancedMesh path is preserved as the fallback.
  */
 export function generateSlabs(recipe: BuildingRecipe): THREE.InstancedMesh | THREE.Group {
   const { floors, footprintWidth, footprintDepth, slab, footprintPolygon } = recipe;
 
-  // POLYGON PATH: when real cadastral polygon is available
+  // POLYGON PATH: unified InstancedMesh — one shared geometry, per-instance Y offset
   if (footprintPolygon && footprintPolygon.length >= 1 && footprintPolygon[0].length >= 3) {
-    const group = new THREE.Group();
-    group.userData = { type: "slab" };
+    // Build the canonical slab geometry at baseY=0; Y is applied via instance matrix.
+    const geo = extrudePolygon(footprintPolygon, slab.thickness, 0);
     const mat = pbrToMaterial(recipe.materials.slab);
+    const count = floors.length;
+    const im = new THREE.InstancedMesh(geo, mat, Math.max(1, count));
+    im.castShadow = true;
+    im.receiveShadow = true;
+
+    const mat4 = new THREE.Matrix4();
+    const pos = new THREE.Vector3();
+    const quat = new THREE.Quaternion();
+    const scl = new THREE.Vector3(1, 1, 1);
     const instanceToFloor = new Map<number, FloorSpec>();
 
     for (let i = 0; i < floors.length; i++) {
       const floor = floors[i];
-      const geo = extrudePolygon(footprintPolygon, slab.thickness, floor.y);
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      mesh.userData = { type: "slab", floorNo: floor.floorNo };
+      // Translate each instance to place the slab's base at floor.y
+      pos.set(0, floor.y, 0);
+      mat4.compose(pos, quat, scl);
+      im.setMatrixAt(i, mat4);
       instanceToFloor.set(i, floor);
-      group.add(mesh);
     }
 
-    // Preserve instanceToFloor on group for getFloorFromInstanceId compatibility
-    group.userData.instanceToFloor = instanceToFloor;
-    group.userData.floors = floors;
-    return group;
+    im.count = count;
+    im.instanceMatrix.needsUpdate = true;
+    im.userData = { type: "slab", floors, instanceToFloor };
+
+    return im;
   }
 
   // RECTANGULAR PATH: original InstancedMesh logic with overhang + ground-floor material
