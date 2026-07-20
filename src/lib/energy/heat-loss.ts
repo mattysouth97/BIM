@@ -103,6 +103,42 @@ export function calculateHeatLoss(
     heatLossPerSqm: totalFloorArea > 0 ? floorHeatLoss / totalFloorArea : 0,
   });
 
+  // ── Infiltration + ventilation (P2-01) ────────────────────────────────────
+  // Sensible air-exchange loss: Q = 0.34 × ACH × V × ΔT (W), where 0.34 is the
+  // volumetric heat capacity of air (Wh/m³·K), ACH is total air changes per
+  // hour, and V is the conditioned volume.
+  //
+  // ACH is the sum of two documented components:
+  //   - Natural infiltration = ach50 / 20. The "/20" is the LBL N-factor rule
+  //     of thumb converting a 50 Pa blower-door result to natural leakage for
+  //     a typical shielded, moderate-height building (assumption).
+  //   - Mechanical ventilation = ventilation.airflowRate (ACH) for any
+  //     non-natural system; a heat-recovery unit recovers a fraction η of that
+  //     stream, so only (1 − η) of the mechanical share is lost.
+  const AIR_VOL_HEAT_CAPACITY = 0.34; // Wh/m³·K
+  const LBL_N_FACTOR = 20;
+  const vent = materials.hvac.ventilation;
+  const conditionedVolume = roofArea * totalHeight; // footprint area × height (m³)
+
+  const infiltrationACH = materials.envelope.airtightness.ach50 / LBL_N_FACTOR;
+  let mechanicalACH = vent.type === "natural" ? 0 : Math.max(0, vent.airflowRate);
+  if (vent.type === "heat-recovery") {
+    const eta = Math.min(Math.max(vent.heatRecoveryEfficiency, 0), 1);
+    mechanicalACH *= 1 - eta;
+  }
+  const totalACH = infiltrationACH + mechanicalACH;
+  const infiltrationHeatLoss =
+    AIR_VOL_HEAT_CAPACITY * totalACH * conditionedVolume * deltaT;
+  elements.push({
+    element: "Infiltration/Ventilation",
+    // area/uValue don't map to an air term — kept 0 to avoid implying an
+    // envelope surface; heatLoss carries the sensible air-exchange loss.
+    area: 0,
+    uValue: 0,
+    heatLoss: infiltrationHeatLoss,
+    heatLossPerSqm: totalFloorArea > 0 ? infiltrationHeatLoss / totalFloorArea : 0,
+  });
+
   const totalHeatLoss = elements.reduce((sum, e) => sum + e.heatLoss, 0);
 
   return {

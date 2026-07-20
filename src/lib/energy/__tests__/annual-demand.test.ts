@@ -113,6 +113,36 @@ describe("calculateAnnualDemand", () => {
     expect(demand.coolingDemand).toBeGreaterThan(0);
   });
 
+  it("higher airtightness (leakier) raises heating demand (P2-01)", () => {
+    const recipe = makeRecipe(15);
+    const tight = makeMaterials();
+    tight.envelope.airtightness.ach50 = 1.0;
+    const leaky = makeMaterials();
+    leaky.envelope.airtightness.ach50 = 8.0;
+
+    const tightDemand = calculateAnnualDemand(
+      calculateHeatLoss(tight, recipe, SEOUL_CLIMATE), tight, recipe, SEOUL_CLIMATE);
+    const leakyDemand = calculateAnnualDemand(
+      calculateHeatLoss(leaky, recipe, SEOUL_CLIMATE), leaky, recipe, SEOUL_CLIMATE);
+
+    expect(leakyDemand.heatingDemand).toBeGreaterThan(tightDemand.heatingDemand);
+  });
+
+  it("HRV recovery lowers heating demand vs plain exhaust (P2-01)", () => {
+    const recipe = makeRecipe(15);
+    const exhaust = makeMaterials();
+    exhaust.hvac.ventilation = { type: "mechanical-exhaust", heatRecoveryEfficiency: 0, airflowRate: 0.6 };
+    const hrv = makeMaterials();
+    hrv.hvac.ventilation = { type: "heat-recovery", heatRecoveryEfficiency: 0.75, airflowRate: 0.6 };
+
+    const exhaustDemand = calculateAnnualDemand(
+      calculateHeatLoss(exhaust, recipe, SEOUL_CLIMATE), exhaust, recipe, SEOUL_CLIMATE);
+    const hrvDemand = calculateAnnualDemand(
+      calculateHeatLoss(hrv, recipe, SEOUL_CLIMATE), hrv, recipe, SEOUL_CLIMATE);
+
+    expect(hrvDemand.heatingDemand).toBeLessThan(exhaustDemand.heatingDemand);
+  });
+
   it("heating demand exceeds cooling demand for Seoul climate", () => {
     const materials = makeMaterials();
     const recipe = makeRecipe(15);
