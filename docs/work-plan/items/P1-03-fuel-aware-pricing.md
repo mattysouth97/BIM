@@ -3,8 +3,8 @@ id: P1-03
 title: Thread heating fuel type into envelope/HVAC generators and price district heating correctly
 priority: P1
 area: retrofit
-status: not-started
-owner: unassigned
+status: done
+owner: claude-fable-5-ultrawork
 effort: M
 created: 2026-07-21
 updated: 2026-07-21
@@ -76,10 +76,32 @@ use_cases: [UC-06, UC-07]
   - Do not fabricate a district-heating tariff: 90 KRW/kWh already exists at cost-database.ts:196; if the implementer believes it is stale, note it in a comment — do not change the constant in this item.
   - kWh energy savings must remain fuel-independent in tests (physics honesty: fuel changes price, not ΔU physics).
 - **Acceptance criteria**:
-  - [ ] `resolveHeatingFuel` mapper exported, unit-tested for all branches incl. default.
-  - [ ] Both generators accept `heatingFuel` and use `ENERGY_PRICES[heatingFuel]` / `CO2_FACTORS[heatingFuel]` for heating-side measures.
-  - [ ] Emitted heating-side measures set `fuel`; escalation follows via the existing explicit path.
-  - [ ] `hvac-heat-pump` suppressed when heating is already electric; documented.
-  - [ ] Hook threads `materials.hvac.heating` into both generators.
-  - [ ] All gates green with zero changes to existing test expectations.
+  - [x] `resolveHeatingFuel` mapper exported, unit-tested for all branches incl. default.
+  - [x] Both generators accept `heatingFuel` and use `ENERGY_PRICES[heatingFuel]` / `CO2_FACTORS[heatingFuel]` for heating-side measures.
+  - [x] Emitted heating-side measures set `fuel`; escalation follows via the existing explicit path.
+  - [x] `hvac-heat-pump` suppressed when heating is already electric; documented.
+  - [x] Hook threads `materials.hvac.heating` into both generators.
+  - [x] All gates green with zero changes to existing test expectations.
 - **Done when**: A district-heated building's envelope/HVAC savings are priced at 90 KRW/kWh, escalated as district heating, and CO2-factored at 0.3200 tCO2/MWh — asserted per fuel type in tests, with legacy gas behavior preserved by default.
+
+### Evaluation notes (2026-07-21, claude-fable-5-ultrawork)
+
+- Single mapping point `resolveHeatingFuel(heating)` exported from economic-model.ts
+  (gas→gas, district-heat→districtHeating, electric/heat-pump→electricity, oil→gas PROXY
+  commented, systemType "district" corroborates, both-absent→gas legacy). Generators never
+  parse fuelType/systemType strings.
+- `generateEnvelopeRetrofits` + `generateHvacRetrofits` gained optional trailing
+  `heatingFuel: Fuel = "gas"` (default keeps every existing caller/test byte-identical —
+  proven by a regression test). Wall/roof/floor + boiler/HRV priced at
+  `ENERGY_PRICES[heatingFuel]` / `CO2_FACTORS[heatingFuel]`; each sets explicit `fuel` so
+  `resolveFuel`'s heuristic branches are unreachable for generator measures. Heat pump's
+  displaced fuel = `heatingFuel`; **suppressed when heating fuel is electricity** (nothing to
+  switch from), documented. Window-replacement electricity proxy kept, comment cross-refs
+  this item.
+- Hook resolves once from `materials.hvac.heating` and threads to both generators.
+- Fitness: zero literal `ENERGY_PRICES.gas`/`CO2_FACTORS.gas` remain in the two generators
+  (grep clean). kWh savings verified fuel-independent (physics); only price/CO2/escalation
+  change.
+- Gates: targeted `heating-fuel use-retrofit-scenario src/lib/retrofit` 116/116 · `pnpm test`
+  **1055 passed / 1 skipped** · `pnpm lint` 0 errors · `pnpm build` green. No existing test
+  expectation changed (default-argument compatibility held).

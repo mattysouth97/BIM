@@ -3,6 +3,7 @@
 // All formulas per Korean energy assessment methodology.
 
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
+import type { Fuel } from "@/lib/retrofit/economic-model";
 import { RETROFIT_COSTS, ENERGY_PRICES, CO2_FACTORS, MEASURE_LIFETIMES } from "@/lib/retrofit/cost-database";
 
 /** 2020+ Korean building energy standard target U-values (W/m²K) */
@@ -34,6 +35,8 @@ function paybackPriority(paybackYears: number): 'high' | 'medium' | 'low' {
  * @param areas             - Surface areas of each envelope element (m²)
  * @param hdd               - Heating degree days (°C·days/year) for the site
  * @param heatingEfficiency - Heating system efficiency (0–1, e.g. 0.87 for 87% boiler)
+ * @param heatingFuel       - Building's heating fuel (P1-03); prices/CO2 for wall/roof/floor
+ *                            savings follow this fuel. Default "gas" = legacy behavior.
  * @returns Array of RetrofitMeasure, sorted by payback period (shortest first)
  */
 export function generateEnvelopeRetrofits(
@@ -41,7 +44,8 @@ export function generateEnvelopeRetrofits(
   targetUValues: { wall: number; roof: number; window: number; floor: number },
   areas: { wall: number; roof: number; window: number; floor: number },
   hdd: number,
-  heatingEfficiency: number
+  heatingEfficiency: number,
+  heatingFuel: Fuel = 'gas'
 ): RetrofitMeasure[] {
   const measures: RetrofitMeasure[] = [];
 
@@ -51,17 +55,20 @@ export function generateEnvelopeRetrofits(
 
   // CO2_FACTORS are in tCO2/MWh — convert to tCO2/kWh by dividing by 1000
   const co2PerKwhElec = CO2_FACTORS.electricity / 1000;
-  const co2PerKwhGas = CO2_FACTORS.gas / 1000;
+  // P1-03: heating-side savings priced/emitted at the building's actual fuel.
+  const heatingPrice = ENERGY_PRICES[heatingFuel];
+  const co2PerKwhHeating = CO2_FACTORS[heatingFuel] / 1000;
 
   // --- Wall insulation ---
   if (currentUValues.wall > targetUValues.wall) {
     const energySaving = calcEnergySaving(currentUValues.wall, targetUValues.wall, areas.wall);
     const totalCost = areas.wall * RETROFIT_COSTS.wallInsulation.perM2;
-    const annualCostSaving = energySaving * ENERGY_PRICES.gas;
+    const annualCostSaving = energySaving * heatingPrice;
     const simplePayback = annualCostSaving > 0 ? totalCost / annualCostSaving : Infinity;
 
     measures.push({
       id: 'envelope-wall-insulation',
+      fuel: heatingFuel, // P1-03: escalation follows the building's heating fuel
       lifetimeYears: MEASURE_LIFETIMES['envelope-wall-insulation'], // P1-02
       name: 'Wall Insulation Upgrade',
       category: 'envelope',
@@ -69,7 +76,7 @@ export function generateEnvelopeRetrofits(
       estimatedCost: totalCost,
       annualEnergySaving: energySaving,
       annualCostSaving,
-      co2Reduction: energySaving * co2PerKwhGas,
+      co2Reduction: energySaving * co2PerKwhHeating,
       paybackYears: simplePayback,
     });
   }
@@ -78,11 +85,12 @@ export function generateEnvelopeRetrofits(
   if (currentUValues.roof > targetUValues.roof) {
     const energySaving = calcEnergySaving(currentUValues.roof, targetUValues.roof, areas.roof);
     const totalCost = areas.roof * RETROFIT_COSTS.roofInsulation.perM2;
-    const annualCostSaving = energySaving * ENERGY_PRICES.gas;
+    const annualCostSaving = energySaving * heatingPrice;
     const simplePayback = annualCostSaving > 0 ? totalCost / annualCostSaving : Infinity;
 
     measures.push({
       id: 'envelope-roof-insulation',
+      fuel: heatingFuel, // P1-03
       lifetimeYears: MEASURE_LIFETIMES['envelope-roof-insulation'], // P1-02
       name: 'Roof Insulation Upgrade',
       category: 'envelope',
@@ -90,7 +98,7 @@ export function generateEnvelopeRetrofits(
       estimatedCost: totalCost,
       annualEnergySaving: energySaving,
       annualCostSaving,
-      co2Reduction: energySaving * co2PerKwhGas,
+      co2Reduction: energySaving * co2PerKwhHeating,
       paybackYears: simplePayback,
     });
   }
@@ -99,7 +107,9 @@ export function generateEnvelopeRetrofits(
   if (currentUValues.window > targetUValues.window) {
     const energySaving = calcEnergySaving(currentUValues.window, targetUValues.window, areas.window);
     const totalCost = areas.window * RETROFIT_COSTS.windowReplacement.perM2;
-    // Windows affect both heating and cooling; use electricity price as combined proxy
+    // Windows affect both heating and cooling; use electricity price as
+    // combined PROXY (kept deliberately in P1-03; fuel stays on the
+    // electricity heuristic path).
     const annualCostSaving = energySaving * ENERGY_PRICES.electricity;
     const simplePayback = annualCostSaving > 0 ? totalCost / annualCostSaving : Infinity;
 
@@ -122,11 +132,12 @@ export function generateEnvelopeRetrofits(
   if (currentFloorU > targetUValues.floor) {
     const energySaving = calcEnergySaving(currentFloorU, targetUValues.floor, areas.floor);
     const totalCost = areas.floor * RETROFIT_COSTS.floorInsulation.perM2;
-    const annualCostSaving = energySaving * ENERGY_PRICES.gas;
+    const annualCostSaving = energySaving * heatingPrice;
     const simplePayback = annualCostSaving > 0 ? totalCost / annualCostSaving : Infinity;
 
     measures.push({
       id: 'envelope-floor-insulation',
+      fuel: heatingFuel, // P1-03
       lifetimeYears: MEASURE_LIFETIMES['envelope-floor-insulation'], // P1-02
       name: 'Ground Floor Insulation Upgrade',
       category: 'envelope',
@@ -134,7 +145,7 @@ export function generateEnvelopeRetrofits(
       estimatedCost: totalCost,
       annualEnergySaving: energySaving,
       annualCostSaving,
-      co2Reduction: energySaving * co2PerKwhGas,
+      co2Reduction: energySaving * co2PerKwhHeating,
       paybackYears: simplePayback,
     });
   }

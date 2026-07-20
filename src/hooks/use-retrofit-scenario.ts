@@ -20,6 +20,7 @@ import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
 import {
   selectMeasuresForBudget,
   computeFinancials,
+  resolveHeatingFuel,
   type EconomicAssumptions,
   type BudgetSelection,
 } from "@/lib/retrofit/economic-model";
@@ -141,6 +142,10 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
       : SEOUL_CLIMATE;
     const hdd = climate.hdd;
 
+    // P1-03: resolve the building's heating fuel ONCE and thread it into
+    // both heating-side generators (pricing, CO2, escalation).
+    const heatingFuel = resolveHeatingFuel(materials.hvac.heating);
+
     // ── Envelope ──
     const wallAgg = aggregateWalls(materials.envelope.walls);
     const wwr = materials.envelope.windows.windowToWallRatio;
@@ -166,6 +171,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
       },
       hdd,
       materials.hvac.heating.efficiency,
+      heatingFuel, // P1-03
     );
 
     // ── HVAC ──
@@ -196,6 +202,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
       totalFloorArea,
       residualHeatingDemand, // post-envelope residual (P1-01)
       coolingDemand,
+      heatingFuel, // P1-03
     );
 
     // ── Lighting ──

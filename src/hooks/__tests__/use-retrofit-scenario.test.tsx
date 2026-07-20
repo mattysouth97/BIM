@@ -45,6 +45,20 @@ describe("useRetrofitScenario sequential damping (P1-01)", () => {
     expect(hrv!.annualEnergySaving).toBeCloseTo(0.15 * residual, 3);
   });
 
+  it("threads district heating from the material store into measure pricing (P1-03)", () => {
+    const dhMaterials = makeMaterials();
+    dhMaterials.hvac.heating.fuelType = "district-heat";
+    dhMaterials.hvac.heating.systemType = "district";
+    useMaterialStore.setState({ properties: { [PK]: dhMaterials } });
+
+    const scenario = renderScenario(100_000);
+    const wall = scenario.allMeasures.find((m) => m.id === "envelope-wall-insulation");
+    expect(wall).toBeDefined();
+    expect(wall!.fuel).toBe("districtHeating");
+    // 90 KRW/kWh district-heat tariff, not the 75 KRW gas price.
+    expect(wall!.annualCostSaving).toBeCloseTo(wall!.annualEnergySaving * 90, 4);
+  });
+
   it("energyImprovementFraction stays within [0, 1]", () => {
     useMaterialStore.setState({ properties: { [PK]: makeMaterials() } });
 

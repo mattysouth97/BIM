@@ -48,7 +48,7 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 |---|---|---|---|---|---|
 | [P1-01](./items/P1-01-knapsack-mutual-exclusion-interaction.md) | Enforce mutually exclusive measures and damp interaction double-counting | retrofit | L | UC-06, UC-07 | ✅ |
 | [P1-02](./items/P1-02-measure-lifetimes.md) | Add measure lifetimes, truncate cash flows, add generator-level tests | retrofit | M | UC-06, UC-07 | ✅ |
-| [P1-03](./items/P1-03-fuel-aware-pricing.md) | Thread heating fuel type into envelope/HVAC generators; price district heating | retrofit | M | UC-06, UC-07 | ⬜ |
+| [P1-03](./items/P1-03-fuel-aware-pricing.md) | Thread heating fuel type into envelope/HVAC generators; price district heating | retrofit | M | UC-06, UC-07 | ✅ |
 | [P1-04](./items/P1-04-fix-system-ratios-use-codes.md) | Correct SYSTEM_RATIOS use-code keys against the real MOLIT 용도코드 table | energy | S | UC-03, UC-06 | ✅ |
 | [P1-05](./items/P1-05-benchmark-units-grading-scale.md) | Fix benchmark unit mismatch and retire dual grading scales | energy | M | UC-03, UC-08 | ✅ |
 | [P1-06](./items/P1-06-api-hardening-sweep.md) | API hardening sweep — traversal, error contracts, proxy factory, batch caps, zod | api | L | UC-01, 02, 04 | ⬜ |
@@ -102,4 +102,5 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | 2026-07-21 | P1-05 | Benchmark + grade now computed in PRIMARY energy via official MOTIE/KEMCO tables (one path); legacy scale demoted to heatmap color ramp; certification input unit fixed | claude-fable-5-ultrawork |
 | 2026-07-21 | P1-01 | Heating-plant conflict groups enforced via exact DP branching; portfolio savings damped (sequential residual in hook, documented pairwise fallback in report); GR fraction clamped | claude-fable-5-ultrawork |
 | 2026-07-21 | P1-02 | Measure lifetimes (ASHRAE-anchored) truncate cash flows past useful life; 3 new generator test suites pin every savings formula + branch boundary | claude-fable-5-ultrawork |
+| 2026-07-21 | P1-03 | Heating fuel (resolveHeatingFuel) threaded into envelope/HVAC generators — district-heat priced at 90 KRW/kWh + 0.32 tCO2/MWh; heat-pump suppressed on electric heat; legacy gas default preserved | claude-fable-5-ultrawork |
 | 2026-07-21 | P2-11, P2-12, P2-13 | Added geometric-fidelity track (data correctness / dead-feature wiring / IFC path + validation loop) from rendering-accuracy review; dashboard, sequencing, and execution prompts updated | orchestrator |

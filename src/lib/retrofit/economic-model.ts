@@ -120,10 +120,46 @@ export interface MeasureFinancials {
 }
 
 /**
+ * P1-03 — map the material model's heating descriptor onto the Fuel union.
+ * The single mapping point: generators never parse fuelType/systemType
+ * strings themselves.
+ *
+ * Mapping table:
+ *   fuelType "gas"           → "gas"
+ *   fuelType "district-heat" → "districtHeating"
+ *   fuelType "electric"      → "electricity"
+ *   fuelType "heat-pump"     → "electricity" (heat pumps run on electricity)
+ *   fuelType "oil"           → "gas" — PROXY: ENERGY_PRICES has no oil
+ *                              tariff; gas is the closest KRW/kWh benchmark.
+ *   otherwise: systemType "district" ⇒ "districtHeating" (corroborating
+ *   signal); both absent/unknown ⇒ "gas" (legacy default).
+ */
+export function resolveHeatingFuel(heating: {
+  systemType: string;
+  fuelType: string;
+}): Fuel {
+  switch (heating.fuelType) {
+    case "gas":
+      return "gas";
+    case "district-heat":
+      return "districtHeating";
+    case "electric":
+    case "heat-pump":
+      return "electricity";
+    case "oil":
+      return "gas"; // documented proxy — no oil tariff in ENERGY_PRICES
+  }
+  if (heating.systemType === "district") return "districtHeating";
+  return "gas";
+}
+
+/**
  * Resolve which fuel's escalation to apply to a measure.
  *
  * Preference order:
- *   1. measure.fuel if present (explicit)
+ *   1. measure.fuel if present (explicit — P1-03 generators always set it on
+ *      heating-side measures, so the heuristics below are unreachable for
+ *      generator-produced measures)
  *   2. inferred from measure.id prefix
  *   3. inferred from measure.category
  *   4. fallback to electricity (most common)

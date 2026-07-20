@@ -2,6 +2,7 @@
 // HVAC retrofit recommendations based on system efficiency, age, and energy demand.
 
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
+import type { Fuel } from "@/lib/retrofit/economic-model";
 import { ENERGY_PRICES, CO2_FACTORS, MEASURE_LIFETIMES } from "@/lib/retrofit/cost-database";
 
 /** Cost per m² for each HVAC measure (KRW) */
@@ -16,6 +17,9 @@ const HRV_COST_PER_SQM = 800_000 / 100;
  * @param floorArea           Total conditioned floor area (m²)
  * @param annualHeatingDemand Annual heating energy demand (kWh)
  * @param annualCoolingDemand Annual cooling energy demand (kWh)
+ * @param heatingFuel         Building's heating fuel (P1-03); boiler/HRV savings
+ *                            and the heat pump's DISPLACED fuel follow it.
+ *                            Default "gas" = legacy behavior.
  */
 export function generateHvacRetrofits(
   currentSystem: {
@@ -27,10 +31,14 @@ export function generateHvacRetrofits(
   },
   floorArea: number,
   annualHeatingDemand: number,
-  annualCoolingDemand: number
+  annualCoolingDemand: number,
+  heatingFuel: Fuel = "gas"
 ): RetrofitMeasure[] {
   const measures: RetrofitMeasure[] = [];
   const { heatingEfficiency, age = 0 } = currentSystem;
+  // P1-03: heating-side savings priced/emitted at the building's actual fuel.
+  const heatingPrice = ENERGY_PRICES[heatingFuel];
+  const heatingCo2 = CO2_FACTORS[heatingFuel];
 
   // --- Boiler upgrade: efficiency < 0.85 ---
   if (heatingEfficiency < 0.85) {
@@ -38,14 +46,15 @@ export function generateHvacRetrofits(
     // Energy saved = demand × (1 - oldEff / newEff)
     const annualEnergySaving =
       annualHeatingDemand * (1 - heatingEfficiency / newEfficiency);
-    const annualCostSaving = annualEnergySaving * ENERGY_PRICES.gas;
-    const annualCO2Saving = (annualEnergySaving / 1000) * CO2_FACTORS.gas;
+    const annualCostSaving = annualEnergySaving * heatingPrice;
+    const annualCO2Saving = (annualEnergySaving / 1000) * heatingCo2;
     const totalCost = BOILER_UPGRADE_COST_PER_SQM * floorArea;
     const simplePayback =
       annualCostSaving > 0 ? totalCost / annualCostSaving : Infinity;
 
     measures.push({
       id: "hvac-boiler-upgrade",
+      fuel: heatingFuel, // P1-03
       lifetimeYears: MEASURE_LIFETIMES["hvac-boiler-upgrade"], // P1-02
       name: "고효율 보일러 교체",
       category: "hvac",
@@ -60,20 +69,22 @@ export function generateHvacRetrofits(
   }
 
   // --- Heat pump conversion: efficiency < 0.70 or age > 15 ---
-  if (heatingEfficiency < 0.7 || age > 15) {
+  // P1-03: suppressed when heating is already electric — nothing to switch
+  // FROM (resistive-to-heat-pump would be a different measure; not modeled).
+  if ((heatingEfficiency < 0.7 || age > 15) && heatingFuel !== "electricity") {
     const heatPumpCOP = 3.5;
     // Existing fuel consumption = demand / efficiency
     const existingFuelUse = annualHeatingDemand / heatingEfficiency;
     // New electricity consumption = demand / COP
     const newElectricUse = annualHeatingDemand / heatPumpCOP;
     const annualEnergySaving = existingFuelUse - newElectricUse;
-    // Cost: old gas vs new electricity
-    const oldFuelCost = existingFuelUse * ENERGY_PRICES.gas;
+    // Cost: old (displaced) heating fuel vs new electricity (P1-03)
+    const oldFuelCost = existingFuelUse * heatingPrice;
     const newElecCost = newElectricUse * ENERGY_PRICES.electricity;
     const annualCostSaving = oldFuelCost - newElecCost;
     // CO2: old gas emissions minus new electricity emissions
     const annualCO2Saving =
-      (existingFuelUse / 1000) * CO2_FACTORS.gas -
+      (existingFuelUse / 1000) * heatingCo2 -
       (newElectricUse / 1000) * CO2_FACTORS.electricity;
     const totalCost = HEAT_PUMP_COST_PER_SQM * floorArea;
     const simplePayback =
@@ -97,14 +108,15 @@ export function generateHvacRetrofits(
   // --- HRV: always recommended (assumes no existing heat recovery ventilation) ---
   const hrvSavingRate = 0.15;
   const hrvEnergySaving = annualHeatingDemand * hrvSavingRate;
-  const hrvCostSaving = hrvEnergySaving * ENERGY_PRICES.gas;
-  const hrvCO2Saving = (hrvEnergySaving / 1000) * CO2_FACTORS.gas;
+  const hrvCostSaving = hrvEnergySaving * heatingPrice;
+  const hrvCO2Saving = (hrvEnergySaving / 1000) * heatingCo2;
   const hrvTotalCost = HRV_COST_PER_SQM * floorArea;
   const hrvPayback =
     hrvCostSaving > 0 ? hrvTotalCost / hrvCostSaving : Infinity;
 
   measures.push({
     id: "hvac-hrv",
+    fuel: heatingFuel, // P1-03
     lifetimeYears: MEASURE_LIFETIMES["hvac-hrv"], // P1-02
     name: "열회수환기장치(HRV) 설치",
     category: "hvac",
