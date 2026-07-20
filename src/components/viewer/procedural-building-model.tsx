@@ -5,6 +5,7 @@ import * as THREE from "three";
 import type { BuildingGeometry, FloorGeometry } from "@/lib/building-geometry";
 import { toRecipe } from "@/lib/building-geometry";
 import { ProceduralBuilding } from "@/lib/procedural/procedural-building";
+import { resolvePickedFloor } from "@/lib/procedural/floor-picking";
 import type { BuildingRecipe, FloorSpec } from "@/lib/procedural/types";
 import { GroundPlane } from "./ground-plane";
 import { useLayerStore } from "@/store/layer-store";
@@ -109,16 +110,16 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
     });
   }, [group, layerVisibility]);
 
-  // Floor selection via raycaster on slab instances
+  // Floor selection via raycaster on slabs — handles both the rectangular
+  // InstancedMesh path (instanceId) and the polygon Group path (plain meshes
+  // carrying userData.floorNo). Resolution lives in resolvePickedFloor.
   const handleClick = useCallback((event: THREE.Event & { instanceId?: number; object?: THREE.Object3D }) => {
     if (!builderRef.current) return;
-    if (!event.object || !('instanceId' in event)) return;
 
-    const obj = event.object as THREE.InstancedMesh;
-    if (obj.userData?.type !== "slab") return;
-
-    const instanceId = event.instanceId as number;
-    const floorSpec = builderRef.current.getFloorFromInstanceId(instanceId);
+    const floorSpec = resolvePickedFloor(
+      { object: event.object, instanceId: event.instanceId },
+      builderRef.current
+    );
     if (!floorSpec) return;
 
     const newSelection = selectedRef.current === floorSpec.floorNo ? null : floorSpec.floorNo;

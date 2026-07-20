@@ -98,6 +98,14 @@ export class ProceduralBuilding {
     return null;
   }
 
+  /**
+   * Resolve a FloorSpec by its floor number from the recipe this builder holds.
+   * Used by the polygon-slab pick path where plain meshes carry userData.floorNo.
+   */
+  getFloorByFloorNo(floorNo: number): FloorSpec | null {
+    return this.recipe.floors.find((f) => f.floorNo === floorNo) ?? null;
+  }
+
   updateRecipe(recipe: BuildingRecipe): THREE.Group {
     this.recipe = recipe;
     return this.generate();
