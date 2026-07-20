@@ -37,7 +37,14 @@ export function ScenePostProcessing() {
 
   // Build composer once on mount
   useEffect(() => {
-    const composer = new EffectComposer(gl);
+    // P2-11: pass a multisample render target so the composer output is anti-aliased.
+    // antialias:true on the Canvas has no effect once EffectComposer takes over the
+    // render loop; MSAA on the composer target restores equivalent AA (≥4 samples).
+    const msaaTarget = new THREE.WebGLRenderTarget(size.width, size.height, {
+      samples: 4,
+      type: THREE.HalfFloatType,
+    });
+    const composer = new EffectComposer(gl, msaaTarget);
 
     const renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
@@ -72,6 +79,7 @@ export function ScenePostProcessing() {
 
     return () => {
       composer.dispose();
+      msaaTarget.dispose();
       composerRef.current = null;
       outlinePassRef.current = null;
     };

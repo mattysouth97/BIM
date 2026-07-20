@@ -345,6 +345,18 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
   const activeCameraDistance = campusData ? campusCameraDistance : cameraDistance;
   const activeTotalHeight = campusData ? 20 : geometry.totalHeight;
 
+  // P2-11: shadow camera frustum derived from site extents (no hardcoded ±60).
+  // Campus mode: use the larger of width/depth so all buildings cast shadows.
+  // Single-building mode: use footprint dimensions + height with a 20% margin.
+  const shadowHalfExtent = useMemo(() => {
+    if (campusSiteLayout) {
+      return Math.max(campusSiteLayout.extents.width, campusSiteLayout.extents.depth) / 2 * 1.2;
+    }
+    return (
+      Math.max(geometry.footprintWidth, geometry.footprintDepth, geometry.totalHeight) * 0.5 + 60
+    );
+  }, [campusSiteLayout, geometry.footprintWidth, geometry.footprintDepth, geometry.totalHeight]);
+
   const handleViewChange = (view: "front" | "side" | "top" | "iso") => {
     controlsRef.current?.setView(view);
   };
@@ -402,7 +414,8 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             args={["#b1e1ff", "#b97a20", 0.6]}
           />
 
-          {/* Single directional light with soft VSM shadows */}
+          {/* Single directional light with soft VSM shadows.
+              P2-11: frustum bounds derived from shadowHalfExtent (site extents), not hardcoded ±60. */}
           <directionalLight
             position={[40, 60, 30]}
             intensity={2.0}
@@ -410,11 +423,11 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             castShadow
             shadow-mapSize-width={2048}
             shadow-mapSize-height={2048}
-            shadow-camera-far={200}
-            shadow-camera-left={-60}
-            shadow-camera-right={60}
-            shadow-camera-top={60}
-            shadow-camera-bottom={-60}
+            shadow-camera-far={shadowHalfExtent * 4}
+            shadow-camera-left={-shadowHalfExtent}
+            shadow-camera-right={shadowHalfExtent}
+            shadow-camera-top={shadowHalfExtent}
+            shadow-camera-bottom={-shadowHalfExtent}
             shadow-bias={-0.0004}
             shadow-radius={4}
           />

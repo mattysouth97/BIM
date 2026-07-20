@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
     }
 
     // No parcel found is a legitimate 200 with polygon: null.
-    return NextResponse.json({ polygon: polygonData ?? null, error: null });
+    return NextResponse.json({ polygon: polygonData?.rings ?? null, parcelCount: polygonData?.parcelCount ?? null, error: null });
   } catch (err) {
     // P1-06 (b): upstream failure → 502, never HTTP 200 with error set.
     return NextResponse.json(
@@ -133,7 +133,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function fetchByPNU(pnu: string, apiKey: string): Promise<number[][][] | null> {
+/** Result of extractPolygon — rings for the chosen parcel plus metadata. */
+interface ExtractedPolygon {
+  rings: number[][][];
+  /** Number of polygon parts in the source MultiPolygon (1 for Polygon type). */
+  parcelCount: number;
+}
+
+async function fetchByPNU(pnu: string, apiKey: string): Promise<ExtractedPolygon | null> {
   const url = new URL(VWORLD_DATA_URL);
   url.searchParams.set("service", "data");
   url.searchParams.set("request", "GetFeature");
@@ -153,7 +160,7 @@ async function fetchByPNU(pnu: string, apiKey: string): Promise<number[][][] | n
   return extractPolygon(data);
 }
 
-async function fetchByBBox(lat: number, lng: number, apiKey: string): Promise<number[][][] | null> {
+async function fetchByBBox(lat: number, lng: number, apiKey: string): Promise<ExtractedPolygon | null> {
   // Search in a ~50m bounding box around the point
   const delta = 0.0005; // ~50m
   const bbox = `BOX(${lng - delta},${lat - delta},${lng + delta},${lat + delta})`;
@@ -232,7 +239,22 @@ async function geocodeAddress(address: string, apiKey: string): Promise<{ lat: n
   return null;
 }
 
-function extractPolygon(data: unknown): number[][][] | null {
+/**
+ * Compute the unsigned shoelace area of a 2D ring (coordinates as [lng, lat] pairs).
+ * Used only for comparing relative parcel sizes — absolute value is not important.
+ */
+function ringArea(ring: number[][]): number {
+  let sum = 0;
+  const n = ring.length;
+  for (let i = 0; i < n; i++) {
+    const [x1, y1] = ring[i];
+    const [x2, y2] = ring[(i + 1) % n];
+    sum += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(sum) / 2;
+}
+
+function extractPolygon(data: unknown): ExtractedPolygon | null {
   try {
     const response = data as {
       response?: {
@@ -260,12 +282,29 @@ function extractPolygon(data: unknown): number[][][] | null {
 
     // Handle both Polygon and MultiPolygon (VWorld returns MultiPolygon for cadastral parcels)
     let rings: number[][][];
+    let parcelCount: number;
+
     if (geometry.type === "MultiPolygon") {
-      // Take all rings from the first polygon part (largest parcel)
-      rings = (geometry.coordinates[0] as number[][][]) ?? [];
+      // P2-11: pick the polygon part with the largest outer-ring area, not just [0].
+      const polygons = geometry.coordinates as number[][][][];
+      parcelCount = polygons.length;
+
+      let bestIdx = 0;
+      let bestArea = -1;
+      for (let i = 0; i < polygons.length; i++) {
+        const outerRing = polygons[i]?.[0];
+        if (!outerRing || outerRing.length < 3) continue;
+        const area = ringArea(outerRing);
+        if (area > bestArea) {
+          bestArea = area;
+          bestIdx = i;
+        }
+      }
+      rings = (polygons[bestIdx] as number[][][]) ?? [];
     } else {
       // Polygon: coordinates is [outerRing, ...holes]
       rings = geometry.coordinates as unknown as number[][][];
+      parcelCount = 1;
     }
 
     // Filter degenerate rings (< 3 points)
@@ -274,7 +313,7 @@ function extractPolygon(data: unknown): number[][][] | null {
 
     // Return raw WGS84 [lng, lat] rings — NO equirectangular projection here.
     // Projection is handled client-side via gis-transform.ts (proj4).
-    return rings;
+    return { rings, parcelCount };
   } catch {
     return null;
   }

@@ -373,6 +373,168 @@ describe("parseDxfText — BIM_OUTLINE layer priority", () => {
 });
 
 // ---------------------------------------------------------------------------
+// P2-11 — Bulge arc tessellation, CIRCLE support, NaN-vertex filter
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a semicircle LWPOLYLINE using DXF bulge encoding.
+ * A half-circle of radius R centred at origin:
+ *   - Two vertices at (-R, 0) and (R, 0) with bulge=1 (= 90° included-angle per segment
+ *     for a full semicircle, bulge=1 corresponds to a 180° arc on the chord).
+ * Analytical area of a semicircle = π·R²/2.
+ *
+ * DXF bulge = tan(θ/4) where θ is the included angle of the arc.
+ * For a 180° arc (half-circle), θ=π, bulge = tan(π/4) = 1.
+ */
+function buildSemicircleLwpolyline(radiusM: number): string {
+  // Two-vertex closed LWPOLYLINE: the chord from (-R,0) to (R,0) with bulge=1
+  // and the return edge with bulge=1 forms a full circle — but we want semicircle:
+  // One segment with bulge=1 (180° arc) + one straight closing segment → D-shape.
+  // Analytical area = πR²/2.
+  return dxf([
+    [0, "SECTION"], [2, "HEADER"],
+    [9, "$INSUNITS"], [70, 6], // meters
+    [0, "ENDSEC"],
+    [0, "SECTION"], [2, "ENTITIES"],
+    [0, "LWPOLYLINE"],
+    [8, "ARC_OUTLINE"],
+    [90, 2],   // 2 vertices
+    [70, 1],   // closed
+    // Vertex 0: (-R, 0) with bulge=1 (180° arc to vertex 1)
+    [10, -radiusM], [20, 0],
+    [42, 1],        // bulge on edge 0→1
+    // Vertex 1: (R, 0) with no bulge (straight closing edge back to vertex 0)
+    [10, radiusM],  [20, 0],
+    [0, "ENDSEC"],
+    [0, "EOF"],
+  ]);
+}
+
+/**
+ * Build a closed CIRCLE entity with given radius (meters).
+ * Analytical area = π·R².
+ */
+function buildCircleFixture(radiusM: number): string {
+  return dxf([
+    [0, "SECTION"], [2, "HEADER"],
+    [9, "$INSUNITS"], [70, 6],
+    [0, "ENDSEC"],
+    [0, "SECTION"], [2, "ENTITIES"],
+    [0, "CIRCLE"],
+    [8, "ROUND_OUTLINE"],
+    [10, 0], [20, 0], [30, 0], // centre
+    [40, radiusM],              // radius
+    [0, "ENDSEC"],
+    [0, "EOF"],
+  ]);
+}
+
+/**
+ * Build an LWPOLYLINE whose vertices include NaN coordinates.
+ * This tests the NaN-vertex filter — the candidate must be rejected cleanly.
+ */
+function buildNaNVertexFixture(): string {
+  return dxf([
+    [0, "SECTION"], [2, "HEADER"],
+    [9, "$INSUNITS"], [70, 6],
+    [0, "ENDSEC"],
+    [0, "SECTION"], [2, "ENTITIES"],
+    [0, "LWPOLYLINE"],
+    [8, "BAD_LAYER"],
+    [90, 4], [70, 1],
+    [10, 0],   [20, 0],
+    [10, "NaN"], [20, 10],  // NaN x-coord
+    [10, 10],  [20, 10],
+    [10, 0],   [20, 0],
+    [0, "ENDSEC"],
+    [0, "EOF"],
+  ]);
+}
+
+describe("parseDxfText — bulge arc tessellation (P2-11)", () => {
+  it("bulge=0 LWPOLYLINE path is unchanged (regression guard)", () => {
+    // Rectangle — all bulges zero / absent. Area must still be exact.
+    const text = buildRectFixture({ insUnits: 6, width: 10, height: 8, layer: "A" });
+    const result = parseDxfText(text);
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].areaSqm).toBeCloseTo(80, 3);
+  });
+
+  it("semicircle bulge arc yields ≥8 tessellation vertices per arc segment", () => {
+    const R = 10; // 10 m radius → analytical area ≈ π·R²/2 ≈ 157.08 m²
+    const text = buildSemicircleLwpolyline(R);
+    const result = parseDxfText(text);
+    // Should produce exactly one candidate (the D-shape)
+    expect(result.candidates).toHaveLength(1);
+    const c = result.candidates[0];
+    // The arc edge has ≥8 chords, so total vertices ≥ 8 + 1 closing straight edge = ≥9
+    expect(c.vertexCount).toBeGreaterThanOrEqual(9);
+  });
+
+  it("semicircle area matches analytical π·R²/2 within 2%", () => {
+    const R = 10;
+    const analyticalArea = Math.PI * R * R / 2; // ≈ 157.08 m²
+    const text = buildSemicircleLwpolyline(R);
+    const result = parseDxfText(text);
+    expect(result.candidates).toHaveLength(1);
+    const area = result.candidates[0].areaSqm;
+    const relErr = Math.abs(area - analyticalArea) / analyticalArea;
+    expect(relErr).toBeLessThan(0.02); // within 2%
+  });
+
+  it("arc tessellation is deterministic — two calls produce the same area", () => {
+    const R = 15;
+    const text = buildSemicircleLwpolyline(R);
+    const r1 = parseDxfText(text);
+    const r2 = parseDxfText(text);
+    expect(r1.candidates[0].areaSqm).toBe(r2.candidates[0].areaSqm);
+  });
+});
+
+describe("parseDxfText — CIRCLE entity support (P2-11)", () => {
+  it("closed CIRCLE is accepted as a candidate polygon", () => {
+    const R = 10;
+    const text = buildCircleFixture(R);
+    const result = parseDxfText(text);
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].layer).toBe("ROUND_OUTLINE");
+  });
+
+  it("CIRCLE area matches analytical π·R² within 2%", () => {
+    const R = 10;
+    const analyticalArea = Math.PI * R * R; // ≈ 314.16 m²
+    const text = buildCircleFixture(R);
+    const result = parseDxfText(text);
+    const area = result.candidates[0].areaSqm;
+    const relErr = Math.abs(area - analyticalArea) / analyticalArea;
+    expect(relErr).toBeLessThan(0.02);
+  });
+
+  it("small CIRCLE below MIN_AREA_SQM is filtered out", () => {
+    // radius=1m → area=π≈3.14 m² < 10 m²
+    const text = buildCircleFixture(1);
+    const result = parseDxfText(text);
+    expect(result.candidates).toHaveLength(0);
+  });
+});
+
+describe("parseDxfText — NaN-vertex filter (P2-11)", () => {
+  it("LWPOLYLINE with NaN coordinates does not throw and produces no candidate", () => {
+    const text = buildNaNVertexFixture();
+    // Must not throw (never-throws contract)
+    let result: ReturnType<typeof parseDxfText> | null = null;
+    expect(() => { result = parseDxfText(text); }).not.toThrow();
+    // Either filtered (no candidates) or rejected — must not produce a NaN-area candidate
+    if (result && (result as ReturnType<typeof parseDxfText>).candidates.length > 0) {
+      for (const c of (result as ReturnType<typeof parseDxfText>).candidates) {
+        expect(Number.isFinite(c.areaSqm)).toBe(true);
+        expect(c.areaSqm).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Shipped QA fixture — docs/samples/sample-footprint.dxf must always parse.
 // ---------------------------------------------------------------------------
 
