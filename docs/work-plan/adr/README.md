@@ -21,7 +21,7 @@ within May-touch paths.
 
 | ADR | Title | Status | Date | Related items |
 |-----|-------|--------|------|---------------|
-| — | *(empty — no ADRs yet)* | | | |
+| ADR-0001 | factoryZones subdivision deferred past P2-12 | proposed | 2026-07-21 | P2-12 |
 
 ## How to add one
 

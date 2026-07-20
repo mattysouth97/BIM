@@ -2,7 +2,7 @@
 
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { getTextureSet, getPBRMaterial, type TextureSet } from "@/lib/pbr-materials";
 import type { BuildingEra } from "@/lib/material-types";
 
@@ -44,25 +44,53 @@ export function useTexturedMaterial(
   const texSet = getTextureSet(strctCd, era, component, roofType);
   const pbr = getPBRMaterial(strctCd, mainPurpsCd, era);
 
-  const [colorTex, normalTex, roughnessTex] = useTexture([
+  const [colorTexShared, normalTexShared, roughnessTexShared] = useTexture([
     texSet.colorMap,
     texSet.normalMap,
     texSet.roughnessMap,
   ]);
 
+  // Clone shared cached textures before mutating repeat/colorSpace.
+  // drei's useTexture caches by URL — mutating the shared object would corrupt
+  // all other consumers that use a different repeat or colorSpace for the same path.
+  const colorTex = useMemo(() => {
+    const t = colorTexShared.clone();
+    t.wrapS = THREE.RepeatWrapping;
+    t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(texSet.repeat[0], texSet.repeat[1]);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.needsUpdate = true;
+    return t;
+  }, [colorTexShared, texSet.repeat]);
+
+  const normalTex = useMemo(() => {
+    const t = normalTexShared.clone();
+    t.wrapS = THREE.RepeatWrapping;
+    t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(texSet.repeat[0], texSet.repeat[1]);
+    t.colorSpace = THREE.LinearSRGBColorSpace;
+    t.needsUpdate = true;
+    return t;
+  }, [normalTexShared, texSet.repeat]);
+
+  const roughnessTex = useMemo(() => {
+    const t = roughnessTexShared.clone();
+    t.wrapS = THREE.RepeatWrapping;
+    t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(texSet.repeat[0], texSet.repeat[1]);
+    t.colorSpace = THREE.LinearSRGBColorSpace;
+    t.needsUpdate = true;
+    return t;
+  }, [roughnessTexShared, texSet.repeat]);
+
+  // Dispose cloned textures when they are replaced
   useEffect(() => {
-    for (const tex of [colorTex, normalTex, roughnessTex]) {
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(texSet.repeat[0], texSet.repeat[1]);
-    }
-    // eslint-disable-next-line react-hooks/immutability
-    colorTex.colorSpace = THREE.SRGBColorSpace;
-    // eslint-disable-next-line react-hooks/immutability
-    normalTex.colorSpace = THREE.LinearSRGBColorSpace;
-    // eslint-disable-next-line react-hooks/immutability
-    roughnessTex.colorSpace = THREE.LinearSRGBColorSpace;
-  }, [colorTex, normalTex, roughnessTex, texSet.repeat]);
+    return () => {
+      colorTex.dispose();
+      normalTex.dispose();
+      roughnessTex.dispose();
+    };
+  }, [colorTex, normalTex, roughnessTex]);
 
   const ns = NORMAL_SCALE[component] || [0.3, 0.3];
 

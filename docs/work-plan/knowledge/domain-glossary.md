@@ -89,6 +89,24 @@
   **L1** = era defaults only (no ledger data); **L2** = ledger-driven procedural output
   (heights, floor count, roof shape from 건축물대장); **L3** = per-orientation WWR +
   explicit footprintPolygon + per-floor heights from calibration overrides.
+- **BuildingCalibration** — per-buildingId JSON record in `src/data/building-calibrations/`
+  carrying `overrides: OverrideRationale[]` (field path, inferred value, override value,
+  traceable source document) and a `geometricLOD` tier. Loaded by
+  `loadCalibration(buildingId)` (`src/lib/fidelity/building-calibration-loader.ts`);
+  unknown buildingId → `null` (never an error). Schema validated by
+  `validateCalibrationEntry` — rejects empty or vague source strings ("backfit", "tuned").
+- **InputProvenance** — per-input measurement flag for the fidelity badge
+  (`src/components/twin/fidelity-badge.tsx`): each of `footprint`, `heights`, and `facade`
+  is `"measured"` (comes from a real data source) or `"estimated"` (era-recipe default or
+  zero-height unavailability). Displayed in the badge tooltip alongside the L1/L2/L3 tier.
+- **slab overhang** — `BuildingRecipe.slab.overhang` (meters): the distance each floor slab
+  extends beyond the facade plane. Zero means flush with the wall face. Non-zero values are
+  applied by `generateSlabs` (`src/lib/procedural/structure-generator.ts`) by scaling the
+  InstancedMesh width/depth by `footprint + 2 × overhang`.
+- **estimated flag** — `FloorHeightResult.estimatedFlags[i]` (`src/lib/fidelity/
+  building-calibration-loader.ts`): `true` when a floor's height is zero (AFF-6 unavailable
+  data) or when a partial calibration exists but does not cover that floor. `false` when the
+  height is a non-zero recipe default (best available) or a calibrated measurement.
 
 ## Governance
 

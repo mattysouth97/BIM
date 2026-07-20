@@ -2,17 +2,30 @@
 
 // src/components/twin/fidelity-badge.tsx
 // Small badge showing the current fidelity level (L1/L2/L3) with a tooltip
-// listing available data sources for that level.
+// listing available data sources for that level, plus per-input provenance
+// (footprint / heights / facade) showing measured vs estimated.
 
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { FidelityLevel } from '@/lib/fidelity/fidelity-types';
 
+/** Per-input provenance — which inputs are measured vs estimated */
+export interface InputProvenance {
+  /** Whether the building footprint comes from a measured cadastral source or is estimated */
+  footprint: 'measured' | 'estimated';
+  /** Whether floor heights come from calibration/ledger data or are era-recipe estimates */
+  heights: 'measured' | 'estimated';
+  /** Whether the facade (window ratio, material) is from measured data or era defaults */
+  facade: 'measured' | 'estimated';
+}
+
 interface FidelityBadgeProps {
   level: FidelityLevel;
   completeness?: number; // 0-1
   className?: string;
+  /** Optional per-input provenance breakdown. When provided, shown in the tooltip. */
+  provenance?: InputProvenance;
 }
 
 const LEVEL_CONFIG: Record<
@@ -53,10 +66,17 @@ const LEVEL_CONFIG: Record<
   },
 };
 
+const PROVENANCE_LABELS: Record<keyof InputProvenance, string> = {
+  footprint: 'Footprint',
+  heights: 'Heights',
+  facade: 'Facade',
+};
+
 export function FidelityBadge({
   level,
   completeness,
   className,
+  provenance,
 }: FidelityBadgeProps) {
   const [showTooltip, setShowTooltip] = useState(false);
   const config = LEVEL_CONFIG[level];
@@ -77,7 +97,7 @@ export function FidelityBadge({
       </Badge>
 
       {showTooltip && (
-        <div className="absolute bottom-full left-0 mb-1.5 z-50 min-w-[200px] rounded-md border bg-popover px-3 py-2 shadow-md text-xs text-popover-foreground">
+        <div className="absolute bottom-full left-0 mb-1.5 z-50 min-w-[220px] rounded-md border bg-popover px-3 py-2 shadow-md text-xs text-popover-foreground">
           <p className="font-semibold mb-1.5">Available data sources</p>
           <ul className="space-y-1">
             {config.sources.map((src) => (
@@ -87,6 +107,37 @@ export function FidelityBadge({
               </li>
             ))}
           </ul>
+
+          {provenance && (
+            <>
+              <p className="mt-2 pt-2 border-t font-semibold mb-1">
+                Input provenance
+              </p>
+              <ul className="space-y-1">
+                {(Object.keys(PROVENANCE_LABELS) as (keyof InputProvenance)[]).map((key) => {
+                  const status = provenance[key];
+                  return (
+                    <li key={key} className="flex items-center justify-between gap-2">
+                      <span className="text-muted-foreground">
+                        {PROVENANCE_LABELS[key]}
+                      </span>
+                      <span
+                        className={cn(
+                          'font-medium',
+                          status === 'measured'
+                            ? 'text-green-600'
+                            : 'text-amber-600',
+                        )}
+                      >
+                        {status}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+
           {completeness !== undefined && (
             <p className="mt-2 pt-2 border-t text-muted-foreground">
               Completeness: {Math.round(completeness * 100)}%

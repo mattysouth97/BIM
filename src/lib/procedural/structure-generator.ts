@@ -56,7 +56,7 @@ export function generateSlabs(recipe: BuildingRecipe): THREE.InstancedMesh | THR
     return group;
   }
 
-  // RECTANGULAR PATH: original InstancedMesh logic (unchanged)
+  // RECTANGULAR PATH: original InstancedMesh logic with overhang + ground-floor material
   const count = floors.length;
 
   const geo = new THREE.BoxGeometry(1, 1, 1);
@@ -65,22 +65,34 @@ export function generateSlabs(recipe: BuildingRecipe): THREE.InstancedMesh | THR
   im.castShadow = true;
   im.receiveShadow = true;
 
+  // Per-instance color: ground floor uses groundFloor material color, others use slab color
+  im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(Math.max(1, count) * 3), 3);
+
+  const slabColor = new THREE.Color(recipe.materials.slab.color);
+  const groundColor = new THREE.Color(recipe.materials.groundFloor.color);
+
   const mat4 = new THREE.Matrix4();
   const pos = new THREE.Vector3();
-  const scl = new THREE.Vector3(footprintWidth, slab.thickness, footprintDepth);
   const quat = new THREE.Quaternion();
   const instanceToFloor = new Map<number, FloorSpec>();
+
+  // slab.overhang extends the slab beyond the facade line on all four sides
+  const slabW = footprintWidth + 2 * (slab.overhang ?? 0);
+  const slabD = footprintDepth + 2 * (slab.overhang ?? 0);
+  const scl = new THREE.Vector3(slabW, slab.thickness, slabD);
 
   for (let i = 0; i < floors.length; i++) {
     const floor = floors[i];
     pos.set(0, floor.y + slab.thickness / 2, 0);
     mat4.compose(pos, quat, scl);
     im.setMatrixAt(i, mat4);
+    im.setColorAt(i, floor.isGroundFloor ? groundColor : slabColor);
     instanceToFloor.set(i, floor);
   }
 
   im.count = count;
   im.instanceMatrix.needsUpdate = true;
+  if (im.instanceColor) im.instanceColor.needsUpdate = true;
   im.userData = { type: "slab", floors: recipe.floors, instanceToFloor };
 
   return im;

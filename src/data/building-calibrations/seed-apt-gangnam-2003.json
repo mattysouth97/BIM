@@ -1,0 +1,22 @@
+{
+  "buildingId": "seed-apt-gangnam-2003",
+  "pnu": "1168010100106790000",
+  "geometricLOD": "L2",
+  "notes": "Seed calibration: RC apartment complex, Gangnam-gu, permit 2003. Floor heights from 건축물대장 층별현황 confirmed against site photograph.",
+  "overrides": [
+    {
+      "field": "floorHeights.1",
+      "inferredValue": 2.9,
+      "overrideValue": 4.2,
+      "source": "건축물대장:층별현황 heit=4.2 (ground lobby height confirmed by 2024 site visit)",
+      "hypothesisForInference": "era 2000-2009 residential default 2.9 m; lobby height is an outlier not captured by the era average"
+    },
+    {
+      "field": "floorHeights.2",
+      "inferredValue": 2.9,
+      "overrideValue": 2.85,
+      "source": "건축물대장:층별현황 heit=2.85 (as-built drawing, Gangnam-gu permit archive 2003-B-0412)",
+      "hypothesisForInference": "era default 2.9 m is slightly above the actual 2.85 m measured finish-to-finish for this block"
+    }
+  ]
+}

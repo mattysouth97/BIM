@@ -1,0 +1,22 @@
+{
+  "buildingId": "seed-office-mapo-2012",
+  "pnu": "1144010100200450001",
+  "geometricLOD": "L2",
+  "notes": "Seed calibration: SRC office building, Mapo-gu, permit 2012. Floor heights from construction permit drawings supplied by GX team.",
+  "overrides": [
+    {
+      "field": "floorHeights.1",
+      "inferredValue": 3.5,
+      "overrideValue": 5.1,
+      "source": "building permit drawing set MP-2012-0445, sheet A-101 section: ground-floor lobby 5.1 m floor-to-ceiling",
+      "hypothesisForInference": "era 2010-2019 commercial default 3.5 m; office lobby heights regularly exceed the era average"
+    },
+    {
+      "field": "floorHeights.2",
+      "inferredValue": 3.5,
+      "overrideValue": 3.6,
+      "source": "building permit drawing set MP-2012-0445, sheet A-101 section: typical upper floor 3.6 m",
+      "hypothesisForInference": "era default 3.5 m; this building uses slightly taller typical floors per the permit drawings"
+    }
+  ]
+}
