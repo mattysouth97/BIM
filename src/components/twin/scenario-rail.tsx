@@ -8,6 +8,7 @@
 // rail.
 
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 import type { BudgetSelection, EconomicAssumptions } from "@/lib/retrofit/economic-model";
 
 interface ScenarioRailProps {
@@ -51,6 +52,7 @@ export function ScenarioRail({
   const effectiveCapex = selection?.effectiveCapex ?? 0;
   const selectedCount = selection?.selected.length ?? 0;
   const utilisation = capexBudgetKrw > 0 ? effectiveCapex / capexBudgetKrw : 0;
+  const { t } = useT(); // P2-06
 
   return (
     <div
@@ -67,18 +69,20 @@ export function ScenarioRail({
     >
       <div className="flex flex-col justify-center px-5 py-2.5 border-r border-border min-w-[240px]">
         <span className="text-[10px] font-medium text-muted-foreground">
-          투자 시나리오
+          {t("투자 시나리오", "Investment scenario")}
         </span>
         <span className="text-[16px] font-semibold tracking-tight text-foreground leading-tight">
-          CAPEX → ROI 시뮬레이션
+          {t("CAPEX → ROI 시뮬레이션", "CAPEX → ROI simulation")}
         </span>
         <span className="text-[10px] text-muted-foreground tabular-nums">
-          {selectedCount}/{totalCandidateMeasures}개 선택 · 예산 ₩
-          {(capexBudgetKrw / KRW_EOK).toFixed(1)}억 중 {formatPercent(utilisation, 0)} 사용
+          {t(
+            `${selectedCount}/${totalCandidateMeasures}개 선택 · 예산 ₩${(capexBudgetKrw / KRW_EOK).toFixed(1)}억 중 ${formatPercent(utilisation, 0)} 사용`,
+            `${selectedCount}/${totalCandidateMeasures} selected · ${formatPercent(utilisation, 0)} of ₩${(capexBudgetKrw / KRW_EOK).toFixed(1)}억 budget used`,
+          )}
         </span>
       </div>
 
-      <Cell label="NPV" sublabel={`할인율 ${formatPercent(assumptions.discountRate, 0)}`}>
+      <Cell label={t("NPV", "NPV")} sublabel={t(`할인율 ${formatPercent(assumptions.discountRate, 0)}`, `Discount ${formatPercent(assumptions.discountRate, 0)}`)}>
         <span
           className={cn(
             "text-[19px] font-semibold tabular-nums tracking-tight",
@@ -89,32 +93,32 @@ export function ScenarioRail({
         </span>
       </Cell>
 
-      <Cell label="회수기간" sublabel="할인 기준">
+      <Cell label={t("회수기간", "Payback")} sublabel={t("할인 기준", "Discounted")}>
         <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
           {formatYears(payback)}
         </span>
       </Cell>
 
-      <Cell label="실효 투자비" sublabel="보조금 반영">
+      <Cell label={t("실효 투자비", "Effective CAPEX")} sublabel={t("보조금 반영", "Post-subsidy")}>
         <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
           {formatKrwBig(effectiveCapex)}
         </span>
       </Cell>
 
-      <Cell label="분석 기간" sublabel="DCF 기준">
+      <Cell label={t("분석 기간", "Horizon")} sublabel={t("DCF 기준", "DCF basis")}>
         <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
-          {assumptions.analysisHorizonYears}년
+          {t(`${assumptions.analysisHorizonYears}년`, `${assumptions.analysisHorizonYears} yr`)}
         </span>
       </Cell>
 
       <div className="flex flex-col justify-center px-4 py-2.5 min-w-[132px]">
         <span className="text-[10px] font-medium text-muted-foreground">
-          에너지 가격 상승률
+          {t("에너지 가격 상승률", "Energy price escalation")}
         </span>
         <div className="text-[10px] tabular-nums text-foreground/80 leading-tight pt-0.5">
-          <div>전기 {formatPercent(assumptions.energyEscalation.electricity, 1)}</div>
-          <div>가스 {formatPercent(assumptions.energyEscalation.gas, 1)}</div>
-          <div>지역난방 {formatPercent(assumptions.energyEscalation.districtHeating, 1)}</div>
+          <div>{t("전기", "Elec")} {formatPercent(assumptions.energyEscalation.electricity, 1)}</div>
+          <div>{t("가스", "Gas")} {formatPercent(assumptions.energyEscalation.gas, 1)}</div>
+          <div>{t("지역난방", "District")} {formatPercent(assumptions.energyEscalation.districtHeating, 1)}</div>
         </div>
       </div>
     </div>

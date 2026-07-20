@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Fraunces, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { Header } from "@/components/layout/header";
+import { HtmlLangSync } from "@/components/layout/html-lang-sync";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -47,6 +48,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <Providers>
+          {/* P2-06: sync <html lang> to the language store (static ko default). */}
+          <HtmlLangSync />
           <Header />
           <main className="flex-1">{children}</main>
         </Providers>

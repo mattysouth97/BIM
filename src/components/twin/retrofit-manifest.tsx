@@ -10,6 +10,7 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
 
 interface RetrofitManifestProps {
@@ -18,29 +19,30 @@ interface RetrofitManifestProps {
 }
 
 const CATEGORY_ORDER = ["envelope", "hvac", "lighting", "renewable"] as const;
+// P2-06: bilingual label/description catalog.
 const CATEGORY_META: Record<
   (typeof CATEGORY_ORDER)[number],
-  { label: string; accent: string; description: string }
+  { label: { ko: string; en: string }; accent: string; description: { ko: string; en: string } }
 > = {
   envelope: {
-    label: "외피 단열",
+    label: { ko: "외피 단열", en: "Envelope" },
     accent: "#ea580c", // orange-600 — matches SceneOutliner category hues
-    description: "벽체 · 지붕 · 창호 · 바닥",
+    description: { ko: "벽체 · 지붕 · 창호 · 바닥", en: "Walls · roof · windows · floor" },
   },
   hvac: {
-    label: "HVAC",
+    label: { ko: "HVAC", en: "HVAC" },
     accent: "#2563eb", // blue-600
-    description: "난방 · 냉방 · 환기",
+    description: { ko: "난방 · 냉방 · 환기", en: "Heating · cooling · ventilation" },
   },
   lighting: {
-    label: "조명",
+    label: { ko: "조명", en: "Lighting" },
     accent: "#d97706", // amber-600
-    description: "LED · 스마트 제어",
+    description: { ko: "LED · 스마트 제어", en: "LED · smart controls" },
   },
   renewable: {
-    label: "신재생",
+    label: { ko: "신재생", en: "Renewable" },
     accent: "#16a34a", // green-600
-    description: "태양광 · 지붕 잠재량",
+    description: { ko: "태양광 · 지붕 잠재량", en: "Solar · roof potential" },
   },
 };
 
@@ -69,6 +71,7 @@ function formatYears(years: number | undefined): string {
 }
 
 export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProps) {
+  const { t, lang } = useT(); // P2-06
   const [activeGroup, setActiveGroup] = useState<
     (typeof CATEGORY_ORDER)[number] | "all"
   >("all");
@@ -129,20 +132,20 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
       <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-border">
         <div className="flex flex-col leading-tight">
           <span className="text-[10px] font-medium text-muted-foreground">
-            개선 후보 목록
+            {t("개선 후보 목록", "Retrofit candidates")}
           </span>
           <span className="text-[15px] font-semibold text-foreground tracking-tight">
-            후보 {measures.length}개
+            {t(`후보 ${measures.length}개`, `${measures.length} candidates`)}
           </span>
         </div>
         <span className="text-[10px] font-semibold text-cyan-700 dark:text-cyan-400">
-          {selectedIds.size}개 예산 내 선택
+          {t(`${selectedIds.size}개 예산 내 선택`, `${selectedIds.size} in budget`)}
         </span>
       </div>
 
       <div className="flex items-stretch border-b border-border">
         <GroupTab
-          label="전체"
+          label={t("전체", "All")}
           active={activeGroup === "all"}
           onClick={() => setActiveGroup("all")}
           accent="#64748b"
@@ -151,7 +154,7 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
         {CATEGORY_ORDER.map((g) => (
           <GroupTab
             key={g}
-            label={CATEGORY_META[g].label}
+            label={CATEGORY_META[g].label[lang]}
             active={activeGroup === g}
             onClick={() => setActiveGroup(g)}
             accent={CATEGORY_META[g].accent}
@@ -177,10 +180,10 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
                     className="text-[10px] font-semibold"
                     style={{ color: meta.accent }}
                   >
-                    {meta.label}
+                    {meta.label[lang]}
                   </span>
                   <span className="text-[9px] text-muted-foreground ml-auto">
-                    {meta.description}
+                    {meta.description[lang]}
                   </span>
                 </header>
 
@@ -220,7 +223,7 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
                                 "shrink-0 inline-block w-[6px] h-[6px] rounded-sm",
                                 isSelected ? "bg-cyan-600" : "bg-border",
                               )}
-                              title={isSelected ? "예산 내 선택됨" : "미선택"}
+                              title={isSelected ? t("예산 내 선택됨", "Selected (in budget)") : t("미선택", "Not selected")}
                             />
                             <span
                               className="text-[12px] text-foreground truncate"
@@ -250,7 +253,7 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
                             IRR <span className="text-foreground/80">{formatPercent(fin?.irr, 0)}</span>
                           </span>
                           <span className="text-right">
-                            회수{" "}
+                            {t("회수", "Payback")}{" "}
                             <span className="text-foreground/80">{formatYears(fin?.discountedPayback)}</span>
                           </span>
                         </div>
@@ -265,23 +268,26 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
 
         {measures.length === 0 && (
           <div className="px-4 py-6 text-[11px] text-muted-foreground text-center">
-            분석 가능한 개선 후보가 없습니다.
+            {t("분석 가능한 개선 후보가 없습니다.", "No retrofit candidates to analyze.")}
             <br />
-            자재 데이터가 아직 로드되지 않았을 수 있습니다.
+            {t("자재 데이터가 아직 로드되지 않았을 수 있습니다.", "Material data may not have loaded yet.")}
           </div>
         )}
       </div>
 
       <div className="px-4 py-2 border-t border-border bg-muted/40">
         <div className="flex items-center justify-between text-[9px] text-muted-foreground">
-          <span>NPV 막대 · 최대값 대비</span>
+          <span>{t("NPV 막대 · 최대값 대비", "NPV bar · vs max")}</span>
           <span className="flex items-center gap-1.5">
             <span className="inline-block w-1.5 h-1.5 rounded-sm bg-cyan-600" />
-            <span>예산 내 선택</span>
+            <span>{t("예산 내 선택", "In budget")}</span>
           </span>
         </div>
         <p className="text-[9px] text-muted-foreground/70 mt-0.5">
-          단가는 KICT 2024 기준 추정치로, 실제 입찰가와 다를 수 있습니다.
+          {t(
+            "단가는 KICT 2024 기준 추정치로, 실제 입찰가와 다를 수 있습니다.",
+            "Unit costs are KICT 2024 estimates and may differ from actual bids.",
+          )}
         </p>
       </div>
     </div>

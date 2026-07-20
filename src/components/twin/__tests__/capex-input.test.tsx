@@ -2,10 +2,14 @@
 // P1-07 (f) — numeric CAPEX input must clamp to [min, max] so slider + number
 // stay in sync.
 
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { CapexInput } from "../capex-input";
+import { useAppStore } from "@/store/app-store";
 
+// P2-06: labels now follow the language store — pin Korean so the
+// getByLabelText("직접 입력 (만원)") queries stay deterministic.
+beforeEach(() => useAppStore.setState({ language: "ko" }));
 afterEach(cleanup);
 
 const MIN = 10_000_000;

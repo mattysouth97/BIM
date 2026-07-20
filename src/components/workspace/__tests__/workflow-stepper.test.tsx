@@ -10,6 +10,7 @@ import { useWorkflowStore } from "@/store/workflow-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useActiveBuildingStore } from "@/store/active-building-store";
 import { useMaterialStore } from "@/store/material-store";
+import { useAppStore } from "@/store/app-store";
 import { TRIANGLE_RINGS } from "@/hooks/__tests__/test-fixtures";
 
 const PK = "TEST-PK-STEPPER";
@@ -22,6 +23,9 @@ function resetStores() {
   useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
   useMaterialStore.setState({ properties: {} });
   useActiveBuildingStore.getState().clearActiveBuilding();
+  // P2-06: labels now follow the language store — pin English so the
+  // Search/Twin/Report matchers below stay valid.
+  useAppStore.setState({ language: "en" });
 }
 
 describe("WorkflowStepper (P1-08 b)", () => {

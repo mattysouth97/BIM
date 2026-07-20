@@ -66,7 +66,8 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | [P2-14](./items/P2-14-building-metadata-font-trim.md) | generateMetadata on /building/[id] via server wrapper + font payload trim (P2-03 follow-up) | infra | S | UC-01, UC-03 | ⬜ |
 | [P2-04](./items/P2-04-readme-product-identity.md) | Rewrite README and retitle landing hero to the GreenRetrofit identity | docs | S | UC-01 | ✅ |
 | [P2-05](./items/P2-05-ml-release-honesty.md) | Make the v0.1.0 ML release honest — build the pipeline or strip the metrics | ml | M | UC-10 | ✅ |
-| [P2-06](./items/P2-06-i18n-consolidation.md) | Consolidate i18n onto a single t(ko,en) catalog honoring the language store | ux | L | UC-01, 05–08 | ⬜ |
+| [P2-06](./items/P2-06-i18n-consolidation.md) | Consolidate i18n onto a single t(ko,en) catalog honoring the language store | ux | L | UC-01, 05–08 | ✅ |
+| [P2-15](./items/P2-15-i18n-numeric-idiom-and-remaining-isko.md) | i18n tail — localize Korean numeric idiom (억/만/년) + migrate remaining isKo sites (P2-06 follow-up) | ux | M | UC-01, 05–08 | ⬜ |
 | [P2-07](./items/P2-07-persistence-hardening.md) | Harden persisted stores — versioning, API-key policy, building-scoped annotations | state | M | UC-04, 05, 06 | ⬜ |
 | [P2-08](./items/P2-08-dead-code-doc-drift.md) | Delete dead code, fix doc drift, remove stray artifacts | infra | M | UC-05 | ⬜ |
 | [P2-09](./items/P2-09-e2e-rewrite.md) | Rewrite e2e suite around the real user journey with mocked APIs | infra | M | UC-01, 03, 05, 08 | ⬜ |
@@ -111,4 +112,5 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | 2026-07-21 | P2-03 | App Router conventions: error/loading/not-found/global-error boundaries; parseBuildingId + notFound() on bad ids; /releases force-dynamic; logo next/link. generateMetadata+font trim → P2-14 | claude-opus-4-8-ultrawork |
 | 2026-07-21 | P2-04 | README rewritten to GreenRetrofit identity (value prop, features, data.go.kr API-key setup, stack); hero + root metadata retitled to the savings story; no fabricated metrics | claude-opus-4-8-ultrawork |
 | 2026-07-21 | P2-05 | ML release made honest (Option B): stripped unverifiable v0.1.0 metrics (MAPE/R²/holdout), relabeled schema-only; /releases guards metrics; skipped corpus test → real smoke test | claude-opus-4-8-ultrawork |
+| 2026-07-21 | P2-06 | i18n consolidated onto useT()/catalog: all 6 twin panels + stepper + export-dropdown + html lang switch KO/EN via one code path. Numeric idiom (억/만/년) + remaining isKo → P2-15 | claude-opus-4-8-ultrawork |
 | 2026-07-21 | P2-11, P2-12, P2-13 | Added geometric-fidelity track (data correctness / dead-feature wiring / IFC path + validation loop) from rendering-accuracy review; dashboard, sequencing, and execution prompts updated | orchestrator |

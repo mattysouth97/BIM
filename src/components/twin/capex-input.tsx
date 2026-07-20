@@ -7,6 +7,7 @@
 
 import { useId } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 interface CapexInputProps {
   /** Current CAPEX budget in KRW. */
@@ -48,6 +49,7 @@ export function CapexInput({
 }: CapexInputProps) {
   const sliderId = useId();
   const numericId = useId();
+  const { t } = useT(); // P2-06
 
   // Snap to common Korean budget tiers for tick marks.
   const tickMarks = [
@@ -71,7 +73,7 @@ export function CapexInput({
       {/* Label column */}
       <div className="flex flex-col items-start justify-center pr-4 border-r border-border min-w-[100px]">
         <label htmlFor={sliderId} className="text-[10px] font-medium text-muted-foreground">
-          투자 예산 (CAPEX)
+          {t("투자 예산 (CAPEX)", "Investment budget (CAPEX)")}
         </label>
         <span className="text-[18px] font-semibold tabular-nums text-foreground leading-tight">
           ₩{formatKrw(value)}
@@ -124,7 +126,7 @@ export function CapexInput({
       {/* Numeric input + summary column */}
       <div className="flex flex-col items-end justify-center gap-1 pl-4 border-l border-border min-w-[140px]">
         <label htmlFor={numericId} className="text-[10px] font-medium text-muted-foreground">
-          직접 입력 (만원)
+          {t("직접 입력 (만원)", "Direct input (10k KRW)")}
         </label>
         <input
           id={numericId}

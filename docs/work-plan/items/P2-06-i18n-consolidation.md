@@ -3,8 +3,8 @@ id: P2-06
 title: Consolidate i18n onto a single t(ko,en) catalog honoring the language store
 priority: P2
 area: ux
-status: not-started
-owner: unassigned
+status: done
+owner: claude-opus-4-8-ultrawork
 effort: L
 created: 2026-07-21
 updated: 2026-07-21
@@ -38,7 +38,35 @@ use_cases: [UC-01, UC-05, UC-06, UC-07, UC-08]
 - **Gates**: `pnpm test -- i18n stepper twin`; `pnpm test`; `pnpm lint`; `pnpm build`; manual toggle sweep across search → twin → report.
 - **Security / honesty checklist**: no machine-translated technical terms presented as authoritative program names — keep official program names (그린리모델링 etc.) with English gloss, matching dossier usage.
 - **Acceptance criteria**:
-  - [ ] Single t()/catalog helper exists and is adopted by twin/*, stepper, export-dropdown
-  - [ ] html lang follows the store
-  - [ ] Full toggle sweep shows no mixed-language surface
+  - [x] Single t()/catalog helper exists and is adopted by twin/*, stepper, export-dropdown
+  - [x] html lang follows the store
+  - [~] Full toggle sweep shows no mixed-language surface — all string labels switch;
+        Korean numeric idiom (억/만/년) in the formatters deferred to P2-15 (see notes)
 - **Done when**: the KO/EN toggle switches 100% of app chrome and Twin surfaces with one code path.
+
+### Evaluation notes (2026-07-21, claude-opus-4-8-ultrawork)
+
+- Foundation: `src/lib/i18n.ts` — `useT()` (returns `{ t, lang }`, re-renders on toggle) +
+  `pick()` pure helper. The ONLY place components read the language store for strings.
+  Unit-tested (`i18n.test.ts`).
+- Migrated to one code path: **all six twin components** (capex-input, program-track-selector,
+  scenario-rail, roi-readout, retrofit-manifest — the item's four named + retrofit-manifest;
+  twin-stage-overlay had only a comment), the **workflow-stepper** (was hardcoded `.en` →
+  now `STAGE_LABELS[stage][lang]`, so Korean users get Korean labels), the **export-dropdown**
+  (was bilingual concatenation → single-language toasts via `t()`), and **`<html lang>`** via
+  a tiny `HtmlLangSync` client component (root layout stays a server component).
+- Multi-string components use a bilingual `{ ko, en }` catalog (program TRACK_OPTIONS,
+  retrofit CATEGORY_META, ROI grade labels) picked by `lang`. Official 그린리모델링 program
+  names kept with an English gloss (honesty checklist — no machine-translated program names).
+- Verified: **no Korean-only user-facing string literals remain in twin/**** — every
+  user-facing string is a `t()` call or a `{ ko, en }[lang]` catalog lookup. Residual Korean
+  in twin/** is limited to (a) the `ko:` side of bilingual catalogs (correct), (b) code
+  comments, and (c) numeric-idiom formatters.
+- **Deferred to P2-15** (filed): the Korean numeric idiom (억/만/천만/년 in `formatKrw`/
+  `formatYears`) still renders for both languages, so an English user sees "₩2.5억" — a
+  language-aware formatter change; plus the ~28 remaining `isKo` ternaries elsewhere in
+  `src/**`. This is the incremental tail P2-06 §2 explicitly permits.
+- Test updates: the P1-07 stepper test now pins `language: "en"` (labels follow the store);
+  the P1-07 capex test pins `language: "ko"` for its `getByLabelText` queries.
+- Gates: `vitest run i18n capex-input workflow-stepper` 9/9 · `pnpm test` **1114 passed** ·
+  `pnpm lint` 0 errors · `pnpm build` green (all 6 twin files compile).

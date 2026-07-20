@@ -13,6 +13,7 @@ import {
 } from "@/lib/workflow/stages";
 import type { WorkflowStage } from "@/lib/workflow/stages";
 import { useHydration } from "@/hooks/use-hydration";
+import { useT } from "@/lib/i18n";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import { useRecipeStore } from "@/store/recipe-store";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export function WorkflowStepper() {
 
   const stage = useWorkflowStore((s) => s.stage);
   const completion = useWorkflowStore((s) => s.completion);
+  const { lang } = useT(); // P2-06: labels follow the language store
 
   // P1-08 (b): build the guard context from the recipe store for the ACTIVE
   // building — same footprintPolygon override upload-stage.tsx commits.
@@ -53,7 +55,7 @@ export function WorkflowStepper() {
         const isCompleted = completion[stageId];
         const isCurrent = stage === stageId;
         const step = steps.find((s) => s.id === stageId);
-        const label = STAGE_LABELS[stageId].en;
+        const label = STAGE_LABELS[stageId][lang];
 
         // Guard-aware lock state: forward jumps are blocked by the first
         // failing intermediate guard; backward/self moves are never locked.

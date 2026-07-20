@@ -8,6 +8,7 @@
 
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 import type { BudgetSelection, EconomicAssumptions } from "@/lib/retrofit/economic-model";
 
 interface RoiReadoutProps {
@@ -32,17 +33,18 @@ function formatKrwBig(krw: number): string {
 
 function gradeFromIrr(
   irr: number | null | undefined,
-): { letter: string; tone: "good" | "ok" | "bad"; label: string } {
+): { letter: string; tone: "good" | "ok" | "bad"; label: { ko: string; en: string } } {
   if (irr === null || irr === undefined || !Number.isFinite(irr)) {
-    return { letter: "—", tone: "bad", label: "IRR 산출 불가" };
+    return { letter: "—", tone: "bad", label: { ko: "IRR 산출 불가", en: "IRR n/a" } };
   }
-  if (irr >= 0.15) return { letter: "A", tone: "good", label: "우수" };
-  if (irr >= 0.08) return { letter: "B", tone: "ok", label: "양호" };
-  if (irr >= 0.05) return { letter: "C", tone: "ok", label: "기준치 수준" };
-  return { letter: "D", tone: "bad", label: "기준 미달" };
+  if (irr >= 0.15) return { letter: "A", tone: "good", label: { ko: "우수", en: "Excellent" } };
+  if (irr >= 0.08) return { letter: "B", tone: "ok", label: { ko: "양호", en: "Good" } };
+  if (irr >= 0.05) return { letter: "C", tone: "ok", label: { ko: "기준치 수준", en: "At hurdle" } };
+  return { letter: "D", tone: "bad", label: { ko: "기준 미달", en: "Below hurdle" } };
 }
 
 export function RoiReadout({ selection, assumptions, isLoading }: RoiReadoutProps) {
+  const { t, lang } = useT(); // P2-06
   const npv = selection?.npv ?? 0;
   const cashFlow = selection?.aggregateCashFlow ?? [];
   const effectiveCapex = selection?.effectiveCapex ?? 0;
@@ -116,11 +118,14 @@ export function RoiReadout({ selection, assumptions, isLoading }: RoiReadoutProp
     >
       <div className="flex items-center justify-between px-4 pt-3 pb-1.5 border-b border-border">
         <span className="text-[10px] font-medium text-muted-foreground">
-          NPV · 할인율 {(discountRate * 100).toFixed(0)}% · {horizon}년
+          {t(
+            `NPV · 할인율 ${(discountRate * 100).toFixed(0)}% · ${horizon}년`,
+            `NPV · ${(discountRate * 100).toFixed(0)}% discount · ${horizon} yr`,
+          )}
         </span>
         <div className="flex items-center gap-1.5">
           <span className="inline-block size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-medium text-emerald-600">실시간</span>
+          <span className="text-[10px] font-medium text-emerald-600">{t("실시간", "Live")}</span>
         </div>
       </div>
 
@@ -157,20 +162,22 @@ export function RoiReadout({ selection, assumptions, isLoading }: RoiReadoutProp
               ? `${(portfolioIrr * 100).toFixed(1)}%`
               : "—"}
             {" · "}
-            {grade.label}
+            {grade.label[lang]}
           </span>
         </div>
         <div className="mt-1 text-[10px] text-muted-foreground tabular-nums">
-          할인 회수기간 ·{" "}
-          {Number.isFinite(payback) ? `${payback.toFixed(1)}년` : "미회수"}
+          {t("할인 회수기간 · ", "Discounted payback · ")}
+          {Number.isFinite(payback)
+            ? t(`${payback.toFixed(1)}년`, `${payback.toFixed(1)} yr`)
+            : t("미회수", "Not recovered")}
         </div>
       </div>
 
       {/* Cumulative discounted cash-flow caliper */}
       <div className="px-4 py-3 border-t border-border bg-muted/40">
         <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground mb-2">
-          <span>누적 할인 현금흐름</span>
-          <span>1년차 → {horizon}년차</span>
+          <span>{t("누적 할인 현금흐름", "Cumulative discounted cash flow")}</span>
+          <span>{t(`1년차 → ${horizon}년차`, `Yr 1 → Yr ${horizon}`)}</span>
         </div>
 
         <div className="relative h-12" aria-hidden="true">
@@ -216,17 +223,17 @@ export function RoiReadout({ selection, assumptions, isLoading }: RoiReadoutProp
             <div
               className="absolute top-0 bottom-0 w-[2px] bg-cyan-600"
               style={{ left: `calc(${(payback / horizon) * 100}% - 1px)` }}
-              title={`할인 회수기간: ${payback.toFixed(1)}년차`}
+              title={t(`할인 회수기간: ${payback.toFixed(1)}년차`, `Discounted payback: Yr ${payback.toFixed(1)}`)}
             />
           )}
         </div>
 
         <div className="flex justify-between mt-1 text-[9px] tabular-nums text-muted-foreground">
-          <span>1년차</span>
+          <span>{t("1년차", "Yr 1")}</span>
           <span className="text-foreground/70">
             ₩{formatKrwBig(minVal)} → ₩{formatKrwBig(maxVal)}
           </span>
-          <span>{horizon}년차</span>
+          <span>{t(`${horizon}년차`, `Yr ${horizon}`)}</span>
         </div>
       </div>
     </div>

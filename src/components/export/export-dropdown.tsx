@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, FileJson, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { exportToCsv, exportToJson, copyBimJson } from "@/lib/export";
+import { useT } from "@/lib/i18n";
 
 interface ExportDropdownProps {
   data: Record<string, unknown>[];
@@ -17,21 +18,24 @@ interface ExportDropdownProps {
 }
 
 export function ExportDropdown({ data, filename }: ExportDropdownProps) {
+  // P2-06: single-language toasts per the store (was bilingual concatenation).
+  const { t } = useT();
+
   const handleCsvExport = () => {
     try {
       exportToCsv(data, filename);
-      toast.success("CSV 파일이 다운로드되었습니다. (CSV exported)");
+      toast.success(t("CSV 파일이 다운로드되었습니다.", "CSV exported."));
     } catch {
-      toast.error("CSV 내보내기에 실패했습니다. (CSV export failed)");
+      toast.error(t("CSV 내보내기에 실패했습니다.", "CSV export failed."));
     }
   };
 
   const handleJsonExport = () => {
     try {
       exportToJson(data, filename);
-      toast.success("JSON 파일이 다운로드되었습니다. (JSON exported)");
+      toast.success(t("JSON 파일이 다운로드되었습니다.", "JSON exported."));
     } catch {
-      toast.error("JSON 내보내기에 실패했습니다. (JSON export failed)");
+      toast.error(t("JSON 내보내기에 실패했습니다.", "JSON export failed."));
     }
   };
 
@@ -39,11 +43,11 @@ export function ExportDropdown({ data, filename }: ExportDropdownProps) {
     const success = await copyBimJson(data);
     if (success) {
       toast.success(
-        "BIM JSON이 클립보드에 복사되었습니다. (BIM JSON copied to clipboard)",
+        t("BIM JSON이 클립보드에 복사되었습니다.", "BIM JSON copied to clipboard."),
       );
     } else {
       toast.error(
-        "클립보드 복사에 실패했습니다. (Failed to copy to clipboard)",
+        t("클립보드 복사에 실패했습니다.", "Failed to copy to clipboard."),
       );
     }
   };
@@ -53,7 +57,7 @@ export function ExportDropdown({ data, filename }: ExportDropdownProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <Download className="size-4" />
-          내보내기 (Export)
+          {t("내보내기", "Export")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
