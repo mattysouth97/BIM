@@ -52,7 +52,7 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | [P1-04](./items/P1-04-fix-system-ratios-use-codes.md) | Correct SYSTEM_RATIOS use-code keys against the real MOLIT 용도코드 table | energy | S | UC-03, UC-06 | ✅ |
 | [P1-05](./items/P1-05-benchmark-units-grading-scale.md) | Fix benchmark unit mismatch and retire dual grading scales | energy | M | UC-03, UC-08 | ✅ |
 | [P1-06](./items/P1-06-api-hardening-sweep.md) | API hardening sweep — traversal, error contracts, proxy factory, batch caps, zod | api | L | UC-01, 02, 04 | ✅ |
-| [P1-07](./items/P1-07-a11y-chart-repair.md) | Accessibility and chart repair — Tab hijack, keyboard-inert rows, black bars | ux | M | UC-01, 03, 05, 06 | ⬜ |
+| [P1-07](./items/P1-07-a11y-chart-repair.md) | Accessibility and chart repair — Tab hijack, keyboard-inert rows, black bars | ux | M | UC-01, 03, 05, 06 | ✅ |
 | [P1-08](./items/P1-08-state-consistency.md) | State consistency — one effective-recipe hook, guard-aware stepper, active building | state | L | UC-05, 06, 08 | ✅ |
 | [P1-09](./items/P1-09-coverage-ratchet.md) | Ratchet src/lib coverage floors from measured 52/57 baseline to 70/70 | infra | S | UC-05, 06, 07 | ⬜ |
 
@@ -104,4 +104,5 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | 2026-07-21 | P1-02 | Measure lifetimes (ASHRAE-anchored) truncate cash flows past useful life; 3 new generator test suites pin every savings formula + branch boundary | claude-fable-5-ultrawork |
 | 2026-07-21 | P1-03 | Heating fuel (resolveHeatingFuel) threaded into envelope/HVAC generators — district-heat priced at 90 KRW/kWh + 0.32 tCO2/MWh; heat-pump suppressed on electric heat; legacy gas default preserved | claude-fable-5-ultrawork |
 | 2026-07-21 | P1-06 | API hardening: filename allowlist + execFile timeout (cad), 400/502/503 contract + truncated flag (vworld), createDataGoKrProxy factory (5 routes → 4 lines), batch cap 10 + Promise.all + failedCodes (title), tab/doc fix (consumption), zod validation | claude-opus-4-8-ultrawork |
+| 2026-07-21 | P1-07 | a11y + chart repair: Tab un-hijacked (→backquote), keyboard-operable result rows, viewport-clamped floating panel, var(--chart-N) bars, sr-only upload input, clamped CAPEX input, anchored Moon icon | claude-opus-4-8-ultrawork |
 | 2026-07-21 | P2-11, P2-12, P2-13 | Added geometric-fidelity track (data correctness / dead-feature wiring / IFC path + validation loop) from rendering-accuracy review; dashboard, sequencing, and execution prompts updated | orchestrator |

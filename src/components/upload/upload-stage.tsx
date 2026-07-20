@@ -278,7 +278,9 @@ export function UploadStage() {
               </span>
               <input
                 type="file"
-                className="hidden"
+                // P1-07 (e): sr-only (not `hidden`) keeps the input in the tab
+                // order so the "browse" affordance is keyboard-reachable.
+                className="sr-only"
                 accept=".dxf,.dwg,.pdf"
                 onChange={handleFileInput}
                 data-testid="upload-file-input"

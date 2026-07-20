@@ -51,6 +51,9 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
+              // P1-07 (g): `relative` anchors the absolutely-positioned Moon
+              // icon to this button (the shared button base has no `relative`).
+              className="relative"
               onClick={toggleTheme}
               title={theme === "dark" ? "Light mode" : "Dark mode"}
             >

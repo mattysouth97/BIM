@@ -281,6 +281,22 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
     router.push(`/building/${id}`);
   };
 
+  // P1-07 (b): make each result row keyboard- and screen-reader-operable.
+  // Enter/Space route through the SAME handleRowClick path as a mouse click.
+  const rowA11yProps = (original: BrTitleInfo) => ({
+    role: "link",
+    tabIndex: 0,
+    "aria-label":
+      `${original.bldNm || original.platPlcNm || "건물"}${original.platPlcNm ? ` — ${original.platPlcNm}` : ""}`,
+    onClick: () => handleRowClick(original),
+    onKeyDown: (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault(); // Space would otherwise scroll the page
+        handleRowClick(original);
+      }
+    },
+  });
+
   // Use virtualization only when rows exceed threshold
   const useVirtual = rows.length > 30;
 
@@ -323,9 +339,9 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
                   return (
                     <TableRow
                       key={row.id}
-                      className="cursor-pointer transition-colors hover:bg-muted/70"
-                      onClick={() => handleRowClick(row.original)}
+                      className="cursor-pointer transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       style={{ height: ROW_HEIGHT }}
+                      {...rowA11yProps(row.original)}
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
@@ -353,8 +369,8 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
               rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="cursor-pointer transition-colors hover:bg-muted/70"
-                  onClick={() => handleRowClick(row.original)}
+                  className="cursor-pointer transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  {...rowA11yProps(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

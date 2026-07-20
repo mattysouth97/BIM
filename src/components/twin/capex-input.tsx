@@ -135,7 +135,8 @@ export function CapexInput({
           value={Math.round(value / KRW_MAN)}
           onChange={(e) => {
             const v = Number(e.target.value);
-            if (Number.isFinite(v) && v >= 0) onChange(v * KRW_MAN);
+            // P1-07 (f): clamp to [min, max] so slider + number never desync.
+            if (Number.isFinite(v)) onChange(Math.min(Math.max(v * KRW_MAN, min), max));
           }}
           className={cn(
             "w-full text-right text-[12px] tabular-nums text-foreground",

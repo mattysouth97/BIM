@@ -35,9 +35,13 @@ const MODE_ORDER: EditorMode[] = [
  * mode switching. Must be called once at the WorkspaceShell level.
  *
  * Bindings:
- *   Tab        → toggleEditMode()   (navigate ↔ last-edit-mode)
- *   Escape     → setMode('navigate')
- *   1 / 2 / 3 / 4  → set mode by index (no modifier keys)
+ *   ` (backquote) → toggleEditMode()  (navigate ↔ last-edit-mode)
+ *   Escape        → setMode('navigate')
+ *   1 / 2 / 3 / 4 → set mode by index (no modifier keys)
+ *
+ * P1-07 (a): the toggle was moved OFF Tab — hijacking Tab trapped keyboard
+ * focus (WCAG 2.1.1/2.1.2). Backquote is a non-focus key following the same
+ * no-modifier convention as the digit bindings.
  */
 export function useEditorKeybinds(): void {
   const setMode = useEditorModeStore((s) => s.setMode);
@@ -49,9 +53,9 @@ export function useEditorKeybinds(): void {
       if (isFocusInTextInput()) return;
 
       switch (e.key) {
-        case "Tab": {
-          // Prevent browser from moving focus to next element
-          e.preventDefault();
+        case "`": {
+          // P1-07 (a): non-focus key — never preventDefault on Tab.
+          if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) break;
           toggleEditMode();
           break;
         }

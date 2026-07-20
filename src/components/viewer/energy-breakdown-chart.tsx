@@ -23,11 +23,14 @@ interface EnergyBreakdownChartProps {
   buildingPk: string;
 }
 
-const chartConfig = {
-  hvac:      { label: "HVAC",     color: "hsl(var(--chart-1))" },
-  lighting:  { label: "Lighting", color: "hsl(var(--chart-2))" },
-  dhw:       { label: "DHW",      color: "hsl(var(--chart-3))" },
-  plugLoads: { label: "Plug",     color: "hsl(var(--chart-4))" },
+// P1-07 (d): --chart-1..5 are already complete oklch() colors in globals.css,
+// so wrapping the token in an hsl() call produced invalid CSS and bars fell
+// back to black. Use the token directly. Exported for unit testing.
+export const chartConfig = {
+  hvac:      { label: "HVAC",     color: "var(--chart-1)" },
+  lighting:  { label: "Lighting", color: "var(--chart-2)" },
+  dhw:       { label: "DHW",      color: "var(--chart-3)" },
+  plugLoads: { label: "Plug",     color: "var(--chart-4)" },
 } satisfies ChartConfig;
 
 export function EnergyBreakdownChart({ buildingPk }: EnergyBreakdownChartProps) {

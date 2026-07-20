@@ -26,6 +26,21 @@ interface FloatingPanelProps {
   headerExtra?: React.ReactNode;
 }
 
+/** P1-07 (c): keep at least this many px of the panel (its drag header)
+ *  inside the viewport so a dragged panel can never be lost off-screen. */
+const MIN_VISIBLE_PX = 48;
+
+/** Clamp a position so the panel stays reachable within the viewport. */
+function clampToViewport(x: number, y: number): { x: number; y: number } {
+  if (typeof window === "undefined") return { x, y };
+  const maxX = Math.max(0, window.innerWidth - MIN_VISIBLE_PX);
+  const maxY = Math.max(0, window.innerHeight - MIN_VISIBLE_PX);
+  return {
+    x: Math.min(Math.max(x, 0), maxX),
+    y: Math.min(Math.max(y, 0), maxY),
+  };
+}
+
 export function FloatingPanel({
   title,
   visible,
@@ -50,6 +65,12 @@ export function FloatingPanel({
   const dragging = React.useRef(false);
   const dragOffset = React.useRef({ x: 0, y: 0 });
 
+  // P1-07 (c): clamp on mount so a persisted/pre-fix off-screen position is
+  // pulled back into view.
+  React.useEffect(() => {
+    setPos((p) => clampToViewport(p.x, p.y));
+  }, []);
+
   // Drag handlers
   const onPointerDown = React.useCallback(
     (e: React.PointerEvent) => {
@@ -63,10 +84,13 @@ export function FloatingPanel({
 
   const onPointerMove = React.useCallback((e: React.PointerEvent) => {
     if (!dragging.current) return;
-    setPos({
-      x: e.clientX - dragOffset.current.x,
-      y: e.clientY - dragOffset.current.y,
-    });
+    // P1-07 (c): clamp raw pointer deltas to the viewport.
+    setPos(
+      clampToViewport(
+        e.clientX - dragOffset.current.x,
+        e.clientY - dragOffset.current.y
+      )
+    );
   }, []);
 
   const onPointerUp = React.useCallback(() => {
