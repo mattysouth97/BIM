@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { generateECO2Input, downloadECO2File, buildSubSystems } from "@/lib/energy/eco2-export";
 import { parseECO2Result } from "@/lib/energy/eco2-import";
 import { useMaterialStore } from "@/store/material-store";
-import { useRecipeStore } from "@/store/recipe-store";
+import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import type { EnergyGrade } from "@/lib/energy/energy-grade";
 
 interface EnergyCardsProps {
@@ -144,41 +145,16 @@ function SkeletonCards() {
 
 export function EnergyCards({ buildingPk }: EnergyCardsProps) {
   const isKo = useAppStore((s) => s.language) === "ko";
-  const metrics = useEnergyMetrics(buildingPk);
+  // P1-08 (d): same regional climate as every other panel.
+  const sigunguCd = useActiveSigunguCd();
+  const metrics = useEnergyMetrics(buildingPk, sigunguCd);
   const actual = useActualEnergy(buildingPk);
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
-  const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
-  const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const effectiveRecipe = baseRecipe
-    ? overrides
-      ? {
-          ...baseRecipe,
-          ...(overrides.footprintWidth !== undefined
-            ? { footprintWidth: overrides.footprintWidth }
-            : {}),
-          ...(overrides.footprintDepth !== undefined
-            ? { footprintDepth: overrides.footprintDepth }
-            : {}),
-          ...(overrides.wallThickness !== undefined
-            ? { wallThickness: overrides.wallThickness }
-            : {}),
-          ...(overrides.facade
-            ? { facade: { ...baseRecipe.facade, ...overrides.facade } }
-            : {}),
-          ...(overrides.slab
-            ? { slab: { ...baseRecipe.slab, ...overrides.slab } }
-            : {}),
-          ...(overrides.column
-            ? { column: { ...baseRecipe.column, ...overrides.column } }
-            : {}),
-          ...(overrides.roof
-            ? { roof: { ...baseRecipe.roof, ...overrides.roof } }
-            : {}),
-        }
-      : baseRecipe
-    : undefined;
+  // P1-08 (a): single canonical merge — the ECO2 export now carries
+  // footprintPolygon overrides instead of silently dropping them.
+  const effectiveRecipe = useEffectiveRecipe(buildingPk);
 
   const handleExport = useCallback(() => {
     if (!materials || !effectiveRecipe || !metrics) return;

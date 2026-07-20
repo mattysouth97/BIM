@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useLayerStore } from "@/store/layer-store";
 import { LayerManager } from "@/lib/layers/layer-manager";
 import { ALL_LAYER_IDS, MEP_SUB_IDS } from "@/lib/layers/types";
 import { useEnergyBreakdown } from "@/hooks/use-energy-breakdown";
-import { useRecipeStore } from "@/store/recipe-store";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import {
   buildEnergyHeatmap,
   disposeHeatmapGroup,
@@ -38,27 +38,14 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
   // Heatmap data — call hooks unconditionally (Rules of Hooks); gate downstream work with pk check
   const pk = buildingPk ?? "";
   const breakdown = useEnergyBreakdown(pk);
-  const baseRecipe = useRecipeStore((s) => s.baseRecipes[pk]);
-  const overrides = useRecipeStore((s) => s.overrides[pk]);
 
   // Equipment params for MEP generators — snapshot-safe selector, falls back to defaults
   const equipmentParams = useEquipmentStore((s) => s.params[pk]) ?? DEFAULT_MEP_EQUIPMENT_PARAMS;
 
-  // Derive effective recipe geometry (footprint + floors) for heatmap sizing.
-  // Mirrors the merge logic in use-energy-breakdown.ts — footprint overrides only.
-  const effectiveRecipe = useMemo(() => {
-    if (!baseRecipe) return undefined;
-    if (!overrides) return baseRecipe;
-    return {
-      ...baseRecipe,
-      ...(overrides.footprintWidth !== undefined
-        ? { footprintWidth: overrides.footprintWidth }
-        : {}),
-      ...(overrides.footprintDepth !== undefined
-        ? { footprintDepth: overrides.footprintDepth }
-        : {}),
-    };
-  }, [baseRecipe, overrides]);
+  // P1-08 (a): single canonical merge for heatmap sizing — this was the
+  // SIXTH hand-copied merge block (found by the fitness grep, missed by the
+  // review's count of five).
+  const effectiveRecipe = useEffectiveRecipe(pk);
 
   // Create LayerManager once
   if (managerRef.current == null) {

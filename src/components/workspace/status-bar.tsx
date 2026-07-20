@@ -7,7 +7,7 @@
 import React from "react";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useAppStore } from "@/store/app-store";
-import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import { useActiveBuildingPk, useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import type { WorkflowStage } from "@/lib/workflow/stages";
 
@@ -54,7 +54,10 @@ export function StatusBar({ buildingPk: buildingPkProp, sigunguCd }: StatusBarPr
 
   const buildingPk = useActiveBuildingPk(buildingPkProp);
 
-  const metrics = useEnergyMetrics(buildingPk, sigunguCd);
+  // P1-08 (d): fall back to the active building's sigunguCd so the status bar
+  // and every other panel compute from the same regional climate.
+  const activeSigunguCd = useActiveSigunguCd();
+  const metrics = useEnergyMetrics(buildingPk, sigunguCd ?? activeSigunguCd);
 
   const promptText = getStageHint(stage, language);
 

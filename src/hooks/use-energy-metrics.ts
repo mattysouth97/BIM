@@ -7,7 +7,7 @@
 
 import { useMemo } from "react";
 import { useMaterialStore } from "@/store/material-store";
-import { useRecipeStore } from "@/store/recipe-store";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { getClimateData } from "@/lib/energy/climate-data";
 import { calculateHeatLoss } from "@/lib/energy/heat-loss";
 import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
@@ -47,40 +47,9 @@ export function useEnergyMetrics(
   sigunguCd?: string,
   actualConsumption?: AnnualConsumption[]
 ): EnergyMetrics | null {
-  // Subscribe to individual store slices to avoid infinite loop from getEffectiveRecipe
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
-  const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
-  const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
-
-  // Derive effective recipe in useMemo (same logic as store's getEffectiveRecipe)
-  const effectiveRecipe = useMemo(() => {
-    if (!baseRecipe) return undefined;
-    if (!overrides) return baseRecipe;
-    return {
-      ...baseRecipe,
-      ...(overrides.footprintWidth !== undefined
-        ? { footprintWidth: overrides.footprintWidth }
-        : {}),
-      ...(overrides.footprintDepth !== undefined
-        ? { footprintDepth: overrides.footprintDepth }
-        : {}),
-      ...(overrides.wallThickness !== undefined
-        ? { wallThickness: overrides.wallThickness }
-        : {}),
-      ...(overrides.facade
-        ? { facade: { ...baseRecipe.facade, ...overrides.facade } }
-        : {}),
-      ...(overrides.slab
-        ? { slab: { ...baseRecipe.slab, ...overrides.slab } }
-        : {}),
-      ...(overrides.column
-        ? { column: { ...baseRecipe.column, ...overrides.column } }
-        : {}),
-      ...(overrides.roof
-        ? { roof: { ...baseRecipe.roof, ...overrides.roof } }
-        : {}),
-    };
-  }, [baseRecipe, overrides]);
+  // P1-08 (a): single canonical merge — carries footprintPolygon overrides.
+  const effectiveRecipe = useEffectiveRecipe(buildingPk);
 
   // Compute all energy metrics
   const metrics = useMemo<EnergyMetrics | null>(() => {

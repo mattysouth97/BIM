@@ -1,7 +1,8 @@
 "use client";
 
-import { use, lazy, Suspense } from "react";
+import { use, lazy, Suspense, useEffect } from "react";
 import { decodeBuildingId } from "@/lib/constants";
+import { useActiveBuildingStore } from "@/store/active-building-store";
 import { useCompositeBuilding } from "@/hooks/use-composite-building";
 import { useBuildingFootprint } from "@/hooks/use-building-footprint";
 import { BuildingToolbar } from "@/components/building/building-toolbar";
@@ -42,6 +43,17 @@ export default function BuildingDetailPage({
 
   const titleData = title?.items?.[0] ?? null;
   const floorsData = floors?.items ?? [];
+
+  // P1-08 (c): this is where a building is actually chosen — publish it (with
+  // its sigunguCd for regional climate) so every workspace panel scopes to it
+  // instead of relying on material-store insertion order.
+  const setActiveBuilding = useActiveBuildingStore((s) => s.setActiveBuilding);
+  const activePk = titleData?.mgmBldrgstPk ? String(titleData.mgmBldrgstPk) : null;
+  useEffect(() => {
+    if (activePk) {
+      setActiveBuilding(activePk, buildingId.sigunguCd);
+    }
+  }, [activePk, buildingId.sigunguCd, setActiveBuilding]);
 
   // Derive address from title once it resolves and fire footprint fetch at page level.
   // This hoists the footprint fetch out of BuildingScene so its result can be passed

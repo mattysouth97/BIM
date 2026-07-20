@@ -106,6 +106,65 @@ describe("useWorkflowStore", () => {
   });
 
   // -------------------------------------------------------------------------
+  // goToStage() — guard-aware navigation (P1-08 b)
+  // -------------------------------------------------------------------------
+
+  it("goToStage backward is always allowed", () => {
+    useWorkflowStore.setState({ stage: "twin" });
+    const ok = useWorkflowStore.getState().goToStage("search");
+    expect(ok).toBe(true);
+    expect(useWorkflowStore.getState().stage).toBe("search");
+  });
+
+  it("goToStage to the current stage is a no-op success", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    const ok = useWorkflowStore.getState().goToStage("upload");
+    expect(ok).toBe(true);
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it('goToStage forward from "upload" is blocked without a footprintPolygon', () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    const ok = useWorkflowStore.getState().goToStage("twin", {});
+    expect(ok).toBe(false);
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it("goToStage forward is blocked by a <3-point polygon", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    const ok = useWorkflowStore
+      .getState()
+      .goToStage("twin", { footprintPolygon: [[[0, 0], [1, 1]]] });
+    expect(ok).toBe(false);
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it("goToStage forward passes with a valid polygon", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    const ok = useWorkflowStore
+      .getState()
+      .goToStage("twin", { footprintPolygon: VALID_POLYGON });
+    expect(ok).toBe(true);
+    expect(useWorkflowStore.getState().stage).toBe("twin");
+  });
+
+  it('goToStage multi-stage jump "search" → "report" is blocked by the intermediate upload guard', () => {
+    useWorkflowStore.setState({ stage: "search" });
+    const ok = useWorkflowStore.getState().goToStage("report", {});
+    expect(ok).toBe(false);
+    expect(useWorkflowStore.getState().stage).toBe("search");
+  });
+
+  it('goToStage "search" → "report" succeeds when every intermediate guard passes', () => {
+    useWorkflowStore.setState({ stage: "search" });
+    const ok = useWorkflowStore
+      .getState()
+      .goToStage("report", { footprintPolygon: VALID_POLYGON });
+    expect(ok).toBe(true);
+    expect(useWorkflowStore.getState().stage).toBe("report");
+  });
+
+  // -------------------------------------------------------------------------
   // setStage()
   // -------------------------------------------------------------------------
 

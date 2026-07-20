@@ -3,8 +3,8 @@ id: P1-08
 title: State consistency — one effective-recipe hook, guard-aware stepper, real active building
 priority: P1
 area: state
-status: not-started
-owner: unassigned
+status: done
+owner: claude-fable-5-ultrawork
 effort: L
 created: 2026-07-21
 updated: 2026-07-21
@@ -250,15 +250,45 @@ call-site parity fix wants the active-building store from (c).
   - The regression test for (a) must genuinely fail pre-fix (prove it in the
     PR description).
 - **Acceptance criteria**:
-  - [ ] (a) `useEffectiveRecipe(pk)` is the only merge path in hooks/components;
-        five hand copies deleted; footprintPolygon regression test passes.
-  - [ ] (b) Stepper navigation is guard-aware with visible lock reasons;
+  - [x] (a) `useEffectiveRecipe(pk)` is the only merge path in hooks/components;
+        five hand copies deleted (a **sixth**, missed by the review, was found by the
+        fitness grep in `building-layers.tsx` and deleted too); footprintPolygon
+        regression test passes.
+  - [x] (b) Stepper navigation is guard-aware with visible lock reasons;
         direct `setStage` gone from the stepper.
-  - [ ] (c) Active-building store set on building selection; panels no longer
+  - [x] (c) Active-building store set on building selection; panels no longer
         depend on material-store insertion order.
-  - [ ] (d) All `useEnergyMetrics` call sites pass `sigunguCd`; report passes
+  - [x] (d) All `useEnergyMetrics` call sites pass `sigunguCd`; report passes
         actual consumption so `predictedVsActualDelta` renders.
-  - [ ] New tests pass; full suite, lint, build green.
+  - [x] New tests pass; full suite, lint, build green.
 - **Done when**: one merge implementation serves every consumer, the stepper
   cannot skip guards, panels track the user-selected building, and all energy
   consumers compute from identical inputs.
+
+### Evaluation notes (2026-07-21, claude-fable-5-ultrawork)
+
+- Landed in the suggested order (c)→(a)→(d)→(b). New: `src/store/active-building-store.ts`
+  (pk + sigunguCd, not persisted, set on building-page resolution),
+  `src/hooks/use-effective-recipe.ts` (canonical merge via `mergeRecipeOverrides`,
+  slice-subscribe + useMemo, referentially stable), `useActiveSigunguCd()` helper.
+- **Six** (not five) hand-copied merge blocks deleted — the extra one in
+  `src/components/viewer/building-layers.tsx:49-61` (heatmap sizing) was caught by the
+  fitness grep; may-touch extended to that file under the item's own fitness mandate.
+- (b): `stages.ts` gains pure `getBlockingStage` + `STAGE_LOCK_REASONS`; store gains
+  `goToStage` (backward always allowed; forward requires every intermediate guard);
+  stepper disables locked stages with the real guard reason (도면 업로드 필요 / CAD
+  footprint required) — no `setStage` call remains in the stepper.
+- (d): report-stage now passes `sigunguCd` + `actual.data` (predictedVsActualDelta no
+  longer structurally null); properties-panel/energy-cards pass `sigunguCd`; status-bar
+  falls back to the active building's sigunguCd when its prop is absent.
+- **Spec correction (BDD 1)**: the degree-day engine does not consume `footprintPolygon`
+  numerically — the honest regression surface is the effective-recipe *object* reaching
+  consumers (ECO2/JSON exports, heatmap, future polygon-aware physics), proven by the
+  `useEffectiveRecipe` polygon test; energy numbers themselves change only via
+  width/depth overrides.
+- Gates: targeted 73/73 (8 files) · `pnpm test` **1005 passed / 1 skipped** · `pnpm lint`
+  0 errors · `pnpm build` green · fitness greps: exactly 1 `overrides.footprintWidth`
+  (recipe.ts), 0 `setStage(` in stepper, legacy `Object.keys(properties)` only in the
+  documented fallback branch.
+- Test-infra note: RTL auto-cleanup doesn't run under vitest with globals off — the
+  stepper test registers `afterEach(cleanup)` explicitly.

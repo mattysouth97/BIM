@@ -7,8 +7,9 @@
 import React, { useMemo, useState } from "react";
 import { useAppStore } from "@/store/app-store";
 import { useMaterialStore } from "@/store/material-store";
-import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import { useActiveBuildingPk, useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useRecipeStore } from "@/store/recipe-store";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
 import { useScenarioStore } from "@/store/scenario-store";
@@ -92,11 +93,14 @@ export function ReportStage() {
 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
   const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
-  const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
-  const metrics = useEnergyMetrics(buildingPk);
   const actual = useActualEnergy(buildingPk);
   const actualData = actual.data ?? [];
   const hasActual = actualData.length > 0;
+  // P1-08 (d): regional climate + actual consumption reach the report path,
+  // so the PDF computes the same HDD/CDD as the status bar and
+  // predictedVsActualDelta is no longer structurally null.
+  const sigunguCd = useActiveSigunguCd();
+  const metrics = useEnergyMetrics(buildingPk, sigunguCd, actual.data);
 
   // ── Retrofit scenario (read-only consumer of the twin-stage state) ───────
   // Same store + hook the simulator uses, so exported financials can never
@@ -124,35 +128,9 @@ export function ReportStage() {
     [scenarioApplies, scenario.selection]
   );
 
-  // Derive effective recipe (same pattern as properties-panel)
-  const effectiveRecipe = useMemo(() => {
-    if (!baseRecipe) return undefined;
-    if (!overrides) return baseRecipe;
-    return {
-      ...baseRecipe,
-      ...(overrides.footprintWidth !== undefined
-        ? { footprintWidth: overrides.footprintWidth }
-        : {}),
-      ...(overrides.footprintDepth !== undefined
-        ? { footprintDepth: overrides.footprintDepth }
-        : {}),
-      ...(overrides.wallThickness !== undefined
-        ? { wallThickness: overrides.wallThickness }
-        : {}),
-      ...(overrides.facade
-        ? { facade: { ...baseRecipe.facade, ...overrides.facade } }
-        : {}),
-      ...(overrides.slab
-        ? { slab: { ...baseRecipe.slab, ...overrides.slab } }
-        : {}),
-      ...(overrides.column
-        ? { column: { ...baseRecipe.column, ...overrides.column } }
-        : {}),
-      ...(overrides.roof
-        ? { roof: { ...baseRecipe.roof, ...overrides.roof } }
-        : {}),
-    };
-  }, [baseRecipe, overrides]);
+  // P1-08 (a): single canonical merge — carries footprintPolygon overrides
+  // into the report/export payloads.
+  const effectiveRecipe = useEffectiveRecipe(buildingPk);
 
   // ── Calibration (optional) ───────────────────────────────────────────────
   const calibration = useMemo(() => {

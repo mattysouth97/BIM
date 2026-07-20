@@ -6,6 +6,7 @@ import {
   WorkflowStage,
   STAGE_ORDER,
   STAGE_GUARDS,
+  getBlockingStage,
   type StageGuardContext,
 } from "@/lib/workflow/stages";
 
@@ -15,6 +16,13 @@ interface WorkflowState {
   setStage: (next: WorkflowStage) => void;
   canAdvance: (ctx?: StageGuardContext) => boolean;
   advance: (ctx?: StageGuardContext) => void;
+  /**
+   * P1-08 (b) — guard-aware navigation for arbitrary jumps (stepper clicks).
+   * Backward/same-stage always succeeds; forward jumps require every
+   * intermediate stage's forward guard to pass. Returns whether the move
+   * happened. UI navigation must use this, never raw setStage.
+   */
+  goToStage: (target: WorkflowStage, ctx?: StageGuardContext) => boolean;
   retreat: () => void;
   markComplete: (stage: WorkflowStage) => void;
   resetWorkflow: () => void;
@@ -53,6 +61,15 @@ export const useWorkflowStore = create<WorkflowState>()(
           set({ stage: STAGE_ORDER[idx + 1] });
         }
         // no-op at terminal
+      },
+
+      goToStage: (target, ctx) => {
+        const current = get().stage;
+        if (getBlockingStage(current, target, ctx) !== null) {
+          return false;
+        }
+        set({ stage: target });
+        return true;
       },
 
       retreat: () => {

@@ -33,3 +33,36 @@ export const STAGE_GUARDS: Partial<Record<WorkflowStage, (ctx?: StageGuardContex
   twin:   () => true,
   // "report" has no forward guard — it is the terminal stage.
 };
+
+// P1-08 (b) — user-facing reason why a stage's FORWARD guard blocks.
+// Keyed by the blocking stage; text must state the real guard condition
+// (upload guard = ≥3-point CAD footprint polygon), never an invented string.
+export const STAGE_LOCK_REASONS: Partial<Record<WorkflowStage, { ko: string; en: string }>> = {
+  upload: {
+    ko: "도면 업로드 필요 (3점 이상 외곽 폴리곤)",
+    en: "CAD footprint required (outer polygon with ≥3 points)",
+  },
+};
+
+/**
+ * P1-08 (b) — pure navigation check for jumping current → target.
+ * Backward and same-stage moves are always allowed (returns null).
+ * A forward jump requires the forward guard of EVERY stage from `current`
+ * up to (but excluding) `target` to pass — otherwise the first blocking
+ * stage is returned so callers can surface its lock reason.
+ */
+export function getBlockingStage(
+  current: WorkflowStage,
+  target: WorkflowStage,
+  ctx?: StageGuardContext
+): WorkflowStage | null {
+  const currentIdx = STAGE_ORDER.indexOf(current);
+  const targetIdx = STAGE_ORDER.indexOf(target);
+  if (targetIdx <= currentIdx) return null;
+  for (let i = currentIdx; i < targetIdx; i++) {
+    const stage = STAGE_ORDER[i];
+    const guard = STAGE_GUARDS[stage];
+    if (guard && !guard(ctx)) return stage;
+  }
+  return null;
+}

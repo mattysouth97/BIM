@@ -10,8 +10,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAppStore } from "@/store/app-store";
 import { useMaterialStore } from "@/store/material-store";
-import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import { useActiveBuildingPk, useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useRecipeStore } from "@/store/recipe-store";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
 import { useWeatherData } from "@/hooks/use-weather-data";
@@ -76,8 +77,9 @@ export function PropertiesPanel() {
 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
   const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
-  const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
-  const metrics = useEnergyMetrics(buildingPk);
+  // P1-08 (d): same regional climate as every other panel.
+  const sigunguCd = useActiveSigunguCd();
+  const metrics = useEnergyMetrics(buildingPk, sigunguCd);
   const actual = useActualEnergy(buildingPk);
   const actualData = actual.data ?? [];
   const hasActual = actualData.length > 0;
@@ -88,35 +90,8 @@ export function PropertiesPanel() {
   const [certVersion, setCertVersion] =
     useState<CertificationVersion>("2024");
 
-  // Derive effective recipe (same pattern as energy-cards)
-  const effectiveRecipe = useMemo(() => {
-    if (!baseRecipe) return undefined;
-    if (!overrides) return baseRecipe;
-    return {
-      ...baseRecipe,
-      ...(overrides.footprintWidth !== undefined
-        ? { footprintWidth: overrides.footprintWidth }
-        : {}),
-      ...(overrides.footprintDepth !== undefined
-        ? { footprintDepth: overrides.footprintDepth }
-        : {}),
-      ...(overrides.wallThickness !== undefined
-        ? { wallThickness: overrides.wallThickness }
-        : {}),
-      ...(overrides.facade
-        ? { facade: { ...baseRecipe.facade, ...overrides.facade } }
-        : {}),
-      ...(overrides.slab
-        ? { slab: { ...baseRecipe.slab, ...overrides.slab } }
-        : {}),
-      ...(overrides.column
-        ? { column: { ...baseRecipe.column, ...overrides.column } }
-        : {}),
-      ...(overrides.roof
-        ? { roof: { ...baseRecipe.roof, ...overrides.roof } }
-        : {}),
-    };
-  }, [baseRecipe, overrides]);
+  // P1-08 (a): single canonical merge (carries footprintPolygon overrides).
+  const effectiveRecipe = useEffectiveRecipe(buildingPk);
 
   // ── Fidelity assessment ──────────────────────────────────────────────────
 
