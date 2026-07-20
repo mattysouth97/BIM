@@ -237,8 +237,10 @@ describe("BIM Energy Accuracy Benchmarks", () => {
       const totalFloorArea = recipe.footprintWidth * recipe.footprintDepth * recipe.floors.length;
       const co2 = calculateCO2(demand, totalFloorArea);
 
-      // Old building: very high CO2/m2
-      expect(co2.co2PerSqm).toBeGreaterThan(100);
+      // Old building: still high CO2/m². P2-02: per-fuel factors charge
+      // gas heating at 0.2018 (not the 0.4594 grid factor), so the honest
+      // value (~72) is below the old single-factor threshold of 100.
+      expect(co2.co2PerSqm).toBeGreaterThan(60);
     });
   });
 
@@ -262,11 +264,16 @@ describe("BIM Energy Accuracy Benchmarks", () => {
       // Old building should have significantly higher CO2 than passive
       expect(oldCO2.totalCO2).toBeGreaterThan(passiveCO2.totalCO2 * 3);
 
-      // CO2 ratio should roughly match demand ratio
-      const demandRatio = oldDemand.totalDemand / passiveDemand.totalDemand;
-      const co2Ratio = oldCO2.totalCO2 / passiveCO2.totalCO2;
-      // Linear CO2 calculation means these ratios should be equal
-      expect(co2Ratio).toBeCloseTo(demandRatio, 1);
+      // P2-02: CO2 is now per-fuel, so the total ratio no longer equals the
+      // demand ratio exactly (gas and electricity carry different factors).
+      // Instead assert each fuel component is proportional to its own demand
+      // component at its factor — coverage preserved, not deleted.
+      expect(oldCO2.electricCO2).toBeCloseTo(
+        (oldDemand.fuelDemand!.electricKwh / 1000) * 0.4594, 5);
+      expect(oldCO2.fossilCO2).toBeCloseTo(
+        (oldDemand.fuelDemand!.fossilKwh / 1000) * 0.2018, 5);
+      // Total is the honest sum of both fuel components.
+      expect(oldCO2.totalCO2).toBeCloseTo(oldCO2.electricCO2 + oldCO2.fossilCO2, 5);
     });
   });
 

@@ -70,4 +70,42 @@ describe("calculateCO2", () => {
 
     expect(result2.totalCO2).toBeCloseTo(result1.totalCO2 * 2, 5);
   });
+
+  // ── P2-02: per-fuel CO2 ────────────────────────────────────────────────────
+
+  it("computes CO2 per fuel and is lower than the single-factor result for gas heating (s1)", () => {
+    const demand: AnnualDemand = {
+      heatingDemand: 6000, coolingDemand: 2400, totalDemand: 8400, demandPerSqm: 100,
+      fuelDemand: { electricKwh: 2400, fossilKwh: 6000, fossilFuel: "gas" },
+    };
+    const result = calculateCO2(demand, 84);
+
+    // electric 2400/1000×0.4594 + gas 6000/1000×0.2018
+    const expected = (2400 / 1000) * 0.4594 + (6000 / 1000) * 0.2018;
+    expect(result.totalCO2).toBeCloseTo(expected, 5);
+    expect(result.electricCO2).toBeCloseTo((2400 / 1000) * 0.4594, 5);
+    expect(result.fossilCO2).toBeCloseTo((6000 / 1000) * 0.2018, 5);
+    // Strictly lower than the old all-electric-on-total result.
+    expect(result.totalCO2).toBeLessThan((8400 / 1000) * 0.4594);
+    expect(result.assumption).toBeUndefined();
+  });
+
+  it("all-electric fuel split equals the legacy factor path (s2)", () => {
+    const demand: AnnualDemand = {
+      heatingDemand: 3000, coolingDemand: 3000, totalDemand: 6000, demandPerSqm: 60,
+      fuelDemand: { electricKwh: 6000, fossilKwh: 0, fossilFuel: null },
+    };
+    const result = calculateCO2(demand, 100);
+    expect(result.totalCO2).toBeCloseTo((6000 / 1000) * 0.4594, 5);
+    expect(result.fossilCO2).toBe(0);
+  });
+
+  it("falls back to all-electric with an explicit flag when no fuel split is provided (s4)", () => {
+    const demand: AnnualDemand = {
+      heatingDemand: 6000, coolingDemand: 2400, totalDemand: 8400, demandPerSqm: 100,
+    };
+    const result = calculateCO2(demand, 84);
+    expect(result.totalCO2).toBeCloseTo((8400 / 1000) * 0.4594, 5);
+    expect(result.assumption).toBeTruthy();
+  });
 });

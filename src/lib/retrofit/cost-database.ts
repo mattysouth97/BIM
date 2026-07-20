@@ -219,12 +219,9 @@ export const ENERGY_PRICES = {
   gas: 75,
 } as const;
 
-/** CO2 emission factors (tCO2/MWh) */
-export const CO2_FACTORS = {
-  /** Korean national grid emission factor 2023 */
-  electricity: 0.4594,
-  /** Natural gas emission factor */
-  gas: 0.2018,
-  /** District heating emission factor */
-  districtHeating: 0.3200,
-} as const;
+/**
+ * CO2 emission factors (tCO2/MWh). P2-02: the canonical definition lives in
+ * src/lib/energy/co2-factors.ts — re-exported here so every retrofit consumer
+ * keeps its import path while there is only ONE source of truth.
+ */
+export { CO2_FACTORS } from "@/lib/energy/co2-factors";

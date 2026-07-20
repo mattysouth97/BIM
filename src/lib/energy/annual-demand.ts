@@ -15,6 +15,20 @@ export interface AnnualDemand {
   totalDemand: number;
   /** Total demand per floor area (kWh/m²·yr) */
   demandPerSqm: number;
+  /**
+   * P2-02 — per-fuel split so CO2 is computed at each fuel's factor rather
+   * than a flat grid factor. Cooling is electric; heating follows the
+   * building's heating fuel. Optional so legacy/hand-built demands keep
+   * their shape (calculateCO2 falls back to all-electric when absent).
+   */
+  fuelDemand?: {
+    /** Electric portion: cooling + electrically-heated heating (kWh/yr). */
+    electricKwh: number;
+    /** Fossil/district portion: gas/oil/district heating (kWh/yr). */
+    fossilKwh: number;
+    /** Which CO2 factor applies to the fossil portion; null when all-electric. */
+    fossilFuel: "gas" | "districtHeating" | null;
+  };
 }
 
 /**
@@ -66,10 +80,27 @@ export function calculateAnnualDemand(
   const coolingDemand = coolingRaw / coolingCOP;
   const totalDemand = heatingDemand + coolingDemand;
 
+  // P2-02: resolve the heating fuel to split demand for per-fuel CO2.
+  // Cooling is always electric. Heat-pump / electric heating stay electric;
+  // gas & oil map to the "gas" factor (oil proxied — no oil factor exists);
+  // district-heat maps to "districtHeating".
+  const heatFuel = materials.hvac.heating.fuelType;
+  const heatingIsElectric = heatFuel === "electric" || heatFuel === "heat-pump";
+  const fossilFuel: "gas" | "districtHeating" | null = heatingIsElectric
+    ? null
+    : heatFuel === "district-heat"
+      ? "districtHeating"
+      : "gas";
+
   return {
     heatingDemand,
     coolingDemand,
     totalDemand,
     demandPerSqm: totalDemand / totalFloorArea,
+    fuelDemand: {
+      electricKwh: coolingDemand + (heatingIsElectric ? heatingDemand : 0),
+      fossilKwh: heatingIsElectric ? 0 : heatingDemand,
+      fossilFuel,
+    },
   };
 }

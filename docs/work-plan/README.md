@@ -61,7 +61,7 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | ID | Title | Area | Effort | UC | Status |
 |---|---|---|---|---|---|
 | [P2-01](./items/P2-01-infiltration-ventilation-loss.md) | Add infiltration/ventilation heat loss to energy model | energy | M | UC-05, UC-06 | ✅ |
-| [P2-02](./items/P2-02-per-fuel-co2.md) | Per-fuel CO2 factors and fuel-split demand result | energy | S | UC-07, UC-08 | ⬜ |
+| [P2-02](./items/P2-02-per-fuel-co2.md) | Per-fuel CO2 factors and fuel-split demand result | energy | S | UC-07, UC-08 | ✅ |
 | [P2-03](./items/P2-03-app-router-conventions.md) | Adopt App Router conventions (error/loading/not-found, metadata, fonts, link) | infra | M | UC-01, UC-03 | ⬜ |
 | [P2-04](./items/P2-04-readme-product-identity.md) | Rewrite README and retitle landing hero to the GreenRetrofit identity | docs | S | UC-01 | ⬜ |
 | [P2-05](./items/P2-05-ml-release-honesty.md) | Make the v0.1.0 ML release honest — build the pipeline or strip the metrics | ml | M | UC-10 | ⬜ |
@@ -106,4 +106,5 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | 2026-07-21 | P1-06 | API hardening: filename allowlist + execFile timeout (cad), 400/502/503 contract + truncated flag (vworld), createDataGoKrProxy factory (5 routes → 4 lines), batch cap 10 + Promise.all + failedCodes (title), tab/doc fix (consumption), zod validation | claude-opus-4-8-ultrawork |
 | 2026-07-21 | P1-07 | a11y + chart repair: Tab un-hijacked (→backquote), keyboard-operable result rows, viewport-clamped floating panel, var(--chart-N) bars, sr-only upload input, clamped CAPEX input, anchored Moon icon | claude-opus-4-8-ultrawork |
 | 2026-07-21 | P2-01 | Infiltration/ventilation heat-loss term (0.34·ACH·V·ΔT; ach50/20 leakage + mechanical airflow; HRV cuts mechanical share); heating demand now airtightness/HRV-sensitive | claude-opus-4-8-ultrawork |
+| 2026-07-21 | P2-02 | Per-fuel CO2 (shared CO2_FACTORS in energy/co2-factors.ts; gas heating at 0.2018 not grid 0.4594); AnnualDemand fuel split; renewable now offsets primary energy at 2.75 | claude-opus-4-8-ultrawork |
 | 2026-07-21 | P2-11, P2-12, P2-13 | Added geometric-fidelity track (data correctness / dead-feature wiring / IFC path + validation loop) from rendering-accuracy review; dashboard, sequencing, and execution prompts updated | orchestrator |

@@ -7,7 +7,10 @@ export const PRIMARY_ENERGY_FACTORS = {
   gas: 1.1,                 // kWh primary per kWh delivered
   districtHeating: 0.728,   // kWh primary per kWh delivered
   districtCooling: 0.937,   // kWh primary per kWh delivered
-  renewable: 0.0,           // renewable offsets primary energy
+  // P2-02: on-site renewable generation displaces grid electricity, so it
+  // offsets primary energy at the ELECTRICITY primary factor (was 0.0, which
+  // made the offset a no-op).
+  renewable: 2.75,
 } as const;
 
 export interface DeliveredEnergy {
@@ -62,10 +65,12 @@ export function calculatePrimaryEnergy(
   const primaryGas = delivered.gas * PRIMARY_ENERGY_FACTORS.gas;
   const primaryDH = dh * PRIMARY_ENERGY_FACTORS.districtHeating;
   const primaryDC = dc * PRIMARY_ENERGY_FACTORS.districtCooling;
-  const primaryRenewable = re * PRIMARY_ENERGY_FACTORS.renewable; // always 0
+  // P2-02: on-site renewable offsets primary energy — stored as a reduction
+  // (≤ 0) and added to the total.
+  const primaryRenewable = -(re * PRIMARY_ENERGY_FACTORS.renewable);
 
   const primaryTotal =
-    primaryElectric + primaryGas + primaryDH + primaryDC - primaryRenewable;
+    primaryElectric + primaryGas + primaryDH + primaryDC + primaryRenewable;
 
   const primaryEnergyPerArea =
     totalArea > 0 ? primaryTotal / totalArea : 0;
