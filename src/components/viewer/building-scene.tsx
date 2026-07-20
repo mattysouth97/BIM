@@ -2,12 +2,8 @@
 
 import { useState, useRef, useMemo, useEffect, useCallback, lazy, Suspense } from "react";
 import * as THREE from "three";
-import { Canvas, useThree, useFrame } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { useEnvironment } from "@react-three/drei";
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-import { SAOPass } from "three/examples/jsm/postprocessing/SAOPass.js";
-import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import type { BrTitleInfo, BrFloorInfo } from "@/lib/types";
 import { generateBuildingGeometry, toRecipe, type FloorGeometry } from "@/lib/building-geometry";
 import { inferMaterialProperties } from "@/lib/material-inference";
@@ -79,54 +75,10 @@ function SceneSetup() {
   return null;
 }
 
-/**
- * SAOPass-based ambient occlusion using three.js native post-processing.
- * Replaces the previous SSAO + Bloom + Vignette pipeline.
- */
-function SAOPostProcessing() {
-  const { gl, scene, camera, size } = useThree();
-  const composerRef = useRef<EffectComposer | null>(null);
-
-  useEffect(() => {
-    const composer = new EffectComposer(gl);
-
-    const renderPass = new RenderPass(scene, camera);
-    composer.addPass(renderPass);
-
-    const saoPass = new SAOPass(scene, camera);
-    saoPass.params.saoBias = 1.0;
-    saoPass.params.saoIntensity = 0.004;
-    saoPass.params.saoScale = 2;
-    saoPass.params.saoKernelRadius = 15;
-    saoPass.params.saoMinResolution = 0;
-    saoPass.params.saoBlur = true;
-    saoPass.params.saoBlurRadius = 12;
-    saoPass.params.saoBlurStdDev = 6;
-    saoPass.params.saoBlurDepthCutoff = 0.01;
-    composer.addPass(saoPass);
-
-    const outputPass = new OutputPass();
-    composer.addPass(outputPass);
-
-    composerRef.current = composer;
-
-    return () => {
-      composer.dispose();
-    };
-  }, [gl, scene, camera]);
-
-  // Resize composer when viewport changes
-  useEffect(() => {
-    composerRef.current?.setSize(size.width, size.height);
-  }, [size]);
-
-  // Take over the render loop
-  useFrame(() => {
-    composerRef.current?.render();
-  }, 1);
-
-  return null;
-}
+// P2-08: the legacy SAOPass post-processing component was defined here but never
+// mounted — the live pipeline is OutlinePass-based via <ScenePostProcessing />
+// (outline-post-processing.tsx). Removed along with its dead SAOPass/EffectComposer
+// imports.
 
 // ─── Campus rendering ────────────────────────────────────────────────────────
 
@@ -360,14 +312,6 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     },
     [buildingPk]
   );
-
-  const handleToggleModelSource = useCallback(() => {
-    if (uploadedModel) {
-      setModelSource((prev) => (prev === "parametric" ? "uploaded" : "parametric"));
-    } else {
-      setUploadDialogOpen(true);
-    }
-  }, [uploadedModel]);
 
   // Store base recipe and apply overrides from config panel
   const setBaseRecipe = useRecipeStore((s) => s.setBaseRecipe);

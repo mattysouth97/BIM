@@ -93,8 +93,6 @@ export class MediaLayer implements LayerGenerator {
       return group;
     }
 
-    const halfW = footprintWidth / 2;
-    const halfD = footprintDepth / 2;
     const tubeRadius = 0.04;
 
     // Material definitions — high metalness neon tubes

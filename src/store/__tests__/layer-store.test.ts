@@ -11,7 +11,6 @@ vi.mock("three", () => ({
 }));
 
 import { useLayerStore } from "../layer-store";
-import type { LayerId } from "@/lib/layers/types";
 import { ALL_LAYER_IDS } from "@/lib/layers/types";
 
 describe("useLayerStore", () => {

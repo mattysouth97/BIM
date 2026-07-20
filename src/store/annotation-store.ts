@@ -5,7 +5,6 @@ import { versionedMigrate } from "./persist-migrate";
 import { persist } from "zustand/middleware";
 import type {
   AnnotationInstance,
-  AnnotationKind,
   ElementId,
 } from "@/lib/bim/annotations/annotation-types";
 

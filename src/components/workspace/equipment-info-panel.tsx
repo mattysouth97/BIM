@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { X } from "lucide-react";
 import { useSelectionStore } from "@/store/selection-store";
 import { useAppStore } from "@/store/app-store";

@@ -35,7 +35,7 @@ export function generateHvacRetrofits(
   },
   floorArea: number,
   annualHeatingDemand: number,
-  annualCoolingDemand: number,
+  _annualCoolingDemand: number,
   heatingFuel: Fuel = "gas"
 ): RetrofitMeasure[] {
   const measures: RetrofitMeasure[] = [];

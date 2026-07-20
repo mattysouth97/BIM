@@ -164,7 +164,6 @@ describe("LightingLayer", () => {
     expect(fixtureIM).not.toBeNull();
 
     fixtureIM.geometry.computeBoundingBox();
-    const box = fixtureIM.geometry.boundingBox!;
     // With showDiffuserFace=true (default), box includes body (0.02) + diffuser (0.015 + offset)
     // The body alone is 0.02, diffuser adds ~0.0225 below. Total extent ~ 0.02 + 0.015 + 0.0075*2
     // What matters: IM exists (user override honored)

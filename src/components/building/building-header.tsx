@@ -2,7 +2,6 @@
 
 import type { BrTitleInfo } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface BuildingHeaderProps {
   title: BrTitleInfo | null;

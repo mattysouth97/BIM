@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { calculateHeatLoss } from "../heat-loss";
 import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe, FloorSpec } from "@/lib/procedural/types";
-import type { ClimateData } from "../climate-data";
 import { SEOUL_CLIMATE } from "../climate-data";
 
 /** Helper: create a realistic 84m2 Korean apartment MaterialProperties */

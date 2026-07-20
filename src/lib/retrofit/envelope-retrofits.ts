@@ -15,16 +15,6 @@ export const KOREAN_2020_TARGET_U_VALUES = {
 } as const;
 
 /**
- * Derive priority from simple payback period.
- * < 5 years = high, 5–10 years = medium, > 10 years = low
- */
-function paybackPriority(paybackYears: number): 'high' | 'medium' | 'low' {
-  if (paybackYears < 5) return 'high';
-  if (paybackYears <= 10) return 'medium';
-  return 'low';
-}
-
-/**
  * Generate envelope retrofit recommendations for a building.
  *
  * Energy saving formula per element:

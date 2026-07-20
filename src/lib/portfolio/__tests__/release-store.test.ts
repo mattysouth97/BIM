@@ -176,7 +176,7 @@ describe("StaticFileReleaseStore", () => {
     });
     const store = new StaticFileReleaseStore(dir);
     const calibration = await store.getCalibration("v0.1.0");
-    expect(calibration?.metrics.kendallTau).toBe(0.672);
+    expect(calibration?.metrics?.kendallTau).toBe(0.672);
   });
 
   // ─── Version allowlist — rejects path-traversal-shaped version strings ────

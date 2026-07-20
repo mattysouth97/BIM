@@ -3,10 +3,9 @@
 // Pure Three.js, no React.
 
 import * as THREE from "three";
-import type { BuildingRecipe, BuildingSection, FloorSpec } from "./types";
+import type { BuildingRecipe, FloorSpec } from "./types";
 import { generateFacade } from "./facade-generator";
 import { generateSlabs, generateColumns, generateRoof } from "./structure-generator";
-import { getSectionForFloor } from "./mixed-use-recipe";
 
 /**
  * ProceduralBuilding generates a complete Three.js scene graph

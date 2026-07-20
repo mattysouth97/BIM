@@ -15,18 +15,6 @@ function hasNoNaN(arr: Float32Array): boolean {
 }
 
 /**
- * Compute the signed area of a 2-D polygon ring via the shoelace formula.
- * Positive = CCW in standard math orientation.
- */
-function signedArea2D(ring: [number, number][]): number {
-  let area = 0;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    area += (ring[j][0] + ring[i][0]) * (ring[j][1] - ring[i][1]);
-  }
-  return area / 2;
-}
-
-/**
  * Sample the normal of the first triangle in the position buffer at the given
  * vertex offset (in triangles, not vertices).  Y-component is returned.
  *
@@ -44,13 +32,13 @@ function firstTriangleNormalY(
   const i1 = indices ? indices.getX(base + 1) : base + 1;
   const i2 = indices ? indices.getX(base + 2) : base + 2;
 
-  const ax = positions[i0 * 3],     ay = positions[i0 * 3 + 1], az = positions[i0 * 3 + 2];
-  const bx = positions[i1 * 3],     by = positions[i1 * 3 + 1], bz = positions[i1 * 3 + 2];
-  const cx = positions[i2 * 3],     cy = positions[i2 * 3 + 1], cz = positions[i2 * 3 + 2];
+  const ax = positions[i0 * 3], az = positions[i0 * 3 + 2];
+  const bx = positions[i1 * 3], bz = positions[i1 * 3 + 2];
+  const cx = positions[i2 * 3], cz = positions[i2 * 3 + 2];
 
   // (B-A) × (C-A)
-  const ex = bx - ax, ey = by - ay, ez = bz - az;
-  const fx = cx - ax, fy = cy - ay, fz = cz - az;
+  const ex = bx - ax, ez = bz - az;
+  const fx = cx - ax, fz = cz - az;
   const ny = ez * fx - ex * fz; // Y component of cross product
   return ny;
 }
@@ -160,7 +148,6 @@ describe("extrudePolygon — Test 4: winding order / face orientation", () => {
     const height = 3;
     const geo = extrudePolygon([TRI_RING], height);
     const pos = geo.attributes.position.array as Float32Array;
-    const idx = geo.index as THREE.BufferAttribute;
 
     // Find how many vertices are at y == height (top cap)
     let topCapCount = 0;

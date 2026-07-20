@@ -68,7 +68,7 @@ export class StructuralAnalysisLayer implements LayerGenerator {
     const allFloorLoads = calcColumnLoad(recipe, columnPositions.length);
     // Build a map from floor index in recipe.floors to load value
     const floorIndexToLoad = new Map<number, number>();
-    recipe.floors.forEach((floor, i) => {
+    recipe.floors.forEach((_floor, i) => {
       floorIndexToLoad.set(i, allFloorLoads[i]);
     });
 

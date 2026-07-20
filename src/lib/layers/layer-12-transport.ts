@@ -73,13 +73,13 @@ const cabFragmentShader = /* glsl */ `
 export class TransportLayer implements LayerGenerator {
   private group: THREE.Group | null = null;
 
-  generate(recipe: BuildingRecipe, density = 1.0): THREE.Group {
+  generate(recipe: BuildingRecipe, _density = 1.0): THREE.Group {
     this.dispose();
 
     const group = new THREE.Group();
     group.name = "layer-12-transport";
 
-    const { floors, footprintWidth, footprintDepth, totalHeight } = recipe;
+    const { floors, totalHeight } = recipe;
     const aboveFloors = floors.filter((f) => f.type === "above");
     if (aboveFloors.length === 0) {
       this.group = group;
@@ -114,7 +114,6 @@ export class TransportLayer implements LayerGenerator {
 
     const mat4 = new THREE.Matrix4();
     const pos = new THREE.Vector3();
-    const quat = new THREE.Quaternion();
     const scl = new THREE.Vector3(1, 1, 1);
 
     for (let si = 0; si < shaftPositions.length; si++) {

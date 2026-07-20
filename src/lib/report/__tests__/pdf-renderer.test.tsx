@@ -6,7 +6,6 @@
 // (offline-deterministic; no network).
 
 import { describe, it, expect } from "vitest";
-import React from "react";
 import { pdf, Font } from "@react-pdf/renderer";
 import { ReportPDF } from "../pdf-renderer";
 import type { ReportData } from "../report-types";

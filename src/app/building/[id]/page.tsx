@@ -8,7 +8,6 @@ import { useCompositeBuilding } from "@/hooks/use-composite-building";
 import { useBuildingFootprint } from "@/hooks/use-building-footprint";
 import { BuildingToolbar } from "@/components/building/building-toolbar";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 
 const BuildingScene = lazy(() =>
@@ -35,7 +34,7 @@ export default function BuildingDetailPage({
   const buildingId = parseBuildingId(id);
   if (!buildingId) notFound();
 
-  const { title, recap, floors, areas, isLoading, isError, errors } =
+  const { title, floors, isLoading, isError, errors } =
     useCompositeBuilding({
       sigunguCd: buildingId.sigunguCd,
       bjdongCd: buildingId.bjdongCd,

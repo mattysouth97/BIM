@@ -3,7 +3,6 @@
 import React from "react";
 import type { FloorGeometry } from "@/lib/building-geometry";
 import type { BuildingEra } from "@/lib/material-types";
-import { formatArea } from "@/lib/constants";
 import { useAppStore } from "@/store/app-store";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useWorkspaceStore } from "@/store/workspace-store";

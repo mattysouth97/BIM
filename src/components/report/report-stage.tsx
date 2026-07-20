@@ -4,7 +4,7 @@
 // Report stage content — renders in place of the 3D viewer when workflow stage = "report".
 // Provides Energy Audit and Compliance report previews with PDF, CSV, and JSON export.
 
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useAppStore } from "@/store/app-store";
 import { useMaterialStore } from "@/store/material-store";
 import { useActiveBuildingPk, useActiveSigunguCd } from "@/hooks/use-active-building-pk";
@@ -20,7 +20,6 @@ import {
 } from "@/lib/report/scenario-summary";
 import { EnergyAuditPreview } from "@/components/report/energy-audit-preview";
 import { CompliancePreview } from "@/components/report/compliance-preview";
-import { buildComplianceReportSections } from "@/lib/report/templates/compliance-report";
 import { assembleEnergyAuditReport, assembleComplianceReport } from "@/lib/report/report-engine";
 import { generateBuildingCSV } from "@/lib/export/csv-export";
 import { generateTwinJSON } from "@/lib/export/json-export";

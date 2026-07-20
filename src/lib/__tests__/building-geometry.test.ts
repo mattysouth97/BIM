@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateBuildingGeometry, toRecipe } from "../building-geometry";
-import type { BrTitleInfo, BrFloorInfo } from "../types";
+import type { BrTitleInfo } from "../types";
 
 function makeTitle(overrides?: Partial<BrTitleInfo>): BrTitleInfo {
   return {

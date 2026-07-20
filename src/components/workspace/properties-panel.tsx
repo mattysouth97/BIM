@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -16,7 +16,6 @@ import {
   buildingTypeFromMaterials,
   isResidentialOccupancy,
 } from "@/lib/energy/delivered-from-demand";
-import { useRecipeStore } from "@/store/recipe-store";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
@@ -81,7 +80,6 @@ export function PropertiesPanel() {
   const buildingPk = useActiveBuildingPk();
 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
-  const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
   // P1-08 (d): same regional climate as every other panel.
   const sigunguCd = useActiveSigunguCd();
   const metrics = useEnergyMetrics(buildingPk, sigunguCd);

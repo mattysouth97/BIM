@@ -56,7 +56,7 @@ describe("useEnergyMetrics", () => {
     // Actual consumption at half the predicted demand ⇒ positive delta
     // (predicted exceeds actual).
     const actual = [
-      { year: 2025, electric_kwh: 0, gas_kwh: 0, total_kwh: base!.demand.totalDemand / 2 },
+      { year: 2025, electric_kwh: 0, gas_kwh: 0, district_kwh: 0, total_kwh: base!.demand.totalDemand / 2 },
     ];
     const withActual = renderHook(() => useEnergyMetrics(PK, undefined, actual)).result
       .current;
@@ -65,7 +65,7 @@ describe("useEnergyMetrics", () => {
 
     // Actual at double the predicted ⇒ negative delta.
     const actualHigh = [
-      { year: 2025, electric_kwh: 0, gas_kwh: 0, total_kwh: base!.demand.totalDemand * 2 },
+      { year: 2025, electric_kwh: 0, gas_kwh: 0, district_kwh: 0, total_kwh: base!.demand.totalDemand * 2 },
     ];
     const withHigh = renderHook(() => useEnergyMetrics(PK, undefined, actualHigh)).result
       .current;

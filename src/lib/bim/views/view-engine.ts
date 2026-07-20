@@ -9,7 +9,6 @@ import type {
   ElevationView,
   SectionView,
   OrthoCameraState,
-  PerspCameraState,
   ClippingPlaneDescriptor,
   ElevationSide,
 } from "./view-definition";

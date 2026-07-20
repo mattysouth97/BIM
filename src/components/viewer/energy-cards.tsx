@@ -93,37 +93,6 @@ function AnimatedValue({
   );
 }
 
-/** Delta indicator with color coding */
-function DeltaIndicator({
-  modeled,
-  actual,
-  suffix = "",
-  decimals = 1,
-  isKo,
-}: {
-  modeled: number;
-  actual: number;
-  suffix?: string;
-  decimals?: number;
-  isKo: boolean;
-}) {
-  const delta = modeled - actual;
-  // Green when modeled <= actual (conservative estimate), red when modeled > actual (optimistic)
-  const isConservative = delta <= 0;
-  const color = isConservative ? "text-green-600" : "text-red-500";
-  const sign = delta > 0 ? "+" : "";
-  const label = isKo ? "\u0394" : "\u0394";
-
-  return (
-    <span className={`text-[10px] font-medium tabular-nums ${color}`}>
-      {label}
-      {sign}
-      {delta.toFixed(decimals)}
-      {suffix}
-    </span>
-  );
-}
-
 /** Small badge indicating actual data presence */
 function ActualDataBadge({ isKo }: { isKo: boolean }) {
   return (
@@ -215,7 +184,6 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
   const hasActual = actualData.length > 0;
   // Grade and certified demand are not available from the consumption API
   const hasActualGrade = false;
-  const hasActualDemand = false;
 
   // Tree equivalent: 1 tree absorbs ~22 kg CO2/yr
   const treeEquivalent = co2.co2PerSqm > 0 ? co2.co2PerSqm / 22 : 0;

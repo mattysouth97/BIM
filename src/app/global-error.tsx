@@ -5,7 +5,7 @@
 // itself throws. Must define its own <html>/<body>. No error internals shown.
 
 export default function GlobalError({
-  error,
+  error: _error,
   reset,
   unstable_retry,
 }: {

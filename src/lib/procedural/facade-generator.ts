@@ -3,7 +3,7 @@
 // Pure Three.js, no React.
 
 import * as THREE from "three";
-import type { BuildingRecipe, FacadeConfig, FloorSpec } from "./types";
+import type { BuildingRecipe, FacadeConfig } from "./types";
 import type { PBRMaterialConfig } from "@/lib/pbr-materials";
 
 function pbrToMaterial(config: PBRMaterialConfig): THREE.MeshStandardMaterial {

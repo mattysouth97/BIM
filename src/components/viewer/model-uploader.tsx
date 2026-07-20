@@ -5,7 +5,7 @@ import { useAppStore } from "@/store/app-store";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileBox, X, Check, AlertCircle } from "lucide-react";
+import { Upload, FileBox, Check, AlertCircle } from "lucide-react";
 
 interface ModelUploaderProps {
   open: boolean;

@@ -4,7 +4,6 @@
 // Bottom shelf status bar: contextual stage hints (left) + live energy metrics (right).
 // Per D-01 (persistent status bar), D-05 / D-08 (energy display).
 
-import React from "react";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useAppStore } from "@/store/app-store";
 import { useActiveBuildingPk, useActiveSigunguCd } from "@/hooks/use-active-building-pk";

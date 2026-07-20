@@ -17,6 +17,22 @@ const eslintConfig = defineConfig([
     // Vendored emscripten-generated WASM glue — not linted
     "public/**",
   ]),
+  // P2-08: `_`-prefixed identifiers are the explicit "intentionally unused"
+  // convention (required-position params, destructure discards) — mirrors
+  // tsc's noUnusedParameters underscore exemption.
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

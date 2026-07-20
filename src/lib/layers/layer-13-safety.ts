@@ -123,9 +123,6 @@ export class SafetyLayer implements LayerGenerator {
     ];
 
     const stairGeo = new THREE.BoxGeometry(2.0, 0, 2.0); // height set per-instance
-    const stairEdgesGeo = new THREE.EdgesGeometry(
-      new THREE.BoxGeometry(2.0, 1, 2.0)
-    );
 
     for (const sp of stairPositions) {
       // Full-height stairwell column as wireframe

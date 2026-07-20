@@ -11,7 +11,6 @@ import type {
   RoofConfig,
   MaterialRefs,
   FactoryZone,
-  CurtainWallConfig,
 } from "./types";
 import { WINDOW_RATIOS } from "@/lib/korean-building-codes";
 import {
@@ -47,7 +46,7 @@ function getFactoryFloorHeight(era: BuildingEra, totalHeight: number, floorCount
 }
 
 /** Factory facade: minimal windows on 3 sides, office treatment on front */
-function getFactoryFacadeConfig(era: BuildingEra, mainPurpsCd: string): FacadeConfig {
+function getFactoryFacadeConfig(era: BuildingEra, _mainPurpsCd: string): FacadeConfig {
   const factoryRatio = WINDOW_RATIOS[era]?.factory || 0.10;
   return {
     windowWidth: 1.2,

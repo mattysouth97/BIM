@@ -47,7 +47,7 @@ interface SheetState {
 
 export const useSheetStore = create<SheetState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       sheets: [],
       activeSheetId: null,
 
