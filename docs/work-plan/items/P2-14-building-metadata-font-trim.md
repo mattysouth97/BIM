@@ -3,8 +3,8 @@ id: P2-14
 title: generateMetadata on /building/[id] via a thin server wrapper + font payload trim
 priority: P2
 area: infra
-status: not-started
-owner: unassigned
+status: done
+owner: claude-fable-5-session
 effort: S
 created: 2026-07-21
 updated: 2026-07-21
@@ -43,7 +43,7 @@ deferred to keep P2-03's core low-risk and fully verified.
 - **Gates**: `pnpm test`; `pnpm lint`; `pnpm build`; manual: a `/building/<valid-id>`
   share preview shows the building title.
 - **Acceptance criteria**:
-  - [ ] `generateMetadata` on `/building/[id]` via a server wrapper; client workspace unchanged.
-  - [ ] Display-font payload reduced on the landing route.
+  - [x] `generateMetadata` on `/building/[id]` via a server wrapper; client workspace unchanged.
+  - [x] Display-font payload reduced on the landing route.
 - **Done when**: shared building links show building-specific titles and the landing
   route no longer ships unused display fonts.
