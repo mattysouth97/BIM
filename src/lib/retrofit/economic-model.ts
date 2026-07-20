@@ -43,6 +43,44 @@ export interface FinancingMix {
   loanRatePreSubsidy: number;
   /** Interest-support buy-down, percentage points (e.g., 0.045 for 4.5pp). */
   interestSupportPp: number;
+  /**
+   * P2-10 (a) — loan term in years. The interest-support buy-down applies
+   * only over the loan term ("what's reduced is their cost of capital over
+   * the loan term" — dossier §3). After year `loanTermYears` the discount
+   * rate reverts to the pure-equity `discountRate`, so a 20-year horizon no
+   * longer enjoys 20 years of subsidized WACC. Absent ⇒ legacy behavior
+   * (buy-down applied over the full horizon).
+   */
+  loanTermYears?: number;
+  /**
+   * P2-10 (g) — program per-applicant loan cap, KRW. When the financed portion
+   * (debtFraction × selected effective CAPEX) exceeds this, `selectMeasuresForBudget`
+   * sets `loanCapExceeded` (flag, not a silent clamp). Absent ⇒ uncapped.
+   */
+  loanCapKrw?: number;
+}
+
+/**
+ * P2-10 (c)/(e) — a single escalation component of a measure's saving stream.
+ * Some measures blend cash flows that escalate differently (a heat pump saves
+ * gas while spending electricity; solar self-consumption tracks the retail
+ * electricity price while its feed-in portion is a fixed SMP/REC tariff). When
+ * a measure carries `escalationComponents`, `projectCashFlow` escalates each
+ * component independently instead of applying one fuel rate to the blended
+ * `annualCostSaving`.
+ */
+export interface EscalationComponent {
+  /** Year-1 nominal amount, KRW. May be negative (e.g. electricity SPENT). */
+  amount: number;
+  /**
+   * Fuel whose escalation applies. Omit together with an explicit `escalation`
+   * for a flat (non-escalating) stream such as a fixed feed-in tariff.
+   */
+  fuel?: Fuel;
+  /** Explicit escalation fraction; overrides the fuel lookup. 0 = flat. */
+  escalation?: number;
+  /** Annual output/performance degradation fraction (e.g. 0.005 = 0.5%/yr). */
+  degradationRate?: number;
 }
 
 export interface EconomicAssumptions {
@@ -197,7 +235,6 @@ export function projectCashFlow(
   assumptions: EconomicAssumptions,
 ): { cashFlow: number[]; resolvedFuel: Fuel } {
   const fuel = resolveFuel(measure);
-  const escalation = assumptions.energyEscalation[fuel];
   const horizon = assumptions.analysisHorizonYears;
   // P1-02: savings stop at the equipment's useful life; the vector stays
   // horizon-length (zero-padded tail) so aggregation/indexing is unchanged.
@@ -205,11 +242,100 @@ export function projectCashFlow(
   // would extend the model here — deliberately out of scope for now.
   const years = Math.min(measure.lifetimeYears ?? horizon, horizon);
   const cashFlow: number[] = new Array(horizon);
+
+  // P2-10 (c)/(e): blended streams escalate per-component. A heat pump's
+  // gas-saved side escalates at the gas rate while its electricity-spent side
+  // escalates faster; solar self-consumption tracks the electricity price while
+  // the fixed feed-in tariff stays flat, and both degrade with panel age.
+  const components = measure.escalationComponents;
+  if (components && components.length > 0) {
+    for (let t = 1; t <= horizon; t++) {
+      if (t > years) {
+        cashFlow[t - 1] = 0;
+        continue;
+      }
+      let sum = 0;
+      for (const c of components) {
+        const esc =
+          c.escalation ?? (c.fuel ? assumptions.energyEscalation[c.fuel] : 0);
+        const deg = c.degradationRate ?? 0;
+        sum +=
+          c.amount * Math.pow(1 + esc, t - 1) * Math.pow(1 - deg, t - 1);
+      }
+      cashFlow[t - 1] = sum;
+    }
+    return { cashFlow, resolvedFuel: fuel };
+  }
+
+  const escalation = assumptions.energyEscalation[fuel];
   for (let t = 1; t <= horizon; t++) {
     cashFlow[t - 1] =
       t <= years ? measure.annualCostSaving * Math.pow(1 + escalation, t - 1) : 0;
   }
   return { cashFlow, resolvedFuel: fuel };
+}
+
+/**
+ * P2-10 (a) — per-year cumulative discount factors for a set of assumptions.
+ *
+ * `factors[t-1]` = Π_{i=1..t} (1 + rate_i), where rate_i is the effective
+ * discount rate in year i. With a `financingMix.loanTermYears`, the subsidized
+ * WACC applies during the loan term and the pure-equity `discountRate` applies
+ * afterward — so the buy-down is NOT enjoyed over the full horizon. Without a
+ * loanTermYears the effective rate is constant (legacy behavior).
+ */
+export function buildDiscountFactors(assumptions: EconomicAssumptions): number[] {
+  const horizon = assumptions.analysisHorizonYears;
+  const wacc = effectiveDiscountRate(assumptions);
+  const equity = assumptions.discountRate;
+  const loanTerm = assumptions.financingMix?.loanTermYears;
+  const factors: number[] = new Array(horizon);
+  let acc = 1;
+  for (let t = 1; t <= horizon; t++) {
+    const rate = loanTerm !== undefined && t > loanTerm ? equity : wacc;
+    acc *= 1 + rate;
+    factors[t - 1] = acc;
+  }
+  return factors;
+}
+
+/**
+ * NPV discounted by an explicit per-year cumulative-factor schedule.
+ * NPV = -outflow + Σ_t cashFlow[t-1] / factors[t-1].
+ */
+export function computeNpvScheduled(
+  outflow: number,
+  cashFlow: number[],
+  discountFactors: number[],
+): number {
+  let pv = -outflow;
+  for (let t = 1; t <= cashFlow.length; t++) {
+    pv += cashFlow[t - 1] / discountFactors[t - 1];
+  }
+  return pv;
+}
+
+/**
+ * Discounted payback using an explicit per-year cumulative-factor schedule.
+ * Returns Infinity when cumulative discounted savings never cover outflow.
+ */
+export function computeDiscountedPaybackScheduled(
+  outflow: number,
+  cashFlow: number[],
+  discountFactors: number[],
+): number {
+  if (outflow <= 0) return 0;
+  let cumulative = 0;
+  for (let t = 1; t <= cashFlow.length; t++) {
+    const pv = cashFlow[t - 1] / discountFactors[t - 1];
+    if (cumulative + pv >= outflow) {
+      const remaining = outflow - cumulative;
+      const fraction = pv > 0 ? remaining / pv : 0;
+      return t - 1 + fraction;
+    }
+    cumulative += pv;
+  }
+  return Infinity;
 }
 
 function discount(amount: number, rate: number, year: number): number {
@@ -351,10 +477,17 @@ export function computeFinancials(
 ): MeasureFinancials {
   const effectiveCapex = applyEffectiveCapex(measure, assumptions);
   const { cashFlow, resolvedFuel } = projectCashFlow(measure, assumptions);
-  const rate = effectiveDiscountRate(assumptions);
-  const npv = computeNpv(effectiveCapex, cashFlow, rate);
+  // P2-10 (a): discount with the per-year schedule so a loan-term buy-down is
+  // not enjoyed over the whole horizon. With no financingMix/loanTermYears the
+  // schedule is a constant effective rate — identical to the prior scalar NPV.
+  const factors = buildDiscountFactors(assumptions);
+  const npv = computeNpvScheduled(effectiveCapex, cashFlow, factors);
   const irr = computeIrr(effectiveCapex, cashFlow);
-  const discountedPayback = computeDiscountedPayback(effectiveCapex, cashFlow, rate);
+  const discountedPayback = computeDiscountedPaybackScheduled(
+    effectiveCapex,
+    cashFlow,
+    factors,
+  );
   return {
     npv,
     irr,
@@ -380,6 +513,15 @@ export interface BudgetSelection {
   aggregateCashFlow: number[];
   /** Discounted payback of the aggregate. */
   discountedPayback: number;
+  /**
+   * P2-10 (g) — set when the loan-financed portion of the selected subset
+   * (debtFraction × effectiveCapex) exceeds the program loan cap
+   * (`financingMix.loanCapKrw`). The engine does not silently clamp the
+   * budget — it flags so the UI can disclose that the scenario exceeds the
+   * program's per-applicant loan limit. Absent/false when within the cap or
+   * when no financingMix is configured.
+   */
+  loanCapExceeded?: boolean;
 }
 
 /**
@@ -550,11 +692,21 @@ export function selectMeasuresForBudget(
     }
   }
 
-  const discountedPayback = computeDiscountedPayback(
+  // P2-10 (a): aggregate payback uses the same per-year schedule as per-measure
+  // financials, so a loan-term buy-down does not discount the whole horizon.
+  const discountedPayback = computeDiscountedPaybackScheduled(
     totalEffectiveCapex,
     aggregateCashFlow,
-    effectiveDiscountRate(assumptions),
+    buildDiscountFactors(assumptions),
   );
+
+  // P2-10 (g): flag (never silently clamp) when the financed portion exceeds
+  // the program loan cap.
+  const financing = assumptions.financingMix;
+  const loanCapExceeded =
+    financing?.loanCapKrw !== undefined
+      ? financing.debtFraction * totalEffectiveCapex > financing.loanCapKrw
+      : false;
 
   return {
     selected,
@@ -562,5 +714,6 @@ export function selectMeasuresForBudget(
     effectiveCapex: totalEffectiveCapex,
     aggregateCashFlow,
     discountedPayback,
+    loanCapExceeded,
   };
 }

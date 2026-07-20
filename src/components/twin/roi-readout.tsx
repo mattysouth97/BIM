@@ -9,6 +9,10 @@
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
+import {
+  effectiveDiscountRate,
+  buildDiscountFactors,
+} from "@/lib/retrofit/economic-model";
 import type { BudgetSelection, EconomicAssumptions } from "@/lib/retrofit/economic-model";
 
 interface RoiReadoutProps {
@@ -49,7 +53,16 @@ export function RoiReadout({ selection, assumptions, isLoading }: RoiReadoutProp
   const cashFlow = selection?.aggregateCashFlow ?? [];
   const effectiveCapex = selection?.effectiveCapex ?? 0;
   const horizon = assumptions.analysisHorizonYears;
-  const discountRate = assumptions.discountRate;
+  // P2-10 (b): display and discount at the rate the ENGINE actually uses —
+  // the interest-support WACC (2.2% on the private base track), not the raw
+  // 5% equity `discountRate`. The caliper reuses the engine's per-year schedule
+  // (`buildDiscountFactors`), so a loan-term buy-down is not applied to the
+  // whole horizon and the chart matches the headline NPV.
+  const effectiveRate = effectiveDiscountRate(assumptions);
+  const discountFactors = useMemo(
+    () => buildDiscountFactors(assumptions),
+    [assumptions],
+  );
 
   // Aggregate IRR across the selected portfolio (bisection on combined cash flow).
   const portfolioIrr = useMemo(() => {
@@ -92,11 +105,11 @@ export function RoiReadout({ selection, assumptions, isLoading }: RoiReadoutProp
     if (!selection) return out;
     let acc = -effectiveCapex;
     for (let t = 1; t <= horizon; t++) {
-      acc += (cashFlow[t - 1] ?? 0) / Math.pow(1 + discountRate, t);
+      acc += (cashFlow[t - 1] ?? 0) / discountFactors[t - 1];
       out[t - 1] = acc;
     }
     return out;
-  }, [selection, cashFlow, effectiveCapex, horizon, discountRate]);
+  }, [selection, cashFlow, effectiveCapex, horizon, discountFactors]);
 
   const minVal = Math.min(0, ...cumulativeDiscounted);
   const maxVal = Math.max(0, ...cumulativeDiscounted);
@@ -119,8 +132,8 @@ export function RoiReadout({ selection, assumptions, isLoading }: RoiReadoutProp
       <div className="flex items-center justify-between px-4 pt-3 pb-1.5 border-b border-border">
         <span className="text-[10px] font-medium text-muted-foreground">
           {t(
-            `NPV · 할인율 ${(discountRate * 100).toFixed(0)}% · ${horizon}년`,
-            `NPV · ${(discountRate * 100).toFixed(0)}% discount · ${horizon} yr`,
+            `NPV · 유효할인율 ${(effectiveRate * 100).toFixed(1)}% · ${horizon}년`,
+            `NPV · ${(effectiveRate * 100).toFixed(1)}% eff. rate · ${horizon} yr`,
           )}
         </span>
         <div className="flex items-center gap-1.5">

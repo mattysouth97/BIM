@@ -3,8 +3,8 @@ id: P2-10
 title: Financial model refinements — loan-term buy-down, rate honesty, solar/escalation fixes, sourced costs
 priority: P2
 area: retrofit
-status: not-started
-owner: unassigned
+status: done
+owner: claude-opus-4-8-ultrawork
 effort: L
 created: 2026-07-21
 updated: 2026-07-21
@@ -45,11 +45,47 @@ use_cases: [UC-06, UC-07, UC-08]
 - **Gates**: `pnpm test -- retrofit economic solar roi`; `pnpm test`; `pnpm lint`; `pnpm build`.
 - **Security / honesty checklist**: no fabricated tariff/price sources — annotate as "assumption" where no citation exists; NPV changes disclosed in PR (before/after for the reference scenario).
 - **Acceptance criteria**:
-  - [ ] (a) loan-term-scoped buy-down
-  - [ ] (b) UI shows effective rate
-  - [ ] (c) feed-in un-escalated + degradation
-  - [ ] (d) unified price
-  - [ ] (e) blended heat-pump escalation
-  - [ ] (f) sourced cost annotations
-  - [ ] (g) versioned program parameters + cap handling
+  - [x] (a) loan-term-scoped buy-down
+  - [x] (b) UI shows effective rate
+  - [x] (c) feed-in un-escalated + degradation
+  - [x] (d) unified price
+  - [x] (e) blended heat-pump escalation
+  - [x] (f) sourced cost annotations
+  - [x] (g) versioned program parameters + cap handling
 - **Done when**: private-track NPV follows the 2026 program rules, the UI's displayed rate matches the computed rate, and every cost input has a stated basis.
+
+### Evaluation notes (2026-07-21, claude-opus-4-8-ultrawork)
+
+- **(a) Loan-term buy-down** — added `FinancingMix.loanTermYears`; `buildDiscountFactors()`
+  now returns a PER-YEAR cumulative discount schedule (subsidized WACC during the loan term,
+  pure-equity `discountRate` after). `computeFinancials` + the knapsack aggregate discount with
+  this schedule. Private presets carry `loanTermYears = GR_PRIVATE_LOAN_TERM_YEARS` (10 — a
+  DOCUMENTED ASSUMPTION; the dossier gives no fixed term, only "over the loan term"). Backward
+  compatible: absent `loanTermYears` ⇒ constant effective rate = prior scalar NPV, so every
+  existing comparative test still holds.
+  **NPV disclosure (reference 20-yr envelope, private-base): ₩153,144,999 → ₩135,124,013
+  (−11.8%)** — the permanent-WACC bug overstated private-track NPV by ~12%.
+- **(b) UI effective rate** — `roi-readout` + `scenario-rail` now display "유효할인율/eff. rate"
+  = `effectiveDiscountRate(assumptions)` (2.2% on private-base) instead of the raw 5% equity rate,
+  and the caliper discounts with the SAME `buildDiscountFactors` schedule as the engine, so the
+  chart matches the headline NPV (fitness: displayed rate === rate used).
+- **(c) Solar feed-in flat + degradation** & **(e) heat-pump blend** — unified via a general
+  `RetrofitMeasure.escalationComponents` model. Solar splits into self-consumption (escalates at
+  the electricity rate) + feed-in (`escalation: 0`, fixed SMP/REC tariff), both with ~0.5%/yr panel
+  degradation. Heat pump splits into displaced-fuel-saved (+, gas/district rate) vs
+  electricity-spent (−, electricity rate). `projectCashFlow` escalates each component independently;
+  the scalar `annualCostSaving` stays the year-1 sum for display/knapsack.
+- **(d) Unified price** — solar `DEFAULT_ELECTRICITY_PRICE` now references
+  `ENERGY_PRICES.electricity` (140), removing the divergent 120 constant.
+- **(f) Sourced costs** — HVAC per-m² (boiler/heat-pump/HRV), lighting per-m², solar 1.5M/kWp, and
+  the HRV 15% saving are now annotated as ENGINEERING ASSUMPTIONS (no official Korean source, unlike
+  the KICT-tagged envelope costs) with a stress-test note.
+- **(g) Versioned params + cap** — added `PROGRAM_PARAMETERS` (version 2026.1, effective 2026-03-01,
+  dossier source) and `GR_PRIVATE_LOAN_CAP_KRW` (₩200B non-residential). `selectMeasuresForBudget`
+  sets `BudgetSelection.loanCapExceeded` when the financed portion (debtFraction × effectiveCapex)
+  exceeds the cap — a FLAG, never a silent clamp.
+- **Honesty**: no fabricated tariffs — every new/changed number carries a source or "assumption"
+  label; the −11.8% NPV change is disclosed above; the loan term is explicitly an assumption pending
+  the program portal.
+- Gates: `vitest economic-model solar-potential` **81 passed** (9 new P2-10 cases) · `pnpm lint`
+  0 errors · `pnpm test` **1126 passed** · `pnpm build` green.

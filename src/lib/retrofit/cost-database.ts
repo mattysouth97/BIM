@@ -91,6 +91,37 @@ export const DEFAULT_ECONOMIC_ASSUMPTIONS: EconomicAssumptions = {
 // ───────────────────────────────────────────────────────────────────────────
 
 /**
+ * P2-10 (g) — version + effective date for the 그린리모델링 program parameters
+ * below (subsidy ratios, interest-support tiers, loan cap). Program rules change
+ * per policy year; stamp the source so a future rule change is a versioned edit,
+ * not a silent constant swap. Authority: the D₁ research dossier at
+ * docs/superpowers/research/2026-04-30-green-remodeling.md.
+ */
+export const PROGRAM_PARAMETERS = {
+  version: "2026.1",
+  effectiveDate: "2026-03-01", // program restarted March 2026
+  source: "docs/superpowers/research/2026-04-30-green-remodeling.md",
+} as const;
+
+/**
+ * P2-10 (a) — 그린리모델링 private-track loan term, years. The interest-support
+ * buy-down applies over the LOAN TERM, not the full 20-yr analysis horizon
+ * (dossier §3). The dossier does not publish a fixed term (it varies by lender
+ * and applicant), so this is a DOCUMENTED ASSUMPTION — a conservative 10-year
+ * term typical of Korean facility-improvement loans. Shorter than the horizon,
+ * so the buy-down no longer subsidizes all 20 years. Adjust when the program
+ * portal publishes the term.
+ */
+export const GR_PRIVATE_LOAN_TERM_YEARS = 10;
+
+/**
+ * P2-10 (g) — 2026 non-residential large-building loan cap: ₩200 billion
+ * (raised from ₩50B in prior years; dossier §3 "Loan limit (2026)"). The engine
+ * flags scenarios whose financed portion exceeds this rather than clamping.
+ */
+export const GR_PRIVATE_LOAN_CAP_KRW = 200_000_000_000;
+
+/**
  * 공공건축물 그린리모델링 — 서울특별시 + 중앙·공공 (50% direct subsidy).
  * Applied to envelope/HVAC/lighting. Renewable not auto-subsidized.
  */
@@ -137,6 +168,8 @@ export const KOREAN_GR_PRIVATE_BASE: EconomicAssumptions = {
     debtFraction: 0.7,
     loanRatePreSubsidy: 0.055,
     interestSupportPp: 0.045,
+    loanTermYears: GR_PRIVATE_LOAN_TERM_YEARS, // P2-10 (a)
+    loanCapKrw: GR_PRIVATE_LOAN_CAP_KRW, // P2-10 (g)
   },
 };
 
@@ -155,6 +188,8 @@ export const KOREAN_GR_PRIVATE_TIER2: EconomicAssumptions = {
     debtFraction: 0.7,
     loanRatePreSubsidy: 0.055,
     interestSupportPp: 0.04,
+    loanTermYears: GR_PRIVATE_LOAN_TERM_YEARS, // P2-10 (a)
+    loanCapKrw: GR_PRIVATE_LOAN_CAP_KRW, // P2-10 (g)
   },
 };
 
@@ -174,6 +209,8 @@ export const KOREAN_GR_PRIVATE_HIGH_PERF: EconomicAssumptions = {
     debtFraction: 0.7,
     loanRatePreSubsidy: 0.055,
     interestSupportPp: 0.055,
+    loanTermYears: GR_PRIVATE_LOAN_TERM_YEARS, // P2-10 (a)
+    loanCapKrw: GR_PRIVATE_LOAN_CAP_KRW, // P2-10 (g)
   },
 };
 

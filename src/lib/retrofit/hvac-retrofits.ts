@@ -5,10 +5,14 @@ import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
 import type { Fuel } from "@/lib/retrofit/economic-model";
 import { ENERGY_PRICES, CO2_FACTORS, MEASURE_LIFETIMES } from "@/lib/retrofit/cost-database";
 
-/** Cost per m² for each HVAC measure (KRW) */
-const BOILER_UPGRADE_COST_PER_SQM = 2_500_000 / 100;
-const HEAT_PUMP_COST_PER_SQM = 4_000_000 / 100;
-const HRV_COST_PER_SQM = 800_000 / 100;
+// P2-10 (f) — HVAC unit costs are ENGINEERING ASSUMPTIONS (system cost per
+// 100 m² conditioned area ÷ 100), not an official Korean tariff. They reflect
+// typical 2024 Korean commercial equipment-plus-install pricing; unlike the
+// KICT-tagged envelope costs there is no single citable source. Stress-test
+// with sensitivity analysis.
+const BOILER_UPGRADE_COST_PER_SQM = 2_500_000 / 100; // ₩25,000/m² — assumption
+const HEAT_PUMP_COST_PER_SQM = 4_000_000 / 100; // ₩40,000/m² — assumption
+const HRV_COST_PER_SQM = 800_000 / 100; // ₩8,000/m² — assumption
 
 /**
  * Generate HVAC retrofit recommendations for a building.
@@ -96,6 +100,14 @@ export function generateHvacRetrofits(
       name: "히트펌프 시스템 전환",
       category: "hvac",
       conflictGroup: "heating-plant", // P1-01: exclusive with boiler upgrade
+      // P2-10 (e): the net saving blends a displaced-fuel stream (gas/district,
+      // slower escalation) against an electricity stream that escalates faster.
+      // Escalating the net at one rate over/understates late-horizon value, so
+      // split it: +displaced fuel, −electricity spent.
+      escalationComponents: [
+        { amount: oldFuelCost, fuel: heatingFuel },
+        { amount: -newElecCost, fuel: "electricity" },
+      ],
       estimatedCost: totalCost,
       annualEnergySaving,
       annualCostSaving,
@@ -106,6 +118,9 @@ export function generateHvacRetrofits(
   }
 
   // --- HRV: always recommended (assumes no existing heat recovery ventilation) ---
+  // P2-10 (f) — assumption: ~15% of heating demand recovered by a 75%-effective
+  // HRV net of fan energy. Order-of-magnitude engineering estimate (site-specific
+  // in reality), not an official standard.
   const hrvSavingRate = 0.15;
   const hrvEnergySaving = annualHeatingDemand * hrvSavingRate;
   const hrvCostSaving = hrvEnergySaving * heatingPrice;

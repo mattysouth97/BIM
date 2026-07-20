@@ -4,9 +4,13 @@
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
 import { ENERGY_PRICES, CO2_FACTORS, MEASURE_LIFETIMES } from "@/lib/retrofit/cost-database";
 
-/** LED fixture installation cost per m² (KRW) */
+// P2-10 (f) — lighting unit costs are ENGINEERING ASSUMPTIONS reflecting typical
+// 2024 Korean commercial LED retrofit pricing (fixture + install per m²). No
+// single official Korean source (unlike the KICT-tagged envelope costs); stress-
+// test with sensitivity analysis.
+/** LED fixture installation cost per m² (KRW) — assumption */
 const LED_FIXTURE_COST_PER_SQM = 45_000;
-/** Additional smart lighting controls cost per m² (KRW) */
+/** Additional smart lighting controls cost per m² (KRW) — assumption */
 const SMART_CONTROLS_COST_PER_SQM = 25_000;
 
 /**

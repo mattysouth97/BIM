@@ -9,6 +9,7 @@
 
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
+import { effectiveDiscountRate } from "@/lib/retrofit/economic-model";
 import type { BudgetSelection, EconomicAssumptions } from "@/lib/retrofit/economic-model";
 
 interface ScenarioRailProps {
@@ -82,7 +83,7 @@ export function ScenarioRail({
         </span>
       </div>
 
-      <Cell label={t("NPV", "NPV")} sublabel={t(`할인율 ${formatPercent(assumptions.discountRate, 0)}`, `Discount ${formatPercent(assumptions.discountRate, 0)}`)}>
+      <Cell label={t("NPV", "NPV")} sublabel={t(`유효할인율 ${formatPercent(effectiveDiscountRate(assumptions), 1)}`, `Eff. rate ${formatPercent(effectiveDiscountRate(assumptions), 1)}`)}>
         <span
           className={cn(
             "text-[19px] font-semibold tabular-nums tracking-tight",
