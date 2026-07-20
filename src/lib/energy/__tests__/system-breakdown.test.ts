@@ -213,37 +213,52 @@ describe("calculateSystemBreakdown", () => {
     expect(breakdown.plugLoadsDataSource).toBe("estimated-ratio");
   });
 
-  it("mainPurpsCd prefix '02' selects office ratios: hvac/total ≈ 0.55 (D6, D7)", () => {
+  it("mainPurpsCd prefix '02' (공동주택 MOLIT 02) selects RESIDENTIAL ratios (P1-04)", () => {
     const materials = makeMaterials();
-    // Office: mainPurpsCd "02000" — prefix "02" → HVAC 55%
+    // Apartment: mainPurpsCd "02000" — 공동주택 per MOLIT 건축물대장 주용도코드
     const recipe = makeRecipe(10, "02000");
 
     const breakdown = calculateSystemBreakdown(materials, recipe, SEOUL_CLIMATE);
 
-    // hvac / total should be approximately 0.55 (office HVAC ratio per CONTEXT.md D6)
-    const hvacFraction = breakdown.hvac / breakdown.total;
-    expect(hvacFraction).toBeCloseTo(0.55, 2);
+    // Residential profile: HVAC 50%, DHW 25% — NOT the office 0.55/0.10.
+    expect(breakdown.hvac / breakdown.total).toBeCloseTo(0.50, 2);
+    expect(breakdown.dhw / breakdown.total).toBeCloseTo(0.25, 2);
   });
 
-  it("mainPurpsCd prefix '11' selects residential ratios (DHW-dominant, different from office)", () => {
+  it("prefix '14' (업무시설 office) vs '02' (residential): office HVAC-heavier, residential DHW-dominant (P1-04)", () => {
     const materials = makeMaterials();
 
-    const officeRecipe = makeRecipe(10, "02000");     // HVAC 55%
-    const residentialRecipe = makeRecipe(10, "11000"); // HVAC 50%
+    const officeRecipe = makeRecipe(10, "14000");      // 업무시설 — HVAC 55%
+    const residentialRecipe = makeRecipe(10, "02000"); // 공동주택 — HVAC 50%
 
     const officeBreakdown = calculateSystemBreakdown(materials, officeRecipe, SEOUL_CLIMATE);
     const residentialBreakdown = calculateSystemBreakdown(materials, residentialRecipe, SEOUL_CLIMATE);
 
-    const officeHvacFraction = officeBreakdown.hvac / officeBreakdown.total;
-    const residentialHvacFraction = residentialBreakdown.hvac / residentialBreakdown.total;
-
-    // Residential HVAC fraction differs from office (office=0.55, residential=0.50)
-    expect(officeHvacFraction).not.toBeCloseTo(residentialHvacFraction, 2);
+    expect(officeBreakdown.hvac / officeBreakdown.total).toBeCloseTo(0.55, 2);
+    expect(residentialBreakdown.hvac / residentialBreakdown.total).toBeCloseTo(0.50, 2);
 
     // Residential DHW fraction is larger (0.25 vs 0.10 for office) — DHW-dominant
     const officeDhwFraction = officeBreakdown.dhw / officeBreakdown.total;
     const residentialDhwFraction = residentialBreakdown.dhw / residentialBreakdown.total;
     expect(residentialDhwFraction).toBeGreaterThan(officeDhwFraction);
+  });
+
+  it("prefix '07' (판매시설 retail) selects the lighting-heavy retail profile (P1-04)", () => {
+    const materials = makeMaterials();
+    const breakdown = calculateSystemBreakdown(materials, makeRecipe(10, "07000"), SEOUL_CLIMATE);
+
+    expect(breakdown.lighting / breakdown.total).toBeCloseTo(0.40, 2);
+  });
+
+  it("de-researched prefixes '11'/'13' fall back to DEFAULT_RATIOS (P1-04 honesty)", () => {
+    const materials = makeMaterials();
+    // 노유자시설 (11) and 운동시설 (13) have no researched profiles — the honest
+    // outcome is the generic mixed-use default, not a wrong specific binding.
+    for (const cd of ["11000", "13000"]) {
+      const breakdown = calculateSystemBreakdown(materials, makeRecipe(10, cd), SEOUL_CLIMATE);
+      expect(breakdown.hvac / breakdown.total).toBeCloseTo(0.42, 2);
+      expect(breakdown.total).toBeGreaterThan(0);
+    }
   });
 
   it("unknown mainPurpsCd falls back to DEFAULT_RATIOS with valid positive breakdown", () => {

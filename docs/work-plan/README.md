@@ -49,7 +49,7 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | [P1-01](./items/P1-01-knapsack-mutual-exclusion-interaction.md) | Enforce mutually exclusive measures and damp interaction double-counting | retrofit | L | UC-06, UC-07 | ⬜ |
 | [P1-02](./items/P1-02-measure-lifetimes.md) | Add measure lifetimes, truncate cash flows, add generator-level tests | retrofit | M | UC-06, UC-07 | ⬜ |
 | [P1-03](./items/P1-03-fuel-aware-pricing.md) | Thread heating fuel type into envelope/HVAC generators; price district heating | retrofit | M | UC-06, UC-07 | ⬜ |
-| [P1-04](./items/P1-04-fix-system-ratios-use-codes.md) | Correct SYSTEM_RATIOS use-code keys against the real MOLIT 용도코드 table | energy | S | UC-03, UC-06 | ⬜ |
+| [P1-04](./items/P1-04-fix-system-ratios-use-codes.md) | Correct SYSTEM_RATIOS use-code keys against the real MOLIT 용도코드 table | energy | S | UC-03, UC-06 | ✅ |
 | [P1-05](./items/P1-05-benchmark-units-grading-scale.md) | Fix benchmark unit mismatch and retire dual grading scales | energy | M | UC-03, UC-08 | ⬜ |
 | [P1-06](./items/P1-06-api-hardening-sweep.md) | API hardening sweep — traversal, error contracts, proxy factory, batch caps, zod | api | L | UC-01, 02, 04 | ⬜ |
 | [P1-07](./items/P1-07-a11y-chart-repair.md) | Accessibility and chart repair — Tab hijack, keyboard-inert rows, black bars | ux | M | UC-01, 03, 05, 06 | ⬜ |
@@ -97,4 +97,5 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | 2026-07-21 | P0-03 | NotoSansKR (subset OTF, OFL) registered for PDF export; all 7 Helvetica refs replaced; toast.error on PDF failure; embedding proven by PDF-bytes test | claude-fable-5-ultrawork |
 | 2026-07-21 | P0-02 | Scenario financials wired into preview/PDF/CSV/JSON via scenario-summary.ts; null (never 0) paybacks; honest fidelity 1/2/3 derivation | claude-fable-5-ultrawork |
 | 2026-07-21 | P0-05 | GitHub Actions CI (lint/test:coverage/build/ci:check); src/lib floors at measured 52/57 baseline (P1-09 ratchet filed); guard (c) now catches untracked release files | claude-fable-5-ultrawork |
+| 2026-07-21 | P1-04 | SYSTEM_RATIOS re-keyed to MOLIT truth (01/02 residential, 07 retail, 14 office; 11/13 → honest fallback); office hours 12000→14000; cross-module consistency oracle test | claude-fable-5-ultrawork |
 | 2026-07-21 | P2-11, P2-12, P2-13 | Added geometric-fidelity track (data correctness / dead-feature wiring / IFC path + validation loop) from rendering-accuracy review; dashboard, sequencing, and execution prompts updated | orchestrator |

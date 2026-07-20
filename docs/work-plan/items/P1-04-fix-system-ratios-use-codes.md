@@ -3,8 +3,8 @@ id: P1-04
 title: Correct SYSTEM_RATIOS use-code keys against the real MOLIT 용도코드 table
 priority: P1
 area: energy
-status: not-started
-owner: unassigned
+status: done
+owner: claude-fable-5-ultrawork
 effort: S
 created: 2026-07-21
 updated: 2026-07-21
@@ -79,9 +79,21 @@ use_cases: [UC-03, UC-06]
   - NEW `use-code-consistency.test.ts`: scenarios 4–5 — iterate exported `SYSTEM_RATIOS` × `USE_CODE_OPERATING_HOURS` against a canonical MOLIT prefix table `{ "01": "residential", "02": "residential", "07": "retail", "14": "office", ... }`; assert equipment-specs office hours now live under `"14000"` and no module binds `"12"` to office.
 - **Gates**: `pnpm test -- src/lib/energy` green; full `pnpm test` green; `pnpm lint` clean; `pnpm build` green.
 - **Acceptance criteria**:
-  - [ ] `SYSTEM_RATIOS` re-keyed to `01/02/07/14` with MOLIT labels in comments; `"11"`/`"13"` removed with explanatory comment.
-  - [ ] `equipment-specs.ts` office operating-hours key corrected to `"14000"`.
-  - [ ] Both modules export their tables (or accessors) for tests.
-  - [ ] Codifying tests rewritten; new cross-module consistency test asserts agreement on every shared prefix incl. the DHW heuristic alignment.
-  - [ ] All gates green; consumers untouched and unaffected in shape (only split values change).
+  - [x] `SYSTEM_RATIOS` re-keyed to `01/02/07/14` with MOLIT labels in comments; `"11"`/`"13"` removed with explanatory comment.
+  - [x] `equipment-specs.ts` office operating-hours key corrected to `"14000"`.
+  - [x] Both modules export their tables (or accessors) for tests.
+  - [x] Codifying tests rewritten; new cross-module consistency test asserts agreement on every shared prefix incl. the DHW heuristic alignment.
+  - [x] All gates green; consumers untouched and unaffected in shape (only split values change).
 - **Done when**: `mainPurpsCd "02000"` yields the residential end-use split, office/retail profiles bind to `14`/`07`, and a single consistency test fails the build if the two modules ever disagree on a use-code prefix again.
+
+### Evaluation notes (2026-07-21, claude-fable-5-ultrawork)
+
+- Re-keyed exactly as designed: `01`/`02` → residential profile, `07` → retail, `14` →
+  office; `11`/`13` removed with an explanatory honesty comment; ratio values untouched.
+  Office operating hours moved `"12000"` → `"14000"` (12xxx 수련시설 now falls back to the
+  2500 h default — behavior change for a previously-mislabeled code, noted in commit).
+- Both tables exported (additive); new `use-code-consistency.test.ts` (5 assertions) is the
+  cross-module oracle incl. the DHW heuristic alignment; codifying tests rewritten (red-first:
+  9 failures pre-fix).
+- Gates: targeted `vitest run system-breakdown use-code-consistency equipment` 41/41 ·
+  `pnpm test` green (exit 0) · `pnpm lint` 0 errors · `pnpm build` green.
