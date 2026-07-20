@@ -262,6 +262,92 @@ describe("selectMeasuresForBudget", () => {
     expect(result.effectiveCapex).toBeLessThanOrEqual(10_000_000);
   });
 
+  // ── P1-01: conflict groups (mutually exclusive measures) ──────────────────
+
+  it("never selects two measures sharing a conflictGroup, keeping the higher-NPV one", () => {
+    const boiler = makeMeasure({
+      id: "hvac-boiler-upgrade",
+      category: "hvac",
+      conflictGroup: "heating-plant",
+      estimatedCost: 10_000_000,
+      annualCostSaving: 2_000_000,
+    });
+    const heatPump = makeMeasure({
+      id: "hvac-heat-pump",
+      category: "hvac",
+      conflictGroup: "heating-plant",
+      estimatedCost: 40_000_000,
+      annualCostSaving: 10_000_000,
+    });
+    // Budget fits BOTH — the conflict, not the budget, must exclude one.
+    const result = selectMeasuresForBudget([boiler, heatPump], 100_000_000, ASSUMPTIONS);
+
+    const heatingPlant = result.selected.filter((m) => m.conflictGroup === "heating-plant");
+    expect(heatingPlant).toHaveLength(1);
+    expect(heatingPlant[0].id).toBe("hvac-heat-pump"); // higher NPV wins
+  });
+
+  it("conflict branching picks the cheaper measure when the better one is infeasible", () => {
+    const boiler = makeMeasure({
+      id: "hvac-boiler-upgrade",
+      category: "hvac",
+      conflictGroup: "heating-plant",
+      estimatedCost: 10_000_000,
+      annualCostSaving: 2_000_000,
+    });
+    const heatPump = makeMeasure({
+      id: "hvac-heat-pump",
+      category: "hvac",
+      conflictGroup: "heating-plant",
+      estimatedCost: 40_000_000,
+      annualCostSaving: 10_000_000,
+    });
+    // 15M budget: heat-pump branch is infeasible; boiler branch must win.
+    const result = selectMeasuresForBudget([boiler, heatPump], 15_000_000, ASSUMPTIONS);
+    expect(result.selected.map((m) => m.id)).toEqual(["hvac-boiler-upgrade"]);
+  });
+
+  it("non-conflicting measures still combine with the chosen group representative", () => {
+    const boiler = makeMeasure({
+      id: "hvac-boiler-upgrade",
+      category: "hvac",
+      conflictGroup: "heating-plant",
+      estimatedCost: 10_000_000,
+      annualCostSaving: 2_000_000,
+    });
+    const heatPump = makeMeasure({
+      id: "hvac-heat-pump",
+      category: "hvac",
+      conflictGroup: "heating-plant",
+      estimatedCost: 40_000_000,
+      annualCostSaving: 10_000_000,
+    });
+    const led = makeMeasure({
+      id: "lighting-led",
+      category: "lighting",
+      estimatedCost: 5_000_000,
+      annualCostSaving: 1_200_000,
+    });
+    const result = selectMeasuresForBudget([boiler, heatPump, led], 100_000_000, ASSUMPTIONS);
+
+    expect(result.selected.map((m) => m.id).sort()).toEqual(["hvac-heat-pump", "lighting-led"]);
+    // Property: no two selected share a group — ever.
+    const groups = result.selected.map((m) => m.conflictGroup).filter(Boolean);
+    expect(new Set(groups).size).toBe(groups.length);
+  });
+
+  it("is deterministic for identical inputs (fixed branch order + tie-breaks)", () => {
+    const measures = [
+      makeMeasure({ id: "hvac-boiler-upgrade", conflictGroup: "heating-plant", estimatedCost: 10_000_000, annualCostSaving: 2_000_000 }),
+      makeMeasure({ id: "hvac-heat-pump", conflictGroup: "heating-plant", estimatedCost: 12_000_000, annualCostSaving: 2_000_000 }),
+      makeMeasure({ id: "lighting-led", estimatedCost: 5_000_000, annualCostSaving: 1_000_000 }),
+    ];
+    const a = selectMeasuresForBudget(measures, 50_000_000, ASSUMPTIONS);
+    const b = selectMeasuresForBudget(measures, 50_000_000, ASSUMPTIONS);
+    expect(a.selected.map((m) => m.id)).toEqual(b.selected.map((m) => m.id));
+    expect(a.npv).toBe(b.npv);
+  });
+
   it("aggregates cash flow across selected measures", () => {
     const m1 = makeMeasure({
       id: "m1",

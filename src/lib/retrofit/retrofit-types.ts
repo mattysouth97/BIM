@@ -30,6 +30,13 @@ export interface RetrofitMeasure {
    */
   fuel?: Fuel;
   /**
+   * P1-01 — mutual-exclusion group. Measures sharing a conflictGroup are
+   * physically incompatible alternatives (e.g. "heating-plant": boiler
+   * upgrade vs heat-pump conversion); `selectMeasuresForBudget` selects at
+   * most one per group. Optional — absent means no conflicts.
+   */
+  conflictGroup?: string;
+  /**
    * Discounted-cash-flow enrichment. Populated by `assembleRetrofitReport`
    * when called with `EconomicAssumptions`. Absent on raw measures emitted
    * by the per-category generators.

@@ -4,6 +4,7 @@
 import type { RetrofitMeasure } from '@/lib/retrofit/retrofit-types';
 import type { EconomicAssumptions } from '@/lib/retrofit/economic-model';
 import { computeFinancials } from '@/lib/retrofit/economic-model';
+import { dampPortfolioSavings } from '@/lib/retrofit/measure-interactions';
 
 export interface CumulativeSaving {
   measureId: string;
@@ -75,20 +76,26 @@ export function assembleRetrofitReport(
     renewable: sorted.filter((m) => m.category === 'renewable'),
   };
 
-  // Portfolio summary
+  // Portfolio summary — P1-01: totals are DAMPED for overlapping
+  // heating-demand measures (envelope ↔ HRV/boiler). Per-measure fields keep
+  // their generated semantics; only these aggregates are damped.
+  const damped = dampPortfolioSavings(sorted);
   const totalInvestment = sorted.reduce((sum, m) => sum + m.estimatedCost, 0);
-  const totalAnnualSaving = sorted.reduce((sum, m) => sum + m.annualEnergySaving, 0);
-  const totalAnnualCostSaving = sorted.reduce((sum, m) => sum + m.annualCostSaving, 0);
-  const totalCO2Reduction = sorted.reduce((sum, m) => sum + m.co2Reduction, 0);
+  const totalAnnualSaving = damped.totalAnnualSaving;
+  const totalAnnualCostSaving = damped.totalAnnualCostSaving;
+  const totalCO2Reduction = damped.totalCO2Reduction;
   const portfolioPayback =
     totalAnnualCostSaving > 0 ? totalInvestment / totalAnnualCostSaving : null;
 
-  // Cumulative savings: running totals ordered by payback
+  // Cumulative savings: running totals ordered by payback (display order),
+  // using the per-measure DAMPED values (damping attributed in physical
+  // order envelope → hvac by the helper, independent of display order).
   let runCost = 0;
   let runSaving = 0;
   const cumulativeSavings: CumulativeSaving[] = sorted.map((m) => {
+    const dampedEntry = damped.dampedByMeasureId.get(m.id);
     runCost += m.estimatedCost;
-    runSaving += m.annualCostSaving;
+    runSaving += dampedEntry?.cost ?? m.annualCostSaving;
     const cumulativePayback = runSaving > 0 ? runCost / runSaving : null;
     return {
       measureId: m.id,

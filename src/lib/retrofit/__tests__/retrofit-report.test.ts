@@ -159,6 +159,46 @@ describe('assembleRetrofitReport', () => {
     expect(report.summary.portfolioEffectiveCapex).toBeGreaterThan(0);
   });
 
+  it("damps portfolio totals for interacting envelope + HVAC measures (P1-01)", () => {
+    const envelope = makeMeasure({
+      id: "envelope-wall-insulation",
+      category: "envelope",
+      annualEnergySaving: 30_000,
+      annualCostSaving: 3_000_000,
+      co2Reduction: 6,
+      paybackYears: 5,
+    });
+    const hrv = makeMeasure({
+      id: "hvac-hrv",
+      category: "hvac",
+      annualEnergySaving: 15_000,
+      annualCostSaving: 1_500_000,
+      co2Reduction: 3,
+      paybackYears: 7,
+    });
+
+    const report = assembleRetrofitReport([envelope, hrv]);
+    const naiveEnergy = 45_000;
+
+    expect(report.summary.totalAnnualSaving).toBeLessThan(naiveEnergy);
+    expect(report.summary.totalAnnualCostSaving).toBeLessThan(4_500_000);
+    // Per-measure fields keep their own generated semantics (undamped).
+    expect(report.measures.find((m) => m.id === "hvac-hrv")!.annualEnergySaving).toBe(15_000);
+    // Cumulative savings reflect the damped running totals: the final row
+    // equals the damped portfolio, not the naive sum.
+    const last = report.cumulativeSavings[report.cumulativeSavings.length - 1];
+    expect(last.cumulativeAnnualSaving).toBeCloseTo(report.summary.totalAnnualCostSaving, 5);
+  });
+
+  it("keeps naive totals when no interacting pair exists (P1-01 honesty)", () => {
+    const lighting = makeMeasure({ id: "lighting-led", category: "lighting", annualEnergySaving: 8_000, annualCostSaving: 900_000 });
+    const solar = makeMeasure({ id: "solar-pv", category: "renewable", annualEnergySaving: 12_000, annualCostSaving: 1_400_000 });
+
+    const report = assembleRetrofitReport([lighting, solar]);
+    expect(report.summary.totalAnnualSaving).toBe(20_000);
+    expect(report.summary.totalAnnualCostSaving).toBe(2_300_000);
+  });
+
   it('does not mutate the input array order', () => {
     const measures: RetrofitMeasure[] = [
       makeMeasure({ id: 'first-in', paybackYears: 10 }),

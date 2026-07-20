@@ -384,41 +384,115 @@ export function selectMeasuresForBudget(
     };
   }
 
-  // Quantise budget + each measure's effective CAPEX.
   const W = Math.floor(capexBudget / quantizationKrw);
-  const weights = enriched.map((e) =>
-    Math.max(1, Math.ceil(e.fin.effectiveCapex / quantizationKrw)),
-  );
-  const values = enriched.map((e) => e.fin.npv);
 
-  // DP table: dp[i][w] = max NPV using first i measures with capex ≤ w.
-  // Only one row needed thanks to backward iteration.
-  const dp = new Array(W + 1).fill(0);
-  const keep: boolean[][] = enriched.map(() => new Array(W + 1).fill(false));
+  // Plain 0/1 knapsack DP over a candidate subset (no conflicts inside).
+  function solveKnapsack(candidates: typeof enriched): {
+    selected: RetrofitMeasure[];
+    npv: number;
+    effectiveCapex: number;
+  } {
+    const weights = candidates.map((e) =>
+      Math.max(1, Math.ceil(e.fin.effectiveCapex / quantizationKrw)),
+    );
+    const values = candidates.map((e) => e.fin.npv);
 
-  for (let i = 0; i < enriched.length; i++) {
-    const wi = weights[i];
-    const vi = values[i];
-    if (wi > W) continue;
-    for (let w = W; w >= wi; w--) {
-      const candidate = dp[w - wi] + vi;
-      if (candidate > dp[w]) {
-        dp[w] = candidate;
-        keep[i][w] = true;
+    // DP table: dp[w] = max NPV with capex ≤ w (one row, backward iteration).
+    const dp = new Array(W + 1).fill(0);
+    const keep: boolean[][] = candidates.map(() => new Array(W + 1).fill(false));
+
+    for (let i = 0; i < candidates.length; i++) {
+      const wi = weights[i];
+      const vi = values[i];
+      if (wi > W) continue;
+      for (let w = W; w >= wi; w--) {
+        const candidate = dp[w - wi] + vi;
+        if (candidate > dp[w]) {
+          dp[w] = candidate;
+          keep[i][w] = true;
+        }
       }
     }
+
+    // Backtrack to recover the selected set.
+    const selected: RetrofitMeasure[] = [];
+    let w = W;
+    let npv = 0;
+    let effectiveCapex = 0;
+    for (let i = candidates.length - 1; i >= 0; i--) {
+      if (keep[i][w]) {
+        selected.push(candidates[i].measure);
+        npv += candidates[i].fin.npv;
+        effectiveCapex += candidates[i].fin.effectiveCapex;
+        w -= weights[i];
+      }
+    }
+    selected.reverse();
+    return { selected, npv, effectiveCapex };
   }
 
-  // Backtrack to recover the selected set.
-  const selected: RetrofitMeasure[] = [];
-  let w = W;
-  for (let i = enriched.length - 1; i >= 0; i--) {
-    if (keep[i][w]) {
-      selected.push(enriched[i].measure);
-      w -= weights[i];
+  // ── P1-01: conflict groups — at most one measure per group, EXACTLY. ──────
+  // The single-table DP cannot encode mutual exclusion, so branch over every
+  // feasible combination of group representatives ({none} ∪ members per
+  // group) and keep the best branch. Groups are tiny (one pair today);
+  // branching is exact and cheap. Cap: beyond 64 combinations fall back to
+  // greedy best-NPV-per-group representatives (approximate — documented).
+  const freeMeasures = enriched.filter((e) => !e.measure.conflictGroup);
+  const groups = new Map<string, typeof enriched>();
+  for (const e of enriched) {
+    const g = e.measure.conflictGroup;
+    if (!g) continue;
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g)!.push(e);
+  }
+
+  // Stable branch order: groups by name, members by measure id.
+  const groupList = [...groups.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, members]) =>
+      [...members].sort((a, b) => a.measure.id.localeCompare(b.measure.id)),
+    );
+
+  const comboCount = groupList.reduce((n, g) => n * (g.length + 1), 1);
+  let combos: (typeof enriched)[];
+  if (comboCount > 64) {
+    // Approximate fallback: best-NPV representative per group, single branch.
+    combos = [
+      groupList.map((members) =>
+        members.reduce((best, e) => (e.fin.npv > best.fin.npv ? e : best)),
+      ),
+    ];
+  } else {
+    combos = [[]];
+    for (const members of groupList) {
+      const next: (typeof enriched)[] = [];
+      for (const combo of combos) {
+        next.push(combo); // "none" option for this group
+        for (const member of members) next.push([...combo, member]);
+      }
+      combos = next;
     }
   }
-  selected.reverse();
+
+  let best: { selected: RetrofitMeasure[]; npv: number; effectiveCapex: number } | null =
+    null;
+  for (const combo of combos) {
+    const result = solveKnapsack([...freeMeasures, ...combo]);
+    // Deterministic tie-break: higher NPV, then lower effective CAPEX, then
+    // lexical order of the joined selected ids.
+    if (
+      best === null ||
+      result.npv > best.npv ||
+      (result.npv === best.npv && result.effectiveCapex < best.effectiveCapex) ||
+      (result.npv === best.npv &&
+        result.effectiveCapex === best.effectiveCapex &&
+        result.selected.map((m) => m.id).join(",") <
+          best.selected.map((m) => m.id).join(","))
+    ) {
+      best = result;
+    }
+  }
+  const selected = best?.selected ?? [];
 
   // Aggregate metrics over the selected subset.
   const horizon = assumptions.analysisHorizonYears;

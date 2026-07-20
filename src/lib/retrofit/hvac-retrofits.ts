@@ -48,6 +48,7 @@ export function generateHvacRetrofits(
       id: "hvac-boiler-upgrade",
       name: "고효율 보일러 교체",
       category: "hvac",
+      conflictGroup: "heating-plant", // P1-01: exclusive with heat-pump conversion
       estimatedCost: totalCost,
       annualEnergySaving,
       annualCostSaving,
@@ -81,6 +82,7 @@ export function generateHvacRetrofits(
       id: "hvac-heat-pump",
       name: "히트펌프 시스템 전환",
       category: "hvac",
+      conflictGroup: "heating-plant", // P1-01: exclusive with boiler upgrade
       estimatedCost: totalCost,
       annualEnergySaving,
       annualCostSaving,

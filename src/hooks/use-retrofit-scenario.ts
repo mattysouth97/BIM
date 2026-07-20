@@ -177,6 +177,15 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
       // crude proxy: ~120 kWh/m²/yr × heating efficiency (older buildings)
       totalFloorArea * 120;
     const coolingDemand = annualCoolingDemand ?? totalFloorArea * 30;
+    // P1-01 sequential damping: HVAC measures act on the demand REMAINING
+    // after the envelope package (physical order: envelope first). Passing
+    // the post-envelope residual prevents double-counting the same heating
+    // kWh across envelope and HRV/boiler savings.
+    const envelopeHeatingSaving = envelopeMeasures.reduce(
+      (s, m) => s + m.annualEnergySaving,
+      0,
+    );
+    const residualHeatingDemand = Math.max(0, heatingDemand - envelopeHeatingSaving);
     const hvacMeasures = generateHvacRetrofits(
       {
         heatingType: materials.hvac.heating.systemType,
@@ -185,7 +194,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
         coolingEfficiency: materials.hvac.cooling.efficiency,
       },
       totalFloorArea,
-      heatingDemand,
+      residualHeatingDemand, // post-envelope residual (P1-01)
       coolingDemand,
     );
 
@@ -253,7 +262,11 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
       (s, m) => (m.category === "renewable" ? s : s + m.annualEnergySaving),
       0,
     );
-    return saved / baseline;
+    // P1-01: measures are generated with sequential damping (HVAC sees the
+    // post-envelope residual), so this sum is already physically bounded;
+    // the clamp guards degenerate inputs so the GR tier hint never exceeds
+    // a 100% improvement claim.
+    return Math.max(0, Math.min(1, saved / baseline));
   }, [
     selection,
     materials,

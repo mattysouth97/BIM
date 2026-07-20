@@ -3,8 +3,8 @@ id: P1-01
 title: Enforce mutually exclusive measures and damp interaction double-counting in retrofit portfolios
 priority: P1
 area: retrofit
-status: not-started
-owner: unassigned
+status: done
+owner: claude-fable-5-ultrawork
 effort: L
 created: 2026-07-21
 updated: 2026-07-21
@@ -77,10 +77,33 @@ use_cases: [UC-06, UC-07]
   - Report/UI must not present damped totals as per-measure savings: per-measure fields keep their generated semantics; only portfolio aggregates are damped, and the damping helper's doc comment states this explicitly.
   - No silent behavioral change for single-measure portfolios (damped total == naive total when no interacting pair exists).
 - **Acceptance criteria**:
-  - [ ] `RetrofitMeasure.conflictGroup` exists; boiler-upgrade and heat-pump carry `"heating-plant"`.
-  - [ ] `selectMeasuresForBudget` never returns conflicting measures; branching is exact for ≤64 combinations and tested.
-  - [ ] Hook passes post-envelope residual heating demand to `generateHvacRetrofits` (commented).
-  - [ ] `assembleRetrofitReport` totals and cumulative savings use the damping helper.
-  - [ ] `energyImprovementFraction` reflects damped savings; GR tier suggestion test updated/added.
-  - [ ] All gates green.
+  - [x] `RetrofitMeasure.conflictGroup` exists; boiler-upgrade and heat-pump carry `"heating-plant"`.
+  - [x] `selectMeasuresForBudget` never returns conflicting measures; branching is exact for ≤64 combinations and tested.
+  - [x] Hook passes post-envelope residual heating demand to `generateHvacRetrofits` (commented).
+  - [x] `assembleRetrofitReport` totals and cumulative savings use the damping helper.
+  - [x] `energyImprovementFraction` reflects damped savings; GR tier suggestion test updated/added.
+  - [x] All gates green.
 - **Done when**: A low-efficiency old building (η < 0.7, age > 15) with poor envelope yields a knapsack selection containing at most one heating-plant measure, portfolio totals ≤ naive sums, and `energyImprovementFraction` no longer exceeds the physically damped bound — all asserted by tests.
+
+### Evaluation notes (2026-07-21, claude-fable-5-ultrawork)
+
+- Implemented the decided design exactly: `conflictGroup` metadata (boiler + heat-pump =
+  `"heating-plant"`); `selectMeasuresForBudget` branches the existing DP over every
+  combination of group representatives (exact ≤64 combos; >64 falls back to greedy
+  best-NPV-per-group with an approximate-result comment — the fallback is item-mandated);
+  deterministic tie-break (NPV ↓, effective CAPEX ↑, joined-id lexical).
+- New `src/lib/retrofit/measure-interactions.ts`: pairwise `dampPortfolioSavings` with
+  documented `INTERACTION_COEFFICIENTS` (0.15 = HRV saving rate; 0.2 = boiler fraction at
+  representative η 0.76); per-measure damped map lets `cumulativeSavings` stay
+  payback-ordered while damping attributes to the later (HVAC) measure.
+- Hook passes the post-envelope residual heating demand (commented) — HRV/boiler are exact
+  there; `energyImprovementFraction` clamped to [0,1].
+- Tests: 4 suites extended/created (conflict exclusion incl. feasibility branch,
+  determinism, damping math with hand-computed values, monotonicity property over a
+  seeded pseudo-random walk — no Math.random, reproducible; hook-level residual test).
+- Gates: targeted 67/67 · `pnpm test` **1026 passed / 1 skipped** · lint 0 errors ·
+  build green.
+- Out-of-scope observation recorded for P1-03/P1-02: the hook passes
+  `materials.hvac.heating.efficiency` on the PERCENT scale (e.g. 87) where the HVAC
+  generator's thresholds expect fractions (< 0.85), so boiler/heat-pump measures rarely
+  trigger from the hook today. Not fixed here (must-not: no drive-by scope creep).
