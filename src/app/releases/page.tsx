@@ -11,6 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { StaticFileReleaseStore } from "@/lib/portfolio/release-store";
 
+// P2-03: read the release manifest at request time so newly-published
+// releases appear without a rebuild (was implicitly build-time static).
+export const dynamic = "force-dynamic";
+
 async function loadReleaseData() {
   const store = new StaticFileReleaseStore();
   const [history, manifest] = await Promise.all([

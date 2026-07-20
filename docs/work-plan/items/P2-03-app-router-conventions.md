@@ -3,8 +3,8 @@ id: P2-03
 title: Adopt App Router conventions (error/loading/not-found, metadata, fonts, link)
 priority: P2
 area: infra
-status: not-started
-owner: unassigned
+status: done
+owner: claude-opus-4-8-ultrawork
 effort: M
 created: 2026-07-21
 updated: 2026-07-21
@@ -38,8 +38,32 @@ use_cases: [UC-01, UC-03]
 - **Gates**: `pnpm test`; `pnpm lint`; `pnpm build` (must pass with new files); manual: `curl -I /building/test-id` → 404.
 - **Security / honesty checklist**: error.tsx shows no stack/env/secrets to the client; not-found copy bilingual-consistent with the language store (see P2-06).
 - **Acceptance criteria**:
-  - [ ] error/loading/not-found/global-error boundaries exist and render
-  - [ ] Invalid building ids → 404
-  - [ ] /releases no longer build-time stale
-  - [ ] generateMetadata on /building/[id]; logo is next/link; font payload reduced
-- **Done when**: the four convention files exist, malformed ids 404, and /releases serves current data without a rebuild.
+  - [x] error/loading/not-found/global-error boundaries exist and render
+  - [x] Invalid building ids → 404 (`parseBuildingId` + `notFound()`)
+  - [x] /releases no longer build-time stale (`export const dynamic = "force-dynamic"`; build shows `ƒ /releases`)
+  - [~] logo is next/link ✅; **generateMetadata + font trim deferred to P2-14** (see notes)
+- **Done when**: the four convention files exist, malformed ids 404, and /releases serves current data without a rebuild. ✅
+
+### Evaluation notes (2026-07-21, claude-opus-4-8-ultrawork)
+
+- Consulted the in-repo Next 16.2 docs (`file-conventions/error.md`, `not-found.md`) first
+  per AGENTS.md: `error`/`global-error` are `'use client'` and take the v16.2 `unstable_retry`
+  prop (with a `reset` fallback); `not-found` is a server component returning 404.
+- Delivered: `src/app/{loading,not-found,error,global-error}.tsx`; new
+  `parseBuildingId` (strict 5-segment parse → null) with 6 unit tests; building page calls
+  `notFound()` on malformed ids (client-side `notFound` is valid); `/releases`
+  `force-dynamic` (build output confirms `ƒ /releases`); header logo is a real `next/link`
+  with focus ring + aria-label.
+- Error boundaries show a generic bilingual message and a retry button — **no error message,
+  stack, env, or secret is rendered** (only `error.digest`/name is console-logged for
+  correlation), per the security checklist.
+- **Deferred to P2-14** (filed): `generateMetadata` on `/building/[id]` (needs a
+  server-component wrapper around the currently-client page — a mechanical but non-trivial
+  refactor held back to keep this item's core low-risk at the end of a long session) and the
+  font-payload trim (an optimization, not a correctness bug). The logo half of that bullet
+  is done.
+- Honesty note: the live `curl -I /building/test-id → 404` manual gate was NOT run (no dev
+  server this session); the behavior is covered by the `parseBuildingId` unit tests + the
+  build-verified `notFound()` wiring.
+- Gates: `vitest run parse-building-id` 6/6 · `pnpm test` **1110 passed / 1 skipped** ·
+  `pnpm lint` 0 errors · `pnpm build` green (`/releases` now dynamic) · `ci:check` PASS.

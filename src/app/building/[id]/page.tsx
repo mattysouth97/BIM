@@ -1,7 +1,8 @@
 "use client";
 
 import { use, lazy, Suspense, useEffect } from "react";
-import { decodeBuildingId } from "@/lib/constants";
+import { notFound } from "next/navigation";
+import { parseBuildingId } from "@/lib/constants";
 import { useActiveBuildingStore } from "@/store/active-building-store";
 import { useCompositeBuilding } from "@/hooks/use-composite-building";
 import { useBuildingFootprint } from "@/hooks/use-building-footprint";
@@ -30,7 +31,9 @@ export default function BuildingDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const buildingId = decodeBuildingId(id);
+  // P2-03: malformed ids render the 404 boundary instead of an empty shell.
+  const buildingId = parseBuildingId(id);
+  if (!buildingId) notFound();
 
   const { title, recap, floors, areas, isLoading, isError, errors } =
     useCompositeBuilding({

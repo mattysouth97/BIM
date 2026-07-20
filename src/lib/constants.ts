@@ -105,6 +105,27 @@ export function decodeBuildingId(id: string) {
   return { sigunguCd, bjdongCd, platGbCd, bun, ji };
 }
 
+/**
+ * P2-03 — strictly parse a building id into its 5 segments, returning null
+ * for anything malformed (wrong segment count, empty segment, non-string).
+ * The building route uses this to trigger `notFound()` instead of rendering
+ * an empty shell for a bad URL.
+ */
+export function parseBuildingId(id: string): {
+  sigunguCd: string;
+  bjdongCd: string;
+  platGbCd: string;
+  bun: string;
+  ji: string;
+} | null {
+  if (typeof id !== "string" || id.length === 0) return null;
+  const parts = id.split("-");
+  if (parts.length !== 5) return null;
+  if (parts.some((p) => p.length === 0)) return null;
+  const [sigunguCd, bjdongCd, platGbCd, bun, ji] = parts;
+  return { sigunguCd, bjdongCd, platGbCd, bun, ji };
+}
+
 // ─────────────────────────────────────────────
 // Formatting helpers
 // ─────────────────────────────────────────────

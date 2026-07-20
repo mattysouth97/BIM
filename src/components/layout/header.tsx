@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, lazy, Suspense } from "react";
+import Link from "next/link";
 import { Building2, Sun, Moon, Key, Globe } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAppStore } from "@/store/app-store";
@@ -27,7 +28,8 @@ export function Header() {
     <>
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+          {/* P2-03: logo is a real next/link to home */}
+          <Link href="/" className="flex items-center gap-2 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="홈으로 / Home">
             <Building2 className="h-6 w-6 text-primary" />
             <div className="flex items-baseline gap-1.5">
               <h1 className="text-lg font-bold tracking-tight">건축물대장</h1>
@@ -35,7 +37,7 @@ export function Header() {
                 Building Ledger
               </span>
             </div>
-          </div>
+          </Link>
 
           <div className="flex items-center gap-1">
             <Button
