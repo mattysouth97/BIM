@@ -1,8 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import { versionedMigrate } from "./persist-migrate";
 import { persist } from "zustand/middleware";
+import { useActiveBuildingStore } from "./active-building-store";
 import type {
   AnnotationInstance,
   ElementId,
@@ -25,9 +25,30 @@ export type {
 
 // ── Store shape ───────────────────────────────────────────────────────────────
 
+/**
+ * P2-16 — every annotation is stamped with the building it was authored on.
+ * `buildingPk: null` marks pre-v2 legacy annotations whose building is
+ * unknown; they are retained but never attributed to a specific building
+ * (attributing them anywhere would re-create the cross-building
+ * anchorElementId-collision bug this scoping fixes).
+ */
+export type ScopedAnnotation = AnnotationInstance & { buildingPk: string | null };
+
+/**
+ * Pure selector: the annotations belonging to one building. Strict equality —
+ * building A's annotations can never surface on building B's model, and
+ * legacy null-scoped annotations only appear while no building is active.
+ */
+export function annotationsForBuilding(
+  annotations: ScopedAnnotation[],
+  buildingPk: string | null
+): ScopedAnnotation[] {
+  return annotations.filter((a) => a.buildingPk === buildingPk);
+}
+
 interface AnnotationState {
-  /** All active annotation instances */
-  annotations: AnnotationInstance[];
+  /** All annotation instances across all buildings (filter with annotationsForBuilding) */
+  annotations: ScopedAnnotation[];
 
   /** ID of the currently selected annotation, or null */
   selectedAnnotationId: string | null;
@@ -61,9 +82,14 @@ export const useAnnotationStore = create<AnnotationState>()(
       annotations: [],
       selectedAnnotationId: null,
 
+      // Stamps the annotation with the active building at authoring time
+      // (signature unchanged — callers keep supplying a plain AnnotationInstance).
       addAnnotation: (anno) =>
         set((state) => ({
-          annotations: [...state.annotations, anno],
+          annotations: [
+            ...state.annotations,
+            { ...anno, buildingPk: useActiveBuildingStore.getState().buildingPk },
+          ],
         })),
 
       removeAnnotation: (id) =>
@@ -76,7 +102,7 @@ export const useAnnotationStore = create<AnnotationState>()(
       updateAnnotation: (id, patch) =>
         set((state) => ({
           annotations: state.annotations.map((a) =>
-            a.id === id ? ({ ...a, ...patch } as AnnotationInstance) : a
+            a.id === id ? ({ ...a, ...patch } as ScopedAnnotation) : a
           ),
         })),
 
@@ -103,8 +129,23 @@ export const useAnnotationStore = create<AnnotationState>()(
     }),
     {
       name: "bim-annotation-store",
-      version: 1, // P2-07: initial version stamp
-      migrate: versionedMigrate,
+      version: 2, // P2-16: annotations gained a buildingPk scope
+      // v0/v1 payloads carried un-scoped AnnotationInstance[]; stamp them
+      // buildingPk: null (unknown building) instead of dropping the data.
+      // Unknown future versions fall back to defaults (undefined), matching
+      // the shared versionedMigrate policy.
+      migrate: (persisted: unknown, version: number) => {
+        if (version < 2) {
+          const p = persisted as { annotations?: AnnotationInstance[] } | null;
+          if (!p || !Array.isArray(p.annotations)) return undefined;
+          return {
+            annotations: p.annotations.map(
+              (a): ScopedAnnotation => ({ ...a, buildingPk: null })
+            ),
+          };
+        }
+        return undefined;
+      },
       // Only persist the annotations array — UI selection state is ephemeral
       partialize: (state) => ({
         annotations: state.annotations,

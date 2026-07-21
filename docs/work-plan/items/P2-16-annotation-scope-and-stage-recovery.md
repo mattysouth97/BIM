@@ -3,8 +3,8 @@ id: P2-16
 title: Building-scope persisted annotations + workflow stage recovery after reload
 priority: P2
 area: state
-status: not-started
-owner: unassigned
+status: done
+owner: claude-fable-5-session
 effort: M
 created: 2026-07-21
 updated: 2026-07-21
@@ -49,7 +49,16 @@ deferred to keep P2-07's versioning slice low-risk.
 ## 4. Evaluation (EDD)
 - **Gates**: `pnpm test -- store`; `pnpm test`; `pnpm lint`; `pnpm build`.
 - **Acceptance criteria**:
-  - [ ] Annotations building-scoped (A's never appear on B)
-  - [ ] Stage/transient-store reload recovery lands on a working stage
+  - [x] Annotations building-scoped (A's never appear on B) — `ScopedAnnotation`
+        stamped with the active buildingPk at add time; `annotationsForBuilding()`
+        strict-equality selector; store version 2 with a dedicated migrator that
+        stamps legacy annotations `buildingPk: null` (retained, never attributed
+        to a specific building). Isolation + migration covered by 9 new tests.
+  - [x] Stage/transient-store reload recovery lands on a working stage —
+        `WorkflowStageRecovery` (mounted in Providers) replays forward guards
+        via `getBlockingStage("search", stage, ctx)` after hydration and
+        retreats to the first failing stage (twin/report → upload when the
+        transient footprint is gone). 7 new tests incl. cross-building
+        footprint rejection and strict-mode idempotence.
 - **Done when**: cross-building navigation and reloads never surface stale
   annotations or dead-end panels.
