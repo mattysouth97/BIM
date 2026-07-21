@@ -22,7 +22,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { encodeBuildingId, formatArea, formatDate, USE_CODES } from "@/lib/constants";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { ArrowUpDown, FileSearch } from "lucide-react";
 import { scoreDataQuality } from "@/lib/data-quality/quality-scorer";
 import type { QualityTier } from "@/lib/data-quality/quality-types";
@@ -61,8 +61,7 @@ function TableSkeleton() {
 
 export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps) {
   const router = useRouter();
-  const language = useAppStore((s) => s.language);
-  const isKo = language === "ko";
+  const { t } = useT();
   const [sorting, setSorting] = useState<SortingState>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -75,13 +74,13 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
             className="flex items-center gap-1 font-medium"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            {isKo ? "건물명" : "Name"}
+            {t("건물명", "Name")}
             <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/70" />
           </button>
         ),
         cell: ({ row }) => (
           <span className="font-medium">
-            {row.original.bldNm || (isKo ? "(미등록)" : "(Unnamed)")}
+            {row.original.bldNm || t("(미등록)", "(Unnamed)")}
           </span>
         ),
       },
@@ -92,7 +91,7 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
             className="flex items-center gap-1 font-medium"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            {isKo ? "주소" : "Address"}
+            {t("주소", "Address")}
             <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/70" />
           </button>
         ),
@@ -104,7 +103,7 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
       },
       {
         accessorKey: "mainPurpsCdNm",
-        header: () => (isKo ? "용도" : "Use"),
+        header: () => t("용도", "Use"),
         cell: ({ row }) => {
           const code = row.original.mainPurpsCd;
           const useInfo = USE_CODES[code];
@@ -118,7 +117,7 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
       },
       {
         accessorKey: "strctCdNm",
-        header: () => (isKo ? "구조" : "Structure"),
+        header: () => t("구조", "Structure"),
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
             {row.original.strctCdNm || row.original.etcStrct || "-"}
@@ -127,7 +126,7 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
       },
       {
         id: "floors",
-        header: () => (isKo ? "층수" : "Floors"),
+        header: () => t("층수", "Floors"),
         cell: ({ row }) => (
           <span className="text-sm tabular-nums">
             {row.original.grndFlrCnt ?? 0}F / B{row.original.ugrndFlrCnt ?? 0}
@@ -143,7 +142,7 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
             className="flex items-center gap-1 font-medium"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            {isKo ? "연면적" : "Area"}
+            {t("연면적", "Area")}
             <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/70" />
           </button>
         ),
@@ -158,7 +157,7 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
             className="flex items-center gap-1 font-medium"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            {isKo ? "승인일" : "Approved"}
+            {t("승인일", "Approved")}
             <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/70" />
           </button>
         ),
@@ -170,7 +169,7 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
       },
       {
         id: "dataQuality",
-        header: () => (isKo ? "데이터 품질" : "Data Quality"),
+        header: () => t("데이터 품질", "Data Quality"),
         cell: ({ row }) => {
           const score = scoreDataQuality(row.original);
           const tier: QualityTier = score.tier;
@@ -183,10 +182,10 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
           };
 
           const tierLabel: Record<QualityTier, string> = {
-            minimal: isKo ? "최소" : "Minimal",
-            partial: isKo ? "부분" : "Partial",
-            good: isKo ? "양호" : "Good",
-            excellent: isKo ? "우수" : "Excellent",
+            minimal: t("최소", "Minimal"),
+            partial: t("부분", "Partial"),
+            good: t("양호", "Good"),
+            excellent: t("우수", "Excellent"),
           };
 
           const dims = score.dimensions;
@@ -204,16 +203,16 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
           ];
 
           const tooltipLines: string[] = [
-            `${isKo ? "점수" : "Score"}: ${score.overall}%`,
+            `${t("점수", "Score")}: ${score.overall}%`,
           ];
           if (allAvailable.length > 0) {
             tooltipLines.push(
-              `${isKo ? "있음" : "Available"}: ${allAvailable.join(", ")}`,
+              `${t("있음", "Available")}: ${allAvailable.join(", ")}`,
             );
           }
           if (allMissing.length > 0) {
             tooltipLines.push(
-              `${isKo ? "없음" : "Missing"}: ${allMissing.join(", ")}`,
+              `${t("없음", "Missing")}: ${allMissing.join(", ")}`,
             );
           }
 
@@ -229,7 +228,7 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
         },
       },
     ],
-    [isKo],
+    [t],
   );
 
   const table = useReactTable({
@@ -258,12 +257,13 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
         <FileSearch className="h-12 w-12 text-muted-foreground/40" />
         <div>
           <p className="font-medium text-muted-foreground">
-            {isKo ? "검색 결과가 없습니다" : "No results found"}
+            {t("검색 결과가 없습니다", "No results found")}
           </p>
           <p className="mt-1 text-sm text-muted-foreground/70">
-            {isKo
-              ? "검색 조건을 변경하여 다시 시도해 주세요."
-              : "Try adjusting your search criteria and search again."}
+            {t(
+              "검색 조건을 변경하여 다시 시도해 주세요.",
+              "Try adjusting your search criteria and search again.",
+            )}
           </p>
         </div>
       </div>

@@ -3,8 +3,8 @@
 import React from "react";
 import type { FloorGeometry } from "@/lib/building-geometry";
 import type { BuildingEra } from "@/lib/material-types";
-import { useAppStore } from "@/store/app-store";
 import { useWorkflowStore } from "@/store/workflow-store";
+import { useT, type Lang } from "@/lib/i18n";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import {
   TOOLBAR_CONFIGS,
@@ -106,11 +106,11 @@ function dispatchAction(
 
 function ToolbarItemRenderer({
   item,
-  isKo,
+  lang,
   props,
 }: {
   item: ToolbarItem;
-  isKo: boolean;
+  lang: Lang;
   props: PropActions;
 }) {
   if (item.type === "separator") {
@@ -130,7 +130,7 @@ function ToolbarItemRenderer({
       size="icon"
       className="h-7 w-7"
       onClick={() => dispatchAction(item, isActive, props)}
-      title={isKo ? item.labelKo : item.labelEn}
+      title={lang === "ko" ? item.labelKo : item.labelEn}
     >
       {Icon && <Icon className="h-3.5 w-3.5" />}
     </Button>
@@ -143,11 +143,11 @@ function ToolbarItemRenderer({
 
 function ToolbarGroupRenderer({
   group,
-  isKo,
+  lang,
   props,
 }: {
   group: ToolbarGroup;
-  isKo: boolean;
+  lang: Lang;
   props: PropActions;
 }) {
   return (
@@ -156,7 +156,7 @@ function ToolbarGroupRenderer({
         <ToolbarItemRenderer
           key={item.id}
           item={item}
-          isKo={isKo}
+          lang={lang}
           props={props}
         />
       ))}
@@ -170,11 +170,11 @@ function ToolbarGroupRenderer({
 
 function StageToolbar({
   stage,
-  isKo,
+  lang,
   props,
 }: {
   stage: string;
-  isKo: boolean;
+  lang: Lang;
   props: PropActions;
 }) {
   const groups = TOOLBAR_CONFIGS[stage as keyof typeof TOOLBAR_CONFIGS] ?? [];
@@ -186,7 +186,7 @@ function StageToolbar({
           {i > 0 && <VerticalDivider />}
           <ToolbarGroupRenderer
             group={group}
-            isKo={isKo}
+            lang={lang}
             props={props}
           />
         </React.Fragment>
@@ -209,26 +209,26 @@ function VerticalDivider() {
 
 function GlobalToolbarSection({
   onViewChange,
-  isKo,
+  lang,
 }: {
   onViewChange: (view: "front" | "side" | "top" | "iso") => void;
-  isKo: boolean;
+  lang: Lang;
 }) {
   return (
     <div className="flex items-center gap-0.5 shrink-0">
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("front")} title={isKo ? "앞면" : "Front"}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("front")} title={lang === "ko" ? "앞면" : "Front"}>
         <ArrowUp className="h-3.5 w-3.5" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("side")} title={isKo ? "측면" : "Side"}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("side")} title={lang === "ko" ? "측면" : "Side"}>
         <ArrowRight className="h-3.5 w-3.5" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("top")} title={isKo ? "위" : "Top"}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("top")} title={lang === "ko" ? "위" : "Top"}>
         <ArrowDown className="h-3.5 w-3.5" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("iso")} title={isKo ? "등각" : "Isometric"}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("iso")} title={lang === "ko" ? "등각" : "Isometric"}>
         <Maximize2 className="h-3.5 w-3.5" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("iso")} title={isKo ? "뷰 초기화" : "Reset View"}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("iso")} title={lang === "ko" ? "뷰 초기화" : "Reset View"}>
         <RotateCcw className="h-3.5 w-3.5" />
       </Button>
     </div>
@@ -249,7 +249,7 @@ export function ContextualToolbar({
   era,
   selectedFloor: _selectedFloor,
 }: ContextualToolbarProps) {
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { lang } = useT();
   const stage = useWorkflowStore((s) => s.stage);
 
   const propActions: PropActions = {
@@ -287,7 +287,7 @@ export function ContextualToolbar({
         {/* Center: Stage-specific toolbar groups — data-driven from TOOLBAR_CONFIGS[stage] */}
         <StageToolbar
           stage={stage}
-          isKo={isKo}
+          lang={lang}
           props={propActions}
         />
 
@@ -295,7 +295,7 @@ export function ContextualToolbar({
         <div className="flex-1" />
 
         {/* Right: Global controls — always visible */}
-        <GlobalToolbarSection onViewChange={onViewChange} isKo={isKo} />
+        <GlobalToolbarSection onViewChange={onViewChange} lang={lang} />
       </div>
     </div>
   );

@@ -5,7 +5,7 @@
 // Provides Energy Audit and Compliance report previews with PDF, CSV, and JSON export.
 
 import { useMemo, useState } from "react";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { useMaterialStore } from "@/store/material-store";
 import { useActiveBuildingPk, useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useRecipeStore } from "@/store/recipe-store";
@@ -87,7 +87,7 @@ function ReportSkeleton() {
 // ---------------------------------------------------------------------------
 
 export function ReportStage() {
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { t } = useT();
   const [activeTab, setActiveTab] = useState<ReportTab>("energy-audit");
   const [pdfLoading, setPdfLoading] = useState(false);
   const [certVersion] = useState<CertificationVersion>("2024");
@@ -375,7 +375,7 @@ export function ReportStage() {
       downloadBlob(blob, `energy-audit-${buildingPk.slice(0, 8)}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
-      toast.error(isKo ? "PDF 생성에 실패했습니다." : "PDF generation failed. Please try again.");
+      toast.error(t("PDF 생성에 실패했습니다.", "PDF generation failed. Please try again."));
     } finally {
       setPdfLoading(false);
     }
@@ -396,7 +396,7 @@ export function ReportStage() {
       downloadBlob(blob, `compliance-${buildingPk.slice(0, 8)}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
-      toast.error(isKo ? "PDF 생성에 실패했습니다." : "PDF generation failed. Please try again.");
+      toast.error(t("PDF 생성에 실패했습니다.", "PDF generation failed. Please try again."));
     } finally {
       setPdfLoading(false);
     }
@@ -471,12 +471,13 @@ export function ReportStage() {
         <FileText className="h-12 w-12 opacity-30" />
         <div className="text-center">
           <p className="text-sm font-medium">
-            {isKo ? "건물을 먼저 선택하세요" : "Select a building first"}
+            {t("건물을 먼저 선택하세요", "Select a building first")}
           </p>
           <p className="mt-1 text-xs opacity-70">
-            {isKo
-              ? "검색 단계에서 건물을 검색한 후 다시 시도하세요."
-              : "Search for a building in the Search stage, then return here."}
+            {t(
+              "검색 단계에서 건물을 검색한 후 다시 시도하세요.",
+              "Search for a building in the Search stage, then return here.",
+            )}
           </p>
         </div>
       </div>
@@ -503,7 +504,7 @@ export function ReportStage() {
                 : "text-muted-foreground hover:bg-muted"
             )}
           >
-            {isKo ? "에너지 감사" : "Energy Audit"}
+            {t("에너지 감사", "Energy Audit")}
           </button>
           <button
             onClick={() => setActiveTab("compliance")}
@@ -515,7 +516,7 @@ export function ReportStage() {
                 : "text-muted-foreground hover:bg-muted"
             )}
           >
-            {isKo ? "준법 인증" : "Compliance"}
+            {t("준법 인증", "Compliance")}
           </button>
         </div>
 
@@ -526,7 +527,7 @@ export function ReportStage() {
             size="sm"
             className="h-7 text-xs gap-1"
             onClick={handleExportCSV}
-            title={isKo ? "CSV로 내보내기" : "Export as CSV"}
+            title={t("CSV로 내보내기", "Export as CSV")}
           >
             <Sheet className="size-3" />
             CSV
@@ -536,7 +537,7 @@ export function ReportStage() {
             size="sm"
             className="h-7 text-xs gap-1"
             onClick={handleExportJSON}
-            title={isKo ? "JSON으로 내보내기" : "Export as JSON"}
+            title={t("JSON으로 내보내기", "Export as JSON")}
           >
             <FileJson className="size-3" />
             JSON
@@ -551,14 +552,10 @@ export function ReportStage() {
                 ? handleDownloadEnergyPdf
                 : handleDownloadCompliancePdf
             }
-            title={isKo ? "PDF 다운로드" : "Download PDF"}
+            title={t("PDF 다운로드", "Download PDF")}
           >
             <Download className="size-3" />
-            {pdfLoading
-              ? isKo
-                ? "생성 중..."
-                : "Generating..."
-              : "PDF"}
+            {pdfLoading ? t("생성 중...", "Generating...") : "PDF"}
           </Button>
         </div>
       </div>
@@ -585,9 +582,7 @@ export function ReportStage() {
         {activeTab === "compliance" && !complianceInput && (
           <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-muted-foreground">
             <p className="text-sm">
-              {isKo
-                ? "준법 인증 데이터를 불러오는 중..."
-                : "Loading compliance data..."}
+              {t("준법 인증 데이터를 불러오는 중...", "Loading compliance data...")}
             </p>
           </div>
         )}

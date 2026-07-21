@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { useHydration } from "@/hooks/use-hydration";
 import { useBuildingSearch } from "@/hooks/use-building-search";
 import { useCampusBuildings } from "@/hooks/use-campus-buildings";
@@ -96,8 +97,8 @@ function FormSkeleton() {
 
 export default function Home() {
   const hydrated = useHydration();
-  const { apiKey, language } = useAppStore();
-  const isKo = language === "ko";
+  const { apiKey } = useAppStore();
+  const { t } = useT();
 
   // ─── Campus mode state ────────────────────────────────────────────────────
   const [campusMode, setCampusMode] = useState(false);
@@ -245,12 +246,13 @@ export default function Home() {
             <Building2 className="h-8 w-8 text-primary" />
           </div>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            {isKo ? "그린리모델링 투자 시뮬레이터" : "GreenRetrofit Simulator"}
+            {t("그린리모델링 투자 시뮬레이터", "GreenRetrofit Simulator")}
           </h2>
           <p className="max-w-lg text-muted-foreground">
-            {isKo
-              ? "건축물대장 데이터를 3D 디지털 트윈으로 변환하고, 단열·설비·태양광 개보수의 에너지 절감과 투자 회수(NPV·IRR·회수기간)를 시뮬레이션하세요. 먼저 건물을 검색하여 시작합니다."
-              : "Turn building-ledger data into a 3D digital twin and simulate the energy savings and investment return (NPV, IRR, payback) of envelope, HVAC, and solar retrofits. Start by searching for a building."}
+            {t(
+              "건축물대장 데이터를 3D 디지털 트윈으로 변환하고, 단열·설비·태양광 개보수의 에너지 절감과 투자 회수(NPV·IRR·회수기간)를 시뮬레이션하세요. 먼저 건물을 검색하여 시작합니다.",
+              "Turn building-ledger data into a 3D digital twin and simulate the energy savings and investment return (NPV, IRR, payback) of envelope, HVAC, and solar retrofits. Start by searching for a building.",
+            )}
           </p>
         </div>
       </section>
@@ -261,12 +263,13 @@ export default function Home() {
           <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div className="flex-1">
             <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-              {isKo ? "API 키가 설정되지 않았습니다." : "No API key configured."}
+              {t("API 키가 설정되지 않았습니다.", "No API key configured.")}
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300">
-              {isKo
-                ? "오른쪽 상단의 열쇠 아이콘을 클릭하여 API 키를 설정하세요."
-                : "Click the key icon in the top-right corner to set your API key."}
+              {t(
+                "오른쪽 상단의 열쇠 아이콘을 클릭하여 API 키를 설정하세요.",
+                "Click the key icon in the top-right corner to set your API key.",
+              )}
             </p>
           </div>
         </div>
@@ -275,7 +278,7 @@ export default function Home() {
       {/* Campus Mode toggle */}
       <div className="mb-6 flex items-center justify-end gap-3">
         <span className="text-sm text-muted-foreground">
-          {isKo ? "캠퍼스 모드" : "Campus Mode"}
+          {t("캠퍼스 모드", "Campus Mode")}
         </span>
         <Button
           variant={campusMode ? "default" : "outline"}
@@ -290,8 +293,8 @@ export default function Home() {
         >
           <LayoutGrid className="h-4 w-4" />
           {campusMode
-            ? isKo ? "캠퍼스 모드 ON" : "Campus Mode ON"
-            : isKo ? "캠퍼스 모드 OFF" : "Campus Mode OFF"}
+            ? t("캠퍼스 모드 ON", "Campus Mode ON")
+            : t("캠퍼스 모드 OFF", "Campus Mode OFF")}
         </Button>
       </div>
 
@@ -302,12 +305,13 @@ export default function Home() {
           <div className="rounded-xl border bg-card shadow-sm p-6 space-y-4">
             <div>
               <h3 className="text-lg font-semibold">
-                {isKo ? "캠퍼스 검색 (지역 일괄조회)" : "Campus Search (Area Batch)"}
+                {t("캠퍼스 검색 (지역 일괄조회)", "Campus Search (Area Batch)")}
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                {isKo
-                  ? "시/군/구 + 법정동을 선택하면 해당 지역의 건물 목록을 한 번에 불러옵니다 (최대 20동)."
-                  : "Select a district and dong to load all buildings in the area at once (up to 20)."}
+                {t(
+                  "시/군/구 + 법정동을 선택하면 해당 지역의 건물 목록을 한 번에 불러옵니다 (최대 20동).",
+                  "Select a district and dong to load all buildings in the area at once (up to 20).",
+                )}
               </p>
             </div>
             <Suspense fallback={<FormSkeleton />}>
@@ -319,7 +323,7 @@ export default function Home() {
           {campusError && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
               <p className="text-sm font-medium text-destructive">
-                {isKo ? "오류가 발생했습니다" : "An error occurred"}
+                {t("오류가 발생했습니다", "An error occurred")}
               </p>
               <p className="mt-1 text-sm text-destructive/80">
                 {campusError instanceof Error ? campusError.message : String(campusError)}
@@ -335,14 +339,12 @@ export default function Home() {
                 <div className="flex items-center gap-3">
                   <h3 className="text-lg font-semibold">
                     {campusLoading
-                      ? isKo ? "불러오는 중…" : "Loading…"
-                      : isKo
-                        ? `건물 ${campusMetrics.length}동`
-                        : `${campusMetrics.length} buildings`}
+                      ? t("불러오는 중…", "Loading…")
+                      : t(`건물 ${campusMetrics.length}동`, `${campusMetrics.length} buildings`)}
                   </h3>
                   {campusMetrics.length > 0 && (
                     <Badge variant="secondary">
-                      {isKo ? "에너지 데이터: 트윈 생성 후 제공" : "Energy data: available after twin generation"}
+                      {t("에너지 데이터: 트윈 생성 후 제공", "Energy data: available after twin generation")}
                     </Badge>
                   )}
                 </div>
@@ -356,10 +358,8 @@ export default function Home() {
                   >
                     <LayoutGrid className="h-4 w-4" />
                     {showComparison
-                      ? isKo ? "비교 닫기" : "Close Comparison"
-                      : isKo
-                        ? `${selectedForCompare.size}동 비교하기`
-                        : `Compare ${selectedForCompare.size} buildings`}
+                      ? t("비교 닫기", "Close Comparison")
+                      : t(`${selectedForCompare.size}동 비교하기`, `Compare ${selectedForCompare.size} buildings`)}
                   </Button>
                 )}
               </div>
@@ -367,9 +367,10 @@ export default function Home() {
               {/* Building selection hint */}
               {campusMetrics.length > 0 && !showComparison && (
                 <p className="text-xs text-muted-foreground">
-                  {isKo
-                    ? "건물을 2~4개 선택하면 비교 분석이 가능합니다."
-                    : "Select 2–4 buildings to enable comparison analysis."}
+                  {t(
+                    "건물을 2~4개 선택하면 비교 분석이 가능합니다.",
+                    "Select 2–4 buildings to enable comparison analysis.",
+                  )}
                 </p>
               )}
 
@@ -384,7 +385,7 @@ export default function Home() {
                       onClick={() => setShowComparison(false)}
                     >
                       <X className="h-3 w-3" />
-                      {isKo ? "닫기" : "Close"}
+                      {t("닫기", "Close")}
                     </Button>
                     <ComparisonView result={comparisonResult} />
                   </div>
@@ -399,7 +400,7 @@ export default function Home() {
                     {campusMetrics.length > 0 && (
                       <div className="border-b px-6 py-3 flex flex-wrap gap-2 items-center bg-muted/30">
                         <span className="text-xs font-medium text-muted-foreground mr-1">
-                          {isKo ? "비교 선택:" : "Compare:"}
+                          {t("비교 선택:", "Compare:")}
                         </span>
                         {campusMetrics.map((m) => {
                           const selected = selectedForCompare.has(m.buildingId);
@@ -423,7 +424,7 @@ export default function Home() {
                     )}
                     <PortfolioDashboard
                       buildings={campusMetrics}
-                      title={isKo ? "캠퍼스 에너지 포트폴리오" : "Campus Energy Portfolio"}
+                      title={t("캠퍼스 에너지 포트폴리오", "Campus Energy Portfolio")}
                     />
                   </div>
                 </Suspense>
@@ -432,7 +433,7 @@ export default function Home() {
               {/* Empty state */}
               {!campusLoading && campusMetrics.length === 0 && (
                 <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-                  {isKo ? "해당 지역에 건물 데이터가 없습니다." : "No building data found for this area."}
+                  {t("해당 지역에 건물 데이터가 없습니다.", "No building data found for this area.")}
                 </div>
               )}
             </div>
@@ -447,11 +448,11 @@ export default function Home() {
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="region" className="gap-2">
                   <MapPin className="h-4 w-4" />
-                  {isKo ? "지역 검색" : "Region Search"}
+                  {t("지역 검색", "Region Search")}
                 </TabsTrigger>
                 <TabsTrigger value="address" className="gap-2">
                   <Search className="h-4 w-4" />
-                  {isKo ? "주소 검색" : "Address Search"}
+                  {t("주소 검색", "Address Search")}
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -473,7 +474,7 @@ export default function Home() {
           {error && (
             <div className="mt-6 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
               <p className="text-sm font-medium text-destructive">
-                {isKo ? "오류가 발생했습니다" : "An error occurred"}
+                {t("오류가 발생했습니다", "An error occurred")}
               </p>
               <p className="mt-1 text-sm text-destructive/80">
                 {error instanceof Error ? error.message : String(error)}
@@ -487,15 +488,16 @@ export default function Home() {
               {hasResults && (
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">
-                    {isKo
-                      ? `검색 결과 (${filteredItems.length}건${useFilter && data ? ` / 전체 ${data.totalCount}` : ""})`
-                      : `Results (${filteredItems.length}${useFilter && data ? ` of ${data.totalCount}` : ""} records)`}
+                    {t(
+                      `검색 결과 (${filteredItems.length}건${useFilter && data ? ` / 전체 ${data.totalCount}` : ""})`,
+                      `Results (${filteredItems.length}${useFilter && data ? ` of ${data.totalCount}` : ""} records)`,
+                    )}
                   </h3>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm" className="gap-2">
                         <Download className="h-4 w-4" />
-                        {isKo ? "내보내기" : "Export"}
+                        {t("내보내기", "Export")}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">

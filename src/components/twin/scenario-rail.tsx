@@ -9,6 +9,7 @@
 
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
+import { formatKrw, formatYears } from "@/lib/twin-formatters";
 import { effectiveDiscountRate } from "@/lib/retrofit/economic-model";
 import type { BudgetSelection, EconomicAssumptions } from "@/lib/retrofit/economic-model";
 
@@ -19,26 +20,8 @@ interface ScenarioRailProps {
   totalCandidateMeasures: number;
 }
 
-const KRW_EOK = 100_000_000;
-
-function formatKrwBig(krw: number): string {
-  const sign = krw < 0 ? "-" : "";
-  const abs = Math.abs(krw);
-  if (abs >= KRW_EOK) {
-    const eok = abs / KRW_EOK;
-    return `${sign}₩${eok % 1 === 0 ? eok.toFixed(0) : eok.toFixed(1)}억`;
-  }
-  if (abs >= 10_000) return `${sign}₩${(abs / 10_000).toFixed(0)}만`;
-  return `${sign}₩${abs.toLocaleString()}`;
-}
-
 function formatPercent(n: number, decimals = 1): string {
   return `${(n * 100).toFixed(decimals)}%`;
-}
-
-function formatYears(years: number): string {
-  if (!Number.isFinite(years)) return "—";
-  return `${years.toFixed(1)}년`;
 }
 
 export function ScenarioRail({
@@ -53,7 +36,7 @@ export function ScenarioRail({
   const effectiveCapex = selection?.effectiveCapex ?? 0;
   const selectedCount = selection?.selected.length ?? 0;
   const utilisation = capexBudgetKrw > 0 ? effectiveCapex / capexBudgetKrw : 0;
-  const { t } = useT(); // P2-06
+  const { t, lang } = useT(); // P2-06
 
   return (
     <div
@@ -77,8 +60,8 @@ export function ScenarioRail({
         </span>
         <span className="text-[10px] text-muted-foreground tabular-nums">
           {t(
-            `${selectedCount}/${totalCandidateMeasures}개 선택 · 예산 ₩${(capexBudgetKrw / KRW_EOK).toFixed(1)}억 중 ${formatPercent(utilisation, 0)} 사용`,
-            `${selectedCount}/${totalCandidateMeasures} selected · ${formatPercent(utilisation, 0)} of ₩${(capexBudgetKrw / KRW_EOK).toFixed(1)}억 budget used`,
+            `${selectedCount}/${totalCandidateMeasures}개 선택 · 예산 ${formatKrw(capexBudgetKrw, "ko")} 중 ${formatPercent(utilisation, 0)} 사용`,
+            `${selectedCount}/${totalCandidateMeasures} selected · ${formatPercent(utilisation, 0)} of ${formatKrw(capexBudgetKrw, "en")} budget used`,
           )}
         </span>
       </div>
@@ -90,19 +73,19 @@ export function ScenarioRail({
             npvPositive ? "text-emerald-600" : "text-orange-600",
           )}
         >
-          {formatKrwBig(npv)}
+          {formatKrw(npv, lang)}
         </span>
       </Cell>
 
       <Cell label={t("회수기간", "Payback")} sublabel={t("할인 기준", "Discounted")}>
         <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
-          {formatYears(payback)}
+          {formatYears(payback, lang)}
         </span>
       </Cell>
 
       <Cell label={t("실효 투자비", "Effective CAPEX")} sublabel={t("보조금 반영", "Post-subsidy")}>
         <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
-          {formatKrwBig(effectiveCapex)}
+          {formatKrw(effectiveCapex, lang)}
         </span>
       </Cell>
 

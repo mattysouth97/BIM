@@ -9,6 +9,7 @@
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
+import { formatKrw } from "@/lib/twin-formatters";
 import {
   effectiveDiscountRate,
   buildDiscountFactors,
@@ -19,20 +20,6 @@ interface RoiReadoutProps {
   selection: BudgetSelection | null;
   assumptions: EconomicAssumptions;
   isLoading?: boolean;
-}
-
-const KRW_EOK = 100_000_000;
-
-function formatKrwBig(krw: number): string {
-  const sign = krw < 0 ? "-" : "";
-  const abs = Math.abs(krw);
-  if (abs >= KRW_EOK) {
-    const eok = abs / KRW_EOK;
-    return `${sign}${eok % 1 === 0 ? eok.toFixed(0) : eok.toFixed(1)}억`;
-  }
-  if (abs >= 10_000_000) return `${sign}${(abs / 10_000_000).toFixed(0)}천만`;
-  if (abs >= 10_000) return `${sign}${(abs / 10_000).toFixed(0)}만`;
-  return `${sign}${abs.toLocaleString()}`;
 }
 
 function gradeFromIrr(
@@ -150,7 +137,7 @@ export function RoiReadout({ selection, assumptions, isLoading }: RoiReadoutProp
               npv >= 0 ? "text-foreground" : "text-orange-600",
             )}
           >
-            {isLoading ? "…" : `₩${formatKrwBig(npv)}`}
+            {isLoading ? "…" : formatKrw(npv, lang)}
           </span>
         </div>
 
@@ -244,7 +231,7 @@ export function RoiReadout({ selection, assumptions, isLoading }: RoiReadoutProp
         <div className="flex justify-between mt-1 text-[9px] tabular-nums text-muted-foreground">
           <span>{t("1년차", "Yr 1")}</span>
           <span className="text-foreground/70">
-            ₩{formatKrwBig(minVal)} → ₩{formatKrwBig(maxVal)}
+            {formatKrw(minVal, lang)} → {formatKrw(maxVal, lang)}
           </span>
           <span>{t(`${horizon}년차`, `Yr ${horizon}`)}</span>
         </div>

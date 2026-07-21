@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 import { useSelectionStore } from "@/store/selection-store";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { MEP_SUB_CONFIGS } from "@/lib/layers/types";
 
 /**
@@ -21,7 +21,7 @@ import { MEP_SUB_CONFIGS } from "@/lib/layers/types";
  * 1~5 scale defined in equipment-specs.ts (D-04 / Pitfall 3).
  */
 export function EquipmentInfoPanel() {
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { t } = useT();
   const info = useSelectionStore((s) => s.selectedEquipment);
   const clearEquipment = useSelectionStore((s) => s.clearEquipment);
 
@@ -36,10 +36,10 @@ export function EquipmentInfoPanel() {
       <div className="flex items-start justify-between mb-2">
         <div>
           <div className="font-semibold text-sm">
-            {isKo ? specs.categoryKo : specs.categoryEn}
+            {t(specs.categoryKo, specs.categoryEn)}
           </div>
           <div className="text-[10px] text-muted-foreground mt-0.5">
-            {isKo ? subConfig.nameKo : subConfig.name}
+            {t(subConfig.nameKo, subConfig.name)}
             {" · "}
             {componentType}
             {floorNo !== null ? ` · ${floorNo}F` : ""}
@@ -48,8 +48,8 @@ export function EquipmentInfoPanel() {
         <button
           onClick={clearEquipment}
           className="p-1 hover:bg-muted rounded transition-colors"
-          title={isKo ? "닫기" : "Close"}
-          aria-label={isKo ? "닫기" : "Close"}
+          title={t("닫기", "Close")}
+          aria-label={t("닫기", "Close")}
         >
           <X className="h-3 w-3" />
         </button>
@@ -69,25 +69,23 @@ export function EquipmentInfoPanel() {
       {/* Spec rows — each row tagged with an inline amber "추정" badge (EQ-02) */}
       <div className="space-y-0.5">
         <SpecRow
-          label={isKo ? "용량" : "Capacity"}
+          label={t("용량", "Capacity")}
           value={specs.capacity}
         />
         <SpecRow
-          label={isKo ? "설치연도" : "Install Year"}
-          value={`${isKo ? "약 " : "~"}${specs.installYear}${isKo ? "년" : ""}`}
+          label={t("설치연도", "Install Year")}
+          value={`${t("약 ", "~")}${specs.installYear}${t("년", "")}`}
         />
         <SpecRow
-          label={isKo ? "연간 소비" : "Annual Use"}
-          value={`${specs.annualKwh.toLocaleString()} kWh/${isKo ? "년" : "yr"}`}
+          label={t("연간 소비", "Annual Use")}
+          value={`${specs.annualKwh.toLocaleString()} kWh/${t("년", "yr")}`}
         />
       </div>
 
       {/* Card-level amber disclaimer — second layer of EQ-02 enforcement */}
       <div className="mt-3 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1.5">
         <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed">
-          {isKo
-            ? "⚠ 모든 값은 추정치입니다 — 실측 데이터가 아닙니다."
-            : "⚠ All values are estimated — not measured data."}
+          {t("⚠ 모든 값은 추정치입니다 — 실측 데이터가 아닙니다.", "⚠ All values are estimated — not measured data.")}
         </p>
       </div>
     </div>

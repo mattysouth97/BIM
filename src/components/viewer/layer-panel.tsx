@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import { useLayerStore } from "@/store/layer-store";
 import { LAYER_CONFIGS, ALL_LAYER_IDS, MEP_SUB_IDS, MEP_SUB_CONFIGS } from "@/lib/layers/types";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { X, ChevronDown } from "lucide-react";
 
@@ -17,7 +17,7 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
   const toggleLayer = useLayerStore((s) => s.toggleLayer);
   const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
   const toggleMepSub = useLayerStore((s) => s.toggleMepSub);
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { t } = useT();
 
   const [mepExpanded, setMepExpanded] = useState(false);
 
@@ -28,7 +28,7 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <span className="text-sm font-semibold">
-          {isKo ? "디지털 트윈 레이어" : "Digital Twin Layers"}
+          {t("디지털 트윈 레이어", "Digital Twin Layers")}
         </span>
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose}>
           <X className="h-3.5 w-3.5" />
@@ -60,7 +60,7 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
                 {/* Layer name + description */}
                 <span className="flex-1 min-w-0">
                   <span className={`block ${active ? "font-medium" : "text-muted-foreground"}`}>
-                    {isKo ? config.nameKo : config.name}
+                    {t(config.nameKo, config.name)}
                   </span>
                   <span className="block text-[10px] text-muted-foreground leading-tight mt-0.5 truncate">
                     {config.description}
@@ -100,7 +100,7 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
                       }}
                     />
                     <span className={subActive ? "font-medium" : "text-muted-foreground"}>
-                      {isKo ? subConfig.nameKo : subConfig.name}
+                      {t(subConfig.nameKo, subConfig.name)}
                     </span>
                   </button>
                 );

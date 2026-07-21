@@ -8,7 +8,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { useMaterialStore } from "@/store/material-store";
 import { useActiveBuildingPk, useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import {
@@ -75,7 +75,7 @@ const PERFORMANCE_COLORS: Record<string, string> = {
  * certification, and efficiency rating for the current building.
  */
 export function PropertiesPanel() {
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { t } = useT();
 
   const buildingPk = useActiveBuildingPk();
 
@@ -208,9 +208,7 @@ export function PropertiesPanel() {
       <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground p-4">
         <Loader2 className="h-8 w-8 opacity-40 animate-spin" />
         <p className="text-xs text-center leading-relaxed">
-          {isKo
-            ? "건물 데이터를 불러오는 중..."
-            : "Loading building data..."}
+          {t("건물 데이터를 불러오는 중...", "Loading building data...")}
         </p>
       </div>
     );
@@ -228,7 +226,7 @@ export function PropertiesPanel() {
         {/* ── Section 1: Twin Fidelity ─────────────────────────────────── */}
         <AccordionItem value="fidelity">
           <AccordionTrigger className="text-xs font-semibold py-3">
-            {isKo ? "트윈 충실도" : "Twin Fidelity"}
+            {t("트윈 충실도", "Twin Fidelity")}
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-3">
@@ -248,14 +246,14 @@ export function PropertiesPanel() {
         {hasActual && calibration && (
           <AccordionItem value="calibration">
             <AccordionTrigger className="text-xs font-semibold py-3">
-              {isKo ? "에너지 보정" : "Energy Calibration"}
+              {t("에너지 보정", "Energy Calibration")}
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 text-xs">
                 {/* Overall delta */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "전체 차이" : "Overall Delta"}
+                    {t("전체 차이", "Overall Delta")}
                   </span>
                   <span
                     className={`font-semibold tabular-nums ${
@@ -272,18 +270,20 @@ export function PropertiesPanel() {
                 </div>
                 <p className="text-[10px] text-muted-foreground">
                   {calibration.overallDelta > 0
-                    ? isKo
-                      ? `예측보다 ${Math.abs(calibration.overallDelta).toFixed(0)}% 더 적게 사용`
-                      : `${Math.abs(calibration.overallDelta).toFixed(0)}% less than predicted`
-                    : isKo
-                      ? `예측보다 ${Math.abs(calibration.overallDelta).toFixed(0)}% 더 많이 사용`
-                      : `${Math.abs(calibration.overallDelta).toFixed(0)}% more than predicted`}
+                    ? t(
+                        `예측보다 ${Math.abs(calibration.overallDelta).toFixed(0)}% 더 적게 사용`,
+                        `${Math.abs(calibration.overallDelta).toFixed(0)}% less than predicted`,
+                      )
+                    : t(
+                        `예측보다 ${Math.abs(calibration.overallDelta).toFixed(0)}% 더 많이 사용`,
+                        `${Math.abs(calibration.overallDelta).toFixed(0)}% more than predicted`,
+                      )}
                 </p>
 
                 {/* Largest discrepancy */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "최대 차이 항목" : "Largest Discrepancy"}
+                    {t("최대 차이 항목", "Largest Discrepancy")}
                   </span>
                   <Badge variant="secondary" className="text-[10px]">
                     {calibration.largestDiscrepancy}
@@ -303,13 +303,13 @@ export function PropertiesPanel() {
         {weather.data && (
           <AccordionItem value="weather">
             <AccordionTrigger className="text-xs font-semibold py-3">
-              {isKo ? "기상 데이터" : "Weather Data"}
+              {t("기상 데이터", "Weather Data")}
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "난방도일 (HDD 18.3°C)" : "Heating Degree Days (18.3°C)"}
+                    {t("난방도일 (HDD 18.3°C)", "Heating Degree Days (18.3°C)")}
                   </span>
                   <span className="font-semibold tabular-nums">
                     {weather.data.hdd.toFixed(0)}
@@ -317,7 +317,7 @@ export function PropertiesPanel() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "냉방도일 (CDD 24°C)" : "Cooling Degree Days (24°C)"}
+                    {t("냉방도일 (CDD 24°C)", "Cooling Degree Days (24°C)")}
                   </span>
                   <span className="font-semibold tabular-nums">
                     {weather.data.cdd.toFixed(0)}
@@ -325,20 +325,22 @@ export function PropertiesPanel() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "연평균 기온" : "Mean Temperature"}
+                    {t("연평균 기온", "Mean Temperature")}
                   </span>
                   <span className="font-medium tabular-nums">
                     {weather.data.avgTemp.toFixed(1)}°C
                   </span>
                 </div>
                 <p className="text-[10px] text-muted-foreground/80 border-t pt-2 mt-1">
-                  {isKo
-                    ? `${weather.data.year}년 KMA ASOS 서울 관측 기준`
-                    : `${weather.data.year} KMA ASOS observations (Seoul station)`}
+                  {t(
+                    `${weather.data.year}년 KMA ASOS 서울 관측 기준`,
+                    `${weather.data.year} KMA ASOS observations (Seoul station)`,
+                  )}
                   {weather.data.dataCompleteness < 0.9 &&
-                    (isKo
-                      ? ` · 데이터 완전성 ${(weather.data.dataCompleteness * 100).toFixed(0)}% — 신뢰도 낮음`
-                      : ` · ${(weather.data.dataCompleteness * 100).toFixed(0)}% complete — low reliability`)}
+                    t(
+                      ` · 데이터 완전성 ${(weather.data.dataCompleteness * 100).toFixed(0)}% — 신뢰도 낮음`,
+                      ` · ${(weather.data.dataCompleteness * 100).toFixed(0)}% complete — low reliability`,
+                    )}
                 </p>
               </div>
             </AccordionContent>
@@ -349,25 +351,25 @@ export function PropertiesPanel() {
         {benchmark && (
           <AccordionItem value="benchmark">
             <AccordionTrigger className="text-xs font-semibold py-3">
-              {isKo ? "벤치마크 비교" : "Benchmark Comparison"}
+              {t("벤치마크 비교", "Benchmark Comparison")}
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 text-xs">
                 {/* Percentile */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "백분위" : "Percentile"}
+                    {t("백분위", "Percentile")}
                   </span>
                   <span className="font-semibold tabular-nums">
                     {Math.round(benchmark.percentile)}
-                    {isKo ? "번째 백분위" : "th percentile"}
+                    {t("번째 백분위", "th percentile")}
                   </span>
                 </div>
 
                 {/* Performance tier */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "성능 등급" : "Performance Tier"}
+                    {t("성능 등급", "Performance Tier")}
                   </span>
                   <span
                     className={`font-semibold capitalize ${
@@ -401,14 +403,14 @@ export function PropertiesPanel() {
         {certification && (
           <AccordionItem value="certification">
             <AccordionTrigger className="text-xs font-semibold py-3">
-              {isKo ? "녹색건축물 인증" : "Green Certification"}
+              {t("녹색건축물 인증", "Green Certification")}
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 text-xs">
                 {/* Score */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "획득 점수" : "Earned Points"}
+                    {t("획득 점수", "Earned Points")}
                   </span>
                   <span className="font-semibold tabular-nums">
                     {certification.earnedPoints.toFixed(1)} /{" "}
@@ -419,7 +421,7 @@ export function PropertiesPanel() {
                 {/* Grade */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "등급" : "Grade"}
+                    {t("등급", "Grade")}
                   </span>
                   <Badge
                     variant={
@@ -430,16 +432,17 @@ export function PropertiesPanel() {
                     }
                     className="text-[10px]"
                   >
-                    {isKo
-                      ? CERTIFICATION_GRADE_LABELS[certification.grade]?.ko
-                      : CERTIFICATION_GRADE_LABELS[certification.grade]?.en}
+                    {t(
+                      CERTIFICATION_GRADE_LABELS[certification.grade]?.ko ?? "",
+                      CERTIFICATION_GRADE_LABELS[certification.grade]?.en ?? "",
+                    )}
                   </Badge>
                 </div>
 
                 {/* Version toggle */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "기준 버전" : "Version"}
+                    {t("기준 버전", "Version")}
                   </span>
                   <div className="flex gap-1">
                     <button
@@ -478,7 +481,7 @@ export function PropertiesPanel() {
         {efficiencyRating && (
           <AccordionItem value="efficiency">
             <AccordionTrigger className="text-xs font-semibold py-3">
-              {isKo ? "에너지효율등급" : "Efficiency Rating"}
+              {t("에너지효율등급", "Efficiency Rating")}
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 text-xs">
@@ -499,9 +502,7 @@ export function PropertiesPanel() {
                       {GRADE_LABELS[efficiencyRating.grade]}
                     </span>
                     <span className="text-[10px] text-muted-foreground">
-                      {isKo
-                        ? "건축물 에너지효율등급"
-                        : "Building Energy Efficiency"}
+                      {t("건축물 에너지효율등급", "Building Energy Efficiency")}
                     </span>
                   </div>
                 </div>
@@ -509,7 +510,7 @@ export function PropertiesPanel() {
                 {/* Primary energy demand */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "1차 에너지 수요" : "Primary Energy Demand"}
+                    {t("1차 에너지 수요", "Primary Energy Demand")}
                   </span>
                   <span className="font-semibold tabular-nums">
                     {efficiencyRating.primaryEnergyPerArea.toFixed(1)} kWh/m

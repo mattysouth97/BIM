@@ -8,6 +8,7 @@
 import { useId } from "react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
+import { formatKrw } from "@/lib/twin-formatters";
 
 interface CapexInputProps {
   /** Current CAPEX budget in KRW. */
@@ -25,19 +26,6 @@ interface CapexInputProps {
 }
 
 const KRW_MAN = 10_000;        // 만 = 10,000 KRW
-const KRW_EOK = 100_000_000;   // 억 = 100,000,000 KRW
-
-/** Format KRW into 억/만 idiom that Korean users read natively. */
-function formatKrw(krw: number): string {
-  if (krw >= KRW_EOK) {
-    const eok = krw / KRW_EOK;
-    return `${eok % 1 === 0 ? eok.toFixed(0) : eok.toFixed(1)}억`;
-  }
-  if (krw >= KRW_MAN) {
-    return `${(krw / KRW_MAN).toFixed(0)}만`;
-  }
-  return krw.toLocaleString();
-}
 
 export function CapexInput({
   value,
@@ -49,7 +37,7 @@ export function CapexInput({
 }: CapexInputProps) {
   const sliderId = useId();
   const numericId = useId();
-  const { t } = useT(); // P2-06
+  const { t, lang } = useT(); // P2-06
 
   // Snap to common Korean budget tiers for tick marks.
   const tickMarks = [
@@ -76,7 +64,7 @@ export function CapexInput({
           {t("투자 예산 (CAPEX)", "Investment budget (CAPEX)")}
         </label>
         <span className="text-[18px] font-semibold tabular-nums text-foreground leading-tight">
-          ₩{formatKrw(value)}
+          {formatKrw(value, lang)}
         </span>
       </div>
 
@@ -117,7 +105,7 @@ export function CapexInput({
                   : "text-muted-foreground",
               )}
             >
-              {formatKrw(tick)}
+              {formatKrw(tick, lang)}
             </button>
           ))}
         </div>

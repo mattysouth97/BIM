@@ -11,7 +11,7 @@ import {
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import { useEditorModeStore, type EditorMode } from "@/store/editor-mode-store";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 
 // ---------------------------------------------------------------------------
 // Mode metadata
@@ -65,7 +65,7 @@ const MODES: ModeDescriptor[] = [
 export function ModeIndicator() {
   const currentMode = useEditorModeStore((s) => s.currentMode);
   const setMode = useEditorModeStore((s) => s.setMode);
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { lang } = useT();
 
   const active = MODES.find((m) => m.mode === currentMode) ?? MODES[0];
   const { Icon } = active;
@@ -78,7 +78,7 @@ export function ModeIndicator() {
           className="h-6 gap-1 text-[10px] cursor-pointer select-none hover:bg-secondary/80 transition-colors"
         >
           <Icon className="h-3 w-3" />
-          {isKo ? active.labelKo : active.labelEn}
+          {lang === "ko" ? active.labelKo : active.labelEn}
         </Badge>
       </DropdownMenuTrigger>
 
@@ -90,7 +90,7 @@ export function ModeIndicator() {
             className={mode === currentMode ? "bg-accent text-accent-foreground" : ""}
           >
             <ItemIcon className="mr-2 h-3.5 w-3.5" />
-            {isKo ? labelKo : labelEn}
+            {lang === "ko" ? labelKo : labelEn}
             <DropdownMenuShortcut>{shortcut}</DropdownMenuShortcut>
           </DropdownMenuItem>
         ))}

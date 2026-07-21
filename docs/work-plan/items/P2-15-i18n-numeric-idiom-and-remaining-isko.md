@@ -3,8 +3,8 @@ id: P2-15
 title: i18n tail — localize Korean numeric idiom (억/만/년) and migrate remaining isKo sites to useT
 priority: P2
 area: ux
-status: not-started
-owner: unassigned
+status: done
+owner: claude-fable-5-session
 effort: M
 created: 2026-07-21
 updated: 2026-07-21
@@ -44,7 +44,11 @@ P2-06 explicitly deferred as incremental.
 - **Gates**: `pnpm test`; `pnpm lint`; `pnpm build`; manual KO/EN toggle sweep
   confirming no "억/만/년" leaks in English.
 - **Acceptance criteria**:
-  - [ ] Twin numeric formatters are language-aware (no 억/만/년 in English)
-  - [ ] Remaining isKo sites migrated to useT
+  - [x] Twin numeric formatters are language-aware (no 억/만/년 in English) —
+        `src/lib/twin-formatters.ts` (`formatKrw(krw, lang)` / `formatYears(years, lang)`),
+        ko output byte-identical, en uses ₩250M / 3.0 yr; unit-tested.
+  - [x] Remaining isKo sites migrated to useT — `grep -rc "isKo" src` is now 0
+        outside one explanatory comment in `src/lib/i18n.ts` (was ~230 occurrences
+        across 13 components: upload stage, viewer config-tabs, energy panels).
 - **Done when**: the KO/EN toggle produces zero mixed-language output anywhere,
   including numeric idiom.

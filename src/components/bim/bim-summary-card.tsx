@@ -3,7 +3,7 @@
 import type { BrTitleInfo, BrRecapTitleInfo, BrFloorInfo } from "@/lib/types";
 import { formatArea, formatDate, formatPercent } from "@/lib/constants";
 import { copyBimJson } from "@/lib/export";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,13 +77,12 @@ export function BimSummaryCard({
   floors,
   loading,
 }: BimSummaryCardProps) {
-  const language = useAppStore((s) => s.language);
-  const isKo = language === "ko";
+  const { t } = useT();
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
-        <p>{isKo ? "데이터 로딩 중..." : "Loading data..."}</p>
+        <p>{t("데이터 로딩 중...", "Loading data...")}</p>
       </div>
     );
   }
@@ -91,7 +90,7 @@ export function BimSummaryCard({
   if (!title) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
-        <p>{isKo ? "건물 데이터가 없습니다." : "No building data available."}</p>
+        <p>{t("건물 데이터가 없습니다.", "No building data available.")}</p>
       </div>
     );
   }
@@ -101,9 +100,9 @@ export function BimSummaryCard({
   const handleCopy = async () => {
     const ok = await copyBimJson(bimData);
     if (ok) {
-      toast.success(isKo ? "BIM JSON 복사 완료" : "BIM JSON copied to clipboard");
+      toast.success(t("BIM JSON 복사 완료", "BIM JSON copied to clipboard"));
     } else {
-      toast.error(isKo ? "복사 실패" : "Failed to copy");
+      toast.error(t("복사 실패", "Failed to copy"));
     }
   };
 
@@ -114,13 +113,13 @@ export function BimSummaryCard({
         <div className="flex items-center gap-3">
           <Building2 className="size-5 text-primary" />
           <h3 className="text-lg font-semibold">
-            {isKo ? "BIM 요약 데이터" : "BIM Summary Data"}
+            {t("BIM 요약 데이터", "BIM Summary Data")}
           </h3>
           <Badge variant="outline">IFC-Ready</Badge>
         </div>
         <Button onClick={handleCopy} variant="outline" size="sm" className="gap-2">
           <Copy className="size-4" />
-          {isKo ? "JSON 복사" : "Copy JSON"}
+          {t("JSON 복사", "Copy JSON")}
         </Button>
       </div>
 
@@ -129,15 +128,15 @@ export function BimSummaryCard({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              {isKo ? "건물 정보" : "Building Info"}
+              {t("건물 정보", "Building Info")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <Row label={isKo ? "건물명" : "Name"} value={title.bldNm || "-"} />
-            <Row label={isKo ? "주소" : "Address"} value={title.platPlcNm || "-"} />
-            <Row label={isKo ? "용도" : "Use"} value={title.mainPurpsCdNm || "-"} />
-            <Row label={isKo ? "구조" : "Structure"} value={title.strctCdNm || "-"} />
-            <Row label={isKo ? "지붕" : "Roof"} value={title.roofCdNm || "-"} />
+            <Row label={t("건물명", "Name")} value={title.bldNm || "-"} />
+            <Row label={t("주소", "Address")} value={title.platPlcNm || "-"} />
+            <Row label={t("용도", "Use")} value={title.mainPurpsCdNm || "-"} />
+            <Row label={t("구조", "Structure")} value={title.strctCdNm || "-"} />
+            <Row label={t("지붕", "Roof")} value={title.roofCdNm || "-"} />
           </CardContent>
         </Card>
 
@@ -145,20 +144,20 @@ export function BimSummaryCard({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              {isKo ? "규모 정보" : "Envelope"}
+              {t("규모 정보", "Envelope")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <Row
-              label={isKo ? "지상/지하" : "Floors"}
+              label={t("지상/지하", "Floors")}
               value={`${title.grndFlrCnt}F / B${title.ugrndFlrCnt}`}
             />
-            <Row label={isKo ? "높이" : "Height"} value={Number(title.heit) > 0 ? `${title.heit}m` : "-"} />
-            <Row label={isKo ? "연면적" : "Total Area"} value={formatArea(title.totArea)} />
-            <Row label={isKo ? "건축면적" : "Building Area"} value={formatArea(title.archArea)} />
-            <Row label={isKo ? "대지면적" : "Site Area"} value={formatArea(title.platArea)} />
-            <Row label={isKo ? "건폐율" : "Coverage"} value={formatPercent(title.bcRat)} />
-            <Row label={isKo ? "용적률" : "FAR"} value={formatPercent(title.vlRat)} />
+            <Row label={t("높이", "Height")} value={Number(title.heit) > 0 ? `${title.heit}m` : "-"} />
+            <Row label={t("연면적", "Total Area")} value={formatArea(title.totArea)} />
+            <Row label={t("건축면적", "Building Area")} value={formatArea(title.archArea)} />
+            <Row label={t("대지면적", "Site Area")} value={formatArea(title.platArea)} />
+            <Row label={t("건폐율", "Coverage")} value={formatPercent(title.bcRat)} />
+            <Row label={t("용적률", "FAR")} value={formatPercent(title.vlRat)} />
           </CardContent>
         </Card>
 
@@ -166,13 +165,13 @@ export function BimSummaryCard({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              {isKo ? "주요 일자" : "Key Dates"}
+              {t("주요 일자", "Key Dates")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <Row label={isKo ? "허가일" : "Permit"} value={formatDate(title.pmsDay)} />
-            <Row label={isKo ? "착공일" : "Construction"} value={formatDate(title.stcnsDay)} />
-            <Row label={isKo ? "사용승인일" : "Approval"} value={formatDate(title.useAprDay)} />
+            <Row label={t("허가일", "Permit")} value={formatDate(title.pmsDay)} />
+            <Row label={t("착공일", "Construction")} value={formatDate(title.stcnsDay)} />
+            <Row label={t("사용승인일", "Approval")} value={formatDate(title.useAprDay)} />
           </CardContent>
         </Card>
 
@@ -180,16 +179,16 @@ export function BimSummaryCard({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              {isKo ? "층별 요약" : "Floor Schedule"}{" "}
+              {t("층별 요약", "Floor Schedule")}{" "}
               <span className="text-xs font-normal">
-                ({floors.length} {isKo ? "개 층" : "floors"})
+                ({floors.length} {t("개 층", "floors")})
               </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm">
             {floors.length === 0 ? (
               <p className="text-muted-foreground">
-                {isKo ? "층별 데이터 없음" : "No floor data"}
+                {t("층별 데이터 없음", "No floor data")}
               </p>
             ) : (
               <div className="max-h-48 space-y-1 overflow-y-auto">
@@ -218,7 +217,7 @@ export function BimSummaryCard({
         <div className="mb-2 flex items-center gap-2">
           <FileJson className="size-4 text-muted-foreground" />
           <span className="text-sm font-medium text-muted-foreground">
-            {isKo ? "IFC 생성용 JSON" : "JSON for IFC Generation"}
+            {t("IFC 생성용 JSON", "JSON for IFC Generation")}
           </span>
         </div>
         <pre className="max-h-80 overflow-auto rounded-lg border bg-muted/50 p-4 text-xs leading-relaxed">

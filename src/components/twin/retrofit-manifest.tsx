@@ -11,6 +11,7 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
+import { formatKrw, formatYears } from "@/lib/twin-formatters";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
 
 interface RetrofitManifestProps {
@@ -46,28 +47,9 @@ const CATEGORY_META: Record<
   },
 };
 
-const KRW_EOK = 100_000_000;
-
-function formatKrw(krw: number): string {
-  const sign = krw < 0 ? "-" : "";
-  const abs = Math.abs(krw);
-  if (abs >= KRW_EOK) {
-    const eok = abs / KRW_EOK;
-    return `${sign}${eok % 1 === 0 ? eok.toFixed(0) : eok.toFixed(1)}억`;
-  }
-  if (abs >= 10_000_000) return `${sign}${(abs / 10_000_000).toFixed(0)}천만`;
-  if (abs >= 10_000) return `${sign}${(abs / 10_000).toFixed(0)}만`;
-  return `${sign}${abs.toLocaleString()}`;
-}
-
 function formatPercent(n: number | null | undefined, decimals = 1): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return "—";
   return `${(n * 100).toFixed(decimals)}%`;
-}
-
-function formatYears(years: number | undefined): string {
-  if (years === undefined || !Number.isFinite(years)) return "—";
-  return `${years.toFixed(1)}년`;
 }
 
 export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProps) {
@@ -233,7 +215,7 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
                             </span>
                           </div>
                           <span className="text-[10.5px] tabular-nums text-foreground/70 shrink-0">
-                            ₩{formatKrw(m.estimatedCost)}
+                            {formatKrw(m.estimatedCost, lang)}
                           </span>
                         </div>
 
@@ -246,7 +228,7 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
                                 npv >= 0 ? "text-emerald-600" : "text-orange-600",
                               )}
                             >
-                              ₩{formatKrw(npv)}
+                              {formatKrw(npv, lang)}
                             </span>
                           </span>
                           <span>
@@ -254,7 +236,7 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
                           </span>
                           <span className="text-right">
                             {t("회수", "Payback")}{" "}
-                            <span className="text-foreground/80">{formatYears(fin?.discountedPayback)}</span>
+                            <span className="text-foreground/80">{formatYears(fin?.discountedPayback, lang)}</span>
                           </span>
                         </div>
                       </li>

@@ -14,7 +14,7 @@ import { useWorkspaceStore } from "@/store/workspace-store";
 import { applyOverrides } from "@/lib/procedural/recipe";
 import { Loader2 } from "lucide-react";
 import { createSceneProjection } from "@/lib/gis/gis-transform";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { formatArea } from "@/lib/constants";
 import type { CampusData } from "@/lib/campus/campus-types";
 import { computeSiteLayout } from "@/lib/campus/site-layout";
@@ -329,7 +329,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     [baseRecipe, recipeOverrides]
   );
 
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { t } = useT();
 
   const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 1.8;
 
@@ -477,15 +477,15 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           <p className="text-sm font-semibold">
             {selectedFloor.label}
             <span className="ml-2 text-xs font-normal text-muted-foreground">
-              ({selectedFloor.type === "below" ? (isKo ? "지하" : "Underground") : (isKo ? "지상" : "Above ground")})
+              ({selectedFloor.type === "below" ? t("지하", "Underground") : t("지상", "Above ground")})
             </span>
           </p>
           <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-            <span>{isKo ? "면적" : "Area"}</span>
+            <span>{t("면적", "Area")}</span>
             <span className="font-medium text-foreground">{formatArea(selectedFloor.area)}</span>
-            <span>{isKo ? "용도" : "Use"}</span>
+            <span>{t("용도", "Use")}</span>
             <span className="font-medium text-foreground">{selectedFloor.use || "-"}</span>
-            <span>{isKo ? "구조" : "Structure"}</span>
+            <span>{t("구조", "Structure")}</span>
             <span className="font-medium text-foreground">{selectedFloor.structure || "-"}</span>
           </div>
         </div>
@@ -493,7 +493,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
 
       {/* Instructions text — bottom-right */}
       <div className="absolute bottom-3 right-3 z-10 text-[10px] text-muted-foreground/60">
-        {isKo ? "클릭: 층 선택 · 드래그: 회전 · 스크롤: 줌" : "Click: select floor · Drag: rotate · Scroll: zoom"}
+        {t("클릭: 층 선택 · 드래그: 회전 · 스크롤: 줌", "Click: select floor · Drag: rotate · Scroll: zoom")}
       </div>
 
       {/* Twin-stage data-product overlay — release rail, prediction readout,

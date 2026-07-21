@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ const ACCEPTED_EXTENSIONS = [".ifc", ".gltf", ".glb"];
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 export function ModelUploader({ open, onOpenChange, onFileLoaded }: ModelUploaderProps) {
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { t } = useT();
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,13 +30,13 @@ export function ModelUploader({ open, onOpenChange, onFileLoaded }: ModelUploade
 
     const ext = file.name.toLowerCase().slice(file.name.lastIndexOf("."));
     if (!ACCEPTED_EXTENSIONS.includes(ext)) {
-      setError(isKo ? `지원하지 않는 파일 형식: ${ext}` : `Unsupported file type: ${ext}`);
+      setError(t(`지원하지 않는 파일 형식: ${ext}`, `Unsupported file type: ${ext}`));
       setLoading(false);
       return;
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      setError(isKo ? "파일 크기가 100MB를 초과합니다" : "File exceeds 100MB limit");
+      setError(t("파일 크기가 100MB를 초과합니다", "File exceeds 100MB limit"));
       setLoading(false);
       return;
     }
@@ -48,10 +48,10 @@ export function ModelUploader({ open, onOpenChange, onFileLoaded }: ModelUploade
       setLoadedFile(file.name);
       setLoading(false);
     } catch {
-      setError(isKo ? "파일을 읽을 수 없습니다" : "Failed to read file");
+      setError(t("파일을 읽을 수 없습니다", "Failed to read file"));
       setLoading(false);
     }
-  }, [isKo, onFileLoaded]);
+  }, [t, onFileLoaded]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -71,12 +71,13 @@ export function ModelUploader({ open, onOpenChange, onFileLoaded }: ModelUploade
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileBox className="h-5 w-5" />
-            {isKo ? "3D 모델 업로드" : "Upload 3D Model"}
+            {t("3D 모델 업로드", "Upload 3D Model")}
           </DialogTitle>
           <DialogDescription>
-            {isKo
-              ? "IFC, glTF, GLB 파일을 업로드하여 실제 건축 모델을 표시합니다."
-              : "Upload IFC, glTF, or GLB files to display the actual architectural model."}
+            {t(
+              "IFC, glTF, GLB 파일을 업로드하여 실제 건축 모델을 표시합니다.",
+              "Upload IFC, glTF, or GLB files to display the actual architectural model.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -94,11 +95,11 @@ export function ModelUploader({ open, onOpenChange, onFileLoaded }: ModelUploade
           <Upload className={`h-10 w-10 ${dragOver ? "text-primary" : "text-muted-foreground/50"}`} />
           <div className="text-center">
             <p className="text-sm font-medium">
-              {isKo ? "파일을 끌어다 놓거나" : "Drag and drop a file, or"}
+              {t("파일을 끌어다 놓거나", "Drag and drop a file, or")}
             </p>
             <label className="cursor-pointer">
               <span className="text-sm text-primary underline">
-                {isKo ? "파일 선택" : "browse"}
+                {t("파일 선택", "browse")}
               </span>
               <input
                 type="file"
@@ -119,7 +120,7 @@ export function ModelUploader({ open, onOpenChange, onFileLoaded }: ModelUploade
         {loading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            {isKo ? "모델 로딩 중..." : "Loading model..."}
+            {t("모델 로딩 중...", "Loading model...")}
           </div>
         )}
 
@@ -139,7 +140,7 @@ export function ModelUploader({ open, onOpenChange, onFileLoaded }: ModelUploade
 
         <div className="flex justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {isKo ? "닫기" : "Close"}
+            {t("닫기", "Close")}
           </Button>
         </div>
       </DialogContent>
