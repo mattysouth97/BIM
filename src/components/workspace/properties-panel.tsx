@@ -24,6 +24,9 @@ import { assessFidelity } from "@/lib/fidelity/fidelity-assessor";
 import { generateUpgradeChecklist } from "@/lib/fidelity/upgrade-checklist";
 import { FidelityBadge } from "@/components/twin/fidelity-badge";
 import { FidelityDetailPanel } from "@/components/twin/fidelity-detail-panel";
+import { deriveInputProvenance } from "@/lib/fidelity/input-provenance";
+import { loadCalibration } from "@/lib/fidelity/building-calibration-loader";
+import type { FootprintSource } from "@/lib/fidelity/input-provenance";
 import { calibrateEnergy } from "@/lib/energy/calibration";
 import { compareToBenchmark } from "@/lib/energy/benchmark-comparison";
 import {
@@ -69,12 +72,33 @@ const PERFORMANCE_COLORS: Record<string, string> = {
   poor: "text-red-500",
 };
 
+interface PropertiesPanelProps {
+  /**
+   * P2-27: footprint source from VWorld or CAD ingest — threaded from the
+   * page level so no second fetch is needed. Absent for CAD-draft buildings.
+   */
+  footprintSource?: FootprintSource;
+  /**
+   * P2-27: ledger 'heit' field (meters). AFF-6: 0 means unavailable.
+   * Threaded from the page's titleData.heit so we don't re-fetch.
+   */
+  ledgerHeit?: number;
+  /**
+   * P2-27: VWorld measured building height (buld_hg, meters). Null when absent.
+   */
+  measuredHeightM?: number | null;
+}
+
 /**
  * Properties panel — renders in the right dock of WorkspaceShell.
  * Shows analytics dashboard with fidelity, calibration, benchmark,
  * certification, and efficiency rating for the current building.
  */
-export function PropertiesPanel() {
+export function PropertiesPanel({
+  footprintSource,
+  ledgerHeit,
+  measuredHeightM,
+}: PropertiesPanelProps = {}) {
   const { t } = useT();
 
   const buildingPk = useActiveBuildingPk();
@@ -115,6 +139,19 @@ export function PropertiesPanel() {
     () => generateUpgradeChecklist(fidelityReport),
     [fidelityReport]
   );
+
+  // ── Input provenance (P2-27) ──────────────────────────────────────────────
+  // calibrationApplied: sync registry lookup — no fetch (loadCalibration returns
+  // null for unknown buildingPk, which is the expected path for most buildings).
+  const inputProvenance = useMemo(() => {
+    const calibrationApplied = !!loadCalibration(buildingPk);
+    return deriveInputProvenance({
+      footprintSource: footprintSource ?? null,
+      ledgerHeit: ledgerHeit ?? 0,
+      measuredHeightM: measuredHeightM ?? null,
+      calibrationApplied,
+    });
+  }, [buildingPk, footprintSource, ledgerHeit, measuredHeightM]);
 
   // ── Calibration ──────────────────────────────────────────────────────────
 
@@ -233,10 +270,12 @@ export function PropertiesPanel() {
               <FidelityBadge
                 level={fidelityReport.level}
                 completeness={fidelityReport.completeness}
+                provenance={inputProvenance}
               />
               <FidelityDetailPanel
                 report={fidelityReport}
                 checklist={upgradeChecklist}
+                provenance={inputProvenance}
               />
             </div>
           </AccordionContent>

@@ -15,12 +15,19 @@ import { UploadStage } from "@/components/upload/upload-stage";
 import { ParamsStage } from "@/components/params/params-stage";
 import { Button } from "@/components/ui/button";
 import { PanelLeft, PanelRight } from "lucide-react";
+import type { FootprintSource } from "@/lib/fidelity/input-provenance";
 
 interface WorkspaceShellProps {
   children: React.ReactNode;
+  /** P2-27: footprint source threaded from the page to PropertiesPanel. */
+  footprintSource?: FootprintSource;
+  /** P2-27: ledger heit (meters, 0 = unavailable per AFF-6) threaded from page. */
+  ledgerHeit?: number;
+  /** P2-27: VWorld measured building height (meters) threaded from page. */
+  measuredHeightM?: number | null;
 }
 
-export function WorkspaceShell({ children }: WorkspaceShellProps) {
+export function WorkspaceShell({ children, footprintSource, ledgerHeit, measuredHeightM }: WorkspaceShellProps) {
   const hydrated = useHydration();
   useOnboardingTour();
 
@@ -114,7 +121,11 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
               minHeight={200}
               dataTour="right-dock"
             >
-              <PropertiesPanel />
+              <PropertiesPanel
+                footprintSource={footprintSource}
+                ledgerHeit={ledgerHeit}
+                measuredHeightM={measuredHeightM}
+              />
             </FloatingPanel>
           </>
         )}

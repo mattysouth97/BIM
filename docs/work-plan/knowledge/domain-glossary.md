@@ -108,6 +108,14 @@
   (`src/components/twin/fidelity-badge.tsx`): each of `footprint`, `heights`, and `facade`
   is `"measured"` (comes from a real data source) or `"estimated"` (era-recipe default or
   zero-height unavailability). Displayed in the badge tooltip alongside the L1/L2/L3 tier.
+  Derived by `deriveInputProvenance()` (`src/lib/fidelity/input-provenance.ts`, P2-27).
+- **deriveInputProvenance** — pure function (`src/lib/fidelity/input-provenance.ts`, P2-27)
+  mapping `{ footprintSource, ledgerHeit, measuredHeightM, calibrationApplied }` to
+  `InputProvenance`. Rules: footprint `'measured'` for `cad | ifc | building` (actual
+  building outline); `'estimated'` for `parcel` (lot boundary — AFF-6) and `null` (era box).
+  Heights `'measured'` when any of `ledgerHeit > 0`, `measuredHeightM > 0`, or
+  `calibrationApplied`. Facade `'measured'` only when `calibrationApplied` (P2-12
+  calibration overrides carry traceable source documents).
 - **slab overhang** — `BuildingRecipe.slab.overhang` (meters): the distance each floor slab
   extends beyond the facade plane. Zero means flush with the wall face. Non-zero values are
   applied by `generateSlabs` (`src/lib/procedural/structure-generator.ts`) by scaling the

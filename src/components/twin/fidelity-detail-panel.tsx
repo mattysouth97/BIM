@@ -17,11 +17,14 @@ import type {
   FidelityReport,
   UpgradeChecklist,
 } from '@/lib/fidelity/fidelity-types';
+import type { InputProvenance } from '@/components/twin/fidelity-badge';
 
 interface FidelityDetailPanelProps {
   report: FidelityReport;
   checklist: UpgradeChecklist;
   onUpgradeClick?: () => void;
+  /** P2-27: per-input provenance to forward to the badge in the accordion trigger. */
+  provenance?: InputProvenance;
 }
 
 // Fixed ordered list of categories to display
@@ -91,6 +94,7 @@ export function FidelityDetailPanel({
   report,
   checklist,
   onUpgradeClick,
+  provenance,
 }: FidelityDetailPanelProps) {
   const nextLevel = checklist.nextLevel;
   const completenessPercent = Math.round(report.completeness * 100);
@@ -104,6 +108,7 @@ export function FidelityDetailPanel({
               <FidelityBadge
                 level={report.level}
                 completeness={report.completeness}
+                provenance={provenance}
               />
             </div>
           </AccordionTrigger>

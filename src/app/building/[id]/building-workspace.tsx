@@ -101,7 +101,11 @@ function LedgerWorkspace({ id }: { id: string }) {
       />
 
       {/* Workspace shell — viewport-dominant resizable layout */}
-      <WorkspaceShell>
+      <WorkspaceShell
+        footprintSource={footprintResult.data?.source ?? null}
+        ledgerHeit={titleData?.heit ?? 0}
+        measuredHeightM={footprintResult.data?.attributes?.height ?? null}
+      >
         {/* Error overlay */}
         {isError && (
           <div className="absolute top-0 inset-x-0 z-10 m-3">
