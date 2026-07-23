@@ -24,6 +24,7 @@ const IFCWINDOW = 3304561284;
 const IFCOPENINGELEMENT = 3588315303;
 const IFCRELVOIDSELEMENT = 1401173127;
 const IFCRELFILLSELEMENT = 3940055652;
+const IFCDOOR = 395920057;
 
 // Minimal shape of the bits of web-ifc's IfcAPI this test actually calls —
 // avoids importing web-ifc's own types at module scope so the file still
@@ -102,7 +103,7 @@ describe("generateIfc real write→read round-trip (web-ifc-node.wasm)", () => {
     }
   });
 
-  it("round-trips real IFCWINDOW/IFCOPENINGELEMENT counts (equal, >0) for a facade-bearing input", async () => {
+  it("round-trips real IFCWINDOW/IFCDOOR/IFCOPENINGELEMENT counts for a facade-bearing input", async () => {
     const session: IfcWriteSession = {
       createModel: () => api.CreateModel({ schema: "IFC4" }),
       writeLine: (modelId: number, lineObject: RawIfcLine) => {
@@ -135,22 +136,34 @@ describe("generateIfc real write→read round-trip (web-ifc-node.wasm)", () => {
     expect(windowConfidences.every((e) => e.sconf < 0.85)).toBe(true);
     expect(result.hitlFlags.some((f) => f.kind === "window")).toBe(true);
 
+    // Slice-3: the entrance door is likewise an estimated placement — exactly
+    // one, scored the same honest way as windows, and always HITL-flagged.
+    const doorConfidences = result.elements.filter((e) => e.kind === "door");
+    expect(doorConfidences).toHaveLength(1);
+    expect(doorConfidences[0].sconf).toBeLessThan(0.85);
+    expect(result.hitlFlags.some((f) => f.kind === "door")).toBe(true);
+
     const openingsCheck = result.validation.checks.find((c) => c.id === "openings-hosted");
     expect(openingsCheck?.passed).toBe(true);
 
     const readModelId = api.OpenModel(result.ifcBytes);
     try {
       const windowCount = api.GetLineIDsWithType(readModelId, IFCWINDOW).size();
+      const doorCount = api.GetLineIDsWithType(readModelId, IFCDOOR).size();
       const openingCount = api.GetLineIDsWithType(readModelId, IFCOPENINGELEMENT).size();
       const voidsCount = api.GetLineIDsWithType(readModelId, IFCRELVOIDSELEMENT).size();
       const fillsCount = api.GetLineIDsWithType(readModelId, IFCRELFILLSELEMENT).size();
 
       expect(windowCount).toBeGreaterThan(0);
-      expect(openingCount).toBe(windowCount);
-      expect(voidsCount).toBe(windowCount);
-      expect(fillsCount).toBe(windowCount);
+      expect(doorCount).toBe(1);
+      // Openings/voids/fills cover both windows AND the one entrance door,
+      // hosted via the exact same IfcOpeningElement/IfcRelVoidsElement/
+      // IfcRelFillsElement machinery.
+      expect(openingCount).toBe(windowCount + 1);
+      expect(voidsCount).toBe(windowCount + 1);
+      expect(fillsCount).toBe(windowCount + 1);
 
-      // File still re-opens cleanly and the non-window entities are intact.
+      // File still re-opens cleanly and the non-window/door entities are intact.
       expect(api.GetLineIDsWithType(readModelId, IFCWALLSTANDARDCASE).size()).toBe(8);
       expect(api.GetLineIDsWithType(readModelId, IFCSLAB).size()).toBe(2);
     } finally {

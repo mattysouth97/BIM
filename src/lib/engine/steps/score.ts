@@ -55,7 +55,10 @@ export function score(
 
   for (const element of elements) {
     let geomScore = GEOM_SCORE[element.geomSource] ?? 0;
-    if (element.kind === "window") {
+    // Slice-3: the entrance door is a heuristic placement exactly like a
+    // window (never measured) — scored identically via the same
+    // FACADE_SCORE table so it can never clear HITL_THRESHOLD either.
+    if (element.kind === "window" || element.kind === "door") {
       const facadeScore = FACADE_SCORE[element.facadeSource ?? "era-estimate"] ?? 0;
       geomScore = Math.min(geomScore, facadeScore);
     }
@@ -82,11 +85,13 @@ export function score(
       const weakestDriver =
         element.kind === "window"
           ? "facade (estimated window placement)"
-          : topologyPenalty > 0
-            ? "topology"
-            : geomScore <= heightScore
-              ? "geometry"
-              : "height";
+          : element.kind === "door"
+            ? "entrance (estimated door placement)"
+            : topologyPenalty > 0
+              ? "topology"
+              : geomScore <= heightScore
+                ? "geometry"
+                : "height";
       hitlFlags.push({
         expressId: element.expressId,
         kind: element.kind,

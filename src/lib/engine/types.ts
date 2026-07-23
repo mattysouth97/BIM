@@ -2,7 +2,7 @@ export type SourceKind =
   | "cad-exact" | "cad-converted" | "cad-traced"
   | "vworld-measured" | "ledger" | "manual" | "era-estimate";
 
-export type ElementKind = "wall" | "slab" | "window";
+export type ElementKind = "wall" | "slab" | "window" | "door";
 
 /** Window-placement parameters (Slice-2), sourced from the era-based facade recipe. */
 export interface FacadeParams {
@@ -115,8 +115,12 @@ export const ENGINE_CONSTANTS = {
   // Windows are placed from era-based facade defaults (never measured), so
   // their geometry confidence is capped low — this MUST keep window sconf
   // below HITL_THRESHOLD (0.85) so they are always flagged, never presented
-  // as measured. See score.ts's FACADE_SCORE table.
+  // as measured. See score.ts's FACADE_SCORE table. This applies to ALL
+  // heuristic-placed openings — windows AND the Slice-3 entrance door.
   FACADE_ESTIMATE_SCORE: 0.5,
+  // Slice-3: the single ground-floor entrance door's size — a heuristic
+  // placement (centered on the longest footprint edge), never measured.
+  DEFAULT_DOOR: { width: 1.2, height: 2.1 },
 } as const;
 
 /** Era-default window placement (Slice-2) — used when no finer facade source is known. */

@@ -22,9 +22,19 @@
 //
 // Scope note (honest about what's still deferred): this writer targets a
 // structurally valid IFC4 file sufficient for this pipeline's own validate/score
-// steps and for loading in a viewer — it does not implement IfcOwnerHistory or
-// IfcDoor openings (deferred per the plan). It DOES emit an IfcUnitAssignment
-// (metres / square metres) per spec §4 — see A1 below.
+// steps and for loading in a viewer — it does not implement IfcOwnerHistory
+// (deferred per the plan). It DOES emit an IfcUnitAssignment (metres / square
+// metres) per spec §4 — see A1 below.
+//
+// Slice-3 adds a single ground-floor entrance IfcDoor: on storey 0 only,
+// after that storey's windows, one door is hosted via the same void/fill
+// machinery as windows, centered on pickEntranceEdge()'s edge (the outer
+// ring's longest edge — ties broken by the lowest index). The door is a
+// heuristic placement (no measured entrance data) and is scored exactly like
+// a window (see score.ts) — always HITL-flagged, never presented as measured.
+// Honest simplification: the door may visually overlap a window placed on
+// the same entrance edge — Slice-3 scope is honest hosting + provenance, not
+// clash-free detailed geometry.
 //
 // Entity field names and express type codes below were verified against
 // node_modules/web-ifc/web-ifc-api.d.ts and node_modules/web-ifc/web-ifc-api.js
@@ -47,8 +57,16 @@
 // Tag, OverallHeight, OverallWidth, PredefinedType, PartitioningType,
 // UserDefinedPartitioningType]; IfcRelFillsElement = [GlobalId, OwnerHistory,
 // Name, Description, RelatingOpeningElement, RelatedBuildingElement].
+//
+// Slice-3 (entrance door): IfcDoor's field order was verified the same way —
+// ToRawLineData[2][395920057] = [GlobalId, OwnerHistory, Name, Description,
+// ObjectType, ObjectPlacement, Representation, Tag, OverallHeight,
+// OverallWidth, PredefinedType, OperationType, UserDefinedOperationType] —
+// identical shape to IfcWindow except OperationType/UserDefinedOperationType
+// in place of PartitioningType/UserDefinedPartitioningType.
 
 import type { FacadeParams, FusedModel, GeneratedElement } from "../types";
+import { ENGINE_CONSTANTS } from "../types";
 import type { IfcWriteSession, RawIfcLine } from "../../ifc/ifc-session";
 
 // Verified IFC4 express type codes (node_modules/web-ifc/web-ifc-api.js).
@@ -77,6 +95,14 @@ const IFC4_TYPE = {
   REL_VOIDS_ELEMENT: 1401173127,
   WINDOW: 3304561284,
   REL_FILLS_ELEMENT: 3940055652,
+  // Slice-3: verified against node_modules/web-ifc/web-ifc-api.js's
+  // ToRawLineData[2] (IFC4 schema slot) entry for 395920057: [GlobalId,
+  // OwnerHistory, Name, Description, ObjectType, ObjectPlacement,
+  // Representation, Tag, OverallHeight, OverallWidth, PredefinedType,
+  // OperationType, UserDefinedOperationType] — same shape as IfcWindow save
+  // for OperationType/UserDefinedOperationType replacing PartitioningType/
+  // UserDefinedPartitioningType.
+  DOOR: 395920057,
 } as const;
 
 // IFC-compressed IfcGloballyUniqueId alphabet: 64 chars, base64-like but
@@ -219,6 +245,29 @@ export function computeWindowLayout(edgeLength: number, facade: FacadeParams): n
   return positions;
 }
 
+/**
+ * Pure: the index of the longest edge of a closed outer ring (ties broken by
+ * lowest index) — Slice-3's ground-floor entrance is centered on this edge.
+ * Exported so validate.ts recomputes the same edge from the FusedModel alone
+ * (single source of truth — no duplicated "which edge is the entrance"
+ * logic). Returns 0 for a degenerate ring (fewer than 2 vertices).
+ */
+export function pickEntranceEdge(outerRing: [number, number][]): number {
+  const edgeCount = Math.max(outerRing.length - 1, 0);
+  let longestIndex = 0;
+  let longestLength = -Infinity;
+  for (let edgeIndex = 0; edgeIndex < edgeCount; edgeIndex += 1) {
+    const [x1, z1] = outerRing[edgeIndex];
+    const [x2, z2] = outerRing[edgeIndex + 1];
+    const length = Math.hypot(x2 - x1, z2 - z1);
+    if (length > longestLength) {
+      longestLength = length;
+      longestIndex = edgeIndex;
+    }
+  }
+  return longestIndex;
+}
+
 /** Local-frame rectangle profile (0,0) -> (width, depth), closed. */
 function rectangleProfile(width: number, depth: number): RawIfcLine {
   return closedProfile([
@@ -348,6 +397,10 @@ export async function generateIfc(
 
   const outerRing = model.footprint[0] ?? [];
   const edgeCount = Math.max(outerRing.length - 1, 0);
+  // Slice-3: the single ground-floor entrance is centered on the longest
+  // footprint edge — computed once, outside the storey loop, since it only
+  // depends on the (storey-independent) footprint.
+  const entranceEdgeIndex = edgeCount > 0 ? pickEntranceEdge(outerRing) : -1;
   const storeys: RawIfcLine[] = [];
 
   for (let storeyIndex = 0; storeyIndex < model.floors; storeyIndex += 1) {
@@ -369,6 +422,12 @@ export async function generateIfc(
     storeys.push(storey);
 
     const storeyProducts: RawIfcLine[] = [];
+    // Slice-3: captured while iterating edges below, so the entrance door
+    // (emitted after this storey's windows) can host itself on the same
+    // wall/placement/edge-length as the entrance edge's IfcWallStandardCase.
+    let entranceWall: RawIfcLine | null = null;
+    let entranceWallPlacement: RawIfcLine | null = null;
+    let entranceEdgeLength = 0;
 
     for (let edgeIndex = 0; edgeIndex < edgeCount; edgeIndex += 1) {
       const [x1, z1] = outerRing[edgeIndex];
@@ -407,6 +466,12 @@ export async function generateIfc(
         geomSource: model.footprintSource,
         heightSource: model.heightSource,
       });
+
+      if (storeyIndex === 0 && edgeIndex === entranceEdgeIndex) {
+        entranceWall = wall;
+        entranceWallPlacement = wallPlacement;
+        entranceEdgeLength = edgeLength;
+      }
 
       // Slice-2: windows are estimated (era-facade defaults), never measured —
       // hosted in this wall via a real IfcOpeningElement void, per the plan.
@@ -501,6 +566,103 @@ export async function generateIfc(
           );
         }
       }
+    }
+
+    // Slice-3: exactly one ground-floor entrance door, hosted via the same
+    // void/fill pattern as windows, on the wall covering the outer ring's
+    // longest edge (pickEntranceEdge). Emitted after this storey's windows
+    // (per the plan) and independent of model.facade — the entrance exists
+    // even when no window facade was supplied.
+    if (storeyIndex === 0 && entranceWall && entranceWallPlacement) {
+      const doorWidth = ENGINE_CONSTANTS.DEFAULT_DOOR.width;
+      const doorHeight = ENGINE_CONSTANTS.DEFAULT_DOOR.height;
+      const leftX = (entranceEdgeLength - doorWidth) / 2;
+
+      const doorOpeningPlacement = localPlacement(
+        entranceWallPlacement,
+        axis2Placement3D(point3(leftX, 0, 0), null, null),
+      );
+      const doorOpeningProfile = rectangleProfile(doorWidth, model.wallThicknessM);
+      const doorOpeningShape = productShape(worldContext, [
+        extrudedSolid(doorOpeningProfile, doorHeight, direction(0, 0, 1)),
+      ]);
+      const doorOpening = line(IFC4_TYPE.OPENING_ELEMENT, {
+        GlobalId: label(guid()),
+        OwnerHistory: null,
+        Name: label(`Entrance Opening ${storeyIndex}`),
+        Description: null,
+        ObjectType: null,
+        ObjectPlacement: doorOpeningPlacement,
+        Representation: doorOpeningShape,
+        Tag: null,
+        PredefinedType: null,
+      });
+      session.writeLine(modelId, doorOpening);
+
+      session.writeLine(
+        modelId,
+        line(IFC4_TYPE.REL_VOIDS_ELEMENT, {
+          GlobalId: label(guid()),
+          OwnerHistory: null,
+          Name: null,
+          Description: null,
+          RelatingBuildingElement: entranceWall,
+          RelatedOpeningElement: doorOpening,
+        }),
+      );
+
+      // Door fills the same box the opening cuts — same honest simplification
+      // as windows (Slice-2): a placeholder leaf/frame box, not detailed
+      // hardware/frame geometry. May visually overlap a window placed on the
+      // same entrance edge (documented Slice-3 scope limitation).
+      const doorPlacement = localPlacement(
+        entranceWallPlacement,
+        axis2Placement3D(point3(leftX, 0, 0), null, null),
+      );
+      const doorProfile = rectangleProfile(doorWidth, model.wallThicknessM);
+      const doorShape = productShape(worldContext, [
+        extrudedSolid(doorProfile, doorHeight, direction(0, 0, 1)),
+      ]);
+      const doorLine = line(IFC4_TYPE.DOOR, {
+        GlobalId: label(guid()),
+        OwnerHistory: null,
+        Name: label(`Entrance Door ${storeyIndex}`),
+        Description: null,
+        ObjectType: null,
+        ObjectPlacement: doorPlacement,
+        Representation: doorShape,
+        Tag: null,
+        OverallHeight: measure(doorHeight),
+        OverallWidth: measure(doorWidth),
+        PredefinedType: null,
+        OperationType: null,
+        UserDefinedOperationType: null,
+      });
+      const doorExpressId = session.writeLine(modelId, doorLine);
+      storeyProducts.push(doorLine);
+      elements.push({
+        expressId: doorExpressId,
+        kind: "door",
+        storey: 0,
+        geomSource: model.footprintSource,
+        heightSource: model.heightSource,
+        // The door's placement is an estimate (centered on the longest edge,
+        // never measured) — scored via the same FACADE_SCORE table as
+        // windows (see score.ts), so this must always be set.
+        facadeSource: model.facadeSource ?? "era-estimate",
+      });
+
+      session.writeLine(
+        modelId,
+        line(IFC4_TYPE.REL_FILLS_ELEMENT, {
+          GlobalId: label(guid()),
+          OwnerHistory: null,
+          Name: null,
+          Description: null,
+          RelatingOpeningElement: doorOpening,
+          RelatedBuildingElement: doorLine,
+        }),
+      );
     }
 
     const slabPlacement = localPlacement(storeyPlacement, axis2Placement3D(point3(0, 0, 0), null, null));

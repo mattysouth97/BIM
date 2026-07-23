@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { generateIfc, compressIfcGuid, computeWindowLayout } from "../generate-ifc";
+import { generateIfc, compressIfcGuid, computeWindowLayout, pickEntranceEdge } from "../generate-ifc";
 import type { FusedModel, FacadeParams } from "../../types";
+import { ENGINE_CONSTANTS } from "../../types";
 
 const IFC_GUID_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$";
 
@@ -44,6 +45,9 @@ const IFCOPENINGELEMENT = 3588315303;
 const IFCRELVOIDSELEMENT = 1401173127;
 const IFCWINDOW = 3304561284;
 const IFCRELFILLSELEMENT = 3940055652;
+// Slice-3: verified against node_modules/web-ifc/web-ifc-api.js (IFC4 schema
+// slot, ToRawLineData[2][395920057]) — see generate-ifc.ts header.
+const IFCDOOR = 395920057;
 
 function fakeSession() {
   let id = 0;
@@ -88,15 +92,21 @@ describe("generateIfc", () => {
     expect(project.UnitsInContext.Units.map((u) => u.Name.value)).toEqual(["METRE", "SQUARE_METRE"]);
   });
 
-  it("emits no windows/openings when model.facade is null", async () => {
+  it("emits no windows when model.facade is null (the entrance door's own opening/void/fill still exist)", async () => {
     const session = fakeSession();
     const { elements } = await generateIfc(model, session as never);
 
+    // No facade => no windows, but Slice-3's entrance door is unconditional —
+    // it still emits exactly one IfcOpeningElement/IfcRelVoidsElement/
+    // IfcRelFillsElement triple for itself (see the "entrance door" describe
+    // block below for door-specific assertions).
     expect(elements.filter((e) => e.kind === "window")).toHaveLength(0);
-    expect(session.writeLine.mock.calls.some(([, obj]) => (obj as { type: number }).type === IFCOPENINGELEMENT)).toBe(false);
     expect(session.writeLine.mock.calls.some(([, obj]) => (obj as { type: number }).type === IFCWINDOW)).toBe(false);
-    expect(session.writeLine.mock.calls.some(([, obj]) => (obj as { type: number }).type === IFCRELVOIDSELEMENT)).toBe(false);
-    expect(session.writeLine.mock.calls.some(([, obj]) => (obj as { type: number }).type === IFCRELFILLSELEMENT)).toBe(false);
+    const typeCounts = (type: number) =>
+      session.writeLine.mock.calls.filter(([, obj]) => (obj as { type: number }).type === type).length;
+    expect(typeCounts(IFCOPENINGELEMENT)).toBe(1);
+    expect(typeCounts(IFCRELVOIDSELEMENT)).toBe(1);
+    expect(typeCounts(IFCRELFILLSELEMENT)).toBe(1);
   });
 
   it("emits windows hosted via voids/fills per wall edge when model.facade is set", async () => {
@@ -115,12 +125,14 @@ describe("generateIfc", () => {
     expect(windowElements.every((e) => e.geomSource === modelWithFacade.footprintSource)).toBe(true);
     expect(windowElements.every((e) => e.heightSource === modelWithFacade.heightSource)).toBe(true);
 
+    // +1 to each opening/void/fill count for the Slice-3 entrance door, which
+    // is hosted via the same machinery but is not itself a window.
     const typeCounts = (type: number) =>
       session.writeLine.mock.calls.filter(([, obj]) => (obj as { type: number }).type === type).length;
     expect(typeCounts(IFCWINDOW)).toBe(windowElements.length);
-    expect(typeCounts(IFCOPENINGELEMENT)).toBe(windowElements.length);
-    expect(typeCounts(IFCRELVOIDSELEMENT)).toBe(windowElements.length);
-    expect(typeCounts(IFCRELFILLSELEMENT)).toBe(windowElements.length);
+    expect(typeCounts(IFCOPENINGELEMENT)).toBe(windowElements.length + 1);
+    expect(typeCounts(IFCRELVOIDSELEMENT)).toBe(windowElements.length + 1);
+    expect(typeCounts(IFCRELFILLSELEMENT)).toBe(windowElements.length + 1);
   });
 
   it("writes IfcWindow with OverallHeight/OverallWidth from the facade recipe", async () => {
@@ -138,19 +150,128 @@ describe("generateIfc", () => {
     const session = fakeSession();
     await generateIfc(modelWithFacade, session as never);
 
+    // voidsCalls also includes the entrance door's own void (same shape:
+    // wall <-> opening), which the loop below already covers generically.
     const voidsCalls = session.writeLine.mock.calls.filter(([, obj]) => (obj as { type: number }).type === IFCRELVOIDSELEMENT);
-    const fillsCalls = session.writeLine.mock.calls.filter(([, obj]) => (obj as { type: number }).type === IFCRELFILLSELEMENT);
+    // Scoped to window fills only — the entrance door's own fill (opening
+    // <-> IfcDoor) is asserted separately in the "entrance door" tests below.
+    const windowFillsCalls = session.writeLine.mock.calls.filter(
+      ([, obj]) =>
+        (obj as { type: number }).type === IFCRELFILLSELEMENT &&
+        (obj as { RelatedBuildingElement: { type: number } }).RelatedBuildingElement.type === IFCWINDOW,
+    );
 
     for (const [, obj] of voidsCalls) {
       const rel = obj as { RelatingBuildingElement: { type: number }; RelatedOpeningElement: { type: number } };
       expect(rel.RelatingBuildingElement.type).toBe(3512223829); // IfcWallStandardCase
       expect(rel.RelatedOpeningElement.type).toBe(IFCOPENINGELEMENT);
     }
-    for (const [, obj] of fillsCalls) {
+    for (const [, obj] of windowFillsCalls) {
       const rel = obj as { RelatingOpeningElement: { type: number }; RelatedBuildingElement: { type: number } };
       expect(rel.RelatingOpeningElement.type).toBe(IFCOPENINGELEMENT);
       expect(rel.RelatedBuildingElement.type).toBe(IFCWINDOW);
     }
+  });
+
+  it("emits exactly ONE entrance IfcDoor on storey 0, even with no facade (no windows)", async () => {
+    const session = fakeSession();
+    const { elements } = await generateIfc(model, session as never);
+
+    const doors = elements.filter((e) => e.kind === "door");
+    expect(doors).toHaveLength(1);
+    expect(doors[0].storey).toBe(0);
+    expect(doors[0].geomSource).toBe(model.footprintSource);
+    expect(doors[0].heightSource).toBe(model.heightSource);
+    expect(doors[0].facadeSource).toBe("era-estimate");
+
+    const doorCalls = session.writeLine.mock.calls.filter(([, obj]) => (obj as { type: number }).type === IFCDOOR);
+    expect(doorCalls).toHaveLength(1);
+  });
+
+  it("hosts the entrance door via a real IfcOpeningElement void + fill on the entrance-edge wall", async () => {
+    const session = fakeSession();
+    await generateIfc(model, session as never);
+
+    const doorCall = session.writeLine.mock.calls.find(([, obj]) => (obj as { type: number }).type === IFCDOOR);
+    expect(doorCall).toBeDefined();
+    const doorLine = doorCall![1] as { type: number };
+
+    const voidsCalls = session.writeLine.mock.calls.filter(([, obj]) => (obj as { type: number }).type === IFCRELVOIDSELEMENT);
+    const fillsCalls = session.writeLine.mock.calls.filter(([, obj]) => (obj as { type: number }).type === IFCRELFILLSELEMENT);
+
+    const doorFill = fillsCalls.find(
+      ([, obj]) => (obj as { RelatedBuildingElement: unknown }).RelatedBuildingElement === doorLine,
+    );
+    expect(doorFill).toBeDefined();
+    const fillObj = doorFill![1] as { RelatingOpeningElement: { type: number } };
+    expect(fillObj.RelatingOpeningElement.type).toBe(IFCOPENINGELEMENT);
+
+    const doorVoid = voidsCalls.find(
+      ([, obj]) => (obj as { RelatedOpeningElement: unknown }).RelatedOpeningElement === fillObj.RelatingOpeningElement,
+    );
+    expect(doorVoid).toBeDefined();
+    const voidObj = doorVoid![1] as { RelatingBuildingElement: { type: number } };
+    expect(voidObj.RelatingBuildingElement.type).toBe(3512223829); // IfcWallStandardCase
+  });
+
+  it("writes IfcDoor with OverallHeight/OverallWidth from ENGINE_CONSTANTS.DEFAULT_DOOR", async () => {
+    const session = fakeSession();
+    await generateIfc(model, session as never);
+
+    const doorCall = session.writeLine.mock.calls.find(([, obj]) => (obj as { type: number }).type === IFCDOOR);
+    expect(doorCall).toBeDefined();
+    const doorObj = doorCall![1] as { OverallHeight: { value: number }; OverallWidth: { value: number } };
+    expect(doorObj.OverallHeight.value).toBeCloseTo(ENGINE_CONSTANTS.DEFAULT_DOOR.height);
+    expect(doorObj.OverallWidth.value).toBeCloseTo(ENGINE_CONSTANTS.DEFAULT_DOOR.width);
+  });
+
+  it("centers the entrance door on the longest footprint edge (pickEntranceEdge)", async () => {
+    const session = fakeSession();
+    await generateIfc(model, session as never);
+
+    // model's ring is a 10x8 rectangle: edges [10,8,10,8]. Longest length is
+    // 10, tied between index 0 and 2 — pickEntranceEdge breaks ties toward
+    // the lowest index, so edge 0 ((0,0)->(10,0)) hosts the door.
+    const entranceEdgeIndex = pickEntranceEdge(model.footprint[0]);
+    expect(entranceEdgeIndex).toBe(0);
+
+    const doorCall = session.writeLine.mock.calls.find(([, obj]) => (obj as { type: number }).type === IFCDOOR);
+    const doorObj = doorCall![1] as { ObjectPlacement: { RelativePlacement: { Location: { Coordinates: { value: number }[] } } } };
+    const [localX, , localZ] = doorObj.ObjectPlacement.RelativePlacement.Location.Coordinates.map((c) => c.value);
+    // Centered: (edgeLength(10) - doorWidth(1.2)) / 2 = 4.4; sill 0 (floor level).
+    expect(localX).toBeCloseTo(4.4);
+    expect(localZ).toBeCloseTo(0);
+  });
+
+  it("does not emit a door on storey 1 (only storey 0 gets the entrance door)", async () => {
+    const session = fakeSession();
+    const { elements } = await generateIfc(model, session as never);
+
+    const doorsByStorey = new Map<number, number>();
+    for (const e of elements.filter((el) => el.kind === "door")) {
+      doorsByStorey.set(e.storey, (doorsByStorey.get(e.storey) ?? 0) + 1);
+    }
+    expect(doorsByStorey.get(0)).toBe(1);
+    expect(doorsByStorey.get(1)).toBeUndefined();
+  });
+});
+
+describe("pickEntranceEdge", () => {
+  it("picks the longest edge, breaking ties toward the lowest index", () => {
+    // 10x8 rectangle: edges of length 10, 8, 10, 8 — tie between index 0 and 2.
+    expect(pickEntranceEdge([[0, 0], [10, 0], [10, 8], [0, 8], [0, 0]])).toBe(0);
+  });
+
+  it("picks the unique longest edge on an irregular polygon", () => {
+    // A skewed quadrilateral where edge index 2 ((4,4)->(-2,4), length 6) is
+    // uniquely longest: edges are 4, 4, 6, sqrt(20)≈4.47.
+    const ring: [number, number][] = [[0, 0], [4, 0], [4, 4], [-2, 4], [0, 0]];
+    expect(pickEntranceEdge(ring)).toBe(2);
+  });
+
+  it("is deterministic for the same input", () => {
+    const ring: [number, number][] = [[0, 0], [10, 0], [10, 8], [0, 8], [0, 0]];
+    expect(pickEntranceEdge(ring)).toBe(pickEntranceEdge(ring));
   });
 });
 

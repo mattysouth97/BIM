@@ -11,6 +11,12 @@ const windowEl = (
   height: GeneratedElement["heightSource"],
   facadeSource: GeneratedElement["facadeSource"] = "era-estimate",
 ): GeneratedElement => ({ expressId, kind: "window", storey: 0, geomSource: geom, heightSource: height, facadeSource });
+const doorEl = (
+  expressId: number,
+  geom: GeneratedElement["geomSource"],
+  height: GeneratedElement["heightSource"],
+  facadeSource: GeneratedElement["facadeSource"] = "era-estimate",
+): GeneratedElement => ({ expressId, kind: "door", storey: 0, geomSource: geom, heightSource: height, facadeSource });
 
 describe("score", () => {
   it("does not flag a cad-exact + ledger element (sconf 1.0)", () => {
@@ -42,6 +48,19 @@ describe("score", () => {
 
   it("never scores a window >= HITL_THRESHOLD regardless of geom/height source (era-estimate facade always caps it)", () => {
     const { elements } = score([windowEl(5, "cad-exact", "ledger", "era-estimate")], ok);
+    expect(elements[0].sconf).toBeLessThan(0.85);
+  });
+
+  it("treats a door exactly like a window: caps geomScore at the facade score and flags it (< 0.85)", () => {
+    const { elements, hitlFlags } = score([doorEl(6, "cad-exact", "ledger")], ok);
+    expect(elements[0].geomScore).toBeCloseTo(0.5);
+    expect(elements[0].sconf).toBeCloseTo(0.7);
+    expect(hitlFlags).toHaveLength(1);
+    expect(hitlFlags[0].reason).toMatch(/entrance \(estimated door placement\)/);
+  });
+
+  it("never scores a door >= HITL_THRESHOLD regardless of geom/height source (era-estimate facade always caps it)", () => {
+    const { elements } = score([doorEl(7, "cad-exact", "ledger", "era-estimate")], ok);
     expect(elements[0].sconf).toBeLessThan(0.85);
   });
 });

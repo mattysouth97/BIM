@@ -26,10 +26,16 @@ describe("runEngine", () => {
 
     const result = await runEngine(input, session as never);
 
-    // 10x8 footprint = 4 edges; 2 storeys => 8 walls + 2 slabs = 10 elements.
-    expect(result.elements).toHaveLength(10);
+    // 10x8 footprint = 4 edges; 2 storeys => 8 walls + 2 slabs + 1 Slice-3
+    // entrance door (storey 0 only) = 11 elements.
+    expect(result.elements).toHaveLength(11);
     expect(result.validation.passed).toBe(true);
-    expect(result.hitlFlags).toHaveLength(0);
+    // The entrance door is a heuristic placement (never measured) — it is
+    // always HITL-flagged (sconf < 0.85), even for an otherwise clean
+    // CAD-exact/ledger building. See score.ts's FACADE_SCORE handling of
+    // ElementKind "door".
+    expect(result.hitlFlags).toHaveLength(1);
+    expect(result.hitlFlags[0].kind).toBe("door");
     expect(result.ifcBytes.length).toBeGreaterThan(0);
     expect(result.conflicts).toHaveLength(0);
     expect(session.saveModel).toHaveBeenCalledOnce();

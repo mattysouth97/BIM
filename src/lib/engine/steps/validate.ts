@@ -104,46 +104,49 @@ function checkStoreyMonotonic(model: FusedModel, elements: GeneratedElement[]): 
   };
 }
 
+/**
+ * Slice-3: the single ground-floor entrance door exists whenever the
+ * footprint has at least one edge to host it on (pickEntranceEdge needs a
+ * real edge) — independent of model.facade, since the entrance is not a
+ * window-facade feature. Returns 0 for a degenerate (edge-less) footprint.
+ */
+function expectedDoorCount(model: FusedModel): number {
+  const outerRing = model.footprint[0] ?? [];
+  const edgeCount = Math.max(outerRing.length - 1, 0);
+  return edgeCount > 0 ? 1 : 0;
+}
+
 function checkElementCount(model: FusedModel, elements: GeneratedElement[]): ValidationCheck {
   // NOT a byte round-trip through IFC — this verifies the flat element
   // accounting produced by generate-ifc.ts matches the construction formula
   // (floors * edges-per-storey walls + floors slabs + floors * windows-per-
-  // storey). A real write→read round-trip is exercised separately by
-  // generate-ifc-roundtrip.integration.test.ts.
+  // storey + the one Slice-3 entrance door). A real write→read round-trip is
+  // exercised separately by generate-ifc-roundtrip.integration.test.ts.
   const outerRing = model.footprint[0] ?? [];
   const edgeCount = Math.max(outerRing.length - 1, 0);
   const windowsPerStorey = expectedWindowsPerStorey(model);
-  const expectedCount = model.floors * edgeCount + model.floors + model.floors * windowsPerStorey;
+  const doorCount = expectedDoorCount(model);
+  const expectedCount = model.floors * edgeCount + model.floors + model.floors * windowsPerStorey + doorCount;
   const actualCount = elements.length;
   const passed = actualCount === expectedCount;
   return {
     id: "element-count",
     passed,
     detail: passed
-      ? `element count ${actualCount} matches expected ${expectedCount} (floors=${model.floors}, edges=${edgeCount}, windows/storey=${windowsPerStorey})`
-      : `element count ${actualCount} does not match expected ${expectedCount} (floors=${model.floors}, edges=${edgeCount}, windows/storey=${windowsPerStorey})`,
+      ? `element count ${actualCount} matches expected ${expectedCount} (floors=${model.floors}, edges=${edgeCount}, windows/storey=${windowsPerStorey}, doors=${doorCount})`
+      : `element count ${actualCount} does not match expected ${expectedCount} (floors=${model.floors}, edges=${edgeCount}, windows/storey=${windowsPerStorey}, doors=${doorCount})`,
   };
 }
 
-function checkOpeningsHosted(model: FusedModel, elements: GeneratedElement[]): ValidationCheck {
-  // Pure topology/count check — does NOT re-parse IFC bytes to confirm the
-  // real IfcRelVoidsElement/IfcRelFillsElement relationships exist; that's
-  // covered separately by generate-ifc-roundtrip.integration.test.ts's real
-  // IFCWINDOW/IFCOPENINGELEMENT count assertions. This check verifies the
-  // flat window accounting is internally consistent with the facade recipe:
-  // no facade => no windows, and otherwise every storey has exactly the
-  // window count the facade layout formula predicts for that storey's edges.
-  const windows = elements.filter((e) => e.kind === "window");
-
+function checkWindowHosting(model: FusedModel, windows: GeneratedElement[]): { passed: boolean; detail: string; badIds: number[] } {
   if (!model.facade) {
     const passed = windows.length === 0;
     return {
-      id: "openings-hosted",
       passed,
       detail: passed
         ? "no facade supplied — 0 windows generated, as expected"
         : `no facade supplied but ${windows.length} window(s) were generated`,
-      ...(passed ? {} : { elementIds: windows.map((w) => w.expressId) }),
+      badIds: passed ? [] : windows.map((w) => w.expressId),
     };
   }
 
@@ -159,12 +162,72 @@ function checkOpeningsHosted(model: FusedModel, elements: GeneratedElement[]): V
   }
 
   return {
-    id: "openings-hosted",
     passed,
     detail: passed
       ? `${windows.length} window(s) hosted (${windowsPerStorey} per storey × ${model.floors} storeys), matching the facade layout`
       : `window count ${windows.length} does not match expected ${windowsPerStorey * model.floors} (${windowsPerStorey} per storey × ${model.floors} storeys)`,
-    ...(passed ? {} : { elementIds: windows.map((w) => w.expressId) }),
+    badIds: passed ? [] : windows.map((w) => w.expressId),
+  };
+}
+
+/**
+ * Slice-3: exactly one entrance door, on storey 0. Reuses expectedDoorCount()
+ * — the same "does a footprint with edges exist" logic checkElementCount
+ * folds in — so both checks agree on how many doors should exist.
+ */
+function checkDoorHosting(model: FusedModel, doors: GeneratedElement[]): { passed: boolean; detail: string; badIds: number[] } {
+  const expected = expectedDoorCount(model);
+
+  if (doors.length !== expected) {
+    return {
+      passed: false,
+      detail: `door count ${doors.length} does not match expected ${expected}`,
+      badIds: doors.map((d) => d.expressId),
+    };
+  }
+  if (expected === 0) {
+    return { passed: true, detail: "no footprint edges — 0 entrance doors expected, as expected", badIds: [] };
+  }
+
+  const [door] = doors;
+  const passed = door.storey === 0;
+  return {
+    passed,
+    detail: passed
+      ? "1 entrance door hosted on storey 0, as expected"
+      : `entrance door is on storey ${door.storey}, expected storey 0`,
+    badIds: passed ? [] : [door.expressId],
+  };
+}
+
+function checkOpeningsHosted(model: FusedModel, elements: GeneratedElement[]): ValidationCheck {
+  // Pure topology/count check — does NOT re-parse IFC bytes to confirm the
+  // real IfcRelVoidsElement/IfcRelFillsElement relationships exist; that's
+  // covered separately by generate-ifc-roundtrip.integration.test.ts's real
+  // IFCWINDOW/IFCDOOR/IFCOPENINGELEMENT count assertions. This check verifies
+  // the flat window AND (Slice-3) entrance-door accounting is internally
+  // consistent: no facade => no windows, otherwise every storey has exactly
+  // the window count the facade layout formula predicts; and exactly one
+  // entrance door exists (when the footprint has edges), on storey 0.
+  const windows = elements.filter((e) => e.kind === "window");
+  const doors = elements.filter((e) => e.kind === "door");
+
+  const windowResult = checkWindowHosting(model, windows);
+  const doorResult = checkDoorHosting(model, doors);
+
+  const passed = windowResult.passed && doorResult.passed;
+  const badIds = [...windowResult.badIds, ...doorResult.badIds];
+  const detail = passed
+    ? `${windowResult.detail}; ${doorResult.detail}`
+    : [windowResult.passed ? null : windowResult.detail, doorResult.passed ? null : doorResult.detail]
+        .filter((d): d is string => d !== null)
+        .join("; ");
+
+  return {
+    id: "openings-hosted",
+    passed,
+    detail,
+    ...(passed ? {} : { elementIds: badIds }),
   };
 }
 

@@ -62,9 +62,21 @@ function buildElements(floors: number, edgeCount: number): GeneratedElement[] {
   return elements;
 }
 
+/** A single Slice-3 ground-floor entrance door element, matching what generate-ifc.ts emits. */
+function buildDoorElement(expressId: number): GeneratedElement {
+  return {
+    expressId,
+    kind: "door",
+    storey: 0,
+    geomSource: "cad-exact",
+    heightSource: "ledger",
+    facadeSource: "era-estimate",
+  };
+}
+
 describe("validate", () => {
   it("passes all checks for a valid closed model", () => {
-    const elements = buildElements(2, 4);
+    const elements = [...buildElements(2, 4), buildDoorElement(9000)];
     const report = validate(model, elements);
 
     expect(report.passed).toBe(true);
@@ -74,8 +86,8 @@ describe("validate", () => {
     );
   });
 
-  it("passes openings-hosted with 0 windows when no facade was supplied", () => {
-    const elements = buildElements(2, 4);
+  it("passes openings-hosted with 0 windows (and the one entrance door) when no facade was supplied", () => {
+    const elements = [...buildElements(2, 4), buildDoorElement(9000)];
     const report = validate(model, elements);
 
     const openingsCheck = report.checks.find((c) => c.id === "openings-hosted");
@@ -85,6 +97,7 @@ describe("validate", () => {
   it("fails openings-hosted when windows exist but no facade was supplied", () => {
     const elements = [
       ...buildElements(2, 4),
+      buildDoorElement(9000),
       { expressId: 999, kind: "window" as const, storey: 0, geomSource: "cad-exact" as const, heightSource: "ledger" as const, facadeSource: "era-estimate" as const },
     ];
     const report = validate(model, elements);
@@ -99,6 +112,7 @@ describe("validate", () => {
     const perStorey = windowsPerStorey();
     const elements = [
       ...buildElements(2, 4),
+      buildDoorElement(9000),
       ...buildWindowElements(2, perStorey, 1000),
     ];
     const report = validate(modelWithFacade, elements);
@@ -148,5 +162,47 @@ describe("validate", () => {
     const areaCheck = report.checks.find((c) => c.id === "footprint-nondegenerate");
     expect(areaCheck?.passed).toBe(false);
     expect(areaCheck?.elementIds).toEqual(elements.filter((e) => e.kind === "slab").map((e) => e.expressId));
+  });
+});
+
+describe("validate — Slice-3 entrance door", () => {
+  it("folds the door into element-count's expected total (+1 for a footprint with edges)", () => {
+    const elements = [...buildElements(2, 4), buildDoorElement(9000)];
+    const report = validate(model, elements);
+
+    const countCheck = report.checks.find((c) => c.id === "element-count");
+    expect(countCheck?.passed).toBe(true);
+    // floors(2)*edges(4) + floors(2) + floors*windows(0) + door(1) = 11
+    expect(countCheck?.detail).toMatch(/11/);
+  });
+
+  it("fails openings-hosted when the entrance door is missing", () => {
+    const elements = buildElements(2, 4); // no door element at all
+    const report = validate(model, elements);
+
+    expect(report.passed).toBe(false);
+    const openingsCheck = report.checks.find((c) => c.id === "openings-hosted");
+    expect(openingsCheck?.passed).toBe(false);
+  });
+
+  it("fails openings-hosted when more than one door is generated", () => {
+    const elements = [...buildElements(2, 4), buildDoorElement(9000), buildDoorElement(9001)];
+    const report = validate(model, elements);
+
+    expect(report.passed).toBe(false);
+    const openingsCheck = report.checks.find((c) => c.id === "openings-hosted");
+    expect(openingsCheck?.passed).toBe(false);
+    expect(openingsCheck?.elementIds).toEqual(expect.arrayContaining([9000, 9001]));
+  });
+
+  it("fails openings-hosted when the door is not on storey 0", () => {
+    const badDoor: GeneratedElement = { ...buildDoorElement(9000), storey: 1 };
+    const elements = [...buildElements(2, 4), badDoor];
+    const report = validate(model, elements);
+
+    expect(report.passed).toBe(false);
+    const openingsCheck = report.checks.find((c) => c.id === "openings-hosted");
+    expect(openingsCheck?.passed).toBe(false);
+    expect(openingsCheck?.elementIds).toEqual([9000]);
   });
 });
