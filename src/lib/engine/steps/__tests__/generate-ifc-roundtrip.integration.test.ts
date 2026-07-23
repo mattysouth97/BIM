@@ -11,7 +11,9 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import path from "node:path";
 import { runEngine } from "../../orchestrator";
+import { buildWindowAssembly, buildDoorAssembly } from "../generate-ifc";
 import type { BimEngineInput } from "../../types";
+import { ENGINE_CONSTANTS } from "../../types";
 import type { IfcWriteSession, RawIfcLine } from "../../../ifc/ifc-session";
 
 // IFC4 express type codes — verified against node_modules/web-ifc/web-ifc-api.js
@@ -25,6 +27,9 @@ const IFCOPENINGELEMENT = 3588315303;
 const IFCRELVOIDSELEMENT = 1401173127;
 const IFCRELFILLSELEMENT = 3940055652;
 const IFCDOOR = 395920057;
+// Slice-4: same IFCEXTRUDEDAREASOLID type code already used (and verified) for
+// wall/slab/opening solids — see generate-ifc.ts header comment.
+const IFCEXTRUDEDAREASOLID = 477187591;
 
 // Minimal shape of the bits of web-ifc's IfcAPI this test actually calls —
 // avoids importing web-ifc's own types at module scope so the file still
@@ -158,7 +163,9 @@ describe("generateIfc real write→read round-trip (web-ifc-node.wasm)", () => {
       expect(doorCount).toBe(1);
       // Openings/voids/fills cover both windows AND the one entrance door,
       // hosted via the exact same IfcOpeningElement/IfcRelVoidsElement/
-      // IfcRelFillsElement machinery.
+      // IfcRelFillsElement machinery — UNCHANGED by the Slice-4 detailed
+      // window/door geometry upgrade (only each product shape's Items array
+      // changed, not the void/fill hosting or GeneratedElement accounting).
       expect(openingCount).toBe(windowCount + 1);
       expect(voidsCount).toBe(windowCount + 1);
       expect(fillsCount).toBe(windowCount + 1);
@@ -166,6 +173,30 @@ describe("generateIfc real write→read round-trip (web-ifc-node.wasm)", () => {
       // File still re-opens cleanly and the non-window/door entities are intact.
       expect(api.GetLineIDsWithType(readModelId, IFCWALLSTANDARDCASE).size()).toBe(8);
       expect(api.GetLineIDsWithType(readModelId, IFCSLAB).size()).toBe(2);
+
+      // Slice-4: confirm the detailed window/door assembly geometry itself
+      // actually round-tripped through real IFC4 bytes (not just constructed
+      // in memory) — every wall/slab/opening-void solid PLUS every window's
+      // buildWindowAssembly() items PLUS the one door's buildDoorAssembly()
+      // items should all be present as real IfcExtrudedAreaSolid entities.
+      const windowAssemblySize = buildWindowAssembly(
+        input.facade!.windowWidth,
+        input.facade!.windowHeight,
+        ENGINE_CONSTANTS.DEFAULT_WALL_THICKNESS_M,
+      ).length;
+      const doorAssemblySize = buildDoorAssembly(
+        ENGINE_CONSTANTS.DEFAULT_DOOR.width,
+        ENGINE_CONSTANTS.DEFAULT_DOOR.height,
+        ENGINE_CONSTANTS.DEFAULT_WALL_THICKNESS_M,
+      ).length;
+      const expectedExtrudedSolids =
+        8 /* wall bodies */ +
+        2 /* slab bodies */ +
+        windowCount /* window opening voids */ +
+        1 /* door opening void */ +
+        windowCount * windowAssemblySize /* detailed window assemblies */ +
+        1 * doorAssemblySize; /* detailed door assembly */
+      expect(api.GetLineIDsWithType(readModelId, IFCEXTRUDEDAREASOLID).size()).toBe(expectedExtrudedSolids);
     } finally {
       api.CloseModel(readModelId);
     }

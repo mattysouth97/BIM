@@ -64,6 +64,23 @@
 // OverallWidth, PredefinedType, OperationType, UserDefinedOperationType] —
 // identical shape to IfcWindow except OperationType/UserDefinedOperationType
 // in place of PartitioningType/UserDefinedPartitioningType.
+//
+// Slice-4 (detailed opening geometry): the Slice-2/3 placeholder single-box
+// Body representation for IfcWindow/IfcDoor is replaced by a realistic
+// assembly of deterministic IfcExtrudedAreaSolid items — a frame (four thin
+// members forming the opening border, ~0.05m deep into the wall), a thin
+// glass pane inset within the frame, and a central vertical mullion (window
+// only; the door gets a lighter frame + single solid panel, no glass/
+// mullion). This ONLY changes what's inside each window/door product shape's
+// Items array — the void/fill hosting (IfcOpeningElement/IfcRelVoidsElement/
+// IfcRelFillsElement) and the one-IfcWindow-per-position/one-IfcDoor
+// GeneratedElement accounting are unchanged. No new IFC entity types: this
+// reuses IfcExtrudedAreaSolid's existing (already-verified) [SweptArea,
+// Position, ExtrudedDirection, Depth] field order — Position (previously
+// always null) is now populated with a translation-only IfcAxis2Placement3D
+// per member, the same null-Axis/null-RefDirection pattern already used
+// (and round-trip-verified) for wall/opening/window placements elsewhere in
+// this file.
 
 import type { FacadeParams, FusedModel, GeneratedElement } from "../types";
 import { ENGINE_CONSTANTS } from "../types";
@@ -196,10 +213,15 @@ function closedProfile(points: RawIfcLine[]): RawIfcLine {
   });
 }
 
-function extrudedSolid(profile: RawIfcLine, depthM: number, extrudeDirection: RawIfcLine): RawIfcLine {
+function extrudedSolid(
+  profile: RawIfcLine,
+  depthM: number,
+  extrudeDirection: RawIfcLine,
+  position: RawIfcLine | null = null,
+): RawIfcLine {
   return line(IFC4_TYPE.EXTRUDED_AREA_SOLID, {
     SweptArea: profile,
-    Position: null,
+    Position: position,
     ExtrudedDirection: extrudeDirection,
     Depth: measure(depthM),
   });
@@ -277,6 +299,154 @@ function rectangleProfile(width: number, depth: number): RawIfcLine {
     point2(0, depth),
     point2(0, 0),
   ]);
+}
+
+// Slice-4: dimensions for the detailed window/door assemblies below (frame +
+// glazing/panel + mullion). These are pure geometry constants scoped to
+// this file's assembly builders, not provenance/scoring inputs — c.f.
+// ENGINE_CONSTANTS.DEFAULT_DOOR, which IS reused below for the door's actual
+// overall width/height (never duplicated here).
+const OPENING_DETAIL = {
+  /** Frame/panel depth into the wall (local Y axis), meters. */
+  FRAME_DEPTH_M: 0.05,
+  /** Cross-section width of each frame member (jamb/head/sill reveal), meters. */
+  FRAME_MEMBER_WIDTH_M: 0.08,
+  /** Glass pane thickness, centered within the frame's depth band, meters. */
+  GLASS_THICKNESS_M: 0.02,
+  /** Central vertical mullion cross-section width, meters. */
+  MULLION_WIDTH_M: 0.06,
+} as const;
+
+interface FrameBand {
+  /** Cross-section width of jamb/head/sill members, clamped to fit width/height. */
+  memberWidth: number;
+  /** Y (wall-depth) start of the frame/panel band, centered in wallThicknessM. */
+  yStart: number;
+  /** Y (wall-depth) extent of the frame/panel band, clamped to wallThicknessM. */
+  yDepth: number;
+}
+
+/**
+ * Shared frame-band geometry for the window and door assemblies below: how
+ * deep into the wall (Y) the frame sits, and how wide each frame member's
+ * cross-section is (clamped so it always fits within the opening). Pure —
+ * deterministic from width/height/wallThicknessM alone.
+ */
+function frameBand(width: number, height: number, wallThicknessM: number): FrameBand {
+  const yDepth = Math.min(OPENING_DETAIL.FRAME_DEPTH_M, wallThicknessM);
+  const yStart = (wallThicknessM - yDepth) / 2;
+  const memberWidth = Math.min(OPENING_DETAIL.FRAME_MEMBER_WIDTH_M, width / 4, height / 4);
+  return { memberWidth, yStart, yDepth };
+}
+
+/**
+ * Four thin extruded members (left jamb, right jamb, sill, head) forming the
+ * border of a `width` x `height` opening, ~FRAME_DEPTH_M deep into the wall —
+ * shared by both the window and door assemblies below (Slice-4). Pure,
+ * deterministic IfcExtrudedAreaSolid items; no new IFC entity types.
+ */
+function buildFrameMembers(width: number, height: number, wallThicknessM: number): RawIfcLine[] {
+  const { memberWidth, yStart, yDepth } = frameBand(width, height, wallThicknessM);
+  const up = direction(0, 0, 1);
+  const jambProfile = rectangleProfile(memberWidth, yDepth);
+  const headSillWidth = Math.max(width - 2 * memberWidth, 0);
+  const headSillProfile = rectangleProfile(headSillWidth, yDepth);
+  return [
+    // Left jamb: full height.
+    extrudedSolid(jambProfile, height, up, axis2Placement3D(point3(0, yStart, 0), null, null)),
+    // Right jamb: full height.
+    extrudedSolid(jambProfile, height, up, axis2Placement3D(point3(width - memberWidth, yStart, 0), null, null)),
+    // Sill: spans between the jambs at the bottom.
+    extrudedSolid(headSillProfile, memberWidth, up, axis2Placement3D(point3(memberWidth, yStart, 0), null, null)),
+    // Head (lintel): spans between the jambs at the top.
+    extrudedSolid(
+      headSillProfile,
+      memberWidth,
+      up,
+      axis2Placement3D(point3(memberWidth, yStart, height - memberWidth), null, null),
+    ),
+  ];
+}
+
+/**
+ * Thin glass pane inset within the frame (Slice-4): fills the opening between
+ * the frame members, centered within the frame's depth band, thickness
+ * GLASS_THICKNESS_M.
+ */
+function buildGlassPane(width: number, height: number, wallThicknessM: number): RawIfcLine {
+  const { memberWidth, yStart, yDepth } = frameBand(width, height, wallThicknessM);
+  const glassThickness = Math.min(OPENING_DETAIL.GLASS_THICKNESS_M, yDepth);
+  const glassY = yStart + (yDepth - glassThickness) / 2;
+  const glassWidth = Math.max(width - 2 * memberWidth, 0);
+  const glassHeight = Math.max(height - 2 * memberWidth, 0);
+  const profile = rectangleProfile(glassWidth, glassThickness);
+  return extrudedSolid(
+    profile,
+    glassHeight,
+    direction(0, 0, 1),
+    axis2Placement3D(point3(memberWidth, glassY, memberWidth), null, null),
+  );
+}
+
+/**
+ * Central vertical mullion splitting the glazing (Slice-4): spans the same
+ * depth band as the frame (deeper than the thin glass pane, so it visually
+ * reads as dividing it), centered on the opening's width.
+ */
+function buildVerticalMullion(width: number, height: number, wallThicknessM: number): RawIfcLine {
+  const { memberWidth, yStart, yDepth } = frameBand(width, height, wallThicknessM);
+  const glassWidth = Math.max(width - 2 * memberWidth, 0);
+  const glassHeight = Math.max(height - 2 * memberWidth, 0);
+  const mullionWidth = Math.min(OPENING_DETAIL.MULLION_WIDTH_M, glassWidth / 2);
+  const mullionX = memberWidth + (glassWidth - mullionWidth) / 2;
+  const profile = rectangleProfile(mullionWidth, yDepth);
+  return extrudedSolid(
+    profile,
+    glassHeight,
+    direction(0, 0, 1),
+    axis2Placement3D(point3(mullionX, yStart, memberWidth), null, null),
+  );
+}
+
+/**
+ * Solid door panel (Slice-4's "lighter treatment" for the entrance door — no
+ * glass/mullion, just a frame + a single leaf filling the reveal).
+ */
+function buildDoorPanel(width: number, height: number, wallThicknessM: number): RawIfcLine {
+  const { memberWidth, yStart, yDepth } = frameBand(width, height, wallThicknessM);
+  const panelWidth = Math.max(width - 2 * memberWidth, 0);
+  const panelHeight = Math.max(height - 2 * memberWidth, 0);
+  const profile = rectangleProfile(panelWidth, yDepth);
+  return extrudedSolid(
+    profile,
+    panelHeight,
+    direction(0, 0, 1),
+    axis2Placement3D(point3(memberWidth, yStart, memberWidth), null, null),
+  );
+}
+
+/**
+ * Full detailed IfcWindow Body representation (Slice-4): frame (4 members) +
+ * glass pane + central vertical mullion — replaces the Slice-2 placeholder
+ * box. Exported so generate-ifc.test.ts can assert the exact item count/
+ * shape against a single source of truth (no duplicated magic numbers).
+ */
+export function buildWindowAssembly(width: number, height: number, wallThicknessM: number): RawIfcLine[] {
+  return [
+    ...buildFrameMembers(width, height, wallThicknessM),
+    buildGlassPane(width, height, wallThicknessM),
+    buildVerticalMullion(width, height, wallThicknessM),
+  ];
+}
+
+/**
+ * Full detailed IfcDoor Body representation (Slice-4): frame (4 members) + a
+ * single solid panel — the "lighter treatment" (no glass/mullion) — replaces
+ * the Slice-3 placeholder box. Exported for the same reason as
+ * buildWindowAssembly above.
+ */
+export function buildDoorAssembly(width: number, height: number, wallThicknessM: number): RawIfcLine[] {
+  return [...buildFrameMembers(width, height, wallThicknessM), buildDoorPanel(width, height, wallThicknessM)];
 }
 
 /** IfcSIUnit for a base (non-derived) SI unit, e.g. LENGTHUNIT/METRE. */
@@ -516,17 +686,17 @@ export async function generateIfc(
             }),
           );
 
-          // Window fills the same box the opening cuts (a simple placeholder
-          // pane geometry — Slice-2 scope is honest hosting + provenance, not
-          // detailed frame/mullion geometry).
+          // Window fills the same box the opening cuts, with a Slice-4
+          // detailed assembly (frame + glass pane + central mullion) rather
+          // than a single placeholder box — see buildWindowAssembly above.
           const windowPlacement = localPlacement(
             wallPlacement,
             axis2Placement3D(point3(leftX, 0, facade.sillHeight), null, null),
           );
-          const windowProfile = rectangleProfile(facade.windowWidth, model.wallThicknessM);
-          const windowShape = productShape(worldContext, [
-            extrudedSolid(windowProfile, facade.windowHeight, direction(0, 0, 1)),
-          ]);
+          const windowShape = productShape(
+            worldContext,
+            buildWindowAssembly(facade.windowWidth, facade.windowHeight, model.wallThicknessM),
+          );
           const windowLine = line(IFC4_TYPE.WINDOW, {
             GlobalId: label(guid()),
             OwnerHistory: null,
@@ -611,18 +781,19 @@ export async function generateIfc(
         }),
       );
 
-      // Door fills the same box the opening cuts — same honest simplification
-      // as windows (Slice-2): a placeholder leaf/frame box, not detailed
-      // hardware/frame geometry. May visually overlap a window placed on the
-      // same entrance edge (documented Slice-3 scope limitation).
+      // Door fills the same box the opening cuts, with a Slice-4 detailed
+      // (but lighter, per the plan) assembly — frame + single solid panel,
+      // no glass/mullion — see buildDoorAssembly above. May visually overlap
+      // a window placed on the same entrance edge (documented Slice-3 scope
+      // limitation, unaffected by the Slice-4 geometry upgrade).
       const doorPlacement = localPlacement(
         entranceWallPlacement,
         axis2Placement3D(point3(leftX, 0, 0), null, null),
       );
-      const doorProfile = rectangleProfile(doorWidth, model.wallThicknessM);
-      const doorShape = productShape(worldContext, [
-        extrudedSolid(doorProfile, doorHeight, direction(0, 0, 1)),
-      ]);
+      const doorShape = productShape(
+        worldContext,
+        buildDoorAssembly(doorWidth, doorHeight, model.wallThicknessM),
+      );
       const doorLine = line(IFC4_TYPE.DOOR, {
         GlobalId: label(guid()),
         OwnerHistory: null,

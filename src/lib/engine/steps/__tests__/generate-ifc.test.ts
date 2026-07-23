@@ -1,5 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
-import { generateIfc, compressIfcGuid, computeWindowLayout, pickEntranceEdge } from "../generate-ifc";
+import {
+  generateIfc,
+  compressIfcGuid,
+  computeWindowLayout,
+  pickEntranceEdge,
+  buildWindowAssembly,
+  buildDoorAssembly,
+} from "../generate-ifc";
 import type { FusedModel, FacadeParams } from "../../types";
 import { ENGINE_CONSTANTS } from "../../types";
 
@@ -48,6 +55,9 @@ const IFCRELFILLSELEMENT = 3940055652;
 // Slice-3: verified against node_modules/web-ifc/web-ifc-api.js (IFC4 schema
 // slot, ToRawLineData[2][395920057]) — see generate-ifc.ts header.
 const IFCDOOR = 395920057;
+// Slice-4: same IFCEXTRUDEDAREASOLID type code already used (and verified) for
+// wall/slab/opening solids — see generate-ifc.ts header comment.
+const IFCEXTRUDEDAREASOLID = 477187591;
 
 function fakeSession() {
   let id = 0;
@@ -144,6 +154,60 @@ describe("generateIfc", () => {
     const windowObj = windowCall![1] as { OverallHeight: { value: number }; OverallWidth: { value: number } };
     expect(windowObj.OverallHeight.value).toBeCloseTo(FACADE.windowHeight);
     expect(windowObj.OverallWidth.value).toBeCloseTo(FACADE.windowWidth);
+  });
+
+  it("builds a detailed window assembly (frame + glass + mullion) instead of a single placeholder box", async () => {
+    const session = fakeSession();
+    await generateIfc(modelWithFacade, session as never);
+
+    const windowCall = session.writeLine.mock.calls.find(([, obj]) => (obj as { type: number }).type === IFCWINDOW);
+    expect(windowCall).toBeDefined();
+    const windowObj = windowCall![1] as {
+      Representation: { Representations: { Items: { type: number; Position: unknown }[] }[] };
+    };
+    const items = windowObj.Representation.Representations[0].Items;
+
+    // Single source of truth: buildWindowAssembly is the exact function that
+    // produced these items, so its own output length is what we assert
+    // against — no duplicated "6 items" magic number.
+    const expected = buildWindowAssembly(FACADE.windowWidth, FACADE.windowHeight, modelWithFacade.wallThicknessM);
+    expect(items).toHaveLength(expected.length);
+    // No longer the Slice-2 single placeholder box.
+    expect(items.length).toBeGreaterThan(1);
+    expect(items.every((it) => it.type === IFCEXTRUDEDAREASOLID)).toBe(true);
+    // Frame/glass/mullion members are each offset within the window's local
+    // frame via a non-null Position — unlike the old single box, which
+    // always had Position: null (occupied the whole local frame).
+    expect(items.some((it) => it.Position !== null)).toBe(true);
+  });
+
+  it("builds a lighter door assembly (frame + solid panel, no glass/mullion)", async () => {
+    const session = fakeSession();
+    await generateIfc(model, session as never);
+
+    const doorCall = session.writeLine.mock.calls.find(([, obj]) => (obj as { type: number }).type === IFCDOOR);
+    expect(doorCall).toBeDefined();
+    const doorObj = doorCall![1] as {
+      Representation: { Representations: { Items: { type: number; Position: unknown }[] }[] };
+    };
+    const items = doorObj.Representation.Representations[0].Items;
+
+    const expectedDoor = buildDoorAssembly(
+      ENGINE_CONSTANTS.DEFAULT_DOOR.width,
+      ENGINE_CONSTANTS.DEFAULT_DOOR.height,
+      model.wallThicknessM,
+    );
+    expect(items).toHaveLength(expectedDoor.length);
+    expect(items.every((it) => it.type === IFCEXTRUDEDAREASOLID)).toBe(true);
+
+    // "Lighter treatment": the door has no glass pane/mullion, so it has
+    // fewer solids than a window assembly of comparable size.
+    const expectedWindow = buildWindowAssembly(
+      ENGINE_CONSTANTS.DEFAULT_DOOR.width,
+      ENGINE_CONSTANTS.DEFAULT_DOOR.height,
+      model.wallThicknessM,
+    );
+    expect(expectedDoor.length).toBeLessThan(expectedWindow.length);
   });
 
   it("hosts each opening/window pair via matching RelatingBuildingElement/RelatedOpeningElement and RelatingOpeningElement/RelatedBuildingElement links", async () => {
@@ -296,6 +360,42 @@ describe("computeWindowLayout", () => {
 
   it("is deterministic for the same inputs", () => {
     expect(computeWindowLayout(10, FACADE)).toEqual(computeWindowLayout(10, FACADE));
+  });
+});
+
+describe("buildWindowAssembly", () => {
+  it("emits a frame (4 members) + glass pane + mullion, all IfcExtrudedAreaSolid", () => {
+    const items = buildWindowAssembly(FACADE.windowWidth, FACADE.windowHeight, 0.3);
+    expect(items).toHaveLength(6); // 4 frame members + 1 glass pane + 1 mullion
+    expect(items.every((it) => it.type === IFCEXTRUDEDAREASOLID)).toBe(true);
+  });
+
+  it("is deterministic for the same inputs", () => {
+    const a = buildWindowAssembly(FACADE.windowWidth, FACADE.windowHeight, 0.3);
+    const b = buildWindowAssembly(FACADE.windowWidth, FACADE.windowHeight, 0.3);
+    expect(a).toEqual(b);
+  });
+
+  it("gives every member an explicit (non-null) Position offset", () => {
+    const wallThicknessM = 0.3;
+    const items = buildWindowAssembly(FACADE.windowWidth, FACADE.windowHeight, wallThicknessM);
+    // Every item has an explicit (non-null) Position — none occupies the
+    // whole local frame the way the old single placeholder box did.
+    expect(items.every((it) => it.Position !== null)).toBe(true);
+  });
+});
+
+describe("buildDoorAssembly", () => {
+  it("emits a frame (4 members) + a single solid panel, all IfcExtrudedAreaSolid", () => {
+    const items = buildDoorAssembly(ENGINE_CONSTANTS.DEFAULT_DOOR.width, ENGINE_CONSTANTS.DEFAULT_DOOR.height, 0.3);
+    expect(items).toHaveLength(5); // 4 frame members + 1 panel
+    expect(items.every((it) => it.type === IFCEXTRUDEDAREASOLID)).toBe(true);
+  });
+
+  it("is deterministic for the same inputs", () => {
+    const a = buildDoorAssembly(ENGINE_CONSTANTS.DEFAULT_DOOR.width, ENGINE_CONSTANTS.DEFAULT_DOOR.height, 0.3);
+    const b = buildDoorAssembly(ENGINE_CONSTANTS.DEFAULT_DOOR.width, ENGINE_CONSTANTS.DEFAULT_DOOR.height, 0.3);
+    expect(a).toEqual(b);
   });
 });
 
