@@ -24,7 +24,6 @@ import {
 } from "@/lib/layers/mep-coordinator";
 import { useEquipmentStore } from "@/store/equipment-store";
 import { useScenarioStore } from "@/store/scenario-store";
-import { useAppStore } from "@/store/app-store";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "@/lib/layers/mep-equipment-params";
 import {
   deriveVisualState,
@@ -280,31 +279,6 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     }
     return restoreAll;
   }, [appliedMeasureIds, effectiveRecipe, equipmentParams, density]);
-
-  // P2-21 fix — three's WebGPU renderer cannot convert raw ShaderMaterials
-  // (NodeMaterial "not compatible" → dead frame → black canvas). The animated
-  // flow/arrow effects are the only ShaderMaterial users, so under WebGPU we
-  // hide exactly those meshes and keep everything else (equipment bodies are
-  // MeshStandardMaterial). Re-runs after every regeneration effect above.
-  const rendererBackend = useAppStore((s) => s.rendererBackend);
-  const webgpuActive =
-    rendererBackend === "webgpu" &&
-    typeof navigator !== "undefined" &&
-    "gpu" in navigator;
-  useEffect(() => {
-    const manager = managerRef.current;
-    if (!manager) return;
-    manager.getParentGroup().traverse((obj) => {
-      if (
-        (obj instanceof THREE.Mesh ||
-          obj instanceof THREE.Line ||
-          obj instanceof THREE.Points) &&
-        obj.material instanceof THREE.ShaderMaterial
-      ) {
-        obj.visible = !webgpuActive;
-      }
-    });
-  }, [webgpuActive, effectiveRecipe, equipmentParams, density, breakdown]);
 
   // Animation loop — update ShaderMaterial uniforms each frame
   useFrame((state) => {

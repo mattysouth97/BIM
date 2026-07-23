@@ -26,12 +26,6 @@ interface AppState {
   // Onboarding tour
   hasSeenTour: boolean;
   setHasSeenTour: (seen: boolean) => void;
-
-  // P2-21 — 3D renderer backend. "webgpu" is opt-in (experimental): higher
-  // fidelity via three's WebGPURenderer where supported; the scene falls
-  // back to WebGL when navigator.gpu is unavailable.
-  rendererBackend: "webgl" | "webgpu";
-  setRendererBackend: (backend: "webgl" | "webgpu") => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -53,9 +47,6 @@ export const useAppStore = create<AppState>()(
 
       hasSeenTour: false,
       setHasSeenTour: (seen) => set({ hasSeenTour: seen }),
-
-      rendererBackend: "webgl",
-      setRendererBackend: (backend) => set({ rendererBackend: backend }),
     }),
     {
       name: "korea-building-info-storage",
@@ -66,7 +57,6 @@ export const useAppStore = create<AppState>()(
         language: state.language,
         sidePanelOpen: state.sidePanelOpen,
         hasSeenTour: state.hasSeenTour,
-        rendererBackend: state.rendererBackend,
       }),
     }
   )
