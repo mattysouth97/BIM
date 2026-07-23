@@ -107,7 +107,8 @@ applies (existing behavior, existing tests stay green).
   concurrent in-flight P2-24 files (`params` stage: status-bar.tsx,
   toolbar-configs.ts, workflow-stepper/workflow-store tests,
   accuracy-routing.test.ts); **zero errors in any P2-25 file**. Build gate
-  must be re-run once P2-24 lands.
+  re-run after P2-24 landed (0e5931a): `pnpm build` ✓ Compiled successfully
+  (2026-07-23). All gates green.
 - **Done when**: a building whose ledger lacks `heit` renders with the
   VWorld outline and measured height, and the API names its source.
 
