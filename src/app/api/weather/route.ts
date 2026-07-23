@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveDataGoKrKey } from "@/lib/api-shared-key";
 
 /**
  * Proxy to KMA ASOS hourly weather data API.
@@ -24,13 +25,11 @@ const PARAMS = [
 ] as const;
 
 export async function GET(request: NextRequest) {
-  const apiKey = request.headers.get("x-api-key");
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "Missing x-api-key header" },
-      { status: 401 },
-    );
+  const keyResult = resolveDataGoKrKey(request);
+  if (!keyResult.ok) {
+    return NextResponse.json({ error: keyResult.error }, { status: keyResult.status });
   }
+  const apiKey = keyResult.apiKey;
 
   const { searchParams } = request.nextUrl;
   const url = new URL(BASE_URL);

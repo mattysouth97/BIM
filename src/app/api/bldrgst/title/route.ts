@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchFromDataGoKr, extractItems, extractTotalCount } from "@/lib/api-proxy";
 import { parseBldrgstParams, toUpstreamParams } from "../_factory";
+import { resolveDataGoKrKey } from "@/lib/api-shared-key";
 
 /**
  * P1-06 (d) — hard cap on the number of 법정동 codes queried per batch
@@ -13,10 +14,11 @@ export const MAX_BATCH_CODES = 10;
 const MAX_BATCH_ITEMS = 20;
 
 export async function GET(request: NextRequest) {
-  const apiKey = request.headers.get("x-api-key");
-  if (!apiKey) {
-    return NextResponse.json({ error: "Missing x-api-key header" }, { status: 401 });
+  const keyResult = resolveDataGoKrKey(request);
+  if (!keyResult.ok) {
+    return NextResponse.json({ error: keyResult.error }, { status: keyResult.status });
   }
+  const apiKey = keyResult.apiKey;
 
   const { searchParams } = request.nextUrl;
   const batchMode = searchParams.get("batchMode") === "true";

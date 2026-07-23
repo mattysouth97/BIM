@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { fetchFromDataGoKr, extractItems, extractTotalCount } from "@/lib/api-proxy";
 import type { EndpointKey } from "@/lib/constants";
+import { resolveDataGoKrKey } from "@/lib/api-shared-key";
 
 /** data.go.kr caps page size at 100; clamp caller-supplied values into [1, 100]. */
 export const MAX_NUM_OF_ROWS = 100;
@@ -75,10 +76,13 @@ export function toUpstreamParams(params: BldrgstParams): Record<string, string |
  */
 export function createDataGoKrProxy(endpoint: EndpointKey) {
   return async function GET(request: NextRequest): Promise<NextResponse> {
-    const apiKey = request.headers.get("x-api-key");
-    if (!apiKey) {
-      return NextResponse.json({ error: "Missing x-api-key header" }, { status: 401 });
+    // Visitor's own key if provided; otherwise the shared server-side key
+    // (DATA_GO_KR_API_KEY) — same-origin demo requests only, rate-limited.
+    const keyResult = resolveDataGoKrKey(request);
+    if (!keyResult.ok) {
+      return NextResponse.json({ error: keyResult.error }, { status: keyResult.status });
     }
+    const apiKey = keyResult.apiKey;
 
     const parsed = parseBldrgstParams(request.nextUrl.searchParams);
     if (!parsed.ok) return parsed.response;
