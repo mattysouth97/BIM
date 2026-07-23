@@ -25,8 +25,21 @@ interface VWorldFootprintItem {
   polygon: number[][][];
 }
 
+/** Building-layer footprint item returned by bboxMode + layer=building (P2-28). */
+interface VWorldBuildingFootprintItem {
+  pnu: string;
+  polygon: number[][][];
+  height: number | null;
+  groundFloors: number | null;
+}
+
 interface VWorldBBoxResponse {
   footprints: VWorldFootprintItem[];
+  error: string | null;
+}
+
+interface VWorldBuildingBBoxResponse {
+  footprints: VWorldBuildingFootprintItem[];
   error: string | null;
 }
 
@@ -69,6 +82,35 @@ async function fetchBBoxFootprints(bounds: CampusBounds): Promise<VWorldFootprin
   return data.footprints ?? [];
 }
 
+/**
+ * Fetch building-layer footprints for a bbox (LT_C_SPBD via layer=building).
+ * P2-28: building fetch failure ALWAYS degrades to [] — never rejects the campus query.
+ * Exported for testability (degradation contract verified in unit tests).
+ */
+export async function fetchBBoxBuildingFootprints(bounds: CampusBounds): Promise<VWorldBuildingFootprintItem[]> {
+  try {
+    const params = new URLSearchParams({
+      bboxMode: "true",
+      layer: "building",
+      minLng: String(bounds.minLng),
+      minLat: String(bounds.minLat),
+      maxLng: String(bounds.maxLng),
+      maxLat: String(bounds.maxLat),
+    });
+
+    const res = await fetch(`/api/vworld/footprint?${params.toString()}`, {
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) return [];
+
+    const data = await res.json() as VWorldBuildingBBoxResponse;
+    return data.footprints ?? [];
+  } catch {
+    // Network error or timeout — degrade to [] (never reject the campus query).
+    return [];
+  }
+}
+
 // ─── Position computation ─────────────────────────────────────────────────────
 
 /**
@@ -106,6 +148,43 @@ function lngLatToMeters(
   };
 }
 
+/**
+ * Compute the unsigned shoelace area of a 2D ring (coordinates as [lng, lat] pairs).
+ * Used only for comparing relative building footprint sizes — absolute value not needed.
+ */
+function ringArea(ring: number[][]): number {
+  let sum = 0;
+  const n = ring.length;
+  for (let i = 0; i < n; i++) {
+    const [x1, y1] = ring[i];
+    const [x2, y2] = ring[(i + 1) % n];
+    sum += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(sum) / 2;
+}
+
+/**
+ * From all building-layer features sharing a PNU, pick the one with the largest
+ * outer-ring area. Multiple buildings can occupy a single cadastral parcel —
+ * "largest outline" is the most prominent structure (P2-28 match semantics).
+ */
+function pickLargestBuildingForPnu(
+  candidates: Array<{ pnu: string; polygon: number[][][]; height: number | null; groundFloors: number | null }>
+): { polygon: number[][][]; height: number | null } | null {
+  let best: { polygon: number[][][]; height: number | null } | null = null;
+  let bestArea = -1;
+  for (const c of candidates) {
+    const outer = c.polygon[0];
+    if (!outer) continue;
+    const area = ringArea(outer);
+    if (area > bestArea) {
+      bestArea = area;
+      best = { polygon: c.polygon, height: c.height };
+    }
+  }
+  return best;
+}
+
 // ─── Main query function ──────────────────────────────────────────────────────
 
 async function fetchCampusData(
@@ -119,16 +198,18 @@ async function fetchCampusData(
     lng: (bounds.minLng + bounds.maxLng) / 2,
   };
 
-  // Fetch buildings and footprints in parallel
-  const [rawBuildings, rawFootprints] = await Promise.all([
+  // P2-28: fetch buildings, parcel footprints, AND building footprints in parallel.
+  // Building fetch failure degrades to [] — never rejects the campus query.
+  const [rawBuildings, rawParcelFootprints, rawBuildingFootprints] = await Promise.all([
     fetchBatchBuildings(sigunguCd, bjdongCd, apiKey),
     fetchBBoxFootprints(bounds),
+    fetchBBoxBuildingFootprints(bounds),
   ]);
 
-  // Build a PNU → footprint map for O(1) lookup
-  const footprintByPnu = new Map<string, VWorldFootprintItem>();
-  for (const fp of rawFootprints) {
-    if (fp.pnu) footprintByPnu.set(fp.pnu, fp);
+  // Build a PNU → parcel footprint map for O(1) lookup (fallback)
+  const parcelByPnu = new Map<string, VWorldFootprintItem>();
+  for (const fp of rawParcelFootprints) {
+    if (fp.pnu) parcelByPnu.set(fp.pnu, fp);
   }
 
   // Cap at MAX_BUILDINGS
@@ -136,21 +217,36 @@ async function fetchCampusData(
 
   const campusBuildings: CampusBuilding[] = buildings.map((b) => {
     const pnu = buildingPnu(b);
-    const fpItem = footprintByPnu.get(pnu);
+
+    // P2-28: prefer building-layer footprint (largest-area per PNU); fall back to parcel.
+    const buildingCandidates = rawBuildingFootprints.filter((bf) => bf.pnu === pnu);
+    const bestBuilding = buildingCandidates.length > 0 ? pickLargestBuildingForPnu(buildingCandidates) : null;
+
+    let resolvedPolygon: number[][][] | null = null;
+    let measuredHeightM: number | null = null;
+
+    if (bestBuilding) {
+      resolvedPolygon = bestBuilding.polygon;
+      measuredHeightM = bestBuilding.height; // null when absent/zero (AFF-6)
+    } else {
+      const parcel = parcelByPnu.get(pnu);
+      if (parcel) resolvedPolygon = parcel.polygon;
+      // measuredHeightM stays null on parcel fallback
+    }
 
     let footprint: GeoJsonPolygon | undefined;
     let position: { x: number; y: number } | undefined;
 
-    if (fpItem) {
-      footprint = { type: "Polygon", coordinates: fpItem.polygon };
+    if (resolvedPolygon) {
+      footprint = { type: "Polygon", coordinates: resolvedPolygon };
 
-      const centroid = polygonCentroid(fpItem.polygon);
+      const centroid = polygonCentroid(resolvedPolygon);
       if (centroid) {
         position = lngLatToMeters(centroid.lng, centroid.lat, center.lng, center.lat);
       }
     }
 
-    return { building: b, footprint, position };
+    return { building: b, footprint, position, measuredHeightM };
   });
 
   return { bounds, buildings: campusBuildings, center };

@@ -12,6 +12,9 @@ const PARCEL_DATASET = "LP_PA_CBND_BUBUN";
 /** Campus mode requests this many parcels; used to derive the truncated flag. */
 const CAMPUS_BBOX_SIZE = 20;
 
+/** Campus building mode requests this many buildings; used to derive truncated flag. */
+const CAMPUS_BUILDING_BBOX_SIZE = 30;
+
 /** Context mode requests this many neighboring buildings; used to derive truncated flag. */
 const CONTEXT_BBOX_SIZE = 30;
 
@@ -135,8 +138,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // P2-28: optional layer=building uses LT_C_SPBD; default/parcel is byte-identical to today.
+    const layer = searchParams.get("layer");
+    const useBuildingLayer = layer === "building";
+
     try {
       const { minLng, minLat, maxLng, maxLat } = parsed.data;
+
+      if (useBuildingLayer) {
+        const footprints = await fetchBuildingsByExplicitBBox(minLng, minLat, maxLng, maxLat, apiKey);
+        const truncated = footprints.length >= CAMPUS_BUILDING_BBOX_SIZE;
+        return NextResponse.json({ footprints, error: null, truncated });
+      }
+
       const footprints = await fetchByExplicitBBox(minLng, minLat, maxLng, maxLat, apiKey);
       // truncated: we requested CAMPUS_BBOX_SIZE — a full page means more may exist.
       const truncated = footprints.length >= CAMPUS_BBOX_SIZE;
@@ -303,6 +317,81 @@ async function fetchByExplicitBBox(
 
   const data = await res.json();
   return extractFootprintList(data);
+}
+
+// ---------------------------------------------------------------------------
+// P2-28 — campus building mode: LT_C_SPBD bbox query returning per-item attrs
+// ---------------------------------------------------------------------------
+
+/** One building footprint returned by bboxMode + layer=building. */
+interface CampusBuildingFootprint {
+  pnu: string;
+  polygon: number[][][];
+  /** Building height in meters (buld_hg) — null when absent or non-positive. */
+  height: number | null;
+  /** Ground floor count (gro_flo_co) — null when absent or non-positive. */
+  groundFloors: number | null;
+}
+
+/**
+ * Fetch all building outlines within an explicit bounding box for campus building mode.
+ * Uses LT_C_SPBD (GIS건물통합정보) — same dataset as the single-building and context paths.
+ * Upstream non-OK or throw → caller surfaces as 502 (AFF-2).
+ * Multiple buildings sharing a PNU are all returned — the client picks.
+ */
+async function fetchBuildingsByExplicitBBox(
+  minLng: number,
+  minLat: number,
+  maxLng: number,
+  maxLat: number,
+  apiKey: string
+): Promise<CampusBuildingFootprint[]> {
+  const bbox = `BOX(${minLng},${minLat},${maxLng},${maxLat})`;
+
+  const url = new URL(VWORLD_DATA_URL);
+  url.searchParams.set("service", "data");
+  url.searchParams.set("request", "GetFeature");
+  url.searchParams.set("data", BUILDING_DATASET);
+  url.searchParams.set("key", apiKey);
+  url.searchParams.set("domain", VWORLD_DOMAIN);
+  url.searchParams.set("crs", "EPSG:4326");
+  url.searchParams.set("geomFilter", bbox);
+  url.searchParams.set("size", String(CAMPUS_BUILDING_BBOX_SIZE));
+  url.searchParams.set("format", "json");
+
+  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error(`VWorld responded ${res.status}`);
+
+  return extractCampusBuildingFootprintList(await res.json());
+}
+
+/**
+ * Extract campus building footprint records from a VWorld GetFeature response.
+ * Returns pnu, outer-ring polygon, and parsed height/floor attributes.
+ * Degenerate rings (< 3 points) are skipped. Never fabricates attribute values (AFF-6).
+ * Multiple features per PNU are all returned — client picks by area.
+ */
+function extractCampusBuildingFootprintList(data: unknown): CampusBuildingFootprint[] {
+  try {
+    const candidates = extractFeatureCandidates(data);
+    const results: CampusBuildingFootprint[] = [];
+
+    for (const candidate of candidates) {
+      const pnu = String(candidate.properties.pnu ?? "");
+      const attrs = parseBuildingAttributes(candidate.properties);
+      results.push({
+        pnu,
+        polygon: candidate.rings,
+        height: attrs.height,
+        groundFloors: attrs.groundFloors,
+      });
+    }
+
+    return results;
+  } catch {
+    console.warn("[vworld] campus building mode: failed to parse upstream response");
+    return [];
+  }
 }
 
 async function geocodeAddress(address: string, apiKey: string): Promise<{ lat: number; lng: number } | null> {

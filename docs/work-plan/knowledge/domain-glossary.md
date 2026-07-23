@@ -161,6 +161,17 @@
   (`ESTIMATED_FLOOR_HEIGHT_M`, `DEFAULT_NEIGHBOR_HEIGHT_M` in `src/lib/context-massing.ts`).
   The subject building itself is excluded from neighbors via ray-cast point-in-polygon
   (`toLocalNeighbors`). `truncated=true` when ≥30 neighbors returned (more may exist).
+- **campus mode (캠퍼스 모드)** — P2-28: multi-building view showing all buildings within a
+  bounding box. The campus hook (`src/hooks/use-campus-buildings.ts`) fetches parcel **and**
+  building footprints in parallel (`Promise.all`). Per ledger record, the **largest-area**
+  `LT_C_SPBD` feature matching the PNU is preferred; when absent, the `LP_PA_CBND_BUBUN`
+  parcel footprint is used as fallback. `measuredHeightM` (from `buld_hg`) is carried on
+  `CampusBuilding` and passed as `opts.measuredHeightM` to `generateBuildingGeometry`,
+  feeding the ledger → measured → era height chain. The building layer fetch degrades to
+  `[]` on any failure — the campus query never rejects. Server endpoint:
+  `GET /api/vworld/footprint?bboxMode=true&layer=building` queries `LT_C_SPBD` at `size=30`;
+  default (`layer` absent or `layer=parcel`) queries `LP_PA_CBND_BUBUN` — byte-identical to
+  pre-P2-28 behavior. `truncated=true` when ≥30 building features returned.
 
 ## Governance
 
