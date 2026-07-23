@@ -1,9 +1,13 @@
 // src/lib/cad/dxf-parser.ts
 // Parse DXF text into footprint polygon candidates for the CAD upload workflow.
 //
-// Extracts closed LWPOLYLINE and POLYLINE entities, converts their vertices to
-// world meters (using the DXF $INSUNITS header), maps DXF XY → world XZ,
-// centers each polygon at its bounding-box origin, and ranks candidates by area.
+// Extracts closed rings from LWPOLYLINE/POLYLINE (closed flag OR visually
+// closed within 1% of bbox diagonal), CIRCLE, stitched LINE-segment loops
+// (per layer, via line-stitcher.ts), and geometry inside INSERT block
+// references (scale/rotation/translation applied, depth ≤ 3). Converts
+// vertices to world meters (using the DXF $INSUNITS header), maps DXF XY →
+// world XZ, centers each polygon at its bounding-box origin, and ranks
+// candidates by area.
 //
 // Pure module — no React, no DOM APIs.
 
@@ -12,6 +16,11 @@ import DxfParser, {
   type ILwpolylineEntity,
   type IPolylineEntity,
 } from "dxf-parser";
+import {
+  stitchSegmentsIntoRings,
+  MAX_SEGMENTS_PER_LAYER,
+  type Segment2D,
+} from "./line-stitcher";
 
 /** LWPOLYLINE vertex — IVertex is not re-exported at the package root, so
  *  we pin the minimal shape we actually read.  bulge encodes arc segments. */
@@ -207,18 +216,31 @@ export function parseDxfText(text: string): ParsedDxf {
     warnings.push("Unitless DXF — assuming meters.");
   }
 
-  // --- Collect closed polylines ------------------------------------------
+  // --- Collect closed rings (polylines, circles, blocks, stitched lines) --
 
   const rawCandidates: Array<{
     layer: string;
     pointsRaw: Array<{ x: number; y: number }>;
   }> = [];
 
-  for (const entity of dxf.entities ?? []) {
+  /** LINE segments per layer, in world coordinates, awaiting stitching. */
+  const lineSegmentsByLayer = new Map<string, Segment2D[]>();
+
+  /** 2D affine transform (INSERT scale → rotation → translation chains). */
+  type Xf = (x: number, y: number) => { x: number; y: number };
+  const identityXf: Xf = (x, y) => ({ x, y });
+
+  /** Guard against pathological or self-referencing block nesting. */
+  const MAX_INSERT_DEPTH = 3;
+
+  const collectEntities = (
+    entities: ReadonlyArray<unknown>,
+    xf: Xf,
+    depth: number,
+  ): void => {
+  for (const entity of entities as Array<{ type: string }>) {
     if (entity.type === "LWPOLYLINE") {
       const lw = entity as ILwpolylineEntity;
-      // `shape` in dxf-parser maps DXF group 70 bit 1 = Closed.
-      if (!lw.shape) continue;
       // Minimum 2 raw vertices needed; arc tessellation can produce ≥3 expanded points.
       if (!Array.isArray(lw.vertices) || lw.vertices.length < 2) continue;
 
@@ -250,8 +272,31 @@ export function parseDxfText(text: string): ParsedDxf {
         }
       }
 
-      if (expanded.length < 3) continue;
-      rawCandidates.push({ layer: lw.layer ?? "0", pointsRaw: expanded });
+      let ring = expanded;
+      // `shape` in dxf-parser maps DXF group 70 bit 1 = Closed. Drafters
+      // often leave the flag unset but close the ring visually — accept a
+      // coincident or near-coincident (≤1% of bbox diagonal) first/last pair.
+      if (!lw.shape) {
+        if (ring.length < 3) continue;
+        const first = ring[0];
+        const last = ring[ring.length - 1];
+        const coincides =
+          Math.abs(first.x - last.x) < 1e-6 && Math.abs(first.y - last.y) < 1e-6;
+        if (coincides) {
+          ring = ring.slice(0, -1);
+        } else {
+          const bbox = computeBbox(ring);
+          const diag = Math.hypot(bbox.maxX - bbox.minX, bbox.maxY - bbox.minY);
+          const gap = Math.hypot(first.x - last.x, first.y - last.y);
+          if (gap > diag * 0.01) continue;
+        }
+      }
+
+      if (ring.length < 3) continue;
+      rawCandidates.push({
+        layer: lw.layer ?? "0",
+        pointsRaw: ring.map((p) => xf(p.x, p.y)),
+      });
       continue;
     }
 
@@ -276,7 +321,7 @@ export function parseDxfText(text: string): ParsedDxf {
       const circlePts: Array<{ x: number; y: number }> = [];
       for (let i = 0; i < CIRCLE_CHORDS; i++) {
         const angle = (2 * Math.PI * i) / CIRCLE_CHORDS;
-        circlePts.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
+        circlePts.push(xf(cx + r * Math.cos(angle), cy + r * Math.sin(angle)));
       }
       rawCandidates.push({ layer: circle.layer ?? "0", pointsRaw: circlePts });
       continue;
@@ -309,8 +354,83 @@ export function parseDxfText(text: string): ParsedDxf {
       rawCandidates.push({
         layer: pl.layer ?? "0",
         // Drop duplicate closing vertex if present so the polygon is a clean ring.
-        pointsRaw: coincides ? pts.slice(0, -1) : pts,
+        pointsRaw: (coincides ? pts.slice(0, -1) : pts).map((p) => xf(p.x, p.y)),
       });
+      continue;
+    }
+
+    // Loose LINE segments — collected per layer, stitched into rings after
+    // traversal. Common when the outline is drafted edge-by-edge.
+    if (entity.type === "LINE") {
+      const line = entity as unknown as {
+        layer?: string;
+        vertices?: Array<{ x: number; y: number }>;
+      };
+      const a = line.vertices?.[0];
+      const b = line.vertices?.[1];
+      if (
+        !a || !b ||
+        !Number.isFinite(a.x) || !Number.isFinite(a.y) ||
+        !Number.isFinite(b.x) || !Number.isFinite(b.y)
+      ) continue;
+      const pa = xf(a.x, a.y);
+      const pb = xf(b.x, b.y);
+      const layer = line.layer ?? "0";
+      const bucket = lineSegmentsByLayer.get(layer);
+      const seg: Segment2D = { x1: pa.x, y1: pa.y, x2: pb.x, y2: pb.y };
+      if (bucket) bucket.push(seg);
+      else lineSegmentsByLayer.set(layer, [seg]);
+      continue;
+    }
+
+    // Block reference — recurse into the block definition with the INSERT's
+    // scale/rotation/translation composed onto the current transform.
+    if (entity.type === "INSERT" && depth < MAX_INSERT_DEPTH) {
+      const ins = entity as unknown as {
+        name?: string;
+        position?: { x: number; y: number };
+        xScale?: number;
+        yScale?: number;
+        rotation?: number;
+      };
+      const blocks = dxf.blocks as
+        | Record<string, { entities?: unknown[]; position?: { x: number; y: number } }>
+        | undefined;
+      const block = ins.name ? blocks?.[ins.name] : undefined;
+      if (!block?.entities?.length) continue;
+
+      const sx = Number.isFinite(ins.xScale) ? ins.xScale! : 1;
+      const sy = Number.isFinite(ins.yScale) ? ins.yScale! : 1;
+      const rot = ((Number.isFinite(ins.rotation) ? ins.rotation! : 0) * Math.PI) / 180;
+      const cos = Math.cos(rot);
+      const sin = Math.sin(rot);
+      const px = ins.position?.x ?? 0;
+      const py = ins.position?.y ?? 0;
+      const bx = block.position?.x ?? 0;
+      const by = block.position?.y ?? 0;
+
+      const childXf: Xf = (x, y) => {
+        const lx = (x - bx) * sx;
+        const ly = (y - by) * sy;
+        return xf(px + lx * cos - ly * sin, py + lx * sin + ly * cos);
+      };
+      collectEntities(block.entities, childXf, depth + 1);
+    }
+  }
+  };
+
+  collectEntities(dxf.entities ?? [], identityXf, 0);
+
+  // Stitch loose LINE segments into rings, per layer.
+  for (const [layer, segments] of lineSegmentsByLayer) {
+    if (segments.length > MAX_SEGMENTS_PER_LAYER) {
+      warnings.push(
+        `Layer '${layer}' has ${segments.length} LINE segments — too many to stitch; skipped.`
+      );
+      continue;
+    }
+    for (const ring of stitchSegmentsIntoRings(segments)) {
+      rawCandidates.push({ layer, pointsRaw: ring });
     }
   }
 

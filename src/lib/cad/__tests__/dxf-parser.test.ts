@@ -553,3 +553,213 @@ describe("docs/samples/sample-footprint.dxf", () => {
     expect(candidate.areaSqm).toBeCloseTo(240, 0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Tolerant outline detection — real drawings rarely have one closed
+// LWPOLYLINE: outlines arrive as visually-closed open polylines, loose LINE
+// segments, or geometry nested inside block INSERTs.
+// ---------------------------------------------------------------------------
+
+describe("parseDxfText — open-but-coincident LWPOLYLINE", () => {
+  it("accepts an open LWPOLYLINE whose first and last vertices coincide", () => {
+    const text = dxf([
+      [0, "SECTION"], [2, "HEADER"],
+      [9, "$INSUNITS"], [70, 6],
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "ENTITIES"],
+      [0, "LWPOLYLINE"],
+      [8, "OUTLINE"],
+      [90, 5], [70, 0], // open flag, but ring closes explicitly
+      [10, 0], [20, 0],
+      [10, 10], [20, 0],
+      [10, 10], [20, 10],
+      [10, 0], [20, 10],
+      [10, 0], [20, 0],
+      [0, "ENDSEC"],
+      [0, "EOF"],
+    ]);
+    const result = parseDxfText(text);
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].areaSqm).toBeCloseTo(100, 0);
+  });
+
+  it("accepts an open LWPOLYLINE with a tiny closing gap (≤1% of bbox diagonal)", () => {
+    const text = dxf([
+      [0, "SECTION"], [2, "HEADER"],
+      [9, "$INSUNITS"], [70, 6],
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "ENTITIES"],
+      [0, "LWPOLYLINE"],
+      [8, "OUTLINE"],
+      [90, 5], [70, 0],
+      [10, 0], [20, 0],
+      [10, 10], [20, 0],
+      [10, 10], [20, 10],
+      [10, 0], [20, 10],
+      [10, 0], [20, 0.05], // returns to within 0.05m of the first vertex
+      [0, "ENDSEC"],
+      [0, "EOF"],
+    ]);
+    const result = parseDxfText(text);
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].areaSqm).toBeCloseTo(100, 0);
+  });
+});
+
+describe("parseDxfText — LINE segment stitching", () => {
+  function lineEntity(layer: string, x1: number, y1: number, x2: number, y2: number): Array<[number, string | number]> {
+    return [
+      [0, "LINE"], [8, layer],
+      [10, x1], [20, y1],
+      [11, x2], [21, y2],
+    ];
+  }
+
+  it("stitches four LINE entities into a closed rectangle candidate", () => {
+    const text = dxf([
+      [0, "SECTION"], [2, "HEADER"],
+      [9, "$INSUNITS"], [70, 6],
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "ENTITIES"],
+      ...lineEntity("외곽선", 0, 0, 20, 0),
+      ...lineEntity("외곽선", 20, 0, 20, 15),
+      ...lineEntity("외곽선", 20, 15, 0, 15),
+      ...lineEntity("외곽선", 0, 15, 0, 0),
+      [0, "ENDSEC"],
+      [0, "EOF"],
+    ]);
+    const result = parseDxfText(text);
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].layer).toBe("외곽선");
+    expect(result.candidates[0].areaSqm).toBeCloseTo(300, 0);
+  });
+
+  it("stitches LINE loops even with small endpoint gaps", () => {
+    const text = dxf([
+      [0, "SECTION"], [2, "HEADER"],
+      [9, "$INSUNITS"], [70, 6],
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "ENTITIES"],
+      ...lineEntity("WALL", 0, 0, 20, 0.005),
+      ...lineEntity("WALL", 20, 0, 20.004, 15),
+      ...lineEntity("WALL", 20, 15, 0.003, 15),
+      ...lineEntity("WALL", 0, 15.005, 0, 0),
+      [0, "ENDSEC"],
+      [0, "EOF"],
+    ]);
+    const result = parseDxfText(text);
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].areaSqm).toBeCloseTo(300, 0);
+  });
+
+  it("does not fabricate a candidate from an open LINE chain", () => {
+    const text = dxf([
+      [0, "SECTION"], [2, "HEADER"],
+      [9, "$INSUNITS"], [70, 6],
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "ENTITIES"],
+      ...lineEntity("WALL", 0, 0, 20, 0),
+      ...lineEntity("WALL", 20, 0, 20, 15),
+      ...lineEntity("WALL", 20, 15, 0, 15),
+      [0, "ENDSEC"],
+      [0, "EOF"],
+    ]);
+    const result = parseDxfText(text);
+    expect(result.candidates).toEqual([]);
+  });
+
+  it("does not stitch lines across different layers", () => {
+    const text = dxf([
+      [0, "SECTION"], [2, "HEADER"],
+      [9, "$INSUNITS"], [70, 6],
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "ENTITIES"],
+      ...lineEntity("A", 0, 0, 20, 0),
+      ...lineEntity("A", 20, 0, 20, 15),
+      ...lineEntity("B", 20, 15, 0, 15),
+      ...lineEntity("B", 0, 15, 0, 0),
+      [0, "ENDSEC"],
+      [0, "EOF"],
+    ]);
+    const result = parseDxfText(text);
+    expect(result.candidates).toEqual([]);
+  });
+});
+
+describe("parseDxfText — INSERT block traversal", () => {
+  function blockWithRect(name: string, w: number, h: number): Array<[number, string | number]> {
+    return [
+      [0, "BLOCK"], [2, name],
+      [8, "0"],
+      [10, 0], [20, 0], // base point
+      [0, "LWPOLYLINE"],
+      [8, "PLAN_OUTLINE"],
+      [90, 4], [70, 1],
+      [10, 0], [20, 0],
+      [10, w], [20, 0],
+      [10, w], [20, h],
+      [10, 0], [20, h],
+      [0, "ENDBLK"],
+    ];
+  }
+
+  it("finds a closed polyline inside an INSERTed block", () => {
+    const text = dxf([
+      [0, "SECTION"], [2, "HEADER"],
+      [9, "$INSUNITS"], [70, 6],
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "BLOCKS"],
+      ...blockWithRect("PLAN", 10, 8),
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "ENTITIES"],
+      [0, "INSERT"], [8, "0"], [2, "PLAN"],
+      [10, 100], [20, 50],
+      [0, "ENDSEC"],
+      [0, "EOF"],
+    ]);
+    const result = parseDxfText(text);
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].layer).toBe("PLAN_OUTLINE");
+    expect(result.candidates[0].areaSqm).toBeCloseTo(80, 0);
+  });
+
+  it("applies INSERT scale to block geometry", () => {
+    const text = dxf([
+      [0, "SECTION"], [2, "HEADER"],
+      [9, "$INSUNITS"], [70, 6],
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "BLOCKS"],
+      ...blockWithRect("PLAN", 10, 8),
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "ENTITIES"],
+      [0, "INSERT"], [8, "0"], [2, "PLAN"],
+      [10, 0], [20, 0],
+      [41, 2], [42, 2], // xScale, yScale
+      [0, "ENDSEC"],
+      [0, "EOF"],
+    ]);
+    const result = parseDxfText(text);
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].areaSqm).toBeCloseTo(320, 0);
+  });
+
+  it("applies INSERT rotation without distorting area", () => {
+    const text = dxf([
+      [0, "SECTION"], [2, "HEADER"],
+      [9, "$INSUNITS"], [70, 6],
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "BLOCKS"],
+      ...blockWithRect("PLAN", 10, 8),
+      [0, "ENDSEC"],
+      [0, "SECTION"], [2, "ENTITIES"],
+      [0, "INSERT"], [8, "0"], [2, "PLAN"],
+      [10, 0], [20, 0],
+      [50, 45], // rotation degrees
+      [0, "ENDSEC"],
+      [0, "EOF"],
+    ]);
+    const result = parseDxfText(text);
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].areaSqm).toBeCloseTo(80, 0);
+  });
+});

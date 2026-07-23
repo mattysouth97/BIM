@@ -48,8 +48,8 @@ export function UploadStage() {
         setStatus({
           kind: "error",
           message: t(
-            "DXF 파일에서 닫힌 외곽 폴리라인을 찾지 못했습니다. 외곽선을 닫힌 폴리라인(LWPOLYLINE)으로 내보냈는지 확인하세요.",
-            "No closed outline polyline found in the DXF. Ensure the building outline is exported as a closed LWPOLYLINE.",
+            "DXF에서 건물 외곽선을 찾지 못했습니다. 외곽선이 폴리라인, 선분(LINE) 루프 또는 블록 내부 지오메트리로서 10m² 이상의 닫힌 영역을 이루는지 확인하세요.",
+            "No building outline found in the DXF. Ensure the outline forms a closed region over 10 m² — as a polyline, a loop of LINE segments, or geometry inside a block.",
           ),
         });
         return;
