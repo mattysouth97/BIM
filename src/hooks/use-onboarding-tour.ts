@@ -37,8 +37,8 @@ export function useOnboardingTour() {
               title: pick(language, "작업 흐름", "Workflow Pipeline"),
               description: pick(
                 language,
-                "5단계를 통해 진행하세요: 건물 선택, 조립, 구성, 분석, 내보내기",
-                "Navigate through 5 stages: Select Building, Assemble, Configure, Analyze, Export",
+                "4단계로 진행하세요: 건물 검색 → 도면 업로드(선택) → 디지털 트윈 → 보고서",
+                "Four stages: Search a building → Upload CAD (optional) → Digital Twin → Report",
               ),
             },
           },
@@ -56,11 +56,11 @@ export function useOnboardingTour() {
           {
             element: '[data-tour="left-dock"]',
             popover: {
-              title: pick(language, "씬 & 구성요소", "Scene & Components"),
+              title: pick(language, "씬 구조", "Scene Outliner"),
               description: pick(
                 language,
-                "씬 트리를 탐색하고 카탈로그에서 구성요소를 드래그하세요.",
-                "Browse the scene tree and drag components from the catalog.",
+                "씬 트리에서 건물 구성요소(층·외피·설비)를 탐색하고 선택하세요.",
+                "Browse and select building elements (floors, envelope, systems) in the scene tree.",
               ),
             },
           },

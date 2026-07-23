@@ -15,9 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  RotateCcw, ArrowUp, ArrowRight, ArrowDown, Maximize2,
+  ArrowUp, ArrowRight, ArrowDown, Maximize2,
 } from "lucide-react";
-import { ModeIndicator } from "./mode-indicator";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -225,11 +224,8 @@ function GlobalToolbarSection({
       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("top")} title={lang === "ko" ? "위" : "Top"}>
         <ArrowDown className="h-3.5 w-3.5" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("iso")} title={lang === "ko" ? "등각" : "Isometric"}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("iso")} title={lang === "ko" ? "등각 (기본 뷰)" : "Isometric (default view)"}>
         <Maximize2 className="h-3.5 w-3.5" />
-      </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("iso")} title={lang === "ko" ? "뷰 초기화" : "Reset View"}>
-        <RotateCcw className="h-3.5 w-3.5" />
       </Button>
     </div>
   );
@@ -264,13 +260,9 @@ export function ContextualToolbar({
       {/* Fixed-height toolbar strip — h-10 (40px) */}
       <div className="h-10 shrink-0 border-b bg-background/95 backdrop-blur flex items-center px-2 gap-1 z-20">
 
-        {/* Mode indicator */}
-        <ModeIndicator />
-
-        {/* Building info badges — always visible when building loaded */}
+        {/* Building identity — leads the strip when a building is loaded */}
         {buildingName && (
           <>
-            <VerticalDivider />
             <Badge variant="secondary" className="text-xs h-6">
               {buildingName}
             </Badge>
@@ -279,10 +271,9 @@ export function ContextualToolbar({
                 {era === "pre-1970" ? "~1970" : era}
               </Badge>
             )}
+            <VerticalDivider />
           </>
         )}
-
-        <VerticalDivider />
 
         {/* Center: Stage-specific toolbar groups — data-driven from TOOLBAR_CONFIGS[stage] */}
         <StageToolbar

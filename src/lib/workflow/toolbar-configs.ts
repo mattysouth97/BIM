@@ -3,10 +3,7 @@
 // Defines TOOLBAR_CONFIGS keyed by WorkflowStage.
 
 import type { LucideIcon } from "lucide-react";
-import {
-  ArrowUp, ArrowRight, ArrowDown, Maximize2, RotateCcw,
-  Settings, Layers, Download, FileText,
-} from "lucide-react";
+import { Settings, Layers, Download, FileText } from "lucide-react";
 import type { WorkflowStage } from "./stages";
 
 // ---------------------------------------------------------------------------
@@ -38,59 +35,6 @@ export interface ToolbarGroup {
   labelKo: string;
   items: ToolbarItem[];
 }
-
-// ---------------------------------------------------------------------------
-// Global toolbar group — appears in all stages
-// ---------------------------------------------------------------------------
-
-export const GLOBAL_ITEMS: ToolbarGroup = {
-  id: "global",
-  labelEn: "Global",
-  labelKo: "전역",
-  items: [
-    {
-      id: "sep-view",
-      type: "separator",
-      labelEn: "",
-      labelKo: "",
-    },
-    {
-      id: "view-front",
-      type: "button",
-      icon: ArrowUp,
-      labelEn: "Front",
-      labelKo: "앞면",
-    },
-    {
-      id: "view-side",
-      type: "button",
-      icon: ArrowRight,
-      labelEn: "Side",
-      labelKo: "측면",
-    },
-    {
-      id: "view-top",
-      type: "button",
-      icon: ArrowDown,
-      labelEn: "Top",
-      labelKo: "위",
-    },
-    {
-      id: "view-iso",
-      type: "button",
-      icon: Maximize2,
-      labelEn: "Isometric",
-      labelKo: "등각",
-    },
-    {
-      id: "view-reset",
-      type: "button",
-      icon: RotateCcw,
-      labelEn: "Reset View",
-      labelKo: "뷰 초기화",
-    },
-  ],
-};
 
 // ---------------------------------------------------------------------------
 // Search stage — minimal toolbar; user is finding a building.
@@ -199,8 +143,3 @@ export const TOOLBAR_ACTIONS: Record<string, ToolbarActionDescriptor> = {
   "twin-config-panel": { store: "workspace", method: "toggleConfigPanel" },
   "twin-layer-panel":  { store: "workspace", method: "toggleLayerPanel" },
 };
-
-/**
- * Item IDs whose actions come from ContextualToolbarProps, not store calls.
- */
-export const PROP_ACTION_ITEMS = new Set<string>([]);
