@@ -12,6 +12,7 @@ import { SceneOutliner } from "./scene-outliner";
 import { StatusBar } from "./status-bar";
 import { ReportStage } from "@/components/report/report-stage";
 import { UploadStage } from "@/components/upload/upload-stage";
+import { ParamsStage } from "@/components/params/params-stage";
 import { Button } from "@/components/ui/button";
 import { PanelLeft, PanelRight } from "lucide-react";
 
@@ -49,9 +50,12 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
 
       {/* Full-bleed viewport with floating panels */}
       <div className="relative flex-1 min-h-0" data-tour="viewport">
-        {/* Viewport content — upload stage, report stage, or 3D canvas */}
+        {/* Viewport content — upload stage, params stage (P2-24, cad-first
+            only — ledger mode never reaches this stage id), report stage, or
+            3D canvas */}
         {stage === "report" ? <ReportStage />
          : stage === "upload" ? <UploadStage />
+         : stage === "params" ? <ParamsStage />
          : children}
 
         {/* Toggle buttons and floating panels — only for the 3D twin viewport */}

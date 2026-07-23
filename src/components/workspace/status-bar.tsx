@@ -32,6 +32,11 @@ const STAGE_HINTS: Record<WorkflowStage, PromptEntry> = {
     en: "Upload a CAD floor plan (.dxf) for this building",
     ko: "건물의 CAD 도면(.dxf)을 업로드하세요",
   },
+  // P2-24 — cad-first only; ledger mode never reaches this stage id
+  params: {
+    en: "Enter floors, year, and region for this draft",
+    ko: "층수·준공연도·지역을 입력하세요",
+  },
   twin: {
     en: "View and configure the digital twin",
     ko: "디지털 트윈을 확인하고 설정하세요",

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback, useMemo, lazy, Suspense } from "react";
-import { Building2, AlertTriangle, MapPin, Search, Download, LayoutGrid, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Building2, AlertTriangle, MapPin, Search, Download, LayoutGrid, X, FileBox, ArrowRight } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/store/app-store";
+import { useWorkflowStore } from "@/store/workflow-store";
+import { useActiveBuildingStore } from "@/store/active-building-store";
+import { makeCadDraftPk } from "@/lib/workflow/cad-draft";
 import { useT } from "@/lib/i18n";
 import { useHydration } from "@/hooks/use-hydration";
 import { useBuildingSearch } from "@/hooks/use-building-search";
@@ -99,6 +103,16 @@ export default function Home() {
   const hydrated = useHydration();
   const { apiKey } = useAppStore();
   const { t } = useT();
+  const router = useRouter();
+
+  // P2-24 — CAD-first standalone entry: mint a draft PK (cad-<uuid>), open its
+  // workspace at the upload stage. No ledger search, no API key needed.
+  const startCadDraft = useCallback(() => {
+    const pk = makeCadDraftPk();
+    useActiveBuildingStore.getState().setActiveBuilding(pk);
+    useWorkflowStore.getState().setStage("upload");
+    router.push(`/building/${pk}`);
+  }, [router]);
 
   // ─── Campus mode state ────────────────────────────────────────────────────
   const [campusMode, setCampusMode] = useState(false);
@@ -274,6 +288,30 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* P2-24 — CAD-first standalone entry */}
+      <button
+        type="button"
+        onClick={startCadDraft}
+        data-testid="cad-first-entry"
+        className="group mb-8 flex w-full items-center gap-4 rounded-xl border border-dashed bg-card p-5 text-left shadow-sm transition-colors hover:border-primary hover:bg-primary/5"
+      >
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+          <FileBox className="h-6 w-6 text-primary" />
+        </div>
+        <div className="flex-1">
+          <p className="font-semibold">
+            {t("CAD 도면으로 시작", "Start from a CAD file")}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {t(
+              "건축물대장 없이 DXF·DWG·PDF 도면을 업로드하고 층수·연도·지역만 입력하면 트윈과 개보수 보고서가 생성됩니다.",
+              "No building ledger? Upload a DXF/DWG/PDF outline, enter floors, year, and region — the twin and retrofit report follow.",
+            )}
+          </p>
+        </div>
+        <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+      </button>
 
       {/* Campus Mode toggle */}
       <div className="mb-6 flex items-center justify-end gap-3">

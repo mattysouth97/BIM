@@ -3,6 +3,8 @@
 import { use, lazy, Suspense, useEffect } from "react";
 import { notFound } from "next/navigation";
 import { parseBuildingId } from "@/lib/constants";
+import { isCadDraftPk } from "@/lib/workflow/cad-draft";
+import { CadWorkspace } from "@/components/workspace/cad-workspace";
 import { useActiveBuildingStore } from "@/store/active-building-store";
 import { useCompositeBuilding } from "@/hooks/use-composite-building";
 import { useBuildingFootprint } from "@/hooks/use-building-footprint";
@@ -30,6 +32,14 @@ export default function BuildingWorkspace({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  // P2-24: cad-first drafts (cad-<uuid>) branch BEFORE ledger-id parsing —
+  // they have no ledger coordinates and must never fire a ledger/VWorld fetch.
+  // (Branching here keeps each workspace's hooks unconditional.)
+  if (isCadDraftPk(id)) return <CadWorkspace pk={id} />;
+  return <LedgerWorkspace id={id} />;
+}
+
+function LedgerWorkspace({ id }: { id: string }) {
   // P2-03: malformed ids render the 404 boundary instead of an empty shell.
   const buildingId = parseBuildingId(id);
   if (!buildingId) notFound();

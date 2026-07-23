@@ -5,8 +5,8 @@ import { versionedMigrate } from "./persist-migrate";
 import { persist } from "zustand/middleware";
 import {
   WorkflowStage,
-  STAGE_ORDER,
   STAGE_GUARDS,
+  getStageOrder,
   getBlockingStage,
   type StageGuardContext,
 } from "@/lib/workflow/stages";
@@ -34,7 +34,8 @@ interface WorkflowState {
    * happened. UI navigation must use this, never raw setStage.
    */
   goToStage: (target: WorkflowStage, ctx?: StageGuardContext) => boolean;
-  retreat: () => void;
+  /** P2-24 — pass ctx.mode for cad-first stage order; omitted = ledger. */
+  retreat: (ctx?: StageGuardContext) => void;
   markComplete: (stage: WorkflowStage) => void;
   resetWorkflow: () => void;
 }
@@ -42,6 +43,7 @@ interface WorkflowState {
 const initialCompletion: Record<WorkflowStage, boolean> = {
   search: false,
   upload: false,
+  params: false,
   twin:   false,
   report: false,
 };
@@ -73,11 +75,12 @@ export const useWorkflowStore = create<WorkflowState>()(
         if (guard && !guard(ctx)) {
           return; // guard blocks advance
         }
-        const idx = STAGE_ORDER.indexOf(current);
-        if (idx < STAGE_ORDER.length - 1) {
-          set({ stage: STAGE_ORDER[idx + 1] });
+        const order = getStageOrder(ctx?.mode);
+        const idx = order.indexOf(current);
+        if (idx >= 0 && idx < order.length - 1) {
+          set({ stage: order[idx + 1] });
         }
-        // no-op at terminal
+        // no-op at terminal or when the stage isn't in this mode's order
       },
 
       goToStage: (target, ctx) => {
@@ -89,11 +92,12 @@ export const useWorkflowStore = create<WorkflowState>()(
         return true;
       },
 
-      retreat: () => {
+      retreat: (ctx) => {
         const current = get().stage;
-        const idx = STAGE_ORDER.indexOf(current);
+        const order = getStageOrder(ctx?.mode);
+        const idx = order.indexOf(current);
         if (idx > 0) {
-          set({ stage: STAGE_ORDER[idx - 1] });
+          set({ stage: order[idx - 1] });
         }
         // no-op at start
       },

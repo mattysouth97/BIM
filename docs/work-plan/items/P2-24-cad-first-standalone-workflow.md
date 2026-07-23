@@ -3,8 +3,8 @@ id: P2-24
 title: CAD-first standalone workflow — begin with a CAD file, no building-ledger dependency
 priority: P2
 area: ux
-status: not-started
-owner: unassigned
+status: in-review
+owner: claude-fable-5-session
 effort: M
 created: 2026-07-23
 updated: 2026-07-23
@@ -55,9 +55,15 @@ Spec bullets:
   계속" skip button from P2-17 is **not rendered** in this mode); `params`
   requires floors ≥ 1, a completion year, and a selected 시군구.
 - New `src/components/params/params-stage.tsx`: minimal form (floors, year,
-  region cascade reusing `region-codes.json`). On submit: build the base
-  recipe via era-based `getRecipe(year)`, write floors as a recipe override,
-  store `sigunguCd` in `active-building-store` for climate lookups.
+  region cascade reusing `region-codes.json`). On submit: store the params in
+  the transient `cad-draft-store`, store `sigunguCd` in
+  `active-building-store` for climate lookups.
+  *(Spec refinement at CONTEXT: "floors as a recipe override" was wrong-shaped
+  — `BuildingRecipe.floors` is a `FloorSpec[]`, not a count. The count flows
+  as `grndFlrCnt` through a synthetic minimal title (`cadDraftTitle`) into the
+  existing `generateBuildingGeometry` → `toRecipe` → `setBaseRecipe` pipeline,
+  which calls the era-based `getRecipe()` internally. Observable behavior —
+  era defaults + N floors — is exactly as specified.)*
 - `building-workspace.tsx` detects the `cad-` prefix → skips
   `useCompositeBuilding` and `useBuildingFootprint` entirely (zero API
   calls). Ledger-derived display fields fall back: floor area = CAD footprint
@@ -130,15 +136,31 @@ Context pack (read in order):
 - **Gates**: targeted vitest for touched modules; `pnpm test` (baseline 1277);
   `pnpm lint`; `pnpm build`.
 - **Acceptance criteria**:
-  - [ ] Home page shows the CAD entry card; click lands in a `cad-first`
-        workspace with zero ledger/VWorld requests
-  - [ ] cad-first stepper: upload → 정보 입력 → twin → report; no skip button;
+  - [x] Home page shows the CAD entry card; click lands in a `cad-first`
+        workspace with zero ledger/VWorld requests (CadWorkspace never mounts
+        the fetch hooks; useActualEnergy disabled for `cad-` PKs)
+  - [x] cad-first stepper: upload → 정보 입력 → twin → report; no skip button;
         params guard enforces floors/year/region
-  - [ ] Params submit yields an era-correct recipe + floors override +
-        `sigunguCd`; twin extrudes the CAD footprint
-  - [ ] Report renders area from polygon × floors, climate from region,
+  - [x] Params submit yields an era-correct recipe + floor count +
+        `sigunguCd`; twin extrudes the CAD footprint (via cadDraftTitle →
+        existing geometry pipeline)
+  - [x] Report renders area from polygon × floors, climate from region,
         `-` for ledger-only fields (AFF-6 honesty checklist)
-  - [ ] UC-11 added to use-cases.md; ledger flow fully regression-green
+  - [x] UC-11 added to use-cases.md (+ glossary entry); ledger flow fully
+        regression-green (1343/1343 tests)
+
+- **Evaluation notes (G4, 2026-07-23)**:
+  - Gates: `pnpm vitest run` 1343/1343 (baseline 1277 + 66 new) ·
+    `pnpm lint` 0 errors (11 pre-existing warnings) · `pnpm build` green
+    (typecheck exposed and fixed two exhaustive `Record<WorkflowStage,…>`
+    tables: STAGE_HINTS, TOOLBAR_CONFIGS) · `pnpm ci:check` all guards passed.
+  - Security checklist: params form validates via `isCadDraftParamsValid`
+    before any store write; no new routes; no secrets/env in errors; no
+    filesystem access. ✔
+  - Honesty checklist: cadDraftTitle emits only user facts, CAD-derived
+    areas, or explicit `0`/`""` unavailable markers (unit-tested);
+    cad-first upload lock reason drops the nonexistent skip option;
+    useActualEnergy no longer issues HUB requests for synthetic PKs. ✔
 - **Done when**: a user starting from only a CAD file reaches an honest twin
   + report through upload → 정보 입력, while the ledger-first flow is
   provably untouched.

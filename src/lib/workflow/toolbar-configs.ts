@@ -113,6 +113,8 @@ const REPORT_GROUPS: ToolbarGroup[] = [
 export const TOOLBAR_CONFIGS: Record<WorkflowStage, ToolbarGroup[]> = {
   search: SEARCH_GROUPS,
   upload: UPLOAD_GROUPS,
+  // P2-24 — the params form is self-contained; no toolbar actions apply
+  params: [],
   twin:   TWIN_GROUPS,
   report: REPORT_GROUPS,
 };

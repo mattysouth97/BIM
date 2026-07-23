@@ -5,6 +5,7 @@ import type { WorkflowStage } from "../../lib/workflow/stages";
 const allFalse: Record<WorkflowStage, boolean> = {
   search: false,
   upload: false,
+  params: false,
   twin:   false,
   report: false,
 };
@@ -303,5 +304,53 @@ describe("useWorkflowStore", () => {
     const persisted = storeApi.persist.getOptions().partialize(useWorkflowStore.getState());
     expect(Object.keys(persisted).sort()).toEqual(["completion", "stage"]);
     expect(persisted).not.toHaveProperty("cadSkipped");
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // P2-24 — cad-first mode navigation
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const CAD_PARAMS = { floors: 6, year: 1995, sigunguCd: "11680" };
+
+  it('cad-first advance() from "upload" with a footprint goes to "params", not "twin"', () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    useWorkflowStore.getState().advance({ mode: "cad-first", footprintPolygon: VALID_POLYGON });
+    expect(useWorkflowStore.getState().stage).toBe("params");
+  });
+
+  it('cad-first advance() from "upload" rejects the skip flag (CAD mandatory)', () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    useWorkflowStore.getState().advance({ mode: "cad-first", cadSkipped: true });
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it('cad-first advance() from "params" blocks without valid params', () => {
+    useWorkflowStore.setState({ stage: "params" });
+    useWorkflowStore.getState().advance({ mode: "cad-first" });
+    expect(useWorkflowStore.getState().stage).toBe("params");
+  });
+
+  it('cad-first advance() from "params" with valid params goes to "twin"', () => {
+    useWorkflowStore.setState({ stage: "params" });
+    useWorkflowStore.getState().advance({ mode: "cad-first", cadParams: CAD_PARAMS });
+    expect(useWorkflowStore.getState().stage).toBe("twin");
+  });
+
+  it('cad-first retreat() from "twin" goes back to "params"', () => {
+    useWorkflowStore.setState({ stage: "twin" });
+    useWorkflowStore.getState().retreat({ mode: "cad-first" });
+    expect(useWorkflowStore.getState().stage).toBe("params");
+  });
+
+  it('cad-first retreat() at "upload" is a no-op (first stage of the mode)', () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    useWorkflowStore.getState().retreat({ mode: "cad-first" });
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it("ledger retreat() without ctx behaves as before (regression)", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    useWorkflowStore.getState().retreat();
+    expect(useWorkflowStore.getState().stage).toBe("search");
   });
 });

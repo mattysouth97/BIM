@@ -87,4 +87,29 @@ describe("recoverWorkflowStage (P2-16)", () => {
     expect(second).toBeNull();
     expect(useWorkflowStore.getState().stage).toBe("upload");
   });
+
+  // ─── P2-24 — cad-first recovery ────────────────────────────────────────────
+
+  it('persisted stage "params" with empty stores retreats to "upload" (cad-first)', () => {
+    useWorkflowStore.setState({ stage: "params" });
+    expect(recoverWorkflowStage()).toBe("upload");
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it("cad draft on twin with a footprint but no params retreats to params", () => {
+    useActiveBuildingStore.getState().setActiveBuilding("cad-abc");
+    useRecipeStore.setState({
+      overrides: { "cad-abc": { footprintPolygon: TRIANGLE } },
+    });
+    useWorkflowStore.setState({ stage: "twin" });
+    expect(recoverWorkflowStage()).toBe("params");
+    expect(useWorkflowStore.getState().stage).toBe("params");
+  });
+
+  it("cad draft on twin with empty stores retreats to upload, never search", () => {
+    useActiveBuildingStore.getState().setActiveBuilding("cad-abc");
+    useWorkflowStore.setState({ stage: "twin" });
+    expect(recoverWorkflowStage()).toBe("upload");
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
 });

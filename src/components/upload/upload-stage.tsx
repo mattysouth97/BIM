@@ -14,6 +14,7 @@ import {
   type Polygon2D,
 } from "@/lib/cad/dxf-parser";
 import { parseDwgFile } from "@/lib/cad/dwg-parser";
+import { getWorkflowMode } from "@/lib/workflow/cad-draft";
 import { FootprintPreview } from "./footprint-preview";
 import { LayerPicker } from "./layer-picker";
 import { PdfTracer } from "./pdf-tracer";
@@ -36,6 +37,10 @@ export function UploadStage() {
   const [pendingLayer, setPendingLayer] = useState<string | null>(null);
 
   const buildingPk = useActiveBuildingPk();
+  // P2-24 — cad-first drafts have no ledger: no search stage behind us, and
+  // no "continue without CAD" escape hatch (the drawing IS the entry point).
+  const mode = getWorkflowMode(buildingPk);
+  const isCadFirst = mode === "cad-first";
   const setOverride = useRecipeStore((s) => s.setOverride);
   const advance = useWorkflowStore((s) => s.advance);
   const retreat = useWorkflowStore((s) => s.retreat);
@@ -217,8 +222,8 @@ export function UploadStage() {
     // Store as GeoJSON-style rings ([outer, ...holes]).
     const rings: [number, number][][] = [status.polygon];
     setOverride(buildingPk, "footprintPolygon", rings);
-    advance({ footprintPolygon: rings });
-  }, [status, buildingPk, setOverride, advance, t]);
+    advance({ mode, footprintPolygon: rings });
+  }, [status, buildingPk, setOverride, advance, mode, t]);
 
   // P2-17 — proceed without a CAD drawing: the twin falls back to the
   // public-data (ledger/VWorld) footprint the viewer already uses when no
@@ -370,42 +375,52 @@ export function UploadStage() {
           </div>
         )}
 
-        {/* Navigation */}
+        {/* Navigation — cad-first drafts have no search stage and no skip path */}
         <div className="flex items-center justify-between pt-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => retreat()}
-          >
-            <ArrowLeft className="mr-1.5 h-4 w-4" />
-            {t("검색으로 돌아가기", "Back to search")}
-          </Button>
-          <div className="flex items-center gap-2">
+          {isCadFirst ? (
+            <span />
+          ) : (
             <Button
               type="button"
-              variant="outline"
-              onClick={skipAndAdvance}
-              data-testid="upload-skip"
+              variant="ghost"
+              onClick={() => retreat()}
             >
-              {t("CAD 없이 계속", "Continue without CAD")}
+              <ArrowLeft className="mr-1.5 h-4 w-4" />
+              {t("검색으로 돌아가기", "Back to search")}
             </Button>
+          )}
+          <div className="flex items-center gap-2">
+            {!isCadFirst && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={skipAndAdvance}
+                data-testid="upload-skip"
+              >
+                {t("CAD 없이 계속", "Continue without CAD")}
+              </Button>
+            )}
             <Button
               type="button"
               disabled={status.kind !== "ready" || !buildingPk}
               onClick={commitAndAdvance}
               data-testid="upload-continue"
             >
-              {t("트윈으로 계속", "Continue to Twin")}
+              {isCadFirst
+                ? t("정보 입력으로 계속", "Continue to Building Info")
+                : t("트윈으로 계속", "Continue to Twin")}
               <ArrowRight className="ml-1.5 h-4 w-4" />
             </Button>
           </div>
         </div>
-        <p className="text-right text-xs text-muted-foreground">
-          {t(
-            "도면이 없어도 진행할 수 있습니다 — 트윈은 공공데이터(건축물대장) 외곽선으로 생성되며, 정밀도가 낮을 수 있습니다.",
-            "No drawing? You can continue — the twin will use the public-data (building ledger) footprint, which may be less precise.",
-          )}
-        </p>
+        {!isCadFirst && (
+          <p className="text-right text-xs text-muted-foreground">
+            {t(
+              "도면이 없어도 진행할 수 있습니다 — 트윈은 공공데이터(건축물대장) 외곽선으로 생성되며, 정밀도가 낮을 수 있습니다.",
+              "No drawing? You can continue — the twin will use the public-data (building ledger) footprint, which may be less precise.",
+            )}
+          </p>
+        )}
       </div>
     </div>
   );

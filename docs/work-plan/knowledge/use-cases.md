@@ -1,4 +1,4 @@
-# Use-Case Catalog — UC-01 … UC-10
+# Use-Case Catalog — UC-01 … UC-11
 
 > Stage-1 artifact of `docs/work-plan/AI_PROCESS.md`. Every work item references ≥1 UC id
 > (rule R1.1). Domain terms used here are defined in `domain-glossary.md`.
@@ -186,6 +186,30 @@
   `src/lib/portfolio/release-store.ts`, `src/lib/portfolio/feature-extractor.ts`,
   `src/app/api/v1/predictions/[bjdongCd]/__tests__/route.test.ts`.
 
+## UC-11 — Start from a CAD file (standalone twin, no ledger)
+
+- **Actor**: End user with a CAD drawing but no 건축물대장 entry (design-phase,
+  unregistered building, quick massing/retrofit study).
+- **Trigger**: User clicks "CAD 도면으로 시작" on the home page.
+- **Main flow**:
+  1. A synthetic draft PK (`cad-<uuid>`) is minted and the workspace opens at
+     `/building/cad-<uuid>` in **cad-first** mode — stage order
+     도면 업로드 → 정보 입력 → 디지털 트윈 → 보고서 (no search stage, no
+     "CAD 없이 계속" skip; the drawing is the entry point).
+  2. User uploads a DXF/DWG/PDF footprint (UC-04 machinery, unchanged).
+  3. At 정보 입력 the user enters exactly three facts: 지상층수, 준공연도,
+     시군구 (regional climate). The era-based recipe supplies every other
+     default; all stay editable in the twin stage.
+  4. The twin renders from a synthetic minimal title: user facts + CAD-derived
+     areas (`archArea` = footprint area; `totArea` = area × floors); every
+     other ledger field is an explicit unavailable marker rendered as `-`
+     (AFF-6). No `bldrgst`/VWorld request is ever fired for a `cad-` PK.
+  5. The report (UC-06/07) runs on the recipe + regional climate; drafts are
+     session-transient — reload retreats to the upload stage (P2-16 recovery).
+- **Primary modules**: `src/lib/workflow/cad-draft.ts`,
+  `src/store/cad-draft-store.ts`, `src/components/params/params-stage.tsx`,
+  `src/components/workspace/cad-workspace.tsx`, `src/lib/workflow/stages.ts`.
+
 ---
 
 ## Traceability matrix
@@ -202,3 +226,4 @@
 | UC-08 | report | exporters reuse pure-function outputs |
 | UC-09 | campus, ux | normalized metrics; explicit gaps |
 | UC-10 | api, ml | 400/404/429/503 contract; rate limit; no secret/path leakage |
+| UC-11 | ux, state | mode derived from `cad-` PK prefix; CAD mandatory (no skip); zero ledger/VWorld calls; derived-or-unavailable values only |

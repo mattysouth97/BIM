@@ -5,6 +5,7 @@ import { UploadStage } from "../upload-stage";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useMaterialStore } from "@/store/material-store";
+import { useActiveBuildingStore } from "@/store/active-building-store";
 import type { MaterialProperties } from "@/lib/material-types";
 
 // Two closed LWPOLYLINE entities on different layers.
@@ -75,7 +76,7 @@ function seedBuilding() {
 function resetStores() {
   useWorkflowStore.setState({
     stage: "upload",
-    completion: { search: false, upload: false, twin: false, report: false },
+    completion: { search: false, upload: false, params: false, twin: false, report: false },
     cadSkipped: {},
   });
   useRecipeStore.setState({
@@ -297,5 +298,52 @@ describe("UploadStage", () => {
     const overrides = useRecipeStore.getState().overrides[TEST_PK];
     expect(overrides?.footprintPolygon).toBeDefined();
     expect(useWorkflowStore.getState().stage).toBe("twin");
+  });
+});
+
+// ─── P2-24 — cad-first mode: CAD is mandatory, search does not exist ─────────
+
+describe("UploadStage in cad-first mode (P2-24)", () => {
+  const CAD_PK = "cad-test-draft";
+
+  beforeEach(() => {
+    resetStores();
+    useActiveBuildingStore.getState().setActiveBuilding(CAD_PK);
+  });
+
+  afterEach(() => {
+    cleanup();
+    useActiveBuildingStore.getState().clearActiveBuilding();
+  });
+
+  it("hides the skip button and the back-to-search button", () => {
+    render(<UploadStage />);
+    expect(screen.queryByTestId("upload-skip")).toBeNull();
+    expect(screen.queryByText("검색으로 돌아가기")).toBeNull();
+  });
+
+  it("committing a DXF advances to params, not twin", async () => {
+    const file = new File([RECT_DXF], "plan.dxf", { type: "application/dxf" });
+    if (typeof (file as { text?: () => Promise<string> }).text !== "function") {
+      Object.defineProperty(file, "text", {
+        value: async () => RECT_DXF,
+      });
+    }
+
+    render(<UploadStage />);
+    const input = screen.getByTestId("upload-file-input") as HTMLInputElement;
+    Object.defineProperty(input, "files", {
+      value: [file],
+      configurable: true,
+    });
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      expect((screen.getByTestId("upload-continue") as HTMLButtonElement).disabled).toBe(false);
+    });
+    fireEvent.click(screen.getByTestId("upload-continue"));
+
+    expect(useRecipeStore.getState().overrides[CAD_PK]?.footprintPolygon).toBeDefined();
+    expect(useWorkflowStore.getState().stage).toBe("params");
   });
 });

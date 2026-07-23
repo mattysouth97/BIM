@@ -21,7 +21,13 @@ import { useHydration } from "@/hooks/use-hydration";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useActiveBuildingStore } from "@/store/active-building-store";
 import { useRecipeStore } from "@/store/recipe-store";
-import { getBlockingStage, type WorkflowStage } from "@/lib/workflow/stages";
+import { useCadDraftStore } from "@/store/cad-draft-store";
+import { getWorkflowMode } from "@/lib/workflow/cad-draft";
+import {
+  getBlockingStage,
+  getStageOrder,
+  type WorkflowStage,
+} from "@/lib/workflow/stages";
 
 /**
  * Hook-free recovery step (exported for tests). Reads the persisted stage,
@@ -33,11 +39,19 @@ export function recoverWorkflowStage(): WorkflowStage | null {
   const { stage, setStage, cadSkipped } = useWorkflowStore.getState();
   const buildingPk = useActiveBuildingStore.getState().buildingPk ?? "";
   const overrides = useRecipeStore.getState().overrides[buildingPk];
-  const blocking = getBlockingStage("search", stage, {
+  // P2-24: mode from the active PK prefix; a persisted "params" stage can only
+  // come from a cad-first session (the ledger order never contains it), so it
+  // classifies as cad-first even when the transient PK is already gone.
+  const mode =
+    stage === "params" ? "cad-first" : getWorkflowMode(buildingPk || null);
+  const blocking = getBlockingStage(getStageOrder(mode)[0], stage, {
+    mode,
     footprintPolygon: overrides?.footprintPolygon,
     // P2-17: like the footprint, the skip flag is transient — after a real
     // reload it is empty and twin/report still retreat to upload.
     cadSkipped: cadSkipped[buildingPk],
+    // P2-24: draft params are transient too; absent ⇒ params guard fails.
+    cadParams: useCadDraftStore.getState().drafts[buildingPk],
   });
   if (blocking !== null) setStage(blocking);
   return blocking;
