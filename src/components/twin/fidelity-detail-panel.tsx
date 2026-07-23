@@ -45,6 +45,10 @@ interface FidelityDetailPanelProps {
    * a real footprint, AFF-6). When set, the Export IFC button is not shown.
    */
   engineUnavailableReason?: string | null;
+  /** Click a HITL flag to highlight that element category in the 3D viewer. */
+  onFlagClick?: (kind: HitlFlag['kind']) => void;
+  /** The element category currently highlighted (drives the active flag state). */
+  activeHighlightKind?: string | null;
 }
 
 // Fixed ordered list of categories to display
@@ -119,6 +123,8 @@ export function FidelityDetailPanel({
   onExportIfc,
   exporting,
   engineUnavailableReason,
+  onFlagClick,
+  activeHighlightKind,
 }: FidelityDetailPanelProps) {
   const { t } = useT();
   const nextLevel = checklist.nextLevel;
@@ -243,17 +249,31 @@ export function FidelityDetailPanel({
                             )}
                           </p>
                           <ul className="space-y-1">
-                            {hitlFlags.map((flag) => (
-                              <li
-                                key={flag.expressId}
-                                className="flex items-start gap-1.5 text-[10px] text-muted-foreground/90"
-                              >
-                                <span className="shrink-0 font-medium text-foreground/80">
-                                  {flag.kind} #{flag.expressId}
-                                </span>
-                                <span className="truncate">{flag.reason}</span>
-                              </li>
-                            ))}
+                            {hitlFlags.map((flag) => {
+                              const active = activeHighlightKind === flag.kind;
+                              return (
+                                <li key={flag.expressId}>
+                                  <button
+                                    type="button"
+                                    onClick={() => onFlagClick?.(flag.kind)}
+                                    aria-pressed={active}
+                                    title={t(
+                                      '3D 뷰에서 이 요소 종류 강조',
+                                      'Highlight this element type in the 3D view'
+                                    )}
+                                    className={cn(
+                                      'flex w-full items-start gap-1.5 rounded px-1 py-0.5 text-left text-[10px] text-muted-foreground/90 transition-colors hover:bg-muted/60',
+                                      active && 'bg-amber-100 text-amber-900'
+                                    )}
+                                  >
+                                    <span className="shrink-0 font-medium text-foreground/80">
+                                      {flag.kind} #{flag.expressId}
+                                    </span>
+                                    <span className="truncate">{flag.reason}</span>
+                                  </button>
+                                </li>
+                              );
+                            })}
                           </ul>
                         </div>
                       ) : (

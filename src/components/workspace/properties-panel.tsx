@@ -18,6 +18,7 @@ import {
 } from "@/lib/energy/delivered-from-demand";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useEngineResult } from "@/hooks/use-engine-result";
+import { useReviewHighlightStore } from "@/store/review-highlight-store";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
 import { useWeatherData } from "@/hooks/use-weather-data";
@@ -103,6 +104,9 @@ export function PropertiesPanel({
   const { t } = useT();
 
   const buildingPk = useActiveBuildingPk();
+  // HITL review highlight — clicking a flag pulses that element category in 3D.
+  const highlightKind = useReviewHighlightStore((s) => s.highlightKind);
+  const toggleHighlightKind = useReviewHighlightStore((s) => s.toggleHighlightKind);
 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
   // P1-08 (d): same regional climate as every other panel.
@@ -294,6 +298,8 @@ export function PropertiesPanel({
                 onExportIfc={engine.exportIfc}
                 exporting={engine.exporting}
                 engineUnavailableReason={engine.unavailableReason}
+                onFlagClick={toggleHighlightKind}
+                activeHighlightKind={highlightKind}
               />
             </div>
           </AccordionContent>

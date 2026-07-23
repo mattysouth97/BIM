@@ -45,11 +45,43 @@ interface ProceduralBuildingModelProps {
    * structural-discipline filter rendered in the Solibri/xeokit x-ray idiom.
    */
   structuralIsolation?: boolean;
+  /**
+   * Category of a HITL-flagged element to highlight (from a fidelity-panel flag
+   * click). Category-level, not per-element: the procedural building has no
+   * per-IFC-element meshes, so the flag's kind maps to a mesh category
+   * (window→glass, wall→facade panels/mullions, slab→slabs; door has no
+   * distinct mesh and is not highlightable).
+   */
+  reviewHighlightKind?: "wall" | "slab" | "window" | "door" | null;
 }
 
 /** Ghost appearance for non-structural context in isolation view. */
 const GHOST_COLOR = "#9ca3af";
 const GHOST_OPACITY = 0.12;
+
+/** HITL review highlight — amber emissive glow on the flagged element category. */
+const REVIEW_HIGHLIGHT_EMISSIVE = "#f59e0b";
+const REVIEW_HIGHLIGHT_INTENSITY = 0.5;
+
+/** True when a mesh belongs to the flagged element category. */
+function meshMatchesReviewKind(
+  obj: THREE.Mesh,
+  kind: "wall" | "slab" | "window" | "door"
+): boolean {
+  const type = obj.userData?.type as string | undefined;
+  switch (kind) {
+    case "window":
+      return type === "glass";
+    case "wall":
+      return type === "solidPanel" || type === "hMullion" || type === "vMullion";
+    case "slab":
+      return type === "slab" || hasAncestorNamed(obj, "slabs");
+    case "door":
+      return false; // no distinct door mesh in the procedural building
+    default:
+      return false;
+  }
+}
 
 /** True when obj or any ancestor group carries the given name. */
 function hasAncestorNamed(obj: THREE.Object3D, name: string): boolean {
@@ -88,7 +120,7 @@ function collectInformationalMeshes(group: THREE.Group): THREE.Mesh[] {
   return result;
 }
 
-export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelect, hideGroundPlane, retrofitVisuals, structuralIsolation }: ProceduralBuildingModelProps) {
+export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelect, hideGroundPlane, retrofitVisuals, structuralIsolation, reviewHighlightKind }: ProceduralBuildingModelProps) {
   const builderRef = useRef<ProceduralBuilding | null>(null);
   const groupRef = useRef<THREE.Group | null>(null);
   const selectedRef = useRef<number | null>(null);
@@ -172,7 +204,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
     restoreAll();
     const v = retrofitVisuals ?? NO_RETROFIT_VISUALS;
     const isolate = structuralIsolation === true;
-    if (!hasAnyVisual(v) && !isolate) return;
+    if (!hasAnyVisual(v) && !isolate && !reviewHighlightKind) return;
 
     const tint = (mesh: THREE.Mesh, apply: (m: THREE.MeshStandardMaterial) => void) => {
       if (Array.isArray(mesh.material)) return;
@@ -217,6 +249,16 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       if (!(obj instanceof THREE.Mesh)) return;
       const type = obj.userData?.type as string | undefined;
 
+      // HITL review highlight takes precedence for matching meshes — an amber
+      // emissive glow on the flagged element category (category-level).
+      if (reviewHighlightKind && meshMatchesReviewKind(obj, reviewHighlightKind)) {
+        tint(obj, (m) => {
+          m.emissive.set(REVIEW_HIGHLIGHT_EMISSIVE);
+          m.emissiveIntensity = REVIEW_HIGHLIGHT_INTENSITY;
+        });
+        return;
+      }
+
       // P2-22 — isolation ghosts every non-load-bearing element first
       // (Revit filters on LoadBearing; masonry walls stay solid because the
       // IFC classification marks them bearing). Ghost wins over retrofit
@@ -252,7 +294,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
     });
 
     return restoreAll;
-  }, [group, retrofitVisuals, structuralIsolation, recipe]);
+  }, [group, retrofitVisuals, structuralIsolation, recipe, reviewHighlightKind]);
 
   // Floor selection via raycaster on slabs — handles both the rectangular
   // InstancedMesh path (instanceId) and the polygon Group path (plain meshes

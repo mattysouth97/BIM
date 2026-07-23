@@ -13,6 +13,7 @@ import { useRecipeStore } from "@/store/recipe-store";
 import { useScenarioStore } from "@/store/scenario-store";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import { useLayerStore } from "@/store/layer-store";
+import { useReviewHighlightStore } from "@/store/review-highlight-store";
 import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
 import { classifyElement, ifcDisplayLine } from "@/lib/bim/ifc-classification";
 import { SolarPanels } from "./solar-panels";
@@ -376,6 +377,10 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
   // P2-22 — structural isolation view (load-bearing solid, rest ghosted).
   const structuralIsolation = useLayerStore((s) => s.structuralIsolation);
 
+  // HITL review highlight — a fidelity-panel flag click pulses the matching
+  // element category (category-level, not per-element).
+  const reviewHighlightKind = useReviewHighlightStore((s) => s.highlightKind);
+
   const { t, lang } = useT();
 
   const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 1.8;
@@ -489,7 +494,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           ) : (
             modelSource === "parametric" && (
               <>
-                <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} retrofitVisuals={retrofitVisuals} structuralIsolation={structuralIsolation} />
+                <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} retrofitVisuals={retrofitVisuals} structuralIsolation={structuralIsolation} reviewHighlightKind={reviewHighlightKind} />
                 {retrofitVisuals.solarInstalled && <SolarPanels recipe={recipe} />}
                 {retrofitVisuals.hvacUpgraded && <RetrofitHvacUnits recipe={recipe} />}
                 <BuildingLayers buildingPk={buildingPk} />
