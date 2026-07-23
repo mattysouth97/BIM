@@ -122,4 +122,28 @@ describe("POST /api/cad/convert", () => {
     // No converter configured ⇒ 501, but it got PAST filename validation.
     expect(res.status).toBe(501);
   });
+
+  // Korean users name drawings in Korean — the filename must not be forced
+  // into an ASCII slug. Validation only guards against path escape, so any
+  // separator-free name reaches the converter stage (501 without converter).
+  it("accepts a Korean filename", async () => {
+    const form = new FormData();
+    form.set("file", makeDwgFile("도면_1층평면도.dwg", 1024));
+    const res = await POST(makeRequest(form));
+    expect(res.status).toBe(501);
+  });
+
+  it("accepts filenames with spaces and parentheses", async () => {
+    const form = new FormData();
+    form.set("file", makeDwgFile("floor plan (final 2).dwg", 1024));
+    const res = await POST(makeRequest(form));
+    expect(res.status).toBe(501);
+  });
+
+  it("rejects a filename containing a null byte", async () => {
+    const form = new FormData();
+    form.set("file", makeDwgFile("evil" + String.fromCharCode(0) + ".dwg", 1024));
+    const res = await POST(makeRequest(form));
+    expect(res.status).toBe(400);
+  });
 });

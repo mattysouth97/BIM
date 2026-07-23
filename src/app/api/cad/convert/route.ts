@@ -32,10 +32,18 @@ const CONVERTER_TIMEOUT_MS = 60_000;
 const DWG_HEADER_PATTERN = /^AC\d{4}$/;
 
 /**
- * P1-06 (a): accept only a plain slug basename ending in .dwg. Rejects path
- * traversal (`../`), separators, and any name that differs from its basename.
+ * P1-06 (a): reject filenames that could escape the temp work dir — path
+ * separators, NUL, or any name differing from its own basename. The client
+ * name is otherwise unrestricted (Korean names, spaces, etc. are fine)
+ * because the upload is written to a fixed server-side name; the original
+ * name is never used as a filesystem path. Deliberately NOT a control-char
+ * class: multipart parsers that decode filenames as latin-1 turn UTF-8
+ * bytes into C1 chars, which would false-reject non-ASCII names.
  */
-const SAFE_DWG_NAME_PATTERN = /^[\w.-]+\.dwg$/i;
+const UNSAFE_NAME_CHARS = /[/\\\x00]/;
+
+/** Fixed on-disk name for the uploaded DWG inside the per-request temp dir. */
+const UPLOAD_BASENAME = "upload.dwg";
 
 /**
  * Path to an external DWG→DXF converter binary.
@@ -129,13 +137,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // --- Sanitize filename (P1-06 a) — reject traversal/separators ----------
-  // The name must equal its own basename and match a strict slug allowlist,
-  // so nothing user-controlled can escape the temp work dir.
-  const safeName = basename(rawName);
-  if (safeName !== rawName || !SAFE_DWG_NAME_PATTERN.test(safeName)) {
+  // Only path-escape vectors are rejected; the name itself may contain any
+  // characters (Korean, spaces, …) since it is never used as a filesystem
+  // path — the upload is written under UPLOAD_BASENAME instead.
+  if (basename(rawName) !== rawName || UNSAFE_NAME_CHARS.test(rawName)) {
     return NextResponse.json(
       {
-        error: "Invalid filename — use a plain name ending in .dwg (letters, digits, '.', '-', '_')",
+        error: "Invalid filename — must not contain path separators ('/', '\\') or control characters",
       },
       { status: 400 },
     );
@@ -180,8 +188,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const workDir = join(tmpdir(), `bim-dwg-${randomUUID()}`);
   const inputDir = join(workDir, "in");
   const outputDir = join(workDir, "out");
-  // safeName is validated above — no traversal possible.
-  const inputPath = join(inputDir, safeName);
+  // The client filename is never used on disk — fixed name, zero injection surface.
+  const inputPath = join(inputDir, UPLOAD_BASENAME);
 
   try {
     await mkdir(inputDir, { recursive: true });
@@ -191,7 +199,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (CONVERTER_MODE === "oda") {
       await convertWithOda(inputDir, outputDir);
     } else {
-      const outputPath = join(outputDir, safeName.replace(/\.dwg$/i, ".dxf"));
+      const outputPath = join(
+        outputDir,
+        UPLOAD_BASENAME.replace(/\.dwg$/i, ".dxf"),
+      );
       await convertSimple(inputPath, outputPath);
     }
 
