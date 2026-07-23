@@ -77,6 +77,7 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | [P2-21](./items/P2-21-webgpu-renderer-option.md) | Opt-in WebGPU renderer backend (experimental) with WebGL fallback | viewer | S | UC-04, UC-05 | ✅ |
 | [P2-22](./items/P2-22-structural-viz-benchmark-iso19650.md) | BIM-benchmarked structural visualization + ISO 19650-2-aligned provenance | viewer | M | UC-04, UC-05 | ✅ |
 | [P2-23](./items/P2-23-webgpu-blackscreen-realistic-previews.md) | Fix WebGPU black screen + scenario clicks render the post-retrofit state | viewer | M | UC-04, 06–08 | ✅ |
+| [P2-24](./items/P2-24-cad-first-standalone-workflow.md) | CAD-first standalone workflow — begin with a CAD file, no ledger dependency | ux | M | UC-04, 05, 06, 11 | ⬜ |
 | [P2-08](./items/P2-08-dead-code-doc-drift.md) | Delete dead code, fix doc drift, remove stray artifacts | infra | M | UC-05 | ✅ |
 | [P2-09](./items/P2-09-e2e-rewrite.md) | Rewrite e2e suite around the real user journey with mocked APIs | infra | M | UC-01, 03, 05, 08 | ✅ |
 | [P2-10](./items/P2-10-financial-model-refinements.md) | Financial model refinements — loan-term buy-down, rate honesty, solar fixes, sourced costs | retrofit | L | UC-06, 07, 08 | ✅ |
