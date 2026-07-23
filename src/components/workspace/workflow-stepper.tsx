@@ -37,9 +37,10 @@ export function WorkflowStepper() {
   // building — same footprintPolygon override upload-stage.tsx commits.
   const buildingPk = useActiveBuildingPk();
   const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
+  const cadSkipped = useWorkflowStore((s) => s.cadSkipped[buildingPk]);
   const guardCtx = useMemo<StageGuardContext>(
-    () => ({ footprintPolygon: overrides?.footprintPolygon }),
-    [overrides]
+    () => ({ footprintPolygon: overrides?.footprintPolygon, cadSkipped }),
+    [overrides, cadSkipped]
   );
 
   // Until hydrated, render a placeholder strip to avoid SSR mismatch

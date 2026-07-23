@@ -14,6 +14,16 @@ import {
 interface WorkflowState {
   stage: WorkflowStage;
   completion: Record<WorkflowStage, boolean>;
+  /**
+   * P2-17 — buildings whose CAD upload the user explicitly skipped this
+   * session. Deliberately NOT persisted (excluded from partialize), mirroring
+   * the transient footprint override it substitutes for: after a reload both
+   * paths retreat to the upload stage via WorkflowStageRecovery, where
+   * skipping again is one click.
+   */
+  cadSkipped: Record<string, boolean>;
+  /** Record that the active building proceeds without a CAD drawing. */
+  skipCad: (buildingPk: string) => void;
   setStage: (next: WorkflowStage) => void;
   canAdvance: (ctx?: StageGuardContext) => boolean;
   advance: (ctx?: StageGuardContext) => void;
@@ -41,6 +51,12 @@ export const useWorkflowStore = create<WorkflowState>()(
     (set, get) => ({
       stage: "search",
       completion: { ...initialCompletion },
+      cadSkipped: {},
+
+      skipCad: (buildingPk) =>
+        set((state) => ({
+          cadSkipped: { ...state.cadSkipped, [buildingPk]: true },
+        })),
 
       setStage: (next) => set({ stage: next }),
 
@@ -91,6 +107,7 @@ export const useWorkflowStore = create<WorkflowState>()(
         set({
           stage: "search",
           completion: { ...initialCompletion },
+          cadSkipped: {},
         }),
     }),
     {

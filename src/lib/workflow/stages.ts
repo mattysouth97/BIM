@@ -20,6 +20,10 @@ export interface StageGuardContext {
   /** GeoJSON-style [outer, ...holes] polygon rings in world meters for the
    *  currently selected building. Used by the `upload` guard. */
   footprintPolygon?: [number, number][][];
+  /** P2-17 — the user explicitly chose to proceed without a CAD drawing for
+   *  the active building. The twin then falls back to the public-data
+   *  (ledger/VWorld) footprint instead of a CAD-derived one. */
+  cadSkipped?: boolean;
 }
 
 // DAG prerequisite guards — pure functions.
@@ -27,6 +31,7 @@ export interface StageGuardContext {
 export const STAGE_GUARDS: Partial<Record<WorkflowStage, (ctx?: StageGuardContext) => boolean>> = {
   search: () => true,
   upload: (ctx) => {
+    if (ctx?.cadSkipped === true) return true;
     const rings = ctx?.footprintPolygon;
     return Array.isArray(rings) && rings.length > 0 && Array.isArray(rings[0]) && rings[0].length >= 3;
   },
@@ -39,8 +44,8 @@ export const STAGE_GUARDS: Partial<Record<WorkflowStage, (ctx?: StageGuardContex
 // (upload guard = ≥3-point CAD footprint polygon), never an invented string.
 export const STAGE_LOCK_REASONS: Partial<Record<WorkflowStage, { ko: string; en: string }>> = {
   upload: {
-    ko: "도면 업로드 필요 (3점 이상 외곽 폴리곤)",
-    en: "CAD footprint required (outer polygon with ≥3 points)",
+    ko: "도면 업로드 또는 'CAD 없이 계속' 필요 (3점 이상 외곽 폴리곤)",
+    en: "Upload a CAD footprint (outer polygon with ≥3 points) or choose 'Continue without CAD'",
   },
 };
 

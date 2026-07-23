@@ -13,6 +13,7 @@ function resetStore() {
   useWorkflowStore.setState({
     stage: "search",
     completion: { ...allFalse },
+    cadSkipped: {},
   });
 }
 
@@ -262,5 +263,45 @@ describe("useWorkflowStore", () => {
     useWorkflowStore.getState().resetWorkflow();
     const { completion } = useWorkflowStore.getState();
     expect(Object.values(completion).every((v) => v === false)).toBe(true);
+  });
+
+  // -------------------------------------------------------------------------
+  // skipCad() — CAD-less path (P2-17)
+  // -------------------------------------------------------------------------
+
+  it("skipCad() marks the building and advance({cadSkipped}) leaves upload", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    useWorkflowStore.getState().skipCad("bldg-A");
+    expect(useWorkflowStore.getState().cadSkipped["bldg-A"]).toBe(true);
+
+    useWorkflowStore.getState().advance({ cadSkipped: true });
+    expect(useWorkflowStore.getState().stage).toBe("twin");
+  });
+
+  it("advance() without a footprint or skip still blocks on upload", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    useWorkflowStore.getState().advance({});
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it("goToStage() forward jump passes with cadSkipped in the guard context", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    expect(useWorkflowStore.getState().goToStage("report", { cadSkipped: true })).toBe(true);
+    expect(useWorkflowStore.getState().stage).toBe("report");
+  });
+
+  it("resetWorkflow() clears the cadSkipped map", () => {
+    useWorkflowStore.getState().skipCad("bldg-A");
+    useWorkflowStore.getState().resetWorkflow();
+    expect(useWorkflowStore.getState().cadSkipped).toEqual({});
+  });
+
+  it("cadSkipped is not persisted (excluded from partialize)", () => {
+    const storeApi = useWorkflowStore as unknown as {
+      persist: { getOptions: () => { partialize: (s: unknown) => Record<string, unknown> } };
+    };
+    const persisted = storeApi.persist.getOptions().partialize(useWorkflowStore.getState());
+    expect(Object.keys(persisted).sort()).toEqual(["completion", "stage"]);
+    expect(persisted).not.toHaveProperty("cadSkipped");
   });
 });

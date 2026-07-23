@@ -77,6 +77,16 @@ describe("STAGE_GUARDS", () => {
     expect(STAGE_GUARDS["upload"]!({ footprintPolygon: polygon })).toBe(false);
   });
 
+  it('STAGE_GUARDS["upload"] returns true when the user explicitly skipped CAD (P2-17)', () => {
+    expect(STAGE_GUARDS["upload"]!({ cadSkipped: true })).toBe(true);
+    // Skip wins even alongside a degenerate/absent footprint
+    expect(STAGE_GUARDS["upload"]!({ cadSkipped: true, footprintPolygon: [] })).toBe(true);
+  });
+
+  it('STAGE_GUARDS["upload"] ignores a falsy cadSkipped', () => {
+    expect(STAGE_GUARDS["upload"]!({ cadSkipped: false })).toBe(false);
+  });
+
   it('STAGE_GUARDS["twin"] is a function returning true', () => {
     expect(typeof STAGE_GUARDS["twin"]).toBe("function");
     expect(STAGE_GUARDS["twin"]!()).toBe(true);

@@ -76,6 +76,7 @@ function resetStores() {
   useWorkflowStore.setState({
     stage: "upload",
     completion: { search: false, upload: false, twin: false, report: false },
+    cadSkipped: {},
   });
   useRecipeStore.setState({
     baseRecipes: {},
@@ -108,6 +109,28 @@ describe("UploadStage", () => {
     render(<UploadStage />);
     const button = screen.getByTestId("upload-continue") as HTMLButtonElement;
     expect(button.disabled).toBe(true);
+  });
+
+  // P2-17 — CAD-less path
+  it("Continue without CAD advances to twin and records the skip, writing no footprint", () => {
+    render(<UploadStage />);
+    fireEvent.click(screen.getByTestId("upload-skip"));
+
+    expect(useWorkflowStore.getState().stage).toBe("twin");
+    expect(useWorkflowStore.getState().cadSkipped[TEST_PK]).toBe(true);
+    // No footprint override was invented for the skipped building
+    expect(useRecipeStore.getState().overrides[TEST_PK]?.footprintPolygon).toBeUndefined();
+  });
+
+  it("Continue without CAD shows an error and stays on upload when no building is active", () => {
+    // Clear the seeded building so useActiveBuildingPk resolves to ""
+    useMaterialStore.setState({ properties: {}, selectedElement: { type: null } });
+    render(<UploadStage />);
+    fireEvent.click(screen.getByTestId("upload-skip"));
+
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+    expect(useWorkflowStore.getState().cadSkipped).toEqual({});
   });
 
   it("processing a valid DXF enables Continue and stores footprintPolygon on confirm", async () => {

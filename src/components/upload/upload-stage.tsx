@@ -39,6 +39,7 @@ export function UploadStage() {
   const setOverride = useRecipeStore((s) => s.setOverride);
   const advance = useWorkflowStore((s) => s.advance);
   const retreat = useWorkflowStore((s) => s.retreat);
+  const skipCad = useWorkflowStore((s) => s.skipCad);
 
   const ingestDxf = useCallback(
     (text: string) => {
@@ -219,6 +220,24 @@ export function UploadStage() {
     advance({ footprintPolygon: rings });
   }, [status, buildingPk, setOverride, advance, t]);
 
+  // P2-17 — proceed without a CAD drawing: the twin falls back to the
+  // public-data (ledger/VWorld) footprint the viewer already uses when no
+  // override exists. No footprint override is written.
+  const skipAndAdvance = useCallback(() => {
+    if (!buildingPk) {
+      setStatus({
+        kind: "error",
+        message: t(
+          "활성 건물이 없습니다. 검색 단계로 돌아가 건물을 선택하세요.",
+          "No active building. Return to search and pick a building first.",
+        ),
+      });
+      return;
+    }
+    skipCad(buildingPk);
+    advance({ cadSkipped: true });
+  }, [buildingPk, skipCad, advance, t]);
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-start overflow-auto bg-background p-8">
       <div className="flex w-full max-w-3xl flex-col gap-6">
@@ -361,16 +380,32 @@ export function UploadStage() {
             <ArrowLeft className="mr-1.5 h-4 w-4" />
             {t("검색으로 돌아가기", "Back to search")}
           </Button>
-          <Button
-            type="button"
-            disabled={status.kind !== "ready" || !buildingPk}
-            onClick={commitAndAdvance}
-            data-testid="upload-continue"
-          >
-            {t("트윈으로 계속", "Continue to Twin")}
-            <ArrowRight className="ml-1.5 h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={skipAndAdvance}
+              data-testid="upload-skip"
+            >
+              {t("CAD 없이 계속", "Continue without CAD")}
+            </Button>
+            <Button
+              type="button"
+              disabled={status.kind !== "ready" || !buildingPk}
+              onClick={commitAndAdvance}
+              data-testid="upload-continue"
+            >
+              {t("트윈으로 계속", "Continue to Twin")}
+              <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Button>
+          </div>
         </div>
+        <p className="text-right text-xs text-muted-foreground">
+          {t(
+            "도면이 없어도 진행할 수 있습니다 — 트윈은 공공데이터(건축물대장) 외곽선으로 생성되며, 정밀도가 낮을 수 있습니다.",
+            "No drawing? You can continue — the twin will use the public-data (building ledger) footprint, which may be less precise.",
+          )}
+        </p>
       </div>
     </div>
   );

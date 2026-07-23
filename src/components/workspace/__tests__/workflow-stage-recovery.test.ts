@@ -14,7 +14,7 @@ const TRIANGLE: [number, number][][] = [
 ];
 
 beforeEach(() => {
-  useWorkflowStore.setState({ stage: "search" });
+  useWorkflowStore.setState({ stage: "search", cadSkipped: {} });
   useActiveBuildingStore.getState().clearActiveBuilding();
   useRecipeStore.setState({ overrides: {} });
 });
@@ -53,6 +53,20 @@ describe("recoverWorkflowStage (P2-16)", () => {
     useWorkflowStore.setState({ stage: "twin" });
     expect(recoverWorkflowStage()).toBeNull();
     expect(useWorkflowStore.getState().stage).toBe("twin");
+  });
+
+  it("keeps the twin stage when the user skipped CAD for the active building (P2-17)", () => {
+    useActiveBuildingStore.getState().setActiveBuilding("bldg-A");
+    useWorkflowStore.setState({ stage: "twin", cadSkipped: { "bldg-A": true } });
+    expect(recoverWorkflowStage()).toBeNull();
+    expect(useWorkflowStore.getState().stage).toBe("twin");
+  });
+
+  it("does not accept another building's CAD skip as proof (P2-17)", () => {
+    useActiveBuildingStore.getState().setActiveBuilding("bldg-A");
+    useWorkflowStore.setState({ stage: "twin", cadSkipped: { "bldg-B": true } });
+    expect(recoverWorkflowStage()).toBe("upload");
+    expect(useWorkflowStore.getState().stage).toBe("upload");
   });
 
   it("does not accept another building's footprint as proof", () => {

@@ -30,11 +30,14 @@ import { getBlockingStage, type WorkflowStage } from "@/lib/workflow/stages";
  * stage. Returns the stage recovered to, or null when no recovery was needed.
  */
 export function recoverWorkflowStage(): WorkflowStage | null {
-  const { stage, setStage } = useWorkflowStore.getState();
+  const { stage, setStage, cadSkipped } = useWorkflowStore.getState();
   const buildingPk = useActiveBuildingStore.getState().buildingPk ?? "";
   const overrides = useRecipeStore.getState().overrides[buildingPk];
   const blocking = getBlockingStage("search", stage, {
     footprintPolygon: overrides?.footprintPolygon,
+    // P2-17: like the footprint, the skip flag is transient — after a real
+    // reload it is empty and twin/report still retreat to upload.
+    cadSkipped: cadSkipped[buildingPk],
   });
   if (blocking !== null) setStage(blocking);
   return blocking;
