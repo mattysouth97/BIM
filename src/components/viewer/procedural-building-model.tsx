@@ -11,6 +11,14 @@ import { GroundPlane } from "./ground-plane";
 import { useLayerStore } from "@/store/layer-store";
 import { InfoEdges } from "./info-edges";
 import { useOutlineHover } from "@/hooks/use-outline-hover";
+import {
+  hasAnyVisual,
+  NO_RETROFIT_VISUALS,
+  UPGRADE_TINT,
+  UPGRADE_GLASS_COLOR,
+  UPGRADE_GLASS_OPACITY,
+  type RetrofitVisualState,
+} from "@/lib/retrofit/measure-visuals";
 
 interface ProceduralBuildingModelProps {
   geometry: BuildingGeometry;
@@ -19,6 +27,22 @@ interface ProceduralBuildingModelProps {
   onFloorSelect?: (floor: FloorGeometry | null) => void;
   /** When true, suppresses the GroundPlane rendered beneath the building (for campus mode) */
   hideGroundPlane?: boolean;
+  /**
+   * P2-20 — applied-retrofit visual state. Renewed elements (glass, walls,
+   * roof, slabs) are re-tinted so clicking scenario measures visibly
+   * transforms the model. Omit (campus mode) for baseline appearance.
+   */
+  retrofitVisuals?: RetrofitVisualState;
+}
+
+/** True when obj or any ancestor group carries the given name. */
+function hasAncestorNamed(obj: THREE.Object3D, name: string): boolean {
+  let p: THREE.Object3D | null = obj;
+  while (p) {
+    if (p.name === name) return true;
+    p = p.parent;
+  }
+  return false;
 }
 
 /** Convert a FloorSpec back to a FloorGeometry for compatibility with existing UI */
@@ -48,7 +72,7 @@ function collectInformationalMeshes(group: THREE.Group): THREE.Mesh[] {
   return result;
 }
 
-export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelect, hideGroundPlane }: ProceduralBuildingModelProps) {
+export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelect, hideGroundPlane, retrofitVisuals }: ProceduralBuildingModelProps) {
   const builderRef = useRef<ProceduralBuilding | null>(null);
   const groupRef = useRef<THREE.Group | null>(null);
   const selectedRef = useRef<number | null>(null);
@@ -109,6 +133,72 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       // MEP / energy-zones / retrofit-targets: no geometry yet — no-op
     });
   }, [group, layerVisibility]);
+
+  // P2-20 — retint renewed elements when applied measures change. Materials
+  // are cloned per-mesh before tinting (they are shared across meshes, so
+  // mutating in place would bleed the tint to unrelated elements); originals
+  // are restored and clones disposed on every change and on unmount.
+  const tintOriginalsRef = useRef<Map<THREE.Mesh, THREE.Material | THREE.Material[]>>(new Map());
+  useEffect(() => {
+    if (!group) return;
+    const originals = tintOriginalsRef.current;
+
+    const restoreAll = () => {
+      for (const [mesh, original] of originals) {
+        if (mesh.material !== original && !Array.isArray(mesh.material)) {
+          mesh.material.dispose();
+        }
+        mesh.material = original;
+      }
+      originals.clear();
+    };
+
+    restoreAll();
+    const v = retrofitVisuals ?? NO_RETROFIT_VISUALS;
+    if (!hasAnyVisual(v)) return;
+
+    const tint = (mesh: THREE.Mesh, apply: (m: THREE.MeshStandardMaterial) => void) => {
+      if (Array.isArray(mesh.material)) return;
+      if (!(mesh.material instanceof THREE.MeshStandardMaterial)) return;
+      originals.set(mesh, mesh.material);
+      const clone = mesh.material.clone();
+      apply(clone);
+      mesh.material = clone;
+    };
+
+    const renewOpaque = (m: THREE.MeshStandardMaterial) => {
+      m.color.lerp(new THREE.Color(UPGRADE_TINT), 0.35);
+      m.emissive.set(UPGRADE_TINT);
+      m.emissiveIntensity = 0.07;
+    };
+
+    group.traverse((obj) => {
+      if (!(obj instanceof THREE.Mesh)) return;
+      const type = obj.userData?.type as string | undefined;
+
+      if (v.windowsUpgraded && type === "glass") {
+        tint(obj, (m) => {
+          m.color.set(UPGRADE_GLASS_COLOR);
+          m.opacity = UPGRADE_GLASS_OPACITY;
+          m.roughness = 0.05;
+        });
+      } else if (
+        v.wallsUpgraded &&
+        (type === "solidPanel" || type === "hMullion" || type === "vMullion")
+      ) {
+        tint(obj, renewOpaque);
+      } else if (v.roofUpgraded && hasAncestorNamed(obj, "roof")) {
+        tint(obj, renewOpaque);
+      } else if (
+        v.floorsUpgraded &&
+        (type === "slab" || hasAncestorNamed(obj, "slabs"))
+      ) {
+        tint(obj, renewOpaque);
+      }
+    });
+
+    return restoreAll;
+  }, [group, retrofitVisuals]);
 
   // Floor selection via raycaster on slabs — handles both the rectangular
   // InstancedMesh path (instanceId) and the polygon Group path (plain meshes

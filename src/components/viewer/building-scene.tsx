@@ -10,7 +10,10 @@ import { inferMaterialProperties } from "@/lib/material-inference";
 import { saveModel, loadModel } from "@/lib/model-storage";
 import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
+import { useScenarioStore } from "@/store/scenario-store";
 import { useWorkspaceStore } from "@/store/workspace-store";
+import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
+import { SolarPanels } from "./solar-panels";
 import { applyOverrides } from "@/lib/procedural/recipe";
 import { Loader2 } from "lucide-react";
 import { createSceneProjection } from "@/lib/gis/gis-transform";
@@ -329,6 +332,13 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     [baseRecipe, recipeOverrides]
   );
 
+  // P2-20 — applied retrofit measures drive the visual state (tints + PV).
+  const appliedMeasureIds = useScenarioStore((s) => s.appliedMeasureIds);
+  const retrofitVisuals = useMemo(
+    () => deriveVisualState(appliedMeasureIds),
+    [appliedMeasureIds]
+  );
+
   const { t } = useT();
 
   const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 1.8;
@@ -442,7 +452,8 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           ) : (
             modelSource === "parametric" && (
               <>
-                <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} />
+                <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} retrofitVisuals={retrofitVisuals} />
+                {retrofitVisuals.solarInstalled && <SolarPanels recipe={recipe} />}
                 <BuildingLayers buildingPk={buildingPk} />
                 <StructuralTooltip />
                 <EquipmentClickHandler />

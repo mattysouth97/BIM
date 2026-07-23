@@ -12,6 +12,7 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { formatKrw, formatYears } from "@/lib/twin-formatters";
+import { useScenarioStore } from "@/store/scenario-store";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
 
 interface RetrofitManifestProps {
@@ -57,6 +58,10 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
   const [activeGroup, setActiveGroup] = useState<
     (typeof CATEGORY_ORDER)[number] | "all"
   >("all");
+
+  // P2-20 — clicking a measure applies it to the 3D model (tints, PV array).
+  const appliedIds = useScenarioStore((s) => s.appliedMeasureIds);
+  const toggleAppliedMeasure = useScenarioStore((s) => s.toggleAppliedMeasure);
 
   const grouped = useMemo<Record<(typeof CATEGORY_ORDER)[number], RetrofitMeasure[]>>(
     () => {
@@ -120,9 +125,14 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
             {t(`후보 ${measures.length}개`, `${measures.length} candidates`)}
           </span>
         </div>
-        <span className="text-[10px] font-semibold text-cyan-700 dark:text-cyan-400">
-          {t(`${selectedIds.size}개 예산 내 선택`, `${selectedIds.size} in budget`)}
-        </span>
+        <div className="flex flex-col items-end leading-tight">
+          <span className="text-[10px] font-semibold text-cyan-700 dark:text-cyan-400">
+            {t(`${selectedIds.size}개 예산 내 선택`, `${selectedIds.size} in budget`)}
+          </span>
+          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+            {t(`${appliedIds.length}개 적용 — 3D 반영`, `${appliedIds.length} applied to 3D`)}
+          </span>
+        </div>
       </div>
 
       <div className="flex items-stretch border-b border-border">
@@ -172,17 +182,30 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
                 <ul className="space-y-1">
                   {list.map((m) => {
                     const isSelected = selectedIds.has(m.id);
+                    const isApplied = appliedIds.includes(m.id);
                     const fin = m.financials;
                     const npv = fin?.npv ?? 0;
                     const npvFraction = Math.min(1, Math.abs(npv) / maxNpv);
                     return (
                       <li
                         key={m.id}
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={isApplied}
+                        onClick={() => toggleAppliedMeasure(m.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            toggleAppliedMeasure(m.id);
+                          }
+                        }}
                         className={cn(
-                          "relative px-2 py-1.5 rounded-md border transition-colors",
-                          isSelected
-                            ? "border-cyan-300 bg-cyan-50/60 dark:border-cyan-800 dark:bg-cyan-950/40"
-                            : "border-transparent hover:bg-muted/60",
+                          "relative px-2 py-1.5 rounded-md border transition-colors cursor-pointer",
+                          isApplied
+                            ? "border-emerald-400 bg-emerald-50/70 dark:border-emerald-700 dark:bg-emerald-950/40"
+                            : isSelected
+                              ? "border-cyan-300 bg-cyan-50/60 dark:border-cyan-800 dark:bg-cyan-950/40"
+                              : "border-transparent hover:bg-muted/60",
                         )}
                       >
                         {fin && (
@@ -203,9 +226,15 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
                             <span
                               className={cn(
                                 "shrink-0 inline-block w-[6px] h-[6px] rounded-sm",
-                                isSelected ? "bg-cyan-600" : "bg-border",
+                                isApplied ? "bg-emerald-500" : isSelected ? "bg-cyan-600" : "bg-border",
                               )}
-                              title={isSelected ? t("예산 내 선택됨", "Selected (in budget)") : t("미선택", "Not selected")}
+                              title={
+                                isApplied
+                                  ? t("적용됨 — 3D 반영", "Applied — shown in 3D")
+                                  : isSelected
+                                    ? t("예산 내 선택됨", "Selected (in budget)")
+                                    : t("미선택", "Not selected")
+                              }
                             />
                             <span
                               className="text-[12px] text-foreground truncate"
@@ -260,9 +289,15 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
       <div className="px-4 py-2 border-t border-border bg-muted/40">
         <div className="flex items-center justify-between text-[9px] text-muted-foreground">
           <span>{t("NPV 막대 · 최대값 대비", "NPV bar · vs max")}</span>
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block w-1.5 h-1.5 rounded-sm bg-cyan-600" />
-            <span>{t("예산 내 선택", "In budget")}</span>
+          <span className="flex items-center gap-2">
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-1.5 h-1.5 rounded-sm bg-cyan-600" />
+              <span>{t("예산 내 선택", "In budget")}</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-1.5 h-1.5 rounded-sm bg-emerald-500" />
+              <span>{t("클릭하여 3D 적용", "Click to apply in 3D")}</span>
+            </span>
           </span>
         </div>
         <p className="text-[9px] text-muted-foreground/70 mt-0.5">

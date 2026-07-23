@@ -22,7 +22,9 @@ import {
   assignToSubGroup,
 } from "@/lib/layers/mep-coordinator";
 import { useEquipmentStore } from "@/store/equipment-store";
+import { useScenarioStore } from "@/store/scenario-store";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "@/lib/layers/mep-equipment-params";
+import { deriveVisualState, UPGRADE_TINT } from "@/lib/retrofit/measure-visuals";
 
 interface BuildingLayersProps {
   buildingPk?: string;
@@ -30,6 +32,9 @@ interface BuildingLayersProps {
 
 export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
   const managerRef = useRef<LayerManager | null>(null);
+  // P2-20 — original materials of tinted MEP meshes (clone-and-restore)
+  const mepTintOriginalsRef = useRef<Map<THREE.Mesh, THREE.Material | THREE.Material[]>>(new Map());
+  const appliedMeasureIds = useScenarioStore((s) => s.appliedMeasureIds);
 
   const visibility = useLayerStore((s) => s.visibility);
   const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
@@ -185,6 +190,52 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     );
     assignToSubGroup(mepGroup, lightingOutput.name, lightingOutput);
   }, [effectiveRecipe, equipmentParams, density]);
+
+  // P2-20 — applied HVAC/lighting measures recolor their MEP sub-groups to
+  // "new equipment" green. Materials are cloned per-mesh (they are shared
+  // within a sub-layer) and originals restored when the measure is
+  // un-applied. Declared AFTER the generation effect so a regeneration in
+  // the same commit is re-tinted; ShaderMaterial children (animated flows)
+  // are left untouched.
+  useEffect(() => {
+    const manager = managerRef.current;
+    if (!manager) return;
+    const originals = mepTintOriginalsRef.current;
+
+    const restoreAll = () => {
+      for (const [mesh, original] of originals) {
+        if (mesh.material !== original && !Array.isArray(mesh.material)) {
+          mesh.material.dispose();
+        }
+        mesh.material = original;
+      }
+      originals.clear();
+    };
+    restoreAll();
+
+    const v = deriveVisualState(appliedMeasureIds);
+    const targets: string[] = [];
+    if (v.hvacUpgraded) targets.push("sub-mep-hvac");
+    if (v.lightingUpgraded) targets.push("sub-mep-lighting");
+    if (targets.length === 0) return;
+
+    const mepGroup = manager.getGroup("mep");
+    for (const child of mepGroup.children) {
+      if (!(child instanceof THREE.Group) || !targets.includes(child.name)) continue;
+      child.traverse((obj) => {
+        if (!(obj instanceof THREE.Mesh)) return;
+        if (Array.isArray(obj.material)) return;
+        if (!(obj.material instanceof THREE.MeshStandardMaterial)) return;
+        originals.set(obj, obj.material);
+        const clone = obj.material.clone();
+        clone.color.lerp(new THREE.Color(UPGRADE_TINT), 0.55);
+        clone.emissive.set(UPGRADE_TINT);
+        clone.emissiveIntensity = 0.25;
+        obj.material = clone;
+      });
+    }
+    return restoreAll;
+  }, [appliedMeasureIds, effectiveRecipe, equipmentParams, density]);
 
   // Animation loop — update ShaderMaterial uniforms each frame
   useFrame((state) => {

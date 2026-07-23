@@ -40,9 +40,17 @@ interface ScenarioState {
    * that has the ledger data. `null` until a building is loaded.
    */
   buildingInputs: ScenarioBuildingInputs | null;
+  /**
+   * P2-20 — measures the user has clicked "apply" on in the manifest. This
+   * drives the 3D visual response (tints, PV panels); it is independent of
+   * the knapsack's budget-optimal recommendation set. Session-only.
+   */
+  appliedMeasureIds: string[];
   setCapexBudget: (krw: number) => void;
   setProgramTrack: (track: ProgramTrack) => void;
   setBuildingInputs: (inputs: ScenarioBuildingInputs | null) => void;
+  toggleAppliedMeasure: (measureId: string) => void;
+  clearAppliedMeasures: () => void;
   resetScenario: () => void;
 }
 
@@ -50,14 +58,32 @@ export const useScenarioStore = create<ScenarioState>()((set) => ({
   capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
   programTrack: "none",
   buildingInputs: null,
+  appliedMeasureIds: [],
 
   setCapexBudget: (krw) => set({ capexBudgetKrw: krw }),
   setProgramTrack: (track) => set({ programTrack: track }),
-  setBuildingInputs: (inputs) => set({ buildingInputs: inputs }),
+  // Applied measures belong to one building — switching buildings clears them
+  // so building A's visual transformations never appear on building B.
+  setBuildingInputs: (inputs) =>
+    set((state) => ({
+      buildingInputs: inputs,
+      appliedMeasureIds:
+        inputs?.buildingPk === state.buildingInputs?.buildingPk
+          ? state.appliedMeasureIds
+          : [],
+    })),
+  toggleAppliedMeasure: (measureId) =>
+    set((state) => ({
+      appliedMeasureIds: state.appliedMeasureIds.includes(measureId)
+        ? state.appliedMeasureIds.filter((id) => id !== measureId)
+        : [...state.appliedMeasureIds, measureId],
+    })),
+  clearAppliedMeasures: () => set({ appliedMeasureIds: [] }),
   resetScenario: () =>
     set({
       capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
       programTrack: "none",
       buildingInputs: null,
+      appliedMeasureIds: [],
     }),
 }));
