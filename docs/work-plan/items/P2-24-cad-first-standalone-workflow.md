@@ -161,6 +161,22 @@ Context pack (read in order):
     areas, or explicit `0`/`""` unavailable markers (unit-tested);
     cad-first upload lock reason drops the nonexistent skip option;
     useActualEnergy no longer issues HUB requests for synthetic PKs. ✔
+
+- **Production smoke test (2026-07-23, bim-self.vercel.app)**:
+  - Caught + fixed live: the P2-14 server wrapper 404'd `cad-` routes
+    (`parseBuildingId`-only validation) — `isRoutableBuildingId` fix shipped
+    as a TDD'd hotfix; drafts now get a "CAD 트윈 드래프트" metadata title.
+  - Verified end-to-end: home card → DXF upload (sample-footprint.dxf, 239.4 m²)
+    → 정보 입력 (6F / 1995 / 서울 강남구) → twin renders 6-story procedural
+    building → report shows GFA 1,436.4 m² (= 239.4 × 6), era 1995, empty
+    address/use, full NPV/IRR portfolio. Network log: zero bldrgst/VWorld/HUB
+    requests for the draft session.
+  - **Follow-up (minor, AFF-6 wording)**: the report's "Twin Fidelity
+    Summary" hardcodes Level-1 provenance as "Korean Building Ledger
+    (건축물대장)" — for cad drafts the true source is CAD + manual params.
+    Template lives in the report engine; fix in a small follow-up item.
+  - Pre-existing, unrelated: `/api/weather` (KMA ASOS) returns 502 without an
+    upstream key — static HDD/CDD fallback applies (affects ledger mode too).
 - **Done when**: a user starting from only a CAD file reaches an honest twin
   + report through upload → 정보 입력, while the ledger-first flow is
   provably untouched.
