@@ -17,6 +17,7 @@ import {
   isResidentialOccupancy,
 } from "@/lib/energy/delivered-from-demand";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
+import { useEngineResult } from "@/hooks/use-engine-result";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
 import { useWeatherData } from "@/hooks/use-weather-data";
@@ -119,6 +120,19 @@ export function PropertiesPanel({
 
   // P1-08 (a): single canonical merge (carries footprintPolygon overrides).
   const effectiveRecipe = useEffectiveRecipe(buildingPk);
+
+  // ── Agentic BIM Engine (Task 8) ───────────────────────────────────────────
+  // Must run unconditionally (before the early-return below) — hooks can't
+  // be called conditionally. `effectiveRecipe` may be undefined; the hook
+  // treats that as `available: false` (needs-outline), same as a
+  // "parcel"/null footprintSource.
+  const engine = useEngineResult({
+    buildingPk,
+    recipe: effectiveRecipe,
+    footprintSource: footprintSource ?? null,
+    ledgerHeit: ledgerHeit ?? 0,
+    measuredHeightM: measuredHeightM ?? null,
+  });
 
   // ── Fidelity assessment ──────────────────────────────────────────────────
 
@@ -276,6 +290,10 @@ export function PropertiesPanel({
                 report={fidelityReport}
                 checklist={upgradeChecklist}
                 provenance={inputProvenance}
+                hitlFlags={engine.result?.hitlFlags}
+                onExportIfc={engine.exportIfc}
+                exporting={engine.exporting}
+                engineUnavailableReason={engine.unavailableReason}
               />
             </div>
           </AccordionContent>

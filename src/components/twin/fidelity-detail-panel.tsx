@@ -3,6 +3,7 @@
 // src/components/twin/fidelity-detail-panel.tsx
 // Expandable panel showing per-category fidelity status and an upgrade CTA.
 
+import { Loader2 } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -18,6 +19,7 @@ import type {
   UpgradeChecklist,
 } from '@/lib/fidelity/fidelity-types';
 import type { InputProvenance } from '@/components/twin/fidelity-badge';
+import type { HitlFlag } from '@/lib/engine';
 
 interface FidelityDetailPanelProps {
   report: FidelityReport;
@@ -25,6 +27,23 @@ interface FidelityDetailPanelProps {
   onUpgradeClick?: () => void;
   /** P2-27: per-input provenance to forward to the badge in the accordion trigger. */
   provenance?: InputProvenance;
+  /**
+   * Task 8 — per-element HITL review flags from the last (pure, counting-
+   * session) `runEngine` pass. `undefined` when the engine hasn't computed a
+   * result yet (or is unavailable); an empty array means every element
+   * cleared the confidence threshold.
+   */
+  hitlFlags?: HitlFlag[];
+  /** Task 8 — triggers the REAL (WASM) engine pass and downloads the .ifc file. */
+  onExportIfc?: () => void;
+  /** Task 8 — true while the real WASM export is in flight. */
+  exporting?: boolean;
+  /**
+   * Task 8 — non-null when the engine is honestly unavailable (e.g. no CAD/
+   * building-outline footprint — a "parcel" or era-estimate rectangle isn't
+   * a real footprint, AFF-6). When set, the Export IFC button is not shown.
+   */
+  engineUnavailableReason?: string | null;
 }
 
 // Fixed ordered list of categories to display
@@ -95,9 +114,22 @@ export function FidelityDetailPanel({
   checklist,
   onUpgradeClick,
   provenance,
+  hitlFlags,
+  onExportIfc,
+  exporting,
+  engineUnavailableReason,
 }: FidelityDetailPanelProps) {
   const nextLevel = checklist.nextLevel;
   const completenessPercent = Math.round(report.completeness * 100);
+
+  // Additive-only: render the engine section only when the caller threaded
+  // at least one of the new props — old call sites (no props passed) render
+  // byte-for-byte the same as before.
+  const showEngineSection =
+    engineUnavailableReason != null ||
+    hitlFlags !== undefined ||
+    onExportIfc !== undefined ||
+    exporting !== undefined;
 
   return (
     <Card className="w-72 gap-0 py-0">
@@ -167,6 +199,57 @@ export function FidelityDetailPanel({
                   <p className="text-[10px] text-center text-muted-foreground">
                     Maximum fidelity reached
                   </p>
+                </div>
+              )}
+
+              {/* ── Task 8: Agentic BIM Engine — Export IFC + HITL flags ── */}
+              {showEngineSection && (
+                <div className="mt-4 pt-3 border-t">
+                  {engineUnavailableReason ? (
+                    <p className="text-[10px] text-center text-muted-foreground">
+                      IFC export needs a CAD or building-outline footprint.
+                    </p>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        className="w-full h-7 text-xs gap-1.5"
+                        onClick={onExportIfc}
+                        disabled={!!exporting}
+                      >
+                        {exporting && (
+                          <Loader2 className="size-3 animate-spin" />
+                        )}
+                        Export IFC
+                      </Button>
+
+                      {hitlFlags && hitlFlags.length > 0 ? (
+                        <div className="mt-2 space-y-1.5">
+                          <p className="text-[10px] text-muted-foreground">
+                            {hitlFlags.length} element
+                            {hitlFlags.length !== 1 ? 's' : ''} need review
+                          </p>
+                          <ul className="space-y-1">
+                            {hitlFlags.map((flag) => (
+                              <li
+                                key={flag.expressId}
+                                className="flex items-start gap-1.5 text-[10px] text-muted-foreground/90"
+                              >
+                                <span className="shrink-0 font-medium text-foreground/80">
+                                  {flag.kind} #{flag.expressId}
+                                </span>
+                                <span className="truncate">{flag.reason}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-[10px] text-center text-muted-foreground">
+                          All elements above confidence threshold.
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>
