@@ -76,7 +76,7 @@ describe("POST /api/cad/convert", () => {
     expect(res.status).toBe(501);
     const body = await res.json();
     expect(body.error).toMatch(/not yet/i);
-    expect(body.hint).toMatch(/\.dxf/i);
+    expect(body.hint).toMatch(/dxf/i);
     expect(body.dwgVersion).toBe("AC1032");
   });
 

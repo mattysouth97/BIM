@@ -1,5 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readDwgHeader, parseDwgFile, DWG_VERSIONS } from "../dwg-parser";
+import { convertDwgViaLibreDwg } from "../libredwg-converter";
+
+// Tier-2 LibreDWG converter is mocked for all tests in this file: the real
+// module loads a 10 MB WASM binary, which is neither possible nor desirable
+// in the test environment. Default behavior = unavailable (throws), which
+// matches the pre-LibreDWG flow and keeps the server-fallback tests intact.
+vi.mock("../libredwg-converter", () => ({
+  convertDwgViaLibreDwg: vi.fn(),
+}));
+
+const mockedLibreDwg = vi.mocked(convertDwgViaLibreDwg);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -64,6 +75,9 @@ describe("parseDwgFile", () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    mockedLibreDwg
+      .mockReset()
+      .mockRejectedValue(new Error("LibreDWG unavailable in tests"));
   });
 
   afterEach(() => {
@@ -195,5 +209,74 @@ describe("parseDwgFile", () => {
     const result2 = await parseDwgFile(file2);
     expect(result2.candidates).toHaveLength(1);
     expect(result2.candidates[0].layer).toBe("WALL");
+  });
+
+  // -------------------------------------------------------------------------
+  // Tier-2 LibreDWG fallback (modern AC1032 files libdxfrw can't read)
+  // -------------------------------------------------------------------------
+
+  const LIBREDWG_DXF = [
+    "0", "SECTION", "2", "HEADER",
+    "9", "$INSUNITS", "70", "6",
+    "0", "ENDSEC",
+    "0", "SECTION", "2", "ENTITIES",
+    "0", "LWPOLYLINE",
+    "8", "BIM_OUTLINE",
+    "90", "4", "70", "1",
+    "10", "0", "20", "0",
+    "10", "30", "20", "0",
+    "10", "30", "20", "20",
+    "10", "0", "20", "20",
+    "0", "ENDSEC",
+    "0", "EOF",
+  ].join("\n");
+
+  it("converts via LibreDWG when libdxfrw fails, without calling the server", async () => {
+    mockedLibreDwg.mockReset().mockResolvedValue(LIBREDWG_DXF);
+    const fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy;
+
+    const file = makeFile("modern.dwg", headerBuffer("AC1032", 1024));
+    const result = await parseDwgFile(file);
+
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].layer).toBe("BIM_OUTLINE");
+    expect(result.candidates[0].areaSqm).toBeCloseTo(600, 0);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("falls back to server when LibreDWG also fails", async () => {
+    mockedLibreDwg
+      .mockReset()
+      .mockRejectedValue(new Error("dwg_write_dxf returned null"));
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(LIBREDWG_DXF, { status: 200 }),
+    );
+
+    const file = makeFile("plan.dwg", headerBuffer("AC1032", 1024));
+    const result = await parseDwgFile(file);
+
+    expect(result.candidates).toHaveLength(1);
+    expect(
+      result.warnings.some((w) => w.includes("LibreDWG conversion failed")),
+    ).toBe(true);
+  });
+
+  it("warns when LibreDWG returns empty output and continues to server", async () => {
+    mockedLibreDwg.mockReset().mockResolvedValue(null);
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ error: "not available", hint: "Export as DXF." }),
+        { status: 501, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const file = makeFile("plan.dwg", headerBuffer("AC1032", 512));
+    const result = await parseDwgFile(file);
+
+    expect(result.candidates).toEqual([]);
+    expect(
+      result.warnings.some((w) => w.includes("no DXF output")),
+    ).toBe(true);
   });
 });

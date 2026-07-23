@@ -178,7 +178,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       {
         error: "DWG conversion is not yet available on this server",
-        hint: "Export the DWG as DXF in your CAD tool (AutoCAD: File → Save As → AutoCAD DXF) and upload the .dxf file.",
+        hint: "In your CAD tool, save the file as 'AutoCAD 2013 DWG' (File → Save As → AutoCAD 2013 Drawing) or export it as DXF, then re-upload.",
         dwgVersion: magic,
       },
       { status: 501 },
