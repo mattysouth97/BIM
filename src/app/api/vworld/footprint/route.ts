@@ -105,10 +105,11 @@ export async function GET(request: NextRequest) {
       const neighbors = await fetchNeighborBuildings(bbox, apiKey);
       const truncated = neighbors.length >= CONTEXT_BBOX_SIZE;
       return NextResponse.json({ neighbors, truncated, error: null });
-    } catch (err) {
+    } catch {
       // P2-26: upstream failure → 502 (AFF-2, no parcel fallback for contextMode).
+      // Fixed generic message — never echo upstream error content (AFF-2 hardening).
       return NextResponse.json(
-        { neighbors: [], truncated: false, error: err instanceof Error ? err.message : "VWorld API error" },
+        { neighbors: [], truncated: false, error: "VWorld API error" },
         { status: 502 }
       );
     }
@@ -593,6 +594,8 @@ function extractNeighborList(data: unknown): NeighborBuilding[] {
 
     return results;
   } catch {
+    // Malformed upstream body — surface in logs (no dynamic upstream content).
+    console.warn("[vworld] contextMode: failed to parse upstream response");
     return [];
   }
 }
