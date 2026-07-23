@@ -33,6 +33,14 @@ function openAccordion() {
   fireEvent.click(screen.getByRole("button", { expanded: false }));
 }
 
+// `useT()` defaults to Korean ("ko") in the test env (app-store's persisted
+// default, see src/store/app-store.ts). The four new engine strings are now
+// rendered via useT(), so query by `data-testid` (language-agnostic) rather
+// than the (previously English-only) visible text.
+function getExportButton() {
+  return screen.getByRole("button", { name: /ifc/i });
+}
+
 describe("FidelityDetailPanel — Agentic BIM Engine wiring", () => {
   it("renders two review rows and an enabled Export button when hitlFlags are passed", () => {
     render(
@@ -44,11 +52,11 @@ describe("FidelityDetailPanel — Agentic BIM Engine wiring", () => {
     );
     openAccordion();
 
-    expect(screen.getByText(/2 element/)).toBeTruthy();
+    expect(screen.getByTestId("hitl-review-count").textContent).toMatch(/2/);
     expect(screen.getByText(/weak geometry source \(vworld-measured\)/)).toBeTruthy();
     expect(screen.getByText(/weak height source \(era-estimate\)/)).toBeTruthy();
 
-    const exportButton = screen.getByRole("button", { name: /export ifc/i });
+    const exportButton = getExportButton();
     expect(exportButton).toBeTruthy();
     expect((exportButton as HTMLButtonElement).disabled).toBe(false);
   });
@@ -63,13 +71,11 @@ describe("FidelityDetailPanel — Agentic BIM Engine wiring", () => {
     );
     openAccordion();
 
-    expect(
-      screen.getByText(/IFC export needs a CAD or building-outline footprint/i),
-    ).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /export ifc/i })).toBeNull();
+    expect(screen.getByTestId("engine-unavailable-message")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /ifc/i })).toBeNull();
   });
 
-  it('shows "All elements above confidence threshold" when hitlFlags is an empty array', () => {
+  it('shows the all-clear row when hitlFlags is an empty array', () => {
     render(
       <FidelityDetailPanel
         report={report}
@@ -79,11 +85,27 @@ describe("FidelityDetailPanel — Agentic BIM Engine wiring", () => {
     );
     openAccordion();
 
-    expect(
-      screen.getByText(/all elements above confidence threshold/i),
-    ).toBeTruthy();
+    expect(screen.getByTestId("hitl-all-clear")).toBeTruthy();
     // Export button should still render (engine IS available, just nothing flagged).
-    expect(screen.getByRole("button", { name: /export ifc/i })).toBeTruthy();
+    expect(getExportButton()).toBeTruthy();
+  });
+
+  it("shows no all-clear and no review list when hitlFlags is undefined (engine not yet computed)", () => {
+    render(
+      <FidelityDetailPanel
+        report={report}
+        checklist={checklist}
+        onExportIfc={() => {}}
+      />,
+    );
+    openAccordion();
+
+    // Export button still renders (engine section is shown because onExportIfc was passed)...
+    expect(getExportButton()).toBeTruthy();
+    // ...but neither the all-clear nor a review-count row should appear — an
+    // undefined hitlFlags must not be presented as a false all-clear (B2).
+    expect(screen.queryByTestId("hitl-all-clear")).toBeNull();
+    expect(screen.queryByTestId("hitl-review-count")).toBeNull();
   });
 
   it("disables the Export button and shows a spinner while exporting", () => {
@@ -97,7 +119,7 @@ describe("FidelityDetailPanel — Agentic BIM Engine wiring", () => {
     );
     openAccordion();
 
-    const exportButton = screen.getByRole("button", { name: /export ifc/i });
+    const exportButton = getExportButton();
     expect((exportButton as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -115,7 +137,7 @@ describe("FidelityDetailPanel — Agentic BIM Engine wiring", () => {
     );
     openAccordion();
 
-    fireEvent.click(screen.getByRole("button", { name: /export ifc/i }));
+    fireEvent.click(getExportButton());
     expect(called).toBe(true);
   });
 
@@ -123,13 +145,9 @@ describe("FidelityDetailPanel — Agentic BIM Engine wiring", () => {
     render(<FidelityDetailPanel report={report} checklist={checklist} />);
     openAccordion();
 
-    expect(screen.queryByRole("button", { name: /export ifc/i })).toBeNull();
-    expect(screen.queryByText(/element.*need review/i)).toBeNull();
-    expect(
-      screen.queryByText(/all elements above confidence threshold/i),
-    ).toBeNull();
-    expect(
-      screen.queryByText(/IFC export needs a CAD or building-outline footprint/i),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: /ifc/i })).toBeNull();
+    expect(screen.queryByTestId("hitl-review-count")).toBeNull();
+    expect(screen.queryByTestId("hitl-all-clear")).toBeNull();
+    expect(screen.queryByTestId("engine-unavailable-message")).toBeNull();
   });
 });

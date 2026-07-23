@@ -134,9 +134,11 @@ Sconf(element) = w_geom · S_geom + w_height · S_height − P_topology
 ```
 
 Elements with `Sconf < 0.85` produce a `HitlFlag { expressId, reason, sconf }`. Flags render
-in `fidelity-detail-panel`; the R3F viewer is the review surface (highlight flagged
-elements). This preserves the repo's honesty discipline: estimated inputs never masquerade
-as measured.
+in `fidelity-detail-panel` as a per-element review list. (Per-element *viewer* highlighting
+is **deferred to Slice 2**: generated-IFC `expressId`s have no correspondence to the
+procedural viewer meshes, so highlighting them in the R3F scene needs a mesh↔IFC id map that
+does not exist yet.) This preserves the repo's honesty discipline: estimated inputs never
+masquerade as measured.
 
 ## 6. Validation checks (Slice 1)
 
@@ -153,8 +155,8 @@ as measured.
 - Twin stage calls `runEngine` for the active building; result cached per PK in a thin
   store slice (not persisted — regenerable).
 - "Export IFC" control downloads `ifcBytes` as `<title>.ifc`.
-- `HitlFlag[]` feed `fidelity-detail-panel`; flagged elements are highlightable in the
-  viewer. No new full-screen UI in Slice 1.
+- `HitlFlag[]` feed `fidelity-detail-panel` as a review list. (Viewer highlighting of flagged
+  elements is deferred to Slice 2 — see §5.) No new full-screen UI in Slice 1.
 
 ## 8. Cleanup scope (targeted, safe)
 

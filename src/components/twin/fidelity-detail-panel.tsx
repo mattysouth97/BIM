@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FidelityBadge } from '@/components/twin/fidelity-badge';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type {
   FidelityReport,
@@ -119,6 +120,7 @@ export function FidelityDetailPanel({
   exporting,
   engineUnavailableReason,
 }: FidelityDetailPanelProps) {
+  const { t } = useT();
   const nextLevel = checklist.nextLevel;
   const completenessPercent = Math.round(report.completeness * 100);
 
@@ -206,8 +208,14 @@ export function FidelityDetailPanel({
               {showEngineSection && (
                 <div className="mt-4 pt-3 border-t">
                   {engineUnavailableReason ? (
-                    <p className="text-[10px] text-center text-muted-foreground">
-                      IFC export needs a CAD or building-outline footprint.
+                    <p
+                      data-testid="engine-unavailable-message"
+                      className="text-[10px] text-center text-muted-foreground"
+                    >
+                      {t(
+                        'IFC 내보내기에는 CAD 또는 건물 외곽선 도면이 필요합니다.',
+                        'IFC export needs a CAD or building-outline footprint.'
+                      )}
                     </p>
                   ) : (
                     <>
@@ -220,14 +228,19 @@ export function FidelityDetailPanel({
                         {exporting && (
                           <Loader2 className="size-3 animate-spin" />
                         )}
-                        Export IFC
+                        {t('IFC 내보내기', 'Export IFC')}
                       </Button>
 
-                      {hitlFlags && hitlFlags.length > 0 ? (
+                      {hitlFlags === undefined ? null : hitlFlags.length > 0 ? (
                         <div className="mt-2 space-y-1.5">
-                          <p className="text-[10px] text-muted-foreground">
-                            {hitlFlags.length} element
-                            {hitlFlags.length !== 1 ? 's' : ''} need review
+                          <p
+                            data-testid="hitl-review-count"
+                            className="text-[10px] text-muted-foreground"
+                          >
+                            {t(
+                              `${hitlFlags.length}개 요소 검토 필요`,
+                              `${hitlFlags.length} element${hitlFlags.length !== 1 ? 's' : ''} need review`
+                            )}
                           </p>
                           <ul className="space-y-1">
                             {hitlFlags.map((flag) => (
@@ -244,8 +257,14 @@ export function FidelityDetailPanel({
                           </ul>
                         </div>
                       ) : (
-                        <p className="mt-2 text-[10px] text-center text-muted-foreground">
-                          All elements above confidence threshold.
+                        <p
+                          data-testid="hitl-all-clear"
+                          className="mt-2 text-[10px] text-center text-muted-foreground"
+                        >
+                          {t(
+                            '모든 요소가 신뢰도 기준을 통과했습니다.',
+                            'All elements above confidence threshold.'
+                          )}
                         </p>
                       )}
                     </>

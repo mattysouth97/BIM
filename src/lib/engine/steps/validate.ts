@@ -47,17 +47,19 @@ function checkRingClosed(model: FusedModel, elements: GeneratedElement[]): Valid
   };
 }
 
-function checkSlabArea(model: FusedModel, elements: GeneratedElement[]): ValidationCheck {
+function checkFootprintNondegenerate(model: FusedModel, elements: GeneratedElement[]): ValidationCheck {
   // Slice-1: every slab is extruded from the same fused footprint, so there is
   // no per-slab area to compare against — the check collapses to "is the
   // shared footprint area non-degenerate" (SLAB_AREA_TOLERANCE_PCT would
   // apply to comparing distinct slab profiles, which this pipeline does not
-  // yet produce; deferred honestly rather than faked).
+  // yet produce; deferred honestly rather than faked). This does NOT verify
+  // per-slab area accuracy — just that the shared footprint isn't a
+  // collinear/zero-area ring.
   const outerRing = model.footprint[0] ?? [];
   const area = Math.abs(shoelaceArea(outerRing));
   const passed = area > 0;
   return {
-    id: "slab-area",
+    id: "footprint-nondegenerate",
     passed,
     detail: passed
       ? `footprint area ${area.toFixed(2)} m^2 is valid`
@@ -79,14 +81,19 @@ function checkStoreyMonotonic(model: FusedModel, elements: GeneratedElement[]): 
   };
 }
 
-function checkRoundtripCount(model: FusedModel, elements: GeneratedElement[]): ValidationCheck {
+function checkElementCount(model: FusedModel, elements: GeneratedElement[]): ValidationCheck {
+  // NOT a byte round-trip through IFC — this verifies the flat element
+  // accounting produced by generate-ifc.ts matches the construction formula
+  // (floors * edges-per-storey walls + floors slabs). A real write→read
+  // round-trip is exercised separately by
+  // generate-ifc-roundtrip.integration.test.ts.
   const outerRing = model.footprint[0] ?? [];
   const edgeCount = Math.max(outerRing.length - 1, 0);
   const expectedCount = model.floors * edgeCount + model.floors;
   const actualCount = elements.length;
   const passed = actualCount === expectedCount;
   return {
-    id: "roundtrip-count",
+    id: "element-count",
     passed,
     detail: passed
       ? `element count ${actualCount} matches expected ${expectedCount} (floors=${model.floors}, edges=${edgeCount})`
@@ -102,9 +109,9 @@ function checkRoundtripCount(model: FusedModel, elements: GeneratedElement[]): V
 export function validate(model: FusedModel, elements: GeneratedElement[]): ValidationReport {
   const checks: ValidationCheck[] = [
     checkRingClosed(model, elements),
-    checkSlabArea(model, elements),
+    checkFootprintNondegenerate(model, elements),
     checkStoreyMonotonic(model, elements),
-    checkRoundtripCount(model, elements),
+    checkElementCount(model, elements),
   ];
   return { checks, passed: checks.every((c) => c.passed) };
 }

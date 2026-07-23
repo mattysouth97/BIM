@@ -35,7 +35,11 @@ export function fuse(input: BimEngineInput, features: SpatialFeature[]): { model
   let floors: number;
   let floorsSource: SourceKind;
   if (chosenFloorsFeature && chosenFloorsFeature.floors != null) {
-    floors = chosenFloorsFeature.floors;
+    // Defensive clamp: ingest.ts already filters out <= 0 floors values
+    // (0 means "data unavailable", never authoritative — see CLAUDE.md), but
+    // a floors <= 0 feature must never reach here and silently divide the
+    // height into zero/negative storeys or produce zero elements downstream.
+    floors = Math.max(1, chosenFloorsFeature.floors);
     floorsSource = chosenFloorsFeature.source;
   } else {
     floors = 1;
@@ -93,7 +97,9 @@ export function fuse(input: BimEngineInput, features: SpatialFeature[]): { model
     }
   }
 
-  const storeyHeightM = totalHeightM / floors;
+  // Guard: floors is clamped to >= 1 above, but keep this division
+  // divide-by-zero-proof independent of that upstream invariant.
+  const storeyHeightM = totalHeightM / Math.max(1, floors);
 
   const model: FusedModel = {
     pk: input.pk,

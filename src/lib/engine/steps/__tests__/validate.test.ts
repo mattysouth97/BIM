@@ -40,7 +40,7 @@ describe("validate", () => {
     expect(report.passed).toBe(true);
     expect(report.checks.every((c) => c.passed)).toBe(true);
     expect(report.checks.map((c) => c.id).sort()).toEqual(
-      ["ring-closed", "roundtrip-count", "slab-area", "storey-monotonic"].sort(),
+      ["element-count", "footprint-nondegenerate", "ring-closed", "storey-monotonic"].sort(),
     );
   });
 
@@ -57,7 +57,7 @@ describe("validate", () => {
     expect(ringCheck?.elementIds).toEqual(elements.filter((e) => e.kind === "slab").map((e) => e.expressId));
   });
 
-  it("fails slab-area for a degenerate (collinear) footprint", () => {
+  it("fails footprint-nondegenerate for a degenerate (collinear) footprint", () => {
     const collinearRing: [number, number][] = [[0, 0], [5, 0], [10, 0], [0, 0]]; // closed, zero area
     const degenerateModel: FusedModel = { ...model, footprint: [collinearRing] };
     const elements = buildElements(2, 3);
@@ -65,7 +65,7 @@ describe("validate", () => {
     const report = validate(degenerateModel, elements);
 
     expect(report.passed).toBe(false);
-    const areaCheck = report.checks.find((c) => c.id === "slab-area");
+    const areaCheck = report.checks.find((c) => c.id === "footprint-nondegenerate");
     expect(areaCheck?.passed).toBe(false);
     expect(areaCheck?.elementIds).toEqual(elements.filter((e) => e.kind === "slab").map((e) => e.expressId));
   });

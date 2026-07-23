@@ -51,7 +51,7 @@ export interface GeneratedElement {
 }
 
 export interface ValidationCheck {
-  id: "ring-closed" | "slab-area" | "storey-monotonic" | "roundtrip-count";
+  id: "ring-closed" | "footprint-nondegenerate" | "storey-monotonic" | "element-count";
   passed: boolean;
   detail: string;
   elementIds?: number[];
@@ -91,6 +91,9 @@ export const ENGINE_CONSTANTS = {
   DEFAULT_STOREY_HEIGHT_M: 3.3,
   DEFAULT_WALL_THICKNESS_M: 0.3,
   CONFLICT_TOLERANCE_PCT: 10,
+  // Not yet consumed (Slice-1 has no distinct per-slab profiles to compare —
+  // see validate.ts's "footprint-nondegenerate" check comment); reserved for
+  // Slice-2's per-slab area delta check.
   SLAB_AREA_TOLERANCE_PCT: 2,
   HITL_THRESHOLD: 0.85,
   W_GEOM: 0.6,

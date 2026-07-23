@@ -13,12 +13,18 @@
 //
 // Scope note (Slice-1, honest about what's deferred): this writer targets a
 // structurally valid IFC4 file sufficient for this pipeline's own validate/score
-// steps and for loading in a viewer — it does not implement IfcOwnerHistory,
-// IfcUnitAssignment, or IfcDoor/IfcWindow openings (all deferred per the plan).
+// steps and for loading in a viewer — it does not implement IfcOwnerHistory or
+// IfcDoor/IfcWindow openings (both deferred per the plan). It DOES emit an
+// IfcUnitAssignment (metres / square metres) per spec §4 — see A1 below.
 //
 // Entity field names and express type codes below were verified against
 // node_modules/web-ifc/web-ifc-api.d.ts and node_modules/web-ifc/web-ifc-api.js
-// (IFC4 schema block) — not from prior memory of the web-ifc API.
+// (IFC4 schema block) — not from prior memory of the web-ifc API. This
+// includes IfcUnitAssignment/IfcSIUnit's ToRawLineData field order (`i.UnitType,
+// i.Prefix, i.Name` for IfcSIUnit; `i.Units` for IfcUnitAssignment — Dimensions
+// is always forced null by web-ifc's writer regardless of what's supplied) and
+// was confirmed end-to-end by a real write→read round-trip against
+// web-ifc-node.wasm (see generate-ifc-roundtrip.integration.test.ts).
 
 import type { FusedModel, GeneratedElement } from "../types";
 import type { IfcWriteSession, RawIfcLine } from "../../ifc/ifc-session";
@@ -43,18 +49,59 @@ const IFC4_TYPE = {
   GEOMETRIC_REPRESENTATION_CONTEXT: 3448662350,
   WALL_STANDARD_CASE: 3512223829,
   SLAB: 1529196076,
+  UNIT_ASSIGNMENT: 180925521,
+  SI_UNIT: 448429030,
 } as const;
 
-let guidCounter = 0;
+// IFC-compressed IfcGloballyUniqueId alphabet: 64 chars, base64-like but
+// IFC-specific ordering (0-9, A-Z, a-z, _, $) — verified against
+// node_modules/web-ifc/web-ifc-api.d.ts's CreateIFCGloballyUniqueId doc and
+// the buildingSMART-documented GUID compression scheme (a 128-bit UUID's 16
+// bytes are split into byte[0] + five 3-byte groups; byte[0] encodes to 2
+// base64 digits, each 3-byte/24-bit group encodes to 4 base64 digits, for
+// 2 + 5*4 = 22 chars total).
+const IFC_GUID_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$";
+
+function base64Digits(value: number, digitCount: number): string {
+  let out = "";
+  for (let i = 0; i < digitCount; i += 1) {
+    const shift = digitCount - i - 1;
+    const digit = Math.floor(value / 64 ** shift) % 64;
+    out += IFC_GUID_ALPHABET[digit];
+  }
+  return out;
+}
+
 /**
- * Slice-1 GlobalId: unique per process but NOT the compressed 22-char IFC GUID
- * format (that requires web-ifc's CreateIFCGloballyUniqueId, not part of our
- * minimal write-session surface). Good enough to round-trip through this
- * pipeline's validate/score steps and any IFC viewer.
+ * Pure compression: 32-hex-char UUID (no dashes) -> 22-char IFC-compressed
+ * GlobalId. Exported for unit testing — generate-ifc.test.ts round-trips it
+ * against a local decompress helper to prove the byte-grouping is correct.
  */
+export function compressIfcGuid(hex32: string): string {
+  const bytes: number[] = [];
+  for (let i = 0; i < 32; i += 2) bytes.push(parseInt(hex32.slice(i, i + 2), 16));
+  let out = base64Digits(bytes[0], 2);
+  for (let g = 0; g < 5; g += 1) {
+    const value = (bytes[1 + g * 3] << 16) + (bytes[2 + g * 3] << 8) + bytes[3 + g * 3];
+    out += base64Digits(value, 4);
+  }
+  return out;
+}
+
+function randomUuidHex32(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID().replace(/-/g, "");
+  }
+  // Fallback for environments without crypto.randomUUID (Slice-1 GUIDs only
+  // need per-file uniqueness, not cryptographic randomness).
+  let hex = "";
+  for (let i = 0; i < 32; i += 1) hex += Math.floor(Math.random() * 16).toString(16);
+  return hex;
+}
+
+/** Conforming 22-char IfcGloballyUniqueId (compressed from a random v4 UUID). */
 function guid(): string {
-  guidCounter += 1;
-  return `bimengine-${Date.now().toString(36)}-${guidCounter.toString(36)}`;
+  return compressIfcGuid(randomUuidHex32());
 }
 
 function line(type: number, fields: Record<string, unknown>): RawIfcLine {
@@ -124,6 +171,29 @@ function ringToPolylinePoints(ring: [number, number][]): RawIfcLine[] {
   return ring.map(([x, z]) => point2(x, z));
 }
 
+/** IfcSIUnit for a base (non-derived) SI unit, e.g. LENGTHUNIT/METRE. */
+function siUnit(unitType: string, name: string): RawIfcLine {
+  return line(IFC4_TYPE.SI_UNIT, {
+    // Dimensions is always forced null by web-ifc's ToRawLineData for
+    // IfcSIUnit regardless of what's supplied (verified in web-ifc-api.js) —
+    // included explicitly here for documentation, not because it's read.
+    Dimensions: null,
+    UnitType: enumValue(unitType),
+    Prefix: null,
+    Name: enumValue(name),
+  });
+}
+
+/**
+ * IfcUnitAssignment for metres (length) and square metres (area) — Spec §4
+ * requires this project's units be explicit rather than implicit/undefined.
+ */
+function unitAssignment(): RawIfcLine {
+  return line(IFC4_TYPE.UNIT_ASSIGNMENT, {
+    Units: [siUnit("LENGTHUNIT", "METRE"), siUnit("AREAUNIT", "SQUARE_METRE")],
+  });
+}
+
 /**
  * Builds an IFC4 model for `model` (project/site/building/storey hierarchy,
  * per-edge walls, per-floor slabs) and returns the serialized bytes plus a
@@ -154,7 +224,7 @@ export async function generateIfc(
     LongName: null,
     Phase: null,
     RepresentationContexts: [worldContext],
-    UnitsInContext: null,
+    UnitsInContext: unitAssignment(),
   });
   session.writeLine(modelId, project);
 

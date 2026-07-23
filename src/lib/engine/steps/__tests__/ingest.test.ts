@@ -18,4 +18,22 @@ describe("ingest", () => {
     expect(f.find((x) => x.kind === "floors" && x.source === "manual")).toBeTruthy();
     expect(f.find((x) => x.kind === "height" && x.source === "manual")).toBeTruthy();
   });
+
+  it("does not emit a floors/height feature when the value is <= 0 (0 means data unavailable, per CLAUDE.md)", () => {
+    const f = ingest({
+      pk: "x",
+      cadFootprint: { rings: RING, source: "cad-exact" },
+      ledger: { floors: 0, heightM: 0 },
+      vworldFootprint: { rings: RING, groundFloors: 0, measuredHeightM: 0 },
+      params: { floors: 0, heightM: 0 },
+    });
+    expect(f.find((x) => x.kind === "floors")).toBeUndefined();
+    expect(f.find((x) => x.kind === "height")).toBeUndefined();
+  });
+
+  it("does not emit a floors/height feature for negative values either", () => {
+    const f = ingest({ pk: "x", ledger: { floors: -1, heightM: -5 } });
+    expect(f.find((x) => x.kind === "floors")).toBeUndefined();
+    expect(f.find((x) => x.kind === "height")).toBeUndefined();
+  });
 });
