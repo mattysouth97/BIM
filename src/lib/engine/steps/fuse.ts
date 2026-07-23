@@ -112,6 +112,11 @@ export function fuse(input: BimEngineInput, features: SpatialFeature[]): { model
     totalHeightM,
     heightSource,
     wallThicknessM: ENGINE_CONSTANTS.DEFAULT_WALL_THICKNESS_M,
+    // Facade params are a direct passthrough from input (not a scored/prioritized
+    // feature — see plan) — always "era-estimate" since the recipe that supplies
+    // them is era-based, never a measured facade source.
+    facade: input.facade ?? null,
+    facadeSource: "era-estimate",
   };
 
   return { model, conflicts };

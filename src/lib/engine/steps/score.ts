@@ -22,6 +22,19 @@ const HEIGHT_SCORE: Partial<Record<SourceKind, number>> = {
   "era-estimate": 0.50,
 };
 
+// Windows are never measured directly — this table caps their geometry score
+// by facade provenance. "era-estimate" (the only source Slice-2 actually
+// produces) is pinned to ENGINE_CONSTANTS.FACADE_ESTIMATE_SCORE (0.5) so a
+// window's sconf always lands below HITL_THRESHOLD (0.85), per the plan.
+// The other entries are reserved for future finer-grained facade sources.
+const FACADE_SCORE: Partial<Record<SourceKind, number>> = {
+  "era-estimate": ENGINE_CONSTANTS.FACADE_ESTIMATE_SCORE,
+  "cad-exact": 0.9,
+  "cad-converted": 0.8,
+  "cad-traced": 0.65,
+  "vworld-measured": 0.75,
+};
+
 function clamp01(n: number): number {
   return Math.min(1, Math.max(0, n));
 }
@@ -41,7 +54,11 @@ export function score(
   const hitlFlags: HitlFlag[] = [];
 
   for (const element of elements) {
-    const geomScore = GEOM_SCORE[element.geomSource] ?? 0;
+    let geomScore = GEOM_SCORE[element.geomSource] ?? 0;
+    if (element.kind === "window") {
+      const facadeScore = FACADE_SCORE[element.facadeSource ?? "era-estimate"] ?? 0;
+      geomScore = Math.min(geomScore, facadeScore);
+    }
     const heightScore = HEIGHT_SCORE[element.heightSource] ?? 0;
     const topologyPenalty = implicatedIds.has(element.expressId)
       ? ENGINE_CONSTANTS.TOPOLOGY_PENALTY
@@ -63,11 +80,13 @@ export function score(
 
     if (sconf < ENGINE_CONSTANTS.HITL_THRESHOLD) {
       const weakestDriver =
-        topologyPenalty > 0
-          ? "topology"
-          : geomScore <= heightScore
-            ? "geometry"
-            : "height";
+        element.kind === "window"
+          ? "facade (estimated window placement)"
+          : topologyPenalty > 0
+            ? "topology"
+            : geomScore <= heightScore
+              ? "geometry"
+              : "height";
       hitlFlags.push({
         expressId: element.expressId,
         kind: element.kind,

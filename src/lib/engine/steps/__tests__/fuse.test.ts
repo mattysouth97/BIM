@@ -40,6 +40,21 @@ describe("fuse", () => {
     expect(Number.isNaN(model.storeyHeightM)).toBe(false);
   });
 
+  it("carries facade params through with facadeSource 'era-estimate' when input.facade is set", () => {
+    const facade = { windowWidth: 1.4, windowHeight: 1.6, sillHeight: 0.8, windowSpacing: 2.2 };
+    const input = { pk: "p", cadFootprint: { rings: RING, source: "cad-exact" as const }, ledger: { heightM: 10, floors: 3 }, facade };
+    const { model } = fuse(input, ingest(input));
+    expect(model.facade).toEqual(facade);
+    expect(model.facadeSource).toBe("era-estimate");
+  });
+
+  it("model.facade is null when input.facade is not set", () => {
+    const input = { pk: "p", cadFootprint: { rings: RING, source: "cad-exact" as const }, ledger: { heightM: 10, floors: 3 } };
+    const { model } = fuse(input, ingest(input));
+    expect(model.facade).toBeNull();
+    expect(model.facadeSource).toBe("era-estimate");
+  });
+
   it("defensively clamps floors to >= 1 even if a caller hands fuse() a raw floors:0 feature directly", () => {
     // Belt-and-suspenders: fuse.ts must not divide by zero even if some
     // future feature source bypasses ingest.ts's guard.

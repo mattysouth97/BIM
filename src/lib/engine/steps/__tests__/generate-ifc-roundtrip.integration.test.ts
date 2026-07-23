@@ -20,6 +20,10 @@ const IFCWALLSTANDARDCASE = 3512223829;
 const IFCSLAB = 1529196076;
 const IFCBUILDINGSTOREY = 3124254112;
 const IFCSIUNIT = 448429030;
+const IFCWINDOW = 3304561284;
+const IFCOPENINGELEMENT = 3588315303;
+const IFCRELVOIDSELEMENT = 1401173127;
+const IFCRELFILLSELEMENT = 3940055652;
 
 // Minimal shape of the bits of web-ifc's IfcAPI this test actually calls —
 // avoids importing web-ifc's own types at module scope so the file still
@@ -93,6 +97,62 @@ describe("generateIfc real write→read round-trip (web-ifc-node.wasm)", () => {
         if (unitType === "LENGTHUNIT") foundLengthUnit = true;
       }
       expect(foundLengthUnit).toBe(true);
+    } finally {
+      api.CloseModel(readModelId);
+    }
+  });
+
+  it("round-trips real IFCWINDOW/IFCOPENINGELEMENT counts (equal, >0) for a facade-bearing input", async () => {
+    const session: IfcWriteSession = {
+      createModel: () => api.CreateModel({ schema: "IFC4" }),
+      writeLine: (modelId: number, lineObject: RawIfcLine) => {
+        api.WriteLine(modelId, lineObject);
+        return lineObject.expressID;
+      },
+      saveModel: (modelId: number) => api.SaveModel(modelId),
+      closeModel: (modelId: number) => api.CloseModel(modelId),
+    };
+
+    const input: BimEngineInput = {
+      pk: "roundtrip-windows",
+      title: "Roundtrip Window Test Building",
+      cadFootprint: {
+        rings: [[[0, 0], [10, 0], [10, 8], [0, 8], [0, 0]]],
+        source: "cad-exact",
+      },
+      ledger: { heightM: 6.6, floors: 2 },
+      // Windows are ESTIMATED (era-based facade defaults) — never presented
+      // as measured. See score.ts's FACADE_SCORE / ENGINE_CONSTANTS.FACADE_ESTIMATE_SCORE.
+      facade: { windowWidth: 1.2, windowHeight: 1.5, sillHeight: 0.9, windowSpacing: 1.5 },
+    };
+
+    const result = await runEngine(input, session);
+    expect(result.ifcBytes.length).toBeGreaterThan(0);
+
+    // Sanity: honest provenance — windows must never score >= HITL_THRESHOLD.
+    const windowConfidences = result.elements.filter((e) => e.kind === "window");
+    expect(windowConfidences.length).toBeGreaterThan(0);
+    expect(windowConfidences.every((e) => e.sconf < 0.85)).toBe(true);
+    expect(result.hitlFlags.some((f) => f.kind === "window")).toBe(true);
+
+    const openingsCheck = result.validation.checks.find((c) => c.id === "openings-hosted");
+    expect(openingsCheck?.passed).toBe(true);
+
+    const readModelId = api.OpenModel(result.ifcBytes);
+    try {
+      const windowCount = api.GetLineIDsWithType(readModelId, IFCWINDOW).size();
+      const openingCount = api.GetLineIDsWithType(readModelId, IFCOPENINGELEMENT).size();
+      const voidsCount = api.GetLineIDsWithType(readModelId, IFCRELVOIDSELEMENT).size();
+      const fillsCount = api.GetLineIDsWithType(readModelId, IFCRELFILLSELEMENT).size();
+
+      expect(windowCount).toBeGreaterThan(0);
+      expect(openingCount).toBe(windowCount);
+      expect(voidsCount).toBe(windowCount);
+      expect(fillsCount).toBe(windowCount);
+
+      // File still re-opens cleanly and the non-window entities are intact.
+      expect(api.GetLineIDsWithType(readModelId, IFCWALLSTANDARDCASE).size()).toBe(8);
+      expect(api.GetLineIDsWithType(readModelId, IFCSLAB).size()).toBe(2);
     } finally {
       api.CloseModel(readModelId);
     }

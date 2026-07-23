@@ -52,6 +52,17 @@ export function buildEngineInput(args: BuildEngineInputArgs): BimEngineInput | n
 
   const ledger = ledgerHeit > 0 ? { heightM: ledgerHeit } : undefined;
   const params = { floors };
+  // Windows are always era-estimated placement (facade recipe = era defaults,
+  // never measured) — see FusedModel.facadeSource in fuse.ts. Passed through
+  // to the engine for all three real-footprint branches.
+  const facade = recipe.facade
+    ? {
+        windowWidth: recipe.facade.windowWidth,
+        windowHeight: recipe.facade.windowHeight,
+        sillHeight: recipe.facade.sillHeight,
+        windowSpacing: recipe.facade.windowSpacing,
+      }
+    : undefined;
 
   if (footprintSource === "cad") {
     // Sub-confidence (exact/converted/traced) is not known at this layer —
@@ -63,6 +74,7 @@ export function buildEngineInput(args: BuildEngineInputArgs): BimEngineInput | n
       cadFootprint: { rings, source: "cad-converted" },
       ledger,
       params,
+      facade,
     };
   }
 
@@ -74,6 +86,7 @@ export function buildEngineInput(args: BuildEngineInputArgs): BimEngineInput | n
       cadFootprint: { rings, source: "cad-exact" },
       ledger,
       params,
+      facade,
     };
   }
 
@@ -88,5 +101,6 @@ export function buildEngineInput(args: BuildEngineInputArgs): BimEngineInput | n
     },
     ledger,
     params,
+    facade,
   };
 }

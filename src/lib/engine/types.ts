@@ -2,7 +2,15 @@ export type SourceKind =
   | "cad-exact" | "cad-converted" | "cad-traced"
   | "vworld-measured" | "ledger" | "manual" | "era-estimate";
 
-export type ElementKind = "wall" | "slab";
+export type ElementKind = "wall" | "slab" | "window";
+
+/** Window-placement parameters (Slice-2), sourced from the era-based facade recipe. */
+export interface FacadeParams {
+  windowWidth: number;
+  windowHeight: number;
+  sillHeight: number;
+  windowSpacing: number;
+}
 
 export interface BimEngineInput {
   pk: string;
@@ -12,6 +20,7 @@ export interface BimEngineInput {
   ledger?: { heightM?: number; floors?: number };
   params?: { floors?: number; heightM?: number; year?: number };
   defaultStoreyHeightM?: number;
+  facade?: FacadeParams;
 }
 
 export interface SpatialFeature {
@@ -40,6 +49,8 @@ export interface FusedModel {
   totalHeightM: number;
   heightSource: SourceKind;
   wallThicknessM: number;
+  facade: FacadeParams | null;
+  facadeSource: SourceKind;
 }
 
 export interface GeneratedElement {
@@ -48,10 +59,12 @@ export interface GeneratedElement {
   storey: number;
   geomSource: SourceKind;
   heightSource: SourceKind;
+  /** Set only on "window" elements — provenance of the facade recipe used to place them. */
+  facadeSource?: SourceKind;
 }
 
 export interface ValidationCheck {
-  id: "ring-closed" | "footprint-nondegenerate" | "storey-monotonic" | "element-count";
+  id: "ring-closed" | "footprint-nondegenerate" | "storey-monotonic" | "element-count" | "openings-hosted";
   passed: boolean;
   detail: string;
   elementIds?: number[];
@@ -99,4 +112,17 @@ export const ENGINE_CONSTANTS = {
   W_GEOM: 0.6,
   W_HEIGHT: 0.4,
   TOPOLOGY_PENALTY: 0.2,
+  // Windows are placed from era-based facade defaults (never measured), so
+  // their geometry confidence is capped low — this MUST keep window sconf
+  // below HITL_THRESHOLD (0.85) so they are always flagged, never presented
+  // as measured. See score.ts's FACADE_SCORE table.
+  FACADE_ESTIMATE_SCORE: 0.5,
 } as const;
+
+/** Era-default window placement (Slice-2) — used when no finer facade source is known. */
+export const DEFAULT_FACADE: FacadeParams = {
+  windowWidth: 1.2,
+  windowHeight: 1.5,
+  sillHeight: 0.9,
+  windowSpacing: 1.5,
+};

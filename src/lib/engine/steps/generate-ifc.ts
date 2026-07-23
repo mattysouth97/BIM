@@ -6,16 +6,25 @@
 // per storey (profile = footprint), then serializes via the injected write
 // session. Geometry is pure, deterministic TS — never LLM-generated.
 //
+// Slice-2 adds window openings: when `model.facade` is set, a row of
+// IfcWindow instances is placed along each wall edge (count/positions from
+// the pure computeWindowLayout() below), each hosted via a real
+// IfcOpeningElement void (IfcRelVoidsElement wall<->opening,
+// IfcRelFillsElement opening<->window) rather than faked/implicit. Windows
+// are placement estimates from the era-based facade recipe — never measured
+// — so they are scored honestly low (see score.ts's FACADE_SCORE) and always
+// HITL-flagged.
+//
 // Coordinate mapping (see src/lib/cad/README.md): the engine's footprint points
 // are [x, z] in the repo's meters/XZ-plane/origin-centered convention (Y-up,
 // three.js style). IFC is Z-up, so repo (x, z) maps to IFC (X, Y) and vertical
 // elevation becomes IFC Z.
 //
-// Scope note (Slice-1, honest about what's deferred): this writer targets a
+// Scope note (honest about what's still deferred): this writer targets a
 // structurally valid IFC4 file sufficient for this pipeline's own validate/score
 // steps and for loading in a viewer — it does not implement IfcOwnerHistory or
-// IfcDoor/IfcWindow openings (both deferred per the plan). It DOES emit an
-// IfcUnitAssignment (metres / square metres) per spec §4 — see A1 below.
+// IfcDoor openings (deferred per the plan). It DOES emit an IfcUnitAssignment
+// (metres / square metres) per spec §4 — see A1 below.
 //
 // Entity field names and express type codes below were verified against
 // node_modules/web-ifc/web-ifc-api.d.ts and node_modules/web-ifc/web-ifc-api.js
@@ -25,8 +34,21 @@
 // is always forced null by web-ifc's writer regardless of what's supplied) and
 // was confirmed end-to-end by a real write→read round-trip against
 // web-ifc-node.wasm (see generate-ifc-roundtrip.integration.test.ts).
+//
+// Slice-2 (window openings): IfcOpeningElement / IfcRelVoidsElement / IfcWindow
+// / IfcRelFillsElement field orders below were verified the same way, against
+// web-ifc-api.js's `ToRawLineData[2]` table (index 2 = the "IFC4" schema slot
+// in `SchemaNames`, confirmed via `SchemaNames[2] = ["IFC4"]` in that file) —
+// specifically: IfcOpeningElement = [GlobalId, OwnerHistory, Name, Description,
+// ObjectType, ObjectPlacement, Representation, Tag, PredefinedType];
+// IfcRelVoidsElement = [GlobalId, OwnerHistory, Name, Description,
+// RelatingBuildingElement, RelatedOpeningElement]; IfcWindow = [GlobalId,
+// OwnerHistory, Name, Description, ObjectType, ObjectPlacement, Representation,
+// Tag, OverallHeight, OverallWidth, PredefinedType, PartitioningType,
+// UserDefinedPartitioningType]; IfcRelFillsElement = [GlobalId, OwnerHistory,
+// Name, Description, RelatingOpeningElement, RelatedBuildingElement].
 
-import type { FusedModel, GeneratedElement } from "../types";
+import type { FacadeParams, FusedModel, GeneratedElement } from "../types";
 import type { IfcWriteSession, RawIfcLine } from "../../ifc/ifc-session";
 
 // Verified IFC4 express type codes (node_modules/web-ifc/web-ifc-api.js).
@@ -51,6 +73,10 @@ const IFC4_TYPE = {
   SLAB: 1529196076,
   UNIT_ASSIGNMENT: 180925521,
   SI_UNIT: 448429030,
+  OPENING_ELEMENT: 3588315303,
+  REL_VOIDS_ELEMENT: 1401173127,
+  WINDOW: 3304561284,
+  REL_FILLS_ELEMENT: 3940055652,
 } as const;
 
 // IFC-compressed IfcGloballyUniqueId alphabet: 64 chars, base64-like but
@@ -169,6 +195,39 @@ function productShape(context: RawIfcLine, items: RawIfcLine[]): RawIfcLine {
 
 function ringToPolylinePoints(ring: [number, number][]): RawIfcLine[] {
   return ring.map(([x, z]) => point2(x, z));
+}
+
+/**
+ * Pure window-row layout for a single wall edge (Slice-2). Returns the local
+ * X offset (along the wall's own direction, left edge of each window box) for
+ * every window that fits on an edge of `edgeLength` meters, given `facade`'s
+ * width/spacing — count = floor(edgeLength / (windowWidth + windowSpacing)),
+ * the row centered within the edge. Exported so validate.ts's
+ * "openings-hosted" check can recompute the same expected layout from the
+ * FusedModel alone (single source of truth — no duplicated placement math).
+ */
+export function computeWindowLayout(edgeLength: number, facade: FacadeParams): number[] {
+  const pitch = facade.windowWidth + facade.windowSpacing;
+  const count = Math.max(0, Math.floor(edgeLength / pitch));
+  if (count === 0) return [];
+  const totalSpan = count * facade.windowWidth + (count - 1) * facade.windowSpacing;
+  const startOffset = (edgeLength - totalSpan) / 2;
+  const positions: number[] = [];
+  for (let i = 0; i < count; i += 1) {
+    positions.push(startOffset + i * pitch);
+  }
+  return positions;
+}
+
+/** Local-frame rectangle profile (0,0) -> (width, depth), closed. */
+function rectangleProfile(width: number, depth: number): RawIfcLine {
+  return closedProfile([
+    point2(0, 0),
+    point2(width, 0),
+    point2(width, depth),
+    point2(0, depth),
+    point2(0, 0),
+  ]);
 }
 
 /** IfcSIUnit for a base (non-derived) SI unit, e.g. LENGTHUNIT/METRE. */
@@ -324,13 +383,7 @@ export async function generateIfc(
         storeyPlacement,
         axis2Placement3D(point3(x1, z1, 0), direction(0, 0, 1), direction(ux, uz, 0)),
       );
-      const wallProfile = closedProfile([
-        point2(0, 0),
-        point2(edgeLength, 0),
-        point2(edgeLength, model.wallThicknessM),
-        point2(0, model.wallThicknessM),
-        point2(0, 0),
-      ]);
+      const wallProfile = rectangleProfile(edgeLength, model.wallThicknessM);
       const wallShape = productShape(worldContext, [
         extrudedSolid(wallProfile, model.storeyHeightM, direction(0, 0, 1)),
       ]);
@@ -354,6 +407,100 @@ export async function generateIfc(
         geomSource: model.footprintSource,
         heightSource: model.heightSource,
       });
+
+      // Slice-2: windows are estimated (era-facade defaults), never measured —
+      // hosted in this wall via a real IfcOpeningElement void, per the plan.
+      // No facade => no windows on this (or any) edge.
+      if (model.facade) {
+        const facade = model.facade;
+        const windowPositions = computeWindowLayout(edgeLength, facade);
+
+        for (let winIndex = 0; winIndex < windowPositions.length; winIndex += 1) {
+          const leftX = windowPositions[winIndex];
+
+          const openingPlacement = localPlacement(
+            wallPlacement,
+            axis2Placement3D(point3(leftX, 0, facade.sillHeight), null, null),
+          );
+          const openingProfile = rectangleProfile(facade.windowWidth, model.wallThicknessM);
+          const openingShape = productShape(worldContext, [
+            extrudedSolid(openingProfile, facade.windowHeight, direction(0, 0, 1)),
+          ]);
+          const opening = line(IFC4_TYPE.OPENING_ELEMENT, {
+            GlobalId: label(guid()),
+            OwnerHistory: null,
+            Name: label(`Opening ${storeyIndex}-${edgeIndex}-${winIndex}`),
+            Description: null,
+            ObjectType: null,
+            ObjectPlacement: openingPlacement,
+            Representation: openingShape,
+            Tag: null,
+            PredefinedType: null,
+          });
+          session.writeLine(modelId, opening);
+
+          session.writeLine(
+            modelId,
+            line(IFC4_TYPE.REL_VOIDS_ELEMENT, {
+              GlobalId: label(guid()),
+              OwnerHistory: null,
+              Name: null,
+              Description: null,
+              RelatingBuildingElement: wall,
+              RelatedOpeningElement: opening,
+            }),
+          );
+
+          // Window fills the same box the opening cuts (a simple placeholder
+          // pane geometry — Slice-2 scope is honest hosting + provenance, not
+          // detailed frame/mullion geometry).
+          const windowPlacement = localPlacement(
+            wallPlacement,
+            axis2Placement3D(point3(leftX, 0, facade.sillHeight), null, null),
+          );
+          const windowProfile = rectangleProfile(facade.windowWidth, model.wallThicknessM);
+          const windowShape = productShape(worldContext, [
+            extrudedSolid(windowProfile, facade.windowHeight, direction(0, 0, 1)),
+          ]);
+          const windowLine = line(IFC4_TYPE.WINDOW, {
+            GlobalId: label(guid()),
+            OwnerHistory: null,
+            Name: label(`Window ${storeyIndex}-${edgeIndex}-${winIndex}`),
+            Description: null,
+            ObjectType: null,
+            ObjectPlacement: windowPlacement,
+            Representation: windowShape,
+            Tag: null,
+            OverallHeight: measure(facade.windowHeight),
+            OverallWidth: measure(facade.windowWidth),
+            PredefinedType: null,
+            PartitioningType: null,
+            UserDefinedPartitioningType: null,
+          });
+          const windowExpressId = session.writeLine(modelId, windowLine);
+          storeyProducts.push(windowLine);
+          elements.push({
+            expressId: windowExpressId,
+            kind: "window",
+            storey: storeyIndex,
+            geomSource: model.footprintSource,
+            heightSource: model.heightSource,
+            facadeSource: model.facadeSource,
+          });
+
+          session.writeLine(
+            modelId,
+            line(IFC4_TYPE.REL_FILLS_ELEMENT, {
+              GlobalId: label(guid()),
+              OwnerHistory: null,
+              Name: null,
+              Description: null,
+              RelatingOpeningElement: opening,
+              RelatedBuildingElement: windowLine,
+            }),
+          );
+        }
+      }
     }
 
     const slabPlacement = localPlacement(storeyPlacement, axis2Placement3D(point3(0, 0, 0), null, null));

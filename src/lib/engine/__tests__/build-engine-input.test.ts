@@ -191,6 +191,39 @@ describe("buildEngineInput", () => {
     expect(result?.params).toEqual({ floors: 1 });
   });
 
+  it("passes facade params through for a cad footprint", () => {
+    const result = buildEngineInput({
+      pk: "p1",
+      recipe: makeRecipe(),
+      footprintSource: "cad",
+      ledgerHeit: 0,
+      measuredHeightM: null,
+    });
+    expect(result?.facade).toEqual({ windowWidth: 1.4, windowHeight: 1.6, sillHeight: 0.8, windowSpacing: 2.2 });
+  });
+
+  it("passes facade params through for an ifc footprint", () => {
+    const result = buildEngineInput({
+      pk: "p1",
+      recipe: makeRecipe(),
+      footprintSource: "ifc",
+      ledgerHeit: 0,
+      measuredHeightM: null,
+    });
+    expect(result?.facade).toEqual({ windowWidth: 1.4, windowHeight: 1.6, sillHeight: 0.8, windowSpacing: 2.2 });
+  });
+
+  it("passes facade params through for a vworld building footprint", () => {
+    const result = buildEngineInput({
+      pk: "p1",
+      recipe: makeRecipe(),
+      footprintSource: "building",
+      ledgerHeit: 0,
+      measuredHeightM: null,
+    });
+    expect(result?.facade).toEqual({ windowWidth: 1.4, windowHeight: 1.6, sillHeight: 0.8, windowSpacing: 2.2 });
+  });
+
   it("omits ledger when ledgerHeit is 0 (AFF-6: 0 means unavailable)", () => {
     const result = buildEngineInput({
       pk: "p1",

@@ -6,6 +6,7 @@
 // on every engine invocation without paying for a round-trip through web-ifc.
 
 import type { FusedModel, GeneratedElement, ValidationCheck, ValidationReport } from "../types";
+import { computeWindowLayout } from "./generate-ifc";
 
 const RING_CLOSURE_EPSILON_M = 1e-6;
 
@@ -32,6 +33,28 @@ function isRingClosed(ring: [number, number][]): boolean {
 
 function slabElementIds(elements: GeneratedElement[]): number[] {
   return elements.filter((e) => e.kind === "slab").map((e) => e.expressId);
+}
+
+/**
+ * Recomputes the expected window count for one storey directly from the
+ * FusedModel, reusing generate-ifc.ts's pure computeWindowLayout() — the same
+ * function that actually places the windows — so this is a single source of
+ * truth rather than a second, potentially-drifting formula. Returns 0 when no
+ * facade was supplied (Slice-2: windows only exist when a facade is present).
+ */
+function expectedWindowsPerStorey(model: FusedModel): number {
+  if (!model.facade) return 0;
+  const facade = model.facade;
+  const outerRing = model.footprint[0] ?? [];
+  const edgeCount = Math.max(outerRing.length - 1, 0);
+  let total = 0;
+  for (let edgeIndex = 0; edgeIndex < edgeCount; edgeIndex += 1) {
+    const [x1, z1] = outerRing[edgeIndex];
+    const [x2, z2] = outerRing[edgeIndex + 1];
+    const edgeLength = Math.hypot(x2 - x1, z2 - z1) || 1e-6;
+    total += computeWindowLayout(edgeLength, facade).length;
+  }
+  return total;
 }
 
 function checkRingClosed(model: FusedModel, elements: GeneratedElement[]): ValidationCheck {
@@ -84,20 +107,64 @@ function checkStoreyMonotonic(model: FusedModel, elements: GeneratedElement[]): 
 function checkElementCount(model: FusedModel, elements: GeneratedElement[]): ValidationCheck {
   // NOT a byte round-trip through IFC — this verifies the flat element
   // accounting produced by generate-ifc.ts matches the construction formula
-  // (floors * edges-per-storey walls + floors slabs). A real write→read
-  // round-trip is exercised separately by
+  // (floors * edges-per-storey walls + floors slabs + floors * windows-per-
+  // storey). A real write→read round-trip is exercised separately by
   // generate-ifc-roundtrip.integration.test.ts.
   const outerRing = model.footprint[0] ?? [];
   const edgeCount = Math.max(outerRing.length - 1, 0);
-  const expectedCount = model.floors * edgeCount + model.floors;
+  const windowsPerStorey = expectedWindowsPerStorey(model);
+  const expectedCount = model.floors * edgeCount + model.floors + model.floors * windowsPerStorey;
   const actualCount = elements.length;
   const passed = actualCount === expectedCount;
   return {
     id: "element-count",
     passed,
     detail: passed
-      ? `element count ${actualCount} matches expected ${expectedCount} (floors=${model.floors}, edges=${edgeCount})`
-      : `element count ${actualCount} does not match expected ${expectedCount} (floors=${model.floors}, edges=${edgeCount})`,
+      ? `element count ${actualCount} matches expected ${expectedCount} (floors=${model.floors}, edges=${edgeCount}, windows/storey=${windowsPerStorey})`
+      : `element count ${actualCount} does not match expected ${expectedCount} (floors=${model.floors}, edges=${edgeCount}, windows/storey=${windowsPerStorey})`,
+  };
+}
+
+function checkOpeningsHosted(model: FusedModel, elements: GeneratedElement[]): ValidationCheck {
+  // Pure topology/count check — does NOT re-parse IFC bytes to confirm the
+  // real IfcRelVoidsElement/IfcRelFillsElement relationships exist; that's
+  // covered separately by generate-ifc-roundtrip.integration.test.ts's real
+  // IFCWINDOW/IFCOPENINGELEMENT count assertions. This check verifies the
+  // flat window accounting is internally consistent with the facade recipe:
+  // no facade => no windows, and otherwise every storey has exactly the
+  // window count the facade layout formula predicts for that storey's edges.
+  const windows = elements.filter((e) => e.kind === "window");
+
+  if (!model.facade) {
+    const passed = windows.length === 0;
+    return {
+      id: "openings-hosted",
+      passed,
+      detail: passed
+        ? "no facade supplied — 0 windows generated, as expected"
+        : `no facade supplied but ${windows.length} window(s) were generated`,
+      ...(passed ? {} : { elementIds: windows.map((w) => w.expressId) }),
+    };
+  }
+
+  const windowsPerStorey = expectedWindowsPerStorey(model);
+  const countsByStorey = new Map<number, number>();
+  for (const w of windows) {
+    countsByStorey.set(w.storey, (countsByStorey.get(w.storey) ?? 0) + 1);
+  }
+
+  let passed = windows.length === windowsPerStorey * model.floors;
+  for (let storey = 0; storey < model.floors; storey += 1) {
+    if ((countsByStorey.get(storey) ?? 0) !== windowsPerStorey) passed = false;
+  }
+
+  return {
+    id: "openings-hosted",
+    passed,
+    detail: passed
+      ? `${windows.length} window(s) hosted (${windowsPerStorey} per storey × ${model.floors} storeys), matching the facade layout`
+      : `window count ${windows.length} does not match expected ${windowsPerStorey * model.floors} (${windowsPerStorey} per storey × ${model.floors} storeys)`,
+    ...(passed ? {} : { elementIds: windows.map((w) => w.expressId) }),
   };
 }
 
@@ -112,6 +179,7 @@ export function validate(model: FusedModel, elements: GeneratedElement[]): Valid
     checkFootprintNondegenerate(model, elements),
     checkStoreyMonotonic(model, elements),
     checkElementCount(model, elements),
+    checkOpeningsHosted(model, elements),
   ];
   return { checks, passed: checks.every((c) => c.passed) };
 }
