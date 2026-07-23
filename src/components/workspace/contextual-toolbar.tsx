@@ -15,8 +15,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  ArrowUp, ArrowRight, ArrowDown, Maximize2,
+  ArrowUp, ArrowRight, ArrowDown, Maximize2, Sparkles,
 } from "lucide-react";
+import { useAppStore } from "@/store/app-store";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -227,7 +228,42 @@ function GlobalToolbarSection({
       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("iso")} title={lang === "ko" ? "등각 (기본 뷰)" : "Isometric (default view)"}>
         <Maximize2 className="h-3.5 w-3.5" />
       </Button>
+      <VerticalDivider />
+      <WebgpuToggle lang={lang} />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// WebgpuToggle — P2-21 opt-in high-fidelity renderer backend
+// ---------------------------------------------------------------------------
+
+function WebgpuToggle({ lang }: { lang: Lang }) {
+  const backend = useAppStore((s) => s.rendererBackend);
+  const setRendererBackend = useAppStore((s) => s.setRendererBackend);
+  const supported = typeof navigator !== "undefined" && "gpu" in navigator;
+  const active = backend === "webgpu" && supported;
+
+  const title = !supported
+    ? lang === "ko"
+      ? "이 브라우저는 WebGPU를 지원하지 않습니다"
+      : "This browser does not support WebGPU"
+    : lang === "ko"
+      ? "WebGPU 렌더러 (실험적) — 고품질 렌더링, 선택 외곽선은 WebGL 전용"
+      : "WebGPU renderer (experimental) — higher fidelity; selection outlines are WebGL-only";
+
+  return (
+    <Button
+      variant={active ? "default" : "ghost"}
+      size="icon"
+      className="h-7 w-7"
+      disabled={!supported}
+      aria-pressed={active}
+      onClick={() => setRendererBackend(active ? "webgl" : "webgpu")}
+      title={title}
+    >
+      <Sparkles className="h-3.5 w-3.5" />
+    </Button>
   );
 }
 

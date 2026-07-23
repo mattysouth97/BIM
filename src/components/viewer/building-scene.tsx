@@ -8,6 +8,7 @@ import type { BrTitleInfo, BrFloorInfo } from "@/lib/types";
 import { generateBuildingGeometry, toRecipe, type FloorGeometry } from "@/lib/building-geometry";
 import { inferMaterialProperties } from "@/lib/material-inference";
 import { saveModel, loadModel } from "@/lib/model-storage";
+import { useAppStore } from "@/store/app-store";
 import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useScenarioStore } from "@/store/scenario-store";
@@ -339,6 +340,15 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     [appliedMeasureIds]
   );
 
+  // P2-21 — opt-in WebGPU backend (higher fidelity). Only honored when the
+  // browser exposes navigator.gpu; otherwise the WebGL path is used
+  // regardless of the stored preference.
+  const rendererBackend = useAppStore((s) => s.rendererBackend);
+  const useWebgpu =
+    rendererBackend === "webgpu" &&
+    typeof navigator !== "undefined" &&
+    "gpu" in navigator;
+
   const { t } = useT();
 
   const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 1.8;
@@ -398,6 +408,8 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
       )}
       <ViewerErrorBoundary>
       <Canvas
+        // P2-21: remount the renderer when the backend preference flips
+        key={useWebgpu ? "webgpu" : "webgl"}
         camera={{
           position: [
             activeCameraDistance * 0.7,
@@ -408,10 +420,25 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           near: 0.1,
           far: activeCameraDistance * 10,
         }}
-        gl={{
-          antialias: true,
-          outputColorSpace: THREE.SRGBColorSpace,
-        }}
+        gl={
+          useWebgpu
+            ? // R3F v9 async gl factory (three's WebGPURenderer requires
+              // await init()). Dynamically imported so the WebGPU build is
+              // code-split away from the default WebGL path.
+              async (props) => {
+                const { WebGPURenderer } = await import("three/webgpu");
+                const renderer = new WebGPURenderer({
+                  ...(props as ConstructorParameters<typeof WebGPURenderer>[0]),
+                  antialias: true,
+                });
+                await renderer.init();
+                return renderer;
+              }
+            : {
+                antialias: true,
+                outputColorSpace: THREE.SRGBColorSpace,
+              }
+        }
         shadows={{ type: THREE.VSMShadowMap }}
         dpr={[1, 2]}
       >
@@ -431,8 +458,8 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             intensity={2.0}
             color="#ffffff"
             castShadow
-            shadow-mapSize-width={2048}
-            shadow-mapSize-height={2048}
+            shadow-mapSize-width={useWebgpu ? 4096 : 2048}
+            shadow-mapSize-height={useWebgpu ? 4096 : 2048}
             shadow-camera-far={shadowHalfExtent * 4}
             shadow-camera-left={-shadowHalfExtent}
             shadow-camera-right={shadowHalfExtent}
@@ -476,8 +503,11 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             distance={activeCameraDistance}
           />
 
-          {/* Outline + post-processing (OutlinePass-based, SAOPass scaffold kept inside) */}
-          <ScenePostProcessing />
+          {/* Outline + post-processing — WebGL only: OutlinePass composes via
+              the WebGL EffectComposer, which the WebGPU renderer cannot run.
+              Selection outlines are the known fidelity trade-off in WebGPU
+              mode until a TSL-based outline replaces it. */}
+          {!useWebgpu && <ScenePostProcessing />}
         </Suspense>
       </Canvas>
       </ViewerErrorBoundary>
