@@ -12,6 +12,14 @@ const PARCEL_DATASET = "LP_PA_CBND_BUBUN";
 /** Campus mode requests this many parcels; used to derive the truncated flag. */
 const CAMPUS_BBOX_SIZE = 20;
 
+/** Context mode requests this many neighboring buildings; used to derive truncated flag. */
+const CONTEXT_BBOX_SIZE = 30;
+
+/** Default search radius in meters for contextMode. Clamped to [50, 500]. */
+const CONTEXT_RADIUS_DEFAULT_M = 150;
+const CONTEXT_RADIUS_MIN_M = 50;
+const CONTEXT_RADIUS_MAX_M = 500;
+
 /** A finite-number coordinate parsed from a query string (rejects NaN/blank). */
 const finiteCoord = z
   .string()
@@ -23,6 +31,11 @@ const bboxSchema = z.object({
   minLat: finiteCoord,
   maxLng: finiteCoord,
   maxLat: finiteCoord,
+});
+
+const contextModeSchema = z.object({
+  lat: finiteCoord,
+  lng: finiteCoord,
 });
 
 /**
@@ -55,6 +68,51 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = request.nextUrl;
   const bboxMode = searchParams.get("bboxMode") === "true";
+  const contextMode = searchParams.get("contextMode") === "true";
+
+  // ── Context mode: return neighbor buildings around a point ──────────────────
+  if (contextMode) {
+    const parsed = contextModeSchema.safeParse({
+      lat: searchParams.get("lat") ?? "",
+      lng: searchParams.get("lng") ?? "",
+    });
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          neighbors: [],
+          truncated: false,
+          error: "contextMode requires finite lat and lng",
+          issues: parsed.error.issues.map((i) => ({ path: i.path, message: i.message })),
+        },
+        { status: 400 }
+      );
+    }
+
+    const { lat, lng } = parsed.data;
+
+    // Clamp radius to [50, 500] — never a validation error, silently clamped.
+    const rawRadius = Number(searchParams.get("radius") ?? CONTEXT_RADIUS_DEFAULT_M);
+    const radiusM = Number.isFinite(rawRadius)
+      ? Math.max(CONTEXT_RADIUS_MIN_M, Math.min(CONTEXT_RADIUS_MAX_M, rawRadius))
+      : CONTEXT_RADIUS_DEFAULT_M;
+
+    // Convert meters → approximate degrees.
+    const deltaLat = radiusM / 111320;
+    const deltaLng = radiusM / (111320 * Math.cos((lat * Math.PI) / 180));
+    const bbox = `BOX(${lng - deltaLng},${lat - deltaLat},${lng + deltaLng},${lat + deltaLat})`;
+
+    try {
+      const neighbors = await fetchNeighborBuildings(bbox, apiKey);
+      const truncated = neighbors.length >= CONTEXT_BBOX_SIZE;
+      return NextResponse.json({ neighbors, truncated, error: null });
+    } catch (err) {
+      // P2-26: upstream failure → 502 (AFF-2, no parcel fallback for contextMode).
+      return NextResponse.json(
+        { neighbors: [], truncated: false, error: err instanceof Error ? err.message : "VWorld API error" },
+        { status: 502 }
+      );
+    }
+  }
 
   // ── Campus bbox mode: return all footprints within a bounding box ───────────
   if (bboxMode) {
@@ -475,6 +533,68 @@ function parseBuildingAttributes(props: Record<string, unknown>): BuildingAttrib
     groundFloors: toPositiveNumber(props.gro_flo_co ?? props.grnd_flr),
     undergroundFloors: toPositiveNumber(props.und_flo_co ?? props.ugrnd_flr),
   };
+}
+
+// ---------------------------------------------------------------------------
+// P2-26 — context mode: neighbor buildings from a bbox query on LT_C_SPBD
+// ---------------------------------------------------------------------------
+
+/** One neighbor building returned by the contextMode response. */
+interface NeighborBuilding {
+  pnu: string;
+  polygon: number[][][];
+  height: number | null;
+  groundFloors: number | null;
+}
+
+/**
+ * Fetch all building outlines within a bounding box for context (neighbor) mode.
+ * Uses LT_C_SPBD (GIS건물통합정보) — same dataset as the single-building path.
+ * Upstream non-OK or throw → caller surfaces as 502 (no parcel fallback: AFF-2).
+ */
+async function fetchNeighborBuildings(bbox: string, apiKey: string): Promise<NeighborBuilding[]> {
+  const url = new URL(VWORLD_DATA_URL);
+  url.searchParams.set("service", "data");
+  url.searchParams.set("request", "GetFeature");
+  url.searchParams.set("data", BUILDING_DATASET);
+  url.searchParams.set("key", apiKey);
+  url.searchParams.set("domain", VWORLD_DOMAIN);
+  url.searchParams.set("crs", "EPSG:4326");
+  url.searchParams.set("geomFilter", bbox);
+  url.searchParams.set("size", String(CONTEXT_BBOX_SIZE));
+  url.searchParams.set("format", "json");
+
+  const res = await fetch(url.toString(), { signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error(`VWorld responded ${res.status}`);
+
+  return extractNeighborList(await res.json());
+}
+
+/**
+ * Extract neighbor building records from a VWorld GetFeature response.
+ * Returns pnu, outer-ring polygon, and parsed height/floor attributes.
+ * Degenerate rings (< 3 points) are skipped. Never fabricates attribute values (AFF-6).
+ */
+function extractNeighborList(data: unknown): NeighborBuilding[] {
+  try {
+    const candidates = extractFeatureCandidates(data);
+    const results: NeighborBuilding[] = [];
+
+    for (const candidate of candidates) {
+      const pnu = String(candidate.properties.pnu ?? "");
+      const attrs = parseBuildingAttributes(candidate.properties);
+      results.push({
+        pnu,
+        polygon: candidate.rings,
+        height: attrs.height,
+        groundFloors: attrs.groundFloors,
+      });
+    }
+
+    return results;
+  } catch {
+    return [];
+  }
 }
 
 /**

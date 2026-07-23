@@ -79,6 +79,7 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | [P2-23](./items/P2-23-webgpu-blackscreen-realistic-previews.md) | Fix WebGPU black screen + scenario clicks render the post-retrofit state | viewer | M | UC-04, 06–08 | ✅ |
 | [P2-24](./items/P2-24-cad-first-standalone-workflow.md) | CAD-first standalone workflow — begin with a CAD file, no ledger dependency | ux | M | UC-04, 05, 06, 11 | 🟣 |
 | [P2-25](./items/P2-25-vworld-building-layer-footprint.md) | VWorld building-layer footprint (LT_C_SPBD) — true outline + measured height fallback | geometry | M | UC-01, UC-05 | 🔎 |
+| [P2-26](./items/P2-26-neighbor-context-massing.md) | Neighbor context massing — surrounding buildings as gray extrusions for solar/shading context | geometry | M | UC-05 | 🟣 |
 | [P2-08](./items/P2-08-dead-code-doc-drift.md) | Delete dead code, fix doc drift, remove stray artifacts | infra | M | UC-05 | ✅ |
 | [P2-09](./items/P2-09-e2e-rewrite.md) | Rewrite e2e suite around the real user journey with mocked APIs | infra | M | UC-01, 03, 05, 08 | ✅ |
 | [P2-10](./items/P2-10-financial-model-refinements.md) | Financial model refinements — loan-term buy-down, rate honesty, solar fixes, sourced costs | retrofit | L | UC-06, 07, 08 | ✅ |
@@ -115,6 +116,7 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | 2026-07-21 | P1-01 | Heating-plant conflict groups enforced via exact DP branching; portfolio savings damped (sequential residual in hook, documented pairwise fallback in report); GR fraction clamped | claude-fable-5-ultrawork |
 | 2026-07-21 | P1-02 | Measure lifetimes (ASHRAE-anchored) truncate cash flows past useful life; 3 new generator test suites pin every savings formula + branch boundary | claude-fable-5-ultrawork |
 | 2026-07-21 | P1-03 | Heating fuel (resolveHeatingFuel) threaded into envelope/HVAC generators — district-heat priced at 90 KRW/kWh + 0.32 tCO2/MWh; heat-pump suppressed on electric heat; legacy gas default preserved | claude-fable-5-ultrawork |
+| 2026-07-23 | P2-26 | Neighbor context massing: contextMode on /api/vworld/footprint returns up to 30 LT_C_SPBD neighbor buildings; client pure module (resolveNeighborHeight, toLocalNeighbors with ray-cast subject exclusion); ContextMassing R3F component mounts in single-building path | claude-fable-5-session |
 | 2026-07-21 | P1-06 | API hardening: filename allowlist + execFile timeout (cad), 400/502/503 contract + truncated flag (vworld), createDataGoKrProxy factory (5 routes → 4 lines), batch cap 10 + Promise.all + failedCodes (title), tab/doc fix (consumption), zod validation | claude-opus-4-8-ultrawork |
 | 2026-07-21 | P1-07 | a11y + chart repair: Tab un-hijacked (→backquote), keyboard-operable result rows, viewport-clamped floating panel, var(--chart-N) bars, sr-only upload input, clamped CAPEX input, anchored Moon icon | claude-opus-4-8-ultrawork |
 | 2026-07-21 | P2-01 | Infiltration/ventilation heat-loss term (0.34·ACH·V·ΔT; ach50/20 leakage + mechanical airflow; HRV cuts mechanical share); heating demand now airtightness/HRV-sensitive | claude-opus-4-8-ultrawork |

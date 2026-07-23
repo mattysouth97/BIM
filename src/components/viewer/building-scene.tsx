@@ -18,6 +18,7 @@ import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
 import { classifyElement, ifcDisplayLine } from "@/lib/bim/ifc-classification";
 import { SolarPanels } from "./solar-panels";
 import { RetrofitHvacUnits } from "./retrofit-hvac-units";
+import { ContextMassing } from "./context-massing";
 import { applyOverrides } from "@/lib/procedural/recipe";
 import { Loader2 } from "lucide-react";
 import { createSceneProjection } from "@/lib/gis/gis-transform";
@@ -217,6 +218,23 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
   // If absent (e.g. component used standalone), footprintPolygon stays undefined
   // and ProceduralBuildingModel renders a rectangular box automatically.
   const footprintPolygon = footprintDataProp?.polygon ?? undefined;
+
+  // P2-26: WGS84 centroid of the subject outer ring — used as the context-massing query center.
+  const contextCenter = useMemo<[number, number] | null>(() => {
+    if (!footprintPolygon || footprintPolygon.length < 1 || footprintPolygon[0].length < 3) {
+      return null;
+    }
+    const outer = footprintPolygon[0];
+    const lng = outer.reduce((s, p) => s + p[0], 0) / outer.length;
+    const lat = outer.reduce((s, p) => s + p[1], 0) / outer.length;
+    return [lng, lat];
+  }, [footprintPolygon]);
+
+  // P2-26: subject outer ring for neighbor exclusion (WGS84 [lng, lat] pairs).
+  const subjectOuterRing = useMemo<[number, number][] | null>(() => {
+    if (!footprintPolygon || footprintPolygon.length < 1) return null;
+    return footprintPolygon[0] as [number, number][];
+  }, [footprintPolygon]);
 
   // P2-25: VWorld measured height fills the gap when the ledger heit is 0.
   // Chain (named in building-geometry.ts): ledger heit → measured → era estimate.
@@ -513,6 +531,13 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
                 <BuildingLayers buildingPk={buildingPk} />
                 <StructuralTooltip />
                 <EquipmentClickHandler />
+                {/* P2-26: neighbor context massing — only when footprint polygon is available */}
+                {footprintPolygon && (
+                  <ContextMassing
+                    centerLngLat={contextCenter}
+                    subjectOuterRing={subjectOuterRing}
+                  />
+                )}
               </>
             )
           )}

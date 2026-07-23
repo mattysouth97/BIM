@@ -146,6 +146,13 @@
 - **연속지적도 필지 (`LP_PA_CBND_BUBUN`)** — VWorld cadastral parcel (lot boundary, NOT
   the building outline). The named fallback when `LT_C_SPBD` has no usable feature; the
   footprint route reports which layer won via its `source` field (`"building" | "parcel"`).
+- **context massing (컨텍스트 매싱)** — P2-26: surrounding neighbor building volumes rendered
+  as gray extrusions (`color: '#cfcfcf'`) in the single-building twin for solar/shading context.
+  Fetched via `GET /api/vworld/footprint?contextMode=true&lat=…&lng=…` (radius 50–500m, default
+  150m, size=30). Height chain: measured `buld_hg` → `gro_flo_co × 3.3m` → 6m default
+  (`ESTIMATED_FLOOR_HEIGHT_M`, `DEFAULT_NEIGHBOR_HEIGHT_M` in `src/lib/context-massing.ts`).
+  The subject building itself is excluded from neighbors via ray-cast point-in-polygon
+  (`toLocalNeighbors`). `truncated=true` when ≥30 neighbors returned (more may exist).
 
 ## Governance
 
