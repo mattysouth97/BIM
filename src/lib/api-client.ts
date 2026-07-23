@@ -29,9 +29,6 @@ async function apiFetch<T>(
   apiKeyOverride?: string,
 ): Promise<ApiListResponse<T>> {
   const apiKey = apiKeyOverride ?? useAppStore.getState().apiKey;
-  if (!apiKey) {
-    throw new Error("API key is not set");
-  }
 
   const url = new URL(path, window.location.origin);
   for (const [key, value] of Object.entries(params as Record<string, unknown>)) {
@@ -40,9 +37,15 @@ async function apiFetch<T>(
     }
   }
 
-  const res = await fetch(url.toString(), {
-    headers: { "x-api-key": apiKey },
-  });
+  // When the visitor supplied their own key, send it (charged to their quota).
+  // When they didn't, send NO x-api-key header: the same-origin proxy route
+  // falls back to the embedded shared demo key (rate-limited per IP, see
+  // api-shared-key.ts), so the ledger works for any visitor out of the box.
+  // The shared secret never leaves the server.
+  const headers: Record<string, string> = {};
+  if (apiKey) headers["x-api-key"] = apiKey;
+
+  const res = await fetch(url.toString(), { headers });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

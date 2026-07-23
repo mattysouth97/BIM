@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, lazy, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, AlertTriangle, MapPin, Search, Download, LayoutGrid, X, FileBox, ArrowRight } from "lucide-react";
+import { Building2, KeyRound, MapPin, Search, Download, LayoutGrid, X, FileBox, ArrowRight } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -271,18 +271,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* API key banner — only after hydration to avoid SSR mismatch */}
+      {/* Shared demo-key notice — search works without a key (the server uses an
+          embedded, rate-limited shared key). This only invites heavy users to
+          add their own key. Rendered after hydration to avoid SSR mismatch. */}
       {hydrated && !apiKey && (
-        <div className="mb-8 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/50">
-          <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+        <div className="mb-8 flex items-center gap-3 rounded-lg border bg-muted/40 p-4">
+          <KeyRound className="h-5 w-5 shrink-0 text-muted-foreground" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-              {t("API 키가 설정되지 않았습니다.", "No API key configured.")}
+            <p className="text-sm font-medium">
+              {t("공용 데모 키로 조회 중입니다.", "Browsing with the shared demo key.")}
             </p>
-            <p className="text-sm text-amber-700 dark:text-amber-300">
+            <p className="text-sm text-muted-foreground">
               {t(
-                "오른쪽 상단의 열쇠 아이콘을 클릭하여 API 키를 설정하세요.",
-                "Click the key icon in the top-right corner to set your API key.",
+                "별도 설정 없이 건축물대장을 조회할 수 있습니다. 사용량이 많다면 오른쪽 상단의 열쇠 아이콘에서 본인 API 키를 등록하세요.",
+                "You can query the building ledger with no setup. For heavier use, add your own API key via the key icon in the top-right.",
               )}
             </p>
           </div>
