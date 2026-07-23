@@ -76,12 +76,17 @@ provenance from those real signals and threads it to all badge call sites.
 - **Tests written first (RED → GREEN)**:
   - `src/lib/fidelity/__tests__/input-provenance.test.ts` — 13 pure-function
     truth-table cases (≥6 required by brief).
-  - `src/lib/fidelity/__tests__/input-provenance-callsite.test.tsx` — 3 RTL
-    tests showing badge shows `'measured'` / `'estimated'` from derived
-    provenance (including "source=building → footprint measured" and
-    "VWorld-height-only → heights measured" cases).
+  - `src/components/workspace/__tests__/properties-panel-provenance.test.tsx`
+    — 4 RTL tests mounting the REAL call site (`PropertiesPanel` with
+    `footprintSource`/`ledgerHeit`/`measuredHeightM` props) asserting the badge
+    tooltip shows the derived provenance (source=building → footprint measured;
+    parcel → all estimated; VWorld-height-only → heights measured; default →
+    all estimated). Verified to FAIL when the panel's
+    `provenance={inputProvenance}` threading is removed (review fix: the
+    initial call-site test rendered `FidelityBadge` directly with a literal
+    and could not catch broken threading — replaced and relocated here).
 - **Gates (all green)**:
-  - Targeted: 24/24 tests across 3 files.
+  - Targeted: 25/25 tests across 3 files.
   - Full suite: 1387/1387 tests (baseline 1343 + 44 new from concurrent items;
     P2-27 adds 16 tests).
   - `pnpm lint`: 0 errors (11 pre-existing react-hooks warnings in untouched
