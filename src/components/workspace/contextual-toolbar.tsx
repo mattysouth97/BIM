@@ -15,9 +15,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  ArrowUp, ArrowRight, ArrowDown, Maximize2, Sparkles,
+  ArrowUp, ArrowRight, ArrowDown, Maximize2, Sparkles, Landmark,
 } from "lucide-react";
 import { useAppStore } from "@/store/app-store";
+import { useLayerStore } from "@/store/layer-store";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -229,8 +230,35 @@ function GlobalToolbarSection({
         <Maximize2 className="h-3.5 w-3.5" />
       </Button>
       <VerticalDivider />
+      <StructuralViewToggle lang={lang} />
       <WebgpuToggle lang={lang} />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// StructuralViewToggle — P2-22 structural isolation (load-bearing solid,
+// non-structural context ghosted; Revit structural-discipline analog)
+// ---------------------------------------------------------------------------
+
+function StructuralViewToggle({ lang }: { lang: Lang }) {
+  const active = useLayerStore((s) => s.structuralIsolation);
+  const toggle = useLayerStore((s) => s.toggleStructuralIsolation);
+  return (
+    <Button
+      variant={active ? "default" : "ghost"}
+      size="icon"
+      className="h-7 w-7"
+      aria-pressed={active}
+      onClick={toggle}
+      title={
+        lang === "ko"
+          ? "구조 보기 — 내력 부재만 표시, 나머지는 반투명"
+          : "Structural view — load-bearing solid, context ghosted"
+      }
+    >
+      <Landmark className="h-3.5 w-3.5" />
+    </Button>
   );
 }
 

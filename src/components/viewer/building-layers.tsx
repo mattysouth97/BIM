@@ -12,6 +12,7 @@ import {
   buildEnergyHeatmap,
   disposeHeatmapGroup,
 } from "@/lib/layers/energy-heatmap-builder";
+import { StructuralAnalysisLayer } from "@/lib/layers/layer-15-structural";
 import { CoolingLayer } from "@/lib/layers/layer-3-cooling";
 import { HeatingLayer } from "@/lib/layers/layer-4-heating";
 import { VentilationLayer } from "@/lib/layers/layer-5-ventilation";
@@ -190,6 +191,31 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     );
     assignToSubGroup(mepGroup, lightingOutput.name, lightingOutput);
   }, [effectiveRecipe, equipmentParams, density]);
+
+  // P2-22 — KBC 2016 structural analysis overlay (stress-colored columns,
+  // animated load-path arrows, foundation markers). The layer class existed
+  // since Phase 22 but was never instantiated — StructuralTooltip searched
+  // for a group no code created. Mounted under the "structure" layer group
+  // so the existing structure toggle controls it alongside slabs/columns;
+  // updateAnimations() picks up its uTime arrow shaders automatically.
+  const structuralLayerRef = useRef<StructuralAnalysisLayer | null>(null);
+  useEffect(() => {
+    const manager = managerRef.current;
+    if (!manager || !effectiveRecipe) return;
+
+    const structureGroup = manager.getGroup("structure");
+    structuralLayerRef.current?.dispose();
+    const layer = new StructuralAnalysisLayer();
+    const group = layer.generate(effectiveRecipe);
+    structuralLayerRef.current = layer;
+    structureGroup.add(group);
+
+    return () => {
+      structureGroup.remove(group);
+      layer.dispose();
+      structuralLayerRef.current = null;
+    };
+  }, [effectiveRecipe]);
 
   // P2-20 — applied HVAC/lighting measures recolor their MEP sub-groups to
   // "new equipment" green. Materials are cloned per-mesh (they are shared

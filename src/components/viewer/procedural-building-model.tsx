@@ -19,6 +19,7 @@ import {
   UPGRADE_GLASS_OPACITY,
   type RetrofitVisualState,
 } from "@/lib/retrofit/measure-visuals";
+import { classifyElement } from "@/lib/bim/ifc-classification";
 
 interface ProceduralBuildingModelProps {
   geometry: BuildingGeometry;
@@ -33,7 +34,18 @@ interface ProceduralBuildingModelProps {
    * transforms the model. Omit (campus mode) for baseline appearance.
    */
   retrofitVisuals?: RetrofitVisualState;
+  /**
+   * P2-22 — structural isolation view. Non-load-bearing elements (per IFC
+   * classification: glazing, mullions, infill walls) ghost to transparent
+   * gray while load-bearing structure stays solid — the Revit
+   * structural-discipline filter rendered in the Solibri/xeokit x-ray idiom.
+   */
+  structuralIsolation?: boolean;
 }
+
+/** Ghost appearance for non-structural context in isolation view. */
+const GHOST_COLOR = "#9ca3af";
+const GHOST_OPACITY = 0.12;
 
 /** True when obj or any ancestor group carries the given name. */
 function hasAncestorNamed(obj: THREE.Object3D, name: string): boolean {
@@ -72,7 +84,7 @@ function collectInformationalMeshes(group: THREE.Group): THREE.Mesh[] {
   return result;
 }
 
-export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelect, hideGroundPlane, retrofitVisuals }: ProceduralBuildingModelProps) {
+export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelect, hideGroundPlane, retrofitVisuals, structuralIsolation }: ProceduralBuildingModelProps) {
   const builderRef = useRef<ProceduralBuilding | null>(null);
   const groupRef = useRef<THREE.Group | null>(null);
   const selectedRef = useRef<number | null>(null);
@@ -155,7 +167,8 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
 
     restoreAll();
     const v = retrofitVisuals ?? NO_RETROFIT_VISUALS;
-    if (!hasAnyVisual(v)) return;
+    const isolate = structuralIsolation === true;
+    if (!hasAnyVisual(v) && !isolate) return;
 
     const tint = (mesh: THREE.Mesh, apply: (m: THREE.MeshStandardMaterial) => void) => {
       if (Array.isArray(mesh.material)) return;
@@ -172,9 +185,31 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       m.emissiveIntensity = 0.07;
     };
 
+    const ghost = (mesh: THREE.Mesh) =>
+      tint(mesh, (m) => {
+        m.color.set(GHOST_COLOR);
+        m.emissive.set("#000000");
+        m.emissiveIntensity = 0;
+        m.transparent = true;
+        m.opacity = GHOST_OPACITY;
+        m.depthWrite = false;
+      });
+
     group.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return;
       const type = obj.userData?.type as string | undefined;
+
+      // P2-22 — isolation ghosts every non-load-bearing element first
+      // (Revit filters on LoadBearing; masonry walls stay solid because the
+      // IFC classification marks them bearing). Ghost wins over retrofit
+      // tints for these meshes; load-bearing structure below keeps them.
+      if (isolate && type) {
+        const cls = classifyElement(type, { strctCd: recipe.strctCd, curtainWall: !!recipe.curtainWall?.enabled });
+        if (cls && !cls.loadBearing) {
+          ghost(obj);
+          return;
+        }
+      }
 
       if (v.windowsUpgraded && type === "glass") {
         tint(obj, (m) => {
@@ -198,7 +233,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
     });
 
     return restoreAll;
-  }, [group, retrofitVisuals]);
+  }, [group, retrofitVisuals, structuralIsolation, recipe]);
 
   // Floor selection via raycaster on slabs — handles both the rectangular
   // InstancedMesh path (instanceId) and the polygon Group path (plain meshes

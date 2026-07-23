@@ -10,6 +10,14 @@ interface LayerState {
   /** Visibility toggle per layer — all layers visible by default */
   visibility: Record<LayerId, boolean>;
 
+  /**
+   * P2-22 — structural isolation view (Revit structural-discipline analog):
+   * load-bearing elements render solid, everything else ghosts to
+   * transparent gray (Solibri/xeokit x-ray convention). Session-only.
+   */
+  structuralIsolation: boolean;
+  toggleStructuralIsolation: () => void;
+
   /** Whether a layer has been generated (lazy generation tracking) */
   generated: Record<LayerId, boolean>;
 
@@ -60,6 +68,10 @@ export const useLayerStore = create<LayerState>()(
       generated: { ...defaultGenerated },
       density: { ...defaultDensity },
 
+      structuralIsolation: false,
+      toggleStructuralIsolation: () =>
+        set((state) => ({ structuralIsolation: !state.structuralIsolation })),
+
       toggleLayer: (id) =>
         set((state) => ({
           visibility: { ...state.visibility, [id]: !state.visibility[id] },
@@ -86,6 +98,7 @@ export const useLayerStore = create<LayerState>()(
           generated: { ...defaultGenerated },
           density: { ...defaultDensity },
           mepSubVisibility: { ...defaultMepSubVisibility },
+          structuralIsolation: false,
         }),
 
       mepSubVisibility: { ...defaultMepSubVisibility },

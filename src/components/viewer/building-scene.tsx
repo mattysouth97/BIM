@@ -13,7 +13,9 @@ import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useScenarioStore } from "@/store/scenario-store";
 import { useWorkspaceStore } from "@/store/workspace-store";
+import { useLayerStore } from "@/store/layer-store";
 import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
+import { classifyElement, ifcDisplayLine } from "@/lib/bim/ifc-classification";
 import { SolarPanels } from "./solar-panels";
 import { applyOverrides } from "@/lib/procedural/recipe";
 import { Loader2 } from "lucide-react";
@@ -340,6 +342,9 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     [appliedMeasureIds]
   );
 
+  // P2-22 — structural isolation view (load-bearing solid, rest ghosted).
+  const structuralIsolation = useLayerStore((s) => s.structuralIsolation);
+
   // P2-21 — opt-in WebGPU backend (higher fidelity). Only honored when the
   // browser exposes navigator.gpu; otherwise the WebGL path is used
   // regardless of the stored preference.
@@ -349,7 +354,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     typeof navigator !== "undefined" &&
     "gpu" in navigator;
 
-  const { t } = useT();
+  const { t, lang } = useT();
 
   const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 1.8;
 
@@ -479,7 +484,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           ) : (
             modelSource === "parametric" && (
               <>
-                <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} retrofitVisuals={retrofitVisuals} />
+                <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} retrofitVisuals={retrofitVisuals} structuralIsolation={structuralIsolation} />
                 {retrofitVisuals.solarInstalled && <SolarPanels recipe={recipe} />}
                 <BuildingLayers buildingPk={buildingPk} />
                 <StructuralTooltip />
@@ -528,6 +533,10 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             <span className="font-medium text-foreground">{selectedFloor.use || "-"}</span>
             <span>{t("구조", "Structure")}</span>
             <span className="font-medium text-foreground">{selectedFloor.structure || "-"}</span>
+            <span>IFC</span>
+            <span className="font-medium text-foreground">
+              {ifcDisplayLine(classifyElement("slab", { strctCd: recipe.strctCd })!, lang)}
+            </span>
           </div>
         </div>
       )}

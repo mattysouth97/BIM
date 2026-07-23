@@ -10,6 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Copy, FileJson, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import { useRecipeStore } from "@/store/recipe-store";
+import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import {
+  buildingInfoContainers,
+  CONTAINER_STATE_LABELS,
+} from "@/lib/bim/iso19650-status";
 
 interface BimSummaryCardProps {
   title: BrTitleInfo | null;
@@ -116,6 +122,7 @@ export function BimSummaryCard({
             {t("BIM 요약 데이터", "BIM Summary Data")}
           </h3>
           <Badge variant="outline">IFC-Ready</Badge>
+          <InfoContainerChips />
         </div>
         <Button onClick={handleCopy} variant="outline" size="sm" className="gap-2">
           <Copy className="size-4" />
@@ -234,5 +241,47 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium">{value}</span>
     </div>
+  );
+}
+
+/**
+ * P2-22 — ISO 19650-2-ALIGNED information-container status chips for the
+ * twin's federated data sources (ledger / CAD / estimated). Suitability
+ * codes follow the BS EN ISO 19650-2 UK National Annex vocabulary; this is
+ * an alignment for honest provenance display, not a compliance claim.
+ */
+function InfoContainerChips() {
+  const { t, lang } = useT();
+  const buildingPk = useActiveBuildingPk();
+  const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
+  const containers = buildingInfoContainers({
+    hasCadFootprint: Array.isArray(overrides?.footprintPolygon),
+  });
+
+  const stateStyle: Record<string, string> = {
+    published: "border-emerald-500/40 text-emerald-700 dark:text-emerald-400",
+    shared: "border-sky-500/40 text-sky-700 dark:text-sky-400",
+    wip: "border-amber-500/40 text-amber-700 dark:text-amber-400",
+  };
+
+  return (
+    <span
+      className="flex items-center gap-1"
+      title={t(
+        "ISO 19650-2 정보 컨테이너 상태 체계에 맞춘 데이터 출처 표시 (준수 인증 아님)",
+        "Data-source status aligned with the ISO 19650-2 information-container scheme (not a compliance claim)",
+      )}
+    >
+      {containers.map((c) => (
+        <Badge
+          key={c.key}
+          variant="outline"
+          className={`text-[10px] ${stateStyle[c.state]}`}
+          title={`${lang === "ko" ? c.noteKo : c.noteEn} — ${CONTAINER_STATE_LABELS[c.state][lang]}`}
+        >
+          {lang === "ko" ? c.labelKo : c.labelEn} · {c.suitability}
+        </Badge>
+      ))}
+    </span>
   );
 }
