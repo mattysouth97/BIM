@@ -18,8 +18,15 @@ import {
   buildScenarioPortfolioSummary,
   deriveFidelityLevel,
 } from "@/lib/report/scenario-summary";
+import { useEngineResult } from "@/hooks/use-engine-result";
+import {
+  buildBimFidelitySummary,
+  buildBimFidelitySections,
+} from "@/lib/report/bim-fidelity-summary";
+import type { FootprintSource } from "@/lib/fidelity/input-provenance";
 import { EnergyAuditPreview } from "@/components/report/energy-audit-preview";
 import { CompliancePreview } from "@/components/report/compliance-preview";
+import { BimFidelitySection } from "@/components/report/bim-fidelity-section";
 import { assembleEnergyAuditReport, assembleComplianceReport } from "@/lib/report/report-engine";
 import { generateBuildingCSV } from "@/lib/export/csv-export";
 import { generateTwinJSON } from "@/lib/export/json-export";
@@ -86,7 +93,20 @@ function ReportSkeleton() {
 // Main component
 // ---------------------------------------------------------------------------
 
-export function ReportStage() {
+interface ReportStageProps {
+  /** Footprint source threaded from the page level, same as PropertiesPanel — used to gate the Agentic BIM Engine. */
+  footprintSource?: FootprintSource;
+  /** Ledger 'heit' field (meters). AFF-6: 0 means unavailable. */
+  ledgerHeit?: number;
+  /** VWorld measured building height (meters), or null when absent. */
+  measuredHeightM?: number | null;
+}
+
+export function ReportStage({
+  footprintSource,
+  ledgerHeit,
+  measuredHeightM,
+}: ReportStageProps = {}) {
   const { t } = useT();
   const [activeTab, setActiveTab] = useState<ReportTab>("energy-audit");
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -135,6 +155,29 @@ export function ReportStage() {
   // P1-08 (a): single canonical merge — carries footprintPolygon overrides
   // into the report/export payloads.
   const effectiveRecipe = useEffectiveRecipe(buildingPk);
+
+  // ── Agentic BIM Engine (additive) ────────────────────────────────────────
+  // Same hook/args shape as PropertiesPanel: the pure (counting-session)
+  // `result` drives the "BIM Fidelity / IFC" report section below, and
+  // `exportIfc` is reused verbatim for the report stage's Export IFC action.
+  // Must run unconditionally (before the early-return below) — hooks can't
+  // be called conditionally.
+  const engine = useEngineResult({
+    buildingPk,
+    recipe: effectiveRecipe,
+    footprintSource: footprintSource ?? null,
+    ledgerHeit: ledgerHeit ?? 0,
+    measuredHeightM: measuredHeightM ?? null,
+  });
+
+  const bimFidelitySummary = useMemo(
+    () => buildBimFidelitySummary(engine.result),
+    [engine.result]
+  );
+  const bimFidelitySections = useMemo(
+    () => buildBimFidelitySections(bimFidelitySummary),
+    [bimFidelitySummary]
+  );
 
   // ── Calibration (optional) ───────────────────────────────────────────────
   const calibration = useMemo(() => {
@@ -369,7 +412,8 @@ export function ReportStage() {
               discountedPayback: portfolio.discountedPayback,
               effectiveCapex: portfolio.effectiveCapex,
             }
-          : undefined
+          : undefined,
+        bimFidelitySections
       );
       const blob = await pdf(<ReportPDF data={reportData} />).toBlob();
       downloadBlob(blob, `energy-audit-${buildingPk.slice(0, 8)}.pdf`);
@@ -390,7 +434,8 @@ export function ReportStage() {
       const reportData = assembleComplianceReport(
         { name: buildingName, address: buildingAddress, fidelityLevel },
         certification,
-        efficiencyRating
+        efficiencyRating,
+        bimFidelitySections
       );
       const blob = await pdf(<ReportPDF data={reportData} />).toBlob();
       downloadBlob(blob, `compliance-${buildingPk.slice(0, 8)}.pdf`);
@@ -428,6 +473,12 @@ export function ReportStage() {
         airtightness: materials.envelope.airtightness.ach50,
         fidelityLevel,
         dataQualityScore: 60,
+        ...(bimFidelitySummary
+          ? {
+              bimOverallFidelity: bimFidelitySummary.overallFidelity,
+              bimHitlFlagCount: bimFidelitySummary.hitlFlagCount,
+            }
+          : {}),
         ...(portfolio
           ? {
               retrofitNpvKrw: portfolio.npv,
@@ -459,6 +510,9 @@ export function ReportStage() {
       benchmarkResult: benchmark ?? undefined,
       // Explicit null = no scenario published (never a silent omission).
       retrofitFinancials: portfolio,
+      // Explicit null = engine unavailable for this building (no real
+      // footprint, AFF-6) — never a silent omission.
+      bimFidelity: bimFidelitySummary,
     });
     const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
     downloadBlob(blob, `twin-export-${buildingPk.slice(0, 8)}.json`);
@@ -562,6 +616,16 @@ export function ReportStage() {
 
       {/* ── Scrollable report preview area ─────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
+        {/* BIM Fidelity / IFC — additive, visible regardless of active tab */}
+        <div className="p-4 pb-0">
+          <BimFidelitySection
+            sections={bimFidelitySections}
+            onExportIfc={engine.exportIfc}
+            exporting={engine.exporting}
+            available={engine.available}
+          />
+        </div>
+
         {activeTab === "energy-audit" && energyAuditInput && (
           <div className="p-4">
             <EnergyAuditPreview input={energyAuditInput} />

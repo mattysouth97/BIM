@@ -19,7 +19,9 @@ function fidelityBadgeVariant(level: 1 | 2 | 3): "outline" | "secondary" | "defa
   return "default";
 }
 
-function SectionContent({ content }: { content: ReportSectionContent }) {
+// Exported so other report-preview surfaces (e.g. bim-fidelity-section.tsx)
+// can render the same generic ReportSectionContent without duplicating markup.
+export function SectionContent({ content }: { content: ReportSectionContent }) {
   if (content.type === "text") {
     return <p className="text-sm text-muted-foreground">{content.text}</p>;
   }

@@ -29,6 +29,11 @@ export interface BuildingExportData {
   retrofitEffectiveCapexKrw?: number;
   retrofitDiscountedPaybackYears?: number | null;
   retrofitAnnualSavingKwh?: number;
+  // Agentic BIM Engine — overall + HITL fidelity from bim-fidelity-summary.ts
+  // (optional; absent ⇒ empty cells, e.g. no real footprint to run the
+  // engine against).
+  bimOverallFidelity?: number;
+  bimHitlFlagCount?: number;
 }
 
 const HEADERS: (keyof BuildingExportData)[] = [
@@ -53,6 +58,8 @@ const HEADERS: (keyof BuildingExportData)[] = [
   "retrofitEffectiveCapexKrw",
   "retrofitDiscountedPaybackYears",
   "retrofitAnnualSavingKwh",
+  "bimOverallFidelity",
+  "bimHitlFlagCount",
 ];
 
 /**

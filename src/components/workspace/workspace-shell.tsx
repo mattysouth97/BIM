@@ -60,7 +60,13 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
         {/* Viewport content — upload stage, params stage (P2-24, cad-first
             only — ledger mode never reaches this stage id), report stage, or
             3D canvas */}
-        {stage === "report" ? <ReportStage />
+        {stage === "report" ? (
+           <ReportStage
+             footprintSource={footprintSource}
+             ledgerHeit={ledgerHeit}
+             measuredHeightM={measuredHeightM}
+           />
+         )
          : stage === "upload" ? <UploadStage />
          : stage === "params" ? <ParamsStage />
          : children}

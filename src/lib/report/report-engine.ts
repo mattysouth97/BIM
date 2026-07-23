@@ -63,13 +63,18 @@ export interface EnergyAuditRetrofitSummary {
  * @param retrofitSummary Optional scenario portfolio financials (P0-02). When
  *                        absent, the report carries an explicit no-analysis
  *                        section — never fabricated numbers.
+ * @param extraSections   Additional pre-built sections appended at the end
+ *                        (e.g. the "BIM Fidelity / IFC" section from
+ *                        bim-fidelity-summary.ts). Additive — defaults to
+ *                        none, so existing call sites are unaffected.
  */
 export function assembleEnergyAuditReport(
   building: { name: string; address: string; fidelityLevel: 1 | 2 | 3 },
   metrics: EnergyMetrics,
   calibration?: CalibrationResult,
   benchmark?: BenchmarkResult,
-  retrofitSummary?: EnergyAuditRetrofitSummary
+  retrofitSummary?: EnergyAuditRetrofitSummary,
+  extraSections: ReportSection[] = []
 ): ReportData {
   const sections: ReportSection[] = [];
 
@@ -211,6 +216,8 @@ export function assembleEnergyAuditReport(
     });
   }
 
+  sections.push(...extraSections);
+
   return {
     type: 'energy-audit',
     buildingName: building.name,
@@ -232,11 +239,14 @@ export function assembleEnergyAuditReport(
  * @param building          Basic building identifiers
  * @param certification     G-SEED certification pre-assessment result
  * @param efficiencyRating  Korean energy efficiency rating result
+ * @param extraSections     Additional pre-built sections appended at the end
+ *                          (e.g. the "BIM Fidelity / IFC" section). Additive.
  */
 export function assembleComplianceReport(
   building: { name: string; address: string; fidelityLevel: 1 | 2 | 3 },
   certification: CertificationResult,
-  efficiencyRating: EfficiencyRatingResult
+  efficiencyRating: EfficiencyRatingResult,
+  extraSections: ReportSection[] = []
 ): ReportData {
   const sections: ReportSection[] = [];
 
@@ -292,6 +302,8 @@ export function assembleComplianceReport(
       ],
     },
   });
+
+  sections.push(...extraSections);
 
   return {
     type: 'compliance',
