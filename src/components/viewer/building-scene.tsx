@@ -162,6 +162,14 @@ function CampusSceneContent({ campusData, onBuildingSelect, activeBuildingPk }: 
 
 interface FootprintResult {
   polygon: number[][][] | null;
+  /** Which VWorld layer produced the polygon (P2-25): building outline or parcel fallback. */
+  source?: "building" | "parcel" | null;
+  /** Measured attributes from GIS건물통합정보 — null per field when unavailable. */
+  attributes?: {
+    height: number | null;
+    groundFloors: number | null;
+    undergroundFloors: number | null;
+  } | null;
   error: string | null;
 }
 
@@ -210,8 +218,12 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
   // and ProceduralBuildingModel renders a rectangular box automatically.
   const footprintPolygon = footprintDataProp?.polygon ?? undefined;
 
+  // P2-25: VWorld measured height fills the gap when the ledger heit is 0.
+  // Chain (named in building-geometry.ts): ledger heit → measured → era estimate.
+  const measuredHeightM = footprintDataProp?.attributes?.height ?? undefined;
+
   const geometry = useMemo(() => {
-    const geo = generateBuildingGeometry(title, floors);
+    const geo = generateBuildingGeometry(title, floors, { measuredHeightM });
 
     if (footprintPolygon && footprintPolygon.length >= 1 && footprintPolygon[0].length >= 3) {
       try {
@@ -245,7 +257,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     }
 
     return geo;
-  }, [title, floors, footprintPolygon]);
+  }, [title, floors, footprintPolygon, measuredHeightM]);
 
   // ── Portfolio-feature-vector geometry shape (area / perimeter / aspect)
   // Used by the TwinStageOverlay to derive the 20-field feature vector.

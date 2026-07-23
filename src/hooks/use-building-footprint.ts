@@ -5,6 +5,14 @@ import type { CampusBounds, GeoJsonPolygon } from "@/lib/campus/campus-types";
 
 interface FootprintResult {
   polygon: number[][][] | null;
+  /** Which VWorld layer produced the polygon (P2-25): building outline or parcel fallback. */
+  source?: "building" | "parcel" | null;
+  /** Measured attributes from GIS건물통합정보 — null per field when unavailable. */
+  attributes?: {
+    height: number | null;
+    groundFloors: number | null;
+    undergroundFloors: number | null;
+  } | null;
   error: string | null;
 }
 

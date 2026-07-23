@@ -4,6 +4,11 @@ import { z } from "zod";
 const VWORLD_DATA_URL = "https://api.vworld.kr/req/data";
 const VWORLD_DOMAIN = process.env.VWORLD_DOMAIN ?? "localhost";
 
+/** GIS건물통합정보 — actual building outline + measured attributes (P2-25, preferred). */
+const BUILDING_DATASET = "LT_C_SPBD";
+/** 연속지적도 필지 — cadastral parcel boundary (named fallback when no building feature). */
+const PARCEL_DATASET = "LP_PA_CBND_BUBUN";
+
 /** Campus mode requests this many parcels; used to derive the truncated flag. */
 const CAMPUS_BBOX_SIZE = 20;
 
@@ -98,32 +103,62 @@ export async function GET(request: NextRequest) {
   const platGbCd = searchParams.get("platGbCd") || "0";
 
   try {
-    let polygonData = null;
+    // P2-25: prefer the actual building outline (GIS건물통합정보, LT_C_SPBD) over
+    // the cadastral parcel. Parcel is the NAMED fallback when the building layer
+    // has no usable feature; `source` reports which layer won.
+    let polygonData: ExtractedPolygon | null = null;
+    let source: "building" | "parcel" | null = null;
+    let attributes: BuildingAttributes | null = null;
 
-    // Method 1: Use PNU directly
-    if (pnu) {
-      polygonData = await fetchByPNU(pnu, apiKey);
+    // Resolve the query to a PNU (Methods 1-2) or a point (Methods 3-4).
+    // PNU format: 시군구코드(5) + 법정동코드(5) + 대지구분(1) + 본번(4) + 부번(4) = 19 digits
+    const resolvedPnu =
+      pnu ??
+      (sigunguCd && bjdongCd && bun
+        ? sigunguCd + bjdongCd + platGbCd + (bun || "0000").padStart(4, "0") + (ji || "0000").padStart(4, "0")
+        : null);
+
+    let point: { lat: number; lng: number } | null = null;
+    if (!resolvedPnu) {
+      if (lat && lng) point = { lat: parseFloat(lat), lng: parseFloat(lng) };
+      else if (address) point = await geocodeAddress(address, apiKey);
     }
-    // Method 2: Construct PNU from building ledger codes
-    else if (sigunguCd && bjdongCd && bun) {
-      // PNU format: 시군구코드(5) + 법정동코드(5) + 대지구분(1) + 본번(4) + 부번(4) = 19 digits
-      const constructedPnu = sigunguCd + bjdongCd + platGbCd + (bun || "0000").padStart(4, "0") + (ji || "0000").padStart(4, "0");
-      polygonData = await fetchByPNU(constructedPnu, apiKey);
-    }
-    // Method 3: Search by bounding box around coordinates
-    else if (lat && lng) {
-      polygonData = await fetchByBBox(parseFloat(lat), parseFloat(lng), apiKey);
-    }
-    // Method 4: Geocode address first, then search
-    else if (address) {
-      const coords = await geocodeAddress(address, apiKey);
-      if (coords) {
-        polygonData = await fetchByBBox(coords.lat, coords.lng, apiKey);
+
+    if (resolvedPnu) {
+      // Several buildings can share one parcel PNU — take the largest outline.
+      const building = pickLargest(await fetchBuildingCandidates({ attrFilter: `pnu:=:${resolvedPnu}` }, apiKey));
+      if (building) {
+        polygonData = { rings: building.rings, parcelCount: building.parcelCount };
+        source = "building";
+        attributes = parseBuildingAttributes(building.properties);
+      } else {
+        polygonData = await fetchByPNU(resolvedPnu, apiKey);
+        if (polygonData) source = "parcel";
+      }
+    } else if (point) {
+      // A ~50m search box can straddle a neighbor's larger building — take the
+      // outline nearest the query point, not the largest.
+      const delta = 0.0005; // ~50m
+      const bbox = `BOX(${point.lng - delta},${point.lat - delta},${point.lng + delta},${point.lat + delta})`;
+      const building = pickNearest(await fetchBuildingCandidates({ geomFilter: bbox }, apiKey), point.lng, point.lat);
+      if (building) {
+        polygonData = { rings: building.rings, parcelCount: building.parcelCount };
+        source = "building";
+        attributes = parseBuildingAttributes(building.properties);
+      } else {
+        polygonData = await fetchByBBox(point.lat, point.lng, apiKey);
+        if (polygonData) source = "parcel";
       }
     }
 
-    // No parcel found is a legitimate 200 with polygon: null.
-    return NextResponse.json({ polygon: polygonData?.rings ?? null, parcelCount: polygonData?.parcelCount ?? null, error: null });
+    // No feature found on either layer is a legitimate 200 with polygon: null.
+    return NextResponse.json({
+      polygon: polygonData?.rings ?? null,
+      parcelCount: polygonData?.parcelCount ?? null,
+      source,
+      attributes,
+      error: null,
+    });
   } catch (err) {
     // P1-06 (b): upstream failure → 502, never HTTP 200 with error set.
     return NextResponse.json(
@@ -144,7 +179,7 @@ async function fetchByPNU(pnu: string, apiKey: string): Promise<ExtractedPolygon
   const url = new URL(VWORLD_DATA_URL);
   url.searchParams.set("service", "data");
   url.searchParams.set("request", "GetFeature");
-  url.searchParams.set("data", "LP_PA_CBND_BUBUN");
+  url.searchParams.set("data", PARCEL_DATASET);
   url.searchParams.set("key", apiKey);
   url.searchParams.set("domain", VWORLD_DOMAIN);
   url.searchParams.set("crs", "EPSG:4326");
@@ -168,7 +203,7 @@ async function fetchByBBox(lat: number, lng: number, apiKey: string): Promise<Ex
   const url = new URL(VWORLD_DATA_URL);
   url.searchParams.set("service", "data");
   url.searchParams.set("request", "GetFeature");
-  url.searchParams.set("data", "LP_PA_CBND_BUBUN");
+  url.searchParams.set("data", PARCEL_DATASET);
   url.searchParams.set("key", apiKey);
   url.searchParams.set("domain", VWORLD_DOMAIN);
   url.searchParams.set("crs", "EPSG:4326");
@@ -196,7 +231,7 @@ async function fetchByExplicitBBox(
   const url = new URL(VWORLD_DATA_URL);
   url.searchParams.set("service", "data");
   url.searchParams.set("request", "GetFeature");
-  url.searchParams.set("data", "LP_PA_CBND_BUBUN");
+  url.searchParams.set("data", PARCEL_DATASET);
   url.searchParams.set("key", apiKey);
   url.searchParams.set("domain", VWORLD_DOMAIN);
   url.searchParams.set("crs", "EPSG:4326");
@@ -255,6 +290,45 @@ function ringArea(ring: number[][]): number {
 }
 
 function extractPolygon(data: unknown): ExtractedPolygon | null {
+  // First feature wins (parcel queries use size=1); P2-11 largest-part selection
+  // and degenerate-ring filtering live in extractFeatureCandidates.
+  const candidate = extractFeatureCandidates(data)[0];
+  return candidate ? { rings: candidate.rings, parcelCount: candidate.parcelCount } : null;
+}
+
+// ---------------------------------------------------------------------------
+// P2-25 — building layer (LT_C_SPBD) candidates, selection, and attributes
+// ---------------------------------------------------------------------------
+
+/** Measured building attributes from GIS건물통합정보 feature properties. */
+interface BuildingAttributes {
+  /** Building height in meters (buld_hg) — null when absent or non-positive. */
+  height: number | null;
+  /** Ground floor count (gro_flo_co) — null when absent or non-positive. */
+  groundFloors: number | null;
+  /** Underground floor count (und_flo_co) — null when absent or non-positive. */
+  undergroundFloors: number | null;
+}
+
+/** One parsed feature from a VWorld GetFeature response, ready for selection. */
+interface FeatureCandidate {
+  rings: number[][][];
+  /** Number of polygon parts in the source MultiPolygon (1 for Polygon type). */
+  parcelCount: number;
+  /** Unsigned shoelace area of the outer ring (relative comparison only). */
+  area: number;
+  /** Outer-ring vertex centroid as [lng, lat]. */
+  centroid: [number, number];
+  properties: Record<string, unknown>;
+}
+
+/**
+ * Parse every feature of a VWorld GetFeature response into candidates.
+ * For MultiPolygon features the largest-area part is kept (P2-11 rule);
+ * degenerate rings (< 3 points) are dropped. Returns raw WGS84 [lng, lat]
+ * rings — projection is handled client-side via gis-transform.ts (proj4).
+ */
+function extractFeatureCandidates(data: unknown): FeatureCandidate[] {
   try {
     const response = data as {
       response?: {
@@ -262,6 +336,7 @@ function extractPolygon(data: unknown): ExtractedPolygon | null {
         result?: {
           featureCollection?: {
             features?: Array<{
+              properties?: Record<string, unknown>;
               geometry?: {
                 type?: string;
                 coordinates?: number[][][][];
@@ -272,51 +347,134 @@ function extractPolygon(data: unknown): ExtractedPolygon | null {
       };
     };
 
-    if (response?.response?.status !== "OK") return null;
+    if (response?.response?.status !== "OK") return [];
 
     const features = response.response?.result?.featureCollection?.features;
-    if (!features || features.length === 0) return null;
+    if (!features || features.length === 0) return [];
 
-    const geometry = features[0].geometry;
-    if (!geometry?.coordinates) return null;
+    const candidates: FeatureCandidate[] = [];
 
-    // Handle both Polygon and MultiPolygon (VWorld returns MultiPolygon for cadastral parcels)
-    let rings: number[][][];
-    let parcelCount: number;
+    for (const feature of features) {
+      const geometry = feature.geometry;
+      if (!geometry?.coordinates) continue;
 
-    if (geometry.type === "MultiPolygon") {
-      // P2-11: pick the polygon part with the largest outer-ring area, not just [0].
-      const polygons = geometry.coordinates as number[][][][];
-      parcelCount = polygons.length;
+      let rings: number[][][];
+      let parcelCount: number;
 
-      let bestIdx = 0;
-      let bestArea = -1;
-      for (let i = 0; i < polygons.length; i++) {
-        const outerRing = polygons[i]?.[0];
-        if (!outerRing || outerRing.length < 3) continue;
-        const area = ringArea(outerRing);
-        if (area > bestArea) {
-          bestArea = area;
-          bestIdx = i;
+      if (geometry.type === "MultiPolygon") {
+        const polygons = geometry.coordinates as number[][][][];
+        parcelCount = polygons.length;
+
+        let bestIdx = 0;
+        let bestArea = -1;
+        for (let i = 0; i < polygons.length; i++) {
+          const outerRing = polygons[i]?.[0];
+          if (!outerRing || outerRing.length < 3) continue;
+          const area = ringArea(outerRing);
+          if (area > bestArea) {
+            bestArea = area;
+            bestIdx = i;
+          }
         }
+        rings = (polygons[bestIdx] as number[][][]) ?? [];
+      } else {
+        // Polygon: coordinates is [outerRing, ...holes]
+        rings = geometry.coordinates as unknown as number[][][];
+        parcelCount = 1;
       }
-      rings = (polygons[bestIdx] as number[][][]) ?? [];
-    } else {
-      // Polygon: coordinates is [outerRing, ...holes]
-      rings = geometry.coordinates as unknown as number[][][];
-      parcelCount = 1;
+
+      rings = rings.filter((ring) => ring.length >= 3);
+      const outer = rings[0];
+      if (!outer) continue;
+
+      const centroid: [number, number] = [
+        outer.reduce((s, p) => s + p[0], 0) / outer.length,
+        outer.reduce((s, p) => s + p[1], 0) / outer.length,
+      ];
+
+      candidates.push({
+        rings,
+        parcelCount,
+        area: ringArea(outer),
+        centroid,
+        properties: feature.properties ?? {},
+      });
     }
 
-    // Filter degenerate rings (< 3 points)
-    rings = rings.filter((ring) => ring.length >= 3);
-    if (rings.length === 0) return null;
-
-    // Return raw WGS84 [lng, lat] rings — NO equirectangular projection here.
-    // Projection is handled client-side via gis-transform.ts (proj4).
-    return { rings, parcelCount };
+    return candidates;
   } catch {
-    return null;
+    return [];
   }
+}
+
+/**
+ * Query the building layer (LT_C_SPBD). Failure here is NOT fatal — the caller
+ * falls back to the cadastral parcel, so upstream errors return [] rather than
+ * throwing. Only a parcel-layer failure surfaces the 502 contract.
+ */
+async function fetchBuildingCandidates(
+  filter: { attrFilter?: string; geomFilter?: string },
+  apiKey: string
+): Promise<FeatureCandidate[]> {
+  const url = new URL(VWORLD_DATA_URL);
+  url.searchParams.set("service", "data");
+  url.searchParams.set("request", "GetFeature");
+  url.searchParams.set("data", BUILDING_DATASET);
+  url.searchParams.set("key", apiKey);
+  url.searchParams.set("domain", VWORLD_DOMAIN);
+  url.searchParams.set("crs", "EPSG:4326");
+  if (filter.attrFilter) url.searchParams.set("attrFilter", filter.attrFilter);
+  if (filter.geomFilter) url.searchParams.set("geomFilter", filter.geomFilter);
+  url.searchParams.set("size", "10");
+  url.searchParams.set("format", "json");
+
+  try {
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return [];
+    return extractFeatureCandidates(await res.json());
+  } catch {
+    return [];
+  }
+}
+
+function pickLargest(candidates: FeatureCandidate[]): FeatureCandidate | null {
+  let best: FeatureCandidate | null = null;
+  for (const c of candidates) {
+    if (!best || c.area > best.area) best = c;
+  }
+  return best;
+}
+
+function pickNearest(candidates: FeatureCandidate[], lng: number, lat: number): FeatureCandidate | null {
+  let best: FeatureCandidate | null = null;
+  let bestDistSq = Infinity;
+  for (const c of candidates) {
+    const distSq = (c.centroid[0] - lng) ** 2 + (c.centroid[1] - lat) ** 2;
+    if (distSq < bestDistSq) {
+      bestDistSq = distSq;
+      best = c;
+    }
+  }
+  return best;
+}
+
+/** Positive finite number or null — absent/zero/junk is NEVER fabricated (AFF-6). */
+function toPositiveNumber(value: unknown): number | null {
+  if (value === undefined || value === null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/**
+ * Parse measured attributes from GIS건물통합정보 properties. Tolerates both
+ * documented VWorld field spellings (WFS lowercase vs shapefile-derived).
+ */
+function parseBuildingAttributes(props: Record<string, unknown>): BuildingAttributes {
+  return {
+    height: toPositiveNumber(props.buld_hg ?? props.height),
+    groundFloors: toPositiveNumber(props.gro_flo_co ?? props.grnd_flr),
+    undergroundFloors: toPositiveNumber(props.und_flo_co ?? props.ugrnd_flr),
+  };
 }
 
 /**

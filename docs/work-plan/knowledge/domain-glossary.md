@@ -82,6 +82,15 @@
   `src/lib/building-geometry.ts:42`) supplied via CAD upload or override
   (`src/lib/cad/README.md:23`); required to advance past the upload stage
   (`src/store/__tests__/workflow-store.test.ts:57`).
+- **CAD-first draft (`cad-` PK)** — P2-24: a standalone building with no
+  건축물대장 entry, identified by a synthetic `cad-<uuid>` PK
+  (`src/lib/workflow/cad-draft.ts`). The workflow **mode** (`ledger` |
+  `cad-first`) is derived from this prefix, never stored; cad-first swaps the
+  stage order to upload → 정보 입력(params) → twin → report, makes the CAD
+  footprint mandatory (no P2-17 skip), and synthesizes a minimal title from
+  three manual params (floors, year, sigunguCd) + CAD-derived areas — all
+  other ledger fields stay explicit unavailable markers (AFF-6). Drafts are
+  session-transient (`src/store/cad-draft-store.ts`).
 - **twin-data** — filesystem JSON store at `<repo>/.twin-data/<buildingId>/<dataType>.json`
   (note the dot prefix), read/written by `src/app/api/twin-data/[buildingId]/route.ts:10`
   and `src/app/api/twin-data/upload/route.ts:10,53`.
@@ -124,6 +133,19 @@
   carries `field`, `divergencePct`, and a `message` stating the exact magnitude.
   Checks: gross area (`totArea`), above-ground floors (`grndFlrCnt`), below-ground floors
   (`ugrndFlrCnt`). Zero ledger fields are skipped (AFF-6 zero = unavailable). Threshold ±15%.
+
+- **PNU (필지고유번호)** — 19-digit parcel key: 시군구코드(5) + 법정동코드(5) +
+  대지구분(1) + 본번(4) + 부번(4). The join key across Korean national spatial databases;
+  constructed from ledger fields (`sigunguCd`/`bjdongCd`/`platGbCd`/`bun`/`ji`) in
+  `src/app/api/vworld/footprint/route.ts` and `use-campus-buildings.ts`.
+- **GIS건물통합정보 (`LT_C_SPBD`)** — VWorld dataset fusing 연속지적도 geometry with
+  건축물대장 attributes per building: actual building outline polygon + measured
+  `buld_hg` (height, m), `gro_flo_co` (ground floors), `und_flo_co` (underground floors).
+  P2-25: preferred footprint source for the single-building twin; multiple buildings can
+  share one PNU, so selection is largest-area (PNU mode) or nearest-centroid (point mode).
+- **연속지적도 필지 (`LP_PA_CBND_BUBUN`)** — VWorld cadastral parcel (lot boundary, NOT
+  the building outline). The named fallback when `LT_C_SPBD` has no usable feature; the
+  footprint route reports which layer won via its `source` field (`"building" | "parcel"`).
 
 ## Governance
 

@@ -83,9 +83,19 @@ function getFloorHeightCategory(mainPurpsCd: string): "residential" | "commercia
   return "commercial";
 }
 
+export interface GenerateGeometryOptions {
+  /**
+   * Measured building height in meters from an external GIS source
+   * (VWorld GIS건물통합정보 `buld_hg`, P2-25). Height fallback chain:
+   * ledger `heit` → measuredHeightM → era-based floor-count estimate.
+   */
+  measuredHeightM?: number;
+}
+
 export function generateBuildingGeometry(
   title: BrTitleInfo,
-  floors: BrFloorInfo[]
+  floors: BrFloorInfo[],
+  opts?: GenerateGeometryOptions
 ): BuildingGeometry {
   const era = classifyEra(title.pmsDay);
   const mainPurpsCd = title.mainPurpsCd || "";
@@ -95,7 +105,11 @@ export function generateBuildingGeometry(
 
   const eraFloorHeight = FLOOR_HEIGHTS[era]?.[floorHeightCat] || 3.2;
   const aboveCount = Number(title.grndFlrCnt) || 1;
-  const totalHeight = Number(title.heit) || aboveCount * eraFloorHeight;
+  // Height fallback chain (named, per AFF-6): ledger heit → VWorld measured → era estimate.
+  const measuredHeight = Number(opts?.measuredHeightM);
+  const totalHeight =
+    Number(title.heit) ||
+    (Number.isFinite(measuredHeight) && measuredHeight > 0 ? measuredHeight : aboveCount * eraFloorHeight);
   const floorHeight = totalHeight / aboveCount;
   const basementFloorHeight = 3.0;
 

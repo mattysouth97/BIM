@@ -42,6 +42,28 @@ describe("generateBuildingGeometry", () => {
     expect(geo.totalHeight).toBe(43.5);
   });
 
+  // P2-25 — height fallback chain: ledger heit → VWorld measured → era estimate
+  it("uses VWorld measured height when ledger heit is 0", () => {
+    const title = makeTitle({ heit: 0, grndFlrCnt: 12 });
+    const geo = generateBuildingGeometry(title, [], { measuredHeightM: 43.5 });
+    expect(geo.totalHeight).toBe(43.5);
+    const above = geo.floors.find((f) => f.type === "above");
+    expect(above?.height).toBeCloseTo(43.5 / 12, 5);
+  });
+
+  it("ledger heit wins over measured height when both are present", () => {
+    const title = makeTitle({ heit: 43.5 });
+    const geo = generateBuildingGeometry(title, [], { measuredHeightM: 99 });
+    expect(geo.totalHeight).toBe(43.5);
+  });
+
+  it("ignores non-positive measured height (era estimate still applies)", () => {
+    const title = makeTitle({ heit: 0, grndFlrCnt: 5 });
+    const geo = generateBuildingGeometry(title, [], { measuredHeightM: 0 });
+    expect(geo.totalHeight).toBeGreaterThan(10);
+    expect(geo.totalHeight).toBeLessThan(25);
+  });
+
   it("footprint dimensions are positive and reasonable", () => {
     const title = makeTitle({ archArea: 84 });
     const geo = generateBuildingGeometry(title, []);
