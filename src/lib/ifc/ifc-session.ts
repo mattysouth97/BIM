@@ -20,7 +20,52 @@ type IfcApiInstance = {
   GetGeometry: (modelId: number, expressId: number) => unknown;
   GetVertexArray: (ptr: number, size: number) => Float32Array;
   GetIndexArray: (ptr: number, size: number) => Uint32Array;
+  // ── Write surface (verified against node_modules/web-ifc/web-ifc-api.d.ts
+  //    + web-ifc-api.js for web-ifc@0.0.77) ────────────────────────────────
+  CreateModel: (model: { schema: string; name?: string }) => number;
+  WriteLine: (modelId: number, lineObject: RawIfcLine) => void;
+  SaveModel: (modelId: number) => Uint8Array;
 };
+
+// ── Write-side type shim ─────────────────────────────────────────────────────
+// A duck-typed IFC "line" object: expressID must be -1 (unassigned) for new
+// entities so web-ifc's WriteLine auto-writes nested un-written line objects
+// and rewrites them in place as Handles; already-written entities may be
+// passed by direct object reference to be linked (WriteLine re-resolves them
+// to their real expressID). `type` is the numeric IFC4 express type code.
+
+export interface RawIfcLine {
+  expressID: number;
+  type: number;
+  [field: string]: unknown;
+}
+
+export interface IfcWriteSession {
+  createModel(): number;
+  writeLine(modelId: number, lineObject: RawIfcLine): number;
+  saveModel(modelId: number): Uint8Array;
+  closeModel(modelId: number): void;
+}
+
+const IFC4_SCHEMA = "IFC4";
+
+/**
+ * Returns an IFC *write* session backed by the same shared IfcAPI singleton
+ * used for reading (see getSharedIfcApi above) — Init is still called at most
+ * once per browser session.
+ */
+export async function getSharedIfcWriteSession(): Promise<IfcWriteSession> {
+  const { api } = await getSharedIfcApi();
+  return {
+    createModel: () => api.CreateModel({ schema: IFC4_SCHEMA }),
+    writeLine: (modelId: number, lineObject: RawIfcLine) => {
+      api.WriteLine(modelId, lineObject);
+      return lineObject.expressID;
+    },
+    saveModel: (modelId: number) => api.SaveModel(modelId),
+    closeModel: (modelId: number) => api.CloseModel(modelId),
+  };
+}
 
 export interface IfcSession {
   api: IfcApiInstance;
