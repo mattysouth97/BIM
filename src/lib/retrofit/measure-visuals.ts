@@ -45,6 +45,19 @@ export const UPGRADE_TINT = "#34d399";
 export const UPGRADE_GLASS_COLOR = "#a8d8f0";
 export const UPGRADE_GLASS_OPACITY = 0.25;
 
+// P2-23 — applied measures render the POST-RETROFIT state (real materials),
+// with one shared low-intensity emerald emissive as the "proposed, not yet
+// built" marker so the change reads as a preview, not decoration.
+/** Fresh exterior finish after wall insulation (clean plaster/EIFS). */
+export const RENEWED_WALL_COLOR = "#e8e6e0";
+/** New roof membrane after roof insulation. */
+export const RENEWED_ROOF_COLOR = "#c9ccd1";
+/** New clean-metal equipment housing (HVAC replacement units). */
+export const RENEWED_EQUIPMENT_COLOR = "#d4d8dd";
+/** Shared "proposed" accent (emissive) + intensity for renewed surfaces. */
+export const PROPOSAL_EMISSIVE = "#34d399";
+export const PROPOSAL_EMISSIVE_INTENSITY = 0.06;
+
 /** Derive the visual flags from the applied measure IDs. */
 export function deriveVisualState(appliedIds: Iterable<string>): RetrofitVisualState {
   const state = { ...NO_RETROFIT_VISUALS };

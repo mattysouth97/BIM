@@ -44,6 +44,9 @@ export function SolarPanels({ recipe }: { recipe: BuildingRecipe }) {
       color: "#1e3a5f",
       metalness: 0.6,
       roughness: 0.25,
+      // Shared "proposed" accent — differentiates the preview from built PV
+      emissive: "#34d399",
+      emissiveIntensity: 0.12,
     });
     const im = new THREE.InstancedMesh(geo, mat, count);
     im.name = "solar-panels";

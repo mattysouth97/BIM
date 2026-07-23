@@ -17,6 +17,7 @@ import { useLayerStore } from "@/store/layer-store";
 import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
 import { classifyElement, ifcDisplayLine } from "@/lib/bim/ifc-classification";
 import { SolarPanels } from "./solar-panels";
+import { RetrofitHvacUnits } from "./retrofit-hvac-units";
 import { applyOverrides } from "@/lib/procedural/recipe";
 import { Loader2 } from "lucide-react";
 import { createSceneProjection } from "@/lib/gis/gis-transform";
@@ -68,14 +69,24 @@ function SceneSetup() {
   const envMap = useEnvironment({ files: "/hdr/studio.hdr" });
 
   useEffect(() => {
-    if (envMap) {
-      const pmrem = new THREE.PMREMGenerator(gl);
-      const processed = pmrem.fromEquirectangular(envMap);
+    if (!envMap) return;
+    // P2-21 fix: PMREMGenerator is a WebGL-only pipeline — constructing it
+    // with a WebGPURenderer throws during mount and blanks the whole canvas
+    // (the "black wall"). WebGPU consumes equirectangular maps directly.
+    const isWebgpu =
+      (gl as unknown as { isWebGPURenderer?: boolean }).isWebGPURenderer === true;
+    if (isWebgpu) {
       // eslint-disable-next-line react-hooks/immutability
-      scene.environment = processed.texture;
-      // Do NOT set scene.background to envMap — keep solid color
-      pmrem.dispose();
+      envMap.mapping = THREE.EquirectangularReflectionMapping;
+      // eslint-disable-next-line react-hooks/immutability
+      scene.environment = envMap;
+      return;
     }
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const processed = pmrem.fromEquirectangular(envMap);
+    scene.environment = processed.texture;
+    // Do NOT set scene.background to envMap — keep solid color
+    pmrem.dispose();
   }, [envMap, scene, gl]);
 
   return null;
@@ -486,6 +497,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
               <>
                 <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} retrofitVisuals={retrofitVisuals} structuralIsolation={structuralIsolation} />
                 {retrofitVisuals.solarInstalled && <SolarPanels recipe={recipe} />}
+                {retrofitVisuals.hvacUpgraded && <RetrofitHvacUnits recipe={recipe} />}
                 <BuildingLayers buildingPk={buildingPk} />
                 <StructuralTooltip />
                 <EquipmentClickHandler />

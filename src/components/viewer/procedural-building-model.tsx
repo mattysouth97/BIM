@@ -17,6 +17,10 @@ import {
   UPGRADE_TINT,
   UPGRADE_GLASS_COLOR,
   UPGRADE_GLASS_OPACITY,
+  RENEWED_WALL_COLOR,
+  RENEWED_ROOF_COLOR,
+  PROPOSAL_EMISSIVE,
+  PROPOSAL_EMISSIVE_INTENSITY,
   type RetrofitVisualState,
 } from "@/lib/retrofit/measure-visuals";
 import { classifyElement } from "@/lib/bim/ifc-classification";
@@ -179,10 +183,24 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       mesh.material = clone;
     };
 
-    const renewOpaque = (m: THREE.MeshStandardMaterial) => {
-      m.color.lerp(new THREE.Color(UPGRADE_TINT), 0.35);
-      m.emissive.set(UPGRADE_TINT);
-      m.emissiveIntensity = 0.07;
+    // P2-23 — realistic post-retrofit finishes + shared "proposed" accent
+    const propose = (m: THREE.MeshStandardMaterial) => {
+      m.emissive.set(PROPOSAL_EMISSIVE);
+      m.emissiveIntensity = PROPOSAL_EMISSIVE_INTENSITY;
+    };
+    const renewWall = (m: THREE.MeshStandardMaterial) => {
+      m.color.set(RENEWED_WALL_COLOR); // fresh plaster/EIFS finish
+      m.roughness = 0.55;
+      propose(m);
+    };
+    const renewRoof = (m: THREE.MeshStandardMaterial) => {
+      m.color.set(RENEWED_ROOF_COLOR); // new membrane
+      m.roughness = 0.5;
+      propose(m);
+    };
+    const renewSlab = (m: THREE.MeshStandardMaterial) => {
+      m.color.lerp(new THREE.Color(UPGRADE_TINT), 0.2); // interior — subtle
+      propose(m);
     };
 
     const ghost = (mesh: THREE.Mesh) =>
@@ -212,6 +230,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       }
 
       if (v.windowsUpgraded && type === "glass") {
+        // New low-e glazing — the realistic change IS the material swap
         tint(obj, (m) => {
           m.color.set(UPGRADE_GLASS_COLOR);
           m.opacity = UPGRADE_GLASS_OPACITY;
@@ -221,14 +240,14 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
         v.wallsUpgraded &&
         (type === "solidPanel" || type === "hMullion" || type === "vMullion")
       ) {
-        tint(obj, renewOpaque);
+        tint(obj, renewWall);
       } else if (v.roofUpgraded && hasAncestorNamed(obj, "roof")) {
-        tint(obj, renewOpaque);
+        tint(obj, renewRoof);
       } else if (
         v.floorsUpgraded &&
         (type === "slab" || hasAncestorNamed(obj, "slabs"))
       ) {
-        tint(obj, renewOpaque);
+        tint(obj, renewSlab);
       }
     });
 

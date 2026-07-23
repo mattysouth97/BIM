@@ -24,8 +24,13 @@ import {
 } from "@/lib/layers/mep-coordinator";
 import { useEquipmentStore } from "@/store/equipment-store";
 import { useScenarioStore } from "@/store/scenario-store";
+import { useAppStore } from "@/store/app-store";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "@/lib/layers/mep-equipment-params";
-import { deriveVisualState, UPGRADE_TINT } from "@/lib/retrofit/measure-visuals";
+import {
+  deriveVisualState,
+  RENEWED_EQUIPMENT_COLOR,
+  PROPOSAL_EMISSIVE,
+} from "@/lib/retrofit/measure-visuals";
 
 interface BuildingLayersProps {
   buildingPk?: string;
@@ -248,20 +253,58 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     const mepGroup = manager.getGroup("mep");
     for (const child of mepGroup.children) {
       if (!(child instanceof THREE.Group) || !targets.includes(child.name)) continue;
+      const isLighting = child.name === "sub-mep-lighting";
       child.traverse((obj) => {
         if (!(obj instanceof THREE.Mesh)) return;
         if (Array.isArray(obj.material)) return;
         if (!(obj.material instanceof THREE.MeshStandardMaterial)) return;
         originals.set(obj, obj.material);
         const clone = obj.material.clone();
-        clone.color.lerp(new THREE.Color(UPGRADE_TINT), 0.55);
-        clone.emissive.set(UPGRADE_TINT);
-        clone.emissiveIntensity = 0.25;
+        if (isLighting) {
+          // P2-23 — new LED fixtures: actually LIT (bright neutral white
+          // with a mint hint as the "proposed" differentiator)
+          clone.color.set("#ffffff");
+          clone.emissive.set("#e6fff4");
+          clone.emissiveIntensity = 0.65;
+        } else {
+          // P2-23 — replacement HVAC plant: clean factory-new metal housing
+          // with the shared proposal accent
+          clone.color.lerp(new THREE.Color(RENEWED_EQUIPMENT_COLOR), 0.65);
+          clone.metalness = Math.max(clone.metalness, 0.45);
+          clone.roughness = Math.min(clone.roughness, 0.35);
+          clone.emissive.set(PROPOSAL_EMISSIVE);
+          clone.emissiveIntensity = 0.15;
+        }
         obj.material = clone;
       });
     }
     return restoreAll;
   }, [appliedMeasureIds, effectiveRecipe, equipmentParams, density]);
+
+  // P2-21 fix — three's WebGPU renderer cannot convert raw ShaderMaterials
+  // (NodeMaterial "not compatible" → dead frame → black canvas). The animated
+  // flow/arrow effects are the only ShaderMaterial users, so under WebGPU we
+  // hide exactly those meshes and keep everything else (equipment bodies are
+  // MeshStandardMaterial). Re-runs after every regeneration effect above.
+  const rendererBackend = useAppStore((s) => s.rendererBackend);
+  const webgpuActive =
+    rendererBackend === "webgpu" &&
+    typeof navigator !== "undefined" &&
+    "gpu" in navigator;
+  useEffect(() => {
+    const manager = managerRef.current;
+    if (!manager) return;
+    manager.getParentGroup().traverse((obj) => {
+      if (
+        (obj instanceof THREE.Mesh ||
+          obj instanceof THREE.Line ||
+          obj instanceof THREE.Points) &&
+        obj.material instanceof THREE.ShaderMaterial
+      ) {
+        obj.visible = !webgpuActive;
+      }
+    });
+  }, [webgpuActive, effectiveRecipe, equipmentParams, density, breakdown]);
 
   // Animation loop — update ShaderMaterial uniforms each frame
   useFrame((state) => {
