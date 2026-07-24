@@ -20,13 +20,13 @@ interface TitleApiResponse {
   numOfRows: number;
 }
 
-interface VWorldFootprintItem {
+export interface VWorldFootprintItem {
   pnu: string;
   polygon: number[][][];
 }
 
 /** Building-layer footprint item returned by bboxMode + layer=building (P2-28). */
-interface VWorldBuildingFootprintItem {
+export interface VWorldBuildingFootprintItem {
   pnu: string;
   polygon: number[][][];
   height: number | null;
@@ -171,21 +171,53 @@ function ringArea(ring: number[][]): number {
  * outer-ring area. Multiple buildings can occupy a single cadastral parcel —
  * "largest outline" is the most prominent structure (P2-28 match semantics).
  */
-function pickLargestBuildingForPnu(
-  candidates: Array<{ pnu: string; polygon: number[][][]; height: number | null; groundFloors: number | null }>
-): { polygon: number[][][]; height: number | null } | null {
-  let best: { polygon: number[][][]; height: number | null } | null = null;
-  let bestArea = -1;
-  for (const c of candidates) {
-    const outer = c.polygon[0];
+export function selectLargestBuildingFootprintsByPnu(
+  footprints: VWorldBuildingFootprintItem[],
+): Map<string, VWorldBuildingFootprintItem> {
+  const selected = new Map<string, VWorldBuildingFootprintItem>();
+  const selectedArea = new Map<string, number>();
+
+  for (const footprint of footprints) {
+    if (!footprint.pnu) continue;
+    const outer = footprint.polygon[0];
     if (!outer) continue;
     const area = ringArea(outer);
-    if (area > bestArea) {
-      bestArea = area;
-      best = { polygon: c.polygon, height: c.height };
+    if (area > (selectedArea.get(footprint.pnu) ?? -1)) {
+      selected.set(footprint.pnu, footprint);
+      selectedArea.set(footprint.pnu, area);
     }
   }
-  return best;
+
+  return selected;
+}
+
+export interface ResolvedFootprint {
+  polygon: number[][][];
+  measuredHeightM: number | null;
+}
+
+export function resolveFootprintForPnu(
+  pnu: string,
+  buildingByPnu: Map<string, VWorldBuildingFootprintItem>,
+  parcelByPnu: Map<string, VWorldFootprintItem>,
+): ResolvedFootprint | null {
+  const building = buildingByPnu.get(pnu);
+  if (building) {
+    return {
+      polygon: building.polygon,
+      measuredHeightM: building.height,
+    };
+  }
+
+  const parcel = parcelByPnu.get(pnu);
+  if (parcel) {
+    return {
+      polygon: parcel.polygon,
+      measuredHeightM: null,
+    };
+  }
+
+  return null;
 }
 
 // ─── Main query function ──────────────────────────────────────────────────────
@@ -214,6 +246,8 @@ async function fetchCampusData(
   for (const fp of rawParcelFootprints) {
     if (fp.pnu) parcelByPnu.set(fp.pnu, fp);
   }
+  const buildingByPnu =
+    selectLargestBuildingFootprintsByPnu(rawBuildingFootprints);
 
   // Cap at MAX_BUILDINGS
   const buildings = rawBuildings.slice(0, MAX_BUILDINGS);
@@ -222,20 +256,9 @@ async function fetchCampusData(
     const pnu = buildingPnu(b);
 
     // P2-28: prefer building-layer footprint (largest-area per PNU); fall back to parcel.
-    const buildingCandidates = rawBuildingFootprints.filter((bf) => bf.pnu === pnu);
-    const bestBuilding = buildingCandidates.length > 0 ? pickLargestBuildingForPnu(buildingCandidates) : null;
-
-    let resolvedPolygon: number[][][] | null = null;
-    let measuredHeightM: number | null = null;
-
-    if (bestBuilding) {
-      resolvedPolygon = bestBuilding.polygon;
-      measuredHeightM = bestBuilding.height; // null when absent/zero (AFF-6)
-    } else {
-      const parcel = parcelByPnu.get(pnu);
-      if (parcel) resolvedPolygon = parcel.polygon;
-      // measuredHeightM stays null on parcel fallback
-    }
+    const resolved = resolveFootprintForPnu(pnu, buildingByPnu, parcelByPnu);
+    const resolvedPolygon = resolved?.polygon ?? null;
+    const measuredHeightM = resolved?.measuredHeightM ?? null;
 
     let footprint: GeoJsonPolygon | undefined;
     let position: { x: number; y: number } | undefined;

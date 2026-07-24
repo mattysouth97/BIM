@@ -101,7 +101,7 @@ function FormSkeleton() {
 
 export default function Home() {
   const hydrated = useHydration();
-  const { apiKey } = useAppStore();
+  const apiKey = useAppStore((state) => state.apiKey);
   const { t } = useT();
   const router = useRouter();
 

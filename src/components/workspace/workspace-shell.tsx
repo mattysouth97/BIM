@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useHydration } from "@/hooks/use-hydration";
@@ -10,12 +10,37 @@ import { WorkflowStepper } from "./workflow-stepper";
 import { PropertiesPanel } from "./properties-panel";
 import { SceneOutliner } from "./scene-outliner";
 import { StatusBar } from "./status-bar";
-import { ReportStage } from "@/components/report/report-stage";
-import { UploadStage } from "@/components/upload/upload-stage";
-import { ParamsStage } from "@/components/params/params-stage";
 import { Button } from "@/components/ui/button";
 import { PanelLeft, PanelRight } from "lucide-react";
 import type { FootprintSource } from "@/lib/fidelity/input-provenance";
+
+const ReportStage = lazy(() =>
+  import("@/components/report/report-stage").then((module) => ({
+    default: module.ReportStage,
+  })),
+);
+const UploadStage = lazy(() =>
+  import("@/components/upload/upload-stage").then((module) => ({
+    default: module.UploadStage,
+  })),
+);
+const ParamsStage = lazy(() =>
+  import("@/components/params/params-stage").then((module) => ({
+    default: module.ParamsStage,
+  })),
+);
+
+function StageFallback() {
+  return (
+    <div
+      className="flex h-full w-full items-center justify-center bg-muted/10 text-sm text-muted-foreground"
+      role="status"
+      aria-label="Loading workspace stage"
+    >
+      Loading...
+    </div>
+  );
+}
 
 interface WorkspaceShellProps {
   children: React.ReactNode;
@@ -60,16 +85,23 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
         {/* Viewport content — upload stage, params stage (P2-24, cad-first
             only — ledger mode never reaches this stage id), report stage, or
             3D canvas */}
-        {stage === "report" ? (
-           <ReportStage
-             footprintSource={footprintSource}
-             ledgerHeit={ledgerHeit}
-             measuredHeightM={measuredHeightM}
-           />
-         )
-         : stage === "upload" ? <UploadStage />
-         : stage === "params" ? <ParamsStage />
-         : children}
+        {stage === "report" || stage === "upload" || stage === "params" ? (
+          <Suspense fallback={<StageFallback />}>
+            {stage === "report" ? (
+              <ReportStage
+                footprintSource={footprintSource}
+                ledgerHeit={ledgerHeit}
+                measuredHeightM={measuredHeightM}
+              />
+            ) : stage === "upload" ? (
+              <UploadStage />
+            ) : (
+              <ParamsStage />
+            )}
+          </Suspense>
+        ) : (
+          children
+        )}
 
         {/* Toggle buttons and floating panels — only for the 3D twin viewport */}
         {stage === "twin" && (

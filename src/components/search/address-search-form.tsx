@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { Search } from "lucide-react";
 
 import regionData from "@/data/region-codes.json";
-import bjdongData from "@/data/bjdong-codes.json";
+import { useBjdongOptions } from "@/hooks/use-bjdong-options";
 import { useT } from "@/lib/i18n";
 
 import { Button } from "@/components/ui/button";
@@ -39,8 +39,6 @@ interface AddressSearchFormProps {
   isLoading?: boolean;
 }
 
-const bjdongMap = bjdongData as Record<string, { code: string; name: string }[]>;
-
 export function AddressSearchForm({ onSearch, isLoading }: AddressSearchFormProps) {
   const { t } = useT();
 
@@ -63,16 +61,13 @@ export function AddressSearchForm({ onSearch, isLoading }: AddressSearchFormProp
 
   const selectedSido = watch("sidoCd");
   const selectedSigungu = watch("sigunguCd");
+  const { options: bjdongOptions, isLoading: isBjdongLoading } =
+    useBjdongOptions(selectedSigungu);
 
   const sigunguOptions = useMemo(() => {
     if (!selectedSido) return [];
     return (regionData.sigungu as Record<string, { code: string; name: string }[]>)[selectedSido] ?? [];
   }, [selectedSido]);
-
-  const bjdongOptions = useMemo(() => {
-    if (!selectedSigungu) return [];
-    return bjdongMap[selectedSigungu] ?? [];
-  }, [selectedSigungu]);
 
   const onSubmit = (values: AddressSearchValues) => {
     onSearch({
@@ -182,14 +177,20 @@ export function AddressSearchForm({ onSearch, isLoading }: AddressSearchFormProp
               <Select
                 value={field.value}
                 onValueChange={field.onChange}
-                disabled={!selectedSigungu || bjdongOptions.length === 0}
+                disabled={
+                  !selectedSigungu ||
+                  isBjdongLoading ||
+                  bjdongOptions.length === 0
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue
                     placeholder={
                       !selectedSigungu
                         ? t("시/군/구를 먼저 선택", "Select district first")
-                        : bjdongOptions.length === 0
+                        : isBjdongLoading
+                          ? t("법정동 데이터 불러오는 중...", "Loading dong data...")
+                          : bjdongOptions.length === 0
                           ? t("동 데이터 없음", "No dong data")
                           : t("법정동 선택", "Select dong")
                     }

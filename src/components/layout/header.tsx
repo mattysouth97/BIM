@@ -13,7 +13,8 @@ const ApiKeyDialog = lazy(() =>
 
 export function Header() {
   const { theme, setTheme } = useTheme();
-  const { language, setLanguage } = useAppStore();
+  const language = useAppStore((state) => state.language);
+  const setLanguage = useAppStore((state) => state.setLanguage);
   const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
 
   const toggleLanguage = () => {

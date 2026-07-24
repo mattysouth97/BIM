@@ -23,7 +23,9 @@ interface ApiKeyDialogProps {
 }
 
 export function ApiKeyDialog({ open, onOpenChange }: ApiKeyDialogProps) {
-  const { apiKey, setApiKey, clearApiKey } = useAppStore();
+  const apiKey = useAppStore((state) => state.apiKey);
+  const setApiKey = useAppStore((state) => state.setApiKey);
+  const clearApiKey = useAppStore((state) => state.clearApiKey);
   const { t } = useT();
   const [inputValue, setInputValue] = useState(apiKey);
   const [validationStatus, setValidationStatus] =
