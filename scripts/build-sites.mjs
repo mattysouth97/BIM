@@ -4,6 +4,7 @@ import {
   cp,
   mkdir,
   readdir,
+  rename,
   rm,
   stat,
 } from "node:fs/promises";
@@ -43,8 +44,8 @@ Usage:
   npm run build:sites
 
 The build creates the OpenNext output, bundles its Worker with Wrangler in
-dry-run mode, and stages the server bundle, WASM modules, static assets, and
-Sites hosting metadata.`);
+dry-run mode, and stages the Worker runtime tree, static assets, and Sites
+hosting metadata.`);
 }
 
 async function assertExists(target, label) {
@@ -92,11 +93,32 @@ async function stageBundle() {
 
   await cp(bundleDir, serverDir, { recursive: true });
   if (entryName !== "index.js") {
-    await copyFile(
-      path.join(bundleDir, entryName),
+    await rename(
+      path.join(serverDir, entryName),
       path.join(serverDir, "index.js"),
     );
   }
+
+  await Promise.all([
+    rm(path.join(serverDir, "README.md"), { force: true }),
+    removeSourceMaps(serverDir),
+  ]);
+}
+
+async function removeSourceMaps(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  await Promise.all(
+    entries.map((entry) => {
+      const target = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        return removeSourceMaps(target);
+      }
+      if (entry.isFile() && entry.name.endsWith(".map")) {
+        return rm(target, { force: true });
+      }
+      return Promise.resolve();
+    }),
+  );
 }
 
 async function build() {
