@@ -2,10 +2,12 @@
 
 import { useState, lazy, Suspense } from "react";
 import Link from "next/link";
-import { Building2, Sun, Moon, Key, Globe } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Building2, Sun, Moon, Key, Globe, CircleHelp } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAppStore } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
+import { requestGuide } from "@/lib/guide-events";
 
 const ApiKeyDialog = lazy(() =>
   import("@/components/settings/api-key-dialog").then((m) => ({ default: m.ApiKeyDialog }))
@@ -13,9 +15,14 @@ const ApiKeyDialog = lazy(() =>
 
 export function Header() {
   const { theme, setTheme } = useTheme();
+  const pathname = usePathname();
   const language = useAppStore((state) => state.language);
   const setLanguage = useAppStore((state) => state.setLanguage);
   const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
+  const showGuide =
+    pathname === "/" || pathname.startsWith("/building/");
+  const guideLabel =
+    language === "ko" ? "가이드 / 도움말" : "Guide / Help";
 
   const toggleLanguage = () => {
     setLanguage(language === "ko" ? "en" : "ko");
@@ -41,6 +48,22 @@ export function Header() {
           </Link>
 
           <div className="flex items-center gap-1">
+            {showGuide && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={requestGuide}
+                data-tour="guide-replay"
+                title={guideLabel}
+                aria-label={guideLabel}
+              >
+                <CircleHelp className="mr-1 h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {language === "ko" ? "가이드" : "Guide"}
+                </span>
+              </Button>
+            )}
+
             <Button
               variant="ghost"
               size="sm"

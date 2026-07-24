@@ -21,6 +21,7 @@ import { useT } from "@/lib/i18n";
 import { useHydration } from "@/hooks/use-hydration";
 import { useBuildingSearch } from "@/hooks/use-building-search";
 import { useCampusBuildings } from "@/hooks/use-campus-buildings";
+import { useHomeTour } from "@/hooks/use-home-tour";
 import { compareBuildings } from "@/lib/campus/comparison-engine";
 import { exportToCsv, exportToJson } from "@/lib/export";
 import type { SearchBuildingsParams } from "@/lib/api-client";
@@ -119,6 +120,8 @@ export default function Home() {
   const [campusParams, setCampusParams] = useState<{ sigunguCd: string; bjdongCd?: string } | null>(null);
   const [selectedForCompare, setSelectedForCompare] = useState<Set<string>>(new Set());
   const [showComparison, setShowComparison] = useState(false);
+  const prepareHomeTour = useCallback(() => setCampusMode(false), []);
+  useHomeTour({ prepare: prepareHomeTour });
 
   const { data: campusData, isLoading: campusLoading, error: campusError } = useCampusBuildings(
     campusParams ? { bounds: DEFAULT_BOUNDS, sigunguCd: campusParams.sigunguCd, bjdongCd: campusParams.bjdongCd } : null
@@ -254,7 +257,7 @@ export default function Home() {
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-8">
       {/* Hero */}
-      <section className="mb-10 text-center">
+      <section className="mb-10 text-center" data-tour="home-hero">
         <div className="mx-auto flex max-w-2xl flex-col items-center gap-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
             <Building2 className="h-8 w-8 text-primary" />
@@ -296,6 +299,7 @@ export default function Home() {
         type="button"
         onClick={startCadDraft}
         data-testid="cad-first-entry"
+        data-tour="home-cad-entry"
         className="group mb-8 flex w-full items-center gap-4 rounded-xl border border-dashed bg-card p-5 text-left shadow-sm transition-colors hover:border-primary hover:bg-primary/5"
       >
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
@@ -316,7 +320,10 @@ export default function Home() {
       </button>
 
       {/* Campus Mode toggle */}
-      <div className="mb-6 flex items-center justify-end gap-3">
+      <div
+        className="mb-6 flex items-center justify-end gap-3"
+        data-tour="home-campus-toggle"
+      >
         <span className="text-sm text-muted-foreground">
           {t("캠퍼스 모드", "Campus Mode")}
         </span>
@@ -483,7 +490,11 @@ export default function Home() {
         /* ─── Individual Search Mode ──────────────────────────────────── */
         <>
           {/* Search tabs */}
-          <Tabs defaultValue="region" className="space-y-6">
+          <Tabs
+            defaultValue="region"
+            className="space-y-6"
+            data-tour="home-search-tabs"
+          >
             <div className="mx-auto max-w-3xl">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="region" className="gap-2">
