@@ -39,11 +39,22 @@ export async function fetchFromDataGoKr(
     }
 
     const text = await response.text();
+    const normalized = text.trim();
+
+    if (normalized === "") {
+      return {
+        data: null,
+        error:
+          "The Building Ledger API returned an empty response. Check that the service key is active for this API.",
+      };
+    }
 
     // data.go.kr sometimes returns XML error even when JSON requested
-    if (text.startsWith("<?xml") || text.startsWith("<")) {
+    if (normalized.startsWith("<?xml") || normalized.startsWith("<")) {
       // Try to extract error message from XML
-      const msgMatch = text.match(/<returnAuthMsg>(.*?)<\/returnAuthMsg>/);
+      const msgMatch = normalized.match(
+        /<returnAuthMsg>(.*?)<\/returnAuthMsg>/,
+      );
       return {
         data: null,
         error: msgMatch
@@ -52,7 +63,23 @@ export async function fetchFromDataGoKr(
       };
     }
 
-    const json = JSON.parse(text);
+    let json: {
+      response?: {
+        header?: {
+          resultCode?: string;
+          resultMsg?: string;
+        };
+      };
+    };
+    try {
+      json = JSON.parse(normalized) as typeof json;
+    } catch {
+      return {
+        data: null,
+        error:
+          "The Building Ledger API returned an invalid response. Try again or verify the service key.",
+      };
+    }
 
     // Check API-level result code
     const resultCode = json?.response?.header?.resultCode;

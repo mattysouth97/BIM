@@ -19,6 +19,19 @@ export interface ApiListResponse<T> {
   numOfRows: number;
 }
 
+async function readJsonResponse(res: Response): Promise<unknown | null> {
+  const text = await res.text();
+  if (text.trim() === "") return null;
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw new Error(
+      `The server returned an invalid response (${res.status}). Try again.`,
+    );
+  }
+}
+
 // ─────────────────────────────────────────────
 // Internal fetch helper
 // ─────────────────────────────────────────────
@@ -46,15 +59,22 @@ async function apiFetch<T>(
   if (apiKey) headers["x-api-key"] = apiKey;
 
   const res = await fetch(url.toString(), { headers });
+  const body = await readJsonResponse(res);
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
     throw new Error(
-      (body as { error?: string }).error ?? `Request failed (${res.status})`,
+      (body as { error?: string } | null)?.error ??
+        `Request failed (${res.status})`,
     );
   }
 
-  return res.json() as Promise<ApiListResponse<T>>;
+  if (body === null) {
+    throw new Error(
+      `The server returned an empty response (${res.status}). Try again.`,
+    );
+  }
+
+  return body as ApiListResponse<T>;
 }
 
 // ─────────────────────────────────────────────

@@ -9,9 +9,11 @@ import { searchBuildings, validateApiKey } from "@/lib/api-client";
 import { useAppStore } from "@/store/app-store";
 
 function okResponse() {
+  const body = { items: [], totalCount: 0, pageNo: 1, numOfRows: 20 };
   return {
     ok: true,
-    json: async () => ({ items: [], totalCount: 0, pageNo: 1, numOfRows: 20 }),
+    status: 200,
+    text: async () => JSON.stringify(body),
   };
 }
 
@@ -66,5 +68,46 @@ describe("api-client apiFetch — embedded shared-key support", () => {
     await validateApiKey("override-key");
 
     expect(headersFromCall(fetchMock)["x-api-key"]).toBe("override-key");
+  });
+
+  it("reports an actionable error for an empty successful response", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => "",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      searchBuildings({ sigunguCd: "11680", bjdongCd: "10300" }),
+    ).rejects.toThrow("The server returned an empty response (200). Try again.");
+  });
+
+  it("does not leak a JSON parser error for a malformed response", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => "{",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      searchBuildings({ sigunguCd: "11680", bjdongCd: "10300" }),
+    ).rejects.toThrow(
+      "The server returned an invalid response (200). Try again.",
+    );
+  });
+
+  it("falls back to the HTTP status when an error response has no body", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 502,
+      text: async () => "",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      searchBuildings({ sigunguCd: "11680", bjdongCd: "10300" }),
+    ).rejects.toThrow("Request failed (502)");
   });
 });
