@@ -163,10 +163,12 @@ describe("TransportLayer — cab / counterweight geometry-only swap", () => {
     expect(mat.uniforms.uColor.value.getHex()).toBe(0xf59e0b);
     expect(mat.uniforms.uFloorCount.value).toBe(3);
     expect(cab.userData).toEqual({ type: "transport-cab", animated: true, shaftIndex: 0 });
-    // Position unchanged: sp.x=0, cabHeight/2 = min(2.6, 3.0*0.75)/2 = 2.25/2, sp.z=0
+    // Core-layout shaft position: single shaft centred on X at the rear
+    // service band — bankZ = -(hd - 0.5 - shaftDepth/2) = -(5 - 0.5 - 1.0) = -3.5.
+    // cabHeight/2 = min(2.6, 3.0*0.75)/2 = 2.25/2.
     expect(cab.position.x).toBeCloseTo(0, 5);
     expect(cab.position.y).toBeCloseTo(1.125, 5);
-    expect(cab.position.z).toBeCloseTo(0, 5);
+    expect(cab.position.z).toBeCloseTo(-3.5, 5);
   });
 
   it("swaps the counterweight geometry when elevator-counterweight is loaded, keeping material/position", () => {
@@ -179,11 +181,11 @@ describe("TransportLayer — cab / counterweight geometry-only swap", () => {
     expect(cw.material).toBeInstanceOf(THREE.MeshStandardMaterial);
     const mat = cw.material as THREE.MeshStandardMaterial;
     expect(mat.color.getHex()).toBe(0x666666);
-    // Position unchanged: sp.x - shaftWidth/2 + 0.2 = 0 - 0.8 + 0.2 = -0.6;
-    // totalHeight*0.6 = 5.4; sp.z = 0
+    // sp.x - shaftWidth/2 + 0.2 = 0 - 0.8 + 0.2 = -0.6;
+    // totalHeight*0.6 = 5.4; sp.z = bankZ = -3.5 (rear service band)
     expect(cw.position.x).toBeCloseTo(-0.6, 5);
     expect(cw.position.y).toBeCloseTo(5.4, 5);
-    expect(cw.position.z).toBeCloseTo(0, 5);
+    expect(cw.position.z).toBeCloseTo(-3.5, 5);
   });
 
   it("swaps cab and counterweight independently (only cab asset loaded)", () => {
@@ -218,9 +220,11 @@ describe("TransportLayer — landing doors (detailed-asset-only)", () => {
     for (let i = 0; i < 3; i++) {
       im.getMatrixAt(i, mat4);
       mat4.decompose(pos, new THREE.Quaternion(), new THREE.Vector3());
-      expect(pos.x).toBeCloseTo(0.8, 5); // sp.x + shaftWidth/2 = 0 + 0.8
+      // Doors mount on the interior-facing +Z face of the rear-band shaft:
+      // x = sp.x = 0, z = bankZ + shaftDepth/2 = -3.5 + 1.0 = -2.5
+      expect(pos.x).toBeCloseTo(0, 5);
       expect(pos.y).toBeCloseTo(expectedY[i], 5);
-      expect(pos.z).toBeCloseTo(0, 5);
+      expect(pos.z).toBeCloseTo(-2.5, 5);
     }
   });
 
@@ -266,7 +270,7 @@ describe("TransportLayer — hoist machine (detailed-asset-only)", () => {
     expect(hoist).toBeDefined();
     expect(hoist!.position.x).toBeCloseTo(0, 5);
     expect(hoist!.position.y).toBeCloseTo(9.15, 5);
-    expect(hoist!.position.z).toBeCloseTo(0, 5);
+    expect(hoist!.position.z).toBeCloseTo(-3.5, 5); // above the rear-band shaft
 
     let taggedMesh: THREE.Mesh | undefined;
     hoist!.traverse((o) => {

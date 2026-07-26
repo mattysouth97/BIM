@@ -5,7 +5,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowUp, ArrowRight, ArrowDown, Maximize2, RotateCcw,
-  Settings, Layers, Download, FileText,
+  Layers, Download, FileText,
 } from "lucide-react";
 import type { WorkflowStage } from "./stages";
 
@@ -108,20 +108,15 @@ const UPLOAD_GROUPS: ToolbarGroup[] = [];
 // Twin stage — view controls, layer toggles, material/energy panel toggles.
 // ---------------------------------------------------------------------------
 
+// The legacy "Properties/속성" authoring toggle (ConfigPanel) was removed per
+// the Digital-Twin pivot — the twin stage exposes only the layer configuration
+// toggle, which maps 1:1 to the LayerManager/ProceduralBuilding groups.
 const TWIN_GROUPS: ToolbarGroup[] = [
   {
     id: "twin-panels",
     labelEn: "Panels",
     labelKo: "패널",
     items: [
-      {
-        id: "twin-config-panel",
-        type: "toggle",
-        icon: Settings,
-        labelEn: "Properties",
-        labelKo: "속성",
-        activeWhen: "configPanelOpen",
-      },
       {
         id: "twin-layer-panel",
         type: "toggle",
@@ -196,11 +191,6 @@ export interface ToolbarActionDescriptor {
  * Maps ToolbarItem `id` strings to their action descriptors.
  */
 export const TOOLBAR_ACTIONS: Record<string, ToolbarActionDescriptor> = {
-  "twin-config-panel": { store: "workspace", method: "toggleConfigPanel" },
-  "twin-layer-panel":  { store: "workspace", method: "toggleLayerPanel" },
+  "twin-layer-panel": { store: "workspace", method: "toggleLayerPanel" },
 };
 
-/**
- * Item IDs whose actions come from ContextualToolbarProps, not store calls.
- */
-export const PROP_ACTION_ITEMS = new Set<string>([]);

@@ -116,6 +116,10 @@ export class SafetyLayer implements LayerGenerator {
         animated: true,
         floorIndex: fi,
       };
+      // Raycast-transparent: this near-full-floor volume would otherwise
+      // shadow every piece of equipment inside it, making the hover/click
+      // handlers report 소방설비 for the entire floor plate.
+      zoneMesh.raycast = () => {};
       group.add(zoneMesh);
     }
 

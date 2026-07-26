@@ -10,6 +10,7 @@ import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
 import type { BoilerParams } from "./mep-equipment-params";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
+import { computeCoreLayout } from "./core-layout";
 import {
   ASSET_NATIVE_DIMS,
   getEquipmentGeometryClone,
@@ -223,15 +224,18 @@ export class HeatingLayer implements LayerGenerator {
       this.addBaselineBoiler(group, boilerParams, plantFloorY);
     }
 
-    // --- Air-source heat pumps (EHP pair on the roof, beside the core) ---
+    // --- Air-source heat pumps (EHP pair on the roof, in the plant band) ---
     // Detailed-asset-only addition: rendered when the Blender asset is loaded.
+    // Slots come from the shared core layout (left of the elevator bank in
+    // the rear roof strip) so the units sit clear of the PV array and the
+    // chiller instead of floating mid-roof.
+    const roofAshpSlots = computeCoreLayout(recipe).roofAshp;
     const ashpRoofY =
       totalHeight + (recipe.roof?.type === "flat" ? recipe.roof.flatThickness : 0);
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < roofAshpSlots.length; i++) {
       const ashp = getEquipmentObjectClone("heat-pump");
       if (!ashp) break;
-      const ashpX = Math.max(-hw + 1.2, -hw * 0.35) + i * 1.5;
-      ashp.position.set(ashpX, ashpRoofY, -Math.min(hd - 1.0, hd * 0.35));
+      ashp.position.set(roofAshpSlots[i].x, ashpRoofY, roofAshpSlots[i].z);
       tagEquipmentObject(
         ashp,
         { type: "heating-ashp" },
@@ -433,6 +437,9 @@ export class HeatingLayer implements LayerGenerator {
       zone.rotation.x = -Math.PI / 2;
       zone.position.set(0, floorY + 0.01, 0);
       zone.userData = { type: "heating-radiant-zone", floorNo: floor.floorNo };
+      // Raycast-transparent: a full-floor overlay plane must not intercept
+      // hover/click raycasts aimed at discrete equipment.
+      zone.raycast = () => {};
       group.add(zone);
     }
 

@@ -10,6 +10,7 @@ import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
 import type { ChillerParams } from "./mep-equipment-params";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
+import { computeCoreLayout } from "./core-layout";
 import {
   ASSET_NATIVE_DIMS,
   getEquipmentObjectClone,
@@ -86,8 +87,13 @@ export class CoolingLayer implements LayerGenerator {
       ...equipParams,
     };
 
-    const coreX = 0; // Core shaft at center
-    const coreZ = 0;
+    // Wet riser slot from the shared parametric core layout — beside the
+    // elevator bank at the rear wall instead of the footprint centre (the
+    // old 0,0 riser ran straight through the elevator shaft, and the chiller
+    // landed on the same roof spot as the hoist machine).
+    const layout = computeCoreLayout(recipe);
+    const coreX = layout.serviceRiser.x;
+    const coreZ = layout.serviceRiser.z;
     const hw = footprintWidth / 2;
     const hd = footprintDepth / 2;
 
@@ -144,7 +150,13 @@ export class CoolingLayer implements LayerGenerator {
 
     // --- Optional cooling tower (showCoolingTower === true) ---
     if (chillerParams.showCoolingTower) {
-      const towerX = coreX + chillerParams.bodyWidth * 0.5 + 2.0;
+      // Beside the chiller toward +X; mirrored to -X when the footprint edge
+      // is too close (keeps the tower on the roof for narrow buildings).
+      const towerOffset = chillerParams.bodyWidth * 0.5 + 2.0;
+      const towerX =
+        coreX + towerOffset + chillerParams.bodyWidth * 0.35 > hw - 0.5
+          ? coreX - towerOffset
+          : coreX + towerOffset;
       const towerAsset = getEquipmentObjectClone("cooling-tower");
       if (towerAsset) {
         const s = chillerParams.bodyWidth / ASSET_NATIVE_DIMS.chiller.w;

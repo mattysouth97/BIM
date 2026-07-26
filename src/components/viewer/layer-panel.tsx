@@ -12,6 +12,13 @@ interface LayerPanelProps {
   onClose: () => void;
 }
 
+// Only layers with actual model content get a toggle. Every id here maps to
+// real geometry: envelope/structure → ProceduralBuilding named groups,
+// mep → LayerManager MEP sub-groups, energy-zones → the energy heatmap.
+// "retrofit-targets" is excluded — no generator populates it yet, and a
+// toggle with no model effect reads as a broken control.
+const PANEL_LAYER_IDS = ALL_LAYER_IDS.filter((id) => id !== "retrofit-targets");
+
 export function LayerPanel({ visible, onClose }: LayerPanelProps) {
   const visibility = useLayerStore((s) => s.visibility);
   const toggleLayer = useLayerStore((s) => s.toggleLayer);
@@ -19,12 +26,15 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
   const toggleMepSub = useLayerStore((s) => s.toggleMepSub);
   const isKo = useAppStore((s) => s.language) === "ko";
 
-  const [mepExpanded, setMepExpanded] = useState(false);
+  const [mepExpanded, setMepExpanded] = useState(true);
 
   if (!visible) return null;
 
   return (
-    <div className="absolute right-4 top-16 z-20 w-72 rounded-lg border bg-card/95 backdrop-blur shadow-lg animate-in slide-in-from-right-4 duration-200">
+    // z-40 keeps the panel above the floating Scene/Properties docks (z-30) —
+    // previously z-20 meant the panel opened *behind* the right dock and the
+    // toolbar button appeared to do nothing.
+    <div className="absolute right-4 top-16 z-40 w-72 rounded-lg border bg-card/95 backdrop-blur shadow-lg animate-in slide-in-from-right-4 duration-200">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <span className="text-sm font-semibold">
@@ -37,7 +47,7 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
 
       {/* Layer rows */}
       <div className="p-2 space-y-0.5">
-        {ALL_LAYER_IDS.map((id) => {
+        {PANEL_LAYER_IDS.map((id) => {
           const config = LAYER_CONFIGS[id];
           const active = visibility[id];
 

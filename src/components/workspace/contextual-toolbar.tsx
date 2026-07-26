@@ -3,7 +3,6 @@
 import React from "react";
 import type { FloorGeometry } from "@/lib/building-geometry";
 import type { BuildingEra } from "@/lib/material-types";
-import { formatArea } from "@/lib/constants";
 import { useAppStore } from "@/store/app-store";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useWorkspaceStore } from "@/store/workspace-store";
@@ -27,11 +26,6 @@ import { ModeIndicator } from "./mode-indicator";
 export interface ContextualToolbarProps {
   /** View change handler — passed from building-scene parent */
   onViewChange: (view: "front" | "side" | "top" | "iso") => void;
-  /** Panel toggle handlers */
-  onToggleConfigPanel?: () => void;
-  configPanelOpen?: boolean;
-  onToggleLayerPanel?: () => void;
-  layerPanelOpen?: boolean;
   /** Building info for badges */
   buildingName?: string;
   era?: BuildingEra;
@@ -40,41 +34,27 @@ export interface ContextualToolbarProps {
 }
 
 // ---------------------------------------------------------------------------
-// PropActions — prop-based handlers for panel toggles
+// Toggle state — every `activeWhen` expression maps to exactly one
+// workspace-store field. The toolbar reads the store directly, and actions
+// dispatch store methods directly: panel state has a single source of truth
+// (no prop mirroring, no double dispatch).
 // ---------------------------------------------------------------------------
 
-interface PropActions {
-  onToggleConfigPanel?: () => void;
-  configPanelOpen?: boolean;
-  onToggleLayerPanel?: () => void;
-  layerPanelOpen?: boolean;
-}
-
-// ---------------------------------------------------------------------------
-// resolveCondition — evaluate activeWhen/visibleWhen expressions
-// ---------------------------------------------------------------------------
+type ToolbarConditions = Record<string, boolean>;
 
 function resolveCondition(
   expr: string | undefined,
-  props: PropActions,
+  conditions: ToolbarConditions,
 ): boolean {
   if (!expr) return false;
-
-  if (expr === "configPanelOpen") return !!props.configPanelOpen;
-  if (expr === "layerPanelOpen") return !!props.layerPanelOpen;
-
-  return false;
+  return !!conditions[expr];
 }
 
 // ---------------------------------------------------------------------------
 // dispatchAction — dispatch a TOOLBAR_ACTIONS descriptor via store.getState()
 // ---------------------------------------------------------------------------
 
-function dispatchAction(
-  item: ToolbarItem,
-  isActive: boolean,
-  props: PropActions,
-): void {
+function dispatchAction(item: ToolbarItem, isActive: boolean): void {
   const descriptor = TOOLBAR_ACTIONS[item.id];
   if (!descriptor) return;
 
@@ -92,13 +72,6 @@ function dispatchAction(
   if (typeof method === "function") {
     (method as (...a: unknown[]) => void)(...(descriptor.args ?? []));
   }
-
-  // Mirror panel state via props callbacks
-  if (descriptor.method === "toggleConfigPanel") {
-    props.onToggleConfigPanel?.();
-  } else if (descriptor.method === "toggleLayerPanel") {
-    props.onToggleLayerPanel?.();
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -108,21 +81,21 @@ function dispatchAction(
 function ToolbarItemRenderer({
   item,
   isKo,
-  props,
+  conditions,
 }: {
   item: ToolbarItem;
   isKo: boolean;
-  props: PropActions;
+  conditions: ToolbarConditions;
 }) {
   if (item.type === "separator") {
     return <VerticalDivider />;
   }
 
-  if (item.visibleWhen && !resolveCondition(item.visibleWhen, props)) {
+  if (item.visibleWhen && !resolveCondition(item.visibleWhen, conditions)) {
     return null;
   }
 
-  const isActive = resolveCondition(item.activeWhen, props);
+  const isActive = resolveCondition(item.activeWhen, conditions);
   const Icon = item.icon;
 
   return (
@@ -130,7 +103,7 @@ function ToolbarItemRenderer({
       variant={isActive ? "default" : "ghost"}
       size="icon"
       className="h-7 w-7"
-      onClick={() => dispatchAction(item, isActive, props)}
+      onClick={() => dispatchAction(item, isActive)}
       title={isKo ? item.labelKo : item.labelEn}
     >
       {Icon && <Icon className="h-3.5 w-3.5" />}
@@ -145,11 +118,11 @@ function ToolbarItemRenderer({
 function ToolbarGroupRenderer({
   group,
   isKo,
-  props,
+  conditions,
 }: {
   group: ToolbarGroup;
   isKo: boolean;
-  props: PropActions;
+  conditions: ToolbarConditions;
 }) {
   return (
     <>
@@ -158,7 +131,7 @@ function ToolbarGroupRenderer({
           key={item.id}
           item={item}
           isKo={isKo}
-          props={props}
+          conditions={conditions}
         />
       ))}
     </>
@@ -172,11 +145,11 @@ function ToolbarGroupRenderer({
 function StageToolbar({
   stage,
   isKo,
-  props,
+  conditions,
 }: {
   stage: string;
   isKo: boolean;
-  props: PropActions;
+  conditions: ToolbarConditions;
 }) {
   const groups = TOOLBAR_CONFIGS[stage as keyof typeof TOOLBAR_CONFIGS] ?? [];
   if (groups.length === 0) return null;
@@ -188,7 +161,7 @@ function StageToolbar({
           <ToolbarGroupRenderer
             group={group}
             isKo={isKo}
-            props={props}
+            conditions={conditions}
           />
         </React.Fragment>
       ))}
@@ -242,21 +215,15 @@ function GlobalToolbarSection({
 
 export function ContextualToolbar({
   onViewChange,
-  onToggleConfigPanel,
-  configPanelOpen,
-  onToggleLayerPanel,
-  layerPanelOpen,
   buildingName,
   era,
   selectedFloor: _selectedFloor,
 }: ContextualToolbarProps) {
   const isKo = useAppStore((s) => s.language) === "ko";
   const stage = useWorkflowStore((s) => s.stage);
+  const layerPanelOpen = useWorkspaceStore((s) => s.layerPanelOpen);
 
-  const propActions: PropActions = {
-    onToggleConfigPanel,
-    configPanelOpen,
-    onToggleLayerPanel,
+  const conditions: ToolbarConditions = {
     layerPanelOpen,
   };
 
@@ -289,7 +256,7 @@ export function ContextualToolbar({
         <StageToolbar
           stage={stage}
           isKo={isKo}
-          props={propActions}
+          conditions={conditions}
         />
 
         {/* Spacer */}

@@ -5,6 +5,7 @@
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import { computeCoreLayout } from "./core-layout";
 import {
   ASSET_NATIVE_DIMS,
   getEquipmentGeometryClone,
@@ -85,7 +86,7 @@ export class TransportLayer implements LayerGenerator {
     const group = new THREE.Group();
     group.name = "layer-12-transport";
 
-    const { floors, footprintWidth, footprintDepth, totalHeight } = recipe;
+    const { floors, totalHeight } = recipe;
     const aboveFloors = floors.filter((f) => f.type === "above");
     if (aboveFloors.length === 0) {
       this.group = group;
@@ -96,27 +97,17 @@ export class TransportLayer implements LayerGenerator {
     const avgFloorHeight =
       floorCount > 0 ? totalHeight / floorCount : 3.5;
 
-    // Shaft count based on building size
-    const shaftCount = floorCount < 6 ? 1 : floorCount < 15 ? 2 : 3;
-    const shaftWidth = 1.6;
-    const shaftDepth = 2.0;
+    // Shaft bank comes from the shared parametric core layout: positioned
+    // against the rear (-Z) wall and sized to the footprint, so the shafts
+    // no longer punch through the centre of the floor plate (where the
+    // cooling riser, boiler, and DHW tanks used to interpenetrate them).
+    const { elevator } = computeCoreLayout(recipe);
+    const shaftPositions = elevator.shafts;
+    const shaftWidth = elevator.shaftWidth;
+    const shaftDepth = elevator.shaftDepth;
     const cabWidth = shaftWidth * 0.75;
     const cabDepth = shaftDepth * 0.75;
     const cabHeight = Math.min(2.6, avgFloorHeight * 0.75);
-
-    // Position shafts near building core
-    const shaftPositions: { x: number; z: number }[] = [];
-    if (shaftCount === 1) {
-      shaftPositions.push({ x: 0, z: 0 });
-    } else {
-      const totalSpan = (shaftCount - 1) * (shaftWidth + 0.6);
-      for (let i = 0; i < shaftCount; i++) {
-        shaftPositions.push({
-          x: -totalSpan / 2 + i * (shaftWidth + 0.6),
-          z: 0,
-        });
-      }
-    }
 
     const mat4 = new THREE.Matrix4();
     const pos = new THREE.Vector3();
@@ -134,16 +125,11 @@ export class TransportLayer implements LayerGenerator {
     // this element kind, rather than one IM per shaft.
     const doorPositions: { x: number; y: number; z: number; scale: number }[] = [];
     const doorNativeHeight = ASSET_NATIVE_DIMS["landing-door"].h;
-    // Doors mount on the shaft's front face. The front face is the +X local
-    // side of the shaft box — established by the existing floor-indicator
-    // placement below (`sp.x + shaftWidth / 2 + 0.02`, with a comment noting
-    // it is "parallel to shaft front face"). Rotate 90° about Y so the
-    // door's thin native axis (d=0.12, its hinge/thickness axis) points
-    // along the face normal (world +X) instead of world +Z.
-    const doorQuat = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(0, 1, 0),
-      Math.PI / 2
-    );
+    // Doors mount on the shaft's front face. With the bank now against the
+    // rear (-Z) wall, the front face is the interior-facing +Z side of the
+    // shaft box. The door's thin native axis (d=0.12, its hinge/thickness
+    // axis) already points along world +Z, so no rotation is needed.
+    const doorQuat = new THREE.Quaternion();
 
     for (let si = 0; si < shaftPositions.length; si++) {
       const sp = shaftPositions[si];
@@ -208,14 +194,12 @@ export class TransportLayer implements LayerGenerator {
       );
       indicatorIM.userData = { type: "transport-floor-indicator" };
 
-      // Rotate to face outward (parallel to shaft front face)
-      const indQuat = new THREE.Quaternion().setFromAxisAngle(
-        new THREE.Vector3(0, 1, 0),
-        0
-      );
+      // Indicators face the interior (+Z) — the same side the landing doors
+      // mount on now that the bank backs onto the rear wall.
+      const indQuat = new THREE.Quaternion();
       for (let fi = 0; fi < floorCount; fi++) {
         const floorY = aboveFloors[fi].y + aboveFloors[fi].height * 0.5;
-        pos.set(sp.x + shaftWidth / 2 + 0.02, floorY, sp.z);
+        pos.set(sp.x, floorY, sp.z + shaftDepth / 2 + 0.02);
         mat4.compose(pos, indQuat, scl);
         indicatorIM.setMatrixAt(fi, mat4);
       }
@@ -343,7 +327,7 @@ export class TransportLayer implements LayerGenerator {
         group.add(hoistAsset);
       }
 
-      // --- Landing-door placements for this shaft (front face, +X side) ---
+      // --- Landing-door placements for this shaft (front face, +Z side) ---
       // Collected here; the combined single IM is built once after the
       // shaft loop (detailed-asset-only — no coarse fallback).
       for (const floor of aboveFloors) {
@@ -358,9 +342,9 @@ export class TransportLayer implements LayerGenerator {
           Math.min(1, (floor.height - 0.15) / doorNativeHeight)
         );
         doorPositions.push({
-          x: sp.x + shaftWidth / 2,
+          x: sp.x,
           y: floor.y + (doorNativeHeight * doorScale) / 2,
-          z: sp.z,
+          z: sp.z + shaftDepth / 2,
           scale: doorScale,
         });
       }

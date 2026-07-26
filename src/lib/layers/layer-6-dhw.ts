@@ -10,6 +10,7 @@ import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
 import type { DhwParams } from "./mep-equipment-params";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
+import { computeCoreLayout } from "./core-layout";
 import {
   ASSET_NATIVE_DIMS,
   getEquipmentObjectClone,
@@ -80,6 +81,13 @@ export class DHWLayer implements LayerGenerator {
     const hw = footprintWidth / 2;
     const hd = footprintDepth / 2;
 
+    // Shared parametric core layout: the DHW tank cluster gets the -X side
+    // of the basement plant room (the boiler owns the centre, the GSHP the
+    // +X side), and the vertical risers run beside the wet riser at the rear
+    // core instead of through the footprint centre.
+    const layout = computeCoreLayout(recipe);
+    const dhwBase = layout.basementDhw;
+
     // --- Pipe material ---
     const pipeMat = new THREE.MeshStandardMaterial({
       color: DHW_ORANGE,
@@ -118,7 +126,7 @@ export class DHWLayer implements LayerGenerator {
         dhwParams.tankHeight / native.h,
         radialScale
       );
-      tankAsset.position.set(0.8, plantFloorY, 0.5);
+      tankAsset.position.set(dhwBase.x + 0.8, plantFloorY, dhwBase.z);
       tagEquipmentObject(
         tankAsset,
         { type: "dhw-storage-tank" },
@@ -128,7 +136,7 @@ export class DHWLayer implements LayerGenerator {
     } else {
       const tankGeo = buildTankGeometry(dhwParams);
       const tank = new THREE.Mesh(tankGeo, tankMat);
-      tank.position.set(0.8, basementY, 0.5);
+      tank.position.set(dhwBase.x + 0.8, basementY, dhwBase.z);
       tank.userData = { type: "dhw-storage-tank" };
       group.add(tank);
     }
@@ -145,7 +153,7 @@ export class DHWLayer implements LayerGenerator {
         radialScale
       );
       // Base on the shared plant floor (fixes the previous 0.36 m float).
-      tank2Asset.position.set(-0.8, plantFloorY, 0.5);
+      tank2Asset.position.set(dhwBase.x - 0.8, plantFloorY, dhwBase.z);
       tagEquipmentObject(
         tank2Asset,
         { type: "dhw-recirc-tank" },
@@ -161,14 +169,14 @@ export class DHWLayer implements LayerGenerator {
       );
       const tank2 = new THREE.Mesh(tank2Geo, tankMat);
       // Centre-origin cylinder: base on the shared plant floor.
-      tank2.position.set(-0.8, plantFloorY + dhwParams.tankHeight * 0.4, 0.5);
+      tank2.position.set(dhwBase.x - 0.8, plantFloorY + dhwParams.tankHeight * 0.4, dhwBase.z);
       tank2.userData = { type: "dhw-recirc-tank" };
       group.add(tank2);
     }
 
     // --- Circulation pump — detailed end-suction pump set or merged fallback ---
     if (dhwParams.showPump) {
-      const pumpX = 0.8 + dhwParams.tankRadius + 0.6;
+      const pumpX = dhwBase.x + 0.8 + dhwParams.tankRadius + 0.6;
       const pumpAsset = getEquipmentObjectClone("dhw-pump");
       if (pumpAsset) {
         // Base-origin asset: baseplate rests on the plant floor (fixes the
@@ -194,11 +202,13 @@ export class DHWLayer implements LayerGenerator {
       }
     }
 
-    // --- Vertical risers in core shaft (strict CylinderGeometry) ---
-    // Two risers: supply and return, slightly offset in core
+    // --- Vertical risers in the rear service core (strict CylinderGeometry) ---
+    // Two risers: supply and return, offset beside the shared wet riser so
+    // they read as one pipe shaft next to the elevator bank (previously they
+    // ran through the footprint centre, inside the old elevator shaft).
     const riserPositions = [
-      { x: 0.15, z: 0.15 },  // Supply
-      { x: -0.15, z: -0.15 }, // Return (slightly thinner)
+      { x: layout.serviceRiser.x - 0.35, z: layout.serviceRiser.z + 0.15 },  // Supply
+      { x: layout.serviceRiser.x - 0.35, z: layout.serviceRiser.z - 0.15 }, // Return (slightly thinner)
     ];
     const riserRadii = [PIPE_RADIUS * 1.5, PIPE_RADIUS * 1.2];
 

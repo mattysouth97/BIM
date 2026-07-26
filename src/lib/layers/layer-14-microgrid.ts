@@ -5,6 +5,7 @@
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import { computeCoreLayout } from "./core-layout";
 import {
   getEquipmentGeometryClone,
   getEquipmentMaterialClone,
@@ -129,6 +130,13 @@ export class MicrogridLayer implements LayerGenerator {
     const halfW = footprintWidth / 2;
     const halfD = footprintDepth / 2;
 
+    // Shared parametric core layout: the vertical backbone runs beside the
+    // elevator bank (previously at x=0, straight through the centre shaft),
+    // and the PV grid skips the rear roof band reserved for plant equipment.
+    const layout = computeCoreLayout(recipe);
+    const riserX = layout.electricalRiser.x;
+    const riserZ = layout.electricalRiser.z;
+
     const mat4 = new THREE.Matrix4();
     const pos = new THREE.Vector3();
     const quat = new THREE.Quaternion();
@@ -187,6 +195,8 @@ export class MicrogridLayer implements LayerGenerator {
           roofInset +
           (pvPanelDepth + pvSpacing) * 0.5 +
           cz * (pvPanelDepth + pvSpacing);
+        // Rear roof band is reserved for plant (hoists, chiller, ASHP row)
+        if (z < layout.roofPlantBandMaxZ) continue;
         pos.set(x, totalHeight + 0.15, z);
         mat4.compose(pos, pvTiltQuat, scl);
         pvIM.setMatrixAt(pvIdx++, mat4);
@@ -229,6 +239,8 @@ export class MicrogridLayer implements LayerGenerator {
           roofInset +
           (pvPanelDepth + pvSpacing) * 0.5 +
           cz * (pvPanelDepth + pvSpacing);
+        // Same rear plant-band skip as the panel loop above
+        if (z < layout.roofPlantBandMaxZ) continue;
         pos.set(x, totalHeight + 0.14, z);
         mat4.compose(pos, pvTiltQuat, scl);
         pvFrameIM.setMatrixAt(pvIdx++, mat4);
@@ -337,7 +349,7 @@ export class MicrogridLayer implements LayerGenerator {
       roughness: 0.3,
     });
     const backbone = new THREE.Mesh(backboneGeo, backboneMat);
-    backbone.position.set(0, (totalHeight + 2) / 2 - 1, -halfD + 1.5);
+    backbone.position.set(riserX, (totalHeight + 2) / 2 - 1, riserZ);
     backbone.userData = { type: "microgrid-backbone" };
     group.add(backbone);
 
@@ -347,15 +359,15 @@ export class MicrogridLayer implements LayerGenerator {
     // 2 splines: roof-to-basement (generating) and basement-to-midfloor (consuming)
     const splines = [
       {
-        x: -0.2,
-        z: -halfD + 1.5,
+        x: riserX - 0.2,
+        z: riserZ,
         dir: 1.0,
         minY: basementY,
         maxY: totalHeight + 0.5,
       }, // generating: roof->basement
       {
-        x: 0.2,
-        z: -halfD + 1.5,
+        x: riserX + 0.2,
+        z: riserZ,
         dir: -1.0,
         minY: basementY,
         maxY: totalHeight * 0.6,
@@ -425,7 +437,7 @@ export class MicrogridLayer implements LayerGenerator {
       const conduitGeo = new THREE.CylinderGeometry(0.03, 0.03, footprintDepth * 0.5, 6);
       conduitGeo.rotateX(Math.PI / 2);
       const conduit = new THREE.Mesh(conduitGeo, conduitMat);
-      conduit.position.set(0, conduitY, -halfD + 1.5 + footprintDepth * 0.25);
+      conduit.position.set(riserX, conduitY, riserZ + footprintDepth * 0.25);
       conduit.userData = { type: "microgrid-floor-conduit" };
       group.add(conduit);
     }
