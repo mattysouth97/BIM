@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback, useMemo, lazy, Suspense } from "react";
-import { Building2, AlertTriangle, MapPin, Search, Download, LayoutGrid, X } from "lucide-react";
+import Link from "next/link";
+import { Building2, AlertTriangle, Box, MapPin, Search, Download, LayoutGrid, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import { useBuildingSearch } from "@/hooks/use-building-search";
 import { useCampusBuildings } from "@/hooks/use-campus-buildings";
 import { compareBuildings } from "@/lib/campus/comparison-engine";
 import { exportToCsv, exportToJson } from "@/lib/export";
+import { DEMO_BUILDING_ID } from "@/lib/constants";
 import type { SearchBuildingsParams } from "@/lib/api-client";
 import type { BrTitleInfo } from "@/lib/types";
 import type { BuildingMetrics } from "@/lib/campus/portfolio-aggregator";
@@ -257,7 +259,7 @@ export default function Home() {
 
       {/* API key banner — only after hydration to avoid SSR mismatch */}
       {hydrated && !apiKey && (
-        <div className="mb-8 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/50">
+        <div className="mb-8 flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center dark:border-amber-900 dark:bg-amber-950/50">
           <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div className="flex-1">
             <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
@@ -265,10 +267,21 @@ export default function Home() {
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300">
               {isKo
-                ? "오른쪽 상단의 열쇠 아이콘을 클릭하여 API 키를 설정하세요."
-                : "Click the key icon in the top-right corner to set your API key."}
+                ? "오른쪽 상단의 열쇠 아이콘으로 API 키를 설정하거나, API 키 없이 데모 건물을 먼저 체험해 보세요."
+                : "Set your API key via the key icon in the top-right, or explore the demo building first — no key needed."}
             </p>
           </div>
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="shrink-0 gap-2 self-start border-amber-300 bg-white/70 text-amber-900 hover:bg-white sm:self-auto dark:border-amber-800 dark:bg-transparent dark:text-amber-200"
+          >
+            <Link href={`/building/${DEMO_BUILDING_ID}`}>
+              <Box className="h-4 w-4" />
+              {isKo ? "데모 건물 보기" : "View demo building"}
+            </Link>
+          </Button>
         </div>
       )}
 

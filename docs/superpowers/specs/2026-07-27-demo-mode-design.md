@@ -1,7 +1,7 @@
 # Demo Mode (데모모드) — Design
 
 Date: 2026-07-27
-Status: Proposed — implementation follows in branch `claude/demo-mode-no-api-key-84ec4b`
+Status: Implemented in branch `claude/demo-mode-no-api-key-84ec4b`
 
 ## Problem
 

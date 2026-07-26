@@ -88,6 +88,40 @@ export const ROOF_CODES: Record<string, { ko: string; en: string }> = {
 };
 
 // ─────────────────────────────────────────────
+// Demo mode (데모모드)
+// ─────────────────────────────────────────────
+
+/** Reserved URL slug for the bundled demo building: /building/demo */
+export const DEMO_BUILDING_ID = "demo";
+
+/** mgmBldrgstPk carried by every demo fixture row — lets the UI label sample data */
+export const DEMO_BUILDING_PK = "DEMO-00000-00000";
+
+/**
+ * Sentinel ledger params for the demo building. No real 시군구/법정동 uses
+ * code 00000, so the sentinel can never collide with a live record.
+ * api-client short-circuits requests carrying both sentinel codes to the
+ * bundled fixtures in src/lib/demo/demo-building.ts — no network, no key.
+ */
+export const DEMO_BUILDING_PARAMS = {
+  sigunguCd: "00000",
+  bjdongCd: "00000",
+  platGbCd: "0",
+  bun: "0000",
+  ji: "0000",
+};
+
+export function isDemoParams(params: {
+  sigunguCd?: string;
+  bjdongCd?: string;
+}): boolean {
+  return (
+    params.sigunguCd === DEMO_BUILDING_PARAMS.sigunguCd &&
+    params.bjdongCd === DEMO_BUILDING_PARAMS.bjdongCd
+  );
+}
+
+// ─────────────────────────────────────────────
 // Building ID encoding
 // ─────────────────────────────────────────────
 export function encodeBuildingId(
@@ -101,6 +135,7 @@ export function encodeBuildingId(
 }
 
 export function decodeBuildingId(id: string) {
+  if (id === DEMO_BUILDING_ID) return { ...DEMO_BUILDING_PARAMS };
   const [sigunguCd, bjdongCd, platGbCd, bun, ji] = id.split("-");
   return { sigunguCd, bjdongCd, platGbCd, bun, ji };
 }
