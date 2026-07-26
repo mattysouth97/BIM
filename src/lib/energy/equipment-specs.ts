@@ -490,6 +490,29 @@ export function inferEquipmentSpecs(
     }
 
     // -----------------------------------------------------------------------
+    // Telecom / IT — telecom-* (server racks, WAPs, CCTV, rooftop antenna)
+    // -----------------------------------------------------------------------
+    // Note: "media-*" (layer-8, med-gas / compressed-air corridors) is
+    // intentionally NOT handled here — passive tubing/valves carry no
+    // standing electrical draw of their own, so it falls through to default.
+    case "telecom": {
+      const grade = ELECTRICAL_ERA_GRADE[era];
+      // ICT infrastructure: ~2 W/m² continuous rack/WAP/CCTV load, 24/7.
+      const annualKwh = Math.round((floorArea * floorCount * 2) / 1000 * 8760);
+
+      return buildSpec({
+        categoryKo:  "통신설비",
+        categoryEn:  "ICT Infrastructure",
+        capacity:    "—",
+        installYear,
+        annualKwh:   Math.max(annualKwh, 1),
+        grade,
+        dataSource:  "estimated-from-era",
+        standardRef: "KSC IEC 62301",
+      });
+    }
+
+    // -----------------------------------------------------------------------
     // Unknown / fallback
     // -----------------------------------------------------------------------
     default: {

@@ -5,6 +5,10 @@
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import {
+  ASSET_NATIVE_DIMS,
+  getEquipmentGeometryClone,
+} from "@/lib/equipment-assets";
 
 /** Colors for different media types: purple (med-gas), green (compressed air) */
 const MEDIA_PURPLE = 0xa855f7;
@@ -225,7 +229,27 @@ export class MediaLayer implements LayerGenerator {
     }
 
     // --- Valve boxes at riser tops (boxes at each riser, top floor) ---
-    const valveGeo = new THREE.BoxGeometry(0.2, 0.15, 0.2);
+    // Detailed Blender asset when preloaded — geometry-only swap; the
+    // material and matrices below are unchanged. Fallback = existing
+    // BoxGeometry when the cache is empty. Note the asset's native depth
+    // (0.12) differs from the existing box's depth (0.2), so the d-axis
+    // scale factor is not 1:1 like w/h.
+    const valveWidth = 0.2;
+    const valveHeight = 0.15;
+    const valveDepth = 0.2;
+    const valveAssetGeo = getEquipmentGeometryClone("gas-valve-station");
+    let valveGeo: THREE.BufferGeometry;
+    if (valveAssetGeo) {
+      const native = ASSET_NATIVE_DIMS["gas-valve-station"];
+      valveAssetGeo.scale(
+        valveWidth / native.w,
+        valveHeight / native.h,
+        valveDepth / native.d
+      );
+      valveGeo = valveAssetGeo;
+    } else {
+      valveGeo = new THREE.BoxGeometry(valveWidth, valveHeight, valveDepth);
+    }
     const valveMat = new THREE.MeshStandardMaterial({
       color: 0xe0e0e0,
       metalness: 0.9,

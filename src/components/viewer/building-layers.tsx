@@ -22,6 +22,8 @@ import { MicrogridLayer } from "@/lib/layers/layer-14-microgrid";
 import { BASLayer } from "@/lib/layers/layer-10-bas";
 import { SafetyLayer } from "@/lib/layers/layer-13-safety";
 import { TransportLayer } from "@/lib/layers/layer-12-transport";
+import { TelecomLayer } from "@/lib/layers/layer-11-telecom";
+import { MediaLayer } from "@/lib/layers/layer-8-media";
 import { useEquipmentAssets } from "@/hooks/use-equipment-assets";
 import {
   setupMepSubGroups,
@@ -251,6 +253,14 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     // landing doors, and hoist machines
     const transportOutput = new TransportLayer().generate(effectiveRecipe, mepDensity);
     assignToSubGroup(mepGroup, transportOutput.name, transportOutput);
+
+    // Telecom / IT: server racks, fiber backbone, WAPs, CCTV, rooftop antenna
+    const telecomOutput = new TelecomLayer().generate(effectiveRecipe, mepDensity);
+    assignToSubGroup(mepGroup, telecomOutput.name, telecomOutput);
+
+    // Specialized media: med-gas / compressed-air Manhattan-routed corridors
+    const mediaOutput = new MediaLayer().generate(effectiveRecipe, mepDensity);
+    assignToSubGroup(mepGroup, mediaOutput.name, mediaOutput);
   }, [effectiveRecipe, equipmentParams, density, equipmentAssetsReady, equipmentScenario]);
 
   // Animation loop — update ShaderMaterial uniforms each frame

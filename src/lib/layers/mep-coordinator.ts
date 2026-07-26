@@ -39,9 +39,10 @@ export function setupMepSubGroups(mepGroup: THREE.Group): Map<MepSubLayerId, THR
  * Routes a generator's output group into the correct MEP sub-group (or directly to the
  * MEP group if the generator is unmapped).
  *
- * Mapped generators (layers 1, 3–7, 9) are placed inside their named sub-group so they
- * can be toggled independently. Unmapped generators (layers 8, 10–14) are added directly
- * to the MEP group — they remain visible under the main MEP toggle but have no sub-toggle.
+ * Mapped generators are placed inside their named sub-group so they can be toggled
+ * independently. Unmapped generators are added directly to the MEP group — they remain
+ * visible under the main MEP toggle but have no sub-toggle. See GENERATOR_TO_MEP_SUB in
+ * ./types.ts for the current mapping.
  *
  * @param mepGroup        - The main MEP THREE.Group
  * @param generatorGroupName - The .name of the generator's output group (e.g. "layer-3-cooling")
@@ -69,7 +70,7 @@ export function assignToSubGroup(
       mepGroup.add(generatorOutput);
     }
   } else {
-    // Unmapped generator (layer-8-media, layer-10-bas, etc.) — add flat to MEP group
+    // Unmapped generator (no entry in GENERATOR_TO_MEP_SUB) — add flat to MEP group
     mepGroup.add(generatorOutput);
   }
 }

@@ -60,7 +60,13 @@ export type EquipmentAssetId =
   | "elevator-cab"
   | "elevator-counterweight"
   | "hoist-machine"
-  | "landing-door";
+  | "landing-door"
+  // Telecom / media kit
+  | "comm-rack"
+  | "wifi-ap"
+  | "cctv-camera"
+  | "antenna-mast"
+  | "gas-valve-station";
 
 export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "chiller",
@@ -99,6 +105,11 @@ export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "elevator-counterweight",
   "hoist-machine",
   "landing-door",
+  "comm-rack",
+  "wifi-ap",
+  "cctv-camera",
+  "antenna-mast",
+  "gas-valve-station",
 ];
 
 const ASSET_BASE_PATH = "/models/equipment";
@@ -152,6 +163,13 @@ export const ASSET_NATIVE_DIMS: Record<
   "elevator-counterweight": { w: 0.3, h: 1.3, d: 0.45 },
   "hoist-machine": { w: 1.2, h: 1.0, d: 0.8 },
   "landing-door": { w: 1.1, h: 2.1, d: 0.12 },
+  // Telecom / media kit — native dims from verified glTF bounds
+  // (three.js axes: w=X, h=Y-up, d=Z).
+  "comm-rack": { w: 0.6, h: 2.0, d: 0.8 },
+  "wifi-ap": { w: 0.18, h: 0.045, d: 0.18 },
+  "cctv-camera": { w: 0.14, h: 0.16, d: 0.14 },
+  "antenna-mast": { w: 1.0, h: 2.6, d: 1.0 },
+  "gas-valve-station": { w: 0.2, h: 0.15, d: 0.12 },
 };
 
 interface CachedAsset {

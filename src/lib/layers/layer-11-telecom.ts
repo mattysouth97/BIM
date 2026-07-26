@@ -5,6 +5,12 @@
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import {
+  ASSET_NATIVE_DIMS,
+  getEquipmentGeometryClone,
+  getEquipmentObjectClone,
+  tagEquipmentObject,
+} from "@/lib/equipment-assets";
 
 /** Vertex shader for high-speed data pulse along fiber lines */
 const fiberPulseVertexShader = /* glsl */ `
@@ -69,7 +75,28 @@ export class TelecomLayer implements LayerGenerator {
     const serverRoomY = -0.5; // slightly below ground (basement)
     const rackCount = Math.max(2, Math.min(6, Math.floor(footprintWidth / 4)));
 
-    const rackGeo = new THREE.BoxGeometry(0.6, 2.0, 0.8);
+    // Detailed Blender asset when preloaded — geometry-only swap; the
+    // material, matrices, and userData below are unchanged. Fallback =
+    // existing BoxGeometry when the cache is empty. Scale factors are
+    // computed generically against ASSET_NATIVE_DIMS so a future change to
+    // the comm-rack GLB's authored dims won't silently desync from these
+    // box dims (which are currently 1:1 with the native asset).
+    const rackWidth = 0.6;
+    const rackHeight = 2.0;
+    const rackDepth = 0.8;
+    const rackAssetGeo = getEquipmentGeometryClone("comm-rack");
+    let rackGeo: THREE.BufferGeometry;
+    if (rackAssetGeo) {
+      const native = ASSET_NATIVE_DIMS["comm-rack"];
+      rackAssetGeo.scale(
+        rackWidth / native.w,
+        rackHeight / native.h,
+        rackDepth / native.d
+      );
+      rackGeo = rackAssetGeo;
+    } else {
+      rackGeo = new THREE.BoxGeometry(rackWidth, rackHeight, rackDepth);
+    }
     const rackMat = new THREE.MeshStandardMaterial({
       color: 0x1e1e2e,
       metalness: 0.7,
@@ -215,7 +242,26 @@ export class TelecomLayer implements LayerGenerator {
     }
 
     // --- WAP discs on ceilings ---
-    const wapGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.04, 12);
+    // Detailed Blender asset when preloaded — geometry-only swap; material
+    // and matrices below are unchanged. Fallback = existing
+    // CylinderGeometry when the cache is empty. The cylinder's diameter
+    // (2x radius) maps to the asset's w/d native axes.
+    const wapRadius = 0.15;
+    const wapHeight = 0.04;
+    const wapDiameter = wapRadius * 2;
+    const wapAssetGeo = getEquipmentGeometryClone("wifi-ap");
+    let wapGeo: THREE.BufferGeometry;
+    if (wapAssetGeo) {
+      const native = ASSET_NATIVE_DIMS["wifi-ap"];
+      wapAssetGeo.scale(
+        wapDiameter / native.w,
+        wapHeight / native.h,
+        wapDiameter / native.d
+      );
+      wapGeo = wapAssetGeo;
+    } else {
+      wapGeo = new THREE.CylinderGeometry(wapRadius, wapRadius, wapHeight, 12);
+    }
     const wapMat = new THREE.MeshStandardMaterial({
       color: 0xf0f0f0,
       metalness: 0.4,
@@ -255,6 +301,66 @@ export class TelecomLayer implements LayerGenerator {
     wapIM.count = wIdx;
     wapIM.instanceMatrix.needsUpdate = true;
     group.add(wapIM);
+
+    // --- CCTV cameras at the 4 core-corner ceiling positions per floor ---
+    // Detailed-asset-only — no coarse fallback for this element kind, so
+    // with an empty cache none of this is added.
+    const cctvGeo = getEquipmentGeometryClone("cctv-camera");
+    if (cctvGeo) {
+      const cctvMat = new THREE.MeshStandardMaterial({
+        color: 0x475569,
+        emissive: 0x22d3ee,
+        emissiveIntensity: 0.2,
+      });
+      const cctvCornerPositions = [
+        { x: 1.5, z: 1.2 },
+        { x: 1.5, z: -1.2 },
+        { x: -1.5, z: 1.2 },
+        { x: -1.5, z: -1.2 },
+      ];
+      const cctvIM = new THREE.InstancedMesh(
+        cctvGeo,
+        cctvMat,
+        cctvCornerPositions.length * aboveFloors.length
+      );
+      cctvIM.userData = { type: "telecom-cctv" };
+
+      let cIdx = 0;
+      for (const floor of aboveFloors) {
+        const ceilingY = floor.y + floor.height - 0.25;
+        for (const cp of cctvCornerPositions) {
+          pos.set(cp.x, ceilingY, cp.z);
+          mat4.compose(pos, quat, scl);
+          cctvIM.setMatrixAt(cIdx++, mat4);
+        }
+      }
+      cctvIM.count = cIdx;
+      cctvIM.instanceMatrix.needsUpdate = true;
+      group.add(cctvIM);
+    }
+
+    // --- Rooftop antenna mast (detailed-asset-only) ---
+    // Only placed on buildings large enough to plausibly need a rooftop
+    // telecom mast; gated on the smaller footprint dimension per the brief.
+    if (Math.min(footprintWidth, footprintDepth) >= 8) {
+      const antennaAsset = getEquipmentObjectClone("antenna-mast");
+      if (antennaAsset) {
+        const roofTopY =
+          totalHeight +
+          (recipe.roof?.type === "flat" ? recipe.roof.flatThickness : 0);
+        antennaAsset.position.set(
+          footprintWidth * 0.25,
+          roofTopY,
+          footprintDepth * 0.25
+        );
+        tagEquipmentObject(
+          antennaAsset,
+          { type: "telecom-antenna" },
+          { castShadow: true, receiveShadow: true }
+        );
+        group.add(antennaAsset);
+      }
+    }
 
     this.group = group;
     return group;
