@@ -27,8 +27,9 @@ so intercepting there makes every existing consumer (`useCompositeBuilding`,
   key, works offline.
 - `useBuildingFootprint` returns a bundled WGS84 L-shaped polygon when asked
   for the demo building's address, skipping the VWorld proxy call.
-- Home page: the existing "no API key" amber banner gains a
-  "데모 건물 보기 / View demo building" button linking to `/building/demo`.
+- Home page: a "데모 건물 둘러보기 / Explore the demo building" button sits in
+  the hero, always visible (not gated on the missing-key banner), linking to
+  `/building/demo`.
 - `BuildingToolbar` shows a small "데모" badge when
   `title.mgmBldrgstPk === DEMO_BUILDING_PK` so sample data is clearly labeled.
 
@@ -47,13 +48,17 @@ because the procedural curtain-wall facade, clean-texture era (2000+), and the
 GX retrofit/CAPEX features all showcase best on a commercial mid-rise.
 
 - 10 above-ground floors + 2 basements (주차장/기계실), 높이 41.5 m
-- L-shaped footprint ≈ 36 m × 28 m with a 16 m × 12 m notch → 건축면적 816 m²
+- Conventional rectangular parcel 34 m × 24 m → 건축면적 816 m². A plain
+  rectangle is the ordinary case for a mid-rise office on a city block; it
+  reads as a normal building to a first-time visitor, where an irregular
+  (L-shaped) parcel invites "is this a rendering bug?"
 - 대지면적 1,650 m² → 건폐율 49.45 %, 지상연면적 8,124 m² → 용적률 492.4 %
   (consistent with 일반상업지역 zoning fixture)
 - Fixture values are generated programmatically in
-  `src/lib/demo/demo-building.ts` so floor sums, counts, and ratios stay
-  internally consistent by construction.
-- Footprint is a closed WGS84 ring near 서울 강남구 테헤란로, in the
+  `src/lib/demo/demo-building.ts` so floor sums, counts, ratios, and the
+  footprint ring stay internally consistent by construction — 건축면적 is
+  literally the product of the two plan dimensions.
+- Footprint is a closed WGS84 ring in 서울 강남구 역삼동, in the
   `number[][][]` rings-of-`[lng, lat]` format `BuildingScene` projects.
 
 Downstream features that fetch per-building extras (energy actuals, twin data)

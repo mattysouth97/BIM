@@ -27,8 +27,14 @@ import type {
 const GROUND_FLOORS = 10;
 const BASEMENT_FLOORS = 2;
 
+// Conventional rectangular parcel — the ordinary case for a mid-rise office
+// on a city block. Plan dimensions drive 건축면적 so the model and the ledger
+// can never disagree.
+const FOOTPRINT_WIDTH_M = 34; // east–west
+const FOOTPRINT_DEPTH_M = 24; // north–south
+
 const PLAT_AREA = 1650; // 대지면적 (m²)
-const ARCH_AREA = 816; // 건축면적 = L-shape footprint area (36×16 + 20×12)
+const ARCH_AREA = FOOTPRINT_WIDTH_M * FOOTPRINT_DEPTH_M; // 건축면적 = 816 m²
 const FIRST_FLOOR_AREA = 780; // 1층 로비/근생 (코어 제외 축소)
 const UPPER_FLOOR_AREA = 816; // 2~10층 기준층
 const BASEMENT_AREA = 1150; // 지하 주차장/기계실 (footprint보다 넓게 굴착)
@@ -235,20 +241,33 @@ export const demoJijigu: BrJijiguInfo[] = [
 ];
 
 // ─────────────────────────────────────────────
-// Footprint — closed WGS84 ring of [lng, lat], L-shape ≈ 36 m × 28 m
-// with a 16 m × 12 m notch (area 816 m² = 건축면적). BuildingScene
-// projects these to local metres around the ring centroid.
+// Footprint — closed WGS84 ring of [lng, lat] for a plain rectangular parcel
+// (FOOTPRINT_WIDTH_M × FOOTPRINT_DEPTH_M) in 역삼동, a conventional Gangnam
+// office block. Generated from the metre dimensions so the drawn outline and
+// 건축면적 stay in lockstep; BuildingScene projects it to local metres.
 // ─────────────────────────────────────────────
+
+/** Parcel south-west corner (WGS84). */
+const SITE_ORIGIN_LNG = 127.0355;
+const SITE_ORIGIN_LAT = 37.501;
+
+// Metres per degree at the site latitude (WGS84 ellipsoid, φ ≈ 37.5°).
+const M_PER_DEG_LAT = 110_987;
+const M_PER_DEG_LNG = 88_425;
+
+const LNG_SPAN = FOOTPRINT_WIDTH_M / M_PER_DEG_LNG;
+const LAT_SPAN = FOOTPRINT_DEPTH_M / M_PER_DEG_LAT;
+
+const EAST = SITE_ORIGIN_LNG + LNG_SPAN;
+const NORTH = SITE_ORIGIN_LAT + LAT_SPAN;
 
 export const DEMO_FOOTPRINT: number[][][] = [
   [
-    [127.03550, 37.50100],
-    [127.0359076, 37.50100],
-    [127.0359076, 37.5011437],
-    [127.0357265, 37.5011437],
-    [127.0357265, 37.5012515],
-    [127.03550, 37.5012515],
-    [127.03550, 37.50100],
+    [SITE_ORIGIN_LNG, SITE_ORIGIN_LAT],
+    [EAST, SITE_ORIGIN_LAT],
+    [EAST, NORTH],
+    [SITE_ORIGIN_LNG, NORTH],
+    [SITE_ORIGIN_LNG, SITE_ORIGIN_LAT],
   ],
 ];
 

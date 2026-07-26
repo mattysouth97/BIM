@@ -22,6 +22,8 @@ import {
   demoFloors,
 } from "@/lib/demo/demo-building";
 import { searchBuildings, getFloorInfo } from "@/lib/api-client";
+import { createSceneProjection } from "@/lib/gis/gis-transform";
+import { ringBboxCenter } from "@/lib/gis/ring-utils";
 import { useAppStore } from "@/store/app-store";
 import type { BrFloorInfo } from "@/lib/types";
 
@@ -133,6 +135,46 @@ describe("demo fixture internal consistency", () => {
 // ─────────────────────────────────────────────
 
 describe("demo footprint", () => {
+  it("is a conventional rectangular parcel — 4 corners, all right angles", () => {
+    expect(DEMO_FOOTPRINT.length).toBe(1); // no holes
+    const outer = DEMO_FOOTPRINT[0];
+    expect(outer.length).toBe(5); // 4 corners + closing vertex
+
+    const [cx, cy] = ringBboxCenter(outer);
+    const proj = createSceneProjection(cx, cy);
+    const local = outer.slice(0, 4).map(([lng, lat]) => proj.project(lng, lat));
+
+    // Every interior angle is 90° — a plain rectangle, not an L or a wedge
+    for (let i = 0; i < 4; i++) {
+      const a = local[(i + 3) % 4];
+      const b = local[i];
+      const c = local[(i + 1) % 4];
+      const dot = (a[0] - b[0]) * (c[0] - b[0]) + (a[1] - b[1]) * (c[1] - b[1]);
+      expect(Math.abs(dot)).toBeLessThan(0.05);
+    }
+  });
+
+  it("matches the ledger's 건축면적 and reads as a normal office plate", () => {
+    const outer = DEMO_FOOTPRINT[0];
+    const [cx, cy] = ringBboxCenter(outer);
+    const proj = createSceneProjection(cx, cy);
+    const local = outer.slice(0, 4).map(([lng, lat]) => proj.project(lng, lat));
+
+    const xs = local.map((p) => p[0]);
+    const zs = local.map((p) => p[1]);
+    const width = Math.max(...xs) - Math.min(...xs);
+    const depth = Math.max(...zs) - Math.min(...zs);
+
+    expect(width).toBeCloseTo(34, 1);
+    expect(depth).toBeCloseTo(24, 1);
+    // Plan area equals the ledger's 건축면적 — the model and the numbers agree
+    expect(width * depth).toBeCloseTo(demoTitle.archArea, -1);
+    // Conventional plate proportion — neither a square nor a sliver
+    const aspect = width / depth;
+    expect(aspect).toBeGreaterThan(1.1);
+    expect(aspect).toBeLessThan(2.0);
+  });
+
   it("is a closed WGS84 ring with enough vertices inside Korea", () => {
     expect(DEMO_FOOTPRINT.length).toBeGreaterThanOrEqual(1);
     const outer = DEMO_FOOTPRINT[0];

@@ -254,12 +254,27 @@ export default function Home() {
               ? "공공데이터포털 API를 활용하여 전국 건축물대장 정보를 조회하세요."
               : "Look up building ledger records across Korea using the data.go.kr API."}
           </p>
+
+          {/* Demo entry — always available, no API key required */}
+          <div className="mt-2 flex flex-col items-center gap-2">
+            <Button asChild size="lg" variant="outline" className="gap-2">
+              <Link href={`/building/${DEMO_BUILDING_ID}`}>
+                <Box className="h-4 w-4" />
+                {isKo ? "데모 건물 둘러보기" : "Explore the demo building"}
+              </Link>
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              {isKo
+                ? "API 키 없이 3D 뷰어와 에너지·투자 분석을 바로 체험할 수 있습니다."
+                : "Try the 3D viewer and the energy/investment analysis — no API key needed."}
+            </p>
+          </div>
         </div>
       </section>
 
       {/* API key banner — only after hydration to avoid SSR mismatch */}
       {hydrated && !apiKey && (
-        <div className="mb-8 flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center dark:border-amber-900 dark:bg-amber-950/50">
+        <div className="mb-8 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/50">
           <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div className="flex-1">
             <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
@@ -267,21 +282,10 @@ export default function Home() {
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300">
               {isKo
-                ? "오른쪽 상단의 열쇠 아이콘으로 API 키를 설정하거나, API 키 없이 데모 건물을 먼저 체험해 보세요."
-                : "Set your API key via the key icon in the top-right, or explore the demo building first — no key needed."}
+                ? "실제 건물을 검색하려면 오른쪽 상단의 열쇠 아이콘으로 API 키를 설정하세요. 데모 건물은 키 없이 이용할 수 있습니다."
+                : "To search real buildings, set your API key via the key icon in the top-right. The demo building works without one."}
             </p>
           </div>
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="shrink-0 gap-2 self-start border-amber-300 bg-white/70 text-amber-900 hover:bg-white sm:self-auto dark:border-amber-800 dark:bg-transparent dark:text-amber-200"
-          >
-            <Link href={`/building/${DEMO_BUILDING_ID}`}>
-              <Box className="h-4 w-4" />
-              {isKo ? "데모 건물 보기" : "View demo building"}
-            </Link>
-          </Button>
         </div>
       )}
 
