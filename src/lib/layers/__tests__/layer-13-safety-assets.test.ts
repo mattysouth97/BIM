@@ -124,25 +124,44 @@ describe("SafetyLayer — pre-existing output (no assets)", () => {
 });
 
 describe("SafetyLayer — detailed asset kit (injected fakes)", () => {
-  it("adds the sprinkler ceiling-grid InstancedMesh at half the lighting-grid density", () => {
+  it("adds the sprinkler ceiling-grid InstancedMesh at half the lighting-grid's areal density", () => {
     __injectEquipmentAssetForTest("sprinkler-head", makeFakeAsset());
     const group = new SafetyLayer().generate(makeRecipe());
     const im = findByType(group, "safety-sprinkler") as THREE.InstancedMesh;
     expect(im).toBeDefined();
-    // spacing = max(3.0, 6.0/1.0) = 6.0 -> 2 cols (x: -5,1) x 2 rows (z: -4,2) = 4/floor * 3 floors
-    expect(im.count).toBe(12);
+    // Half the AREAL density of the lighting-layer grid means spacing scales
+    // by sqrt(2) per axis, not 2x (a 2D grid's point count scales with
+    // 1/spacing^2, so doubling spacing would quarter the count):
+    //   spacing = max(1.5*sqrt2, 3.0*sqrt2/1.0) = 3*sqrt2 ~= 4.242640687
+    //   (the density=1.0 term dominates on both axes)
+    // Grid bounds match layer-7's -halfW+1..halfW-1 / -halfD+1..halfD-1:
+    //   x in [-5, 5] step 4.242640687 -> -5, -0.757..., 3.485... (3 points;
+    //     next step 7.727... exceeds the x<=5 bound)
+    //   z in [-4, 4] step 4.242640687 -> -4, 0.2426... (2 points; next step
+    //     4.485... exceeds the z<=4 bound)
+    // 3 x 2 = 6 sprinklers/floor * 3 floors = 18
+    expect(im.count).toBe(18);
     const mat = im.material as THREE.MeshStandardMaterial;
     expect(mat.color.getHex()).toBe(0xd97706); // brass tint
     expect(mat.emissiveIntensity).toBeGreaterThanOrEqual(0.15);
     expect(mat.emissiveIntensity).toBeLessThanOrEqual(0.3);
   });
 
-  it("adds the smoke-detector offset grid at 1/4 the sprinkler density", () => {
+  it("adds the smoke-detector offset grid at 1/4 the sprinkler's areal density", () => {
     __injectEquipmentAssetForTest("smoke-detector", makeFakeAsset());
     const group = new SafetyLayer().generate(makeRecipe());
     const im = findByType(group, "safety-smoke-detector") as THREE.InstancedMesh;
     expect(im).toBeDefined();
-    // spacing = 12.0 -> 1 col x 1 row = 1/floor * 3 floors
+    // Smoke-detector spacing = 2x the SPRINKLER spacing on both axes, which
+    // correctly quarters the areal count relative to sprinklers (the "1/4
+    // density of sprinklers" the brief calls for): 2 * 3*sqrt2 = 6*sqrt2
+    // ~= 8.485281374. The grid start is offset by half that spacing so it
+    // doesn't coincide with the sprinkler grid.
+    //   x start = -5 + 4.242640687 = -0.757... -> only 1 point fits: the
+    //     next step (7.727...) exceeds the x<=5 bound
+    //   z start = -4 + 4.242640687 = 0.2426... -> only 1 point fits: the
+    //     next step (8.727...) exceeds the z<=4 bound
+    // 1 x 1 = 1 detector/floor * 3 floors = 3
     expect(im.count).toBe(3);
     const mat = im.material as THREE.MeshStandardMaterial;
     expect(mat.color.getHex()).toBe(0xef4444);

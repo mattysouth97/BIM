@@ -254,16 +254,20 @@ export class SafetyLayer implements LayerGenerator {
     // unchanged. ---
 
     // Ceiling grid, reusing the lighting-layer (layer-7) grid approach but at
-    // half density: sprinklers are spaced roughly double a light-fixture
-    // grid. Smoke detectors sit on an offset grid at 1/4 the areal density
-    // of the sprinklers (double the sprinkler spacing again).
+    // half the AREAL density. A 2D grid's point count scales with 1/spacing²,
+    // so doubling spacing on both axes would QUARTER the count, not halve it.
+    // To exactly halve the areal density, spacing must scale by sqrt(2) per
+    // axis: (sqrt(2) * spacing)² = 2 * spacing², i.e. half as many points per
+    // unit area. Smoke detectors sit on an offset grid at 1/4 the areal
+    // density of the sprinklers (double the SPRINKLER spacing, which
+    // correctly quarters the areal count relative to sprinklers).
     const ceilStartX = -halfW + 1.0;
     const ceilEndX = halfW - 1.0;
     const ceilStartZ = -halfD + 1.0;
     const ceilEndZ = halfD - 1.0;
 
-    const sprinklerSpacingX = Math.max(3.0, 6.0 / density);
-    const sprinklerSpacingZ = Math.max(3.0, 6.0 / density);
+    const sprinklerSpacingX = Math.max(1.5 * Math.SQRT2, (3.0 * Math.SQRT2) / density);
+    const sprinklerSpacingZ = Math.max(1.5 * Math.SQRT2, (3.0 * Math.SQRT2) / density);
     const sprinklerGridPositions: { x: number; z: number }[] = [];
     for (let x = ceilStartX; x <= ceilEndX; x += sprinklerSpacingX) {
       for (let z = ceilStartZ; z <= ceilEndZ; z += sprinklerSpacingZ) {
