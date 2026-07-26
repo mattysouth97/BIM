@@ -55,7 +55,12 @@ export type EquipmentAssetId =
   | "smoke-detector"
   | "exit-sign"
   | "fire-extinguisher"
-  | "hydrant-cabinet";
+  | "hydrant-cabinet"
+  // Transport / elevator kit
+  | "elevator-cab"
+  | "elevator-counterweight"
+  | "hoist-machine"
+  | "landing-door";
 
 export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "chiller",
@@ -90,6 +95,10 @@ export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "exit-sign",
   "fire-extinguisher",
   "hydrant-cabinet",
+  "elevator-cab",
+  "elevator-counterweight",
+  "hoist-machine",
+  "landing-door",
 ];
 
 const ASSET_BASE_PATH = "/models/equipment";
@@ -137,6 +146,12 @@ export const ASSET_NATIVE_DIMS: Record<
   "exit-sign": { w: 0.36, h: 0.20, d: 0.06 },
   "fire-extinguisher": { w: 0.22, h: 0.60, d: 0.18 },
   "hydrant-cabinet": { w: 0.70, h: 1.30, d: 0.22 },
+  // Transport / elevator kit — native dims from verified glTF bounds
+  // (three.js axes: w=X, h=Y-up, d=Z).
+  "elevator-cab": { w: 1.4, h: 2.2, d: 1.5 },
+  "elevator-counterweight": { w: 0.3, h: 1.3, d: 0.45 },
+  "hoist-machine": { w: 1.2, h: 1.0, d: 0.8 },
+  "landing-door": { w: 1.1, h: 2.1, d: 0.12 },
 };
 
 interface CachedAsset {

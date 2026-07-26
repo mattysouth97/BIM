@@ -5,6 +5,12 @@
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import {
+  ASSET_NATIVE_DIMS,
+  getEquipmentGeometryClone,
+  getEquipmentObjectClone,
+  tagEquipmentObject,
+} from "@/lib/equipment-assets";
 
 /**
  * Vertex shader for elevator cab with discrete floor-step animation.
@@ -116,6 +122,27 @@ export class TransportLayer implements LayerGenerator {
     const pos = new THREE.Vector3();
     const quat = new THREE.Quaternion();
     const scl = new THREE.Vector3(1, 1, 1);
+
+    // Equipment sits ON TOP of the roof slab — for flat roofs the roof box
+    // extends flatThickness above totalHeight (same convention as the other
+    // MEP layers' rooftop plant placement).
+    const roofTopY =
+      totalHeight + (recipe.roof?.type === "flat" ? recipe.roof.flatThickness : 0);
+
+    // Landing doors are detailed-asset-only and collected across ALL shafts
+    // so the whole layer adds exactly one InstancedMesh (1 draw call) for
+    // this element kind, rather than one IM per shaft.
+    const doorPositions: { x: number; y: number; z: number }[] = [];
+    // Doors mount on the shaft's front face. The front face is the +X local
+    // side of the shaft box — established by the existing floor-indicator
+    // placement below (`sp.x + shaftWidth / 2 + 0.02`, with a comment noting
+    // it is "parallel to shaft front face"). Rotate 90° about Y so the
+    // door's thin native axis (d=0.12, its hinge/thickness axis) points
+    // along the face normal (world +X) instead of world +Z.
+    const doorQuat = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      Math.PI / 2
+    );
 
     for (let si = 0; si < shaftPositions.length; si++) {
       const sp = shaftPositions[si];
@@ -235,7 +262,22 @@ export class TransportLayer implements LayerGenerator {
       }
 
       // --- Animated elevator cab ---
-      const cabGeo = new THREE.BoxGeometry(cabWidth, cabHeight, cabDepth);
+      // Detailed Blender asset when preloaded — geometry-only swap; the
+      // material, position, userData, and step-animation shader below are
+      // unchanged. Fallback = existing BoxGeometry when the cache is empty.
+      const cabAssetGeo = getEquipmentGeometryClone("elevator-cab");
+      let cabGeo: THREE.BufferGeometry;
+      if (cabAssetGeo) {
+        const native = ASSET_NATIVE_DIMS["elevator-cab"];
+        cabAssetGeo.scale(
+          cabWidth / native.w,
+          cabHeight / native.h,
+          cabDepth / native.d
+        );
+        cabGeo = cabAssetGeo;
+      } else {
+        cabGeo = new THREE.BoxGeometry(cabWidth, cabHeight, cabDepth);
+      }
       const cabMat = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
@@ -256,7 +298,22 @@ export class TransportLayer implements LayerGenerator {
       group.add(cabMesh);
 
       // --- Counterweight on opposite side (thin box) ---
-      const cwGeo = new THREE.BoxGeometry(0.3, cabHeight * 0.6, cabDepth * 0.3);
+      // Detailed Blender asset when preloaded — geometry-only swap, scaled
+      // to the same box dims used today; material/position/userData
+      // unchanged. Fallback = existing BoxGeometry when the cache is empty.
+      const cwAssetGeo = getEquipmentGeometryClone("elevator-counterweight");
+      let cwGeo: THREE.BufferGeometry;
+      if (cwAssetGeo) {
+        const native = ASSET_NATIVE_DIMS["elevator-counterweight"];
+        cwAssetGeo.scale(
+          0.3 / native.w,
+          (cabHeight * 0.6) / native.h,
+          (cabDepth * 0.3) / native.d
+        );
+        cwGeo = cwAssetGeo;
+      } else {
+        cwGeo = new THREE.BoxGeometry(0.3, cabHeight * 0.6, cabDepth * 0.3);
+      }
       const cwMat = new THREE.MeshStandardMaterial({
         color: 0x666666,
         metalness: 0.6,
@@ -270,6 +327,60 @@ export class TransportLayer implements LayerGenerator {
       );
       cw.userData = { type: "transport-counterweight" };
       group.add(cw);
+
+      // --- Hoist machine at shaft top (detailed-asset-only) ---
+      // Base-origin asset: base rests exactly on the roof top surface, same
+      // convention as the other MEP layers' rooftop plant placement.
+      const hoistAsset = getEquipmentObjectClone("hoist-machine");
+      if (hoistAsset) {
+        hoistAsset.position.set(sp.x, roofTopY, sp.z);
+        tagEquipmentObject(
+          hoistAsset,
+          { type: "transport-hoist-machine" },
+          { castShadow: true, receiveShadow: true }
+        );
+        group.add(hoistAsset);
+      }
+
+      // --- Landing-door placements for this shaft (front face, +X side) ---
+      // Collected here; the combined single IM is built once after the
+      // shaft loop (detailed-asset-only — no coarse fallback).
+      for (const floor of aboveFloors) {
+        doorPositions.push({
+          x: sp.x + shaftWidth / 2,
+          y: floor.y + 1.05,
+          z: sp.z,
+        });
+      }
+    }
+
+    // --- Landing doors: one IM across every shaft × above-floor combo ---
+    // Detailed-asset-only — no coarse fallback for this element kind, so
+    // with an empty cache none of this is added.
+    if (doorPositions.length > 0) {
+      const doorGeo = getEquipmentGeometryClone("landing-door");
+      if (doorGeo) {
+        const doorMat = new THREE.MeshStandardMaterial({
+          color: 0x9ca3af,
+          emissive: 0x64748b,
+          emissiveIntensity: 0.15,
+        });
+        const doorIM = new THREE.InstancedMesh(
+          doorGeo,
+          doorMat,
+          doorPositions.length
+        );
+        doorIM.userData = { type: "transport-landing-door" };
+        for (let i = 0; i < doorPositions.length; i++) {
+          const dp = doorPositions[i];
+          pos.set(dp.x, dp.y, dp.z);
+          mat4.compose(pos, doorQuat, scl);
+          doorIM.setMatrixAt(i, mat4);
+        }
+        doorIM.count = doorPositions.length;
+        doorIM.instanceMatrix.needsUpdate = true;
+        group.add(doorIM);
+      }
     }
 
     this.group = group;

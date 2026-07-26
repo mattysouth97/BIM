@@ -470,6 +470,26 @@ export function inferEquipmentSpecs(
     }
 
     // -----------------------------------------------------------------------
+    // Transport — transport-* (elevator shafts, cabs, counterweights,
+    // landing doors, hoist machines, floor indicators)
+    // -----------------------------------------------------------------------
+    case "transport": {
+      const grade = ELECTRICAL_ERA_GRADE[era];
+      const annualKwh = Math.round(floorCount * 1200);
+
+      return buildSpec({
+        categoryKo:  "승강기",
+        categoryEn:  "Elevator",
+        capacity:    `${floorCount} floors served`,
+        installYear,
+        annualKwh:   Math.max(annualKwh, 1),
+        grade,
+        dataSource:  "estimated-from-era",
+        standardRef: "KSC IEC 62301",
+      });
+    }
+
+    // -----------------------------------------------------------------------
     // Unknown / fallback
     // -----------------------------------------------------------------------
     default: {

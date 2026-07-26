@@ -21,6 +21,7 @@ import { ElectricalRoutingLayer } from "@/lib/layers/electrical-routing";
 import { MicrogridLayer } from "@/lib/layers/layer-14-microgrid";
 import { BASLayer } from "@/lib/layers/layer-10-bas";
 import { SafetyLayer } from "@/lib/layers/layer-13-safety";
+import { TransportLayer } from "@/lib/layers/layer-12-transport";
 import { useEquipmentAssets } from "@/hooks/use-equipment-assets";
 import {
   setupMepSubGroups,
@@ -245,6 +246,11 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     // detectors, exit signs, extinguishers, hydrant cabinets
     const safetyOutput = new SafetyLayer().generate(effectiveRecipe, mepDensity);
     assignToSubGroup(mepGroup, safetyOutput.name, safetyOutput);
+
+    // Kinetic transport: elevator shafts, animated cabs, counterweights,
+    // landing doors, and hoist machines
+    const transportOutput = new TransportLayer().generate(effectiveRecipe, mepDensity);
+    assignToSubGroup(mepGroup, transportOutput.name, transportOutput);
   }, [effectiveRecipe, equipmentParams, density, equipmentAssetsReady, equipmentScenario]);
 
   // Animation loop — update ShaderMaterial uniforms each frame
