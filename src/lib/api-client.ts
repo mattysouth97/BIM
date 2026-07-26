@@ -19,6 +19,19 @@ export interface ApiListResponse<T> {
   numOfRows: number;
 }
 
+async function readJsonResponse(res: Response): Promise<unknown | null> {
+  const text = await res.text();
+  if (text.trim() === "") return null;
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw new Error(
+      `The server returned an invalid response (${res.status}). Try again.`,
+    );
+  }
+}
+
 // ─────────────────────────────────────────────
 // Internal fetch helper
 // ─────────────────────────────────────────────
@@ -29,9 +42,6 @@ async function apiFetch<T>(
   apiKeyOverride?: string,
 ): Promise<ApiListResponse<T>> {
   const apiKey = apiKeyOverride ?? useAppStore.getState().apiKey;
-  if (!apiKey) {
-    throw new Error("API key is not set");
-  }
 
   const url = new URL(path, window.location.origin);
   for (const [key, value] of Object.entries(params as Record<string, unknown>)) {
@@ -40,18 +50,31 @@ async function apiFetch<T>(
     }
   }
 
-  const res = await fetch(url.toString(), {
-    headers: { "x-api-key": apiKey },
-  });
+  // When the visitor supplied their own key, send it (charged to their quota).
+  // When they didn't, send NO x-api-key header: the same-origin proxy route
+  // falls back to the embedded shared demo key (rate-limited per IP, see
+  // api-shared-key.ts), so the ledger works for any visitor out of the box.
+  // The shared secret never leaves the server.
+  const headers: Record<string, string> = {};
+  if (apiKey) headers["x-api-key"] = apiKey;
+
+  const res = await fetch(url.toString(), { headers });
+  const body = await readJsonResponse(res);
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
     throw new Error(
-      (body as { error?: string }).error ?? `Request failed (${res.status})`,
+      (body as { error?: string } | null)?.error ??
+        `Request failed (${res.status})`,
     );
   }
 
-  return res.json() as Promise<ApiListResponse<T>>;
+  if (body === null) {
+    throw new Error(
+      `The server returned an empty response (${res.status}). Try again.`,
+    );
+  }
+
+  return body as ApiListResponse<T>;
 }
 
 // ─────────────────────────────────────────────

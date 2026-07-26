@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveDataGoKrKey } from "@/lib/api-shared-key";
+import { normalizeServiceKey } from "@/lib/api-proxy";
 
 /**
  * Proxy to data.go.kr Building Energy Rating API (건축물 에너지효율등급).
@@ -11,18 +13,16 @@ const BASE_URL =
 const PARAMS = ["mgmBldrgstPk", "numOfRows", "pageNo"] as const;
 
 export async function GET(request: NextRequest) {
-  const apiKey = request.headers.get("x-api-key");
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "Missing x-api-key header" },
-      { status: 401 },
-    );
+  const keyResult = resolveDataGoKrKey(request);
+  if (!keyResult.ok) {
+    return NextResponse.json({ error: keyResult.error }, { status: keyResult.status });
   }
+  const apiKey = keyResult.apiKey;
 
   const { searchParams } = request.nextUrl;
   const url = new URL(BASE_URL);
 
-  url.searchParams.set("serviceKey", apiKey);
+  url.searchParams.set("serviceKey", normalizeServiceKey(apiKey));
   url.searchParams.set("_type", "json");
 
   for (const key of PARAMS) {
