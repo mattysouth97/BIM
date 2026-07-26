@@ -18,6 +18,7 @@ import { DHWLayer } from "@/lib/layers/layer-6-dhw";
 import { LightingLayer } from "@/lib/layers/layer-7-lighting";
 import { MicrogridLayer } from "@/lib/layers/layer-14-microgrid";
 import { BASLayer } from "@/lib/layers/layer-10-bas";
+import { SafetyLayer } from "@/lib/layers/layer-13-safety";
 import { ElectricalRoutingLayer } from "@/lib/layers/electrical-routing";
 import { useEquipmentAssets } from "@/hooks/use-equipment-assets";
 
@@ -83,6 +84,7 @@ function AssetShowcase({ assetsReady }: { assetsReady: boolean }) {
     root.add(new LightingLayer().generate(recipe, 1.0, {}));
     root.add(new MicrogridLayer().generate(recipe));
     root.add(new BASLayer().generate(recipe));
+    root.add(new SafetyLayer().generate(recipe));
     root.add(new ElectricalRoutingLayer().generate(recipe));
     return root;
     // assetsReady is intentionally a dependency: the generators read the GLB

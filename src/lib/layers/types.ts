@@ -153,6 +153,7 @@ export const GENERATOR_TO_MEP_SUB: Record<string, MepSubLayerId> = {
   "electrical-routing": "mep-electrical",
   "layer-14-microgrid": "mep-electrical",
   "layer-10-bas": "mep-electrical",
+  "layer-13-safety": "mep-electrical",
   "layer-3-cooling": "mep-hvac",
   "layer-4-heating": "mep-hvac",
   "layer-5-ventilation": "mep-hvac",

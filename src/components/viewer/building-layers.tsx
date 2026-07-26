@@ -20,6 +20,7 @@ import { LightingLayer } from "@/lib/layers/layer-7-lighting";
 import { ElectricalRoutingLayer } from "@/lib/layers/electrical-routing";
 import { MicrogridLayer } from "@/lib/layers/layer-14-microgrid";
 import { BASLayer } from "@/lib/layers/layer-10-bas";
+import { SafetyLayer } from "@/lib/layers/layer-13-safety";
 import { useEquipmentAssets } from "@/hooks/use-equipment-assets";
 import {
   setupMepSubGroups,
@@ -239,6 +240,11 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     // BAS/IoT nervous system: sensors, data webs, DDC panels, head-end
     const basOutput = new BASLayer().generate(effectiveRecipe, mepDensity);
     assignToSubGroup(mepGroup, basOutput.name, basOutput);
+
+    // Safety / fire-protection: fire zones, stairwells, sprinklers, smoke
+    // detectors, exit signs, extinguishers, hydrant cabinets
+    const safetyOutput = new SafetyLayer().generate(effectiveRecipe, mepDensity);
+    assignToSubGroup(mepGroup, safetyOutput.name, safetyOutput);
   }, [effectiveRecipe, equipmentParams, density, equipmentAssetsReady, equipmentScenario]);
 
   // Animation loop — update ShaderMaterial uniforms each frame

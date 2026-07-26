@@ -5,6 +5,10 @@
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import {
+  getEquipmentGeometryClone,
+  type EquipmentAssetId,
+} from "@/lib/equipment-assets";
 
 /** Vertex shader for Fresnel forcefield volumes */
 const fresnelVertexShader = /* glsl */ `
@@ -242,6 +246,166 @@ export class SafetyLayer implements LayerGenerator {
     bulbIM.instanceMatrix.needsUpdate = true;
     group.add(headIM);
     group.add(bulbIM);
+
+    // --- Detailed Blender-asset safety kit: sprinkler heads, smoke detectors,
+    // exit signs, extinguishers, hydrant cabinets. Each InstancedMesh is
+    // detailed-asset-only — no coarse fallback for these element kinds, so
+    // with an empty cache none of them are added and the output above is
+    // unchanged. ---
+
+    // Ceiling grid, reusing the lighting-layer (layer-7) grid approach but at
+    // half density: sprinklers are spaced roughly double a light-fixture
+    // grid. Smoke detectors sit on an offset grid at 1/4 the areal density
+    // of the sprinklers (double the sprinkler spacing again).
+    const ceilStartX = -halfW + 1.0;
+    const ceilEndX = halfW - 1.0;
+    const ceilStartZ = -halfD + 1.0;
+    const ceilEndZ = halfD - 1.0;
+
+    const sprinklerSpacingX = Math.max(3.0, 6.0 / density);
+    const sprinklerSpacingZ = Math.max(3.0, 6.0 / density);
+    const sprinklerGridPositions: { x: number; z: number }[] = [];
+    for (let x = ceilStartX; x <= ceilEndX; x += sprinklerSpacingX) {
+      for (let z = ceilStartZ; z <= ceilEndZ; z += sprinklerSpacingZ) {
+        sprinklerGridPositions.push({ x, z });
+      }
+    }
+
+    const smokeSpacingX = sprinklerSpacingX * 2;
+    const smokeSpacingZ = sprinklerSpacingZ * 2;
+    const smokeGridPositions: { x: number; z: number }[] = [];
+    for (
+      let x = ceilStartX + smokeSpacingX / 2;
+      x <= ceilEndX;
+      x += smokeSpacingX
+    ) {
+      for (
+        let z = ceilStartZ + smokeSpacingZ / 2;
+        z <= ceilEndZ;
+        z += smokeSpacingZ
+      ) {
+        smokeGridPositions.push({ x, z });
+      }
+    }
+
+    /** Detailed-asset-only ceiling InstancedMesh (sprinklers, smoke detectors). */
+    const addDetailedCeilingIM = (
+      assetId: EquipmentAssetId,
+      type: string,
+      positions: { x: number; z: number }[],
+      color: number,
+      emissiveIntensity: number,
+      metalness: number
+    ): void => {
+      if (positions.length === 0) return;
+      const geo = getEquipmentGeometryClone(assetId);
+      if (!geo) return;
+      const mat = new THREE.MeshStandardMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity,
+        roughness: 0.45,
+        metalness,
+      });
+      const im = new THREE.InstancedMesh(
+        geo,
+        mat,
+        positions.length * aboveFloors.length
+      );
+      im.userData = { type };
+      let idx = 0;
+      for (const floor of aboveFloors) {
+        const ceilingY = floor.y + floor.height - 0.15;
+        for (const p of positions) {
+          mat4.makeTranslation(p.x, ceilingY, p.z);
+          im.setMatrixAt(idx++, mat4);
+        }
+      }
+      im.count = idx;
+      im.instanceMatrix.needsUpdate = true;
+      group.add(im);
+    };
+
+    // Brass-toned sprinkler heads; red-family everything else (safety palette).
+    addDetailedCeilingIM(
+      "sprinkler-head",
+      "safety-sprinkler",
+      sprinklerGridPositions,
+      0xd97706,
+      0.2,
+      0.5
+    );
+    addDetailedCeilingIM(
+      "smoke-detector",
+      "safety-smoke-detector",
+      smokeGridPositions,
+      0xef4444,
+      0.18,
+      0.2
+    );
+
+    /** Detailed-asset-only point InstancedMesh (exit signs, extinguishers, hydrants). */
+    const addDetailedPointIM = (
+      assetId: EquipmentAssetId,
+      type: string,
+      pointsPerFloor: { x: number; y: number; z: number }[],
+      color: number,
+      emissiveIntensity: number
+    ): void => {
+      const geo = getEquipmentGeometryClone(assetId);
+      if (!geo) return;
+      const mat = new THREE.MeshStandardMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity,
+        roughness: 0.4,
+        metalness: 0.2,
+      });
+      const im = new THREE.InstancedMesh(
+        geo,
+        mat,
+        pointsPerFloor.length * aboveFloors.length
+      );
+      im.userData = { type };
+      let idx = 0;
+      for (const floor of aboveFloors) {
+        for (const p of pointsPerFloor) {
+          mat4.makeTranslation(p.x, floor.y + p.y, p.z);
+          im.setMatrixAt(idx++, mat4);
+        }
+      }
+      im.count = idx;
+      im.instanceMatrix.needsUpdate = true;
+      group.add(im);
+    };
+
+    // Exit signs at the stair/core positions already computed above.
+    addDetailedPointIM(
+      "exit-sign",
+      "safety-exit-sign",
+      stairPositions.map((sp) => ({ x: sp.x, y: 2.2, z: sp.z })),
+      0xef4444,
+      0.25
+    );
+    // Extinguishers near core.
+    addDetailedPointIM(
+      "fire-extinguisher",
+      "safety-extinguisher",
+      [
+        { x: 1.2, y: 0.6, z: 0.6 },
+        { x: -1.2, y: 0.6, z: 0.6 },
+      ],
+      0xdc2626,
+      0.15
+    );
+    // Hydrant cabinet, one per floor.
+    addDetailedPointIM(
+      "hydrant-cabinet",
+      "safety-hydrant",
+      [{ x: 1.8, y: 0.75, z: 0.4 }],
+      0xb91c1c,
+      0.15
+    );
 
     this.group = group;
     return group;

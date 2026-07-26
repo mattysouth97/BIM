@@ -49,7 +49,13 @@ export type EquipmentAssetId =
   | "mullion"
   | "facade-panel"
   | "cable-tray"
-  | "roof-furniture";
+  | "roof-furniture"
+  // Safety / fire-protection kit
+  | "sprinkler-head"
+  | "smoke-detector"
+  | "exit-sign"
+  | "fire-extinguisher"
+  | "hydrant-cabinet";
 
 export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "chiller",
@@ -79,6 +85,11 @@ export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "facade-panel",
   "cable-tray",
   "roof-furniture",
+  "sprinkler-head",
+  "smoke-detector",
+  "exit-sign",
+  "fire-extinguisher",
+  "hydrant-cabinet",
 ];
 
 const ASSET_BASE_PATH = "/models/equipment";
@@ -119,6 +130,13 @@ export const ASSET_NATIVE_DIMS: Record<
   "facade-panel": { w: 1, h: 1, d: 1 }, // unit-normalized
   "cable-tray": { w: 0.45, h: 1.0, d: 0.17 }, // fixed 1 m module, length along Y
   "roof-furniture": { w: 4.9, h: 2.4, d: 3.4 },
+  // Safety / fire-protection kit — authored Blender Z-up; native dims below
+  // are the three.js axes (w=X, h=Y-up, d=Z) after the Blender→three.js swap.
+  "sprinkler-head": { w: 0.06, h: 0.10, d: 0.06 },
+  "smoke-detector": { w: 0.13, h: 0.045, d: 0.13 },
+  "exit-sign": { w: 0.36, h: 0.20, d: 0.06 },
+  "fire-extinguisher": { w: 0.22, h: 0.60, d: 0.18 },
+  "hydrant-cabinet": { w: 0.70, h: 1.30, d: 0.22 },
 };
 
 interface CachedAsset {

@@ -447,6 +447,29 @@ export function inferEquipmentSpecs(
     }
 
     // -----------------------------------------------------------------------
+    // Safety / fire-protection — safety-* (sprinklers, detectors, exit
+    // signs, extinguishers, hydrant cabinets, fire-zone/stairwell overlay)
+    // -----------------------------------------------------------------------
+    case "safety": {
+      const grade = ELECTRICAL_ERA_GRADE[era];
+      // Alarm/monitoring load only — sprinklers/extinguishers/hydrants are
+      // passive hardware with no standing electrical draw of their own.
+      const monitoringKw = (floorArea * floorCount * 0.3) / 1000;
+      const annualKwh = Math.round(monitoringKw * 8760);
+
+      return buildSpec({
+        categoryKo:  "소방설비",
+        categoryEn:  "Fire Protection",
+        capacity:    "—",
+        installYear,
+        annualKwh:   Math.max(annualKwh, 1),
+        grade,
+        dataSource:  "estimated-from-era",
+        standardRef: "KSC IEC 62301",
+      });
+    }
+
+    // -----------------------------------------------------------------------
     // Unknown / fallback
     // -----------------------------------------------------------------------
     default: {
