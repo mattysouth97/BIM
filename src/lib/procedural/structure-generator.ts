@@ -6,6 +6,7 @@ import * as THREE from "three";
 import type { BuildingRecipe, FloorSpec } from "./types";
 import type { PBRMaterialConfig } from "@/lib/pbr-materials";
 import { extrudePolygon } from "@/lib/gis/earcut-extrude";
+import { pointInRing } from "@/lib/gis/ring-utils";
 import {
   getEquipmentGeometryClone,
   getEquipmentObjectClone,
@@ -143,9 +144,17 @@ function computeColumnGrid(recipe: BuildingRecipe): ColumnGrid {
  * scaling is unchanged. Falls back to the plain unit box otherwise.
  */
 export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
-  const { floors, column, slab } = recipe;
+  const { floors, column, slab, footprintPolygon } = recipe;
 
-  const columnPositions = computeColumnGrid(recipe).positions;
+  let columnPositions = computeColumnGrid(recipe).positions;
+
+  // The grid is derived from the bbox rectangle; with a real footprint
+  // polygon, drop positions that fall outside the outline (e.g. inside an
+  // L-notch) so no column stands outside the polygon-driven facade.
+  if (footprintPolygon && footprintPolygon.length >= 1 && footprintPolygon[0].length >= 3) {
+    const outer = footprintPolygon[0];
+    columnPositions = columnPositions.filter((cp) => pointInRing(cp.x, cp.z, outer));
+  }
 
   const totalCount = floors.length * columnPositions.length;
   const geo = getEquipmentGeometryClone("column") ?? new THREE.BoxGeometry(1, 1, 1);
@@ -270,7 +279,7 @@ export function generateBeams(recipe: BuildingRecipe): THREE.InstancedMesh | nul
  * is not flat, or the footprint is too small to host the ~5×3.5 m set.
  */
 export function generateRoofFurniture(recipe: BuildingRecipe): THREE.Group | null {
-  const { roof, footprintWidth, footprintDepth, totalHeight } = recipe;
+  const { roof, footprintWidth, footprintDepth, totalHeight, footprintPolygon } = recipe;
   if (roof.type !== "flat") return null;
   if (Math.min(footprintWidth, footprintDepth) < 10) return null;
 
@@ -281,6 +290,17 @@ export function generateRoofFurniture(recipe: BuildingRecipe): THREE.Group | nul
   // Offset toward a rear corner, clamped so the set stays on the roof.
   const x = Math.min(footprintWidth / 2 - 3.2, footprintWidth * 0.18);
   const z = Math.max(-(footprintDepth / 2 - 2.6), -footprintDepth * 0.22);
+
+  // The corner spot is bbox-derived; with a real footprint polygon, skip the
+  // set entirely if the spot is not actually on the roof (e.g. in a notch).
+  if (
+    footprintPolygon &&
+    footprintPolygon.length >= 1 &&
+    footprintPolygon[0].length >= 3 &&
+    !pointInRing(x, z, footprintPolygon[0])
+  ) {
+    return null;
+  }
   furniture.position.set(x, roofTopY, z);
   tagEquipmentObject(
     furniture,
@@ -394,8 +414,25 @@ function generateSawtoothGeometry(
  * Supports flat, gable, hip, sawtooth, and legacy "other" (truncated pyramid) types.
  */
 export function generateRoof(recipe: BuildingRecipe): THREE.Mesh {
-  const { roof, footprintWidth, footprintDepth, totalHeight } = recipe;
+  const { roof, footprintWidth, footprintDepth, totalHeight, footprintPolygon } = recipe;
   const mat = pbrToMaterial(recipe.materials.roof);
+
+  // POLYGON PATH: flat roofs follow the real outline exactly like the slabs —
+  // a bbox rectangle would cantilever over concave regions (L-notches) and
+  // misalign with the polygon-driven facade and parapet.
+  if (
+    roof.type === "flat" &&
+    footprintPolygon &&
+    footprintPolygon.length >= 1 &&
+    footprintPolygon[0].length >= 3
+  ) {
+    const geo = extrudePolygon(footprintPolygon, roof.flatThickness, totalHeight);
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData = { type: "roof" };
+    return mesh;
+  }
 
   let geo: THREE.BufferGeometry;
   let y: number;
