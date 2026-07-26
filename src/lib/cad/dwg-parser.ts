@@ -128,7 +128,7 @@ export interface ParseDwgOptions {
 export async function parseDwgFile(
   file: File,
   options?: ParseDwgOptions,
-): Promise<ParsedDxf> {
+): Promise<ParsedDxf & { dxfText?: string }> {
   const warnings: string[] = [];
 
   const buffer = await file.arrayBuffer();
@@ -155,7 +155,7 @@ export async function parseDwgFile(
     const dxfText = await convertDwgToDxf(buffer);
     if (dxfText) {
       const parsed = parseDxfText(dxfText);
-      return { ...parsed, warnings: [...warnings, ...parsed.warnings] };
+      return { ...parsed, warnings: [...warnings, ...parsed.warnings], dxfText };
     }
     warnings.push("DWG read succeeded but DXF export returned empty output.");
   } catch (err) {
@@ -222,7 +222,7 @@ async function convertViaServer(
   file: File,
   warnings: string[],
   options?: ParseDwgOptions,
-): Promise<ParsedDxf> {
+): Promise<ParsedDxf & { dxfText?: string }> {
   const form = new FormData();
   form.set("file", file);
 
@@ -248,5 +248,5 @@ async function convertViaServer(
 
   const dxfText = await res.text();
   const parsed = parseDxfText(dxfText);
-  return { ...parsed, warnings: [...warnings, ...parsed.warnings] };
+  return { ...parsed, warnings: [...warnings, ...parsed.warnings], dxfText };
 }

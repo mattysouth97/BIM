@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { Upload, FileBox, AlertCircle, ArrowLeft, ArrowRight } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { Upload, FileBox, AlertCircle, ArrowLeft, ArrowRight, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAppStore } from "@/store/app-store";
@@ -14,6 +14,10 @@ import {
   type Polygon2D,
 } from "@/lib/cad/dxf-parser";
 import { parseDwgFile } from "@/lib/cad/dwg-parser";
+import { mapDxfTextToDoc } from "@/lib/cad/doc/map-dxf-to-doc";
+import type { CadDocument } from "@/lib/cad/doc/types";
+import { useCadViewerStore } from "@/store/cad-viewer-store";
+import { CadViewer } from "@/components/cad-viewer/cad-viewer";
 import { FootprintPreview } from "./footprint-preview";
 import { LayerPicker } from "./layer-picker";
 import { PdfTracer } from "./pdf-tracer";
@@ -38,6 +42,10 @@ export function UploadStage() {
   const [dragOver, setDragOver] = useState(false);
   const [status, setStatus] = useState<UploadStatus>({ kind: "idle" });
   const [pendingLayer, setPendingLayer] = useState<string | null>(null);
+  const [cadDoc, setCadDoc] = useState<CadDocument | null>(null);
+  const fileNameRef = useRef<string>("drawing.dxf");
+  const openViewer = useCadViewerStore((s) => s.openViewer);
+  const closeViewer = useCadViewerStore((s) => s.closeViewer);
 
   const buildingPk = useActiveBuildingPk();
   const setOverride = useRecipeStore((s) => s.setOverride);
@@ -47,6 +55,9 @@ export function UploadStage() {
   const ingestDxf = useCallback(
     (text: string) => {
       const parsed = parseDxfText(text);
+      // Full-drawing document for the viewer — independent of footprint
+      // candidate extraction, so it exists even when no outline is found.
+      setCadDoc(mapDxfTextToDoc(text, fileNameRef.current));
       if (parsed.candidates.length === 0) {
         setStatus({
           kind: "error",
@@ -108,6 +119,7 @@ export function UploadStage() {
       }
 
       setStatus({ kind: "parsing" });
+      fileNameRef.current = file.name;
 
       try {
         if (ext === ".dxf") {
@@ -115,11 +127,16 @@ export function UploadStage() {
           ingestDxf(text);
         } else if (ext === ".pdf") {
           // Rendering and tracing happen in <PdfTracer>; we only ferry the bytes.
+          // PDFs are raster sources — no CadDocument, no viewer.
+          setCadDoc(null);
           const buf = await file.arrayBuffer();
           setStatus({ kind: "pdf-tracing", pdfBytes: buf });
         } else {
           // .dwg — validate header client-side, then round-trip through server.
           const parsed = await parseDwgFile(file);
+          setCadDoc(
+            parsed.dxfText ? mapDxfTextToDoc(parsed.dxfText, file.name) : null,
+          );
           if (parsed.candidates.length === 0) {
             setStatus({
               kind: "error",
@@ -311,6 +328,21 @@ export function UploadStage() {
           </div>
         )}
 
+        {/* Open full drawing in the CAD viewer */}
+        {cadDoc && (status.kind === "ready" || status.kind === "needs-pick") && (
+          <div className="flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              data-testid="open-cad-viewer"
+              onClick={() => openViewer(cadDoc)}
+            >
+              <Eye className="mr-1.5 h-4 w-4" />
+              {t("뷰어에서 열기", "Open in viewer", isKo)}
+            </Button>
+          </div>
+        )}
+
         {/* Status — needs layer pick */}
         {status.kind === "needs-pick" && (
           <LayerPicker
@@ -380,6 +412,14 @@ export function UploadStage() {
           </Button>
         </div>
       </div>
+
+      {/* Full-screen CAD viewer (renders only while a doc is open) */}
+      <CadViewer
+        onUseFootprint={(polygon, areaSqm, layer) => {
+          setStatus({ kind: "ready", polygon, layer, areaSqm, warnings: [] });
+          closeViewer();
+        }}
+      />
     </div>
   );
 }

@@ -187,7 +187,7 @@ function convertEntity(
       const blockName = typeof r.name === "string" ? r.name
         : typeof r.block === "string" ? r.block : null;
       const block = blockName
-        ? (dxf.blocks as Record<string, { entities?: RawEntity[]; position?: unknown } | undefined> | undefined)?.[blockName]
+        ? (dxf.blocks as unknown as Record<string, { entities?: RawEntity[]; position?: unknown } | undefined> | undefined)?.[blockName]
         : undefined;
       if (!block?.entities?.length) break; // unresolvable → skipped
       const insertAt = v(r.position, scale) ?? v(r.anchorPoint, scale) ?? { x: 0, y: 0 };
