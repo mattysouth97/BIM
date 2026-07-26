@@ -17,6 +17,10 @@ import {
   getEquipmentObjectClone,
   tagEquipmentObject,
 } from "@/lib/equipment-assets";
+import {
+  SHOWCASE_EQUIPMENT_SCENARIO,
+  type EquipmentScenario,
+} from "./equipment-scenario";
 
 const HEAT_RED = 0xef4444;
 const PIPE_RADIUS = 0.04;
@@ -121,7 +125,8 @@ export class HeatingLayer implements LayerGenerator {
   generate(
     recipe: BuildingRecipe,
     density: number = 1.0,
-    equipParams: Partial<BoilerParams> = {}
+    equipParams: Partial<BoilerParams> = {},
+    scenario: EquipmentScenario = SHOWCASE_EQUIPMENT_SCENARIO
   ): THREE.Group {
     this.dispose();
 
@@ -160,42 +165,79 @@ export class HeatingLayer implements LayerGenerator {
     // into the first-floor slab — geometry-clipping fix).
     const plantFloorY = -(boilerParams.height + 0.3);
 
-    // --- Central boiler plant at basement level ---
-    // Detailed Blender asset when preloaded; merged-primitive fallback otherwise.
-    const boilerAsset = getEquipmentObjectClone("boiler");
-    if (boilerAsset) {
-      const native = ASSET_NATIVE_DIMS.boiler;
-      const radialScale = (boilerParams.radius * 2) / native.w;
-      boilerAsset.scale.set(
-        radialScale,
-        boilerParams.height / native.h,
-        radialScale
-      );
-      // Base-origin asset: body occupies [plantFloorY, plantFloorY + height],
-      // fully below the ground slab; only the flue penetrates upward.
-      boilerAsset.position.set(0, plantFloorY, 0);
+    // --- Central heating plant at basement level — SCENARIO-DEPENDENT ---
+    // Green remodeling physically swaps the plant: selecting the heat-pump
+    // measure replaces the boiler with an ASHP bank; the boiler-upgrade
+    // measure replaces it with a condensing cascade; otherwise the legacy
+    // fire-tube boiler renders.
+    if (scenario.heating === "heat-pump") {
+      for (let i = 0; i < 3; i++) {
+        const px = -1.4 + i * 1.4;
+        const ashpUnit = getEquipmentObjectClone("heat-pump");
+        if (ashpUnit) {
+          ashpUnit.position.set(px, plantFloorY, 0);
+          tagEquipmentObject(
+            ashpUnit,
+            { type: "heating-heat-pump-plant" },
+            { castShadow: true, receiveShadow: true }
+          );
+          group.add(ashpUnit);
+        } else {
+          const hpMat = new THREE.MeshStandardMaterial({
+            color: 0x94a3b8,
+            emissive: HEAT_RED,
+            emissiveIntensity: 0.15,
+            roughness: 0.5,
+            metalness: 0.4,
+          });
+          const hpBox = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.35, 0.45), hpMat);
+          hpBox.position.set(px, plantFloorY + 0.675, 0);
+          hpBox.userData = { type: "heating-heat-pump-plant" };
+          group.add(hpBox);
+        }
+      }
+    } else if (scenario.heating === "condensing") {
+      const cascade = getEquipmentObjectClone("boiler-condensing");
+      if (cascade) {
+        cascade.position.set(0, plantFloorY, 0);
+        tagEquipmentObject(
+          cascade,
+          { type: "heating-condensing-boiler" },
+          { castShadow: true, receiveShadow: true }
+        );
+        group.add(cascade);
+      } else {
+        const cascMat = new THREE.MeshStandardMaterial({
+          color: 0xe2e8f0,
+          emissive: HEAT_RED,
+          emissiveIntensity: 0.12,
+          roughness: 0.4,
+          metalness: 0.2,
+        });
+        const casc = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.5, 0.6), cascMat);
+        casc.position.set(0, plantFloorY + 0.75, 0);
+        casc.userData = { type: "heating-condensing-boiler" };
+        group.add(casc);
+      }
+    } else {
+      this.addBaselineBoiler(group, boilerParams, plantFloorY);
+    }
+
+    // --- Air-source heat pumps (EHP pair on the roof, beside the core) ---
+    // Detailed-asset-only addition: rendered when the Blender asset is loaded.
+    const ashpRoofY =
+      totalHeight + (recipe.roof?.type === "flat" ? recipe.roof.flatThickness : 0);
+    for (let i = 0; i < 2; i++) {
+      const ashp = getEquipmentObjectClone("heat-pump");
+      if (!ashp) break;
+      const ashpX = Math.max(-hw + 1.2, -hw * 0.35) + i * 1.5;
+      ashp.position.set(ashpX, ashpRoofY, -Math.min(hd - 1.0, hd * 0.35));
       tagEquipmentObject(
-        boilerAsset,
-        { type: "heating-boiler" },
+        ashp,
+        { type: "heating-ashp" },
         { castShadow: true, receiveShadow: true }
       );
-      group.add(boilerAsset);
-    } else {
-      const boilerGeo = buildBoilerGeometry(boilerParams);
-      const plantMat = new THREE.MeshStandardMaterial({
-        color: 0xb91c1c,
-        emissive: HEAT_RED,
-        emissiveIntensity: 0.4,
-        roughness: 0.5,
-        metalness: 0.4,
-      });
-      const plant = new THREE.Mesh(boilerGeo, plantMat);
-      // Centre-origin merged geometry: centre so the body top sits at -0.3
-      // (below the ground slab) instead of protruding into floor 1.
-      plant.position.set(0, plantFloorY + boilerParams.height / 2, 0);
-      // Pitfall 2: userData on the Mesh, NOT on the BufferGeometry
-      plant.userData = { type: "heating-boiler" };
-      group.add(plant);
+      group.add(ashp);
     }
 
     // --- Geothermal installation (GSHP + borehole manifold) ---
@@ -294,16 +336,15 @@ export class HeatingLayer implements LayerGenerator {
     // flat-box fallback: wider and flatter than AHU (0.9×0.1×0.5)
     const fcDetailedGeo = getEquipmentGeometryClone("fan-coil");
     const fcGeo = fcDetailedGeo ?? new THREE.BoxGeometry(0.9, 0.1, 0.5);
-    // Blue tint for fan coils (distinct from VRF cyan and heating red)
-    const fcMat =
-      (fcDetailedGeo ? getEquipmentMaterialClone("fan-coil") : null) ??
-      new THREE.MeshStandardMaterial({
-        color: 0x1d4ed8,
-        emissive: 0x3b82f6,
-        emissiveIntensity: 0.2,
-        roughness: 0.4,
-        metalness: 0.5,
-      });
+    // Blue emissive tint always — fan coils are interior ceiling units and
+    // the x-ray colour language keeps them readable through the envelope.
+    const fcMat = new THREE.MeshStandardMaterial({
+      color: 0x1d4ed8,
+      emissive: 0x3b82f6,
+      emissiveIntensity: 0.2,
+      roughness: 0.4,
+      metalness: 0.5,
+    });
     const fcIM = new THREE.InstancedMesh(fcGeo, fcMat, aboveFloors.length);
     // Pitfall 2: userData on the InstancedMesh
     fcIM.userData = { type: "heating-fan-coil" };
@@ -397,6 +438,49 @@ export class HeatingLayer implements LayerGenerator {
 
     this.group = group;
     return group;
+  }
+
+  /** Legacy fire-tube boiler (baseline scenario) — detailed asset or merged fallback. */
+  private addBaselineBoiler(
+    group: THREE.Group,
+    boilerParams: BoilerParams,
+    plantFloorY: number
+  ): void {
+    const boilerAsset = getEquipmentObjectClone("boiler");
+    if (boilerAsset) {
+      const native = ASSET_NATIVE_DIMS.boiler;
+      const radialScale = (boilerParams.radius * 2) / native.w;
+      boilerAsset.scale.set(
+        radialScale,
+        boilerParams.height / native.h,
+        radialScale
+      );
+      // Base-origin asset: body occupies [plantFloorY, plantFloorY + height],
+      // fully below the ground slab; only the flue penetrates upward.
+      boilerAsset.position.set(0, plantFloorY, 0);
+      tagEquipmentObject(
+        boilerAsset,
+        { type: "heating-boiler" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(boilerAsset);
+    } else {
+      const boilerGeo = buildBoilerGeometry(boilerParams);
+      const plantMat = new THREE.MeshStandardMaterial({
+        color: 0xb91c1c,
+        emissive: HEAT_RED,
+        emissiveIntensity: 0.4,
+        roughness: 0.5,
+        metalness: 0.4,
+      });
+      const plant = new THREE.Mesh(boilerGeo, plantMat);
+      // Centre-origin merged geometry: centre so the body top sits at -0.3
+      // (below the ground slab) instead of protruding into floor 1.
+      plant.position.set(0, plantFloorY + boilerParams.height / 2, 0);
+      // Pitfall 2: userData on the Mesh, NOT on the BufferGeometry
+      plant.userData = { type: "heating-boiler" };
+      group.add(plant);
+    }
   }
 
   dispose(): void {

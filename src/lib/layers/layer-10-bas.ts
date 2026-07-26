@@ -5,6 +5,11 @@
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import {
+  getEquipmentGeometryClone,
+  getEquipmentObjectClone,
+  tagEquipmentObject,
+} from "@/lib/equipment-assets";
 
 /** Vertex shader for pulsing/breathing sensor nodes (instanced) */
 const sensorVertexShader = /* glsl */ `
@@ -165,8 +170,11 @@ export class BASLayer implements LayerGenerator {
       return group;
     }
 
-    // --- Sensor nodes: IcosahedronGeometry (low-poly sphere, detail=1) ---
-    const sensorGeo = new THREE.IcosahedronGeometry(0.1, 1);
+    // --- Sensor nodes: detailed IoT multi-sensor puck (Blender asset) or
+    // IcosahedronGeometry fallback. The pulsing shader scales vertices around
+    // the origin, so any centre-origin geometry breathes correctly. ---
+    const sensorGeo =
+      getEquipmentGeometryClone("bas-sensor") ?? new THREE.IcosahedronGeometry(0.1, 1);
     const sensorMat = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
@@ -268,6 +276,41 @@ export class BASLayer implements LayerGenerator {
         vertWeb.userData = { type: "bas-vertical-web" };
         group.add(vertWeb);
       }
+    }
+
+    // --- DDC controller panels (one per floor, near core) ---
+    // Detailed-asset-only addition: single InstancedMesh, 1 draw call.
+    const ddcGeo = getEquipmentGeometryClone("ddc-panel");
+    if (ddcGeo) {
+      const ddcMat = new THREE.MeshStandardMaterial({
+        color: 0x9ca3af,
+        emissive: 0x22c55e,
+        emissiveIntensity: 0.12,
+        roughness: 0.4,
+        metalness: 0.4,
+      });
+      const ddcIM = new THREE.InstancedMesh(ddcGeo, ddcMat, aboveFloors.length);
+      ddcIM.userData = { type: "bas-ddc-panel" };
+      const dMat4 = new THREE.Matrix4();
+      for (let i = 0; i < aboveFloors.length; i++) {
+        const floor = aboveFloors[i];
+        dMat4.makeTranslation(1.4, floor.y + floor.height * 0.5, 0.4);
+        ddcIM.setMatrixAt(i, dMat4);
+      }
+      ddcIM.instanceMatrix.needsUpdate = true;
+      group.add(ddcIM);
+    }
+
+    // --- BAS head-end server rack (basement, beside the plant zone) ---
+    const headend = getEquipmentObjectClone("bas-headend");
+    if (headend) {
+      headend.position.set(2.6, -1.0, -footprintDepth / 2 + 1.6);
+      tagEquipmentObject(
+        headend,
+        { type: "bas-headend" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(headend);
     }
 
     this.group = group;

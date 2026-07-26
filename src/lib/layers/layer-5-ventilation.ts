@@ -14,42 +14,35 @@ import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
 import {
   ASSET_NATIVE_DIMS,
   getEquipmentGeometryClone,
-  getEquipmentMaterialClone,
 } from "@/lib/equipment-assets";
 
 const CYAN = 0x06b6d4;
 const WHITE = 0xffffff;
 
-// Dashed airflow line shader with animated UV offset
+// Flowing supply-air tube shader — bright pulses stream along uv.x
+// (0 = AHU outlet, 1 = diffuser), replacing the old dashed-line look.
 const airflowVertexShader = /* glsl */ `
-  attribute float lineDistance;
-  varying float vLineDistance;
-  varying float vAlpha;
+  varying vec2 vUv;
   void main() {
-    vLineDistance = lineDistance;
-    vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
-    vAlpha = 1.0;
-    gl_Position = projectionMatrix * mvPos;
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
 
 const airflowFragmentShader = /* glsl */ `
   uniform float uTime;
   uniform vec3 uColor;
-  uniform float uDashSize;
-  uniform float uGapSize;
-  varying float vLineDistance;
+  uniform vec3 uHighlight;
+  varying vec2 vUv;
 
   void main() {
-    float totalSize = uDashSize + uGapSize;
-    // Animate the dash pattern by shifting with time
-    float offset = uTime * 2.0;
-    float pattern = mod(vLineDistance + offset, totalSize);
-    if (pattern > uDashSize) discard;
-
-    // Fade based on dash position for softer look
-    float fade = 1.0 - smoothstep(uDashSize * 0.6, uDashSize, pattern);
-    gl_FragColor = vec4(uColor, fade * 0.7);
+    // Repeating pulses travelling from the AHU toward the diffusers
+    float stripe = fract(vUv.x * 5.0 - uTime * 1.1);
+    float pulse = smoothstep(0.35, 0.0, abs(stripe - 0.2));
+    // Faint constant body keeps the duct path legible between pulses
+    float alpha = 0.10 + pulse * 0.8;
+    vec3 col = mix(uColor, uHighlight, pulse * 0.5);
+    gl_FragColor = vec4(col, alpha);
   }
 `;
 
@@ -124,7 +117,6 @@ export class VentilationLayer implements LayerGenerator {
     }
 
     const hw = footprintWidth / 2;
-    const hd = footprintDepth / 2;
 
     // Merge caller overrides onto defaults
     const ahuParams: AhuParams = {
@@ -145,15 +137,16 @@ export class VentilationLayer implements LayerGenerator {
       );
     }
     const ahuGeo = ahuDetailedGeo ?? buildAhuGeometry(ahuParams);
-    const ahuMat =
-      (ahuDetailedGeo ? getEquipmentMaterialClone("ahu") : null) ??
-      new THREE.MeshStandardMaterial({
-        color: 0x0891b2,
-        emissive: CYAN,
-        emissiveIntensity: 0.2,
-        roughness: 0.5,
-        metalness: 0.5,
-      });
+    // Always use the emissive cyan subsystem material — AHUs live INSIDE the
+    // building, and the emissive x-ray colour language is what keeps interior
+    // MEP readable. (The GLB's realistic gray made ceiling HVAC disappear.)
+    const ahuMat = new THREE.MeshStandardMaterial({
+      color: 0x0891b2,
+      emissive: CYAN,
+      emissiveIntensity: 0.2,
+      roughness: 0.5,
+      metalness: 0.5,
+    });
 
     const instanceCount = aboveFloors.length * ahuParams.unitsPerFloor;
     const ahuIM = new THREE.InstancedMesh(ahuGeo, ahuMat, instanceCount);
@@ -175,98 +168,123 @@ export class VentilationLayer implements LayerGenerator {
     ahuIM.instanceMatrix.needsUpdate = true; // Pitfall 1 — CRITICAL
     group.add(ahuIM);
 
-    // --- Airflow trails per floor (chaotic B-splines, NOT straight pipes) ---
-    const trailsPerFloor = Math.max(3, Math.round(5 * density));
+    // --- Ceiling duct network — rigid trunk + branch runs per floor ---
+    // Replaces the old chaotic-spline-only look: HVAC now reads as real
+    // ceiling ductwork. ONE InstancedMesh for every duct segment on every
+    // floor (type "vent-duct-run" — the per-floor loose "vent-duct" Meshes
+    // remain eliminated).
+    const branchXs = [-0.6, -0.25, 0.25, 0.6].map((f) => hw * f);
+    const trunkLen = footprintWidth * 0.72;
+    const branchLen = footprintDepth * 0.62;
+    const segsPerFloor = 1 + branchXs.length * 3; // trunk + (branch + 2 diffusers) each
+    const ductIM = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.MeshStandardMaterial({
+        color: 0x0e7490,
+        emissive: CYAN,
+        emissiveIntensity: 0.35,
+        roughness: 0.4,
+        metalness: 0.5,
+        transparent: true,
+        opacity: 0.45,
+        depthWrite: false,
+      }),
+      aboveFloors.length * segsPerFloor
+    );
+    ductIM.userData = { type: "vent-duct-run" };
+
+    const dPos = new THREE.Vector3();
+    const dQuat = new THREE.Quaternion();
+    const dScl = new THREE.Vector3();
+    const dMat4 = new THREE.Matrix4();
+    let dIdx = 0;
 
     for (const floor of aboveFloors) {
-      const ceilingY = floor.y + floor.height - 0.2;
-      const roomH = floor.height * 0.7;
+      const ductY = floor.y + floor.height - 0.32;
 
-      for (let t = 0; t < trailsPerFloor; t++) {
-        // Generate chaotic control points for fluid-looking airflow
-        const numPoints = 8 + Math.floor(Math.random() * 5);
-        const controlPoints: THREE.Vector3[] = [];
+      // Main trunk along X at the core
+      dPos.set(0, ductY, 0);
+      dScl.set(trunkLen, 0.3, 0.42);
+      dMat4.compose(dPos, dQuat, dScl);
+      ductIM.setMatrixAt(dIdx++, dMat4);
 
-        // Start near AHU (center)
-        controlPoints.push(
-          new THREE.Vector3(
-            (Math.random() - 0.5) * 1.5,
-            ceilingY - Math.random() * 0.3,
-            (Math.random() - 0.5) * 1.5
-          )
-        );
-
-        // Meander through the floor space with chaotic displacement
-        for (let p = 1; p < numPoints; p++) {
-          const progress = p / numPoints;
-          const angle =
-            (t / trailsPerFloor) * Math.PI * 2 + progress * Math.PI;
-          const radius = progress * Math.min(hw, hd) * 0.8;
-
-          controlPoints.push(
-            new THREE.Vector3(
-              Math.cos(angle) * radius + (Math.random() - 0.5) * 2.0,
-              ceilingY - Math.random() * roomH * 0.6,
-              Math.sin(angle) * radius + (Math.random() - 0.5) * 2.0
-            )
-          );
+      for (const bx of branchXs) {
+        const x = Math.max(-hw * 0.8, Math.min(hw * 0.8, bx));
+        // Branch along Z
+        dPos.set(x, ductY, 0);
+        dScl.set(0.3, 0.24, branchLen);
+        dMat4.compose(dPos, dQuat, dScl);
+        ductIM.setMatrixAt(dIdx++, dMat4);
+        // Diffuser plates near both branch ends, dropped slightly
+        for (const sz of [-1, 1]) {
+          dPos.set(x, ductY - 0.16, sz * branchLen * 0.42);
+          dScl.set(0.5, 0.06, 0.5);
+          dMat4.compose(dPos, dQuat, dScl);
+          ductIM.setMatrixAt(dIdx++, dMat4);
         }
-
-        const spline = new THREE.CatmullRomCurve3(
-          controlPoints,
-          false,
-          "catmullrom",
-          0.5
-        );
-        const splinePoints = spline.getPoints(40);
-
-        // Calculate cumulative line distances for dash animation
-        const positions: number[] = [];
-        const lineDistances: number[] = [];
-        let cumDist = 0;
-
-        for (let i = 0; i < splinePoints.length; i++) {
-          const pt = splinePoints[i];
-          positions.push(pt.x, pt.y, pt.z);
-          if (i > 0) {
-            cumDist += splinePoints[i].distanceTo(splinePoints[i - 1]);
-          }
-          lineDistances.push(cumDist);
-        }
-
-        const lineGeo = new THREE.BufferGeometry();
-        lineGeo.setAttribute(
-          "position",
-          new THREE.Float32BufferAttribute(positions, 3)
-        );
-        lineGeo.setAttribute(
-          "lineDistance",
-          new THREE.Float32BufferAttribute(lineDistances, 1)
-        );
-
-        const lineMat = new THREE.ShaderMaterial({
-          vertexShader: airflowVertexShader,
-          fragmentShader: airflowFragmentShader,
-          uniforms: {
-            uTime: { value: 0 },
-            uColor: {
-              value: new THREE.Color(t % 2 === 0 ? CYAN : WHITE),
-            },
-            uDashSize: { value: 0.3 },
-            uGapSize: { value: 0.2 },
-          },
-          transparent: true,
-          depthWrite: false,
-          blending: THREE.AdditiveBlending,
-        });
-
-        const line = new THREE.Line(lineGeo, lineMat);
-        line.userData = { type: "vent-airflow", floorNo: floor.floorNo };
-        group.add(line);
       }
-      // NOTE: Per-floor individual duct segment Meshes (4 × BoxGeometry per floor)
-      // have been intentionally removed. Duct stubs are now baked into the merged
-      // AHU geometry via buildAhuGeometry() — no O(floors × 4) loose Meshes.
+    }
+    ductIM.count = dIdx;
+    ductIM.instanceMatrix.needsUpdate = true;
+    group.add(ductIM);
+
+    // --- Animated supply-air flow tubes along the duct paths ---
+    // One merged tube Mesh per floor (uv.x runs along each tube's length);
+    // the shader streams bright pulses outward from the AHU. Density scales
+    // how many branches carry a visible flow tube.
+    const flowBranches = Math.max(
+      1,
+      Math.min(branchXs.length, Math.round(branchXs.length * density))
+    );
+
+    for (const floor of aboveFloors) {
+      const ductY = floor.y + floor.height - 0.32;
+      const tubeGeos: THREE.BufferGeometry[] = [];
+
+      for (let b = 0; b < flowBranches; b++) {
+        const bx = Math.max(-hw * 0.8, Math.min(hw * 0.8, branchXs[b]));
+        for (const sz of [-1, 1]) {
+          const path = new THREE.CatmullRomCurve3(
+            [
+              new THREE.Vector3(0, ductY - 0.05, 0),
+              new THREE.Vector3(bx * 0.6, ductY - 0.02, 0),
+              new THREE.Vector3(bx, ductY, sz * branchLen * 0.12),
+              new THREE.Vector3(bx, ductY - 0.04, sz * branchLen * 0.3),
+              new THREE.Vector3(bx, ductY - 0.22, sz * branchLen * 0.44),
+            ],
+            false,
+            "catmullrom",
+            0.1
+          );
+          tubeGeos.push(new THREE.TubeGeometry(path, 24, 0.05, 6, false));
+        }
+      }
+
+      const floorTubeGeo = mergeGeometries(tubeGeos);
+      tubeGeos.forEach((g) => g.dispose());
+      if (!floorTubeGeo) continue;
+
+      const flowMat = new THREE.ShaderMaterial({
+        vertexShader: airflowVertexShader,
+        fragmentShader: airflowFragmentShader,
+        uniforms: {
+          uTime: { value: 0 },
+          uColor: { value: new THREE.Color(CYAN) },
+          uHighlight: { value: new THREE.Color(WHITE) },
+        },
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+      });
+
+      const flowMesh = new THREE.Mesh(floorTubeGeo, flowMat);
+      flowMesh.userData = {
+        type: "vent-airflow",
+        floorNo: floor.floorNo,
+        animated: true,
+      };
+      group.add(flowMesh);
     }
 
     this.group = group;

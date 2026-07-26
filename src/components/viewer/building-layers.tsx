@@ -18,12 +18,16 @@ import { VentilationLayer } from "@/lib/layers/layer-5-ventilation";
 import { DHWLayer } from "@/lib/layers/layer-6-dhw";
 import { LightingLayer } from "@/lib/layers/layer-7-lighting";
 import { ElectricalRoutingLayer } from "@/lib/layers/electrical-routing";
+import { MicrogridLayer } from "@/lib/layers/layer-14-microgrid";
+import { BASLayer } from "@/lib/layers/layer-10-bas";
 import { useEquipmentAssets } from "@/hooks/use-equipment-assets";
 import {
   setupMepSubGroups,
   assignToSubGroup,
 } from "@/lib/layers/mep-coordinator";
 import { useEquipmentStore } from "@/store/equipment-store";
+import { useScenarioStore } from "@/store/scenario-store";
+import { deriveEquipmentScenario } from "@/lib/layers/equipment-scenario";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "@/lib/layers/mep-equipment-params";
 
 interface BuildingLayersProps {
@@ -45,6 +49,16 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
 
   // Equipment params for MEP generators — snapshot-safe selector, falls back to defaults
   const equipmentParams = useEquipmentStore((s) => s.params[pk]) ?? DEFAULT_MEP_EQUIPMENT_PARAMS;
+
+  // Green-retrofit hardware scenario: the knapsack-selected measures decide
+  // WHICH physical equipment renders (boiler vs condensing cascade vs ASHP
+  // bank, fluorescent vs LED, PV present or not). Changing budget/track in
+  // the scenario rail regenerates the MEP layers with the swapped hardware.
+  const selectedMeasureIds = useScenarioStore((s) => s.selectedMeasureIds);
+  const equipmentScenario = useMemo(
+    () => deriveEquipmentScenario(selectedMeasureIds),
+    [selectedMeasureIds]
+  );
 
   // Detailed Blender GLB assets — regenerate MEP geometry once preloaded so
   // the synchronous generators swap their coarse fallbacks for real models.
@@ -176,7 +190,8 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     const heatingOutput = new HeatingLayer().generate(
       effectiveRecipe,
       mepDensity,
-      equipmentParams.boiler
+      equipmentParams.boiler,
+      equipmentScenario
     );
     assignToSubGroup(mepGroup, heatingOutput.name, heatingOutput);
 
@@ -200,7 +215,8 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
       {
         fixture: equipmentParams.lightingFixture,
         panel: equipmentParams.electricalPanel,
-      }
+      },
+      equipmentScenario
     );
     assignToSubGroup(mepGroup, lightingOutput.name, lightingOutput);
 
@@ -209,7 +225,21 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
       mepDensity
     );
     assignToSubGroup(mepGroup, electricalOutput.name, electricalOutput);
-  }, [effectiveRecipe, equipmentParams, density, equipmentAssetsReady]);
+
+    // Rooftop PV + BESS + inverters (was previously never instantiated —
+    // this is what puts the solar array on the roof). PV presence follows
+    // the retrofit scenario's solar measure.
+    const microgridOutput = new MicrogridLayer().generate(
+      effectiveRecipe,
+      mepDensity,
+      equipmentScenario
+    );
+    assignToSubGroup(mepGroup, microgridOutput.name, microgridOutput);
+
+    // BAS/IoT nervous system: sensors, data webs, DDC panels, head-end
+    const basOutput = new BASLayer().generate(effectiveRecipe, mepDensity);
+    assignToSubGroup(mepGroup, basOutput.name, basOutput);
+  }, [effectiveRecipe, equipmentParams, density, equipmentAssetsReady, equipmentScenario]);
 
   // Animation loop — update ShaderMaterial uniforms each frame
   useFrame((state) => {

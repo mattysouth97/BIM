@@ -79,6 +79,16 @@ export function TwinStageOverlay({ title, footprintGeometry }: TwinStageOverlayP
     [scenario.selection],
   );
 
+  // Publish the knapsack selection so the 3D MEP layers can physically swap
+  // equipment (boiler→condensing/ASHP, fluorescent→LED, PV on/off) whenever
+  // the budget or program track changes the selected measures.
+  const setSelectedMeasureIds = useScenarioStore((s) => s.setSelectedMeasureIds);
+  useEffect(() => {
+    if (!scenario.selection) return;
+    const ids = scenario.selection.selected.map((m) => m.id).sort();
+    setSelectedMeasureIds(ids);
+  }, [scenario.selection, setSelectedMeasureIds]);
+
   const summary = useMemo(() => {
     if (!scenario.selection) return undefined;
     const sel = scenario.selection.selected.length;

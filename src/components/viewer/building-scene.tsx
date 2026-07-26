@@ -36,6 +36,7 @@ import { EnergyCards } from "./energy-cards";
 import { ErrorBoundary, ViewerErrorBoundary } from "@/components/error-boundary";
 import { StructuralTooltip } from "./structural-tooltip";
 import { EquipmentClickHandler } from "./equipment-click-handler";
+import { EquipmentHoverCard } from "./equipment-hover-card";
 import { ScenePostProcessing } from "./outline-post-processing";
 import { TwinStageOverlay } from "@/components/twin/twin-stage-overlay";
 import type { FootprintGeometry } from "@/lib/portfolio/types";
@@ -489,6 +490,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
                 <BuildingLayers buildingPk={buildingPk} />
                 <StructuralTooltip />
                 <EquipmentClickHandler />
+                <EquipmentHoverCard />
               </>
             )
           )}

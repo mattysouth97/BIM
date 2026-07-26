@@ -11,6 +11,11 @@ import { CoolingLayer } from "../layer-3-cooling";
 import { HeatingLayer } from "../layer-4-heating";
 import { DHWLayer } from "../layer-6-dhw";
 import { ElectricalRoutingLayer } from "../electrical-routing";
+import { MicrogridLayer } from "../layer-14-microgrid";
+import {
+  deriveEquipmentScenario,
+  SHOWCASE_EQUIPMENT_SCENARIO,
+} from "../equipment-scenario";
 import {
   __injectEquipmentAssetForTest,
   __resetEquipmentAssetsForTest,
@@ -216,13 +221,83 @@ describe("ElectricalRoutingLayer (wires)", () => {
     const group = new ElectricalRoutingLayer().generate(makeRecipe());
     const tray = findByType(group, "electrical-cable-tray") as THREE.InstancedMesh;
     expect(tray).toBeDefined();
-    // riser: ceil(9) = 9 modules; runs: 3 floors × floor(12×0.7)=8 → 24; total 33
-    expect(tray.count).toBe(33);
+    // riser ceil(9)=9 + 3 floors × (mainRun floor(12×0.7)=8 + zRun floor(10×0.5)=5)
+    expect(tray.count).toBe(9 + 3 * (8 + 5));
+    // Realism additions: conduit banks/drops + junction boxes
+    const conduits = findByType(group, "electrical-conduit") as THREE.InstancedMesh;
+    expect(conduits).toBeDefined();
+    expect(conduits.count).toBe(3 * 5); // 3 bank + 2 drops per floor
+    const jboxes = findByType(group, "electrical-junction-box") as THREE.InstancedMesh;
+    expect(jboxes).toBeDefined();
+    expect(jboxes.count).toBe(3 * 3);
   });
 
   it("dispose() clears without throwing", () => {
     const layer = new ElectricalRoutingLayer();
     layer.generate(makeRecipe());
     expect(() => layer.dispose()).not.toThrow();
+  });
+});
+
+describe("Green-retrofit equipment scenario", () => {
+  it("derives hardware swaps from selected measure ids", () => {
+    expect(deriveEquipmentScenario(null)).toEqual(SHOWCASE_EQUIPMENT_SCENARIO);
+    expect(deriveEquipmentScenario([])).toEqual({
+      heating: "baseline",
+      lightingLed: false,
+      solarPv: false,
+    });
+    expect(
+      deriveEquipmentScenario(["hvac-boiler-upgrade", "lighting-led", "solar-pv-flat"])
+    ).toEqual({ heating: "condensing", lightingLed: true, solarPv: true });
+    // Heat-pump conversion supersedes the boiler upgrade
+    expect(
+      deriveEquipmentScenario(["hvac-boiler-upgrade", "hvac-heat-pump"]).heating
+    ).toBe("heat-pump");
+    expect(deriveEquipmentScenario(["lighting-led-smart"]).lightingLed).toBe(true);
+  });
+
+  it("heat-pump scenario replaces the boiler with an ASHP bank", () => {
+    const group = new HeatingLayer().generate(makeRecipe(), 1.0, {}, {
+      heating: "heat-pump",
+      lightingLed: false,
+      solarPv: false,
+    });
+    expect(findByType(group, "heating-boiler")).toBeUndefined();
+    let ashpCount = 0;
+    group.traverse((o) => {
+      if (o.userData?.type === "heating-heat-pump-plant" && o.parent === group) ashpCount++;
+    });
+    expect(ashpCount).toBe(3);
+  });
+
+  it("condensing scenario swaps in the cascade and drops the legacy boiler", () => {
+    const group = new HeatingLayer().generate(makeRecipe(), 1.0, {}, {
+      heating: "condensing",
+      lightingLed: false,
+      solarPv: false,
+    });
+    expect(findByType(group, "heating-boiler")).toBeUndefined();
+    expect(findByType(group, "heating-condensing-boiler")).toBeDefined();
+  });
+
+  it("solar measure gates the PV array, BESS, and inverters", () => {
+    const noPv = new MicrogridLayer().generate(makeRecipe(), 1.0, {
+      heating: "baseline",
+      lightingLed: false,
+      solarPv: false,
+    });
+    expect(findByType(noPv, "microgrid-pv-panel")).toBeUndefined();
+    expect(findByType(noPv, "microgrid-bess")).toBeUndefined();
+    // Distribution backbone still renders without PV
+    expect(findByType(noPv, "microgrid-backbone")).toBeDefined();
+
+    const withPv = new MicrogridLayer().generate(makeRecipe(), 1.0, {
+      heating: "baseline",
+      lightingLed: false,
+      solarPv: true,
+    });
+    expect(findByType(withPv, "microgrid-pv-panel")).toBeDefined();
+    expect(findByType(withPv, "microgrid-bess")).toBeDefined();
   });
 });

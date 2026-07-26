@@ -11,6 +11,10 @@ import {
   getEquipmentObjectClone,
   tagEquipmentObject,
 } from "@/lib/equipment-assets";
+import {
+  SHOWCASE_EQUIPMENT_SCENARIO,
+  type EquipmentScenario,
+} from "./equipment-scenario";
 
 /** Vertex shader for battery glow pulse (instanced) */
 const batteryGlowVertexShader = /* glsl */ `
@@ -100,11 +104,20 @@ const flowParticleFragmentShader = /* glsl */ `
 export class MicrogridLayer implements LayerGenerator {
   private group: THREE.Group | null = null;
 
-  generate(recipe: BuildingRecipe, density = 1.0): THREE.Group {
+  generate(
+    recipe: BuildingRecipe,
+    density = 1.0,
+    scenario: EquipmentScenario = SHOWCASE_EQUIPMENT_SCENARIO
+  ): THREE.Group {
     this.dispose();
 
     const group = new THREE.Group();
     group.name = "layer-14-microgrid";
+    // Green-retrofit gating: the PV array, BESS, and inverters exist only
+    // when the solar measure is in the selected scenario (or in showcase
+    // mode before any scenario is evaluated). The distribution backbone and
+    // floor conduits render regardless.
+    const renderPv = scenario.solarPv;
 
     const { floors, footprintWidth, footprintDepth, totalHeight } = recipe;
     const aboveFloors = floors.filter((f) => f.type === "above");
@@ -121,6 +134,9 @@ export class MicrogridLayer implements LayerGenerator {
     const quat = new THREE.Quaternion();
     const scl = new THREE.Vector3(1, 1, 1);
 
+    const basementY = -1.0; // below grade (shared by BESS + flow splines)
+
+    if (renderPv) {
     // --- Solar PV panels on roof: flat InstancedMesh grid tilted south ---
     const pvPanelWidth = 1.6;
     const pvPanelDepth = 1.0;
@@ -250,7 +266,6 @@ export class MicrogridLayer implements LayerGenerator {
       (footprintWidth * 0.6) / batteryCount
     );
     const batteryRowStart = -(batteryCount * batterySpacing) / 2;
-    const basementY = -1.0; // below grade
 
     for (let i = 0; i < batteryCount; i++) {
       pos.set(
@@ -305,6 +320,7 @@ export class MicrogridLayer implements LayerGenerator {
       );
       group.add(inverterAsset);
     }
+    } // end if (renderPv) — PV array, BESS, LEDs, inverters
 
     // --- Vertical power backbone conduit ---
     const backboneGeo = new THREE.CylinderGeometry(
@@ -325,7 +341,8 @@ export class MicrogridLayer implements LayerGenerator {
     backbone.userData = { type: "microgrid-backbone" };
     group.add(backbone);
 
-    // --- Bi-directional energy flow particles ---
+    // --- Bi-directional energy flow particles (only with PV generating) ---
+    if (renderPv) {
     const particlesPerSpline = Math.floor(40 * density);
     // 2 splines: roof-to-basement (generating) and basement-to-midfloor (consuming)
     const splines = [
@@ -392,6 +409,7 @@ export class MicrogridLayer implements LayerGenerator {
       };
       group.add(particles);
     }
+    } // end if (renderPv) — flow particles
 
     // --- Horizontal distribution conduits per floor (from backbone to floor plates) ---
     const conduitMat = new THREE.MeshStandardMaterial({

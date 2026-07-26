@@ -35,6 +35,14 @@ export type EquipmentAssetId =
   | "battery-rack"
   | "inverter"
   | "gshp"
+  | "heat-pump"
+  // Retrofit-scenario variants (green remodeling swaps)
+  | "boiler-condensing"
+  | "light-fixture-led"
+  // BAS / controls
+  | "bas-sensor"
+  | "ddc-panel"
+  | "bas-headend"
   // Structural kit
   | "column"
   | "beam"
@@ -59,6 +67,12 @@ export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "battery-rack",
   "inverter",
   "gshp",
+  "heat-pump",
+  "boiler-condensing",
+  "light-fixture-led",
+  "bas-sensor",
+  "ddc-panel",
+  "bas-headend",
   "column",
   "beam",
   "mullion",
@@ -93,6 +107,12 @@ export const ASSET_NATIVE_DIMS: Record<
   "battery-rack": { w: 0.9, h: 0.7, d: 0.6 },
   inverter: { w: 0.8, h: 1.7, d: 0.5 },
   gshp: { w: 2.0, h: 1.15, d: 1.2 },
+  "heat-pump": { w: 1.1, h: 1.35, d: 0.45 },
+  "boiler-condensing": { w: 2.0, h: 2.0, d: 0.6 },
+  "light-fixture-led": { w: 0.6, h: 0.06, d: 0.3 },
+  "bas-sensor": { w: 0.2, h: 0.09, d: 0.2 },
+  "ddc-panel": { w: 0.6, h: 0.8, d: 0.2 },
+  "bas-headend": { w: 0.66, h: 2.0, d: 0.84 },
   column: { w: 1, h: 1, d: 1 }, // unit-normalized (BoxGeometry(1,1,1) drop-in)
   beam: { w: 1, h: 1, d: 1 }, // unit-normalized, length along X
   mullion: { w: 1, h: 1, d: 1 }, // unit-normalized, length along Y

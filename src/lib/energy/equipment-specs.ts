@@ -223,15 +223,48 @@ export function inferEquipmentSpecs(
     // HVAC — heating-*
     // -----------------------------------------------------------------------
     case "heating": {
+      const heatingLoad = floorArea * floorCount * 0.06; // kW (slightly higher than cooling)
+      const capacityKw = Math.round(heatingLoad * 10) / 10;
+
+      // Retrofit hardware variants carry their own efficiency profile —
+      // the whole point of the green-remodeling swap is visibly (and
+      // numerically) better energy usage than the era-graded legacy plant.
+      if (type.includes("heat-pump") || type.includes("ashp")) {
+        // Electric heat pump: COP ~3.5, new install
+        const annualKwh = Math.round((heatingLoad * opHours * 0.45) / 3.5);
+        return buildSpec({
+          categoryKo:  "히트펌프 (전기)",
+          categoryEn:  "Heat Pump (Electric)",
+          capacity:    `${capacityKw} kW`,
+          installYear: 2026,
+          annualKwh:   Math.max(annualKwh, 1),
+          grade:       1,
+          dataSource:  "estimated-from-recipe",
+          standardRef: "KS B 6364",
+        });
+      }
+      if (type.includes("condensing")) {
+        // Condensing boiler cascade: ~96% seasonal efficiency, new install
+        const annualKwh = Math.round((heatingLoad * opHours * 0.45) / 0.96);
+        return buildSpec({
+          categoryKo:  "콘덴싱 보일러",
+          categoryEn:  "Condensing Boiler Cascade",
+          capacity:    `${capacityKw} kW`,
+          installYear: 2026,
+          annualKwh:   Math.max(annualKwh, 1),
+          grade:       1,
+          dataSource:  "estimated-from-recipe",
+          standardRef: "KS B 6364",
+        });
+      }
+
       const grade = HVAC_ERA_GRADE[era];
       // Heating efficiency: COP/efficiency ratio
       const effByGrade: Record<EquipmentEfficiencyGrade, number> = {
         1: 0.95, 2: 0.88, 3: 0.80, 4: 0.72, 5: 0.60,
       };
       const eff = effByGrade[grade];
-      const heatingLoad = floorArea * floorCount * 0.06; // kW (slightly higher than cooling)
       const annualKwh = Math.round((heatingLoad * opHours * 0.45) / eff);
-      const capacityKw = Math.round(heatingLoad * 10) / 10;
 
       return buildSpec({
         categoryKo:  "난방기",
@@ -384,6 +417,27 @@ export function inferEquipmentSpecs(
         categoryKo:  "전력 간선 (케이블 트레이)",
         categoryEn:  "Power Distribution (Cable Tray)",
         capacity:    "—",
+        installYear,
+        annualKwh:   Math.max(annualKwh, 1),
+        grade,
+        dataSource:  "estimated-from-era",
+        standardRef: "KSC IEC 62301",
+      });
+    }
+
+    // -----------------------------------------------------------------------
+    // BAS / controls — bas-* (sensors, DDC panels, head-end)
+    // -----------------------------------------------------------------------
+    case "bas": {
+      const grade = ELECTRICAL_ERA_GRADE[era];
+      // Controls/automation: ~1.5 W/m² continuous panel + sensor load
+      const controlsKw = (floorArea * floorCount * 1.5) / 1000;
+      const annualKwh = Math.round(controlsKw * 8760); // controls run 24/7
+
+      return buildSpec({
+        categoryKo:  "빌딩 자동제어 (BAS)",
+        categoryEn:  "Building Automation System",
+        capacity:    `${Math.max(1, Math.round(controlsKw))} kW`,
         installYear,
         annualKwh:   Math.max(annualKwh, 1),
         grade,

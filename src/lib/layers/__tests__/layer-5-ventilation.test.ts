@@ -170,17 +170,35 @@ describe("VentilationLayer", () => {
     layer.dispose();
   });
 
-  it("airflow trail Lines with userData.type === 'vent-airflow' are still present", () => {
+  it("animated airflow tube Meshes with userData.type === 'vent-airflow' are present", () => {
     const layer = new VentilationLayer();
     const group = layer.generate(makeRecipe());
     const byType = collectByType(group);
     const airflowObjects = byType.get("vent-airflow");
     expect(airflowObjects).toBeDefined();
     expect(airflowObjects!.length).toBeGreaterThan(0);
-    // Each should be a Line (not a Mesh)
+    // Flow tubes: one merged Mesh per floor with a uTime-animated shader
     for (const obj of airflowObjects!) {
-      expect(obj).toBeInstanceOf(THREE.Line);
+      expect(obj).toBeInstanceOf(THREE.Mesh);
+      const mat = (obj as THREE.Mesh).material as THREE.ShaderMaterial;
+      expect(mat).toBeInstanceOf(THREE.ShaderMaterial);
+      expect(mat.uniforms).toHaveProperty("uTime");
     }
+    layer.dispose();
+  });
+
+  it("renders a rigid ceiling duct network as ONE InstancedMesh (vent-duct-run)", () => {
+    const layer = new VentilationLayer();
+    const group = layer.generate(makeRecipe());
+    const byType = collectByType(group);
+    const ductRuns = byType.get("vent-duct-run");
+    expect(ductRuns).toBeDefined();
+    expect(ductRuns!.length).toBe(1);
+    expect(ductRuns![0]).toBeInstanceOf(THREE.InstancedMesh);
+    const im = ductRuns![0] as THREE.InstancedMesh;
+    // trunk + 4 branches × (1 duct + 2 diffusers) = 13 segments per floor
+    const aboveFloors = makeRecipe().floors.filter((f) => f.type === "above").length;
+    expect(im.count).toBe(aboveFloors * 13);
     layer.dispose();
   });
 });

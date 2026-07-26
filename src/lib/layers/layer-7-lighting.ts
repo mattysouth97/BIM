@@ -15,8 +15,14 @@ import {
   getEquipmentGeometryClone,
   getEquipmentMaterialClone,
 } from "@/lib/equipment-assets";
+import {
+  SHOWCASE_EQUIPMENT_SCENARIO,
+  type EquipmentScenario,
+} from "./equipment-scenario";
 
 const LIGHT_YELLOW = 0xfbbf24;
+// Cool-white glow for the LED retrofit variant
+const LED_WHITE = 0xdbeafe;
 
 // Fixture shader — emissiveIntensity animated by uTime for dimming simulation
 const fixtureVertexShader = /* glsl */ `
@@ -120,7 +126,8 @@ export class LightingLayer implements LayerGenerator {
     equipParams: {
       fixture?: Partial<LightingFixtureParams>;
       panel?: Partial<ElectricalPanelParams>;
-    } = {}
+    } = {},
+    scenario: EquipmentScenario = SHOWCASE_EQUIPMENT_SCENARIO
   ): THREE.Group {
     this.dispose();
 
@@ -168,24 +175,34 @@ export class LightingLayer implements LayerGenerator {
 
     if (totalFixtures > 0) {
       // --- InstancedMesh for all fixtures — merged geometry with diffuser face ---
-      // Detailed louvred-troffer Blender asset (0.6×0.1×0.3, centre origin)
-      // scaled to params; the animated dimming ShaderMaterial is kept either way.
-      const fixtureDetailedGeo = getEquipmentGeometryClone("light-fixture");
+      // SCENARIO-DEPENDENT hardware: the LED retrofit measure swaps the legacy
+      // louvred fluorescent troffer for a slim LED flat panel (and shifts the
+      // glow from warm yellow to cool white). Animated dimming shader kept.
+      const fixtureAssetId = scenario.lightingLed ? "light-fixture-led" : "light-fixture";
+      const fixtureDetailedGeo = getEquipmentGeometryClone(fixtureAssetId);
       if (fixtureDetailedGeo) {
-        const native = ASSET_NATIVE_DIMS["light-fixture"];
+        const native = ASSET_NATIVE_DIMS[fixtureAssetId];
         fixtureDetailedGeo.scale(
           fixtureParams.width / native.w,
-          fixtureParams.height / native.h,
+          // LED panels keep their slim authored height — only the legacy
+          // troffer follows the height param.
+          scenario.lightingLed ? 1 : fixtureParams.height / native.h,
           fixtureParams.depth / native.d
         );
       }
-      const fixtureGeo = fixtureDetailedGeo ?? buildFixtureGeometry(fixtureParams);
+      const fixtureGeo =
+        fixtureDetailedGeo ??
+        (scenario.lightingLed
+          ? new THREE.BoxGeometry(fixtureParams.width, 0.035, fixtureParams.depth)
+          : buildFixtureGeometry(fixtureParams));
       const fixtureMat = new THREE.ShaderMaterial({
         vertexShader: fixtureVertexShader,
         fragmentShader: fixtureFragmentShader,
         uniforms: {
           uTime: { value: 0 },
-          uColor: { value: new THREE.Color(LIGHT_YELLOW) },
+          uColor: {
+            value: new THREE.Color(scenario.lightingLed ? LED_WHITE : LIGHT_YELLOW),
+          },
         },
         transparent: true,
         depthWrite: false,

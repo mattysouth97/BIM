@@ -40,9 +40,17 @@ interface ScenarioState {
    * that has the ledger data. `null` until a building is loaded.
    */
   buildingInputs: ScenarioBuildingInputs | null;
+  /**
+   * Knapsack-selected retrofit measure ids, published by the twin-stage
+   * overlay after each budget/track evaluation. `null` = no scenario has
+   * been evaluated yet (3D layers render the showcase equipment kit).
+   * Drives the physical equipment swaps in the MEP layers.
+   */
+  selectedMeasureIds: string[] | null;
   setCapexBudget: (krw: number) => void;
   setProgramTrack: (track: ProgramTrack) => void;
   setBuildingInputs: (inputs: ScenarioBuildingInputs | null) => void;
+  setSelectedMeasureIds: (ids: string[] | null) => void;
   resetScenario: () => void;
 }
 
@@ -50,14 +58,32 @@ export const useScenarioStore = create<ScenarioState>()((set) => ({
   capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
   programTrack: "none",
   buildingInputs: null,
+  selectedMeasureIds: null,
 
   setCapexBudget: (krw) => set({ capexBudgetKrw: krw }),
   setProgramTrack: (track) => set({ programTrack: track }),
   setBuildingInputs: (inputs) => set({ buildingInputs: inputs }),
+  setSelectedMeasureIds: (ids) =>
+    set((state) => {
+      // Referential stability: skip the update when the id set is unchanged
+      // so 3D layers don't regenerate on every knapsack re-evaluation.
+      const prev = state.selectedMeasureIds;
+      if (
+        prev !== null &&
+        ids !== null &&
+        prev.length === ids.length &&
+        prev.every((v, i) => v === ids[i])
+      ) {
+        return state;
+      }
+      if (prev === null && ids === null) return state;
+      return { selectedMeasureIds: ids };
+    }),
   resetScenario: () =>
     set({
       capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
       programTrack: "none",
       buildingInputs: null,
+      selectedMeasureIds: null,
     }),
 }));
