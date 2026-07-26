@@ -69,6 +69,32 @@ function estimateFootprint(area: number): { width: number; depth: number } {
   return { width: Math.round(width * 10) / 10, depth: Math.round(depth * 10) / 10 };
 }
 
+/**
+ * The floor-outline endpoint can return rows for multiple building registers
+ * and multiple use/area rows for one physical floor. Scope them to the chosen
+ * title and keep one representative per floor so geometry is never duplicated.
+ */
+function normalizeFloorRows(title: BrTitleInfo, floors: BrFloorInfo[]): BrFloorInfo[] {
+  const titlePk = String(title.mgmBldrgstPk || "");
+  const scoped = floors.filter((floor) => {
+    const floorPk = String(floor.mgmBldrgstPk || "");
+    return !titlePk || !floorPk || floorPk === titlePk;
+  });
+  const byFloor = new Map<string, BrFloorInfo>();
+
+  for (const floor of scoped) {
+    const floorNo = Number(floor.flrNo);
+    if (!Number.isFinite(floorNo)) continue;
+    const key = `${floor.flrGbCd || (floorNo < 0 ? "below" : "above")}:${floorNo}`;
+    const existing = byFloor.get(key);
+    if (!existing || Number(floor.area) > Number(existing.area)) {
+      byFloor.set(key, floor);
+    }
+  }
+
+  return [...byFloor.values()];
+}
+
 function getUseCategory(mainPurpsCd: string): "residential" | "office" | "factory" | "retail" | "default" {
   if (["01000", "02000"].includes(mainPurpsCd)) return "residential";
   if (mainPurpsCd === "14000") return "office";
@@ -125,9 +151,10 @@ export function generateBuildingGeometry(
     roofCode.includes("모임") || roofCode === "3" ? "hip" : "flat";
 
   const floorGeometries: FloorGeometry[] = [];
+  const normalizedFloors = normalizeFloorRows(title, floors);
 
-  if (floors.length > 0) {
-    for (const f of floors) {
+  if (normalizedFloors.length > 0) {
+    for (const f of normalizedFloors) {
       const flrNo = Number(f.flrNo);
       const isBelow = (f.flrGbCdNm || "").includes("지하") || flrNo < 0;
       const absFloor = Math.abs(flrNo);

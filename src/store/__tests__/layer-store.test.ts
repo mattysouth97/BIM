@@ -25,6 +25,17 @@ describe("useLayerStore", () => {
     }
   });
 
+  it("airflow is visible by default and can be toggled independently", () => {
+    expect(useLayerStore.getState().airflowVisible).toBe(true);
+
+    useLayerStore.getState().toggleAirflow();
+    expect(useLayerStore.getState().airflowVisible).toBe(false);
+    expect(useLayerStore.getState().mepSubVisibility["mep-hvac"]).toBe(true);
+
+    useLayerStore.getState().setAirflowVisible(true);
+    expect(useLayerStore.getState().airflowVisible).toBe(true);
+  });
+
   it("all 5 layers have default entries", () => {
     const { visibility, generated, density } = useLayerStore.getState();
     for (const id of ALL_LAYER_IDS) {
@@ -75,6 +86,7 @@ describe("useLayerStore", () => {
     useLayerStore.getState().toggleLayer("mep");
     useLayerStore.getState().setDensity("structure", 90);
     useLayerStore.getState().setGenerated("energy-zones");
+    useLayerStore.getState().setAirflowVisible(false);
 
     // Reset
     useLayerStore.getState().resetAll();
@@ -84,6 +96,7 @@ describe("useLayerStore", () => {
     expect(useLayerStore.getState().visibility["mep"]).toBe(true);
     expect(useLayerStore.getState().density["structure"]).toBe(50);
     expect(useLayerStore.getState().generated["energy-zones"]).toBe(false);
+    expect(useLayerStore.getState().airflowVisible).toBe(true);
   });
 
   it("default density is 50 for all layers", () => {

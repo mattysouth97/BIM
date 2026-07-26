@@ -8,9 +8,6 @@ import type { LayerGenerator } from "./types";
 import {
   getColumnPositions,
   calcColumnLoad,
-  calcColumnCapacity,
-  getStressColor,
-  getRecommendedColumnSize,
 } from "@/lib/structural-codes";
 
 // ---------------------------------------------------------------------------
@@ -35,11 +32,11 @@ const arrowFragmentShader = /* glsl */ `
 
 /**
  * StructuralAnalysisLayer renders:
- * A. Stress-colored column overlay (InstancedMesh, colored green/yellow/red)
- * B. Animated load path arrows (ShaderMaterial with uTime pulse, per floor per column)
- * C. Foundation markers at ground level (flat discs, gray)
+ * A. Animated load path arrows (ShaderMaterial with uTime pulse, per floor per column)
+ * B. Foundation markers at ground level (flat discs, gray)
  *
- * All based on KBC 2016 calculations from structural-codes.ts.
+ * The physical column mesh owns the stress colors and sizing metadata. Keeping
+ * the analysis layer annotation-only avoids a second coincident column volume.
  */
 export class StructuralAnalysisLayer implements LayerGenerator {
   private group: THREE.Group | null = null;
@@ -62,7 +59,6 @@ export class StructuralAnalysisLayer implements LayerGenerator {
       return group;
     }
 
-    const capacity = calcColumnCapacity(recipe);
     // calcColumnLoad uses all floors, but we only iterate above-ground floors
     // We need per-above-floor loads — pass columnPositions.length as count
     const allFloorLoads = calcColumnLoad(recipe, columnPositions.length);
@@ -81,55 +77,7 @@ export class StructuralAnalysisLayer implements LayerGenerator {
     const maxLoad = Math.max(...aboveFloorLoadsForArrows);
 
     // ---------------------------------------------------------------------------
-    // A. Stress-Colored Column Overlay (InstancedMesh)
-    // ---------------------------------------------------------------------------
-
-    const totalCount = aboveFloors.length * columnPositions.length;
-    const colGeo = new THREE.BoxGeometry(1, 1, 1);
-    const colMat = new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.7 });
-    const im = new THREE.InstancedMesh(colGeo, colMat, Math.max(1, totalCount));
-    im.userData.type = "structural-column";
-    im.userData.sizingLabels = [] as string[];
-
-    const mat4 = new THREE.Matrix4();
-    const pos = new THREE.Vector3();
-    const quat = new THREE.Quaternion();
-    const scl = new THREE.Vector3();
-    const color = new THREE.Color();
-
-    let idx = 0;
-    for (const floor of aboveFloors) {
-      const floorIdx = recipe.floors.indexOf(floor);
-      const floorLoad = floorIndexToLoad.get(floorIdx) ?? 0;
-      const ratio = capacity > 0 ? floorLoad / capacity : 0;
-
-      const colHeight = floor.height - recipe.slab.thickness;
-      if (colHeight <= 0) continue;
-      const y = floor.y + recipe.slab.thickness + colHeight / 2;
-
-      const hexColor = getStressColor(ratio);
-      color.set(hexColor);
-
-      for (const cp of columnPositions) {
-        pos.set(cp.x, y, cp.z);
-        scl.set(recipe.column.size, colHeight, recipe.column.size);
-        mat4.compose(pos, quat, scl);
-        im.setMatrixAt(idx, mat4);
-        im.setColorAt(idx, color);
-
-        const sizingLabel = `${getRecommendedColumnSize(floorLoad)} | ${Math.round(floorLoad)} kN | ${Math.round(ratio * 100)}% cap.`;
-        im.userData.sizingLabels[idx] = sizingLabel;
-        idx++;
-      }
-    }
-
-    im.count = idx;
-    im.instanceMatrix.needsUpdate = true;
-    if (im.instanceColor) im.instanceColor.needsUpdate = true;
-    group.add(im);
-
-    // ---------------------------------------------------------------------------
-    // B. Animated Load Path Arrows
+    // A. Animated Load Path Arrows
     // ---------------------------------------------------------------------------
 
     const arrowsGroup = new THREE.Group();
@@ -159,7 +107,8 @@ export class StructuralAnalysisLayer implements LayerGenerator {
       const shaftHeight = arrowHeight * 0.7;
       const headHeight = arrowHeight * 0.3;
 
-      const arrowY = floor.y + recipe.slab.thickness + 0.1;
+      const arrowTipY = floor.y + recipe.slab.thickness + 0.05;
+      const horizontalClearance = recipe.column.size / 2 + 0.16;
 
       // Rotation: 180 degrees around X axis so cone points downward
       const downQuat = new THREE.Quaternion().setFromAxisAngle(
@@ -169,21 +118,32 @@ export class StructuralAnalysisLayer implements LayerGenerator {
 
       for (const cp of columnPositions) {
         const arrowSubGroup = new THREE.Group();
-        arrowSubGroup.userData = { type: "load-path-arrow" };
+        const directionX = cp.x >= 0 ? 1 : -1;
+        const directionZ = cp.z >= 0 ? 1 : -1;
+        const arrowX = cp.x + directionX * horizontalClearance;
+        const arrowZ = cp.z + directionZ * horizontalClearance;
+        arrowSubGroup.userData = {
+          type: "load-path-arrow",
+          columnAnchor: { x: cp.x, z: cp.z },
+        };
 
         // Shaft
         const shaftGeo = new THREE.CylinderGeometry(0.05, 0.05, shaftHeight, 6);
         const shaft = new THREE.Mesh(shaftGeo, arrowMat);
-        // Position shaft so bottom of shaft is at arrowY
-        shaft.position.set(cp.x, arrowY + shaftHeight / 2, cp.z);
+        // Seat the arrow beside the column, with its downward tip just above
+        // the slab and the shaft touching the cone rather than intersecting it.
+        shaft.position.set(
+          arrowX,
+          arrowTipY + headHeight + shaftHeight / 2,
+          arrowZ,
+        );
         shaft.setRotationFromQuaternion(downQuat);
         arrowSubGroup.add(shaft);
 
         // Head (cone) below the shaft
         const headGeo = new THREE.ConeGeometry(0.12, headHeight, 8);
         const head = new THREE.Mesh(headGeo, arrowMat);
-        // Position head below shaft
-        head.position.set(cp.x, arrowY - headHeight / 2, cp.z);
+        head.position.set(arrowX, arrowTipY + headHeight / 2, arrowZ);
         head.setRotationFromQuaternion(downQuat);
         arrowSubGroup.add(head);
 
@@ -194,7 +154,7 @@ export class StructuralAnalysisLayer implements LayerGenerator {
     group.add(arrowsGroup);
 
     // ---------------------------------------------------------------------------
-    // C. Foundation Markers (flat discs at y=0)
+    // B. Foundation Markers (flat discs at y=0)
     // ---------------------------------------------------------------------------
 
     const foundationsGroup = new THREE.Group();
@@ -204,13 +164,16 @@ export class StructuralAnalysisLayer implements LayerGenerator {
       color: 0x6b7280,
       transparent: true,
       opacity: 0.5,
+      depthTest: false,
+      depthWrite: false,
     });
 
     for (const cp of columnPositions) {
       const discGeo = new THREE.CircleGeometry(recipe.column.size * 1.5, 16);
       const disc = new THREE.Mesh(discGeo, discMat);
-      disc.position.set(cp.x, 0, cp.z);
+      disc.position.set(cp.x, recipe.slab.thickness + 0.01, cp.z);
       disc.rotation.x = -Math.PI / 2;
+      disc.renderOrder = 19;
       disc.userData = { type: "structural-foundation" };
       foundationsGroup.add(disc);
     }

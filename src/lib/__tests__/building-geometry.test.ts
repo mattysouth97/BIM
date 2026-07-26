@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateBuildingGeometry, toRecipe } from "../building-geometry";
-import type { BrTitleInfo } from "../types";
+import type { BrFloorInfo, BrTitleInfo } from "../types";
 
 function makeTitle(overrides?: Partial<BrTitleInfo>): BrTitleInfo {
   return {
@@ -97,6 +97,21 @@ describe("generateBuildingGeometry", () => {
     const rcGeo = generateBuildingGeometry(makeTitle({ strctCd: "11" }), []);
     expect(rcGeo.wallThickness).toBeGreaterThan(0.1);
     expect(rcGeo.wallThickness).toBeLessThan(1.0);
+  });
+
+  it("scopes floor rows to the selected register and emits one geometry per physical floor", () => {
+    const title = makeTitle({ mgmBldrgstPk: "selected", grndFlrCnt: 2, ugrndFlrCnt: 0 });
+    const rows = [
+      { mgmBldrgstPk: "selected", flrNo: 1, flrGbCd: "20", area: 70 },
+      { mgmBldrgstPk: "selected", flrNo: 1, flrGbCd: "20", area: 20 },
+      { mgmBldrgstPk: "selected", flrNo: 2, flrGbCd: "20", area: 70 },
+      { mgmBldrgstPk: "other", flrNo: 1, flrGbCd: "20", area: 100 },
+    ] as BrFloorInfo[];
+
+    const geo = generateBuildingGeometry(title, rows);
+
+    expect(geo.floors.map((floor) => floor.floorNo)).toEqual([1, 2]);
+    expect(geo.floors[0].area).toBe(70);
   });
 });
 

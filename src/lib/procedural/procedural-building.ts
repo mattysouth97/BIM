@@ -31,6 +31,7 @@ export class ProceduralBuilding {
     if (this.recipe.sections && this.recipe.sections.length > 1) {
       const facadeGroup = new THREE.Group();
       facadeGroup.name = "facade";
+      const topSectionEnd = Math.max(...this.recipe.sections.map((section) => section.endFloor));
       for (let si = 0; si < this.recipe.sections.length; si++) {
         const section = this.recipe.sections[si];
         const sectionFloors = this.recipe.floors.filter(
@@ -46,7 +47,9 @@ export class ProceduralBuilding {
           curtainWall: section.curtainWall,
           // Sections share structural dimensions but have unique facades
         };
-        const sectionFacade = generateFacade(sectionRecipe);
+        const sectionFacade = generateFacade(sectionRecipe, {
+          includeParapet: section.endFloor === topSectionEnd && this.recipe.roof.type === "flat",
+        });
         sectionFacade.name = `facade-section-${si}`;
         facadeGroup.add(sectionFacade);
       }

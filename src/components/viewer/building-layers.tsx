@@ -43,6 +43,7 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
 
   const visibility = useLayerStore((s) => s.visibility);
   const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
+  const airflowVisible = useLayerStore((s) => s.airflowVisible);
   const density = useLayerStore((s) => s.density);
 
   // Heatmap data — call hooks unconditionally (Rules of Hooks); gate downstream work with pk check
@@ -202,6 +203,12 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
   // for a group no code created. Mounted under the "structure" layer group
   // so the existing structure toggle controls it alongside slabs/columns;
   // updateAnimations() picks up its uTime arrow shaders automatically.
+  // Hide only the batched streamline object, leaving HVAC equipment mounted.
+  // Re-apply after any MEP regeneration so the user's preference is stable.
+  useEffect(() => {
+    managerRef.current?.setAirflowVisible(airflowVisible);
+  }, [airflowVisible, effectiveRecipe, equipmentParams, density]);
+
   const structuralLayerRef = useRef<StructuralAnalysisLayer | null>(null);
   useEffect(() => {
     const manager = managerRef.current;

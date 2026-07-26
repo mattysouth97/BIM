@@ -42,6 +42,15 @@ interface LayerState {
   /** Visibility toggle per MEP sub-layer — all sub-layers visible by default */
   mepSubVisibility: Record<MepSubLayerId, boolean>;
 
+  /** Animated airflow effect inside the HVAC sub-layer. */
+  airflowVisible: boolean;
+
+  /** Toggle only the airflow effect, leaving HVAC equipment visible. */
+  toggleAirflow: () => void;
+
+  /** Set airflow visibility explicitly. */
+  setAirflowVisible: (visible: boolean) => void;
+
   /** Toggle a single MEP sub-layer's visibility */
   toggleMepSub: (id: MepSubLayerId) => void;
 
@@ -98,10 +107,17 @@ export const useLayerStore = create<LayerState>()(
           generated: { ...defaultGenerated },
           density: { ...defaultDensity },
           mepSubVisibility: { ...defaultMepSubVisibility },
+          airflowVisible: true,
           structuralIsolation: false,
         }),
 
       mepSubVisibility: { ...defaultMepSubVisibility },
+      airflowVisible: true,
+
+      toggleAirflow: () =>
+        set((state) => ({ airflowVisible: !state.airflowVisible })),
+
+      setAirflowVisible: (visible) => set({ airflowVisible: visible }),
 
       toggleMepSub: (id) =>
         set((state) => ({
@@ -122,6 +138,7 @@ export const useLayerStore = create<LayerState>()(
       migrate: versionedMigrate,
       partialize: (s) => ({
         mepSubVisibility: s.mepSubVisibility,
+        airflowVisible: s.airflowVisible,
       }),
     }
   )

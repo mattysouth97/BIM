@@ -28,6 +28,9 @@ export async function fetchFromDataGoKr(
 
   try {
     const response = await fetch(url.toString(), {
+      headers: {
+        Accept: "application/json",
+      },
       signal: AbortSignal.timeout(15000),
     });
 

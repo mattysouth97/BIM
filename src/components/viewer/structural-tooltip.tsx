@@ -8,10 +8,10 @@ import { useLayerStore } from "@/store/layer-store";
 
 /**
  * StructuralTooltip — R3F component that shows a hover tooltip over structural
- * analysis columns when layer 15 is active.
+ * physical structural columns when the structure layer is active.
  *
  * Uses raycasting in useFrame (throttled every 3rd frame) to detect pointer
- * over structural-column InstancedMesh instances and reads sizing labels from
+ * over column InstancedMesh instances and reads sizing labels from
  * im.userData.sizingLabels[instanceId].
  *
  * Hidden in plan view mode (orthographic 2D) per design spec.
@@ -25,6 +25,7 @@ export function StructuralTooltip() {
 
   const mouse = useRef(new THREE.Vector2());
   const frameCount = useRef(0);
+  const raycaster = useRef(new THREE.Raycaster());
 
   const { scene, camera, gl } = useThree();
 
@@ -56,19 +57,16 @@ export function StructuralTooltip() {
       return;
     }
 
-    // Find the layer-15 group in scene
-    const structuralGroup = scene.getObjectByName("layer-15-structural");
-    if (!structuralGroup) {
-      setHovered(null);
-      return;
-    }
-
-    // Find the structural-column InstancedMesh
+    // The physical column mesh owns stress colors and sizing metadata. The
+    // analysis layer intentionally contains annotations only, so no duplicate
+    // geometry occupies the same volume.
     let columnMesh: THREE.InstancedMesh | null = null;
-    structuralGroup.traverse((obj) => {
+    scene.traverse((obj) => {
       if (
+        !columnMesh &&
         obj instanceof THREE.InstancedMesh &&
-        obj.userData.type === "structural-column"
+        obj.userData.type === "column" &&
+        Array.isArray(obj.userData.sizingLabels)
       ) {
         columnMesh = obj;
       }
@@ -80,9 +78,8 @@ export function StructuralTooltip() {
     }
 
     // Raycast against the InstancedMesh
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(mouse.current, camera);
-    const intersections = raycaster.intersectObject(columnMesh, false);
+    raycaster.current.setFromCamera(mouse.current, camera);
+    const intersections = raycaster.current.intersectObject(columnMesh, false);
 
     if (intersections.length > 0) {
       const hit = intersections[0];

@@ -69,4 +69,31 @@ describe("fetchFromDataGoKr response parsing", () => {
       ),
     ).resolves.toEqual({ data: payload, error: null });
   });
+
+  it("explicitly requests JSON because the upstream returns an empty body without Accept", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          response: {
+            header: { resultCode: "00", resultMsg: "NORMAL SERVICE." },
+          },
+        }),
+        { status: 200 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchFromDataGoKr(
+      "title",
+      { sigunguCd: "11680", bjdongCd: "10300" },
+      "test-key",
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: { Accept: "application/json" },
+      }),
+    );
+  });
 });
