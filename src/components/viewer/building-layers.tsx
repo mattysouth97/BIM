@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useMemo } from "react";
+import { useRef, useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useLayerStore } from "@/store/layer-store";
@@ -32,7 +32,10 @@ import {
 } from "@/lib/layers/mep-coordinator";
 import { useEquipmentStore } from "@/store/equipment-store";
 import { useScenarioStore } from "@/store/scenario-store";
-import { deriveEquipmentScenario } from "@/lib/layers/equipment-scenario";
+import {
+  deriveEquipmentScenario,
+  equipmentScenarioKey,
+} from "@/lib/layers/equipment-scenario";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "@/lib/layers/mep-equipment-params";
 
 interface BuildingLayersProps {
@@ -59,11 +62,26 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
   // WHICH physical equipment renders (boiler vs condensing cascade vs ASHP
   // bank, fluorescent vs LED, PV present or not). Changing budget/track in
   // the scenario rail regenerates the MEP layers with the swapped hardware.
+  // Measure-selection churn (e.g. toggling a measure that maps to no
+  // hardware, like envelope-roof-insulation or a DHW measure) still produces
+  // a new selectedMeasureIds identity, but deriveEquipmentScenario's OUTPUT
+  // is what actually matters for regeneration. `equipmentScenario` below is
+  // stabilized on equipmentScenarioKey (its stable semantic fingerprint)
+  // using React's "adjust state during render" pattern, so it keeps the
+  // SAME object reference — and the MEP generation effect below does not
+  // re-run — whenever the derived scenario is unchanged.
   const selectedMeasureIds = useScenarioStore((s) => s.selectedMeasureIds);
-  const equipmentScenario = useMemo(
+  const derivedScenario = useMemo(
     () => deriveEquipmentScenario(selectedMeasureIds),
     [selectedMeasureIds]
   );
+  const derivedScenarioKey = equipmentScenarioKey(derivedScenario);
+  const [scenarioKey, setScenarioKey] = useState(derivedScenarioKey);
+  const [equipmentScenario, setEquipmentScenario] = useState(derivedScenario);
+  if (derivedScenarioKey !== scenarioKey) {
+    setScenarioKey(derivedScenarioKey);
+    setEquipmentScenario(derivedScenario);
+  }
 
   // Detailed Blender GLB assets — regenerate MEP geometry once preloaded so
   // the synchronous generators swap their coarse fallbacks for real models.

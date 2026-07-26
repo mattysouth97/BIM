@@ -132,7 +132,8 @@ export class TransportLayer implements LayerGenerator {
     // Landing doors are detailed-asset-only and collected across ALL shafts
     // so the whole layer adds exactly one InstancedMesh (1 draw call) for
     // this element kind, rather than one IM per shaft.
-    const doorPositions: { x: number; y: number; z: number }[] = [];
+    const doorPositions: { x: number; y: number; z: number; scale: number }[] = [];
+    const doorNativeHeight = ASSET_NATIVE_DIMS["landing-door"].h;
     // Doors mount on the shaft's front face. The front face is the +X local
     // side of the shaft box — established by the existing floor-indicator
     // placement below (`sp.x + shaftWidth / 2 + 0.02`, with a comment noting
@@ -346,10 +347,21 @@ export class TransportLayer implements LayerGenerator {
       // Collected here; the combined single IM is built once after the
       // shaft loop (detailed-asset-only — no coarse fallback).
       for (const floor of aboveFloors) {
+        // Clamp the door's Y scale to the floor's clear height: at unit
+        // scale the asset's native 2.1 m height (centred at floor.y + 1.05)
+        // punches into the slab above on floors shorter than ~2.2 m. 0.15 m
+        // is reserved as clearance under that slab; the centre-y offset is
+        // derived from the same scale so the door stays vertically centred
+        // within the clamped envelope instead of sinking into the floor.
+        const doorScale = Math.max(
+          0,
+          Math.min(1, (floor.height - 0.15) / doorNativeHeight)
+        );
         doorPositions.push({
           x: sp.x + shaftWidth / 2,
-          y: floor.y + 1.05,
+          y: floor.y + (doorNativeHeight * doorScale) / 2,
           z: sp.z,
+          scale: doorScale,
         });
       }
     }
@@ -371,10 +383,15 @@ export class TransportLayer implements LayerGenerator {
           doorPositions.length
         );
         doorIM.userData = { type: "transport-landing-door" };
+        // Rotation about Y (doorQuat) doesn't mix the Y axis with X/Z, so
+        // scaling only the Y component here clamps the door's world-space
+        // height to the floor's clear height regardless of shaft orientation.
+        const doorScl = new THREE.Vector3(1, 1, 1);
         for (let i = 0; i < doorPositions.length; i++) {
           const dp = doorPositions[i];
           pos.set(dp.x, dp.y, dp.z);
-          mat4.compose(pos, doorQuat, scl);
+          doorScl.set(1, dp.scale, 1);
+          mat4.compose(pos, doorQuat, doorScl);
           doorIM.setMatrixAt(i, mat4);
         }
         doorIM.count = doorPositions.length;

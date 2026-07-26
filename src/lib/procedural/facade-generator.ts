@@ -235,10 +235,16 @@ export function generateFacade(
   const solidPanelDepth = scenario.wallInsulation
     ? wallThickness + WALL_INSULATION_DEPTH
     : wallThickness;
+  // Graceful degrade: if the retrofit-only "facade-panel-insulated" variant
+  // failed to preload, fall back to the baseline "facade-panel" asset (which
+  // preloads independently and is very likely cached) before the plain box —
+  // never worse than the pre-retrofit look just because one GLB dropped out.
   const solidGeo =
     getEquipmentGeometryClone(
       scenario.wallInsulation ? "facade-panel-insulated" : "facade-panel",
-    ) ?? new THREE.BoxGeometry(1, 1, 1);
+    ) ??
+    getEquipmentGeometryClone("facade-panel") ??
+    new THREE.BoxGeometry(1, 1, 1);
   const solidMat = pbrToMaterial(recipe.materials.wall);
   const solidIM = new THREE.InstancedMesh(solidGeo, solidMat, Math.max(1, solidCount));
   solidIM.castShadow = true;
@@ -256,10 +262,16 @@ export function generateFacade(
   // rotated so its length axis runs along X.
   // windowUpgrade swaps in the thermally-broken twin-fin profile, authored
   // with the SAME unit envelope and axis convention → same rotations.
+  // Graceful degrade: if the retrofit-only "mullion-he" variant failed to
+  // preload, fall back to the baseline "mullion" asset (which preloads
+  // independently and is very likely cached) before the plain box — never
+  // worse than the pre-retrofit look just because one GLB dropped out.
   const mullionAssetId = scenario.windowUpgrade ? "mullion-he" : "mullion";
-  const vDetailedGeo = getEquipmentGeometryClone(mullionAssetId);
+  const vDetailedGeo =
+    getEquipmentGeometryClone(mullionAssetId) ?? getEquipmentGeometryClone("mullion");
   if (vDetailedGeo) vDetailedGeo.rotateY(Math.PI);
-  const hDetailedGeo = getEquipmentGeometryClone(mullionAssetId);
+  const hDetailedGeo =
+    getEquipmentGeometryClone(mullionAssetId) ?? getEquipmentGeometryClone("mullion");
   if (hDetailedGeo) {
     hDetailedGeo.rotateY(Math.PI);
     hDetailedGeo.rotateZ(-Math.PI / 2);

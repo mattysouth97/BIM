@@ -222,6 +222,33 @@ describe("equipmentScenarioKey", () => {
       equipmentScenarioKey(deriveEquipmentScenario([]))
     );
   });
+
+  // Regression coverage for the regen-thrash fix in procedural-building-model.tsx
+  // / building-layers.tsx: those components now memoize the EquipmentScenario
+  // object on this key (instead of on the raw selectedMeasureIds array) so a
+  // measure-selection change that maps to no hardware doesn't rebuild the
+  // whole scene. This proves the key is the right thing to memoize on: it
+  // stays identical when the id-set churns without changing any hardware
+  // flag, and still changes when a hardware-affecting measure is added.
+  it("stays identical when selectedMeasureIds changes but no hardware flag is affected", () => {
+    const before = deriveEquipmentScenario(["envelope-wall-insulation"]);
+    // envelope-roof-insulation matches neither the window nor the wall
+    // measure prefix — see deriveEquipmentScenario's own comment.
+    const after = deriveEquipmentScenario([
+      "envelope-wall-insulation",
+      "envelope-roof-insulation",
+    ]);
+    expect(equipmentScenarioKey(before)).toBe(equipmentScenarioKey(after));
+  });
+
+  it("changes when a hardware-affecting measure is actually added", () => {
+    const before = deriveEquipmentScenario(["envelope-wall-insulation"]);
+    const after = deriveEquipmentScenario([
+      "envelope-wall-insulation",
+      "envelope-window-replacement",
+    ]);
+    expect(equipmentScenarioKey(before)).not.toBe(equipmentScenarioKey(after));
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -296,12 +323,23 @@ describe("generateFacade — windowUpgrade", () => {
     expect(upgraded.glass.count).toBe(base.glass.count);
   });
 
-  it("falls back to the unit box when mullion-he is not cached", () => {
-    __injectEquipmentAssetForTest("mullion", makeFakeAsset(1)); // baseline only
+  it("degrades to the baseline mullion asset when mullion-he is not cached (never worse than pre-retrofit)", () => {
+    // 2-box fake → 48 verts, distinguishable from both the 24-vert box
+    // fallback and the mullion-he fake used elsewhere in this file.
+    __injectEquipmentAssetForTest("mullion", makeFakeAsset(2)); // baseline only
     const { hMullions, vMullions } = facadeParts(
       generateFacade(makeRecipe(), WINDOW_UPGRADE)
     );
-    expect(verts(hMullions)).toBe(24); // BoxGeometry fallback, NOT the baseline mullion
+    expect(verts(hMullions)).toBe(48); // baseline mullion, NOT the box
+    expect(verts(vMullions)).toBe(48);
+  });
+
+  it("falls back to the unit box when BOTH mullion-he and the baseline mullion are missing", () => {
+    // Truly empty cache — nothing injected.
+    const { hMullions, vMullions } = facadeParts(
+      generateFacade(makeRecipe(), WINDOW_UPGRADE)
+    );
+    expect(verts(hMullions)).toBe(24); // BoxGeometry fallback
     expect(verts(vMullions)).toBe(24);
   });
 });
@@ -341,9 +379,24 @@ describe("generateFacade — wallInsulation", () => {
     );
   });
 
-  it("still deepens the panels when the insulated asset is not cached", () => {
-    // Depth is a scenario property, not an asset property — the coarse box
-    // fallback must thicken too, otherwise the retrofit reads as a no-op.
+  it("degrades to the baseline facade-panel asset when facade-panel-insulated is not cached (never worse than pre-retrofit)", () => {
+    // 2-box fake → 48 verts, distinguishable from both the 24-vert box
+    // fallback and the facade-panel-insulated fake used elsewhere in this file.
+    __injectEquipmentAssetForTest("facade-panel", makeFakeAsset(2)); // baseline only
+    const { solid } = facadeParts(generateFacade(makeRecipe(), WALL_INSULATION));
+    expect(verts(solid)).toBe(48); // baseline facade-panel, NOT the box
+    // Depth still deepens — the extra depth is a scenario property (the
+    // retrofit itself), independent of which panel asset rendered it.
+    expect(solid.count).toBeGreaterThan(0);
+    for (let i = 0; i < solid.count; i++) {
+      expect(instanceScale(solid, i).z).toBeCloseTo(0.28, 6);
+    }
+  });
+
+  it("still deepens the panels when BOTH facade-panel-insulated and the baseline facade-panel are missing", () => {
+    // Truly empty cache — nothing injected. Depth is a scenario property,
+    // not an asset property — the coarse box fallback must thicken too,
+    // otherwise the retrofit reads as a no-op.
     const { solid } = facadeParts(generateFacade(makeRecipe(), WALL_INSULATION));
     expect(verts(solid)).toBe(24); // BoxGeometry fallback
     expect(instanceScale(solid, 0).z).toBeCloseTo(0.28, 6);

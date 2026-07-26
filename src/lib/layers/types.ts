@@ -138,12 +138,25 @@ export const MEP_SUB_CONFIGS: Record<MepSubLayerId, MepSubConfig> = {
 
 /**
  * Maps generator group names to their MEP sub-layer.
- * Unmapped generators (layer-8-media, layer-10 through layer-14) have no entry
- * and their output falls through to the flat MEP group.
+ *
+ * All 14 generators below (layer-1-shell, electrical-routing, layer-3-cooling,
+ * layer-4-heating, layer-5-ventilation, layer-6-dhw, layer-7-lighting,
+ * layer-8-media, layer-9-waste, layer-10-bas, layer-11-telecom,
+ * layer-12-transport, layer-13-safety, layer-14-microgrid) have an entry.
+ * Being mapped places a generator's output inside its named sub-mep-* group
+ * (see mep-coordinator.ts assignToSubGroup), which makes it both
+ * independently toggleable AND selectable/hoverable via
+ * EquipmentClickHandler's raycast — per D-06 (CONTEXT.md) that handler only
+ * resolves a sub-layer id by walking up to a sub-mep-* named ancestor.
+ *
+ * Any generator absent from this map falls through to the flat MEP group: it
+ * stays visible under the main MEP toggle but has no sub-toggle and is not
+ * reachable by the sub-mep-* raycast walk.
  *
  * Note: layer-1-shell is assigned to mep-electrical per locked decision in CONTEXT.md.
  * It provides the structural reference armature for electrical routing visualization.
- * A dedicated electrical-routing generator is planned for v5.x.
+ * The dedicated electrical-routing generator (src/lib/layers/electrical-routing.ts)
+ * now exists and is mapped to mep-electrical alongside it.
  *
  * Note: layer-9-waste is mapped to mep-dhw. CONTEXT.md referred to this as
  * "layer-8-special-waste" which is a mis-numbering — layer-8 is layer-8-media (AV/media).

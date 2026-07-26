@@ -125,7 +125,7 @@ export default function DevAssetsPage() {
         Asset QA — Blender GLB kit {assetsReady ? "LOADED" : "loading… (coarse fallback)"}
         {" · left: baseline envelope · right: window + wall-insulation retrofit"}
       </div>
-      <Canvas shadows camera={{ position: [26, 18, 26], fov: 45 }}>
+      <Canvas shadows camera={{ position: [45, 26, 30], fov: 45 }}>
         <color attach="background" args={["#f5f5f5"]} />
         <hemisphereLight args={["#b1e1ff", "#b97a20", 0.6]} />
         <directionalLight
@@ -135,7 +135,9 @@ export default function DevAssetsPage() {
           shadow-mapSize={[2048, 2048]}
         />
         <AssetShowcase assetsReady={assetsReady} />
-        <OrbitControls makeDefault />
+        {/* Target the midpoint between the baseline building (x=0) and the
+            retrofit twin (x=30) so both are comfortably framed on load. */}
+        <OrbitControls makeDefault target={[15, 6, 0]} />
         <gridHelper args={[100, 50, "#999", "#ddd"]} />
       </Canvas>
     </div>

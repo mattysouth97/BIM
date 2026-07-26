@@ -187,7 +187,7 @@ export const ASSET_NATIVE_DIMS: Record<
   // Waste & recovery kit (three.js axes: w=X, h=Y-up, d=Z).
   // wheelie-bin uses a BASE origin (y ∈ [0, h]) — consumers replacing a
   // centre-origin primitive must translate the clone down by half its height.
-  "wheelie-bin": { w: 0.58, h: 1.07, d: 0.74 }, // nominal body; lid lip + wheels reach 0.61 × 1.05 × 0.80
+  "wheelie-bin": { w: 0.58, h: 1.07, d: 0.74 }, // nominal body; measured bounds 0.61 × 1.05 × 0.80 are wider/deeper from the lid lip + wheels, and slightly shorter than nominal height
   "waste-chute-module": { w: 1, h: 1, d: 1 }, // unit-normalized shell, axis along Y; flange collars reach ±0.54
 };
 

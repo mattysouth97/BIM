@@ -93,6 +93,21 @@ function makeMultiMeshFakeAsset(): THREE.Group {
   return group;
 }
 
+/** Same fixture as makeRecipe() but with floors short enough (2.0 m) to
+ * exercise the landing-door Y-scale clamp — native door height is 2.1 m. */
+function makeShortFloorRecipe(): BuildingRecipe {
+  const recipe = makeRecipe();
+  return {
+    ...recipe,
+    floors: [
+      { floorNo: 1, label: "1F", type: "above", y: 0, height: 2.0, isGroundFloor: true },
+      { floorNo: 2, label: "2F", type: "above", y: 2.0, height: 2.0, isGroundFloor: false },
+      { floorNo: 3, label: "3F", type: "above", y: 4.0, height: 2.0, isGroundFloor: false },
+    ],
+    totalHeight: 6.0,
+  };
+}
+
 function findByType(group: THREE.Group, type: string): THREE.Object3D | undefined {
   let found: THREE.Object3D | undefined;
   group.traverse((obj) => {
@@ -212,6 +227,33 @@ describe("TransportLayer — landing doors (detailed-asset-only)", () => {
   it("does not add transport-landing-door when the asset is absent (no coarse fallback)", () => {
     const group = new TransportLayer().generate(makeRecipe());
     expect(findByType(group, "transport-landing-door")).toBeUndefined();
+  });
+
+  it("clamps the door's Y scale on short floors so it doesn't punch into the slab above", () => {
+    __injectEquipmentAssetForTest("landing-door", makeSimpleFakeAsset());
+    const shortRecipe = makeShortFloorRecipe();
+    const group = new TransportLayer().generate(shortRecipe);
+
+    const im = findByType(group, "transport-landing-door") as THREE.InstancedMesh;
+    expect(im).toBeDefined();
+    expect(im.count).toBe(3); // 1 shaft * 3 above floors
+
+    const doorNativeHeight = 2.1;
+    const expectedScale = Math.min(1, (2.0 - 0.15) / doorNativeHeight);
+    expect(expectedScale).toBeLessThan(1); // sanity: the clamp is actually engaged
+
+    const mat4 = new THREE.Matrix4();
+    const pos = new THREE.Vector3();
+    const scl = new THREE.Vector3();
+    for (let i = 0; i < 3; i++) {
+      im.getMatrixAt(i, mat4);
+      mat4.decompose(pos, new THREE.Quaternion(), scl);
+      expect(scl.y).toBeCloseTo(expectedScale, 5);
+
+      const floor = shortRecipe.floors[i];
+      const doorTop = pos.y + (doorNativeHeight * scl.y) / 2;
+      expect(doorTop).toBeLessThan(floor.y + floor.height);
+    }
   });
 });
 

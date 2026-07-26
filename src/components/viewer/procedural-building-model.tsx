@@ -12,7 +12,10 @@ import { InfoEdges } from "./info-edges";
 import { useOutlineHover } from "@/hooks/use-outline-hover";
 import { useEquipmentAssets } from "@/hooks/use-equipment-assets";
 import { useScenarioStore } from "@/store/scenario-store";
-import { deriveEquipmentScenario } from "@/lib/layers/equipment-scenario";
+import {
+  deriveEquipmentScenario,
+  equipmentScenarioKey,
+} from "@/lib/layers/equipment-scenario";
 
 interface ProceduralBuildingModelProps {
   geometry: BuildingGeometry;
@@ -65,14 +68,27 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
 
   // Green-retrofit envelope scenario: the knapsack-selected measures decide
   // WHICH facade hardware renders (baseline vs thermally-broken mullions,
-  // plain vs externally-insulated spandrel panels). The store setter dedupes
-  // identical id sets, so this memo is referentially stable across
-  // re-evaluations and does not thrash the generate effect below.
+  // plain vs externally-insulated spandrel panels). Measure-selection churn
+  // (e.g. toggling a measure that maps to no hardware, like
+  // envelope-roof-insulation) still produces a new selectedMeasureIds
+  // identity, but deriveEquipmentScenario's OUTPUT is what actually matters
+  // for regeneration. `equipmentScenario` below is stabilized on
+  // equipmentScenarioKey (its stable semantic fingerprint) using React's
+  // "adjust state during render" pattern, so it keeps the SAME object
+  // reference — and the generate effect below does not re-run — whenever
+  // the derived scenario is unchanged.
   const selectedMeasureIds = useScenarioStore((s) => s.selectedMeasureIds);
-  const equipmentScenario = useMemo(
+  const derivedScenario = useMemo(
     () => deriveEquipmentScenario(selectedMeasureIds),
     [selectedMeasureIds]
   );
+  const derivedScenarioKey = equipmentScenarioKey(derivedScenario);
+  const [scenarioKey, setScenarioKey] = useState(derivedScenarioKey);
+  const [equipmentScenario, setEquipmentScenario] = useState(derivedScenario);
+  if (derivedScenarioKey !== scenarioKey) {
+    setScenarioKey(derivedScenarioKey);
+    setEquipmentScenario(derivedScenario);
+  }
 
   // Generate building geometry — setGroup triggers re-render so <primitive> picks it up
   useEffect(() => {
