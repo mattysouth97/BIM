@@ -371,6 +371,28 @@ export function inferEquipmentSpecs(
     }
 
     // -----------------------------------------------------------------------
+    // Electrical routing — electrical-* (cable trays, risers, runs)
+    // -----------------------------------------------------------------------
+    case "electrical": {
+      const grade = ELECTRICAL_ERA_GRADE[era];
+      // Distribution infrastructure: no direct consumption of its own —
+      // report line losses (~1.5% of the residual plug load it carries).
+      const plugLoadKw = (floorArea * floorCount * 12) / 1000;
+      const annualKwh = Math.round(plugLoadKw * opHours * 0.015);
+
+      return buildSpec({
+        categoryKo:  "전력 간선 (케이블 트레이)",
+        categoryEn:  "Power Distribution (Cable Tray)",
+        capacity:    "—",
+        installYear,
+        annualKwh:   Math.max(annualKwh, 1),
+        grade,
+        dataSource:  "estimated-from-era",
+        standardRef: "KSC IEC 62301",
+      });
+    }
+
+    // -----------------------------------------------------------------------
     // Unknown / fallback
     // -----------------------------------------------------------------------
     default: {

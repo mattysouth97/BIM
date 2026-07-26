@@ -11,6 +11,11 @@ import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
 import type { AhuParams } from "./mep-equipment-params";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
+import {
+  ASSET_NATIVE_DIMS,
+  getEquipmentGeometryClone,
+  getEquipmentMaterialClone,
+} from "@/lib/equipment-assets";
 
 const CYAN = 0x06b6d4;
 const WHITE = 0xffffff;
@@ -128,14 +133,27 @@ export class VentilationLayer implements LayerGenerator {
     };
 
     // --- Merged AHU InstancedMesh — one draw call for all floors × units ---
-    const ahuGeo = buildAhuGeometry(ahuParams);
-    const ahuMat = new THREE.MeshStandardMaterial({
-      color: 0x0891b2,
-      emissive: CYAN,
-      emissiveIntensity: 0.2,
-      roughness: 0.5,
-      metalness: 0.5,
-    });
+    // Detailed single-mesh Blender asset (authored 1.2×0.8×0.8, centre origin)
+    // scaled to the current params, or merged-primitive fallback.
+    const ahuDetailedGeo = getEquipmentGeometryClone("ahu");
+    if (ahuDetailedGeo) {
+      const native = ASSET_NATIVE_DIMS.ahu;
+      ahuDetailedGeo.scale(
+        ahuParams.width / native.w,
+        ahuParams.height / native.h,
+        ahuParams.depth / native.d
+      );
+    }
+    const ahuGeo = ahuDetailedGeo ?? buildAhuGeometry(ahuParams);
+    const ahuMat =
+      (ahuDetailedGeo ? getEquipmentMaterialClone("ahu") : null) ??
+      new THREE.MeshStandardMaterial({
+        color: 0x0891b2,
+        emissive: CYAN,
+        emissiveIntensity: 0.2,
+        roughness: 0.5,
+        metalness: 0.5,
+      });
 
     const instanceCount = aboveFloors.length * ahuParams.unitsPerFloor;
     const ahuIM = new THREE.InstancedMesh(ahuGeo, ahuMat, instanceCount);

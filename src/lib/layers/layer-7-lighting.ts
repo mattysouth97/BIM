@@ -10,6 +10,11 @@ import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
 import type { LightingFixtureParams, ElectricalPanelParams } from "./mep-equipment-params";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
+import {
+  ASSET_NATIVE_DIMS,
+  getEquipmentGeometryClone,
+  getEquipmentMaterialClone,
+} from "@/lib/equipment-assets";
 
 const LIGHT_YELLOW = 0xfbbf24;
 
@@ -163,7 +168,18 @@ export class LightingLayer implements LayerGenerator {
 
     if (totalFixtures > 0) {
       // --- InstancedMesh for all fixtures — merged geometry with diffuser face ---
-      const fixtureGeo = buildFixtureGeometry(fixtureParams);
+      // Detailed louvred-troffer Blender asset (0.6×0.1×0.3, centre origin)
+      // scaled to params; the animated dimming ShaderMaterial is kept either way.
+      const fixtureDetailedGeo = getEquipmentGeometryClone("light-fixture");
+      if (fixtureDetailedGeo) {
+        const native = ASSET_NATIVE_DIMS["light-fixture"];
+        fixtureDetailedGeo.scale(
+          fixtureParams.width / native.w,
+          fixtureParams.height / native.h,
+          fixtureParams.depth / native.d
+        );
+      }
+      const fixtureGeo = fixtureDetailedGeo ?? buildFixtureGeometry(fixtureParams);
       const fixtureMat = new THREE.ShaderMaterial({
         vertexShader: fixtureVertexShader,
         fragmentShader: fixtureFragmentShader,
@@ -246,13 +262,26 @@ export class LightingLayer implements LayerGenerator {
     sensorIM.instanceMatrix.needsUpdate = true;
     group.add(sensorIM);
 
-    // --- Electrical panel boxes (one per floor, near core) — merged geometry with door outline ---
-    const panelGeo = buildPanelGeometry(panelParams);
-    const panelMat = new THREE.MeshStandardMaterial({
-      color: 0x6b7280,
-      roughness: 0.4,
-      metalness: 0.6,
-    });
+    // --- Electrical panel boxes (배전반, one per floor, near core) ---
+    // Detailed distribution-board Blender asset (0.5×0.8×0.18, centre origin)
+    // scaled to params, or merged door-outline fallback.
+    const panelDetailedGeo = getEquipmentGeometryClone("electrical-panel");
+    if (panelDetailedGeo) {
+      const native = ASSET_NATIVE_DIMS["electrical-panel"];
+      panelDetailedGeo.scale(
+        panelParams.width / native.w,
+        panelParams.height / native.h,
+        panelParams.depth / native.d
+      );
+    }
+    const panelGeo = panelDetailedGeo ?? buildPanelGeometry(panelParams);
+    const panelMat =
+      (panelDetailedGeo ? getEquipmentMaterialClone("electrical-panel") : null) ??
+      new THREE.MeshStandardMaterial({
+        color: 0x6b7280,
+        roughness: 0.4,
+        metalness: 0.6,
+      });
     const panelIM = new THREE.InstancedMesh(panelGeo, panelMat, aboveFloors.length);
     panelIM.userData = { type: "lighting-panel" };
 

@@ -5,6 +5,12 @@
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import {
+  getEquipmentGeometryClone,
+  getEquipmentMaterialClone,
+  getEquipmentObjectClone,
+  tagEquipmentObject,
+} from "@/lib/equipment-assets";
 
 /** Vertex shader for battery glow pulse (instanced) */
 const batteryGlowVertexShader = /* glsl */ `
@@ -132,12 +138,17 @@ export class MicrogridLayer implements LayerGenerator {
     );
     const pvCount = pvColsX * pvColsZ;
 
-    const pvGeo = new THREE.BoxGeometry(pvPanelWidth, 0.04, pvPanelDepth);
-    const pvMat = new THREE.MeshStandardMaterial({
-      color: 0x1a237e, // dark blue solar cells
-      metalness: 0.7,
-      roughness: 0.2,
-    });
+    // Detailed PV module Blender asset (authored 1.6×1.0, centre origin — the
+    // same footprint as the coarse box) or plain-box fallback.
+    const pvDetailedGeo = getEquipmentGeometryClone("solar-panel");
+    const pvGeo = pvDetailedGeo ?? new THREE.BoxGeometry(pvPanelWidth, 0.04, pvPanelDepth);
+    const pvMat =
+      (pvDetailedGeo ? getEquipmentMaterialClone("solar-panel") : null) ??
+      new THREE.MeshStandardMaterial({
+        color: 0x1a237e, // dark blue solar cells
+        metalness: 0.7,
+        roughness: 0.2,
+      });
     const pvIM = new THREE.InstancedMesh(pvGeo, pvMat, Math.max(1, pvCount));
     pvIM.userData = { type: "microgrid-pv-panel" };
 
@@ -169,17 +180,19 @@ export class MicrogridLayer implements LayerGenerator {
     pvIM.instanceMatrix.needsUpdate = true;
     group.add(pvIM);
 
-    // PV panel frame highlights (thin bright edges)
-    const pvFrameGeo = new THREE.BoxGeometry(
-      pvPanelWidth + 0.04,
-      0.02,
-      pvPanelDepth + 0.04
-    );
-    const pvFrameMat = new THREE.MeshStandardMaterial({
-      color: 0xc0c0c0,
-      metalness: 0.8,
-      roughness: 0.2,
-    });
+    // PV mounting frame/rack (detailed asset: frame + rails + legs + junction
+    // box) or thin bright-edge fallback box.
+    const rackDetailedGeo = getEquipmentGeometryClone("solar-rack");
+    const pvFrameGeo =
+      rackDetailedGeo ??
+      new THREE.BoxGeometry(pvPanelWidth + 0.04, 0.02, pvPanelDepth + 0.04);
+    const pvFrameMat =
+      (rackDetailedGeo ? getEquipmentMaterialClone("solar-rack") : null) ??
+      new THREE.MeshStandardMaterial({
+        color: 0xc0c0c0,
+        metalness: 0.8,
+        roughness: 0.2,
+      });
     const pvFrameIM = new THREE.InstancedMesh(
       pvFrameGeo,
       pvFrameMat,
@@ -211,7 +224,10 @@ export class MicrogridLayer implements LayerGenerator {
 
     // --- BESS battery boxes in basement ---
     const batteryCount = Math.max(2, Math.min(8, Math.floor(footprintWidth / 3)));
-    const batteryGeo = new THREE.BoxGeometry(0.9, 0.7, 0.6);
+    // Detailed BESS cabinet asset (authored 0.9×0.7×0.6, centre origin) keeps
+    // the pulsing glow ShaderMaterial — only the geometry is swapped.
+    const batteryGeo =
+      getEquipmentGeometryClone("battery-rack") ?? new THREE.BoxGeometry(0.9, 0.7, 0.6);
     const batteryMat = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
@@ -269,6 +285,26 @@ export class MicrogridLayer implements LayerGenerator {
     }
     ledIM.instanceMatrix.needsUpdate = true;
     group.add(ledIM);
+
+    // --- PCS inverters (DC→AC) beside the battery row ---
+    // Detailed-asset-only addition: rendered when the Blender asset is loaded.
+    for (let i = 0; i < 2; i++) {
+      const inverterAsset = getEquipmentObjectClone("inverter");
+      if (!inverterAsset) break;
+      // Base-origin asset stands on the same basement floor as the batteries
+      // (battery boxes are centre-origin at basementY + 0.35).
+      inverterAsset.position.set(
+        batteryRowStart - 0.9 - i * 1.0,
+        basementY,
+        -halfD + 1.5
+      );
+      tagEquipmentObject(
+        inverterAsset,
+        { type: "microgrid-inverter" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(inverterAsset);
+    }
 
     // --- Vertical power backbone conduit ---
     const backboneGeo = new THREE.CylinderGeometry(

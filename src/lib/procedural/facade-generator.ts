@@ -5,6 +5,7 @@
 import * as THREE from "three";
 import type { BuildingRecipe, FacadeConfig, FloorSpec } from "./types";
 import type { PBRMaterialConfig } from "@/lib/pbr-materials";
+import { getEquipmentGeometryClone } from "@/lib/equipment-assets";
 
 function pbrToMaterial(config: PBRMaterialConfig): THREE.MeshStandardMaterial {
   const mat = new THREE.MeshStandardMaterial({
@@ -210,7 +211,11 @@ export function generateFacade(recipe: BuildingRecipe): THREE.Group {
   glassIM.receiveShadow = true;
   glassIM.userData = { type: "glass" };
 
-  const solidGeo = new THREE.BoxGeometry(1, 1, 1);
+  // Detailed spandrel-panel Blender module (unit-normalized, raised face
+  // toward local +Z = exterior) or plain unit box. Instance scaling to
+  // (windowWidth, winH, wallThickness) is identical either way.
+  const solidGeo =
+    getEquipmentGeometryClone("facade-panel") ?? new THREE.BoxGeometry(1, 1, 1);
   const solidMat = pbrToMaterial(recipe.materials.wall);
   const solidIM = new THREE.InstancedMesh(solidGeo, solidMat, Math.max(1, solidCount));
   solidIM.castShadow = true;
@@ -222,13 +227,24 @@ export function generateFacade(recipe: BuildingRecipe): THREE.Group {
     ? { ...recipe.materials.mullion, color: "#505860", metalness: 0.7, roughness: 0.3 }
     : recipe.materials.mullion;
   const mullionMat = pbrToMaterial(mullionConfig);
-  const hGeo = new THREE.BoxGeometry(1, 1, 1);
+  // Detailed aluminum mullion profile (unit-normalized, length along Y,
+  // exterior cap fin authored toward -Z → rotate 180° about Y so the cap
+  // faces local +Z = outward). Horizontal bars reuse the same profile
+  // rotated so its length axis runs along X.
+  const vDetailedGeo = getEquipmentGeometryClone("mullion");
+  if (vDetailedGeo) vDetailedGeo.rotateY(Math.PI);
+  const hDetailedGeo = getEquipmentGeometryClone("mullion");
+  if (hDetailedGeo) {
+    hDetailedGeo.rotateY(Math.PI);
+    hDetailedGeo.rotateZ(-Math.PI / 2);
+  }
+  const hGeo = hDetailedGeo ?? new THREE.BoxGeometry(1, 1, 1);
   const hIM = new THREE.InstancedMesh(hGeo, mullionMat, Math.max(1, hMullionCount));
   hIM.castShadow = true;
   hIM.receiveShadow = true;
   hIM.userData = { type: "hMullion" };
 
-  const vGeo = new THREE.BoxGeometry(1, 1, 1);
+  const vGeo = vDetailedGeo ?? new THREE.BoxGeometry(1, 1, 1);
   const vMat = pbrToMaterial(recipe.materials.mullion);
   const vIM = new THREE.InstancedMesh(vGeo, vMat, Math.max(1, vMullionCount));
   vIM.castShadow = true;

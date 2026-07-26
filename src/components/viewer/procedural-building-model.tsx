@@ -10,6 +10,7 @@ import { GroundPlane } from "./ground-plane";
 import { useLayerStore } from "@/store/layer-store";
 import { InfoEdges } from "./info-edges";
 import { useOutlineHover } from "@/hooks/use-outline-hover";
+import { useEquipmentAssets } from "@/hooks/use-equipment-assets";
 
 interface ProceduralBuildingModelProps {
   geometry: BuildingGeometry;
@@ -56,6 +57,10 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
   const baseRecipe = useMemo(() => toRecipe(geometry), [geometry]);
   const recipe = recipeOverride ?? baseRecipe;
 
+  // Detailed Blender structural kit (columns, beams, mullions, panels, roof
+  // furniture) — regenerate once the GLB cache is preloaded.
+  const equipmentAssetsReady = useEquipmentAssets();
+
   // Generate building geometry — setGroup triggers re-render so <primitive> picks it up
   useEffect(() => {
     // Clean up previous
@@ -80,7 +85,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       groupRef.current = null;
       setGroup(null);
     };
-  }, [recipe]);
+  }, [recipe, equipmentAssetsReady]);
 
   // Sync Digital Twin layer visibility to named mesh groups.
   // Depends on `group` state so it re-runs after building generation completes.
@@ -95,13 +100,14 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       if (
         n === "facade" ||
         n.startsWith("facade-section-") ||
-        n === "roof"
+        n === "roof" ||
+        n === "roof-furniture"
       ) {
         child.visible = layerVisibility["envelope"] ?? true;
       }
 
-      // Structure layer: floor slabs and columns
-      if (n === "slabs" || n === "columns") {
+      // Structure layer: floor slabs, columns, and beams
+      if (n === "slabs" || n === "columns" || n === "beams") {
         child.visible = layerVisibility["structure"] ?? true;
       }
 

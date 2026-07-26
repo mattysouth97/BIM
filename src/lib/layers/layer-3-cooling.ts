@@ -10,6 +10,11 @@ import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
 import type { ChillerParams } from "./mep-equipment-params";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
+import {
+  ASSET_NATIVE_DIMS,
+  getEquipmentObjectClone,
+  tagEquipmentObject,
+} from "@/lib/equipment-assets";
 
 const COOL_BLUE = 0x3b82f6;
 const PIPE_RADIUS = 0.04;
@@ -97,53 +102,97 @@ export class CoolingLayer implements LayerGenerator {
       opacity: 0.85,
     });
 
-    // --- Central chiller plant (roof level) — merged multi-primitive geometry ---
-    const chillerGeo = buildChillerGeometry(chillerParams);
-    const plantMat = new THREE.MeshStandardMaterial({
-      color: 0x2563eb,
-      emissive: COOL_BLUE,
-      emissiveIntensity: 0.3,
-      roughness: 0.6,
-      metalness: 0.4,
-    });
-    const plant = new THREE.Mesh(chillerGeo, plantMat);
-    plant.position.set(coreX, totalHeight + chillerParams.bodyHeight / 2, coreZ);
-    // Pitfall 2: userData on the Mesh, NOT on the BufferGeometry
-    plant.userData = { type: "cooling-plant" };
-    group.add(plant);
+    // Equipment sits ON TOP of the roof slab — for flat roofs the roof box
+    // extends flatThickness above totalHeight (fixes the previous half-embedded
+    // placement where equipment bases clipped into the roof geometry).
+    const roofTopY =
+      totalHeight + (recipe.roof?.type === "flat" ? recipe.roof.flatThickness : 0);
+
+    // --- Central chiller plant (roof level) ---
+    // Detailed Blender asset when preloaded; merged-primitive fallback otherwise.
+    const chillerAsset = getEquipmentObjectClone("chiller");
+    if (chillerAsset) {
+      const native = ASSET_NATIVE_DIMS.chiller;
+      chillerAsset.scale.set(
+        chillerParams.bodyWidth / native.w,
+        chillerParams.bodyHeight / native.h,
+        chillerParams.bodyDepth / native.d
+      );
+      // Asset origin is at base centre — base rests exactly on the roof top.
+      chillerAsset.position.set(coreX, roofTopY, coreZ);
+      tagEquipmentObject(
+        chillerAsset,
+        { type: "cooling-plant" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(chillerAsset);
+    } else {
+      const chillerGeo = buildChillerGeometry(chillerParams);
+      const plantMat = new THREE.MeshStandardMaterial({
+        color: 0x2563eb,
+        emissive: COOL_BLUE,
+        emissiveIntensity: 0.3,
+        roughness: 0.6,
+        metalness: 0.4,
+      });
+      const plant = new THREE.Mesh(chillerGeo, plantMat);
+      plant.position.set(coreX, roofTopY + chillerParams.bodyHeight / 2, coreZ);
+      // Pitfall 2: userData on the Mesh, NOT on the BufferGeometry
+      plant.userData = { type: "cooling-plant" };
+      group.add(plant);
+    }
 
     // --- Optional cooling tower (showCoolingTower === true) ---
     if (chillerParams.showCoolingTower) {
-      const towerBodyGeo = new THREE.CylinderGeometry(
-        chillerParams.bodyWidth * 0.3,
-        chillerParams.bodyWidth * 0.35,
-        chillerParams.bodyHeight * 0.8,
-        12
-      );
-      const fanRingGeo = new THREE.TorusGeometry(
-        chillerParams.bodyWidth * 0.28,
-        0.06,
-        6,
-        16
-      );
-      fanRingGeo.rotateX(Math.PI / 2);
-      fanRingGeo.translate(0, chillerParams.bodyHeight * 0.4 + 0.08, 0);
-      const towerGeo = mergeGeometries([towerBodyGeo, fanRingGeo]);
-      const towerMat = new THREE.MeshStandardMaterial({
-        color: 0x1d4ed8,
-        emissive: 0x1d4ed8,
-        emissiveIntensity: 0.2,
-        roughness: 0.5,
-        metalness: 0.3,
-      });
-      const tower = new THREE.Mesh(towerGeo, towerMat);
-      tower.position.set(
-        coreX + chillerParams.bodyWidth * 0.5 + 2.0,
-        totalHeight + chillerParams.bodyHeight * 0.4,
-        coreZ
-      );
-      tower.userData = { type: "cooling-tower" };
-      group.add(tower);
+      const towerX = coreX + chillerParams.bodyWidth * 0.5 + 2.0;
+      const towerAsset = getEquipmentObjectClone("cooling-tower");
+      if (towerAsset) {
+        const s = chillerParams.bodyWidth / ASSET_NATIVE_DIMS.chiller.w;
+        towerAsset.scale.set(s, s, s);
+        // Base-origin asset: base sits on the roof top surface (roofTopY
+        // accounts for the flat-roof slab thickness — previously equipment
+        // bases were embedded 0.15 m inside the roof box).
+        towerAsset.position.set(towerX, roofTopY, coreZ);
+        tagEquipmentObject(
+          towerAsset,
+          { type: "cooling-tower" },
+          { castShadow: true, receiveShadow: true }
+        );
+        group.add(towerAsset);
+      } else {
+        const towerBodyGeo = new THREE.CylinderGeometry(
+          chillerParams.bodyWidth * 0.3,
+          chillerParams.bodyWidth * 0.35,
+          chillerParams.bodyHeight * 0.8,
+          12
+        );
+        const fanRingGeo = new THREE.TorusGeometry(
+          chillerParams.bodyWidth * 0.28,
+          0.06,
+          6,
+          16
+        );
+        fanRingGeo.rotateX(Math.PI / 2);
+        fanRingGeo.translate(0, chillerParams.bodyHeight * 0.4 + 0.08, 0);
+        const towerGeo = mergeGeometries([towerBodyGeo, fanRingGeo]);
+        const towerMat = new THREE.MeshStandardMaterial({
+          color: 0x1d4ed8,
+          emissive: 0x1d4ed8,
+          emissiveIntensity: 0.2,
+          roughness: 0.5,
+          metalness: 0.3,
+        });
+        const tower = new THREE.Mesh(towerGeo, towerMat);
+        // Centre-origin cylinder lifted so its base rests on roofTopY
+        // (accounts for flat-roof slab thickness — coarse-path fix).
+        tower.position.set(
+          towerX,
+          roofTopY + chillerParams.bodyHeight * 0.4,
+          coreZ
+        );
+        tower.userData = { type: "cooling-tower" };
+        group.add(tower);
+      }
     }
 
     // --- Vertical riser from plant down through core shaft ---

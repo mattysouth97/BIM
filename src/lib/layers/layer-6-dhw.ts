@@ -10,6 +10,11 @@ import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
 import type { DhwParams } from "./mep-equipment-params";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
+import {
+  ASSET_NATIVE_DIMS,
+  getEquipmentObjectClone,
+  tagEquipmentObject,
+} from "@/lib/equipment-assets";
 
 const DHW_ORANGE = 0xf97316;
 const PIPE_RADIUS = 0.05;
@@ -95,40 +100,98 @@ export class DHWLayer implements LayerGenerator {
       metalness: 0.4,
     });
 
-    // Basement Y position for tank base
+    // Basement Y position for tank centre (coarse path)
     const basementY = -(dhwParams.tankHeight / 2);
+    // Shared plant-floor plane: every DHW plant item stands on the same
+    // basement floor (fixes the recirc tank and pump previously floating
+    // 0.36 m / 0.9 m above the main tank's base plane).
+    const plantFloorY = -dhwParams.tankHeight;
 
-    // --- Hot water storage tank at basement (merged geometry with pipe stubs) ---
-    const tankGeo = buildTankGeometry(dhwParams);
-    const tank = new THREE.Mesh(tankGeo, tankMat);
-    tank.position.set(0.8, basementY, 0.5);
-    tank.userData = { type: "dhw-storage-tank" };
-    group.add(tank);
+    // --- Hot water storage tank at basement ---
+    // Detailed Blender asset when preloaded; merged-primitive fallback otherwise.
+    const tankAsset = getEquipmentObjectClone("dhw-tank");
+    if (tankAsset) {
+      const native = ASSET_NATIVE_DIMS["dhw-tank"];
+      const radialScale = (dhwParams.tankRadius * 2) / native.w;
+      tankAsset.scale.set(
+        radialScale,
+        dhwParams.tankHeight / native.h,
+        radialScale
+      );
+      tankAsset.position.set(0.8, plantFloorY, 0.5);
+      tagEquipmentObject(
+        tankAsset,
+        { type: "dhw-storage-tank" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(tankAsset);
+    } else {
+      const tankGeo = buildTankGeometry(dhwParams);
+      const tank = new THREE.Mesh(tankGeo, tankMat);
+      tank.position.set(0.8, basementY, 0.5);
+      tank.userData = { type: "dhw-storage-tank" };
+      group.add(tank);
+    }
 
-    // Secondary tank (recirculation) — left as-is, good silhouette already
-    const tank2Geo = new THREE.CylinderGeometry(
-      dhwParams.tankRadius * 0.7,
-      dhwParams.tankRadius * 0.7,
-      dhwParams.tankHeight * 0.8,
-      12
-    );
-    const tank2 = new THREE.Mesh(tank2Geo, tankMat);
-    tank2.position.set(-0.8, -(dhwParams.tankHeight * 0.4), 0.5);
-    tank2.userData = { type: "dhw-recirc-tank" };
-    group.add(tank2);
+    // Secondary tank (recirculation) — scaled clone of the detailed tank, or
+    // the original plain cylinder fallback.
+    const tank2Asset = getEquipmentObjectClone("dhw-tank");
+    if (tank2Asset) {
+      const native = ASSET_NATIVE_DIMS["dhw-tank"];
+      const radialScale = (dhwParams.tankRadius * 2 * 0.7) / native.w;
+      tank2Asset.scale.set(
+        radialScale,
+        (dhwParams.tankHeight * 0.8) / native.h,
+        radialScale
+      );
+      // Base on the shared plant floor (fixes the previous 0.36 m float).
+      tank2Asset.position.set(-0.8, plantFloorY, 0.5);
+      tagEquipmentObject(
+        tank2Asset,
+        { type: "dhw-recirc-tank" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(tank2Asset);
+    } else {
+      const tank2Geo = new THREE.CylinderGeometry(
+        dhwParams.tankRadius * 0.7,
+        dhwParams.tankRadius * 0.7,
+        dhwParams.tankHeight * 0.8,
+        12
+      );
+      const tank2 = new THREE.Mesh(tank2Geo, tankMat);
+      // Centre-origin cylinder: base on the shared plant floor.
+      tank2.position.set(-0.8, plantFloorY + dhwParams.tankHeight * 0.4, 0.5);
+      tank2.userData = { type: "dhw-recirc-tank" };
+      group.add(tank2);
+    }
 
-    // --- Pump housing (NEW) — horizontal pump cylinder + motor box ---
+    // --- Circulation pump — detailed end-suction pump set or merged fallback ---
     if (dhwParams.showPump) {
-      const pumpBody = new THREE.CylinderGeometry(0.18, 0.18, 0.5, 12);
-      pumpBody.rotateZ(Math.PI / 2);
-      const motor = new THREE.BoxGeometry(0.3, 0.25, 0.25);
-      motor.translate(0.4, 0, 0);
-      const pumpGeo = mergeGeometries([pumpBody, motor]);
-      const pumpMesh = new THREE.Mesh(pumpGeo, tankMat);
-      pumpMesh.userData = { type: "dhw-pump" };
-      // Position next to storage tank (+X side, at basement level)
-      pumpMesh.position.set(0.8 + dhwParams.tankRadius + 0.6, basementY + 0.18, 0.5);
-      group.add(pumpMesh);
+      const pumpX = 0.8 + dhwParams.tankRadius + 0.6;
+      const pumpAsset = getEquipmentObjectClone("dhw-pump");
+      if (pumpAsset) {
+        // Base-origin asset: baseplate rests on the plant floor (fixes the
+        // previous placement where the pump floated at mid-basement height).
+        pumpAsset.position.set(pumpX, plantFloorY, 0.5);
+        tagEquipmentObject(
+          pumpAsset,
+          { type: "dhw-pump" },
+          { castShadow: true, receiveShadow: true }
+        );
+        group.add(pumpAsset);
+      } else {
+        const pumpBody = new THREE.CylinderGeometry(0.18, 0.18, 0.5, 12);
+        pumpBody.rotateZ(Math.PI / 2);
+        const motor = new THREE.BoxGeometry(0.3, 0.25, 0.25);
+        motor.translate(0.4, 0, 0);
+        const pumpGeo = mergeGeometries([pumpBody, motor]);
+        const pumpMesh = new THREE.Mesh(pumpGeo, tankMat);
+        pumpMesh.userData = { type: "dhw-pump" };
+        // Pump axis sits one body-radius above the shared plant floor.
+        pumpMesh.position.set(pumpX, plantFloorY + 0.18, 0.5);
+        group.add(pumpMesh);
+      }
     }
 
     // --- Vertical risers in core shaft (strict CylinderGeometry) ---

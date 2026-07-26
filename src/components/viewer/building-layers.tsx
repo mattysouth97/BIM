@@ -17,6 +17,8 @@ import { HeatingLayer } from "@/lib/layers/layer-4-heating";
 import { VentilationLayer } from "@/lib/layers/layer-5-ventilation";
 import { DHWLayer } from "@/lib/layers/layer-6-dhw";
 import { LightingLayer } from "@/lib/layers/layer-7-lighting";
+import { ElectricalRoutingLayer } from "@/lib/layers/electrical-routing";
+import { useEquipmentAssets } from "@/hooks/use-equipment-assets";
 import {
   setupMepSubGroups,
   assignToSubGroup,
@@ -43,6 +45,10 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
 
   // Equipment params for MEP generators — snapshot-safe selector, falls back to defaults
   const equipmentParams = useEquipmentStore((s) => s.params[pk]) ?? DEFAULT_MEP_EQUIPMENT_PARAMS;
+
+  // Detailed Blender GLB assets — regenerate MEP geometry once preloaded so
+  // the synchronous generators swap their coarse fallbacks for real models.
+  const equipmentAssetsReady = useEquipmentAssets();
 
   // Derive effective recipe geometry (footprint + floors) for heatmap sizing.
   // Mirrors the merge logic in use-energy-breakdown.ts — footprint overrides only.
@@ -197,7 +203,13 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
       }
     );
     assignToSubGroup(mepGroup, lightingOutput.name, lightingOutput);
-  }, [effectiveRecipe, equipmentParams, density]);
+
+    const electricalOutput = new ElectricalRoutingLayer().generate(
+      effectiveRecipe,
+      mepDensity
+    );
+    assignToSubGroup(mepGroup, electricalOutput.name, electricalOutput);
+  }, [effectiveRecipe, equipmentParams, density, equipmentAssetsReady]);
 
   // Animation loop — update ShaderMaterial uniforms each frame
   useFrame((state) => {

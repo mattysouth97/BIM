@@ -6,6 +6,11 @@ import * as THREE from "three";
 import type { BuildingRecipe, FloorSpec } from "./types";
 import type { PBRMaterialConfig } from "@/lib/pbr-materials";
 import { extrudePolygon } from "@/lib/gis/earcut-extrude";
+import {
+  getEquipmentGeometryClone,
+  getEquipmentObjectClone,
+  tagEquipmentObject,
+} from "@/lib/equipment-assets";
 
 function pbrToMaterial(config: PBRMaterialConfig): THREE.MeshStandardMaterial {
   const mat = new THREE.MeshStandardMaterial({
@@ -86,28 +91,39 @@ export function generateSlabs(recipe: BuildingRecipe): THREE.InstancedMesh | THR
   return im;
 }
 
-/**
- * Generate instanced column geometry for all floors.
- */
-export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
-  const { floors, footprintWidth, footprintDepth, column, slab } = recipe;
+/** Structural column/beam grid derived from the recipe. */
+interface ColumnGrid {
+  positions: { x: number; z: number }[];
+  colsX: number;
+  colsZ: number;
+  spacingX: number;
+  spacingZ: number;
+  innerW: number;
+  innerD: number;
+}
 
-  // Column grid positions
+/** Compute the structural column grid (shared by columns and beams). */
+function computeColumnGrid(recipe: BuildingRecipe): ColumnGrid {
+  const { footprintWidth, footprintDepth, column } = recipe;
   const margin = column.inset;
   const innerW = footprintWidth - margin * 2;
   const innerD = footprintDepth - margin * 2;
 
-  const columnPositions: { x: number; z: number }[] = [];
+  const positions: { x: number; z: number }[] = [];
+  let colsX = 0;
+  let colsZ = 0;
+  let spacingX = 0;
+  let spacingZ = 0;
 
   if (innerW >= column.spacing && innerD >= column.spacing) {
-    const colsX = Math.max(2, Math.round(innerW / column.spacing) + 1);
-    const colsZ = Math.max(2, Math.round(innerD / column.spacing) + 1);
-    const spacingX = colsX > 1 ? innerW / (colsX - 1) : 0;
-    const spacingZ = colsZ > 1 ? innerD / (colsZ - 1) : 0;
+    colsX = Math.max(2, Math.round(innerW / column.spacing) + 1);
+    colsZ = Math.max(2, Math.round(innerD / column.spacing) + 1);
+    spacingX = colsX > 1 ? innerW / (colsX - 1) : 0;
+    spacingZ = colsZ > 1 ? innerD / (colsZ - 1) : 0;
 
     for (let ix = 0; ix < colsX; ix++) {
       for (let iz = 0; iz < colsZ; iz++) {
-        columnPositions.push({
+        positions.push({
           x: colsX > 1 ? -innerW / 2 + ix * spacingX : 0,
           z: colsZ > 1 ? -innerD / 2 + iz * spacingZ : 0,
         });
@@ -115,8 +131,24 @@ export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
     }
   }
 
+  return { positions, colsX, colsZ, spacingX, spacingZ, innerW, innerD };
+}
+
+/**
+ * Generate instanced column geometry for all floors.
+ *
+ * Uses the detailed Blender column module (unit-normalized: chamfered shaft,
+ * base/cap plates, corner ribs) when preloaded — it occupies the same
+ * BoxGeometry(1,1,1) unit space, so the per-instance (size, height, size)
+ * scaling is unchanged. Falls back to the plain unit box otherwise.
+ */
+export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
+  const { floors, column, slab } = recipe;
+
+  const columnPositions = computeColumnGrid(recipe).positions;
+
   const totalCount = floors.length * columnPositions.length;
-  const geo = new THREE.BoxGeometry(1, 1, 1);
+  const geo = getEquipmentGeometryClone("column") ?? new THREE.BoxGeometry(1, 1, 1);
   const mat = pbrToMaterial(recipe.materials.column);
   const im = new THREE.InstancedMesh(geo, mat, Math.max(1, totalCount));
   im.castShadow = true;
@@ -146,6 +178,116 @@ export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
   im.instanceMatrix.needsUpdate = true;
 
   return im;
+}
+
+/**
+ * Generate instanced structural beams spanning the column grid.
+ *
+ * Beams run along X and Z between adjacent column nodes at every floor, with
+ * the beam top flush against the slab above. Uses the detailed Blender beam
+ * profile (unit-normalized, length along X, constant cross-section — safe to
+ * stretch along its length) when preloaded, otherwise a plain unit box.
+ *
+ * Returns null when the recipe has no column grid (footprint smaller than a
+ * single structural bay) or when the building uses a cadastral polygon
+ * footprint (the rectangular grid would poke outside the real outline).
+ */
+export function generateBeams(recipe: BuildingRecipe): THREE.InstancedMesh | null {
+  const { floors, column, slab, footprintPolygon } = recipe;
+  if (footprintPolygon && footprintPolygon.length >= 1 && footprintPolygon[0].length >= 3) {
+    return null;
+  }
+
+  const grid = computeColumnGrid(recipe);
+  if (grid.positions.length === 0 || grid.colsX < 2 || grid.colsZ < 2) return null;
+
+  const beamDepth = Math.min(0.5, slab.thickness * 2 + 0.1);
+  const beamWidth = Math.max(0.2, column.size * 0.8);
+
+  const beamsPerFloor =
+    (grid.colsX - 1) * grid.colsZ + grid.colsX * (grid.colsZ - 1);
+  const totalCount = floors.length * beamsPerFloor;
+  if (totalCount === 0) return null;
+
+  const geo = getEquipmentGeometryClone("beam") ?? new THREE.BoxGeometry(1, 1, 1);
+  const mat = pbrToMaterial(recipe.materials.column);
+  const im = new THREE.InstancedMesh(geo, mat, totalCount);
+  im.castShadow = true;
+  im.receiveShadow = true;
+  im.userData = { type: "beam" };
+
+  const mat4 = new THREE.Matrix4();
+  const pos = new THREE.Vector3();
+  const scl = new THREE.Vector3();
+  const identityQuat = new THREE.Quaternion();
+  // Beam geometry length axis is X; rotate 90° about Y for Z-spanning beams.
+  const zSpanQuat = new THREE.Quaternion().setFromAxisAngle(
+    new THREE.Vector3(0, 1, 0),
+    Math.PI / 2
+  );
+
+  let idx = 0;
+  for (const floor of floors) {
+    // Beam top flush with the underside of the slab above this floor.
+    const y = floor.y + floor.height - beamDepth / 2;
+
+    // X-spanning beams between adjacent grid columns in each Z row
+    for (let iz = 0; iz < grid.colsZ; iz++) {
+      const z = grid.colsZ > 1 ? -grid.innerD / 2 + iz * grid.spacingZ : 0;
+      for (let ix = 0; ix < grid.colsX - 1; ix++) {
+        const x0 = -grid.innerW / 2 + ix * grid.spacingX;
+        pos.set(x0 + grid.spacingX / 2, y, z);
+        scl.set(grid.spacingX, beamDepth, beamWidth);
+        mat4.compose(pos, identityQuat, scl);
+        im.setMatrixAt(idx++, mat4);
+      }
+    }
+
+    // Z-spanning beams between adjacent grid columns in each X row
+    for (let ix = 0; ix < grid.colsX; ix++) {
+      const x = grid.colsX > 1 ? -grid.innerW / 2 + ix * grid.spacingX : 0;
+      for (let iz = 0; iz < grid.colsZ - 1; iz++) {
+        const z0 = -grid.innerD / 2 + iz * grid.spacingZ;
+        pos.set(x, y, z0 + grid.spacingZ / 2);
+        // Local scale is applied before rotation: X = span length.
+        scl.set(grid.spacingZ, beamDepth, beamWidth);
+        mat4.compose(pos, zSpanQuat, scl);
+        im.setMatrixAt(idx++, mat4);
+      }
+    }
+  }
+
+  im.count = idx;
+  im.instanceMatrix.needsUpdate = true;
+  return im;
+}
+
+/**
+ * Roof furniture (stair bulkhead, gooseneck vents, skylight, drain, ladder) —
+ * a fixed-size detailed Blender asset dressed onto flat roofs.
+ *
+ * Detailed-asset-only: returns null when the asset is not preloaded, the roof
+ * is not flat, or the footprint is too small to host the ~5×3.5 m set.
+ */
+export function generateRoofFurniture(recipe: BuildingRecipe): THREE.Group | null {
+  const { roof, footprintWidth, footprintDepth, totalHeight } = recipe;
+  if (roof.type !== "flat") return null;
+  if (Math.min(footprintWidth, footprintDepth) < 10) return null;
+
+  const furniture = getEquipmentObjectClone("roof-furniture");
+  if (!furniture) return null;
+
+  const roofTopY = totalHeight + roof.flatThickness;
+  // Offset toward a rear corner, clamped so the set stays on the roof.
+  const x = Math.min(footprintWidth / 2 - 3.2, footprintWidth * 0.18);
+  const z = Math.max(-(footprintDepth / 2 - 2.6), -footprintDepth * 0.22);
+  furniture.position.set(x, roofTopY, z);
+  tagEquipmentObject(
+    furniture,
+    { type: "roof" },
+    { castShadow: true, receiveShadow: true }
+  );
+  return furniture;
 }
 
 /**

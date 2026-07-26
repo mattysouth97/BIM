@@ -5,7 +5,13 @@
 import * as THREE from "three";
 import type { BuildingRecipe, BuildingSection, FloorSpec } from "./types";
 import { generateFacade } from "./facade-generator";
-import { generateSlabs, generateColumns, generateRoof } from "./structure-generator";
+import {
+  generateSlabs,
+  generateColumns,
+  generateBeams,
+  generateRoof,
+  generateRoofFurniture,
+} from "./structure-generator";
 import { getSectionForFloor } from "./mixed-use-recipe";
 
 /**
@@ -66,9 +72,24 @@ export class ProceduralBuilding {
     columns.name = "columns";
     group.add(columns);
 
+    // Structural beams spanning the column grid (1 extra draw call)
+    const beams = generateBeams(this.recipe);
+    if (beams) {
+      beams.name = "beams";
+      group.add(beams);
+    }
+
     const roof = generateRoof(this.recipe);
     roof.name = "roof";
     group.add(roof);
+
+    // Flat-roof furniture (stair bulkhead, vents, skylight) — only when the
+    // detailed Blender asset is preloaded.
+    const roofFurniture = generateRoofFurniture(this.recipe);
+    if (roofFurniture) {
+      roofFurniture.name = "roof-furniture";
+      group.add(roofFurniture);
+    }
 
     this.group = group;
     return group;

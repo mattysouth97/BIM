@@ -10,6 +10,13 @@ import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
 import type { BoilerParams } from "./mep-equipment-params";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
+import {
+  ASSET_NATIVE_DIMS,
+  getEquipmentGeometryClone,
+  getEquipmentMaterialClone,
+  getEquipmentObjectClone,
+  tagEquipmentObject,
+} from "@/lib/equipment-assets";
 
 const HEAT_RED = 0xef4444;
 const PIPE_RADIUS = 0.04;
@@ -148,33 +155,83 @@ export class HeatingLayer implements LayerGenerator {
       opacity: 0.85,
     });
 
-    // --- Central boiler plant at basement level — merged multi-primitive geometry ---
-    const boilerGeo = buildBoilerGeometry(boilerParams);
-    const plantMat = new THREE.MeshStandardMaterial({
-      color: 0xb91c1c,
-      emissive: HEAT_RED,
-      emissiveIntensity: 0.4,
-      roughness: 0.5,
-      metalness: 0.4,
-    });
-    const plant = new THREE.Mesh(boilerGeo, plantMat);
-    plant.position.set(0, -0.6, 0); // Basement level
-    // Pitfall 2: userData on the Mesh, NOT on the BufferGeometry
-    plant.userData = { type: "heating-boiler" };
-    group.add(plant);
+    // Plant floor plane: boiler body must stay fully below the ground slab
+    // (the previous fixed y=-0.6 centre placement pushed the body 0.3 m up
+    // into the first-floor slab — geometry-clipping fix).
+    const plantFloorY = -(boilerParams.height + 0.3);
 
-    // --- VRF outdoor unit InstancedMesh (NEW) ---
+    // --- Central boiler plant at basement level ---
+    // Detailed Blender asset when preloaded; merged-primitive fallback otherwise.
+    const boilerAsset = getEquipmentObjectClone("boiler");
+    if (boilerAsset) {
+      const native = ASSET_NATIVE_DIMS.boiler;
+      const radialScale = (boilerParams.radius * 2) / native.w;
+      boilerAsset.scale.set(
+        radialScale,
+        boilerParams.height / native.h,
+        radialScale
+      );
+      // Base-origin asset: body occupies [plantFloorY, plantFloorY + height],
+      // fully below the ground slab; only the flue penetrates upward.
+      boilerAsset.position.set(0, plantFloorY, 0);
+      tagEquipmentObject(
+        boilerAsset,
+        { type: "heating-boiler" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(boilerAsset);
+    } else {
+      const boilerGeo = buildBoilerGeometry(boilerParams);
+      const plantMat = new THREE.MeshStandardMaterial({
+        color: 0xb91c1c,
+        emissive: HEAT_RED,
+        emissiveIntensity: 0.4,
+        roughness: 0.5,
+        metalness: 0.4,
+      });
+      const plant = new THREE.Mesh(boilerGeo, plantMat);
+      // Centre-origin merged geometry: centre so the body top sits at -0.3
+      // (below the ground slab) instead of protruding into floor 1.
+      plant.position.set(0, plantFloorY + boilerParams.height / 2, 0);
+      // Pitfall 2: userData on the Mesh, NOT on the BufferGeometry
+      plant.userData = { type: "heating-boiler" };
+      group.add(plant);
+    }
+
+    // --- Geothermal installation (GSHP + borehole manifold) ---
+    // Detailed-asset-only addition: rendered when the Blender asset is loaded.
+    const gshpAsset = getEquipmentObjectClone("gshp");
+    if (gshpAsset) {
+      const gshpX = Math.min(hw - 1.2, 2.6);
+      gshpAsset.position.set(gshpX, plantFloorY, 0.6);
+      tagEquipmentObject(
+        gshpAsset,
+        { type: "heating-gshp" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(gshpAsset);
+    }
+
+    // --- VRF outdoor unit InstancedMesh ---
     if (boilerParams.vrfHeads) {
-      // VRF body: small box cassette with louvre stripes on front face
-      const vrfBody = new THREE.BoxGeometry(0.8, 0.6, 0.35);
-      // Louvre stripes — 3 thin boxes merged for IM-compatible single geometry
-      const louvreA = new THREE.BoxGeometry(0.7, 0.08, 0.02);
-      louvreA.translate(0, 0.1, 0.175 + 0.01);
-      const louvreB = new THREE.BoxGeometry(0.7, 0.08, 0.02);
-      louvreB.translate(0, 0.0, 0.175 + 0.01);
-      const louvreC = new THREE.BoxGeometry(0.7, 0.08, 0.02);
-      louvreC.translate(0, -0.1, 0.175 + 0.01);
-      const vrfGeo = mergeGeometries([vrfBody, louvreA, louvreB, louvreC]);
+      // Detailed single-mesh Blender asset (authored 0.8×0.6×0.35, centre
+      // origin — matches the coarse box) or merged-primitive fallback.
+      const vrfDetailedGeo = getEquipmentGeometryClone("vrf-outdoor");
+      let vrfGeo: THREE.BufferGeometry;
+      if (vrfDetailedGeo) {
+        vrfGeo = vrfDetailedGeo;
+      } else {
+        // VRF body: small box cassette with louvre stripes on front face
+        const vrfBody = new THREE.BoxGeometry(0.8, 0.6, 0.35);
+        // Louvre stripes — 3 thin boxes merged for IM-compatible single geometry
+        const louvreA = new THREE.BoxGeometry(0.7, 0.08, 0.02);
+        louvreA.translate(0, 0.1, 0.175 + 0.01);
+        const louvreB = new THREE.BoxGeometry(0.7, 0.08, 0.02);
+        louvreB.translate(0, 0.0, 0.175 + 0.01);
+        const louvreC = new THREE.BoxGeometry(0.7, 0.08, 0.02);
+        louvreC.translate(0, -0.1, 0.175 + 0.01);
+        vrfGeo = mergeGeometries([vrfBody, louvreA, louvreB, louvreC]);
+      }
 
       // Roof cluster: 2 × vrfHeadsPerFloor total; perimeter: one per floor × per-floor count
       const vrfCount =
@@ -182,24 +239,30 @@ export class HeatingLayer implements LayerGenerator {
           ? boilerParams.vrfHeadsPerFloor * 2
           : aboveFloors.length * boilerParams.vrfHeadsPerFloor;
 
-      // Cyan tint for VRF (visually distinct from heating pipes)
-      const vrfMat = new THREE.MeshStandardMaterial({
-        color: 0x0891b2,
-        emissive: 0x06b6d4,
-        emissiveIntensity: 0.15,
-        roughness: 0.5,
-        metalness: 0.4,
-      });
+      // Detailed asset ships its own PBR material; fallback keeps the cyan
+      // tint (visually distinct from heating pipes).
+      const vrfMat =
+        (vrfDetailedGeo ? getEquipmentMaterialClone("vrf-outdoor") : null) ??
+        new THREE.MeshStandardMaterial({
+          color: 0x0891b2,
+          emissive: 0x06b6d4,
+          emissiveIntensity: 0.15,
+          roughness: 0.5,
+          metalness: 0.4,
+        });
 
       const vrfIM = new THREE.InstancedMesh(vrfGeo, vrfMat, vrfCount);
       // Pitfall 2: userData on the InstancedMesh, NOT on the geometry
       vrfIM.userData = { type: "heating-vrf-head" };
 
       const mat4 = new THREE.Matrix4();
-      const roofY =
-        aboveFloors[aboveFloors.length - 1].y +
-        aboveFloors[aboveFloors.length - 1].height +
-        0.3;
+      // Roof cluster sits on the roof TOP surface (same roofTopY convention
+      // as the layer-3 chiller fix — flat roofs extend flatThickness above
+      // totalHeight). +0.31 lifts the centre-origin 0.62 m unit so its base
+      // rests on the surface instead of being half-buried in the roof box.
+      const roofTopY =
+        totalHeight + (recipe.roof?.type === "flat" ? recipe.roof.flatThickness : 0);
+      const roofY = roofTopY + 0.31;
 
       for (let i = 0; i < vrfCount; i++) {
         if (boilerParams.vrfLocation === "roof") {
@@ -226,17 +289,21 @@ export class HeatingLayer implements LayerGenerator {
       group.add(vrfIM);
     }
 
-    // --- Fan coil InstancedMesh (NEW) — thin ceiling cassettes per above floor ---
-    // Flat box: wider and flatter than AHU (0.9×0.1×0.5)
-    const fcGeo = new THREE.BoxGeometry(0.9, 0.1, 0.5);
+    // --- Fan coil InstancedMesh — thin ceiling cassettes per above floor ---
+    // Detailed 4-way cassette asset (authored 0.9×0.1×0.5, centre origin) or
+    // flat-box fallback: wider and flatter than AHU (0.9×0.1×0.5)
+    const fcDetailedGeo = getEquipmentGeometryClone("fan-coil");
+    const fcGeo = fcDetailedGeo ?? new THREE.BoxGeometry(0.9, 0.1, 0.5);
     // Blue tint for fan coils (distinct from VRF cyan and heating red)
-    const fcMat = new THREE.MeshStandardMaterial({
-      color: 0x1d4ed8,
-      emissive: 0x3b82f6,
-      emissiveIntensity: 0.2,
-      roughness: 0.4,
-      metalness: 0.5,
-    });
+    const fcMat =
+      (fcDetailedGeo ? getEquipmentMaterialClone("fan-coil") : null) ??
+      new THREE.MeshStandardMaterial({
+        color: 0x1d4ed8,
+        emissive: 0x3b82f6,
+        emissiveIntensity: 0.2,
+        roughness: 0.4,
+        metalness: 0.5,
+      });
     const fcIM = new THREE.InstancedMesh(fcGeo, fcMat, aboveFloors.length);
     // Pitfall 2: userData on the InstancedMesh
     fcIM.userData = { type: "heating-fan-coil" };
