@@ -87,14 +87,15 @@ export interface LayerGenerator {
 // Parallel to LayerId — does NOT extend ALL_LAYER_IDS (which stays at 5 entries)
 // ---------------------------------------------------------------------------
 
-/** MEP sub-layer identifier — 6 utility system groups within the MEP layer */
+/** MEP sub-layer identifier — 7 utility system groups within the MEP layer */
 export type MepSubLayerId =
   | "mep-electrical"
   | "mep-hvac"
   | "mep-lighting"
   | "mep-dhw"
   | "mep-safety"
-  | "mep-transport";
+  | "mep-transport"
+  | "mep-gas";
 
 /** All valid MEP sub-layer IDs for iteration */
 export const MEP_SUB_IDS: MepSubLayerId[] = [
@@ -104,6 +105,7 @@ export const MEP_SUB_IDS: MepSubLayerId[] = [
   "mep-dhw",
   "mep-safety",
   "mep-transport",
+  "mep-gas",
 ];
 
 /** Configuration metadata for each MEP sub-layer */
@@ -148,6 +150,11 @@ export const MEP_SUB_CONFIGS: Record<MepSubLayerId, MepSubConfig> = {
     name: "Vertical Transport",
     nameKo: "승강설비",
     color: "#eab308", // amber
+  },
+  "mep-gas": {
+    name: "Gas Supply",
+    nameKo: "가스설비",
+    color: "#facc15", // gas-pipe yellow (황색 도장)
   },
 };
 
@@ -194,4 +201,5 @@ export const GENERATOR_TO_MEP_SUB: Record<string, MepSubLayerId> = {
   "layer-6-dhw": "mep-dhw",
   "layer-7-lighting": "mep-lighting",
   "layer-9-waste": "mep-dhw",
+  "gas-system": "mep-gas",
 };

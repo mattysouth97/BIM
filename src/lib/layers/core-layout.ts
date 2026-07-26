@@ -59,6 +59,27 @@ export interface CoreLayout {
    * not generated underneath rooftop equipment.
    */
   roofPlantBandMaxZ: number;
+  /**
+   * Stacked wet zones — identical position on every floor so supply/drain
+   * risers run straight (Korean 설비 practice: bathrooms/kitchens stack
+   * vertically). Restroom sits beside the service core; kitchen sits on the
+   * front half of the plate near the +Z facade (where the gas riser climbs).
+   */
+  wetZones: { restroom: CoreSlot; kitchen: CoreSlot };
+  /** Cold-water riser — beside the DHW risers in the wet service shaft. */
+  coldRiser: CoreSlot;
+  /** Water meter at the front property side (municipal service entry). */
+  waterMeter: CoreSlot;
+  /**
+   * Gas riser — OUTSIDE the +Z facade, aligned with the kitchen stack.
+   * 도시가스사업법 requires exposed exterior gas piping, so the riser climbs
+   * the outside of the wall, never inside it.
+   */
+  gasRiser: CoreSlot;
+  /** Gas meter at the base of the exterior gas riser. */
+  gasMeter: CoreSlot;
+  /** LPG cylinder cage — rear exterior corner (pre-city-gas era buildings). */
+  lpgCage: CoreSlot;
 }
 
 const SHAFT_WIDTH = 1.6;
@@ -196,6 +217,49 @@ export function computeCoreLayout(recipe: BuildingRecipe): CoreLayout {
     z: 0.5,
   };
 
+  // --- Wet zones (stacked vertically) ----------------------------------------
+  // Restroom hugs the wet service shaft (short branch runs, straight risers);
+  // kitchen sits toward the front (+Z) facade where the exterior gas riser
+  // climbs. Identical x/z on every floor — Korean plumbing practice.
+  const wetZones = {
+    restroom: {
+      x: clamp(serviceRiser.x + 2.4, -hw + 1.5, hw - 1.5),
+      z: clamp(serviceRiser.z + 1.6, -hd + 1.5, hd - 1.5),
+    },
+    kitchen: {
+      x: clamp(-hw * 0.4, -hw + 1.5, hw - 1.5),
+      z: clamp(hd * 0.55, -hd + 1.5, hd - 1.5),
+    },
+  };
+
+  // Cold-water riser joins the DHW supply/return pair in the wet shaft.
+  const coldRiser: CoreSlot = {
+    x: clamp(serviceRiser.x - 0.7, -hw + 0.8, hw - 0.8),
+    z: serviceRiser.z,
+  };
+
+  // Municipal water service enters from the street (front, +Z); the meter
+  // sits at the property side of the front wall.
+  const waterMeter: CoreSlot = {
+    x: clamp(hw * 0.3, -hw + 1.0, hw - 1.0),
+    z: hd + 1.0,
+  };
+
+  // Exterior gas riser aligned with the kitchen stack, just outside the +Z
+  // facade (exposed piping per 도시가스사업법); the meter sits at its base.
+  const gasRiser: CoreSlot = {
+    x: wetZones.kitchen.x,
+    z: hd + 0.2,
+  };
+  const gasMeter: CoreSlot = { x: gasRiser.x, z: gasRiser.z };
+
+  // LPG cylinder cage at the rear exterior corner — serviceable from the
+  // alley, away from openings (pre-1990 era buildings).
+  const lpgCage: CoreSlot = {
+    x: clamp(-hw * 0.6, -hw + 1.0, -1.0),
+    z: -hd - 0.6,
+  };
+
   return {
     elevator,
     serviceRiser,
@@ -204,5 +268,11 @@ export function computeCoreLayout(recipe: BuildingRecipe): CoreLayout {
     roofAshp,
     basementDhw,
     roofPlantBandMaxZ,
+    wetZones,
+    coldRiser,
+    waterMeter,
+    gasRiser,
+    gasMeter,
+    lpgCage,
   };
 }

@@ -5,6 +5,7 @@
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import { getBuildingCodeRules } from "./building-code-rules";
 import {
   getEquipmentGeometryClone,
   type EquipmentAssetId,
@@ -184,6 +185,11 @@ export class SafetyLayer implements LayerGenerator {
     stairGeo.dispose();
 
     // --- Sprinkler heads on ceilings: InstancedMesh grid ---
+    // 소방시설법 시행령 별표 4: sprinklers are mandatory on all floors of
+    // 11+ floor buildings. Low-rise buildings rely on extinguishers, hydrant
+    // cabinets, and detectors (all rendered below regardless).
+    const sprinklersRequired = getBuildingCodeRules(recipe).sprinklersRequired;
+    if (sprinklersRequired) {
     const sprinklerSpacing = density >= 0.7 ? 3.0 : 4.5;
     const colsX = Math.max(1, Math.floor(footprintWidth / sprinklerSpacing));
     const colsZ = Math.max(1, Math.floor(footprintDepth / sprinklerSpacing));
@@ -250,6 +256,7 @@ export class SafetyLayer implements LayerGenerator {
     bulbIM.instanceMatrix.needsUpdate = true;
     group.add(headIM);
     group.add(bulbIM);
+    } // end if (sprinklersRequired) — coarse sprinkler grid
 
     // --- Detailed Blender-asset safety kit: sprinkler heads, smoke detectors,
     // exit signs, extinguishers, hydrant cabinets. Each InstancedMesh is
@@ -335,14 +342,18 @@ export class SafetyLayer implements LayerGenerator {
     };
 
     // Brass-toned sprinkler heads; red-family everything else (safety palette).
-    addDetailedCeilingIM(
-      "sprinkler-head",
-      "safety-sprinkler",
-      sprinklerGridPositions,
-      0xd97706,
-      0.2,
-      0.5
-    );
+    // Detailed sprinkler kit follows the same 11+ floor code gate as the
+    // coarse grid above.
+    if (sprinklersRequired) {
+      addDetailedCeilingIM(
+        "sprinkler-head",
+        "safety-sprinkler",
+        sprinklerGridPositions,
+        0xd97706,
+        0.2,
+        0.5
+      );
+    }
     addDetailedCeilingIM(
       "smoke-detector",
       "safety-smoke-detector",

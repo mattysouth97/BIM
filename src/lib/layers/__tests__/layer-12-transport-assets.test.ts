@@ -10,6 +10,10 @@
 // empty cache the pre-existing layer-12 output must be unchanged. Landing
 // doors and hoist machines have NO coarse fallback — they simply don't
 // appear when their asset isn't loaded.
+//
+// Baseline recipe is SIX floors: 건축법 제64조 requires passenger elevators
+// from 6 above-ground floors, and the generator renders nothing below that
+// (see the low-rise gating describe block at the bottom).
 
 import { describe, it, expect, afterEach } from "vitest";
 import * as THREE from "three";
@@ -20,16 +24,23 @@ import {
 } from "@/lib/equipment-assets";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 
+function makeFloors(count: number, height: number) {
+  return Array.from({ length: count }, (_, i) => ({
+    floorNo: i + 1,
+    label: `${i + 1}F`,
+    type: "above" as const,
+    y: i * height,
+    height,
+    isGroundFloor: i === 0,
+  }));
+}
+
 function makeRecipe(): BuildingRecipe {
   return {
     footprintWidth: 12,
     footprintDepth: 10,
-    floors: [
-      { floorNo: 1, label: "1F", type: "above", y: 0, height: 3.0, isGroundFloor: true },
-      { floorNo: 2, label: "2F", type: "above", y: 3.0, height: 3.0, isGroundFloor: false },
-      { floorNo: 3, label: "3F", type: "above", y: 6.0, height: 3.0, isGroundFloor: false },
-    ],
-    totalHeight: 9.0,
+    floors: makeFloors(6, 3.0),
+    totalHeight: 18.0,
     wallThickness: 0.2,
     era: "2010-2019",
     strctCd: "21",
@@ -66,6 +77,14 @@ function makeRecipe(): BuildingRecipe {
   };
 }
 
+// Layout facts for makeRecipe() (see core-layout.ts):
+//   6 floors → 2 shafts; span = 2.2 → shaft x = ±1.1
+//   bankZ = -(hd - 0.5 - shaftDepth/2) = -(5 - 0.5 - 1.0) = -3.5
+//   door face: interior +Z → z = bankZ + shaftDepth/2 = -2.5
+const SHAFT0_X = -1.1;
+const BANK_Z = -3.5;
+const DOOR_Z = -2.5;
+
 /** Simple single-box fake — same vertex count (24) as a plain BoxGeometry. */
 function makeSimpleFakeAsset(): THREE.Group {
   const group = new THREE.Group();
@@ -99,12 +118,18 @@ function makeShortFloorRecipe(): BuildingRecipe {
   const recipe = makeRecipe();
   return {
     ...recipe,
-    floors: [
-      { floorNo: 1, label: "1F", type: "above", y: 0, height: 2.0, isGroundFloor: true },
-      { floorNo: 2, label: "2F", type: "above", y: 2.0, height: 2.0, isGroundFloor: false },
-      { floorNo: 3, label: "3F", type: "above", y: 4.0, height: 2.0, isGroundFloor: false },
-    ],
-    totalHeight: 6.0,
+    floors: makeFloors(6, 2.0),
+    totalHeight: 12.0,
+  };
+}
+
+/** 3-floor variant — below the 건축법 제64조 elevator threshold. */
+function makeLowRiseRecipe(): BuildingRecipe {
+  const recipe = makeRecipe();
+  return {
+    ...recipe,
+    floors: makeFloors(3, 3.0),
+    totalHeight: 9.0,
   };
 }
 
@@ -140,7 +165,7 @@ describe("TransportLayer — pre-existing output (no assets)", () => {
 
     const indicator = findByType(group, "transport-floor-indicator") as THREE.InstancedMesh;
     expect(indicator).toBeDefined();
-    expect(indicator.count).toBe(3); // one per above floor
+    expect(indicator.count).toBe(6); // one per above floor
   });
 
   it("adds neither transport-landing-door nor transport-hoist-machine when the cache is empty", () => {
@@ -161,14 +186,16 @@ describe("TransportLayer — cab / counterweight geometry-only swap", () => {
     expect(cab.material).toBeInstanceOf(THREE.ShaderMaterial);
     const mat = cab.material as THREE.ShaderMaterial;
     expect(mat.uniforms.uColor.value.getHex()).toBe(0xf59e0b);
-    expect(mat.uniforms.uFloorCount.value).toBe(3);
+    // Travel range tops out at the highest LANDING (floorCount - 1 = 5),
+    // not the floor count — the old uFloorCount range let the cab climb
+    // one full interval past the top floor, through the roof.
+    expect(mat.uniforms.uTopLanding.value).toBe(5);
     expect(cab.userData).toEqual({ type: "transport-cab", animated: true, shaftIndex: 0 });
-    // Core-layout shaft position: single shaft centred on X at the rear
-    // service band — bankZ = -(hd - 0.5 - shaftDepth/2) = -(5 - 0.5 - 1.0) = -3.5.
+    // Core-layout shaft 0 position: x = -1.1, z = bankZ = -3.5 (rear band);
     // cabHeight/2 = min(2.6, 3.0*0.75)/2 = 2.25/2.
-    expect(cab.position.x).toBeCloseTo(0, 5);
+    expect(cab.position.x).toBeCloseTo(SHAFT0_X, 5);
     expect(cab.position.y).toBeCloseTo(1.125, 5);
-    expect(cab.position.z).toBeCloseTo(-3.5, 5);
+    expect(cab.position.z).toBeCloseTo(BANK_Z, 5);
   });
 
   it("swaps the counterweight geometry when elevator-counterweight is loaded, keeping material/position", () => {
@@ -181,11 +208,11 @@ describe("TransportLayer — cab / counterweight geometry-only swap", () => {
     expect(cw.material).toBeInstanceOf(THREE.MeshStandardMaterial);
     const mat = cw.material as THREE.MeshStandardMaterial;
     expect(mat.color.getHex()).toBe(0x666666);
-    // sp.x - shaftWidth/2 + 0.2 = 0 - 0.8 + 0.2 = -0.6;
-    // totalHeight*0.6 = 5.4; sp.z = bankZ = -3.5 (rear service band)
-    expect(cw.position.x).toBeCloseTo(-0.6, 5);
-    expect(cw.position.y).toBeCloseTo(5.4, 5);
-    expect(cw.position.z).toBeCloseTo(-3.5, 5);
+    // sp.x - shaftWidth/2 + 0.2 = -1.1 - 0.8 + 0.2 = -1.7;
+    // totalHeight*0.6 = 10.8; sp.z = bankZ = -3.5 (rear service band)
+    expect(cw.position.x).toBeCloseTo(-1.7, 5);
+    expect(cw.position.y).toBeCloseTo(10.8, 5);
+    expect(cw.position.z).toBeCloseTo(BANK_Z, 5);
   });
 
   it("swaps cab and counterweight independently (only cab asset loaded)", () => {
@@ -207,7 +234,7 @@ describe("TransportLayer — landing doors (detailed-asset-only)", () => {
 
     const im = findByType(group, "transport-landing-door") as THREE.InstancedMesh;
     expect(im).toBeDefined();
-    expect(im.count).toBe(3); // 1 shaft * 3 above floors
+    expect(im.count).toBe(12); // 2 shafts * 6 above floors
 
     const mat = im.material as THREE.MeshStandardMaterial;
     expect(mat.color.getHex()).toBe(0x9ca3af);
@@ -216,15 +243,15 @@ describe("TransportLayer — landing doors (detailed-asset-only)", () => {
 
     const mat4 = new THREE.Matrix4();
     const pos = new THREE.Vector3();
-    const expectedY = [1.05, 4.05, 7.05]; // floor.y (0,3,6) + 1.05
-    for (let i = 0; i < 3; i++) {
+    const expectedY = [1.05, 4.05, 7.05, 10.05, 13.05, 16.05]; // floor.y + 1.05
+    // First 6 instances belong to shaft 0; doors mount on the interior-facing
+    // +Z face of the rear-band shaft: x = sp.x, z = bankZ + shaftDepth/2.
+    for (let i = 0; i < 6; i++) {
       im.getMatrixAt(i, mat4);
       mat4.decompose(pos, new THREE.Quaternion(), new THREE.Vector3());
-      // Doors mount on the interior-facing +Z face of the rear-band shaft:
-      // x = sp.x = 0, z = bankZ + shaftDepth/2 = -3.5 + 1.0 = -2.5
-      expect(pos.x).toBeCloseTo(0, 5);
+      expect(pos.x).toBeCloseTo(SHAFT0_X, 5);
       expect(pos.y).toBeCloseTo(expectedY[i], 5);
-      expect(pos.z).toBeCloseTo(-2.5, 5);
+      expect(pos.z).toBeCloseTo(DOOR_Z, 5);
     }
   });
 
@@ -240,7 +267,7 @@ describe("TransportLayer — landing doors (detailed-asset-only)", () => {
 
     const im = findByType(group, "transport-landing-door") as THREE.InstancedMesh;
     expect(im).toBeDefined();
-    expect(im.count).toBe(3); // 1 shaft * 3 above floors
+    expect(im.count).toBe(12); // 2 shafts * 6 above floors
 
     const doorNativeHeight = 2.1;
     const expectedScale = Math.min(1, (2.0 - 0.15) / doorNativeHeight);
@@ -249,7 +276,7 @@ describe("TransportLayer — landing doors (detailed-asset-only)", () => {
     const mat4 = new THREE.Matrix4();
     const pos = new THREE.Vector3();
     const scl = new THREE.Vector3();
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 6; i++) {
       im.getMatrixAt(i, mat4);
       mat4.decompose(pos, new THREE.Quaternion(), scl);
       expect(scl.y).toBeCloseTo(expectedScale, 5);
@@ -262,15 +289,15 @@ describe("TransportLayer — landing doors (detailed-asset-only)", () => {
 });
 
 describe("TransportLayer — hoist machine (detailed-asset-only)", () => {
-  it("adds the hoist machine per shaft, seated at totalHeight + flatThickness = 9.15", () => {
+  it("adds the hoist machine per shaft, seated at totalHeight + flatThickness = 18.15", () => {
     __injectEquipmentAssetForTest("hoist-machine", makeSimpleFakeAsset());
     const group = new TransportLayer().generate(makeRecipe());
 
     const hoist = findByType(group, "transport-hoist-machine");
     expect(hoist).toBeDefined();
-    expect(hoist!.position.x).toBeCloseTo(0, 5);
-    expect(hoist!.position.y).toBeCloseTo(9.15, 5);
-    expect(hoist!.position.z).toBeCloseTo(-3.5, 5); // above the rear-band shaft
+    expect(hoist!.position.x).toBeCloseTo(SHAFT0_X, 5);
+    expect(hoist!.position.y).toBeCloseTo(18.15, 5);
+    expect(hoist!.position.z).toBeCloseTo(BANK_Z, 5); // above the rear-band shaft
 
     let taggedMesh: THREE.Mesh | undefined;
     hoist!.traverse((o) => {
@@ -288,6 +315,24 @@ describe("TransportLayer — hoist machine (detailed-asset-only)", () => {
   });
 });
 
+describe("TransportLayer — 건축법 제64조 low-rise gating", () => {
+  it("renders NO elevator for buildings under 6 above-ground floors", () => {
+    __injectEquipmentAssetForTest("elevator-cab", makeMultiMeshFakeAsset());
+    __injectEquipmentAssetForTest("landing-door", makeSimpleFakeAsset());
+    __injectEquipmentAssetForTest("hoist-machine", makeSimpleFakeAsset());
+
+    const group = new TransportLayer().generate(makeLowRiseRecipe());
+
+    expect(findByType(group, "transport-shaft")).toBeUndefined();
+    expect(findByType(group, "transport-cab")).toBeUndefined();
+    expect(findByType(group, "transport-counterweight")).toBeUndefined();
+    expect(findByType(group, "transport-floor-indicator")).toBeUndefined();
+    expect(findByType(group, "transport-landing-door")).toBeUndefined();
+    expect(findByType(group, "transport-hoist-machine")).toBeUndefined();
+    expect(group.children.length).toBe(0);
+  });
+});
+
 describe("TransportLayer — full detailed kit together", () => {
   it("renders cab/counterweight swaps, landing doors, and hoist machine together, keeping pre-existing content", () => {
     __injectEquipmentAssetForTest("elevator-cab", makeMultiMeshFakeAsset());
@@ -299,13 +344,13 @@ describe("TransportLayer — full detailed kit together", () => {
 
     expect((findByType(group, "transport-cab") as THREE.Mesh).geometry.attributes.position.count).toBe(48);
     expect((findByType(group, "transport-counterweight") as THREE.Mesh).geometry.attributes.position.count).toBe(48);
-    expect((findByType(group, "transport-landing-door") as THREE.InstancedMesh).count).toBe(3);
+    expect((findByType(group, "transport-landing-door") as THREE.InstancedMesh).count).toBe(12);
     expect(findByType(group, "transport-hoist-machine")).toBeDefined();
 
     // Pre-existing shaft / floor indicators still present
     expect(findByType(group, "transport-shaft")).toBeDefined();
     const indicator = findByType(group, "transport-floor-indicator") as THREE.InstancedMesh;
-    expect(indicator.count).toBe(3);
+    expect(indicator.count).toBe(6);
   });
 });
 

@@ -6,6 +6,7 @@ import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
 import { computeCoreLayout } from "./core-layout";
+import { getBuildingCodeRules } from "./building-code-rules";
 import {
   ASSET_NATIVE_DIMS,
   getEquipmentGeometryClone,
@@ -17,10 +18,14 @@ import {
  * Vertex shader for elevator cab with discrete floor-step animation.
  * Instead of smooth oscillation, the cab dwells at floor heights and
  * lerps quickly between them (simulating real elevator behavior).
+ *
+ * uTopLanding is the highest landing INDEX (floorCount - 1), not the floor
+ * count — the previous uFloorCount travel range let the cab climb one full
+ * interval past the top landing, poking through the roof.
  */
 const cabVertexShader = /* glsl */ `
   uniform float uTime;
-  uniform float uFloorCount;
+  uniform float uTopLanding;
   uniform float uFloorHeight;
   uniform float uShaftIndex;
   varying vec3 vNormal;
@@ -31,14 +36,14 @@ const cabVertexShader = /* glsl */ `
 
     // Phase offset per shaft
     float phase = uShaftIndex * 2.7;
-    float cycle = mod(uTime * 0.25 + phase, uFloorCount * 2.0);
+    float cycle = mod(uTime * 0.25 + phase, uTopLanding * 2.0);
 
-    // Ping-pong between floors: go up then down
+    // Ping-pong between the ground landing and the TOP landing
     float floorF;
-    if (cycle < uFloorCount) {
+    if (cycle < uTopLanding) {
       floorF = cycle;
     } else {
-      floorF = uFloorCount * 2.0 - cycle;
+      floorF = uTopLanding * 2.0 - cycle;
     }
 
     // Discrete step: snap to nearest floor with quick transition
@@ -89,6 +94,15 @@ export class TransportLayer implements LayerGenerator {
     const { floors, totalHeight } = recipe;
     const aboveFloors = floors.filter((f) => f.type === "above");
     if (aboveFloors.length === 0) {
+      this.group = group;
+      return group;
+    }
+
+    // 건축법 제64조: passenger elevators are required from 6 above-ground
+    // floors — low-rise buildings genuinely have none (stairwells, rendered
+    // by the safety layer, are their vertical circulation), so the twin
+    // renders no shaft rather than inventing one.
+    if (!getBuildingCodeRules(recipe).elevatorRequired) {
       this.group = group;
       return group;
     }
@@ -266,7 +280,9 @@ export class TransportLayer implements LayerGenerator {
       const cabMat = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
-          uFloorCount: { value: floorCount },
+          // Highest landing index — cab travel tops out at the top FLOOR,
+          // not at roof level (floorCount would overshoot by one interval).
+          uTopLanding: { value: Math.max(1, floorCount - 1) },
           uFloorHeight: { value: avgFloorHeight },
           uShaftIndex: { value: si },
           uColor: { value: new THREE.Color(0xf59e0b) },

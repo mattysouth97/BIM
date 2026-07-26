@@ -25,6 +25,7 @@ import { TransportLayer } from "@/lib/layers/layer-12-transport";
 import { TelecomLayer } from "@/lib/layers/layer-11-telecom";
 import { MediaLayer } from "@/lib/layers/layer-8-media";
 import { WasteLayer } from "@/lib/layers/layer-9-waste";
+import { GasLayer } from "@/lib/layers/gas-system";
 import { useEquipmentAssets } from "@/hooks/use-equipment-assets";
 import {
   setupMepSubGroups,
@@ -285,6 +286,11 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     // and the downward particle flow
     const wasteOutput = new WasteLayer().generate(effectiveRecipe, mepDensity);
     assignToSubGroup(mepGroup, wasteOutput.name, wasteOutput);
+
+    // Gas supply (era-aware): city-gas service + exterior riser + kitchen
+    // branches, or LPG cylinder cage for pre-1990 permits
+    const gasOutput = new GasLayer().generate(effectiveRecipe, mepDensity);
+    assignToSubGroup(mepGroup, gasOutput.name, gasOutput);
   }, [effectiveRecipe, equipmentParams, density, equipmentAssetsReady, equipmentScenario]);
 
   // Animation loop — update ShaderMaterial uniforms each frame

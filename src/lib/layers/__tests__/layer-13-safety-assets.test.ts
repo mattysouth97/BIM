@@ -61,6 +61,23 @@ function makeRecipe(): BuildingRecipe {
   };
 }
 
+/** 11-floor variant — 소방시설법 threshold: sprinklers require 11+ floors. */
+function makeHighRiseRecipe(): BuildingRecipe {
+  const recipe = makeRecipe();
+  return {
+    ...recipe,
+    floors: Array.from({ length: 11 }, (_, i) => ({
+      floorNo: i + 1,
+      label: `${i + 1}F`,
+      type: "above" as const,
+      y: i * 3.0,
+      height: 3.0,
+      isGroundFloor: i === 0,
+    })),
+    totalHeight: 33.0,
+  };
+}
+
 function makeFakeAsset(): THREE.Group {
   const group = new THREE.Group();
   const mesh = new THREE.Mesh(
@@ -92,7 +109,7 @@ afterEach(() => {
 });
 
 describe("SafetyLayer — pre-existing output (no assets)", () => {
-  it("renders fire zones, stairwells, and the coarse sprinkler grid exactly as before", () => {
+  it("renders fire zones and stairwells; low-rise gets NO sprinkler grid (소방시설법 11+ floors)", () => {
     const group = new SafetyLayer().generate(makeRecipe());
 
     let fireZones = 0;
@@ -104,13 +121,22 @@ describe("SafetyLayer — pre-existing output (no assets)", () => {
     expect(fireZones).toBe(3); // one per above floor
     expect(stairwells).toBe(2); // fixed 2-corner layout
 
+    // 3-floor building: sprinklers not required (extinguishers/hydrants/
+    // detectors carry the fire load, matching the real code requirement)
+    expect(findByType(group, "safety-sprinkler-head")).toBeUndefined();
+    expect(findByType(group, "safety-sprinkler-bulb")).toBeUndefined();
+  });
+
+  it("renders the coarse sprinkler grid on 11+ floor buildings", () => {
+    const group = new SafetyLayer().generate(makeHighRiseRecipe());
+
     const coarseHead = findByType(group, "safety-sprinkler-head") as THREE.InstancedMesh;
     const coarseBulb = findByType(group, "safety-sprinkler-bulb") as THREE.InstancedMesh;
     expect(coarseHead).toBeDefined();
     expect(coarseBulb).toBeDefined();
-    // colsX=floor(12/3)=4, colsZ=floor(10/3)=3 -> 12/floor * 3 floors = 36
-    expect(coarseHead.count).toBe(36);
-    expect(coarseBulb.count).toBe(36);
+    // colsX=floor(12/3)=4, colsZ=floor(10/3)=3 -> 12/floor * 11 floors = 132
+    expect(coarseHead.count).toBe(132);
+    expect(coarseBulb.count).toBe(132);
   });
 
   it("adds none of the 5 detailed safety-kit InstancedMeshes when the cache is empty", () => {
@@ -126,7 +152,8 @@ describe("SafetyLayer — pre-existing output (no assets)", () => {
 describe("SafetyLayer — detailed asset kit (injected fakes)", () => {
   it("adds the sprinkler ceiling-grid InstancedMesh at half the lighting-grid's areal density", () => {
     __injectEquipmentAssetForTest("sprinkler-head", makeFakeAsset());
-    const group = new SafetyLayer().generate(makeRecipe());
+    // 11-floor recipe: sprinklers only exist on 11+ floor buildings
+    const group = new SafetyLayer().generate(makeHighRiseRecipe());
     const im = findByType(group, "safety-sprinkler") as THREE.InstancedMesh;
     expect(im).toBeDefined();
     // Half the AREAL density of the lighting-layer grid means spacing scales
@@ -139,8 +166,8 @@ describe("SafetyLayer — detailed asset kit (injected fakes)", () => {
     //     next step 7.727... exceeds the x<=5 bound)
     //   z in [-4, 4] step 4.242640687 -> -4, 0.2426... (2 points; next step
     //     4.485... exceeds the z<=4 bound)
-    // 3 x 2 = 6 sprinklers/floor * 3 floors = 18
-    expect(im.count).toBe(18);
+    // 3 x 2 = 6 sprinklers/floor * 11 floors = 66
+    expect(im.count).toBe(66);
     const mat = im.material as THREE.MeshStandardMaterial;
     expect(mat.color.getHex()).toBe(0xd97706); // brass tint
     expect(mat.emissiveIntensity).toBeGreaterThanOrEqual(0.15);
@@ -225,7 +252,8 @@ describe("SafetyLayer — detailed asset kit (injected fakes)", () => {
 
   it("renders all 5 detailed InstancedMeshes together and keeps the pre-existing content", () => {
     injectAllFive();
-    const group = new SafetyLayer().generate(makeRecipe());
+    // 11-floor recipe so the sprinkler kit is code-eligible
+    const group = new SafetyLayer().generate(makeHighRiseRecipe());
 
     expect(findByType(group, "safety-sprinkler")).toBeDefined();
     expect(findByType(group, "safety-smoke-detector")).toBeDefined();
@@ -238,7 +266,7 @@ describe("SafetyLayer — detailed asset kit (injected fakes)", () => {
     group.traverse((o) => {
       if (o.userData?.type === "safety-fire-zone") fireZones++;
     });
-    expect(fireZones).toBe(3);
+    expect(fireZones).toBe(11);
     expect(findByType(group, "safety-sprinkler-head")).toBeDefined();
   });
 });
