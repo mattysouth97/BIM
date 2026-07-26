@@ -126,9 +126,129 @@ function convertEntity(
       if (!center || typeof radius !== "number") break;
       return [{ ...base, id: idGen(), kind: "circle", center, radius: radius * scale }];
     }
+    case "TEXT": {
+      const position = v((raw as Record<string, unknown>).startPoint, scale);
+      const r = raw as { textHeight?: unknown; rotation?: unknown; text?: unknown };
+      if (!position || typeof r.text !== "string") break;
+      return [{
+        ...base, id: idGen(), kind: "text", position, text: r.text,
+        height: typeof r.textHeight === "number" ? r.textHeight * scale : 0.2,
+        rotation: typeof r.rotation === "number" ? (r.rotation * Math.PI) / 180 : 0,
+      }];
+    }
+    case "MTEXT": {
+      const r = raw as { position?: unknown; height?: unknown; rotation?: unknown; text?: unknown };
+      const position = v(r.position, scale);
+      if (!position || typeof r.text !== "string") break;
+      return [{
+        ...base, id: idGen(), kind: "text", position,
+        text: stripMtextCodes(r.text),
+        height: typeof r.height === "number" ? r.height * scale : 0.2,
+        rotation: typeof r.rotation === "number" ? (r.rotation * Math.PI) / 180 : 0,
+      }];
+    }
+    case "POINT": {
+      const position = v((raw as Record<string, unknown>).position, scale);
+      if (!position) break;
+      return [{ ...base, id: idGen(), kind: "point", position }];
+    }
+    case "ELLIPSE": {
+      const r = raw as {
+        center?: unknown; majorAxisEndPoint?: unknown; axisRatio?: unknown;
+        startAngle?: unknown; endAngle?: unknown;
+      };
+      const center = v(r.center, scale);
+      const majorAxis = v(r.majorAxisEndPoint, scale);
+      if (!center || !majorAxis || typeof r.axisRatio !== "number") break;
+      return [{
+        ...base, id: idGen(), kind: "ellipse", center, majorAxis, ratio: r.axisRatio,
+        startParam: typeof r.startAngle === "number" ? r.startAngle : 0,
+        endParam: typeof r.endAngle === "number" ? r.endAngle : Math.PI * 2,
+      }];
+    }
+    case "SPLINE": {
+      const cps = ((raw as { controlPoints?: unknown[] }).controlPoints ?? [])
+        .map((p) => v(p, scale))
+        .filter((p): p is Vec2 => p !== null);
+      if (cps.length < 2) break;
+      warnings.push("SPLINE approximated by its control polygon.");
+      return [{
+        ...base, id: idGen(), kind: "polyline",
+        vertices: cps, bulges: cps.map(() => 0), closed: false,
+      }];
+    }
+    case "INSERT":
+    case "DIMENSION": {
+      if (depth >= 4) break; // runaway nesting guard
+      const r = raw as {
+        name?: unknown; block?: unknown; position?: unknown; anchorPoint?: unknown;
+        xScale?: unknown; yScale?: unknown; rotation?: unknown;
+      };
+      const blockName = typeof r.name === "string" ? r.name
+        : typeof r.block === "string" ? r.block : null;
+      const block = blockName
+        ? (dxf.blocks as Record<string, { entities?: RawEntity[]; position?: unknown } | undefined> | undefined)?.[blockName]
+        : undefined;
+      if (!block?.entities?.length) break; // unresolvable → skipped
+      const insertAt = v(r.position, scale) ?? v(r.anchorPoint, scale) ?? { x: 0, y: 0 };
+      const basePoint = v(block.position, scale) ?? { x: 0, y: 0 };
+      const sx = typeof r.xScale === "number" ? r.xScale : 1;
+      const sy = typeof r.yScale === "number" ? r.yScale : 1;
+      const rot = typeof r.rotation === "number" ? (r.rotation * Math.PI) / 180 : 0;
+      const out: CadEntity[] = [];
+      for (const child of block.entities) {
+        for (const e of convertEntity(child, scale, idGen, skipped, warnings, dxf, depth + 1)) {
+          out.push(transformEntity(e, insertAt, basePoint, sx, sy, rot, blockName!));
+        }
+      }
+      if (out.length) return out;
+      break;
+    }
   }
   skipped[raw.type] = (skipped[raw.type] ?? 0) + 1;
   return [];
+}
+
+/** Strip common MTEXT inline format codes; keep the visible text. */
+export function stripMtextCodes(s: string): string {
+  return s
+    .replace(/\\P/g, "\n")                       // paragraph
+    .replace(/\\[A-Za-z][^;{}\\]*;/g, "")        // \H2.5x; \fArial|b0; etc.
+    .replace(/[{}]/g, "")                        // group braces
+    .trim();
+}
+
+function xform(p: Vec2, at: Vec2, bp: Vec2, sx: number, sy: number, rot: number): Vec2 {
+  const x = (p.x - bp.x) * sx, y = (p.y - bp.y) * sy;
+  const c = Math.cos(rot), s = Math.sin(rot);
+  return { x: at.x + x * c - y * s, y: at.y + x * s + y * c };
+}
+
+function transformEntity(
+  e: CadEntity, at: Vec2, bp: Vec2, sx: number, sy: number, rot: number, blockName: string,
+): CadEntity {
+  const t = (p: Vec2) => xform(p, at, bp, sx, sy, rot);
+  const tagged = { ...e, fromBlock: blockName };
+  switch (tagged.kind) {
+    case "line": return { ...tagged, a: t(tagged.a), b: t(tagged.b) };
+    case "polyline": return { ...tagged, vertices: tagged.vertices.map(t) };
+    case "arc": {
+      // Uniform scale assumed for radius; mirror/skew inserts are out of scope v1.
+      return {
+        ...tagged, center: t(tagged.center), radius: tagged.radius * Math.abs(sx),
+        startAngle: tagged.startAngle + rot, endAngle: tagged.endAngle + rot,
+      };
+    }
+    case "circle": return { ...tagged, center: t(tagged.center), radius: tagged.radius * Math.abs(sx) };
+    case "ellipse": {
+      const maj = xform(
+        { x: tagged.majorAxis.x + bp.x, y: tagged.majorAxis.y + bp.y }, { x: 0, y: 0 }, bp, sx, sy, rot,
+      );
+      return { ...tagged, center: t(tagged.center), majorAxis: maj };
+    }
+    case "text": return { ...tagged, position: t(tagged.position), rotation: tagged.rotation + rot };
+    case "point": return { ...tagged, position: t(tagged.position) };
+  }
 }
 
 function extractLayers(dxf: IDxf, entities: CadEntity[]): CadLayer[] {
