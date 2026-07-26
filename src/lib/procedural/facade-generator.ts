@@ -6,6 +6,13 @@ import * as THREE from "three";
 import type { BuildingRecipe, FacadeConfig, FloorSpec } from "./types";
 import type { PBRMaterialConfig } from "@/lib/pbr-materials";
 import { getEquipmentGeometryClone } from "@/lib/equipment-assets";
+import {
+  SHOWCASE_EQUIPMENT_SCENARIO,
+  type EquipmentScenario,
+} from "@/lib/layers/equipment-scenario";
+
+/** Extra depth (m) an externally-insulated solid panel adds to the wall. */
+const WALL_INSULATION_DEPTH = 0.08;
 
 function pbrToMaterial(config: PBRMaterialConfig): THREE.MeshStandardMaterial {
   const mat = new THREE.MeshStandardMaterial({
@@ -157,8 +164,17 @@ function applyCurtainWallOverrides(
  *
  * Supports curtain wall mode for modern office buildings when
  * recipe.curtainWall is enabled and window ratio > 0.65.
+ *
+ * The green-retrofit `scenario` decides WHICH envelope hardware renders:
+ *   - windowUpgrade  → thermally-broken "mullion-he" profile replaces "mullion"
+ *   - wallInsulation → "facade-panel-insulated" replaces "facade-panel", and
+ *     the solid-panel instances deepen by WALL_INSULATION_DEPTH so the added
+ *     external insulation is visible in section.
  */
-export function generateFacade(recipe: BuildingRecipe): THREE.Group {
+export function generateFacade(
+  recipe: BuildingRecipe,
+  scenario: EquipmentScenario = SHOWCASE_EQUIPMENT_SCENARIO,
+): THREE.Group {
   const { slab, wallThickness, footprintWidth, footprintDepth, floors } = recipe;
   const aboveFloors = floors.filter(f => f.type === "above");
   if (aboveFloors.length === 0) return new THREE.Group();
@@ -213,9 +229,16 @@ export function generateFacade(recipe: BuildingRecipe): THREE.Group {
 
   // Detailed spandrel-panel Blender module (unit-normalized, raised face
   // toward local +Z = exterior) or plain unit box. Instance scaling to
-  // (windowWidth, winH, wallThickness) is identical either way.
+  // (windowWidth, winH, solidPanelDepth) is identical either way.
+  // wallInsulation swaps in the EIFS-clad variant (same unit envelope and
+  // axis convention) and deepens the panel by the added insulation.
+  const solidPanelDepth = scenario.wallInsulation
+    ? wallThickness + WALL_INSULATION_DEPTH
+    : wallThickness;
   const solidGeo =
-    getEquipmentGeometryClone("facade-panel") ?? new THREE.BoxGeometry(1, 1, 1);
+    getEquipmentGeometryClone(
+      scenario.wallInsulation ? "facade-panel-insulated" : "facade-panel",
+    ) ?? new THREE.BoxGeometry(1, 1, 1);
   const solidMat = pbrToMaterial(recipe.materials.wall);
   const solidIM = new THREE.InstancedMesh(solidGeo, solidMat, Math.max(1, solidCount));
   solidIM.castShadow = true;
@@ -231,9 +254,12 @@ export function generateFacade(recipe: BuildingRecipe): THREE.Group {
   // exterior cap fin authored toward -Z → rotate 180° about Y so the cap
   // faces local +Z = outward). Horizontal bars reuse the same profile
   // rotated so its length axis runs along X.
-  const vDetailedGeo = getEquipmentGeometryClone("mullion");
+  // windowUpgrade swaps in the thermally-broken twin-fin profile, authored
+  // with the SAME unit envelope and axis convention → same rotations.
+  const mullionAssetId = scenario.windowUpgrade ? "mullion-he" : "mullion";
+  const vDetailedGeo = getEquipmentGeometryClone(mullionAssetId);
   if (vDetailedGeo) vDetailedGeo.rotateY(Math.PI);
-  const hDetailedGeo = getEquipmentGeometryClone("mullion");
+  const hDetailedGeo = getEquipmentGeometryClone(mullionAssetId);
   if (hDetailedGeo) {
     hDetailedGeo.rotateY(Math.PI);
     hDetailedGeo.rotateZ(-Math.PI / 2);
@@ -286,7 +312,7 @@ export function generateFacade(recipe: BuildingRecipe): THREE.Group {
         if (isSolid) {
           pos.set(localX, wallBaseY + localY, 0);
           pos.applyQuaternion(face.quaternion).add(face.position);
-          scl.set(facade.windowWidth, winH, wallThickness);
+          scl.set(facade.windowWidth, winH, solidPanelDepth);
           mat4.compose(pos, face.quaternion, scl);
           solidIM.setMatrixAt(si++, mat4);
         } else {

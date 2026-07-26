@@ -13,18 +13,31 @@ export interface EquipmentScenario {
   lightingLed: boolean;
   /** Rooftop PV + BESS + inverters present. */
   solarPv: boolean;
+  /** Windows replaced: high-efficiency thermally-broken mullion profile. */
+  windowUpgrade: boolean;
+  /** External wall insulation: thicker insulated spandrel/solid panels. */
+  wallInsulation: boolean;
 }
 
-/** Showcase default: no scenario published yet — render the full kit. */
+/**
+ * Showcase default: no scenario published yet — render the full kit.
+ *
+ * The envelope flags are deliberately `false` here (unlike `solarPv`): the
+ * baseline envelope is what an un-retrofitted Korean building actually has,
+ * and it is the "before" state the window/wall measures visibly upgrade.
+ */
 export const SHOWCASE_EQUIPMENT_SCENARIO: EquipmentScenario = {
   heating: "baseline",
   lightingLed: false,
   solarPv: true,
+  windowUpgrade: false,
+  wallInsulation: false,
 };
 
 /**
  * Derive the hardware scenario from selected retrofit measure ids
- * (hvac-retrofits / lighting-retrofits / solar-potential id conventions).
+ * (hvac-retrofits / lighting-retrofits / solar-potential / envelope-retrofits
+ * id conventions).
  *
  * Pass `null` when no scenario has been published (no building/budget yet):
  * returns the showcase default so the twin still demonstrates the full kit.
@@ -49,10 +62,20 @@ export function deriveEquipmentScenario(
         : "baseline",
     lightingLed: has("lighting-led"),
     solarPv: has("solar-pv"),
+    // Envelope measures: "envelope-roof-insulation" deliberately matches
+    // neither prefix — it changes no facade hardware.
+    windowUpgrade: has("envelope-window-replacement"),
+    wallInsulation: has("envelope-wall-insulation"),
   };
 }
 
 /** Stable key for React dependency arrays / memoization. */
 export function equipmentScenarioKey(s: EquipmentScenario): string {
-  return `${s.heating}|${s.lightingLed ? "led" : "fl"}|${s.solarPv ? "pv" : "nopv"}`;
+  return [
+    s.heating,
+    s.lightingLed ? "led" : "fl",
+    s.solarPv ? "pv" : "nopv",
+    s.windowUpgrade ? "win" : "nowin",
+    s.wallInsulation ? "ins" : "noins",
+  ].join("|");
 }

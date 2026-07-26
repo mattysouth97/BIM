@@ -11,6 +11,8 @@ import { useLayerStore } from "@/store/layer-store";
 import { InfoEdges } from "./info-edges";
 import { useOutlineHover } from "@/hooks/use-outline-hover";
 import { useEquipmentAssets } from "@/hooks/use-equipment-assets";
+import { useScenarioStore } from "@/store/scenario-store";
+import { deriveEquipmentScenario } from "@/lib/layers/equipment-scenario";
 
 interface ProceduralBuildingModelProps {
   geometry: BuildingGeometry;
@@ -61,6 +63,17 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
   // furniture) — regenerate once the GLB cache is preloaded.
   const equipmentAssetsReady = useEquipmentAssets();
 
+  // Green-retrofit envelope scenario: the knapsack-selected measures decide
+  // WHICH facade hardware renders (baseline vs thermally-broken mullions,
+  // plain vs externally-insulated spandrel panels). The store setter dedupes
+  // identical id sets, so this memo is referentially stable across
+  // re-evaluations and does not thrash the generate effect below.
+  const selectedMeasureIds = useScenarioStore((s) => s.selectedMeasureIds);
+  const equipmentScenario = useMemo(
+    () => deriveEquipmentScenario(selectedMeasureIds),
+    [selectedMeasureIds]
+  );
+
   // Generate building geometry — setGroup triggers re-render so <primitive> picks it up
   useEffect(() => {
     // Clean up previous
@@ -71,7 +84,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       builderRef.current.dispose();
     }
 
-    const builder = new ProceduralBuilding(recipe);
+    const builder = new ProceduralBuilding(recipe, equipmentScenario);
     const g = builder.generate();
 
     builderRef.current = builder;
@@ -85,7 +98,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       groupRef.current = null;
       setGroup(null);
     };
-  }, [recipe, equipmentAssetsReady]);
+  }, [recipe, equipmentAssetsReady, equipmentScenario]);
 
   // Sync Digital Twin layer visibility to named mesh groups.
   // Depends on `group` state so it re-runs after building generation completes.

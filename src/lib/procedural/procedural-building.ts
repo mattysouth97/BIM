@@ -13,19 +13,32 @@ import {
   generateRoofFurniture,
 } from "./structure-generator";
 import { getSectionForFloor } from "./mixed-use-recipe";
+import {
+  SHOWCASE_EQUIPMENT_SCENARIO,
+  type EquipmentScenario,
+} from "@/lib/layers/equipment-scenario";
 
 /**
  * ProceduralBuilding generates a complete Three.js scene graph
  * from a BuildingRecipe using InstancedMesh for high performance.
  *
  * Draw call budget: facade (4) + slabs (1) + columns (1) + roof (1) = 7 total.
+ *
+ * The optional `scenario` threads the green-retrofit measure selection into
+ * the facade pass (window / wall-insulation envelope variants). It defaults to
+ * the showcase scenario so every existing call site keeps its behavior.
  */
 export class ProceduralBuilding {
   private group: THREE.Group | null = null;
   private recipe: BuildingRecipe;
+  private scenario: EquipmentScenario;
 
-  constructor(recipe: BuildingRecipe) {
+  constructor(
+    recipe: BuildingRecipe,
+    scenario: EquipmentScenario = SHOWCASE_EQUIPMENT_SCENARIO
+  ) {
     this.recipe = recipe;
+    this.scenario = scenario;
   }
 
   generate(): THREE.Group {
@@ -53,13 +66,13 @@ export class ProceduralBuilding {
           curtainWall: section.curtainWall,
           // Sections share structural dimensions but have unique facades
         };
-        const sectionFacade = generateFacade(sectionRecipe);
+        const sectionFacade = generateFacade(sectionRecipe, this.scenario);
         sectionFacade.name = `facade-section-${si}`;
         facadeGroup.add(sectionFacade);
       }
       group.add(facadeGroup);
     } else {
-      const facade = generateFacade(this.recipe);
+      const facade = generateFacade(this.recipe, this.scenario);
       facade.name = "facade";
       group.add(facade);
     }

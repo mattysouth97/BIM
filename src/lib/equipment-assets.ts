@@ -39,6 +39,9 @@ export type EquipmentAssetId =
   // Retrofit-scenario variants (green remodeling swaps)
   | "boiler-condensing"
   | "light-fixture-led"
+  // Envelope retrofit variants (windowUpgrade / wallInsulation scenarios)
+  | "mullion-he"
+  | "facade-panel-insulated"
   // BAS / controls
   | "bas-sensor"
   | "ddc-panel"
@@ -66,7 +69,10 @@ export type EquipmentAssetId =
   | "wifi-ap"
   | "cctv-camera"
   | "antenna-mast"
-  | "gas-valve-station";
+  | "gas-valve-station"
+  // Waste & recovery kit
+  | "wheelie-bin"
+  | "waste-chute-module";
 
 export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "chiller",
@@ -87,6 +93,8 @@ export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "heat-pump",
   "boiler-condensing",
   "light-fixture-led",
+  "mullion-he",
+  "facade-panel-insulated",
   "bas-sensor",
   "ddc-panel",
   "bas-headend",
@@ -110,6 +118,8 @@ export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "cctv-camera",
   "antenna-mast",
   "gas-valve-station",
+  "wheelie-bin",
+  "waste-chute-module",
 ];
 
 const ASSET_BASE_PATH = "/models/equipment";
@@ -141,6 +151,10 @@ export const ASSET_NATIVE_DIMS: Record<
   "heat-pump": { w: 1.1, h: 1.35, d: 0.45 },
   "boiler-condensing": { w: 2.0, h: 2.0, d: 0.6 },
   "light-fixture-led": { w: 0.6, h: 0.06, d: 0.3 },
+  // Envelope retrofit variants — authored as drop-in replacements for their
+  // baseline counterparts (same unit envelope, same axis conventions).
+  "mullion-he": { w: 1, h: 1, d: 1 }, // unit-normalized, length along Y (mullion drop-in)
+  "facade-panel-insulated": { w: 1, h: 1, d: 1 }, // unit-normalized (facade-panel drop-in)
   "bas-sensor": { w: 0.2, h: 0.09, d: 0.2 },
   "ddc-panel": { w: 0.6, h: 0.8, d: 0.2 },
   "bas-headend": { w: 0.66, h: 2.0, d: 0.84 },
@@ -170,6 +184,11 @@ export const ASSET_NATIVE_DIMS: Record<
   "cctv-camera": { w: 0.14, h: 0.16, d: 0.14 },
   "antenna-mast": { w: 1.0, h: 2.6, d: 1.0 },
   "gas-valve-station": { w: 0.2, h: 0.15, d: 0.12 },
+  // Waste & recovery kit (three.js axes: w=X, h=Y-up, d=Z).
+  // wheelie-bin uses a BASE origin (y ∈ [0, h]) — consumers replacing a
+  // centre-origin primitive must translate the clone down by half its height.
+  "wheelie-bin": { w: 0.58, h: 1.07, d: 0.74 }, // nominal body; lid lip + wheels reach 0.61 × 1.05 × 0.80
+  "waste-chute-module": { w: 1, h: 1, d: 1 }, // unit-normalized shell, axis along Y; flange collars reach ±0.54
 };
 
 interface CachedAsset {

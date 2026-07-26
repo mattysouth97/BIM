@@ -246,10 +246,18 @@ describe("Green-retrofit equipment scenario", () => {
       heating: "baseline",
       lightingLed: false,
       solarPv: false,
+      windowUpgrade: false,
+      wallInsulation: false,
     });
     expect(
       deriveEquipmentScenario(["hvac-boiler-upgrade", "lighting-led", "solar-pv-flat"])
-    ).toEqual({ heating: "condensing", lightingLed: true, solarPv: true });
+    ).toEqual({
+      heating: "condensing",
+      lightingLed: true,
+      solarPv: true,
+      windowUpgrade: false,
+      wallInsulation: false,
+    });
     // Heat-pump conversion supersedes the boiler upgrade
     expect(
       deriveEquipmentScenario(["hvac-boiler-upgrade", "hvac-heat-pump"]).heating
@@ -262,6 +270,8 @@ describe("Green-retrofit equipment scenario", () => {
       heating: "heat-pump",
       lightingLed: false,
       solarPv: false,
+      windowUpgrade: false,
+      wallInsulation: false,
     });
     expect(findByType(group, "heating-boiler")).toBeUndefined();
     let ashpCount = 0;
@@ -276,6 +286,8 @@ describe("Green-retrofit equipment scenario", () => {
       heating: "condensing",
       lightingLed: false,
       solarPv: false,
+      windowUpgrade: false,
+      wallInsulation: false,
     });
     expect(findByType(group, "heating-boiler")).toBeUndefined();
     expect(findByType(group, "heating-condensing-boiler")).toBeDefined();
@@ -286,6 +298,8 @@ describe("Green-retrofit equipment scenario", () => {
       heating: "baseline",
       lightingLed: false,
       solarPv: false,
+      windowUpgrade: false,
+      wallInsulation: false,
     });
     expect(findByType(noPv, "microgrid-pv-panel")).toBeUndefined();
     expect(findByType(noPv, "microgrid-bess")).toBeUndefined();
@@ -296,6 +310,8 @@ describe("Green-retrofit equipment scenario", () => {
       heating: "baseline",
       lightingLed: false,
       solarPv: true,
+      windowUpgrade: false,
+      wallInsulation: false,
     });
     expect(findByType(withPv, "microgrid-pv-panel")).toBeDefined();
     expect(findByType(withPv, "microgrid-bess")).toBeDefined();

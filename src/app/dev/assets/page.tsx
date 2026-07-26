@@ -22,8 +22,10 @@ import { SafetyLayer } from "@/lib/layers/layer-13-safety";
 import { TransportLayer } from "@/lib/layers/layer-12-transport";
 import { TelecomLayer } from "@/lib/layers/layer-11-telecom";
 import { MediaLayer } from "@/lib/layers/layer-8-media";
+import { WasteLayer } from "@/lib/layers/layer-9-waste";
 import { ElectricalRoutingLayer } from "@/lib/layers/electrical-routing";
 import { useEquipmentAssets } from "@/hooks/use-equipment-assets";
+import { SHOWCASE_EQUIPMENT_SCENARIO } from "@/lib/layers/equipment-scenario";
 
 function fixtureRecipe(): BuildingRecipe {
   return {
@@ -80,6 +82,18 @@ function AssetShowcase({ assetsReady }: { assetsReady: boolean }) {
     const building = new ProceduralBuilding(recipe).generate();
     root.add(building);
 
+    // Envelope retrofit twin: same recipe rendered with the window +
+    // wall-insulation measures selected, so the `mullion-he` /
+    // `facade-panel-insulated` variants are inspectable side by side with
+    // the baseline envelope above. Offset clear of the MEP kit.
+    const retrofitTwin = new ProceduralBuilding(recipe, {
+      ...SHOWCASE_EQUIPMENT_SCENARIO,
+      windowUpgrade: true,
+      wallInsulation: true,
+    }).generate();
+    retrofitTwin.position.x = 30;
+    root.add(retrofitTwin);
+
     root.add(new CoolingLayer().generate(recipe, 1.0, { showCoolingTower: true }));
     root.add(new HeatingLayer().generate(recipe));
     root.add(new VentilationLayer().generate(recipe));
@@ -91,6 +105,7 @@ function AssetShowcase({ assetsReady }: { assetsReady: boolean }) {
     root.add(new TransportLayer().generate(recipe));
     root.add(new TelecomLayer().generate(recipe));
     root.add(new MediaLayer().generate(recipe));
+    root.add(new WasteLayer().generate(recipe));
     root.add(new ElectricalRoutingLayer().generate(recipe));
     return root;
     // assetsReady is intentionally a dependency: the generators read the GLB
@@ -108,6 +123,7 @@ export default function DevAssetsPage() {
     <div className="h-dvh w-full relative">
       <div className="absolute top-2 left-2 z-10 rounded bg-black/60 px-3 py-1.5 text-xs text-white">
         Asset QA — Blender GLB kit {assetsReady ? "LOADED" : "loading… (coarse fallback)"}
+        {" · left: baseline envelope · right: window + wall-insulation retrofit"}
       </div>
       <Canvas shadows camera={{ position: [26, 18, 26], fov: 45 }}>
         <color attach="background" args={["#f5f5f5"]} />
@@ -120,7 +136,7 @@ export default function DevAssetsPage() {
         />
         <AssetShowcase assetsReady={assetsReady} />
         <OrbitControls makeDefault />
-        <gridHelper args={[60, 30, "#999", "#ddd"]} />
+        <gridHelper args={[100, 50, "#999", "#ddd"]} />
       </Canvas>
     </div>
   );

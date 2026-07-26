@@ -24,6 +24,7 @@ import { SafetyLayer } from "@/lib/layers/layer-13-safety";
 import { TransportLayer } from "@/lib/layers/layer-12-transport";
 import { TelecomLayer } from "@/lib/layers/layer-11-telecom";
 import { MediaLayer } from "@/lib/layers/layer-8-media";
+import { WasteLayer } from "@/lib/layers/layer-9-waste";
 import { useEquipmentAssets } from "@/hooks/use-equipment-assets";
 import {
   setupMepSubGroups,
@@ -261,6 +262,11 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     // Specialized media: med-gas / compressed-air Manhattan-routed corridors
     const mediaOutput = new MediaLayer().generate(effectiveRecipe, mepDensity);
     assignToSubGroup(mepGroup, mediaOutput.name, mediaOutput);
+
+    // Waste & recovery: segmented chutes, floor hoppers, ground wheelie bins,
+    // and the downward particle flow
+    const wasteOutput = new WasteLayer().generate(effectiveRecipe, mepDensity);
+    assignToSubGroup(mepGroup, wasteOutput.name, wasteOutput);
   }, [effectiveRecipe, equipmentParams, density, equipmentAssetsReady, equipmentScenario]);
 
   // Animation loop — update ShaderMaterial uniforms each frame

@@ -5,6 +5,11 @@
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import {
+  ASSET_NATIVE_DIMS,
+  getEquipmentGeometryClone,
+  isEquipmentAssetReady,
+} from "@/lib/equipment-assets";
 
 /** Vertex shader for downward-flowing waste particles along chute splines */
 const wasteParticleVertexShader = /* glsl */ `
@@ -59,9 +64,11 @@ const wasteParticleFragmentShader = /* glsl */ `
 
 /**
  * WasteLayer generates waste management infrastructure:
- * - Segmented chute cylinders (CylinderGeometry segments per floor)
+ * - Segmented chute cylinders (detailed `waste-chute-module` when preloaded,
+ *   CylinderGeometry segments per floor otherwise)
  * - Reverse-flow particle animation: spawn at floor endpoints, travel DOWN to collector
- * - Collection bins (boxes) at ground level
+ * - Collection bins at ground level (detailed `wheelie-bin` when preloaded,
+ *   boxes + slab lids otherwise)
  * - Hopper funnels at each floor intake
  */
 export class WasteLayer implements LayerGenerator {
@@ -108,12 +115,29 @@ export class WasteLayer implements LayerGenerator {
 
     // --- Segmented chute geometry: one cylinder segment per floor ---
     const totalSegments = chutePositions.length * aboveFloors.length;
-    const segUnitGeo = new THREE.CylinderGeometry(
-      chuteOuterRadius,
-      chuteOuterRadius,
-      1,
-      8
-    );
+    // Detailed Blender chute module (unit-normalized shell, axis along Y,
+    // flanged ends + inspection hatch) baked down to the coarse cylinder's
+    // outer diameter so the per-instance (1, segHeight, 1) scaling below is
+    // unchanged. Fallback = the original 8-segment cylinder.
+    const chuteAssetGeo = getEquipmentGeometryClone("waste-chute-module");
+    let segUnitGeo: THREE.BufferGeometry;
+    if (chuteAssetGeo) {
+      const native = ASSET_NATIVE_DIMS["waste-chute-module"];
+      const chuteDiameter = chuteOuterRadius * 2;
+      chuteAssetGeo.scale(
+        chuteDiameter / native.w,
+        1 / native.h,
+        chuteDiameter / native.d
+      );
+      segUnitGeo = chuteAssetGeo;
+    } else {
+      segUnitGeo = new THREE.CylinderGeometry(
+        chuteOuterRadius,
+        chuteOuterRadius,
+        1,
+        8
+      );
+    }
     const chuteMat = new THREE.MeshStandardMaterial({
       color: 0x65a30d,
       roughness: 0.85,
@@ -189,7 +213,28 @@ export class WasteLayer implements LayerGenerator {
     group.add(hopperIM);
 
     // --- Collection bins at ground level ---
-    const binGeo = new THREE.BoxGeometry(1.0, 0.9, 0.7);
+    const binWidth = 1.0;
+    const binHeight = 0.9;
+    const binDepth = 0.7;
+    // The detailed wheelie bin models its own hinged lid, so the coarse slab
+    // lid below is drawn only for the fallback box.
+    const binDetailed = isEquipmentAssetReady("wheelie-bin");
+
+    /**
+     * Fresh per-bin geometry (never a shared reference — every bin mesh is
+     * disposed independently). Detailed asset is BASE-origin while the box it
+     * replaces is CENTRE-origin, so the clone is translated down half a bin
+     * height and occupies exactly the same volume as the box did.
+     */
+    const makeBinGeometry = (): THREE.BufferGeometry => {
+      const asset = getEquipmentGeometryClone("wheelie-bin");
+      if (!asset) return new THREE.BoxGeometry(binWidth, binHeight, binDepth);
+      const native = ASSET_NATIVE_DIMS["wheelie-bin"];
+      asset.scale(binWidth / native.w, binHeight / native.h, binDepth / native.d);
+      asset.translate(0, -binHeight / 2, 0);
+      return asset;
+    };
+
     const trashBinMat = new THREE.MeshStandardMaterial({
       color: 0x78350f,
       roughness: 0.8,
@@ -202,14 +247,16 @@ export class WasteLayer implements LayerGenerator {
     for (let i = 0; i < chutePositions.length; i++) {
       const cp = chutePositions[i];
       const binMesh = new THREE.Mesh(
-        binGeo.clone(),
+        makeBinGeometry(),
         cp.label === "trash" ? trashBinMat : recycleBinMat
       );
-      binMesh.position.set(cp.x, 0.45, cp.z - 0.5);
+      binMesh.position.set(cp.x, binHeight / 2, cp.z - 0.5);
       binMesh.userData = { type: `waste-bin-${cp.label}` };
       group.add(binMesh);
 
-      // Bin lid (thin box on top)
+      if (binDetailed) continue;
+
+      // Bin lid (thin box on top) — coarse fallback only
       const lidGeo = new THREE.BoxGeometry(1.05, 0.05, 0.75);
       const lidMat = new THREE.MeshStandardMaterial({
         color: 0x404040,
