@@ -20,17 +20,21 @@ export function useCadView(extents: CadDocument["extents"], panEnabled: boolean)
     if (!el) return;
     const ro = new ResizeObserver(() => {
       const r = el.getBoundingClientRect();
-      setSize({ w: Math.max(1, r.width), h: Math.max(1, r.height) });
+      const w = Math.max(1, r.width), h = Math.max(1, r.height);
+      setSize({ w, h });
+      // Refit whenever the container resizes; RO fires once on observe, which
+      // doubles as the initial fit. Extents are stable for a mounted viewer
+      // (the component is keyed by doc id).
+      setView(computeFitView(extents, w, h));
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [extents]);
 
   const fit = useCallback(
     () => setView(computeFitView(extents, size.w, size.h)),
     [extents, size.w, size.h],
   );
-  useEffect(() => { fit(); }, [fit]);
 
   const toLocal = (e: { clientX: number; clientY: number }): Vec2 => {
     const r = containerRef.current!.getBoundingClientRect();
