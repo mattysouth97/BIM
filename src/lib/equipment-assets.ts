@@ -72,7 +72,12 @@ export type EquipmentAssetId =
   | "gas-valve-station"
   // Waste & recovery kit
   | "wheelie-bin"
-  | "waste-chute-module";
+  | "waste-chute-module"
+  // Gas + water + bathroom kit
+  | "gas-meter"
+  | "lpg-tank"
+  | "water-meter"
+  | "bathroom-fixture";
 
 export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "chiller",
@@ -120,6 +125,10 @@ export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "gas-valve-station",
   "wheelie-bin",
   "waste-chute-module",
+  "gas-meter",
+  "lpg-tank",
+  "water-meter",
+  "bathroom-fixture",
 ];
 
 const ASSET_BASE_PATH = "/models/equipment";
@@ -189,6 +198,12 @@ export const ASSET_NATIVE_DIMS: Record<
   // centre-origin primitive must translate the clone down by half its height.
   "wheelie-bin": { w: 0.58, h: 1.07, d: 0.74 }, // nominal body; measured bounds 0.61 × 1.05 × 0.80 are wider/deeper from the lid lip + wheels, and slightly shorter than nominal height
   "waste-chute-module": { w: 1, h: 1, d: 1 }, // unit-normalized shell, axis along Y; flange collars reach ±0.54
+  // Gas + water + bathroom kit (authored 2026-07-27 via scripts/blender/
+  // gas_water_assets.py — measured export bounds, BASE origin y ∈ [0, h]).
+  "gas-meter": { w: 0.24, h: 0.49, d: 0.17 },
+  "lpg-tank": { w: 1.05, h: 1.48, d: 0.55 },
+  "water-meter": { w: 0.33, h: 0.15, d: 0.11 },
+  "bathroom-fixture": { w: 1.4, h: 0.92, d: 0.9 },
 };
 
 interface CachedAsset {

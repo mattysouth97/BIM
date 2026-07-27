@@ -513,6 +513,51 @@ export function inferEquipmentSpecs(
     }
 
     // -----------------------------------------------------------------------
+    // Gas supply — gas-* (service line, meter, exterior riser, kitchen
+    // branches, LPG cage, boiler feed)
+    // -----------------------------------------------------------------------
+    case "gas": {
+      const grade = HVAC_ERA_GRADE[era];
+      // Cooking + boiler gas throughput expressed as delivered energy.
+      // ~25 kWh/m²·yr of gas for mixed cooking/heating supplementation.
+      const annualKwh = Math.round(floorArea * floorCount * 25);
+      const capacityM3h = Math.max(2.5, Math.round(floorArea * floorCount * 0.004 * 10) / 10);
+
+      return buildSpec({
+        categoryKo:  "가스설비",
+        categoryEn:  "Gas Supply",
+        capacity:    `${capacityM3h} m³/h`,
+        installYear,
+        annualKwh:   Math.max(annualKwh, 1),
+        grade,
+        dataSource:  "estimated-from-recipe",
+        standardRef: "KS B 6364",
+      });
+    }
+
+    // -----------------------------------------------------------------------
+    // Water supply / sanitary — water-* (service line, meter, cold riser,
+    // branches, bathroom zones/fixtures)
+    // -----------------------------------------------------------------------
+    case "water": {
+      const grade = HVAC_ERA_GRADE[era];
+      // Booster-pump electricity for cold-water distribution (~0.4 kWh per
+      // m² of served floor area per year — bathrooms dominate consumption).
+      const annualKwh = Math.round(floorArea * floorCount * 0.4);
+
+      return buildSpec({
+        categoryKo:  "위생·급수설비",
+        categoryEn:  "Water Supply / Sanitary",
+        capacity:    "—",
+        installYear,
+        annualKwh:   Math.max(annualKwh, 1),
+        grade,
+        dataSource:  "estimated-from-recipe",
+        standardRef: "KS B 6364",
+      });
+    }
+
+    // -----------------------------------------------------------------------
     // Unknown / fallback
     // -----------------------------------------------------------------------
     default: {

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback, useMemo, lazy, Suspense } from "react";
-import { Building2, AlertTriangle, MapPin, Search, Download, LayoutGrid, X } from "lucide-react";
+import Link from "next/link";
+import { Building2, AlertTriangle, Box, MapPin, Search, Download, LayoutGrid, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import { useBuildingSearch } from "@/hooks/use-building-search";
 import { useCampusBuildings } from "@/hooks/use-campus-buildings";
 import { compareBuildings } from "@/lib/campus/comparison-engine";
 import { exportToCsv, exportToJson } from "@/lib/export";
+import { DEMO_BUILDING_ID } from "@/lib/constants";
 import type { SearchBuildingsParams } from "@/lib/api-client";
 import type { BrTitleInfo } from "@/lib/types";
 import type { BuildingMetrics } from "@/lib/campus/portfolio-aggregator";
@@ -252,6 +254,21 @@ export default function Home() {
               ? "공공데이터포털 API를 활용하여 전국 건축물대장 정보를 조회하세요."
               : "Look up building ledger records across Korea using the data.go.kr API."}
           </p>
+
+          {/* Demo entry — always available, no API key required */}
+          <div className="mt-2 flex flex-col items-center gap-2">
+            <Button asChild size="lg" variant="outline" className="gap-2">
+              <Link href={`/building/${DEMO_BUILDING_ID}`}>
+                <Box className="h-4 w-4" />
+                {isKo ? "데모 건물 둘러보기" : "Explore the demo building"}
+              </Link>
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              {isKo
+                ? "API 키 없이 3D 뷰어와 에너지·투자 분석을 바로 체험할 수 있습니다."
+                : "Try the 3D viewer and the energy/investment analysis — no API key needed."}
+            </p>
+          </div>
         </div>
       </section>
 
@@ -265,8 +282,8 @@ export default function Home() {
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300">
               {isKo
-                ? "오른쪽 상단의 열쇠 아이콘을 클릭하여 API 키를 설정하세요."
-                : "Click the key icon in the top-right corner to set your API key."}
+                ? "실제 건물을 검색하려면 오른쪽 상단의 열쇠 아이콘으로 API 키를 설정하세요. 데모 건물은 키 없이 이용할 수 있습니다."
+                : "To search real buildings, set your API key via the key icon in the top-right. The demo building works without one."}
             </p>
           </div>
         </div>

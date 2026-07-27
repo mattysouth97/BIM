@@ -107,6 +107,20 @@ export const useLayerStore = create<LayerState>()(
       partialize: (s) => ({
         mepSubVisibility: s.mepSubVisibility,
       }),
+      // Deep-merge persisted sub-visibility OVER the defaults so newly added
+      // sub-layer ids (absent from older persisted snapshots) fall back to
+      // visible instead of undefined (= hidden + unhoverable).
+      merge: (persisted, current) => {
+        const p = persisted as Partial<LayerState> | undefined;
+        return {
+          ...current,
+          ...p,
+          mepSubVisibility: {
+            ...defaultMepSubVisibility,
+            ...(p?.mepSubVisibility ?? {}),
+          },
+        };
+      },
     }
   )
 );

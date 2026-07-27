@@ -52,7 +52,7 @@ export interface ParsedDxf {
  * Only values we actually need are mapped; anything else falls back to 1.0
  * with a warning.
  */
-const INSUNITS_TO_METERS: Record<number, number> = {
+export const INSUNITS_TO_METERS: Record<number, number> = {
   0: 1,        // Unitless — assume meters, emit warning
   1: 0.0254,   // Inches
   2: 0.3048,   // Feet

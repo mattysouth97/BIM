@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { getDemoFootprintResult } from "@/lib/demo/demo-building";
 import type { CampusBounds, GeoJsonPolygon } from "@/lib/campus/campus-types";
 
 interface FootprintResult {
@@ -20,6 +21,10 @@ interface CampusFootprintsResult {
 
 async function fetchFootprint(address: string): Promise<FootprintResult> {
   if (!address || address.trim() === "") return { polygon: null, error: null };
+
+  // Demo mode (데모모드): the demo building's footprint is bundled — skip VWorld.
+  const demo = getDemoFootprintResult(address);
+  if (demo) return demo;
 
   const res = await fetch(
     `/api/vworld/footprint?address=${encodeURIComponent(address)}`

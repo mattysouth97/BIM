@@ -1,4 +1,6 @@
 import { useAppStore } from "@/store/app-store";
+import { isDemoParams } from "@/lib/constants";
+import { getDemoResponse } from "@/lib/demo/demo-building";
 import type {
   BrTitleInfo,
   BrRecapTitleInfo,
@@ -41,6 +43,13 @@ async function apiFetch<T>(
   params: Record<string, string | number | undefined> | object,
   apiKeyOverride?: string,
 ): Promise<ApiListResponse<T>> {
+  // Demo mode (데모모드): the reserved demo building is served from bundled
+  // fixtures — no network, no key. See src/lib/demo/demo-building.ts.
+  if (isDemoParams(params as { sigunguCd?: string; bjdongCd?: string })) {
+    const demo = getDemoResponse(path);
+    if (demo) return demo as ApiListResponse<T>;
+  }
+
   const apiKey = apiKeyOverride ?? useAppStore.getState().apiKey;
 
   const url = new URL(path, window.location.origin);

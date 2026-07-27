@@ -87,12 +87,15 @@ export interface LayerGenerator {
 // Parallel to LayerId — does NOT extend ALL_LAYER_IDS (which stays at 5 entries)
 // ---------------------------------------------------------------------------
 
-/** MEP sub-layer identifier — 4 utility system groups within the MEP layer */
+/** MEP sub-layer identifier — 7 utility system groups within the MEP layer */
 export type MepSubLayerId =
   | "mep-electrical"
   | "mep-hvac"
   | "mep-lighting"
-  | "mep-dhw";
+  | "mep-dhw"
+  | "mep-safety"
+  | "mep-transport"
+  | "mep-gas";
 
 /** All valid MEP sub-layer IDs for iteration */
 export const MEP_SUB_IDS: MepSubLayerId[] = [
@@ -100,6 +103,9 @@ export const MEP_SUB_IDS: MepSubLayerId[] = [
   "mep-hvac",
   "mep-lighting",
   "mep-dhw",
+  "mep-safety",
+  "mep-transport",
+  "mep-gas",
 ];
 
 /** Configuration metadata for each MEP sub-layer */
@@ -111,7 +117,8 @@ export interface MepSubConfig {
 
 /**
  * MEP sub-layer configurations with bilingual labels and industry-standard colors.
- * Colors: yellow=electrical, cyan=HVAC, lime=lighting, orange=DHW
+ * Colors: yellow=electrical, cyan=HVAC, lime=lighting, orange=DHW,
+ * red=fire safety, amber=vertical transport
  */
 export const MEP_SUB_CONFIGS: Record<MepSubLayerId, MepSubConfig> = {
   "mep-electrical": {
@@ -133,6 +140,21 @@ export const MEP_SUB_CONFIGS: Record<MepSubLayerId, MepSubConfig> = {
     name: "DHW/Plumbing",
     nameKo: "급탕/배관",
     color: "#f97316", // orange
+  },
+  "mep-safety": {
+    name: "Fire Safety",
+    nameKo: "소방설비",
+    color: "#ef4444", // red
+  },
+  "mep-transport": {
+    name: "Vertical Transport",
+    nameKo: "승강설비",
+    color: "#eab308", // amber
+  },
+  "mep-gas": {
+    name: "Gas Supply",
+    nameKo: "가스설비",
+    color: "#facc15", // gas-pipe yellow (황색 도장)
   },
 };
 
@@ -166,8 +188,11 @@ export const GENERATOR_TO_MEP_SUB: Record<string, MepSubLayerId> = {
   "electrical-routing": "mep-electrical",
   "layer-14-microgrid": "mep-electrical",
   "layer-10-bas": "mep-electrical",
-  "layer-13-safety": "mep-electrical",
-  "layer-12-transport": "mep-electrical",
+  // Fire safety and vertical transport get their own sub-toggles so the
+  // panel's toggles map 1:1 to what the user sees (previously lumped into
+  // mep-electrical, which made the 전기 toggle hide sprinklers + elevators).
+  "layer-13-safety": "mep-safety",
+  "layer-12-transport": "mep-transport",
   "layer-11-telecom": "mep-electrical",
   "layer-3-cooling": "mep-hvac",
   "layer-4-heating": "mep-hvac",
@@ -176,4 +201,5 @@ export const GENERATOR_TO_MEP_SUB: Record<string, MepSubLayerId> = {
   "layer-6-dhw": "mep-dhw",
   "layer-7-lighting": "mep-lighting",
   "layer-9-waste": "mep-dhw",
+  "gas-system": "mep-gas",
 };

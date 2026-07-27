@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { BrTitleInfo } from "@/lib/types";
+import { DEMO_BUILDING_PK } from "@/lib/constants";
 import { useAppStore } from "@/store/app-store";
 import { useHydration } from "@/hooks/use-hydration";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,7 @@ export function BuildingToolbar({
   const toggleSidePanel = useAppStore((s) => s.toggleSidePanel);
 
   const isKo = language === "ko";
+  const isDemo = title?.mgmBldrgstPk === DEMO_BUILDING_PK;
   const displayName = title
     ? title.bldNm || title.platPlcNm || "건물명 없음"
     : null;
@@ -62,6 +64,15 @@ export function BuildingToolbar({
             {displayName}
           </span>
         ) : null}
+
+        {isDemo && (
+          <Badge
+            variant="outline"
+            className="text-[10px] shrink-0 border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
+          >
+            {isKo ? "데모 데이터" : "Demo data"}
+          </Badge>
+        )}
 
         {title?.mainPurpsCdNm && (
           <Badge variant="secondary" className="text-[10px] shrink-0 hidden sm:inline-flex">

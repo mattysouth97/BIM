@@ -5,6 +5,8 @@
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
+import { computeCoreLayout } from "./core-layout";
+import { getBuildingCodeRules } from "./building-code-rules";
 import {
   ASSET_NATIVE_DIMS,
   getEquipmentGeometryClone,
@@ -16,10 +18,14 @@ import {
  * Vertex shader for elevator cab with discrete floor-step animation.
  * Instead of smooth oscillation, the cab dwells at floor heights and
  * lerps quickly between them (simulating real elevator behavior).
+ *
+ * uTopLanding is the highest landing INDEX (floorCount - 1), not the floor
+ * count — the previous uFloorCount travel range let the cab climb one full
+ * interval past the top landing, poking through the roof.
  */
 const cabVertexShader = /* glsl */ `
   uniform float uTime;
-  uniform float uFloorCount;
+  uniform float uTopLanding;
   uniform float uFloorHeight;
   uniform float uShaftIndex;
   varying vec3 vNormal;
@@ -30,14 +36,14 @@ const cabVertexShader = /* glsl */ `
 
     // Phase offset per shaft
     float phase = uShaftIndex * 2.7;
-    float cycle = mod(uTime * 0.25 + phase, uFloorCount * 2.0);
+    float cycle = mod(uTime * 0.25 + phase, uTopLanding * 2.0);
 
-    // Ping-pong between floors: go up then down
+    // Ping-pong between the ground landing and the TOP landing
     float floorF;
-    if (cycle < uFloorCount) {
+    if (cycle < uTopLanding) {
       floorF = cycle;
     } else {
-      floorF = uFloorCount * 2.0 - cycle;
+      floorF = uTopLanding * 2.0 - cycle;
     }
 
     // Discrete step: snap to nearest floor with quick transition
@@ -85,9 +91,18 @@ export class TransportLayer implements LayerGenerator {
     const group = new THREE.Group();
     group.name = "layer-12-transport";
 
-    const { floors, footprintWidth, footprintDepth, totalHeight } = recipe;
+    const { floors, totalHeight } = recipe;
     const aboveFloors = floors.filter((f) => f.type === "above");
     if (aboveFloors.length === 0) {
+      this.group = group;
+      return group;
+    }
+
+    // 건축법 제64조: passenger elevators are required from 6 above-ground
+    // floors — low-rise buildings genuinely have none (stairwells, rendered
+    // by the safety layer, are their vertical circulation), so the twin
+    // renders no shaft rather than inventing one.
+    if (!getBuildingCodeRules(recipe).elevatorRequired) {
       this.group = group;
       return group;
     }
@@ -96,27 +111,17 @@ export class TransportLayer implements LayerGenerator {
     const avgFloorHeight =
       floorCount > 0 ? totalHeight / floorCount : 3.5;
 
-    // Shaft count based on building size
-    const shaftCount = floorCount < 6 ? 1 : floorCount < 15 ? 2 : 3;
-    const shaftWidth = 1.6;
-    const shaftDepth = 2.0;
+    // Shaft bank comes from the shared parametric core layout: positioned
+    // against the rear (-Z) wall and sized to the footprint, so the shafts
+    // no longer punch through the centre of the floor plate (where the
+    // cooling riser, boiler, and DHW tanks used to interpenetrate them).
+    const { elevator } = computeCoreLayout(recipe);
+    const shaftPositions = elevator.shafts;
+    const shaftWidth = elevator.shaftWidth;
+    const shaftDepth = elevator.shaftDepth;
     const cabWidth = shaftWidth * 0.75;
     const cabDepth = shaftDepth * 0.75;
     const cabHeight = Math.min(2.6, avgFloorHeight * 0.75);
-
-    // Position shafts near building core
-    const shaftPositions: { x: number; z: number }[] = [];
-    if (shaftCount === 1) {
-      shaftPositions.push({ x: 0, z: 0 });
-    } else {
-      const totalSpan = (shaftCount - 1) * (shaftWidth + 0.6);
-      for (let i = 0; i < shaftCount; i++) {
-        shaftPositions.push({
-          x: -totalSpan / 2 + i * (shaftWidth + 0.6),
-          z: 0,
-        });
-      }
-    }
 
     const mat4 = new THREE.Matrix4();
     const pos = new THREE.Vector3();
@@ -134,16 +139,11 @@ export class TransportLayer implements LayerGenerator {
     // this element kind, rather than one IM per shaft.
     const doorPositions: { x: number; y: number; z: number; scale: number }[] = [];
     const doorNativeHeight = ASSET_NATIVE_DIMS["landing-door"].h;
-    // Doors mount on the shaft's front face. The front face is the +X local
-    // side of the shaft box — established by the existing floor-indicator
-    // placement below (`sp.x + shaftWidth / 2 + 0.02`, with a comment noting
-    // it is "parallel to shaft front face"). Rotate 90° about Y so the
-    // door's thin native axis (d=0.12, its hinge/thickness axis) points
-    // along the face normal (world +X) instead of world +Z.
-    const doorQuat = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(0, 1, 0),
-      Math.PI / 2
-    );
+    // Doors mount on the shaft's front face. With the bank now against the
+    // rear (-Z) wall, the front face is the interior-facing +Z side of the
+    // shaft box. The door's thin native axis (d=0.12, its hinge/thickness
+    // axis) already points along world +Z, so no rotation is needed.
+    const doorQuat = new THREE.Quaternion();
 
     for (let si = 0; si < shaftPositions.length; si++) {
       const sp = shaftPositions[si];
@@ -208,14 +208,12 @@ export class TransportLayer implements LayerGenerator {
       );
       indicatorIM.userData = { type: "transport-floor-indicator" };
 
-      // Rotate to face outward (parallel to shaft front face)
-      const indQuat = new THREE.Quaternion().setFromAxisAngle(
-        new THREE.Vector3(0, 1, 0),
-        0
-      );
+      // Indicators face the interior (+Z) — the same side the landing doors
+      // mount on now that the bank backs onto the rear wall.
+      const indQuat = new THREE.Quaternion();
       for (let fi = 0; fi < floorCount; fi++) {
         const floorY = aboveFloors[fi].y + aboveFloors[fi].height * 0.5;
-        pos.set(sp.x + shaftWidth / 2 + 0.02, floorY, sp.z);
+        pos.set(sp.x, floorY, sp.z + shaftDepth / 2 + 0.02);
         mat4.compose(pos, indQuat, scl);
         indicatorIM.setMatrixAt(fi, mat4);
       }
@@ -282,7 +280,9 @@ export class TransportLayer implements LayerGenerator {
       const cabMat = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: 0 },
-          uFloorCount: { value: floorCount },
+          // Highest landing index — cab travel tops out at the top FLOOR,
+          // not at roof level (floorCount would overshoot by one interval).
+          uTopLanding: { value: Math.max(1, floorCount - 1) },
           uFloorHeight: { value: avgFloorHeight },
           uShaftIndex: { value: si },
           uColor: { value: new THREE.Color(0xf59e0b) },
@@ -343,7 +343,7 @@ export class TransportLayer implements LayerGenerator {
         group.add(hoistAsset);
       }
 
-      // --- Landing-door placements for this shaft (front face, +X side) ---
+      // --- Landing-door placements for this shaft (front face, +Z side) ---
       // Collected here; the combined single IM is built once after the
       // shaft loop (detailed-asset-only — no coarse fallback).
       for (const floor of aboveFloors) {
@@ -358,9 +358,9 @@ export class TransportLayer implements LayerGenerator {
           Math.min(1, (floor.height - 0.15) / doorNativeHeight)
         );
         doorPositions.push({
-          x: sp.x + shaftWidth / 2,
+          x: sp.x,
           y: floor.y + (doorNativeHeight * doorScale) / 2,
-          z: sp.z,
+          z: sp.z + shaftDepth / 2,
           scale: doorScale,
         });
       }

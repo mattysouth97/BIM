@@ -10,6 +10,7 @@ import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { LayerGenerator } from "./types";
 import type { DhwParams } from "./mep-equipment-params";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
+import { computeCoreLayout } from "./core-layout";
 import {
   ASSET_NATIVE_DIMS,
   getEquipmentObjectClone,
@@ -70,15 +71,21 @@ export class DHWLayer implements LayerGenerator {
     const group = new THREE.Group();
     group.name = "layer-6-dhw";
 
-    const { floors, footprintWidth, footprintDepth, totalHeight } = recipe;
+    const { floors, footprintDepth, totalHeight } = recipe;
     const aboveFloors = floors.filter((f) => f.type === "above");
     if (aboveFloors.length === 0) {
       this.group = group;
       return group;
     }
 
-    const hw = footprintWidth / 2;
     const hd = footprintDepth / 2;
+
+    // Shared parametric core layout: the DHW tank cluster gets the -X side
+    // of the basement plant room (the boiler owns the centre, the GSHP the
+    // +X side), and the vertical risers run beside the wet riser at the rear
+    // core instead of through the footprint centre.
+    const layout = computeCoreLayout(recipe);
+    const dhwBase = layout.basementDhw;
 
     // --- Pipe material ---
     const pipeMat = new THREE.MeshStandardMaterial({
@@ -118,7 +125,7 @@ export class DHWLayer implements LayerGenerator {
         dhwParams.tankHeight / native.h,
         radialScale
       );
-      tankAsset.position.set(0.8, plantFloorY, 0.5);
+      tankAsset.position.set(dhwBase.x + 0.8, plantFloorY, dhwBase.z);
       tagEquipmentObject(
         tankAsset,
         { type: "dhw-storage-tank" },
@@ -128,7 +135,7 @@ export class DHWLayer implements LayerGenerator {
     } else {
       const tankGeo = buildTankGeometry(dhwParams);
       const tank = new THREE.Mesh(tankGeo, tankMat);
-      tank.position.set(0.8, basementY, 0.5);
+      tank.position.set(dhwBase.x + 0.8, basementY, dhwBase.z);
       tank.userData = { type: "dhw-storage-tank" };
       group.add(tank);
     }
@@ -145,7 +152,7 @@ export class DHWLayer implements LayerGenerator {
         radialScale
       );
       // Base on the shared plant floor (fixes the previous 0.36 m float).
-      tank2Asset.position.set(-0.8, plantFloorY, 0.5);
+      tank2Asset.position.set(dhwBase.x - 0.8, plantFloorY, dhwBase.z);
       tagEquipmentObject(
         tank2Asset,
         { type: "dhw-recirc-tank" },
@@ -161,14 +168,14 @@ export class DHWLayer implements LayerGenerator {
       );
       const tank2 = new THREE.Mesh(tank2Geo, tankMat);
       // Centre-origin cylinder: base on the shared plant floor.
-      tank2.position.set(-0.8, plantFloorY + dhwParams.tankHeight * 0.4, 0.5);
+      tank2.position.set(dhwBase.x - 0.8, plantFloorY + dhwParams.tankHeight * 0.4, dhwBase.z);
       tank2.userData = { type: "dhw-recirc-tank" };
       group.add(tank2);
     }
 
     // --- Circulation pump — detailed end-suction pump set or merged fallback ---
     if (dhwParams.showPump) {
-      const pumpX = 0.8 + dhwParams.tankRadius + 0.6;
+      const pumpX = dhwBase.x + 0.8 + dhwParams.tankRadius + 0.6;
       const pumpAsset = getEquipmentObjectClone("dhw-pump");
       if (pumpAsset) {
         // Base-origin asset: baseplate rests on the plant floor (fixes the
@@ -194,11 +201,13 @@ export class DHWLayer implements LayerGenerator {
       }
     }
 
-    // --- Vertical risers in core shaft (strict CylinderGeometry) ---
-    // Two risers: supply and return, slightly offset in core
+    // --- Vertical risers in the rear service core (strict CylinderGeometry) ---
+    // Two risers: supply and return, offset beside the shared wet riser so
+    // they read as one pipe shaft next to the elevator bank (previously they
+    // ran through the footprint centre, inside the old elevator shaft).
     const riserPositions = [
-      { x: 0.15, z: 0.15 },  // Supply
-      { x: -0.15, z: -0.15 }, // Return (slightly thinner)
+      { x: layout.serviceRiser.x - 0.35, z: layout.serviceRiser.z + 0.15 },  // Supply
+      { x: layout.serviceRiser.x - 0.35, z: layout.serviceRiser.z - 0.15 }, // Return (slightly thinner)
     ];
     const riserRadii = [PIPE_RADIUS * 1.5, PIPE_RADIUS * 1.2];
 
@@ -213,12 +222,84 @@ export class DHWLayer implements LayerGenerator {
       group.add(riser);
     }
 
+    // --- Cold-water supply (상수도) -----------------------------------------
+    // Municipal service enters underground from the street (+Z front), hits
+    // the water meter at the property side, then feeds the cold riser in the
+    // wet service shaft. Green-retrofit relevance: bathrooms are where most
+    // domestic water — and the energy that heats it — is consumed.
+    const waterMat = new THREE.MeshStandardMaterial({
+      color: 0x0ea5e9,
+      emissive: 0x0ea5e9,
+      emissiveIntensity: 0.15,
+      roughness: 0.4,
+      metalness: 0.5,
+    });
+
+    const meterPos = layout.waterMeter;
+    const coldRiserPos = layout.coldRiser;
+
+    // Underground service line: street → meter → riser base
+    const servicePts = [
+      new THREE.Vector3(meterPos.x, -0.6, hd + 3.0),
+      new THREE.Vector3(meterPos.x, -0.6, meterPos.z),
+      new THREE.Vector3(coldRiserPos.x, -0.6, coldRiserPos.z),
+    ];
+    for (let i = 0; i < servicePts.length - 1; i++) {
+      const seg = new THREE.Mesh(
+        new THREE.TubeGeometry(
+          new THREE.LineCurve3(servicePts[i], servicePts[i + 1]),
+          1,
+          PIPE_RADIUS * 1.3,
+          PIPE_SEGMENTS,
+          false
+        ),
+        waterMat
+      );
+      seg.userData = { type: "water-service-line" };
+      group.add(seg);
+    }
+
+    // Water meter at grade on the front property side (base-origin asset;
+    // detailed-asset-only — no coarse fallback for this element kind).
+    const waterMeterAsset = getEquipmentObjectClone("water-meter");
+    if (waterMeterAsset) {
+      waterMeterAsset.position.set(meterPos.x, 0.02, meterPos.z);
+      tagEquipmentObject(
+        waterMeterAsset,
+        { type: "water-meter" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(waterMeterAsset);
+    }
+
+    // Cold riser through the wet shaft, beside the DHW supply/return pair
+    const coldRiserMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        PIPE_RADIUS * 1.2,
+        PIPE_RADIUS * 1.2,
+        totalHeight + 1.0,
+        PIPE_SEGMENTS
+      ),
+      waterMat
+    );
+    coldRiserMesh.position.set(coldRiserPos.x, totalHeight / 2 - 0.5, coldRiserPos.z);
+    coldRiserMesh.userData = { type: "water-riser" };
+    group.add(coldRiserMesh);
+
+    // Translucent bathroom-zone material — shared across floors
+    const bathZoneMat = new THREE.MeshStandardMaterial({
+      color: 0x0ea5e9,
+      transparent: true,
+      opacity: 0.08,
+      depthWrite: false,
+    });
+
     // --- Per-floor horizontal branches to restroom/kitchen zones ONLY ---
-    // Restroom zone: 1/3 of depth, near back wall (+Z side)
-    // Kitchen zone: 2/3 of depth, near back wall (+Z side)
+    // Stacked wet zones from the shared core layout — identical position on
+    // every floor so supply/drain risers run straight (Korean 설비 practice).
     const wetZones = [
-      { name: "restroom", x: hw * 0.6, z: hd * 0.33 },
-      { name: "kitchen", x: -hw * 0.5, z: hd * 0.67 },
+      { name: "restroom", x: layout.wetZones.restroom.x, z: layout.wetZones.restroom.z },
+      { name: "kitchen", x: layout.wetZones.kitchen.x, z: layout.wetZones.kitchen.z },
     ];
 
     for (const floor of aboveFloors) {
@@ -262,13 +343,53 @@ export class DHWLayer implements LayerGenerator {
         fixture.position.set(zone.x, pipeY, zone.z);
         fixture.userData = { type: "dhw-fixture", zone: zone.name, floorNo: floor.floorNo };
         group.add(fixture);
+
+        // Cold-water branch — runs below the DHW pair from the cold riser
+        const coldCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(coldRiserPos.x, pipeY - 0.2, coldRiserPos.z),
+          new THREE.Vector3(
+            (coldRiserPos.x + zone.x) / 2,
+            pipeY - 0.2,
+            (coldRiserPos.z + zone.z) / 2
+          ),
+          new THREE.Vector3(zone.x, pipeY - 0.2, zone.z + 0.15),
+        ]);
+        const coldGeo = new THREE.TubeGeometry(coldCurve, 12, PIPE_RADIUS * 0.9, PIPE_SEGMENTS, false);
+        const coldBranch = new THREE.Mesh(coldGeo, waterMat);
+        coldBranch.userData = { type: "water-branch", zone: zone.name, floorNo: floor.floorNo };
+        group.add(coldBranch);
+      }
+
+      // --- Bathroom indication at the stacked restroom zone ---
+      // Translucent volume marks WHERE the water is used; the fixture asset
+      // (양변기 + 세면대) makes the room legible. The volume is raycast-
+      // transparent so it never blocks hover on the fixtures inside.
+      const bathZone = layout.wetZones.restroom;
+      const zoneBox = new THREE.Mesh(
+        new THREE.BoxGeometry(2.4, floor.height * 0.55, 1.8),
+        bathZoneMat
+      );
+      zoneBox.position.set(bathZone.x, floor.y + floor.height * 0.28 + 0.03, bathZone.z);
+      zoneBox.userData = { type: "water-bathroom-zone", floorNo: floor.floorNo };
+      zoneBox.raycast = () => {};
+      group.add(zoneBox);
+
+      const bathroomAsset = getEquipmentObjectClone("bathroom-fixture");
+      if (bathroomAsset) {
+        bathroomAsset.position.set(bathZone.x, floor.y + 0.03, bathZone.z);
+        tagEquipmentObject(
+          bathroomAsset,
+          { type: "water-bathroom-fixture", floorNo: floor.floorNo },
+          { castShadow: true, receiveShadow: true }
+        );
+        group.add(bathroomAsset);
       }
     }
 
     // --- Connection pipe from tanks to risers ---
     const connectCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.8, -dhwParams.tankHeight * 0.3, 0.5),
-      new THREE.Vector3(0.5, -0.2, 0.3),
+      new THREE.Vector3(dhwBase.x + 0.8, -dhwParams.tankHeight * 0.3, dhwBase.z),
+      new THREE.Vector3((dhwBase.x + riserPositions[0].x) / 2, -0.2, (dhwBase.z + riserPositions[0].z) / 2),
       new THREE.Vector3(riserPositions[0].x, 0.1, riserPositions[0].z),
     ]);
     const connectGeo = new THREE.TubeGeometry(connectCurve, 12, PIPE_RADIUS * 1.3, PIPE_SEGMENTS, false);

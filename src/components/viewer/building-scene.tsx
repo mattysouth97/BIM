@@ -18,6 +18,7 @@ import { useWorkspaceStore } from "@/store/workspace-store";
 import { applyOverrides } from "@/lib/procedural/recipe";
 import { Loader2 } from "lucide-react";
 import { createSceneProjection } from "@/lib/gis/gis-transform";
+import { ringBboxCenter } from "@/lib/gis/ring-utils";
 import { useAppStore } from "@/store/app-store";
 import { formatArea } from "@/lib/constants";
 import type { CampusData } from "@/lib/campus/campus-types";
@@ -29,7 +30,6 @@ import { ProceduralBuildingModel } from "./procedural-building-model";
 import { BuildingLayers } from "./building-layers";
 import { SceneControls, type SceneControlsRef } from "./scene-controls";
 import { ContextualToolbar } from "@/components/workspace/contextual-toolbar";
-import { ConfigPanel } from "./config-panel";
 import { LayerPanel } from "./layer-panel";
 import { ModelUploader } from "./model-uploader";
 import { EnergyCards } from "./energy-cards";
@@ -221,11 +221,11 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
   const [modelSource, setModelSource] = useState<ModelSource>("parametric");
   const [activeCampusBuilding, setActiveCampusBuilding] = useState<string | null>(null);
 
-  // Panel open state — extracted to workspace-store per D-06
-  const configPanelOpen = useWorkspaceStore((s) => s.configPanelOpen);
+  // Panel open state — extracted to workspace-store per D-06.
+  // The toolbar toggles layerPanelOpen directly on the store; this component
+  // only reads it to mount the LayerPanel (single source of truth).
   const layerPanelOpen = useWorkspaceStore((s) => s.layerPanelOpen);
   const uploadDialogOpen = useWorkspaceStore((s) => s.uploadDialogOpen);
-  const setConfigPanelOpen = useWorkspaceStore((s) => s.setConfigPanelOpen);
   const setLayerPanelOpen = useWorkspaceStore((s) => s.setLayerPanelOpen);
   const setUploadDialogOpen = useWorkspaceStore((s) => s.setUploadDialogOpen);
   const [uploadedModel, setUploadedModel] = useState<{
@@ -250,16 +250,23 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
         // footprintPolygon is number[][][] — WGS84 rings [[lng, lat], ...]
         const outerRing = footprintPolygon[0];
 
-        // Compute polygon centroid in WGS84 for scene origin
-        const centroidLng = outerRing.reduce((s, p) => s + p[0], 0) / outerRing.length;
-        const centroidLat = outerRing.reduce((s, p) => s + p[1], 0) / outerRing.length;
+        // Center the scene frame on the ring's bbox midpoint — a vertex
+        // average is biased by the duplicated closing vertex and vertex-dense
+        // edges, which would shift the polygon shell away from the
+        // origin-centered frame the roof box and column grid build in.
+        const [centerLng, centerLat] = ringBboxCenter(outerRing);
 
-        // Create site-specific TM projection centered on polygon centroid
-        const proj = createSceneProjection(centroidLng, centroidLat);
+        // Create site-specific TM projection centered on the bbox midpoint
+        const proj = createSceneProjection(centerLng, centerLat);
 
-        // Project all rings from WGS84 to local [x, z] meters
-        const localRings: [number, number][][] = footprintPolygon.map((ring) =>
+        // Project all rings from WGS84 to local [x, z] meters, then re-center
+        // exactly on the projected bbox so the outline is origin-centered.
+        const projected: [number, number][][] = footprintPolygon.map((ring) =>
           ring.map(([lng, lat]) => proj.project(lng, lat) as [number, number])
+        );
+        const [cx, cz] = ringBboxCenter(projected[0]);
+        const localRings: [number, number][][] = projected.map((ring) =>
+          ring.map(([x, z]) => [x - cx, z - cz] as [number, number])
         );
 
         geo.footprintPolygon = localRings;
@@ -411,10 +418,6 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
       {/* Contextual toolbar strip — replaces ViewerOverlay */}
       <ContextualToolbar
         onViewChange={handleViewChange}
-        onToggleConfigPanel={() => setConfigPanelOpen(!configPanelOpen)}
-        configPanelOpen={configPanelOpen}
-        onToggleLayerPanel={() => setLayerPanelOpen(!layerPanelOpen)}
-        layerPanelOpen={layerPanelOpen}
         buildingName={geometry.buildingName}
         era={geometry.era}
         selectedFloor={modelSource === "parametric" ? selectedFloor : null}
@@ -558,14 +561,6 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           <EnergyCards buildingPk={buildingPk} />
         </ErrorBoundary>
       )}
-
-      <ErrorBoundary>
-        <ConfigPanel
-          buildingPk={buildingPk}
-          visible={configPanelOpen}
-          onClose={() => setConfigPanelOpen(false)}
-        />
-      </ErrorBoundary>
 
       <LayerPanel
         visible={layerPanelOpen}
