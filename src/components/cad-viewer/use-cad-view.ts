@@ -15,6 +15,12 @@ export function useCadView(extents: CadDocument["extents"], panEnabled: boolean)
   const [view, setView] = useState<ViewState>(() => computeFitView(extents, 800, 600));
   const dragging = useRef<{ startPx: Vec2; startCenter: Vec2 } | null>(null);
 
+  // Extents may change on every drafting edit — the camera must NOT refit
+  // then (the view would jump under the cursor). Read them through a ref so
+  // only mount/resize/manual-fit consult the latest value.
+  const extentsRef = useRef(extents);
+  useEffect(() => { extentsRef.current = extents; });
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -22,18 +28,16 @@ export function useCadView(extents: CadDocument["extents"], panEnabled: boolean)
       const r = el.getBoundingClientRect();
       const w = Math.max(1, r.width), h = Math.max(1, r.height);
       setSize({ w, h });
-      // Refit whenever the container resizes; RO fires once on observe, which
-      // doubles as the initial fit. Extents are stable for a mounted viewer
-      // (the component is keyed by doc id).
-      setView(computeFitView(extents, w, h));
+      // RO fires once on observe — doubles as the initial fit.
+      setView(computeFitView(extentsRef.current, w, h));
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [extents]);
+  }, []);
 
   const fit = useCallback(
-    () => setView(computeFitView(extents, size.w, size.h)),
-    [extents, size.w, size.h],
+    () => setView(computeFitView(extentsRef.current, size.w, size.h)),
+    [size.w, size.h],
   );
 
   const toLocal = (e: { clientX: number; clientY: number }): Vec2 => {

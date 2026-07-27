@@ -57,7 +57,11 @@ export function UploadStage() {
   const advance = useWorkflowStore((s) => s.advance);
   const retreat = useWorkflowStore((s) => s.retreat);
 
-  const draftKey = `cad-draft:${buildingPk ?? "anon"}`;
+  // useActiveBuildingPk returns "" (not undefined) before the material store
+  // hydrates — || catches both. The effect re-runs when the pk arrives, so
+  // the button flips to "continue drawing" once the real key is known.
+  const draftPk = buildingPk || "anon";
+  const draftKey = `cad-draft:${draftPk}`;
 
   useEffect(() => {
     let alive = true;
@@ -67,10 +71,10 @@ export function UploadStage() {
 
   const openDraft = useCallback(() => {
     if (savedDraft) startDraft(savedDraft, draftKey);
-    else newDrawing(`draft-${buildingPk ?? "plan"}`, draftKey);
+    else newDrawing(`draft-${draftPk}`, draftKey);
     const doc = useCadDraftStore.getState().doc;
     if (doc) openViewer(doc);
-  }, [savedDraft, draftKey, buildingPk, startDraft, newDrawing, openViewer]);
+  }, [savedDraft, draftKey, draftPk, startDraft, newDrawing, openViewer]);
 
   const ingestDxf = useCallback(
     (text: string) => {
@@ -374,7 +378,7 @@ export function UploadStage() {
                 openViewer(cadDoc);
                 // Uploaded drawings are draft-editable too (edits persist
                 // under an upload-scoped key, separate from blank drafts).
-                startDraft(cadDoc, `cad-draft:upload:${buildingPk ?? "anon"}:${cadDoc.id}`);
+                startDraft(cadDoc, `cad-draft:upload:${draftPk}:${cadDoc.id}`);
               }}
             >
               <Eye className="mr-1.5 h-4 w-4" />
