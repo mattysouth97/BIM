@@ -74,8 +74,10 @@ export function assembleRetrofitReport(
   const totalAnnualSaving = sorted.reduce((sum, m) => sum + m.annualEnergySaving, 0);
   const totalAnnualCostSaving = sorted.reduce((sum, m) => sum + m.annualCostSaving, 0);
   const totalCO2Reduction = sorted.reduce((sum, m) => sum + m.co2Reduction, 0);
+  // Zero savings → the portfolio NEVER pays back: Infinity, not 0
+  // ("instant payback") as the old code claimed (audit finding #10).
   const portfolioPayback =
-    totalAnnualCostSaving > 0 ? totalInvestment / totalAnnualCostSaving : 0;
+    totalAnnualCostSaving > 0 ? totalInvestment / totalAnnualCostSaving : Infinity;
 
   // Cumulative savings: running totals ordered by payback
   let runCost = 0;
@@ -83,7 +85,8 @@ export function assembleRetrofitReport(
   const cumulativeSavings: CumulativeSaving[] = sorted.map((m) => {
     runCost += m.estimatedCost;
     runSaving += m.annualCostSaving;
-    const cumulativePayback = runSaving > 0 ? runCost / runSaving : 0;
+    // Same correction as portfolioPayback: no savings yet → not paid back.
+    const cumulativePayback = runSaving > 0 ? runCost / runSaving : Infinity;
     return {
       measureId: m.id,
       description: m.description,

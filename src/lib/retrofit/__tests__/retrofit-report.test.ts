@@ -27,7 +27,9 @@ describe('assembleRetrofitReport', () => {
     expect(report.summary.totalAnnualSaving).toBe(0);
     expect(report.summary.totalAnnualCostSaving).toBe(0);
     expect(report.summary.totalCO2Reduction).toBe(0);
-    expect(report.summary.portfolioPayback).toBe(0);
+    // Audit finding #10: no savings means the investment NEVER pays back —
+    // Infinity, not 0 ("instant payback").
+    expect(report.summary.portfolioPayback).toBe(Infinity);
     expect(report.byCategory.envelope).toHaveLength(0);
     expect(report.byCategory.hvac).toHaveLength(0);
     expect(report.byCategory.lighting).toHaveLength(0);
@@ -126,6 +128,19 @@ describe('assembleRetrofitReport', () => {
 
     expect(report.summary.totalAnnualSaving).toBe(3000);
     expect(report.summary.totalCO2Reduction).toBeCloseTo(1.377, 5);
+  });
+
+  it('returns Infinity payback (never pays back) when savings are zero (audit finding #10)', () => {
+    // Old behavior returned 0, which reads as INSTANT payback — the exact
+    // opposite of "never pays back".
+    const measures: RetrofitMeasure[] = [
+      makeMeasure({ id: 'no-saving', estimatedCost: 1_000_000, annualCostSaving: 0, paybackYears: Infinity }),
+    ];
+
+    const report = assembleRetrofitReport(measures);
+
+    expect(report.summary.portfolioPayback).toBe(Infinity);
+    expect(report.cumulativeSavings[0].cumulativePayback).toBe(Infinity);
   });
 
   it('does not mutate the input array order', () => {
