@@ -213,10 +213,10 @@ describe("calculateSystemBreakdown", () => {
     expect(breakdown.plugLoadsDataSource).toBe("estimated-ratio");
   });
 
-  it("mainPurpsCd prefix '02' selects office ratios: hvac/total ≈ 0.55 (D6, D7)", () => {
+  it("mainPurpsCd prefix '14' selects office ratios: hvac/total ≈ 0.55 (D6, D7)", () => {
     const materials = makeMaterials();
-    // Office: mainPurpsCd "02000" — prefix "02" → HVAC 55%
-    const recipe = makeRecipe(10, "02000");
+    // Office: 업무시설 = 14000 per the 건축물대장 주용도코드 table
+    const recipe = makeRecipe(10, "14000");
 
     const breakdown = calculateSystemBreakdown(materials, recipe, SEOUL_CLIMATE);
 
@@ -225,11 +225,11 @@ describe("calculateSystemBreakdown", () => {
     expect(hvacFraction).toBeCloseTo(0.55, 2);
   });
 
-  it("mainPurpsCd prefix '11' selects residential ratios (DHW-dominant, different from office)", () => {
+  it("mainPurpsCd prefix '02' selects residential ratios (DHW-dominant, different from office)", () => {
     const materials = makeMaterials();
 
-    const officeRecipe = makeRecipe(10, "02000");     // HVAC 55%
-    const residentialRecipe = makeRecipe(10, "11000"); // HVAC 50%
+    const officeRecipe = makeRecipe(10, "14000");      // 업무시설: HVAC 55%
+    const residentialRecipe = makeRecipe(10, "02000"); // 공동주택: HVAC 50%
 
     const officeBreakdown = calculateSystemBreakdown(materials, officeRecipe, SEOUL_CLIMATE);
     const residentialBreakdown = calculateSystemBreakdown(materials, residentialRecipe, SEOUL_CLIMATE);

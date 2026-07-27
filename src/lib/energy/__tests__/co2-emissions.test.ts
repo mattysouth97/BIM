@@ -16,13 +16,27 @@ describe("calculateCO2", () => {
       demandPerSqm: 100,
     };
 
-    const result = calculateCO2(demand, totalFloorArea);
+    const result = calculateCO2(demand, totalFloorArea); // default: gas heating
 
-    // CO2 = 8400 kWh / 1000 * 0.4594 = 3.859 tCO2/yr
+    // Per-fuel factors: heating rides gas (0.202 t/MWh), cooling the grid
+    // (0.4594): 6.0 MWh × 0.202 + 2.4 MWh × 0.4594 = 1.212 + 1.10256 = 2.3146 t
+    expect(result.totalCO2).toBeCloseTo(2.3146, 3);
+
+    // CO2/m2 = 2314.6 kg / 84 m² = 27.55 kgCO2/m²·yr
+    expect(result.co2PerSqm).toBeCloseTo(27.55, 1);
+  });
+
+  it("electric heating uses the grid factor for both legs", () => {
+    const demand: AnnualDemand = {
+      heatingDemand: 6000,
+      coolingDemand: 2400,
+      totalDemand: 8400,
+      demandPerSqm: 100,
+    };
+    const result = calculateCO2(demand, 84, "electric");
+    // 8.4 MWh × 0.4594 = 3.859 t — the old single-factor value, now only
+    // correct for all-electric buildings.
     expect(result.totalCO2).toBeCloseTo(3.859, 2);
-
-    // CO2/m2 = 3.859 tCO2 * 1000 / 84 = 45.94 kgCO2/m2/yr
-    expect(result.co2PerSqm).toBeCloseTo(45.94, 1);
   });
 
   it("returns zero for zero demand", () => {

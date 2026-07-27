@@ -145,13 +145,15 @@ export function PropertiesPanel() {
     const mostRecent = actualData.reduce((a, b) => (b.year > a.year ? b : a));
     if (mostRecent.total_kwh <= 0) return null;
 
+    // Predicted stack must be WHOLE-building (the meter total includes
+    // lighting/DHW/plug) — comparing HVAC-only vs meter always "under-predicts".
     return calibrateEnergy(
       {
         heating: metrics.demand.heatingDemand,
         cooling: metrics.demand.coolingDemand,
-        lighting: metrics.demand.totalDemand * 0.15, // lighting estimate
-        dhw: metrics.demand.totalDemand * 0.1, // DHW estimate
-        total: metrics.demand.totalDemand,
+        lighting: metrics.breakdown.lighting,
+        dhw: metrics.breakdown.dhw,
+        total: metrics.siteTotal,
       },
       {
         electric_kwh: mostRecent.electric_kwh ?? 0,
@@ -165,13 +167,16 @@ export function PropertiesPanel() {
 
   const benchmark = useMemo(() => {
     if (!metrics) return null;
-    // Derive use type and era from material properties
+    // Residential = LOW occupant density (0.04 p/m²) vs office 0.1+, so the
+    // test is density BELOW the office threshold, not above it.
     const useType =
       materials?.occupancy?.occupancyDensity !== undefined &&
-      materials.occupancy.occupancyDensity > 0.1
+      materials.occupancy.occupancyDensity < 0.07
         ? "residential"
         : "office";
     const codeYear = materials?.codeYear ?? 2000;
+    // Benchmark DB has no pre-1990 rows — map to the NEAREST era (1990s),
+    // not the newest (the default fallback picks 2020+, the worst match).
     const era =
       codeYear >= 2020
         ? "2020+"
@@ -179,10 +184,9 @@ export function PropertiesPanel() {
           ? "2010s"
           : codeYear >= 2000
             ? "2000s"
-            : codeYear >= 1990
-              ? "1990s"
-              : "pre-1990";
-    return compareToBenchmark(metrics.demand.demandPerSqm, useType, era);
+            : "1990s";
+    // Benchmark values are PRIMARY energy — compare on the same basis.
+    return compareToBenchmark(metrics.primaryPerSqm, useType, era);
   }, [metrics, materials]);
 
   // ── Green Certification ──────────────────────────────────────────────────
@@ -198,7 +202,7 @@ export function PropertiesPanel() {
       windowUValue: materials.envelope.windows.uValue,
       roofUValue: materials.envelope.roof.uValue,
       energyGrade: metrics.grade,
-      primaryEnergyDemand: metrics.demand.demandPerSqm,
+      primaryEnergyDemand: metrics.primaryPerSqm,
       renewableCapacity: materials.renewable?.solarPV?.capacity ?? 0,
       windowToWallRatio:
         materials.envelope.windows.windowToWallRatio?.S ?? 0.3,
@@ -217,15 +221,26 @@ export function PropertiesPanel() {
       effectiveRecipe.floors.length;
     if (totalArea <= 0) return null;
 
-    // Derive delivered energy from demand breakdown
+    // Residential = LOW density (0.04) — see benchmark note above.
     const isRes =
       materials?.occupancy?.occupancyDensity !== undefined &&
-      materials.occupancy.occupancyDensity > 0.1;
+      materials.occupancy.occupancyDensity < 0.07;
+    // Fuel-aware whole-building split: heating+DHW on the heating fuel,
+    // cooling/lighting/plug electric (matches use-energy-metrics).
+    const heatingFuel = materials.hvac.heating.fuelType;
+    const fuelLeg = metrics.demand.heatingDemand + metrics.breakdown.dhw;
+    const electricLeg =
+      metrics.demand.coolingDemand +
+      metrics.breakdown.lighting +
+      metrics.breakdown.plugLoads;
     return calculateEfficiencyRating(
       {
-        electric: metrics.demand.coolingDemand + metrics.demand.totalDemand * 0.15,
-        gas: metrics.demand.heatingDemand + metrics.demand.totalDemand * 0.1,
-        districtHeating: 0,
+        electric:
+          heatingFuel === "electric" || heatingFuel === "heat-pump"
+            ? electricLeg + fuelLeg
+            : electricLeg,
+        gas: heatingFuel === "gas" || heatingFuel === "oil" ? fuelLeg : 0,
+        districtHeating: heatingFuel === "district-heat" ? fuelLeg : 0,
         districtCooling: 0,
         renewable: 0,
       },

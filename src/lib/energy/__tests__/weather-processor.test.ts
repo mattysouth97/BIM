@@ -21,11 +21,12 @@ describe("processWeatherData", () => {
     expect(result.dataCompleteness).toBe(0);
   });
 
-  it("computes correct HDD for all-cold days (base 18.3°C)", () => {
-    // 365 days at exactly 0°C → each day contributes 18.3 HDD
+  it("computes correct HDD for all-cold days (base 18°C)", () => {
+    // Base is 18.0 to match the static climate-data tables (they are swapped
+    // for each other transparently). 365 days at 0°C → 18 HDD each.
     const days = makeDays(365, 0);
     const result = processWeatherData(days, 2023);
-    expect(result.hdd).toBeCloseTo(365 * 18.3, 0);
+    expect(result.hdd).toBeCloseTo(365 * 18.0, 0);
     expect(result.cdd).toBe(0);
     expect(result.dataCompleteness).toBeCloseTo(1.0, 2);
   });
@@ -38,7 +39,7 @@ describe("processWeatherData", () => {
     expect(result.hdd).toBe(0);
   });
 
-  it("HDD is 0 when all days are above heating base (18.3°C)", () => {
+  it("HDD is 0 when all days are above heating base (18°C)", () => {
     const days = makeDays(365, 25);
     const result = processWeatherData(days, 2023);
     expect(result.hdd).toBe(0);
@@ -66,12 +67,30 @@ describe("processWeatherData", () => {
     expect(result.dataCompleteness).toBeCloseTo(1.0, 3);
   });
 
-  it("correctly uses heating base 18.3°C, not 18°C", () => {
-    // 1 day at 18°C: should still accumulate 0.3 HDD (18.3 - 18.0 = 0.3)
-    const days: DailyWeather[] = [{ date: "20230101", avgTemp: 18.0, maxTemp: 21, minTemp: 15 }];
+  it("uses heating base 18°C (consistent with static climate tables)", () => {
+    // 1 day at exactly the base accumulates 0 HDD; 1 day at 17°C → 1.0 HDD.
+    const atBase = processWeatherData(
+      [{ date: "20230101", avgTemp: 18.0, maxTemp: 21, minTemp: 15 }], 2023);
+    expect(atBase.hdd).toBe(0);
+    const below = processWeatherData(
+      [{ date: "20230102", avgTemp: 17.0, maxTemp: 20, minTemp: 14 }], 2023);
+    expect(below.hdd).toBeCloseTo(1.0, 1);
+  });
+
+  it("excludes KMA sentinel/garbage days from sums and completeness", () => {
+    const days = [
+      ...makeDays(100, 10),                                             // valid
+      { date: "20230601", avgTemp: -99, maxTemp: -99, minTemp: -99 },   // sentinel
+      { date: "20230602", avgTemp: NaN, maxTemp: 0, minTemp: 0 },       // missing
+    ];
     const result = processWeatherData(days, 2023);
-    expect(result.hdd).toBeCloseTo(0.3, 1);
-    expect(result.cdd).toBe(0);
+    expect(result.hdd).toBeCloseTo(100 * 8.0, 0); // sentinel's ~117 HDD excluded
+    expect(result.dataCompleteness).toBeCloseTo(100 / 365, 3);
+  });
+
+  it("leap years use 366 days for completeness", () => {
+    const result = processWeatherData(makeDays(366, 10), 2024);
+    expect(result.dataCompleteness).toBeCloseTo(1.0, 3);
   });
 
   it("correctly uses cooling base 24°C", () => {
@@ -83,12 +102,12 @@ describe("processWeatherData", () => {
   });
 
   it("correctly handles mixed hot and cold days", () => {
-    const coldDays = makeDays(100, 5);   // 100 × (18.3 - 5) = 1330 HDD
-    const hotDays = makeDays(50, 28);    // 50  × (28 - 24)  = 200  CDD
+    const coldDays = makeDays(100, 5);   // 100 × (18 - 5)  = 1300 HDD
+    const hotDays = makeDays(50, 28);    // 50  × (28 - 24) = 200  CDD
     const mildDays = makeDays(50, 20);   // mild: no HDD, no CDD
     const allDays = [...coldDays, ...hotDays, ...mildDays];
     const result = processWeatherData(allDays, 2023);
-    expect(result.hdd).toBeCloseTo(100 * 13.3, 0);
+    expect(result.hdd).toBeCloseTo(100 * 13.0, 0);
     expect(result.cdd).toBeCloseTo(50 * 4.0, 0);
   });
 

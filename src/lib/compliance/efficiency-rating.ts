@@ -36,11 +36,13 @@ const RESIDENTIAL_THRESHOLDS: Record<Exclude<EfficiencyGrade, "7">, number> = {
   "1++": 90,
   "1+": 120,
   "1": 150,
-  "2": 200,
-  "3": 260,
-  "4": 320,
-  "5": 380,
-  "6": 450,
+  // 주거용 1차에너지 기준: grades 2–6 corrected to the official
+  // 190/230/270/320/370 bands (previous values were non-residential bands).
+  "2": 190,
+  "3": 230,
+  "4": 270,
+  "5": 320,
+  "6": 370,
 };
 
 const NON_RESIDENTIAL_THRESHOLDS: Record<
@@ -53,7 +55,7 @@ const NON_RESIDENTIAL_THRESHOLDS: Record<
   "1": 260,
   "2": 320,
   "3": 380,
-  "4": 440,
+  "4": 450, // official band 380–450 (was 440)
   "5": 520,
   "6": 610,
 };

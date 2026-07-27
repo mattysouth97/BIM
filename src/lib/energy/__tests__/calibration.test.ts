@@ -165,12 +165,15 @@ describe("calibrateEnergy", () => {
   });
 
   describe("edge cases", () => {
-    it("does not produce NaN when actual total_kwh is zero", () => {
+    it("flags an unbounded mismatch (not a perfect match) when actual is zero", () => {
+      // A 20 MWh prediction vs zero recorded consumption must NOT read as
+      // delta 0 ("closely matches") — it is an infinite mismatch flag.
       const predicted = makePredicted({ total: 20_000 });
       const actual = { gas_kwh: 0, electric_kwh: 0, total_kwh: 0 };
       const result = calibrateEnergy(predicted, actual);
       expect(isNaN(result.overallDelta)).toBe(false);
-      expect(result.overallDelta).toBe(0);
+      expect(result.overallDelta).toBe(Number.POSITIVE_INFINITY);
+      expect(result.insight).toContain("calibration unavailable");
     });
 
     it("calibrationRatio defaults to 1 when predicted total is zero", () => {

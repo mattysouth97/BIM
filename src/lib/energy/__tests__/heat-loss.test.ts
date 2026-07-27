@@ -121,14 +121,21 @@ describe("calculateHeatLoss", () => {
     expect(result.totalHeatLoss).toBeGreaterThan(1000);
     expect(result.totalHeatLoss).toBeLessThan(100000);
 
-    // Should have 4 elements: Walls, Windows, Roof, Ground Floor
-    expect(result.elements).toHaveLength(4);
+    // 5 elements: envelope transmission + the infiltration/ventilation term
+    // (H_ve = 0.34·ACH·V per ISO 13789 — previously missing entirely).
+    expect(result.elements).toHaveLength(5);
     expect(result.elements.map((e) => e.element)).toEqual([
       "Walls",
       "Windows",
       "Roof",
       "Ground Floor",
+      "Ventilation",
     ]);
+    // Every element exposes its coefficient for basis-correct annualization.
+    for (const el of result.elements) {
+      expect(el.hCoefficient).toBeGreaterThanOrEqual(0);
+      expect(el.heatLoss).toBeCloseTo(el.hCoefficient * el.deltaT, 6);
+    }
   });
 
   it("wall heat loss exceeds roof heat loss for typical apartment", () => {

@@ -126,7 +126,7 @@ const USE_CODE_OPERATING_HOURS: Record<string, number> = {
   "07000": 4000,  // 판매시설 (retail)
   "09000": 3500,  // 의료시설 (medical)
   "10000": 2500,  // 교육연구시설 (education)
-  "12000": 4380,  // 업무시설 (office, 8760/2)
+  "14000": 4380,  // 업무시설 (office, 8760/2) — 14000 is the 건축물대장 office code
 };
 
 function getOperatingHours(mainPurpsCd: string): number {

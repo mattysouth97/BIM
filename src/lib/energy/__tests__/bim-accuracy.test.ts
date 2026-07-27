@@ -237,8 +237,11 @@ describe("BIM Energy Accuracy Benchmarks", () => {
       const totalFloorArea = recipe.footprintWidth * recipe.footprintDepth * recipe.floors.length;
       const co2 = calculateCO2(demand, totalFloorArea);
 
-      // Old building: very high CO2/m2
-      expect(co2.co2PerSqm).toBeGreaterThan(100);
+      // Old building: very high CO2/m2. With per-fuel factors the gas-heated
+      // stock emits ~0.202 kg/kWh (not the 0.4594 grid factor), so the old
+      // >100 threshold — an artifact of mispricing gas — becomes >60,
+      // still 2×+ the passive-house bound of 30.
+      expect(co2.co2PerSqm).toBeGreaterThan(60);
     });
   });
 
@@ -262,11 +265,15 @@ describe("BIM Energy Accuracy Benchmarks", () => {
       // Old building should have significantly higher CO2 than passive
       expect(oldCO2.totalCO2).toBeGreaterThan(passiveCO2.totalCO2 * 3);
 
-      // CO2 ratio should roughly match demand ratio
-      const demandRatio = oldDemand.totalDemand / passiveDemand.totalDemand;
+      // With per-fuel factors CO2 is linear in the (heating, cooling) pair,
+      // not in the total: heating rides gas (0.202), cooling the grid
+      // (0.4594). The exact linear identity per fuel leg:
+      const expectedRatio =
+        (oldDemand.heatingDemand * 0.202 + oldDemand.coolingDemand * 0.4594) /
+        (passiveDemand.heatingDemand * 0.202 +
+          passiveDemand.coolingDemand * 0.4594);
       const co2Ratio = oldCO2.totalCO2 / passiveCO2.totalCO2;
-      // Linear CO2 calculation means these ratios should be equal
-      expect(co2Ratio).toBeCloseTo(demandRatio, 1);
+      expect(co2Ratio).toBeCloseTo(expectedRatio, 5);
     });
   });
 
