@@ -6,6 +6,7 @@ import * as THREE from "three";
 import type { BuildingRecipe, FacadeConfig, FloorSpec } from "./types";
 import type { PBRMaterialConfig } from "@/lib/pbr-materials";
 import { getEquipmentGeometryClone } from "@/lib/equipment-assets";
+import { pointInRing } from "@/lib/gis/ring-utils";
 import {
   SHOWCASE_EQUIPMENT_SCENARIO,
   type EquipmentScenario,
@@ -64,24 +65,31 @@ function getPolygonFaces(outerRing: [number, number][], wallThickness: number): 
     const midX = (x0 + x1) / 2;
     const midZ = (z0 + z1) / 2;
 
-    // Edge direction angle (atan2 in XZ plane, measured from +Z axis toward +X axis)
-    const angle = Math.atan2(dx, dz);
+    // Outward normal: take a perpendicular of the edge and flip it if a probe
+    // point on that side is still inside the ring. Winding-agnostic — VWorld
+    // and CAD rings arrive in either orientation.
+    let nx = dz / edgeLength;
+    let nz = -dx / edgeLength;
+    if (pointInRing(midX + nx * 0.5, midZ + nz * 0.5, outerRing)) {
+      nx = -nx;
+      nz = -nz;
+    }
 
-    // Outward normal (perpendicular to edge, pointing out of the polygon)
-    const nx = -dz / edgeLength;
-    const nz = dx / edgeLength;
-
-    // Position the face at the outer wall surface (offset inward by wallThickness/2)
+    // Position the face plane at the wall centre (inward by wallThickness/2
+    // from the ring line — same convention as the rectangular getFaces path)
     const facePos = new THREE.Vector3(
       midX - nx * wallThickness / 2,
       0,
       midZ - nz * wallThickness / 2,
     );
 
-    // Quaternion: rotate a +Z-facing quad to align with this edge
+    // Yaw a +Z-facing quad so its normal matches the outward normal — which
+    // also lays its local X (the window-layout axis) along the edge. The
+    // previous atan2(dx, dz) form pointed local X PERPENDICULAR to the edge,
+    // marching every window strip off the wall into mid-air.
     const quat = new THREE.Quaternion().setFromAxisAngle(
       new THREE.Vector3(0, 1, 0),
-      -angle,
+      Math.atan2(nx, nz),
     );
 
     faces.push({

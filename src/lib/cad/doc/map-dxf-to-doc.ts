@@ -7,7 +7,7 @@ import { INSUNITS_TO_METERS } from "@/lib/cad/dxf-parser";
 import type {
   CadDocument, CadEntity, CadLayer, CadPolyline, Vec2,
 } from "./types";
-import { arcPoints, bulgeArcPoints, circlePoints } from "./tessellate";
+import { computeExtents } from "./extents";
 
 /* dxf-parser's entity typings are partial; we read loosely and validate. */
 type RawEntity = Record<string, unknown> & { type: string; layer?: string };
@@ -267,37 +267,4 @@ function extractLayers(dxf: IDxf, entities: CadEntity[]): CadLayer[] {
   });
 }
 
-function computeExtents(entities: CadEntity[]): { min: Vec2; max: Vec2 } {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  const eat = (p: Vec2) => {
-    if (p.x < minX) minX = p.x;
-    if (p.y < minY) minY = p.y;
-    if (p.x > maxX) maxX = p.x;
-    if (p.y > maxY) maxY = p.y;
-  };
-  for (const e of entities) {
-    switch (e.kind) {
-      case "line": eat(e.a); eat(e.b); break;
-      case "polyline":
-        for (let i = 0; i < e.vertices.length; i++) {
-          const j = (i + 1) % e.vertices.length;
-          if (!e.closed && j === 0) { eat(e.vertices[i]); break; }
-          if (e.bulges[i]) bulgeArcPoints(e.vertices[i], e.vertices[j], e.bulges[i]).forEach(eat);
-          else eat(e.vertices[i]);
-        }
-        break;
-      case "arc": arcPoints(e.center, e.radius, e.startAngle, e.endAngle).forEach(eat); break;
-      case "circle": circlePoints(e.center, e.radius).forEach(eat); break;
-      case "ellipse": {
-        const a = Math.hypot(e.majorAxis.x, e.majorAxis.y);
-        eat({ x: e.center.x - a, y: e.center.y - a });
-        eat({ x: e.center.x + a, y: e.center.y + a });
-        break;
-      }
-      case "text": eat(e.position); break;
-      case "point": eat(e.position); break;
-    }
-  }
-  if (minX === Infinity) return { min: { x: 0, y: 0 }, max: { x: 0, y: 0 } };
-  return { min: { x: minX, y: minY }, max: { x: maxX, y: maxY } };
-}
+// computeExtents lives in ./extents.ts (shared with the draft store).

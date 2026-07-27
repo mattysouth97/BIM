@@ -23,7 +23,7 @@
     - `procedural-building.ts` — ProceduralBuilding class composing all generators (7 draw calls total)
   - `src/lib/cad/` — CAD footprint ingest (DXF parse, DWG→DXF WASM conversion, PDF tracing) — see `src/lib/cad/README.md`
   - `src/lib/cad/doc/` — CadDocument model: full DXF entity mapping, tessellation, snap, viewport math, footprint conversion (pure modules, meters/DXF-XY/radians)
-  - `src/components/cad-viewer/` — In-browser DWG/DXF viewer: ortho R3F scene + SVG markup overlay driven by one ViewState; layer toggles, measure, note/leader/cloud markups (idb-keyval), use-as-footprint
+  - `src/components/cad-viewer/` — In-browser DWG/DXF viewer + 2D drafting: ortho R3F scene + SVG markup overlay driven by one ViewState; layer toggles, measure, note/leader/cloud markups (idb-keyval), draw tools (line/polyline/rect/circle, grid/ortho snap, undo/redo via `cad-draft-store`), use-as-footprint
   - `src/lib/retrofit/` — Retrofit measures + DCF economic model (NPV/IRR, knapsack, 그린리모델링 presets)
   - `src/store/scenario-store.ts` — Shared CAPEX/ROI scenario state (budget, program track, building inputs)
   - `src/lib/pbr-materials.ts` — PBR texture mapping per structure type + era

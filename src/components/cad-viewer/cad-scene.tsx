@@ -5,7 +5,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { OrthographicCamera, Text } from "@react-three/drei";
+import { Grid, OrthographicCamera, Text } from "@react-three/drei";
 import type { CadDocument } from "@/lib/cad/doc/types";
 import { buildLayerGeometries } from "@/lib/cad/doc/build-geometry";
 import { aciToHex } from "@/lib/cad/doc/aci-colors";
@@ -14,11 +14,12 @@ import type { ViewState } from "@/lib/cad/doc/viewport";
 const MAX_TEXT_LABELS = 2000;
 
 export function CadScene({
-  doc, layerVisibility, view,
+  doc, layerVisibility, view, gridOn = false,
 }: {
   doc: CadDocument;
   layerVisibility: Record<string, boolean>;
   view: ViewState;
+  gridOn?: boolean;
 }) {
   const { layers, texts } = useMemo(() => buildLayerGeometries(doc), [doc]);
   // ACI 7 is "white on dark / black on light" — remap to dark gray for the
@@ -37,6 +38,19 @@ export function CadScene({
         near={0.1}
         far={100}
       />
+      {gridOn && (
+        <Grid
+          position={[view.center.x, view.center.y, -0.01]}
+          rotation={[Math.PI / 2, 0, 0]}
+          cellSize={0.5}
+          sectionSize={5}
+          cellColor="#dcdcdc"
+          sectionColor="#bdbdbd"
+          infiniteGrid
+          fadeDistance={10000}
+          followCamera={false}
+        />
+      )}
       {layers.map((lg) =>
         layerVisibility[lg.layer] === false ? null : (
           <lineSegments key={lg.layer} frustumCulled={false}>

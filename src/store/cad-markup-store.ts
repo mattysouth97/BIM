@@ -8,8 +8,11 @@
 import { create } from "zustand";
 import { get as idbGet, set as idbSet } from "idb-keyval";
 import type { Vec2 } from "@/lib/cad/doc/types";
+import type { DrawToolKind } from "@/lib/cad/doc/draw-tools";
 
-export type CadTool = "pan" | "measure" | "note" | "leader" | "cloud" | "select";
+export type CadTool =
+  | "pan" | "measure" | "note" | "leader" | "cloud" | "select"
+  | DrawToolKind;
 
 export type CadMarkup =
   | { id: string; kind: "note"; position: Vec2; text: string }

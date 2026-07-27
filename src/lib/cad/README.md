@@ -32,6 +32,18 @@ footprint path, nothing is re-centered until `to-footprint.ts`.
 | `doc/to-footprint.ts` | Closed `CadPolyline` → bbox-centered footprint polygon (same convention as `dxf-parser.ts`). |
 | `doc/hit-test.ts` | Nearest closed polyline within tolerance (viewer's "use as footprint" pick). |
 | `doc/aci-colors.ts` | AutoCAD Color Index → hex (1–9 and 250–255 exact, 10–249 generated). |
+| `doc/entity-geometry.ts` | `entityToChains` — the single tessellation authority shared by build-geometry, hit-testing, and selection highlight. |
+| `doc/grid.ts` | Grid snap (`snapToGrid`) + ortho lock (`applyOrtho`) for drafting. |
+| `doc/draw-tools.ts` | Pure draw-tool reducer (line/polyline/rect/circle) + live preview chains. Emits entity payloads sans id/layer. |
+
+## Drafting (phase 2)
+
+`src/store/cad-draft-store.ts` owns the working `CadDocument` while drawing:
+snapshot undo/redo (cap 50), active layer, per-building persistence
+(`cad-draft:{buildingPk|anon}` in idb-keyval). Mutations sync the viewer via
+`cad-viewer-store.updateDoc` (preserves layer-visibility toggles). The upload
+stage's "새 도면 그리기" opens a blank draft with no file or API key — draw a
+closed outline, select it, "바닥 외곽선으로 사용" feeds the twin + energy sim.
 
 ## Flow
 

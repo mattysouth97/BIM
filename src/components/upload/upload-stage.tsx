@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { Upload, FileBox, AlertCircle, ArrowLeft, ArrowRight, Eye } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Upload, FileBox, AlertCircle, ArrowLeft, ArrowRight, Eye, PencilRuler } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAppStore } from "@/store/app-store";
@@ -17,6 +17,7 @@ import { parseDwgFile } from "@/lib/cad/dwg-parser";
 import { mapDxfTextToDoc } from "@/lib/cad/doc/map-dxf-to-doc";
 import type { CadDocument } from "@/lib/cad/doc/types";
 import { useCadViewerStore } from "@/store/cad-viewer-store";
+import { useCadDraftStore } from "@/store/cad-draft-store";
 import { CadViewer } from "@/components/cad-viewer/cad-viewer";
 import { FootprintPreview } from "./footprint-preview";
 import { LayerPicker } from "./layer-picker";
@@ -46,11 +47,34 @@ export function UploadStage() {
   const fileNameRef = useRef<string>("drawing.dxf");
   const openViewer = useCadViewerStore((s) => s.openViewer);
   const closeViewer = useCadViewerStore((s) => s.closeViewer);
+  const startDraft = useCadDraftStore((s) => s.startDraft);
+  const newDrawing = useCadDraftStore((s) => s.newDrawing);
+  const loadDraft = useCadDraftStore((s) => s.loadDraft);
+  const [savedDraft, setSavedDraft] = useState<CadDocument | null>(null);
 
   const buildingPk = useActiveBuildingPk();
   const setOverride = useRecipeStore((s) => s.setOverride);
   const advance = useWorkflowStore((s) => s.advance);
   const retreat = useWorkflowStore((s) => s.retreat);
+
+  // useActiveBuildingPk returns "" (not undefined) before the material store
+  // hydrates — || catches both. The effect re-runs when the pk arrives, so
+  // the button flips to "continue drawing" once the real key is known.
+  const draftPk = buildingPk || "anon";
+  const draftKey = `cad-draft:${draftPk}`;
+
+  useEffect(() => {
+    let alive = true;
+    void loadDraft(draftKey).then((d) => { if (alive) setSavedDraft(d); });
+    return () => { alive = false; };
+  }, [draftKey, loadDraft]);
+
+  const openDraft = useCallback(() => {
+    if (savedDraft) startDraft(savedDraft, draftKey);
+    else newDrawing(`draft-${draftPk}`, draftKey);
+    const doc = useCadDraftStore.getState().doc;
+    if (doc) openViewer(doc);
+  }, [savedDraft, draftKey, draftPk, startDraft, newDrawing, openViewer]);
 
   const ingestDxf = useCallback(
     (text: string) => {
@@ -309,6 +333,21 @@ export function UploadStage() {
           </div>
         </div>
 
+        {/* Draw from scratch — no file, no API key needed */}
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            variant="outline"
+            data-testid="new-drawing"
+            onClick={openDraft}
+          >
+            <PencilRuler className="mr-1.5 h-4 w-4" />
+            {savedDraft
+              ? t("도면 계속 그리기", "Continue drawing", isKo)
+              : t("새 도면 그리기", "Draw new plan", isKo)}
+          </Button>
+        </div>
+
         {/* Status — parsing */}
         {status.kind === "parsing" && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -335,7 +374,12 @@ export function UploadStage() {
               type="button"
               variant="outline"
               data-testid="open-cad-viewer"
-              onClick={() => openViewer(cadDoc)}
+              onClick={() => {
+                openViewer(cadDoc);
+                // Uploaded drawings are draft-editable too (edits persist
+                // under an upload-scoped key, separate from blank drafts).
+                startDraft(cadDoc, `cad-draft:upload:${draftPk}:${cadDoc.id}`);
+              }}
             >
               <Eye className="mr-1.5 h-4 w-4" />
               {t("뷰어에서 열기", "Open in viewer", isKo)}

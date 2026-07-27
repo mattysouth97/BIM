@@ -1,7 +1,8 @@
 // src/components/cad-viewer/markup-overlay.tsx
-// Screen-space SVG overlay for markups + measure + select. Renders from the
-// same ViewState as the camera, so it can never drift from the drawing.
-// Alt+click a markup to delete it.
+// Screen-space SVG overlay: markups, measure, selection, and the drafting
+// tools' click surface + live preview. Renders from the same ViewState as
+// the camera, so it can never drift from the drawing.
+// Alt+click a markup glyph to delete it.
 
 "use client";
 
@@ -10,13 +11,18 @@ import type { CadDocument, Vec2 } from "@/lib/cad/doc/types";
 import type { SnapIndex } from "@/lib/cad/doc/snap";
 import { findSnap } from "@/lib/cad/doc/snap";
 import { screenToWorld, worldToScreen, type ViewState } from "@/lib/cad/doc/viewport";
-import { findClosedPolylineAt } from "@/lib/cad/doc/hit-test";
+import { findClosedPolylineAt, findEntityAt } from "@/lib/cad/doc/hit-test";
 import { polylineToFootprint } from "@/lib/cad/doc/to-footprint";
+import { snapToGrid, applyOrtho } from "@/lib/cad/doc/grid";
+import {
+  previewChains, type DrawEvent, type DrawState,
+} from "@/lib/cad/doc/draw-tools";
 import { useCadMarkupStore, type CadMarkup } from "@/store/cad-markup-store";
 import type { Polygon2D } from "@/lib/cad/dxf-parser";
 
 const SNAP_PX = 12;
 const HIT_PX = 8;
+export const GRID_STEP_M = 0.5;
 
 export interface FootprintPick {
   polygon: Polygon2D; areaSqm: number; layer: string;
@@ -24,6 +30,7 @@ export interface FootprintPick {
 
 export function MarkupOverlay({
   doc, view, size, snapIndex, isKo, onFootprintPick,
+  drawState, onDrawEvent, gridOn, selectedChains, onSelectEntity,
 }: {
   doc: CadDocument;
   view: ViewState;
@@ -31,21 +38,32 @@ export function MarkupOverlay({
   snapIndex: SnapIndex;
   isKo: boolean;
   onFootprintPick: (pick: FootprintPick) => void;
+  drawState: DrawState | null;
+  onDrawEvent: (ev: DrawEvent) => void;
+  gridOn: boolean;
+  selectedChains: Vec2[][];
+  onSelectEntity: (id: string | null) => void;
 }) {
   const tool = useCadMarkupStore((s) => s.tool);
   const markups = useCadMarkupStore((s) => s.markups);
   const addMarkup = useCadMarkupStore((s) => s.addMarkup);
   const removeMarkup = useCadMarkupStore((s) => s.removeMarkup);
-  const [pending, setPending] = useState<Vec2 | null>(null); // first click of 2-click tools
+  const [pending, setPending] = useState<Vec2 | null>(null); // first click of 2-click markup tools
   const [hover, setHover] = useState<Vec2 | null>(null);
 
   const toWorld = useCallback((e: React.MouseEvent<SVGSVGElement>): Vec2 => {
     const r = e.currentTarget.getBoundingClientRect();
     const px = { x: e.clientX - r.left, y: e.clientY - r.top };
-    const w = screenToWorld(px, view, size.w, size.h);
+    let w = screenToWorld(px, view, size.w, size.h);
     const snap = findSnap(snapIndex, w, SNAP_PX * view.scale);
-    return snap ? snap.point : w;
-  }, [view, size.w, size.h, snapIndex]);
+    if (snap) return snap.point;
+    if (drawState) {
+      const anchor = drawState.points[drawState.points.length - 1];
+      if (e.shiftKey && anchor) w = applyOrtho(anchor, w);
+      if (gridOn) w = snapToGrid(w, GRID_STEP_M);
+    }
+    return w;
+  }, [view, size.w, size.h, snapIndex, drawState, gridOn]);
 
   const S = useCallback(
     (p: Vec2) => worldToScreen(p, view, size.w, size.h),
@@ -59,8 +77,16 @@ export function MarkupOverlay({
     const w = toWorld(e);
     const id = `m${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
 
+    if (drawState) {
+      onDrawEvent({ type: "click", point: w });
+      return;
+    }
     if (tool === "select") {
-      const hitPl = findClosedPolylineAt(doc, w, HIT_PX * view.scale);
+      const entity = findEntityAt(doc, w, HIT_PX * view.scale);
+      onSelectEntity(entity?.id ?? null);
+      const hitPl = entity?.kind === "polyline" && entity.closed
+        ? entity
+        : findClosedPolylineAt(doc, w, HIT_PX * view.scale);
       if (hitPl) {
         const fp = polylineToFootprint(hitPl);
         if (fp) onFootprintPick({ ...fp, layer: hitPl.layer });
@@ -86,7 +112,13 @@ export function MarkupOverlay({
       }
       setPending(null);
     }
-  }, [tool, toWorld, pending, doc, view.scale, addMarkup, onFootprintPick, isKo]);
+  }, [
+    tool, toWorld, pending, doc, view.scale, addMarkup,
+    onFootprintPick, isKo, drawState, onDrawEvent, onSelectEntity,
+  ]);
+
+  const chainToPath = (chain: Vec2[]) =>
+    chain.map((p, i) => `${i === 0 ? "M" : "L"}${S(p).x.toFixed(1)},${S(p).y.toFixed(1)}`).join(" ");
 
   return (
     <svg
@@ -96,19 +128,31 @@ export function MarkupOverlay({
       onMouseMove={(e) => setHover(toWorld(e))}
       data-testid="cad-markup-overlay"
     >
+      {/* selection highlight */}
+      {selectedChains.map((chain, i) => (
+        <path key={`sel${i}`} d={chainToPath(chain)} fill="none"
+          stroke="#f97316" strokeWidth={2.5} opacity={0.9} />
+      ))}
+      {/* draw preview */}
+      {drawState && hover &&
+        previewChains(drawState, hover).map((chain, i) => (
+          <path key={`pv${i}`} d={chainToPath(chain)} fill="none"
+            stroke="#16a34a" strokeWidth={1.5} strokeDasharray="5 4" />
+        ))}
       {markups.map((m) => (
         <MarkupGlyph key={m.id} m={m} S={S} onDelete={() => removeMarkup(m.id)} />
       ))}
-      {/* live preview for 2-click tools */}
+      {/* live preview for 2-click markup tools */}
       {pending && hover && (
         <line
           x1={S(pending).x} y1={S(pending).y} x2={S(hover).x} y2={S(hover).y}
           stroke="#f59e0b" strokeDasharray="4 3"
         />
       )}
-      {/* snap indicator */}
+      {/* cursor/snap indicator */}
       {hover && tool !== "pan" && (
-        <circle cx={S(hover).x} cy={S(hover).y} r={4} fill="none" stroke="#f59e0b" />
+        <circle cx={S(hover).x} cy={S(hover).y} r={4} fill="none"
+          stroke={drawState ? "#16a34a" : "#f59e0b"} />
       )}
     </svg>
   );
