@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, lazy, Suspense } from "react";
 import Link from "next/link";
-import { Building2, AlertTriangle, Box, MapPin, Search, Download, LayoutGrid, X } from "lucide-react";
+import { Building2, AlertTriangle, Box, MapPin, Search, Download, LayoutGrid, X, PencilRuler } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAppStore } from "@/store/app-store";
+import { useWorkflowStore } from "@/store/workflow-store";
 import { useHydration } from "@/hooks/use-hydration";
 import { useBuildingSearch } from "@/hooks/use-building-search";
 import { useCampusBuildings } from "@/hooks/use-campus-buildings";
@@ -255,18 +256,32 @@ export default function Home() {
               : "Look up building ledger records across Korea using the data.go.kr API."}
           </p>
 
-          {/* Demo entry — always available, no API key required */}
+          {/* Entry modules — always available, no API key required */}
           <div className="mt-2 flex flex-col items-center gap-2">
-            <Button asChild size="lg" variant="outline" className="gap-2">
-              <Link href={`/building/${DEMO_BUILDING_ID}`}>
-                <Box className="h-4 w-4" />
-                {isKo ? "데모 건물 둘러보기" : "Explore the demo building"}
-              </Link>
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Button asChild size="lg" variant="outline" className="gap-2">
+                <Link href={`/building/${DEMO_BUILDING_ID}`}>
+                  <Box className="h-4 w-4" />
+                  {isKo ? "데모 건물 둘러보기" : "Explore the demo building"}
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="gap-2" data-testid="landing-cad-start">
+                <Link
+                  href={`/building/${DEMO_BUILDING_ID}`}
+                  onClick={() => {
+                    // Land directly on the 도면 업로드 stage (persisted store).
+                    useWorkflowStore.getState().setStage("upload");
+                  }}
+                >
+                  <PencilRuler className="h-4 w-4" />
+                  {isKo ? "CAD 도면으로 시작하기" : "Start from a CAD drawing"}
+                </Link>
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">
               {isKo
-                ? "API 키 없이 3D 뷰어와 에너지·투자 분석을 바로 체험할 수 있습니다."
-                : "Try the 3D viewer and the energy/investment analysis — no API key needed."}
+                ? "API 키 없이 3D 뷰어와 에너지·투자 분석을 바로 체험하거나, DXF·DWG 업로드 또는 브라우저에서 직접 도면을 그려 시작하세요."
+                : "No API key needed — explore the 3D viewer and energy/investment analysis, or start by uploading a DXF/DWG or drawing a plan right in the browser."}
             </p>
           </div>
         </div>
