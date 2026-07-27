@@ -11,6 +11,7 @@ import {
   generateRoof,
   generateRoofFurniture,
 } from "../structure-generator";
+import { generateFacade } from "../facade-generator";
 import { pointInRing } from "@/lib/gis/ring-utils";
 import {
   __injectEquipmentAssetForTest,
@@ -163,6 +164,63 @@ describe("generateColumns with a footprint polygon", () => {
         `column ${i} at (${p.x}, ${p.z}) is outside the ring`,
       ).toBe(true);
     }
+  });
+});
+
+describe("generateFacade with a footprint polygon", () => {
+  it("keeps every glass/panel/mullion instance on the ring — nothing floats off the walls", () => {
+    const group = generateFacade(makeRecipe(true));
+    group.updateMatrixWorld(true);
+
+    const m4 = new THREE.Matrix4();
+    const p = new THREE.Vector3();
+    let checked = 0;
+    group.traverse((o) => {
+      if (!(o as THREE.InstancedMesh).isInstancedMesh) return;
+      const im = o as THREE.InstancedMesh;
+      for (let i = 0; i < im.count; i++) {
+        im.getMatrixAt(i, m4);
+        p.setFromMatrixPosition(m4).applyMatrix4(im.matrixWorld);
+        checked++;
+        // Instances sit on wall centre lines just inside the ring; the old
+        // perpendicular-yaw bug threw them 10-15 m past the bbox.
+        expect(
+          Math.abs(p.x),
+          `${im.userData.type} instance ${i} at x=${p.x.toFixed(1)}`,
+        ).toBeLessThanOrEqual(10 + 1);
+        expect(
+          Math.abs(p.z),
+          `${im.userData.type} instance ${i} at z=${p.z.toFixed(1)}`,
+        ).toBeLessThanOrEqual(8 + 1);
+      }
+    });
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  it("faces the glass outward along each edge (normal leaves the ring)", () => {
+    const group = generateFacade(makeRecipe(true));
+    group.updateMatrixWorld(true);
+
+    const m4 = new THREE.Matrix4();
+    const p = new THREE.Vector3();
+    const q = new THREE.Quaternion();
+    const s = new THREE.Vector3();
+    const normal = new THREE.Vector3();
+    group.traverse((o) => {
+      if (!(o as THREE.InstancedMesh).isInstancedMesh) return;
+      const im = o as THREE.InstancedMesh;
+      if (im.userData.type !== "glass") return;
+      for (let i = 0; i < im.count; i++) {
+        im.getMatrixAt(i, m4);
+        m4.decompose(p, q, s);
+        normal.set(0, 0, 1).applyQuaternion(q);
+        const probe = [p.x + normal.x * 1.5, p.z + normal.z * 1.5] as const;
+        expect(
+          pointInRing(probe[0], probe[1], L_RING),
+          `glass ${i} at (${p.x.toFixed(1)}, ${p.z.toFixed(1)}) faces inward`,
+        ).toBe(false);
+      }
+    });
   });
 });
 
