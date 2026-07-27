@@ -126,13 +126,14 @@ export function ReportStage() {
     if (!metrics || !hasActual || actualData.length === 0) return undefined;
     const mostRecent = actualData.reduce((a, b) => (b.year > a.year ? b : a));
     if (mostRecent.total_kwh <= 0) return undefined;
+    // Whole-building predicted stack vs whole-building meter total.
     return calibrateEnergy(
       {
         heating: metrics.demand.heatingDemand,
         cooling: metrics.demand.coolingDemand,
-        lighting: metrics.demand.totalDemand * 0.15,
-        dhw: metrics.demand.totalDemand * 0.1,
-        total: metrics.demand.totalDemand,
+        lighting: metrics.breakdown.lighting,
+        dhw: metrics.breakdown.dhw,
+        total: metrics.siteTotal,
       },
       {
         electric_kwh: mostRecent.electric_kwh ?? 0,
@@ -145,9 +146,11 @@ export function ReportStage() {
   // ── Benchmark (optional) ─────────────────────────────────────────────────
   const benchmark = useMemo(() => {
     if (!metrics) return undefined;
+    // Residential = LOW density (0.04 p/m²); benchmark DB is PRIMARY energy;
+    // pre-1990 maps to the nearest era with data (1990s).
     const useType =
       materials?.occupancy?.occupancyDensity !== undefined &&
-      materials.occupancy.occupancyDensity > 0.1
+      materials.occupancy.occupancyDensity < 0.07
         ? "residential"
         : "office";
     const codeYear = materials?.codeYear ?? 2000;
@@ -158,10 +161,8 @@ export function ReportStage() {
           ? "2010s"
           : codeYear >= 2000
             ? "2000s"
-            : codeYear >= 1990
-              ? "1990s"
-              : "pre-1990";
-    return compareToBenchmark(metrics.demand.demandPerSqm, useType, era);
+            : "1990s";
+    return compareToBenchmark(metrics.primaryPerSqm, useType, era);
   }, [metrics, materials]);
 
   // ── Green Certification ──────────────────────────────────────────────────
@@ -175,7 +176,7 @@ export function ReportStage() {
       windowUValue: materials.envelope.windows.uValue,
       roofUValue: materials.envelope.roof.uValue,
       energyGrade: metrics.grade,
-      primaryEnergyDemand: metrics.demand.demandPerSqm,
+      primaryEnergyDemand: metrics.primaryPerSqm,
       renewableCapacity: materials.renewable?.solarPV?.capacity ?? 0,
       windowToWallRatio: materials.envelope.windows.windowToWallRatio?.S ?? 0.3,
       structureCode: undefined,
@@ -193,12 +194,21 @@ export function ReportStage() {
     if (totalArea <= 0) return undefined;
     const isRes =
       materials?.occupancy?.occupancyDensity !== undefined &&
-      materials.occupancy.occupancyDensity > 0.1;
+      materials.occupancy.occupancyDensity < 0.07;
+    const heatingFuel = materials.hvac.heating.fuelType;
+    const fuelLeg = metrics.demand.heatingDemand + metrics.breakdown.dhw;
+    const electricLeg =
+      metrics.demand.coolingDemand +
+      metrics.breakdown.lighting +
+      metrics.breakdown.plugLoads;
     return calculateEfficiencyRating(
       {
-        electric: metrics.demand.coolingDemand + metrics.demand.totalDemand * 0.15,
-        gas: metrics.demand.heatingDemand + metrics.demand.totalDemand * 0.1,
-        districtHeating: 0,
+        electric:
+          heatingFuel === "electric" || heatingFuel === "heat-pump"
+            ? electricLeg + fuelLeg
+            : electricLeg,
+        gas: heatingFuel === "gas" || heatingFuel === "oil" ? fuelLeg : 0,
+        districtHeating: heatingFuel === "district-heat" ? fuelLeg : 0,
         districtCooling: 0,
         renewable: 0,
       },

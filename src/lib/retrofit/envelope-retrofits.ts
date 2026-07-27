@@ -14,6 +14,17 @@ export const KOREAN_2020_TARGET_U_VALUES = {
 } as const;
 
 /**
+ * Ground-contact heat-loss reduction factor for floor measures.
+ *
+ * Ground-floor losses are driven by the (much warmer, seasonally damped)
+ * ground temperature, not outdoor air — ISO 13370 steady-state ground heat
+ * transfer yields roughly half the loss implied by full outdoor-air HDD for
+ * typical slab-on-ground geometries. Applied to floor-measure energy savings
+ * (audit finding #5).
+ */
+const GROUND_HDD_REDUCTION_FACTOR = 0.5;
+
+/**
  * Derive priority from simple payback period.
  * < 5 years = high, 5–10 years = medium, > 10 years = low
  */
@@ -50,7 +61,6 @@ export function generateEnvelopeRetrofits(
   }
 
   // CO2_FACTORS are in tCO2/MWh — convert to tCO2/kWh by dividing by 1000
-  const co2PerKwhElec = CO2_FACTORS.electricity / 1000;
   const co2PerKwhGas = CO2_FACTORS.gas / 1000;
 
   // --- Wall insulation ---
@@ -97,8 +107,10 @@ export function generateEnvelopeRetrofits(
   if (currentUValues.window > targetUValues.window) {
     const energySaving = calcEnergySaving(currentUValues.window, targetUValues.window, areas.window);
     const totalCost = areas.window * RETROFIT_COSTS.windowReplacement.perM2;
-    // Windows affect both heating and cooling; use electricity price as combined proxy
-    const annualCostSaving = energySaving * ENERGY_PRICES.electricity;
+    // The saving is HDD-derived HEATING energy, so it displaces gas — price
+    // at the gas tariff (audit finding #3; the old electricity proxy
+    // overstated the saving by ~1.9×).
+    const annualCostSaving = energySaving * ENERGY_PRICES.gas;
     const simplePayback = annualCostSaving > 0 ? totalCost / annualCostSaving : Infinity;
 
     measures.push({
@@ -109,7 +121,8 @@ export function generateEnvelopeRetrofits(
       estimatedCost: totalCost,
       annualEnergySaving: energySaving,
       annualCostSaving,
-      co2Reduction: energySaving * co2PerKwhElec,
+      // Gas factor, matching the heating fuel (audit finding #4).
+      co2Reduction: energySaving * co2PerKwhGas,
       paybackYears: simplePayback,
     });
   }
@@ -117,7 +130,9 @@ export function generateEnvelopeRetrofits(
   // --- Floor insulation ---
   const currentFloorU = currentUValues.floor ?? 0;
   if (currentFloorU > targetUValues.floor) {
-    const energySaving = calcEnergySaving(currentFloorU, targetUValues.floor, areas.floor);
+    const energySaving =
+      GROUND_HDD_REDUCTION_FACTOR *
+      calcEnergySaving(currentFloorU, targetUValues.floor, areas.floor);
     const totalCost = areas.floor * RETROFIT_COSTS.floorInsulation.perM2;
     const annualCostSaving = energySaving * ENERGY_PRICES.gas;
     const simplePayback = annualCostSaving > 0 ? totalCost / annualCostSaving : Infinity;

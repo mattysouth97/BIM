@@ -30,6 +30,13 @@ export interface RetrofitMeasure {
    */
   fuel?: Fuel;
   /**
+   * Mutual-exclusion group. Measures sharing the same group key are
+   * alternatives (e.g. boiler upgrade vs heat-pump conversion both replace
+   * the heating plant) — the budget knapsack selects AT MOST ONE per group.
+   * Absent = independently selectable.
+   */
+  exclusiveGroup?: string;
+  /**
    * Discounted-cash-flow enrichment. Populated by `assembleRetrofitReport`
    * when called with `EconomicAssumptions`. Absent on raw measures emitted
    * by the per-category generators.

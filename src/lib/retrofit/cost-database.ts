@@ -61,10 +61,12 @@ export const DEFAULT_ECONOMIC_ASSUMPTIONS: EconomicAssumptions = {
 //                         사업 program and NOT subsidized here by default.
 //
 //   민간건축물 (private): interest-rate buy-down on the retrofit loan, NOT
-//                         a CAPEX grant. Drops the effective discount rate
-//                         on the financed portion via WACC. Default
-//                         debtFraction = 0.7 (typical Korean retrofit LTV).
-//                         Tier 1 base = 4.5pp; Tier 3 high-perf = 5.5pp.
+//                         a CAPEX grant. Valued as the PV of interest saved
+//                         on a 5-year equal-principal loan (additive
+//                         `subsidyValue`; discounting stays at the base
+//                         rate). Default debtFraction = 0.7 (typical Korean
+//                         retrofit LTV). Tier 1 base = 4.5pp; Tier 3
+//                         high-perf = 5.5pp.
 //
 // 2026 program parameters (program restarted in March 2026 after 2024 hiatus).
 // ───────────────────────────────────────────────────────────────────────────
@@ -102,11 +104,10 @@ export const KOREAN_GR_PUBLIC_LOCAL: EconomicAssumptions = {
 /**
  * 민간건축물 그린리모델링 — Tier 1 base interest support (4.5pp on 70% LTV).
  *
- * Effective WACC ≈ 0.7 × max(0, 0.055 − 0.045) + 0.3 × 0.05
- *                ≈ 0.007 + 0.015 = 2.2%.
- *
  * Korean commercial retrofit loans run ~5.5% in 2025–2026; 4.5pp support
- * brings the financed-portion rate to ~1%. Equity portion still uses 5%.
+ * brings the financed-portion rate to ~1% during the 5-year support period.
+ * Valued as `subsidyValue` (PV of interest saved on the amortizing loan);
+ * NPV/payback still discount at the 5% base rate.
  */
 export const KOREAN_GR_PRIVATE_BASE: EconomicAssumptions = {
   discountRate: 0.05,
@@ -142,8 +143,9 @@ export const KOREAN_GR_PRIVATE_TIER2: EconomicAssumptions = {
  * (5.5pp on 70% LTV). Triggered by ≥30% energy improvement OR vulnerable
  * household status (low-income / multi-child / elderly / newlywed).
  *
- * Effective WACC ≈ 0.7 × 0 + 0.3 × 0.05 = 1.5% — the financed portion
- * effectively becomes interest-free.
+ * 5.5pp fully offsets the 5.5% loan rate — the financed portion is
+ * interest-free for the 5-year support period (largest `subsidyValue`
+ * of the three private tiers).
  */
 export const KOREAN_GR_PRIVATE_HIGH_PERF: EconomicAssumptions = {
   discountRate: 0.05,

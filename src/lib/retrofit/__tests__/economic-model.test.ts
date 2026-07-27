@@ -5,12 +5,14 @@ import {
   computeNpv,
   computeIrr,
   computeDiscountedPayback,
+  computeInterestSavedSchedule,
   projectCashFlow,
   computeFinancials,
   selectMeasuresForBudget,
   effectiveDiscountRate,
   type EconomicAssumptions,
 } from "../economic-model";
+import { generateHvacRetrofits } from "../hvac-retrofits";
 import {
   KOREAN_GR_PUBLIC_SEOUL_OR_CENTRAL,
   KOREAN_GR_PUBLIC_LOCAL,
@@ -97,6 +99,13 @@ describe("computeIrr", () => {
     expect(irr!).toBeCloseTo(0.151, 2);
   });
 
+  it("returns the clamped sentinel 5.0 when the IRR exceeds the bracket ceiling (audit finding #11)", () => {
+    // Outflow 1, single inflow 1000 → true IRR = 999 (99,900%), far beyond
+    // the widened bracket ceiling of 5.0. The old code returned null (looked
+    // like "no IRR"); the fix returns the 5.0 sentinel.
+    expect(computeIrr(1, [1000])).toBe(5.0);
+  });
+
   it("makes NPV ≈ 0 at the IRR rate (relative to outflow)", () => {
     const outflow = 5_000_000;
     const cashFlow = new Array(15).fill(700_000);
@@ -162,6 +171,16 @@ describe("projectCashFlow", () => {
     expect(cashFlow[0]).toBeCloseTo(1_000_000, 0);
     expect(cashFlow[1]).toBeCloseTo(1_050_000, 0);
     expect(cashFlow[19]).toBeCloseTo(1_000_000 * Math.pow(1.05, 19), 0);
+  });
+
+  it("maps window replacement to GAS escalation (audit finding #3)", () => {
+    // Window savings are HDD-derived heating (gas). The old resolveFuel
+    // special-cased the window measure to electricity (5% escalation);
+    // corrected to gas (3%).
+    const m = makeMeasure({ id: "envelope-window-replacement", annualCostSaving: 1_000_000 });
+    const { cashFlow, resolvedFuel } = projectCashFlow(m, ASSUMPTIONS);
+    expect(resolvedFuel).toBe("gas");
+    expect(cashFlow[1]).toBeCloseTo(1_030_000, 0); // 3%/yr, not 5%/yr
   });
 
   it("respects an explicit `fuel` override on the measure", () => {
@@ -284,7 +303,9 @@ describe("selectMeasuresForBudget", () => {
 });
 
 // ──────────────────────────────────────────────────────────────────────────
-// D₂: effectiveDiscountRate (WACC) + financingMix
+// Audit finding #7: interest subsidy is an additive PV term, NOT a blended
+// WACC. All cash flows discount at the BASE rate; the 이자지원 buy-down is
+// the present value of interest saved on a 5-year equal-principal loan.
 // ──────────────────────────────────────────────────────────────────────────
 
 describe("effectiveDiscountRate", () => {
@@ -292,38 +313,121 @@ describe("effectiveDiscountRate", () => {
     expect(effectiveDiscountRate(ASSUMPTIONS)).toBeCloseTo(0.05, 9);
   });
 
-  it("returns the raw discountRate when debtFraction is 0", () => {
-    const a: EconomicAssumptions = {
-      ...ASSUMPTIONS,
-      financingMix: { debtFraction: 0, loanRatePreSubsidy: 0.055, interestSupportPp: 0.045 },
-    };
-    expect(effectiveDiscountRate(a)).toBeCloseTo(0.05, 9);
+  it("returns the BASE discountRate even with a financingMix (audit finding #7)", () => {
+    // Corrected: the old model returned a blended WACC (2.2% for private-base,
+    // 1.5% for high-perf), permanently lowering the discount rate over all 20
+    // years. Interest support only lasts the loan term — it is now modeled as
+    // an additive subsidyValue PV, so the discount rate stays at 5%.
+    expect(effectiveDiscountRate(KOREAN_GR_PRIVATE_BASE)).toBeCloseTo(0.05, 9);
+    expect(effectiveDiscountRate(KOREAN_GR_PRIVATE_HIGH_PERF)).toBeCloseTo(0.05, 9);
+  });
+});
+
+describe("computeInterestSavedSchedule (audit finding #7)", () => {
+  // Loan principal = 0.7 × 100,000,000 = 70,000,000; equal-principal over
+  // 5 years → outstanding balances at the start of years 1..5:
+  //   70M, 56M, 42M, 28M, 14M
+  // Interest saved at 4.5pp: 3.15M, 2.52M, 1.89M, 1.26M, 0.63M, then 0.
+  it("computes the equal-principal amortization interest-saved schedule", () => {
+    const schedule = computeInterestSavedSchedule(
+      100_000_000,
+      { debtFraction: 0.7, loanRatePreSubsidy: 0.055, interestSupportPp: 0.045 },
+      20,
+    );
+    expect(schedule).toHaveLength(20);
+    expect(schedule[0]).toBeCloseTo(3_150_000, 0);
+    expect(schedule[1]).toBeCloseTo(2_520_000, 0);
+    expect(schedule[2]).toBeCloseTo(1_890_000, 0);
+    expect(schedule[3]).toBeCloseTo(1_260_000, 0);
+    expect(schedule[4]).toBeCloseTo(630_000, 0);
+    expect(schedule[5]).toBe(0);
+    expect(schedule[19]).toBe(0);
   });
 
-  it("computes WACC correctly for the 그린리모델링 private-base preset", () => {
-    // 0.7 × max(0, 0.055 − 0.045) + 0.3 × 0.05 = 0.7 × 0.01 + 0.015 = 0.022
-    expect(effectiveDiscountRate(KOREAN_GR_PRIVATE_BASE)).toBeCloseTo(0.022, 6);
+  it("respects the loanCapKrw program cap", () => {
+    // Cap 50M < 0.7 × 100M = 70M → principal 50M → year-1 saved 2.25M.
+    const schedule = computeInterestSavedSchedule(
+      100_000_000,
+      {
+        debtFraction: 0.7,
+        loanRatePreSubsidy: 0.055,
+        interestSupportPp: 0.045,
+        loanCapKrw: 50_000_000,
+      },
+      20,
+    );
+    expect(schedule[0]).toBeCloseTo(2_250_000, 0);
   });
 
-  it("floors the loan portion at 0 when interestSupport ≥ loanRate (private high-perf)", () => {
-    // 0.7 × max(0, 0.055 − 0.055) + 0.3 × 0.05 = 0 + 0.015 = 0.015
-    expect(effectiveDiscountRate(KOREAN_GR_PRIVATE_HIGH_PERF)).toBeCloseTo(0.015, 6);
+  it("caps the buy-down at the loan rate (cannot save more interest than paid)", () => {
+    // 6.5pp support on a 5.5% loan saves at most 5.5pp.
+    const schedule = computeInterestSavedSchedule(
+      100_000_000,
+      { debtFraction: 1, loanRatePreSubsidy: 0.055, interestSupportPp: 0.065 },
+      20,
+    );
+    expect(schedule[0]).toBeCloseTo(100_000_000 * 0.055, 0);
+  });
+});
+
+describe("computeFinancials — subsidyValue (audit finding #7)", () => {
+  const ENVELOPE_100M = makeMeasure({
+    id: "envelope-wall-insulation",
+    category: "envelope",
+    estimatedCost: 100_000_000,
+    annualCostSaving: 5_000_000,
   });
 
-  it("clamps debtFraction to [0, 1]", () => {
-    const over: EconomicAssumptions = {
-      ...ASSUMPTIONS,
-      financingMix: { debtFraction: 1.5, loanRatePreSubsidy: 0.055, interestSupportPp: 0.045 },
-    };
-    // Treated as 100% debt: max(0, 0.055 − 0.045) = 0.01
-    expect(effectiveDiscountRate(over)).toBeCloseTo(0.01, 6);
+  it("subsidyValue is 0 without a financingMix", () => {
+    const fin = computeFinancials(ENVELOPE_100M, ASSUMPTIONS);
+    expect(fin.subsidyValue).toBe(0);
+  });
 
-    const under: EconomicAssumptions = {
-      ...ASSUMPTIONS,
-      financingMix: { debtFraction: -0.5, loanRatePreSubsidy: 0.055, interestSupportPp: 0.045 },
-    };
-    // Treated as 0% debt: pure equity discount
-    expect(effectiveDiscountRate(under)).toBeCloseTo(0.05, 6);
+  it("private-base subsidyValue = PV of interest saved ≈ ₩8,448,594", () => {
+    // Hand calc at 5% base rate (schedule above):
+    //   3,150,000/1.05   = 3,000,000.00
+    //   2,520,000/1.05^2 = 2,285,714.29
+    //   1,890,000/1.05^3 = 1,632,653.06
+    //   1,260,000/1.05^4 = 1,036,605.12
+    //     630,000/1.05^5 =   493,621.48
+    //   Σ = 8,448,593.95
+    const fin = computeFinancials(ENVELOPE_100M, KOREAN_GR_PRIVATE_BASE);
+    expect(fin.subsidyValue).toBeCloseTo(8_448_593.95, 0);
+  });
+
+  it("npv = base-rate NPV + subsidyValue", () => {
+    const withFin = computeFinancials(ENVELOPE_100M, KOREAN_GR_PRIVATE_BASE);
+    const equityOnly = computeFinancials(ENVELOPE_100M, ASSUMPTIONS);
+    expect(withFin.npv).toBeCloseTo(equityOnly.npv + withFin.subsidyValue, 0);
+  });
+
+  it("tier subsidyValues scale with the support pp (4.0 < 4.5 < 5.5)", () => {
+    // Linear in pp: base × 8/9 = 7,509,861.29; base × 11/9 = 10,326,059.27
+    const base = computeFinancials(ENVELOPE_100M, KOREAN_GR_PRIVATE_BASE);
+    const tier2 = computeFinancials(ENVELOPE_100M, KOREAN_GR_PRIVATE_TIER2);
+    const high = computeFinancials(ENVELOPE_100M, KOREAN_GR_PRIVATE_HIGH_PERF);
+    expect(tier2.subsidyValue).toBeCloseTo(7_509_861.29, 0);
+    expect(high.subsidyValue).toBeCloseTo(10_326_059.27, 0);
+    expect(tier2.subsidyValue).toBeLessThan(base.subsidyValue);
+    expect(base.subsidyValue).toBeLessThan(high.subsidyValue);
+  });
+
+  it("IRR and discounted payback include the yearly interest-saved amounts", () => {
+    // A measure that pays back at the base rate: 100M capex, 8M/yr gas-side
+    // saving. Adding interest-saved inflows in years 1–5 must raise IRR and
+    // shorten the discounted payback.
+    const payer = makeMeasure({
+      id: "envelope-wall-insulation",
+      category: "envelope",
+      estimatedCost: 100_000_000,
+      annualCostSaving: 8_000_000,
+    });
+    const noFin = computeFinancials(payer, ASSUMPTIONS);
+    const withFin = computeFinancials(payer, KOREAN_GR_PRIVATE_BASE);
+    expect(noFin.irr).not.toBeNull();
+    expect(withFin.irr).not.toBeNull();
+    expect(withFin.irr!).toBeGreaterThan(noFin.irr!);
+    expect(withFin.discountedPayback).toBeLessThan(noFin.discountedPayback);
   });
 });
 
@@ -399,16 +503,18 @@ describe("그린리모델링 presets (KOREAN_GR_*)", () => {
     expect(fin.effectiveCapex).toBeCloseTo(50_000_000, 0); // unchanged
   });
 
-  it("private-base reduces effective discount rate to 2.2%, no CAPEX subsidy", () => {
+  it("private-base adds an interest-subsidy PV, no CAPEX subsidy", () => {
+    // Audit finding #7: interest support no longer lowers the discount rate;
+    // it adds a positive subsidyValue on top of the base-rate NPV.
     const fin = computeFinancials(ENVELOPE, KOREAN_GR_PRIVATE_BASE);
     expect(fin.effectiveCapex).toBeCloseTo(100_000_000, 0); // no subsidy
-    // NPV at 2.2% should be HIGHER than at 5% (the equity-only rate).
+    expect(fin.subsidyValue).toBeGreaterThan(0);
     const equityOnly = computeFinancials(ENVELOPE, ASSUMPTIONS);
     expect(fin.npv).toBeGreaterThan(equityOnly.npv);
   });
 
   it("private-high-perf produces strictly higher NPV than private-base", () => {
-    // High-perf zeroes out the financed-portion rate; base leaves a 1% residual.
+    // 5.5pp support saves more interest each year than 4.5pp.
     const base = computeFinancials(ENVELOPE, KOREAN_GR_PRIVATE_BASE);
     const high = computeFinancials(ENVELOPE, KOREAN_GR_PRIVATE_HIGH_PERF);
     expect(high.npv).toBeGreaterThan(base.npv);
@@ -452,18 +558,131 @@ describe("suggestPrivateTrack (D₂.5)", () => {
 });
 
 describe("KOREAN_GR_PRIVATE_TIER2 preset", () => {
-  it("computes WACC of 2.55% (4.0pp support on 70% LTV)", () => {
-    // 0.7 × max(0, 0.055 − 0.040) + 0.3 × 0.05 = 0.0105 + 0.015
-    expect(effectiveDiscountRate(KOREAN_GR_PRIVATE_TIER2)).toBeCloseTo(0.0255, 6);
+  // Audit finding #7: tiers are now compared via subsidyValue (PV of interest
+  // saved), not via a blended discount rate — the old test pinned WACC 2.55%.
+  const ENVELOPE = makeMeasure({
+    id: "envelope-wall-insulation",
+    category: "envelope",
+    estimatedCost: 100_000_000,
+    annualCostSaving: 5_000_000,
   });
 
-  it("sits between base (4.5pp) and high-perf (5.5pp) in effective rate", () => {
-    const base = effectiveDiscountRate(KOREAN_GR_PRIVATE_BASE);
-    const tier2 = effectiveDiscountRate(KOREAN_GR_PRIVATE_TIER2);
-    const high = effectiveDiscountRate(KOREAN_GR_PRIVATE_HIGH_PERF);
-    // Higher pp support → lower effective rate; Tier 2 (4.0pp) has the
-    // HIGHEST rate of the three per the 2026 program table.
-    expect(high).toBeLessThan(base);
-    expect(base).toBeLessThan(tier2);
+  it("discounts at the base rate like every other preset", () => {
+    expect(effectiveDiscountRate(KOREAN_GR_PRIVATE_TIER2)).toBeCloseTo(0.05, 9);
+  });
+
+  it("has the SMALLEST subsidyValue of the three private tiers (4.0pp)", () => {
+    const base = computeFinancials(ENVELOPE, KOREAN_GR_PRIVATE_BASE);
+    const tier2 = computeFinancials(ENVELOPE, KOREAN_GR_PRIVATE_TIER2);
+    const high = computeFinancials(ENVELOPE, KOREAN_GR_PRIVATE_HIGH_PERF);
+    // Per the 2026 program table Tier 2 (4.0pp) is below the base tier (4.5pp).
+    expect(tier2.subsidyValue).toBeLessThan(base.subsidyValue);
+    expect(base.subsidyValue).toBeLessThan(high.subsidyValue);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────
+// Audit finding #8: exclusiveGroup — grouped knapsack
+// ──────────────────────────────────────────────────────────────────────────
+
+describe("selectMeasuresForBudget — exclusiveGroup (audit finding #8)", () => {
+  it("selects at most one measure per group even when the budget allows both", () => {
+    // Both fit within 100M; heat pump has the higher NPV
+    // (saving 7.54M/yr vs 2.11M/yr at similar CAPEX) and must win.
+    const boiler = makeMeasure({
+      id: "hvac-boiler-upgrade",
+      category: "hvac",
+      exclusiveGroup: "heating-plant",
+      estimatedCost: 2_500_000,
+      annualCostSaving: 2_105_263,
+    });
+    const hp = makeMeasure({
+      id: "hvac-heat-pump",
+      category: "hvac",
+      exclusiveGroup: "heating-plant",
+      estimatedCost: 4_000_000,
+      annualCostSaving: 7_538_462,
+    });
+    const result = selectMeasuresForBudget([boiler, hp], 100_000_000, ASSUMPTIONS);
+    expect(result.selected).toHaveLength(1);
+    expect(result.selected[0].id).toBe("hvac-heat-pump");
+  });
+
+  it("generated boiler + heat-pump are mutually exclusive; HRV still packs", () => {
+    // η = 0.65 generates boiler, heat pump AND HRV. With a budget covering
+    // everything, exactly one heating-plant measure may be selected.
+    const measures = generateHvacRetrofits(
+      { heatingType: "boiler", heatingEfficiency: 0.65 },
+      100,
+      100_000,
+      0,
+    );
+    const result = selectMeasuresForBudget(measures, 100_000_000, ASSUMPTIONS);
+    const ids = result.selected.map((m) => m.id);
+    const heatingPlant = ids.filter(
+      (id) => id === "hvac-boiler-upgrade" || id === "hvac-heat-pump",
+    );
+    expect(heatingPlant).toEqual(["hvac-heat-pump"]); // higher-NPV alternative
+    expect(ids).toContain("hvac-hrv"); // independent measure still selected
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────
+// Audit finding #9: baseline savings cap
+// ──────────────────────────────────────────────────────────────────────────
+
+describe("selectMeasuresForBudget — baseline savings cap (audit finding #9)", () => {
+  const gas = makeMeasure({
+    id: "envelope-wall-insulation",
+    category: "envelope",
+    fuel: "gas",
+    estimatedCost: 3_000_000,
+    annualCostSaving: 1_000_000,
+  });
+  const elec = makeMeasure({
+    id: "lighting-led",
+    category: "lighting",
+    fuel: "electricity",
+    estimatedCost: 2_000_000,
+    annualCostSaving: 500_000,
+  });
+
+  it("scales heating-side savings proportionally so total ≤ baseline", () => {
+    // Selected total = 1.5M > baseline 1.2M → excess 0.3M is borne by the
+    // heating (gas) side: factor = (1.0M − 0.3M) / 1.0M = 0.7.
+    // Gas measure → 700,000; electric untouched → total = 1,200,000.
+    const result = selectMeasuresForBudget(
+      [gas, elec],
+      10_000_000,
+      ASSUMPTIONS,
+      1_000_000,
+      1_200_000,
+    );
+    const total = result.selected.reduce((s, m) => s + m.annualCostSaving, 0);
+    expect(total).toBeCloseTo(1_200_000, 0);
+    const gasSel = result.selected.find((m) => m.id === "envelope-wall-insulation")!;
+    const elecSel = result.selected.find((m) => m.id === "lighting-led")!;
+    expect(gasSel.annualCostSaving).toBeCloseTo(700_000, 0);
+    expect(elecSel.annualCostSaving).toBeCloseTo(500_000, 0);
+    // Year-1 aggregate cash flow reflects the capped savings.
+    expect(result.aggregateCashFlow[0]).toBeCloseTo(1_200_000, 0);
+  });
+
+  it("is backward compatible: no cap when the baseline param is absent", () => {
+    const result = selectMeasuresForBudget([gas, elec], 10_000_000, ASSUMPTIONS);
+    const total = result.selected.reduce((s, m) => s + m.annualCostSaving, 0);
+    expect(total).toBeCloseTo(1_500_000, 0);
+  });
+
+  it("does not scale when total savings are within the baseline", () => {
+    const result = selectMeasuresForBudget(
+      [gas, elec],
+      10_000_000,
+      ASSUMPTIONS,
+      1_000_000,
+      2_000_000,
+    );
+    const total = result.selected.reduce((s, m) => s + m.annualCostSaving, 0);
+    expect(total).toBeCloseTo(1_500_000, 0);
   });
 });

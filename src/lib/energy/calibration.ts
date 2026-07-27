@@ -38,7 +38,9 @@ const ELECTRIC_COOLING_FRACTION = 0.4;
 const ELECTRIC_LIGHTING_FRACTION = 0.6;
 
 function computeDelta(predicted: number, actual: number): number {
-  if (actual === 0) return 0;
+  // No recorded consumption: a nonzero prediction is an unbounded mismatch,
+  // not a perfect match. Consumers must handle the non-finite flag.
+  if (actual === 0) return predicted === 0 ? 0 : Number.POSITIVE_INFINITY;
   return ((predicted - actual) / actual) * 100;
 }
 
@@ -79,7 +81,10 @@ export function calibrateEnergy(
 
   // Overall delta uses total values directly
   const overallDelta = computeDelta(predicted.total, actual.total_kwh);
-  const calibrationRatio = actual.total_kwh > 0 ? actual.total_kwh / predicted.total : 1;
+  // Guard the DENOMINATOR (predicted), not the numerator — a zero prediction
+  // must not produce an Infinity scaling ratio.
+  const calibrationRatio =
+    predicted.total > 0 ? actual.total_kwh / predicted.total : 1;
 
   // Find the end-use with the largest absolute delta
   const candidates: Array<[string, number]> = [
@@ -94,15 +99,20 @@ export function calibrateEnergy(
 
   // Generate human-readable insight
   const absOverall = Math.abs(overallDelta);
-  const roundedPercent = Math.round(absOverall);
   let insight: string;
-  if (absOverall < 5) {
+  if (!Number.isFinite(overallDelta)) {
+    insight =
+      "No actual consumption recorded for this building — calibration unavailable.";
+  } else if (absOverall < 5) {
     insight =
       "This building's actual energy use closely matches the predicted demand (within 5%).";
   } else if (overallDelta > 0) {
-    insight = `This building uses ${roundedPercent}% less energy than predicted — the model may be over-estimating demand.`;
+    // "Uses X% less than predicted" must be expressed on the PREDICTED base:
+    // (pred − act)/pred. Expressing it on the actual base can exceed 100%.
+    const lessPercent = Math.round((overallDelta / (100 + overallDelta)) * 100);
+    insight = `This building uses ${lessPercent}% less energy than predicted — the model may be over-estimating demand.`;
   } else {
-    insight = `This building uses ${roundedPercent}% more energy than predicted — the model may be under-estimating demand.`;
+    insight = `This building uses ${Math.round(absOverall)}% more energy than predicted — the model may be under-estimating demand.`;
   }
 
   return {

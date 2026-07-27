@@ -12,9 +12,19 @@ describe('calculateSolarPotential — 500m2 flat roof in Seoul', () => {
     expect(result.systemSizeKWp).toBeCloseTo(70, 1);
   });
 
-  it('annual generation is ~68,000 kWh/year', () => {
-    // 70 * 3.5 * 365 * 0.75 = 67,068.75 kWh
-    expect(result.annualGenerationKWh).toBeCloseTo(67068, -2);
+  it('annual generation is ~82,271 kWh/year', () => {
+    // Audit finding #6: previous yield (958 kWh/kWp) omitted the
+    // plane-of-array tilt gain and used a pessimistic PR.
+    // 70 kWp × 3.5 PSH × 365 × 1.15 (tilt) × 0.80 (PR) = 82,271 kWh
+    expect(result.annualGenerationKWh).toBeCloseTo(82_271, -2);
+  });
+
+  it('specific yield lands in the plausible Korean range (1,100–1,300 kWh/kWp)', () => {
+    // Seoul 3.5 PSH: 3.5 × 365 × 1.15 × 0.80 = 1,175.3 kWh/kWp
+    const specificYield = result.annualGenerationKWh / result.systemSizeKWp;
+    expect(specificYield).toBeGreaterThan(1_100);
+    expect(specificYield).toBeLessThan(1_300);
+    expect(specificYield).toBeCloseTo(1_175.3, 1);
   });
 
   it('roof utilization is 0.7 for flat', () => {

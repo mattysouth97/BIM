@@ -11,8 +11,11 @@ import { useRecipeStore } from "@/store/recipe-store";
 import { getClimateData } from "@/lib/energy/climate-data";
 import { calculateHeatLoss } from "@/lib/energy/heat-loss";
 import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
-import { getEnergyGrade, getGradeColor } from "@/lib/energy/energy-grade";
+import { getGradeColor } from "@/lib/energy/energy-grade";
 import { calculateCO2 } from "@/lib/energy/co2-emissions";
+import { calculateSystemBreakdown } from "@/lib/energy/system-breakdown";
+import type { SystemBreakdown } from "@/lib/energy/system-breakdown";
+import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import type { HeatLossResult } from "@/lib/energy/heat-loss";
 import type { AnnualDemand } from "@/lib/energy/annual-demand";
 import type { EnergyGrade } from "@/lib/energy/energy-grade";
@@ -22,9 +25,16 @@ import type { AnnualConsumption } from "@/lib/energy/consumption-normalizer";
 export interface EnergyMetrics {
   heatLoss: HeatLossResult;
   demand: AnnualDemand;
+  /** Official-style grade on PRIMARY energy with the correct threshold table */
   grade: EnergyGrade;
   gradeColor: string;
   co2: CO2Result;
+  /** Whole-building primary energy intensity (kWh/m²·yr) the grade is based on */
+  primaryPerSqm: number;
+  /** Whole-building site energy incl. lighting/DHW/plug (kWh/yr) */
+  siteTotal: number;
+  /** End-use split behind siteTotal (hvac/lighting/dhw/plugLoads) */
+  breakdown: SystemBreakdown;
   /**
    * Percentage difference between predicted annual demand and most recent actual consumption.
    * Positive = predicted exceeds actual; negative = actual exceeds predicted.
@@ -94,15 +104,45 @@ export function useEnergyMetrics(
       effectiveRecipe,
       climate
     );
-    const grade = getEnergyGrade(demand.demandPerSqm);
-    const gradeColor = getGradeColor(grade);
     const totalFloorArea =
       effectiveRecipe.footprintWidth *
       effectiveRecipe.footprintDepth *
       effectiveRecipe.floors.length;
-    const co2 = calculateCO2(demand, totalFloorArea);
 
-    // Compute predicted vs actual delta using most recent actual year
+    // Whole-building site energy: HVAC (degree-day engine) + lighting/DHW/
+    // plug via use-type ratios. Needed for grading and calibration — the
+    // HVAC-only number systematically under-represents the building.
+    const breakdown = calculateSystemBreakdown(materials, effectiveRecipe, climate);
+
+    // Grade on PRIMARY energy against the correct table (official method).
+    // Fuel split: heating + DHW ride the heating fuel; cooling, lighting and
+    // plug loads are electric.
+    const heatingFuel = materials.hvac.heating.fuelType;
+    const fuelLeg = demand.heatingDemand + breakdown.dhw;
+    const electricLeg =
+      demand.coolingDemand + breakdown.lighting + breakdown.plugLoads;
+    const delivered = {
+      electric:
+        heatingFuel === "electric" || heatingFuel === "heat-pump"
+          ? electricLeg + fuelLeg
+          : electricLeg,
+      gas: heatingFuel === "gas" || heatingFuel === "oil" ? fuelLeg : 0,
+      districtHeating: heatingFuel === "district-heat" ? fuelLeg : 0,
+    };
+    const isResidential =
+      effectiveRecipe.mainPurpsCd?.startsWith("01") ||
+      effectiveRecipe.mainPurpsCd?.startsWith("02");
+    const rating = calculateEfficiencyRating(
+      delivered,
+      totalFloorArea,
+      isResidential ? "residential" : "non-residential"
+    );
+    const grade = rating.grade as EnergyGrade;
+    const gradeColor = getGradeColor(grade);
+    const co2 = calculateCO2(demand, totalFloorArea, heatingFuel);
+
+    // Predicted vs actual: compare whole-building prediction against the
+    // whole-building meter total (HVAC-only vs meter is apples-to-oranges).
     let predictedVsActualDelta: number | null = null;
     if (actualConsumption && actualConsumption.length > 0) {
       const mostRecent = actualConsumption.reduce((a, b) =>
@@ -110,11 +150,21 @@ export function useEnergyMetrics(
       );
       if (mostRecent.total_kwh > 0) {
         predictedVsActualDelta =
-          ((demand.totalDemand - mostRecent.total_kwh) / mostRecent.total_kwh) * 100;
+          ((breakdown.total - mostRecent.total_kwh) / mostRecent.total_kwh) * 100;
       }
     }
 
-    return { heatLoss, demand, grade, gradeColor, co2, predictedVsActualDelta };
+    return {
+      heatLoss,
+      demand,
+      grade,
+      gradeColor,
+      co2,
+      primaryPerSqm: rating.primaryEnergyPerArea,
+      siteTotal: breakdown.total,
+      breakdown,
+      predictedVsActualDelta,
+    };
   }, [materials, effectiveRecipe, sigunguCd, actualConsumption]);
 
   return metrics;

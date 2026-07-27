@@ -16,7 +16,7 @@ export interface DailyWeather {
  */
 export interface WeatherSummary {
   year: number;
-  /** Heating Degree Days — base 18.3°C (Korean standard) */
+  /** Heating Degree Days — base 18°C (matches climate-data.ts static table) */
   hdd: number;
   /** Cooling Degree Days — base 24°C (Korean standard) */
   cdd: number;
@@ -26,17 +26,31 @@ export interface WeatherSummary {
   dataCompleteness: number;
 }
 
-const HEATING_BASE = 18.3;
+// Bases MUST match the static tables in climate-data.ts (HDD 18, CDD 24) —
+// getClimateData() swaps observed values in for static ones transparently.
+const HEATING_BASE = 18.0;
 const COOLING_BASE = 24.0;
+
+/** KMA missing-value sentinels (-99, -999…) and garbage: reject |t| > 50°C. */
+const MAX_PLAUSIBLE_ABS_TEMP = 50;
+
+function daysInYear(year: number): number {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 ? 366 : 365;
+}
 
 /**
  * Compute HDD, CDD, avgTemp, and dataCompleteness from raw daily weather records.
+ * Days with missing/sentinel temperatures are excluded and count against
+ * dataCompleteness rather than polluting the degree-day sums.
  *
  * @param days - Array of daily observations. May be empty or partial-year.
  * @param year - The calendar year these observations belong to (used in output).
  */
 export function processWeatherData(days: DailyWeather[], year: number): WeatherSummary {
-  if (days.length === 0) {
+  const valid = days.filter(
+    (d) => Number.isFinite(d.avgTemp) && Math.abs(d.avgTemp) <= MAX_PLAUSIBLE_ABS_TEMP,
+  );
+  if (valid.length === 0) {
     return { year, hdd: 0, cdd: 0, avgTemp: 0, dataCompleteness: 0 };
   }
 
@@ -44,7 +58,7 @@ export function processWeatherData(days: DailyWeather[], year: number): WeatherS
   let cdd = 0;
   let tempSum = 0;
 
-  for (const day of days) {
+  for (const day of valid) {
     const t = day.avgTemp;
     if (t < HEATING_BASE) {
       hdd += HEATING_BASE - t;
@@ -55,8 +69,8 @@ export function processWeatherData(days: DailyWeather[], year: number): WeatherS
     tempSum += t;
   }
 
-  const avgTemp = tempSum / days.length;
-  const dataCompleteness = days.length / 365;
+  const avgTemp = tempSum / valid.length;
+  const dataCompleteness = valid.length / daysInYear(year);
 
   return {
     year,

@@ -7,7 +7,10 @@ export const PRIMARY_ENERGY_FACTORS = {
   gas: 1.1,                 // kWh primary per kWh delivered
   districtHeating: 0.728,   // kWh primary per kWh delivered
   districtCooling: 0.937,   // kWh primary per kWh delivered
-  renewable: 0.0,           // renewable offsets primary energy
+  /** On-site renewables substitute grid electricity BEFORE conversion, so
+   *  their effective primary credit is 2.75 per kWh substituted (capped at
+   *  the electric consumption). See calculatePrimaryEnergy. */
+  renewable: 0.0,
 } as const;
 
 export interface DeliveredEnergy {
@@ -55,17 +58,23 @@ export function calculatePrimaryEnergy(
   const dc = delivered.districtCooling ?? 0;
   const re = delivered.renewable ?? 0;
 
-  const deliveredTotal =
-    delivered.electric + delivered.gas + dh + dc - re;
+  // On-site renewable generation substitutes grid electricity: net it
+  // against the electric leg BEFORE applying the 2.75 factor (capped so a
+  // large PV array cannot drive electric consumption negative).
+  const reUsed = Math.min(re, delivered.electric);
+  const electricNet = delivered.electric - reUsed;
 
-  const primaryElectric = delivered.electric * PRIMARY_ENERGY_FACTORS.electricity;
+  const deliveredTotal = electricNet + delivered.gas + dh + dc;
+
+  const primaryElectric = electricNet * PRIMARY_ENERGY_FACTORS.electricity;
   const primaryGas = delivered.gas * PRIMARY_ENERGY_FACTORS.gas;
   const primaryDH = dh * PRIMARY_ENERGY_FACTORS.districtHeating;
   const primaryDC = dc * PRIMARY_ENERGY_FACTORS.districtCooling;
-  const primaryRenewable = re * PRIMARY_ENERGY_FACTORS.renewable; // always 0
+  // Report the credit renewables earned (≤ 0 by interface convention).
+  const primaryRenewable =
+    reUsed > 0 ? -reUsed * PRIMARY_ENERGY_FACTORS.electricity : 0;
 
-  const primaryTotal =
-    primaryElectric + primaryGas + primaryDH + primaryDC - primaryRenewable;
+  const primaryTotal = primaryElectric + primaryGas + primaryDH + primaryDC;
 
   const primaryEnergyPerArea =
     totalArea > 0 ? primaryTotal / totalArea : 0;
