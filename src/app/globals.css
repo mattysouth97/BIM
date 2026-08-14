@@ -268,8 +268,8 @@ body:has(.landing-issue) main {
 
 .cad-sheet {
   height: 100%;
-  display: grid;
-  grid-template-rows: auto auto auto auto auto 1fr auto;
+  display: flex;
+  flex-direction: column;
   padding: 0.55rem 1rem 0.65rem;
   gap: 0.25rem;
 }
@@ -384,7 +384,8 @@ body:has(.landing-issue) main {
 
 .cad-stage {
   position: relative;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 240px;
   border: 1px solid #000;
   overflow: hidden;
   background: #fff;
@@ -394,6 +395,7 @@ body:has(.landing-issue) main {
   width: 100%;
   height: 100%;
   display: block;
+  min-height: 240px;
 }
 
 .cad-grid {
@@ -680,6 +682,10 @@ body:has(.landing-issue) main {
   .cad-hint,
   .cad-note {
     display: none;
+  }
+
+  .cad-bar {
+    padding-left: 3.25rem;
   }
 
   .cad-doors {
