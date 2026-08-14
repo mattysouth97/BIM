@@ -43,6 +43,20 @@ describe("useScenarioStore", () => {
     expect(useScenarioStore.getState().buildingInputs).toBeNull();
   });
 
+  it("persists only the budget and program track so tomorrow reopens the same answer", () => {
+    useScenarioStore.getState().setCapexBudget(500_000_000);
+    useScenarioStore.getState().setProgramTrack("public-seoul-or-central");
+    useScenarioStore.getState().setBuildingInputs(SAMPLE_INPUTS);
+    const partial = useScenarioStore.persist.getOptions().partialize!(
+      useScenarioStore.getState(),
+    );
+    expect(partial).toEqual({
+      capexBudgetKrw: 500_000_000,
+      programTrack: "public-seoul-or-central",
+    });
+    expect(partial).not.toHaveProperty("buildingInputs");
+  });
+
   it("resetScenario restores all defaults", () => {
     const s = useScenarioStore.getState();
     s.setCapexBudget(1_000_000_000);

@@ -22,6 +22,7 @@ import { RoiReadout } from "./roi-readout";
 import { RetrofitManifest } from "./retrofit-manifest";
 import { CapexInput } from "./capex-input";
 import { ProgramTrackSelector } from "./program-track-selector";
+import { SelectedMeasuresStrip } from "./selected-measures-strip";
 
 interface TwinStageOverlayProps {
   title: BrTitleInfo;
@@ -120,6 +121,10 @@ export function TwinStageOverlay({ title, footprintGeometry }: TwinStageOverlayP
       <RetrofitManifest
         measures={scenario.allMeasures}
         selectedIds={selectedIds}
+      />
+
+      <SelectedMeasuresStrip
+        measures={scenario.selection?.selected ?? []}
       />
 
       <CapexInput

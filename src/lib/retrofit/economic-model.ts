@@ -592,6 +592,12 @@ export function selectMeasuresForBudget(
     effectiveDiscountRate(assumptions),
   );
 
+  // Re-attach DCF so the report/twin takeaway does not show "—" per measure.
+  selected = selected.map((measure) => ({
+    ...measure,
+    financials: computeFinancials(measure, assumptions),
+  }));
+
   return {
     selected,
     npv: totalNpv,

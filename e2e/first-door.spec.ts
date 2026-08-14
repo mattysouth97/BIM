@@ -62,8 +62,13 @@ test.describe("First door", () => {
   test("reopening keeps the CAPEX the person set", async ({ page }) => {
     await page.getByTestId("landing-demo-start").click();
     await expect(page.getByTitle("데모 오피스 타워")).toBeVisible({ timeout: 15000 });
+    const tour = page.locator(".driver-popover");
+    if (await tour.isVisible().catch(() => false)) {
+      await page.keyboard.press("Escape");
+      await expect(tour).toHaveCount(0);
+    }
     const capex = page.locator("[data-twin-capex-input]");
-    await capex.getByRole("button", { name: /^5억$/ }).click();
+    await capex.getByRole("button", { name: /^5억$/ }).click({ force: true });
     await expect(capex).toContainText("₩5억");
     await page.reload();
     await expect(page.getByTitle("데모 오피스 타워")).toBeVisible({ timeout: 15000 });

@@ -102,6 +102,11 @@ let _seq = 0; // 12-bit counter, max 0xfff
  */
 function uuidv7(): string {
   let ms = Date.now();
+  // Overflow can push _lastMs into the future. Do not walk the clock
+  // backwards — that would make later IDs sort before earlier ones.
+  if (ms < _lastMs) {
+    ms = _lastMs;
+  }
 
   if (ms === _lastMs) {
     _seq = (_seq + 1) & 0xfff;

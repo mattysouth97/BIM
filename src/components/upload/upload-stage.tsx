@@ -113,6 +113,25 @@ export function UploadStage() {
     [isKo]
   );
 
+  const loadSampleDrawing = useCallback(async () => {
+    setStatus({ kind: "parsing" });
+    try {
+      const res = await fetch("/samples/sample-footprint.dxf");
+      if (!res.ok) throw new Error(String(res.status));
+      fileNameRef.current = "sample-footprint.dxf";
+      ingestDxf(await res.text());
+    } catch {
+      setStatus({
+        kind: "error",
+        message: t(
+          "샘플 도면을 불러오지 못했습니다. 다시 시도하거나 파일을 직접 올리세요.",
+          "Could not load the sample drawing. Try again or upload your own file.",
+          isKo,
+        ),
+      });
+    }
+  }, [ingestDxf, isKo]);
+
   const processFile = useCallback(
     async (file: File) => {
       const name = file.name.toLowerCase();
@@ -334,7 +353,7 @@ export function UploadStage() {
         </div>
 
         {/* Draw from scratch — no file, no API key needed */}
-        <div className="flex justify-center">
+        <div className="flex flex-wrap justify-center gap-2">
           <Button
             type="button"
             variant="outline"
@@ -345,6 +364,14 @@ export function UploadStage() {
             {savedDraft
               ? t("도면 계속 그리기", "Continue drawing", isKo)
               : t("새 도면 그리기", "Draw new plan", isKo)}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            data-testid="upload-sample-dxf"
+            onClick={() => void loadSampleDrawing()}
+          >
+            {t("샘플 도면으로 시작", "Start with a sample plan", isKo)}
           </Button>
         </div>
 

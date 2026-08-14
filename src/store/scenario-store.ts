@@ -12,6 +12,7 @@
 // feeds `useRetrofitScenario` from the same record.
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { ProgramTrack } from "@/lib/retrofit/cost-database";
 
 /** Engine inputs derived from ledger title + footprint geometry. */
@@ -54,36 +55,47 @@ interface ScenarioState {
   resetScenario: () => void;
 }
 
-export const useScenarioStore = create<ScenarioState>()((set) => ({
-  capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
-  programTrack: "none",
-  buildingInputs: null,
-  selectedMeasureIds: null,
-
-  setCapexBudget: (krw) => set({ capexBudgetKrw: krw }),
-  setProgramTrack: (track) => set({ programTrack: track }),
-  setBuildingInputs: (inputs) => set({ buildingInputs: inputs }),
-  setSelectedMeasureIds: (ids) =>
-    set((state) => {
-      // Referential stability: skip the update when the id set is unchanged
-      // so 3D layers don't regenerate on every knapsack re-evaluation.
-      const prev = state.selectedMeasureIds;
-      if (
-        prev !== null &&
-        ids !== null &&
-        prev.length === ids.length &&
-        prev.every((v, i) => v === ids[i])
-      ) {
-        return state;
-      }
-      if (prev === null && ids === null) return state;
-      return { selectedMeasureIds: ids };
-    }),
-  resetScenario: () =>
-    set({
+export const useScenarioStore = create<ScenarioState>()(
+  persist(
+    (set) => ({
       capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
       programTrack: "none",
       buildingInputs: null,
       selectedMeasureIds: null,
+
+      setCapexBudget: (krw) => set({ capexBudgetKrw: krw }),
+      setProgramTrack: (track) => set({ programTrack: track }),
+      setBuildingInputs: (inputs) => set({ buildingInputs: inputs }),
+      setSelectedMeasureIds: (ids) =>
+        set((state) => {
+          // Referential stability: skip the update when the id set is unchanged
+          // so 3D layers don't regenerate on every knapsack re-evaluation.
+          const prev = state.selectedMeasureIds;
+          if (
+            prev !== null &&
+            ids !== null &&
+            prev.length === ids.length &&
+            prev.every((v, i) => v === ids[i])
+          ) {
+            return state;
+          }
+          if (prev === null && ids === null) return state;
+          return { selectedMeasureIds: ids };
+        }),
+      resetScenario: () =>
+        set({
+          capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
+          programTrack: "none",
+          buildingInputs: null,
+          selectedMeasureIds: null,
+        }),
     }),
-}));
+    {
+      name: "bim-scenario-state",
+      partialize: (state) => ({
+        capexBudgetKrw: state.capexBudgetKrw,
+        programTrack: state.programTrack,
+      }),
+    },
+  ),
+);

@@ -270,6 +270,7 @@ describe("selectMeasuresForBudget", () => {
     const result = selectMeasuresForBudget([cheap, expensive], 8_500_000, ASSUMPTIONS);
     expect(result.selected).toHaveLength(1);
     expect(result.selected[0].id).toBe("expensive"); // higher NPV
+    expect(result.selected[0].financials?.npv).toBeGreaterThan(0);
   });
 
   it("packs multiple measures when budget is large enough", () => {

@@ -110,6 +110,11 @@ describe("UploadStage", () => {
     expect(button.disabled).toBe(true);
   });
 
+  it("offers a sample drawing so the CAD door is not a dead end", () => {
+    render(<UploadStage />);
+    expect(screen.getByTestId("upload-sample-dxf")).toBeTruthy();
+  });
+
   it("processing a valid DXF enables Continue and stores footprintPolygon on confirm", async () => {
     // happy-dom File.text() polyfill — attach if missing.
     const file = new File([RECT_DXF], "plan.dxf", { type: "application/dxf" });
