@@ -38,10 +38,8 @@ export function Header() {
     <>
       <header
         className={cn(
-          "sticky top-0 z-50 border-b backdrop-blur supports-[backdrop-filter]:bg-background/60",
-          isHome
-            ? "lj-header"
-            : "bg-background/95",
+          "sticky top-0 z-50 border-b",
+          isHome ? "lj-header" : "bg-background/95 backdrop-blur",
         )}
       >
         <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between px-4">

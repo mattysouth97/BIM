@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useNarrowViewport } from "@/hooks/use-narrow-viewport";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
 
@@ -15,11 +14,7 @@ export function SelectedMeasuresStrip({ measures }: SelectedMeasuresStripProps) 
 
   return (
     <div
-      className={cn(
-        "pointer-events-auto absolute left-4 right-4 bottom-[7.5rem] z-20",
-        "rounded-lg border border-border bg-card/95 backdrop-blur-md shadow-md",
-        "px-3 py-2",
-      )}
+      className="border-b border-border px-3 py-2"
       data-twin-selected-measures
     >
       <p className="text-[10px] font-medium text-muted-foreground mb-1">

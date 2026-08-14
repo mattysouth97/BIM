@@ -1,6 +1,6 @@
 # Project CORE Memory
 
-_Last updated: 2026-08-14. Report takes the twin retrofit answer away._
+_Last updated: 2026-08-14. Five retention cuts: knapsack NPV, persisted scenario, sample drawing, Korean report, phone measure strip._
 
 ## One sentence
 
@@ -13,22 +13,22 @@ A person arrives with an address, a 대장, or a drawing. They leave with a buil
 ## Jobs (in this order)
 
 1. **See a building as a twin** — open one building and believe the 3D model is *that* building (ledger floors, footprint, era, use).
-2. **Know what retrofit is worth** — move a budget, see NPV/IRR and which measures get picked, on the same building.
-3. **Take an answer away** — energy-audit / compliance report, PDF/CSV/JSON, reopen the same building tomorrow. The energy-audit **개보수 권장 사항** is the same knapsack the twin just computed (NPV, 실효 투자비, selected measures). It does not hide behind a Fidelity Level 2 gate.
-4. **Start from a drawing** — upload DXF/DWG/PDF or draw a plan in the browser, then use it as the twin footprint.
+2. **Know what retrofit is worth** — move a budget, see NPV/IRR and which measures get picked, on the same building. Selected measures carry DCF. On a phone a strip lists the picks. Budget and 그린리모델링 track persist so tomorrow reopens the same answer.
+3. **Take an answer away** — energy-audit / compliance report, PDF/CSV/JSON, reopen the same building tomorrow. The energy-audit **개보수 권장 사항** is the same knapsack (per-measure NPV, 실효 투자비). Korean-first titles. Preview PDF is the real download.
+4. **Start from a drawing** — upload DXF/DWG/PDF, draw a plan, or **샘플 도면으로 시작** then continue to the twin.
 5. **Look up a real 대장** — region or address search via data.go.kr, once a key exists.
 6. **Compare a campus** — batch a 법정동 and compare a few buildings (energy only after twins exist).
 
 ## Doors (first verbs)
 
 1. **데모 건물 둘러보기** — `/building/demo`, no key, no network. Primary CTA. Always opens the Twin stage (`doorStage("demo")`), even if a previous visit left the workflow on upload.
-2. **CAD 도면으로 시작하기** — same demo building, land on the upload/draw stage (`doorStage("cad")`).
+2. **CAD 도면으로 시작하기** — same demo building, land on the upload/draw stage (`doorStage("cad")`). A sample DXF completes the loop without owning a file.
 3. **지역/주소 검색** — needs an API key (user or `DATA_GO_KR_API_KEY`).
 4. **캠퍼스 모드** — batch lookup after a key exists.
 
 ## Surfaces
 
-- `/` — BIMFIT journal landing (promise → cost → twin → method → begin) plus the same search + campus lookup. Primary CTA is still 데모 건물 둘러보기.
+- `/` — BIMFIT CAD sheet (no page scroll, black on white). Beats by click: ledger-only vs twin, wireframe orbit, four stages. Search/campus open as an overlay. Primary CTA is still 데모 건물 둘러보기.
 - `/building/[id]` — workspace: Search → Upload CAD → Twin → Report (persisted stage). No marketing header. Stepper follows language. First-visit tour only on Twin, names the four real stages. Ledger materials and the base recipe seed when the 대장 title loads, so energy numbers exist even if the 3D canvas has not mounted (CAD door, report).
 - `/building/demo` — reserved fixture twin
 - `/releases` — prediction-release identity (secondary)

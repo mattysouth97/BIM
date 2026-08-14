@@ -23,7 +23,6 @@ import type { BrTitleInfo } from "@/lib/types";
 import type { BuildingMetrics } from "@/lib/campus/portfolio-aggregator";
 import type { CampusBounds } from "@/lib/campus/campus-types";
 import type { LandingCopy } from "@/lib/landing/copy";
-import { JournalSection } from "./journal-section";
 
 const RegionSearchForm = lazy(() =>
   import("@/components/search/region-search-form").then((m) => ({ default: m.RegionSearchForm })),
@@ -231,12 +230,8 @@ export function LookupInstrument({ copy, isKo }: { copy: LandingCopy; isKo: bool
   };
 
   return (
-    <JournalSection
-      id="lookup"
-      kicker={isKo ? "06  LOOKUP" : "06  LOOKUP"}
-      title={copy.lookupTitle}
-      titleAlt={copy.lookupTitleEn}
-    >
+    <section id="lookup" className="cad-lookup" aria-labelledby="lookup-title">
+      <h2 id="lookup-title">{copy.lookupTitle}</h2>
       <p className="lj-chapter-lead">{copy.lookupLead}</p>
 
       {hydrated && !apiKey && (
@@ -477,6 +472,6 @@ export function LookupInstrument({ copy, isKo }: { copy: LandingCopy; isKo: bool
           )}
         </>
       )}
-    </JournalSection>
+    </section>
   );
 }

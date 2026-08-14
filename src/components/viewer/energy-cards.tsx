@@ -7,7 +7,6 @@
 
 import { useRef, useEffect, useCallback } from "react";
 import { useAppStore } from "@/store/app-store";
-import { useWorkspaceStore } from "@/store/workspace-store";
 import { useNarrowViewport } from "@/hooks/use-narrow-viewport";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
@@ -19,10 +18,11 @@ import { parseECO2Result } from "@/lib/energy/eco2-import";
 import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import type { EnergyGrade } from "@/lib/energy/energy-grade";
-import { cn } from "@/lib/utils";
 
 interface EnergyCardsProps {
   buildingPk: string;
+  /** `strip` sits in the twin instrument frame. `stack` is the old overlay pile. */
+  variant?: "strip" | "stack";
 }
 
 /** Korean grade names */
@@ -149,9 +149,8 @@ function SkeletonCards() {
   );
 }
 
-export function EnergyCards({ buildingPk }: EnergyCardsProps) {
+export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps) {
   const isKo = useAppStore((s) => s.language) === "ko";
-  const leftDockOpen = useWorkspaceStore((s) => s.leftDockOpen);
   const narrow = useNarrowViewport();
   const metrics = useEnergyMetrics(buildingPk);
   const actual = useActualEnergy(buildingPk);
@@ -238,13 +237,9 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
   if (narrow) return null;
 
   if (!metrics) {
+    if (variant === "strip") return null;
     return (
-      <div
-        className={cn(
-          "absolute bottom-4 z-10",
-          leftDockOpen ? "left-[364px]" : "left-4",
-        )}
-      >
+      <div className="px-3 py-2">
         <SkeletonCards />
       </div>
     );
@@ -267,13 +262,47 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
     pct: totalHL > 0 ? (el.heatLoss / totalHL) * 100 : 0,
   }));
 
+  if (variant === "strip") {
+    return (
+      <div className="flex items-center gap-3 overflow-x-auto border-b border-border px-3 py-2">
+        <span
+          className="inline-flex h-7 min-w-[2rem] items-center justify-center rounded-md px-2 text-sm font-bold text-white"
+          style={{ backgroundColor: gradeColor }}
+        >
+          {grade}
+        </span>
+        <span className="shrink-0 text-xs tabular-nums text-foreground">
+          <AnimatedValue value={demand.demandPerSqm} suffix=" kWh/m²·yr" />
+        </span>
+        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+          <AnimatedValue value={co2.co2PerSqm} suffix=" kgCO₂/m²·yr" />
+        </span>
+        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+          <AnimatedValue value={heatLoss.totalHeatLoss} decimals={0} suffix=" W" />
+        </span>
+        <div className="ml-auto flex shrink-0 gap-1">
+          <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={handleExport}>
+            <Download className="mr-1 h-3 w-3" />
+            ECO2
+          </Button>
+          <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={handleImport}>
+            <Upload className="mr-1 h-3 w-3" />
+            {isKo ? "가져오기" : "Import"}
+          </Button>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={cn(
-        "absolute bottom-4 z-10 flex flex-col gap-2 pointer-events-auto",
-        leftDockOpen ? "left-[364px]" : "left-4",
-      )}
-    >
+    <div className="flex flex-col gap-2 p-3">
       {/* Actual data badge */}
       {hasActual && (
         <div className="flex items-center gap-1.5">

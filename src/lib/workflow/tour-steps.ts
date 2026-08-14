@@ -33,15 +33,15 @@ export function twinTourSteps(isKo: boolean): TwinTourStep[] {
       element: '[data-tour="left-dock"]',
       title: isKo ? "씬" : "Scene",
       description: isKo
-        ? "이 건물의 구성 요소입니다. 층을 고르면 뷰포트가 따라갑니다."
-        : "This building’s parts. Pick a floor and the viewport follows.",
+        ? "왼쪽 서랍입니다. 고른 개보수와 건물의 구성이 여기 있습니다."
+        : "A left drawer. Selected measures and the building’s parts live here.",
     },
     {
       element: '[data-tour="right-dock"]',
       title: isKo ? "속성" : "Properties",
       description: isKo
-        ? "선택한 요소의 물성과 에너지 가정을 봅니다. 숫자는 같은 건물에서 나옵니다."
-        : "Materials and energy assumptions for the selection. The numbers belong to this building.",
+        ? "오른쪽 서랍입니다. 물성과 에너지 가정은 여기, 트윈 위가 아닙니다."
+        : "A right drawer. Materials and energy assumptions stay here, not on the twin.",
     },
   ];
 }

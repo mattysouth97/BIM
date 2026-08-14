@@ -1,12 +1,9 @@
 "use client";
 
 // src/components/twin/twin-stage-overlay.tsx
-// Composes the CAPEX/ROI investment-scenario surface that overlays the 3D
-// viewport on the Twin stage. Pulls retrofit candidates + knapsack
-// selection via `useRetrofitScenario`, lets the user drive the CAPEX
-// budget via the bottom-center slider and the 그린리모델링 track via the
-// chip group, and surfaces results in the scenario rail (top), ROI
-// readout (left), and retrofit manifest (right).
+// Composes the twin instrument: top answer bar (NPV + 그린리모델링 chips)
+// and bottom budget grip (CAPEX). Side catalogs live in WorkspaceShell
+// drawers so they cannot cover the numbers.
 //
 // D₃: scenario state (budget, program track, derived building inputs)
 // lives in `useScenarioStore` so the SceneOutliner left dock reads the
@@ -17,12 +14,12 @@ import type { BrTitleInfo } from "@/lib/types";
 import type { FootprintGeometry } from "@/lib/portfolio/types";
 import { useRetrofitScenario } from "@/hooks/use-retrofit-scenario";
 import { useScenarioStore } from "@/store/scenario-store";
+import { TwinInstrumentFrame } from "./twin-instrument-frame";
 import { ScenarioRail } from "./scenario-rail";
-import { RoiReadout } from "./roi-readout";
-import { RetrofitManifest } from "./retrofit-manifest";
 import { CapexInput } from "./capex-input";
 import { ProgramTrackSelector } from "./program-track-selector";
 import { SelectedMeasuresStrip } from "./selected-measures-strip";
+import { EnergyCards } from "@/components/viewer/energy-cards";
 
 interface TwinStageOverlayProps {
   title: BrTitleInfo;
@@ -75,11 +72,6 @@ export function TwinStageOverlay({ title, footprintGeometry }: TwinStageOverlayP
     programTrack,
   });
 
-  const selectedIds = useMemo(
-    () => new Set(scenario.selection?.selected.map((m) => m.id) ?? []),
-    [scenario.selection],
-  );
-
   // Publish the knapsack selection so the 3D MEP layers can physically swap
   // equipment (boiler→condensing/ASHP, fluorescent→LED, PV on/off) whenever
   // the budget or program track changes the selected measures.
@@ -98,40 +90,37 @@ export function TwinStageOverlay({ title, footprintGeometry }: TwinStageOverlayP
   }, [scenario.selection, scenario.allMeasures.length]);
 
   return (
-    <>
-      <ScenarioRail
-        capexBudgetKrw={capexBudgetKrw}
-        selection={scenario.selection}
-        assumptions={scenario.assumptions}
-        totalCandidateMeasures={scenario.allMeasures.length}
-      />
-
-      <ProgramTrackSelector
-        value={programTrack}
-        onChange={setProgramTrack}
-        suggestedTrack={scenario.suggestedPrivateTrack}
-      />
-
-      <RoiReadout
-        selection={scenario.selection}
-        assumptions={scenario.assumptions}
-        isLoading={!scenario.selection && scenario.allMeasures.length === 0}
-      />
-
-      <RetrofitManifest
-        measures={scenario.allMeasures}
-        selectedIds={selectedIds}
-      />
-
-      <SelectedMeasuresStrip
-        measures={scenario.selection?.selected ?? []}
-      />
-
-      <CapexInput
-        value={capexBudgetKrw}
-        onChange={setCapexBudget}
-        summary={summary}
-      />
-    </>
+    <TwinInstrumentFrame
+      top={
+        <section className="overflow-hidden rounded-lg border border-border bg-card/95 shadow-sm backdrop-blur-md">
+          <ScenarioRail
+            capexBudgetKrw={capexBudgetKrw}
+            selection={scenario.selection}
+            assumptions={scenario.assumptions}
+            totalCandidateMeasures={scenario.allMeasures.length}
+          />
+          <div className="border-t border-border">
+            <ProgramTrackSelector
+              value={programTrack}
+              onChange={setProgramTrack}
+              suggestedTrack={scenario.suggestedPrivateTrack}
+            />
+          </div>
+        </section>
+      }
+      bottom={
+        <section className="overflow-hidden rounded-lg border border-border bg-card/95 shadow-sm backdrop-blur-md">
+          <EnergyCards buildingPk={buildingPk} variant="strip" />
+          <SelectedMeasuresStrip
+            measures={scenario.selection?.selected ?? []}
+          />
+          <CapexInput
+            value={capexBudgetKrw}
+            onChange={setCapexBudget}
+            summary={summary}
+          />
+        </section>
+      }
+    />
   );
 }

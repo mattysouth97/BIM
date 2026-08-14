@@ -52,18 +52,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <link
-          rel="preload"
-          as="image"
-          href="/landing/promise-plate.jpg"
-          media="(min-width: 768px)"
-        />
-        <link
-          rel="preload"
-          as="image"
-          href="/landing/promise-mobile.jpg"
-          media="(max-width: 767px)"
-        />
         <Providers>
           <Header />
           <main className="flex-1">{children}</main>

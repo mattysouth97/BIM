@@ -173,16 +173,12 @@
   background: var(--muted-foreground);
 }
 
-/* ─── BIMFIT landing: architecture-journal issue ─────────────────────────── */
+/* ─── BIMFIT landing: CAD sheet, black on white, no page scroll ─────────── */
 
 :root {
-  --lj-paper: #f3efe6;
-  --lj-ink: #1b1914;
-  --lj-rule: #c8c1b3;
-  --lj-mist: #d5d8d0;
-  --lj-copper: #8a4b2a;
-  --lj-forest: #2c3a30;
-  --lj-warm: #e8e2d4;
+  --lj-paper: #ffffff;
+  --lj-ink: #000000;
+  --lj-rule: #000000;
   --lj-display: var(--font-display-release), "Times New Roman", serif;
   --lj-ko: var(--font-ko-display), "Noto Serif KR", "Apple SD Gothic Neo", serif;
   --lj-sans: var(--font-geist-sans), "Apple SD Gothic Neo", sans-serif;
@@ -190,710 +186,516 @@
 }
 
 .lj-header {
-  border-color: var(--lj-rule);
-  background: color-mix(in oklab, var(--lj-paper) 88%, transparent);
-  color: var(--lj-ink);
+  border-color: #000;
+  background: #fff;
+  color: #000;
 }
 
 .lj-header a,
 .lj-header button {
-  color: var(--lj-ink);
+  color: #000;
 }
 
 .lj-wordmark {
   font-family: var(--lj-display);
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   line-height: 1;
 }
 
 .lj-wordmark-sub {
-  font-family: var(--lj-ko);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  color: color-mix(in oklab, var(--lj-ink) 55%, transparent);
+  font-family: var(--lj-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #000;
 }
 
 body:has(.landing-issue) {
-  background: var(--lj-paper);
+  background: #fff;
+  color: #000;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body:has(.landing-issue) main {
+  overflow: hidden;
+  min-height: 0;
 }
 
 .landing-issue {
-  --background: var(--lj-paper);
-  --foreground: var(--lj-ink);
-  --card: #f7f4ec;
-  --card-foreground: var(--lj-ink);
-  --popover: #f7f4ec;
-  --popover-foreground: var(--lj-ink);
-  --primary: var(--lj-ink);
-  --primary-foreground: var(--lj-paper);
-  --secondary: var(--lj-warm);
-  --secondary-foreground: var(--lj-ink);
-  --muted: var(--lj-warm);
-  --muted-foreground: #5c574c;
-  --accent: var(--lj-warm);
-  --accent-foreground: var(--lj-ink);
-  --border: var(--lj-rule);
-  --input: var(--lj-rule);
-  --ring: var(--lj-copper);
-  --destructive: #9f2d2d;
-  position: relative;
-  background: var(--lj-paper);
-  color: var(--lj-ink);
+  --background: #fff;
+  --foreground: #000;
+  --card: #fff;
+  --card-foreground: #000;
+  --popover: #fff;
+  --popover-foreground: #000;
+  --primary: #000;
+  --primary-foreground: #fff;
+  --secondary: #fff;
+  --secondary-foreground: #000;
+  --muted: #fff;
+  --muted-foreground: #000;
+  --accent: #fff;
+  --accent-foreground: #000;
+  --border: #000;
+  --input: #000;
+  --ring: #000;
+  height: calc(100dvh - 3.5rem);
+  overflow: hidden;
+  background: #fff;
+  color: #000;
   font-family: var(--lj-sans);
   color-scheme: light;
-  min-height: 100%;
-  overflow-x: hidden;
-}
-
-.landing-issue::before {
-  content: "";
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 70;
-  opacity: 0.045;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  position: relative;
 }
 
 .lj-skip {
   position: absolute;
-  left: 1rem;
+  left: 0.75rem;
   top: -3rem;
   z-index: 80;
-  background: var(--lj-ink);
-  color: var(--lj-paper);
-  padding: 0.5rem 0.85rem;
-  font-size: 0.8rem;
+  background: #000;
+  color: #fff;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.75rem;
 }
 
 .lj-skip:focus {
-  top: 0.75rem;
+  top: 0.5rem;
 }
 
-.lj-sheet {
-  width: min(1120px, calc(100% - 2rem));
-  margin: 0 auto;
-  padding: 1.5rem 0 6rem;
-}
-
-@media (min-width: 768px) {
-  .lj-sheet {
-    width: min(1120px, calc(100% - 4rem));
-    padding-top: 2rem;
-  }
-}
-
-.lj-kicker {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-family: var(--lj-sans);
-  font-size: 0.68rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: color-mix(in oklab, var(--lj-ink) 62%, transparent);
-}
-
-.lj-page-no {
-  font-family: var(--lj-display);
-  letter-spacing: 0.08em;
-  color: var(--lj-copper);
-}
-
-.lj-rule {
-  border: 0;
-  border-top: 1px solid var(--lj-rule);
-  margin: 0.85rem 0 1.25rem;
-}
-
-.lj-section {
-  scroll-margin-top: 4.5rem;
-  padding: 3.5rem 0 1rem;
-}
-
-.lj-section-head {
+.cad-sheet {
+  height: 100%;
   display: grid;
-  gap: 0.65rem;
+  grid-template-rows: auto auto auto auto auto 1fr auto;
+  padding: 0.55rem 1rem 0.65rem;
+  gap: 0.25rem;
 }
 
-@media (min-width: 768px) {
-  .lj-section-head {
-    grid-template-columns: 8rem 1fr;
-    align-items: end;
-  }
-}
-
-.lj-section-titles {
+.cad-titleblock {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 0.35rem 1.5rem;
-  align-items: baseline;
+  align-items: flex-end;
+  gap: 1rem;
+  border-bottom: 1px solid #000;
+  padding-bottom: 0.35rem;
 }
 
-.lj-h2 {
-  font-family: var(--lj-ko);
-  font-size: clamp(1.7rem, 3.4vw, 2.55rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
-
-.lj-h2-alt {
+.cad-titleblock-brand h1 {
   font-family: var(--lj-display);
-  font-size: 1.05rem;
-  font-weight: 400;
-  font-style: italic;
-  color: color-mix(in oklab, var(--lj-ink) 55%, transparent);
-}
-
-.lj-chapter-lead {
-  max-width: 40rem;
-  font-size: 1.02rem;
-  line-height: 1.7;
-  margin-bottom: 1.5rem;
-}
-
-.lj-brand {
-  font-family: var(--lj-display);
-  font-size: clamp(3.4rem, 10vw, 6.4rem);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
   font-weight: 450;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.08em;
   line-height: 0.9;
 }
 
-.lj-brand-alt {
+.cad-subtitle {
+  font-family: var(--lj-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 0.2rem;
+}
+
+.cad-slash {
+  margin: 0 0.4rem;
+}
+
+.cad-titleblock-meta {
+  font-family: var(--lj-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.15rem;
+  gap: 1rem;
 }
 
-@media (min-width: 768px) {
-  .lj-brand-alt {
-    align-items: flex-end;
-    text-align: right;
-  }
-}
-
-.lj-brand-ko {
+.cad-lead {
   font-family: var(--lj-ko);
-  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+  line-height: 1.45;
+  max-width: 42rem;
+}
+
+.cad-lead-sub {
+  font-family: var(--lj-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  line-height: 1.45;
+  max-width: 42rem;
+}
+
+.cad-h2 {
+  font-family: var(--lj-ko);
+  font-size: 1rem;
   font-weight: 500;
 }
 
-.lj-brand-en {
-  font-family: var(--lj-display);
-  font-size: 1rem;
-  font-style: italic;
-  color: color-mix(in oklab, var(--lj-ink) 55%, transparent);
-}
-
-.lj-title-row {
+.cad-revs {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: 1.75rem;
+  flex-wrap: wrap;
+  gap: 0;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
 }
 
-@media (min-width: 768px) {
-  .lj-title-row {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-end;
-  }
+.cad-rev {
+  background: #fff;
+  color: #000;
+  border: 0;
+  border-right: 1px solid #000;
+  padding: 0.35rem 0.7rem;
+  font-family: var(--lj-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
 }
 
-.lj-lead-grid {
-  display: grid;
-  gap: 1rem 2.5rem;
-  margin-bottom: 1.4rem;
+.cad-rev span {
+  margin-right: 0.4rem;
 }
 
-@media (min-width: 768px) {
-  .lj-lead-grid {
-    grid-template-columns: 1.3fr 0.9fr;
-  }
+.cad-rev:last-child {
+  border-right: 0;
 }
 
-.lj-lead {
-  font-family: var(--lj-ko);
-  font-size: clamp(1.05rem, 2vw, 1.28rem);
-  line-height: 1.65;
+.cad-rev.is-on,
+.cad-rev:hover,
+.cad-rev:focus-visible {
+  background: #000;
+  color: #fff;
+  outline: none;
 }
 
-.lj-lead-secondary {
-  font-size: 0.95rem;
-  line-height: 1.65;
-  color: color-mix(in oklab, var(--lj-ink) 70%, transparent);
+.cad-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
-.lj-cta-row {
+.cad-note p {
+  margin: 0;
+  max-width: 40rem;
+}
+
+.cad-stage {
+  position: relative;
+  min-height: 0;
+  border: 1px solid #000;
+  overflow: hidden;
+  background: #fff;
+}
+
+.cad-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cad-grid {
+  stroke: #000;
+  stroke-width: 0.3;
+  opacity: 0.12;
+  fill: none;
+}
+
+.cad-ink {
+  stroke: #000;
+  stroke-width: 1;
+  fill: none;
+}
+
+.cad-ink-soft {
+  stroke: #000;
+  stroke-width: 0.6;
+  fill: none;
+  opacity: 0.55;
+}
+
+.cad-ink-hot {
+  stroke: #000;
+  stroke-width: 2;
+  fill: none;
+}
+
+.cad-dash {
+  stroke: #000;
+  stroke-width: 1;
+  stroke-dasharray: 6 4;
+  fill: none;
+}
+
+.cad-mass-fill {
+  fill: #fff;
+  stroke: #000;
+  stroke-width: 1.1;
+}
+
+.cad-core {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1;
+}
+
+.cad-win {
+  fill: #fff;
+  stroke: #000;
+  stroke-width: 0.5;
+}
+
+.cad-fill {
+  fill: #000;
+  stroke: none;
+}
+
+.cad-anno,
+.cad-dim,
+.cad-void {
+  fill: #000;
+  stroke: none;
+  font-family: var(--lj-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.cad-void {
+  font-size: 14px;
+}
+
+.cad-mass {
+  cursor: pointer;
+}
+
+.cad-orbit {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+.cad-orbit canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.cad-orbit:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: -2px;
+}
+
+.cad-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem 1rem;
+  gap: 0.55rem 0.85rem;
+  border-top: 1px solid #000;
+  padding: 0.4rem 0 0.15rem 0;
+}
+
+.cad-toggle {
+  display: flex;
+  border: 1px solid #000;
+}
+
+.cad-toggle button {
+  background: #fff;
+  color: #000;
+  border: 0;
+  padding: 0.3rem 0.65rem;
+  font-family: var(--lj-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.cad-toggle button + button {
+  border-left: 1px solid #000;
+}
+
+.cad-toggle button.is-on,
+.cad-toggle button:focus-visible {
+  background: #000;
+  color: #fff;
+  outline: none;
+}
+
+.cad-hint {
+  font-family: var(--lj-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  flex: 1;
+  min-width: 10rem;
+}
+
+.cad-doors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-left: auto;
 }
 
 .lj-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.75rem;
-  padding: 0 1.2rem;
-  background: var(--lj-ink);
-  color: var(--lj-paper);
-  font-size: 0.82rem;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  background: #000;
+  color: #fff;
+  border: 1px solid #000;
+  font-family: var(--lj-mono);
+  font-size: 0.68rem;
   letter-spacing: 0.04em;
-  border: 1px solid var(--lj-ink);
   text-decoration: none;
-  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 120ms ease;
 }
 
-.lj-cta:hover {
-  background: var(--lj-copper);
-  border-color: var(--lj-copper);
-  color: var(--lj-paper);
-}
-
-.lj-cta:active {
-  transform: translateY(1px);
-}
-
+.lj-cta:hover,
 .lj-cta:focus-visible {
-  outline: 2px solid var(--lj-copper);
-  outline-offset: 3px;
+  background: #fff;
+  color: #000;
+  outline: 2px solid #000;
+  outline-offset: 2px;
 }
 
 .lj-cta-ghost {
-  background: transparent;
-  color: var(--lj-ink);
+  background: #fff;
+  color: #000;
 }
 
-.lj-cta-ghost:hover {
-  background: var(--lj-ink);
-  color: var(--lj-paper);
+.lj-cta-ghost:hover,
+.lj-cta-ghost:focus-visible {
+  background: #000;
+  color: #fff;
 }
 
-.lj-cta-sm {
-  min-height: 2.2rem;
-  padding: 0 0.9rem;
-  font-size: 0.75rem;
-}
-
-.lj-text-link,
-.lj-text-btn {
+.cad-text {
   background: none;
   border: 0;
   padding: 0;
-  color: var(--lj-ink);
-  font-size: 0.82rem;
-  letter-spacing: 0.03em;
+  color: #000;
+  font-family: var(--lj-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
   text-decoration: underline;
-  text-underline-offset: 0.28em;
-  text-decoration-color: var(--lj-copper);
+  text-underline-offset: 0.22em;
   cursor: pointer;
 }
 
-.lj-text-link:hover,
-.lj-text-btn:hover {
-  color: var(--lj-copper);
+.cad-text:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 2px;
 }
 
-.lj-text-link:focus-visible,
-.lj-text-btn:focus-visible {
-  outline: 2px solid var(--lj-copper);
-  outline-offset: 3px;
-}
-
-.lj-hint {
-  margin-top: 0.65rem;
+.cad-hover-hint {
+  padding: 1rem;
+  font-family: var(--lj-mono);
   font-size: 0.75rem;
-  line-height: 1.5;
-  color: color-mix(in oklab, var(--lj-ink) 55%, transparent);
 }
 
-.lj-elevation {
-  margin: 0.9rem 0 0.2rem;
-}
-
-.lj-elevation-svg {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.lj-scale-text {
-  fill: color-mix(in oklab, var(--lj-ink) 55%, transparent);
-  font-size: 11px;
-  font-family: var(--lj-mono);
-}
-
-.lj-ink {
-  fill: none;
-  stroke: var(--lj-ink);
-  stroke-width: 1;
-}
-
-.lj-ink-soft {
-  fill: none;
-  stroke: var(--lj-ink);
-  stroke-width: 0.6;
-  opacity: 0.55;
-}
-
-.lj-ink-faint {
-  fill: none;
-  stroke: var(--lj-ink);
-  stroke-width: 0.5;
-  opacity: 0.28;
-}
-
-.lj-ink-fill {
-  fill: var(--lj-ink);
-  stroke: var(--lj-ink);
-}
-
-.lj-mass {
-  fill: var(--lj-paper);
-  stroke: var(--lj-ink);
-  stroke-width: 1.1;
-}
-
-.lj-mass-stroke {
-  fill: var(--lj-paper);
-  stroke: var(--lj-ink);
-  stroke-width: 1.1;
-}
-
-.lj-core {
-  fill: color-mix(in oklab, var(--lj-mist) 55%, var(--lj-paper));
-  stroke: none;
-}
-
-.lj-glass {
-  fill: color-mix(in oklab, var(--lj-forest) 18%, var(--lj-paper));
-  stroke: var(--lj-ink);
-  stroke-width: 0.4;
-  opacity: 0.85;
-}
-
-.lj-spread {
-  --px: 0;
-  --py: 0;
-  display: grid;
-  gap: 0.75rem 1rem;
-  margin-top: 1.75rem;
-}
-
-@media (min-width: 900px) {
-  .lj-spread {
-    grid-template-columns: 1.7fr 0.9fr;
-    grid-template-rows: auto auto;
-  }
-
-  .lj-plate {
-    grid-row: 1;
-    grid-column: 1;
-  }
-
-  .lj-inset {
-    grid-row: 1;
-    grid-column: 2;
-  }
-
-  .lj-caption {
-    grid-column: 1;
-  }
-
-  .lj-spec {
-    grid-column: 2;
-    grid-row: 2;
-  }
-}
-
-.lj-plate,
-.lj-inset {
-  overflow: hidden;
-  background: var(--lj-warm);
-  aspect-ratio: 16 / 9;
-}
-
-.lj-inset {
-  aspect-ratio: 16 / 10;
-}
-
-@media (max-width: 767px) {
-  .lj-plate {
-    aspect-ratio: 4 / 5;
-  }
-}
-
-.lj-plate-img,
-.lj-inset-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transform: translate3d(calc(var(--px) * -14px), calc(var(--py) * -10px), 0) scale(1.06);
-  transition: transform 220ms ease-out;
-}
-
-.lj-caption {
-  font-size: 0.78rem;
-  line-height: 1.55;
-  color: color-mix(in oklab, var(--lj-ink) 68%, transparent);
-}
-
-.lj-spec {
-  margin: 0;
-}
-
-.lj-spec-row {
-  display: grid;
-  grid-template-columns: 5.5rem 1fr;
-  gap: 0.75rem;
-  padding: 0.42rem 0;
-  border-top: 1px solid var(--lj-rule);
-  font-size: 0.78rem;
-}
-
-.lj-spec-row dt {
-  font-family: var(--lj-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-size: 0.65rem;
-  color: color-mix(in oklab, var(--lj-ink) 50%, transparent);
-}
-
-.lj-wipe-stage {
-  position: relative;
-  overflow: hidden;
-  aspect-ratio: 16 / 9;
-  background: var(--lj-forest);
-}
-
-.lj-wipe-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.lj-wipe-void {
+.cad-overlay {
   position: absolute;
   inset: 0;
-  clip-path: inset(0 0 0 var(--wipe, 42%));
-  background:
-    linear-gradient(180deg, #c5c9c2 0%, #8b9388 42%, #3a433c 100%);
-  display: grid;
-  place-items: center;
-}
-
-.lj-wipe-void span {
-  font-family: var(--lj-ko);
-  color: var(--lj-paper);
-  font-size: 1.05rem;
-  letter-spacing: 0.04em;
-}
-
-.lj-wipe-labels {
-  position: absolute;
-  left: 0.75rem;
-  right: 0.75rem;
-  bottom: 0.65rem;
+  z-index: 30;
+  background: #fff;
+  border: 1px solid #000;
   display: flex;
-  justify-content: space-between;
-  font-family: var(--lj-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--lj-paper);
-  mix-blend-mode: difference;
+  flex-direction: column;
+  min-height: 0;
 }
 
-.lj-wipe-control {
-  display: block;
-  margin-top: 0.75rem;
-}
-
-.lj-wipe-control input[type="range"] {
-  width: 100%;
-  accent-color: var(--lj-copper);
-  height: 1.5rem;
-}
-
-.lj-reveal {
-  outline: none;
-}
-
-.lj-reveal:focus-visible {
-  outline: 2px solid var(--lj-copper);
-  outline-offset: 4px;
-}
-
-.lj-reveal-stage {
-  height: min(68vh, 560px);
-  background: var(--lj-paper);
-  border-top: 1px solid var(--lj-rule);
-  border-bottom: 1px solid var(--lj-rule);
-}
-
-.lj-reveal-poster {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: var(--lj-paper);
-}
-
-.lj-reveal-bar {
+.cad-overlay-bar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem 1.25rem;
-  padding: 0.85rem 0;
+  justify-content: flex-end;
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid #000;
 }
 
-.lj-reveal-bar .lj-hint {
-  margin: 0;
-  flex: 1;
+.cad-overlay-body {
+  overflow: auto;
+  padding: 0.75rem 1rem 1.25rem;
+  min-height: 0;
 }
 
-.lj-pipeline-line {
-  width: 100%;
-  height: auto;
-  margin-bottom: 0.5rem;
-}
-
-.lj-stage-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-}
-
-@media (min-width: 768px) {
-  .lj-stage-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-.lj-stage {
-  text-align: left;
-  background: transparent;
-  border: 0;
-  border-top: 1px solid var(--lj-rule);
-  padding: 0.7rem 0.15rem;
-  cursor: pointer;
-  color: inherit;
-}
-
-.lj-stage:hover .lj-stage-title,
-.lj-stage:focus-visible .lj-stage-title {
-  color: var(--lj-copper);
-}
-
-.lj-stage:focus-visible {
-  outline: 2px solid var(--lj-copper);
-  outline-offset: 3px;
-}
-
-.lj-stage.is-active {
-  border-top-color: var(--lj-copper);
-  border-top-width: 2px;
-}
-
-.lj-stage-no {
-  display: block;
-  font-family: var(--lj-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
-  color: var(--lj-copper);
-  margin-bottom: 0.25rem;
-}
-
-.lj-stage-title {
+.cad-lookup h2 {
   font-family: var(--lj-ko);
-  font-size: 1.02rem;
+  font-size: 1.35rem;
+  margin-bottom: 0.35rem;
 }
 
-.lj-stage-body {
-  margin-top: 1.1rem;
-  max-width: 38rem;
-  font-size: 0.98rem;
-  line-height: 1.7;
-}
-
-.lj-stage-body .lj-text-link {
-  display: inline-block;
-  margin-top: 0.7rem;
+.lj-chapter-lead {
+  max-width: 40rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 0.85rem;
 }
 
 .lj-note {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.6rem;
   align-items: flex-start;
-  padding: 0.9rem 1rem;
-  margin-bottom: 1.25rem;
-  border: 1px solid color-mix(in oklab, var(--lj-copper) 45%, var(--lj-rule));
-  background: color-mix(in oklab, var(--lj-copper) 8%, var(--lj-paper));
-  font-size: 0.85rem;
-  line-height: 1.5;
+  padding: 0.7rem 0.8rem;
+  margin-bottom: 0.9rem;
+  border: 1px solid #000;
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .lj-lookup-toolbar {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
 }
 
-.lj-lookup-toolbar .lj-hint {
-  margin: 0;
+.lj-hint {
+  font-family: var(--lj-mono);
+  font-size: 0.65rem;
 }
 
 .lj-panel {
-  border: 1px solid var(--lj-rule);
-  background: #f7f4ec;
-  padding: 1.25rem;
+  border: 1px solid #000;
+  background: #fff;
+  padding: 1rem;
 }
 
-.lj-colophon {
-  padding: 2.5rem 0 1rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  color: color-mix(in oklab, var(--lj-ink) 50%, transparent);
-}
+@media (max-width: 767px) {
+  .cad-sheet {
+    padding: 0.4rem 0.65rem 0.5rem;
+    gap: 0.18rem;
+  }
 
-.lj-sticky {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  left: auto;
-  z-index: 40;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 0;
-  background: transparent;
-  border: 0;
-}
+  .cad-titleblock-brand h1 {
+    font-size: 1.55rem;
+  }
 
-.lj-sticky-brand {
-  font-family: var(--lj-display);
-  letter-spacing: 0.12em;
-  font-size: 0.85rem;
+  .cad-lead-sub,
+  .cad-hint,
+  .cad-note {
+    display: none;
+  }
+
+  .cad-doors {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .lj-cta {
+    flex: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lj-plate-img,
-  .lj-inset-img,
   .lj-cta,
-  .lj-wipe-void {
-    transition: none !important;
-    transform: none !important;
+  .cad-rev,
+  .cad-toggle button {
+    transition: none;
   }
 }

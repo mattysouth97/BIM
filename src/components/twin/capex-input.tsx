@@ -58,16 +58,8 @@ export function CapexInput({
   return (
     <div
       className={cn(
-        "pointer-events-auto absolute left-4 right-4 bottom-4 z-20",
-        "sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-auto",
         "flex flex-col sm:flex-row items-stretch gap-2 sm:gap-4 px-3 sm:px-5 py-2 sm:py-3",
-        "max-w-[720px] overflow-hidden",
-        "rounded-lg border border-border",
-        "bg-card/95 backdrop-blur-md",
-        "shadow-lg",
-        "select-none",
-        "max-sm:animate-none",
-        "sm:animate-[twin-slide-up_520ms_cubic-bezier(0.2,0.7,0.2,1)_both]",
+        "overflow-hidden select-none",
       )}
       data-twin-capex-input
     >

@@ -33,15 +33,8 @@ export function ProgramTrackSelector({ value, onChange, suggestedTrack }: Progra
   return (
     <div
       className={cn(
-        "pointer-events-auto absolute left-4 right-4 top-[76px] z-20",
-        "sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-auto",
         "flex items-center gap-1.5 px-2.5 py-1.5",
-        "overflow-x-auto",
-        "rounded-lg border border-border",
-        "bg-card/95 backdrop-blur-md",
-        "shadow-md",
-        "select-none",
-        "animate-[twin-slide-in_560ms_cubic-bezier(0.2,0.7,0.2,1)_both]",
+        "overflow-x-auto select-none",
       )}
       data-twin-track-selector
       role="radiogroup"

@@ -32,7 +32,6 @@ import { SceneControls, type SceneControlsRef } from "./scene-controls";
 import { ContextualToolbar } from "@/components/workspace/contextual-toolbar";
 import { LayerPanel } from "./layer-panel";
 import { ModelUploader } from "./model-uploader";
-import { EnergyCards } from "./energy-cards";
 import { ErrorBoundary, ViewerErrorBoundary } from "@/components/error-boundary";
 import { StructuralTooltip } from "./structural-tooltip";
 import { EquipmentClickHandler } from "./equipment-click-handler";
@@ -519,9 +518,9 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
       </Canvas>
       </ViewerErrorBoundary>
 
-      {/* Floor info overlay — bottom-left, kept as viewport overlay */}
+      {/* Floor info — mid-left, above the budget strip */}
       {selectedFloor && modelSource === "parametric" && (
-        <div className="absolute bottom-3 left-3 z-10 rounded-lg border bg-card/95 backdrop-blur p-3 shadow-lg max-w-xs">
+        <div className="absolute left-3 bottom-28 z-10 rounded-lg border bg-card/95 backdrop-blur p-3 shadow-sm max-w-xs">
           <p className="text-sm font-semibold">
             {selectedFloor.label}
             <span className="ml-2 text-xs font-normal text-muted-foreground">
@@ -539,8 +538,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
         </div>
       )}
 
-      {/* Instructions text — bottom-right */}
-      <div className="absolute bottom-3 right-3 z-10 text-[10px] text-muted-foreground/60">
+      <div className="pointer-events-none absolute right-3 bottom-28 z-10 text-[10px] text-muted-foreground/60">
         {isKo ? "클릭: 층 선택 · 드래그: 회전 · 스크롤: 줌" : "Click: select floor · Drag: rotate · Scroll: zoom"}
       </div>
 
@@ -552,13 +550,6 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             title={title}
             footprintGeometry={portfolioFootprint}
           />
-        </ErrorBoundary>
-      )}
-
-      {/* Energy metric cards — bottom-left, visible when building loaded */}
-      {modelSource === "parametric" && (
-        <ErrorBoundary>
-          <EnergyCards buildingPk={buildingPk} />
         </ErrorBoundary>
       )}
 
