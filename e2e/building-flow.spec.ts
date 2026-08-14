@@ -17,7 +17,7 @@ test.describe("Building Flow", () => {
   test("homepage has main content area", async ({ page }) => {
     await page.goto("/");
     // Main content area should be visible
-    await expect(page.locator("main").or(page.locator("[role='main']")).or(page.locator("body > div")).first()).toBeVisible();
+    await expect(page.locator("main")).toBeVisible();
   });
 
   test("building detail page renders without crash", async ({ page }) => {

@@ -11,7 +11,7 @@ const DEPTH = 24;
 const STOREY = 3.5;
 const PAPER = "#f3efe6";
 const CONCRETE = "#e4ddd0";
-const GLASS = "#7f9aa3";
+const GLASS = "#8ea8b0";
 const INK = "#1b1914";
 
 function Massing({ exploded }: { exploded: boolean }) {
@@ -31,6 +31,10 @@ function Massing({ exploded }: { exploded: boolean }) {
   const floors = useMemo(() => Array.from({ length: FLOORS }, (_, i) => i), []);
   const slabGeo = useMemo(() => new THREE.BoxGeometry(WIDTH, 0.28, DEPTH), []);
   const sideGeo = useMemo(() => new THREE.BoxGeometry(0.28, STOREY - 0.22, DEPTH), []);
+  const fillGeo = useMemo(
+    () => new THREE.BoxGeometry(WIDTH - 0.7, STOREY - 0.48, DEPTH - 0.55),
+    [],
+  );
   const glassGeo = useMemo(
     () => new THREE.BoxGeometry(WIDTH - 0.56, STOREY - 0.42, 0.07),
     [],
@@ -41,10 +45,11 @@ function Massing({ exploded }: { exploded: boolean }) {
     return () => {
       slabGeo.dispose();
       sideGeo.dispose();
+      fillGeo.dispose();
       glassGeo.dispose();
       edgeGeo.dispose();
     };
-  }, [slabGeo, sideGeo, glassGeo, edgeGeo]);
+  }, [slabGeo, sideGeo, fillGeo, glassGeo, edgeGeo]);
 
   const wallY = (STOREY - 0.22) / 2 + 0.14;
 
@@ -60,6 +65,9 @@ function Massing({ exploded }: { exploded: boolean }) {
           </mesh>
           <mesh geometry={sideGeo} position={[WIDTH / 2 - 0.14, wallY, 0]} castShadow>
             <meshStandardMaterial color={CONCRETE} roughness={0.9} metalness={0.02} />
+          </mesh>
+          <mesh geometry={fillGeo} position={[0, wallY, 0]}>
+            <meshStandardMaterial color="#d8d1c4" roughness={1} metalness={0} />
           </mesh>
           <mesh geometry={glassGeo} position={[0, wallY, DEPTH / 2 - 0.1]}>
             <meshStandardMaterial
@@ -137,13 +145,9 @@ export function RevealScene({
       shadows
     >
       <Lights />
-      <group position={[0, 0.2, 0]}>
+      <group position={[0, 0.2, 0]} rotation={[0, 0.35, 0]}>
         <Massing exploded={exploded} />
       </group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[280, 280]} />
-        <meshBasicMaterial color={PAPER} />
-      </mesh>
       <OrbitControls
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ref={controlsRef as any}

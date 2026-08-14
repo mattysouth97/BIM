@@ -11,6 +11,8 @@ import { buildEnergyAuditSections } from "@/lib/report/templates/energy-audit";
 
 interface EnergyAuditPreviewProps {
   input: EnergyAuditInput;
+  isKo?: boolean;
+  onDownloadPdf?: () => void;
 }
 
 function fidelityBadgeVariant(level: 1 | 2 | 3): "outline" | "secondary" | "default" {
@@ -86,14 +88,26 @@ function SectionContent({ content }: { content: ReportSectionContent }) {
   return null;
 }
 
-function ReportSectionCard({ section, index }: { section: ReportSection; index: number }) {
+function ReportSectionCard({
+  section,
+  index,
+  isKo,
+}: {
+  section: ReportSection;
+  index: number;
+  isKo: boolean;
+}) {
   return (
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle className="text-base">{section.title}</CardTitle>
-            <p className="mt-0.5 text-xs text-muted-foreground">{section.titleKo}</p>
+            <CardTitle className="text-base">
+              {isKo ? section.titleKo : section.title}
+            </CardTitle>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {isKo ? section.title : section.titleKo}
+            </p>
           </div>
           <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
             {index + 1}
@@ -108,46 +122,57 @@ function ReportSectionCard({ section, index }: { section: ReportSection; index: 
   );
 }
 
-export function EnergyAuditPreview({ input }: EnergyAuditPreviewProps) {
+export function EnergyAuditPreview({
+  input,
+  isKo = false,
+  onDownloadPdf,
+}: EnergyAuditPreviewProps) {
   const sections: ReportSection[] = buildEnergyAuditSections(input);
-
-  const handleDownloadPdf = () => {
-    // Placeholder — will wire to pdf-renderer in a future phase
-    console.warn("PDF download not yet implemented");
-  };
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold leading-tight">
-            Energy Audit Report
+            {isKo ? "에너지 감사 보고서" : "Energy Audit Report"}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {input.building.name} &mdash; {input.building.address}
           </p>
           <div className="mt-2 flex items-center gap-2">
             <Badge variant={fidelityBadgeVariant(input.fidelityLevel)}>
-              Fidelity Level {input.fidelityLevel}
+              {isKo
+                ? `충실도 ${input.fidelityLevel}단계`
+                : `Fidelity Level ${input.fidelityLevel}`}
             </Badge>
             <span className="text-xs text-muted-foreground">
-              {sections.length} sections
+              {isKo ? `${sections.length}개 섹션` : `${sections.length} sections`}
             </span>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={handleDownloadPdf} className="shrink-0">
-          <Download className="size-4" />
-          Download PDF
-        </Button>
+        {onDownloadPdf && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onDownloadPdf}
+            className="shrink-0"
+          >
+            <Download className="size-4" />
+            {isKo ? "PDF 받기" : "Download PDF"}
+          </Button>
+        )}
       </div>
 
       <Separator />
 
-      {/* Scrollable section list */}
       <div className="flex flex-col gap-4">
         {sections.map((section, i) => (
-          <ReportSectionCard key={section.title} section={section} index={i} />
+          <ReportSectionCard
+            key={section.title}
+            section={section}
+            index={i}
+            isKo={isKo}
+          />
         ))}
       </div>
     </div>

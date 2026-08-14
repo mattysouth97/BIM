@@ -554,7 +554,11 @@ export function ReportStage() {
       <div className="flex-1 overflow-y-auto">
         {activeTab === "energy-audit" && energyAuditInput && (
           <div className="p-4">
-            <EnergyAuditPreview input={energyAuditInput} />
+            <EnergyAuditPreview
+              input={energyAuditInput}
+              isKo={isKo}
+              onDownloadPdf={handleDownloadEnergyPdf}
+            />
           </div>
         )}
 

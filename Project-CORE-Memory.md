@@ -1,6 +1,6 @@
 # Project CORE Memory
 
-_Last updated: 2026-08-14. First verb now opens the twin._
+_Last updated: 2026-08-14. Report takes the twin retrofit answer away._
 
 ## One sentence
 
@@ -14,7 +14,7 @@ A person arrives with an address, a 대장, or a drawing. They leave with a buil
 
 1. **See a building as a twin** — open one building and believe the 3D model is *that* building (ledger floors, footprint, era, use).
 2. **Know what retrofit is worth** — move a budget, see NPV/IRR and which measures get picked, on the same building.
-3. **Take an answer away** — energy-audit / compliance report, PDF/CSV/JSON, reopen the same building tomorrow.
+3. **Take an answer away** — energy-audit / compliance report, PDF/CSV/JSON, reopen the same building tomorrow. The energy-audit **개보수 권장 사항** is the same knapsack the twin just computed (NPV, 실효 투자비, selected measures). It does not hide behind a Fidelity Level 2 gate.
 4. **Start from a drawing** — upload DXF/DWG/PDF or draw a plan in the browser, then use it as the twin footprint.
 5. **Look up a real 대장** — region or address search via data.go.kr, once a key exists.
 6. **Compare a campus** — batch a 법정동 and compare a few buildings (energy only after twins exist).
