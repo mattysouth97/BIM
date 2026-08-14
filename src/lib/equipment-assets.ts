@@ -77,7 +77,13 @@ export type EquipmentAssetId =
   | "gas-meter"
   | "lpg-tank"
   | "water-meter"
-  | "bathroom-fixture";
+  | "bathroom-fixture"
+  // New site kit (2026-08-14) — not remakes of existing ids
+  | "junction-box"
+  | "ev-charger"
+  | "exhaust-fan"
+  | "fire-pump"
+  | "emergency-generator";
 
 export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "chiller",
@@ -129,6 +135,11 @@ export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "lpg-tank",
   "water-meter",
   "bathroom-fixture",
+  "junction-box",
+  "ev-charger",
+  "exhaust-fan",
+  "fire-pump",
+  "emergency-generator",
 ];
 
 const ASSET_BASE_PATH = "/models/equipment";
@@ -204,6 +215,12 @@ export const ASSET_NATIVE_DIMS: Record<
   "lpg-tank": { w: 1.05, h: 1.48, d: 0.55 },
   "water-meter": { w: 0.33, h: 0.15, d: 0.11 },
   "bathroom-fixture": { w: 1.4, h: 0.92, d: 0.9 },
+  // New site kit — three.js axes after glTF Y-up (w=X, h=Y, d=Z).
+  "junction-box": { w: 0.2, h: 0.14, d: 0.14 }, // centre origin, drop-in for BoxGeometry
+  "ev-charger": { w: 0.36, h: 1.44, d: 0.28 }, // base origin
+  "exhaust-fan": { w: 0.84, h: 0.6, d: 0.84 }, // base origin
+  "fire-pump": { w: 1.55, h: 0.78, d: 0.62 }, // base origin
+  "emergency-generator": { w: 2.15, h: 1.14, d: 0.95 }, // base origin
 };
 
 interface CachedAsset {

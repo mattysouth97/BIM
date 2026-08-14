@@ -110,6 +110,18 @@ depending on the active retrofit scenario — this was reverse-engineered from
 the existing binaries during integration because it wasn't written down
 until now.
 
+## New site kit (2026-08-14)
+
+These ids are **new** — they do not replace any existing GLB.
+
+| Asset | File | Native dims (W×H×D m) | Origin | Consumer |
+|---|---|---|---|---|
+| Junction box | junction-box.glb | 0.20×0.14×0.14 | centre | electrical-routing `electrical-junction-box` (instanced; BoxGeometry fallback) |
+| EV charger | ev-charger.glb | 0.36×1.44×0.28 | base | layer-14-microgrid `microgrid-ev-charger` (grade, +X site edge) |
+| Exhaust fan | exhaust-fan.glb | 0.84×0.60×0.84 | base | layer-5-ventilation `vent-exhaust-fan` (2 rooftop, detailed-only) |
+| Fire pump | fire-pump.glb | 1.55×0.78×0.62 | base | layer-13-safety `safety-fire-pump` (ground plant, detailed-only) |
+| Emergency generator | emergency-generator.glb | 2.15×1.14×0.95 | base | layer-14-microgrid `microgrid-generator` (roof plant band, detailed-only) |
+
 Notes:
 - Instanced consumers require single-mesh/single-material assets (1 draw call).
 - Slabs/floors intentionally stay parametric: fixed GLBs cannot adapt to

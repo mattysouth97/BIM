@@ -8,6 +8,8 @@ import type { LayerGenerator } from "./types";
 import { getBuildingCodeRules } from "./building-code-rules";
 import {
   getEquipmentGeometryClone,
+  getEquipmentObjectClone,
+  tagEquipmentObject,
   type EquipmentAssetId,
 } from "@/lib/equipment-assets";
 
@@ -425,6 +427,19 @@ export class SafetyLayer implements LayerGenerator {
       0xb91c1c,
       0.15
     );
+
+    // Fire pump — new base-origin plant asset, ground floor beside the core.
+    // Detailed-only: empty cache leaves pre-existing safety output unchanged.
+    const firePump = getEquipmentObjectClone("fire-pump");
+    if (firePump) {
+      firePump.position.set(-2.1, 0, -0.9);
+      tagEquipmentObject(
+        firePump,
+        { type: "safety-fire-pump" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(firePump);
+    }
 
     this.group = group;
     return group;

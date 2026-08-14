@@ -14,6 +14,8 @@ import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
 import {
   ASSET_NATIVE_DIMS,
   getEquipmentGeometryClone,
+  getEquipmentObjectClone,
+  tagEquipmentObject,
 } from "@/lib/equipment-assets";
 
 const CYAN = 0x06b6d4;
@@ -285,6 +287,26 @@ export class VentilationLayer implements LayerGenerator {
         animated: true,
       };
       group.add(flowMesh);
+    }
+
+    // Rooftop exhaust fans — new asset, detailed-only (no coarse fallback).
+    const roofY =
+      recipe.totalHeight +
+      (recipe.roof.type === "flat" ? recipe.roof.flatThickness : 0);
+    const fanOffsets: [number, number][] = [
+      [recipe.footprintWidth * 0.22, -recipe.footprintDepth * 0.32],
+      [-recipe.footprintWidth * 0.18, -recipe.footprintDepth * 0.28],
+    ];
+    for (const [fx, fz] of fanOffsets) {
+      const fan = getEquipmentObjectClone("exhaust-fan");
+      if (!fan) break;
+      fan.position.set(fx, roofY, fz);
+      tagEquipmentObject(
+        fan,
+        { type: "vent-exhaust-fan" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(fan);
     }
 
     this.group = group;

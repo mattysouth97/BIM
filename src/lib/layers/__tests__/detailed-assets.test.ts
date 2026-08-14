@@ -12,6 +12,8 @@ import { HeatingLayer } from "../layer-4-heating";
 import { DHWLayer } from "../layer-6-dhw";
 import { ElectricalRoutingLayer } from "../electrical-routing";
 import { MicrogridLayer } from "../layer-14-microgrid";
+import { VentilationLayer } from "../layer-5-ventilation";
+import { SafetyLayer } from "../layer-13-safety";
 import {
   deriveEquipmentScenario,
   SHOWCASE_EQUIPMENT_SCENARIO,
@@ -315,5 +317,54 @@ describe("Green-retrofit equipment scenario", () => {
     });
     expect(findByType(withPv, "microgrid-pv-panel")).toBeDefined();
     expect(findByType(withPv, "microgrid-bess")).toBeDefined();
+  });
+});
+
+describe("New site kit (not remakes)", () => {
+  it("leaves the new objects out when the cache is empty", () => {
+    const vent = new VentilationLayer().generate(makeRecipe());
+    const safety = new SafetyLayer().generate(makeRecipe());
+    const micro = new MicrogridLayer().generate(makeRecipe());
+    expect(findByType(vent, "vent-exhaust-fan")).toBeUndefined();
+    expect(findByType(safety, "safety-fire-pump")).toBeUndefined();
+    expect(findByType(micro, "microgrid-generator")).toBeUndefined();
+    expect(findByType(micro, "microgrid-ev-charger")).toBeUndefined();
+  });
+
+  it("places exhaust fans, fire pump, generator, and EV charger when injected", () => {
+    __injectEquipmentAssetForTest("exhaust-fan", makeFakeAsset());
+    __injectEquipmentAssetForTest("fire-pump", makeFakeAsset());
+    __injectEquipmentAssetForTest("emergency-generator", makeFakeAsset());
+    __injectEquipmentAssetForTest("ev-charger", makeFakeAsset());
+
+    const vent = new VentilationLayer().generate(makeRecipe());
+    const safety = new SafetyLayer().generate(makeRecipe());
+    const micro = new MicrogridLayer().generate(makeRecipe());
+
+    const fan = findByType(vent, "vent-exhaust-fan")!;
+    expect(fan).toBeDefined();
+    expect(fan.position.y).toBeCloseTo(9.15, 5);
+
+    const pump = findByType(safety, "safety-fire-pump")!;
+    expect(pump).toBeDefined();
+    expect(pump.position.y).toBeCloseTo(0, 5);
+
+    const gen = findByType(micro, "microgrid-generator")!;
+    expect(gen).toBeDefined();
+    expect(gen.position.y).toBeCloseTo(9.15, 5);
+
+    const charger = findByType(micro, "microgrid-ev-charger")!;
+    expect(charger).toBeDefined();
+    expect(charger.position.y).toBeCloseTo(0, 5);
+    expect(charger.position.x).toBeGreaterThan(6);
+  });
+
+  it("swaps junction-box geometry onto the electrical IM when loaded", () => {
+    __injectEquipmentAssetForTest("cable-tray", makeFakeAsset());
+    __injectEquipmentAssetForTest("junction-box", makeFakeAsset());
+    const group = new ElectricalRoutingLayer().generate(makeRecipe());
+    const jboxes = findByType(group, "electrical-junction-box") as THREE.InstancedMesh;
+    expect(jboxes).toBeDefined();
+    expect(jboxes.geometry.getAttribute("position").count).toBe(24);
   });
 });

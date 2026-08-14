@@ -182,7 +182,8 @@ export class ElectricalRoutingLayer implements LayerGenerator {
       group.add(conduitIM);
 
       // --- Junction boxes where drops leave the runs ---
-      const jboxGeo = new THREE.BoxGeometry(0.2, 0.14, 0.14);
+      const jboxAssetGeo = getEquipmentGeometryClone("junction-box");
+      const jboxGeo = jboxAssetGeo ?? new THREE.BoxGeometry(0.2, 0.14, 0.14);
       const jboxMat = new THREE.MeshStandardMaterial({
         color: 0x8a6d1d,
         emissive: ELEC_AMBER,

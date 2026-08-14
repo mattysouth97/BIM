@@ -442,6 +442,31 @@ export class MicrogridLayer implements LayerGenerator {
       group.add(conduit);
     }
 
+    // New site kit (not remakes): rooftop emergency generator in the plant
+    // band, EV charger at grade on the +X site edge. Detailed-asset-only.
+    const roofY =
+      totalHeight + (recipe.roof.type === "flat" ? recipe.roof.flatThickness : 0);
+    const generator = getEquipmentObjectClone("emergency-generator");
+    if (generator) {
+      generator.position.set(layout.roofChiller.x - 2.4, roofY, layout.roofChiller.z);
+      tagEquipmentObject(
+        generator,
+        { type: "microgrid-generator" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(generator);
+    }
+    const charger = getEquipmentObjectClone("ev-charger");
+    if (charger) {
+      charger.position.set(halfW + 1.15, 0, halfD * 0.25);
+      tagEquipmentObject(
+        charger,
+        { type: "microgrid-ev-charger" },
+        { castShadow: true, receiveShadow: true }
+      );
+      group.add(charger);
+    }
+
     this.group = group;
     return group;
   }
