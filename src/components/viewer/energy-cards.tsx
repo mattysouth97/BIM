@@ -7,6 +7,8 @@
 
 import { useRef, useEffect, useCallback } from "react";
 import { useAppStore } from "@/store/app-store";
+import { useWorkspaceStore } from "@/store/workspace-store";
+import { useNarrowViewport } from "@/hooks/use-narrow-viewport";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +19,7 @@ import { parseECO2Result } from "@/lib/energy/eco2-import";
 import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import type { EnergyGrade } from "@/lib/energy/energy-grade";
+import { cn } from "@/lib/utils";
 
 interface EnergyCardsProps {
   buildingPk: string;
@@ -65,11 +68,13 @@ function AnimatedValue({
       currentRef.current = current;
 
       if (ref.current) {
-        ref.current.textContent =
-          current.toLocaleString("en-US", {
-            minimumFractionDigits: decimals,
-            maximumFractionDigits: decimals,
-          }) + suffix;
+        // Animate the number only — never concatenate the unit into
+        // textContent. JSX unicode escapes in a suffix string have
+        // rendered as literal `\u00B2` in the live overlay.
+        ref.current.textContent = current.toLocaleString("en-US", {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
+        });
       }
 
       if (progress < 1) {
@@ -82,11 +87,13 @@ function AnimatedValue({
   }, [value, decimals, suffix]);
 
   return (
-    <span ref={ref}>
-      {value.toLocaleString("en-US", {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals,
-      })}
+    <span>
+      <span ref={ref}>
+        {value.toLocaleString("en-US", {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
+        })}
+      </span>
       {suffix}
     </span>
   );
@@ -144,6 +151,8 @@ function SkeletonCards() {
 
 export function EnergyCards({ buildingPk }: EnergyCardsProps) {
   const isKo = useAppStore((s) => s.language) === "ko";
+  const leftDockOpen = useWorkspaceStore((s) => s.leftDockOpen);
+  const narrow = useNarrowViewport();
   const metrics = useEnergyMetrics(buildingPk);
   const actual = useActualEnergy(buildingPk);
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
@@ -226,9 +235,16 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
     [isKo]
   );
 
+  if (narrow) return null;
+
   if (!metrics) {
     return (
-      <div className="absolute bottom-4 left-4 z-10">
+      <div
+        className={cn(
+          "absolute bottom-4 z-10",
+          leftDockOpen ? "left-[364px]" : "left-4",
+        )}
+      >
         <SkeletonCards />
       </div>
     );
@@ -252,7 +268,12 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
   }));
 
   return (
-    <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2 pointer-events-auto">
+    <div
+      className={cn(
+        "absolute bottom-4 z-10 flex flex-col gap-2 pointer-events-auto",
+        leftDockOpen ? "left-[364px]" : "left-4",
+      )}
+    >
       {/* Actual data badge */}
       {hasActual && (
         <div className="flex items-center gap-1.5">
@@ -299,7 +320,7 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
           {isKo ? "연간 에너지 수요" : "Annual Energy Demand"}
         </p>
         <p className="text-sm font-semibold tabular-nums">
-          <AnimatedValue value={demand.demandPerSqm} suffix=" kWh/m\u00B2\u00B7yr" />
+          <AnimatedValue value={demand.demandPerSqm} suffix=" kWh/m²·yr" />
         </p>
         {hasActual ? (
           <p className="text-[9px] text-muted-foreground/60 italic mt-0.5">
@@ -331,16 +352,15 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
       {/* Card 3: CO2 Emissions */}
       <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-56">
         <p className="text-[10px] text-muted-foreground mb-1">
-          {isKo ? "CO\u2082 배출량" : "CO\u2082 Emissions"}
+          {isKo ? "CO₂ 배출량" : "CO₂ Emissions"}
         </p>
         <p className="text-sm font-semibold tabular-nums">
-          <AnimatedValue value={co2.co2PerSqm} suffix=" kgCO\u2082/m\u00B2\u00B7yr" />
+          <AnimatedValue value={co2.co2PerSqm} suffix=" kgCO₂/m²·yr" />
         </p>
         {null}
         <p className="text-[10px] text-muted-foreground mt-0.5">
-          {isKo ? "\u2248 " : "\u2248 "}
-          {treeEquivalent.toFixed(1)}{" "}
-          {isKo ? "그루 나무/m\u00B2 필요" : "trees/m\u00B2 needed"}
+          ≈ {treeEquivalent.toFixed(1)}{" "}
+          {isKo ? "그루 나무/m² 필요" : "trees/m² needed"}
         </p>
       </div>
 

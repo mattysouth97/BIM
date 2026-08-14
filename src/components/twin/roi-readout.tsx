@@ -8,6 +8,8 @@
 
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { useWorkspaceStore } from "@/store/workspace-store";
+import { useNarrowViewport } from "@/hooks/use-narrow-viewport";
 import type { BudgetSelection, EconomicAssumptions } from "@/lib/retrofit/economic-model";
 
 interface RoiReadoutProps {
@@ -96,11 +98,17 @@ export function RoiReadout({ selection, assumptions, isLoading }: RoiReadoutProp
     return out;
   }, [selection, cashFlow, effectiveCapex, horizon, discountRate]);
 
+  const leftDockOpen = useWorkspaceStore((s) => s.leftDockOpen);
+  const narrow = useNarrowViewport();
   const minVal = Math.min(0, ...cumulativeDiscounted);
   const maxVal = Math.max(0, ...cumulativeDiscounted);
   const range = Math.max(1, maxVal - minVal);
   // Vertical position of the zero line within [minVal, maxVal].
   const zeroPct = ((maxVal - 0) / range) * 100;
+
+  // Rail already carries NPV. Hide the duplicate caliper when Scene
+  // occupies this corner, or on a phone.
+  if (narrow || leftDockOpen) return null;
 
   return (
     <div

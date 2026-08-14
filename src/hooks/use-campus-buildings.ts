@@ -40,8 +40,10 @@ async function fetchBatchBuildings(
   const params = new URLSearchParams({ batchMode: "true", sigunguCd });
   if (bjdongCd) params.set("bjdongCd", bjdongCd);
 
+  const headers: Record<string, string> = {};
+  if (apiKey) headers["x-api-key"] = apiKey;
   const res = await fetch(`/api/bldrgst/title?${params.toString()}`, {
-    headers: { "x-api-key": apiKey },
+    headers,
   });
 
   if (!res.ok) {
@@ -170,18 +172,19 @@ export interface UseCampusBuildingsParams {
  * Fetches all buildings within a campus bounding area and correlates them
  * with VWorld footprint polygons.
  *
- * - Requires a valid API key in the app store.
- * - Caps at 20 buildings per campus.
- * - 5 minute stale time.
+ * Same key path as individual search: a visitor key if they set one,
+ * otherwise the same-origin shared-key fallback on the proxy. Never treat
+ * "query not run" as "zero buildings."
+ * Caps at 20 buildings per campus.
  */
 export function useCampusBuildings(params: UseCampusBuildingsParams | null) {
   const apiKey = useAppStore((s) => s.apiKey);
 
   return useQuery({
-    queryKey: ["campus", params],
+    queryKey: ["campus", params, apiKey || ""],
     queryFn: () =>
       fetchCampusData(params!.bounds, params!.sigunguCd, params!.bjdongCd, apiKey),
-    enabled: params !== null && !!apiKey,
+    enabled: params !== null,
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 1,
   });

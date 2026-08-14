@@ -27,6 +27,14 @@ describe("findEntityAt", () => {
     ]);
     expect(findEntityAt(d, { x: 5, y: 0.7 }, 2)?.id).toBe("b");
   });
+  it("hits the interior of a closed polyline", () => {
+    const d = doc([{
+      id: "pl1", kind: "polyline", layer: "L", closed: true,
+      vertices: [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }],
+      bulges: [0, 0, 0, 0],
+    }]);
+    expect(findEntityAt(d, { x: 5, y: 5 }, 0.5)?.id).toBe("pl1");
+  });
   it("hits text inside its label box", () => {
     const d = doc([{
       id: "t1", kind: "text", layer: "L", position: { x: 10, y: 10 },

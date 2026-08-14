@@ -8,6 +8,8 @@
 // rail.
 
 import { cn } from "@/lib/utils";
+import { useWorkspaceStore } from "@/store/workspace-store";
+import { useNarrowViewport } from "@/hooks/use-narrow-viewport";
 import type { BudgetSelection, EconomicAssumptions } from "@/lib/retrofit/economic-model";
 
 interface ScenarioRailProps {
@@ -51,21 +53,26 @@ export function ScenarioRail({
   const effectiveCapex = selection?.effectiveCapex ?? 0;
   const selectedCount = selection?.selected.length ?? 0;
   const utilisation = capexBudgetKrw > 0 ? effectiveCapex / capexBudgetKrw : 0;
+  const leftDockOpen = useWorkspaceStore((s) => s.leftDockOpen);
+  const rightDockOpen = useWorkspaceStore((s) => s.rightDockOpen);
+  const narrow = useNarrowViewport();
 
   return (
     <div
       className={cn(
-        "pointer-events-auto absolute left-4 right-4 top-2 z-20",
+        "pointer-events-auto absolute top-2 z-20",
         "flex items-stretch",
         "rounded-lg border border-border",
         "bg-card/95 backdrop-blur-md",
         "shadow-lg",
-        "overflow-hidden select-none",
+        "overflow-x-auto select-none",
         "animate-[twin-slide-in_560ms_cubic-bezier(0.2,0.7,0.2,1)_both]",
+        !narrow && leftDockOpen ? "left-[364px]" : "left-4",
+        !narrow && rightDockOpen ? "right-[400px]" : "right-4",
       )}
       data-twin-rail
     >
-      <div className="flex flex-col justify-center px-5 py-2.5 border-r border-border min-w-[240px]">
+      <div className="flex flex-col justify-center px-3 sm:px-5 py-2.5 border-r border-border min-w-[140px] sm:min-w-[240px] shrink-0">
         <span className="text-[10px] font-medium text-muted-foreground">
           투자 시나리오
         </span>

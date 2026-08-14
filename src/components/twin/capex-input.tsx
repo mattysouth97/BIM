@@ -58,18 +58,21 @@ export function CapexInput({
   return (
     <div
       className={cn(
-        "pointer-events-auto absolute left-1/2 -translate-x-1/2 bottom-4 z-20",
-        "flex items-stretch gap-4 px-5 py-3",
+        "pointer-events-auto absolute left-4 right-4 bottom-4 z-20",
+        "sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-auto",
+        "flex flex-col sm:flex-row items-stretch gap-2 sm:gap-4 px-3 sm:px-5 py-2 sm:py-3",
+        "max-w-[720px] overflow-hidden",
         "rounded-lg border border-border",
         "bg-card/95 backdrop-blur-md",
         "shadow-lg",
         "select-none",
-        "animate-[twin-slide-up_520ms_cubic-bezier(0.2,0.7,0.2,1)_both]",
+        "max-sm:animate-none",
+        "sm:animate-[twin-slide-up_520ms_cubic-bezier(0.2,0.7,0.2,1)_both]",
       )}
       data-twin-capex-input
     >
       {/* Label column */}
-      <div className="flex flex-col items-start justify-center pr-4 border-r border-border min-w-[100px]">
+      <div className="flex flex-col items-start justify-center sm:pr-4 sm:border-r border-border min-w-0 sm:min-w-[100px]">
         <label htmlFor={sliderId} className="text-[10px] font-medium text-muted-foreground">
           투자 예산 (CAPEX)
         </label>
@@ -79,7 +82,7 @@ export function CapexInput({
       </div>
 
       {/* Slider column */}
-      <div className="flex flex-col gap-1 min-w-[400px] justify-center">
+      <div className="flex flex-col gap-1 min-w-0 w-full sm:min-w-[240px] md:min-w-[400px] justify-center">
         <input
           id={sliderId}
           type="range"
@@ -102,7 +105,7 @@ export function CapexInput({
             "[&::-moz-range-thumb]:bg-cyan-600 [&::-moz-range-thumb]:border-none",
           )}
         />
-        <div className="flex items-center justify-between text-[9px] tabular-nums">
+        <div className="flex items-center justify-between gap-0.5 text-[9px] tabular-nums overflow-hidden">
           {tickMarks.map((tick) => (
             <button
               key={tick}
@@ -122,7 +125,7 @@ export function CapexInput({
       </div>
 
       {/* Numeric input + summary column */}
-      <div className="flex flex-col items-end justify-center gap-1 pl-4 border-l border-border min-w-[140px]">
+      <div className="hidden sm:flex flex-col items-end justify-center gap-1 pl-4 border-l border-border min-w-[140px]">
         <label htmlFor={numericId} className="text-[10px] font-medium text-muted-foreground">
           직접 입력 (만원)
         </label>

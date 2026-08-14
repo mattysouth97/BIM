@@ -6,11 +6,15 @@
 
 import React, { useMemo, useState } from "react";
 import { useAppStore } from "@/store/app-store";
+import { formatUseTypeLabel } from "@/lib/constants";
 import { useMaterialStore } from "@/store/material-store";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
+import { useRetrofitScenario } from "@/hooks/use-retrofit-scenario";
+import { useScenarioStore } from "@/store/scenario-store";
+import { scenarioToAuditSummary } from "@/lib/report/scenario-summary";
 import { EnergyAuditPreview } from "@/components/report/energy-audit-preview";
 import { CompliancePreview } from "@/components/report/compliance-preview";
 import { buildComplianceReportSections } from "@/lib/report/templates/compliance-report";
@@ -88,6 +92,9 @@ export function ReportStage() {
   const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
   const metrics = useEnergyMetrics(buildingPk);
   const actual = useActualEnergy(buildingPk);
+  const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
+  const programTrack = useScenarioStore((s) => s.programTrack);
+  const buildingInputs = useScenarioStore((s) => s.buildingInputs);
   const actualData = actual.data ?? [];
   const hasActual = actualData.length > 0;
 
@@ -220,12 +227,33 @@ export function ReportStage() {
   // ── Derive building name/address from recipe (fallback to pk) ───────────
   const buildingName = baseRecipe?.buildingName ?? buildingPk ?? "Unknown Building";
   const buildingAddress = baseRecipe?.address ?? "";
+  const useTypeLabel = formatUseTypeLabel(
+    baseRecipe?.mainPurpsCd,
+    isKo ? "ko" : "en",
+  );
   const totalArea =
     effectiveRecipe
       ? effectiveRecipe.footprintWidth *
         effectiveRecipe.footprintDepth *
         effectiveRecipe.floors.length
       : 0;
+
+  const scenarioFloorArea = buildingInputs?.totalFloorArea || totalArea;
+  const scenarioFootprint =
+    buildingInputs?.footprintArea ||
+    (effectiveRecipe
+      ? effectiveRecipe.footprintWidth * effectiveRecipe.footprintDepth
+      : 0);
+  const retrofitScenario = useRetrofitScenario({
+    buildingPk: buildingInputs?.buildingPk || buildingPk,
+    capexBudgetKrw,
+    totalFloorArea: scenarioFloorArea,
+    footprintArea: scenarioFootprint,
+    roofType: buildingInputs?.roofType ?? "flat",
+    sidoPrefix: buildingInputs?.sidoPrefix,
+    programTrack,
+  });
+  const retrofitSummary = scenarioToAuditSummary(retrofitScenario.selection);
 
   // ── Energy Audit input ───────────────────────────────────────────────────
   const energyAuditInput = useMemo<EnergyAuditInput | null>(() => {
@@ -239,7 +267,7 @@ export function ReportStage() {
       building: {
         name: buildingName,
         address: buildingAddress,
-        useType: baseRecipe?.mainPurpsCd ?? "Unknown",
+        useType: useTypeLabel,
         era: String(materials.codeYear ?? "Unknown"),
         area: totalArea,
         floors: effectiveRecipe.floors.length,
@@ -285,6 +313,7 @@ export function ReportStage() {
             insight: benchmark.insight,
           }
         : undefined,
+      retrofitSummary,
     };
   }, [
     metrics,
@@ -292,9 +321,11 @@ export function ReportStage() {
     effectiveRecipe,
     buildingName,
     buildingAddress,
+    useTypeLabel,
     totalArea,
     calibration,
     benchmark,
+    retrofitSummary,
   ]);
 
   // ── Compliance input ─────────────────────────────────────────────────────
@@ -305,7 +336,7 @@ export function ReportStage() {
       building: {
         name: buildingName,
         address: buildingAddress,
-        useType: baseRecipe?.mainPurpsCd ?? "Unknown",
+        useType: useTypeLabel,
         era: String(materials.codeYear ?? "Unknown"),
         area: totalArea,
       },
@@ -323,7 +354,7 @@ export function ReportStage() {
       },
       disclaimer: certification.disclaimer,
     };
-  }, [certification, efficiencyRating, materials, buildingName, buildingAddress, totalArea, certVersion]);
+  }, [certification, efficiencyRating, materials, buildingName, buildingAddress, useTypeLabel, totalArea, certVersion]);
 
   // ── PDF download ─────────────────────────────────────────────────────────
   const handleDownloadEnergyPdf = async () => {
@@ -336,7 +367,8 @@ export function ReportStage() {
         { name: buildingName, address: buildingAddress, fidelityLevel: 1 },
         metrics,
         calibration ?? undefined,
-        benchmark ?? undefined
+        benchmark ?? undefined,
+        retrofitSummary,
       );
       const blob = await pdf(<ReportPDF data={reportData} />).toBlob();
       downloadBlob(blob, `energy-audit-${buildingPk.slice(0, 8)}.pdf`);
@@ -378,7 +410,7 @@ export function ReportStage() {
       {
         name: buildingName,
         address: buildingAddress,
-        useType: baseRecipe?.mainPurpsCd ?? "",
+        useType: useTypeLabel,
         era: String(materials.codeYear ?? ""),
         area: totalArea,
         floors: effectiveRecipe?.floors.length ?? 0,
@@ -407,7 +439,7 @@ export function ReportStage() {
         buildingPk,
         name: buildingName,
         address: buildingAddress,
-        useType: baseRecipe?.mainPurpsCd ?? "",
+        useType: useTypeLabel,
         era: String(materials.codeYear ?? ""),
       },
       recipe: effectiveRecipe,

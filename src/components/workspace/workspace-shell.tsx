@@ -6,6 +6,7 @@ import { useWorkflowStore } from "@/store/workflow-store";
 import { useHydration } from "@/hooks/use-hydration";
 import { useOnboardingTour } from "@/hooks/use-onboarding-tour";
 import { useEditorKeybinds } from "@/hooks/use-editor-keybinds";
+import { useNarrowViewport } from "@/hooks/use-narrow-viewport";
 import { FloatingPanel } from "./floating-panel";
 import { WorkflowStepper } from "./workflow-stepper";
 import { PropertiesPanel } from "./properties-panel";
@@ -32,6 +33,11 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
   const bottomShelfOpen = useWorkspaceStore((s) => s.bottomShelfOpen);
   const toggleLeftDock = useWorkspaceStore((s) => s.toggleLeftDock);
   const toggleRightDock = useWorkspaceStore((s) => s.toggleRightDock);
+  const narrow = useNarrowViewport();
+  // Phone: docks bury the twin and the investment numbers. Do not persist
+  // this as the desktop preference — only suppress at render time.
+  const showLeftDock = leftDockOpen && !narrow;
+  const showRightDock = rightDockOpen && !narrow;
 
   // Until hydrated, render a skeleton to avoid SSR/client mismatch
   if (!hydrated) {
@@ -50,7 +56,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
       </div>
 
       {/* Full-bleed viewport with floating panels */}
-      <div className="relative flex-1 min-h-0" data-tour="viewport">
+      <div className="relative flex-1 min-h-0 overflow-hidden" data-tour="viewport">
         {/* Viewport content — upload stage, report stage, or 3D canvas */}
         {stage === "report" ? <ReportStage />
          : stage === "upload" ? <UploadStage />
@@ -60,7 +66,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         {stage === "twin" && (
           <>
             {/* Toggle buttons when panels are closed */}
-            {!leftDockOpen && (
+            {!showLeftDock && !narrow && (
               <Button
                 variant="secondary"
                 size="icon"
@@ -71,7 +77,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
                 <PanelLeft className="size-4" />
               </Button>
             )}
-            {!rightDockOpen && (
+            {!showRightDock && !narrow && (
               <Button
                 variant="secondary"
                 size="icon"
@@ -83,13 +89,13 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
               </Button>
             )}
 
-            {/* Floating Scene panel (left) */}
+            {/* Floating Scene panel (left) — sit below the scenario rail */}
             <FloatingPanel
               title="Scene"
-              visible={leftDockOpen}
+              visible={showLeftDock}
               onClose={toggleLeftDock}
               defaultX={12}
-              defaultY={12}
+              defaultY={88}
               defaultWidth={340}
               defaultHeight={500}
               minWidth={280}
@@ -102,10 +108,10 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
             {/* Floating Properties panel (right) */}
             <FloatingPanel
               title="Properties"
-              visible={rightDockOpen}
+              visible={showRightDock}
               onClose={toggleRightDock}
               defaultX={typeof window !== "undefined" ? window.innerWidth - 400 : 800}
-              defaultY={12}
+              defaultY={88}
               defaultWidth={380}
               defaultHeight={600}
               minWidth={300}

@@ -1,19 +1,30 @@
 "use client";
 
 import { useState, lazy, Suspense } from "react";
-import { Building2, Sun, Moon, Key, Globe } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Sun, Moon, Key, Globe } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAppStore } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const ApiKeyDialog = lazy(() =>
   import("@/components/settings/api-key-dialog").then((m) => ({ default: m.ApiKeyDialog }))
 );
 
 export function Header() {
+  const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { language, setLanguage } = useAppStore();
   const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
+  const isHome = pathname === "/";
+
+  // The workspace is a full-viewport instrument. The marketing header
+  // steals the first look at the building — hide it on /building/*.
+  if (pathname?.startsWith("/building/")) {
+    return null;
+  }
 
   const toggleLanguage = () => {
     setLanguage(language === "ko" ? "en" : "ko");
@@ -25,17 +36,21 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header
+        className={cn(
+          "sticky top-0 z-50 border-b backdrop-blur supports-[backdrop-filter]:bg-background/60",
+          isHome
+            ? "lj-header"
+            : "bg-background/95",
+        )}
+      >
         <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-6 w-6 text-primary" />
-            <div className="flex items-baseline gap-1.5">
-              <h1 className="text-lg font-bold tracking-tight">건축물대장</h1>
-              <span className="hidden text-sm text-muted-foreground sm:inline">
-                Building Ledger
-              </span>
-            </div>
-          </div>
+          <Link href="/" className="flex items-baseline gap-2 no-underline">
+            <span className="lj-wordmark">BIMFIT</span>
+            <span className="lj-wordmark-sub hidden sm:inline">
+              {language === "ko" ? "대장에서 트윈까지" : "Ledger to Twin"}
+            </span>
+          </Link>
 
           <div className="flex items-center gap-1">
             <Button

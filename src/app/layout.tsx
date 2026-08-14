@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Fraunces, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Fraunces, JetBrains_Mono, Hahmlet } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { Header } from "@/components/layout/header";
 import "./globals.css";
@@ -28,10 +28,16 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const hahmlet = Hahmlet({
+  variable: "--font-ko-display",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "건축물대장 | Building Ledger",
+  title: "BIMFIT | 대장에서 트윈까지",
   description:
-    "한국 건축물대장 정보 조회 서비스 - Korea Building Ledger information lookup powered by data.go.kr",
+    "건축물대장 또는 도면을 넣으면 그 건물의 3D 트윈이 열립니다. 에너지 숫자와 그린리모델링 투자 답이 같은 건물에서 나옵니다.",
 };
 
 export default function RootLayout({
@@ -42,10 +48,22 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${jetbrainsMono.variable} ${hahmlet.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
+        <link
+          rel="preload"
+          as="image"
+          href="/landing/promise-plate.jpg"
+          media="(min-width: 768px)"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="/landing/promise-mobile.jpg"
+          media="(max-width: 767px)"
+        />
         <Providers>
           <Header />
           <main className="flex-1">{children}</main>

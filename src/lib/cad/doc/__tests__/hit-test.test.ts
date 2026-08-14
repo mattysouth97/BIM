@@ -16,13 +16,17 @@ const doc = (entities: CadDocument["entities"]): CadDocument => ({
 });
 
 describe("findClosedPolylineAt", () => {
-  it("hits the boundary within tolerance, misses the interior", () => {
+  it("hits the boundary within tolerance and the filled interior", () => {
     const d = doc([ring("a", 0)]);
     expect(findClosedPolylineAt(d, { x: 5, y: 0.2 }, 0.5)?.id).toBe("a");
-    expect(findClosedPolylineAt(d, { x: 5, y: 5 }, 0.5)).toBeNull();
+    expect(findClosedPolylineAt(d, { x: 5, y: 5 }, 0.5)?.id).toBe("a");
   });
   it("returns the nearest of overlapping candidates", () => {
     const d = doc([ring("a", 0), ring("b", 9)]);
     expect(findClosedPolylineAt(d, { x: 9.1, y: 5 }, 1)?.id).toBe("b");
+  });
+  it("misses a point well outside the ring", () => {
+    const d = doc([ring("a", 0)]);
+    expect(findClosedPolylineAt(d, { x: 20, y: 20 }, 0.5)).toBeNull();
   });
 });

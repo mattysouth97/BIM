@@ -50,6 +50,17 @@ export const USE_CODES: Record<string, { ko: string; en: string }> = {
   "29000": { ko: "야영장시설", en: "Camping" },
 };
 
+/** Ledger noun for a 주용도코드. Never return the raw code when a name exists. */
+export function formatUseTypeLabel(
+  code: string | undefined,
+  lang: "ko" | "en" = "ko",
+): string {
+  if (!code) return lang === "ko" ? "미상" : "Unknown";
+  const entry = USE_CODES[code];
+  if (entry) return lang === "ko" ? entry.ko : entry.en;
+  return code;
+}
+
 // Common filter options for search
 export const SEARCH_USE_FILTERS = [
   { code: "17000", ko: "공장", en: "Factory" },

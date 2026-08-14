@@ -21,7 +21,8 @@ import { entityToChains } from "@/lib/cad/doc/entity-geometry";
 import {
   reduceDraw, type DrawEvent, type DrawState, type DrawToolKind,
 } from "@/lib/cad/doc/draw-tools";
-import type { Vec2 } from "@/lib/cad/doc/types";
+import type { CadPolyline, Vec2 } from "@/lib/cad/doc/types";
+import { polylineToFootprint } from "@/lib/cad/doc/to-footprint";
 import { CadScene } from "./cad-scene";
 import { LayerPanel } from "./layer-panel";
 import { ViewerToolbar } from "./viewer-toolbar";
@@ -95,9 +96,19 @@ function CadViewerInner({ onUseFootprint }: CadViewerProps) {
       if (!drawState) return;
       const r = reduceDraw(drawState, ev);
       setDrawPoints(r.state.points);
-      if (r.created) addEntity(r.created);
+      if (r.created) {
+        addEntity(r.created);
+        if (r.created.kind === "polyline" && r.created.closed) {
+          const fp = polylineToFootprint({
+            ...r.created,
+            id: "draft-new",
+            layer: activeLayer,
+          } satisfies CadPolyline);
+          if (fp) setPick({ ...fp, layer: activeLayer });
+        }
+      }
     },
-    [drawState, addEntity],
+    [drawState, addEntity, activeLayer],
   );
 
   const { layers } = useMemo(() => buildLayerGeometries(doc), [doc]);

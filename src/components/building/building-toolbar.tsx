@@ -44,7 +44,7 @@ export function BuildingToolbar({
   return (
     <div className="flex items-center justify-between h-12 px-3 border-b bg-background/95 backdrop-blur shrink-0">
       {/* Left side */}
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
         <Link
           href="/"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
@@ -60,7 +60,10 @@ export function BuildingToolbar({
         {loading && !title ? (
           <Skeleton className="h-5 w-32" />
         ) : displayName ? (
-          <span className="text-sm font-semibold truncate max-w-[200px] lg:max-w-[400px]">
+          <span
+            className="text-sm font-semibold truncate min-w-0 flex-1"
+            title={displayName}
+          >
             {displayName}
           </span>
         ) : null}

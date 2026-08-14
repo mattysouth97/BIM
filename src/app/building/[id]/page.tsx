@@ -4,6 +4,7 @@ import { use, lazy, Suspense } from "react";
 import { decodeBuildingId } from "@/lib/constants";
 import { useCompositeBuilding } from "@/hooks/use-composite-building";
 import { useBuildingFootprint } from "@/hooks/use-building-footprint";
+import { useEnsureBuildingModel } from "@/hooks/use-ensure-building-model";
 import { BuildingToolbar } from "@/components/building/building-toolbar";
 import { WorkspaceShell } from "@/components/workspace/workspace-shell";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,6 +43,7 @@ export default function BuildingDetailPage({
 
   const titleData = title?.items?.[0] ?? null;
   const floorsData = floors?.items ?? [];
+  useEnsureBuildingModel(titleData, floorsData);
 
   // Derive address from title once it resolves and fire footprint fetch at page level.
   // This hoists the footprint fetch out of BuildingScene so its result can be passed

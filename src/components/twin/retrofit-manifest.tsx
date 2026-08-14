@@ -10,6 +10,8 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useWorkspaceStore } from "@/store/workspace-store";
+import { useNarrowViewport } from "@/hooks/use-narrow-viewport";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
 
 interface RetrofitManifestProps {
@@ -112,6 +114,10 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
     }
     return max;
   }, [measures]);
+
+  const rightDockOpen = useWorkspaceStore((s) => s.rightDockOpen);
+  const narrow = useNarrowViewport();
+  if (narrow || rightDockOpen) return null;
 
   return (
     <div

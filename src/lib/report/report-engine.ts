@@ -8,6 +8,7 @@ import type { CertificationResult } from '@/lib/compliance/certification-types';
 import type { EfficiencyRatingResult } from '@/lib/compliance/efficiency-rating';
 import type { RetrofitReport } from '@/lib/retrofit/retrofit-report';
 import type { ReportData, ReportSection } from './report-types';
+import type { EnergyAuditInput } from './templates/energy-audit';
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -45,7 +46,8 @@ export function assembleEnergyAuditReport(
   building: { name: string; address: string; fidelityLevel: 1 | 2 | 3 },
   metrics: EnergyMetrics,
   calibration?: CalibrationResult,
-  benchmark?: BenchmarkResult
+  benchmark?: BenchmarkResult,
+  retrofitSummary?: EnergyAuditInput["retrofitSummary"],
 ): ReportData {
   const sections: ReportSection[] = [];
 
@@ -135,6 +137,38 @@ export function assembleEnergyAuditReport(
           { label: '상위 75% (P75)', value: fmt(benchmark.p75) },
           { label: '성능 평가', value: benchmark.performance },
           { label: '인사이트', value: benchmark.insight },
+        ],
+      },
+    });
+  }
+
+  if (retrofitSummary && retrofitSummary.topMeasures.length > 0) {
+    sections.push({
+      title: "Retrofit Scenario",
+      titleKo: "개보수 투자 시나리오",
+      content: {
+        type: "table",
+        headers: ["항목", "NPV", "회수"],
+        rows: [
+          ...retrofitSummary.topMeasures.map((m) => [
+            m.description,
+            m.npv !== undefined ? `${(m.npv / 100_000_000).toFixed(1)}억` : "—",
+            Number.isFinite(m.payback) ? `${fmt(m.payback)}년` : "—",
+          ]),
+          [
+            "실효 투자비",
+            `${(retrofitSummary.totalInvestment / 100_000_000).toFixed(1)}억`,
+            "",
+          ],
+          [
+            "포트폴리오 NPV",
+            retrofitSummary.npv !== undefined
+              ? `${(retrofitSummary.npv / 100_000_000).toFixed(1)}억`
+              : "—",
+            Number.isFinite(retrofitSummary.payback)
+              ? `${fmt(retrofitSummary.payback)}년`
+              : "미회수",
+          ],
         ],
       },
     });

@@ -4,6 +4,7 @@ import React from "react";
 import { defineStepper } from "@stepperize/react";
 import { CheckCircle2, Circle, ChevronRight } from "lucide-react";
 import { useWorkflowStore } from "@/store/workflow-store";
+import { useAppStore } from "@/store/app-store";
 import { STAGE_ORDER, STAGE_LABELS } from "@/lib/workflow/stages";
 import type { WorkflowStage } from "@/lib/workflow/stages";
 import { useHydration } from "@/hooks/use-hydration";
@@ -22,6 +23,7 @@ export function WorkflowStepper() {
 
   const stage = useWorkflowStore((s) => s.stage);
   const completion = useWorkflowStore((s) => s.completion);
+  const isKo = useAppStore((s) => s.language) === "ko";
 
   // Until hydrated, render a placeholder strip to avoid SSR mismatch
   if (!hydrated) {
@@ -31,13 +33,13 @@ export function WorkflowStepper() {
   }
 
   return (
-    <div className="h-10 flex items-center gap-1 px-4 border-b bg-background shrink-0">
+    <div className="h-10 flex items-center gap-1 px-2 sm:px-4 border-b bg-background shrink-0 overflow-x-auto">
       {STAGE_ORDER.map((stageId: WorkflowStage, index) => {
         const isCompleted = completion[stageId];
         const isCurrent = stage === stageId;
         const isFuture = !isCurrent && !isCompleted;
         const step = steps.find((s) => s.id === stageId);
-        const label = STAGE_LABELS[stageId].en;
+        const label = STAGE_LABELS[stageId][isKo ? "ko" : "en"];
 
         return (
           <React.Fragment key={stageId}>
@@ -66,7 +68,7 @@ export function WorkflowStepper() {
                   )}
                 />
               )}
-              <span>{label}</span>
+              <span className={cn(!isCurrent && "hidden sm:inline")}>{label}</span>
             </button>
 
             {/* Chevron separator — not shown after last step */}

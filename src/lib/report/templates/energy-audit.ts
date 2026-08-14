@@ -51,7 +51,8 @@ export interface EnergyAuditInput {
     totalInvestment: number;
     totalAnnualSaving: number;
     payback: number;
-    topMeasures: { description: string; payback: number }[];
+    npv?: number;
+    topMeasures: { description: string; payback: number; npv?: number }[];
   };
 }
 
@@ -228,33 +229,50 @@ export function buildEnergyAuditSections(input: EnergyAuditInput): ReportSection
 
   // Section 8: Retrofit Recommendations (conditional)
   if (input.retrofitSummary) {
-    const { totalInvestment, totalAnnualSaving, payback, topMeasures } = input.retrofitSummary;
-    const measureRows: string[][] = topMeasures.slice(0, 3).map((m, i) => [
+    const { totalInvestment, totalAnnualSaving, payback, npv, topMeasures } =
+      input.retrofitSummary;
+    const measureRows: string[][] = topMeasures.slice(0, 6).map((m, i) => [
       `${i + 1}`,
       m.description,
-      `${fmt(m.payback, 1)} yr`,
+      m.npv !== undefined ? `${(m.npv / 100_000_000).toFixed(1)}억` : "—",
+      Number.isFinite(m.payback) ? `${fmt(m.payback, 1)}년` : "—",
     ]);
+    const npvRow =
+      npv !== undefined
+        ? ([["", "포트폴리오 NPV", `${(npv / 100_000_000).toFixed(1)}억`, ""]] as string[][])
+        : [];
     sections.push({
-      title: 'Retrofit Recommendations',
-      titleKo: '개보수 권장 사항',
+      title: "Retrofit Recommendations",
+      titleKo: "개보수 권장 사항",
       content: {
-        type: 'table',
-        headers: ['#', 'Measure', 'Payback'],
+        type: "table",
+        headers: ["#", "항목", "NPV", "회수"],
         rows: [
           ...measureRows,
-          ['', 'Total Portfolio Investment', `${(totalInvestment / 1_000_000).toFixed(1)}M KRW`],
-          ['', 'Annual Energy Saving', `${fmt(totalAnnualSaving)} kWh/yr`],
-          ['', 'Portfolio Payback', `${fmt(payback, 1)} yr`],
+          [
+            "",
+            "실효 투자비",
+            `${(totalInvestment / 100_000_000).toFixed(1)}억`,
+            "",
+          ],
+          ["", "연간 에너지 절감", `${fmt(totalAnnualSaving)} kWh/년`, ""],
+          [
+            "",
+            "할인 회수기간",
+            Number.isFinite(payback) ? `${fmt(payback, 1)}년` : "미회수",
+            "",
+          ],
+          ...npvRow,
         ],
       },
     });
   } else {
     sections.push({
-      title: 'Retrofit Recommendations',
-      titleKo: '개보수 권장 사항',
+      title: "Retrofit Recommendations",
+      titleKo: "개보수 권장 사항",
       content: {
-        type: 'text',
-        text: 'No retrofit analysis available. Upgrade to Fidelity Level 2 or higher to unlock retrofit recommendations.',
+        type: "text",
+        text: "트윈에서 고른 투자 시나리오가 없습니다. 디지털 트윈에서 예산을 움직이면 이 건물의 개보수 답이 여기에 붙습니다.",
       },
     });
   }
