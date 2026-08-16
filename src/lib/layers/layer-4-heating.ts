@@ -68,35 +68,115 @@ const heatFragmentShader = /* glsl */ `
 `;
 
 /**
- * Builds a merged boiler geometry:
- * - Body: CylinderGeometry (main boiler tank)
- * - Flue: CylinderGeometry translated to top (flue stack)
- * - PipeA: CylinderGeometry rotated Z (supply stub)
- * - PipeB: CylinderGeometry rotated Z (return stub)
+ * Builds a merged vertical-boiler geometry with vessel bands, feet, controls,
+ * a pressure gauge, flue stack, and flanged supply/return connections.
  *
  * mergeGeometries called once — NOT in animation loop.
- * Pitfall 3: all primitives are standard Cylinders — merge compatible.
+ * Pitfall 3: all primitives are standard Three.js geometries — merge compatible.
  * Pitfall 4: each sub-geometry is a new instance — never shared + translated.
  */
 export function buildBoilerGeometry(p: BoilerParams): THREE.BufferGeometry {
   // Main cylindrical boiler body
-  const body = new THREE.CylinderGeometry(p.radius, p.radius, p.height, 16);
+  const body = new THREE.CylinderGeometry(p.radius, p.radius, p.height, 24);
+  const parts: THREE.BufferGeometry[] = [body];
 
   // Flue stack on top of body
   const flue = new THREE.CylinderGeometry(p.flueRadius, p.flueRadius, p.flueHeight, 12);
   flue.translate(0, p.height / 2 + p.flueHeight / 2, 0);
+  parts.push(flue);
+
+  // Rolled-jacket seams and top/bottom collars break up the tank silhouette.
+  const bandRadius = p.radius * 1.015;
+  const bandTube = Math.max(0.022, p.radius * 0.045);
+  for (const y of [-p.height * 0.29, p.height * 0.29]) {
+    const band = new THREE.TorusGeometry(bandRadius, bandTube, 6, 24);
+    band.rotateX(Math.PI / 2);
+    band.translate(0, y, 0);
+    parts.push(band);
+  }
+
+  const baseCollarHeight = Math.max(0.08, p.height * 0.055);
+  const baseCollar = new THREE.CylinderGeometry(
+    p.radius * 1.08,
+    p.radius * 1.08,
+    baseCollarHeight,
+    24
+  );
+  baseCollar.translate(0, -p.height / 2 - baseCollarHeight / 2, 0);
+  parts.push(baseCollar);
+
+  const topCollar = new THREE.CylinderGeometry(
+    p.radius * 1.04,
+    p.radius * 1.04,
+    baseCollarHeight * 0.7,
+    24
+  );
+  topCollar.translate(0, p.height / 2 + baseCollarHeight * 0.35, 0);
+  parts.push(topCollar);
+
+  // Front-mounted controls and gauge remain merged into the selectable boiler.
+  const controlDepth = Math.max(0.1, p.radius * 0.22);
+  const controlBox = new THREE.BoxGeometry(
+    p.radius * 0.88,
+    p.height * 0.24,
+    controlDepth
+  );
+  controlBox.translate(0, -p.height * 0.1, p.radius + controlDepth / 2);
+  parts.push(controlBox);
+
+  const controlBezel = new THREE.BoxGeometry(
+    p.radius * 0.58,
+    p.height * 0.075,
+    Math.max(0.025, controlDepth * 0.24)
+  );
+  controlBezel.translate(
+    0,
+    -p.height * 0.08,
+    p.radius + controlDepth + Math.max(0.0125, controlDepth * 0.12)
+  );
+  parts.push(controlBezel);
+
+  const gauge = new THREE.CylinderGeometry(
+    Math.max(0.075, p.radius * 0.16),
+    Math.max(0.075, p.radius * 0.16),
+    Math.max(0.05, p.radius * 0.12),
+    16
+  );
+  gauge.rotateX(Math.PI / 2);
+  gauge.translate(0, p.height * 0.27, p.radius + Math.max(0.06, p.radius * 0.13));
+  parts.push(gauge);
+
+  // Four short feet visibly separate the boiler vessel from the slab.
+  const footSize = Math.max(0.1, p.radius * 0.2);
+  const footHeight = Math.max(0.12, p.height * 0.09);
+  for (const x of [-p.radius * 0.56, p.radius * 0.56]) {
+    for (const z of [-p.radius * 0.46, p.radius * 0.46]) {
+      const foot = new THREE.BoxGeometry(footSize, footHeight, footSize);
+      foot.translate(x, -p.height / 2 - baseCollarHeight - footHeight / 2, z);
+      parts.push(foot);
+    }
+  }
 
   // Supply pipe stub — horizontal at -Y
   const pipeA = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8);
   pipeA.rotateZ(Math.PI / 2);
   pipeA.translate(p.radius + 0.25, -p.height * 0.3, 0);
+  parts.push(pipeA);
 
   // Return pipe stub — horizontal at +Y
   const pipeB = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8);
   pipeB.rotateZ(Math.PI / 2);
   pipeB.translate(p.radius + 0.25, p.height * 0.3, 0);
+  parts.push(pipeB);
 
-  return mergeGeometries([body, flue, pipeA, pipeB]);
+  for (const y of [-p.height * 0.3, p.height * 0.3]) {
+    const flange = new THREE.CylinderGeometry(0.125, 0.125, 0.06, 12);
+    flange.rotateZ(Math.PI / 2);
+    flange.translate(p.radius + 0.46, y, 0);
+    parts.push(flange);
+  }
+
+  return mergeGeometries(parts);
 }
 
 /**
@@ -161,20 +241,57 @@ export class HeatingLayer implements LayerGenerator {
     plant.position.set(0, -0.6, 0); // Basement level
     // Pitfall 2: userData on the Mesh, NOT on the BufferGeometry
     plant.userData = { type: "heating-boiler" };
+    plant.castShadow = true;
+    plant.receiveShadow = true;
     group.add(plant);
 
     // --- VRF outdoor unit InstancedMesh (NEW) ---
     if (boilerParams.vrfHeads) {
       // VRF body: small box cassette with louvre stripes on front face
       const vrfBody = new THREE.BoxGeometry(0.8, 0.6, 0.35);
+      const vrfParts: THREE.BufferGeometry[] = [vrfBody];
       // Louvre stripes — 3 thin boxes merged for IM-compatible single geometry
-      const louvreA = new THREE.BoxGeometry(0.7, 0.08, 0.02);
-      louvreA.translate(0, 0.1, 0.175 + 0.01);
-      const louvreB = new THREE.BoxGeometry(0.7, 0.08, 0.02);
-      louvreB.translate(0, 0.0, 0.175 + 0.01);
-      const louvreC = new THREE.BoxGeometry(0.7, 0.08, 0.02);
-      louvreC.translate(0, -0.1, 0.175 + 0.01);
-      const vrfGeo = mergeGeometries([vrfBody, louvreA, louvreB, louvreC]);
+      const louvreA = new THREE.BoxGeometry(0.24, 0.035, 0.025);
+      louvreA.translate(0.23, 0.08, 0.195);
+      vrfParts.push(louvreA);
+      const louvreB = new THREE.BoxGeometry(0.24, 0.035, 0.025);
+      louvreB.translate(0.23, 0.0, 0.195);
+      vrfParts.push(louvreB);
+      const louvreC = new THREE.BoxGeometry(0.24, 0.035, 0.025);
+      louvreC.translate(0.23, -0.08, 0.195);
+      vrfParts.push(louvreC);
+
+      const fanRing = new THREE.TorusGeometry(0.19, 0.022, 6, 24);
+      fanRing.translate(-0.12, 0.02, 0.205);
+      vrfParts.push(fanRing);
+
+      const fanHub = new THREE.CylinderGeometry(0.045, 0.045, 0.045, 12);
+      fanHub.rotateX(Math.PI / 2);
+      fanHub.translate(-0.12, 0.02, 0.205);
+      vrfParts.push(fanHub);
+
+      for (const angle of [Math.PI / 4, (Math.PI * 3) / 4]) {
+        const bladePair = new THREE.BoxGeometry(0.28, 0.035, 0.025);
+        bladePair.rotateZ(angle);
+        bladePair.translate(-0.12, 0.02, 0.205);
+        vrfParts.push(bladePair);
+      }
+
+      const serviceSeam = new THREE.BoxGeometry(0.025, 0.48, 0.025);
+      serviceSeam.translate(0.09, 0, 0.198);
+      vrfParts.push(serviceSeam);
+
+      const serviceHandle = new THREE.BoxGeometry(0.025, 0.09, 0.035);
+      serviceHandle.translate(0.32, -0.16, 0.215);
+      vrfParts.push(serviceHandle);
+
+      for (const x of [-0.25, 0.25]) {
+        const foot = new THREE.BoxGeometry(0.2, 0.08, 0.3);
+        foot.translate(x, -0.34, 0);
+        vrfParts.push(foot);
+      }
+
+      const vrfGeo = mergeGeometries(vrfParts);
 
       // Roof cluster: 2 × vrfHeadsPerFloor total; perimeter: one per floor × per-floor count
       const vrfCount =
@@ -193,13 +310,20 @@ export class HeatingLayer implements LayerGenerator {
 
       const vrfIM = new THREE.InstancedMesh(vrfGeo, vrfMat, vrfCount);
       // Pitfall 2: userData on the InstancedMesh, NOT on the geometry
-      vrfIM.userData = { type: "heating-vrf-head" };
+      vrfIM.userData = {
+        type: "heating-vrf-head",
+        ...(boilerParams.vrfLocation === "perimeter"
+          ? { instancesPerFloor: boilerParams.vrfHeadsPerFloor }
+          : {}),
+      };
+      vrfIM.castShadow = true;
+      vrfIM.receiveShadow = true;
 
       const mat4 = new THREE.Matrix4();
       const roofY =
         aboveFloors[aboveFloors.length - 1].y +
         aboveFloors[aboveFloors.length - 1].height +
-        0.3;
+        0.38;
 
       for (let i = 0; i < vrfCount; i++) {
         if (boilerParams.vrfLocation === "roof") {
@@ -228,7 +352,45 @@ export class HeatingLayer implements LayerGenerator {
 
     // --- Fan coil InstancedMesh (NEW) — thin ceiling cassettes per above floor ---
     // Flat box: wider and flatter than AHU (0.9×0.1×0.5)
-    const fcGeo = new THREE.BoxGeometry(0.9, 0.1, 0.5);
+    const fcBody = new THREE.BoxGeometry(0.9, 0.1, 0.5);
+    const fcParts: THREE.BufferGeometry[] = [fcBody];
+    const cassetteFaceY = -0.065;
+
+    // Raised perimeter frame around the ceiling cassette diffuser.
+    for (const z of [-0.21, 0.21]) {
+      const edge = new THREE.BoxGeometry(0.84, 0.025, 0.035);
+      edge.translate(0, cassetteFaceY, z);
+      fcParts.push(edge);
+    }
+    for (const x of [-0.41, 0.41]) {
+      const edge = new THREE.BoxGeometry(0.035, 0.025, 0.4);
+      edge.translate(x, cassetteFaceY, 0);
+      fcParts.push(edge);
+    }
+
+    const fcGuard = new THREE.TorusGeometry(0.16, 0.018, 6, 20);
+    fcGuard.rotateX(Math.PI / 2);
+    fcGuard.translate(0, cassetteFaceY - 0.012, 0);
+    fcParts.push(fcGuard);
+
+    const fcHub = new THREE.CylinderGeometry(0.035, 0.035, 0.035, 12);
+    fcHub.translate(0, cassetteFaceY - 0.012, 0);
+    fcParts.push(fcHub);
+
+    for (const angle of [Math.PI / 4, (Math.PI * 3) / 4]) {
+      const guardSpoke = new THREE.BoxGeometry(0.27, 0.02, 0.022);
+      guardSpoke.rotateY(angle);
+      guardSpoke.translate(0, cassetteFaceY - 0.012, 0);
+      fcParts.push(guardSpoke);
+    }
+
+    for (const x of [-0.48, 0.48]) {
+      const mountingTab = new THREE.BoxGeometry(0.1, 0.035, 0.13);
+      mountingTab.translate(x, -0.025, 0);
+      fcParts.push(mountingTab);
+    }
+
+    const fcGeo = mergeGeometries(fcParts);
     // Blue tint for fan coils (distinct from VRF cyan and heating red)
     const fcMat = new THREE.MeshStandardMaterial({
       color: 0x1d4ed8,
@@ -239,7 +401,9 @@ export class HeatingLayer implements LayerGenerator {
     });
     const fcIM = new THREE.InstancedMesh(fcGeo, fcMat, aboveFloors.length);
     // Pitfall 2: userData on the InstancedMesh
-    fcIM.userData = { type: "heating-fan-coil" };
+    fcIM.userData = { type: "heating-fan-coil", instancesPerFloor: 1 };
+    fcIM.castShadow = true;
+    fcIM.receiveShadow = true;
 
     const fcMat4 = new THREE.Matrix4();
     for (let i = 0; i < aboveFloors.length; i++) {

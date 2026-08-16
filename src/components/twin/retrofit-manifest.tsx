@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { formatKrw, formatYears } from "@/lib/twin-formatters";
 import { useScenarioStore } from "@/store/scenario-store";
+import { useWorkspaceStore } from "@/store/workspace-store";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
 
 interface RetrofitManifestProps {
@@ -55,6 +56,7 @@ function formatPercent(n: number | null | undefined, decimals = 1): string {
 
 export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProps) {
   const { t, lang } = useT(); // P2-06
+  const rightDockOpen = useWorkspaceStore((s) => s.rightDockOpen);
   const [activeGroup, setActiveGroup] = useState<
     (typeof CATEGORY_ORDER)[number] | "all"
   >("all");
@@ -106,13 +108,16 @@ export function RetrofitManifest({ measures, selectedIds }: RetrofitManifestProp
   return (
     <div
       className={cn(
-        "pointer-events-auto absolute right-4 top-20 bottom-28 z-20 w-[380px]",
-        "flex flex-col",
+        "pointer-events-auto absolute top-20 bottom-28 z-20 w-[380px] transition-[right] duration-200",
+        "flex-col",
         "rounded-lg border border-border",
         "bg-card/95 backdrop-blur-md",
         "shadow-lg",
         "select-none overflow-hidden",
         "animate-[twin-slide-in_560ms_cubic-bezier(0.2,0.7,0.2,1)_both]",
+        rightDockOpen
+          ? "hidden 2xl:flex 2xl:right-[404px]"
+          : "right-4 flex",
       )}
       data-twin-feature-vector
     >

@@ -27,6 +27,7 @@ import type { FootprintSource } from "@/lib/fidelity/input-provenance";
 import { EnergyAuditPreview } from "@/components/report/energy-audit-preview";
 import { CompliancePreview } from "@/components/report/compliance-preview";
 import { BimFidelitySection } from "@/components/report/bim-fidelity-section";
+import { SheetComposer } from "@/components/sheets/sheet-composer";
 import { assembleEnergyAuditReport, assembleComplianceReport } from "@/lib/report/report-engine";
 import { generateBuildingCSV } from "@/lib/export/csv-export";
 import { generateTwinJSON } from "@/lib/export/json-export";
@@ -71,7 +72,7 @@ function downloadBlob(blob: Blob, filename: string) {
 // Tab type
 // ---------------------------------------------------------------------------
 
-type ReportTab = "energy-audit" | "compliance";
+type ReportTab = "energy-audit" | "compliance" | "sheets";
 
 // ---------------------------------------------------------------------------
 // Loading skeleton
@@ -572,6 +573,17 @@ export function ReportStage({
           >
             {t("준법 인증", "Compliance")}
           </button>
+          <button
+            onClick={() => setActiveTab("sheets")}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+              activeTab === "sheets"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted"
+            )}
+          >
+            {t("시트", "Sheets")}
+          </button>
         </div>
 
         {/* Export action buttons */}
@@ -600,12 +612,12 @@ export function ReportStage({
             variant="outline"
             size="sm"
             className="h-7 text-xs gap-1"
-            disabled={pdfLoading}
             onClick={
-              activeTab === "energy-audit"
-                ? handleDownloadEnergyPdf
-                : handleDownloadCompliancePdf
+              activeTab === "compliance"
+                ? handleDownloadCompliancePdf
+                : handleDownloadEnergyPdf
             }
+            disabled={pdfLoading || activeTab === "sheets"}
             title={t("PDF 다운로드", "Download PDF")}
           >
             <Download className="size-3" />
@@ -648,6 +660,12 @@ export function ReportStage({
             <p className="text-sm">
               {t("준법 인증 데이터를 불러오는 중...", "Loading compliance data...")}
             </p>
+          </div>
+        )}
+
+        {activeTab === "sheets" && (
+          <div className="h-[min(640px,70vh)] p-4">
+            <SheetComposer />
           </div>
         )}
       </div>

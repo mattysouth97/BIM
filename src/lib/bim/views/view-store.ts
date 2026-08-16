@@ -8,7 +8,7 @@ import { persist } from "zustand/middleware";
 import * as THREE from "three";
 import type { ViewDefinition } from "./view-definition";
 import type { FloorGeometry } from "@/lib/building-geometry";
-import { computeDefaultViewsForBuilding } from "./view-engine";
+import { computeDefaultViewsForBuilding, create3dView } from "./view-engine";
 
 // ─── State shape ──────────────────────────────────────────────────────────────
 
@@ -67,14 +67,18 @@ export const useViewStore = create<ViewState>()(
       setActiveView: (id) => set({ activeViewId: id }),
 
       initializeDefaultViews: (floors, bbox) => {
-        const generated = computeDefaultViewsForBuilding(floors, bbox);
+        const generated = [
+          ...computeDefaultViewsForBuilding(floors, bbox),
+          create3dView(bbox),
+        ];
 
-        // Keep user-created views (not plan-* or elev-*)
+        // Keep user-created views (not plan-*, elev-*, or the default 3d iso)
         const existing = get().views;
         const userViews = existing.filter(
           (v) =>
             !v.id.startsWith("plan-") &&
             !v.id.startsWith("elev-") &&
+            v.id !== "3d-iso" &&
             !generated.some((g) => g.id === v.id)
         );
 

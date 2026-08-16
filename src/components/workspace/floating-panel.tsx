@@ -31,10 +31,22 @@ interface FloatingPanelProps {
 const MIN_VISIBLE_PX = 48;
 
 /** Clamp a position so the panel stays reachable within the viewport. */
-function clampToViewport(x: number, y: number): { x: number; y: number } {
+function clampToViewport(
+  x: number,
+  y: number,
+  container?: HTMLElement | null
+): { x: number; y: number } {
   if (typeof window === "undefined") return { x, y };
-  const maxX = Math.max(0, window.innerWidth - MIN_VISIBLE_PX);
-  const maxY = Math.max(0, window.innerHeight - MIN_VISIBLE_PX);
+  const width =
+    container && container.clientWidth > 0
+      ? container.clientWidth
+      : window.innerWidth;
+  const height =
+    container && container.clientHeight > 0
+      ? container.clientHeight
+      : window.innerHeight;
+  const maxX = Math.max(0, width - MIN_VISIBLE_PX);
+  const maxY = Math.max(0, height - MIN_VISIBLE_PX);
   return {
     x: Math.min(Math.max(x, 0), maxX),
     y: Math.min(Math.max(y, 0), maxY),
@@ -68,7 +80,19 @@ export function FloatingPanel({
   // P1-07 (c): clamp on mount so a persisted/pre-fix off-screen position is
   // pulled back into view.
   React.useEffect(() => {
-    setPos((p) => clampToViewport(p.x, p.y));
+    setPos((p) =>
+      clampToViewport(p.x, p.y, panelRef.current?.parentElement)
+    );
+  }, []);
+
+  React.useEffect(() => {
+    const onResize = () => {
+      setPos((p) =>
+        clampToViewport(p.x, p.y, panelRef.current?.parentElement)
+      );
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   // Drag handlers
@@ -88,7 +112,8 @@ export function FloatingPanel({
     setPos(
       clampToViewport(
         e.clientX - dragOffset.current.x,
-        e.clientY - dragOffset.current.y
+        e.clientY - dragOffset.current.y,
+        panelRef.current?.parentElement
       )
     );
   }, []);
@@ -115,9 +140,12 @@ export function FloatingPanel({
     <div
       ref={panelRef}
       data-tour={dataTour}
+      role="dialog"
+      aria-label={title}
       className={cn(
-        "absolute z-30 flex flex-col rounded-lg border bg-background shadow-xl",
-        "overflow-hidden resize",
+        "absolute z-30 flex flex-col overflow-hidden resize rounded-xl",
+        "border border-border/80 bg-background/94 backdrop-blur-xl",
+        "shadow-[0_22px_60px_rgba(15,23,42,0.2)]",
         className
       )}
       style={{
@@ -131,24 +159,30 @@ export function FloatingPanel({
     >
       {/* Draggable header */}
       <div
-        className="flex items-center justify-between border-b px-3 py-2 cursor-grab active:cursor-grabbing select-none shrink-0 bg-muted/50"
+        className="relative flex shrink-0 cursor-grab select-none items-center justify-between border-b border-border/70 bg-gradient-to-r from-muted/80 to-background/70 px-3 py-2.5 active:cursor-grabbing"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
       >
-        <div className="flex items-center gap-2">
-          <GripHorizontal className="size-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-primary/60 via-primary/20 to-transparent" />
+        <div className="min-w-0">
+          <span className="block text-[8px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Model workspace
+          </span>
+          <span className="block truncate text-sm font-semibold leading-tight text-foreground">
             {title}
           </span>
         </div>
         <div className="flex items-center gap-1">
           {headerExtra}
+          <GripHorizontal className="mx-1 size-3.5 text-muted-foreground/70" />
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            onPointerDown={(event) => event.stopPropagation()}
             onClick={onClose}
+            aria-label={`Close ${title}`}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -156,7 +190,9 @@ export function FloatingPanel({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto">{children}</div>
+      <div className="min-h-0 flex-1 overflow-auto bg-background/88">
+        {children}
+      </div>
     </div>
   );
 }

@@ -8,11 +8,18 @@ import { useOnboardingTour } from "@/hooks/use-onboarding-tour";
 import { FloatingPanel } from "./floating-panel";
 import { WorkflowStepper } from "./workflow-stepper";
 import { PropertiesPanel } from "./properties-panel";
-import { SceneOutliner } from "./scene-outliner";
+import { TwinLeftDock } from "./twin-left-dock";
+import { RevitWorkRail } from "./revit-work-rail";
 import { StatusBar } from "./status-bar";
 import { Button } from "@/components/ui/button";
 import { PanelLeft, PanelRight } from "lucide-react";
 import type { FootprintSource } from "@/lib/fidelity/input-provenance";
+import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import { useInitializeBimViews } from "@/hooks/use-initialize-bim-views";
+import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
+import { SchedulePanel } from "@/components/schedules/schedule-panel";
+import { SheetComposer } from "@/components/sheets/sheet-composer";
+import { ViewSwitcher } from "@/components/viewer/view-switcher";
 
 const ReportStage = lazy(() =>
   import("@/components/report/report-stage").then((module) => ({
@@ -57,6 +64,12 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
   useOnboardingTour();
 
   const stage = useWorkflowStore((s) => s.stage);
+  const buildingPk = useActiveBuildingPk();
+  useInitializeBimViews(buildingPk);
+  const schedulePanelOpen = useRevitWorkflowStore((s) => s.schedulePanelOpen);
+  const sheetPanelOpen = useRevitWorkflowStore((s) => s.sheetPanelOpen);
+  const setSchedulePanelOpen = useRevitWorkflowStore((s) => s.setSchedulePanelOpen);
+  const setSheetPanelOpen = useRevitWorkflowStore((s) => s.setSheetPanelOpen);
 
   const leftDockOpen = useWorkspaceStore((s) => s.leftDockOpen);
   const rightDockOpen = useWorkspaceStore((s) => s.rightDockOpen);
@@ -79,6 +92,7 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
       <div data-tour="stepper">
         <WorkflowStepper />
       </div>
+      {(stage === "twin" || stage === "report") && <RevitWorkRail />}
 
       {/* Full-bleed viewport with floating panels */}
       <div className="relative flex-1 min-h-0" data-tour="viewport">
@@ -111,7 +125,7 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
               <Button
                 variant="secondary"
                 size="icon"
-                className="absolute left-2 top-2 z-20 h-8 w-8 shadow-md"
+                className="absolute left-2 top-20 z-20 h-8 w-8 shadow-md"
                 onClick={toggleLeftDock}
                 title="Open Scene panel"
               >
@@ -122,7 +136,7 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
               <Button
                 variant="secondary"
                 size="icon"
-                className="absolute right-2 top-2 z-20 h-8 w-8 shadow-md"
+                className="absolute right-2 top-20 z-20 h-8 w-8 shadow-md"
                 onClick={toggleRightDock}
                 title="Open Properties panel"
               >
@@ -130,20 +144,24 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
               </Button>
             )}
 
+            <div className="pointer-events-none absolute top-[76px] left-1/2 z-20 -translate-x-1/2">
+              <ViewSwitcher />
+            </div>
+
             {/* Floating Scene panel (left) */}
             <FloatingPanel
               title="Scene"
               visible={leftDockOpen}
               onClose={toggleLeftDock}
               defaultX={12}
-              defaultY={12}
+              defaultY={84}
               defaultWidth={340}
               defaultHeight={500}
               minWidth={280}
               minHeight={200}
               dataTour="left-dock"
             >
-              <SceneOutliner buildingPk="" />
+              <TwinLeftDock />
             </FloatingPanel>
 
             {/* Floating Properties panel (right) */}
@@ -152,7 +170,7 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
               visible={rightDockOpen}
               onClose={toggleRightDock}
               defaultX={typeof window !== "undefined" ? window.innerWidth - 400 : 800}
-              defaultY={12}
+              defaultY={84}
               defaultWidth={380}
               defaultHeight={600}
               minWidth={300}
@@ -164,6 +182,34 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
                 ledgerHeit={ledgerHeit}
                 measuredHeightM={measuredHeightM}
               />
+            </FloatingPanel>
+
+            <FloatingPanel
+              title="Schedules"
+              visible={schedulePanelOpen}
+              onClose={() => setSchedulePanelOpen(false)}
+              defaultX={12}
+              defaultY={typeof window !== "undefined" ? window.innerHeight - 360 : 420}
+              defaultWidth={720}
+              defaultHeight={280}
+              minWidth={420}
+              minHeight={200}
+            >
+              <SchedulePanel />
+            </FloatingPanel>
+
+            <FloatingPanel
+              title="Sheets"
+              visible={sheetPanelOpen}
+              onClose={() => setSheetPanelOpen(false)}
+              defaultX={typeof window !== "undefined" ? window.innerWidth - 760 : 200}
+              defaultY={120}
+              defaultWidth={720}
+              defaultHeight={420}
+              minWidth={480}
+              minHeight={260}
+            >
+              <SheetComposer />
             </FloatingPanel>
           </>
         )}

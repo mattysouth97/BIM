@@ -178,7 +178,10 @@ export class LightingLayer implements LayerGenerator {
       });
 
       const fixtureIM = new THREE.InstancedMesh(fixtureGeo, fixtureMat, totalFixtures);
-      fixtureIM.userData = { type: "lighting-fixture" };
+      fixtureIM.userData = {
+        type: "lighting-fixture",
+        instancesPerFloor: fixturesPerFloor,
+      };
 
       const mat4 = new THREE.Matrix4();
       let idx = 0;
@@ -211,7 +214,10 @@ export class LightingLayer implements LayerGenerator {
     const sensorsPerSide = 4;
     const totalSensors = aboveFloors.length * sensorsPerSide * 4; // 4 sides
     const sensorIM = new THREE.InstancedMesh(sensorGeo, sensorMat, totalSensors);
-    sensorIM.userData = { type: "lighting-sensor" };
+    sensorIM.userData = {
+      type: "lighting-sensor",
+      instancesPerFloor: sensorsPerSide * 4,
+    };
 
     let sIdx = 0;
     const sensorMat4 = new THREE.Matrix4();
@@ -254,7 +260,7 @@ export class LightingLayer implements LayerGenerator {
       metalness: 0.6,
     });
     const panelIM = new THREE.InstancedMesh(panelGeo, panelMat, aboveFloors.length);
-    panelIM.userData = { type: "lighting-panel" };
+    panelIM.userData = { type: "lighting-panel", instancesPerFloor: 1 };
 
     for (let i = 0; i < aboveFloors.length; i++) {
       const floor = aboveFloors[i];

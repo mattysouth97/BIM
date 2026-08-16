@@ -11,6 +11,7 @@ import { GroundPlane } from "./ground-plane";
 import { useLayerStore } from "@/store/layer-store";
 import { InfoEdges } from "./info-edges";
 import { useOutlineHover } from "@/hooks/use-outline-hover";
+import { useSelectionStore } from "@/store/selection-store";
 import {
   hasAnyVisual,
   NO_RETROFIT_VISUALS,
@@ -301,6 +302,10 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
   // carrying userData.floorNo). Resolution lives in resolvePickedFloor.
   const handleClick = useCallback((event: THREE.Event & { instanceId?: number; object?: THREE.Object3D }) => {
     if (!builderRef.current) return;
+    // The native MEP coordinator resolves its click on pointerup, before this
+    // R3F click event. Do not let the building floor replace that more precise
+    // equipment selection.
+    if (useSelectionStore.getState().selectedEquipment) return;
 
     const floorSpec = resolvePickedFloor(
       { object: event.object, instanceId: event.instanceId },
@@ -326,7 +331,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
     return collectInformationalMeshes(group);
   }, [group]);
 
-  const { onPointerOver, onPointerOut } = useOutlineHover();
+  const { onPointerOver, onPointerMove, onPointerOut } = useOutlineHover();
 
   return (
     <>
@@ -338,6 +343,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
           object={group}
           onClick={handleClick}
           onPointerOver={onPointerOver}
+          onPointerMove={onPointerMove}
           onPointerOut={onPointerOut}
         />
       )}

@@ -8,6 +8,7 @@ import type {
   PlanView,
   ElevationView,
   SectionView,
+  PerspectiveView,
   OrthoCameraState,
   ClippingPlaneDescriptor,
   ElevationSide,
@@ -207,6 +208,38 @@ export function createSectionView(
     cameraState,
     cutPlane: cutDescriptor,
     clippingPlanes: [cutDescriptor],
+  };
+}
+
+// ─── 3D isometric view ────────────────────────────────────────────────────────
+
+/**
+ * Default perspective isometric view of the full building bounding box.
+ * Kept out of `computeDefaultViewsForBuilding` so existing plan/elevation
+ * counts stay stable; callers (view-store) append it explicitly.
+ */
+export function create3dView(bbox: THREE.Box3, id = "3d-iso"): PerspectiveView {
+  const center = bbox.getCenter(new THREE.Vector3());
+  const size = bbox.getSize(new THREE.Vector3());
+  const d = Math.max(size.x, size.y, size.z) * 1.8 || 20;
+
+  return {
+    id,
+    name: "3D — Isometric",
+    kind: "3d",
+    cameraState: {
+      kind: "persp",
+      position: [
+        center.x + d * 0.7,
+        center.y + d * 0.5,
+        center.z + d * 0.7,
+      ],
+      target: [center.x, center.y, center.z],
+      fov: 35,
+      near: 0.1,
+      far: d * 10,
+    },
+    clippingPlanes: [],
   };
 }
 

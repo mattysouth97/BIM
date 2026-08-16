@@ -4,6 +4,7 @@ import {
   createPlanView,
   createElevationView,
   createSectionView,
+  create3dView,
   computeDefaultViewsForBuilding,
 } from "../view-engine";
 import type { FloorGeometry } from "@/lib/building-geometry";
@@ -264,5 +265,16 @@ describe("computeDefaultViewsForBuilding", () => {
     expect(secondFloor).toBeDefined();
     const lowerPlane = secondFloor!.clippingPlanes!.find((p) => p.normal[1] === 1);
     expect(lowerPlane!.constant).toBeCloseTo(-floorHeight, 4);
+  });
+});
+
+describe("create3dView", () => {
+  it("returns a perspective isometric view that does not clip", () => {
+    const bbox = makeBbox(-6, 0, -4, 6, 9, 4);
+    const view = create3dView(bbox);
+    expect(view.id).toBe("3d-iso");
+    expect(view.kind).toBe("3d");
+    expect(view.cameraState.kind).toBe("persp");
+    expect(view.clippingPlanes).toEqual([]);
   });
 });

@@ -10,6 +10,7 @@ import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { formatKrw } from "@/lib/twin-formatters";
+import { useWorkspaceStore } from "@/store/workspace-store";
 import {
   effectiveDiscountRate,
   buildDiscountFactors,
@@ -36,6 +37,7 @@ function gradeFromIrr(
 
 export function RoiReadout({ selection, assumptions, isLoading }: RoiReadoutProps) {
   const { t, lang } = useT(); // P2-06
+  const leftDockOpen = useWorkspaceStore((s) => s.leftDockOpen);
   const npv = selection?.npv ?? 0;
   const cashFlow = selection?.aggregateCashFlow ?? [];
   const effectiveCapex = selection?.effectiveCapex ?? 0;
@@ -107,12 +109,15 @@ export function RoiReadout({ selection, assumptions, isLoading }: RoiReadoutProp
   return (
     <div
       className={cn(
-        "pointer-events-auto absolute left-4 top-20 z-20 w-[340px]",
+        "pointer-events-auto absolute top-20 z-20 w-[340px] transition-[left] duration-200",
         "rounded-lg border border-border",
         "bg-card/95 backdrop-blur-md",
         "shadow-lg",
         "select-none overflow-hidden",
         "animate-[twin-slide-in_480ms_cubic-bezier(0.2,0.7,0.2,1)_both]",
+        leftDockOpen
+          ? "hidden 2xl:block 2xl:left-[368px]"
+          : "left-4",
       )}
       data-twin-prediction
     >

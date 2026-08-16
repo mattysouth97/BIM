@@ -41,7 +41,8 @@ import {
   GRADE_LABELS,
 } from "@/lib/compliance/efficiency-rating";
 import { Loader2 } from "lucide-react";
-import { EquipmentInfoPanel } from "./equipment-info-panel";
+import { EquipmentInsightCard } from "./equipment-insight-card";
+import { RevitIdentityCard } from "./revit-identity-card";
 
 // ── Grade color map for efficiency rating ────────────────────────────────────
 
@@ -271,8 +272,9 @@ export function PropertiesPanel({
 
   return (
     <div className="h-full overflow-y-auto">
+      <RevitIdentityCard />
       {/* Equipment info panel — appears above analytics accordion when a MEP mesh is clicked */}
-      <EquipmentInfoPanel />
+      <EquipmentInsightCard />
       <Accordion
         type="multiple"
         defaultValue={["fidelity", "benchmark", "efficiency"]}

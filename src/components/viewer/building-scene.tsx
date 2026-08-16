@@ -39,8 +39,8 @@ import { ModelUploader } from "./model-uploader";
 import { EnergyCards } from "./energy-cards";
 import { ErrorBoundary, ViewerErrorBoundary } from "@/components/error-boundary";
 import { StructuralTooltip } from "./structural-tooltip";
-import { EquipmentClickHandler } from "./equipment-click-handler";
-import { ScenePostProcessing } from "./outline-post-processing";
+import { EquipmentInteractionHandler } from "./equipment-interaction-handler";
+import { SceneHighlightProcessing } from "./scene-highlight-processing";
 import { TwinStageOverlay } from "@/components/twin/twin-stage-overlay";
 import type { FootprintGeometry } from "@/lib/portfolio/types";
 
@@ -499,7 +499,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
                 {retrofitVisuals.hvacUpgraded && <RetrofitHvacUnits recipe={recipe} />}
                 <BuildingLayers buildingPk={buildingPk} />
                 <StructuralTooltip />
-                <EquipmentClickHandler />
+                <EquipmentInteractionHandler />
                 {/* P2-26: neighbor context massing — only when footprint polygon is available */}
                 {footprintPolygon && (
                   <ContextMassing
@@ -527,7 +527,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           />
 
           {/* Outline + post-processing — OutlinePass via the WebGL EffectComposer. */}
-          <ScenePostProcessing />
+          <SceneHighlightProcessing />
         </Suspense>
       </Canvas>
       </ViewerErrorBoundary>

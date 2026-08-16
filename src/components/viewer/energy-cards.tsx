@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { generateECO2Input, downloadECO2File, buildSubSystems } from "@/lib/energy/eco2-export";
 import { parseECO2Result } from "@/lib/energy/eco2-import";
 import { useMaterialStore } from "@/store/material-store";
+import { useWorkspaceStore } from "@/store/workspace-store";
 import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import type { EnergyGrade } from "@/lib/energy/energy-grade";
@@ -114,6 +115,7 @@ function SkeletonCards() {
 
 export function EnergyCards({ buildingPk }: EnergyCardsProps) {
   const { t } = useT();
+  const leftDockOpen = useWorkspaceStore((s) => s.leftDockOpen);
   // P1-08 (d): same regional climate as every other panel.
   const sigunguCd = useActiveSigunguCd();
   const metrics = useEnergyMetrics(buildingPk, sigunguCd);
@@ -172,7 +174,11 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
 
   if (!metrics) {
     return (
-      <div className="absolute bottom-4 left-4 z-10">
+      <div
+        className={`absolute bottom-4 z-10 transition-[left] duration-200 ${
+          leftDockOpen ? "hidden 2xl:block 2xl:left-[368px]" : "left-4"
+        }`}
+      >
         <SkeletonCards />
       </div>
     );
@@ -195,7 +201,11 @@ export function EnergyCards({ buildingPk }: EnergyCardsProps) {
   }));
 
   return (
-    <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2 pointer-events-auto">
+    <div
+      className={`absolute bottom-4 z-10 flex-col gap-2 pointer-events-auto transition-[left] duration-200 ${
+        leftDockOpen ? "hidden 2xl:flex 2xl:left-[368px]" : "left-4 flex"
+      }`}
+    >
       {/* Actual data badge */}
       {hasActual && (
         <div className="flex items-center gap-1.5">

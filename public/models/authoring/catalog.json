@@ -1,0 +1,1861 @@
+{
+  "version": 1,
+  "source": "Universidad Europea Revit Basic Course (García / Martínez, 2014) + BIM authoring identity",
+  "units": "metres",
+  "blender": "5.2 Z-up",
+  "gltf": "Y-up, export_yup=True",
+  "count": 46,
+  "families": [
+    {
+      "id": "wall-basic-generic-200",
+      "category": "Walls",
+      "categoryKo": "벽",
+      "family": "Basic Wall",
+      "familyKo": "기본 벽",
+      "type": "Generic 200mm",
+      "typeKo": "일반 200mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-centerline-base",
+      "placement": "linear",
+      "scaleAxes": {
+        "x": "length",
+        "y": "fixed-thickness",
+        "z": "height"
+      },
+      "widthM": 0.2,
+      "heightM": 3.0,
+      "courseRef": "Basic Model Elements / Walls — Generic Wall Type (low LOD)",
+      "boundsMin": [
+        -0.5,
+        -0.1,
+        -1.5
+      ],
+      "boundsMax": [
+        0.5,
+        0.1,
+        1.5
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 3.0,
+        "z": 0.2,
+        "blenderXYZ": [
+          1.0,
+          0.2,
+          3.0
+        ]
+      },
+      "triangles": 12,
+      "file": "wall-basic-generic-200.glb",
+      "bytesKb": 2.0,
+      "path": "/models/authoring/wall-basic-generic-200.glb"
+    },
+    {
+      "id": "wall-exterior-brick-on-cmu",
+      "category": "Walls",
+      "categoryKo": "벽",
+      "family": "Basic Wall",
+      "familyKo": "기본 벽",
+      "type": "Exterior – Brick on CMU",
+      "typeKo": "외부 – 벽돌+CMU",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-centerline-base",
+      "placement": "linear",
+      "scaleAxes": {
+        "x": "length",
+        "y": "fixed-thickness",
+        "z": "height"
+      },
+      "widthM": 0.363,
+      "heightM": 3.0,
+      "layers": [
+        "Finish 1",
+        "Thermal/Air Layer",
+        "Thermal/Air Layer",
+        "Structure",
+        "Finish 2"
+      ],
+      "courseRef": "Revit element Hierarchy — Exterior – Brick on CMU",
+      "boundsMin": [
+        -0.5,
+        -0.1915,
+        -1.5
+      ],
+      "boundsMax": [
+        0.5,
+        0.1915,
+        1.5
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 3.0,
+        "z": 0.383,
+        "blenderXYZ": [
+          1.0,
+          0.383,
+          3.0
+        ]
+      },
+      "triangles": 72,
+      "file": "wall-exterior-brick-on-cmu.glb",
+      "bytesKb": 8.4,
+      "path": "/models/authoring/wall-exterior-brick-on-cmu.glb"
+    },
+    {
+      "id": "wall-exterior-cmu-insulated",
+      "category": "Walls",
+      "categoryKo": "벽",
+      "family": "Basic Wall",
+      "familyKo": "기본 벽",
+      "type": "Exterior – CMU Insulated",
+      "typeKo": "외부 – 단열 CMU",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-centerline-base",
+      "placement": "linear",
+      "widthM": 0.295,
+      "heightM": 3.0,
+      "courseRef": "Revit element Hierarchy — Exterior – CMU Insulated",
+      "boundsMin": [
+        -0.5,
+        -0.095,
+        -1.5
+      ],
+      "boundsMax": [
+        0.5,
+        0.095,
+        1.5
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 3.0,
+        "z": 0.19,
+        "blenderXYZ": [
+          1.0,
+          0.19,
+          3.0
+        ]
+      },
+      "triangles": 48,
+      "file": "wall-exterior-cmu-insulated.glb",
+      "bytesKb": 5.9,
+      "path": "/models/authoring/wall-exterior-cmu-insulated.glb"
+    },
+    {
+      "id": "wall-interior-partition",
+      "category": "Walls",
+      "categoryKo": "벽",
+      "family": "Basic Wall",
+      "familyKo": "기본 벽",
+      "type": "Interior – Partition",
+      "typeKo": "내부 – 칸막이",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-centerline-base",
+      "placement": "linear",
+      "widthM": 0.11499999999999999,
+      "heightM": 3.0,
+      "courseRef": "Revit element Hierarchy — Interior – Partition",
+      "boundsMin": [
+        -0.5,
+        -0.045,
+        -1.5
+      ],
+      "boundsMax": [
+        0.5,
+        0.045,
+        1.5
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 3.0,
+        "z": 0.09,
+        "blenderXYZ": [
+          1.0,
+          0.09,
+          3.0
+        ]
+      },
+      "triangles": 36,
+      "file": "wall-interior-partition.glb",
+      "bytesKb": 4.4,
+      "path": "/models/authoring/wall-interior-partition.glb"
+    },
+    {
+      "id": "wall-stacked-brick-cmu",
+      "category": "Walls",
+      "categoryKo": "벽",
+      "family": "Stacked Wall",
+      "familyKo": "적층 벽",
+      "type": "Exterior – Brick Base + CMU",
+      "typeKo": "외부 – 벽돌 하단 + CMU",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-centerline-base",
+      "placement": "linear",
+      "widthM": 0.363,
+      "heightM": 3.0,
+      "courseRef": "Wall Category — three System Families: Basic, Curtain, Stacked",
+      "boundsMin": [
+        -0.5,
+        -0.095,
+        -0.9
+      ],
+      "boundsMax": [
+        0.5,
+        0.095,
+        0.9
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 1.8,
+        "z": 0.19,
+        "blenderXYZ": [
+          1.0,
+          0.19,
+          1.8
+        ]
+      },
+      "triangles": 120,
+      "file": "wall-stacked-brick-cmu.glb",
+      "bytesKb": 13.2,
+      "path": "/models/authoring/wall-stacked-brick-cmu.glb"
+    },
+    {
+      "id": "curtain-mullion-rect-50x150",
+      "category": "Curtain Wall Mullions",
+      "categoryKo": "커튼월 멀리언",
+      "family": "Rectangular Mullion",
+      "familyKo": "각형 멀리언",
+      "type": "50 x 150mm",
+      "typeKo": "50 × 150mm",
+      "familyKind": "system",
+      "host": "curtain-grid",
+      "origin": "center-axis",
+      "placement": "linear",
+      "scaleAxes": {
+        "z": "length"
+      },
+      "courseRef": "Complex Walls — curtain walls have grids, mullions and panels",
+      "boundsMin": [
+        -0.028,
+        -0.075,
+        -0.5
+      ],
+      "boundsMax": [
+        0.028,
+        0.075,
+        0.5
+      ],
+      "nativeDimsM": {
+        "x": 0.056,
+        "y": 1.0,
+        "z": 0.15,
+        "blenderXYZ": [
+          0.056,
+          0.15,
+          1.0
+        ]
+      },
+      "triangles": 132,
+      "file": "curtain-mullion-rect-50x150.glb",
+      "bytesKb": 9.5,
+      "path": "/models/authoring/curtain-mullion-rect-50x150.glb"
+    },
+    {
+      "id": "curtain-panel-glazed",
+      "category": "Curtain Panels",
+      "categoryKo": "커튼월 패널",
+      "family": "System Panel",
+      "familyKo": "시스템 패널",
+      "type": "Glazed",
+      "typeKo": "유리",
+      "familyKind": "system",
+      "host": "curtain-grid",
+      "origin": "bottom-center",
+      "placement": "hosted",
+      "widthM": 1.2,
+      "heightM": 2.4,
+      "courseRef": "Complex Walls — mullions and panels",
+      "boundsMin": [
+        -0.59,
+        -0.012,
+        -1.19
+      ],
+      "boundsMax": [
+        0.59,
+        0.012,
+        1.19
+      ],
+      "nativeDimsM": {
+        "x": 1.18,
+        "y": 2.38,
+        "z": 0.024,
+        "blenderXYZ": [
+          1.18,
+          0.024,
+          2.38
+        ]
+      },
+      "triangles": 24,
+      "file": "curtain-panel-glazed.glb",
+      "bytesKb": 3.4,
+      "path": "/models/authoring/curtain-panel-glazed.glb"
+    },
+    {
+      "id": "curtain-wall-storefront",
+      "category": "Walls",
+      "categoryKo": "벽",
+      "family": "Curtain Wall",
+      "familyKo": "커튼월",
+      "type": "Storefront",
+      "typeKo": "스토어프론트",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-centerline-base",
+      "placement": "linear",
+      "widthM": 0.15,
+      "heightM": 3.0,
+      "lengthM": 2.5,
+      "courseRef": "Complex Walls — Curtain walls have grids, mullions and panels",
+      "boundsMin": [
+        -1.25,
+        -0.075,
+        -1.5
+      ],
+      "boundsMax": [
+        1.25,
+        0.075,
+        1.5
+      ],
+      "nativeDimsM": {
+        "x": 2.5,
+        "y": 3.0,
+        "z": 0.15,
+        "blenderXYZ": [
+          2.5,
+          0.15,
+          3.0
+        ]
+      },
+      "triangles": 696,
+      "file": "curtain-wall-storefront.glb",
+      "bytesKb": 39.7,
+      "path": "/models/authoring/curtain-wall-storefront.glb"
+    },
+    {
+      "id": "door-single-flush-910",
+      "category": "Doors",
+      "categoryKo": "문",
+      "family": "Single-Flush",
+      "familyKo": "단여닫이",
+      "type": "Generic 910mm",
+      "typeKo": "일반 910mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center-floor",
+      "placement": "hosted",
+      "widthM": 0.91,
+      "heightM": 2.1,
+      "swing": "LeafPivot rotates about +Z, interior -Y",
+      "courseRef": "Doors and Windows — wall-hosted loadable families; Generic 910mm",
+      "boundsMin": [
+        -0.455,
+        -0.06,
+        -1.05
+      ],
+      "boundsMax": [
+        0.455,
+        0.06,
+        1.05
+      ],
+      "nativeDimsM": {
+        "x": 0.91,
+        "y": 2.1,
+        "z": 0.12,
+        "blenderXYZ": [
+          0.91,
+          0.12,
+          2.1
+        ]
+      },
+      "triangles": 1332,
+      "file": "door-single-flush-910.glb",
+      "bytesKb": 73.7,
+      "path": "/models/authoring/door-single-flush-910.glb"
+    },
+    {
+      "id": "door-single-flush-810",
+      "category": "Doors",
+      "categoryKo": "문",
+      "family": "Single-Flush",
+      "familyKo": "단여닫이",
+      "type": "Generic 810mm",
+      "typeKo": "일반 810mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center-floor",
+      "placement": "hosted",
+      "widthM": 0.81,
+      "heightM": 2.1,
+      "swing": "LeafPivot rotates about +Z, interior -Y",
+      "courseRef": "Doors and Windows — wall-hosted loadable families; Generic 910mm",
+      "boundsMin": [
+        -0.405,
+        -0.06,
+        -1.05
+      ],
+      "boundsMax": [
+        0.405,
+        0.06,
+        1.05
+      ],
+      "nativeDimsM": {
+        "x": 0.81,
+        "y": 2.1,
+        "z": 0.12,
+        "blenderXYZ": [
+          0.81,
+          0.12,
+          2.1
+        ]
+      },
+      "triangles": 1332,
+      "file": "door-single-flush-810.glb",
+      "bytesKb": 73.8,
+      "path": "/models/authoring/door-single-flush-810.glb"
+    },
+    {
+      "id": "door-double-flush-1800",
+      "category": "Doors",
+      "categoryKo": "문",
+      "family": "Double-Flush",
+      "familyKo": "양여닫이",
+      "type": "Generic 1800mm",
+      "typeKo": "일반 1800mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center-floor",
+      "placement": "hosted",
+      "widthM": 1.8,
+      "heightM": 2.1,
+      "courseRef": "Doors — loadable families placed on walls",
+      "boundsMin": [
+        -0.9,
+        -0.07,
+        -1.05
+      ],
+      "boundsMax": [
+        0.9,
+        0.07,
+        1.05
+      ],
+      "nativeDimsM": {
+        "x": 1.8,
+        "y": 2.1,
+        "z": 0.14,
+        "blenderXYZ": [
+          1.8,
+          0.14,
+          2.1
+        ]
+      },
+      "triangles": 1284,
+      "file": "door-double-flush-1800.glb",
+      "bytesKb": 70.7,
+      "path": "/models/authoring/door-double-flush-1800.glb"
+    },
+    {
+      "id": "door-glass-storefront",
+      "category": "Doors",
+      "categoryKo": "문",
+      "family": "Glass",
+      "familyKo": "유리문",
+      "type": "Storefront 1000mm",
+      "typeKo": "스토어프론트 1000mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center-floor",
+      "placement": "hosted",
+      "widthM": 1.0,
+      "heightM": 2.2,
+      "courseRef": "Doors and Windows — manufacturer / OOTB loadable families",
+      "boundsMin": [
+        -0.5,
+        -0.06,
+        -1.1
+      ],
+      "boundsMax": [
+        0.5,
+        0.06,
+        1.1
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 2.2,
+        "z": 0.12,
+        "blenderXYZ": [
+          1.0,
+          0.12,
+          2.2
+        ]
+      },
+      "triangles": 900,
+      "file": "door-glass-storefront.glb",
+      "bytesKb": 49.5,
+      "path": "/models/authoring/door-glass-storefront.glb"
+    },
+    {
+      "id": "window-fixed-1200x1500",
+      "category": "Windows",
+      "categoryKo": "창",
+      "family": "Fixed",
+      "familyKo": "고정창",
+      "type": "Fixed 1200 x 1500mm",
+      "typeKo": "고정 1200 × 1500mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center",
+      "placement": "hosted",
+      "widthM": 1.2,
+      "heightM": 1.5,
+      "courseRef": "Doors and Windows — wall-hosted loadable families",
+      "boundsMin": [
+        -0.62,
+        -0.06,
+        -0.75
+      ],
+      "boundsMax": [
+        0.62,
+        0.06,
+        0.75
+      ],
+      "nativeDimsM": {
+        "x": 1.24,
+        "y": 1.5,
+        "z": 0.12,
+        "blenderXYZ": [
+          1.24,
+          0.12,
+          1.5
+        ]
+      },
+      "triangles": 444,
+      "file": "window-fixed-1200x1500.glb",
+      "bytesKb": 25.4,
+      "path": "/models/authoring/window-fixed-1200x1500.glb"
+    },
+    {
+      "id": "window-casement-900x1200",
+      "category": "Windows",
+      "categoryKo": "창",
+      "family": "Casement",
+      "familyKo": "여닫이창",
+      "type": "Casement 900 x 1200mm",
+      "typeKo": "여닫이 900 × 1200mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center",
+      "placement": "hosted",
+      "widthM": 0.9,
+      "heightM": 1.2,
+      "swing": "SashPivot rotates about +Z",
+      "courseRef": "Doors and Windows — loadable families",
+      "boundsMin": [
+        -0.47,
+        -0.06,
+        -0.6
+      ],
+      "boundsMax": [
+        0.47,
+        0.06,
+        0.6
+      ],
+      "nativeDimsM": {
+        "x": 0.94,
+        "y": 1.2,
+        "z": 0.12,
+        "blenderXYZ": [
+          0.94,
+          0.12,
+          1.2
+        ]
+      },
+      "triangles": 600,
+      "file": "window-casement-900x1200.glb",
+      "bytesKb": 36.3,
+      "path": "/models/authoring/window-casement-900x1200.glb"
+    },
+    {
+      "id": "window-sliding-1800x1500",
+      "category": "Windows",
+      "categoryKo": "창",
+      "family": "Sliding",
+      "familyKo": "미서기창",
+      "type": "Sliding 1800 x 1500mm",
+      "typeKo": "미서기 1800 × 1500mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center",
+      "placement": "hosted",
+      "widthM": 1.8,
+      "heightM": 1.5,
+      "courseRef": "Doors and Windows — loadable families",
+      "boundsMin": [
+        -0.92,
+        -0.07,
+        -0.75
+      ],
+      "boundsMax": [
+        0.92,
+        0.07,
+        0.75
+      ],
+      "nativeDimsM": {
+        "x": 1.84,
+        "y": 1.5,
+        "z": 0.14,
+        "blenderXYZ": [
+          1.84,
+          0.14,
+          1.5
+        ]
+      },
+      "triangles": 684,
+      "file": "window-sliding-1800x1500.glb",
+      "bytesKb": 39.6,
+      "path": "/models/authoring/window-sliding-1800x1500.glb"
+    },
+    {
+      "id": "window-awning-900x600",
+      "category": "Windows",
+      "categoryKo": "창",
+      "family": "Awning",
+      "familyKo": "프로젝트창",
+      "type": "Awning 900 x 600mm",
+      "typeKo": "프로젝트 900 × 600mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center",
+      "placement": "hosted",
+      "widthM": 0.9,
+      "heightM": 0.6,
+      "swing": "SashPivot rotates about +X (top-hung)",
+      "courseRef": "Doors and Windows — loadable families",
+      "boundsMin": [
+        -0.47,
+        -0.055,
+        -0.3
+      ],
+      "boundsMax": [
+        0.47,
+        0.055,
+        0.3
+      ],
+      "nativeDimsM": {
+        "x": 0.94,
+        "y": 0.6,
+        "z": 0.11,
+        "blenderXYZ": [
+          0.94,
+          0.11,
+          0.6
+        ]
+      },
+      "triangles": 552,
+      "file": "window-awning-900x600.glb",
+      "bytesKb": 31.1,
+      "path": "/models/authoring/window-awning-900x600.glb"
+    },
+    {
+      "id": "column-struct-round-450",
+      "category": "Structural Columns",
+      "categoryKo": "구조 기둥",
+      "family": "Round Column",
+      "familyKo": "원형 기둥",
+      "type": "450 mm",
+      "typeKo": "450 mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "point",
+      "scaleAxes": {
+        "z": "height"
+      },
+      "diameterM": 0.45,
+      "courseRef": "Revit element Hierarchy — Round columns 450 mm / 600 mm",
+      "boundsMin": [
+        -0.245,
+        -0.245,
+        -0.5
+      ],
+      "boundsMax": [
+        0.245,
+        0.245,
+        0.5
+      ],
+      "nativeDimsM": {
+        "x": 0.49,
+        "y": 1.0,
+        "z": 0.49,
+        "blenderXYZ": [
+          0.49,
+          0.49,
+          1.0
+        ]
+      },
+      "triangles": 628,
+      "file": "column-struct-round-450.glb",
+      "bytesKb": 30.9,
+      "path": "/models/authoring/column-struct-round-450.glb"
+    },
+    {
+      "id": "column-struct-round-600",
+      "category": "Structural Columns",
+      "categoryKo": "구조 기둥",
+      "family": "Round Column",
+      "familyKo": "원형 기둥",
+      "type": "600 mm",
+      "typeKo": "600 mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "point",
+      "scaleAxes": {
+        "z": "height"
+      },
+      "diameterM": 0.6,
+      "courseRef": "Revit element Hierarchy — Round columns 450 mm / 600 mm",
+      "boundsMin": [
+        -0.32,
+        -0.32,
+        -0.5
+      ],
+      "boundsMax": [
+        0.32,
+        0.32,
+        0.5
+      ],
+      "nativeDimsM": {
+        "x": 0.64,
+        "y": 1.0,
+        "z": 0.64,
+        "blenderXYZ": [
+          0.64,
+          0.64,
+          1.0
+        ]
+      },
+      "triangles": 628,
+      "file": "column-struct-round-600.glb",
+      "bytesKb": 30.9,
+      "path": "/models/authoring/column-struct-round-600.glb"
+    },
+    {
+      "id": "column-struct-rect-450x600",
+      "category": "Structural Columns",
+      "categoryKo": "구조 기둥",
+      "family": "Rectangular Column",
+      "familyKo": "각형 기둥",
+      "type": "450x600mm",
+      "typeKo": "450x600mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "point",
+      "scaleAxes": {
+        "z": "height"
+      },
+      "widthM": 0.45,
+      "depthM": 0.6,
+      "courseRef": "Revit element Hierarchy — Rectangular columns 450x600 / 600x750",
+      "boundsMin": [
+        -0.245,
+        -0.32,
+        -0.5
+      ],
+      "boundsMax": [
+        0.245,
+        0.32,
+        0.5
+      ],
+      "nativeDimsM": {
+        "x": 0.49,
+        "y": 1.0,
+        "z": 0.64,
+        "blenderXYZ": [
+          0.49,
+          0.64,
+          1.0
+        ]
+      },
+      "triangles": 132,
+      "file": "column-struct-rect-450x600.glb",
+      "bytesKb": 9.3,
+      "path": "/models/authoring/column-struct-rect-450x600.glb"
+    },
+    {
+      "id": "column-struct-rect-600x750",
+      "category": "Structural Columns",
+      "categoryKo": "구조 기둥",
+      "family": "Rectangular Column",
+      "familyKo": "각형 기둥",
+      "type": "600x750mm",
+      "typeKo": "600x750mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "point",
+      "scaleAxes": {
+        "z": "height"
+      },
+      "widthM": 0.6,
+      "depthM": 0.75,
+      "courseRef": "Revit element Hierarchy — Rectangular columns 450x600 / 600x750",
+      "boundsMin": [
+        -0.32,
+        -0.395,
+        -0.5
+      ],
+      "boundsMax": [
+        0.32,
+        0.395,
+        0.5
+      ],
+      "nativeDimsM": {
+        "x": 0.64,
+        "y": 1.0,
+        "z": 0.79,
+        "blenderXYZ": [
+          0.64,
+          0.79,
+          1.0
+        ]
+      },
+      "triangles": 132,
+      "file": "column-struct-rect-600x750.glb",
+      "bytesKb": 9.3,
+      "path": "/models/authoring/column-struct-rect-600x750.glb"
+    },
+    {
+      "id": "column-arch-rect-400",
+      "category": "Columns",
+      "categoryKo": "건축 기둥",
+      "family": "Rectangular Column",
+      "familyKo": "각형 기둥",
+      "type": "Architectural Wrap 400mm",
+      "typeKo": "건축 마감 400mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "point",
+      "scaleAxes": {
+        "z": "height"
+      },
+      "widthM": 0.4,
+      "depthM": 0.4,
+      "courseRef": "Columns — architectural column used as wrap around structural",
+      "boundsMin": [
+        -0.23,
+        -0.23,
+        -0.5
+      ],
+      "boundsMax": [
+        0.23,
+        0.23,
+        0.5
+      ],
+      "nativeDimsM": {
+        "x": 0.46,
+        "y": 1.0,
+        "z": 0.46,
+        "blenderXYZ": [
+          0.46,
+          0.46,
+          1.0
+        ]
+      },
+      "triangles": 336,
+      "file": "column-arch-rect-400.glb",
+      "bytesKb": 19.6,
+      "path": "/models/authoring/column-arch-rect-400.glb"
+    },
+    {
+      "id": "floor-generic-150",
+      "category": "Floors",
+      "categoryKo": "바닥",
+      "family": "Floor",
+      "familyKo": "바닥",
+      "type": "Generic 150mm",
+      "typeKo": "일반 150mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "center-top",
+      "placement": "sketch-boundary",
+      "scaleAxes": {
+        "x": "width",
+        "y": "depth",
+        "z": "fixed-thickness"
+      },
+      "thicknessM": 0.15,
+      "courseRef": "Sketch-Based Modeling — Floors; construction layers + functions",
+      "boundsMin": [
+        -0.5,
+        -0.5,
+        -0.065
+      ],
+      "boundsMax": [
+        0.5,
+        0.5,
+        0.065
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.13,
+        "z": 1.0,
+        "blenderXYZ": [
+          1.0,
+          1.0,
+          0.13
+        ]
+      },
+      "triangles": 24,
+      "file": "floor-generic-150.glb",
+      "bytesKb": 3.2,
+      "path": "/models/authoring/floor-generic-150.glb"
+    },
+    {
+      "id": "floor-concrete-200",
+      "category": "Floors",
+      "categoryKo": "바닥",
+      "family": "Floor",
+      "familyKo": "바닥",
+      "type": "Concrete 200mm",
+      "typeKo": "콘크리트 200mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "center-top",
+      "placement": "sketch-boundary",
+      "thicknessM": 0.2,
+      "courseRef": "Floors — Structure / Substrate / Thermal / Finish functions",
+      "boundsMin": [
+        -0.5,
+        -0.5,
+        -0.0625
+      ],
+      "boundsMax": [
+        0.5,
+        0.5,
+        0.0625
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.125,
+        "z": 1.0,
+        "blenderXYZ": [
+          1.0,
+          1.0,
+          0.125
+        ]
+      },
+      "triangles": 48,
+      "file": "floor-concrete-200.glb",
+      "bytesKb": 5.8,
+      "path": "/models/authoring/floor-concrete-200.glb"
+    },
+    {
+      "id": "floor-wood-finish",
+      "category": "Floors",
+      "categoryKo": "바닥",
+      "family": "Floor",
+      "familyKo": "바닥",
+      "type": "Wood Finish 186mm",
+      "typeKo": "목재 마감 186mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "center-top",
+      "placement": "sketch-boundary",
+      "thicknessM": 0.186,
+      "courseRef": "Floors — construction layers with materials and functions",
+      "boundsMin": [
+        -0.5,
+        -0.5,
+        -0.075
+      ],
+      "boundsMax": [
+        0.5,
+        0.5,
+        0.075
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.15,
+        "z": 1.0,
+        "blenderXYZ": [
+          1.0,
+          1.0,
+          0.15
+        ]
+      },
+      "triangles": 84,
+      "file": "floor-wood-finish.glb",
+      "bytesKb": 8.7,
+      "path": "/models/authoring/floor-wood-finish.glb"
+    },
+    {
+      "id": "roof-basic-flat",
+      "category": "Roofs",
+      "categoryKo": "지붕",
+      "family": "Basic Roof",
+      "familyKo": "기본 지붕",
+      "type": "Warm Roof – Flat",
+      "typeKo": "평지붕",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "center-bottom",
+      "placement": "sketch-footprint",
+      "thicknessM": 0.24,
+      "courseRef": "Roofs — Roof by Footprint (typically sloped; flat type included)",
+      "boundsMin": [
+        -0.5,
+        -0.5,
+        -0.075
+      ],
+      "boundsMax": [
+        0.5,
+        0.5,
+        0.075
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.15,
+        "z": 1.0,
+        "blenderXYZ": [
+          1.0,
+          1.0,
+          0.15
+        ]
+      },
+      "triangles": 36,
+      "file": "roof-basic-flat.glb",
+      "bytesKb": 4.3,
+      "path": "/models/authoring/roof-basic-flat.glb"
+    },
+    {
+      "id": "roof-pitched-module",
+      "category": "Roofs",
+      "categoryKo": "지붕",
+      "family": "Basic Roof",
+      "familyKo": "기본 지붕",
+      "type": "Pitched 30° Tile",
+      "typeKo": "경사 30° 기와",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "eave-center",
+      "placement": "sketch-footprint",
+      "slopeDeg": 30,
+      "courseRef": "Roofs — Footprint roof with slope; Roof by Extrusion for vertical profiles",
+      "boundsMin": [
+        -0.5,
+        -0.575,
+        -0.011
+      ],
+      "boundsMax": [
+        0.5,
+        0.575,
+        0.011
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.022,
+        "z": 1.15,
+        "blenderXYZ": [
+          1.0,
+          1.15,
+          0.022
+        ]
+      },
+      "triangles": 36,
+      "file": "roof-pitched-module.glb",
+      "bytesKb": 4.3,
+      "path": "/models/authoring/roof-pitched-module.glb"
+    },
+    {
+      "id": "ceiling-generic-gypsum",
+      "category": "Ceilings",
+      "categoryKo": "천장",
+      "family": "Compound Ceiling",
+      "familyKo": "복합 천장",
+      "type": "Gypsum 15mm",
+      "typeKo": "석고 15mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "center-top",
+      "placement": "sketch-or-auto",
+      "thicknessM": 0.04,
+      "courseRef": "Ceilings and Lights — Auto-Ceiling / sketched ceiling",
+      "boundsMin": [
+        -0.5,
+        -0.5,
+        -0.0125
+      ],
+      "boundsMax": [
+        0.5,
+        0.5,
+        0.0125
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.025,
+        "z": 1.0,
+        "blenderXYZ": [
+          1.0,
+          1.0,
+          0.025
+        ]
+      },
+      "triangles": 24,
+      "file": "ceiling-generic-gypsum.glb",
+      "bytesKb": 3.1,
+      "path": "/models/authoring/ceiling-generic-gypsum.glb"
+    },
+    {
+      "id": "ceiling-acoustic-tile",
+      "category": "Ceilings",
+      "categoryKo": "천장",
+      "family": "Compound Ceiling",
+      "familyKo": "복합 천장",
+      "type": "600 x 600mm Acoustic",
+      "typeKo": "600 × 600mm 흡음",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "center-top",
+      "placement": "sketch-or-auto",
+      "moduleM": 0.6,
+      "courseRef": "Ceilings and Lights — ceiling as host for lighting fixtures",
+      "boundsMin": [
+        -0.6,
+        -0.6,
+        -0.015
+      ],
+      "boundsMax": [
+        0.6,
+        0.6,
+        0.015
+      ],
+      "nativeDimsM": {
+        "x": 1.2,
+        "y": 0.03,
+        "z": 1.2,
+        "blenderXYZ": [
+          1.2,
+          1.2,
+          0.03
+        ]
+      },
+      "triangles": 120,
+      "file": "ceiling-acoustic-tile.glb",
+      "bytesKb": 11.8,
+      "path": "/models/authoring/ceiling-acoustic-tile.glb"
+    },
+    {
+      "id": "stair-run-8riser",
+      "category": "Stairs",
+      "categoryKo": "계단",
+      "family": "Assembled Stair",
+      "familyKo": "조립식 계단",
+      "type": "8 Riser 175/280",
+      "typeKo": "8단 175/280",
+      "familyKind": "system",
+      "host": "level-to-level",
+      "origin": "first-riser-nosing",
+      "placement": "component-run",
+      "riserM": 0.175,
+      "treadM": 0.28,
+      "risers": 8,
+      "widthM": 1.2,
+      "courseRef": "Stairs by Component — max riser / min tread; Revit computes riser count",
+      "boundsMin": [
+        -0.58,
+        -1.14,
+        -0.72
+      ],
+      "boundsMax": [
+        0.58,
+        1.14,
+        0.72
+      ],
+      "nativeDimsM": {
+        "x": 1.16,
+        "y": 1.44,
+        "z": 2.28,
+        "blenderXYZ": [
+          1.16,
+          2.28,
+          1.44
+        ]
+      },
+      "triangles": 984,
+      "file": "stair-run-8riser.glb",
+      "bytesKb": 57.3,
+      "path": "/models/authoring/stair-run-8riser.glb"
+    },
+    {
+      "id": "stair-landing-1200",
+      "category": "Stairs",
+      "categoryKo": "계단",
+      "family": "Stair Landing",
+      "familyKo": "계단참",
+      "type": "1200 x 1200mm",
+      "typeKo": "1200 × 1200mm",
+      "familyKind": "system",
+      "host": "stair",
+      "origin": "center-top",
+      "placement": "component-landing",
+      "courseRef": "Stairs by Component — Revit models landings from run clicks",
+      "boundsMin": [
+        -0.6,
+        -0.6,
+        -0.075
+      ],
+      "boundsMax": [
+        0.6,
+        0.6,
+        0.075
+      ],
+      "nativeDimsM": {
+        "x": 1.2,
+        "y": 0.15,
+        "z": 1.2,
+        "blenderXYZ": [
+          1.2,
+          1.2,
+          0.15
+        ]
+      },
+      "triangles": 132,
+      "file": "stair-landing-1200.glb",
+      "bytesKb": 9.7,
+      "path": "/models/authoring/stair-landing-1200.glb"
+    },
+    {
+      "id": "railing-guard-1m",
+      "category": "Railings",
+      "categoryKo": "난간",
+      "family": "Guardrail",
+      "familyKo": "난간",
+      "type": "1100mm Pipe",
+      "typeKo": "1100mm 파이프",
+      "familyKind": "system",
+      "host": "stair-or-floor",
+      "origin": "start-base",
+      "placement": "sketch",
+      "scaleAxes": {
+        "x": "length"
+      },
+      "heightM": 1.1,
+      "courseRef": "Stairs and Railings — railings placed automatically on stairs; also on floors",
+      "boundsMin": [
+        -0.52,
+        -0.02,
+        -0.55
+      ],
+      "boundsMax": [
+        0.52,
+        0.02,
+        0.55
+      ],
+      "nativeDimsM": {
+        "x": 1.04,
+        "y": 1.1,
+        "z": 0.04,
+        "blenderXYZ": [
+          1.04,
+          0.04,
+          1.1
+        ]
+      },
+      "triangles": 356,
+      "file": "railing-guard-1m.glb",
+      "bytesKb": 23.0,
+      "path": "/models/authoring/railing-guard-1m.glb"
+    },
+    {
+      "id": "railing-handrail-1m",
+      "category": "Railings",
+      "categoryKo": "난간",
+      "family": "Handrail",
+      "familyKo": "손스침",
+      "type": "Circular 42mm",
+      "typeKo": "원형 42mm",
+      "familyKind": "system",
+      "host": "wall-or-stair",
+      "origin": "start-mount",
+      "placement": "sketch",
+      "scaleAxes": {
+        "x": "length"
+      },
+      "courseRef": "Railings — handrails on floors and stairs",
+      "boundsMin": [
+        -0.5,
+        -0.04,
+        -0.03
+      ],
+      "boundsMax": [
+        0.5,
+        0.04,
+        0.03
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.06,
+        "z": 0.08,
+        "blenderXYZ": [
+          1.0,
+          0.08,
+          0.06
+        ]
+      },
+      "triangles": 148,
+      "file": "railing-handrail-1m.glb",
+      "bytesKb": 10.3,
+      "path": "/models/authoring/railing-handrail-1m.glb"
+    },
+    {
+      "id": "ramp-module",
+      "category": "Ramps",
+      "categoryKo": "램프",
+      "family": "Ramp",
+      "familyKo": "램프",
+      "type": "1:12 Concrete",
+      "typeKo": "1:12 콘크리트",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "bottom-center",
+      "placement": "sketch",
+      "slope": "1:12",
+      "widthM": 1.2,
+      "courseRef": "Architecture tab companion to stairs (sketch-based)",
+      "boundsMin": [
+        -0.6,
+        -0.925,
+        -0.075
+      ],
+      "boundsMax": [
+        0.6,
+        0.925,
+        0.075
+      ],
+      "nativeDimsM": {
+        "x": 1.2,
+        "y": 0.15,
+        "z": 1.85,
+        "blenderXYZ": [
+          1.2,
+          1.85,
+          0.15
+        ]
+      },
+      "triangles": 36,
+      "file": "ramp-module.glb",
+      "bytesKb": 4.1,
+      "path": "/models/authoring/ramp-module.glb"
+    },
+    {
+      "id": "light-troffer-600",
+      "category": "Lighting Fixtures",
+      "categoryKo": "조명 기구",
+      "family": "Troffer",
+      "familyKo": "매립등",
+      "type": "LED 600 x 600mm",
+      "typeKo": "LED 600 × 600mm",
+      "familyKind": "loadable",
+      "host": "ceiling",
+      "origin": "ceiling-plane",
+      "placement": "hosted",
+      "courseRef": "Ceilings and Lights — ceiling-hosted lighting fixtures",
+      "boundsMin": [
+        -0.2975,
+        -0.2975,
+        -0.04
+      ],
+      "boundsMax": [
+        0.2975,
+        0.2975,
+        0.04
+      ],
+      "nativeDimsM": {
+        "x": 0.595,
+        "y": 0.08,
+        "z": 0.595,
+        "blenderXYZ": [
+          0.595,
+          0.595,
+          0.08
+        ]
+      },
+      "triangles": 132,
+      "file": "light-troffer-600.glb",
+      "bytesKb": 9.8,
+      "path": "/models/authoring/light-troffer-600.glb"
+    },
+    {
+      "id": "light-pendant",
+      "category": "Lighting Fixtures",
+      "categoryKo": "조명 기구",
+      "family": "Pendant Light",
+      "familyKo": "펜던트",
+      "type": "Dome 400mm",
+      "typeKo": "돔 400mm",
+      "familyKind": "loadable",
+      "host": "ceiling",
+      "origin": "ceiling-plane",
+      "placement": "hosted",
+      "courseRef": "Ceilings and Lights — load lighting families onto a ceiling",
+      "boundsMin": [
+        -0.22,
+        -0.22,
+        -0.275
+      ],
+      "boundsMax": [
+        0.22,
+        0.22,
+        0.275
+      ],
+      "nativeDimsM": {
+        "x": 0.44,
+        "y": 0.55,
+        "z": 0.44,
+        "blenderXYZ": [
+          0.44,
+          0.44,
+          0.55
+        ]
+      },
+      "triangles": 540,
+      "file": "light-pendant.glb",
+      "bytesKb": 31.4,
+      "path": "/models/authoring/light-pendant.glb"
+    },
+    {
+      "id": "light-downlight",
+      "category": "Lighting Fixtures",
+      "categoryKo": "조명 기구",
+      "family": "Downlight",
+      "familyKo": "다운라이트",
+      "type": "Recessed 90mm",
+      "typeKo": "매립 90mm",
+      "familyKind": "loadable",
+      "host": "ceiling",
+      "origin": "ceiling-plane",
+      "placement": "hosted",
+      "courseRef": "Ceilings and Lights — ceiling-hosted fixture",
+      "boundsMin": [
+        -0.055,
+        -0.055,
+        -0.045
+      ],
+      "boundsMax": [
+        0.055,
+        0.055,
+        0.045
+      ],
+      "nativeDimsM": {
+        "x": 0.11,
+        "y": 0.09,
+        "z": 0.11,
+        "blenderXYZ": [
+          0.11,
+          0.11,
+          0.09
+        ]
+      },
+      "triangles": 196,
+      "file": "light-downlight.glb",
+      "bytesKb": 11.1,
+      "path": "/models/authoring/light-downlight.glb"
+    },
+    {
+      "id": "furniture-desk",
+      "category": "Furniture",
+      "categoryKo": "가구",
+      "family": "Desk",
+      "familyKo": "책상",
+      "type": "1400 x 700mm",
+      "typeKo": "1400 × 700mm",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "Other Components — Furniture via Component / Load Family",
+      "boundsMin": [
+        -0.7,
+        -0.35,
+        -0.36
+      ],
+      "boundsMax": [
+        0.7,
+        0.35,
+        0.36
+      ],
+      "nativeDimsM": {
+        "x": 1.4,
+        "y": 0.72,
+        "z": 0.7,
+        "blenderXYZ": [
+          1.4,
+          0.7,
+          0.72
+        ]
+      },
+      "triangles": 684,
+      "file": "furniture-desk.glb",
+      "bytesKb": 39.7,
+      "path": "/models/authoring/furniture-desk.glb"
+    },
+    {
+      "id": "furniture-task-chair",
+      "category": "Furniture",
+      "categoryKo": "가구",
+      "family": "Chair",
+      "familyKo": "의자",
+      "type": "Task Chair",
+      "typeKo": "사무용 의자",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "Other Components — Furniture",
+      "boundsMin": [
+        -0.23,
+        -0.23,
+        -0.24
+      ],
+      "boundsMax": [
+        0.23,
+        0.23,
+        0.24
+      ],
+      "nativeDimsM": {
+        "x": 0.46,
+        "y": 0.48,
+        "z": 0.46,
+        "blenderXYZ": [
+          0.46,
+          0.46,
+          0.48
+        ]
+      },
+      "triangles": 1056,
+      "file": "furniture-task-chair.glb",
+      "bytesKb": 65.0,
+      "path": "/models/authoring/furniture-task-chair.glb"
+    },
+    {
+      "id": "furniture-sofa-2seat",
+      "category": "Furniture",
+      "categoryKo": "가구",
+      "family": "Sofa",
+      "familyKo": "소파",
+      "type": "2-Seat",
+      "typeKo": "2인용",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "Other Components — Furniture",
+      "boundsMin": [
+        -0.8,
+        -0.39,
+        -0.21
+      ],
+      "boundsMax": [
+        0.8,
+        0.39,
+        0.21
+      ],
+      "nativeDimsM": {
+        "x": 1.6,
+        "y": 0.42,
+        "z": 0.78,
+        "blenderXYZ": [
+          1.6,
+          0.78,
+          0.42
+        ]
+      },
+      "triangles": 756,
+      "file": "furniture-sofa-2seat.glb",
+      "bytesKb": 40.8,
+      "path": "/models/authoring/furniture-sofa-2seat.glb"
+    },
+    {
+      "id": "furniture-dining-table",
+      "category": "Furniture",
+      "categoryKo": "가구",
+      "family": "Table",
+      "familyKo": "테이블",
+      "type": "Round 1200mm",
+      "typeKo": "원형 1200mm",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "Other Components — Furniture",
+      "boundsMin": [
+        -0.6,
+        -0.6,
+        -0.35
+      ],
+      "boundsMax": [
+        0.6,
+        0.6,
+        0.35
+      ],
+      "nativeDimsM": {
+        "x": 1.2,
+        "y": 0.7,
+        "z": 1.2,
+        "blenderXYZ": [
+          1.2,
+          1.2,
+          0.7
+        ]
+      },
+      "triangles": 904,
+      "file": "furniture-dining-table.glb",
+      "bytesKb": 47.8,
+      "path": "/models/authoring/furniture-dining-table.glb"
+    },
+    {
+      "id": "furniture-bed-queen",
+      "category": "Furniture",
+      "categoryKo": "가구",
+      "family": "Bed",
+      "familyKo": "침대",
+      "type": "Queen 1600mm",
+      "typeKo": "퀸 1600mm",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "Other Components — Furniture",
+      "boundsMin": [
+        -0.82,
+        -1.05,
+        -0.35
+      ],
+      "boundsMax": [
+        0.82,
+        1.05,
+        0.35
+      ],
+      "nativeDimsM": {
+        "x": 1.64,
+        "y": 0.7,
+        "z": 2.1,
+        "blenderXYZ": [
+          1.64,
+          2.1,
+          0.7
+        ]
+      },
+      "triangles": 540,
+      "file": "furniture-bed-queen.glb",
+      "bytesKb": 29.6,
+      "path": "/models/authoring/furniture-bed-queen.glb"
+    },
+    {
+      "id": "plumbing-toilet",
+      "category": "Plumbing Fixtures",
+      "categoryKo": "위생기구",
+      "family": "Toilet",
+      "familyKo": "변기",
+      "type": "Floor Mounted",
+      "typeKo": "바닥 설치",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "Other Components — Plumbing Fixtures from OOTB library",
+      "boundsMin": [
+        -0.22,
+        -0.22,
+        -0.19
+      ],
+      "boundsMax": [
+        0.22,
+        0.22,
+        0.19
+      ],
+      "nativeDimsM": {
+        "x": 0.44,
+        "y": 0.38,
+        "z": 0.44,
+        "blenderXYZ": [
+          0.44,
+          0.44,
+          0.38
+        ]
+      },
+      "triangles": 696,
+      "file": "plumbing-toilet.glb",
+      "bytesKb": 37.4,
+      "path": "/models/authoring/plumbing-toilet.glb"
+    },
+    {
+      "id": "plumbing-lavatory",
+      "category": "Plumbing Fixtures",
+      "categoryKo": "위생기구",
+      "family": "Lavatory",
+      "familyKo": "세면기",
+      "type": "Pedestal",
+      "typeKo": "페데스탈",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "Other Components — Plumbing Fixtures",
+      "boundsMin": [
+        -0.28,
+        -0.21,
+        -0.36
+      ],
+      "boundsMax": [
+        0.28,
+        0.21,
+        0.36
+      ],
+      "nativeDimsM": {
+        "x": 0.56,
+        "y": 0.72,
+        "z": 0.42,
+        "blenderXYZ": [
+          0.56,
+          0.42,
+          0.72
+        ]
+      },
+      "triangles": 388,
+      "file": "plumbing-lavatory.glb",
+      "bytesKb": 22.4,
+      "path": "/models/authoring/plumbing-lavatory.glb"
+    },
+    {
+      "id": "plumbing-kitchen-sink",
+      "category": "Plumbing Fixtures",
+      "categoryKo": "위생기구",
+      "family": "Sink",
+      "familyKo": "싱크",
+      "type": "Single Bowl 800mm",
+      "typeKo": "싱글볼 800mm",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "Other Components — Plumbing Fixtures",
+      "boundsMin": [
+        -0.4,
+        -0.25,
+        -0.09
+      ],
+      "boundsMax": [
+        0.4,
+        0.25,
+        0.09
+      ],
+      "nativeDimsM": {
+        "x": 0.8,
+        "y": 0.18,
+        "z": 0.5,
+        "blenderXYZ": [
+          0.8,
+          0.5,
+          0.18
+        ]
+      },
+      "triangles": 316,
+      "file": "plumbing-kitchen-sink.glb",
+      "bytesKb": 18.8,
+      "path": "/models/authoring/plumbing-kitchen-sink.glb"
+    },
+    {
+      "id": "planting-tree-deciduous",
+      "category": "Planting",
+      "categoryKo": "식재",
+      "family": "RPC Tree",
+      "familyKo": "수목",
+      "type": "Deciduous",
+      "typeKo": "낙엽수",
+      "familyKind": "loadable",
+      "host": "toposurface",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "The Site — Planting families sit on toposurface; RPC prefix in OOTB library",
+      "boundsMin": [
+        -0.85,
+        -0.85,
+        -0.85
+      ],
+      "boundsMax": [
+        0.85,
+        0.85,
+        0.85
+      ],
+      "nativeDimsM": {
+        "x": 1.7,
+        "y": 1.7,
+        "z": 1.7,
+        "blenderXYZ": [
+          1.7,
+          1.7,
+          1.7
+        ]
+      },
+      "triangles": 884,
+      "file": "planting-tree-deciduous.glb",
+      "bytesKb": 53.9,
+      "path": "/models/authoring/planting-tree-deciduous.glb"
+    },
+    {
+      "id": "planting-shrub",
+      "category": "Planting",
+      "categoryKo": "식재",
+      "family": "RPC Shrub",
+      "familyKo": "관목",
+      "type": "Generic",
+      "typeKo": "일반",
+      "familyKind": "loadable",
+      "host": "toposurface",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "The Site — Planting on toposurface",
+      "boundsMin": [
+        -0.3043,
+        -0.32,
+        -0.32
+      ],
+      "boundsMax": [
+        0.3043,
+        0.32,
+        0.32
+      ],
+      "nativeDimsM": {
+        "x": 0.6087,
+        "y": 0.64,
+        "z": 0.64,
+        "blenderXYZ": [
+          0.6087,
+          0.64,
+          0.64
+        ]
+      },
+      "triangles": 588,
+      "file": "planting-shrub.glb",
+      "bytesKb": 36.9,
+      "path": "/models/authoring/planting-shrub.glb"
+    }
+  ]
+}
