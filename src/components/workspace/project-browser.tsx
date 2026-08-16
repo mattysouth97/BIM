@@ -8,6 +8,7 @@ import { useSheetStore } from "@/lib/bim/sheets/sheet-store";
 import { SEED_SCHEDULES } from "@/lib/bim/schedules/schedule-definitions";
 import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
 import { REVIT_FEATURE_MAP } from "@/lib/workflow/revit-workflow";
+import { AUTHORING_FAMILY_IDS } from "@/lib/bim/family-catalog";
 import { cn } from "@/lib/utils";
 import {
   Accordion,
@@ -17,7 +18,7 @@ import {
 } from "@/components/ui/accordion";
 
 export function ProjectBrowser() {
-  const { t, lang } = useT();
+  const { t } = useT();
   const views = useViewStore((s) => s.views);
   const activeViewId = useViewStore((s) => s.activeViewId);
   const setActiveView = useViewStore((s) => s.setActiveView);
@@ -27,6 +28,8 @@ export function ProjectBrowser() {
   const setWorkMode = useRevitWorkflowStore((s) => s.setWorkMode);
   const setActiveScheduleId = useRevitWorkflowStore((s) => s.setActiveScheduleId);
   const activeScheduleId = useRevitWorkflowStore((s) => s.activeScheduleId);
+  const selectedFamilyId = useRevitWorkflowStore((s) => s.selectedFamilyId);
+  const setSelectedFamilyId = useRevitWorkflowStore((s) => s.setSelectedFamilyId);
 
   const plans = views.filter((v) => v.kind === "plan");
   const elevations = views.filter((v) => v.kind === "elevation");
@@ -182,14 +185,24 @@ export function ProjectBrowser() {
                 {t("패밀리", "Families")}
               </span>
             </AccordionTrigger>
-            <AccordionContent className="px-3 pb-2 text-[10px] text-muted-foreground">
-              {t(
-                "카테고리·패밀리·타입은 속성 패널에 표시됩니다. 3D 에셋 세션이 슬롯을 채우면 절차형 폴백을 대체합니다.",
-                "Category / Family / Type show in Properties. The 3D-asset session replaces procedural fallbacks when slots publish."
-              )}
-              <span className="mt-1 block text-[10px] text-muted-foreground/80">
-                {lang === "ko" ? "에셋 슬롯: family.*" : "Asset slots: family.*"}
-              </span>
+            <AccordionContent className="px-1 pb-2">
+              <p className="px-3 pb-1 text-[10px] text-muted-foreground">
+                {t(
+                  "클릭하면 건물 옆에 타입 프리뷰가 놓입니다.",
+                  "Click to place a type preview beside the building."
+                )}
+              </p>
+              {AUTHORING_FAMILY_IDS.map((id) => (
+                <BrowserRow
+                  key={id}
+                  label={id}
+                  active={selectedFamilyId === id}
+                  onClick={() => {
+                    setSelectedFamilyId(selectedFamilyId === id ? null : id);
+                    setWorkMode("model");
+                  }}
+                />
+              ))}
             </AccordionContent>
           </AccordionItem>
         </Accordion>

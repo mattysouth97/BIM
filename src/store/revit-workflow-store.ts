@@ -14,11 +14,13 @@ interface RevitWorkflowState {
   schedulePanelOpen: boolean;
   sheetPanelOpen: boolean;
   activeScheduleId: string;
+  selectedFamilyId: string | null;
   setWorkMode: (mode: RevitWorkMode) => void;
   setLeftDockTab: (tab: LeftDockTab) => void;
   setSchedulePanelOpen: (open: boolean) => void;
   setSheetPanelOpen: (open: boolean) => void;
   setActiveScheduleId: (id: string) => void;
+  setSelectedFamilyId: (id: string | null) => void;
 }
 
 export const useRevitWorkflowStore = create<RevitWorkflowState>()((set) => ({
@@ -27,6 +29,7 @@ export const useRevitWorkflowStore = create<RevitWorkflowState>()((set) => ({
   schedulePanelOpen: false,
   sheetPanelOpen: false,
   activeScheduleId: "wall-schedule-v1",
+  selectedFamilyId: null,
 
   setWorkMode: (mode) =>
     set({
@@ -40,4 +43,5 @@ export const useRevitWorkflowStore = create<RevitWorkflowState>()((set) => ({
   setSchedulePanelOpen: (open) => set({ schedulePanelOpen: open }),
   setSheetPanelOpen: (open) => set({ sheetPanelOpen: open }),
   setActiveScheduleId: (id) => set({ activeScheduleId: id }),
+  setSelectedFamilyId: (id) => set({ selectedFamilyId: id }),
 }));

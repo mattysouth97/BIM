@@ -40,6 +40,7 @@ import { EnergyCards } from "./energy-cards";
 import { ErrorBoundary, ViewerErrorBoundary } from "@/components/error-boundary";
 import { StructuralTooltip } from "./structural-tooltip";
 import { EquipmentInteractionHandler } from "./equipment-interaction-handler";
+import { AuthoringFamilyLayer } from "./authoring-family-layer";
 import { SceneHighlightProcessing } from "./scene-highlight-processing";
 import { TwinStageOverlay } from "@/components/twin/twin-stage-overlay";
 import type { FootprintGeometry } from "@/lib/portfolio/types";
@@ -498,6 +499,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
                 {retrofitVisuals.solarInstalled && <SolarPanels recipe={recipe} />}
                 {retrofitVisuals.hvacUpgraded && <RetrofitHvacUnits recipe={recipe} />}
                 <BuildingLayers buildingPk={buildingPk} />
+                <AuthoringFamilyLayer recipe={recipe} />
                 <StructuralTooltip />
                 <EquipmentInteractionHandler />
                 {/* P2-26: neighbor context massing — only when footprint polygon is available */}
