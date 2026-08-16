@@ -61,7 +61,7 @@ Korean-first instrument named BIMFIT. White-card numbers, ledger nouns (표제�
 - Live neighboring 지적 fetch on a single twin (demo uses static neighbor boxes; no VWorld).
 - BMS / sensor data (fidelity still reports unavailable).
 - A second simulation engine or a CAD competitor.
-- Full family editor, worksharing, fabrication LOD, or freeform MEP routing. Types/instances and hosted placement exist; those stay scoped.
+- Full family editor, worksharing, fabrication LOD, or freeform MEP routing. Sketch walls, hosted doors/windows, snaps, IFC/EMS identity, quantities, and issues exist; those stay scoped.
 
 ## Where truth lives
 
@@ -70,6 +70,7 @@ Korean-first instrument named BIMFIT. White-card numbers, ledger nouns (표제�
 - Demo: `src/lib/demo/demo-building.ts`, `src/lib/constants.ts`
 - Twin authoring: `src/store/twin-provenance-store.ts`, `src/hooks/use-twin-fidelity.ts`, `src/lib/cad/doc/classify-plan.ts`, `src/lib/energy/equipment-schedule.ts`, `src/components/workspace/floor-stack-editor.tsx`
 - BIM model: `src/lib/bim/model/`, `src/store/bim-model-store.ts`, `src/hooks/use-bim-model.ts`, `src/components/workspace/bim-properties-inspector.tsx`
+- Family catalog (Figma + 102 GLBs): `src/lib/bim/family-catalog.ts`, `src/lib/bim/family-semantics.ts`, `public/models/authoring/`
 - Autonomous BIM document: `src/lib/bim/derive/twin-elements.ts`, `src/lib/bim/phases/apply-phase.ts`, `src/lib/bim/views/`, `src/lib/bim/schedules/`, `src/lib/bim/sheets/compose-default-sheets.ts`, `src/hooks/use-twin-document.ts`
 - Twin investment: `src/components/twin/*`, `src/store/scenario-store.ts`, `src/lib/retrofit/`
 - Energy: `src/lib/energy/`, `src/hooks/use-energy-metrics.ts`

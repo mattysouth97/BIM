@@ -2,6 +2,7 @@
 // Built-in type/instance parameter definitions + family-catalog inference.
 
 import type { AuthoringFamily } from "../family-catalog";
+import { familySemantics } from "../family-semantics";
 import type { BimParameterDef, BimParamValue, BimType } from "./types";
 
 export const WALL_TYPE_PARAMS: BimParameterDef[] = [
@@ -68,6 +69,8 @@ export function typeFromAuthoringFamily(family: AuthoringFamily): BimType {
   if (family.tool === "column") {
     parameters.widthMm = inferMmFromLabel(family.type, 400);
   }
+  const semantics = familySemantics(family.id);
+  if (semantics?.fireRating) parameters.fireRating = semantics.fireRating;
   return {
     id: family.id,
     category: family.category,
@@ -77,6 +80,8 @@ export function typeFromAuthoringFamily(family: AuthoringFamily): BimType {
     typeName: family.type,
     typeNameKo: family.typeKo,
     parameters,
+    layers: semantics?.layers,
+    ifcClass: semantics?.ifcClass,
   };
 }
 

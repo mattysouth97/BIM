@@ -6,3 +6,7 @@ export * from "./graph";
 export * from "./transactions";
 export * from "./commands";
 export * from "./query";
+export * from "./geometry";
+export * from "./snap";
+export * from "./quantities";
+export * from "./issues";

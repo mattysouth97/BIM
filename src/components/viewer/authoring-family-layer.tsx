@@ -8,6 +8,7 @@ import type { BuildingRecipe } from "@/lib/procedural/types";
 import { planAuthoringInstances } from "@/lib/bim/authoring-placements";
 import { AUTHORING_ASSET_MANIFEST } from "@/lib/bim/authoring-asset-manifest";
 import { authoringFamilyUrl, getAuthoringFamily } from "@/lib/bim/family-catalog";
+import { snapPoint } from "@/lib/bim/model";
 import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
 import { useBimModelStore } from "@/store/bim-model-store";
 
@@ -64,9 +65,14 @@ export function AuthoringFamilyLayer({ recipe }: AuthoringFamilyLayerProps) {
   const workMode = useRevitWorkflowStore((s) => s.workMode);
   const selectedFamilyId = useRevitWorkflowStore((s) => s.selectedFamilyId);
   const tool = useRevitWorkflowStore((s) => s.activeAuthoringTool);
+  const sketchStart = useRevitWorkflowStore((s) => s.sketchStart);
+  const setSketchStart = useRevitWorkflowStore((s) => s.setSketchStart);
   const snapshot = useBimModelStore((s) => s.snapshot);
   const activeLevelId = useBimModelStore((s) => s.activeLevelId);
   const applyPlace = useBimModelStore((s) => s.applyPlace);
+  const applyWall = useBimModelStore((s) => s.applyWall);
+  const applyFloorSketch = useBimModelStore((s) => s.applyFloorSketch);
+  const applyHost = useBimModelStore((s) => s.applyHost);
 
   const generatedPoses = useMemo(
     () => planAuthoringInstances(recipe, selectedFamilyId),
@@ -81,7 +87,11 @@ export function AuthoringFamilyLayer({ recipe }: AuthoringFamilyLayerProps) {
         id: el.id,
         url: authoringFamilyUrl(el.typeId),
         position: [el.placement.x, el.placement.y, el.placement.z] as [number, number, number],
-        scale: [1, 1, 1] as [number, number, number],
+        scale: [
+          Number(el.instanceParameters.scaleX ?? 1),
+          Number(el.instanceParameters.scaleY ?? 1),
+          Number(el.instanceParameters.scaleZ ?? 1),
+        ] as [number, number, number],
         rotation: [0, el.placement.rotationY, 0] as [number, number, number],
       }));
   }, [snapshot]);
@@ -91,26 +101,70 @@ export function AuthoringFamilyLayer({ recipe }: AuthoringFamilyLayerProps) {
   const level =
     snapshot?.levels.find((l) => l.id === activeLevelId) ?? snapshot?.levels[0];
   const family = getAuthoringFamily(selectedFamilyId);
-  const canPlace = Boolean(family && tool && tool !== "wall");
+  const linear = family?.placement === "linear" || tool === "wall" || tool === "beam";
+  const sketch = family?.placement?.startsWith("sketch") || tool === "floor" || tool === "roof" || tool === "ceiling";
+  const hosted = family?.host === "wall" || tool === "door" || tool === "window";
+
+  const snapped = (e: ThreeEvent<MouseEvent>) => {
+    const raw = { x: e.point.x, z: e.point.z };
+    return snapPoint(raw, {
+      grids: snapshot?.grids,
+      walls: snapshot?.elements,
+      spacing: Math.max(recipe.column.spacing / 2, 0.5),
+      orthoFrom: sketchStart,
+    }).point;
+  };
 
   const onPlace = (e: ThreeEvent<MouseEvent>) => {
-    if (!canPlace || !selectedFamilyId || !snapshot) return;
+    if (!selectedFamilyId || !snapshot || !family) return;
     e.stopPropagation();
-    const host =
-      snapshot.elements.find(
-        (el) => el.kind === "wall" && el.levelId === (level?.id ?? null),
-      )?.id ?? null;
+    const pt = snapped(e);
+    const y = level?.elevation ?? 0;
+
+    if (linear || sketch) {
+      if (!sketchStart) {
+        setSketchStart(pt);
+        return;
+      }
+      if (sketch) {
+        applyFloorSketch({
+          typeId: selectedFamilyId,
+          buildingPk: snapshot.buildingPk,
+          levelId: level?.id ?? null,
+          a: sketchStart,
+          b: pt,
+        });
+      } else {
+        applyWall({
+          typeId: selectedFamilyId,
+          buildingPk: snapshot.buildingPk,
+          levelId: level?.id ?? null,
+          start: sketchStart,
+          end: pt,
+          heightM: level?.height ?? 3,
+        });
+      }
+      setSketchStart(null);
+      return;
+    }
+
+    if (hosted) {
+      applyHost({
+        typeId: selectedFamilyId,
+        buildingPk: snapshot.buildingPk,
+        levelId: level?.id ?? null,
+        point: pt,
+        y,
+      });
+      return;
+    }
+
     applyPlace({
       typeId: selectedFamilyId,
       buildingPk: snapshot.buildingPk,
       levelId: level?.id ?? null,
-      hostId: family?.host === "wall" ? host : null,
-      placement: {
-        x: e.point.x,
-        y: level?.elevation ?? 0,
-        z: e.point.z,
-        rotationY: 0,
-      },
+      hostId: null,
+      placement: { x: pt.x, y, z: pt.z, rotationY: 0 },
     });
   };
 
@@ -135,14 +189,20 @@ export function AuthoringFamilyLayer({ recipe }: AuthoringFamilyLayerProps) {
           instanceId={pose.id}
         />
       ))}
-      {canPlace && (
+      {family && (
         <mesh
           rotation={[-Math.PI / 2, 0, 0]}
           position={[0, (level?.elevation ?? 0) + 0.02, 0]}
           onClick={onPlace}
         >
-          <planeGeometry args={[recipe.footprintWidth * 2, recipe.footprintDepth * 2]} />
+          <planeGeometry args={[recipe.footprintWidth * 3, recipe.footprintDepth * 3]} />
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+      )}
+      {sketchStart && (
+        <mesh position={[sketchStart.x, (level?.elevation ?? 0) + 0.05, sketchStart.z]}>
+          <sphereGeometry args={[0.08, 12, 12]} />
+          <meshBasicMaterial color="#2563eb" />
         </mesh>
       )}
     </group>

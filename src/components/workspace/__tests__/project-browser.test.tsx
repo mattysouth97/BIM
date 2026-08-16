@@ -46,6 +46,8 @@ describe("ProjectBrowser", () => {
         ],
         grids: [],
         types: {},
+        documents: [],
+        visibility: {},
         elements: [
           {
             id: "W-1-S",

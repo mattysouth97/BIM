@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "source": "Universidad Europea Revit Basic Course (García / Martínez, 2014) + BIM authoring identity",
+  "source": "Universidad Europea Revit Basic Course + BIM starter library expansion",
   "units": "metres",
   "blender": "5.2 Z-up",
   "gltf": "Y-up, export_yup=True",
-  "count": 46,
+  "count": 102,
   "families": [
     {
       "id": "wall-basic-generic-200",
@@ -1856,6 +1856,2161 @@
       "file": "planting-shrub.glb",
       "bytesKb": 36.9,
       "path": "/models/authoring/planting-shrub.glb"
+    },
+    {
+      "id": "door-sliding-1800",
+      "category": "Doors",
+      "categoryKo": "문",
+      "family": "Sliding Door",
+      "familyKo": "미서기문",
+      "type": "Automatic 1800mm",
+      "typeKo": "자동 1800mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center-floor",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "widthM": 1.8,
+      "heightM": 2.1,
+      "boundsMin": [
+        -0.9,
+        -0.05,
+        0.0
+      ],
+      "boundsMax": [
+        0.9,
+        0.05,
+        2.1
+      ],
+      "nativeDimsM": {
+        "x": 1.8,
+        "y": 2.1,
+        "z": 0.1,
+        "blenderXYZ": [
+          1.8,
+          0.1,
+          2.1
+        ]
+      },
+      "triangles": 96,
+      "file": "door-sliding-1800.glb",
+      "bytesKb": 9.7,
+      "path": "/models/authoring/door-sliding-1800.glb"
+    },
+    {
+      "id": "door-revolving-2400",
+      "category": "Doors",
+      "categoryKo": "문",
+      "family": "Revolving Door",
+      "familyKo": "회전문",
+      "type": "4-Wing 2400mm",
+      "typeKo": "4익 2400mm",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "center-floor",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "widthM": 2.4,
+      "heightM": 2.2,
+      "boundsMin": [
+        -1.22,
+        -1.22,
+        0.0
+      ],
+      "boundsMax": [
+        1.22,
+        1.22,
+        2.2
+      ],
+      "nativeDimsM": {
+        "x": 2.44,
+        "y": 2.2,
+        "z": 2.44,
+        "blenderXYZ": [
+          2.44,
+          2.44,
+          2.2
+        ]
+      },
+      "triangles": 388,
+      "file": "door-revolving-2400.glb",
+      "bytesKb": 23.4,
+      "path": "/models/authoring/door-revolving-2400.glb"
+    },
+    {
+      "id": "door-rollup-3000",
+      "category": "Doors",
+      "categoryKo": "문",
+      "family": "Roll-Up Door",
+      "familyKo": "셔터문",
+      "type": "Industrial 3000mm",
+      "typeKo": "공업용 3000mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center-floor",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "widthM": 3.0,
+      "heightM": 3.0,
+      "boundsMin": [
+        -1.5,
+        -0.14,
+        0.0
+      ],
+      "boundsMax": [
+        1.5,
+        0.14,
+        3.2
+      ],
+      "nativeDimsM": {
+        "x": 3.0,
+        "y": 3.2,
+        "z": 0.28,
+        "blenderXYZ": [
+          3.0,
+          0.28,
+          3.2
+        ]
+      },
+      "triangles": 468,
+      "file": "door-rollup-3000.glb",
+      "bytesKb": 42.7,
+      "path": "/models/authoring/door-rollup-3000.glb"
+    },
+    {
+      "id": "door-fire-single-900",
+      "category": "Doors",
+      "categoryKo": "문",
+      "family": "Fire-Rated Door",
+      "familyKo": "방화문",
+      "type": "FD60 900mm",
+      "typeKo": "FD60 900mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center-floor",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "widthM": 0.9,
+      "heightM": 2.1,
+      "fireRating": "FD60",
+      "boundsMin": [
+        -0.45,
+        -0.07,
+        0.0
+      ],
+      "boundsMax": [
+        0.45,
+        0.06,
+        2.1
+      ],
+      "nativeDimsM": {
+        "x": 0.9,
+        "y": 2.1,
+        "z": 0.13,
+        "blenderXYZ": [
+          0.9,
+          0.13,
+          2.1
+        ]
+      },
+      "triangles": 72,
+      "file": "door-fire-single-900.glb",
+      "bytesKb": 8.0,
+      "path": "/models/authoring/door-fire-single-900.glb"
+    },
+    {
+      "id": "window-double-casement-1500x1200",
+      "category": "Windows",
+      "categoryKo": "창",
+      "family": "Double Casement",
+      "familyKo": "양여닫이창",
+      "type": "1500 x 1200mm",
+      "typeKo": "1500 × 1200mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "widthM": 1.5,
+      "heightM": 1.2,
+      "boundsMin": [
+        -0.75,
+        -0.04,
+        -0.6
+      ],
+      "boundsMax": [
+        0.75,
+        0.06,
+        0.6
+      ],
+      "nativeDimsM": {
+        "x": 1.5,
+        "y": 1.2,
+        "z": 0.1,
+        "blenderXYZ": [
+          1.5,
+          0.1,
+          1.2
+        ]
+      },
+      "triangles": 84,
+      "file": "window-double-casement-1500x1200.glb",
+      "bytesKb": 8.7,
+      "path": "/models/authoring/window-double-casement-1500x1200.glb"
+    },
+    {
+      "id": "window-double-hung-900x1500",
+      "category": "Windows",
+      "categoryKo": "창",
+      "family": "Double-Hung",
+      "familyKo": "오르내리창",
+      "type": "900 x 1500mm",
+      "typeKo": "900 × 1500mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "widthM": 0.9,
+      "heightM": 1.5,
+      "boundsMin": [
+        -0.45,
+        -0.04,
+        -0.75
+      ],
+      "boundsMax": [
+        0.45,
+        0.06,
+        0.75
+      ],
+      "nativeDimsM": {
+        "x": 0.9,
+        "y": 1.5,
+        "z": 0.1,
+        "blenderXYZ": [
+          0.9,
+          0.1,
+          1.5
+        ]
+      },
+      "triangles": 84,
+      "file": "window-double-hung-900x1500.glb",
+      "bytesKb": 8.7,
+      "path": "/models/authoring/window-double-hung-900x1500.glb"
+    },
+    {
+      "id": "window-louvre-1200x1200",
+      "category": "Windows",
+      "categoryKo": "창",
+      "family": "Louvre",
+      "familyKo": "루버창",
+      "type": "1200 x 1200mm",
+      "typeKo": "1200 × 1200mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "widthM": 1.2,
+      "heightM": 1.2,
+      "boundsMin": [
+        -0.6,
+        -0.0395,
+        -0.6
+      ],
+      "boundsMax": [
+        0.6,
+        0.055,
+        0.6
+      ],
+      "nativeDimsM": {
+        "x": 1.2,
+        "y": 1.2,
+        "z": 0.0945,
+        "blenderXYZ": [
+          1.2,
+          0.0945,
+          1.2
+        ]
+      },
+      "triangles": 144,
+      "file": "window-louvre-1200x1200.glb",
+      "bytesKb": 13.9,
+      "path": "/models/authoring/window-louvre-1200x1200.glb"
+    },
+    {
+      "id": "window-industrial-1800x900",
+      "category": "Windows",
+      "categoryKo": "창",
+      "family": "Industrial Window",
+      "familyKo": "공업용 창",
+      "type": "1800 x 900mm",
+      "typeKo": "1800 × 900mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "opening-center",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "widthM": 1.8,
+      "heightM": 0.9,
+      "boundsMin": [
+        -0.9,
+        -0.045,
+        -0.45
+      ],
+      "boundsMax": [
+        0.9,
+        0.065,
+        0.45
+      ],
+      "nativeDimsM": {
+        "x": 1.8,
+        "y": 0.9,
+        "z": 0.11,
+        "blenderXYZ": [
+          1.8,
+          0.11,
+          0.9
+        ]
+      },
+      "triangles": 96,
+      "file": "window-industrial-1800x900.glb",
+      "bytesKb": 10.1,
+      "path": "/models/authoring/window-industrial-1800x900.glb"
+    },
+    {
+      "id": "column-steel-h-300",
+      "category": "Structural Columns",
+      "categoryKo": "구조 기둥",
+      "family": "Steel H Column",
+      "familyKo": "H형강 기둥",
+      "type": "H 300×300",
+      "typeKo": "H 300×300",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "point",
+      "courseRef": "BIM starter library expansion",
+      "scaleAxes": {
+        "x": "section",
+        "y": "section",
+        "z": "height"
+      },
+      "boundsMin": [
+        -0.15,
+        -0.15,
+        0.0
+      ],
+      "boundsMax": [
+        0.15,
+        0.15,
+        1.0
+      ],
+      "nativeDimsM": {
+        "x": 0.3,
+        "y": 1.0,
+        "z": 0.3,
+        "blenderXYZ": [
+          0.3,
+          0.3,
+          1.0
+        ]
+      },
+      "triangles": 36,
+      "file": "column-steel-h-300.glb",
+      "bytesKb": 4.0,
+      "path": "/models/authoring/column-steel-h-300.glb"
+    },
+    {
+      "id": "column-steel-box-300",
+      "category": "Structural Columns",
+      "categoryKo": "구조 기둥",
+      "family": "Steel Box Column",
+      "familyKo": "각형강관 기둥",
+      "type": "Box 300×300×12",
+      "typeKo": "각형 300×300×12",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "point",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.15,
+        -0.15,
+        0.0
+      ],
+      "boundsMax": [
+        0.15,
+        0.15,
+        1.0
+      ],
+      "nativeDimsM": {
+        "x": 0.3,
+        "y": 1.0,
+        "z": 0.3,
+        "blenderXYZ": [
+          0.3,
+          0.3,
+          1.0
+        ]
+      },
+      "triangles": 48,
+      "file": "column-steel-box-300.glb",
+      "bytesKb": 5.0,
+      "path": "/models/authoring/column-steel-box-300.glb"
+    },
+    {
+      "id": "column-steel-pipe-273",
+      "category": "Structural Columns",
+      "categoryKo": "구조 기둥",
+      "family": "Steel Pipe Column",
+      "familyKo": "원형강관 기둥",
+      "type": "Ø273.1",
+      "typeKo": "Ø273.1",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "point",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.1365,
+        -0.1365,
+        0.0
+      ],
+      "boundsMax": [
+        0.1365,
+        0.1365,
+        1.0
+      ],
+      "nativeDimsM": {
+        "x": 0.273,
+        "y": 1.0,
+        "z": 0.273,
+        "blenderXYZ": [
+          0.273,
+          0.273,
+          1.0
+        ]
+      },
+      "triangles": 92,
+      "file": "column-steel-pipe-273.glb",
+      "bytesKb": 5.2,
+      "path": "/models/authoring/column-steel-pipe-273.glb"
+    },
+    {
+      "id": "beam-rc-rect-300x500",
+      "category": "Structural Framing",
+      "categoryKo": "구조 보",
+      "family": "RC Rectangular Beam",
+      "familyKo": "RC 각형 보",
+      "type": "300 x 500mm",
+      "typeKo": "300 × 500mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-center",
+      "placement": "linear",
+      "courseRef": "BIM starter library expansion",
+      "scaleAxes": {
+        "x": "length",
+        "y": "section",
+        "z": "section"
+      },
+      "boundsMin": [
+        0.0,
+        -0.15,
+        -0.25
+      ],
+      "boundsMax": [
+        1.0,
+        0.15,
+        0.25
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.5,
+        "z": 0.3,
+        "blenderXYZ": [
+          1.0,
+          0.3,
+          0.5
+        ]
+      },
+      "triangles": 12,
+      "file": "beam-rc-rect-300x500.glb",
+      "bytesKb": 1.9,
+      "path": "/models/authoring/beam-rc-rect-300x500.glb"
+    },
+    {
+      "id": "beam-steel-i-200x400",
+      "category": "Structural Framing",
+      "categoryKo": "구조 보",
+      "family": "Steel I Beam",
+      "familyKo": "I형강 보",
+      "type": "I 200×400",
+      "typeKo": "I 200×400",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-center",
+      "placement": "linear",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        0.0,
+        -0.1,
+        -0.2
+      ],
+      "boundsMax": [
+        1.0,
+        0.1,
+        0.2
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.4,
+        "z": 0.2,
+        "blenderXYZ": [
+          1.0,
+          0.2,
+          0.4
+        ]
+      },
+      "triangles": 36,
+      "file": "beam-steel-i-200x400.glb",
+      "bytesKb": 4.0,
+      "path": "/models/authoring/beam-steel-i-200x400.glb"
+    },
+    {
+      "id": "beam-steel-h-300x300",
+      "category": "Structural Framing",
+      "categoryKo": "구조 보",
+      "family": "Steel H Beam",
+      "familyKo": "H형강 보",
+      "type": "H 300×300",
+      "typeKo": "H 300×300",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-center",
+      "placement": "linear",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        0.0,
+        -0.15,
+        -0.15
+      ],
+      "boundsMax": [
+        1.0,
+        0.15,
+        0.15
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.3,
+        "z": 0.3,
+        "blenderXYZ": [
+          1.0,
+          0.3,
+          0.3
+        ]
+      },
+      "triangles": 36,
+      "file": "beam-steel-h-300x300.glb",
+      "bytesKb": 4.0,
+      "path": "/models/authoring/beam-steel-h-300x300.glb"
+    },
+    {
+      "id": "beam-steel-box-200",
+      "category": "Structural Framing",
+      "categoryKo": "구조 보",
+      "family": "Steel Box Beam",
+      "familyKo": "각형강관 보",
+      "type": "Box 200×200",
+      "typeKo": "각형 200×200",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-center",
+      "placement": "linear",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        0.0,
+        -0.1,
+        -0.1
+      ],
+      "boundsMax": [
+        1.0,
+        0.1,
+        0.1
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.2,
+        "z": 0.2,
+        "blenderXYZ": [
+          1.0,
+          0.2,
+          0.2
+        ]
+      },
+      "triangles": 48,
+      "file": "beam-steel-box-200.glb",
+      "bytesKb": 5.0,
+      "path": "/models/authoring/beam-steel-box-200.glb"
+    },
+    {
+      "id": "beam-steel-channel-200",
+      "category": "Structural Framing",
+      "categoryKo": "구조 보",
+      "family": "Steel Channel",
+      "familyKo": "채널 보",
+      "type": "C 200",
+      "typeKo": "C 200",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-center",
+      "placement": "linear",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        0.0,
+        -0.045,
+        -0.1
+      ],
+      "boundsMax": [
+        1.0,
+        0.04,
+        0.1
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.2,
+        "z": 0.085,
+        "blenderXYZ": [
+          1.0,
+          0.085,
+          0.2
+        ]
+      },
+      "triangles": 36,
+      "file": "beam-steel-channel-200.glb",
+      "bytesKb": 4.0,
+      "path": "/models/authoring/beam-steel-channel-200.glb"
+    },
+    {
+      "id": "beam-timber-100x200",
+      "category": "Structural Framing",
+      "categoryKo": "구조 보",
+      "family": "Timber Beam",
+      "familyKo": "목재 보",
+      "type": "100 x 200mm",
+      "typeKo": "100 × 200mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-center",
+      "placement": "linear",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        0.0,
+        -0.05,
+        -0.1
+      ],
+      "boundsMax": [
+        1.0,
+        0.05,
+        0.1
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.2,
+        "z": 0.1,
+        "blenderXYZ": [
+          1.0,
+          0.1,
+          0.2
+        ]
+      },
+      "triangles": 12,
+      "file": "beam-timber-100x200.glb",
+      "bytesKb": 1.9,
+      "path": "/models/authoring/beam-timber-100x200.glb"
+    },
+    {
+      "id": "footing-isolated-1500",
+      "category": "Structural Foundations",
+      "categoryKo": "기초",
+      "family": "Isolated Footing",
+      "familyKo": "독립기초",
+      "type": "1500 x 1500 x 500",
+      "typeKo": "1500 × 1500 × 500",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "top-center",
+      "placement": "point",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.75,
+        -0.75,
+        -0.5
+      ],
+      "boundsMax": [
+        0.75,
+        0.75,
+        0.4
+      ],
+      "nativeDimsM": {
+        "x": 1.5,
+        "y": 0.9,
+        "z": 1.5,
+        "blenderXYZ": [
+          1.5,
+          1.5,
+          0.9
+        ]
+      },
+      "triangles": 24,
+      "file": "footing-isolated-1500.glb",
+      "bytesKb": 2.8,
+      "path": "/models/authoring/footing-isolated-1500.glb"
+    },
+    {
+      "id": "footing-strip-600",
+      "category": "Structural Foundations",
+      "categoryKo": "기초",
+      "family": "Strip Footing",
+      "familyKo": "줄기초",
+      "type": "600 x 400mm",
+      "typeKo": "600 × 400mm",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "start-top-center",
+      "placement": "linear",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        0.0,
+        -0.3,
+        -0.4
+      ],
+      "boundsMax": [
+        1.0,
+        0.3,
+        0.0
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 0.4,
+        "z": 0.6,
+        "blenderXYZ": [
+          1.0,
+          0.6,
+          0.4
+        ]
+      },
+      "triangles": 12,
+      "file": "footing-strip-600.glb",
+      "bytesKb": 1.9,
+      "path": "/models/authoring/footing-strip-600.glb"
+    },
+    {
+      "id": "pile-400",
+      "category": "Structural Foundations",
+      "categoryKo": "기초",
+      "family": "Pile",
+      "familyKo": "말뚝",
+      "type": "Ø400 × 8m",
+      "typeKo": "Ø400 × 8m",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "top-center",
+      "placement": "point",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.2,
+        -0.2,
+        -8.0
+      ],
+      "boundsMax": [
+        0.2,
+        0.2,
+        0.0
+      ],
+      "nativeDimsM": {
+        "x": 0.4,
+        "y": 8.0,
+        "z": 0.4,
+        "blenderXYZ": [
+          0.4,
+          0.4,
+          8.0
+        ]
+      },
+      "triangles": 60,
+      "file": "pile-400.glb",
+      "bytesKb": 3.9,
+      "path": "/models/authoring/pile-400.glb"
+    },
+    {
+      "id": "pile-cap-1800",
+      "category": "Structural Foundations",
+      "categoryKo": "기초",
+      "family": "Pile Cap",
+      "familyKo": "말뚝머리",
+      "type": "1800 x 1800 x 800",
+      "typeKo": "1800 × 1800 × 800",
+      "familyKind": "system",
+      "host": "level",
+      "origin": "top-center",
+      "placement": "point",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.9,
+        -0.9,
+        -0.8
+      ],
+      "boundsMax": [
+        0.9,
+        0.9,
+        0.0
+      ],
+      "nativeDimsM": {
+        "x": 1.8,
+        "y": 0.8,
+        "z": 1.8,
+        "blenderXYZ": [
+          1.8,
+          1.8,
+          0.8
+        ]
+      },
+      "triangles": 12,
+      "file": "pile-cap-1800.glb",
+      "bytesKb": 1.9,
+      "path": "/models/authoring/pile-cap-1800.glb"
+    },
+    {
+      "id": "plumbing-urinal",
+      "category": "Plumbing Fixtures",
+      "categoryKo": "위생기구",
+      "family": "Urinal",
+      "familyKo": "소변기",
+      "type": "Wall Hung",
+      "typeKo": "벽걸이",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-face-floor",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.18,
+        -0.29,
+        0.63
+      ],
+      "boundsMax": [
+        0.18,
+        0.06,
+        1.34
+      ],
+      "nativeDimsM": {
+        "x": 0.36,
+        "y": 0.71,
+        "z": 0.35,
+        "blenderXYZ": [
+          0.36,
+          0.35,
+          0.71
+        ]
+      },
+      "triangles": 60,
+      "file": "plumbing-urinal.glb",
+      "bytesKb": 5.6,
+      "path": "/models/authoring/plumbing-urinal.glb"
+    },
+    {
+      "id": "plumbing-shower",
+      "category": "Plumbing Fixtures",
+      "categoryKo": "위생기구",
+      "family": "Shower",
+      "familyKo": "샤워",
+      "type": "900 Tray",
+      "typeKo": "900 트레이",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "tray-back-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.45,
+        0.0,
+        0.0
+      ],
+      "boundsMax": [
+        0.45,
+        0.9,
+        1.95
+      ],
+      "nativeDimsM": {
+        "x": 0.9,
+        "y": 1.95,
+        "z": 0.9,
+        "blenderXYZ": [
+          0.9,
+          0.9,
+          1.95
+        ]
+      },
+      "triangles": 112,
+      "file": "plumbing-shower.glb",
+      "bytesKb": 8.3,
+      "path": "/models/authoring/plumbing-shower.glb"
+    },
+    {
+      "id": "plumbing-bathtub",
+      "category": "Plumbing Fixtures",
+      "categoryKo": "위생기구",
+      "family": "Bathtub",
+      "familyKo": "욕조",
+      "type": "1700 mm",
+      "typeKo": "1700 mm",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "back-center-floor",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.85,
+        0.0,
+        0.0
+      ],
+      "boundsMax": [
+        0.85,
+        0.75,
+        0.55
+      ],
+      "nativeDimsM": {
+        "x": 1.7,
+        "y": 0.55,
+        "z": 0.75,
+        "blenderXYZ": [
+          1.7,
+          0.75,
+          0.55
+        ]
+      },
+      "triangles": 120,
+      "file": "plumbing-bathtub.glb",
+      "bytesKb": 8.4,
+      "path": "/models/authoring/plumbing-bathtub.glb"
+    },
+    {
+      "id": "plumbing-floor-drain",
+      "category": "Plumbing Fixtures",
+      "categoryKo": "위생기구",
+      "family": "Floor Drain",
+      "familyKo": "바닥배수",
+      "type": "Ø150",
+      "typeKo": "Ø150",
+      "familyKind": "loadable",
+      "host": "floor",
+      "origin": "finish-floor",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.075,
+        -0.075,
+        -0.08
+      ],
+      "boundsMax": [
+        0.075,
+        0.075,
+        0.012
+      ],
+      "nativeDimsM": {
+        "x": 0.15,
+        "y": 0.092,
+        "z": 0.15,
+        "blenderXYZ": [
+          0.15,
+          0.15,
+          0.092
+        ]
+      },
+      "triangles": 104,
+      "file": "plumbing-floor-drain.glb",
+      "bytesKb": 6.7,
+      "path": "/models/authoring/plumbing-floor-drain.glb"
+    },
+    {
+      "id": "plumbing-fountain",
+      "category": "Plumbing Fixtures",
+      "categoryKo": "위생기구",
+      "family": "Drinking Fountain",
+      "familyKo": "음수대",
+      "type": "Wall Hung",
+      "typeKo": "벽걸이",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-face-floor",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.16,
+        -0.29,
+        0.0
+      ],
+      "boundsMax": [
+        0.16,
+        0.06,
+        1.032
+      ],
+      "nativeDimsM": {
+        "x": 0.32,
+        "y": 1.032,
+        "z": 0.35,
+        "blenderXYZ": [
+          0.32,
+          0.35,
+          1.032
+        ]
+      },
+      "triangles": 52,
+      "file": "plumbing-fountain.glb",
+      "bytesKb": 5.3,
+      "path": "/models/authoring/plumbing-fountain.glb"
+    },
+    {
+      "id": "furniture-conference-table",
+      "category": "Furniture",
+      "categoryKo": "가구",
+      "family": "Conference Table",
+      "familyKo": "회의 테이블",
+      "type": "3200 x 1200mm",
+      "typeKo": "3200 × 1200mm",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -1.6,
+        -0.6,
+        0.0
+      ],
+      "boundsMax": [
+        1.6,
+        0.6,
+        0.76
+      ],
+      "nativeDimsM": {
+        "x": 3.2,
+        "y": 0.76,
+        "z": 1.2,
+        "blenderXYZ": [
+          3.2,
+          1.2,
+          0.76
+        ]
+      },
+      "triangles": 24,
+      "file": "furniture-conference-table.glb",
+      "bytesKb": 3.2,
+      "path": "/models/authoring/furniture-conference-table.glb"
+    },
+    {
+      "id": "furniture-cabinet",
+      "category": "Furniture",
+      "categoryKo": "가구",
+      "family": "Cabinet",
+      "familyKo": "수납장",
+      "type": "900 x 400 x 1800",
+      "typeKo": "900 × 400 × 1800",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.45,
+        -0.22,
+        0.0
+      ],
+      "boundsMax": [
+        0.45,
+        0.2,
+        1.8
+      ],
+      "nativeDimsM": {
+        "x": 0.9,
+        "y": 1.8,
+        "z": 0.42,
+        "blenderXYZ": [
+          0.9,
+          0.42,
+          1.8
+        ]
+      },
+      "triangles": 36,
+      "file": "furniture-cabinet.glb",
+      "bytesKb": 4.2,
+      "path": "/models/authoring/furniture-cabinet.glb"
+    },
+    {
+      "id": "furniture-bookshelf",
+      "category": "Furniture",
+      "categoryKo": "가구",
+      "family": "Bookshelf",
+      "familyKo": "책장",
+      "type": "1000 x 1800mm",
+      "typeKo": "1000 × 1800mm",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.5,
+        -0.16,
+        0.0
+      ],
+      "boundsMax": [
+        0.5,
+        0.16,
+        1.8
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 1.8,
+        "z": 0.32,
+        "blenderXYZ": [
+          1.0,
+          0.32,
+          1.8
+        ]
+      },
+      "triangles": 72,
+      "file": "furniture-bookshelf.glb",
+      "bytesKb": 7.4,
+      "path": "/models/authoring/furniture-bookshelf.glb"
+    },
+    {
+      "id": "furniture-wardrobe",
+      "category": "Furniture",
+      "categoryKo": "가구",
+      "family": "Wardrobe",
+      "familyKo": "옷장",
+      "type": "1200 x 2100mm",
+      "typeKo": "1200 × 2100mm",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.6,
+        -0.31,
+        0.0
+      ],
+      "boundsMax": [
+        0.6,
+        0.29,
+        2.1
+      ],
+      "nativeDimsM": {
+        "x": 1.2,
+        "y": 2.1,
+        "z": 0.6,
+        "blenderXYZ": [
+          1.2,
+          0.6,
+          2.1
+        ]
+      },
+      "triangles": 36,
+      "file": "furniture-wardrobe.glb",
+      "bytesKb": 4.2,
+      "path": "/models/authoring/furniture-wardrobe.glb"
+    },
+    {
+      "id": "casework-base-cabinet",
+      "category": "Casework",
+      "categoryKo": "붙박이",
+      "family": "Base Cabinet",
+      "familyKo": "하부장",
+      "type": "800 mm",
+      "typeKo": "800 mm",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "back-center-floor",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.41,
+        -0.31,
+        0.02
+      ],
+      "boundsMax": [
+        0.41,
+        0.3,
+        0.92
+      ],
+      "nativeDimsM": {
+        "x": 0.82,
+        "y": 0.9,
+        "z": 0.61,
+        "blenderXYZ": [
+          0.82,
+          0.61,
+          0.9
+        ]
+      },
+      "triangles": 36,
+      "file": "casework-base-cabinet.glb",
+      "bytesKb": 4.4,
+      "path": "/models/authoring/casework-base-cabinet.glb"
+    },
+    {
+      "id": "light-linear-1200",
+      "category": "Lighting Fixtures",
+      "categoryKo": "조명 기구",
+      "family": "Linear LED",
+      "familyKo": "라인 LED",
+      "type": "1200 mm",
+      "typeKo": "1200 mm",
+      "familyKind": "loadable",
+      "host": "ceiling",
+      "origin": "ceiling-plane",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.6,
+        -0.04,
+        -0.07
+      ],
+      "boundsMax": [
+        0.6,
+        0.04,
+        0.0
+      ],
+      "nativeDimsM": {
+        "x": 1.2,
+        "y": 0.07,
+        "z": 0.08,
+        "blenderXYZ": [
+          1.2,
+          0.08,
+          0.07
+        ]
+      },
+      "triangles": 24,
+      "file": "light-linear-1200.glb",
+      "bytesKb": 3.3,
+      "path": "/models/authoring/light-linear-1200.glb"
+    },
+    {
+      "id": "light-highbay",
+      "category": "Lighting Fixtures",
+      "categoryKo": "조명 기구",
+      "family": "High-Bay",
+      "familyKo": "하이베이",
+      "type": "LED 150W",
+      "typeKo": "LED 150W",
+      "familyKind": "loadable",
+      "host": "ceiling",
+      "origin": "ceiling-plane",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.18,
+        -0.18,
+        -0.16
+      ],
+      "boundsMax": [
+        0.18,
+        0.18,
+        0.06
+      ],
+      "nativeDimsM": {
+        "x": 0.36,
+        "y": 0.22,
+        "z": 0.36,
+        "blenderXYZ": [
+          0.36,
+          0.36,
+          0.22
+        ]
+      },
+      "triangles": 148,
+      "file": "light-highbay.glb",
+      "bytesKb": 9.2,
+      "path": "/models/authoring/light-highbay.glb"
+    },
+    {
+      "id": "light-wall",
+      "category": "Lighting Fixtures",
+      "categoryKo": "조명 기구",
+      "family": "Wall Light",
+      "familyKo": "벽등",
+      "type": "Surface 180mm",
+      "typeKo": "벽면 180mm",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-face",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.09,
+        -0.11,
+        -0.14
+      ],
+      "boundsMax": [
+        0.09,
+        0.04,
+        0.14
+      ],
+      "nativeDimsM": {
+        "x": 0.18,
+        "y": 0.28,
+        "z": 0.15,
+        "blenderXYZ": [
+          0.18,
+          0.15,
+          0.28
+        ]
+      },
+      "triangles": 24,
+      "file": "light-wall.glb",
+      "bytesKb": 3.3,
+      "path": "/models/authoring/light-wall.glb"
+    },
+    {
+      "id": "light-emergency",
+      "category": "Lighting Fixtures",
+      "categoryKo": "조명 기구",
+      "family": "Emergency Light",
+      "familyKo": "비상조명",
+      "type": "Twin-head",
+      "typeKo": "쌍두형",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-or-ceiling",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.14,
+        -0.05,
+        -0.1
+      ],
+      "boundsMax": [
+        0.14,
+        0.04,
+        0.0
+      ],
+      "nativeDimsM": {
+        "x": 0.28,
+        "y": 0.1,
+        "z": 0.09,
+        "blenderXYZ": [
+          0.28,
+          0.09,
+          0.1
+        ]
+      },
+      "triangles": 24,
+      "file": "light-emergency.glb",
+      "bytesKb": 3.3,
+      "path": "/models/authoring/light-emergency.glb"
+    },
+    {
+      "id": "device-outlet-single",
+      "category": "Electrical Fixtures",
+      "categoryKo": "전기기구",
+      "family": "Single Outlet",
+      "familyKo": "단구 콘센트",
+      "type": "230V",
+      "typeKo": "230V",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-face",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.04,
+        -0.01,
+        -0.06
+      ],
+      "boundsMax": [
+        0.04,
+        0.005,
+        0.06
+      ],
+      "nativeDimsM": {
+        "x": 0.08,
+        "y": 0.12,
+        "z": 0.015,
+        "blenderXYZ": [
+          0.08,
+          0.015,
+          0.12
+        ]
+      },
+      "triangles": 68,
+      "file": "device-outlet-single.glb",
+      "bytesKb": 5.7,
+      "path": "/models/authoring/device-outlet-single.glb"
+    },
+    {
+      "id": "device-switch",
+      "category": "Electrical Fixtures",
+      "categoryKo": "전기기구",
+      "family": "Light Switch",
+      "familyKo": "전등 스위치",
+      "type": "1-gang",
+      "typeKo": "1구",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-face",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.04,
+        -0.012,
+        -0.06
+      ],
+      "boundsMax": [
+        0.04,
+        0.005,
+        0.06
+      ],
+      "nativeDimsM": {
+        "x": 0.08,
+        "y": 0.12,
+        "z": 0.017,
+        "blenderXYZ": [
+          0.08,
+          0.017,
+          0.12
+        ]
+      },
+      "triangles": 24,
+      "file": "device-switch.glb",
+      "bytesKb": 3.2,
+      "path": "/models/authoring/device-switch.glb"
+    },
+    {
+      "id": "device-thermostat",
+      "category": "Electrical Fixtures",
+      "categoryKo": "전기기구",
+      "family": "Thermostat",
+      "familyKo": "온도조절기",
+      "type": "Digital",
+      "typeKo": "디지털",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-face",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.05,
+        -0.012,
+        -0.05
+      ],
+      "boundsMax": [
+        0.05,
+        0.009,
+        0.05
+      ],
+      "nativeDimsM": {
+        "x": 0.1,
+        "y": 0.1,
+        "z": 0.021,
+        "blenderXYZ": [
+          0.1,
+          0.021,
+          0.1
+        ]
+      },
+      "triangles": 24,
+      "file": "device-thermostat.glb",
+      "bytesKb": 3.4,
+      "path": "/models/authoring/device-thermostat.glb"
+    },
+    {
+      "id": "electrical-transformer",
+      "category": "Electrical Equipment",
+      "categoryKo": "전기설비",
+      "family": "Transformer",
+      "familyKo": "변압기",
+      "type": "Pad 500 kVA",
+      "typeKo": "패드 500 kVA",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.7,
+        -0.55,
+        0.0
+      ],
+      "boundsMax": [
+        0.86,
+        0.55,
+        1.955
+      ],
+      "nativeDimsM": {
+        "x": 1.56,
+        "y": 1.955,
+        "z": 1.1,
+        "blenderXYZ": [
+          1.56,
+          1.1,
+          1.955
+        ]
+      },
+      "triangles": 132,
+      "file": "electrical-transformer.glb",
+      "bytesKb": 9.4,
+      "path": "/models/authoring/electrical-transformer.glb"
+    },
+    {
+      "id": "electrical-ups",
+      "category": "Electrical Equipment",
+      "categoryKo": "전기설비",
+      "family": "UPS",
+      "familyKo": "UPS",
+      "type": "Floor 80 kVA",
+      "typeKo": "바닥형 80 kVA",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.3,
+        -0.42,
+        0.0
+      ],
+      "boundsMax": [
+        0.3,
+        0.4,
+        1.8
+      ],
+      "nativeDimsM": {
+        "x": 0.6,
+        "y": 1.8,
+        "z": 0.82,
+        "blenderXYZ": [
+          0.6,
+          0.82,
+          1.8
+        ]
+      },
+      "triangles": 36,
+      "file": "electrical-ups.glb",
+      "bytesKb": 4.4,
+      "path": "/models/authoring/electrical-ups.glb"
+    },
+    {
+      "id": "mep-vav",
+      "category": "Mechanical Equipment",
+      "categoryKo": "기계설비",
+      "family": "VAV",
+      "familyKo": "VAV",
+      "type": "Single Duct",
+      "typeKo": "단일덕트",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.37,
+        -0.15,
+        -0.14
+      ],
+      "boundsMax": [
+        0.33,
+        0.15,
+        0.24
+      ],
+      "nativeDimsM": {
+        "x": 0.7,
+        "y": 0.38,
+        "z": 0.3,
+        "blenderXYZ": [
+          0.7,
+          0.3,
+          0.38
+        ]
+      },
+      "triangles": 80,
+      "file": "mep-vav.glb",
+      "bytesKb": 7.0,
+      "path": "/models/authoring/mep-vav.glb"
+    },
+    {
+      "id": "mep-pump",
+      "category": "Mechanical Equipment",
+      "categoryKo": "기계설비",
+      "family": "Circulation Pump",
+      "familyKo": "순환펌프",
+      "type": "Inline",
+      "typeKo": "인라인",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.25,
+        -0.14,
+        0.0
+      ],
+      "boundsMax": [
+        0.3,
+        0.14,
+        0.36
+      ],
+      "nativeDimsM": {
+        "x": 0.55,
+        "y": 0.36,
+        "z": 0.28,
+        "blenderXYZ": [
+          0.55,
+          0.28,
+          0.36
+        ]
+      },
+      "triangles": 124,
+      "file": "mep-pump.glb",
+      "bytesKb": 8.2,
+      "path": "/models/authoring/mep-pump.glb"
+    },
+    {
+      "id": "mep-expansion-tank",
+      "category": "Mechanical Equipment",
+      "categoryKo": "기계설비",
+      "family": "Expansion Tank",
+      "familyKo": "팽창탱크",
+      "type": "80 L",
+      "typeKo": "80 L",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.22,
+        -0.22,
+        0.0
+      ],
+      "boundsMax": [
+        0.22,
+        0.22,
+        0.94
+      ],
+      "nativeDimsM": {
+        "x": 0.44,
+        "y": 0.94,
+        "z": 0.44,
+        "blenderXYZ": [
+          0.44,
+          0.44,
+          0.94
+        ]
+      },
+      "triangles": 132,
+      "file": "mep-expansion-tank.glb",
+      "bytesKb": 8.7,
+      "path": "/models/authoring/mep-expansion-tank.glb"
+    },
+    {
+      "id": "mep-diffuser",
+      "category": "Air Terminals",
+      "categoryKo": "디퓨저",
+      "family": "Supply Diffuser",
+      "familyKo": "급기 디퓨저",
+      "type": "600 x 600",
+      "typeKo": "600 × 600",
+      "familyKind": "loadable",
+      "host": "ceiling",
+      "origin": "ceiling-plane",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.3,
+        -0.3,
+        -0.038
+      ],
+      "boundsMax": [
+        0.3,
+        0.3,
+        0.11
+      ],
+      "nativeDimsM": {
+        "x": 0.6,
+        "y": 0.148,
+        "z": 0.6,
+        "blenderXYZ": [
+          0.6,
+          0.6,
+          0.148
+        ]
+      },
+      "triangles": 60,
+      "file": "mep-diffuser.glb",
+      "bytesKb": 6.2,
+      "path": "/models/authoring/mep-diffuser.glb"
+    },
+    {
+      "id": "fire-heat-detector",
+      "category": "Fire Alarm Devices",
+      "categoryKo": "화재경보",
+      "family": "Heat Detector",
+      "familyKo": "열감지기",
+      "type": "Rate-of-rise",
+      "typeKo": "차동식",
+      "familyKind": "loadable",
+      "host": "ceiling",
+      "origin": "ceiling-plane",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.055,
+        -0.055,
+        -0.024
+      ],
+      "boundsMax": [
+        0.055,
+        0.055,
+        0.009
+      ],
+      "nativeDimsM": {
+        "x": 0.11,
+        "y": 0.033,
+        "z": 0.11,
+        "blenderXYZ": [
+          0.11,
+          0.11,
+          0.033
+        ]
+      },
+      "triangles": 96,
+      "file": "fire-heat-detector.glb",
+      "bytesKb": 6.4,
+      "path": "/models/authoring/fire-heat-detector.glb"
+    },
+    {
+      "id": "fire-mcp",
+      "category": "Fire Alarm Devices",
+      "categoryKo": "화재경보",
+      "family": "Manual Call Point",
+      "familyKo": "발신기",
+      "type": "Type A",
+      "typeKo": "A형",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-face",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.05,
+        -0.028,
+        -0.07
+      ],
+      "boundsMax": [
+        0.05,
+        0.02,
+        0.07
+      ],
+      "nativeDimsM": {
+        "x": 0.1,
+        "y": 0.14,
+        "z": 0.048,
+        "blenderXYZ": [
+          0.1,
+          0.048,
+          0.14
+        ]
+      },
+      "triangles": 24,
+      "file": "fire-mcp.glb",
+      "bytesKb": 3.2,
+      "path": "/models/authoring/fire-mcp.glb"
+    },
+    {
+      "id": "fire-alarm-bell",
+      "category": "Fire Alarm Devices",
+      "categoryKo": "화재경보",
+      "family": "Alarm Bell",
+      "familyKo": "경종",
+      "type": "Ø150",
+      "typeKo": "Ø150",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-face",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.09,
+        -0.025,
+        -0.09
+      ],
+      "boundsMax": [
+        0.09,
+        0.05,
+        0.09
+      ],
+      "nativeDimsM": {
+        "x": 0.18,
+        "y": 0.18,
+        "z": 0.075,
+        "blenderXYZ": [
+          0.18,
+          0.075,
+          0.18
+        ]
+      },
+      "triangles": 96,
+      "file": "fire-alarm-bell.glb",
+      "bytesKb": 6.4,
+      "path": "/models/authoring/fire-alarm-bell.glb"
+    },
+    {
+      "id": "bems-temp-sensor",
+      "category": "BEMS",
+      "categoryKo": "BEMS",
+      "family": "Temperature Sensor",
+      "familyKo": "온도센서",
+      "type": "Wall",
+      "typeKo": "벽면",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-face",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.035,
+        -0.013,
+        -0.05
+      ],
+      "boundsMax": [
+        0.035,
+        0.009,
+        0.05
+      ],
+      "nativeDimsM": {
+        "x": 0.07,
+        "y": 0.1,
+        "z": 0.022,
+        "blenderXYZ": [
+          0.07,
+          0.022,
+          0.1
+        ]
+      },
+      "triangles": 40,
+      "file": "bems-temp-sensor.glb",
+      "bytesKb": 4.0,
+      "path": "/models/authoring/bems-temp-sensor.glb"
+    },
+    {
+      "id": "bems-co2-sensor",
+      "category": "BEMS",
+      "categoryKo": "BEMS",
+      "family": "CO2 Sensor",
+      "familyKo": "CO₂ 센서",
+      "type": "Wall",
+      "typeKo": "벽면",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-face",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.045,
+        -0.014,
+        -0.055
+      ],
+      "boundsMax": [
+        0.045,
+        0.011,
+        0.055
+      ],
+      "nativeDimsM": {
+        "x": 0.09,
+        "y": 0.11,
+        "z": 0.025,
+        "blenderXYZ": [
+          0.09,
+          0.025,
+          0.11
+        ]
+      },
+      "triangles": 24,
+      "file": "bems-co2-sensor.glb",
+      "bytesKb": 3.4,
+      "path": "/models/authoring/bems-co2-sensor.glb"
+    },
+    {
+      "id": "energy-smart-meter",
+      "category": "Electrical Equipment",
+      "categoryKo": "전기설비",
+      "family": "Smart Meter",
+      "familyKo": "스마트미터",
+      "type": "3-phase",
+      "typeKo": "3상",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-face",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.08,
+        -0.045,
+        -0.12
+      ],
+      "boundsMax": [
+        0.08,
+        0.04,
+        0.12
+      ],
+      "nativeDimsM": {
+        "x": 0.16,
+        "y": 0.24,
+        "z": 0.085,
+        "blenderXYZ": [
+          0.16,
+          0.085,
+          0.24
+        ]
+      },
+      "triangles": 24,
+      "file": "energy-smart-meter.glb",
+      "bytesKb": 3.4,
+      "path": "/models/authoring/energy-smart-meter.glb"
+    },
+    {
+      "id": "ess-pcs",
+      "category": "Electrical Equipment",
+      "categoryKo": "전기설비",
+      "family": "PCS",
+      "familyKo": "PCS",
+      "type": "Cabinet 250 kW",
+      "typeKo": "캐비닛 250 kW",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.4,
+        -0.32,
+        0.0
+      ],
+      "boundsMax": [
+        0.4,
+        0.3,
+        2.0
+      ],
+      "nativeDimsM": {
+        "x": 0.8,
+        "y": 2.0,
+        "z": 0.62,
+        "blenderXYZ": [
+          0.8,
+          0.62,
+          2.0
+        ]
+      },
+      "triangles": 36,
+      "file": "ess-pcs.glb",
+      "bytesKb": 4.4,
+      "path": "/models/authoring/ess-pcs.glb"
+    },
+    {
+      "id": "generic-equipment",
+      "category": "Generic Models",
+      "categoryKo": "일반모델",
+      "family": "Generic Equipment",
+      "familyKo": "일반 장비",
+      "type": "Placeholder",
+      "typeKo": "플레이스홀더",
+      "familyKind": "loadable",
+      "host": "level",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.5,
+        -0.4,
+        0.0
+      ],
+      "boundsMax": [
+        0.5,
+        0.4,
+        1.2
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 1.2,
+        "z": 0.8,
+        "blenderXYZ": [
+          1.0,
+          0.8,
+          1.2
+        ]
+      },
+      "triangles": 12,
+      "file": "generic-equipment.glb",
+      "bytesKb": 1.9,
+      "path": "/models/authoring/generic-equipment.glb"
+    },
+    {
+      "id": "generic-sensor",
+      "category": "Generic Models",
+      "categoryKo": "일반모델",
+      "family": "Generic Sensor",
+      "familyKo": "일반 센서",
+      "type": "Placeholder",
+      "typeKo": "플레이스홀더",
+      "familyKind": "loadable",
+      "host": "wall",
+      "origin": "wall-face",
+      "placement": "hosted",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.04,
+        -0.015,
+        -0.04
+      ],
+      "boundsMax": [
+        0.04,
+        0.015,
+        0.04
+      ],
+      "nativeDimsM": {
+        "x": 0.08,
+        "y": 0.08,
+        "z": 0.03,
+        "blenderXYZ": [
+          0.08,
+          0.03,
+          0.08
+        ]
+      },
+      "triangles": 12,
+      "file": "generic-sensor.glb",
+      "bytesKb": 1.9,
+      "path": "/models/authoring/generic-sensor.glb"
+    },
+    {
+      "id": "site-bollard",
+      "category": "Site",
+      "categoryKo": "외부",
+      "family": "Bollard",
+      "familyKo": "볼라드",
+      "type": "Fixed 900mm",
+      "typeKo": "고정 900mm",
+      "familyKind": "loadable",
+      "host": "toposurface",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.085,
+        -0.085,
+        0.0
+      ],
+      "boundsMax": [
+        0.085,
+        0.085,
+        0.96
+      ],
+      "nativeDimsM": {
+        "x": 0.17,
+        "y": 0.96,
+        "z": 0.17,
+        "blenderXYZ": [
+          0.17,
+          0.17,
+          0.96
+        ]
+      },
+      "triangles": 88,
+      "file": "site-bollard.glb",
+      "bytesKb": 5.6,
+      "path": "/models/authoring/site-bollard.glb"
+    },
+    {
+      "id": "site-streetlight",
+      "category": "Site",
+      "categoryKo": "외부",
+      "family": "Streetlight",
+      "familyKo": "가로등",
+      "type": "6 m pole",
+      "typeKo": "6 m 폴",
+      "familyKind": "loadable",
+      "host": "toposurface",
+      "origin": "base-center",
+      "placement": "component",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        -0.1,
+        -0.11,
+        0.0
+      ],
+      "boundsMax": [
+        1.25,
+        0.11,
+        6.0
+      ],
+      "nativeDimsM": {
+        "x": 1.35,
+        "y": 6.0,
+        "z": 0.22,
+        "blenderXYZ": [
+          1.35,
+          0.22,
+          6.0
+        ]
+      },
+      "triangles": 68,
+      "file": "site-streetlight.glb",
+      "bytesKb": 5.9,
+      "path": "/models/authoring/site-streetlight.glb"
+    },
+    {
+      "id": "site-fence-module",
+      "category": "Site",
+      "categoryKo": "외부",
+      "family": "Fence",
+      "familyKo": "펜스",
+      "type": "1 m module 1200h",
+      "typeKo": "1 m 모듈 1200h",
+      "familyKind": "system",
+      "host": "toposurface",
+      "origin": "start-base",
+      "placement": "linear",
+      "courseRef": "BIM starter library expansion",
+      "boundsMin": [
+        0.0,
+        -0.03,
+        0.0
+      ],
+      "boundsMax": [
+        1.0,
+        0.03,
+        1.2
+      ],
+      "nativeDimsM": {
+        "x": 1.0,
+        "y": 1.2,
+        "z": 0.06,
+        "blenderXYZ": [
+          1.0,
+          0.06,
+          1.2
+        ]
+      },
+      "triangles": 132,
+      "file": "site-fence-module.glb",
+      "bytesKb": 12.7,
+      "path": "/models/authoring/site-fence-module.glb"
     }
   ]
 }

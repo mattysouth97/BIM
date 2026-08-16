@@ -35,6 +35,8 @@ function generatedTypes(recipe: BuildingRecipe): Record<string, BimType> {
         structural: true,
         roomBounding: true,
       },
+      layers: ["Structure"],
+      ifcClass: "IfcWall",
     },
     [GENERATED_FLOOR_TYPE]: {
       id: GENERATED_FLOOR_TYPE,
@@ -258,6 +260,8 @@ export function hydrateBimModel(input: {
     grids: defaultGrids(input.recipe),
     types,
     elements: [...generated, ...authored],
+    documents: [],
+    visibility: {},
   };
 }
 

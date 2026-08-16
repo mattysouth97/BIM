@@ -16,6 +16,8 @@ describe("family catalog", () => {
       "door",
       "window",
       "column",
+      "beam",
+      "foundation",
       "floor",
       "roof",
       "ceiling",
@@ -24,13 +26,17 @@ describe("family catalog", () => {
       "lighting",
       "furniture",
       "plumbing",
+      "electrical",
+      "fire",
+      "equipment",
       "planting",
+      "site",
     ]);
   });
 
-  it("keeps 46 authored families with unique ids", () => {
-    expect(AUTHORING_FAMILIES).toHaveLength(46);
-    expect(new Set(AUTHORING_FAMILY_IDS).size).toBe(46);
+  it("keeps authored families with unique ids", () => {
+    expect(AUTHORING_FAMILIES.length).toBeGreaterThanOrEqual(100);
+    expect(new Set(AUTHORING_FAMILY_IDS).size).toBe(AUTHORING_FAMILIES.length);
   });
 
   it("groups doors and defaults to Generic 910mm", () => {

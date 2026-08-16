@@ -51,6 +51,8 @@ export interface BimType {
   typeNameKo: string;
   /** Type parameters. Changing these updates every instance of this type. */
   parameters: Record<string, BimParamValue>;
+  layers?: string[];
+  ifcClass?: string;
 }
 
 export interface BimPlacement {
@@ -60,7 +62,37 @@ export interface BimPlacement {
   rotationY: number;
 }
 
-export type BimKind = ElementKind | "room" | "roof" | "ceiling" | "furniture" | "lighting";
+export type BimKind =
+  | ElementKind
+  | "room"
+  | "roof"
+  | "ceiling"
+  | "furniture"
+  | "lighting"
+  | "beam";
+
+export interface BimConnector {
+  id: string;
+  system: string;
+  direction: string;
+  connectedTo?: string;
+}
+
+export interface BimDocumentItem {
+  id: string;
+  kind: "tag" | "dimension" | "section" | "note";
+  viewId: string | null;
+  elementId?: string;
+  text: string;
+  start?: BimPlacement;
+  end?: BimPlacement;
+}
+
+export interface BimViewVisibility {
+  hiddenIds: string[];
+  hiddenCategories: string[];
+  isolatedIds: string[];
+}
 
 export interface BimElement {
   id: string;
@@ -77,6 +109,10 @@ export interface BimElement {
   placement: BimPlacement;
   phaseCreated: BimPhase;
   visible: boolean;
+  assetId?: string;
+  emsTag?: string;
+  ifcClass?: string;
+  connectors?: BimConnector[];
 }
 
 export interface BimLevel {
@@ -103,6 +139,8 @@ export interface BimModelSnapshot {
   grids: BimGrid[];
   types: Record<string, BimType>;
   elements: BimElement[];
+  documents: BimDocumentItem[];
+  visibility: Record<string, BimViewVisibility>;
 }
 
 export interface BimQuery {

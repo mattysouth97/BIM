@@ -8,11 +8,17 @@ import { persist } from "zustand/middleware";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { DerivedTwinElements } from "@/lib/bim/derive/twin-elements";
 import {
+  addDocument,
   beginCommit,
   changeElementType,
+  createFloorSketch,
+  createWall,
   deleteInstance,
   duplicateType,
   EMPTY_LOG,
+  flipHosted,
+  hideInView,
+  hostOnNearestWall,
   hydrateBimModel,
   lastCommandName,
   placeInstance,
@@ -22,12 +28,14 @@ import {
   setLevelName,
   setTypeParameter,
   undo,
+  type BimDocumentItem,
   type BimElement,
   type BimModelSnapshot,
   type BimParamValue,
   type BimPlacement,
   type BimType,
   type TransactionLog,
+  type Xz,
 } from "@/lib/bim/model";
 
 interface BuildingBimState {
@@ -66,6 +74,31 @@ interface BimModelState {
   }) => string | null;
   applyDelete: (elementId: string) => void;
   applyDuplicateType: (typeId: string, typeName: string) => void;
+  applyWall: (input: {
+    typeId: string;
+    buildingPk: string;
+    levelId: string | null;
+    start: Xz;
+    end: Xz;
+    heightM: number;
+  }) => string | null;
+  applyFloorSketch: (input: {
+    typeId: string;
+    buildingPk: string;
+    levelId: string | null;
+    a: Xz;
+    b: Xz;
+  }) => string | null;
+  applyHost: (input: {
+    typeId: string;
+    buildingPk: string;
+    levelId: string | null;
+    point: Xz;
+    y: number;
+  }) => string | null;
+  applyFlip: (elementId: string, field: "hand" | "facing") => void;
+  applyDocument: (item: BimDocumentItem) => void;
+  applyHide: (viewId: string, payload: { elementId?: string; category?: string }) => void;
   undoLast: () => void;
   redoLast: () => void;
 }
@@ -136,6 +169,8 @@ export const useBimModelStore = create<BimModelState>()(
               ...snapshot,
               types: { ...snapshot.types, ...current.types },
               elements: [...generated, ...authored],
+              documents: current.documents ?? [],
+              visibility: current.visibility ?? {},
             },
           });
           return;
@@ -209,6 +244,66 @@ export const useBimModelStore = create<BimModelState>()(
         const before = get().snapshot;
         if (!before) return;
         set(commit("Duplicate Type", before, duplicateType(before, typeId, typeName), get().log, get().byBuilding));
+      },
+
+      applyWall: (input) => {
+        const before = get().snapshot;
+        if (!before) return null;
+        const result = createWall({ model: before, ...input });
+        const created = result.model.elements.find(
+          (el) => el.origin === "authored" && !before.elements.some((b) => b.id === el.id),
+        );
+        set({
+          ...commit("Create Wall", before, result, get().log, get().byBuilding),
+          selectedElementId: created?.id ?? get().selectedElementId,
+        });
+        return created?.id ?? null;
+      },
+
+      applyFloorSketch: (input) => {
+        const before = get().snapshot;
+        if (!before) return null;
+        const result = createFloorSketch({ model: before, ...input });
+        const created = result.model.elements.find(
+          (el) => el.origin === "authored" && !before.elements.some((b) => b.id === el.id),
+        );
+        set({
+          ...commit("Create Floor", before, result, get().log, get().byBuilding),
+          selectedElementId: created?.id ?? get().selectedElementId,
+        });
+        return created?.id ?? null;
+      },
+
+      applyHost: (input) => {
+        const before = get().snapshot;
+        if (!before) return null;
+        const result = hostOnNearestWall({ model: before, ...input });
+        const created = result.model.elements.find(
+          (el) => el.origin === "authored" && !before.elements.some((b) => b.id === el.id),
+        );
+        set({
+          ...commit("Place Hosted", before, result, get().log, get().byBuilding),
+          selectedElementId: created?.id ?? get().selectedElementId,
+        });
+        return created?.id ?? null;
+      },
+
+      applyFlip: (elementId, field) => {
+        const before = get().snapshot;
+        if (!before) return;
+        set(commit(`Flip ${field}`, before, flipHosted(before, elementId, field), get().log, get().byBuilding));
+      },
+
+      applyDocument: (item) => {
+        const before = get().snapshot;
+        if (!before) return;
+        set(commit("Annotate", before, addDocument(before, item), get().log, get().byBuilding));
+      },
+
+      applyHide: (viewId, payload) => {
+        const before = get().snapshot;
+        if (!before) return;
+        set(commit("Hide in View", before, hideInView(before, viewId, payload), get().log, get().byBuilding));
       },
 
       undoLast: () => {

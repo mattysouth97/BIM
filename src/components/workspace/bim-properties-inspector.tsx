@@ -5,8 +5,10 @@ import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useBimModelStore } from "@/store/bim-model-store";
-import { parameterDefsForKind, type BimParamValue } from "@/lib/bim/model";
+import { parameterDefsForKind, validateModel, quantifyModel, type BimParamValue } from "@/lib/bim/model";
 import { familiesForTool, type AuthoringToolId } from "@/lib/bim/family-catalog";
+import { familySemantics } from "@/lib/bim/family-semantics";
+import { useViewStore } from "@/lib/bim/views/view-store";
 
 export function BimPropertiesInspector() {
   const { t, lang } = useT();
@@ -19,6 +21,10 @@ export function BimPropertiesInspector() {
   const applyChangeType = useBimModelStore((s) => s.applyChangeType);
   const applyDuplicateType = useBimModelStore((s) => s.applyDuplicateType);
   const applyDelete = useBimModelStore((s) => s.applyDelete);
+  const applyFlip = useBimModelStore((s) => s.applyFlip);
+  const applyHide = useBimModelStore((s) => s.applyHide);
+  const applyDocument = useBimModelStore((s) => s.applyDocument);
+  const activeViewId = useViewStore((s) => s.activeViewId);
 
   const element = snapshot?.elements.find((el) => el.id === selectedId) ?? null;
   const type = element ? snapshot?.types[element.typeId] : undefined;
@@ -39,10 +45,13 @@ export function BimPropertiesInspector() {
     );
   }
 
+  const issues = validateModel(snapshot);
+  const quantities = quantifyModel(snapshot);
+
   if (!element) {
     const viewHint = snapshot.levels.find((l) => l.id === snapshot.levels[0]?.id);
     return (
-      <div className="border-b px-3 py-2" data-testid="bim-properties">
+      <div className="border-b px-3 py-2 space-y-2" data-testid="bim-properties">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           {t("뷰 속성", "View Properties")}
         </p>
@@ -56,6 +65,28 @@ export function BimPropertiesInspector() {
           <p className="mt-1 text-[10px] text-muted-foreground">
             {t(`활성 평면 컷: 1.2 m`, `Active plan cut: 1.2 m`)}
           </p>
+        )}
+        <div data-testid="bim-quantities" className="space-y-0.5">
+          <p className="text-[10px] font-semibold uppercase text-muted-foreground">
+            {t("물량", "Quantities")}
+          </p>
+          {quantities.slice(0, 6).map((row) => (
+            <p key={row.category} className="text-[10px] text-muted-foreground">
+              {row.category}: {row.count} · {row.lengthM.toFixed(1)} m · {row.areaM2.toFixed(1)} m²
+            </p>
+          ))}
+        </div>
+        {issues.length > 0 && (
+          <div data-testid="bim-issues" className="space-y-0.5">
+            <p className="text-[10px] font-semibold uppercase text-muted-foreground">
+              {t("검토", "Issues")} ({issues.length})
+            </p>
+            {issues.slice(0, 4).map((issue) => (
+              <p key={issue.id} className="text-[10px] text-amber-700">
+                {lang === "ko" ? issue.messageKo : issue.messageEn}
+              </p>
+            ))}
+          </div>
         )}
       </div>
     );
@@ -98,7 +129,56 @@ export function BimPropertiesInspector() {
         ))}
       </div>
 
-      <div className="flex items-center gap-1">
+      {(element.ifcClass || element.emsTag || familySemantics(element.typeId)?.layers) && (
+        <div className="space-y-0.5 text-[10px] text-muted-foreground" data-testid="bim-family-semantics">
+          {element.ifcClass && <p>IFC {element.ifcClass}</p>}
+          {element.emsTag && <p>EMS {element.emsTag}</p>}
+          {element.assetId && <p>Asset {element.assetId}</p>}
+          {familySemantics(element.typeId)?.layers && (
+            <p>{t("레이어", "Layers")}: {familySemantics(element.typeId)!.layers!.join(" · ")}</p>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-1">
+        {(element.kind === "door" || element.kind === "window") && (
+          <>
+            <Button type="button" size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => applyFlip(element.id, "hand")}>
+              {t("손잡이 반전", "Flip Hand")}
+            </Button>
+            <Button type="button" size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => applyFlip(element.id, "facing")}>
+              {t("향 반전", "Flip Facing")}
+            </Button>
+          </>
+        )}
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-6 px-2 text-[10px]"
+          onClick={() =>
+            applyDocument({
+              id: `tag-${element.id}`,
+              kind: "tag",
+              viewId: activeViewId,
+              elementId: element.id,
+              text: element.mark,
+            })
+          }
+        >
+          {t("태그", "Tag")}
+        </Button>
+        {activeViewId && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-6 px-2 text-[10px]"
+            onClick={() => applyHide(activeViewId, { elementId: element.id })}
+          >
+            {t("뷰에서 숨김", "Hide in view")}
+          </Button>
+        )}
         <Button
           type="button"
           size="sm"
@@ -219,6 +299,7 @@ function kindToTool(kind: string): AuthoringToolId | null {
   if (kind === "door") return "door";
   if (kind === "window") return "window";
   if (kind === "column") return "column";
+  if (kind === "beam") return "beam";
   if (kind === "slab") return "floor";
   if (kind === "roof") return "roof";
   if (kind === "ceiling") return "ceiling";

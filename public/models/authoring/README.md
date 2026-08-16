@@ -12,7 +12,7 @@ Rebuild: `scripts/blender/build_authoring_assets.py` (all packs) or
 `src/lib/bim/asset-slots.ts` slot defaults are published under
 `/bim-assets/*.glb` and registered by `publishAuthoringAssets()`.
 
-This folder is the **full type library** (46 families). Use it when the
+This folder is the **full type library** (102 families: 46 course kit + 56 starter expansion). Use it when the
 authoring UI needs a specific type (Brick on CMU, casement window, 8-riser
 run, toilet, …), not just the slot default.
 

@@ -7,12 +7,18 @@ import {
   Columns2,
   DoorOpen,
   Droplets,
+  Fence,
+  Flame,
   Home,
   Layers,
   Lightbulb,
+  Minus,
   PanelTop,
+  Plug,
   Square,
   TreePine,
+  UtilityPole,
+  Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useT } from "@/lib/i18n";
@@ -33,15 +39,21 @@ const TOOL_ICONS: Record<AuthoringToolId, LucideIcon> = {
   door: DoorOpen,
   window: AppWindow,
   column: Columns2,
+  beam: Minus,
+  foundation: Layers,
   floor: Layers,
   roof: Home,
   ceiling: PanelTop,
   stair: Box,
-  railing: Box,
+  railing: Fence,
   furniture: Armchair,
   plumbing: Droplets,
   lighting: Lightbulb,
+  electrical: Plug,
+  fire: Flame,
+  equipment: Zap,
   planting: TreePine,
+  site: UtilityPole,
 };
 
 export function AuthoringPalette() {
@@ -116,9 +128,11 @@ export function AuthoringPalette() {
           {selected && (
             <span className="ml-auto hidden truncate text-[10px] text-muted-foreground lg:inline">
               {familyIdentityLabel(selected, lang)}
-              {selected.placement !== "linear"
-                ? t(" · 평면에 클릭해서 배치", " · click the plan to place")
-                : ""}
+              {selected.placement === "linear" || selected.placement.startsWith("sketch")
+                ? t(" · 두 점 클릭 (그리드 스냅)", " · click two points (grid snap)")
+                : selected.host === "wall"
+                  ? t(" · 벽에 클릭해서 호스트", " · click a wall to host")
+                  : t(" · 평면에 클릭해서 배치", " · click the plan to place")}
             </span>
           )}
         </div>

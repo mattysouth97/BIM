@@ -21,6 +21,7 @@ interface RevitWorkflowState {
   activeScheduleId: string;
   selectedFamilyId: string | null;
   activeAuthoringTool: AuthoringToolId | null;
+  sketchStart: { x: number; z: number } | null;
   setWorkMode: (mode: RevitWorkMode) => void;
   setLeftDockTab: (tab: LeftDockTab) => void;
   setSchedulePanelOpen: (open: boolean) => void;
@@ -28,6 +29,7 @@ interface RevitWorkflowState {
   setActiveScheduleId: (id: string) => void;
   setSelectedFamilyId: (id: string | null) => void;
   setActiveAuthoringTool: (tool: AuthoringToolId) => void;
+  setSketchStart: (pt: { x: number; z: number } | null) => void;
 }
 
 export const useRevitWorkflowStore = create<RevitWorkflowState>()((set) => ({
@@ -38,6 +40,7 @@ export const useRevitWorkflowStore = create<RevitWorkflowState>()((set) => ({
   activeScheduleId: "wall-schedule-v1",
   selectedFamilyId: null,
   activeAuthoringTool: null,
+  sketchStart: null,
 
   setWorkMode: (mode) =>
     set((s) => {
@@ -78,6 +81,8 @@ export const useRevitWorkflowStore = create<RevitWorkflowState>()((set) => ({
         selectedFamilyId: nextFamily,
         workMode: "authoring",
         leftDockTab: "browser",
+        sketchStart: null,
       };
     }),
+  setSketchStart: (pt) => set({ sketchStart: pt }),
 }));
