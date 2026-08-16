@@ -16,8 +16,12 @@ import bmesh
 import bpy
 from mathutils import Euler, Matrix, Vector
 
-ASSET_DIR = r"C:\Users\Nam\BIM\public\models\authoring"
-TEX_DIR = r"C:\Users\Nam\BIM\public\textures"
+# Prefer this checkout; fall back to the historical Nam path if present.
+_HERE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+_LEGACY = r"C:\Users\Nam\BIM"
+_ROOT = _HERE if os.path.isdir(os.path.join(_HERE, "public", "models")) else _LEGACY
+ASSET_DIR = os.path.join(_ROOT, "public", "models", "authoring")
+TEX_DIR = os.path.join(_ROOT, "public", "textures")
 CATALOG_PATH = os.path.join(ASSET_DIR, "catalog.json")
 
 # ---------------------------------------------------------------------------
