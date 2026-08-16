@@ -1,61 +1,11 @@
-# .vercelignore — files NOT uploaded to Vercel during deploy.
-# Mirrors .gitignore for runtime-irrelevant artifacts; explicitly excludes
-# anything bulky or session-local that doesn't belong in a production deploy.
-
-# Build cache (1.1G locally — biggest single offender)
-.next/
-out/
-
-# Dependencies (Vercel installs fresh)
-node_modules/
-.pnpm-store/
-
-# OMC session state, plans, project memory — local-only orchestration data
-.omc/
-
-# Test coverage reports
-coverage/
-
-# IDE / editor / OS
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Local env (Vercel uses its own env config; never upload .env)
-.env
-.env.*
-!.env.example
-
-# Planning docs — keep in repo for collaborators, but not needed at runtime
-docs/superpowers/
-.planning/
-
-# Test-only fixtures + golden corpora
-**/__tests__/
-**/*.test.ts
-**/*.test.tsx
-**/*.spec.ts
-**/*.spec.tsx
-
-# Claude / agent state
-.claude/
-.cursor/
-worktrees/
-
-# Vercel internal (already gitignored, double-protect)
-.vercel/
-
-# Backup / scratch
-*.bak
-*.tmp
-*.backup
-
-# Python ML pipeline (offline-only, deferred from v7 Phase 35)
-ml/
+node_modules
+.next
+.omc
+.playwright-mcp
+coverage
+dist
+.open-next
+.sites-worker-bundle
+ml
+.git
+scripts/blender/__pycache__

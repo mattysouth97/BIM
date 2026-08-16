@@ -111,7 +111,7 @@ export function resolveRevitIdentity(ctx: IdentityContext): RevitIdentity {
     const raw = ctx.equipment.componentType;
     const mapped =
       MEP_FAMILY[raw] ??
-      MEP_FAMILY[ctx.equipment.subLayerId === "lighting" ? "lightingFixture" : ""] ??
+      MEP_FAMILY[ctx.equipment.subLayerId === "mep-lighting" ? "lightingFixture" : ""] ??
       null;
     const catKey = mapped?.category ?? "mep";
     const cat = CATEGORY[catKey];
