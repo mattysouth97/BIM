@@ -4,7 +4,12 @@ import React from "react";
 import { X } from "lucide-react";
 import { useSelectionStore } from "@/store/selection-store";
 import { useAppStore } from "@/store/app-store";
+import { useMaterialStore } from "@/store/material-store";
+import { useTwinProvenanceStore } from "@/store/twin-provenance-store";
+import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import { MEP_SUB_CONFIGS } from "@/lib/layers/types";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 /**
  * EquipmentInfoPanel — renders in the right dock when a MEP mesh has been
@@ -25,6 +30,13 @@ export function EquipmentInfoPanel() {
   const isKo = useAppStore((s) => s.language) === "ko";
   const info = useSelectionStore((s) => s.selectedEquipment);
   const clearEquipment = useSelectionStore((s) => s.clearEquipment);
+  const buildingPk = useActiveBuildingPk();
+  const materials = useMaterialStore((s) => s.properties[buildingPk]);
+  const overrideProperty = useMaterialStore((s) => s.overrideProperty);
+  const patchProvenance = useTwinProvenanceStore((s) => s.patch);
+  const confirmed = materials?.source === "user-input";
+  const [cap, setCap] = useState("");
+  const [year, setYear] = useState("");
 
   if (!info) return null;
 
@@ -83,12 +95,78 @@ export function EquipmentInfoPanel() {
         />
       </div>
 
-      {/* Card-level amber disclaimer — second layer of EQ-02 enforcement */}
-      <div className="mt-3 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1.5">
-        <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed">
-          {isKo
-            ? "⚠ 모든 값은 추정치입니다 — 실측 데이터가 아닙니다."
-            : "⚠ All values are estimated — not measured data."}
+      <div className="mt-2 space-y-1.5 border-t pt-2">
+        <p className="text-[10px] font-semibold text-muted-foreground">
+          {isKo ? "사양 확인" : "Confirm spec"}
+        </p>
+        <label className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          {isKo ? "용량 kW" : "Capacity kW"}
+          <input
+            type="number"
+            min={1}
+            className="h-6 flex-1 rounded border bg-background px-1.5 text-xs tabular-nums"
+            placeholder={specs.capacity}
+            value={cap}
+            onChange={(e) => setCap(e.target.value)}
+          />
+        </label>
+        <label className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          {isKo ? "설치연도" : "Year"}
+          <input
+            type="number"
+            min={1960}
+            max={2030}
+            className="h-6 flex-1 rounded border bg-background px-1.5 text-xs tabular-nums"
+            placeholder={String(specs.installYear)}
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+          />
+        </label>
+        <Button
+          type="button"
+          size="sm"
+          className="h-6 w-full text-[10px]"
+          disabled={!cap && !year}
+          onClick={() => {
+            const isHeat =
+              info.subLayerId === "mep-hvac" &&
+              (info.componentType.includes("heat") ||
+                info.componentType.includes("boiler"));
+            if (cap) {
+              const n = Number(cap);
+              if (Number.isFinite(n)) {
+                overrideProperty(
+                  buildingPk,
+                  isHeat ? "hvac.heating.capacity" : "hvac.cooling.capacity",
+                  n,
+                );
+              }
+            }
+            if (year) {
+              const y = Number(year);
+              if (Number.isFinite(y)) {
+                patchProvenance(buildingPk, { equipmentInstallYear: y });
+              }
+            }
+          }}
+        >
+          {isKo ? "확인 — 입력으로 저장" : "Confirm — save as input"}
+        </Button>
+      </div>
+
+      <div className={`mt-3 rounded border px-2 py-1.5 ${
+        confirmed
+          ? "border-cyan-500/30 bg-cyan-500/10"
+          : "border-amber-500/30 bg-amber-500/10"
+      }`}>
+        <p className={`text-[10px] leading-relaxed ${
+          confirmed
+            ? "text-cyan-700 dark:text-cyan-400"
+            : "text-amber-700 dark:text-amber-400"
+        }`}>
+          {confirmed
+            ? (isKo ? "일부 값은 사용자 입력입니다. 등급이 이 값을 사용합니다." : "Some values are user input. The grade uses them.")
+            : (isKo ? "⚠ 모든 값은 추정치입니다 — 실측 데이터가 아닙니다." : "⚠ All values are estimated — not measured data.")}
         </p>
       </div>
     </div>
@@ -106,7 +184,7 @@ function SpecRow({ label, value }: { label: string; value: string }) {
       <div className="flex items-center gap-1.5">
         <span className="font-medium tabular-nums">{value}</span>
         <span className="inline-flex items-center rounded px-1 py-px text-[9px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400">
-          추정
+          {label.includes("용량") || label.toLowerCase().includes("capacity") ? "추정" : "추정"}
         </span>
       </div>
     </div>

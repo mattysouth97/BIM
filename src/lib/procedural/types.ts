@@ -55,6 +55,21 @@ export interface MaterialRefs {
   groundFloor: PBRMaterialConfig;
 }
 
+/** Per-floor authoring patch written by 층 편집. */
+export interface FloorEdit {
+  height?: number;
+  /** 주용도코드 (e.g. "14000") — optional override of the building use. */
+  useCode?: string;
+  /** Drop this floor from the twin + energy stack. */
+  excluded?: boolean;
+}
+
+/** Authored service-core slot in footprint-local metres (XZ). */
+export interface ServiceCoreSlot {
+  x: number;
+  z: number;
+}
+
 /** Minimal floor descriptor for procedural generation */
 export interface FloorSpec {
   floorNo: number;
@@ -63,6 +78,8 @@ export interface FloorSpec {
   y: number;
   height: number;
   isGroundFloor: boolean;
+  /** Optional 주용도코드 override from 층 편집. */
+  useCode?: string;
 }
 
 /** Top-level building generation recipe — all parameters needed to procedurally generate a building */
@@ -96,6 +113,12 @@ export interface BuildingRecipe {
   factoryZones?: FactoryZone[];
   /** Mixed-use vertical sections with per-section facade */
   sections?: BuildingSection[];
+  /**
+   * Authored service-core centre in footprint-local metres.
+   * When set, `computeCoreLayout` parks the elevator bank here instead of
+   * the rear-wall default.
+   */
+  serviceCore?: ServiceCoreSlot;
 }
 
 /** Factory building zone descriptors */
@@ -155,4 +178,10 @@ export type RecipeOverrides = Partial<{
   column: Partial<ColumnConfig>;
   roof: Partial<RoofConfig>;
   curtainWall: Partial<CurtainWallConfig>;
+  serviceCore: ServiceCoreSlot;
+  /**
+   * Per-floor patches keyed by `String(floorNo)`. Applied after
+   * `floorCount` / `floorHeight` so a stack editor can refine one level.
+   */
+  floorEdits: Record<string, FloorEdit>;
 }>;

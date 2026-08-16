@@ -22,9 +22,8 @@ export function CadDrawing({
       viewBox="0 0 1100 620"
       role="img"
       aria-label={label}
-      className="cad-svg"
+      className="cad-svg h-full w-full"
     >
-      {/* sheet grid */}
       {Array.from({ length: 22 }, (_, i) => (
         <line
           key={`vg${i}`}
@@ -46,13 +45,11 @@ export function CadDrawing({
         />
       ))}
 
-      {/* crop marks */}
       <path d="M24 16 H56 M24 16 V48" className="cad-ink" />
       <path d="M1076 16 H1044 M1076 16 V48" className="cad-ink" />
       <path d="M24 604 H56 M24 604 V572" className="cad-ink" />
       <path d="M1076 604 H1044 M1076 604 V572" className="cad-ink" />
 
-      {/* ELEVATION */}
       <g transform="translate(80 48)">
         <text x="0" y="0" className="cad-anno">
           EL. SOUTH
@@ -71,13 +68,7 @@ export function CadDrawing({
 
         {mode === "void" ? (
           <g>
-            <rect
-              x="80"
-              y="80"
-              width="440"
-              height="292"
-              className="cad-dash"
-            />
+            <rect x="80" y="80" width="440" height="292" className="cad-dash" />
             <text x="300" y="230" textAnchor="middle" className="cad-void">
               {voidLabel}
             </text>
@@ -152,7 +143,6 @@ export function CadDrawing({
         </g>
       </g>
 
-      {/* PLAN */}
       <g transform="translate(740 80)">
         <text x="0" y="0" className="cad-anno">
           PL. L01
@@ -183,7 +173,6 @@ export function CadDrawing({
         <text x="236" y="110" className="cad-dim">
           24.0
         </text>
-        {/* north */}
         <g transform="translate(248 40)">
           <line x1="0" y1="28" x2="0" y2="0" className="cad-ink" />
           <polygon points="0,-4 -4,6 4,6" className="cad-fill" />

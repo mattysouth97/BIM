@@ -68,6 +68,7 @@ const RECT_DXF = [
 function seedBuilding() {
   useMaterialStore.setState({
     properties: { [TEST_PK]: {} as unknown as MaterialProperties },
+    activePk: TEST_PK,
     selectedElement: { type: null },
   });
 }
@@ -83,6 +84,7 @@ function resetStores() {
   });
   useMaterialStore.setState({
     properties: {},
+    activePk: "",
     selectedElement: { type: null },
   });
 }

@@ -1,16 +1,20 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useHydration } from "@/hooks/use-hydration";
 import { useOnboardingTour } from "@/hooks/use-onboarding-tour";
 import { useEditorKeybinds } from "@/hooks/use-editor-keybinds";
+import { useEditorModeStore } from "@/store/editor-mode-store";
 import { useNarrowViewport } from "@/hooks/use-narrow-viewport";
 import { WorkflowStepper } from "./workflow-stepper";
 import { PropertiesPanel } from "./properties-panel";
 import { SceneOutliner } from "./scene-outliner";
 import { StatusBar } from "./status-bar";
+import { BimSchedulePanel } from "./bim-schedule-panel";
+import { useBimDocumentStore } from "@/store/bim-document-store";
+import { cn } from "@/lib/utils";
 import { TwinDock, TwinDockTab } from "./twin-dock";
 import { ReportStage } from "@/components/report/report-stage";
 import { UploadStage } from "@/components/upload/upload-stage";
@@ -23,6 +27,13 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
   const hydrated = useHydration();
   useOnboardingTour();
   useEditorKeybinds();
+  const currentMode = useEditorModeStore((s) => s.currentMode);
+  const setRightDockOpen = useWorkspaceStore((s) => s.setRightDockOpen);
+  useEffect(() => {
+    if (currentMode === "floor-edit" || currentMode === "object-edit") {
+      setRightDockOpen(true);
+    }
+  }, [currentMode, setRightDockOpen]);
 
   const stage = useWorkflowStore((s) => s.stage);
 
@@ -31,6 +42,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
   const bottomShelfOpen = useWorkspaceStore((s) => s.bottomShelfOpen);
   const toggleLeftDock = useWorkspaceStore((s) => s.toggleLeftDock);
   const toggleRightDock = useWorkspaceStore((s) => s.toggleRightDock);
+  const scheduleOpen = useBimDocumentStore((s) => s.scheduleOpen);
   const narrow = useNarrowViewport();
   // Phone: docks bury the twin and the investment numbers. Do not persist
   // this as the desktop preference — only suppress at render time.
@@ -58,7 +70,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         {stage === "twin" && showLeftDock && (
           <TwinDock
             side="left"
-            title="Scene"
+            title="씬"
             onClose={toggleLeftDock}
             dataTour="left-dock"
           >
@@ -92,7 +104,7 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         {stage === "twin" && showRightDock && (
           <TwinDock
             side="right"
-            title="Properties"
+            title="속성"
             onClose={toggleRightDock}
             dataTour="right-dock"
           >
@@ -101,10 +113,22 @@ export function WorkspaceShell({ children }: WorkspaceShellProps) {
         )}
       </div>
 
-      {/* Bottom shelf */}
+      {/* Bottom shelf — status always; 일람표 expands it */}
       {bottomShelfOpen && (
-        <div className="h-10 shrink-0 border-t bg-muted/30">
-          <StatusBar buildingPk="" />
+        <div
+          className={cn(
+            "shrink-0 overflow-hidden border-t bg-muted/30",
+            stage === "twin" && scheduleOpen
+              ? narrow
+                ? "grid h-44 grid-rows-[minmax(0,1fr)_2.5rem]"
+                : "grid h-56 grid-rows-[minmax(0,1fr)_2.5rem]"
+              : "h-10",
+          )}
+        >
+          {stage === "twin" && scheduleOpen && <BimSchedulePanel />}
+          <div className="h-10 min-h-10">
+            <StatusBar buildingPk="" />
+          </div>
         </div>
       )}
     </div>

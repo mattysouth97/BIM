@@ -11,12 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { useAppStore } from "@/store/app-store";
 import { useMaterialStore } from "@/store/material-store";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
-import { useRecipeStore } from "@/store/recipe-store";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
 import { useWeatherData } from "@/hooks/use-weather-data";
-import { assessFidelity } from "@/lib/fidelity/fidelity-assessor";
-import { generateUpgradeChecklist } from "@/lib/fidelity/upgrade-checklist";
+import { useTwinFidelity } from "@/hooks/use-twin-fidelity";
+import { useEditorModeStore } from "@/store/editor-mode-store";
+import { FloorStackEditor } from "./floor-stack-editor";
+import { SlotPlan } from "./slot-plan";
+import { EquipmentScheduleIngest } from "./equipment-schedule-ingest";
 import { FidelityBadge } from "@/components/twin/fidelity-badge";
 import { FidelityDetailPanel } from "@/components/twin/fidelity-detail-panel";
 import { calibrateEnergy } from "@/lib/energy/calibration";
@@ -75,68 +77,19 @@ export function PropertiesPanel() {
   const buildingPk = useActiveBuildingPk();
 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
-  const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
-  const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
   const metrics = useEnergyMetrics(buildingPk);
+  const currentMode = useEditorModeStore((s) => s.currentMode);
   const actual = useActualEnergy(buildingPk);
   const actualData = actual.data ?? [];
   const hasActual = actualData.length > 0;
+  const { report: fidelityReport, checklist: upgradeChecklist, recipe: effectiveRecipe } =
+    useTwinFidelity(buildingPk, hasActual);
   // KMA ASOS weather (previous year, Seoul station default). Disabled
   // without an API key; the section below renders only on success.
   const weather = useWeatherData();
 
   const [certVersion, setCertVersion] =
     useState<CertificationVersion>("2024");
-
-  // Derive effective recipe (same pattern as energy-cards)
-  const effectiveRecipe = useMemo(() => {
-    if (!baseRecipe) return undefined;
-    if (!overrides) return baseRecipe;
-    return {
-      ...baseRecipe,
-      ...(overrides.footprintWidth !== undefined
-        ? { footprintWidth: overrides.footprintWidth }
-        : {}),
-      ...(overrides.footprintDepth !== undefined
-        ? { footprintDepth: overrides.footprintDepth }
-        : {}),
-      ...(overrides.wallThickness !== undefined
-        ? { wallThickness: overrides.wallThickness }
-        : {}),
-      ...(overrides.facade
-        ? { facade: { ...baseRecipe.facade, ...overrides.facade } }
-        : {}),
-      ...(overrides.slab
-        ? { slab: { ...baseRecipe.slab, ...overrides.slab } }
-        : {}),
-      ...(overrides.column
-        ? { column: { ...baseRecipe.column, ...overrides.column } }
-        : {}),
-      ...(overrides.roof
-        ? { roof: { ...baseRecipe.roof, ...overrides.roof } }
-        : {}),
-    };
-  }, [baseRecipe, overrides]);
-
-  // ── Fidelity assessment ──────────────────────────────────────────────────
-
-  const fidelityReport = useMemo(() => {
-    return assessFidelity({
-      hasPublicData: !!materials,
-      hasFloorData: !!effectiveRecipe,
-      hasFootprint: !!effectiveRecipe,
-      hasEnergyBills: hasActual,
-      hasFloorPlans: false,
-      hasEquipmentSchedule: false,
-      hasIfcModel: materials?.source === "ifc-model",
-      hasSensorData: false,
-    });
-  }, [materials, effectiveRecipe, hasActual]);
-
-  const upgradeChecklist = useMemo(
-    () => generateUpgradeChecklist(fidelityReport),
-    [fidelityReport]
-  );
 
   // ── Calibration ──────────────────────────────────────────────────────────
 
@@ -266,8 +219,10 @@ export function PropertiesPanel() {
 
   return (
     <div className="h-full overflow-y-auto">
-      {/* Equipment info panel — appears above analytics accordion when a MEP mesh is clicked */}
+      {currentMode === "floor-edit" && <FloorStackEditor buildingPk={buildingPk} />}
+      {currentMode === "object-edit" && <SlotPlan buildingPk={buildingPk} />}
       <EquipmentInfoPanel />
+      <EquipmentScheduleIngest buildingPk={buildingPk} />
       <Accordion
         type="multiple"
         defaultValue={["fidelity", "benchmark", "efficiency"]}

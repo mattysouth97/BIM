@@ -230,22 +230,29 @@ export function LookupInstrument({ copy, isKo }: { copy: LandingCopy; isKo: bool
   };
 
   return (
-    <section id="lookup" className="cad-lookup" aria-labelledby="lookup-title">
-      <h2 id="lookup-title">{copy.lookupTitle}</h2>
-      <p className="lj-chapter-lead">{copy.lookupLead}</p>
+    <section id="lookup" className="space-y-4" aria-labelledby="lookup-title">
+      <h2 id="lookup-title" className="text-lg font-semibold tracking-tight">
+        {copy.lookupTitle}
+      </h2>
+      <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+        {copy.lookupLead}
+      </p>
 
       {hydrated && !apiKey && (
-        <div className="lj-note" role="status">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
+        <div
+          className="flex gap-2 rounded-lg border border-amber-300/70 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+          role="status"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
             <p className="font-medium">{copy.apiMissing}</p>
-            <p>{copy.apiMissingBody}</p>
+            <p className="text-amber-800/80 dark:text-amber-200/80">{copy.apiMissingBody}</p>
           </div>
         </div>
       )}
 
-      <div className="lj-lookup-toolbar">
-        <span className="lj-hint">{copy.campus}</span>
+      <div className="mb-2 flex items-center justify-end gap-2">
+        <span className="text-[10px] font-medium text-muted-foreground">{copy.campus}</span>
         <Button
           variant={campusMode ? "default" : "outline"}
           size="sm"
@@ -264,7 +271,7 @@ export function LookupInstrument({ copy, isKo }: { copy: LandingCopy; isKo: bool
 
       {campusMode ? (
         <div className="space-y-6">
-          <div className="lj-panel space-y-4">
+          <div className="space-y-4 rounded-lg border border-border bg-card p-4">
             <div>
               <h3 className="text-lg font-semibold">
                 {isKo ? "캠퍼스 검색 (지역 일괄조회)" : "Campus Search (Area Batch)"}
@@ -352,7 +359,7 @@ export function LookupInstrument({ copy, isKo }: { copy: LandingCopy; isKo: bool
 
               {campusMetrics.length > 0 && (
                 <Suspense fallback={<FormSkeleton />}>
-                  <div className="lj-panel overflow-hidden">
+                  <div className="overflow-hidden rounded-lg border border-border bg-card">
                     <div className="border-b px-6 py-3 flex flex-wrap gap-2 items-center bg-muted/30">
                       <span className="text-xs font-medium text-muted-foreground mr-1">
                         {isKo ? "비교 선택:" : "Compare:"}
@@ -385,7 +392,7 @@ export function LookupInstrument({ copy, isKo }: { copy: LandingCopy; isKo: bool
               )}
 
               {!campusLoading && campusMetrics.length === 0 && (
-                <div className="lj-panel p-8 text-center text-sm text-muted-foreground">
+                <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
                   {isKo ? "해당 지역에 건물 데이터가 없습니다." : "No building data found for this area."}
                 </div>
               )}

@@ -15,6 +15,7 @@ export function useEnsureBuildingModel(
   floors: BrFloorInfo[],
 ) {
   const setProperties = useMaterialStore((s) => s.setProperties);
+  const setActivePk = useMaterialStore((s) => s.setActivePk);
   const setBaseRecipe = useRecipeStore((s) => s.setBaseRecipe);
 
   useEffect(() => {
@@ -22,11 +23,12 @@ export function useEnsureBuildingModel(
     const seeded = seedBuildingFromLedger(title, floors);
     if (!seeded) return;
 
+    setActivePk(seeded.pk);
     if (!useMaterialStore.getState().properties[seeded.pk]) {
       setProperties(seeded.pk, seeded.materials);
     }
     if (!useRecipeStore.getState().baseRecipes[seeded.pk]) {
       setBaseRecipe(seeded.pk, seeded.recipe);
     }
-  }, [title, floors, setProperties, setBaseRecipe]);
+  }, [title, floors, setProperties, setBaseRecipe, setActivePk]);
 }

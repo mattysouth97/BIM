@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type {
   MepEquipmentParams,
 } from "@/lib/layers/mep-equipment-params";
@@ -29,7 +30,9 @@ interface EquipmentState {
   getParams: (pk: string) => MepEquipmentParams;
 }
 
-export const useEquipmentStore = create<EquipmentState>()((set, get) => ({
+export const useEquipmentStore = create<EquipmentState>()(
+  persist(
+    (set, get) => ({
   params: {},
 
   setParams: (pk, params) =>
@@ -61,4 +64,17 @@ export const useEquipmentStore = create<EquipmentState>()((set, get) => ({
   getParams: (pk) =>
     get().params[pk] ??
     (JSON.parse(JSON.stringify(DEFAULT_MEP_EQUIPMENT_PARAMS)) as MepEquipmentParams),
-}));
+    }),
+    {
+      name: "bim-equipment-params",
+      partialize: (s) => ({ params: s.params }),
+      merge: (persisted, current) => {
+        const p = persisted as Partial<EquipmentState> | undefined;
+        return {
+          ...current,
+          params: { ...current.params, ...(p?.params ?? {}) },
+        };
+      },
+    },
+  ),
+);

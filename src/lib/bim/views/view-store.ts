@@ -7,10 +7,18 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import * as THREE from "three";
 import type { ViewDefinition } from "./view-definition";
-import type { FloorGeometry } from "@/lib/building-geometry";
-import { computeDefaultViewsForBuilding } from "./view-engine";
+import { computeDefaultViewsForBuilding, type ViewFloorInput } from "./view-engine";
 
 // ─── State shape ──────────────────────────────────────────────────────────────
+
+function isGeneratedViewId(id: string): boolean {
+  return (
+    id === "3d-iso" ||
+    id === "section-long" ||
+    id.startsWith("plan-") ||
+    id.startsWith("elev-")
+  );
+}
 
 interface ViewState {
   /** All registered views for the current building */
@@ -18,6 +26,9 @@ interface ViewState {
 
   /** ID of the currently active view; null = free-camera mode */
   activeViewId: string | null;
+
+  /** Building these views belong to — regenerated when it changes */
+  activeBuildingPk: string | null;
 
   // ─── Actions ───────────────────────────────────────────────────────────────
 
@@ -35,10 +46,15 @@ interface ViewState {
    * Any existing auto-generated views (plan-*, elev-*) are replaced.
    * User-created views (section-*, custom ids) are preserved.
    *
-   * @param floors  FloorGeometry array from building-geometry.ts
+   * @param floors  Floor specs (recipe or FloorGeometry)
    * @param bbox    Full building bounding box (THREE.Box3)
+   * @param buildingPk  When the pk changes, user views from another twin are dropped
    */
-  initializeDefaultViews: (floors: FloorGeometry[], bbox: THREE.Box3) => void;
+  initializeDefaultViews: (
+    floors: ViewFloorInput[],
+    bbox: THREE.Box3,
+    buildingPk?: string,
+  ) => void;
 
   /** Replace all views (used internally and for testing) */
   _setViews: (views: ViewDefinition[]) => void;
@@ -51,6 +67,7 @@ export const useViewStore = create<ViewState>()(
     (set, get) => ({
       views: [],
       activeViewId: null,
+      activeBuildingPk: null,
 
       addView: (view) =>
         set((state) => {
@@ -66,23 +83,25 @@ export const useViewStore = create<ViewState>()(
 
       setActiveView: (id) => set({ activeViewId: id }),
 
-      initializeDefaultViews: (floors, bbox) => {
+      initializeDefaultViews: (floors, bbox, buildingPk) => {
         const generated = computeDefaultViewsForBuilding(floors, bbox);
+        const sameBuilding =
+          buildingPk !== undefined && buildingPk === get().activeBuildingPk;
 
-        // Keep user-created views (not plan-* or elev-*)
         const existing = get().views;
-        const userViews = existing.filter(
-          (v) =>
-            !v.id.startsWith("plan-") &&
-            !v.id.startsWith("elev-") &&
-            !generated.some((g) => g.id === v.id)
-        );
+        const userViews = sameBuilding
+          ? existing.filter(
+              (v) =>
+                !isGeneratedViewId(v.id) &&
+                !generated.some((g) => g.id === v.id),
+            )
+          : [];
 
         const merged = [...generated, ...userViews];
 
         set((state) => ({
           views: merged,
-          // If the previously active view no longer exists, clear it
+          activeBuildingPk: buildingPk ?? state.activeBuildingPk,
           activeViewId:
             state.activeViewId !== null &&
             merged.some((v) => v.id === state.activeViewId)
@@ -96,8 +115,8 @@ export const useViewStore = create<ViewState>()(
     {
       name: "bim-view-store",
       partialize: (state) => ({
-        views: state.views,
         activeViewId: state.activeViewId,
+        activeBuildingPk: state.activeBuildingPk,
       }),
     }
   )

@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { BuildingRecipe, RecipeOverrides } from "@/lib/procedural/types";
 import { mergeRecipeOverrides } from "@/lib/procedural/recipe";
 
@@ -33,7 +34,9 @@ interface RecipeState {
   ) => void;
 }
 
-export const useRecipeStore = create<RecipeState>()((set, get) => ({
+export const useRecipeStore = create<RecipeState>()(
+  persist(
+    (set, get) => ({
   baseRecipes: {},
   overrides: {},
 
@@ -97,4 +100,17 @@ export const useRecipeStore = create<RecipeState>()((set, get) => ({
 
       return { overrides: { ...state.overrides, [pk]: updated } };
     }),
-}));
+    }),
+    {
+      name: "bim-recipe-overrides",
+      partialize: (s) => ({ overrides: s.overrides }),
+      merge: (persisted, current) => {
+        const p = persisted as Partial<RecipeState> | undefined;
+        return {
+          ...current,
+          overrides: { ...current.overrides, ...(p?.overrides ?? {}) },
+        };
+      },
+    },
+  ),
+);

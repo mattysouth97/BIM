@@ -14,10 +14,12 @@ import { useMaterialStore } from "@/store/material-store";
  * Otherwise, returns the first key registered in the material store, or "" if none.
  */
 export function useActiveBuildingPk(override?: string): string {
+  const activePk = useMaterialStore((s) => s.activePk);
   const properties = useMaterialStore((s) => s.properties);
   return useMemo(() => {
     if (override) return override;
+    if (activePk) return activePk;
     const keys = Object.keys(properties);
     return keys.length > 0 ? keys[0] : "";
-  }, [override, properties]);
+  }, [override, activePk, properties]);
 }

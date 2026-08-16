@@ -1,11 +1,15 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { MaterialProperties } from "@/lib/material-types";
 
 interface MaterialState {
   // Material properties keyed by building PK (mgmBldrgstPk)
   properties: Record<string, MaterialProperties>;
+
+  /** PK of the building the workspace is currently showing. Not persisted. */
+  activePk: string;
 
   // Currently selected element for the panel
   selectedElement: {
@@ -28,11 +32,17 @@ interface MaterialState {
 
   // Get properties for a building
   getProperties: (pk: string) => MaterialProperties | undefined;
+
+  setActivePk: (pk: string) => void;
 }
 
-export const useMaterialStore = create<MaterialState>()((set, get) => ({
+export const useMaterialStore = create<MaterialState>()(
+  persist(
+    (set, get) => ({
   properties: {},
+  activePk: "",
   selectedElement: { type: null },
+  setActivePk: (pk) => set({ activePk: pk }),
 
   setProperties: (pk, props) =>
     set((state) => ({
@@ -60,4 +70,17 @@ export const useMaterialStore = create<MaterialState>()((set, get) => ({
   selectElement: (element) => set({ selectedElement: element }),
   clearSelection: () => set({ selectedElement: { type: null } }),
   getProperties: (pk) => get().properties[pk],
-}));
+    }),
+    {
+      name: "bim-material-properties",
+      partialize: (s) => ({ properties: s.properties }),
+      merge: (persisted, current) => {
+        const p = persisted as Partial<MaterialState> | undefined;
+        return {
+          ...current,
+          properties: { ...current.properties, ...(p?.properties ?? {}) },
+        };
+      },
+    },
+  ),
+);

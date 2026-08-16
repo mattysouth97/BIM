@@ -144,19 +144,30 @@ export function computeCoreLayout(recipe: BuildingRecipe): CoreLayout {
   );
   const shaftCount = Math.min(countByHeight, maxByWidth);
 
-  // Bank sits against the rear (-Z) wall — the typical Korean office core
-  // position — instead of the dead centre of the floor plate. On footprints
-  // too shallow for a rear band the bank degrades gracefully toward centre.
-  const bankZ = -Math.max(0, hd - WALL_CLEARANCE - SHAFT_DEPTH / 2);
+  // Default: bank sits against the rear (-Z) wall — typical Korean office
+  // core. An authored serviceCore (CAD pin or slot-plan nudge) replaces
+  // that default so MEP follows *this* plate.
+  const defaultBankZ = -Math.max(0, hd - WALL_CLEARANCE - SHAFT_DEPTH / 2);
+  const insetX = hw - SHAFT_WIDTH / 2 - WALL_CLEARANCE;
+  const insetZ = hd - SHAFT_DEPTH / 2 - WALL_CLEARANCE;
+  const bankX = clamp(recipe.serviceCore?.x ?? 0, -Math.max(0, insetX), Math.max(0, insetX));
+  const bankZ = clamp(
+    recipe.serviceCore?.z ?? defaultBankZ,
+    -Math.max(0, insetZ),
+    Math.max(0, insetZ),
+  );
 
   const span = (shaftCount - 1) * (SHAFT_WIDTH + SHAFT_GAP);
   const shafts: CoreSlot[] = [];
   for (let i = 0; i < shaftCount; i++) {
-    shafts.push({ x: -span / 2 + i * (SHAFT_WIDTH + SHAFT_GAP), z: bankZ });
+    shafts.push({
+      x: bankX - span / 2 + i * (SHAFT_WIDTH + SHAFT_GAP),
+      z: bankZ,
+    });
   }
 
-  const bankMinX = -span / 2 - SHAFT_WIDTH / 2;
-  const bankMaxX = span / 2 + SHAFT_WIDTH / 2;
+  const bankMinX = bankX - span / 2 - SHAFT_WIDTH / 2;
+  const bankMaxX = bankX + span / 2 + SHAFT_WIDTH / 2;
 
   const elevator: ElevatorBank = {
     shafts,

@@ -25,7 +25,7 @@ const HIT_PX = 8;
 export const GRID_STEP_M = 0.5;
 
 export interface FootprintPick {
-  polygon: Polygon2D; areaSqm: number; layer: string;
+  polygon: Polygon2D; areaSqm: number; layer: string; entityId?: string;
 }
 
 export function MarkupOverlay({
@@ -89,7 +89,7 @@ export function MarkupOverlay({
         : findClosedPolylineAt(doc, w, HIT_PX * view.scale);
       if (hitPl) {
         const fp = polylineToFootprint(hitPl);
-        if (fp) onFootprintPick({ ...fp, layer: hitPl.layer });
+        if (fp) onFootprintPick({ ...fp, layer: hitPl.layer, entityId: hitPl.id });
       }
       return;
     }

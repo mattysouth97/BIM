@@ -199,25 +199,34 @@ describe("computeDefaultViewsForBuilding", () => {
     );
   }
 
-  it("returns N+4 views for N floors", () => {
+  it("returns N+6 views for N floors (3D + plans + 4 elev + section)", () => {
     const floors = makeFloors(5);
     const bbox = makeBbox(-6, 0, -4, 6, 15, 4);
     const views = computeDefaultViewsForBuilding(floors, bbox);
-    expect(views).toHaveLength(5 + 4);
+    expect(views).toHaveLength(5 + 6);
   });
 
-  it("returns 1+4 = 5 views for a single floor", () => {
+  it("returns 1+6 = 7 views for a single floor", () => {
     const floors = makeFloors(1);
     const bbox = makeBbox(-6, 0, -4, 6, 3, 4);
     const views = computeDefaultViewsForBuilding(floors, bbox);
-    expect(views).toHaveLength(5);
+    expect(views).toHaveLength(7);
   });
 
-  it("returns 10+4 = 14 views for a 10-floor building", () => {
+  it("returns 10+6 = 16 views for a 10-floor building", () => {
     const floors = makeFloors(10);
     const bbox = makeBbox(-6, 0, -4, 6, 30, 4);
     const views = computeDefaultViewsForBuilding(floors, bbox);
-    expect(views).toHaveLength(14);
+    expect(views).toHaveLength(16);
+  });
+
+  it("includes a 3D view and a longitudinal section", () => {
+    const views = computeDefaultViewsForBuilding(
+      makeFloors(2),
+      makeBbox(-6, 0, -4, 6, 6, 4),
+    );
+    expect(views.some((v) => v.id === "3d-iso" && v.kind === "3d")).toBe(true);
+    expect(views.some((v) => v.id === "section-long" && v.kind === "section")).toBe(true);
   });
 
   it("all plan views have kind 'plan'", () => {

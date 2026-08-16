@@ -8,9 +8,10 @@
 
 import { create } from "zustand";
 import { get as idbGet, set as idbSet } from "idb-keyval";
-import type { CadDocument, CadEntity } from "@/lib/cad/doc/types";
+import type { CadDocument, CadEntity, CadPolyline } from "@/lib/cad/doc/types";
 import type { NewEntity } from "@/lib/cad/doc/draw-tools";
 import { computeExtents } from "@/lib/cad/doc/extents";
+import { joinConnectedEntities } from "@/lib/cad/doc/join";
 import { useCadViewerStore } from "./cad-viewer-store";
 
 export interface DraftStorage {
@@ -62,6 +63,12 @@ interface CadDraftState {
   loadDraft: (persistKey: string) => Promise<CadDocument | null>;
   addEntity: (e: NewEntity) => void;
   deleteEntity: (id: string) => void;
+  /**
+   * AutoCAD JOIN: weld connected open linework into polylines.
+   * If an entity is selected, only its connected component is joined.
+   * Returns any newly closed outlines (ready to use as a footprint).
+   */
+  joinConnected: () => CadPolyline[];
   addLayer: (name: string, colorIndex?: number) => void;
   setActiveLayer: (name: string) => void;
   selectEntity: (id: string | null) => void;
@@ -138,6 +145,26 @@ export const useCadDraftStore = create<CadDraftState>()((set, get) => {
         extents: computeExtents(entities),
         stats: { ...doc.stats, mapped: entities.length },
       });
+    },
+
+    joinConnected: () => {
+      const { doc, selectedEntityId } = get();
+      if (!doc) return [];
+      const result = joinConnectedEntities(doc.entities, {
+        seedIds: selectedEntityId ? [selectedEntityId] : undefined,
+      });
+      if (!result.changed) return [];
+      commit({
+        ...doc,
+        entities: result.entities,
+        extents: computeExtents(result.entities),
+        stats: { ...doc.stats, mapped: result.entities.length },
+      });
+      const keepId = result.closed[0]?.id ?? selectedEntityId;
+      if (keepId && result.entities.some((e) => e.id === keepId)) {
+        set({ selectedEntityId: keepId });
+      }
+      return result.closed;
     },
 
     addLayer: (name, colorIndex = 7) => {

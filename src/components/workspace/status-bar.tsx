@@ -35,7 +35,7 @@ const STAGE_HINTS: Record<WorkflowStage, PromptEntry> = {
   },
   twin: {
     en: "View and configure the digital twin",
-    ko: "디지털 트윈을 확인하고 설정하세요",
+    ko: "층을 고치거나(2) 코어·설비를 확인하세요(3). 저장은 자동입니다.",
   },
   report: {
     en: "Generate reports and export data",

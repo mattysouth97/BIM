@@ -17,6 +17,7 @@ import { useScenarioStore } from "@/store/scenario-store";
 import { scenarioToAuditSummary } from "@/lib/report/scenario-summary";
 import { EnergyAuditPreview } from "@/components/report/energy-audit-preview";
 import { CompliancePreview } from "@/components/report/compliance-preview";
+import { SchedulePreview } from "@/components/report/schedule-preview";
 import { buildComplianceReportSections } from "@/lib/report/templates/compliance-report";
 import { assembleEnergyAuditReport, assembleComplianceReport } from "@/lib/report/report-engine";
 import { generateBuildingCSV } from "@/lib/export/csv-export";
@@ -56,7 +57,7 @@ function downloadBlob(blob: Blob, filename: string) {
 // Tab type
 // ---------------------------------------------------------------------------
 
-type ReportTab = "energy-audit" | "compliance";
+type ReportTab = "energy-audit" | "compliance" | "schedules";
 
 // ---------------------------------------------------------------------------
 // Loading skeleton
@@ -504,6 +505,18 @@ export function ReportStage() {
           >
             {isKo ? "준법 인증" : "Compliance"}
           </button>
+          <button
+            onClick={() => setActiveTab("schedules")}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+              activeTab === "schedules"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted"
+            )}
+            data-testid="report-schedules-tab"
+          >
+            {isKo ? "일람표" : "Schedules"}
+          </button>
         </div>
 
         {/* Export action buttons */}
@@ -532,7 +545,7 @@ export function ReportStage() {
             variant="outline"
             size="sm"
             className="h-7 text-xs gap-1"
-            disabled={pdfLoading}
+            disabled={pdfLoading || activeTab === "schedules"}
             onClick={
               activeTab === "energy-audit"
                 ? handleDownloadEnergyPdf
@@ -582,6 +595,8 @@ export function ReportStage() {
             </p>
           </div>
         )}
+
+        {activeTab === "schedules" && <SchedulePreview />}
       </div>
     </div>
   );

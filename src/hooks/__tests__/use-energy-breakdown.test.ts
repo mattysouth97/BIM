@@ -111,7 +111,7 @@ const TEST_PK = "TEST-PK-23-02";
 describe("useEnergyBreakdown", () => {
   beforeEach(() => {
     // Reset both Zustand stores between tests
-    useMaterialStore.setState({ properties: {} });
+    useMaterialStore.setState({ properties: {}, activePk: "" });
     useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
   });
 

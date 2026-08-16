@@ -23,6 +23,7 @@ import {
 } from "@/lib/cad/doc/draw-tools";
 import type { CadPolyline, Vec2 } from "@/lib/cad/doc/types";
 import { polylineToFootprint } from "@/lib/cad/doc/to-footprint";
+import { classifyPlanPolylines, serviceCoreFromPlan } from "@/lib/cad/doc/classify-plan";
 import { CadScene } from "./cad-scene";
 import { LayerPanel } from "./layer-panel";
 import { ViewerToolbar } from "./viewer-toolbar";
@@ -32,6 +33,7 @@ import type { Polygon2D } from "@/lib/cad/dxf-parser";
 
 export interface CadViewerProps {
   onUseFootprint?: (polygon: Polygon2D, areaSqm: number, layer: string) => void;
+  onUseCore?: (slot: { x: number; z: number }, entityId: string) => void;
 }
 
 function t(ko: string, en: string, isKo: boolean): string {
@@ -41,13 +43,13 @@ function t(ko: string, en: string, isKo: boolean): string {
 const DRAW_TOOL_SET = new Set(["draw-line", "draw-polyline", "draw-rect", "draw-circle"]);
 const isDrawTool = (v: string): v is DrawToolKind => DRAW_TOOL_SET.has(v);
 
-export function CadViewer({ onUseFootprint }: CadViewerProps) {
+export function CadViewer({ onUseFootprint, onUseCore }: CadViewerProps) {
   const doc = useCadViewerStore((s) => s.doc);
   if (!doc) return null;
-  return <CadViewerInner key={doc.id} onUseFootprint={onUseFootprint} />;
+  return <CadViewerInner key={doc.id} onUseFootprint={onUseFootprint} onUseCore={onUseCore} />;
 }
 
-function CadViewerInner({ onUseFootprint }: CadViewerProps) {
+function CadViewerInner({ onUseFootprint, onUseCore }: CadViewerProps) {
   const isKo = useAppStore((s) => s.language) === "ko";
   const doc = useCadViewerStore((s) => s.doc)!;
   const layerVisibility = useCadViewerStore((s) => s.layerVisibility);
@@ -71,6 +73,8 @@ function CadViewerInner({ onUseFootprint }: CadViewerProps) {
   const setActiveLayer = useCadDraftStore((s) => s.setActiveLayer);
   const undo = useCadDraftStore((s) => s.undo);
   const redo = useCadDraftStore((s) => s.redo);
+  const joinConnected = useCadDraftStore((s) => s.joinConnected);
+  const entityCount = useCadDraftStore((s) => s.doc?.entities.length ?? 0);
 
   const { containerRef, view, size, fit, handlers } = useCadView(
     doc.extents,
@@ -147,6 +151,14 @@ function CadViewerInner({ onUseFootprint }: CadViewerProps) {
   useHotkeys(["ctrl+y", "ctrl+shift+z", "meta+shift+z"], (e) => {
     e.preventDefault(); redo();
   }, [redo]);
+  useHotkeys("j", () => {
+    if (!draftActive) return;
+    const closed = joinConnected();
+    const pl = closed[0];
+    if (!pl) return;
+    const fp = polylineToFootprint(pl);
+    if (fp) setPick({ ...fp, layer: pl.layer });
+  }, [draftActive, joinConnected]);
 
   const snapshot = useCallback(() => {
     const canvas = glRef.current;
@@ -238,6 +250,14 @@ function CadViewerInner({ onUseFootprint }: CadViewerProps) {
               canRedo={draftActive && canRedo}
               gridOn={gridOn}
               onToggleGrid={() => setGridOn((g) => !g)}
+              canJoin={draftActive && entityCount > 0}
+              onJoin={() => {
+                const closed = joinConnected();
+                const pl = closed[0];
+                if (!pl) return;
+                const fp = polylineToFootprint(pl);
+                if (fp) setPick({ ...fp, layer: pl.layer });
+              }}
             />
           </div>
           {/* Footprint pick panel */}
@@ -259,6 +279,23 @@ function CadViewerInner({ onUseFootprint }: CadViewerProps) {
               >
                 {t("바닥 외곽선으로 사용", "Use as footprint", isKo)}
               </Button>
+              {onUseCore && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  data-testid="cad-use-core"
+                  onClick={() => {
+                    const classified = classifyPlanPolylines(doc);
+                    const id = pick.entityId ?? selectedEntityId ?? undefined;
+                    const slot = serviceCoreFromPlan(classified, id);
+                    if (slot) onUseCore(slot, id ?? classified.find((c) => c.role === "core")?.entityId ?? "");
+                    setPick(null);
+                  }}
+                >
+                  {t("서비스 코어로 지정", "Use as service core", isKo)}
+                </Button>
+              )}
               <Button type="button" size="sm" variant="ghost" onClick={() => setPick(null)}>
                 ✕
               </Button>

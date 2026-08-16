@@ -26,6 +26,7 @@ import { assembleRetrofitReport } from "@/lib/retrofit/retrofit-report";
 import type { RetrofitMeasure, RetrofitCategory } from "@/lib/retrofit/retrofit-types";
 import type { ProgramTrack } from "@/lib/retrofit/cost-database";
 import { Sun, Thermometer, Lightbulb, Building2, CheckCircle2 } from "lucide-react";
+import { SceneLayerList } from "./scene-layer-list";
 
 interface SceneOutlinerProps {
   /** Optional override — if omitted, derives from the material store. */
@@ -303,7 +304,9 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
 
   if (!materials || totalFloorArea <= 0) {
     return (
-      <div className="p-4 flex flex-col items-center justify-center h-full min-h-[200px]">
+      <div className="flex h-full flex-col">
+        <SceneLayerList />
+        <div className="p-4 flex flex-col items-center justify-center flex-1 min-h-[160px]">
         <Building2 className="h-8 w-8 text-muted-foreground/40 mb-2" />
         <p className="text-xs text-muted-foreground text-center">
           건물을 선택하면 개선 권장사항을 확인할 수 있습니다
@@ -311,16 +314,20 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
         <p className="text-[10px] text-muted-foreground/60 text-center mt-1">
           Select a building to view retrofit recommendations
         </p>
+        </div>
       </div>
     );
   }
 
   if (!report) {
     return (
-      <div className="p-3">
+      <div className="flex h-full flex-col">
+        <SceneLayerList />
+        <div className="p-3">
         <p className="text-xs text-muted-foreground text-center py-4">
           분석 중...
         </p>
+        </div>
       </div>
     );
   }
@@ -335,6 +342,7 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      <SceneLayerList />
       {/* ── Header ── */}
       <div className="px-3 pt-3 pb-2 border-b shrink-0">
         <div className="flex items-center justify-between mb-1.5">

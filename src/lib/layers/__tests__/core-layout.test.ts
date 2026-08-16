@@ -66,6 +66,15 @@ function makeRecipe(
 }
 
 describe("computeCoreLayout — elevator bank", () => {
+  it("honours an authored serviceCore slot", () => {
+    const recipe = makeRecipe(20, 16, 3);
+    recipe.serviceCore = { x: 3, z: -1 };
+    const layout = computeCoreLayout(recipe);
+    expect(layout.elevator.bankZ).toBeCloseTo(-1, 5);
+    expect(layout.elevator.shafts[0].x).toBeCloseTo(3, 5);
+    expect(layout.serviceRiser.x).toBeGreaterThan(layout.elevator.maxX);
+  });
+
   it("places the bank against the rear (-Z) wall, not the footprint centre", () => {
     const layout = computeCoreLayout(makeRecipe(12, 10, 3));
     // bankZ = -(hd - 0.5 - shaftDepth/2) = -(5 - 0.5 - 1.0)

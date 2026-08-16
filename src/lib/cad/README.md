@@ -35,6 +35,7 @@ footprint path, nothing is re-centered until `to-footprint.ts`.
 | `doc/entity-geometry.ts` | `entityToChains` — the single tessellation authority shared by build-geometry, hit-testing, and selection highlight. |
 | `doc/grid.ts` | Grid snap (`snapToGrid`) + ortho lock (`applyOrtho`) for drafting. |
 | `doc/draw-tools.ts` | Pure draw-tool reducer (line/polyline/rect/circle) + live preview chains. Emits entity payloads sans id/layer. |
+| `doc/join.ts` | AutoCAD JOIN: weld open lines/polylines/arcs that share endpoints; close the loop so it can become a footprint. |
 
 ## Drafting (phase 2)
 
@@ -43,7 +44,7 @@ snapshot undo/redo (cap 50), active layer, per-building persistence
 (`cad-draft:{buildingPk|anon}` in idb-keyval). Mutations sync the viewer via
 `cad-viewer-store.updateDoc` (preserves layer-visibility toggles). The upload
 stage's "새 도면 그리기" opens a blank draft with no file or API key — draw a
-closed outline, select it, "바닥 외곽선으로 사용" feeds the twin + energy sim.
+closed outline (or draw lines and Join), select it, "바닥 외곽선으로 사용" feeds the twin + energy sim.
 
 ## Flow
 

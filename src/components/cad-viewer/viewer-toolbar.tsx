@@ -4,6 +4,7 @@
 import {
   Hand, MousePointer, Ruler, StickyNote, MoveUpRight, Cloud, Camera, Trash2,
   Slash, Waypoints, Square, Circle as CircleIcon, Undo2, Redo2, Grid3x3,
+  Combine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCadMarkupStore, type CadTool } from "@/store/cad-markup-store";
@@ -33,10 +34,13 @@ export interface ViewerToolbarProps {
   canRedo: boolean;
   gridOn: boolean;
   onToggleGrid: () => void;
+  onJoin?: () => void;
+  canJoin?: boolean;
 }
 
 export function ViewerToolbar({
   isKo, onSnapshot, onUndo, onRedo, canUndo, canRedo, gridOn, onToggleGrid,
+  onJoin, canJoin = false,
 }: ViewerToolbarProps) {
   const tool = useCadMarkupStore((s) => s.tool);
   const setTool = useCadMarkupStore((s) => s.setTool);
@@ -69,6 +73,18 @@ export function ViewerToolbar({
       <Button type="button" size="sm" variant="ghost" disabled={!canRedo}
         onClick={onRedo} title={isKo ? "다시 실행" : "Redo"} data-testid="cad-redo">
         <Redo2 className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        disabled={!canJoin}
+        onClick={onJoin}
+        title={isKo ? "결합 (끝점이 맞는 선을 하나의 닫힌 외곽선으로)" : "Join (weld touching lines into one outline)"}
+        data-testid="cad-join"
+      >
+        <Combine className="h-4 w-4" />
+        <span className="ml-1 hidden text-xs sm:inline">{isKo ? "결합" : "Join"}</span>
       </Button>
       <Button type="button" size="sm" variant={gridOn ? "secondary" : "ghost"}
         onClick={onToggleGrid} title={isKo ? "그리드" : "Grid"} data-testid="cad-grid-toggle">

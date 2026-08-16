@@ -155,6 +155,30 @@ describe("applyOverrides", () => {
     expect(result.footprintPolygon).toEqual(polygon);
   });
 
+  it("rebuilds the above-ground stack from floorCount and floorHeight", () => {
+    const base = makeBaseRecipe();
+    const result = applyOverrides(base, { floorCount: 4, floorHeight: 3.5 });
+    const above = result.floors.filter((f) => f.type !== "below");
+    expect(above).toHaveLength(4);
+    expect(above.every((f) => f.height === 3.5)).toBe(true);
+    expect(result.totalHeight).toBeCloseTo(14, 5);
+    expect(above[3].y).toBeCloseTo(10.5, 5);
+  });
+
+  it("applies floorEdits and serviceCore", () => {
+    const base = makeBaseRecipe();
+    const stacked = applyOverrides(base, { floorCount: 3, floorHeight: 3 });
+    const result = applyOverrides(stacked, {
+      floorEdits: { "2": { height: 4.5, useCode: "07000" } },
+      serviceCore: { x: 2, z: -3 },
+    });
+    const f2 = result.floors.find((f) => f.floorNo === 2);
+    expect(f2?.height).toBe(4.5);
+    expect(f2?.useCode).toBe("07000");
+    expect(result.serviceCore).toEqual({ x: 2, z: -3 });
+    expect(result.totalHeight).toBeCloseTo(10.5, 5);
+  });
+
   it("preserves base footprintPolygon when override omits it", () => {
     const base = makeBaseRecipe();
     // base has no footprintPolygon set — should remain undefined

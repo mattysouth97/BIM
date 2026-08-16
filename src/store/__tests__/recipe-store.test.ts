@@ -100,6 +100,16 @@ describe("useRecipeStore", () => {
     expect(effective?.facade.windowRatio).toBe(0.35); // back to base
   });
 
+  it("getEffectiveRecipe applies floorCount through mergeRecipeOverrides", () => {
+    const recipe = makeRecipe();
+    useRecipeStore.getState().setBaseRecipe("pk-001", recipe);
+    useRecipeStore.getState().setOverride("pk-001", "floorCount", 5);
+    useRecipeStore.getState().setOverride("pk-001", "floorHeight", 3.2);
+    const effective = useRecipeStore.getState().getEffectiveRecipe("pk-001");
+    expect(effective?.floors.filter((f) => f.type !== "below")).toHaveLength(5);
+    expect(effective?.totalHeight).toBeCloseTo(16, 5);
+  });
+
   it("resetSection clears only the specified section", () => {
     const recipe = makeRecipe();
     useRecipeStore.getState().setBaseRecipe("pk-001", recipe);

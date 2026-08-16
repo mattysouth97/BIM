@@ -8,12 +8,20 @@ import type {
   PlanView,
   ElevationView,
   SectionView,
+  PerspectiveView,
   OrthoCameraState,
   PerspCameraState,
   ClippingPlaneDescriptor,
   ElevationSide,
 } from "./view-definition";
-import type { FloorGeometry } from "@/lib/building-geometry";
+
+/** Minimal floor input — recipe FloorSpec is enough; FloorGeometry also fits. */
+export interface ViewFloorInput {
+  floorNo: number;
+  label: string;
+  y: number;
+  height: number;
+}
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
@@ -211,6 +219,43 @@ export function createSectionView(
   };
 }
 
+// ─── 3D perspective ───────────────────────────────────────────────────────────
+
+/** Default isometric-style 3D view. */
+export function create3dView(bbox: THREE.Box3): PerspectiveView {
+  const center = bbox.getCenter(new THREE.Vector3());
+  const size = bbox.getSize(new THREE.Vector3());
+  const d = Math.max(size.x, size.y, size.z) * 1.8 + 8;
+
+  const cameraState: PerspCameraState = {
+    kind: "persp",
+    position: [center.x + d * 0.7, center.y + d * 0.5, center.z + d * 0.7],
+    target: [center.x, center.y, center.z],
+    fov: 35,
+    near: 0.1,
+    far: d * 10,
+  };
+
+  return {
+    id: "3d-iso",
+    name: "3D",
+    kind: "3d",
+    cameraState,
+    clippingPlanes: [],
+  };
+}
+
+/** Longitudinal section through the origin, looking at the longer axis. */
+export function createDefaultSectionView(bbox: THREE.Box3): SectionView {
+  const size = bbox.getSize(new THREE.Vector3());
+  const normal =
+    size.x >= size.z
+      ? new THREE.Vector3(1, 0, 0)
+      : new THREE.Vector3(0, 0, 1);
+  const plane = new THREE.Plane(normal, 0);
+  return createSectionView(plane, bbox, "section-long", "Section — Long");
+}
+
 // ─── Apply view to camera ──────────────────────────────────────────────────────
 
 export interface OrbitControlsLike {
@@ -226,7 +271,8 @@ export interface OrbitControlsLike {
 export function applyViewToCamera(
   view: ViewDefinition,
   camera: THREE.Camera,
-  orbitControls?: OrbitControlsLike
+  orbitControls?: OrbitControlsLike,
+  viewportAspect?: number,
 ): void {
   const cs = view.cameraState;
   camera.position.set(...cs.position);
@@ -236,9 +282,10 @@ export function applyViewToCamera(
     const halfH = cs.zoom;
     // Preserve aspect ratio if the camera already has width/height set
     if (orthoCamera.isOrthographicCamera) {
-      const aspect =
+      const fromCamera =
         (orthoCamera.right - orthoCamera.left) /
-        (orthoCamera.top - orthoCamera.bottom) || 1;
+        (orthoCamera.top - orthoCamera.bottom);
+      const aspect = viewportAspect ?? (fromCamera || 1);
       orthoCamera.top = halfH;
       orthoCamera.bottom = -halfH;
       orthoCamera.left = -halfH * aspect;
@@ -270,14 +317,13 @@ export function applyViewToCamera(
 
 /**
  * Generate the full default view set for a building:
+ *   - One 3D view
  *   - One plan view per floor
  *   - Four elevation views (front, back, left, right)
- *
- * `floors` should be the FloorGeometry array from building-geometry.ts.
- * `bbox` is the full building bounding box (from ProceduralBuilding or estimated).
+ *   - One longitudinal section
  */
 export function computeDefaultViewsForBuilding(
-  floors: FloorGeometry[],
+  floors: ViewFloorInput[],
   bbox: THREE.Box3
 ): ViewDefinition[] {
   const bboxSize = bbox.getSize(new THREE.Vector3());
@@ -303,5 +349,10 @@ export function computeDefaultViewsForBuilding(
     createElevationView(side, bbox)
   );
 
-  return [...planViews, ...elevationViews];
+  return [
+    create3dView(bbox),
+    ...planViews,
+    ...elevationViews,
+    createDefaultSectionView(bbox),
+  ];
 }

@@ -7,7 +7,6 @@ import { Sun, Moon, Key, Globe } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAppStore } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 const ApiKeyDialog = lazy(() =>
   import("@/components/settings/api-key-dialog").then((m) => ({ default: m.ApiKeyDialog }))
@@ -18,8 +17,6 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage } = useAppStore();
   const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
-  const isHome = pathname === "/";
-
   // The workspace is a full-viewport instrument. The marketing header
   // steals the first look at the building — hide it on /building/*.
   if (pathname?.startsWith("/building/")) {
@@ -36,16 +33,11 @@ export function Header() {
 
   return (
     <>
-      <header
-        className={cn(
-          "sticky top-0 z-50 border-b",
-          isHome ? "lj-header" : "bg-background/95 backdrop-blur",
-        )}
-      >
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between px-4">
           <Link href="/" className="flex items-baseline gap-2 no-underline">
-            <span className="lj-wordmark">BIMFIT</span>
-            <span className="lj-wordmark-sub hidden sm:inline">
+            <span className="text-sm font-semibold tracking-tight">BIMFIT</span>
+            <span className="hidden text-[10px] font-medium text-muted-foreground sm:inline">
               {language === "ko" ? "대장에서 트윈까지" : "Ledger to Twin"}
             </span>
           </Link>

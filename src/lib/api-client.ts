@@ -1,6 +1,7 @@
 import { useAppStore } from "@/store/app-store";
-import { isDemoParams } from "@/lib/constants";
+import { isDemoParams, isDrawingParams } from "@/lib/constants";
 import { getDemoResponse } from "@/lib/demo/demo-building";
+import { getDrawingResponse } from "@/lib/demo/drawing-building";
 import type {
   BrTitleInfo,
   BrRecapTitleInfo,
@@ -48,6 +49,10 @@ async function apiFetch<T>(
   if (isDemoParams(params as { sigunguCd?: string; bjdongCd?: string })) {
     const demo = getDemoResponse(path);
     if (demo) return demo as ApiListResponse<T>;
+  }
+  if (isDrawingParams(params as { sigunguCd?: string; bjdongCd?: string })) {
+    const drawing = getDrawingResponse(path);
+    if (drawing) return drawing as ApiListResponse<T>;
   }
 
   const apiKey = apiKeyOverride ?? useAppStore.getState().apiKey;

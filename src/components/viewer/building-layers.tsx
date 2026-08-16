@@ -38,6 +38,7 @@ import {
   equipmentScenarioKey,
 } from "@/lib/layers/equipment-scenario";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "@/lib/layers/mep-equipment-params";
+import { useViewStore } from "@/lib/bim/views/view-store";
 
 interface BuildingLayersProps {
   buildingPk?: string;
@@ -49,6 +50,12 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
   const visibility = useLayerStore((s) => s.visibility);
   const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
   const density = useLayerStore((s) => s.density);
+  const activeViewId = useViewStore((s) => s.activeViewId);
+  const views = useViewStore((s) => s.views);
+  const activeViewKind = useMemo(() => {
+    return views.find((v) => v.id === activeViewId)?.kind ?? null;
+  }, [views, activeViewId]);
+  const drawingView = !!activeViewKind && activeViewKind !== "3d";
 
   // Heatmap data — call hooks unconditionally (Rules of Hooks); gate downstream work with pk check
   const pk = buildingPk ?? "";
@@ -114,9 +121,12 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     const manager = managerRef.current;
     if (!manager) return;
     for (const id of ALL_LAYER_IDS) {
-      manager.setVisible(id, visibility[id]);
+      const hiddenByView =
+        (drawingView && (id === "energy-zones" || id === "retrofit-targets")) ||
+        (activeViewKind === "plan" && id === "mep");
+      manager.setVisible(id, hiddenByView ? false : visibility[id]);
     }
-  }, [visibility]);
+  }, [visibility, drawingView, activeViewKind]);
 
   // Sync MEP sub-layer visibility to Three.js sub-groups.
   // Depends on both mepSubVisibility AND visibility so that when the main MEP toggle

@@ -10,8 +10,12 @@ test.describe("First door", () => {
   test("demo door is the primary verb and opens the twin", async ({ page }) => {
     const demo = page.getByTestId("landing-demo-start");
     await expect(demo).toBeVisible();
-    await expect(page.getByRole("heading", { level: 1, name: "BIMFIT" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "그 건물의 3D 트윈" })).toBeVisible();
+    await expect(page.getByTestId("landing-layer-rail")).toBeVisible();
+    await expect(page.getByTestId("landing-layer-all")).toHaveAttribute("aria-checked", "true");
+    await expect(page.getByRole("heading", { level: 1, name: /BIMFIT/ })).toBeVisible();
+    await expect(
+      page.getByText("BIMFIT: Building Energy Retrofit Simulator"),
+    ).toBeVisible();
 
     await demo.click();
     await expect(page).toHaveURL(/\/building\/demo/);
@@ -27,11 +31,13 @@ test.describe("First door", () => {
 
   test("CAD door still lands on upload", async ({ page }) => {
     await page.getByTestId("landing-cad-start").click();
-    await expect(page).toHaveURL(/\/building\/demo/);
+    await expect(page).toHaveURL(/\/building\/drawing/);
     await expect(
       page.getByRole("button", { name: /도면 업로드/ }),
     ).toHaveAttribute("aria-current", "step");
     await expect(page.getByText("도면 업로드").first()).toBeVisible();
+    await expect(page.getByTitle("데모 오피스 타워")).toHaveCount(0);
+    await expect(page.getByTitle("도면에서 시작")).toBeVisible({ timeout: 15000 });
     await expect(page.getByText("건물 데이터 없음")).toHaveCount(0);
     await expect(page.getByText("간이 모델")).toBeVisible({ timeout: 15000 });
   });

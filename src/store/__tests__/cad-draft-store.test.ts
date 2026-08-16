@@ -75,6 +75,22 @@ describe("cad-draft-store", () => {
     expect(S().doc!.entities[1].kind).toBe("circle");
   });
 
+  it("joinConnected welds four lines into a closed outline in one undo step", () => {
+    S().newDrawing("d", "k");
+    S().addEntity({ kind: "line", a: { x: 0, y: 0 }, b: { x: 10, y: 0 } });
+    S().addEntity({ kind: "line", a: { x: 10, y: 0 }, b: { x: 10, y: 6 } });
+    S().addEntity({ kind: "line", a: { x: 10, y: 6 }, b: { x: 0, y: 6 } });
+    S().addEntity({ kind: "line", a: { x: 0, y: 6 }, b: { x: 0, y: 0 } });
+    const closed = S().joinConnected();
+    expect(closed).toHaveLength(1);
+    expect(closed[0].closed).toBe(true);
+    expect(S().doc!.entities).toHaveLength(1);
+    expect(S().doc!.entities[0].kind).toBe("polyline");
+    expect(useCadViewerStore.getState().doc?.entities).toHaveLength(1);
+    S().undo();
+    expect(S().doc!.entities).toHaveLength(4);
+  });
+
   it("deleteEntity removes and clears selection", () => {
     S().newDrawing("d", "k");
     S().addEntity({ kind: "line", a: { x: 0, y: 0 }, b: { x: 1, y: 0 } });

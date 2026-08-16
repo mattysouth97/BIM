@@ -26,9 +26,13 @@ import { computeSiteLayout } from "@/lib/campus/site-layout";
 import { getCampusBuildingConfigs } from "@/lib/campus/campus-scene";
 import type { FootprintOutline } from "./ground-plane";
 import { GroundPlane } from "./ground-plane";
+import { SiteContext } from "./site-context";
+import { useTwinProvenanceStore } from "@/store/twin-provenance-store";
+import { DEMO_BUILDING_PK } from "@/lib/constants";
 import { ProceduralBuildingModel } from "./procedural-building-model";
 import { BuildingLayers } from "./building-layers";
 import { SceneControls, type SceneControlsRef } from "./scene-controls";
+import { useViewStore } from "@/lib/bim/views/view-store";
 import { ContextualToolbar } from "@/components/workspace/contextual-toolbar";
 import { LayerPanel } from "./layer-panel";
 import { ModelUploader } from "./model-uploader";
@@ -355,6 +359,9 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           fileType: stored.fileType,
         });
         setModelSource("uploaded");
+        if (stored.fileType === "ifc") {
+          useTwinProvenanceStore.getState().patch(buildingPk, { hasIfcModel: true });
+        }
       }
     });
   }, [buildingPk]);
@@ -364,6 +371,9 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
       setUploadedModel({ buffer, fileName, fileType });
       setModelSource("uploaded");
       await saveModel(buildingPk, buffer, fileName, fileType);
+      if (fileType === "ifc") {
+        useTwinProvenanceStore.getState().patch(buildingPk, { hasIfcModel: true });
+      }
     },
     [buildingPk]
   );
@@ -412,6 +422,18 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     controlsRef.current?.setView(view);
   };
 
+  const initializeDefaultViews = useViewStore((s) => s.initializeDefaultViews);
+  useEffect(() => {
+    if (campusData) return;
+    const halfW = recipe.footprintWidth / 2;
+    const halfD = recipe.footprintDepth / 2;
+    const bbox = new THREE.Box3(
+      new THREE.Vector3(-halfW, 0, -halfD),
+      new THREE.Vector3(halfW, recipe.totalHeight, halfD),
+    );
+    initializeDefaultViews(recipe.floors, bbox, buildingPk);
+  }, [campusData, recipe, buildingPk, initializeDefaultViews]);
+
   return (
     <div className="relative h-full w-full overflow-hidden flex flex-col">
       {/* Contextual toolbar strip — replaces ViewerOverlay */}
@@ -448,6 +470,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
         gl={{
           antialias: true,
           outputColorSpace: THREE.SRGBColorSpace,
+          localClippingEnabled: true,
         }}
         shadows={{ type: THREE.VSMShadowMap }}
         dpr={[1, 2]}
@@ -489,6 +512,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             modelSource === "parametric" && (
               <>
                 <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} />
+                <SiteContext recipe={recipe} showDemoNeighbors={buildingPk === DEMO_BUILDING_PK} />
                 <BuildingLayers buildingPk={buildingPk} />
                 <StructuralTooltip />
                 <EquipmentClickHandler />

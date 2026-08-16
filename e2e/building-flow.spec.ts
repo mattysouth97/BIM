@@ -10,8 +10,7 @@ test.describe("Building Flow", () => {
     // The homepage should render without crashing
     await expect(page.locator("body")).toBeVisible();
     // Search input should be present (region or address search)
-    const searchArea = page.getByRole("tablist").or(page.locator("input")).first();
-    await expect(searchArea).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("landing-demo-start")).toBeVisible({ timeout: 10000 });
   });
 
   test("homepage has main content area", async ({ page }) => {

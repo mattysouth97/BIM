@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAppStore } from "@/store/app-store";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useRecipeStore } from "@/store/recipe-store";
+import { useTwinProvenanceStore } from "@/store/twin-provenance-store";
+import { classifyPlanPolylines, serviceCoreFromPlan } from "@/lib/cad/doc/classify-plan";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import {
   parseDxfText,
@@ -54,6 +56,7 @@ export function UploadStage() {
 
   const buildingPk = useActiveBuildingPk();
   const setOverride = useRecipeStore((s) => s.setOverride);
+  const patchProvenance = useTwinProvenanceStore((s) => s.patch);
   const advance = useWorkflowStore((s) => s.advance);
   const retreat = useWorkflowStore((s) => s.retreat);
 
@@ -86,8 +89,8 @@ export function UploadStage() {
         setStatus({
           kind: "error",
           message: t(
-            "DXF 파일에서 닫힌 외곽 폴리라인을 찾지 못했습니다. 외곽선을 닫힌 폴리라인(LWPOLYLINE)으로 내보냈는지 확인하세요.",
-            "No closed outline polyline found in the DXF. Ensure the building outline is exported as a closed LWPOLYLINE.",
+            "닫힌 외곽 폴리라인을 찾지 못했습니다. 뷰어에서 열어 선을 결합(Join)하면 바닥 외곽선이 됩니다.",
+            "No closed outline polyline found. Open the drawing and Join touching lines to make a floor outline.",
             isKo
           ),
         });
@@ -285,8 +288,23 @@ export function UploadStage() {
     // Store as GeoJSON-style rings ([outer, ...holes]).
     const rings: [number, number][][] = [status.polygon];
     setOverride(buildingPk, "footprintPolygon", rings);
+    let hasCadPlan = false;
+    if (cadDoc) {
+      const classified = classifyPlanPolylines(cadDoc);
+      const core = serviceCoreFromPlan(classified);
+      if (core) {
+        setOverride(buildingPk, "serviceCore", core);
+        hasCadPlan = true;
+      } else if (classified.some((c) => c.role === "room")) {
+        hasCadPlan = true;
+      }
+    }
+    patchProvenance(buildingPk, {
+      hasCadFootprint: true,
+      hasCadPlan,
+    });
     advance({ footprintPolygon: rings });
-  }, [status, buildingPk, setOverride, advance, isKo]);
+  }, [status, buildingPk, setOverride, advance, isKo, cadDoc, patchProvenance]);
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-start overflow-auto bg-background p-8">
@@ -395,7 +413,7 @@ export function UploadStage() {
         )}
 
         {/* Open full drawing in the CAD viewer */}
-        {cadDoc && (status.kind === "ready" || status.kind === "needs-pick") && (
+        {cadDoc && (status.kind === "ready" || status.kind === "needs-pick" || status.kind === "error") && (
           <div className="flex justify-center">
             <Button
               type="button"
@@ -488,6 +506,13 @@ export function UploadStage() {
       <CadViewer
         onUseFootprint={(polygon, areaSqm, layer) => {
           setStatus({ kind: "ready", polygon, layer, areaSqm, warnings: [] });
+          closeViewer();
+        }}
+        onUseCore={(slot) => {
+          if (buildingPk) {
+            setOverride(buildingPk, "serviceCore", slot);
+            patchProvenance(buildingPk, { hasCadPlan: true, hasCadFootprint: true });
+          }
           closeViewer();
         }}
       />

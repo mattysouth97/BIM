@@ -1,6 +1,7 @@
 import type { WorkflowStage } from "./stages";
 
-/** Named entry doors on `/`. Each door promises a workspace stage. */
+/** Named entry doors on `/`. Each door promises a workspace stage.
+ *  `cad` opens `/building/drawing` (blank 1-floor host), never the demo tower. */
 export const WORKFLOW_DOORS = {
   demo: "twin",
   cad: "upload",

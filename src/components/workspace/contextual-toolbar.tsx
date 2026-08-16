@@ -18,6 +18,7 @@ import {
   RotateCcw, ArrowUp, ArrowRight, ArrowDown, Maximize2,
 } from "lucide-react";
 import { ModeIndicator } from "./mode-indicator";
+import { BimViewBar } from "./bim-view-bar";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -262,8 +263,11 @@ export function ContextualToolbar({
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Right: Global controls — always visible */}
-        <GlobalToolbarSection onViewChange={onViewChange} isKo={isKo} />
+        {stage === "twin" ? (
+          <BimViewBar />
+        ) : (
+          <GlobalToolbarSection onViewChange={onViewChange} isKo={isKo} />
+        )}
       </div>
     </div>
   );

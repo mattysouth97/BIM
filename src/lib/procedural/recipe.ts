@@ -11,6 +11,7 @@ import type {
   MaterialRefs,
   RecipeOverrides,
   CurtainWallConfig,
+  FloorSpec,
 } from "./types";
 import { WINDOW_RATIOS } from "@/lib/korean-building-codes";
 import {
@@ -219,10 +220,112 @@ export function getRecipe(
  * drift — historically, adding `footprintPolygon` to only one of the two sites
  * broke the CAD upload workflow (the 3D viewport consumed the other site).
  */
+/**
+ * Rebuild the floor stack from count/height/per-floor edits.
+ * Basement floors are preserved; above-ground floors are resized, then
+ * `floorEdits` can drop or retag individual levels. `y` and `totalHeight`
+ * are always recomputed so energy + 3D stay aligned.
+ */
+export function applyFloorOverrides(
+  floors: FloorSpec[],
+  overrides: Pick<RecipeOverrides, "floorCount" | "floorHeight" | "floorEdits">,
+): { floors: FloorSpec[]; totalHeight: number } {
+  const below = floors.filter((f) => f.type === "below");
+  let above = floors.filter((f) => f.type !== "below");
+
+  if (overrides.floorCount !== undefined) {
+    const target = Math.max(1, Math.round(overrides.floorCount));
+    const fallbackH = overrides.floorHeight ?? above[0]?.height ?? 3.0;
+    const next: FloorSpec[] = [];
+    for (let i = 0; i < target; i++) {
+      const existing = above[i];
+      next.push({
+        floorNo: i + 1,
+        label: existing?.label ?? `${i + 1}F`,
+        type: "above",
+        y: 0,
+        height: existing?.height ?? fallbackH,
+        isGroundFloor: i === 0,
+        useCode: existing?.useCode,
+      });
+    }
+    above = next;
+  }
+
+  if (overrides.floorHeight !== undefined) {
+    const h = overrides.floorHeight;
+    above = above.map((f) => ({ ...f, height: h }));
+  }
+
+  if (overrides.floorEdits) {
+    const edits = overrides.floorEdits;
+    above = above
+      .map((f) => {
+        const edit = edits[String(f.floorNo)];
+        if (!edit) return f;
+        if (edit.excluded) return null;
+        return {
+          ...f,
+          height: edit.height ?? f.height,
+          useCode: edit.useCode ?? f.useCode,
+        };
+      })
+      .filter((f): f is FloorSpec => f !== null);
+
+    below.forEach((f, i) => {
+      const edit = edits[String(f.floorNo)];
+      if (!edit) return;
+      if (edit.excluded) {
+        below[i] = { ...f, height: 0 };
+        return;
+      }
+      below[i] = {
+        ...f,
+        height: edit.height ?? f.height,
+        useCode: edit.useCode ?? f.useCode,
+      };
+    });
+  }
+
+  const keptBelow = below.filter((f) => f.height > 0);
+
+  // Stack above from y=0 upward; basement downward from 0.
+  let y = 0;
+  const stackedAbove = above.map((f, i) => {
+    const next = {
+      ...f,
+      y,
+      isGroundFloor: i === 0,
+      label: f.label || `${f.floorNo}F`,
+    };
+    y += f.height;
+    return next;
+  });
+  const totalHeight = y;
+
+  let by = 0;
+  const stackedBelow = [...keptBelow]
+    .sort((a, b) => Math.abs(a.floorNo) - Math.abs(b.floorNo))
+    .map((f) => {
+      by -= f.height;
+      return { ...f, y: by, isGroundFloor: false };
+    });
+
+  return { floors: [...stackedBelow, ...stackedAbove], totalHeight };
+}
+
 export function mergeRecipeOverrides(
   recipe: BuildingRecipe,
   overrides: RecipeOverrides
 ): BuildingRecipe {
+  const floorTouched =
+    overrides.floorCount !== undefined ||
+    overrides.floorHeight !== undefined ||
+    overrides.floorEdits !== undefined;
+  const floorResult = floorTouched
+    ? applyFloorOverrides(recipe.floors, overrides)
+    : { floors: recipe.floors, totalHeight: recipe.totalHeight };
+
   return {
     ...recipe,
     ...(overrides.footprintWidth !== undefined ? { footprintWidth: overrides.footprintWidth } : {}),
@@ -233,6 +336,10 @@ export function mergeRecipeOverrides(
     ...(overrides.slab ? { slab: { ...recipe.slab, ...overrides.slab } } : {}),
     ...(overrides.column ? { column: { ...recipe.column, ...overrides.column } } : {}),
     ...(overrides.roof ? { roof: { ...recipe.roof, ...overrides.roof } } : {}),
+    ...(overrides.serviceCore ? { serviceCore: overrides.serviceCore } : {}),
+    ...(floorTouched
+      ? { floors: floorResult.floors, totalHeight: floorResult.totalHeight }
+      : {}),
   };
 }
 

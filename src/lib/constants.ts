@@ -132,6 +132,34 @@ export function isDemoParams(params: {
   );
 }
 
+/** Reserved URL slug for a drawing-origin twin: /building/drawing */
+export const DRAWING_BUILDING_ID = "drawing";
+
+/** mgmBldrgstPk for the blank drawing-origin fixture — never the demo tower. */
+export const DRAWING_BUILDING_PK = "DRAW-00000-00000";
+
+/**
+ * Sentinel params for a CAD/drawing start. Shares the unused 00000 시군구
+ * but a different 법정동 so it cannot collide with the demo office fixture.
+ */
+export const DRAWING_BUILDING_PARAMS = {
+  sigunguCd: "00000",
+  bjdongCd: "00001",
+  platGbCd: "0",
+  bun: "0000",
+  ji: "0000",
+};
+
+export function isDrawingParams(params: {
+  sigunguCd?: string;
+  bjdongCd?: string;
+}): boolean {
+  return (
+    params.sigunguCd === DRAWING_BUILDING_PARAMS.sigunguCd &&
+    params.bjdongCd === DRAWING_BUILDING_PARAMS.bjdongCd
+  );
+}
+
 // ─────────────────────────────────────────────
 // Building ID encoding
 // ─────────────────────────────────────────────
@@ -147,6 +175,7 @@ export function encodeBuildingId(
 
 export function decodeBuildingId(id: string) {
   if (id === DEMO_BUILDING_ID) return { ...DEMO_BUILDING_PARAMS };
+  if (id === DRAWING_BUILDING_ID) return { ...DRAWING_BUILDING_PARAMS };
   const [sigunguCd, bjdongCd, platGbCd, bun, ji] = id.split("-");
   return { sigunguCd, bjdongCd, platGbCd, bun, ji };
 }
