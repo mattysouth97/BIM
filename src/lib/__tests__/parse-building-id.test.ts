@@ -3,7 +3,14 @@
 // route can call notFound() instead of rendering an empty shell.
 
 import { describe, it, expect } from "vitest";
-import { parseBuildingId, encodeBuildingId } from "../constants";
+import {
+  parseBuildingId,
+  encodeBuildingId,
+  DEMO_BUILDING_ID,
+  DEMO_BUILDING_PARAMS,
+  DRAWING_BUILDING_ID,
+  DRAWING_BUILDING_PARAMS,
+} from "../constants";
 
 describe("parseBuildingId (P2-03)", () => {
   it("parses a well-formed 5-segment id", () => {
@@ -15,6 +22,11 @@ describe("parseBuildingId (P2-03)", () => {
       bun: "0001",
       ji: "0000",
     });
+  });
+
+  it("accepts the reserved demo and drawing slugs", () => {
+    expect(parseBuildingId(DEMO_BUILDING_ID)).toEqual(DEMO_BUILDING_PARAMS);
+    expect(parseBuildingId(DRAWING_BUILDING_ID)).toEqual(DRAWING_BUILDING_PARAMS);
   });
 
   it("returns null for a missing-segment id", () => {

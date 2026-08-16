@@ -5,7 +5,11 @@
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { parseBuildingId } from "@/lib/constants";
+import {
+  DEMO_BUILDING_ID,
+  DRAWING_BUILDING_ID,
+  parseBuildingId,
+} from "@/lib/constants";
 import { isCadDraftPk } from "@/lib/workflow/cad-draft";
 import BuildingWorkspace from "./building-workspace";
 
@@ -19,7 +23,12 @@ type Props = {
  * unit-tested in src/lib/__tests__/building-metadata-title.test.ts.
  */
 export function isRoutableBuildingId(id: string): boolean {
-  return isCadDraftPk(id) || parseBuildingId(id) !== null;
+  return (
+    id === DEMO_BUILDING_ID ||
+    id === DRAWING_BUILDING_ID ||
+    isCadDraftPk(id) ||
+    parseBuildingId(id) !== null
+  );
 }
 
 /**
@@ -29,6 +38,8 @@ export function isRoutableBuildingId(id: string): boolean {
  * src/lib/__tests__/building-metadata-title.test.ts.
  */
 export function buildingMetadataTitle(id: string): string {
+  if (id === DEMO_BUILDING_ID) return "데모 오피스 타워 | BIMFIT";
+  if (id === DRAWING_BUILDING_ID) return "도면에서 시작 | BIMFIT";
   if (isCadDraftPk(id)) return "CAD 트윈 드래프트 | BIMFIT";
   const parsed = parseBuildingId(id);
   if (!parsed) return "건물 정보 | BIMFIT";

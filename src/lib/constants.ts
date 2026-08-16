@@ -195,6 +195,8 @@ export function parseBuildingId(id: string): {
   ji: string;
 } | null {
   if (typeof id !== "string" || id.length === 0) return null;
+  if (id === DEMO_BUILDING_ID) return { ...DEMO_BUILDING_PARAMS };
+  if (id === DRAWING_BUILDING_ID) return { ...DRAWING_BUILDING_PARAMS };
   const parts = id.split("-");
   if (parts.length !== 5) return null;
   if (parts.some((p) => p.length === 0)) return null;

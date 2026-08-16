@@ -42,6 +42,11 @@ describe("buildingMetadataTitle (P2-14)", () => {
 
   // ─── P2-24 — cad-first drafts route through /building/[id] ────────────────
 
+  it("names the reserved demo and drawing doors", () => {
+    expect(buildingMetadataTitle("demo")).toBe("데모 오피스 타워 | BIMFIT");
+    expect(buildingMetadataTitle("drawing")).toBe("도면에서 시작 | BIMFIT");
+  });
+
   it("gives cad drafts a distinct draft title (no fabricated ledger codes)", () => {
     const title = buildingMetadataTitle("cad-c8a95604-8b0d-4cbc-8044-d6683475a1d4");
     expect(title).toBe("CAD 트윈 드래프트 | BIMFIT");
@@ -55,6 +60,11 @@ describe("isRoutableBuildingId (P2-24)", () => {
 
   it("accepts a cad-first draft id (server must not 404 it)", () => {
     expect(isRoutableBuildingId("cad-c8a95604-8b0d-4cbc-8044-d6683475a1d4")).toBe(true);
+  });
+
+  it("accepts the reserved demo and drawing slugs", () => {
+    expect(isRoutableBuildingId("demo")).toBe(true);
+    expect(isRoutableBuildingId("drawing")).toBe(true);
   });
 
   it("rejects malformed ids", () => {
