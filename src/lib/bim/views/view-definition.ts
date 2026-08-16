@@ -60,6 +60,14 @@ interface ViewBase {
 
 // ─── Concrete view interfaces ─────────────────────────────────────────────────
 
+/** Revit-style floor-plan range, stored in metres relative to the level. */
+export interface ViewRange {
+  top: number;
+  cut: number;
+  bottom: number;
+  viewDepth: number;
+}
+
 /** Top-down orthographic view clipped to a single building level */
 export interface PlanView extends ViewBase {
   kind: "plan";
@@ -70,6 +78,8 @@ export interface PlanView extends ViewBase {
   levelHeight: number;
   /** Level identifier from FloorGeometry */
   levelId: string;
+  /** View range — display metadata; clipping still uses level slab + height. */
+  viewRange?: ViewRange;
 }
 
 export type ElevationSide = "front" | "back" | "left" | "right";

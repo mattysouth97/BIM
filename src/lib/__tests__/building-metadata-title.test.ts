@@ -13,24 +13,24 @@ describe("buildingMetadataTitle (P2-14)", () => {
     const title = buildingMetadataTitle("11110-10100-0-0001-0000");
     expect(title).toContain("11110");
     expect(title).toContain("10100");
-    expect(title).toContain("GreenRetrofit Simulator");
+    expect(title).toContain("BIMFIT");
   });
 
   it("returns a safe fallback for a malformed id (too few segments)", () => {
     expect(buildingMetadataTitle("bad-id")).toBe(
-      "건물 정보 | GreenRetrofit Simulator"
+      "건물 정보 | BIMFIT"
     );
   });
 
   it("returns a safe fallback for an empty string", () => {
     expect(buildingMetadataTitle("")).toBe(
-      "건물 정보 | GreenRetrofit Simulator"
+      "건물 정보 | BIMFIT"
     );
   });
 
   it("returns a safe fallback for extra segments", () => {
     expect(buildingMetadataTitle("11110-10100-0-0001-0000-extra")).toBe(
-      "건물 정보 | GreenRetrofit Simulator"
+      "건물 정보 | BIMFIT"
     );
   });
 
@@ -44,7 +44,7 @@ describe("buildingMetadataTitle (P2-14)", () => {
 
   it("gives cad drafts a distinct draft title (no fabricated ledger codes)", () => {
     const title = buildingMetadataTitle("cad-c8a95604-8b0d-4cbc-8044-d6683475a1d4");
-    expect(title).toBe("CAD 트윈 드래프트 | GreenRetrofit Simulator");
+    expect(title).toBe("CAD 트윈 드래프트 | BIMFIT");
   });
 });
 

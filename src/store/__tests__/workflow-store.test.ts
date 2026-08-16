@@ -259,7 +259,7 @@ describe("useWorkflowStore", () => {
 
   it("resetWorkflow() sets all completion flags to false", () => {
     useWorkflowStore.setState({
-      completion: { search: true, upload: true, twin: true, report: true },
+      completion: { search: true, upload: true, params: true, twin: true, report: true },
     });
     useWorkflowStore.getState().resetWorkflow();
     const { completion } = useWorkflowStore.getState();

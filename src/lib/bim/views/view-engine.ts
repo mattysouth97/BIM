@@ -100,6 +100,12 @@ export function createPlanView(level: {
     levelElevation: elevation,
     levelHeight: height,
     levelId: id,
+    viewRange: {
+      top: height,
+      cut: Math.min(1.2, Math.max(0.3, height * 0.35)),
+      bottom: 0,
+      viewDepth: -0.3,
+    },
     clippingPlanes: [
       planeToDescriptor(lowerPlane),
       planeToDescriptor(upperPlane),

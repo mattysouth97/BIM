@@ -124,11 +124,13 @@ describe("CoolingLayer detailed assets", () => {
       showCoolingTower: true,
     });
     const plant = findByType(group, "cooling-plant") as THREE.Mesh;
-    // Centre-origin merged geometry: 9.15 + bodyHeight/2
-    expect(plant.position.y).toBeCloseTo(9.15 + 0.75, 5);
+    // Centre-origin merged geometry + support rails: 9.15 + bodyHeight/2 + lift
+    const supportLift = Math.max(0.08, 1.5 * 0.07) * 1.7;
+    expect(plant.position.y).toBeCloseTo(9.15 + 0.75 + supportLift, 5);
     const tower = findByType(group, "cooling-tower") as THREE.Mesh;
-    // Cylinder (height 0.8×bodyHeight, centre origin) base at 9.15
-    expect(tower.position.y).toBeCloseTo(9.15 + 0.6, 5);
+    // Detailed fallback: basin/fans lift the merged origin above the roof.
+    const towerHeight = 1.5 * 0.8;
+    expect(tower.position.y).toBeCloseTo(9.15 + 1.5 * 0.4 + towerHeight * 0.195, 5);
   });
 });
 

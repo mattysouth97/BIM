@@ -42,7 +42,8 @@ describe("useRetrofitScenario sequential damping (P1-01)", () => {
     expect(hrv).toBeDefined();
 
     const residual = Math.max(0, 100_000 - envelopeSaving);
-    expect(hrv!.annualEnergySaving).toBeCloseTo(0.15 * residual, 3);
+    // Demand-side 15% recovered, converted to fuel by / η (accuracy wave).
+    expect(hrv!.annualEnergySaving).toBeCloseTo((0.15 * residual) / 0.87, 3);
   });
 
   it("threads district heating from the material store into measure pricing (P1-03)", () => {

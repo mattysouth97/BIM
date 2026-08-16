@@ -116,6 +116,9 @@ export function AuthoringPalette() {
           {selected && (
             <span className="ml-auto hidden truncate text-[10px] text-muted-foreground lg:inline">
               {familyIdentityLabel(selected, lang)}
+              {selected.placement !== "linear"
+                ? t(" · 평면에 클릭해서 배치", " · click the plan to place")
+                : ""}
             </span>
           )}
         </div>

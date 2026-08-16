@@ -18,7 +18,7 @@ const PK = "TEST-PK-STEPPER";
 function resetStores() {
   useWorkflowStore.setState({
     stage: "search",
-    completion: { search: false, upload: false, twin: false, report: false },
+    completion: { search: false, upload: false, params: false, twin: false, report: false },
   });
   useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
   useMaterialStore.setState({ properties: {} });

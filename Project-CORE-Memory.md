@@ -1,6 +1,6 @@
 # Project CORE Memory
 
-_Last updated: 2026-08-15. Autonomous BIM document: views, schedules, sheets, and 현황/개보수 phases derived from the twin._
+_Last updated: 2026-08-17. Twin + Revit-class BIM model: levels, types/instances, live views/schedules/sheets, and 현황/개보수 phases._
 
 ## One sentence
 
@@ -12,7 +12,7 @@ A person arrives with an address, a 대장, or a drawing. They leave with a buil
 
 ## Jobs (in this order)
 
-1. **See a building as a twin** — open one building and believe the 3D model is *that* building (ledger floors, footprint, era, use). Corrections persist. 층 편집 fixes the stack; 객체 편집 parks the service core and confirms plant specs. Plan / elevation / section / 일람표 / 현황·개보수 come out of the recipe — they are not drafted.
+1. **See a building as a twin** — open one building and believe the 3D model is *that* building (ledger floors, footprint, era, use). Corrections persist. 층 편집 fixes the stack; 객체 편집 parks the service core and confirms plant specs. The twin hydrates a BIM model (levels, types, instances). Plan / elevation / section / 일람표 / 현황·개보수 come from that model — they are not drafted as separate drawings. Authoring places hosted families on the live twin; type edits update every instance.
 2. **Know what retrofit is worth** — move a budget, see NPV/IRR and which measures get picked, on the same building. Selected measures carry DCF. On a phone a strip lists the picks. Budget and 그린리모델링 track persist so tomorrow reopens the same answer.
 3. **Take an answer away** — energy-audit / compliance report, PDF/CSV/JSON, reopen the same building tomorrow. The energy-audit **개보수 권장 사항** is the same knapsack (per-measure NPV, 실효 투자비). Korean-first titles. Preview PDF is the real download.
 4. **Start from a drawing** — upload DXF/DWG/PDF, draw a plan, or **샘플 도면으로 시작** then continue to the twin.
@@ -45,7 +45,7 @@ Korean-first instrument named BIMFIT. White-card numbers, ledger nouns (표제�
 - Demo never calls data.go.kr or VWorld.
 - Workflow stages are four: search, upload, twin, report. Do not invent a fifth product stage.
 - Energy and retrofit numbers come from the existing engines in `src/lib/energy` and `src/lib/retrofit`. Do not add a second engine.
-- This is not a BIM authoring tool, not a CAD competitor, not a government portal clone. Revit *outcomes* (views, schedules, sheets, phases) are produced procedurally from the twin. Do not add Revit *tools* (place wall, route duct, Dynamo).
+- BIM authoring extends the twin: semantic levels/types/instances, project browser, type/instance properties, hosted placement. It does not replace the ledger→twin→energy loop or clone Revit’s UI.
 
 ## Ship
 
@@ -60,8 +60,8 @@ Korean-first instrument named BIMFIT. White-card numbers, ledger nouns (표제�
 - Campus energy before twins exist — do not fake kWh on the landing comparison.
 - Live neighboring 지적 fetch on a single twin (demo uses static neighbor boxes; no VWorld).
 - BMS / sensor data (fidelity still reports unavailable).
-- A second simulation engine, a full BIM editor, or a CAD product.
-- Revit families, worksharing, fabrication LOD, or freeform MEP — those stay generated, not authored.
+- A second simulation engine or a CAD competitor.
+- Full family editor, worksharing, fabrication LOD, or freeform MEP routing. Types/instances and hosted placement exist; those stay scoped.
 
 ## Where truth lives
 
@@ -69,6 +69,7 @@ Korean-first instrument named BIMFIT. White-card numbers, ledger nouns (표제�
 - Building seed: `src/lib/building-seed.ts`
 - Demo: `src/lib/demo/demo-building.ts`, `src/lib/constants.ts`
 - Twin authoring: `src/store/twin-provenance-store.ts`, `src/hooks/use-twin-fidelity.ts`, `src/lib/cad/doc/classify-plan.ts`, `src/lib/energy/equipment-schedule.ts`, `src/components/workspace/floor-stack-editor.tsx`
+- BIM model: `src/lib/bim/model/`, `src/store/bim-model-store.ts`, `src/hooks/use-bim-model.ts`, `src/components/workspace/bim-properties-inspector.tsx`
 - Autonomous BIM document: `src/lib/bim/derive/twin-elements.ts`, `src/lib/bim/phases/apply-phase.ts`, `src/lib/bim/views/`, `src/lib/bim/schedules/`, `src/lib/bim/sheets/compose-default-sheets.ts`, `src/hooks/use-twin-document.ts`
 - Twin investment: `src/components/twin/*`, `src/store/scenario-store.ts`, `src/lib/retrofit/`
 - Energy: `src/lib/energy/`, `src/hooks/use-energy-metrics.ts`

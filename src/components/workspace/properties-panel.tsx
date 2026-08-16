@@ -48,6 +48,7 @@ import { Loader2 } from "lucide-react";
 import { EquipmentInfoPanel } from "./equipment-info-panel";
 import { EquipmentInsightCard } from "./equipment-insight-card";
 import { RevitIdentityCard } from "./revit-identity-card";
+import { BimPropertiesInspector } from "./bim-properties-inspector";
 
 // ── Grade color map for efficiency rating ────────────────────────────────────
 
@@ -264,6 +265,7 @@ export function PropertiesPanel({
       {currentMode === "floor-edit" && <FloorStackEditor buildingPk={buildingPk} />}
       {currentMode === "object-edit" && <SlotPlan buildingPk={buildingPk} />}
       <RevitIdentityCard />
+      <BimPropertiesInspector />
       <EquipmentInfoPanel />
       <EquipmentInsightCard />
       <EquipmentScheduleIngest buildingPk={buildingPk} />

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useEditorModeStore, type EditorMode } from "@/store/editor-mode-store";
+import { useBimModelStore } from "@/store/bim-model-store";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -57,7 +58,35 @@ export function useEditorKeybinds(): void {
         }
 
         case "Escape": {
+          const bim = useBimModelStore.getState();
+          if (bim.editingTypeId) {
+            bim.setEditingType(null);
+            break;
+          }
+          if (bim.selectedElementId) {
+            bim.selectElement(null);
+            break;
+          }
           setMode("navigate");
+          break;
+        }
+
+        case "z":
+        case "Z": {
+          if (!(e.ctrlKey || e.metaKey)) break;
+          e.preventDefault();
+          if (e.shiftKey) useBimModelStore.getState().redoLast();
+          else useBimModelStore.getState().undoLast();
+          break;
+        }
+
+        case "Delete":
+        case "Backspace": {
+          const selected = useBimModelStore.getState().selectedElementId;
+          if (selected) {
+            e.preventDefault();
+            useBimModelStore.getState().applyDelete(selected);
+          }
           break;
         }
 

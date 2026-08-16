@@ -21,6 +21,9 @@ import { cn } from "@/lib/utils";
 import { TwinDock, TwinDockTab } from "./twin-dock";
 import type { FootprintSource } from "@/lib/fidelity/input-provenance";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import { useBimModel } from "@/hooks/use-bim-model";
+import { useSelectionStore } from "@/store/selection-store";
+import { useBimModelStore } from "@/store/bim-model-store";
 import { useInitializeBimViews } from "@/hooks/use-initialize-bim-views";
 import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
 import { SchedulePanel } from "@/components/schedules/schedule-panel";
@@ -80,6 +83,12 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
   const stage = useWorkflowStore((s) => s.stage);
   const buildingPk = useActiveBuildingPk();
   useInitializeBimViews(buildingPk);
+  useBimModel(buildingPk);
+  const sceneSelectedId = useSelectionStore((s) => s.selectedId);
+  const selectBimElement = useBimModelStore((s) => s.selectElement);
+  useEffect(() => {
+    if (sceneSelectedId) selectBimElement(sceneSelectedId);
+  }, [sceneSelectedId, selectBimElement]);
   const workMode = useRevitWorkflowStore((s) => s.workMode);
   const schedulePanelOpen = useRevitWorkflowStore((s) => s.schedulePanelOpen);
   const sheetPanelOpen = useRevitWorkflowStore((s) => s.sheetPanelOpen);

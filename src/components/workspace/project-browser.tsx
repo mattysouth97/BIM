@@ -7,6 +7,7 @@ import { useViewStore } from "@/lib/bim/views/view-store";
 import { useSheetStore } from "@/lib/bim/sheets/sheet-store";
 import { SEED_SCHEDULES } from "@/lib/bim/schedules/schedule-definitions";
 import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
+import { useBimModelStore } from "@/store/bim-model-store";
 import { REVIT_FEATURE_MAP } from "@/lib/workflow/revit-workflow";
 import {
   AUTHORING_TOOLS,
@@ -34,6 +35,16 @@ export function ProjectBrowser() {
   const activeScheduleId = useRevitWorkflowStore((s) => s.activeScheduleId);
   const selectedFamilyId = useRevitWorkflowStore((s) => s.selectedFamilyId);
   const setSelectedFamilyId = useRevitWorkflowStore((s) => s.setSelectedFamilyId);
+  const levels = useBimModelStore((s) => s.snapshot?.levels ?? []);
+  const elements = useBimModelStore((s) => s.snapshot?.elements ?? []);
+  const selectedElementId = useBimModelStore((s) => s.selectedElementId);
+  const selectElement = useBimModelStore((s) => s.selectElement);
+  const activeLevelId = useBimModelStore((s) => s.activeLevelId);
+  const setActiveLevel = useBimModelStore((s) => s.setActiveLevel);
+  const walls = elements.filter((el) => el.kind === "wall");
+  const doors = elements.filter((el) => el.kind === "door");
+  const windows = elements.filter((el) => el.kind === "window");
+  const rooms = elements.filter((el) => el.kind === "room");
 
   const plans = views.filter((v) => v.kind === "plan");
   const elevations = views.filter((v) => v.kind === "elevation");
@@ -57,9 +68,76 @@ export function ProjectBrowser() {
       <div className="flex-1 overflow-y-auto">
         <Accordion
           type="multiple"
-          defaultValue={["views", "schedules", "sheets", "families"]}
+          defaultValue={["levels", "views", "schedules", "sheets", "families"]}
           className="w-full"
         >
+          <AccordionItem value="levels" className="border-b">
+            <AccordionTrigger className="px-3 py-2 text-xs font-semibold hover:no-underline">
+              <span className="flex items-center gap-1.5">
+                <Layers className="size-3.5" />
+                {t("레벨 · 모델", "Levels · Model")}
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="px-1 pb-2">
+              <BrowserGroup label={t("레벨", "Levels")}>
+                {levels.length === 0 ? (
+                  <EmptyRow text={t("트윈 로드 후 생성", "Created after the twin loads")} />
+                ) : (
+                  levels.map((level) => (
+                    <BrowserRow
+                      key={level.id}
+                      label={`${level.name}  ${level.elevation.toFixed(2)} m`}
+                      active={activeLevelId === level.id}
+                      onClick={() => {
+                        setActiveLevel(level.id);
+                        if (level.associatedViewId) {
+                          setActiveView(level.associatedViewId);
+                          setWorkMode("views");
+                        }
+                      }}
+                    />
+                  ))
+                )}
+              </BrowserGroup>
+              <BrowserGroup label={t("벽", "Walls")}>
+                {walls.slice(0, 12).map((el) => (
+                  <BrowserRow
+                    key={el.id}
+                    label={el.mark}
+                    active={selectedElementId === el.id}
+                    onClick={() => {
+                      selectElement(el.id);
+                      setWorkMode("authoring");
+                    }}
+                  />
+                ))}
+              </BrowserGroup>
+              <BrowserGroup label={t("문 / 창", "Doors / Windows")}>
+                {[...doors, ...windows].slice(0, 16).map((el) => (
+                  <BrowserRow
+                    key={el.id}
+                    label={`${el.mark} · ${el.family}`}
+                    active={selectedElementId === el.id}
+                    onClick={() => {
+                      selectElement(el.id);
+                      setWorkMode("authoring");
+                    }}
+                  />
+                ))}
+              </BrowserGroup>
+              <BrowserGroup label={t("실", "Rooms")}>
+                {rooms.map((el) => (
+                  <BrowserRow
+                    key={el.id}
+                    label={String(el.instanceParameters.name ?? el.mark)}
+                    active={selectedElementId === el.id}
+                    onClick={() => selectElement(el.id)}
+                  />
+                ))}
+              </BrowserGroup>
+            </AccordionContent>
+          </AccordionItem>
+
           <AccordionItem value="views" className="border-b">
             <AccordionTrigger className="px-3 py-2 text-xs font-semibold hover:no-underline">
               <span className="flex items-center gap-1.5">

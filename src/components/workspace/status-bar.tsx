@@ -12,6 +12,8 @@ import { useSelectionStore } from "@/store/selection-store";
 import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
 import { getWorkMode } from "@/lib/workflow/revit-workflow";
 import { resolveRevitIdentity } from "@/lib/bim/revit-identity";
+import { useBimModelStore } from "@/store/bim-model-store";
+import { lastCommandName } from "@/lib/bim/model";
 import type { WorkflowStage } from "@/lib/workflow/stages";
 
 export interface StatusBarProps {
@@ -71,6 +73,11 @@ export function StatusBar({ buildingPk: buildingPkProp, sigunguCd }: StatusBarPr
   const workMode = useRevitWorkflowStore((s) => s.workMode);
   const selectedType = useSelectionStore((s) => s.selectedType);
   const selectedEquipment = useSelectionStore((s) => s.selectedEquipment);
+  const bimElement = useBimModelStore((s) => {
+    const id = s.selectedElementId;
+    return id ? s.snapshot?.elements.find((el) => el.id === id) ?? null : null;
+  });
+  const lastTx = useBimModelStore((s) => lastCommandName(s.log));
   const identity =
     stage === "twin"
       ? resolveRevitIdentity({
@@ -94,9 +101,19 @@ export function StatusBar({ buildingPk: buildingPkProp, sigunguCd }: StatusBarPr
           aria-hidden="true"
         />
         <span className="text-xs text-muted-foreground truncate">{modeHint}</span>
-        {identity && (
+        {bimElement && (
+          <span className="hidden truncate text-[10px] text-foreground/80 md:inline" data-testid="status-bim-mark">
+            {bimElement.category} · {bimElement.mark}
+          </span>
+        )}
+        {identity && !bimElement && (
           <span className="hidden truncate text-[10px] text-muted-foreground/80 md:inline">
             {language === "ko" ? identity.displayKo : identity.displayEn}
+          </span>
+        )}
+        {lastTx && (
+          <span className="hidden truncate text-[10px] text-muted-foreground/70 lg:inline">
+            {lastTx}
           </span>
         )}
       </div>

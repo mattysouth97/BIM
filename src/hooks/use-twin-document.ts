@@ -12,6 +12,8 @@ import { runSchedule } from "@/lib/bim/schedules/schedule-engine";
 import { SEED_SCHEDULES } from "@/lib/bim/schedules/schedule-definitions";
 import { composeDefaultSheets } from "@/lib/bim/sheets/compose-default-sheets";
 import type { ScheduleResult } from "@/lib/bim/schedules/schedule-types";
+import { scheduleSourceForCategory } from "@/lib/bim/model";
+import { useBimModelStore } from "@/store/bim-model-store";
 
 export const TWIN_SCHEDULE_IDS = [
   "wall-schedule-v1",
@@ -26,6 +28,9 @@ export function useTwinDocument(buildingPk: string, locale: "ko" | "en" = "ko") 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
   const equipment = useEquipmentStore((s) => s.params[buildingPk]);
   const phase = useBimDocumentStore((s) => s.phase);
+  const bimSnapshot = useBimModelStore((s) =>
+    s.snapshot?.buildingPk === buildingPk ? s.snapshot : null,
+  );
 
   const recipe = useMemo(() => {
     if (!baseRecipe) return undefined;
@@ -47,6 +52,26 @@ export function useTwinDocument(buildingPk: string, locale: "ko" | "en" = "ko") 
   }, [recipe, phasedMaterials, equipment]);
 
   const schedules = useMemo<Partial<Record<string, ScheduleResult>>>(() => {
+    if (bimSnapshot) {
+      return {
+        "wall-schedule-v1": runSchedule(
+          SEED_SCHEDULES["wall-schedule-v1"],
+          scheduleSourceForCategory(bimSnapshot, "wall"),
+        ),
+        "window-door-schedule-v1": runSchedule(
+          SEED_SCHEDULES["window-door-schedule-v1"],
+          scheduleSourceForCategory(bimSnapshot, "opening"),
+        ),
+        "mep-equipment-schedule-v1": runSchedule(
+          SEED_SCHEDULES["mep-equipment-schedule-v1"],
+          scheduleSourceForCategory(bimSnapshot, "mep"),
+        ),
+        "room-schedule-v1": runSchedule(
+          SEED_SCHEDULES["room-schedule-v1"],
+          scheduleSourceForCategory(bimSnapshot, "room"),
+        ),
+      };
+    }
     if (!elements) return {};
     return {
       "wall-schedule-v1": runSchedule(SEED_SCHEDULES["wall-schedule-v1"], elements.walls),
@@ -60,7 +85,7 @@ export function useTwinDocument(buildingPk: string, locale: "ko" | "en" = "ko") 
       ),
       "room-schedule-v1": runSchedule(SEED_SCHEDULES["room-schedule-v1"], elements.rooms),
     };
-  }, [elements]);
+  }, [elements, bimSnapshot]);
 
   const sheets = useMemo(() => {
     if (!recipe) return [];
