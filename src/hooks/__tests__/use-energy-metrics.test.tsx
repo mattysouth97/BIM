@@ -10,6 +10,7 @@ import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { makeMaterials, makeRecipe } from "./test-fixtures";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
+import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import {
   deliveredFromDemand,
   buildingTypeFromMaterials,
@@ -83,8 +84,7 @@ describe("useEnergyMetrics", () => {
     // grade must equal calculateEfficiencyRating's, not the legacy
     // delivered-energy scale.
     const recipe = makeRecipe();
-    const totalArea =
-      recipe.footprintWidth * recipe.footprintDepth * recipe.floors.length;
+    const totalArea = envelopeQuantities(recipe).intensityFloorAreaSqm;
     const expected = calculateEfficiencyRating(
       deliveredFromDemand(metrics!.demand),
       totalArea,

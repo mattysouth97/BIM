@@ -40,6 +40,8 @@ export interface BuildingGeometry {
   mainPurpsCd: string;
   windowRatio: number;
   footprintPolygon?: [number, number][][];
+  /** totArea when > 0; omitted when unavailable (AFF-6). */
+  officialFloorAreaSqm?: number;
   wallThickness: number;
   slabThickness: number;
   columnSpacing: number;
@@ -141,6 +143,8 @@ export function generateBuildingGeometry(
 
   const windowRatio = WINDOW_RATIOS[era]?.[useCategory] || WINDOW_RATIOS[era]?.default || 0.3;
 
+  const totArea = Number(title.totArea);
+  const officialFloorAreaSqm = totArea > 0 ? totArea : undefined;
   const buildingFootprint = estimateFootprint(Number(title.archArea) || 100);
   const siteFootprint = estimateFootprint(Number(title.platArea) || Number(title.archArea) * 2);
 
@@ -233,6 +237,7 @@ export function generateBuildingGeometry(
     footprintWidth: buildingFootprint.width, footprintDepth: buildingFootprint.depth,
     siteWidth: siteFootprint.width, siteDepth: siteFootprint.depth,
     roofType, buildingName: title.bldNm || "", address: title.platPlcNm || "",
+    officialFloorAreaSqm,
     era, strctCd, mainPurpsCd, windowRatio,
     wallThickness, slabThickness, columnSpacing, columnSize,
   };
@@ -265,6 +270,7 @@ export function toRecipe(geo: BuildingGeometry): BuildingRecipe {
     footprintWidth: geo.footprintWidth,
     footprintDepth: geo.footprintDepth,
     footprintPolygon: geo.footprintPolygon,
+    officialFloorAreaSqm: geo.officialFloorAreaSqm,
     floors,
     totalHeight: geo.totalHeight,
     wallThickness: geo.wallThickness,

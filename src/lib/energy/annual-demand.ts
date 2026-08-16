@@ -5,6 +5,7 @@ import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { ClimateData } from "./climate-data";
 import type { HeatLossResult } from "./heat-loss";
+import { envelopeQuantities } from "./envelope-quantities";
 
 export interface AnnualDemand {
   /** Annual heating demand (kWh/yr) */
@@ -44,8 +45,7 @@ export function calculateAnnualDemand(
   recipe: BuildingRecipe,
   climate: ClimateData
 ): AnnualDemand {
-  const totalFloorArea =
-    recipe.footprintWidth * recipe.footprintDepth * recipe.floors.length;
+  const totalFloorArea = envelopeQuantities(recipe).intensityFloorAreaSqm;
 
   if (totalFloorArea <= 0) {
     return { heatingDemand: 0, coolingDemand: 0, totalDemand: 0, demandPerSqm: 0 };

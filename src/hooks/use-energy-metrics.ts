@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import { useMaterialStore } from "@/store/material-store";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { getClimateData } from "@/lib/energy/climate-data";
+import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { calculateHeatLoss } from "@/lib/energy/heat-loss";
 import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
 import { getGradeColor } from "@/lib/energy/energy-grade";
@@ -67,10 +68,7 @@ export function useEnergyMetrics(
   const metrics = useMemo<EnergyMetrics | null>(() => {
     if (!materials || !effectiveRecipe) return null;
 
-    const totalFloorArea =
-      effectiveRecipe.footprintWidth *
-      effectiveRecipe.footprintDepth *
-      effectiveRecipe.floors.length;
+    const totalFloorArea = envelopeQuantities(effectiveRecipe).intensityFloorAreaSqm;
     // P1-05 honesty: without a positive floor area no per-area intensity or
     // grade can exist — return null rather than fabricate a "1+++" rating.
     if (totalFloorArea <= 0) return null;

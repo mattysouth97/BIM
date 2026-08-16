@@ -5,6 +5,7 @@
 import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { ClimateData } from "./climate-data";
+import { envelopeQuantities } from "./envelope-quantities";
 
 export interface ElementHeatLoss {
   /** Element name (e.g. "Wall - North", "Roof", "Floor", "Window") */
@@ -36,18 +37,17 @@ export function calculateHeatLoss(
   recipe: BuildingRecipe,
   climate: ClimateData
 ): HeatLossResult {
-  const { footprintWidth, footprintDepth, totalHeight } = recipe;
-  const perimeter = 2 * (footprintWidth + footprintDepth);
-  const totalFloorArea = footprintWidth * footprintDepth * recipe.floors.length;
-  const roofArea = footprintWidth * footprintDepth;
-  const floorArea = roofArea; // ground floor area
+  const q = envelopeQuantities(recipe);
+  const totalFloorArea = q.intensityFloorAreaSqm;
+  const roofArea = q.roofAreaSqm;
+  const floorArea = q.planAreaSqm;
 
   // ΔT for winter heat loss
   const deltaT = climate.indoorTemp - climate.winterDesignTemp; // 20 - (-11.3) = 31.3
   // Ground floor: indoor vs ground (~5°C below indoor)
   const groundDeltaT = climate.indoorTemp - (climate.indoorTemp - 5); // 5°C
 
-  const grossWallArea = perimeter * totalHeight;
+  const grossWallArea = q.grossWallAreaSqm;
   const wwr = materials.envelope.windows.windowToWallRatio;
   const avgWWR = (wwr.N + wwr.S + wwr.E + wwr.W) / 4;
   const totalWindowArea = grossWallArea * avgWWR;
@@ -118,7 +118,7 @@ export function calculateHeatLoss(
   const AIR_VOL_HEAT_CAPACITY = 0.34; // Wh/m³·K
   const LBL_N_FACTOR = 20;
   const vent = materials.hvac.ventilation;
-  const conditionedVolume = roofArea * totalHeight; // footprint area × height (m³)
+  const conditionedVolume = q.volumeM3;
 
   const infiltrationACH = materials.envelope.airtightness.ach50 / LBL_N_FACTOR;
   let mechanicalACH = vent.type === "natural" ? 0 : Math.max(0, vent.airflowRate);

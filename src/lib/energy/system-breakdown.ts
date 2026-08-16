@@ -4,6 +4,7 @@
 
 import { calculateAnnualDemand } from "./annual-demand";
 import { calculateHeatLoss } from "./heat-loss";
+import { envelopeQuantities } from "./envelope-quantities";
 import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe, FloorSpec } from "@/lib/procedural/types";
 import type { ClimateData } from "./climate-data";
@@ -119,7 +120,7 @@ export function calculateSystemBreakdown(
   // Step 4: Per-floor distribution across above-grade floors only (D3).
   // Array index matches Phase 25 heatmap convention — DO NOT include below-grade floors.
   const aboveFloors = recipe.floors.filter((f: FloorSpec) => f.type === "above");
-  const floorArea = recipe.footprintWidth * recipe.footprintDepth;
+  const floorArea = envelopeQuantities(recipe).planAreaSqm;
   const perFloorIntensity =
     aboveFloors.length > 0 && floorArea > 0
       ? total / (aboveFloors.length * floorArea) // uniform kWh/m² distribution

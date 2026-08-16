@@ -82,6 +82,13 @@
   `src/lib/building-geometry.ts:42`) supplied via CAD upload or override
   (`src/lib/cad/README.md:23`); required to advance past the upload stage
   (`src/store/__tests__/workflow-store.test.ts:57`).
+- **EnvelopeQuantities** — plan area, wall length (outer + courtyard holes),
+  roof/ground area, volume, and intensity floor area derived from a
+  BuildingRecipe (`src/lib/energy/envelope-quantities.ts`). A CAD/VWorld ring
+  is the envelope source when present; otherwise the bbox. Intensity
+  denominator is 건축물대장 `totArea` when > 0 (AFF-6), else
+  planArea × floor count. Heat loss, demandPerSqm, grade, ECO2, and
+  system-breakdown share this module.
 - **CAD-first draft (`cad-` PK)** — P2-24: a standalone building with no
   건축물대장 entry, identified by a synthetic `cad-<uuid>` PK
   (`src/lib/workflow/cad-draft.ts`). The workflow **mode** (`ledger` |

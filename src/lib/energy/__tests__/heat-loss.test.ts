@@ -268,4 +268,25 @@ describe("calculateHeatLoss", () => {
     const expectedWallHeatLoss = wallEl.uValue * wallEl.area * expectedDeltaT;
     expect(wallEl.heatLoss).toBeCloseTo(expectedWallHeatLoss, 1);
   });
+
+  it("uses the CAD ring for wall area instead of the bounding box", () => {
+    const materials = makeApartmentMaterials({ wwr: 0 });
+    const box = makeApartmentRecipe(1);
+    const triangle: BuildingRecipe = {
+      ...box,
+      footprintPolygon: [
+        [
+          [0, 0],
+          [box.footprintWidth, 0],
+          [0, box.footprintDepth],
+        ],
+      ],
+    };
+    const boxLoss = calculateHeatLoss(materials, box, SEOUL_CLIMATE);
+    const triLoss = calculateHeatLoss(materials, triangle, SEOUL_CLIMATE);
+    const boxWalls = boxLoss.elements.find((e) => e.element === "Walls")!;
+    const triWalls = triLoss.elements.find((e) => e.element === "Walls")!;
+    expect(triWalls.area).toBeLessThan(boxWalls.area);
+    expect(triLoss.totalHeatLoss).toBeLessThan(boxLoss.totalHeatLoss);
+  });
 });

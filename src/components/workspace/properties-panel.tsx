@@ -20,6 +20,7 @@ import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useEngineResult } from "@/hooks/use-engine-result";
 import { useReviewHighlightStore } from "@/store/review-highlight-store";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
+import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
 import { useWeatherData } from "@/hooks/use-weather-data";
 import { assessFidelity } from "@/lib/fidelity/fidelity-assessor";
@@ -242,10 +243,7 @@ export function PropertiesPanel({
 
   const efficiencyRating = useMemo(() => {
     if (!metrics || !effectiveRecipe || !materials) return null;
-    const totalArea =
-      effectiveRecipe.footprintWidth *
-      effectiveRecipe.footprintDepth *
-      effectiveRecipe.floors.length;
+    const totalArea = envelopeQuantities(effectiveRecipe).intensityFloorAreaSqm;
     if (totalArea <= 0) return null;
 
     // P1-05: shared fuel-split + building-type helpers — same computation
