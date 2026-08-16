@@ -27,14 +27,14 @@
       "heightM": 3.0,
       "courseRef": "Basic Model Elements / Walls — Generic Wall Type (low LOD)",
       "boundsMin": [
-        -0.5,
+        0.0,
         -0.1,
-        -1.5
+        0.0
       ],
       "boundsMax": [
-        0.5,
+        1.0,
         0.1,
-        1.5
+        3.0
       ],
       "nativeDimsM": {
         "x": 1.0,
@@ -79,28 +79,28 @@
       ],
       "courseRef": "Revit element Hierarchy — Exterior – Brick on CMU",
       "boundsMin": [
-        -0.5,
+        0.0,
         -0.1915,
-        -1.5
+        0.0
       ],
       "boundsMax": [
-        0.5,
+        1.0,
         0.1915,
-        1.5
+        3.04
       ],
       "nativeDimsM": {
         "x": 1.0,
-        "y": 3.0,
+        "y": 3.04,
         "z": 0.383,
         "blenderXYZ": [
           1.0,
           0.383,
-          3.0
+          3.04
         ]
       },
       "triangles": 72,
       "file": "wall-exterior-brick-on-cmu.glb",
-      "bytesKb": 8.4,
+      "bytesKb": 8.3,
       "path": "/models/authoring/wall-exterior-brick-on-cmu.glb"
     },
     {
@@ -119,28 +119,28 @@
       "heightM": 3.0,
       "courseRef": "Revit element Hierarchy — Exterior – CMU Insulated",
       "boundsMin": [
-        -0.5,
-        -0.095,
-        -1.5
+        0.0,
+        -0.1475,
+        0.0
       ],
       "boundsMax": [
-        0.5,
-        0.095,
-        1.5
+        1.0,
+        0.1475,
+        3.0
       ],
       "nativeDimsM": {
         "x": 1.0,
         "y": 3.0,
-        "z": 0.19,
+        "z": 0.295,
         "blenderXYZ": [
           1.0,
-          0.19,
+          0.295,
           3.0
         ]
       },
       "triangles": 48,
       "file": "wall-exterior-cmu-insulated.glb",
-      "bytesKb": 5.9,
+      "bytesKb": 5.8,
       "path": "/models/authoring/wall-exterior-cmu-insulated.glb"
     },
     {
@@ -159,22 +159,22 @@
       "heightM": 3.0,
       "courseRef": "Revit element Hierarchy — Interior – Partition",
       "boundsMin": [
-        -0.5,
-        -0.045,
-        -1.5
+        0.0,
+        -0.0575,
+        0.0
       ],
       "boundsMax": [
-        0.5,
-        0.045,
-        1.5
+        1.0,
+        0.0575,
+        3.0
       ],
       "nativeDimsM": {
         "x": 1.0,
         "y": 3.0,
-        "z": 0.09,
+        "z": 0.115,
         "blenderXYZ": [
           1.0,
-          0.09,
+          0.115,
           3.0
         ]
       },
@@ -199,28 +199,28 @@
       "heightM": 3.0,
       "courseRef": "Wall Category — three System Families: Basic, Curtain, Stacked",
       "boundsMin": [
-        -0.5,
-        -0.095,
-        -0.9
+        0.0,
+        -0.1815,
+        0.0
       ],
       "boundsMax": [
-        0.5,
-        0.095,
-        0.9
+        1.0,
+        0.1915,
+        3.0
       ],
       "nativeDimsM": {
         "x": 1.0,
-        "y": 1.8,
-        "z": 0.19,
+        "y": 3.0,
+        "z": 0.373,
         "blenderXYZ": [
           1.0,
-          0.19,
-          1.8
+          0.373,
+          3.0
         ]
       },
       "triangles": 120,
       "file": "wall-stacked-brick-cmu.glb",
-      "bytesKb": 13.2,
+      "bytesKb": 13.0,
       "path": "/models/authoring/wall-stacked-brick-cmu.glb"
     },
     {
@@ -242,20 +242,20 @@
       "boundsMin": [
         -0.028,
         -0.075,
-        -0.5
+        0.0
       ],
       "boundsMax": [
         0.028,
-        0.075,
-        0.5
+        0.087,
+        1.0
       ],
       "nativeDimsM": {
         "x": 0.056,
         "y": 1.0,
-        "z": 0.15,
+        "z": 0.162,
         "blenderXYZ": [
           0.056,
-          0.15,
+          0.162,
           1.0
         ]
       },
@@ -282,12 +282,12 @@
       "boundsMin": [
         -0.59,
         -0.012,
-        -1.19
+        0.01
       ],
       "boundsMax": [
         0.59,
         0.012,
-        1.19
+        2.39
       ],
       "nativeDimsM": {
         "x": 1.18,
@@ -321,14 +321,14 @@
       "lengthM": 2.5,
       "courseRef": "Complex Walls — Curtain walls have grids, mullions and panels",
       "boundsMin": [
-        -1.25,
+        0.0,
         -0.075,
-        -1.5
+        0.0
       ],
       "boundsMax": [
-        1.25,
+        2.5,
         0.075,
-        1.5
+        3.0
       ],
       "nativeDimsM": {
         "x": 2.5,
@@ -342,7 +342,7 @@
       },
       "triangles": 696,
       "file": "curtain-wall-storefront.glb",
-      "bytesKb": 39.7,
+      "bytesKb": 43.4,
       "path": "/models/authoring/curtain-wall-storefront.glb"
     },
     {
@@ -364,12 +364,12 @@
       "boundsMin": [
         -0.455,
         -0.06,
-        -1.05
+        0.0
       ],
       "boundsMax": [
         0.455,
         0.06,
-        1.05
+        2.1
       ],
       "nativeDimsM": {
         "x": 0.91,
@@ -383,7 +383,7 @@
       },
       "triangles": 1332,
       "file": "door-single-flush-910.glb",
-      "bytesKb": 73.7,
+      "bytesKb": 75.8,
       "path": "/models/authoring/door-single-flush-910.glb"
     },
     {
@@ -405,12 +405,12 @@
       "boundsMin": [
         -0.405,
         -0.06,
-        -1.05
+        0.0
       ],
       "boundsMax": [
         0.405,
         0.06,
-        1.05
+        2.1
       ],
       "nativeDimsM": {
         "x": 0.81,
@@ -424,7 +424,7 @@
       },
       "triangles": 1332,
       "file": "door-single-flush-810.glb",
-      "bytesKb": 73.8,
+      "bytesKb": 75.1,
       "path": "/models/authoring/door-single-flush-810.glb"
     },
     {
@@ -445,12 +445,12 @@
       "boundsMin": [
         -0.9,
         -0.07,
-        -1.05
+        0.0
       ],
       "boundsMax": [
         0.9,
         0.07,
-        1.05
+        2.1
       ],
       "nativeDimsM": {
         "x": 1.8,
@@ -464,7 +464,7 @@
       },
       "triangles": 1284,
       "file": "door-double-flush-1800.glb",
-      "bytesKb": 70.7,
+      "bytesKb": 71.3,
       "path": "/models/authoring/door-double-flush-1800.glb"
     },
     {
@@ -484,27 +484,27 @@
       "courseRef": "Doors and Windows — manufacturer / OOTB loadable families",
       "boundsMin": [
         -0.5,
-        -0.06,
-        -1.1
+        -0.068,
+        0.0
       ],
       "boundsMax": [
         0.5,
         0.06,
-        1.1
+        2.2
       ],
       "nativeDimsM": {
         "x": 1.0,
         "y": 2.2,
-        "z": 0.12,
+        "z": 0.128,
         "blenderXYZ": [
           1.0,
-          0.12,
+          0.128,
           2.2
         ]
       },
       "triangles": 900,
       "file": "door-glass-storefront.glb",
-      "bytesKb": 49.5,
+      "bytesKb": 50.8,
       "path": "/models/authoring/door-glass-storefront.glb"
     },
     {
@@ -524,27 +524,27 @@
       "courseRef": "Doors and Windows — wall-hosted loadable families",
       "boundsMin": [
         -0.62,
-        -0.06,
-        -0.75
+        -0.04,
+        -0.76
       ],
       "boundsMax": [
         0.62,
-        0.06,
+        0.08,
         0.75
       ],
       "nativeDimsM": {
         "x": 1.24,
-        "y": 1.5,
+        "y": 1.51,
         "z": 0.12,
         "blenderXYZ": [
           1.24,
           0.12,
-          1.5
+          1.51
         ]
       },
       "triangles": 444,
       "file": "window-fixed-1200x1500.glb",
-      "bytesKb": 25.4,
+      "bytesKb": 26.9,
       "path": "/models/authoring/window-fixed-1200x1500.glb"
     },
     {
@@ -565,27 +565,27 @@
       "courseRef": "Doors and Windows — loadable families",
       "boundsMin": [
         -0.47,
-        -0.06,
-        -0.6
+        -0.07,
+        -0.61
       ],
       "boundsMax": [
-        0.47,
-        0.06,
+        0.792,
+        0.08,
         0.6
       ],
       "nativeDimsM": {
-        "x": 0.94,
-        "y": 1.2,
-        "z": 0.12,
+        "x": 1.262,
+        "y": 1.21,
+        "z": 0.15,
         "blenderXYZ": [
-          0.94,
-          0.12,
-          1.2
+          1.262,
+          0.15,
+          1.21
         ]
       },
       "triangles": 600,
       "file": "window-casement-900x1200.glb",
-      "bytesKb": 36.3,
+      "bytesKb": 37.8,
       "path": "/models/authoring/window-casement-900x1200.glb"
     },
     {
@@ -605,27 +605,27 @@
       "courseRef": "Doors and Windows — loadable families",
       "boundsMin": [
         -0.92,
-        -0.07,
-        -0.75
+        -0.05,
+        -0.76
       ],
       "boundsMax": [
         0.92,
-        0.07,
+        0.09,
         0.75
       ],
       "nativeDimsM": {
         "x": 1.84,
-        "y": 1.5,
+        "y": 1.51,
         "z": 0.14,
         "blenderXYZ": [
           1.84,
           0.14,
-          1.5
+          1.51
         ]
       },
       "triangles": 684,
       "file": "window-sliding-1800x1500.glb",
-      "bytesKb": 39.6,
+      "bytesKb": 41.8,
       "path": "/models/authoring/window-sliding-1800x1500.glb"
     },
     {
@@ -646,27 +646,27 @@
       "courseRef": "Doors and Windows — loadable families",
       "boundsMin": [
         -0.47,
-        -0.055,
-        -0.3
+        -0.035,
+        -0.502
       ],
       "boundsMax": [
         0.47,
-        0.055,
+        0.075,
         0.3
       ],
       "nativeDimsM": {
         "x": 0.94,
-        "y": 0.6,
+        "y": 0.802,
         "z": 0.11,
         "blenderXYZ": [
           0.94,
           0.11,
-          0.6
+          0.802
         ]
       },
       "triangles": 552,
       "file": "window-awning-900x600.glb",
-      "bytesKb": 31.1,
+      "bytesKb": 33.3,
       "path": "/models/authoring/window-awning-900x600.glb"
     },
     {
@@ -689,12 +689,12 @@
       "boundsMin": [
         -0.245,
         -0.245,
-        -0.5
+        0.0
       ],
       "boundsMax": [
         0.245,
         0.245,
-        0.5
+        1.0
       ],
       "nativeDimsM": {
         "x": 0.49,
@@ -708,7 +708,7 @@
       },
       "triangles": 628,
       "file": "column-struct-round-450.glb",
-      "bytesKb": 30.9,
+      "bytesKb": 30.8,
       "path": "/models/authoring/column-struct-round-450.glb"
     },
     {
@@ -731,12 +731,12 @@
       "boundsMin": [
         -0.32,
         -0.32,
-        -0.5
+        0.0
       ],
       "boundsMax": [
         0.32,
         0.32,
-        0.5
+        1.0
       ],
       "nativeDimsM": {
         "x": 0.64,
@@ -750,7 +750,7 @@
       },
       "triangles": 628,
       "file": "column-struct-round-600.glb",
-      "bytesKb": 30.9,
+      "bytesKb": 30.8,
       "path": "/models/authoring/column-struct-round-600.glb"
     },
     {
@@ -774,12 +774,12 @@
       "boundsMin": [
         -0.245,
         -0.32,
-        -0.5
+        0.0
       ],
       "boundsMax": [
         0.245,
         0.32,
-        0.5
+        1.0
       ],
       "nativeDimsM": {
         "x": 0.49,
@@ -817,12 +817,12 @@
       "boundsMin": [
         -0.32,
         -0.395,
-        -0.5
+        0.0
       ],
       "boundsMax": [
         0.32,
         0.395,
-        0.5
+        1.0
       ],
       "nativeDimsM": {
         "x": 0.64,
@@ -860,12 +860,12 @@
       "boundsMin": [
         -0.23,
         -0.23,
-        -0.5
+        0.0
       ],
       "boundsMax": [
         0.23,
         0.23,
-        0.5
+        1.0
       ],
       "nativeDimsM": {
         "x": 0.46,
@@ -879,7 +879,7 @@
       },
       "triangles": 336,
       "file": "column-arch-rect-400.glb",
-      "bytesKb": 19.6,
+      "bytesKb": 20.3,
       "path": "/models/authoring/column-arch-rect-400.glb"
     },
     {
@@ -904,21 +904,21 @@
       "boundsMin": [
         -0.5,
         -0.5,
-        -0.065
+        -0.15
       ],
       "boundsMax": [
         0.5,
         0.5,
-        0.065
+        0.0
       ],
       "nativeDimsM": {
         "x": 1.0,
-        "y": 0.13,
+        "y": 0.15,
         "z": 1.0,
         "blenderXYZ": [
           1.0,
           1.0,
-          0.13
+          0.15
         ]
       },
       "triangles": 24,
@@ -943,21 +943,21 @@
       "boundsMin": [
         -0.5,
         -0.5,
-        -0.0625
+        -0.2
       ],
       "boundsMax": [
         0.5,
         0.5,
-        0.0625
+        0.0
       ],
       "nativeDimsM": {
         "x": 1.0,
-        "y": 0.125,
+        "y": 0.2,
         "z": 1.0,
         "blenderXYZ": [
           1.0,
           1.0,
-          0.125
+          0.2
         ]
       },
       "triangles": 48,
@@ -982,26 +982,26 @@
       "boundsMin": [
         -0.5,
         -0.5,
-        -0.075
+        -0.186
       ],
       "boundsMax": [
         0.5,
         0.5,
-        0.075
+        0.002
       ],
       "nativeDimsM": {
         "x": 1.0,
-        "y": 0.15,
+        "y": 0.188,
         "z": 1.0,
         "blenderXYZ": [
           1.0,
           1.0,
-          0.15
+          0.188
         ]
       },
       "triangles": 84,
       "file": "floor-wood-finish.glb",
-      "bytesKb": 8.7,
+      "bytesKb": 8.6,
       "path": "/models/authoring/floor-wood-finish.glb"
     },
     {
@@ -1021,21 +1021,21 @@
       "boundsMin": [
         -0.5,
         -0.5,
-        -0.075
+        0.0
       ],
       "boundsMax": [
         0.5,
         0.5,
-        0.075
+        0.24
       ],
       "nativeDimsM": {
         "x": 1.0,
-        "y": 0.15,
+        "y": 0.24,
         "z": 1.0,
         "blenderXYZ": [
           1.0,
           1.0,
-          0.15
+          0.24
         ]
       },
       "triangles": 36,
@@ -1060,21 +1060,21 @@
       "boundsMin": [
         -0.5,
         -0.575,
-        -0.011
+        -0.022
       ],
       "boundsMax": [
         0.5,
         0.575,
-        0.011
+        0.033
       ],
       "nativeDimsM": {
         "x": 1.0,
-        "y": 0.022,
+        "y": 0.055,
         "z": 1.15,
         "blenderXYZ": [
           1.0,
           1.15,
-          0.022
+          0.055
         ]
       },
       "triangles": 36,
@@ -1099,21 +1099,21 @@
       "boundsMin": [
         -0.5,
         -0.5,
-        -0.0125
+        -0.0405
       ],
       "boundsMax": [
         0.5,
         0.5,
-        0.0125
+        0.0
       ],
       "nativeDimsM": {
         "x": 1.0,
-        "y": 0.025,
+        "y": 0.0405,
         "z": 1.0,
         "blenderXYZ": [
           1.0,
           1.0,
-          0.025
+          0.0405
         ]
       },
       "triangles": 24,
@@ -1136,28 +1136,28 @@
       "moduleM": 0.6,
       "courseRef": "Ceilings and Lights — ceiling as host for lighting fixtures",
       "boundsMin": [
-        -0.6,
-        -0.6,
-        -0.015
+        -0.612,
+        -0.612,
+        -0.0455
       ],
       "boundsMax": [
-        0.6,
-        0.6,
-        0.015
+        0.612,
+        0.612,
+        0.0
       ],
       "nativeDimsM": {
-        "x": 1.2,
-        "y": 0.03,
-        "z": 1.2,
+        "x": 1.224,
+        "y": 0.0455,
+        "z": 1.224,
         "blenderXYZ": [
-          1.2,
-          1.2,
-          0.03
+          1.224,
+          1.224,
+          0.0455
         ]
       },
       "triangles": 120,
       "file": "ceiling-acoustic-tile.glb",
-      "bytesKb": 11.8,
+      "bytesKb": 11.7,
       "path": "/models/authoring/ceiling-acoustic-tile.glb"
     },
     {
@@ -1178,28 +1178,28 @@
       "widthM": 1.2,
       "courseRef": "Stairs by Component — max riser / min tread; Revit computes riser count",
       "boundsMin": [
-        -0.58,
-        -1.14,
-        -0.72
+        -0.6,
+        -0.02,
+        -0.02
       ],
       "boundsMax": [
-        0.58,
-        1.14,
-        0.72
+        0.6,
+        2.26,
+        1.43
       ],
       "nativeDimsM": {
-        "x": 1.16,
-        "y": 1.44,
+        "x": 1.2,
+        "y": 1.45,
         "z": 2.28,
         "blenderXYZ": [
-          1.16,
+          1.2,
           2.28,
-          1.44
+          1.45
         ]
       },
       "triangles": 984,
       "file": "stair-run-8riser.glb",
-      "bytesKb": 57.3,
+      "bytesKb": 59.4,
       "path": "/models/authoring/stair-run-8riser.glb"
     },
     {
@@ -1217,22 +1217,22 @@
       "courseRef": "Stairs by Component — Revit models landings from run clicks",
       "boundsMin": [
         -0.6,
-        -0.6,
-        -0.075
+        -0.615,
+        -0.15
       ],
       "boundsMax": [
         0.6,
         0.6,
-        0.075
+        0.02
       ],
       "nativeDimsM": {
         "x": 1.2,
-        "y": 0.15,
-        "z": 1.2,
+        "y": 0.17,
+        "z": 1.215,
         "blenderXYZ": [
           1.2,
-          1.2,
-          0.15
+          1.215,
+          0.17
         ]
       },
       "triangles": 132,
@@ -1258,14 +1258,14 @@
       "heightM": 1.1,
       "courseRef": "Stairs and Railings — railings placed automatically on stairs; also on floors",
       "boundsMin": [
-        -0.52,
         -0.02,
-        -0.55
+        -0.02,
+        0.0
       ],
       "boundsMax": [
-        0.52,
+        1.02,
         0.02,
-        0.55
+        1.1
       ],
       "nativeDimsM": {
         "x": 1.04,
@@ -1279,7 +1279,7 @@
       },
       "triangles": 356,
       "file": "railing-guard-1m.glb",
-      "bytesKb": 23.0,
+      "bytesKb": 22.9,
       "path": "/models/authoring/railing-guard-1m.glb"
     },
     {
@@ -1299,28 +1299,28 @@
       },
       "courseRef": "Railings — handrails on floors and stairs",
       "boundsMin": [
-        -0.5,
-        -0.04,
-        -0.03
+        0.0,
+        -0.022,
+        0.87
       ],
       "boundsMax": [
-        0.5,
-        0.04,
-        0.03
+        1.0,
+        0.083,
+        0.93
       ],
       "nativeDimsM": {
         "x": 1.0,
         "y": 0.06,
-        "z": 0.08,
+        "z": 0.105,
         "blenderXYZ": [
           1.0,
-          0.08,
+          0.105,
           0.06
         ]
       },
       "triangles": 148,
       "file": "railing-handrail-1m.glb",
-      "bytesKb": 10.3,
+      "bytesKb": 10.2,
       "path": "/models/authoring/railing-handrail-1m.glb"
     },
     {
@@ -1340,27 +1340,27 @@
       "courseRef": "Architecture tab companion to stairs (sketch-based)",
       "boundsMin": [
         -0.6,
-        -0.925,
+        -0.025,
         -0.075
       ],
       "boundsMax": [
         0.6,
-        0.925,
-        0.075
+        1.825,
+        0.13
       ],
       "nativeDimsM": {
         "x": 1.2,
-        "y": 0.15,
+        "y": 0.205,
         "z": 1.85,
         "blenderXYZ": [
           1.2,
           1.85,
-          0.15
+          0.205
         ]
       },
       "triangles": 36,
       "file": "ramp-module.glb",
-      "bytesKb": 4.1,
+      "bytesKb": 4.0,
       "path": "/models/authoring/ramp-module.glb"
     },
     {
@@ -1379,21 +1379,21 @@
       "boundsMin": [
         -0.2975,
         -0.2975,
-        -0.04
+        -0.086
       ],
       "boundsMax": [
         0.2975,
         0.2975,
-        0.04
+        0.0
       ],
       "nativeDimsM": {
         "x": 0.595,
-        "y": 0.08,
+        "y": 0.086,
         "z": 0.595,
         "blenderXYZ": [
           0.595,
           0.595,
-          0.08
+          0.086
         ]
       },
       "triangles": 132,
@@ -1417,21 +1417,21 @@
       "boundsMin": [
         -0.22,
         -0.22,
-        -0.275
+        -0.68
       ],
       "boundsMax": [
         0.22,
         0.22,
-        0.275
+        -0.001
       ],
       "nativeDimsM": {
         "x": 0.44,
-        "y": 0.55,
+        "y": 0.679,
         "z": 0.44,
         "blenderXYZ": [
           0.44,
           0.44,
-          0.55
+          0.679
         ]
       },
       "triangles": 540,
@@ -1455,21 +1455,21 @@
       "boundsMin": [
         -0.055,
         -0.055,
-        -0.045
+        -0.011
       ],
       "boundsMax": [
         0.055,
         0.055,
-        0.045
+        0.085
       ],
       "nativeDimsM": {
         "x": 0.11,
-        "y": 0.09,
+        "y": 0.096,
         "z": 0.11,
         "blenderXYZ": [
           0.11,
           0.11,
-          0.09
+          0.096
         ]
       },
       "triangles": 196,
@@ -1493,26 +1493,26 @@
       "boundsMin": [
         -0.7,
         -0.35,
-        -0.36
+        0.0
       ],
       "boundsMax": [
         0.7,
         0.35,
-        0.36
+        0.75
       ],
       "nativeDimsM": {
         "x": 1.4,
-        "y": 0.72,
+        "y": 0.75,
         "z": 0.7,
         "blenderXYZ": [
           1.4,
           0.7,
-          0.72
+          0.75
         ]
       },
       "triangles": 684,
       "file": "furniture-desk.glb",
-      "bytesKb": 39.7,
+      "bytesKb": 38.8,
       "path": "/models/authoring/furniture-desk.glb"
     },
     {
@@ -1529,28 +1529,28 @@
       "placement": "component",
       "courseRef": "Other Components — Furniture",
       "boundsMin": [
-        -0.23,
-        -0.23,
-        -0.24
+        -0.2532,
+        -0.2943,
+        0.0
       ],
       "boundsMax": [
-        0.23,
-        0.23,
-        0.24
+        0.3066,
+        0.2943,
+        1.02
       ],
       "nativeDimsM": {
-        "x": 0.46,
-        "y": 0.48,
-        "z": 0.46,
+        "x": 0.5598,
+        "y": 1.02,
+        "z": 0.5886,
         "blenderXYZ": [
-          0.46,
-          0.46,
-          0.48
+          0.5598,
+          0.5886,
+          1.02
         ]
       },
       "triangles": 1056,
       "file": "furniture-task-chair.glb",
-      "bytesKb": 65.0,
+      "bytesKb": 66.5,
       "path": "/models/authoring/furniture-task-chair.glb"
     },
     {
@@ -1569,21 +1569,21 @@
       "boundsMin": [
         -0.8,
         -0.39,
-        -0.21
+        0.0
       ],
       "boundsMax": [
         0.8,
         0.39,
-        0.21
+        0.68
       ],
       "nativeDimsM": {
         "x": 1.6,
-        "y": 0.42,
+        "y": 0.68,
         "z": 0.78,
         "blenderXYZ": [
           1.6,
           0.78,
-          0.42
+          0.68
         ]
       },
       "triangles": 756,
@@ -1607,26 +1607,26 @@
       "boundsMin": [
         -0.6,
         -0.6,
-        -0.35
+        0.0
       ],
       "boundsMax": [
         0.6,
         0.6,
-        0.35
+        0.752
       ],
       "nativeDimsM": {
         "x": 1.2,
-        "y": 0.7,
+        "y": 0.752,
         "z": 1.2,
         "blenderXYZ": [
           1.2,
           1.2,
-          0.7
+          0.752
         ]
       },
       "triangles": 904,
       "file": "furniture-dining-table.glb",
-      "bytesKb": 47.8,
+      "bytesKb": 49.2,
       "path": "/models/authoring/furniture-dining-table.glb"
     },
     {
@@ -1645,21 +1645,21 @@
       "boundsMin": [
         -0.82,
         -1.05,
-        -0.35
+        0.06
       ],
       "boundsMax": [
         0.82,
         1.05,
-        0.35
+        0.85
       ],
       "nativeDimsM": {
         "x": 1.64,
-        "y": 0.7,
+        "y": 0.79,
         "z": 2.1,
         "blenderXYZ": [
           1.64,
           2.1,
-          0.7
+          0.79
         ]
       },
       "triangles": 540,
@@ -1682,22 +1682,22 @@
       "courseRef": "Other Components — Plumbing Fixtures from OOTB library",
       "boundsMin": [
         -0.22,
-        -0.22,
-        -0.19
+        -0.26,
+        0.03
       ],
       "boundsMax": [
         0.22,
-        0.22,
-        0.19
+        0.3,
+        0.82
       ],
       "nativeDimsM": {
         "x": 0.44,
-        "y": 0.38,
-        "z": 0.44,
+        "y": 0.79,
+        "z": 0.56,
         "blenderXYZ": [
           0.44,
-          0.44,
-          0.38
+          0.56,
+          0.79
         ]
       },
       "triangles": 696,
@@ -1721,26 +1721,26 @@
       "boundsMin": [
         -0.28,
         -0.21,
-        -0.36
+        0.0
       ],
       "boundsMax": [
         0.28,
         0.21,
-        0.36
+        0.93
       ],
       "nativeDimsM": {
         "x": 0.56,
-        "y": 0.72,
+        "y": 0.93,
         "z": 0.42,
         "blenderXYZ": [
           0.56,
           0.42,
-          0.72
+          0.93
         ]
       },
       "triangles": 388,
       "file": "plumbing-lavatory.glb",
-      "bytesKb": 22.4,
+      "bytesKb": 22.3,
       "path": "/models/authoring/plumbing-lavatory.glb"
     },
     {
@@ -1759,26 +1759,26 @@
       "boundsMin": [
         -0.4,
         -0.25,
-        -0.09
+        0.71
       ],
       "boundsMax": [
         0.4,
         0.25,
-        0.09
+        1.16
       ],
       "nativeDimsM": {
         "x": 0.8,
-        "y": 0.18,
+        "y": 0.45,
         "z": 0.5,
         "blenderXYZ": [
           0.8,
           0.5,
-          0.18
+          0.45
         ]
       },
       "triangles": 316,
       "file": "plumbing-kitchen-sink.glb",
-      "bytesKb": 18.8,
+      "bytesKb": 19.6,
       "path": "/models/authoring/plumbing-kitchen-sink.glb"
     },
     {
@@ -1795,23 +1795,23 @@
       "placement": "component",
       "courseRef": "The Site — Planting families sit on toposurface; RPC prefix in OOTB library",
       "boundsMin": [
-        -0.85,
-        -0.85,
-        -0.85
+        -0.9,
+        -0.93,
+        0.0
       ],
       "boundsMax": [
-        0.85,
-        0.85,
-        0.85
+        1.0,
+        0.86,
+        2.95
       ],
       "nativeDimsM": {
-        "x": 1.7,
-        "y": 1.7,
-        "z": 1.7,
+        "x": 1.9,
+        "y": 2.95,
+        "z": 1.79,
         "blenderXYZ": [
-          1.7,
-          1.7,
-          1.7
+          1.9,
+          1.79,
+          2.95
         ]
       },
       "triangles": 884,
@@ -1833,23 +1833,23 @@
       "placement": "component",
       "courseRef": "The Site — Planting on toposurface",
       "boundsMin": [
-        -0.3043,
-        -0.32,
-        -0.32
+        -0.3502,
+        -0.36,
+        -0.005
       ],
       "boundsMax": [
-        0.3043,
+        0.3892,
         0.32,
-        0.32
+        0.77
       ],
       "nativeDimsM": {
-        "x": 0.6087,
-        "y": 0.64,
-        "z": 0.64,
+        "x": 0.7394,
+        "y": 0.775,
+        "z": 0.68,
         "blenderXYZ": [
-          0.6087,
-          0.64,
-          0.64
+          0.7394,
+          0.68,
+          0.775
         ]
       },
       "triangles": 588,

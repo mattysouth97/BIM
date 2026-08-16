@@ -233,13 +233,17 @@ def _emissive(name, rgb, strength):
 
 
 def _new_mesh_obj(name, bm, col, mat, loc=(0, 0, 0), rot=(0, 0, 0)):
+    # Bake insertion offset into verts so glTF export cannot drop object TRS.
+    # Family origin is then the object origin (0,0,0) — the Revit insertion point.
+    if rot != (0, 0, 0) or loc != (0, 0, 0):
+        R = Euler(rot).to_matrix().to_4x4()
+        T = Matrix.Translation(loc)
+        bmesh.ops.transform(bm, matrix=T @ R, verts=bm.verts)
     mesh = bpy.data.meshes.new(name)
     bm.to_mesh(mesh)
     bm.free()
     mesh.update()
     o = bpy.data.objects.new(name, mesh)
-    o.location = loc
-    o.rotation_euler = Euler(rot)
     col.objects.link(o)
     if mat is not None:
         mesh.materials.clear()
@@ -366,6 +370,20 @@ def tri_count(col):
     return total
 
 
+def bake_transform(o):
+    """Collapse location/rotation/parent into mesh verts. Origin stays at world 0
+    of the family (the insertion point)."""
+    if o.type != "MESH":
+        return o
+    mw = o.matrix_world.copy()
+    if mw == Matrix.Identity(4):
+        return o
+    o.data.transform(mw)
+    o.parent = None
+    o.matrix_world = Matrix.Identity(4)
+    return o
+
+
 def export_glb(col, filename):
     os.makedirs(ASSET_DIR, exist_ok=True)
     ensure_object_mode()
@@ -373,11 +391,13 @@ def export_glb(col, filename):
     for o in bpy.data.objects:
         o.select_set(False)
     exported = []
-    for o in col.objects:
+    for o in list(col.objects):
+        if o.type == "MESH":
+            if o.modifiers:
+                apply_mods(o)
+            bake_transform(o)
         o.select_set(True)
         exported.append(o.name)
-        if o.type == "MESH" and o.modifiers:
-            apply_mods(o)
     if not exported:
         raise RuntimeError(f"nothing to export in {col.name}")
     # pick a mesh as active
