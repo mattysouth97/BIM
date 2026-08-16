@@ -12,6 +12,7 @@ import {
 import * as THREE from "three";
 import { useViewStore } from "@/lib/bim/views/view-store";
 import { applyViewToCamera } from "@/lib/bim/views/view-engine";
+import { toThreePlane, type ViewDefinition } from "@/lib/bim/views/view-definition";
 
 export interface SceneControlsRef {
   setView: (view: "front" | "side" | "top" | "iso") => void;
@@ -22,11 +23,33 @@ interface SceneControlsProps {
   distance: number;
 }
 
+function applyClipping(
+  scene: THREE.Scene,
+  gl: THREE.WebGLRenderer,
+  view: ViewDefinition | null
+): void {
+  const planes =
+    view?.clippingPlanes?.map((desc) => toThreePlane(desc, THREE)) ?? [];
+  gl.localClippingEnabled = planes.length > 0;
+  gl.clippingPlanes = planes;
+  scene.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (!mesh.material) return;
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const mat of mats) {
+      if ("clippingPlanes" in mat) {
+        (mat as THREE.Material & { clippingPlanes: THREE.Plane[] }).clippingPlanes =
+          planes;
+      }
+    }
+  });
+}
+
 export const SceneControls = forwardRef<SceneControlsRef, SceneControlsProps>(
   function SceneControls({ targetHeight, distance }, ref) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const controlsRef = useRef<any>(null);
-    const { camera, set, gl, size, invalidate } = useThree();
+    const { camera, set, gl, size, invalidate, scene } = useThree();
     const perspRef = useRef<THREE.PerspectiveCamera | null>(
       (camera as THREE.PerspectiveCamera).isPerspectiveCamera
         ? (camera as THREE.PerspectiveCamera)
@@ -46,8 +69,7 @@ export const SceneControls = forwardRef<SceneControlsRef, SceneControlsProps>(
         const persp = perspRef.current;
         if (!persp) return;
         if (camera !== persp) set({ camera: persp });
-        gl.clippingPlanes = [];
-        gl.localClippingEnabled = false;
+        applyClipping(scene, gl, null);
         const target = new THREE.Vector3(0, targetHeight / 2, 0);
         const d = distance;
         const positions: Record<string, THREE.Vector3> = {
@@ -65,7 +87,7 @@ export const SceneControls = forwardRef<SceneControlsRef, SceneControlsProps>(
         }
         invalidate();
       },
-      [camera, set, gl, targetHeight, distance, invalidate],
+      [camera, set, gl, targetHeight, distance, invalidate, scene],
     );
 
     useImperativeHandle(ref, () => ({ setView: applyPreset }), [applyPreset]);
@@ -87,8 +109,7 @@ export const SceneControls = forwardRef<SceneControlsRef, SceneControlsProps>(
       if (!activeView) {
         const persp = perspRef.current;
         if (persp && camera !== persp) set({ camera: persp });
-        gl.clippingPlanes = [];
-        gl.localClippingEnabled = false;
+        applyClipping(scene, gl, null);
         return;
       }
 
@@ -111,13 +132,9 @@ export const SceneControls = forwardRef<SceneControlsRef, SceneControlsProps>(
         controlsRef.current.update();
       }
 
-      const planes = (activeView.clippingPlanes ?? []).map(
-        (d) => new THREE.Plane(new THREE.Vector3(...d.normal), d.constant),
-      );
-      gl.clippingPlanes = planes;
-      gl.localClippingEnabled = planes.length > 0;
+      applyClipping(scene, gl, activeView);
       invalidate();
-    }, [activeView, camera, set, gl, size, invalidate]);
+    }, [activeView, camera, set, gl, size, invalidate, scene]);
 
     return (
       <OrbitControls

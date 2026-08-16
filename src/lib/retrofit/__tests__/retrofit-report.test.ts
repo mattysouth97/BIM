@@ -27,9 +27,8 @@ describe('assembleRetrofitReport', () => {
     expect(report.summary.totalAnnualSaving).toBe(0);
     expect(report.summary.totalAnnualCostSaving).toBe(0);
     expect(report.summary.totalCO2Reduction).toBe(0);
-    // Audit finding #10: no savings means the investment NEVER pays back —
-    // Infinity, not 0 ("instant payback").
-    expect(report.summary.portfolioPayback).toBe(Infinity);
+    // Union: audit #10 (never a fabricated 0) + P0-02 (null, JSON-safe).
+    expect(report.summary.portfolioPayback).toBeNull();
     expect(report.byCategory.envelope).toHaveLength(0);
     expect(report.byCategory.hvac).toHaveLength(0);
     expect(report.byCategory.lighting).toHaveLength(0);
@@ -132,15 +131,86 @@ describe('assembleRetrofitReport', () => {
 
   it('returns Infinity payback (never pays back) when savings are zero (audit finding #10)', () => {
     // Old behavior returned 0, which reads as INSTANT payback — the exact
-    // opposite of "never pays back".
+    // opposite of "never pays back". Union uses null (JSON-safe) not Infinity.
     const measures: RetrofitMeasure[] = [
       makeMeasure({ id: 'no-saving', estimatedCost: 1_000_000, annualCostSaving: 0, paybackYears: Infinity }),
     ];
 
     const report = assembleRetrofitReport(measures);
 
-    expect(report.summary.portfolioPayback).toBe(Infinity);
-    expect(report.cumulativeSavings[0].cumulativePayback).toBe(Infinity);
+    expect(report.summary.portfolioPayback).toBeNull();
+    expect(report.cumulativeSavings[0].cumulativePayback).toBeNull();
+    expect(report.summary.portfolioPayback).not.toBe(0);
+  });
+
+  it('returns null paybacks (never 0) when total annual cost saving is zero', () => {
+    const measures: RetrofitMeasure[] = [
+      makeMeasure({ id: 'dead-1', estimatedCost: 1_000_000, annualCostSaving: 0, paybackYears: 99 }),
+      makeMeasure({ id: 'dead-2', estimatedCost: 2_000_000, annualCostSaving: 0, paybackYears: 99 }),
+    ];
+
+    const report = assembleRetrofitReport(measures);
+
+    expect(report.summary.portfolioPayback).toBeNull();
+    for (const cum of report.cumulativeSavings) {
+      expect(cum.cumulativePayback).toBeNull();
+    }
+    // Nulls survive JSON serialization; Infinity would silently corrupt exports.
+    expect(JSON.stringify(report)).not.toContain('Infinity');
+  });
+
+  it('still aggregates portfolioNpv and portfolioEffectiveCapex when assumptions are provided', async () => {
+    const { DEFAULT_ECONOMIC_ASSUMPTIONS } = await import('@/lib/retrofit/cost-database');
+    const measures: RetrofitMeasure[] = [
+      makeMeasure({ id: 'a', estimatedCost: 2_000_000, annualCostSaving: 400_000, paybackYears: 5 }),
+      makeMeasure({ id: 'b', estimatedCost: 3_000_000, annualCostSaving: 300_000, paybackYears: 10 }),
+    ];
+
+    const report = assembleRetrofitReport(measures, DEFAULT_ECONOMIC_ASSUMPTIONS);
+
+    expect(report.summary.portfolioNpv).toBeTypeOf('number');
+    expect(report.summary.portfolioEffectiveCapex).toBeTypeOf('number');
+    expect(report.summary.portfolioEffectiveCapex).toBeGreaterThan(0);
+  });
+
+  it("damps portfolio totals for interacting envelope + HVAC measures (P1-01)", () => {
+    const envelope = makeMeasure({
+      id: "envelope-wall-insulation",
+      category: "envelope",
+      annualEnergySaving: 30_000,
+      annualCostSaving: 3_000_000,
+      co2Reduction: 6,
+      paybackYears: 5,
+    });
+    const hrv = makeMeasure({
+      id: "hvac-hrv",
+      category: "hvac",
+      annualEnergySaving: 15_000,
+      annualCostSaving: 1_500_000,
+      co2Reduction: 3,
+      paybackYears: 7,
+    });
+
+    const report = assembleRetrofitReport([envelope, hrv]);
+    const naiveEnergy = 45_000;
+
+    expect(report.summary.totalAnnualSaving).toBeLessThan(naiveEnergy);
+    expect(report.summary.totalAnnualCostSaving).toBeLessThan(4_500_000);
+    // Per-measure fields keep their own generated semantics (undamped).
+    expect(report.measures.find((m) => m.id === "hvac-hrv")!.annualEnergySaving).toBe(15_000);
+    // Cumulative savings reflect the damped running totals: the final row
+    // equals the damped portfolio, not the naive sum.
+    const last = report.cumulativeSavings[report.cumulativeSavings.length - 1];
+    expect(last.cumulativeAnnualSaving).toBeCloseTo(report.summary.totalAnnualCostSaving, 5);
+  });
+
+  it("keeps naive totals when no interacting pair exists (P1-01 honesty)", () => {
+    const lighting = makeMeasure({ id: "lighting-led", category: "lighting", annualEnergySaving: 8_000, annualCostSaving: 900_000 });
+    const solar = makeMeasure({ id: "solar-pv", category: "renewable", annualEnergySaving: 12_000, annualCostSaving: 1_400_000 });
+
+    const report = assembleRetrofitReport([lighting, solar]);
+    expect(report.summary.totalAnnualSaving).toBe(20_000);
+    expect(report.summary.totalAnnualCostSaving).toBe(2_300_000);
   });
 
   it('does not mutate the input array order', () => {

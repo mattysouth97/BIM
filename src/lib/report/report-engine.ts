@@ -30,6 +30,26 @@ function fmtKrw(value: number): string {
   return `${Math.round(value).toLocaleString()}원`;
 }
 
+/**
+ * Honest payback formatting: `null`/non-finite means the savings never cover
+ * the cost — render 회수 불가, never a fabricated 0.0년 or Infinity.
+ */
+function fmtPayback(years: number | null): string {
+  return years !== null && Number.isFinite(years) ? `${fmt(years)}년` : '회수 불가';
+}
+
+/** Retrofit portfolio summary carried into the energy-audit PDF (P0-02). */
+export interface EnergyAuditRetrofitSummary {
+  totalInvestment: number;
+  totalAnnualSaving: number;
+  payback: number | null;
+  topMeasures: { description: string; payback: number; npv?: number }[];
+  npv?: number | null;
+  irr?: number | null;
+  discountedPayback?: number | null;
+  effectiveCapex?: number;
+}
+
 // ---------------------------------------------------------------------------
 // Energy Audit Report
 // ---------------------------------------------------------------------------
@@ -41,13 +61,21 @@ function fmtKrw(value: number): string {
  * @param metrics         Computed energy metrics (heat loss, demand, grade, CO2)
  * @param calibration     Optional calibration result comparing predicted vs actual
  * @param benchmark       Optional benchmark comparison against peer buildings
+ * @param retrofitSummary Optional scenario portfolio financials (P0-02). When
+ *                        absent, the report carries an explicit no-analysis
+ *                        section — never fabricated numbers.
+ * @param extraSections   Additional pre-built sections appended at the end
+ *                        (e.g. the "BIM Fidelity / IFC" section from
+ *                        bim-fidelity-summary.ts). Additive — defaults to
+ *                        none, so existing call sites are unaffected.
  */
 export function assembleEnergyAuditReport(
   building: { name: string; address: string; fidelityLevel: 1 | 2 | 3 },
   metrics: EnergyMetrics,
   calibration?: CalibrationResult,
   benchmark?: BenchmarkResult,
-  retrofitSummary?: EnergyAuditInput["retrofitSummary"],
+  retrofitSummary?: EnergyAuditInput["retrofitSummary"] | EnergyAuditRetrofitSummary,
+  extraSections: ReportSection[] = []
 ): ReportData {
   const sections: ReportSection[] = [];
 
@@ -142,6 +170,7 @@ export function assembleEnergyAuditReport(
     });
   }
 
+  // Local audit wiring: NPV-in-억 scenario table when measures exist.
   if (retrofitSummary && retrofitSummary.topMeasures.length > 0) {
     sections.push({
       title: "Retrofit Scenario",
@@ -162,10 +191,10 @@ export function assembleEnergyAuditReport(
           ],
           [
             "포트폴리오 NPV",
-            retrofitSummary.npv !== undefined
+            retrofitSummary.npv !== undefined && retrofitSummary.npv !== null
               ? `${(retrofitSummary.npv / 100_000_000).toFixed(1)}억`
               : "—",
-            Number.isFinite(retrofitSummary.payback)
+            retrofitSummary.payback !== null && Number.isFinite(retrofitSummary.payback)
               ? `${fmt(retrofitSummary.payback)}년`
               : "미회수",
           ],
@@ -173,6 +202,55 @@ export function assembleEnergyAuditReport(
       },
     });
   }
+
+  // Section 6: Retrofit Recommendations (P0-02) — real scenario financials
+  // when a knapsack selection exists; explicit no-analysis text otherwise.
+  if (retrofitSummary) {
+    const measureRows: string[][] = retrofitSummary.topMeasures
+      .slice(0, 3)
+      .map((m, i) => [
+        `${i + 1}`,
+        m.description,
+        fmtPayback(m.payback),
+      ]);
+    sections.push({
+      title: 'Retrofit Recommendations',
+      titleKo: '개보수 권장 사항',
+      content: {
+        type: 'table',
+        headers: ['#', '항목', '값'],
+        rows: [
+          ...measureRows,
+          ['', '총 투자비', fmtKrw(retrofitSummary.totalInvestment)],
+          ...(retrofitSummary.effectiveCapex !== undefined
+            ? [['', '실효 투자비 (보조금 반영)', fmtKrw(retrofitSummary.effectiveCapex)]]
+            : []),
+          ['', '연간 에너지 절감량', `${Math.round(retrofitSummary.totalAnnualSaving).toLocaleString()} kWh/년`],
+          ...(retrofitSummary.npv !== undefined && retrofitSummary.npv !== null
+            ? [['', '포트폴리오 NPV', fmtKrw(retrofitSummary.npv)]]
+            : []),
+          ...(retrofitSummary.irr !== undefined
+            ? [['', '포트폴리오 IRR', retrofitSummary.irr !== null ? `${fmt(retrofitSummary.irr * 100)}%` : 'N/A']]
+            : []),
+          ...(retrofitSummary.discountedPayback !== undefined
+            ? [['', '할인 회수기간', fmtPayback(retrofitSummary.discountedPayback)]]
+            : []),
+          ['', '단순 회수기간', fmtPayback(retrofitSummary.payback)],
+        ],
+      },
+    });
+  } else {
+    sections.push({
+      title: 'Retrofit Recommendations',
+      titleKo: '개보수 권장 사항',
+      content: {
+        type: 'text',
+        text: 'No retrofit analysis available for this export. 시뮬레이터(트윈 단계)에서 시나리오를 설정하면 보고서에 투자 분석이 포함됩니다.',
+      },
+    });
+  }
+
+  sections.push(...extraSections);
 
   return {
     type: 'energy-audit',
@@ -195,11 +273,14 @@ export function assembleEnergyAuditReport(
  * @param building          Basic building identifiers
  * @param certification     G-SEED certification pre-assessment result
  * @param efficiencyRating  Korean energy efficiency rating result
+ * @param extraSections     Additional pre-built sections appended at the end
+ *                          (e.g. the "BIM Fidelity / IFC" section). Additive.
  */
 export function assembleComplianceReport(
   building: { name: string; address: string; fidelityLevel: 1 | 2 | 3 },
   certification: CertificationResult,
-  efficiencyRating: EfficiencyRatingResult
+  efficiencyRating: EfficiencyRatingResult,
+  extraSections: ReportSection[] = []
 ): ReportData {
   const sections: ReportSection[] = [];
 
@@ -256,6 +337,8 @@ export function assembleComplianceReport(
     },
   });
 
+  sections.push(...extraSections);
+
   return {
     type: 'compliance',
     buildingName: building.name,
@@ -295,7 +378,13 @@ export function assembleRetrofitReport(
         { label: '연간 에너지 절감량 (kWh/년)', value: Math.round(summary.totalAnnualSaving).toLocaleString() },
         { label: '연간 비용 절감액', value: fmtKrw(summary.totalAnnualCostSaving) },
         { label: '연간 CO₂ 감축량 (tCO₂/년)', value: fmt(summary.totalCO2Reduction) },
-        { label: '포트폴리오 회수 기간', value: `${fmt(summary.portfolioPayback)}년` },
+        { label: '포트폴리오 회수 기간', value: fmtPayback(summary.portfolioPayback) },
+        ...(summary.portfolioNpv !== undefined
+          ? [{ label: '포트폴리오 NPV', value: fmtKrw(summary.portfolioNpv) }]
+          : []),
+        ...(summary.portfolioEffectiveCapex !== undefined
+          ? [{ label: '실효 투자비 (보조금 반영)', value: fmtKrw(summary.portfolioEffectiveCapex) }]
+          : []),
       ],
     },
   });
@@ -312,7 +401,7 @@ export function assembleRetrofitReport(
         m.category,
         fmtKrw(m.estimatedCost),
         fmtKrw(m.annualCostSaving),
-        `${fmt(m.paybackYears)}년`,
+        fmtPayback(m.paybackYears),
       ]),
     },
   });
@@ -337,7 +426,7 @@ export function assembleRetrofitReport(
           m.name,
           Math.round(m.annualEnergySaving).toLocaleString(),
           fmt(m.co2Reduction),
-          `${fmt(m.paybackYears)}년`,
+          fmtPayback(m.paybackYears),
         ]),
       },
     });

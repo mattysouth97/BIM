@@ -2,13 +2,17 @@
 // Solar PV potential assessment for Korean buildings.
 
 import type { RetrofitMeasure } from '@/lib/retrofit/retrofit-types';
-import { CO2_FACTORS } from '@/lib/retrofit/cost-database';
+import { CO2_FACTORS, MEASURE_LIFETIMES, ENERGY_PRICES } from '@/lib/retrofit/cost-database';
 
 export interface SolarPVResult extends RetrofitMeasure {
   systemSizeKWp: number;
   annualGenerationKWh: number;
   roofUtilization: number; // 0-1
   feedInTariffRate: number; // KRW/kWh (user-configurable)
+  /** P2-10 (c) — year-1 revenue from self-consumed generation (escalates at electricity rate). */
+  annualSelfConsumptionRevenue: number;
+  /** P2-10 (c) — year-1 revenue from the feed-in portion (fixed SMP/REC tariff — does not escalate). */
+  annualFeedInRevenue: number;
 }
 
 /** Korean regional peak sun hours (hours/day annual average) */
@@ -39,8 +43,16 @@ const TILT_FACTOR = 1.15;
 const PERFORMANCE_RATIO = 0.80;
 const SELF_CONSUMPTION_RATIO = 0.7;
 const FEED_IN_RATIO = 0.3;
-const COST_PER_KWP = 1_500_000; // KRW/kWp (Korean average)
-const DEFAULT_ELECTRICITY_PRICE = 120; // KRW/kWh
+// P2-10 (f) — assumption: turnkey rooftop PV ~1.5M KRW/kWp reflects Korean
+// small-commercial installed cost circa 2024. No single official tariff; treat
+// as an engineering estimate and stress-test with sensitivity analysis.
+const COST_PER_KWP = 1_500_000; // KRW/kWp — assumption (Korean small-commercial avg)
+// P2-10 (d) — one electricity price for the whole engine (was a divergent 120
+// here vs 140 in cost-database). Self-consumed solar offsets retail electricity.
+const DEFAULT_ELECTRICITY_PRICE = ENERGY_PRICES.electricity; // 140 KRW/kWh
+// P2-10 (c) — assumption: ~0.5%/yr panel output degradation, consistent with the
+// 80%-at-25yr performance warranty encoded in MEASURE_LIFETIMES['solar-pv'].
+const PANEL_DEGRADATION_RATE = 0.005;
 
 /** CO2 emission factor for Korean grid (tCO2/kWh) — shared constant, tCO2/MWh ÷ 1000 */
 const CO2_FACTOR_ELECTRICITY = CO2_FACTORS.electricity / 1000;
@@ -74,6 +86,8 @@ export function calculateSolarPotential(
   return {
     // RetrofitMeasure fields
     id: `solar-pv-${roofType}`,
+    // P1-02: one shared "solar-pv" lifetime applies to all roof variants.
+    lifetimeYears: MEASURE_LIFETIMES['solar-pv'],
     category: 'renewable',
     name: `Solar PV (${roofType} roof, ${systemSizeKWp.toFixed(1)} kWp)`,
     description: `Solar PV system (${roofType} roof, ${systemSizeKWp.toFixed(1)} kWp)`,
@@ -82,10 +96,27 @@ export function calculateSolarPotential(
     annualCostSaving,
     co2Reduction,
     paybackYears,
+    // P2-10 (c)/(e): split the blended saving so the DCF escalates each stream
+    // correctly — self-consumption tracks the retail electricity price while the
+    // feed-in portion is a fixed tariff, and both fade with panel degradation.
+    escalationComponents: [
+      {
+        amount: annualSelfConsumptionRevenue,
+        fuel: 'electricity',
+        degradationRate: PANEL_DEGRADATION_RATE,
+      },
+      {
+        amount: annualFeedInRevenue,
+        escalation: 0, // fixed SMP/REC tariff — does not escalate
+        degradationRate: PANEL_DEGRADATION_RATE,
+      },
+    ],
     // SolarPVResult-specific fields
     systemSizeKWp,
     annualGenerationKWh,
     roofUtilization,
     feedInTariffRate,
+    annualSelfConsumptionRevenue,
+    annualFeedInRevenue,
   };
 }

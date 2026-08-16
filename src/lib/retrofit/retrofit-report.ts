@@ -4,13 +4,15 @@
 import type { RetrofitMeasure } from '@/lib/retrofit/retrofit-types';
 import type { EconomicAssumptions } from '@/lib/retrofit/economic-model';
 import { computeFinancials } from '@/lib/retrofit/economic-model';
+import { dampPortfolioSavings } from '@/lib/retrofit/measure-interactions';
 
 export interface CumulativeSaving {
   measureId: string;
   description: string;
   cumulativeInvestment: number;
   cumulativeAnnualSaving: number;
-  cumulativePayback: number;
+  /** Years; `null` when cumulative annual cost saving is 0 (no payback claim). */
+  cumulativePayback: number | null;
 }
 
 export interface RetrofitReport {
@@ -20,7 +22,13 @@ export interface RetrofitReport {
     totalAnnualSaving: number;      // kWh/year
     totalAnnualCostSaving: number;  // KRW/year
     totalCO2Reduction: number;      // tCO2/year
-    portfolioPayback: number;       // years (total cost / total annual cost saving)
+    /**
+     * Years (total cost / total annual cost saving). `null` when total annual
+     * cost saving ≤ 0 — never a fabricated 0 ("instant payback") and never
+     * Infinity (not JSON-serializable). Audit finding #10 honesty is preserved
+     * by refusing a 0; P0-02 uses null instead of Infinity.
+     */
+    portfolioPayback: number | null;
     /**
      * Sum of per-measure NPV when the report was assembled with
      * EconomicAssumptions. Absent for legacy callers.
@@ -69,24 +77,27 @@ export function assembleRetrofitReport(
     renewable: sorted.filter((m) => m.category === 'renewable'),
   };
 
-  // Portfolio summary
+  // Portfolio summary — P1-01: totals are DAMPED for overlapping
+  // heating-demand measures (envelope ↔ HRV/boiler). Per-measure fields keep
+  // their generated semantics; only these aggregates are damped.
+  const damped = dampPortfolioSavings(sorted);
   const totalInvestment = sorted.reduce((sum, m) => sum + m.estimatedCost, 0);
-  const totalAnnualSaving = sorted.reduce((sum, m) => sum + m.annualEnergySaving, 0);
-  const totalAnnualCostSaving = sorted.reduce((sum, m) => sum + m.annualCostSaving, 0);
-  const totalCO2Reduction = sorted.reduce((sum, m) => sum + m.co2Reduction, 0);
-  // Zero savings → the portfolio NEVER pays back: Infinity, not 0
-  // ("instant payback") as the old code claimed (audit finding #10).
+  const totalAnnualSaving = damped.totalAnnualSaving;
+  const totalAnnualCostSaving = damped.totalAnnualCostSaving;
+  const totalCO2Reduction = damped.totalCO2Reduction;
   const portfolioPayback =
-    totalAnnualCostSaving > 0 ? totalInvestment / totalAnnualCostSaving : Infinity;
+    totalAnnualCostSaving > 0 ? totalInvestment / totalAnnualCostSaving : null;
 
-  // Cumulative savings: running totals ordered by payback
+  // Cumulative savings: running totals ordered by payback (display order),
+  // using the per-measure DAMPED values (damping attributed in physical
+  // order envelope → hvac by the helper, independent of display order).
   let runCost = 0;
   let runSaving = 0;
   const cumulativeSavings: CumulativeSaving[] = sorted.map((m) => {
+    const dampedEntry = damped.dampedByMeasureId.get(m.id);
     runCost += m.estimatedCost;
-    runSaving += m.annualCostSaving;
-    // Same correction as portfolioPayback: no savings yet → not paid back.
-    const cumulativePayback = runSaving > 0 ? runCost / runSaving : Infinity;
+    runSaving += dampedEntry?.cost ?? m.annualCostSaving;
+    const cumulativePayback = runSaving > 0 ? runCost / runSaving : null;
     return {
       measureId: m.id,
       description: m.description,

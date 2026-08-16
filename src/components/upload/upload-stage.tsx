@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Upload, FileBox, AlertCircle, ArrowLeft, ArrowRight, Eye, PencilRuler } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useTwinProvenanceStore } from "@/store/twin-provenance-store";
@@ -21,6 +21,7 @@ import type { CadDocument } from "@/lib/cad/doc/types";
 import { useCadViewerStore } from "@/store/cad-viewer-store";
 import { useCadDraftStore } from "@/store/cad-draft-store";
 import { CadViewer } from "@/components/cad-viewer/cad-viewer";
+import { getWorkflowMode } from "@/lib/workflow/cad-draft";
 import { FootprintPreview } from "./footprint-preview";
 import { LayerPicker } from "./layer-picker";
 import { PdfTracer } from "./pdf-tracer";
@@ -36,12 +37,8 @@ type UploadStatus =
   | { kind: "ready"; polygon: Polygon2D; layer: string; areaSqm: number; warnings: string[] }
   | { kind: "error"; message: string };
 
-function t(ko: string, en: string, isKo: boolean): string {
-  return isKo ? ko : en;
-}
-
 export function UploadStage() {
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { t, lang } = useT();
   const [dragOver, setDragOver] = useState(false);
   const [status, setStatus] = useState<UploadStatus>({ kind: "idle" });
   const [pendingLayer, setPendingLayer] = useState<string | null>(null);
@@ -55,10 +52,15 @@ export function UploadStage() {
   const [savedDraft, setSavedDraft] = useState<CadDocument | null>(null);
 
   const buildingPk = useActiveBuildingPk();
+  // P2-24 — cad-first drafts have no ledger: no search stage behind us, and
+  // no "continue without CAD" escape hatch (the drawing IS the entry point).
+  const mode = getWorkflowMode(buildingPk);
+  const isCadFirst = mode === "cad-first";
   const setOverride = useRecipeStore((s) => s.setOverride);
   const patchProvenance = useTwinProvenanceStore((s) => s.patch);
   const advance = useWorkflowStore((s) => s.advance);
   const retreat = useWorkflowStore((s) => s.retreat);
+  const skipCad = useWorkflowStore((s) => s.skipCad);
 
   // useActiveBuildingPk returns "" (not undefined) before the material store
   // hydrates — || catches both. The effect re-runs when the pk arrives, so
@@ -91,7 +93,6 @@ export function UploadStage() {
           message: t(
             "닫힌 외곽 폴리라인을 찾지 못했습니다. 뷰어에서 열어 선을 결합(Join)하면 바닥 외곽선이 됩니다.",
             "No closed outline polyline found. Open the drawing and Join touching lines to make a floor outline.",
-            isKo
           ),
         });
         return;
@@ -113,7 +114,7 @@ export function UploadStage() {
         });
       }
     },
-    [isKo]
+    [t]
   );
 
   const loadSampleDrawing = useCallback(async () => {
@@ -129,11 +130,10 @@ export function UploadStage() {
         message: t(
           "샘플 도면을 불러오지 못했습니다. 다시 시도하거나 파일을 직접 올리세요.",
           "Could not load the sample drawing. Try again or upload your own file.",
-          isKo,
         ),
       });
     }
-  }, [ingestDxf, isKo]);
+  }, [ingestDxf, t]);
 
   const processFile = useCallback(
     async (file: File) => {
@@ -146,7 +146,6 @@ export function UploadStage() {
           message: t(
             `지원하지 않는 파일 형식: ${ext}`,
             `Unsupported file type: ${ext}`,
-            isKo
           ),
         });
         return;
@@ -158,7 +157,6 @@ export function UploadStage() {
           message: t(
             "파일 크기가 50MB를 초과합니다",
             "File exceeds 50 MB limit",
-            isKo
           ),
         });
         return;
@@ -178,7 +176,7 @@ export function UploadStage() {
           const buf = await file.arrayBuffer();
           setStatus({ kind: "pdf-tracing", pdfBytes: buf });
         } else {
-          // .dwg — validate header client-side, then round-trip through server.
+          // .dwg — validate header, then LibreDWG / server round-trip.
           const parsed = await parseDwgFile(file);
           setCadDoc(
             parsed.dxfText ? mapDxfTextToDoc(parsed.dxfText, file.name) : null,
@@ -191,7 +189,6 @@ export function UploadStage() {
                 t(
                   "DWG 변환에 실패했습니다. .dxf로 내보내어 다시 업로드하세요.",
                   "DWG conversion failed. Export as .dxf and upload again.",
-                  isKo,
                 ),
             });
             return;
@@ -220,7 +217,7 @@ export function UploadStage() {
         });
       }
     },
-    [ingestDxf, isKo]
+    [ingestDxf, t]
   );
 
   const handleDrop = useCallback(
@@ -280,7 +277,6 @@ export function UploadStage() {
         message: t(
           "활성 건물이 없습니다. 검색 단계로 돌아가 건물을 선택하세요.",
           "No active building. Return to search and pick a building first.",
-          isKo
         ),
       });
       return;
@@ -303,8 +299,26 @@ export function UploadStage() {
       hasCadFootprint: true,
       hasCadPlan,
     });
-    advance({ footprintPolygon: rings });
-  }, [status, buildingPk, setOverride, advance, isKo, cadDoc, patchProvenance]);
+    advance({ mode, footprintPolygon: rings });
+  }, [status, buildingPk, setOverride, advance, mode, t, cadDoc, patchProvenance]);
+
+  // P2-17 — proceed without a CAD drawing: the twin falls back to the
+  // public-data (ledger/VWorld) footprint the viewer already uses when no
+  // override exists. No footprint override is written.
+  const skipAndAdvance = useCallback(() => {
+    if (!buildingPk) {
+      setStatus({
+        kind: "error",
+        message: t(
+          "활성 건물이 없습니다. 검색 단계로 돌아가 건물을 선택하세요.",
+          "No active building. Return to search and pick a building first.",
+        ),
+      });
+      return;
+    }
+    skipCad(buildingPk);
+    advance({ cadSkipped: true });
+  }, [buildingPk, skipCad, advance, t]);
 
   return (
     <div className="flex h-full w-full flex-col items-center justify-start overflow-auto bg-background p-8">
@@ -314,14 +328,13 @@ export function UploadStage() {
           <div className="flex items-center gap-2">
             <FileBox className="h-5 w-5" />
             <h2 className="text-lg font-semibold">
-              {t("도면 업로드", "Upload CAD Floor Plan", isKo)}
+              {t("도면 업로드", "Upload CAD Floor Plan")}
             </h2>
           </div>
           <p className="text-sm text-muted-foreground">
             {t(
               "선택한 건물의 CAD 외곽 도면을 업로드하세요. 업로드한 외곽선이 디지털 트윈의 바닥 폴리곤으로 사용됩니다.",
               "Upload the CAD outline for the selected building. The uploaded footprint will drive the digital twin geometry.",
-              isKo
             )}
           </p>
         </div>
@@ -348,15 +361,17 @@ export function UploadStage() {
           />
           <div className="text-center">
             <p className="text-sm font-medium">
-              {t("파일을 끌어다 놓거나", "Drag and drop a file, or", isKo)}
+              {t("파일을 끌어다 놓거나", "Drag and drop a file, or")}
             </p>
             <label className="cursor-pointer">
               <span className="text-sm text-primary underline">
-                {t("파일 선택", "browse", isKo)}
+                {t("파일 선택", "browse")}
               </span>
               <input
                 type="file"
-                className="hidden"
+                // P1-07 (e): sr-only (not `hidden`) keeps the input in the tab
+                // order so the "browse" affordance is keyboard-reachable.
+                className="sr-only"
                 accept=".dxf,.dwg,.pdf"
                 onChange={handleFileInput}
                 data-testid="upload-file-input"
@@ -380,8 +395,8 @@ export function UploadStage() {
           >
             <PencilRuler className="mr-1.5 h-4 w-4" />
             {savedDraft
-              ? t("도면 계속 그리기", "Continue drawing", isKo)
-              : t("새 도면 그리기", "Draw new plan", isKo)}
+              ? t("도면 계속 그리기", "Continue drawing")
+              : t("새 도면 그리기", "Draw new plan")}
           </Button>
           <Button
             type="button"
@@ -389,7 +404,7 @@ export function UploadStage() {
             data-testid="upload-sample-dxf"
             onClick={() => void loadSampleDrawing()}
           >
-            {t("샘플 도면으로 시작", "Start with a sample plan", isKo)}
+            {t("샘플 도면으로 시작", "Start with a sample plan")}
           </Button>
         </div>
 
@@ -397,7 +412,7 @@ export function UploadStage() {
         {status.kind === "parsing" && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            {t("도면 처리 중…", "Processing drawing…", isKo)}
+            {t("도면 처리 중…", "Processing drawing…")}
           </div>
         )}
 
@@ -427,7 +442,7 @@ export function UploadStage() {
               }}
             >
               <Eye className="mr-1.5 h-4 w-4" />
-              {t("뷰어에서 열기", "Open in viewer", isKo)}
+              {t("뷰어에서 열기", "Open in viewer")}
             </Button>
           </div>
         )}
@@ -439,7 +454,7 @@ export function UploadStage() {
             selectedLayer={pendingLayer}
             onPreview={handleLayerPreview}
             onConfirm={handleLayerConfirm}
-            lang={isKo ? "ko" : "en"}
+            lang={lang}
           />
         )}
 
@@ -448,7 +463,7 @@ export function UploadStage() {
           <PdfTracer
             pdfBytes={status.pdfBytes}
             onConfirm={handlePdfConfirm}
-            lang={isKo ? "ko" : "en"}
+            lang={lang}
           />
         )}
 
@@ -458,10 +473,10 @@ export function UploadStage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-semibold">
-                  {t("외곽선 준비 완료", "Footprint ready", isKo)}
+                  {t("외곽선 준비 완료", "Footprint ready")}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {t("레이어", "Layer", isKo)}: <code>{status.layer}</code>
+                  {t("레이어", "Layer")}: <code>{status.layer}</code>
                   {" · "}
                   {status.areaSqm.toFixed(0)} m²
                 </div>
@@ -480,26 +495,52 @@ export function UploadStage() {
           </div>
         )}
 
-        {/* Navigation */}
+        {/* Navigation — cad-first drafts have no search stage and no skip path */}
         <div className="flex items-center justify-between pt-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => retreat()}
-          >
-            <ArrowLeft className="mr-1.5 h-4 w-4" />
-            {t("검색으로 돌아가기", "Back to search", isKo)}
-          </Button>
-          <Button
-            type="button"
-            disabled={status.kind !== "ready" || !buildingPk}
-            onClick={commitAndAdvance}
-            data-testid="upload-continue"
-          >
-            {t("트윈으로 계속", "Continue to Twin", isKo)}
-            <ArrowRight className="ml-1.5 h-4 w-4" />
-          </Button>
+          {isCadFirst ? (
+            <span />
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => retreat()}
+            >
+              <ArrowLeft className="mr-1.5 h-4 w-4" />
+              {t("검색으로 돌아가기", "Back to search")}
+            </Button>
+          )}
+          <div className="flex items-center gap-2">
+            {!isCadFirst && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={skipAndAdvance}
+                data-testid="upload-skip"
+              >
+                {t("CAD 없이 계속", "Continue without CAD")}
+              </Button>
+            )}
+            <Button
+              type="button"
+              disabled={status.kind !== "ready" || !buildingPk}
+              onClick={commitAndAdvance}
+              data-testid="upload-continue"
+            >
+              {isCadFirst
+                ? t("정보 입력으로 계속", "Continue to Building Info")
+                : t("트윈으로 계속", "Continue to Twin")}
+              <ArrowRight className="ml-1.5 h-4 w-4" />
+            </Button>
+          </div>
         </div>
+        {!isCadFirst && (
+          <p className="text-right text-xs text-muted-foreground">
+            {t(
+              "도면이 없어도 진행할 수 있습니다 — 트윈은 공공데이터(건축물대장) 외곽선으로 생성되며, 정밀도가 낮을 수 있습니다.",
+              "No drawing? You can continue — the twin will use the public-data (building ledger) footprint, which may be less precise.",
+            )}
+          </p>
+        )}
       </div>
 
       {/* Full-screen CAD viewer (renders only while a doc is open) */}

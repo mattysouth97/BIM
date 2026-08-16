@@ -7,11 +7,12 @@ import { useLayerStore } from "@/store/layer-store";
 import { LayerManager } from "@/lib/layers/layer-manager";
 import { ALL_LAYER_IDS, MEP_SUB_IDS } from "@/lib/layers/types";
 import { useEnergyBreakdown } from "@/hooks/use-energy-breakdown";
-import { useRecipeStore } from "@/store/recipe-store";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import {
   buildEnergyHeatmap,
   disposeHeatmapGroup,
 } from "@/lib/layers/energy-heatmap-builder";
+import { StructuralAnalysisLayer } from "@/lib/layers/layer-15-structural";
 import { CoolingLayer } from "@/lib/layers/layer-3-cooling";
 import { HeatingLayer } from "@/lib/layers/layer-4-heating";
 import { VentilationLayer } from "@/lib/layers/layer-5-ventilation";
@@ -39,6 +40,11 @@ import {
 } from "@/lib/layers/equipment-scenario";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "@/lib/layers/mep-equipment-params";
 import { useViewStore } from "@/lib/bim/views/view-store";
+import {
+  deriveVisualState,
+  RENEWED_EQUIPMENT_COLOR,
+  PROPOSAL_EMISSIVE,
+} from "@/lib/retrofit/measure-visuals";
 
 interface BuildingLayersProps {
   buildingPk?: string;
@@ -46,9 +52,13 @@ interface BuildingLayersProps {
 
 export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
   const managerRef = useRef<LayerManager | null>(null);
+  // P2-20 — original materials of tinted MEP meshes (clone-and-restore)
+  const mepTintOriginalsRef = useRef<Map<THREE.Mesh, THREE.Material | THREE.Material[]>>(new Map());
+  const appliedMeasureIds = useScenarioStore((s) => s.appliedMeasureIds);
 
   const visibility = useLayerStore((s) => s.visibility);
   const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
+  const airflowVisible = useLayerStore((s) => s.airflowVisible);
   const density = useLayerStore((s) => s.density);
   const activeViewId = useViewStore((s) => s.activeViewId);
   const views = useViewStore((s) => s.views);
@@ -60,8 +70,6 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
   // Heatmap data — call hooks unconditionally (Rules of Hooks); gate downstream work with pk check
   const pk = buildingPk ?? "";
   const breakdown = useEnergyBreakdown(pk);
-  const baseRecipe = useRecipeStore((s) => s.baseRecipes[pk]);
-  const overrides = useRecipeStore((s) => s.overrides[pk]);
 
   // Equipment params for MEP generators — snapshot-safe selector, falls back to defaults
   const equipmentParams = useEquipmentStore((s) => s.params[pk]) ?? DEFAULT_MEP_EQUIPMENT_PARAMS;
@@ -95,21 +103,10 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
   // the synchronous generators swap their coarse fallbacks for real models.
   const equipmentAssetsReady = useEquipmentAssets();
 
-  // Derive effective recipe geometry (footprint + floors) for heatmap sizing.
-  // Mirrors the merge logic in use-energy-breakdown.ts — footprint overrides only.
-  const effectiveRecipe = useMemo(() => {
-    if (!baseRecipe) return undefined;
-    if (!overrides) return baseRecipe;
-    return {
-      ...baseRecipe,
-      ...(overrides.footprintWidth !== undefined
-        ? { footprintWidth: overrides.footprintWidth }
-        : {}),
-      ...(overrides.footprintDepth !== undefined
-        ? { footprintDepth: overrides.footprintDepth }
-        : {}),
-    };
-  }, [baseRecipe, overrides]);
+  // P1-08 (a): single canonical merge for heatmap sizing — this was the
+  // SIXTH hand-copied merge block (found by the fitness grep, missed by the
+  // review's count of five).
+  const effectiveRecipe = useEffectiveRecipe(pk);
 
   // Create LayerManager once
   if (managerRef.current == null) {
@@ -302,6 +299,96 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     const gasOutput = new GasLayer().generate(effectiveRecipe, mepDensity);
     assignToSubGroup(mepGroup, gasOutput.name, gasOutput);
   }, [effectiveRecipe, equipmentParams, density, equipmentAssetsReady, equipmentScenario]);
+
+  // P2-22 — KBC 2016 structural analysis overlay (stress-colored columns,
+  // animated load-path arrows, foundation markers). The layer class existed
+  // since Phase 22 but was never instantiated — StructuralTooltip searched
+  // for a group no code created. Mounted under the "structure" layer group
+  // so the existing structure toggle controls it alongside slabs/columns;
+  // updateAnimations() picks up its uTime arrow shaders automatically.
+  // Hide only the batched streamline object, leaving HVAC equipment mounted.
+  // Re-apply after any MEP regeneration so the user's preference is stable.
+  useEffect(() => {
+    managerRef.current?.setAirflowVisible(airflowVisible);
+  }, [airflowVisible, effectiveRecipe, equipmentParams, density]);
+
+  const structuralLayerRef = useRef<StructuralAnalysisLayer | null>(null);
+  useEffect(() => {
+    const manager = managerRef.current;
+    if (!manager || !effectiveRecipe) return;
+
+    const structureGroup = manager.getGroup("structure");
+    structuralLayerRef.current?.dispose();
+    const layer = new StructuralAnalysisLayer();
+    const group = layer.generate(effectiveRecipe);
+    structuralLayerRef.current = layer;
+    structureGroup.add(group);
+
+    return () => {
+      structureGroup.remove(group);
+      layer.dispose();
+      structuralLayerRef.current = null;
+    };
+  }, [effectiveRecipe]);
+
+  // P2-20 — applied HVAC/lighting measures recolor their MEP sub-groups to
+  // "new equipment" green. Materials are cloned per-mesh (they are shared
+  // within a sub-layer) and originals restored when the measure is
+  // un-applied. Declared AFTER the generation effect so a regeneration in
+  // the same commit is re-tinted; ShaderMaterial children (animated flows)
+  // are left untouched.
+  useEffect(() => {
+    const manager = managerRef.current;
+    if (!manager) return;
+    const originals = mepTintOriginalsRef.current;
+
+    const restoreAll = () => {
+      for (const [mesh, original] of originals) {
+        if (mesh.material !== original && !Array.isArray(mesh.material)) {
+          mesh.material.dispose();
+        }
+        mesh.material = original;
+      }
+      originals.clear();
+    };
+    restoreAll();
+
+    const v = deriveVisualState(appliedMeasureIds);
+    const targets: string[] = [];
+    if (v.hvacUpgraded) targets.push("sub-mep-hvac");
+    if (v.lightingUpgraded) targets.push("sub-mep-lighting");
+    if (targets.length === 0) return;
+
+    const mepGroup = manager.getGroup("mep");
+    for (const child of mepGroup.children) {
+      if (!(child instanceof THREE.Group) || !targets.includes(child.name)) continue;
+      const isLighting = child.name === "sub-mep-lighting";
+      child.traverse((obj) => {
+        if (!(obj instanceof THREE.Mesh)) return;
+        if (Array.isArray(obj.material)) return;
+        if (!(obj.material instanceof THREE.MeshStandardMaterial)) return;
+        originals.set(obj, obj.material);
+        const clone = obj.material.clone();
+        if (isLighting) {
+          // P2-23 — new LED fixtures: actually LIT (bright neutral white
+          // with a mint hint as the "proposed" differentiator)
+          clone.color.set("#ffffff");
+          clone.emissive.set("#e6fff4");
+          clone.emissiveIntensity = 0.65;
+        } else {
+          // P2-23 — replacement HVAC plant: clean factory-new metal housing
+          // with the shared proposal accent
+          clone.color.lerp(new THREE.Color(RENEWED_EQUIPMENT_COLOR), 0.65);
+          clone.metalness = Math.max(clone.metalness, 0.45);
+          clone.roughness = Math.min(clone.roughness, 0.35);
+          clone.emissive.set(PROPOSAL_EMISSIVE);
+          clone.emissiveIntensity = 0.15;
+        }
+        obj.material = clone;
+      });
+    }
+    return restoreAll;
+  }, [appliedMeasureIds, effectiveRecipe, equipmentParams, density]);
 
   // Animation loop — update ShaderMaterial uniforms each frame
   useFrame((state) => {

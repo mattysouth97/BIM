@@ -6,7 +6,7 @@
 // When actual energy data is available, shows modeled vs actual comparison with delta indicators.
 
 import { useRef, useEffect, useCallback } from "react";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { useNarrowViewport } from "@/hooks/use-narrow-viewport";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
@@ -16,7 +16,9 @@ import { Button } from "@/components/ui/button";
 import { generateECO2Input, downloadECO2File, buildSubSystems } from "@/lib/energy/eco2-export";
 import { parseECO2Result } from "@/lib/energy/eco2-import";
 import { useMaterialStore } from "@/store/material-store";
-import { useRecipeStore } from "@/store/recipe-store";
+import { useWorkspaceStore } from "@/store/workspace-store";
+import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import type { EnergyGrade } from "@/lib/energy/energy-grade";
 
 interface EnergyCardsProps {
@@ -105,24 +107,21 @@ function DeltaIndicator({
   actual,
   suffix = "",
   decimals = 1,
-  isKo,
 }: {
   modeled: number;
   actual: number;
   suffix?: string;
   decimals?: number;
-  isKo: boolean;
 }) {
   const delta = modeled - actual;
   // Green when modeled <= actual (conservative estimate), red when modeled > actual (optimistic)
   const isConservative = delta <= 0;
   const color = isConservative ? "text-green-600" : "text-red-500";
   const sign = delta > 0 ? "+" : "";
-  const label = isKo ? "\u0394" : "\u0394";
 
   return (
     <span className={`text-[10px] font-medium tabular-nums ${color}`}>
-      {label}
+      {"\u0394"}
       {sign}
       {delta.toFixed(decimals)}
       {suffix}
@@ -131,10 +130,10 @@ function DeltaIndicator({
 }
 
 /** Small badge indicating actual data presence */
-function ActualDataBadge({ isKo }: { isKo: boolean }) {
+function ActualDataBadge({ label }: { label: string }) {
   return (
     <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-700 text-[8px] font-medium px-1.5 py-0.5 leading-none">
-      {isKo ? "실측 데이터" : "Actual data"}
+      {label}
     </span>
   );
 }
@@ -150,43 +149,19 @@ function SkeletonCards() {
 }
 
 export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps) {
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { t } = useT();
   const narrow = useNarrowViewport();
-  const metrics = useEnergyMetrics(buildingPk);
+  const leftDockOpen = useWorkspaceStore((s) => s.leftDockOpen);
+  // P1-08 (d): same regional climate as every other panel.
+  const sigunguCd = useActiveSigunguCd();
+  const metrics = useEnergyMetrics(buildingPk, sigunguCd);
   const actual = useActualEnergy(buildingPk);
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
-  const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
-  const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const effectiveRecipe = baseRecipe
-    ? overrides
-      ? {
-          ...baseRecipe,
-          ...(overrides.footprintWidth !== undefined
-            ? { footprintWidth: overrides.footprintWidth }
-            : {}),
-          ...(overrides.footprintDepth !== undefined
-            ? { footprintDepth: overrides.footprintDepth }
-            : {}),
-          ...(overrides.wallThickness !== undefined
-            ? { wallThickness: overrides.wallThickness }
-            : {}),
-          ...(overrides.facade
-            ? { facade: { ...baseRecipe.facade, ...overrides.facade } }
-            : {}),
-          ...(overrides.slab
-            ? { slab: { ...baseRecipe.slab, ...overrides.slab } }
-            : {}),
-          ...(overrides.column
-            ? { column: { ...baseRecipe.column, ...overrides.column } }
-            : {}),
-          ...(overrides.roof
-            ? { roof: { ...baseRecipe.roof, ...overrides.roof } }
-            : {}),
-        }
-      : baseRecipe
-    : undefined;
+  // P1-08 (a): single canonical merge — the ECO2 export now carries
+  // footprintPolygon overrides instead of silently dropping them.
+  const effectiveRecipe = useEffectiveRecipe(buildingPk);
 
   const handleExport = useCallback(() => {
     if (!materials || !effectiveRecipe || !metrics) return;
@@ -210,20 +185,19 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
         const text = reader.result as string;
         const result = parseECO2Result(text);
         if (result) {
-          const gradeLabel = isKo
-            ? `등급: ${result.grade}, 수요: ${result.demand.toFixed(1)} kWh/m2yr, CO2: ${result.co2.toFixed(1)} kgCO2/m2yr`
-            : `Grade: ${result.grade}, Demand: ${result.demand.toFixed(1)} kWh/m2yr, CO2: ${result.co2.toFixed(1)} kgCO2/m2yr`;
-          alert(
-            isKo
-              ? `ECO2 결과 가져오기 성공\n${gradeLabel}`
-              : `ECO2 result imported successfully\n${gradeLabel}`
+          const gradeLabel = t(
+            `등급: ${result.grade}, 수요: ${result.demand.toFixed(1)} kWh/m2yr, CO2: ${result.co2.toFixed(1)} kgCO2/m2yr`,
+            `Grade: ${result.grade}, Demand: ${result.demand.toFixed(1)} kWh/m2yr, CO2: ${result.co2.toFixed(1)} kgCO2/m2yr`
           );
+          alert(t(
+            `ECO2 결과 가져오기 성공\n${gradeLabel}`,
+            `ECO2 result imported successfully\n${gradeLabel}`
+          ));
         } else {
-          alert(
-            isKo
-              ? "ECO2 파일을 파싱할 수 없습니다."
-              : "Could not parse ECO2 result file."
-          );
+          alert(t(
+            "ECO2 파일을 파싱할 수 없습니다.",
+            "Could not parse ECO2 result file."
+          ));
         }
       };
       reader.readAsText(file);
@@ -231,7 +205,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
       // Reset input so same file can be imported again
       e.target.value = "";
     },
-    [isKo]
+    [t]
   );
 
   if (narrow) return null;
@@ -239,7 +213,11 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
   if (!metrics) {
     if (variant === "strip") return null;
     return (
-      <div className="px-3 py-2">
+      <div
+        className={`absolute bottom-4 z-10 transition-[left] duration-200 ${
+          leftDockOpen ? "hidden 2xl:block 2xl:left-[368px]" : "left-4"
+        }`}
+      >
         <SkeletonCards />
       </div>
     );
@@ -287,7 +265,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
           </Button>
           <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={handleImport}>
             <Upload className="mr-1 h-3 w-3" />
-            {isKo ? "가져오기" : "Import"}
+            {t("가져오기", "Import")}
           </Button>
         </div>
         <input
@@ -302,14 +280,18 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
   }
 
   return (
-    <div className="flex flex-col gap-2 p-3">
+    <div
+      className={`absolute bottom-4 z-10 flex-col gap-2 pointer-events-auto transition-[left] duration-200 ${
+        leftDockOpen ? "hidden 2xl:flex 2xl:left-[368px]" : "left-4 flex"
+      }`}
+    >
       {/* Actual data badge */}
       {hasActual && (
         <div className="flex items-center gap-1.5">
-          <ActualDataBadge isKo={isKo} />
+          <ActualDataBadge label={t("실측 데이터", "Actual data")} />
           {actual.isLoading && (
             <span className="text-[9px] text-muted-foreground animate-pulse">
-              {isKo ? "로딩..." : "Loading..."}
+              {t("로딩...", "Loading...")}
             </span>
           )}
 
@@ -319,7 +301,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
       {/* Card 1: Energy Grade */}
       <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-56">
         <p className="text-[10px] text-muted-foreground mb-1">
-          {isKo ? "에너지효율등급" : "Energy Grade"}
+          {t("에너지효율등급", "Energy Grade")}
         </p>
         <div className="flex items-center gap-2">
           <span
@@ -330,13 +312,11 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
           </span>
           <div className="flex flex-col">
             <span className="text-xs text-muted-foreground">
-              {isKo
-                ? `${GRADE_NAME_KO[grade]} (모델)`
-                : `Grade ${grade} (modeled)`}
+              {t(`${GRADE_NAME_KO[grade]} (모델)`, `Grade ${grade} (modeled)`)}
             </span>
             {hasActualGrade ? null : hasActual ? (
               <span className="text-[9px] text-muted-foreground/60 italic">
-                {isKo ? "등급 데이터 없음" : "No grade data"}
+                {t("등급 데이터 없음", "No grade data")}
               </span>
             ) : null}
           </div>
@@ -346,19 +326,22 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
       {/* Card 2: Annual Energy Demand */}
       <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-56">
         <p className="text-[10px] text-muted-foreground mb-1">
-          {isKo ? "연간 에너지 수요" : "Annual Energy Demand"}
+          {t("연간 에너지 수요", "Annual Energy Demand")}
         </p>
         <p className="text-sm font-semibold tabular-nums">
           <AnimatedValue value={demand.demandPerSqm} suffix=" kWh/m²·yr" />
         </p>
         {hasActual ? (
           <p className="text-[9px] text-muted-foreground/60 italic mt-0.5">
-            {isKo ? "실측 수요 데이터 없음" : "No actual demand data"}
+            {t("실측 수요 데이터 없음", "No actual demand data")}
           </p>
+        ) : null}
+        {hasActualDemand ? (
+          <DeltaIndicator modeled={demand.demandPerSqm} actual={0} suffix=" kWh/m²·yr" />
         ) : null}
         <div className="mt-1 flex gap-3 text-[10px] text-muted-foreground">
           <span>
-            {isKo ? "난방" : "Heat"}{" "}
+            {t("난방", "Heat")}{" "}
             <span className="font-medium text-foreground tabular-nums">
               {demand.heatingDemand > 0
                 ? (demand.heatingDemand / 1000).toFixed(1)
@@ -367,7 +350,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
             </span>
           </span>
           <span>
-            {isKo ? "냉방" : "Cool"}{" "}
+            {t("냉방", "Cool")}{" "}
             <span className="font-medium text-foreground tabular-nums">
               {demand.coolingDemand > 0
                 ? (demand.coolingDemand / 1000).toFixed(1)
@@ -381,22 +364,23 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
       {/* Card 3: CO2 Emissions */}
       <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-56">
         <p className="text-[10px] text-muted-foreground mb-1">
-          {isKo ? "CO₂ 배출량" : "CO₂ Emissions"}
+          {t("CO₂ 배출량", "CO₂ Emissions")}
         </p>
         <p className="text-sm font-semibold tabular-nums">
           <AnimatedValue value={co2.co2PerSqm} suffix=" kgCO₂/m²·yr" />
         </p>
         {null}
         <p className="text-[10px] text-muted-foreground mt-0.5">
-          ≈ {treeEquivalent.toFixed(1)}{" "}
-          {isKo ? "그루 나무/m² 필요" : "trees/m² needed"}
+          {"≈ "}
+          {treeEquivalent.toFixed(1)}{" "}
+          {t("그루 나무/m² 필요", "trees/m² needed")}
         </p>
       </div>
 
       {/* Card 4: Heat Loss (no actual comparison) */}
       <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-56">
         <p className="text-[10px] text-muted-foreground mb-1">
-          {isKo ? "열손실" : "Heat Loss"}
+          {t("열손실", "Heat Loss")}
         </p>
         <p className="text-sm font-semibold tabular-nums">
           <AnimatedValue
@@ -408,15 +392,10 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
         <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
           {breakdown.map((b) => (
             <span key={b.label}>
-              {isKo
-                ? b.label === "Walls"
-                  ? "벽"
-                  : b.label === "Windows"
-                    ? "창"
-                    : b.label === "Roof"
-                      ? "지붕"
-                      : "바닥"
-                : b.label.split(" ")[0]}
+              {t(
+                b.label === "Walls" ? "벽" : b.label === "Windows" ? "창" : b.label === "Roof" ? "지붕" : "바닥",
+                b.label.split(" ")[0]
+              )}
               {" "}
               <span className="font-medium text-foreground tabular-nums">
                 {b.pct.toFixed(0)}%
@@ -433,20 +412,20 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
           size="sm"
           className="h-7 text-[10px] flex-1"
           onClick={handleExport}
-          title={isKo ? "ECO2 입력 파일 내보내기" : "Export ECO2 Input File"}
+          title={t("ECO2 입력 파일 내보내기", "Export ECO2 Input File")}
         >
           <Download className="h-3 w-3 mr-1" />
-          {isKo ? "ECO2 내보내기" : "ECO2 Export"}
+          {t("ECO2 내보내기", "ECO2 Export")}
         </Button>
         <Button
           variant="secondary"
           size="sm"
           className="h-7 text-[10px] flex-1"
           onClick={handleImport}
-          title={isKo ? "ECO2 결과 가져오기" : "Import ECO2 Result"}
+          title={t("ECO2 결과 가져오기", "Import ECO2 Result")}
         >
           <Upload className="h-3 w-3 mr-1" />
-          {isKo ? "ECO2 가져오기" : "ECO2 Import"}
+          {t("ECO2 가져오기", "ECO2 Import")}
         </Button>
       </div>
 

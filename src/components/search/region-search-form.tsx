@@ -5,9 +5,9 @@ import { useMemo } from "react";
 import { Search } from "lucide-react";
 
 import regionData from "@/data/region-codes.json";
-import bjdongData from "@/data/bjdong-codes.json";
+import { useBjdongOptions } from "@/hooks/use-bjdong-options";
 import { SEARCH_USE_FILTERS } from "@/lib/constants";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -38,11 +38,8 @@ interface RegionSearchFormProps {
   isLoading?: boolean;
 }
 
-const bjdongMap = bjdongData as Record<string, { code: string; name: string }[]>;
-
 export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps) {
-  const language = useAppStore((s) => s.language);
-  const isKo = language === "ko";
+  const { t } = useT();
 
   const {
     control,
@@ -62,16 +59,13 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
 
   const selectedSido = watch("sidoCd");
   const selectedSigungu = watch("sigunguCd");
+  const { options: bjdongOptions, isLoading: isBjdongLoading } =
+    useBjdongOptions(selectedSigungu);
 
   const sigunguOptions = useMemo(() => {
     if (!selectedSido) return [];
     return (regionData.sigungu as Record<string, { code: string; name: string }[]>)[selectedSido] ?? [];
   }, [selectedSido]);
-
-  const bjdongOptions = useMemo(() => {
-    if (!selectedSigungu) return [];
-    return bjdongMap[selectedSigungu] ?? [];
-  }, [selectedSigungu]);
 
   const onSubmit = (values: RegionSearchValues) => {
     onSearch({
@@ -90,19 +84,20 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
     >
       <div className="border-b px-6 py-4">
         <h3 className="text-lg font-semibold">
-          {isKo ? "지역 검색 (Region Search)" : "Region Search"}
+          {t("지역 검색 (Region Search)", "Region Search")}
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          {isKo
-            ? "시/도, 시/군/구, 법정동을 선택하여 건축물 목록을 조회합니다."
-            : "Select province, city/district, and dong to browse building records."}
+          {t(
+            "시/도, 시/군/구, 법정동을 선택하여 건축물 목록을 조회합니다.",
+            "Select province, city/district, and dong to browse building records.",
+          )}
         </p>
       </div>
 
       <div className="grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-3">
         {/* 시/도 */}
         <div className="space-y-2">
-          <Label>{isKo ? "시/도" : "Province"}</Label>
+          <Label>{t("시/도", "Province")}</Label>
           <Controller
             control={control}
             name="sidoCd"
@@ -116,7 +111,7 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={isKo ? "시/도 선택" : "Select province"} />
+                  <SelectValue placeholder={t("시/도 선택", "Select province")} />
                 </SelectTrigger>
                 <SelectContent>
                   {regionData.sido.map((s) => (
@@ -133,7 +128,7 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
 
         {/* 시/군/구 */}
         <div className="space-y-2">
-          <Label>{isKo ? "시/군/구" : "City / District"}</Label>
+          <Label>{t("시/군/구", "City / District")}</Label>
           <Controller
             control={control}
             name="sigunguCd"
@@ -150,8 +145,8 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
                   <SelectValue
                     placeholder={
                       selectedSido
-                        ? isKo ? "시/군/구 선택" : "Select district"
-                        : isKo ? "시/도를 먼저 선택" : "Select province first"
+                        ? t("시/군/구 선택", "Select district")
+                        : t("시/도를 먼저 선택", "Select province first")
                     }
                   />
                 </SelectTrigger>
@@ -170,25 +165,31 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
 
         {/* 법정동 */}
         <div className="space-y-2">
-          <Label>{isKo ? "법정동" : "Dong (Legal District)"}</Label>
+          <Label>{t("법정동", "Dong (Legal District)")}</Label>
           <Controller
             control={control}
             name="bjdongCd"
-            rules={{ required: isKo ? "법정동을 선택하세요" : "Select a dong" }}
+            rules={{ required: t("법정동을 선택하세요", "Select a dong") }}
             render={({ field }) => (
               <Select
                 value={field.value}
                 onValueChange={field.onChange}
-                disabled={!selectedSigungu || bjdongOptions.length === 0}
+                disabled={
+                  !selectedSigungu ||
+                  isBjdongLoading ||
+                  bjdongOptions.length === 0
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue
                     placeholder={
                       !selectedSigungu
-                        ? isKo ? "시/군/구를 먼저 선택" : "Select district first"
-                        : bjdongOptions.length === 0
-                          ? isKo ? "동 데이터 없음" : "No dong data"
-                          : isKo ? "법정동 선택" : "Select dong"
+                        ? t("시/군/구를 먼저 선택", "Select district first")
+                        : isBjdongLoading
+                          ? t("법정동 데이터 불러오는 중...", "Loading dong data...")
+                          : bjdongOptions.length === 0
+                          ? t("동 데이터 없음", "No dong data")
+                          : t("법정동 선택", "Select dong")
                     }
                   />
                 </SelectTrigger>
@@ -207,20 +208,20 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
 
         {/* 용도 */}
         <div className="space-y-2">
-          <Label>{isKo ? "건물 용도" : "Building Use"}</Label>
+          <Label>{t("건물 용도", "Building Use")}</Label>
           <Controller
             control={control}
             name="mainPurpsCd"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={isKo ? "전체" : "All types"} />
+                  <SelectValue placeholder={t("전체", "All types")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{isKo ? "전체 (All)" : "All types"}</SelectItem>
+                  <SelectItem value="all">{t("전체 (All)", "All types")}</SelectItem>
                   {SEARCH_USE_FILTERS.map((f) => (
                     <SelectItem key={f.code} value={f.code}>
-                      {isKo ? `${f.ko} (${f.en})` : f.en}
+                      {t(`${f.ko} (${f.en})`, f.en)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -231,7 +232,7 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
 
         {/* 결과 수 */}
         <div className="space-y-2">
-          <Label>{isKo ? "결과 수" : "Per Page"}</Label>
+          <Label>{t("결과 수", "Per Page")}</Label>
           <Controller
             control={control}
             name="numOfRows"
@@ -246,7 +247,7 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
                 <SelectContent>
                   {[10, 20, 50, 100].map((n) => (
                     <SelectItem key={n} value={String(n)}>
-                      {n}{isKo ? "개" : " rows"}
+                      {n}{t("개", " rows")}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -260,8 +261,8 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
         <Button type="submit" disabled={isLoading} className="gap-2">
           <Search className="h-4 w-4" />
           {isLoading
-            ? isKo ? "검색 중..." : "Searching..."
-            : isKo ? "검색" : "Search"}
+            ? t("검색 중...", "Searching...")
+            : t("검색", "Search")}
         </Button>
       </div>
     </form>

@@ -150,7 +150,7 @@ export async function parseDwgFile(
     );
   }
 
-  // --- Try client-side WASM conversion first ------------------------------
+  // --- Tier 1: libdxfrw WASM (fast, 1.4 MB; best for R14–2013) ------------
   try {
     const dxfText = await convertDwgToDxf(buffer);
     if (dxfText) {
@@ -163,7 +163,21 @@ export async function parseDwgFile(
     warnings.push(`Client-side DWG conversion failed: ${msg}`);
   }
 
-  // --- Fallback: server round-trip ----------------------------------------
+  // --- Tier 2: LibreDWG WASM (10 MB lazy; reads modern AC1032 files) ------
+  try {
+    const { convertDwgViaLibreDwg } = await import("./libredwg-converter");
+    const dxfText = await convertDwgViaLibreDwg(buffer);
+    if (dxfText) {
+      const parsed = parseDxfText(dxfText);
+      return { ...parsed, warnings: [...warnings, ...parsed.warnings] };
+    }
+    warnings.push("LibreDWG conversion produced no DXF output.");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    warnings.push(`LibreDWG conversion failed: ${msg}`);
+  }
+
+  // --- Tier 3: server round-trip ------------------------------------------
   try {
     return await convertViaServer(file, warnings, options);
   } catch {
@@ -172,7 +186,7 @@ export async function parseDwgFile(
       unitScaleToMeters: 1,
       warnings: [
         ...warnings,
-        "DWG conversion failed. Export the DWG as DXF in your CAD tool and re-upload.",
+        "DWG conversion failed. In your CAD tool, save the file as 'AutoCAD 2013 DWG' or export it as DXF, then re-upload.",
       ],
     };
   }

@@ -23,34 +23,144 @@ const PIPE_SEGMENTS = 8;
 const SPLINE_DIVISIONS = 48;
 
 /**
- * Builds a merged chiller plant geometry:
- * - Body: BoxGeometry (main chiller cabinet)
- * - Grille: thinner BoxGeometry translated to +Z face (condenser grille)
- * - PipeA: CylinderGeometry rotated Z (supply stub at -Y offset)
- * - PipeB: CylinderGeometry rotated Z (return stub at +Y offset)
+ * Builds a merged packaged-chiller geometry with a condenser grille,
+ * service-panel seams, base rails, axial fans, and flanged pipe stubs.
  *
  * mergeGeometries called once — NOT in animation loop.
- * Pitfall 3: all primitives are standard (Box/Cylinder) — merge compatible.
+ * Pitfall 3: all primitives are standard Three.js geometries — merge compatible.
  * Pitfall 4: each sub-geometry is a new instance — never shared + translated.
  */
 export function buildChillerGeometry(p: ChillerParams): THREE.BufferGeometry {
   const body = new THREE.BoxGeometry(p.bodyWidth, p.bodyHeight, p.bodyDepth);
+  const parts: THREE.BufferGeometry[] = [body];
 
   // Condenser grille on front (+Z) face — thin box slightly protruding
   const grille = new THREE.BoxGeometry(p.bodyWidth * 0.9, p.bodyHeight * 0.9, 0.08);
   grille.translate(0, 0, p.bodyDepth / 2 + 0.04);
+  parts.push(grille);
+
+  const frontZ = p.bodyDepth / 2;
+  const seamThickness = Math.max(0.018, p.bodyWidth * 0.008);
+  for (const x of [-p.bodyWidth * 0.28, p.bodyWidth * 0.28]) {
+    const seam = new THREE.BoxGeometry(
+      seamThickness,
+      p.bodyHeight * 0.78,
+      Math.max(0.025, p.bodyDepth * 0.015)
+    );
+    seam.translate(x, 0, frontZ + 0.09);
+    parts.push(seam);
+  }
+
+  const lowerSeam = new THREE.BoxGeometry(
+    p.bodyWidth * 0.88,
+    seamThickness,
+    Math.max(0.025, p.bodyDepth * 0.015)
+  );
+  lowerSeam.translate(0, -p.bodyHeight * 0.28, frontZ + 0.09);
+  parts.push(lowerSeam);
+
+  const serviceHandle = new THREE.BoxGeometry(
+    Math.max(0.05, p.bodyWidth * 0.025),
+    p.bodyHeight * 0.16,
+    Math.max(0.04, p.bodyDepth * 0.025)
+  );
+  serviceHandle.translate(p.bodyWidth * 0.39, -p.bodyHeight * 0.08, frontZ + 0.11);
+  parts.push(serviceHandle);
+
+  const railHeight = Math.max(0.08, p.bodyHeight * 0.07);
+  const railDepth = Math.max(0.12, p.bodyDepth * 0.1);
+  for (const z of [-p.bodyDepth * 0.34, p.bodyDepth * 0.34]) {
+    const rail = new THREE.BoxGeometry(p.bodyWidth * 1.04, railHeight, railDepth);
+    rail.translate(0, -p.bodyHeight / 2 - railHeight / 2, z);
+    parts.push(rail);
+
+    for (const x of [-p.bodyWidth * 0.38, p.bodyWidth * 0.38]) {
+      const foot = new THREE.BoxGeometry(
+        Math.max(0.14, p.bodyWidth * 0.1),
+        railHeight * 0.7,
+        railDepth * 1.35
+      );
+      foot.translate(x, -p.bodyHeight / 2 - railHeight * 1.35, z);
+      parts.push(foot);
+    }
+  }
+
+  const fanRadius = Math.min(p.bodyWidth * 0.17, p.bodyDepth * 0.22);
+  const fanY = p.bodyHeight / 2 + Math.max(0.055, p.bodyHeight * 0.035);
+  for (const x of [-p.bodyWidth * 0.24, p.bodyWidth * 0.24]) {
+    const housing = new THREE.CylinderGeometry(
+      fanRadius * 1.08,
+      fanRadius * 1.08,
+      Math.max(0.08, p.bodyHeight * 0.06),
+      20
+    );
+    housing.translate(x, fanY, 0);
+    parts.push(housing);
+
+    const guard = new THREE.TorusGeometry(
+      fanRadius * 0.82,
+      Math.max(0.018, fanRadius * 0.06),
+      6,
+      24
+    );
+    guard.rotateX(Math.PI / 2);
+    guard.translate(x, fanY + Math.max(0.05, p.bodyHeight * 0.035), 0);
+    parts.push(guard);
+
+    const hub = new THREE.CylinderGeometry(
+      fanRadius * 0.18,
+      fanRadius * 0.18,
+      Math.max(0.07, p.bodyHeight * 0.05),
+      12
+    );
+    hub.translate(x, fanY + Math.max(0.055, p.bodyHeight * 0.04), 0);
+    parts.push(hub);
+
+    for (const angle of [Math.PI / 4, (Math.PI * 3) / 4]) {
+      const blades = new THREE.BoxGeometry(
+        fanRadius * 1.25,
+        Math.max(0.025, p.bodyHeight * 0.018),
+        Math.max(0.045, fanRadius * 0.16)
+      );
+      blades.rotateY(angle);
+      blades.translate(x, fanY + Math.max(0.06, p.bodyHeight * 0.043), 0);
+      parts.push(blades);
+    }
+  }
 
   // Supply pipe stub — horizontal cylinder at -Y on +X face
   const pipeA = new THREE.CylinderGeometry(p.pipeStubRadius, p.pipeStubRadius, 0.4, 8);
   pipeA.rotateZ(Math.PI / 2);
   pipeA.translate(p.bodyWidth / 2 + 0.2, -p.bodyHeight * 0.3, 0);
+  parts.push(pipeA);
 
   // Return pipe stub — horizontal cylinder at +Y on +X face
   const pipeB = new THREE.CylinderGeometry(p.pipeStubRadius * 0.8, p.pipeStubRadius * 0.8, 0.4, 8);
   pipeB.rotateZ(Math.PI / 2);
   pipeB.translate(p.bodyWidth / 2 + 0.2, p.bodyHeight * 0.3, 0);
+  parts.push(pipeB);
 
-  return mergeGeometries([body, grille, pipeA, pipeB]);
+  const supplyFlange = new THREE.CylinderGeometry(
+    p.pipeStubRadius * 1.45,
+    p.pipeStubRadius * 1.45,
+    0.06,
+    12
+  );
+  supplyFlange.rotateZ(Math.PI / 2);
+  supplyFlange.translate(p.bodyWidth / 2 + 0.37, -p.bodyHeight * 0.3, 0);
+  parts.push(supplyFlange);
+
+  const returnFlange = new THREE.CylinderGeometry(
+    p.pipeStubRadius * 1.18,
+    p.pipeStubRadius * 1.18,
+    0.06,
+    12
+  );
+  returnFlange.rotateZ(Math.PI / 2);
+  returnFlange.translate(p.bodyWidth / 2 + 0.37, p.bodyHeight * 0.3, 0);
+  parts.push(returnFlange);
+
+  return mergeGeometries(parts);
 }
 
 /**
@@ -113,6 +223,8 @@ export class CoolingLayer implements LayerGenerator {
     // placement where equipment bases clipped into the roof geometry).
     const roofTopY =
       totalHeight + (recipe.roof?.type === "flat" ? recipe.roof.flatThickness : 0);
+    const chillerSupportLift =
+      Math.max(0.08, chillerParams.bodyHeight * 0.07) * 1.7;
 
     // --- Central chiller plant (roof level) ---
     // Detailed Blender asset when preloaded; merged-primitive fallback otherwise.
@@ -142,9 +254,15 @@ export class CoolingLayer implements LayerGenerator {
         metalness: 0.4,
       });
       const plant = new THREE.Mesh(chillerGeo, plantMat);
-      plant.position.set(coreX, roofTopY + chillerParams.bodyHeight / 2, coreZ);
+      plant.position.set(
+        coreX,
+        roofTopY + chillerParams.bodyHeight / 2 + chillerSupportLift,
+        coreZ
+      );
       // Pitfall 2: userData on the Mesh, NOT on the BufferGeometry
       plant.userData = { type: "cooling-plant" };
+      plant.castShadow = true;
+      plant.receiveShadow = true;
       group.add(plant);
     }
 
@@ -172,21 +290,78 @@ export class CoolingLayer implements LayerGenerator {
         );
         group.add(towerAsset);
       } else {
+        const towerHeight = chillerParams.bodyHeight * 0.8;
+        const towerRadius = chillerParams.bodyWidth * 0.35;
         const towerBodyGeo = new THREE.CylinderGeometry(
           chillerParams.bodyWidth * 0.3,
-          chillerParams.bodyWidth * 0.35,
-          chillerParams.bodyHeight * 0.8,
-          12
+          towerRadius,
+          towerHeight,
+          20
         );
+        const towerParts: THREE.BufferGeometry[] = [towerBodyGeo];
+
+        const basinHeight = Math.max(0.09, towerHeight * 0.09);
+        const basin = new THREE.CylinderGeometry(
+          towerRadius * 1.08,
+          towerRadius * 1.08,
+          basinHeight,
+          20
+        );
+        basin.translate(0, -towerHeight / 2 - basinHeight / 2, 0);
+        towerParts.push(basin);
+
+        for (const y of [-towerHeight * 0.24, towerHeight * 0.18]) {
+          const casingBand = new THREE.TorusGeometry(
+            towerRadius * 0.96,
+            Math.max(0.025, towerRadius * 0.045),
+            6,
+            24
+          );
+          casingBand.rotateX(Math.PI / 2);
+          casingBand.translate(0, y, 0);
+          towerParts.push(casingBand);
+        }
+
         const fanRingGeo = new THREE.TorusGeometry(
           chillerParams.bodyWidth * 0.28,
-          0.06,
+          Math.max(0.04, towerRadius * 0.08),
           6,
-          16
+          24
         );
         fanRingGeo.rotateX(Math.PI / 2);
-        fanRingGeo.translate(0, chillerParams.bodyHeight * 0.4 + 0.08, 0);
-        const towerGeo = mergeGeometries([towerBodyGeo, fanRingGeo]);
+        fanRingGeo.translate(0, towerHeight / 2 + 0.08, 0);
+        towerParts.push(fanRingGeo);
+
+        const fanHub = new THREE.CylinderGeometry(
+          towerRadius * 0.14,
+          towerRadius * 0.14,
+          0.12,
+          12
+        );
+        fanHub.translate(0, towerHeight / 2 + 0.09, 0);
+        towerParts.push(fanHub);
+
+        for (const angle of [0, Math.PI / 2]) {
+          const bladePair = new THREE.BoxGeometry(
+            towerRadius * 1.25,
+            0.035,
+            towerRadius * 0.14
+          );
+          bladePair.rotateY(angle);
+          bladePair.translate(0, towerHeight / 2 + 0.09, 0);
+          towerParts.push(bladePair);
+        }
+
+        const supportSize = Math.max(0.09, towerRadius * 0.12);
+        for (const x of [-towerRadius * 0.58, towerRadius * 0.58]) {
+          for (const z of [-towerRadius * 0.58, towerRadius * 0.58]) {
+            const support = new THREE.BoxGeometry(supportSize, towerHeight * 0.13, supportSize);
+            support.translate(x, -towerHeight / 2 - towerHeight * 0.13, z);
+            towerParts.push(support);
+          }
+        }
+
+        const towerGeo = mergeGeometries(towerParts);
         const towerMat = new THREE.MeshStandardMaterial({
           color: 0x1d4ed8,
           emissive: 0x1d4ed8,
@@ -195,14 +370,14 @@ export class CoolingLayer implements LayerGenerator {
           metalness: 0.3,
         });
         const tower = new THREE.Mesh(towerGeo, towerMat);
-        // Centre-origin cylinder lifted so its base rests on roofTopY
-        // (accounts for flat-roof slab thickness — coarse-path fix).
         tower.position.set(
           towerX,
-          roofTopY + chillerParams.bodyHeight * 0.4,
+          roofTopY + chillerParams.bodyHeight * 0.4 + towerHeight * 0.195,
           coreZ
         );
         tower.userData = { type: "cooling-tower" };
+        tower.castShadow = true;
+        tower.receiveShadow = true;
         group.add(tower);
       }
     }

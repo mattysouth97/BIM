@@ -1,8 +1,10 @@
 // src/store/cad-draft-store.ts
-// Working document for 2D drafting: owns the mutable CadDocument, snapshot
-// undo/redo (immutable updates make snapshots cheap references), the active
-// layer, and per-building persistence. Every mutation pushes the new doc to
-// cad-viewer-store.updateDoc so the viewer renders it.
+// Two slices, one hook:
+//   1. 2D drafting document (undo/redo, layers, idb persistence) used by the
+//      CAD viewer / draw tools. Mutations sync to cad-viewer-store.updateDoc.
+//   2. P2-24 CAD-first draft params (floors/year/sigungu), keyed by draft PK.
+//      Params are NOT persisted — after reload, WorkflowStageRecovery retreats
+//      the draft to upload. Persisting params is a documented v1 non-goal.
 
 "use client";
 
@@ -12,6 +14,7 @@ import type { CadDocument, CadEntity, CadPolyline } from "@/lib/cad/doc/types";
 import type { NewEntity } from "@/lib/cad/doc/draw-tools";
 import { computeExtents } from "@/lib/cad/doc/extents";
 import { joinConnectedEntities } from "@/lib/cad/doc/join";
+import type { CadDraftParams } from "@/lib/workflow/cad-draft";
 import { useCadViewerStore } from "./cad-viewer-store";
 
 export interface DraftStorage {
@@ -52,6 +55,7 @@ function maxEntityId(doc: CadDocument): number {
 }
 
 interface CadDraftState {
+  // ── 2D drafting slice ────────────────────────────────────────────────────
   doc: CadDocument | null;
   past: CadDocument[];
   future: CadDocument[];
@@ -76,6 +80,12 @@ interface CadDraftState {
   redo: () => void;
   endDraft: () => void;
   _setStorage: (s: DraftStorage) => void;
+
+  // ── P2-24 cad-first params slice ─────────────────────────────────────────
+  /** Draft params keyed by draft PK. Absent key = params stage not completed. */
+  drafts: Record<string, CadDraftParams>;
+  setDraftParams: (pk: string, params: CadDraftParams) => void;
+  clearDraft: (pk: string) => void;
 }
 
 let nextId = 0;
@@ -107,6 +117,7 @@ export const useCadDraftStore = create<CadDraftState>()((set, get) => {
   return {
     doc: null, past: [], future: [],
     activeLayer: "0", selectedEntityId: null, persistKey: null,
+    drafts: {},
 
     startDraft: (base, persistKey) => begin(base, persistKey),
 
@@ -206,5 +217,14 @@ export const useCadDraftStore = create<CadDraftState>()((set, get) => {
       set({ doc: null, past: [], future: [], selectedEntityId: null, persistKey: null }),
 
     _setStorage: (s) => { storage = s; },
+
+    setDraftParams: (pk, params) =>
+      set((state) => ({ drafts: { ...state.drafts, [pk]: params } })),
+
+    clearDraft: (pk) =>
+      set((state) => {
+        const { [pk]: _, ...rest } = state.drafts;
+        return { drafts: rest };
+      }),
   };
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toRecipe, generateBuildingGeometry } from "@/lib/building-geometry";
+import { toRecipe } from "@/lib/building-geometry";
 import { getRecipe } from "../recipe";
 import type { BuildingGeometry, FloorGeometry } from "@/lib/building-geometry";
 import type { BuildingEra } from "@/lib/material-types";

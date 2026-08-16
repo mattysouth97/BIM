@@ -219,13 +219,18 @@ export function createSectionView(
   };
 }
 
-// ─── 3D perspective ───────────────────────────────────────────────────────────
+// ─── 3D isometric view ────────────────────────────────────────────────────────
 
-/** Default isometric-style 3D view. */
-export function create3dView(bbox: THREE.Box3): PerspectiveView {
+/**
+ * Default perspective isometric view of the full building bounding box.
+ * Included in `computeDefaultViewsForBuilding` so the autonomous BIM document
+ * ships with a 3D sheet; callers may still append a custom-id copy.
+ */
+export function create3dView(bbox: THREE.Box3, id = "3d-iso"): PerspectiveView {
   const center = bbox.getCenter(new THREE.Vector3());
   const size = bbox.getSize(new THREE.Vector3());
-  const d = Math.max(size.x, size.y, size.z) * 1.8 + 8;
+  const span = Math.max(size.x, size.y, size.z);
+  const d = span * 1.8 + 8 || 20;
 
   const cameraState: PerspCameraState = {
     kind: "persp",
@@ -237,8 +242,8 @@ export function create3dView(bbox: THREE.Box3): PerspectiveView {
   };
 
   return {
-    id: "3d-iso",
-    name: "3D",
+    id,
+    name: "3D — Isometric",
     kind: "3d",
     cameraState,
     clippingPlanes: [],

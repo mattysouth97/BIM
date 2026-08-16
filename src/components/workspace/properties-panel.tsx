@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -8,10 +8,19 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { useMaterialStore } from "@/store/material-store";
-import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import { useActiveBuildingPk, useActiveSigunguCd } from "@/hooks/use-active-building-pk";
+import {
+  deliveredFromDemand,
+  buildingTypeFromMaterials,
+  isResidentialOccupancy,
+} from "@/lib/energy/delivered-from-demand";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
+import { useEngineResult } from "@/hooks/use-engine-result";
+import { useReviewHighlightStore } from "@/store/review-highlight-store";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
+import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
 import { useWeatherData } from "@/hooks/use-weather-data";
 import { useTwinFidelity } from "@/hooks/use-twin-fidelity";
@@ -21,6 +30,9 @@ import { SlotPlan } from "./slot-plan";
 import { EquipmentScheduleIngest } from "./equipment-schedule-ingest";
 import { FidelityBadge } from "@/components/twin/fidelity-badge";
 import { FidelityDetailPanel } from "@/components/twin/fidelity-detail-panel";
+import { deriveInputProvenance } from "@/lib/fidelity/input-provenance";
+import { loadCalibration } from "@/lib/fidelity/building-calibration-loader";
+import type { FootprintSource } from "@/lib/fidelity/input-provenance";
 import { calibrateEnergy } from "@/lib/energy/calibration";
 import { compareToBenchmark } from "@/lib/energy/benchmark-comparison";
 import {
@@ -34,6 +46,8 @@ import {
 } from "@/lib/compliance/efficiency-rating";
 import { Loader2 } from "lucide-react";
 import { EquipmentInfoPanel } from "./equipment-info-panel";
+import { EquipmentInsightCard } from "./equipment-insight-card";
+import { RevitIdentityCard } from "./revit-identity-card";
 
 // ── Grade color map for efficiency rating ────────────────────────────────────
 
@@ -66,23 +80,49 @@ const PERFORMANCE_COLORS: Record<string, string> = {
   poor: "text-red-500",
 };
 
+interface PropertiesPanelProps {
+  /**
+   * P2-27: footprint source from VWorld or CAD ingest — threaded from the
+   * page level so no second fetch is needed. Absent for CAD-draft buildings.
+   */
+  footprintSource?: FootprintSource;
+  /**
+   * P2-27: ledger 'heit' field (meters). AFF-6: 0 means unavailable.
+   * Threaded from the page's titleData.heit so we don't re-fetch.
+   */
+  ledgerHeit?: number;
+  /**
+   * P2-27: VWorld measured building height (buld_hg, meters). Null when absent.
+   */
+  measuredHeightM?: number | null;
+}
+
 /**
  * Properties panel — renders in the right dock of WorkspaceShell.
  * Shows analytics dashboard with fidelity, calibration, benchmark,
  * certification, and efficiency rating for the current building.
  */
-export function PropertiesPanel() {
-  const isKo = useAppStore((s) => s.language) === "ko";
+export function PropertiesPanel({
+  footprintSource,
+  ledgerHeit,
+  measuredHeightM,
+}: PropertiesPanelProps = {}) {
+  const { t } = useT();
 
   const buildingPk = useActiveBuildingPk();
+  // HITL review highlight — clicking a flag pulses that element category in 3D.
+  const highlightKind = useReviewHighlightStore((s) => s.highlightKind);
+  const toggleHighlightKind = useReviewHighlightStore((s) => s.toggleHighlightKind);
 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
-  const metrics = useEnergyMetrics(buildingPk);
+  // P1-08 (d): same regional climate as every other panel.
+  const sigunguCd = useActiveSigunguCd();
+  const metrics = useEnergyMetrics(buildingPk, sigunguCd);
   const currentMode = useEditorModeStore((s) => s.currentMode);
   const actual = useActualEnergy(buildingPk);
   const actualData = actual.data ?? [];
   const hasActual = actualData.length > 0;
-  const { report: fidelityReport, checklist: upgradeChecklist, recipe: effectiveRecipe } =
+  const { report: fidelityReport, checklist: upgradeChecklist } =
     useTwinFidelity(buildingPk, hasActual);
   // KMA ASOS weather (previous year, Seoul station default). Disabled
   // without an API key; the section below renders only on success.
@@ -90,6 +130,35 @@ export function PropertiesPanel() {
 
   const [certVersion, setCertVersion] =
     useState<CertificationVersion>("2024");
+
+  // P1-08 (a): single canonical merge (carries footprintPolygon overrides).
+  const effectiveRecipe = useEffectiveRecipe(buildingPk);
+
+  // ── Agentic BIM Engine (Task 8) ───────────────────────────────────────────
+  // Must run unconditionally (before the early-return below) — hooks can't
+  // be called conditionally. `effectiveRecipe` may be undefined; the hook
+  // treats that as `available: false` (needs-outline), same as a
+  // "parcel"/null footprintSource.
+  const engine = useEngineResult({
+    buildingPk,
+    recipe: effectiveRecipe,
+    footprintSource: footprintSource ?? null,
+    ledgerHeit: ledgerHeit ?? 0,
+    measuredHeightM: measuredHeightM ?? null,
+  });
+
+  // ── Input provenance (P2-27) ──────────────────────────────────────────────
+  // calibrationApplied: sync registry lookup — no fetch (loadCalibration returns
+  // null for unknown buildingPk, which is the expected path for most buildings).
+  const inputProvenance = useMemo(() => {
+    const calibrationApplied = !!loadCalibration(buildingPk);
+    return deriveInputProvenance({
+      footprintSource: footprintSource ?? null,
+      ledgerHeit: ledgerHeit ?? 0,
+      measuredHeightM: measuredHeightM ?? null,
+      calibrationApplied,
+    });
+  }, [buildingPk, footprintSource, ledgerHeit, measuredHeightM]);
 
   // ── Calibration ──────────────────────────────────────────────────────────
 
@@ -120,13 +189,8 @@ export function PropertiesPanel() {
 
   const benchmark = useMemo(() => {
     if (!metrics) return null;
-    // Residential = LOW occupant density (0.04 p/m²) vs office 0.1+, so the
-    // test is density BELOW the office threshold, not above it.
-    const useType =
-      materials?.occupancy?.occupancyDensity !== undefined &&
-      materials.occupancy.occupancyDensity < 0.07
-        ? "residential"
-        : "office";
+    // P1-05: benchmark dataset is PRIMARY energy — compare primary intensity.
+    const useType = isResidentialOccupancy(materials) ? "residential" : "office";
     const codeYear = materials?.codeYear ?? 2000;
     // Benchmark DB has no pre-1990 rows — map to the NEAREST era (1990s),
     // not the newest (the default fallback picks 2020+, the worst match).
@@ -137,9 +201,10 @@ export function PropertiesPanel() {
           ? "2010s"
           : codeYear >= 2000
             ? "2000s"
-            : "1990s";
-    // Benchmark values are PRIMARY energy — compare on the same basis.
-    return compareToBenchmark(metrics.primaryPerSqm, useType, era);
+            : codeYear >= 1990
+              ? "1990s"
+              : "pre-1990";
+    return compareToBenchmark(metrics.primaryEnergyPerArea, useType, era);
   }, [metrics, materials]);
 
   // ── Green Certification ──────────────────────────────────────────────────
@@ -155,7 +220,8 @@ export function PropertiesPanel() {
       windowUValue: materials.envelope.windows.uValue,
       roofUValue: materials.envelope.roof.uValue,
       energyGrade: metrics.grade,
-      primaryEnergyDemand: metrics.primaryPerSqm,
+      // P1-05: this field is PRIMARY energy — was mislabeled with delivered.
+      primaryEnergyDemand: metrics.primaryEnergyPerArea,
       renewableCapacity: materials.renewable?.solarPV?.capacity ?? 0,
       windowToWallRatio:
         materials.envelope.windows.windowToWallRatio?.S ?? 0.3,
@@ -168,37 +234,15 @@ export function PropertiesPanel() {
 
   const efficiencyRating = useMemo(() => {
     if (!metrics || !effectiveRecipe || !materials) return null;
-    const totalArea =
-      effectiveRecipe.footprintWidth *
-      effectiveRecipe.footprintDepth *
-      effectiveRecipe.floors.length;
+    const totalArea = envelopeQuantities(effectiveRecipe).intensityFloorAreaSqm;
     if (totalArea <= 0) return null;
 
-    // Residential = LOW density (0.04) — see benchmark note above.
-    const isRes =
-      materials?.occupancy?.occupancyDensity !== undefined &&
-      materials.occupancy.occupancyDensity < 0.07;
-    // Fuel-aware whole-building split: heating+DHW on the heating fuel,
-    // cooling/lighting/plug electric (matches use-energy-metrics).
-    const heatingFuel = materials.hvac.heating.fuelType;
-    const fuelLeg = metrics.demand.heatingDemand + metrics.breakdown.dhw;
-    const electricLeg =
-      metrics.demand.coolingDemand +
-      metrics.breakdown.lighting +
-      metrics.breakdown.plugLoads;
+    // P1-05: shared fuel-split + building-type helpers — same computation
+    // path as metrics.grade, so the two can never disagree.
     return calculateEfficiencyRating(
-      {
-        electric:
-          heatingFuel === "electric" || heatingFuel === "heat-pump"
-            ? electricLeg + fuelLeg
-            : electricLeg,
-        gas: heatingFuel === "gas" || heatingFuel === "oil" ? fuelLeg : 0,
-        districtHeating: heatingFuel === "district-heat" ? fuelLeg : 0,
-        districtCooling: 0,
-        renewable: 0,
-      },
+      deliveredFromDemand(metrics.demand),
       totalArea,
-      isRes ? "residential" : "non-residential"
+      buildingTypeFromMaterials(materials)
     );
   }, [metrics, effectiveRecipe, materials]);
 
@@ -209,9 +253,7 @@ export function PropertiesPanel() {
       <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground p-4">
         <Loader2 className="h-8 w-8 opacity-40 animate-spin" />
         <p className="text-xs text-center leading-relaxed">
-          {isKo
-            ? "건물 데이터를 불러오는 중..."
-            : "Loading building data..."}
+          {t("건물 데이터를 불러오는 중...", "Loading building data...")}
         </p>
       </div>
     );
@@ -221,7 +263,9 @@ export function PropertiesPanel() {
     <div className="h-full overflow-y-auto">
       {currentMode === "floor-edit" && <FloorStackEditor buildingPk={buildingPk} />}
       {currentMode === "object-edit" && <SlotPlan buildingPk={buildingPk} />}
+      <RevitIdentityCard />
       <EquipmentInfoPanel />
+      <EquipmentInsightCard />
       <EquipmentScheduleIngest buildingPk={buildingPk} />
       <Accordion
         type="multiple"
@@ -231,17 +275,25 @@ export function PropertiesPanel() {
         {/* ── Section 1: Twin Fidelity ─────────────────────────────────── */}
         <AccordionItem value="fidelity">
           <AccordionTrigger className="text-xs font-semibold py-3">
-            {isKo ? "트윈 충실도" : "Twin Fidelity"}
+            {t("트윈 충실도", "Twin Fidelity")}
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-3">
               <FidelityBadge
                 level={fidelityReport.level}
                 completeness={fidelityReport.completeness}
+                provenance={inputProvenance}
               />
               <FidelityDetailPanel
                 report={fidelityReport}
                 checklist={upgradeChecklist}
+                provenance={inputProvenance}
+                hitlFlags={engine.result?.hitlFlags}
+                onExportIfc={engine.exportIfc}
+                exporting={engine.exporting}
+                engineUnavailableReason={engine.unavailableReason}
+                onFlagClick={toggleHighlightKind}
+                activeHighlightKind={highlightKind}
               />
             </div>
           </AccordionContent>
@@ -251,14 +303,14 @@ export function PropertiesPanel() {
         {hasActual && calibration && (
           <AccordionItem value="calibration">
             <AccordionTrigger className="text-xs font-semibold py-3">
-              {isKo ? "에너지 보정" : "Energy Calibration"}
+              {t("에너지 보정", "Energy Calibration")}
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 text-xs">
                 {/* Overall delta */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "전체 차이" : "Overall Delta"}
+                    {t("전체 차이", "Overall Delta")}
                   </span>
                   <span
                     className={`font-semibold tabular-nums ${
@@ -275,18 +327,20 @@ export function PropertiesPanel() {
                 </div>
                 <p className="text-[10px] text-muted-foreground">
                   {calibration.overallDelta > 0
-                    ? isKo
-                      ? `예측보다 ${Math.abs(calibration.overallDelta).toFixed(0)}% 더 적게 사용`
-                      : `${Math.abs(calibration.overallDelta).toFixed(0)}% less than predicted`
-                    : isKo
-                      ? `예측보다 ${Math.abs(calibration.overallDelta).toFixed(0)}% 더 많이 사용`
-                      : `${Math.abs(calibration.overallDelta).toFixed(0)}% more than predicted`}
+                    ? t(
+                        `예측보다 ${Math.abs(calibration.overallDelta).toFixed(0)}% 더 적게 사용`,
+                        `${Math.abs(calibration.overallDelta).toFixed(0)}% less than predicted`,
+                      )
+                    : t(
+                        `예측보다 ${Math.abs(calibration.overallDelta).toFixed(0)}% 더 많이 사용`,
+                        `${Math.abs(calibration.overallDelta).toFixed(0)}% more than predicted`,
+                      )}
                 </p>
 
                 {/* Largest discrepancy */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "최대 차이 항목" : "Largest Discrepancy"}
+                    {t("최대 차이 항목", "Largest Discrepancy")}
                   </span>
                   <Badge variant="secondary" className="text-[10px]">
                     {calibration.largestDiscrepancy}
@@ -306,13 +360,13 @@ export function PropertiesPanel() {
         {weather.data && (
           <AccordionItem value="weather">
             <AccordionTrigger className="text-xs font-semibold py-3">
-              {isKo ? "기상 데이터" : "Weather Data"}
+              {t("기상 데이터", "Weather Data")}
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "난방도일 (HDD 18.3°C)" : "Heating Degree Days (18.3°C)"}
+                    {t("난방도일 (HDD 18.3°C)", "Heating Degree Days (18.3°C)")}
                   </span>
                   <span className="font-semibold tabular-nums">
                     {weather.data.hdd.toFixed(0)}
@@ -320,7 +374,7 @@ export function PropertiesPanel() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "냉방도일 (CDD 24°C)" : "Cooling Degree Days (24°C)"}
+                    {t("냉방도일 (CDD 24°C)", "Cooling Degree Days (24°C)")}
                   </span>
                   <span className="font-semibold tabular-nums">
                     {weather.data.cdd.toFixed(0)}
@@ -328,20 +382,22 @@ export function PropertiesPanel() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "연평균 기온" : "Mean Temperature"}
+                    {t("연평균 기온", "Mean Temperature")}
                   </span>
                   <span className="font-medium tabular-nums">
                     {weather.data.avgTemp.toFixed(1)}°C
                   </span>
                 </div>
                 <p className="text-[10px] text-muted-foreground/80 border-t pt-2 mt-1">
-                  {isKo
-                    ? `${weather.data.year}년 KMA ASOS 서울 관측 기준`
-                    : `${weather.data.year} KMA ASOS observations (Seoul station)`}
+                  {t(
+                    `${weather.data.year}년 KMA ASOS 서울 관측 기준`,
+                    `${weather.data.year} KMA ASOS observations (Seoul station)`,
+                  )}
                   {weather.data.dataCompleteness < 0.9 &&
-                    (isKo
-                      ? ` · 데이터 완전성 ${(weather.data.dataCompleteness * 100).toFixed(0)}% — 신뢰도 낮음`
-                      : ` · ${(weather.data.dataCompleteness * 100).toFixed(0)}% complete — low reliability`)}
+                    t(
+                      ` · 데이터 완전성 ${(weather.data.dataCompleteness * 100).toFixed(0)}% — 신뢰도 낮음`,
+                      ` · ${(weather.data.dataCompleteness * 100).toFixed(0)}% complete — low reliability`,
+                    )}
                 </p>
               </div>
             </AccordionContent>
@@ -352,25 +408,25 @@ export function PropertiesPanel() {
         {benchmark && (
           <AccordionItem value="benchmark">
             <AccordionTrigger className="text-xs font-semibold py-3">
-              {isKo ? "벤치마크 비교" : "Benchmark Comparison"}
+              {t("벤치마크 비교", "Benchmark Comparison")}
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 text-xs">
                 {/* Percentile */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "백분위" : "Percentile"}
+                    {t("백분위", "Percentile")}
                   </span>
                   <span className="font-semibold tabular-nums">
                     {Math.round(benchmark.percentile)}
-                    {isKo ? "번째 백분위" : "th percentile"}
+                    {t("번째 백분위", "th percentile")}
                   </span>
                 </div>
 
                 {/* Performance tier */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "성능 등급" : "Performance Tier"}
+                    {t("성능 등급", "Performance Tier")}
                   </span>
                   <span
                     className={`font-semibold capitalize ${
@@ -404,14 +460,14 @@ export function PropertiesPanel() {
         {certification && (
           <AccordionItem value="certification">
             <AccordionTrigger className="text-xs font-semibold py-3">
-              {isKo ? "녹색건축물 인증" : "Green Certification"}
+              {t("녹색건축물 인증", "Green Certification")}
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 text-xs">
                 {/* Score */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "획득 점수" : "Earned Points"}
+                    {t("획득 점수", "Earned Points")}
                   </span>
                   <span className="font-semibold tabular-nums">
                     {certification.earnedPoints.toFixed(1)} /{" "}
@@ -422,7 +478,7 @@ export function PropertiesPanel() {
                 {/* Grade */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "등급" : "Grade"}
+                    {t("등급", "Grade")}
                   </span>
                   <Badge
                     variant={
@@ -433,16 +489,17 @@ export function PropertiesPanel() {
                     }
                     className="text-[10px]"
                   >
-                    {isKo
-                      ? CERTIFICATION_GRADE_LABELS[certification.grade]?.ko
-                      : CERTIFICATION_GRADE_LABELS[certification.grade]?.en}
+                    {t(
+                      CERTIFICATION_GRADE_LABELS[certification.grade]?.ko ?? "",
+                      CERTIFICATION_GRADE_LABELS[certification.grade]?.en ?? "",
+                    )}
                   </Badge>
                 </div>
 
                 {/* Version toggle */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "기준 버전" : "Version"}
+                    {t("기준 버전", "Version")}
                   </span>
                   <div className="flex gap-1">
                     <button
@@ -481,7 +538,7 @@ export function PropertiesPanel() {
         {efficiencyRating && (
           <AccordionItem value="efficiency">
             <AccordionTrigger className="text-xs font-semibold py-3">
-              {isKo ? "에너지효율등급" : "Efficiency Rating"}
+              {t("에너지효율등급", "Efficiency Rating")}
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2 text-xs">
@@ -502,9 +559,7 @@ export function PropertiesPanel() {
                       {GRADE_LABELS[efficiencyRating.grade]}
                     </span>
                     <span className="text-[10px] text-muted-foreground">
-                      {isKo
-                        ? "건축물 에너지효율등급"
-                        : "Building Energy Efficiency"}
+                      {t("건축물 에너지효율등급", "Building Energy Efficiency")}
                     </span>
                   </div>
                 </div>
@@ -512,7 +567,7 @@ export function PropertiesPanel() {
                 {/* Primary energy demand */}
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
-                    {isKo ? "1차 에너지 수요" : "Primary Energy Demand"}
+                    {t("1차 에너지 수요", "Primary Energy Demand")}
                   </span>
                   <span className="font-semibold tabular-nums">
                     {efficiencyRating.primaryEnergyPerArea.toFixed(1)} kWh/m

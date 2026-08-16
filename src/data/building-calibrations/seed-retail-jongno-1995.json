@@ -1,0 +1,22 @@
+{
+  "buildingId": "seed-retail-jongno-1995",
+  "pnu": "1111010100200010000",
+  "geometricLOD": "L2",
+  "notes": "Seed calibration: brick retail/commercial building, Jongno-gu, permit 1995. Mixed-use ground-floor retail with residential above.",
+  "overrides": [
+    {
+      "field": "floorHeights.1",
+      "inferredValue": 3.2,
+      "overrideValue": 4.5,
+      "source": "건축물대장:층별현황 heit=4.5 (ground retail unit, confirmed in Jongno-gu 1995 permit archive scan JN-1995-C-0228)",
+      "hypothesisForInference": "era 1990-1999 commercial default 3.2 m; retail ground floors in 1990s Jongno regularly used 4.5 m to accommodate display shelving and signage"
+    },
+    {
+      "field": "walls.uValue",
+      "inferredValue": 0.52,
+      "overrideValue": 0.45,
+      "source": "permit drawing insulation schedule, JN-1995-C-0228 sheet A-201: 100mm EPS cavity insulation confirmed",
+      "hypothesisForInference": "era 1990-1999 brick masonry default U=0.52; 100mm EPS reduces effective U to ~0.45 W/m2K"
+    }
+  ]
+}

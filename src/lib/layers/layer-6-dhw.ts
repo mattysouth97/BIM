@@ -22,26 +22,147 @@ const PIPE_RADIUS = 0.05;
 const PIPE_SEGMENTS = 8;
 
 /**
- * Build merged DHW tank geometry: main cylinder body + top/bottom pipe stubs + side outlet.
- * Merged geometry has significantly more vertices than a plain CylinderGeometry.
+ * Build a merged DHW storage vessel with jacket bands, service controls,
+ * support feet, and flanged top, bottom, and side connections.
  */
 function buildTankGeometry(p: DhwParams): THREE.BufferGeometry {
-  const body = new THREE.CylinderGeometry(p.tankRadius, p.tankRadius, p.tankHeight, 16);
+  const body = new THREE.CylinderGeometry(p.tankRadius, p.tankRadius, p.tankHeight, 24);
+  const parts: THREE.BufferGeometry[] = [body];
 
   // Top pipe stub (vertical cylinder protruding up)
   const topPipe = new THREE.CylinderGeometry(0.06, 0.06, 0.3, 8);
   topPipe.translate(0, p.tankHeight / 2 + 0.15, 0);
+  parts.push(topPipe);
 
   // Bottom pipe stub (vertical cylinder protruding down)
   const bottomPipe = new THREE.CylinderGeometry(0.06, 0.06, 0.3, 8);
   bottomPipe.translate(0, -(p.tankHeight / 2 + 0.15), 0);
+  parts.push(bottomPipe);
 
   // Side outlet (horizontal pipe on +X face, mid-height)
   const sidePipe = new THREE.CylinderGeometry(0.05, 0.05, 0.35, 8);
   sidePipe.rotateZ(Math.PI / 2);
   sidePipe.translate(p.tankRadius + 0.175, 0, 0);
+  parts.push(sidePipe);
 
-  return mergeGeometries([body, topPipe, bottomPipe, sidePipe]);
+  // Jacket bands and end collars make the vessel legible at overview scale.
+  const bandRadius = p.tankRadius * 1.015;
+  const bandTube = Math.max(0.022, p.tankRadius * 0.038);
+  for (const y of [-p.tankHeight * 0.29, p.tankHeight * 0.29]) {
+    const jacketBand = new THREE.TorusGeometry(bandRadius, bandTube, 6, 24);
+    jacketBand.rotateX(Math.PI / 2);
+    jacketBand.translate(0, y, 0);
+    parts.push(jacketBand);
+  }
+
+  const collarHeight = Math.max(0.07, p.tankHeight * 0.045);
+  for (const y of [
+    -p.tankHeight / 2 - collarHeight / 2,
+    p.tankHeight / 2 + collarHeight / 2,
+  ]) {
+    const collar = new THREE.CylinderGeometry(
+      p.tankRadius * 1.06,
+      p.tankRadius * 1.06,
+      collarHeight,
+      24
+    );
+    collar.translate(0, y, 0);
+    parts.push(collar);
+  }
+
+  // Pipe flanges distinguish service connections from generic cylinders.
+  const topFlange = new THREE.CylinderGeometry(0.1, 0.1, 0.055, 12);
+  topFlange.translate(0, p.tankHeight / 2 + 0.27, 0);
+  parts.push(topFlange);
+
+  const bottomFlange = new THREE.CylinderGeometry(0.1, 0.1, 0.055, 12);
+  bottomFlange.translate(0, -(p.tankHeight / 2 + 0.27), 0);
+  parts.push(bottomFlange);
+
+  const sideFlange = new THREE.CylinderGeometry(0.09, 0.09, 0.055, 12);
+  sideFlange.rotateZ(Math.PI / 2);
+  sideFlange.translate(p.tankRadius + 0.32, 0, 0);
+  parts.push(sideFlange);
+
+  // Front control enclosure and four feet keep the tank visually serviceable.
+  const controlDepth = Math.max(0.1, p.tankRadius * 0.18);
+  const controlBox = new THREE.BoxGeometry(
+    p.tankRadius * 0.72,
+    p.tankHeight * 0.22,
+    controlDepth
+  );
+  controlBox.translate(0, -p.tankHeight * 0.08, p.tankRadius + controlDepth / 2);
+  parts.push(controlBox);
+
+  const controlFace = new THREE.BoxGeometry(
+    p.tankRadius * 0.42,
+    p.tankHeight * 0.065,
+    Math.max(0.025, controlDepth * 0.24)
+  );
+  controlFace.translate(
+    0,
+    -p.tankHeight * 0.06,
+    p.tankRadius + controlDepth + Math.max(0.0125, controlDepth * 0.12)
+  );
+  parts.push(controlFace);
+
+  const footSize = Math.max(0.09, p.tankRadius * 0.17);
+  const footHeight = Math.max(0.12, p.tankHeight * 0.08);
+  for (const x of [-p.tankRadius * 0.55, p.tankRadius * 0.55]) {
+    for (const z of [-p.tankRadius * 0.5, p.tankRadius * 0.5]) {
+      const foot = new THREE.BoxGeometry(footSize, footHeight, footSize);
+      foot.translate(x, -p.tankHeight / 2 - collarHeight - footHeight / 2, z);
+      parts.push(foot);
+    }
+  }
+
+  return mergeGeometries(parts);
+}
+
+function buildRecirculationTankGeometry(p: DhwParams): THREE.BufferGeometry {
+  const radius = p.tankRadius * 0.7;
+  const height = p.tankHeight * 0.8;
+  const body = new THREE.CylinderGeometry(radius, radius, height, 20);
+  const parts: THREE.BufferGeometry[] = [body];
+
+  for (const y of [-height * 0.28, height * 0.28]) {
+    const band = new THREE.TorusGeometry(
+      radius * 1.015,
+      Math.max(0.018, radius * 0.045),
+      6,
+      20
+    );
+    band.rotateX(Math.PI / 2);
+    band.translate(0, y, 0);
+    parts.push(band);
+  }
+
+  const topOutlet = new THREE.CylinderGeometry(0.05, 0.05, 0.24, 10);
+  topOutlet.translate(0, height / 2 + 0.12, 0);
+  parts.push(topOutlet);
+
+  const outletFlange = new THREE.CylinderGeometry(0.085, 0.085, 0.05, 12);
+  outletFlange.translate(0, height / 2 + 0.22, 0);
+  parts.push(outletFlange);
+
+  const gauge = new THREE.CylinderGeometry(
+    Math.max(0.06, radius * 0.15),
+    Math.max(0.06, radius * 0.15),
+    0.05,
+    14
+  );
+  gauge.rotateX(Math.PI / 2);
+  gauge.translate(0, height * 0.17, radius + 0.035);
+  parts.push(gauge);
+
+  const footHeight = Math.max(0.1, height * 0.08);
+  for (const x of [-radius * 0.5, radius * 0.5]) {
+    const foot = new THREE.BoxGeometry(radius * 0.26, footHeight, radius * 0.34);
+    foot.translate(x, -height / 2 - footHeight / 2, 0);
+    parts.push(foot);
+  }
+
+  return mergeGeometries(parts);
 }
 
 /**
@@ -137,6 +258,8 @@ export class DHWLayer implements LayerGenerator {
       const tank = new THREE.Mesh(tankGeo, tankMat);
       tank.position.set(dhwBase.x + 0.8, basementY, dhwBase.z);
       tank.userData = { type: "dhw-storage-tank" };
+      tank.castShadow = true;
+      tank.receiveShadow = true;
       group.add(tank);
     }
 
@@ -160,16 +283,13 @@ export class DHWLayer implements LayerGenerator {
       );
       group.add(tank2Asset);
     } else {
-      const tank2Geo = new THREE.CylinderGeometry(
-        dhwParams.tankRadius * 0.7,
-        dhwParams.tankRadius * 0.7,
-        dhwParams.tankHeight * 0.8,
-        12
-      );
+      const tank2Geo = buildRecirculationTankGeometry(dhwParams);
       const tank2 = new THREE.Mesh(tank2Geo, tankMat);
       // Centre-origin cylinder: base on the shared plant floor.
       tank2.position.set(dhwBase.x - 0.8, plantFloorY + dhwParams.tankHeight * 0.4, dhwBase.z);
       tank2.userData = { type: "dhw-recirc-tank" };
+      tank2.castShadow = true;
+      tank2.receiveShadow = true;
       group.add(tank2);
     }
 
@@ -188,15 +308,74 @@ export class DHWLayer implements LayerGenerator {
         );
         group.add(pumpAsset);
       } else {
-        const pumpBody = new THREE.CylinderGeometry(0.18, 0.18, 0.5, 12);
+        const pumpParts: THREE.BufferGeometry[] = [];
+
+        const pumpBody = new THREE.CylinderGeometry(0.2, 0.2, 0.32, 16);
         pumpBody.rotateZ(Math.PI / 2);
-        const motor = new THREE.BoxGeometry(0.3, 0.25, 0.25);
-        motor.translate(0.4, 0, 0);
-        const pumpGeo = mergeGeometries([pumpBody, motor]);
+        pumpBody.translate(-0.2, 0, 0);
+        pumpParts.push(pumpBody);
+
+        const volute = new THREE.SphereGeometry(0.22, 16, 10);
+        volute.scale(0.78, 1, 1);
+        volute.translate(-0.25, 0, 0);
+        pumpParts.push(volute);
+
+        const inlet = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 12);
+        inlet.rotateZ(Math.PI / 2);
+        inlet.translate(-0.4, 0, 0);
+        pumpParts.push(inlet);
+
+        const inletFlange = new THREE.CylinderGeometry(0.15, 0.15, 0.055, 12);
+        inletFlange.rotateZ(Math.PI / 2);
+        inletFlange.translate(-0.53, 0, 0);
+        pumpParts.push(inletFlange);
+
+        const discharge = new THREE.CylinderGeometry(0.09, 0.09, 0.28, 12);
+        discharge.translate(-0.24, 0.25, 0);
+        pumpParts.push(discharge);
+
+        const dischargeFlange = new THREE.CylinderGeometry(0.14, 0.14, 0.05, 12);
+        dischargeFlange.translate(-0.24, 0.39, 0);
+        pumpParts.push(dischargeFlange);
+
+        const coupling = new THREE.CylinderGeometry(0.07, 0.07, 0.2, 12);
+        coupling.rotateZ(Math.PI / 2);
+        coupling.translate(0.08, 0, 0);
+        pumpParts.push(coupling);
+
+        const motor = new THREE.CylinderGeometry(0.16, 0.16, 0.42, 16);
+        motor.rotateZ(Math.PI / 2);
+        motor.translate(0.37, 0, 0);
+        pumpParts.push(motor);
+
+        const motorEnd = new THREE.CylinderGeometry(0.17, 0.17, 0.055, 16);
+        motorEnd.rotateZ(Math.PI / 2);
+        motorEnd.translate(0.59, 0, 0);
+        pumpParts.push(motorEnd);
+
+        for (const x of [0.22, 0.32, 0.42, 0.52]) {
+          const coolingFin = new THREE.CylinderGeometry(0.18, 0.18, 0.025, 16);
+          coolingFin.rotateZ(Math.PI / 2);
+          coolingFin.translate(x, 0, 0);
+          pumpParts.push(coolingFin);
+        }
+
+        const basePlate = new THREE.BoxGeometry(1.05, 0.06, 0.42);
+        basePlate.translate(0.02, -0.245, 0);
+        pumpParts.push(basePlate);
+
+        for (const x of [-0.32, 0.4]) {
+          const foot = new THREE.BoxGeometry(0.2, 0.12, 0.24);
+          foot.translate(x, -0.32, 0);
+          pumpParts.push(foot);
+        }
+
+        const pumpGeo = mergeGeometries(pumpParts);
         const pumpMesh = new THREE.Mesh(pumpGeo, tankMat);
         pumpMesh.userData = { type: "dhw-pump" };
-        // Pump axis sits one body-radius above the shared plant floor.
-        pumpMesh.position.set(pumpX, plantFloorY + 0.18, 0.5);
+        pumpMesh.castShadow = true;
+        pumpMesh.receiveShadow = true;
+        pumpMesh.position.set(pumpX, plantFloorY + 0.18, dhwBase.z);
         group.add(pumpMesh);
       }
     }

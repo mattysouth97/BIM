@@ -92,6 +92,11 @@ export interface BuildingRecipe {
    * Consumed by earcut-extrude.ts for cap triangulation and facade edge generation.
    */
   footprintPolygon?: [number, number][][];
+  /**
+   * Official 연면적 (totArea) from 건축물대장 when > 0.
+   * Intensity denominator for grade / demandPerSqm. AFF-6: 0 means unavailable.
+   */
+  officialFloorAreaSqm?: number;
   floors: FloorSpec[];
   totalHeight: number;
   wallThickness: number;

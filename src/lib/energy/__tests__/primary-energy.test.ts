@@ -31,12 +31,16 @@ describe("calculatePrimaryEnergy", () => {
     expect(result.primaryEnergy.districtCooling).toBeCloseTo(93.7, 5);
   });
 
-  it("renewable factor is zero — no primary energy contribution", () => {
-    const result = calculatePrimaryEnergy(
-      { electric: 0, gas: 0, renewable: 100 },
-      1
-    );
-    expect(result.primaryEnergy.renewable).toBe(0);
+  it("renewable generation offsets primary energy at the grid-electricity factor (P2-02 s3)", () => {
+    const withRenewable = calculatePrimaryEnergy({ electric: 1000, gas: 0, renewable: 100 }, 1);
+    const withoutRenewable = calculatePrimaryEnergy({ electric: 1000, gas: 0, renewable: 0 }, 1);
+
+    // Primary total drops by R × electricity factor (100 × 2.75 = 275).
+    expect(withoutRenewable.primaryEnergy.total - withRenewable.primaryEnergy.total).toBeCloseTo(275, 5);
+    // Delivered total drops by R.
+    expect(withoutRenewable.deliveredEnergy.total - withRenewable.deliveredEnergy.total).toBeCloseTo(100, 5);
+    // The renewable line is a reduction (≤ 0).
+    expect(withRenewable.primaryEnergy.renewable).toBeLessThanOrEqual(0);
   });
 
   it("computes correct per-area intensity", () => {

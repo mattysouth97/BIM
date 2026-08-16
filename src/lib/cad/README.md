@@ -10,8 +10,10 @@ CAD viewer phase — into a full `CadDocument` entity model rendered by
 
 | Module | Role |
 |---|---|
-| `dxf-parser.ts` | Pure text parser. Extracts closed `LWPOLYLINE`/`POLYLINE` candidates, converts units via `$INSUNITS` (unitless → meters + warning), ranks candidates by area with `BIM_OUTLINE` layer priority, maps DXF XY → world XZ centered at origin. |
-| `dwg-parser.ts` | Client-side DWG → DXF via libdxfrw WASM (`fileImport()` + `fileExport()`, R14–2020). Header magic validated by `readDwgHeader()`. WASM module cached; cache reset on failure. Falls back to the server route `/api/cad/convert` (returns 501 + hint when no converter binary is configured). Output pipes through `parseDxfText()`; also returns the converted `dxfText` so the viewer can build a `CadDocument`. |
+| `dxf-parser.ts` | Pure text parser. Extracts closed rings from `LWPOLYLINE`/`POLYLINE` (closed flag or visually closed within 1% of bbox diagonal), `CIRCLE`, stitched `LINE` loops, and `INSERT` block geometry (transform applied, depth ≤ 3). Converts units via `$INSUNITS` (unitless → meters + warning), ranks candidates by area with `BIM_OUTLINE` layer priority, maps DXF XY → world XZ centered at origin. Also returns converted `dxfText` so the viewer can build a `CadDocument`. |
+| `line-stitcher.ts` | Reassembles loose `LINE` segments into closed rings by endpoint proximity (tolerance = 0.1% of layer bbox diagonal, 20k-segment cap per layer). |
+| `dwg-parser.ts` | Client-side DWG → DXF, three tiers: ① libdxfrw WASM (1.4 MB, fast, best for R14–2013), ② LibreDWG WASM via `libredwg-converter.ts` (10 MB lazy-loaded, reads modern AC1032/2018+ files), ③ server route `/api/cad/convert` (returns 501 + hint when no converter binary is configured). Header magic validated by `readDwgHeader()`. WASM modules cached; caches reset on failure. All tiers pipe through `parseDxfText()` so ranking/units are identical to the DXF path. |
+| `libredwg-converter.ts` | Lazy singleton around `@mlightcad/libredwg-web` (GPL-3.0): `dwg_write_dxf()` → DXF text. WASM binary served from `public/wasm/libredwg-web.wasm` — re-copy from the npm package when bumping its version. |
 | `pdf-to-polygon.ts` | Click-traced polygon over a rendered PDF page. Calibration via either a known edge length or a two-point ruler (`metersPerPixel`). |
 | `ingest-result.ts` | `FootprintIngestResult` contract unifying the three paths with `source` (`dxf`/`dwg`/`pdf`) and `confidence` (`exact`/`converted`/`traced`) so downstream consumers can badge provenance. |
 

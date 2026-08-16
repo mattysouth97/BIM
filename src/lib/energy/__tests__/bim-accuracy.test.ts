@@ -237,10 +237,10 @@ describe("BIM Energy Accuracy Benchmarks", () => {
       const totalFloorArea = recipe.footprintWidth * recipe.footprintDepth * recipe.floors.length;
       const co2 = calculateCO2(demand, totalFloorArea);
 
-      // Old building: very high CO2/m2. With per-fuel factors the gas-heated
-      // stock emits ~0.202 kg/kWh (not the 0.4594 grid factor), so the old
-      // >100 threshold — an artifact of mispricing gas — becomes >60,
-      // still 2×+ the passive-house bound of 30.
+      // Old building: still high CO2/m². Per-fuel factors charge gas heating
+      // at ~0.202 (not the 0.4594 grid factor), so the honest value is below
+      // the old single-factor threshold of 100 but still 2×+ the passive
+      // house bound of 30.
       expect(co2.co2PerSqm).toBeGreaterThan(60);
     });
   });
@@ -265,15 +265,19 @@ describe("BIM Energy Accuracy Benchmarks", () => {
       // Old building should have significantly higher CO2 than passive
       expect(oldCO2.totalCO2).toBeGreaterThan(passiveCO2.totalCO2 * 3);
 
-      // With per-fuel factors CO2 is linear in the (heating, cooling) pair,
-      // not in the total: heating rides gas (0.202), cooling the grid
-      // (0.4594). The exact linear identity per fuel leg:
+      // Per-fuel CO2 is linear in the (heating, cooling) pair, not the total:
+      // heating rides gas, cooling the grid. Keep both identities.
       const expectedRatio =
         (oldDemand.heatingDemand * 0.202 + oldDemand.coolingDemand * 0.4594) /
         (passiveDemand.heatingDemand * 0.202 +
           passiveDemand.coolingDemand * 0.4594);
       const co2Ratio = oldCO2.totalCO2 / passiveCO2.totalCO2;
-      expect(co2Ratio).toBeCloseTo(expectedRatio, 5);
+      expect(co2Ratio).toBeCloseTo(expectedRatio, 2);
+      expect(oldCO2.electricCO2).toBeCloseTo(
+        (oldDemand.fuelDemand!.electricKwh / 1000) * 0.4594, 5);
+      expect(oldCO2.fossilCO2).toBeCloseTo(
+        (oldDemand.fuelDemand!.fossilKwh / 1000) * 0.2018, 5);
+      expect(oldCO2.totalCO2).toBeCloseTo(oldCO2.electricCO2 + oldCO2.fossilCO2, 5);
     });
   });
 

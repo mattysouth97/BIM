@@ -3,7 +3,7 @@
 // Pure Three.js, no React.
 
 import * as THREE from "three";
-import type { BuildingRecipe, BuildingSection, FloorSpec } from "./types";
+import type { BuildingRecipe, FloorSpec } from "./types";
 import { generateFacade } from "./facade-generator";
 import {
   generateSlabs,
@@ -12,7 +12,6 @@ import {
   generateRoof,
   generateRoofFurniture,
 } from "./structure-generator";
-import { getSectionForFloor } from "./mixed-use-recipe";
 import {
   SHOWCASE_EQUIPMENT_SCENARIO,
   type EquipmentScenario,
@@ -51,6 +50,7 @@ export class ProceduralBuilding {
     if (this.recipe.sections && this.recipe.sections.length > 1) {
       const facadeGroup = new THREE.Group();
       facadeGroup.name = "facade";
+      const topSectionEnd = Math.max(...this.recipe.sections.map((section) => section.endFloor));
       for (let si = 0; si < this.recipe.sections.length; si++) {
         const section = this.recipe.sections[si];
         const sectionFloors = this.recipe.floors.filter(
@@ -66,7 +66,9 @@ export class ProceduralBuilding {
           curtainWall: section.curtainWall,
           // Sections share structural dimensions but have unique facades
         };
-        const sectionFacade = generateFacade(sectionRecipe, this.scenario);
+        const sectionFacade = generateFacade(sectionRecipe, this.scenario, {
+          includeParapet: section.endFloor === topSectionEnd && this.recipe.roof.type === "flat",
+        });
         sectionFacade.name = `facade-section-${si}`;
         facadeGroup.add(sectionFacade);
       }
@@ -130,6 +132,14 @@ export class ProceduralBuilding {
     }
 
     return null;
+  }
+
+  /**
+   * Resolve a FloorSpec by its floor number from the recipe this builder holds.
+   * Used by the polygon-slab pick path where plain meshes carry userData.floorNo.
+   */
+  getFloorByFloorNo(floorNo: number): FloorSpec | null {
+    return this.recipe.floors.find((f) => f.floorNo === floorNo) ?? null;
   }
 
   updateRecipe(recipe: BuildingRecipe): THREE.Group {

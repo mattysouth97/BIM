@@ -52,6 +52,39 @@ describe("generateBuildingCSV", () => {
     expect(csv).toContain('"Seoul, Gangnam-gu"');
   });
 
+  it("includes retrofit financial columns when provided (P0-02)", () => {
+    const building: BuildingExportData = {
+      ...BASE_BUILDING,
+      retrofitNpvKrw: 6_500_000,
+      retrofitEffectiveCapexKrw: 8_000_000,
+      retrofitDiscountedPaybackYears: 6.8,
+      retrofitAnnualSavingKwh: 40_000,
+    };
+    const csv = generateBuildingCSV([building]);
+    const lines = csv.trimEnd().split("\n");
+
+    expect(lines[0]).toContain("retrofitNpvKrw");
+    expect(lines[0]).toContain("retrofitEffectiveCapexKrw");
+    expect(lines[0]).toContain("retrofitDiscountedPaybackYears");
+    expect(lines[0]).toContain("retrofitAnnualSavingKwh");
+    expect(lines[1]).toContain("6500000");
+    expect(lines[1]).toContain("6.8");
+  });
+
+  it("renders empty cells (not zeros) for absent retrofit financials (P0-02)", () => {
+    const csv = generateBuildingCSV([BASE_BUILDING]);
+    const lines = csv.trimEnd().split("\n");
+
+    // Row stays aligned with the header — absent retrofit values are explicit
+    // empty fields, never fabricated 0s.
+    expect(lines[1].split(",").length).toBe(lines[0].split(",").length);
+    const cells = lines[1].split(",");
+    const headerCells = lines[0].split(",");
+    const npvIdx = headerCells.findIndex((h) => h.includes("retrofitNpvKrw"));
+    expect(npvIdx).toBeGreaterThan(-1);
+    expect(cells[npvIdx]).toBe("");
+  });
+
   it("empty array returns BOM + header line only", () => {
     const csv = generateBuildingCSV([]);
     const lines = csv.trimEnd().split("\n");

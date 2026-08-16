@@ -1,7 +1,7 @@
 "use client";
 
 import { useMaterialStore } from "@/store/material-store";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -51,7 +51,7 @@ export function ConfigPanel({
   visible,
   onClose,
 }: ConfigPanelProps) {
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { t } = useT();
   const properties = useMaterialStore((s) => s.properties[buildingPk]);
 
   if (!visible) return null;
@@ -61,7 +61,7 @@ export function ConfigPanel({
       sourceBadgeLabels["code-estimate"];
     return (
       <Badge variant={label.variant} className="text-[10px]">
-        {isKo ? label.ko : label.en}
+        {t(label.ko, label.en)}
       </Badge>
     );
   };
@@ -73,7 +73,7 @@ export function ConfigPanel({
         <div className="flex items-center gap-2">
           <Settings className="h-4 w-4 text-primary" />
           <span className="text-sm font-semibold">
-            {isKo ? "설정" : "Configuration"}
+            {t("설정", "Configuration")}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -95,27 +95,27 @@ export function ConfigPanel({
           <TabsList className="w-full">
             <TabsTrigger value="building" className="gap-1 text-xs">
               <Building2 className="h-3.5 w-3.5" />
-              {isKo ? "건물" : "Building"}
+              {t("건물", "Building")}
             </TabsTrigger>
             <TabsTrigger value="envelope" className="gap-1 text-xs">
               <Thermometer className="h-3.5 w-3.5" />
-              {isKo ? "외피" : "Envelope"}
+              {t("외피", "Envelope")}
             </TabsTrigger>
             <TabsTrigger value="systems" className="gap-1 text-xs">
               <Cog className="h-3.5 w-3.5" />
-              {isKo ? "설비" : "Systems"}
+              {t("설비", "Systems")}
             </TabsTrigger>
             <TabsTrigger value="equipment" className="gap-1 text-xs">
               <Wrench className="h-3.5 w-3.5" />
-              {isKo ? "장비" : "Equipment"}
+              {t("장비", "Equipment")}
             </TabsTrigger>
             <TabsTrigger value="layers" className="gap-1 text-xs">
               <Layers className="h-3.5 w-3.5" />
-              {isKo ? "레이어" : "Layers"}
+              {t("레이어", "Layers")}
             </TabsTrigger>
             <TabsTrigger value="energy" className="gap-1 text-xs">
               <BarChart2 className="h-3.5 w-3.5" />
-              {isKo ? "에너지" : "Energy"}
+              {t("에너지", "Energy")}
             </TabsTrigger>
           </TabsList>
 

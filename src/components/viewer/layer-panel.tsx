@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import { useLayerStore } from "@/store/layer-store";
 import { LAYER_CONFIGS, ALL_LAYER_IDS, MEP_SUB_IDS, MEP_SUB_CONFIGS } from "@/lib/layers/types";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { X, ChevronDown } from "lucide-react";
 
@@ -24,7 +24,9 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
   const toggleLayer = useLayerStore((s) => s.toggleLayer);
   const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
   const toggleMepSub = useLayerStore((s) => s.toggleMepSub);
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const airflowVisible = useLayerStore((s) => s.airflowVisible);
+  const toggleAirflow = useLayerStore((s) => s.toggleAirflow);
+  const { t } = useT();
 
   const [mepExpanded, setMepExpanded] = useState(true);
 
@@ -38,7 +40,7 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <span className="text-sm font-semibold">
-          {isKo ? "디지털 트윈 레이어" : "Digital Twin Layers"}
+          {t("디지털 트윈 레이어", "Digital Twin Layers")}
         </span>
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose}>
           <X className="h-3.5 w-3.5" />
@@ -70,7 +72,7 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
                 {/* Layer name + description */}
                 <span className="flex-1 min-w-0">
                   <span className={`block ${active ? "font-medium" : "text-muted-foreground"}`}>
-                    {isKo ? config.nameKo : config.name}
+                    {t(config.nameKo, config.name)}
                   </span>
                   <span className="block text-[10px] text-muted-foreground leading-tight mt-0.5 truncate">
                     {config.description}
@@ -96,23 +98,45 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
                 const subConfig = MEP_SUB_CONFIGS[subId];
                 const subActive = mepSubVisibility[subId];
                 return (
-                  <button
-                    key={subId}
-                    type="button"
-                    onClick={() => toggleMepSub(subId)}
-                    className="flex w-full items-start gap-3 rounded-md pl-8 pr-3 py-1.5 text-left text-xs transition-colors hover:bg-accent/50"
-                  >
-                    <span
-                      className="mt-0.5 size-2 shrink-0 rounded-full border-2 transition-colors"
-                      style={{
-                        borderColor: subConfig.color,
-                        backgroundColor: subActive ? subConfig.color : "transparent",
-                      }}
-                    />
-                    <span className={subActive ? "font-medium" : "text-muted-foreground"}>
-                      {isKo ? subConfig.nameKo : subConfig.name}
-                    </span>
-                  </button>
+                  <Fragment key={subId}>
+                    <button
+                      type="button"
+                      aria-pressed={subActive}
+                      onClick={() => toggleMepSub(subId)}
+                      className="flex w-full items-start gap-3 rounded-md pl-8 pr-3 py-1.5 text-left text-xs transition-colors hover:bg-accent/50"
+                    >
+                      <span
+                        className="mt-0.5 size-2 shrink-0 rounded-full border-2 transition-colors"
+                        style={{
+                          borderColor: subConfig.color,
+                          backgroundColor: subActive ? subConfig.color : "transparent",
+                        }}
+                      />
+                      <span className={subActive ? "font-medium" : "text-muted-foreground"}>
+                        {t(subConfig.nameKo, subConfig.name)}
+                      </span>
+                    </button>
+
+                    {subId === "mep-hvac" && (
+                      <button
+                        type="button"
+                        aria-pressed={airflowVisible}
+                        onClick={toggleAirflow}
+                        className="flex w-full items-center gap-3 rounded-md pl-12 pr-3 py-1.5 text-left text-[11px] transition-colors hover:bg-accent/50"
+                      >
+                        <span
+                          className="size-1.5 shrink-0 rounded-full border transition-colors"
+                          style={{
+                            borderColor: "#67e8f9",
+                            backgroundColor: airflowVisible ? "#67e8f9" : "transparent",
+                          }}
+                        />
+                        <span className={airflowVisible ? "font-medium" : "text-muted-foreground"}>
+                          {t("공기 흐름", "Airflow")}
+                        </span>
+                      </button>
+                    )}
+                  </Fragment>
                 );
               })}
             </Fragment>

@@ -8,6 +8,7 @@ import type { AnnualConsumption } from "@/lib/energy/consumption-normalizer";
 import type { PrimaryEnergyResult } from "@/lib/energy/primary-energy";
 import type { BenchmarkResult } from "@/lib/energy/benchmark-comparison";
 import type { EnergyDataSource } from "@/lib/energy/system-breakdown";
+import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import {
   getHeatingSystemTypeCode,
   getCoolingSystemTypeCode,
@@ -179,8 +180,7 @@ export function generateECO2Input(
   metrics: EnergyMetrics,
   extra?: ECO2ExtraOptions
 ): string {
-  const totalFloorArea =
-    recipe.footprintWidth * recipe.footprintDepth * recipe.floors.length;
+  const totalFloorArea = envelopeQuantities(recipe).intensityFloorAreaSqm;
   const totalHL = metrics.heatLoss.totalHeatLoss;
 
   const data: ECO2InputData = {

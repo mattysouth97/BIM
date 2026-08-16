@@ -8,6 +8,7 @@ import { Undo2, RotateCcw, Check } from "lucide-react";
 import type { PixelPoint } from "@/lib/cad/pdf-to-polygon";
 import { pdfToPolygon } from "@/lib/cad/pdf-to-polygon";
 import type { Polygon2D } from "@/lib/cad/dxf-parser";
+import { pick } from "@/lib/i18n";
 
 interface PdfTracerProps {
   /** Raw PDF file bytes (ArrayBuffer). */
@@ -17,10 +18,6 @@ interface PdfTracerProps {
   /** Called once the user confirms a valid traced polygon. */
   onConfirm: (polygon: Polygon2D, areaSqm: number) => void;
   lang?: "ko" | "en";
-}
-
-function t(ko: string, en: string, isKo: boolean): string {
-  return isKo ? ko : en;
 }
 
 /**
@@ -37,8 +34,6 @@ export function PdfTracer({
   onConfirm,
   lang = "en",
 }: PdfTracerProps) {
-  const isKo = lang === "ko";
-
   const renderCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -200,13 +195,13 @@ export function PdfTracer({
       {/* Instructions */}
       <div className="flex flex-col gap-1">
         <h3 className="text-sm font-semibold">
-          {t("외곽선 추적", "Trace the footprint", isKo)}
+          {pick(lang, "외곽선 추적", "Trace the footprint")}
         </h3>
         <p className="text-xs text-muted-foreground">
-          {t(
+          {pick(
+            lang,
             "건물 외곽선의 각 꼭짓점을 순서대로 클릭하세요. 세 점 이상이면 닫힌 다각형이 됩니다.",
             "Click each corner of the building outline in order. After 3+ points the polygon closes automatically.",
-            isKo
           )}
         </p>
       </div>
@@ -215,7 +210,7 @@ export function PdfTracer({
       {renderState.kind === "loading" && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          {t("PDF 렌더링 중…", "Rendering PDF…", isKo)}
+          {pick(lang, "PDF 렌더링 중…", "Rendering PDF…")}
         </div>
       )}
       {renderState.kind === "error" && (
@@ -224,7 +219,7 @@ export function PdfTracer({
           role="alert"
         >
           <span>
-            {t("PDF를 읽을 수 없습니다: ", "Could not read PDF: ", isKo)}
+            {pick(lang, "PDF를 읽을 수 없습니다: ", "Could not read PDF: ")}
             {renderState.message}
           </span>
         </div>
@@ -247,7 +242,7 @@ export function PdfTracer({
       {/* Vertex + tool controls */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-muted-foreground tabular-nums">
-          {points.length} {t("정점", "vertices", isKo)}
+          {points.length} {pick(lang, "정점", "vertices")}
         </span>
         <Button
           type="button"
@@ -257,7 +252,7 @@ export function PdfTracer({
           disabled={points.length === 0}
         >
           <Undo2 className="mr-1 h-4 w-4" />
-          {t("되돌리기", "Undo", isKo)}
+          {pick(lang, "되돌리기", "Undo")}
         </Button>
         <Button
           type="button"
@@ -267,18 +262,14 @@ export function PdfTracer({
           disabled={points.length === 0}
         >
           <RotateCcw className="mr-1 h-4 w-4" />
-          {t("초기화", "Clear", isKo)}
+          {pick(lang, "초기화", "Clear")}
         </Button>
       </div>
 
       {/* Scale calibration */}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="pdf-width-meters" className="text-xs">
-          {t(
-            "건물 대략 폭 (미터)",
-            "Approximate building width (meters)",
-            isKo
-          )}
+          {pick(lang, "건물 대략 폭 (미터)", "Approximate building width (meters)")}
         </Label>
         <Input
           id="pdf-width-meters"
@@ -286,17 +277,17 @@ export function PdfTracer({
           min="0"
           step="0.1"
           inputMode="decimal"
-          placeholder={t("예: 25", "e.g. 25", isKo)}
+          placeholder={pick(lang, "예: 25", "e.g. 25")}
           value={widthMeters}
           onChange={(e) => setWidthMeters(e.target.value)}
           className="max-w-[200px]"
           data-testid="pdf-width-meters"
         />
         <p className="text-[11px] text-muted-foreground">
-          {t(
+          {pick(
+            lang,
             "추적한 외곽선의 가로 길이에 해당하는 실제 미터값을 입력하세요. 축척 보정에 사용됩니다.",
             "Enter the real-world width in meters of the horizontal extent of your traced outline. Used for scale calibration.",
-            isKo
           )}
         </p>
       </div>
@@ -310,7 +301,7 @@ export function PdfTracer({
           data-testid="pdf-tracer-confirm"
         >
           <Check className="mr-1 h-4 w-4" />
-          {t("외곽선 확정", "Confirm footprint", isKo)}
+          {pick(lang, "외곽선 확정", "Confirm footprint")}
         </Button>
       </div>
     </div>

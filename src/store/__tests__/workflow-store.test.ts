@@ -5,6 +5,7 @@ import type { WorkflowStage } from "../../lib/workflow/stages";
 const allFalse: Record<WorkflowStage, boolean> = {
   search: false,
   upload: false,
+  params: false,
   twin:   false,
   report: false,
 };
@@ -13,6 +14,7 @@ function resetStore() {
   useWorkflowStore.setState({
     stage: "search",
     completion: { ...allFalse },
+    cadSkipped: {},
   });
 }
 
@@ -103,6 +105,65 @@ describe("useWorkflowStore", () => {
     useWorkflowStore.setState({ stage: "report" });
     useWorkflowStore.getState().retreat();
     expect(useWorkflowStore.getState().stage).toBe("twin");
+  });
+
+  // -------------------------------------------------------------------------
+  // goToStage() — guard-aware navigation (P1-08 b)
+  // -------------------------------------------------------------------------
+
+  it("goToStage backward is always allowed", () => {
+    useWorkflowStore.setState({ stage: "twin" });
+    const ok = useWorkflowStore.getState().goToStage("search");
+    expect(ok).toBe(true);
+    expect(useWorkflowStore.getState().stage).toBe("search");
+  });
+
+  it("goToStage to the current stage is a no-op success", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    const ok = useWorkflowStore.getState().goToStage("upload");
+    expect(ok).toBe(true);
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it('goToStage forward from "upload" is blocked without a footprintPolygon', () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    const ok = useWorkflowStore.getState().goToStage("twin", {});
+    expect(ok).toBe(false);
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it("goToStage forward is blocked by a <3-point polygon", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    const ok = useWorkflowStore
+      .getState()
+      .goToStage("twin", { footprintPolygon: [[[0, 0], [1, 1]]] });
+    expect(ok).toBe(false);
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it("goToStage forward passes with a valid polygon", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    const ok = useWorkflowStore
+      .getState()
+      .goToStage("twin", { footprintPolygon: VALID_POLYGON });
+    expect(ok).toBe(true);
+    expect(useWorkflowStore.getState().stage).toBe("twin");
+  });
+
+  it('goToStage multi-stage jump "search" → "report" is blocked by the intermediate upload guard', () => {
+    useWorkflowStore.setState({ stage: "search" });
+    const ok = useWorkflowStore.getState().goToStage("report", {});
+    expect(ok).toBe(false);
+    expect(useWorkflowStore.getState().stage).toBe("search");
+  });
+
+  it('goToStage "search" → "report" succeeds when every intermediate guard passes', () => {
+    useWorkflowStore.setState({ stage: "search" });
+    const ok = useWorkflowStore
+      .getState()
+      .goToStage("report", { footprintPolygon: VALID_POLYGON });
+    expect(ok).toBe(true);
+    expect(useWorkflowStore.getState().stage).toBe("report");
   });
 
   // -------------------------------------------------------------------------
@@ -203,5 +264,93 @@ describe("useWorkflowStore", () => {
     useWorkflowStore.getState().resetWorkflow();
     const { completion } = useWorkflowStore.getState();
     expect(Object.values(completion).every((v) => v === false)).toBe(true);
+  });
+
+  // -------------------------------------------------------------------------
+  // skipCad() — CAD-less path (P2-17)
+  // -------------------------------------------------------------------------
+
+  it("skipCad() marks the building and advance({cadSkipped}) leaves upload", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    useWorkflowStore.getState().skipCad("bldg-A");
+    expect(useWorkflowStore.getState().cadSkipped["bldg-A"]).toBe(true);
+
+    useWorkflowStore.getState().advance({ cadSkipped: true });
+    expect(useWorkflowStore.getState().stage).toBe("twin");
+  });
+
+  it("advance() without a footprint or skip still blocks on upload", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    useWorkflowStore.getState().advance({});
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it("goToStage() forward jump passes with cadSkipped in the guard context", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    expect(useWorkflowStore.getState().goToStage("report", { cadSkipped: true })).toBe(true);
+    expect(useWorkflowStore.getState().stage).toBe("report");
+  });
+
+  it("resetWorkflow() clears the cadSkipped map", () => {
+    useWorkflowStore.getState().skipCad("bldg-A");
+    useWorkflowStore.getState().resetWorkflow();
+    expect(useWorkflowStore.getState().cadSkipped).toEqual({});
+  });
+
+  it("cadSkipped is not persisted (excluded from partialize)", () => {
+    const storeApi = useWorkflowStore as unknown as {
+      persist: { getOptions: () => { partialize: (s: unknown) => Record<string, unknown> } };
+    };
+    const persisted = storeApi.persist.getOptions().partialize(useWorkflowStore.getState());
+    expect(Object.keys(persisted).sort()).toEqual(["completion", "stage"]);
+    expect(persisted).not.toHaveProperty("cadSkipped");
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // P2-24 — cad-first mode navigation
+  // ───────────────────────────────────────────────────────────────────────────
+
+  const CAD_PARAMS = { floors: 6, year: 1995, sigunguCd: "11680" };
+
+  it('cad-first advance() from "upload" with a footprint goes to "params", not "twin"', () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    useWorkflowStore.getState().advance({ mode: "cad-first", footprintPolygon: VALID_POLYGON });
+    expect(useWorkflowStore.getState().stage).toBe("params");
+  });
+
+  it('cad-first advance() from "upload" rejects the skip flag (CAD mandatory)', () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    useWorkflowStore.getState().advance({ mode: "cad-first", cadSkipped: true });
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it('cad-first advance() from "params" blocks without valid params', () => {
+    useWorkflowStore.setState({ stage: "params" });
+    useWorkflowStore.getState().advance({ mode: "cad-first" });
+    expect(useWorkflowStore.getState().stage).toBe("params");
+  });
+
+  it('cad-first advance() from "params" with valid params goes to "twin"', () => {
+    useWorkflowStore.setState({ stage: "params" });
+    useWorkflowStore.getState().advance({ mode: "cad-first", cadParams: CAD_PARAMS });
+    expect(useWorkflowStore.getState().stage).toBe("twin");
+  });
+
+  it('cad-first retreat() from "twin" goes back to "params"', () => {
+    useWorkflowStore.setState({ stage: "twin" });
+    useWorkflowStore.getState().retreat({ mode: "cad-first" });
+    expect(useWorkflowStore.getState().stage).toBe("params");
+  });
+
+  it('cad-first retreat() at "upload" is a no-op (first stage of the mode)', () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    useWorkflowStore.getState().retreat({ mode: "cad-first" });
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+  });
+
+  it("ledger retreat() without ctx behaves as before (regression)", () => {
+    useWorkflowStore.setState({ stage: "upload" });
+    useWorkflowStore.getState().retreat();
+    expect(useWorkflowStore.getState().stage).toBe("search");
   });
 });

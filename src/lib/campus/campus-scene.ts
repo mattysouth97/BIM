@@ -38,8 +38,11 @@ export function getCampusBuildingConfigs(siteLayout: SiteLayout): CampusBuilding
       const { building, position, footprintVertices } = entry;
       const key = building.building.mgmBldrgstPk || String(index);
 
-      // Generate geometry without per-floor data (campus view uses title-level info only)
-      const geometry = generateBuildingGeometry(building.building, []);
+      // Generate geometry without per-floor data (campus view uses title-level info only).
+      // P2-28: pass measuredHeightM so campus uses ledger → measured → era height chain.
+      const geometry = generateBuildingGeometry(building.building, [], {
+        measuredHeightM: building.measuredHeightM ?? undefined,
+      });
       const recipe = toRecipe(geometry);
 
       configs.push({

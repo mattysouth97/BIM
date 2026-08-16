@@ -7,7 +7,9 @@
 //   (b) Explorer purity — src/app/releases/page.tsx (and its imports) must not
 //                          contain "use client"
 //   (c) Release immutability — files under public/releases/v*/ must be
-//                               unchanged vs `git diff --name-only HEAD`
+//                               unchanged vs `git diff --name-only HEAD`,
+//                               AND no new untracked files may appear there
+//                               (`git ls-files --others --exclude-standard`)
 //
 // Exit code 0 = all guards pass. Exit code 1 = at least one guard failed.
 
@@ -150,13 +152,25 @@ function checkReleaseImmutability() {
 
   let changedFiles;
   try {
-    const output = execFileSync("git", ["diff", "--name-only", "HEAD"], {
+    const diffOutput = execFileSync("git", ["diff", "--name-only", "HEAD"], {
       cwd: REPO_ROOT,
       encoding: "utf8",
     });
-    changedFiles = output.split("\n").map((f) => f.trim()).filter(Boolean);
+    // P0-05: `git diff` never lists untracked files, so a brand-new file
+    // dropped into public/releases/v*/ would pass undetected. Union in the
+    // untracked set (same exclude rules as .gitignore).
+    const untrackedOutput = execFileSync(
+      "git",
+      ["ls-files", "--others", "--exclude-standard"],
+      { cwd: REPO_ROOT, encoding: "utf8" }
+    );
+    changedFiles = [...diffOutput.split("\n"), ...untrackedOutput.split("\n")]
+      .map((f) => f.trim())
+      // git quotes paths with special characters — strip the surrounding quotes.
+      .map((f) => (f.startsWith('"') && f.endsWith('"') ? f.slice(1, -1) : f))
+      .filter(Boolean);
   } catch (err) {
-    reportFail(guard, `git diff failed: ${err.message}`);
+    reportFail(guard, `git file enumeration failed: ${err.message}`);
     return;
   }
 

@@ -16,26 +16,29 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEnergyBreakdown } from "@/hooks/use-energy-breakdown";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import type { EnergyDataSource } from "@/lib/energy/system-breakdown";
 
 interface EnergyBreakdownChartProps {
   buildingPk: string;
 }
 
-const chartConfig = {
-  hvac:      { label: "HVAC",     color: "hsl(var(--chart-1))" },
-  lighting:  { label: "Lighting", color: "hsl(var(--chart-2))" },
-  dhw:       { label: "DHW",      color: "hsl(var(--chart-3))" },
-  plugLoads: { label: "Plug",     color: "hsl(var(--chart-4))" },
+// P1-07 (d): --chart-1..5 are already complete oklch() colors in globals.css,
+// so wrapping the token in an hsl() call produced invalid CSS and bars fell
+// back to black. Use the token directly. Exported for unit testing.
+export const chartConfig = {
+  hvac:      { label: "HVAC",     color: "var(--chart-1)" },
+  lighting:  { label: "Lighting", color: "var(--chart-2)" },
+  dhw:       { label: "DHW",      color: "var(--chart-3)" },
+  plugLoads: { label: "Plug",     color: "var(--chart-4)" },
 } satisfies ChartConfig;
 
 export function EnergyBreakdownChart({ buildingPk }: EnergyBreakdownChartProps) {
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { t } = useT();
   const breakdown = useEnergyBreakdown(buildingPk);
 
   // Derive percentages in useMemo — always called before any early return (Rules of Hooks).
-  // Deps: [breakdown, isKo] ONLY — not buildingPk or individual store slices.
+  // Deps: [breakdown, t] ONLY — not buildingPk or individual store slices.
   // breakdown reference is stable per Phase 23 guarantee, so camera rotation cannot invalidate this.
   const chartData = useMemo(() => {
     if (!breakdown || breakdown.total <= 0) return [];
@@ -43,35 +46,35 @@ export function EnergyBreakdownChart({ buildingPk }: EnergyBreakdownChartProps) 
     const fmtKwh = (v: number) => (v / 1000).toFixed(1);
     return [
       {
-        system: isKo ? "냉난방" : "HVAC",
+        system: t("냉난방", "HVAC"),
         percent: pct(breakdown.hvac),
         mwh: fmtKwh(breakdown.hvac),
         source: breakdown.hvacDataSource as EnergyDataSource,
         colorVar: "var(--color-hvac)",
       },
       {
-        system: isKo ? "조명" : "Lighting",
+        system: t("조명", "Lighting"),
         percent: pct(breakdown.lighting),
         mwh: fmtKwh(breakdown.lighting),
         source: breakdown.lightingDataSource as EnergyDataSource,
         colorVar: "var(--color-lighting)",
       },
       {
-        system: isKo ? "급탕" : "DHW",
+        system: t("급탕", "DHW"),
         percent: pct(breakdown.dhw),
         mwh: fmtKwh(breakdown.dhw),
         source: breakdown.dhwDataSource as EnergyDataSource,
         colorVar: "var(--color-dhw)",
       },
       {
-        system: isKo ? "콘센트" : "Plug",
+        system: t("콘센트", "Plug"),
         percent: pct(breakdown.plugLoads),
         mwh: fmtKwh(breakdown.plugLoads),
         source: breakdown.plugLoadsDataSource as EnergyDataSource,
         colorVar: "var(--color-plugLoads)",
       },
     ];
-  }, [breakdown, isKo]);
+  }, [breakdown, t]);
 
   // Null guard after all hooks — matches energy-cards.tsx SkeletonCards pattern.
   if (!breakdown) return <Skeleton className="h-48 w-full rounded-md" />;
@@ -87,10 +90,10 @@ export function EnergyBreakdownChart({ buildingPk }: EnergyBreakdownChartProps) 
             variant="outline"
             className="border-amber-400 text-amber-700 bg-amber-50 text-[10px] px-1.5"
           >
-            {isKo ? "추정 비율" : "Estimated"}
+            {t("추정 비율", "Estimated")}
           </Badge>
           <span className="text-[9px] text-muted-foreground">
-            {isKo ? "ASHRAE 90.1 기반 비율" : "ASHRAE 90.1 ratios"}
+            {t("ASHRAE 90.1 기반 비율", "ASHRAE 90.1 ratios")}
           </span>
         </div>
       )}
@@ -136,7 +139,7 @@ export function EnergyBreakdownChart({ buildingPk }: EnergyBreakdownChartProps) 
       </ChartContainer>
 
       <p className="text-[9px] text-muted-foreground pl-1">
-        {isKo ? "총 연간 수요" : "Total annual demand"}:{" "}
+        {t("총 연간 수요", "Total annual demand")}:{" "}
         <span className="tabular-nums font-medium text-foreground">
           {(breakdown.total / 1000).toFixed(1)} MWh
         </span>

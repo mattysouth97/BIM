@@ -14,6 +14,27 @@ export const RETROFIT_COSTS = {
 } as const;
 
 /**
+ * P1-02 — useful equipment life per measure id (years). Cash flow truncates
+ * at `min(lifetimeYears, analysisHorizonYears)`. Values are engineering
+ * estimates anchored to the ASHRAE Equipment Life Expectancy table (ASHRAE
+ * Handbook — HVAC Applications, Ch. 37 "Owning and Operating Costs") and
+ * common manufacturer-rated lives; none is an official Korean standard —
+ * labeled honestly per entry.
+ */
+export const MEASURE_LIFETIMES: Record<string, number> = {
+  "lighting-led": 15, // LED fixture rated life ~50k h ÷ 2,500-4,000 h/yr — engineering estimate
+  "lighting-led-smart": 15, // controls ≤ fixtures; governed by fixture life — engineering estimate
+  "hvac-boiler-upgrade": 15, // ASHRAE: steel water-tube boilers ~24 yr, packaged commercial ~15 yr — conservative
+  "hvac-heat-pump": 20, // ASHRAE: air-to-air heat pumps ~15 yr; modern VRF-class units ~20 — engineering estimate
+  "hvac-hrv": 15, // ASHRAE: heat-recovery ventilators/air-side economizers ~15 yr
+  "envelope-wall-insulation": 30, // insulation outlives the 20-yr horizon ⇒ intentionally no truncation
+  "envelope-roof-insulation": 30, // same — no truncation at 20 yr
+  "envelope-floor-insulation": 30, // same — no truncation at 20 yr
+  "envelope-window-replacement": 25, // IGU service life 20-30 yr — engineering estimate; ≥ horizon ⇒ no truncation
+  "solar-pv": 25, // panel performance warranty norm (80% @ 25 yr); applies to all solar-pv-<roof> ids
+};
+
+/**
  * Annual nominal energy-price escalation rates for Korean fuels.
  *
  * Sourced from 2020–2024 actuals:
@@ -72,6 +93,37 @@ export const DEFAULT_ECONOMIC_ASSUMPTIONS: EconomicAssumptions = {
 // ───────────────────────────────────────────────────────────────────────────
 
 /**
+ * P2-10 (g) — version + effective date for the 그린리모델링 program parameters
+ * below (subsidy ratios, interest-support tiers, loan cap). Program rules change
+ * per policy year; stamp the source so a future rule change is a versioned edit,
+ * not a silent constant swap. Authority: the D₁ research dossier at
+ * docs/superpowers/research/2026-04-30-green-remodeling.md.
+ */
+export const PROGRAM_PARAMETERS = {
+  version: "2026.1",
+  effectiveDate: "2026-03-01", // program restarted March 2026
+  source: "docs/superpowers/research/2026-04-30-green-remodeling.md",
+} as const;
+
+/**
+ * P2-10 (a) — 그린리모델링 private-track loan term, years. The interest-support
+ * buy-down applies over the LOAN TERM, not the full 20-yr analysis horizon
+ * (dossier §3). The dossier does not publish a fixed term (it varies by lender
+ * and applicant), so this is a DOCUMENTED ASSUMPTION — a conservative 10-year
+ * term typical of Korean facility-improvement loans. Shorter than the horizon,
+ * so the buy-down no longer subsidizes all 20 years. Adjust when the program
+ * portal publishes the term.
+ */
+export const GR_PRIVATE_LOAN_TERM_YEARS = 10;
+
+/**
+ * P2-10 (g) — 2026 non-residential large-building loan cap: ₩200 billion
+ * (raised from ₩50B in prior years; dossier §3 "Loan limit (2026)"). The engine
+ * flags scenarios whose financed portion exceeds this rather than clamping.
+ */
+export const GR_PRIVATE_LOAN_CAP_KRW = 200_000_000_000;
+
+/**
  * 공공건축물 그린리모델링 — 서울특별시 + 중앙·공공 (50% direct subsidy).
  * Applied to envelope/HVAC/lighting. Renewable not auto-subsidized.
  */
@@ -117,6 +169,8 @@ export const KOREAN_GR_PRIVATE_BASE: EconomicAssumptions = {
     debtFraction: 0.7,
     loanRatePreSubsidy: 0.055,
     interestSupportPp: 0.045,
+    loanTermYears: GR_PRIVATE_LOAN_TERM_YEARS, // P2-10 (a)
+    loanCapKrw: GR_PRIVATE_LOAN_CAP_KRW, // P2-10 (g)
   },
 };
 
@@ -135,6 +189,8 @@ export const KOREAN_GR_PRIVATE_TIER2: EconomicAssumptions = {
     debtFraction: 0.7,
     loanRatePreSubsidy: 0.055,
     interestSupportPp: 0.04,
+    loanTermYears: GR_PRIVATE_LOAN_TERM_YEARS, // P2-10 (a)
+    loanCapKrw: GR_PRIVATE_LOAN_CAP_KRW, // P2-10 (g)
   },
 };
 
@@ -155,6 +211,8 @@ export const KOREAN_GR_PRIVATE_HIGH_PERF: EconomicAssumptions = {
     debtFraction: 0.7,
     loanRatePreSubsidy: 0.055,
     interestSupportPp: 0.055,
+    loanTermYears: GR_PRIVATE_LOAN_TERM_YEARS, // P2-10 (a)
+    loanCapKrw: GR_PRIVATE_LOAN_CAP_KRW, // P2-10 (g)
   },
 };
 
@@ -200,12 +258,9 @@ export const ENERGY_PRICES = {
   gas: 75,
 } as const;
 
-/** CO2 emission factors (tCO2/MWh) */
-export const CO2_FACTORS = {
-  /** Korean national grid emission factor 2023 */
-  electricity: 0.4594,
-  /** Natural gas emission factor */
-  gas: 0.2018,
-  /** District heating emission factor */
-  districtHeating: 0.3200,
-} as const;
+/**
+ * CO2 emission factors (tCO2/MWh). P2-02: the canonical definition lives in
+ * src/lib/energy/co2-factors.ts — re-exported here so every retrofit consumer
+ * keeps its import path while there is only ONE source of truth.
+ */
+export { CO2_FACTORS } from "@/lib/energy/co2-factors";

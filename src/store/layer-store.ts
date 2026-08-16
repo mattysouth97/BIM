@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { versionedMigrate } from "./persist-migrate";
 import { persist } from "zustand/middleware";
 import type { LayerId, MepSubLayerId } from "@/lib/layers/types";
 import { ALL_LAYER_IDS, MEP_SUB_IDS } from "@/lib/layers/types";
@@ -8,6 +9,14 @@ import { ALL_LAYER_IDS, MEP_SUB_IDS } from "@/lib/layers/types";
 interface LayerState {
   /** Visibility toggle per layer — all layers visible by default */
   visibility: Record<LayerId, boolean>;
+
+  /**
+   * P2-22 — structural isolation view (Revit structural-discipline analog):
+   * load-bearing elements render solid, everything else ghosts to
+   * transparent gray (Solibri/xeokit x-ray convention). Session-only.
+   */
+  structuralIsolation: boolean;
+  toggleStructuralIsolation: () => void;
 
   /** Whether a layer has been generated (lazy generation tracking) */
   generated: Record<LayerId, boolean>;
@@ -32,6 +41,15 @@ interface LayerState {
 
   /** Visibility toggle per MEP sub-layer — all sub-layers visible by default */
   mepSubVisibility: Record<MepSubLayerId, boolean>;
+
+  /** Animated airflow effect inside the HVAC sub-layer. */
+  airflowVisible: boolean;
+
+  /** Toggle only the airflow effect, leaving HVAC equipment visible. */
+  toggleAirflow: () => void;
+
+  /** Set airflow visibility explicitly. */
+  setAirflowVisible: (visible: boolean) => void;
 
   /** Toggle a single MEP sub-layer's visibility */
   toggleMepSub: (id: MepSubLayerId) => void;
@@ -59,6 +77,10 @@ export const useLayerStore = create<LayerState>()(
       generated: { ...defaultGenerated },
       density: { ...defaultDensity },
 
+      structuralIsolation: false,
+      toggleStructuralIsolation: () =>
+        set((state) => ({ structuralIsolation: !state.structuralIsolation })),
+
       toggleLayer: (id) =>
         set((state) => ({
           visibility: { ...state.visibility, [id]: !state.visibility[id] },
@@ -85,9 +107,17 @@ export const useLayerStore = create<LayerState>()(
           generated: { ...defaultGenerated },
           density: { ...defaultDensity },
           mepSubVisibility: { ...defaultMepSubVisibility },
+          airflowVisible: true,
+          structuralIsolation: false,
         }),
 
       mepSubVisibility: { ...defaultMepSubVisibility },
+      airflowVisible: true,
+
+      toggleAirflow: () =>
+        set((state) => ({ airflowVisible: !state.airflowVisible })),
+
+      setAirflowVisible: (visible) => set({ airflowVisible: visible }),
 
       toggleMepSub: (id) =>
         set((state) => ({
@@ -104,8 +134,11 @@ export const useLayerStore = create<LayerState>()(
     }),
     {
       name: "bim-layer-store",
+      version: 1, // P2-07: initial version stamp
+      migrate: versionedMigrate,
       partialize: (s) => ({
         mepSubVisibility: s.mepSubVisibility,
+        airflowVisible: s.airflowVisible,
       }),
       // Deep-merge persisted sub-visibility OVER the defaults so newly added
       // sub-layer ids (absent from older persisted snapshots) fall back to

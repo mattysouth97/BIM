@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { useLayerStore } from "@/store/layer-store";
 import { LAYER_CONFIGS, ALL_LAYER_IDS, type LayerId } from "@/lib/layers/types";
 import { Slider } from "@/components/ui/slider";
@@ -20,7 +20,7 @@ const DENSITY_LABELS: Record<LayerId, { ko: string; en: string }> = {
 };
 
 export function LayersTab({ buildingPk: _buildingPk }: LayersTabProps) {
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { t } = useT();
   const visibility = useLayerStore((s) => s.visibility);
   const density = useLayerStore((s) => s.density);
   const toggleLayer = useLayerStore((s) => s.toggleLayer);
@@ -43,7 +43,7 @@ export function LayersTab({ buildingPk: _buildingPk }: LayersTabProps) {
                 style={{ backgroundColor: config.color }}
               />
               <span className="text-[11px] font-medium flex-1 truncate">
-                {isKo ? config.nameKo : config.name}
+                {t(config.nameKo, config.name)}
               </span>
               <button
                 onClick={() => toggleLayer(id)}
@@ -62,7 +62,7 @@ export function LayersTab({ buildingPk: _buildingPk }: LayersTabProps) {
             <div className="space-y-0.5">
               <div className="flex items-center justify-between text-[10px]">
                 <span className="text-muted-foreground">
-                  {isKo ? densityLabel.ko : densityLabel.en}
+                  {t(densityLabel.ko, densityLabel.en)}
                 </span>
                 <span className="font-mono tabular-nums">{densityVal}%</span>
               </div>

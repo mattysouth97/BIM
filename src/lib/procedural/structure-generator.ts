@@ -12,6 +12,13 @@ import {
   getEquipmentObjectClone,
   tagEquipmentObject,
 } from "@/lib/equipment-assets";
+import {
+  calcColumnCapacity,
+  calcColumnLoad,
+  getColumnPositions,
+  getRecommendedColumnSize,
+  getStressColor,
+} from "@/lib/structural-codes";
 
 function pbrToMaterial(config: PBRMaterialConfig): THREE.MeshStandardMaterial {
   const mat = new THREE.MeshStandardMaterial({
@@ -31,38 +38,50 @@ function pbrToMaterial(config: PBRMaterialConfig): THREE.MeshStandardMaterial {
  * Generate instanced slab geometry for all floors.
  * Each slab instance gets a floor mapping in userData for raycaster selection.
  *
- * When recipe.footprintPolygon is present, returns a THREE.Group of per-floor
- * extruded polygon meshes (one Mesh per floor) instead of a single InstancedMesh.
+ * P2-13 WP3 — Polygon path now returns ONE InstancedMesh (not a Group of per-floor
+ * Meshes). All floors share the same extruded polygon geometry; per-instance
+ * matrix transforms encode each floor's Y position. This bounds draw calls to the
+ * same budget as the rectangular path and preserves P0-04 floor selection via
+ * userData.instanceToFloor.
+ *
  * The rectangular InstancedMesh path is preserved as the fallback.
  */
 export function generateSlabs(recipe: BuildingRecipe): THREE.InstancedMesh | THREE.Group {
   const { floors, footprintWidth, footprintDepth, slab, footprintPolygon } = recipe;
 
-  // POLYGON PATH: when real cadastral polygon is available
+  // POLYGON PATH: unified InstancedMesh — one shared geometry, per-instance Y offset
   if (footprintPolygon && footprintPolygon.length >= 1 && footprintPolygon[0].length >= 3) {
-    const group = new THREE.Group();
-    group.userData = { type: "slab" };
+    // Build the canonical slab geometry at baseY=0; Y is applied via instance matrix.
+    const geo = extrudePolygon(footprintPolygon, slab.thickness, 0);
     const mat = pbrToMaterial(recipe.materials.slab);
+    const count = floors.length;
+    const im = new THREE.InstancedMesh(geo, mat, Math.max(1, count));
+    im.castShadow = true;
+    im.receiveShadow = true;
+
+    const mat4 = new THREE.Matrix4();
+    const pos = new THREE.Vector3();
+    const quat = new THREE.Quaternion();
+    const scl = new THREE.Vector3(1, 1, 1);
     const instanceToFloor = new Map<number, FloorSpec>();
 
     for (let i = 0; i < floors.length; i++) {
       const floor = floors[i];
-      const geo = extrudePolygon(footprintPolygon, slab.thickness, floor.y);
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      mesh.userData = { type: "slab", floorNo: floor.floorNo };
+      // Translate each instance to place the slab's base at floor.y
+      pos.set(0, floor.y, 0);
+      mat4.compose(pos, quat, scl);
+      im.setMatrixAt(i, mat4);
       instanceToFloor.set(i, floor);
-      group.add(mesh);
     }
 
-    // Preserve instanceToFloor on group for getFloorFromInstanceId compatibility
-    group.userData.instanceToFloor = instanceToFloor;
-    group.userData.floors = floors;
-    return group;
+    im.count = count;
+    im.instanceMatrix.needsUpdate = true;
+    im.userData = { type: "slab", floors, instanceToFloor };
+
+    return im;
   }
 
-  // RECTANGULAR PATH: original InstancedMesh logic (unchanged)
+  // RECTANGULAR PATH: original InstancedMesh logic with overhang + ground-floor material
   const count = floors.length;
 
   const geo = new THREE.BoxGeometry(1, 1, 1);
@@ -71,22 +90,34 @@ export function generateSlabs(recipe: BuildingRecipe): THREE.InstancedMesh | THR
   im.castShadow = true;
   im.receiveShadow = true;
 
+  // Per-instance color: ground floor uses groundFloor material color, others use slab color
+  im.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(Math.max(1, count) * 3), 3);
+
+  const slabColor = new THREE.Color(recipe.materials.slab.color);
+  const groundColor = new THREE.Color(recipe.materials.groundFloor.color);
+
   const mat4 = new THREE.Matrix4();
   const pos = new THREE.Vector3();
-  const scl = new THREE.Vector3(footprintWidth, slab.thickness, footprintDepth);
   const quat = new THREE.Quaternion();
   const instanceToFloor = new Map<number, FloorSpec>();
+
+  // slab.overhang extends the slab beyond the facade line on all four sides
+  const slabW = footprintWidth + 2 * (slab.overhang ?? 0);
+  const slabD = footprintDepth + 2 * (slab.overhang ?? 0);
+  const scl = new THREE.Vector3(slabW, slab.thickness, slabD);
 
   for (let i = 0; i < floors.length; i++) {
     const floor = floors[i];
     pos.set(0, floor.y + slab.thickness / 2, 0);
     mat4.compose(pos, quat, scl);
     im.setMatrixAt(i, mat4);
+    im.setColorAt(i, floor.isGroundFloor ? groundColor : slabColor);
     instanceToFloor.set(i, floor);
   }
 
   im.count = count;
   im.instanceMatrix.needsUpdate = true;
+  if (im.instanceColor) im.instanceColor.needsUpdate = true;
   im.userData = { type: "slab", floors: recipe.floors, instanceToFloor };
 
   return im;
@@ -144,17 +175,11 @@ function computeColumnGrid(recipe: BuildingRecipe): ColumnGrid {
  * scaling is unchanged. Falls back to the plain unit box otherwise.
  */
 export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
-  const { floors, column, slab, footprintPolygon } = recipe;
+  const { floors, column, slab } = recipe;
 
-  let columnPositions = computeColumnGrid(recipe).positions;
-
-  // The grid is derived from the bbox rectangle; with a real footprint
-  // polygon, drop positions that fall outside the outline (e.g. inside an
-  // L-notch) so no column stands outside the polygon-driven facade.
-  if (footprintPolygon && footprintPolygon.length >= 1 && footprintPolygon[0].length >= 3) {
-    const outer = footprintPolygon[0];
-    columnPositions = columnPositions.filter((cp) => pointInRing(cp.x, cp.z, outer));
-  }
+  // Canonical grid (structural-codes) already drops columns that do not fit
+  // the cadastral polygon — same visual filter as the local point-in-ring path.
+  const columnPositions = getColumnPositions(recipe);
 
   const totalCount = floors.length * columnPositions.length;
   const geo = getEquipmentGeometryClone("column") ?? new THREE.BoxGeometry(1, 1, 1);
@@ -162,29 +187,41 @@ export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
   const im = new THREE.InstancedMesh(geo, mat, Math.max(1, totalCount));
   im.castShadow = true;
   im.receiveShadow = true;
-  im.userData = { type: "column" };
+  im.userData = { type: "column", sizingLabels: [] as string[] };
 
   const mat4 = new THREE.Matrix4();
   const pos = new THREE.Vector3();
   const quat = new THREE.Quaternion();
   const scl = new THREE.Vector3();
+  const color = new THREE.Color();
+  const capacity = calcColumnCapacity(recipe);
+  const loads = calcColumnLoad(recipe, columnPositions.length);
 
   let idx = 0;
-  for (const floor of floors) {
+  for (let floorIndex = 0; floorIndex < floors.length; floorIndex++) {
+    const floor = floors[floorIndex];
     const colHeight = floor.height - slab.thickness;
     if (colHeight <= 0) continue;
     const y = floor.y + slab.thickness + colHeight / 2;
+    const floorLoad = loads[floorIndex] ?? 0;
+    const utilization = capacity > 0 ? floorLoad / capacity : 0;
+    color.set(getStressColor(utilization));
 
     for (const cp of columnPositions) {
       pos.set(cp.x, y, cp.z);
       scl.set(column.size, colHeight, column.size);
       mat4.compose(pos, quat, scl);
-      im.setMatrixAt(idx++, mat4);
+      im.setMatrixAt(idx, mat4);
+      im.setColorAt(idx, color);
+      im.userData.sizingLabels[idx] =
+        `${getRecommendedColumnSize(floorLoad)} | ${Math.round(floorLoad)} kN | ${Math.round(utilization * 100)}% cap.`;
+      idx++;
     }
   }
 
   im.count = idx;
   im.instanceMatrix.needsUpdate = true;
+  if (im.instanceColor) im.instanceColor.needsUpdate = true;
 
   return im;
 }
@@ -413,6 +450,35 @@ function generateSawtoothGeometry(
  * Generate roof mesh (single mesh, not instanced — only one roof per building).
  * Supports flat, gable, hip, sawtooth, and legacy "other" (truncated pyramid) types.
  */
+function isAxisAlignedRectangle(rings?: [number, number][][]): boolean {
+  if (!rings || rings.length !== 1 || rings[0].length < 4) return false;
+  const ring = [...rings[0]];
+  const first = ring[0];
+  const last = ring[ring.length - 1];
+  if (
+    ring.length > 1 &&
+    Math.abs(first[0] - last[0]) < 1e-6 &&
+    Math.abs(first[1] - last[1]) < 1e-6
+  ) {
+    ring.pop();
+  }
+  if (ring.length !== 4) return false;
+
+  const xs = ring.map(([x]) => x);
+  const zs = ring.map(([, z]) => z);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minZ = Math.min(...zs);
+  const maxZ = Math.max(...zs);
+  const expected = new Set([
+    `${minX}:${minZ}`,
+    `${minX}:${maxZ}`,
+    `${maxX}:${minZ}`,
+    `${maxX}:${maxZ}`,
+  ]);
+  return ring.every(([x, z]) => expected.has(`${x}:${z}`));
+}
+
 export function generateRoof(recipe: BuildingRecipe): THREE.Mesh {
   const { roof, footprintWidth, footprintDepth, totalHeight, footprintPolygon } = recipe;
   const mat = pbrToMaterial(recipe.materials.roof);
@@ -430,14 +496,25 @@ export function generateRoof(recipe: BuildingRecipe): THREE.Mesh {
     const mesh = new THREE.Mesh(geo, mat);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
-    mesh.userData = { type: "roof" };
+    mesh.userData = { type: "roof", effectiveRoofType: "flat" };
     return mesh;
   }
 
   let geo: THREE.BufferGeometry;
   let y: number;
+  let effectiveRoofType = roof.type;
+  const hasPolygon = !!recipe.footprintPolygon?.[0]?.length;
+  const needsPolygonCap =
+    hasPolygon && (roof.type === "flat" || !isAxisAlignedRectangle(recipe.footprintPolygon));
 
-  if (roof.type === "gable") {
+  if (needsPolygonCap) {
+    // Bounding-box roofs cross concave footprints and courtyard voids. Keep
+    // the exact footprint; irregular pitched roofs use a collision-free flat
+    // cap until a polygon-aware pitch solver is available.
+    geo = extrudePolygon(recipe.footprintPolygon!, roof.flatThickness, 0);
+    y = totalHeight;
+    effectiveRoofType = "flat";
+  } else if (roof.type === "gable") {
     const shape = new THREE.Shape();
     const hw = footprintWidth / 2;
     shape.moveTo(-hw, 0);
@@ -468,7 +545,7 @@ export function generateRoof(recipe: BuildingRecipe): THREE.Mesh {
   mesh.position.set(0, y, 0);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
-  mesh.userData = { type: "roof" };
+  mesh.userData = { type: "roof", effectiveRoofType };
 
   return mesh;
 }

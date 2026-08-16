@@ -3,6 +3,7 @@
 // src/components/twin/fidelity-detail-panel.tsx
 // Expandable panel showing per-category fidelity status and an upgrade CTA.
 
+import { Loader2 } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -12,16 +13,42 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FidelityBadge } from '@/components/twin/fidelity-badge';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type {
   FidelityReport,
   UpgradeChecklist,
 } from '@/lib/fidelity/fidelity-types';
+import type { InputProvenance } from '@/components/twin/fidelity-badge';
+import type { HitlFlag } from '@/lib/engine';
 
 interface FidelityDetailPanelProps {
   report: FidelityReport;
   checklist: UpgradeChecklist;
   onUpgradeClick?: () => void;
+  /** P2-27: per-input provenance to forward to the badge in the accordion trigger. */
+  provenance?: InputProvenance;
+  /**
+   * Task 8 — per-element HITL review flags from the last (pure, counting-
+   * session) `runEngine` pass. `undefined` when the engine hasn't computed a
+   * result yet (or is unavailable); an empty array means every element
+   * cleared the confidence threshold.
+   */
+  hitlFlags?: HitlFlag[];
+  /** Task 8 — triggers the REAL (WASM) engine pass and downloads the .ifc file. */
+  onExportIfc?: () => void;
+  /** Task 8 — true while the real WASM export is in flight. */
+  exporting?: boolean;
+  /**
+   * Task 8 — non-null when the engine is honestly unavailable (e.g. no CAD/
+   * building-outline footprint — a "parcel" or era-estimate rectangle isn't
+   * a real footprint, AFF-6). When set, the Export IFC button is not shown.
+   */
+  engineUnavailableReason?: string | null;
+  /** Click a HITL flag to highlight that element category in the 3D viewer. */
+  onFlagClick?: (kind: HitlFlag['kind']) => void;
+  /** The element category currently highlighted (drives the active flag state). */
+  activeHighlightKind?: string | null;
 }
 
 // Fixed ordered list of categories to display
@@ -91,9 +118,26 @@ export function FidelityDetailPanel({
   report,
   checklist,
   onUpgradeClick,
+  provenance,
+  hitlFlags,
+  onExportIfc,
+  exporting,
+  engineUnavailableReason,
+  onFlagClick,
+  activeHighlightKind,
 }: FidelityDetailPanelProps) {
+  const { t } = useT();
   const nextLevel = checklist.nextLevel;
   const completenessPercent = Math.round(report.completeness * 100);
+
+  // Additive-only: render the engine section only when the caller threaded
+  // at least one of the new props — old call sites (no props passed) render
+  // byte-for-byte the same as before.
+  const showEngineSection =
+    engineUnavailableReason != null ||
+    hitlFlags !== undefined ||
+    onExportIfc !== undefined ||
+    exporting !== undefined;
 
   return (
     <Card className="w-72 gap-0 py-0">
@@ -104,6 +148,7 @@ export function FidelityDetailPanel({
               <FidelityBadge
                 level={report.level}
                 completeness={report.completeness}
+                provenance={provenance}
               />
             </div>
           </AccordionTrigger>
@@ -162,6 +207,88 @@ export function FidelityDetailPanel({
                   <p className="text-[10px] text-center text-muted-foreground">
                     Maximum fidelity reached
                   </p>
+                </div>
+              )}
+
+              {/* ── Task 8: Agentic BIM Engine — Export IFC + HITL flags ── */}
+              {showEngineSection && (
+                <div className="mt-4 pt-3 border-t">
+                  {engineUnavailableReason ? (
+                    <p
+                      data-testid="engine-unavailable-message"
+                      className="text-[10px] text-center text-muted-foreground"
+                    >
+                      {t(
+                        'IFC 내보내기에는 CAD 또는 건물 외곽선 도면이 필요합니다.',
+                        'IFC export needs a CAD or building-outline footprint.'
+                      )}
+                    </p>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        className="w-full h-7 text-xs gap-1.5"
+                        onClick={onExportIfc}
+                        disabled={!!exporting}
+                      >
+                        {exporting && (
+                          <Loader2 className="size-3 animate-spin" />
+                        )}
+                        {t('IFC 내보내기', 'Export IFC')}
+                      </Button>
+
+                      {hitlFlags === undefined ? null : hitlFlags.length > 0 ? (
+                        <div className="mt-2 space-y-1.5">
+                          <p
+                            data-testid="hitl-review-count"
+                            className="text-[10px] text-muted-foreground"
+                          >
+                            {t(
+                              `${hitlFlags.length}개 요소 검토 필요`,
+                              `${hitlFlags.length} element${hitlFlags.length !== 1 ? 's' : ''} need review`
+                            )}
+                          </p>
+                          <ul className="space-y-1">
+                            {hitlFlags.map((flag) => {
+                              const active = activeHighlightKind === flag.kind;
+                              return (
+                                <li key={flag.expressId}>
+                                  <button
+                                    type="button"
+                                    onClick={() => onFlagClick?.(flag.kind)}
+                                    aria-pressed={active}
+                                    title={t(
+                                      '3D 뷰에서 이 요소 종류 강조',
+                                      'Highlight this element type in the 3D view'
+                                    )}
+                                    className={cn(
+                                      'flex w-full items-start gap-1.5 rounded px-1 py-0.5 text-left text-[10px] text-muted-foreground/90 transition-colors hover:bg-muted/60',
+                                      active && 'bg-amber-100 text-amber-900'
+                                    )}
+                                  >
+                                    <span className="shrink-0 font-medium text-foreground/80">
+                                      {flag.kind} #{flag.expressId}
+                                    </span>
+                                    <span className="truncate">{flag.reason}</span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      ) : (
+                        <p
+                          data-testid="hitl-all-clear"
+                          className="mt-2 text-[10px] text-center text-muted-foreground"
+                        >
+                          {t(
+                            '모든 요소가 신뢰도 기준을 통과했습니다.',
+                            'All elements above confidence threshold.'
+                          )}
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>

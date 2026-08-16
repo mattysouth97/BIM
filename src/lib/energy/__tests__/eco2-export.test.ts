@@ -199,9 +199,14 @@ function makeMetrics(): EnergyMetrics {
     },
     grade: "3",
     gradeColor: "#FFA500",
+    // P1-05 field — fixture value (kWh/m²·yr primary energy), grade-3 band
+    primaryEnergyPerArea: 230,
     co2: {
       totalCO2: 28.95,
       co2PerSqm: 48.25,
+      // P2-02 CO2Result split — fixture values, electric-dominant office
+      electricCO2: 20.0,
+      fossilCO2: 8.95,
     },
     predictedVsActualDelta: null,
   };

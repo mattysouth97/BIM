@@ -4,21 +4,32 @@
 // Report stage content — renders in place of the 3D viewer when workflow stage = "report".
 // Provides Energy Audit and Compliance report previews with PDF, CSV, and JSON export.
 
-import React, { useMemo, useState } from "react";
-import { useAppStore } from "@/store/app-store";
+import { useMemo, useState } from "react";
+import { useT } from "@/lib/i18n";
 import { formatUseTypeLabel } from "@/lib/constants";
 import { useMaterialStore } from "@/store/material-store";
-import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import { useActiveBuildingPk, useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useRecipeStore } from "@/store/recipe-store";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
-import { useRetrofitScenario } from "@/hooks/use-retrofit-scenario";
 import { useScenarioStore } from "@/store/scenario-store";
-import { scenarioToAuditSummary } from "@/lib/report/scenario-summary";
+import { useRetrofitScenario } from "@/hooks/use-retrofit-scenario";
+import {
+  buildScenarioPortfolioSummary,
+  deriveFidelityLevel,
+} from "@/lib/report/scenario-summary";
+import { useEngineResult } from "@/hooks/use-engine-result";
+import {
+  buildBimFidelitySummary,
+  buildBimFidelitySections,
+} from "@/lib/report/bim-fidelity-summary";
+import type { FootprintSource } from "@/lib/fidelity/input-provenance";
 import { EnergyAuditPreview } from "@/components/report/energy-audit-preview";
 import { CompliancePreview } from "@/components/report/compliance-preview";
 import { SchedulePreview } from "@/components/report/schedule-preview";
-import { buildComplianceReportSections } from "@/lib/report/templates/compliance-report";
+import { BimFidelitySection } from "@/components/report/bim-fidelity-section";
+import { SheetComposer } from "@/components/sheets/sheet-composer";
 import { assembleEnergyAuditReport, assembleComplianceReport } from "@/lib/report/report-engine";
 import { generateBuildingCSV } from "@/lib/export/csv-export";
 import { generateTwinJSON } from "@/lib/export/json-export";
@@ -32,12 +43,18 @@ import {
 } from "@/lib/compliance/efficiency-rating";
 import { calibrateEnergy } from "@/lib/energy/calibration";
 import { compareToBenchmark } from "@/lib/energy/benchmark-comparison";
+import {
+  deliveredFromDemand,
+  buildingTypeFromMaterials,
+  isResidentialOccupancy,
+} from "@/lib/energy/delivered-from-demand";
 import type { EnergyAuditInput } from "@/lib/report/templates/energy-audit";
 import type { ComplianceReportInput } from "@/lib/report/templates/compliance-report";
 import type { CertificationVersion } from "@/lib/compliance/certification-types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Download, FileJson, Sheet } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -57,7 +74,7 @@ function downloadBlob(blob: Blob, filename: string) {
 // Tab type
 // ---------------------------------------------------------------------------
 
-type ReportTab = "energy-audit" | "compliance" | "schedules";
+type ReportTab = "energy-audit" | "compliance" | "schedules" | "sheets";
 
 // ---------------------------------------------------------------------------
 // Loading skeleton
@@ -79,8 +96,22 @@ function ReportSkeleton() {
 // Main component
 // ---------------------------------------------------------------------------
 
-export function ReportStage() {
-  const isKo = useAppStore((s) => s.language) === "ko";
+interface ReportStageProps {
+  /** Footprint source threaded from the page level, same as PropertiesPanel — used to gate the Agentic BIM Engine. */
+  footprintSource?: FootprintSource;
+  /** Ledger 'heit' field (meters). AFF-6: 0 means unavailable. */
+  ledgerHeit?: number;
+  /** VWorld measured building height (meters), or null when absent. */
+  measuredHeightM?: number | null;
+}
+
+export function ReportStage({
+  footprintSource,
+  ledgerHeit,
+  measuredHeightM,
+}: ReportStageProps = {}) {
+  const { t, lang } = useT();
+  const isKo = lang === "ko";
   const [activeTab, setActiveTab] = useState<ReportTab>("energy-audit");
   const [pdfLoading, setPdfLoading] = useState(false);
   const [certVersion] = useState<CertificationVersion>("2024");
@@ -90,44 +121,76 @@ export function ReportStage() {
 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
   const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
-  const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
-  const metrics = useEnergyMetrics(buildingPk);
   const actual = useActualEnergy(buildingPk);
-  const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
-  const programTrack = useScenarioStore((s) => s.programTrack);
-  const buildingInputs = useScenarioStore((s) => s.buildingInputs);
   const actualData = actual.data ?? [];
   const hasActual = actualData.length > 0;
+  // P1-08 (d): regional climate + actual consumption reach the report path,
+  // so the PDF computes the same HDD/CDD as the status bar and
+  // predictedVsActualDelta is no longer structurally null.
+  const sigunguCd = useActiveSigunguCd();
+  const metrics = useEnergyMetrics(buildingPk, sigunguCd, actual.data);
 
-  // Derive effective recipe (same pattern as properties-panel)
-  const effectiveRecipe = useMemo(() => {
-    if (!baseRecipe) return undefined;
-    if (!overrides) return baseRecipe;
-    return {
-      ...baseRecipe,
-      ...(overrides.footprintWidth !== undefined
-        ? { footprintWidth: overrides.footprintWidth }
-        : {}),
-      ...(overrides.footprintDepth !== undefined
-        ? { footprintDepth: overrides.footprintDepth }
-        : {}),
-      ...(overrides.wallThickness !== undefined
-        ? { wallThickness: overrides.wallThickness }
-        : {}),
-      ...(overrides.facade
-        ? { facade: { ...baseRecipe.facade, ...overrides.facade } }
-        : {}),
-      ...(overrides.slab
-        ? { slab: { ...baseRecipe.slab, ...overrides.slab } }
-        : {}),
-      ...(overrides.column
-        ? { column: { ...baseRecipe.column, ...overrides.column } }
-        : {}),
-      ...(overrides.roof
-        ? { roof: { ...baseRecipe.roof, ...overrides.roof } }
-        : {}),
-    };
-  }, [baseRecipe, overrides]);
+  // ── Retrofit scenario (read-only consumer of the twin-stage state) ───────
+  // Same store + hook the simulator uses, so exported financials can never
+  // drift from what the UI shows. Inputs published for a different building
+  // (stale) are ignored — recipe area then keeps the BIMFIT report populated.
+  const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
+  const programTrack = useScenarioStore((s) => s.programTrack);
+  const scenarioInputs = useScenarioStore((s) => s.buildingInputs);
+  const scenarioApplies =
+    scenarioInputs !== null && scenarioInputs.buildingPk === buildingPk;
+
+  // P1-08 (a): single canonical merge — carries footprintPolygon overrides
+  // into the report/export payloads.
+  const effectiveRecipe = useEffectiveRecipe(buildingPk);
+
+  const totalArea =
+    effectiveRecipe
+      ? effectiveRecipe.footprintWidth *
+        effectiveRecipe.footprintDepth *
+        effectiveRecipe.floors.length
+      : 0;
+  const recipeFootprint = effectiveRecipe
+    ? effectiveRecipe.footprintWidth * effectiveRecipe.footprintDepth
+    : 0;
+
+  const scenario = useRetrofitScenario({
+    buildingPk,
+    capexBudgetKrw,
+    totalFloorArea: scenarioApplies ? scenarioInputs.totalFloorArea : totalArea,
+    footprintArea: scenarioApplies ? scenarioInputs.footprintArea : recipeFootprint,
+    roofType: scenarioApplies ? scenarioInputs.roofType : "flat",
+    sidoPrefix: scenarioApplies ? scenarioInputs.sidoPrefix : undefined,
+    programTrack,
+  });
+
+  const portfolio = useMemo(
+    () => buildScenarioPortfolioSummary(scenario.selection),
+    [scenario.selection]
+  );
+
+  // ── Agentic BIM Engine (additive) ────────────────────────────────────────
+  // Same hook/args shape as PropertiesPanel: the pure (counting-session)
+  // `result` drives the "BIM Fidelity / IFC" report section below, and
+  // `exportIfc` is reused verbatim for the report stage's Export IFC action.
+  // Must run unconditionally (before the early-return below) — hooks can't
+  // be called conditionally.
+  const engine = useEngineResult({
+    buildingPk,
+    recipe: effectiveRecipe,
+    footprintSource: footprintSource ?? null,
+    ledgerHeit: ledgerHeit ?? 0,
+    measuredHeightM: measuredHeightM ?? null,
+  });
+
+  const bimFidelitySummary = useMemo(
+    () => buildBimFidelitySummary(engine.result),
+    [engine.result]
+  );
+  const bimFidelitySections = useMemo(
+    () => buildBimFidelitySections(bimFidelitySummary),
+    [bimFidelitySummary]
+  );
 
   // ── Calibration (optional) ───────────────────────────────────────────────
   const calibration = useMemo(() => {
@@ -151,16 +214,16 @@ export function ReportStage() {
     );
   }, [metrics, hasActual, actualData]);
 
+  // ── Honest fidelity tier (never hardcoded; P0-02) ────────────────────────
+  // 3 = calibration exists · 2 = actual energy rows present · 1 = public data.
+  const fidelityLevel = deriveFidelityLevel(calibration !== undefined, hasActual);
+
   // ── Benchmark (optional) ─────────────────────────────────────────────────
+  // P1-05: the benchmark dataset is PRIMARY energy — compare the derived
+  // primary intensity, not delivered demand (which sat ~2-3 bands too low).
   const benchmark = useMemo(() => {
     if (!metrics) return undefined;
-    // Residential = LOW density (0.04 p/m²); benchmark DB is PRIMARY energy;
-    // pre-1990 maps to the nearest era with data (1990s).
-    const useType =
-      materials?.occupancy?.occupancyDensity !== undefined &&
-      materials.occupancy.occupancyDensity < 0.07
-        ? "residential"
-        : "office";
+    const useType = isResidentialOccupancy(materials) ? "residential" : "office";
     const codeYear = materials?.codeYear ?? 2000;
     const era =
       codeYear >= 2020
@@ -169,8 +232,10 @@ export function ReportStage() {
           ? "2010s"
           : codeYear >= 2000
             ? "2000s"
-            : "1990s";
-    return compareToBenchmark(metrics.primaryPerSqm, useType, era);
+            : codeYear >= 1990
+              ? "1990s"
+              : "pre-1990";
+    return compareToBenchmark(metrics.primaryEnergyPerArea, useType, era);
   }, [metrics, materials]);
 
   // ── Green Certification ──────────────────────────────────────────────────
@@ -184,7 +249,8 @@ export function ReportStage() {
       windowUValue: materials.envelope.windows.uValue,
       roofUValue: materials.envelope.roof.uValue,
       energyGrade: metrics.grade,
-      primaryEnergyDemand: metrics.primaryPerSqm,
+      // P1-05: this field is PRIMARY energy — was mislabeled with delivered.
+      primaryEnergyDemand: metrics.primaryEnergyPerArea,
       renewableCapacity: materials.renewable?.solarPV?.capacity ?? 0,
       windowToWallRatio: materials.envelope.windows.windowToWallRatio?.S ?? 0.3,
       structureCode: undefined,
@@ -195,35 +261,15 @@ export function ReportStage() {
   // ── Efficiency Rating ────────────────────────────────────────────────────
   const efficiencyRating = useMemo(() => {
     if (!metrics || !effectiveRecipe || !materials) return undefined;
-    const totalArea =
-      effectiveRecipe.footprintWidth *
-      effectiveRecipe.footprintDepth *
-      effectiveRecipe.floors.length;
     if (totalArea <= 0) return undefined;
-    const isRes =
-      materials?.occupancy?.occupancyDensity !== undefined &&
-      materials.occupancy.occupancyDensity < 0.07;
-    const heatingFuel = materials.hvac.heating.fuelType;
-    const fuelLeg = metrics.demand.heatingDemand + metrics.breakdown.dhw;
-    const electricLeg =
-      metrics.demand.coolingDemand +
-      metrics.breakdown.lighting +
-      metrics.breakdown.plugLoads;
+    // P1-05: shared fuel-split + building-type helpers — same computation
+    // path as metrics.grade, so the two can never disagree.
     return calculateEfficiencyRating(
-      {
-        electric:
-          heatingFuel === "electric" || heatingFuel === "heat-pump"
-            ? electricLeg + fuelLeg
-            : electricLeg,
-        gas: heatingFuel === "gas" || heatingFuel === "oil" ? fuelLeg : 0,
-        districtHeating: heatingFuel === "district-heat" ? fuelLeg : 0,
-        districtCooling: 0,
-        renewable: 0,
-      },
+      deliveredFromDemand(metrics.demand),
       totalArea,
-      isRes ? "residential" : "non-residential"
+      buildingTypeFromMaterials(materials)
     );
-  }, [metrics, effectiveRecipe, materials]);
+  }, [metrics, effectiveRecipe, materials, totalArea]);
 
   // ── Derive building name/address from recipe (fallback to pk) ───────────
   const buildingName = baseRecipe?.buildingName ?? buildingPk ?? "Unknown Building";
@@ -232,29 +278,6 @@ export function ReportStage() {
     baseRecipe?.mainPurpsCd,
     isKo ? "ko" : "en",
   );
-  const totalArea =
-    effectiveRecipe
-      ? effectiveRecipe.footprintWidth *
-        effectiveRecipe.footprintDepth *
-        effectiveRecipe.floors.length
-      : 0;
-
-  const scenarioFloorArea = buildingInputs?.totalFloorArea || totalArea;
-  const scenarioFootprint =
-    buildingInputs?.footprintArea ||
-    (effectiveRecipe
-      ? effectiveRecipe.footprintWidth * effectiveRecipe.footprintDepth
-      : 0);
-  const retrofitScenario = useRetrofitScenario({
-    buildingPk: buildingInputs?.buildingPk || buildingPk,
-    capexBudgetKrw,
-    totalFloorArea: scenarioFloorArea,
-    footprintArea: scenarioFootprint,
-    roofType: buildingInputs?.roofType ?? "flat",
-    sidoPrefix: buildingInputs?.sidoPrefix,
-    programTrack,
-  });
-  const retrofitSummary = scenarioToAuditSummary(retrofitScenario.selection);
 
   // ── Energy Audit input ───────────────────────────────────────────────────
   const energyAuditInput = useMemo<EnergyAuditInput | null>(() => {
@@ -273,8 +296,12 @@ export function ReportStage() {
         area: totalArea,
         floors: effectiveRecipe.floors.length,
       },
-      fidelityLevel: 1,
-      dataSources: ["Korean Building Ledger (건축물대장)"],
+      fidelityLevel,
+      dataSources: [
+        "Korean Building Ledger (건축물대장)",
+        ...(hasActual ? ["Actual energy consumption (실측 에너지)"] : []),
+        ...(calibration ? ["Model calibration (모델 보정)"] : []),
+      ],
       envelope: {
         wallU: avgWallU,
         roofU: materials.envelope.roof.uValue,
@@ -314,7 +341,18 @@ export function ReportStage() {
             insight: benchmark.insight,
           }
         : undefined,
-      retrofitSummary,
+      retrofitSummary: portfolio
+        ? {
+            totalInvestment: portfolio.totalInvestment,
+            totalAnnualSaving: portfolio.totalAnnualSavingKwh,
+            payback: portfolio.payback,
+            topMeasures: portfolio.topMeasures,
+            npv: portfolio.npv,
+            irr: portfolio.irr,
+            discountedPayback: portfolio.discountedPayback,
+            effectiveCapex: portfolio.effectiveCapex,
+          }
+        : undefined,
     };
   }, [
     metrics,
@@ -326,7 +364,9 @@ export function ReportStage() {
     totalArea,
     calibration,
     benchmark,
-    retrofitSummary,
+    portfolio,
+    fidelityLevel,
+    hasActual,
   ]);
 
   // ── Compliance input ─────────────────────────────────────────────────────
@@ -365,16 +405,29 @@ export function ReportStage() {
       const { pdf } = await import("@react-pdf/renderer");
       const { ReportPDF } = await import("@/lib/report/pdf-renderer");
       const reportData = assembleEnergyAuditReport(
-        { name: buildingName, address: buildingAddress, fidelityLevel: 1 },
+        { name: buildingName, address: buildingAddress, fidelityLevel },
         metrics,
         calibration ?? undefined,
         benchmark ?? undefined,
-        retrofitSummary,
+        portfolio
+          ? {
+              totalInvestment: portfolio.totalInvestment,
+              totalAnnualSaving: portfolio.totalAnnualSavingKwh,
+              payback: portfolio.payback,
+              topMeasures: portfolio.topMeasures,
+              npv: portfolio.npv,
+              irr: portfolio.irr,
+              discountedPayback: portfolio.discountedPayback,
+              effectiveCapex: portfolio.effectiveCapex,
+            }
+          : undefined,
+        bimFidelitySections
       );
       const blob = await pdf(<ReportPDF data={reportData} />).toBlob();
       downloadBlob(blob, `energy-audit-${buildingPk.slice(0, 8)}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
+      toast.error(t("PDF 생성에 실패했습니다.", "PDF generation failed. Please try again."));
     } finally {
       setPdfLoading(false);
     }
@@ -387,14 +440,16 @@ export function ReportStage() {
       const { pdf } = await import("@react-pdf/renderer");
       const { ReportPDF } = await import("@/lib/report/pdf-renderer");
       const reportData = assembleComplianceReport(
-        { name: buildingName, address: buildingAddress, fidelityLevel: 1 },
+        { name: buildingName, address: buildingAddress, fidelityLevel },
         certification,
-        efficiencyRating
+        efficiencyRating,
+        bimFidelitySections
       );
       const blob = await pdf(<ReportPDF data={reportData} />).toBlob();
       downloadBlob(blob, `compliance-${buildingPk.slice(0, 8)}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
+      toast.error(t("PDF 생성에 실패했습니다.", "PDF generation failed. Please try again."));
     } finally {
       setPdfLoading(false);
     }
@@ -424,8 +479,22 @@ export function ReportStage() {
         roofU: materials.envelope.roof.uValue,
         windowU: materials.envelope.windows.uValue,
         airtightness: materials.envelope.airtightness.ach50,
-        fidelityLevel: 1,
+        fidelityLevel,
         dataQualityScore: 60,
+        ...(bimFidelitySummary
+          ? {
+              bimOverallFidelity: bimFidelitySummary.overallFidelity,
+              bimHitlFlagCount: bimFidelitySummary.hitlFlagCount,
+            }
+          : {}),
+        ...(portfolio
+          ? {
+              retrofitNpvKrw: portfolio.npv,
+              retrofitEffectiveCapexKrw: portfolio.effectiveCapex,
+              retrofitDiscountedPaybackYears: portfolio.discountedPayback,
+              retrofitAnnualSavingKwh: portfolio.totalAnnualSavingKwh,
+            }
+          : {}),
       },
     ]);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -447,6 +516,11 @@ export function ReportStage() {
       materials,
       energyMetrics: metrics,
       benchmarkResult: benchmark ?? undefined,
+      // Explicit null = no scenario published (never a silent omission).
+      retrofitFinancials: portfolio,
+      // Explicit null = engine unavailable for this building (no real
+      // footprint, AFF-6) — never a silent omission.
+      bimFidelity: bimFidelitySummary,
     });
     const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
     downloadBlob(blob, `twin-export-${buildingPk.slice(0, 8)}.json`);
@@ -459,12 +533,13 @@ export function ReportStage() {
         <FileText className="h-12 w-12 opacity-30" />
         <div className="text-center">
           <p className="text-sm font-medium">
-            {isKo ? "건물을 먼저 선택하세요" : "Select a building first"}
+            {t("건물을 먼저 선택하세요", "Select a building first")}
           </p>
           <p className="mt-1 text-xs opacity-70">
-            {isKo
-              ? "검색 단계에서 건물을 검색한 후 다시 시도하세요."
-              : "Search for a building in the Search stage, then return here."}
+            {t(
+              "검색 단계에서 건물을 검색한 후 다시 시도하세요.",
+              "Search for a building in the Search stage, then return here.",
+            )}
           </p>
         </div>
       </div>
@@ -491,7 +566,7 @@ export function ReportStage() {
                 : "text-muted-foreground hover:bg-muted"
             )}
           >
-            {isKo ? "에너지 감사" : "Energy Audit"}
+            {t("에너지 감사", "Energy Audit")}
           </button>
           <button
             onClick={() => setActiveTab("compliance")}
@@ -503,7 +578,7 @@ export function ReportStage() {
                 : "text-muted-foreground hover:bg-muted"
             )}
           >
-            {isKo ? "준법 인증" : "Compliance"}
+            {t("준법 인증", "Compliance")}
           </button>
           <button
             onClick={() => setActiveTab("schedules")}
@@ -515,7 +590,18 @@ export function ReportStage() {
             )}
             data-testid="report-schedules-tab"
           >
-            {isKo ? "일람표" : "Schedules"}
+            {t("일람표", "Schedules")}
+          </button>
+          <button
+            onClick={() => setActiveTab("sheets")}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+              activeTab === "sheets"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted"
+            )}
+          >
+            {t("시트", "Sheets")}
           </button>
         </div>
 
@@ -526,7 +612,7 @@ export function ReportStage() {
             size="sm"
             className="h-7 text-xs gap-1"
             onClick={handleExportCSV}
-            title={isKo ? "CSV로 내보내기" : "Export as CSV"}
+            title={t("CSV로 내보내기", "Export as CSV")}
           >
             <Sheet className="size-3" />
             CSV
@@ -536,7 +622,7 @@ export function ReportStage() {
             size="sm"
             className="h-7 text-xs gap-1"
             onClick={handleExportJSON}
-            title={isKo ? "JSON으로 내보내기" : "Export as JSON"}
+            title={t("JSON으로 내보내기", "Export as JSON")}
           >
             <FileJson className="size-3" />
             JSON
@@ -545,26 +631,32 @@ export function ReportStage() {
             variant="outline"
             size="sm"
             className="h-7 text-xs gap-1"
-            disabled={pdfLoading || activeTab === "schedules"}
+            disabled={pdfLoading || activeTab === "schedules" || activeTab === "sheets"}
             onClick={
-              activeTab === "energy-audit"
-                ? handleDownloadEnergyPdf
-                : handleDownloadCompliancePdf
+              activeTab === "compliance"
+                ? handleDownloadCompliancePdf
+                : handleDownloadEnergyPdf
             }
-            title={isKo ? "PDF 다운로드" : "Download PDF"}
+            title={t("PDF 다운로드", "Download PDF")}
           >
             <Download className="size-3" />
-            {pdfLoading
-              ? isKo
-                ? "생성 중..."
-                : "Generating..."
-              : "PDF"}
+            {pdfLoading ? t("생성 중...", "Generating...") : "PDF"}
           </Button>
         </div>
       </div>
 
       {/* ── Scrollable report preview area ─────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
+        {/* BIM Fidelity / IFC — additive, visible regardless of active tab */}
+        <div className="p-4 pb-0">
+          <BimFidelitySection
+            sections={bimFidelitySections}
+            onExportIfc={engine.exportIfc}
+            exporting={engine.exporting}
+            available={engine.available}
+          />
+        </div>
+
         {activeTab === "energy-audit" && energyAuditInput && (
           <div className="p-4">
             <EnergyAuditPreview
@@ -589,14 +681,18 @@ export function ReportStage() {
         {activeTab === "compliance" && !complianceInput && (
           <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-muted-foreground">
             <p className="text-sm">
-              {isKo
-                ? "준법 인증 데이터를 불러오는 중..."
-                : "Loading compliance data..."}
+              {t("준법 인증 데이터를 불러오는 중...", "Loading compliance data...")}
             </p>
           </div>
         )}
 
         {activeTab === "schedules" && <SchedulePreview />}
+
+        {activeTab === "sheets" && (
+          <div className="h-[min(640px,70vh)] p-4">
+            <SheetComposer />
+          </div>
+        )}
       </div>
     </div>
   );

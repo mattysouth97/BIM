@@ -2,7 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 
 // ─────────────────────────────────────────────
 // Props
@@ -25,8 +25,7 @@ export function SearchPagination({
   numOfRows,
   onPageChange,
 }: SearchPaginationProps) {
-  const language = useAppStore((s) => s.language);
-  const isKo = language === "ko";
+  const { t } = useT();
 
   const totalPages = Math.max(1, Math.ceil(totalCount / numOfRows));
   const start = (pageNo - 1) * numOfRows + 1;
@@ -38,9 +37,10 @@ export function SearchPagination({
     <div className="flex items-center justify-between rounded-xl border bg-card px-6 py-3 shadow-sm">
       {/* Result count */}
       <p className="text-sm text-muted-foreground">
-        {isKo
-          ? `총 ${totalCount.toLocaleString()}건 중 ${start.toLocaleString()}-${end.toLocaleString()}건`
-          : `Showing ${start.toLocaleString()}-${end.toLocaleString()} of ${totalCount.toLocaleString()} results`}
+        {t(
+          `총 ${totalCount.toLocaleString()}건 중 ${start.toLocaleString()}-${end.toLocaleString()}건`,
+          `Showing ${start.toLocaleString()}-${end.toLocaleString()} of ${totalCount.toLocaleString()} results`,
+        )}
       </p>
 
       {/* Page controls */}
@@ -53,7 +53,7 @@ export function SearchPagination({
           className="gap-1"
         >
           <ChevronLeft className="h-4 w-4" />
-          {isKo ? "이전" : "Prev"}
+          {t("이전", "Prev")}
         </Button>
 
         <span className="min-w-[4rem] text-center text-sm font-medium tabular-nums">
@@ -67,7 +67,7 @@ export function SearchPagination({
           onClick={() => onPageChange(pageNo + 1)}
           className="gap-1"
         >
-          {isKo ? "다음" : "Next"}
+          {t("다음", "Next")}
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

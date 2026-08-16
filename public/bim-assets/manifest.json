@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "note": "Slot ids match src/lib/bim/asset-slots.ts. Full family library lives in /models/authoring/.",
+  "slots": {
+    "family.wall.basic": { "uri": "/bim-assets/wall-basic.glb", "format": "glb", "libraryId": "wall-basic-generic-200" },
+    "family.wall.curtain": { "uri": "/bim-assets/wall-curtain.glb", "format": "glb", "libraryId": "curtain-wall-storefront" },
+    "family.floor.basic": { "uri": "/bim-assets/floor-basic.glb", "format": "glb", "libraryId": "floor-generic-150" },
+    "family.roof.basic": { "uri": "/bim-assets/roof-basic.glb", "format": "glb", "libraryId": "roof-basic-flat" },
+    "family.column.rectangular": { "uri": "/bim-assets/column-rectangular.glb", "format": "glb", "libraryId": "column-struct-rect-450x600" },
+    "family.window.fixed": { "uri": "/bim-assets/window-fixed.glb", "format": "glb", "libraryId": "window-fixed-1200x1500" },
+    "family.door.single-flush": { "uri": "/bim-assets/door-single-flush.glb", "format": "glb", "libraryId": "door-single-flush-910" },
+    "family.mep.chiller": { "uri": "/bim-assets/chiller.glb", "format": "glb" },
+    "family.mep.boiler": { "uri": "/bim-assets/boiler.glb", "format": "glb" },
+    "family.mep.ahu": { "uri": "/bim-assets/ahu.glb", "format": "glb" },
+    "family.mep.dhw": { "uri": "/bim-assets/dhw.glb", "format": "glb" },
+    "family.lighting.fixture": { "uri": "/bim-assets/light-fixture.glb", "format": "glb", "libraryId": "light-troffer-600" },
+    "family.electrical.panel": { "uri": "/bim-assets/electrical-panel.glb", "format": "glb" }
+  }
+}

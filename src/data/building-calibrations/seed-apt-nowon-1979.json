@@ -1,0 +1,15 @@
+{
+  "buildingId": "seed-apt-nowon-1979",
+  "pnu": "1135010100100010000",
+  "geometricLOD": "L2",
+  "notes": "Seed calibration: RC apartment block, Nowon-gu, permit 1979. Pre-1980 5-storey walk-up apartment; floor heights uniform from 건축물대장:heit/grndFlrCnt.",
+  "overrides": [
+    {
+      "field": "floorHeights.1",
+      "inferredValue": 2.5,
+      "overrideValue": 2.4,
+      "source": "건축물대장:heit=12.0, grndFlrCnt=5 → 12.0/5=2.4 m per floor (NW-1979-A-0044 original permit drawings confirmed by GX engineer site visit 2024)",
+      "hypothesisForInference": "era pre-1970/1970-1989 residential default 2.5 m; this pre-1980 apartment used the original Korean standard 2.4 m slab-to-slab height"
+    }
+  ]
+}

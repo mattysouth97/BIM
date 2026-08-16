@@ -12,7 +12,7 @@
 
   - `src/app/api/bldrgst/*` — Server-side proxy routes to data.go.kr (solves CORS)
   - `src/components/viewer/` — Three.js 3D building viewer (React Three Fiber v9)
-  - `src/components/viewer/building-scene.tsx` — Main R3F Canvas with renderer config, SAOPass, lighting
+  - `src/components/viewer/building-scene.tsx` — Main R3F Canvas with renderer config, OutlinePass post-processing (`<ScenePostProcessing />`), lighting
   - `src/components/viewer/procedural-building-model.tsx` — R3F wrapper for ProceduralBuilding class
   - `src/lib/building-geometry.ts` — Pure functions converting API data → 3D geometry
   - `src/lib/procedural/` — Procedural building generation pipeline:
@@ -20,7 +20,7 @@
     - `recipe.ts` — Era-based recipe factory with getRecipe(), applyOverrides()
     - `facade-generator.ts` — InstancedMesh glass/mullions/panels (4 draw calls)
     - `structure-generator.ts` — InstancedMesh slabs + columns (2 draw calls)
-    - `procedural-building.ts` — ProceduralBuilding class composing all generators (7 draw calls total)
+    - `procedural-building.ts` — ProceduralBuilding class composing all generators (7 draw calls on the rectangular InstancedMesh path: facade 4 + slabs 1 + columns 1 + roof 1; polygon-footprint towers fall back to per-face Groups and emit more)
   - `src/lib/cad/` — CAD footprint ingest (DXF parse, DWG→DXF WASM conversion, PDF tracing) — see `src/lib/cad/README.md`
   - `src/lib/cad/doc/` — CadDocument model: full DXF entity mapping, tessellation, snap, viewport math, footprint conversion (pure modules, meters/DXF-XY/radians)
   - `src/components/cad-viewer/` — In-browser DWG/DXF viewer + 2D drafting: ortho R3F scene + SVG markup overlay driven by one ViewState; layer toggles, measure, note/leader/cloud markups (idb-keyval), draw tools (line/polyline/rect/circle, grid/ortho snap, undo/redo via `cad-draft-store`), use-as-footprint
@@ -40,11 +40,11 @@
   - Shadows: VSMShadowMap (soft variance shadows)
   - Background: solid #f5f5f5 (no HDR background)
   - Lighting: HemisphereLight("#b1e1ff", "#b97a20", 0.6) + DirectionalLight(white, 2.0)
-  - Post-processing: SAOPass (from three/examples/jsm/postprocessing)
+  - Post-processing: OutlinePass via `<ScenePostProcessing />` (outline-post-processing.tsx). (A legacy SAOPass component existed but was never mounted — removed in P2-08.)
   - Materials: MeshStandardMaterial for all components
   - HDR: studio.hdr at `/hdr/studio.hdr` for reflections only
-  - Era boundary: pre-2000 = weathered textures, 2000+ = clean textures
-  - PBR textures: 7 sets in `public/textures/` (concrete_rough, concrete_clean, brick, metal_panel, wood, roof_tile, roof_flat)
+  - Era boundary: drives era-based recipe materials for the building AND the ground texture set (pre-2000 weathered vs 2000+ clean)
+  - PBR textures: 7 sets in `public/textures/` (concrete_rough, concrete_clean, brick, metal_panel, wood, roof_tile, roof_flat). NOTE: these image sets are applied to the ground plane (`TexturedGround` → `useTexturedMaterial`); the procedural building facade/structure use recipe-driven MeshStandardMaterial (color/roughness), not these image maps.
 
   ## API Gotchas (건축HUB)
 
@@ -63,5 +63,12 @@
   - Three.js `three-stdlib` types conflict with drei v10 OrbitControls — use `any` ref type
   - Duplicate floor keys from API — floors can have same flrNo, use array index in React key
   - InstancedMesh `setMatrixAt` must be followed by `instanceMatrix.needsUpdate = true`
-  - SAOPass not in @react-three/postprocessing — import from three/examples/jsm/postprocessing/SAOPass.js
+  - Post-processing uses OutlinePass from three/examples/jsm/postprocessing (not @react-three/postprocessing); see outline-post-processing.tsx
   - useTexturedMaterial must always return roughness value — Three.js defaults to 1.0 when roughnessMap present but roughness prop omitted
+
+  ## Tracked Work Plan
+
+  All remediation/feature work lives in `docs/work-plan/` (23 items, P0→P2, from the 2026-07-21 review).
+  Before executing any work item, follow `docs/work-plan/AI_PROCESS.md` (RE → SDD → CDD → EDD loop);
+  item specs are in `docs/work-plan/items/`, domain knowledge in `docs/work-plan/knowledge/`,
+  status dashboard in `docs/work-plan/README.md`. Update item frontmatter + dashboard changelog when done.

@@ -3,7 +3,7 @@
 // Pure Three.js, no React.
 
 import * as THREE from "three";
-import type { BuildingRecipe, FacadeConfig, FloorSpec } from "./types";
+import type { BuildingRecipe, FacadeConfig } from "./types";
 import type { PBRMaterialConfig } from "@/lib/pbr-materials";
 import { getEquipmentGeometryClone } from "@/lib/equipment-assets";
 import { pointInRing } from "@/lib/gis/ring-utils";
@@ -40,6 +40,40 @@ interface FaceDesc {
   side: "front" | "back" | "left" | "right";
 }
 
+export interface FacadeGenerationOptions {
+  /** Mixed-use recipes render one facade per section, but only the top section owns the parapet. */
+  includeParapet?: boolean;
+  /** Override the parapet base elevation. Flat roofs default to their finished top surface. */
+  parapetBaseY?: number;
+}
+
+function samePoint(a: [number, number], b: [number, number]): boolean {
+  return Math.abs(a[0] - b[0]) < 1e-6 && Math.abs(a[1] - b[1]) < 1e-6;
+}
+
+function signedArea(ring: [number, number][]): number {
+  let area = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const [x0, z0] = ring[i];
+    const [x1, z1] = ring[(i + 1) % ring.length];
+    area += x0 * z1 - x1 * z0;
+  }
+  return area / 2;
+}
+
+/**
+ * Return an open, counter-clockwise outer ring. Keeping this convention makes
+ * each edge's left normal point inward and its right normal point outward.
+ */
+function normalizeOuterRing(outerRing: [number, number][]): [number, number][] {
+  if (outerRing.length === 0) return [];
+  const ring = outerRing.map(([x, z]) => [x, z] as [number, number]);
+  if (ring.length > 1 && samePoint(ring[0], ring[ring.length - 1])) {
+    ring.pop();
+  }
+  return signedArea(ring) < 0 ? ring.reverse() : ring;
+}
+
 /**
  * Derive FaceDesc array from cadastral polygon outer ring edges.
  * Each consecutive vertex pair becomes one facade face strip.
@@ -50,18 +84,18 @@ interface FaceDesc {
  */
 function getPolygonFaces(outerRing: [number, number][], wallThickness: number): FaceDesc[] {
   const faces: FaceDesc[] = [];
-  const n = outerRing.length;
+  const ring = normalizeOuterRing(outerRing);
+  const n = ring.length;
 
-  for (let i = 0; i < n - 1; i++) {  // n-1 because last point closes ring (equals first)
-    const [x0, z0] = outerRing[i];
-    const [x1, z1] = outerRing[i + 1];
+  for (let i = 0; i < n; i++) {
+    const [x0, z0] = ring[i];
+    const [x1, z1] = ring[(i + 1) % n];
 
     const dx = x1 - x0;
     const dz = z1 - z0;
-    const edgeLength = Math.sqrt(dx * dx + dz * dz);
+    const edgeLength = Math.hypot(dx, dz);
     if (edgeLength < 0.1) continue;  // skip degenerate edges
 
-    // Midpoint of this edge
     const midX = (x0 + x1) / 2;
     const midZ = (z0 + z1) / 2;
 
@@ -74,13 +108,15 @@ function getPolygonFaces(outerRing: [number, number][], wallThickness: number): 
       nx = -nx;
       nz = -nz;
     }
+    const inwardX = -nx;
+    const inwardZ = -nz;
 
     // Position the face plane at the wall centre (inward by wallThickness/2
     // from the ring line — same convention as the rectangular getFaces path)
     const facePos = new THREE.Vector3(
-      midX - nx * wallThickness / 2,
+      midX + inwardX * wallThickness / 2,
       0,
-      midZ - nz * wallThickness / 2,
+      midZ + inwardZ * wallThickness / 2,
     );
 
     // Yaw a +Z-facing quad so its normal matches the outward normal — which
@@ -179,10 +215,28 @@ function applyCurtainWallOverrides(
  *     the solid-panel instances deepen by WALL_INSULATION_DEPTH so the added
  *     external insulation is visible in section.
  */
+function isFacadeGenerationOptions(
+  value: EquipmentScenario | FacadeGenerationOptions,
+): value is FacadeGenerationOptions {
+  return "includeParapet" in value || "parapetBaseY" in value;
+}
+
+/**
+ * `scenarioOrOptions` accepts either the green-retrofit equipment scenario
+ * (window/wall swaps) or mixed-use parapet options so existing call sites
+ * keep compiling. Pass both via the 3-arg form.
+ */
 export function generateFacade(
   recipe: BuildingRecipe,
-  scenario: EquipmentScenario = SHOWCASE_EQUIPMENT_SCENARIO,
+  scenarioOrOptions: EquipmentScenario | FacadeGenerationOptions = SHOWCASE_EQUIPMENT_SCENARIO,
+  maybeOptions: FacadeGenerationOptions = {},
 ): THREE.Group {
+  const scenario = isFacadeGenerationOptions(scenarioOrOptions)
+    ? SHOWCASE_EQUIPMENT_SCENARIO
+    : scenarioOrOptions;
+  const options = isFacadeGenerationOptions(scenarioOrOptions)
+    ? scenarioOrOptions
+    : maybeOptions;
   const { slab, wallThickness, footprintWidth, footprintDepth, floors } = recipe;
   const aboveFloors = floors.filter(f => f.type === "above");
   if (aboveFloors.length === 0) return new THREE.Group();
@@ -224,8 +278,8 @@ export function generateFacade(
       vMullionCount += adjustedCols + 1;
     }
   }
-  // Parapet: 1 horizontal bar per face at building top
-  hMullionCount += faces.length;
+  const includeParapet = options.includeParapet ?? recipe.roof.type === "flat";
+  if (includeParapet) hMullionCount += faces.length;
 
   // --- Create InstancedMesh objects ---
   const glassGeo = new THREE.PlaneGeometry(1, 1);
@@ -306,6 +360,9 @@ export function generateFacade(
   for (const floor of aboveFloors) {
     const clearHeight = floor.height - slab.thickness;
     const wallBaseY = floor.y + slab.thickness;
+    const railHeight = Math.min(facade.mullionWidth, Math.max(0, clearHeight / 2));
+    const verticalHeight = Math.max(0, clearHeight - 2 * railHeight);
+    const verticalCenterY = wallBaseY + railHeight + verticalHeight / 2;
 
     for (let fi = 0; fi < faces.length; fi++) {
       const face = faces[fi];
@@ -346,20 +403,19 @@ export function generateFacade(
         }
       }
 
-      // Horizontal mullions: bottom slab line + top of clear height
+      // Horizontal mullions sit fully inside the clear facade zone and touch
+      // the slabs without penetrating them.
       const barWidth = face.length - 2 * facade.cornerInset;
-      if (barWidth > 0) {
-        // Bottom bar (at slab line)
-        pos.set(0, wallBaseY, wallThickness / 2 + facade.mullionDepth / 2);
+      if (barWidth > 0 && railHeight > 0) {
+        pos.set(0, wallBaseY + railHeight / 2, wallThickness / 2 + facade.mullionDepth / 2);
         pos.applyQuaternion(face.quaternion).add(face.position);
-        scl.set(barWidth, facade.mullionWidth, facade.mullionDepth);
+        scl.set(barWidth, railHeight, facade.mullionDepth);
         mat4.compose(pos, face.quaternion, scl);
         hIM.setMatrixAt(hi++, mat4);
 
-        // Top bar (at top of clear height)
-        pos.set(0, wallBaseY + clearHeight, wallThickness / 2 + facade.mullionDepth / 2);
+        pos.set(0, wallBaseY + clearHeight - railHeight / 2, wallThickness / 2 + facade.mullionDepth / 2);
         pos.applyQuaternion(face.quaternion).add(face.position);
-        scl.set(barWidth, facade.mullionWidth, facade.mullionDepth);
+        scl.set(barWidth, railHeight, facade.mullionDepth);
         mat4.compose(pos, face.quaternion, scl);
         hIM.setMatrixAt(hi++, mat4);
       }
@@ -380,25 +436,29 @@ export function generateFacade(
         // Skip if too close to corner
         if (Math.abs(localX) > face.length / 2 - facade.cornerInset) continue;
 
-        pos.set(localX, wallBaseY + clearHeight / 2, wallThickness / 2 + facade.mullionDepth / 2);
+        if (verticalHeight <= 0) continue;
+        pos.set(localX, verticalCenterY, wallThickness / 2 + facade.mullionDepth / 2);
         pos.applyQuaternion(face.quaternion).add(face.position);
-        scl.set(facade.mullionWidth, clearHeight, facade.mullionDepth);
+        scl.set(facade.mullionWidth, verticalHeight, facade.mullionDepth);
         mat4.compose(pos, face.quaternion, scl);
         vIM.setMatrixAt(vi++, mat4);
       }
     }
   }
 
-  // Parapet at building top
-  const topY = recipe.totalHeight;
-  for (const face of faces) {
-    const barWidth = face.length - 2 * facade.cornerInset;
-    if (barWidth <= 0) continue;
-    pos.set(0, topY + facade.parapetHeight / 2, wallThickness / 2 + facade.mullionDepth / 2);
-    pos.applyQuaternion(face.quaternion).add(face.position);
-    scl.set(barWidth, facade.parapetHeight, facade.mullionDepth);
-    mat4.compose(pos, face.quaternion, scl);
-    hIM.setMatrixAt(hi++, mat4);
+  if (includeParapet) {
+    const parapetBaseY =
+      options.parapetBaseY ??
+      recipe.totalHeight + (recipe.roof.type === "flat" ? recipe.roof.flatThickness : 0);
+    for (const face of faces) {
+      const barWidth = face.length - 2 * facade.cornerInset;
+      if (barWidth <= 0) continue;
+      pos.set(0, parapetBaseY + facade.parapetHeight / 2, wallThickness / 2 + facade.mullionDepth / 2);
+      pos.applyQuaternion(face.quaternion).add(face.position);
+      scl.set(barWidth, facade.parapetHeight, facade.mullionDepth);
+      mat4.compose(pos, face.quaternion, scl);
+      hIM.setMatrixAt(hi++, mat4);
+    }
   }
 
   // Update instance counts to actual used

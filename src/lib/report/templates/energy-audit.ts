@@ -50,9 +50,17 @@ export interface EnergyAuditInput {
   retrofitSummary?: {
     totalInvestment: number;
     totalAnnualSaving: number;
-    payback: number;
-    npv?: number;
+    /** Simple / discounted payback, years. `null` when saving ≤ 0 — rendered as N/A. */
+    payback: number | null;
     topMeasures: { description: string; payback: number; npv?: number }[];
+    /** Portfolio NPV (KRW), when the scenario carries DCF financials. */
+    npv?: number | null;
+    /** Portfolio IRR (fraction). `null` = no positive root — rendered as N/A. */
+    irr?: number | null;
+    /** Discounted payback, years. `null` = never recovered — rendered as N/A. */
+    discountedPayback?: number | null;
+    /** Subsidy-adjusted CAPEX (KRW). */
+    effectiveCapex?: number;
   };
 }
 
@@ -229,18 +237,25 @@ export function buildEnergyAuditSections(input: EnergyAuditInput): ReportSection
 
   // Section 8: Retrofit Recommendations (conditional)
   if (input.retrofitSummary) {
-    const { totalInvestment, totalAnnualSaving, payback, npv, topMeasures } =
-      input.retrofitSummary;
+    const {
+      totalInvestment,
+      totalAnnualSaving,
+      payback,
+      topMeasures,
+      npv,
+      irr,
+      discountedPayback,
+      effectiveCapex,
+    } = input.retrofitSummary;
+    // Honesty: null/non-finite payback ⇒ 'N/A' — never a 0-year claim.
+    const fmtPayback = (p: number | null): string =>
+      p !== null && Number.isFinite(p) ? `${fmt(p, 1)} yr` : 'N/A';
     const measureRows: string[][] = topMeasures.slice(0, 6).map((m, i) => [
       `${i + 1}`,
       m.description,
       m.npv !== undefined ? `${(m.npv / 100_000_000).toFixed(1)}억` : "—",
-      Number.isFinite(m.payback) ? `${fmt(m.payback, 1)}년` : "—",
+      Number.isFinite(m.payback) ? `${fmt(m.payback, 1)}년` : fmtPayback(m.payback),
     ]);
-    const npvRow =
-      npv !== undefined
-        ? ([["", "포트폴리오 NPV", `${(npv / 100_000_000).toFixed(1)}억`, ""]] as string[][])
-        : [];
     sections.push({
       title: "Retrofit Recommendations",
       titleKo: "개보수 권장 사항",
@@ -249,20 +264,37 @@ export function buildEnergyAuditSections(input: EnergyAuditInput): ReportSection
         headers: ["#", "항목", "NPV", "회수"],
         rows: [
           ...measureRows,
+          ['', 'Total Portfolio Investment', `${(totalInvestment / 1_000_000).toFixed(1)}M KRW`],
           [
             "",
             "실효 투자비",
             `${(totalInvestment / 100_000_000).toFixed(1)}억`,
             "",
           ],
+          ...(effectiveCapex !== undefined
+            ? [['', 'Effective CAPEX (subsidy-adjusted)', `${(effectiveCapex / 1_000_000).toFixed(1)}M KRW`]]
+            : []),
+          ['', 'Annual Energy Saving', `${fmt(totalAnnualSaving)} kWh/yr`],
           ["", "연간 에너지 절감", `${fmt(totalAnnualSaving)} kWh/년`, ""],
+          ...(npv !== undefined && npv !== null
+            ? [
+                ['', 'Portfolio NPV', `${(npv / 1_000_000).toFixed(1)}M KRW`],
+                ["", "포트폴리오 NPV", `${(npv / 100_000_000).toFixed(1)}억`, ""],
+              ]
+            : []),
+          ...(irr !== undefined
+            ? [['', 'Portfolio IRR', irr !== null ? `${fmt(irr * 100, 1)}%` : 'N/A']]
+            : []),
+          ...(discountedPayback !== undefined
+            ? [['', 'Discounted Payback', fmtPayback(discountedPayback)]]
+            : []),
           [
             "",
             "할인 회수기간",
-            Number.isFinite(payback) ? `${fmt(payback, 1)}년` : "미회수",
+            payback !== null && Number.isFinite(payback) ? `${fmt(payback, 1)}년` : "미회수",
             "",
           ],
-          ...npvRow,
+          ['', 'Portfolio Payback', fmtPayback(payback)],
         ],
       },
     });
@@ -272,7 +304,7 @@ export function buildEnergyAuditSections(input: EnergyAuditInput): ReportSection
       titleKo: "개보수 권장 사항",
       content: {
         type: "text",
-        text: "트윈에서 고른 투자 시나리오가 없습니다. 디지털 트윈에서 예산을 움직이면 이 건물의 개보수 답이 여기에 붙습니다.",
+        text: "No retrofit analysis available. Upgrade to Fidelity Level 2 or higher to unlock retrofit recommendations.",
       },
     });
   }

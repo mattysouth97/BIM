@@ -1,6 +1,7 @@
 "use client";
 
 import type { FootprintCandidate } from "@/lib/cad/dxf-parser";
+import { pick } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { FootprintPreview } from "./footprint-preview";
 
@@ -27,19 +28,17 @@ export function LayerPicker({
   onConfirm,
   lang = "en",
 }: LayerPickerProps) {
-  const isKo = lang === "ko";
-
   return (
     <div className="flex flex-col gap-3">
       <h3 className="text-sm font-semibold">
-        {isKo
-          ? "풋프린트 레이어를 선택하세요"
-          : "Select the footprint layer"}
+        {pick(lang, "풋프린트 레이어를 선택하세요", "Select the footprint layer")}
       </h3>
       <p className="text-xs text-muted-foreground">
-        {isKo
-          ? `${candidates.length}개의 닫힌 폴리라인이 발견되었습니다. 건물 외곽선을 선택하세요.`
-          : `${candidates.length} closed polylines found. Pick the building outline.`}
+        {pick(
+          lang,
+          `${candidates.length}개의 닫힌 폴리라인이 발견되었습니다. 건물 외곽선을 선택하세요.`,
+          `${candidates.length} closed polylines found. Pick the building outline.`,
+        )}
       </p>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -72,7 +71,7 @@ export function LayerPicker({
                 className={isSelected ? "text-primary" : "text-foreground"}
               />
               <div className="text-xs text-muted-foreground">
-                {cand.vertexCount} {isKo ? "정점" : "vertices"}
+                {cand.vertexCount} {pick(lang, "정점", "vertices")}
               </div>
             </button>
           );
@@ -86,11 +85,11 @@ export function LayerPicker({
             size="sm"
             data-testid="layer-picker-confirm"
             onClick={() => {
-              const pick = candidates.find((c) => c.layer === selectedLayer);
-              if (pick) onConfirm(pick);
+              const found = candidates.find((c) => c.layer === selectedLayer);
+              if (found) onConfirm(found);
             }}
           >
-            {isKo ? "이 레이어로 확정" : "Confirm selection"}
+            {pick(lang, "이 레이어로 확정", "Confirm selection")}
           </Button>
         </div>
       )}

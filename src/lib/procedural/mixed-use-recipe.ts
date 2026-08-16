@@ -7,7 +7,6 @@ import type {
   BuildingSection,
   FacadeConfig,
   CurtainWallConfig,
-  FloorSpec,
 } from "./types";
 import { WINDOW_RATIOS } from "@/lib/korean-building-codes";
 

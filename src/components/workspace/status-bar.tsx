@@ -4,11 +4,14 @@
 // Bottom shelf status bar: contextual stage hints (left) + live energy metrics (right).
 // Per D-01 (persistent status bar), D-05 / D-08 (energy display).
 
-import React from "react";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useAppStore } from "@/store/app-store";
-import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import { useActiveBuildingPk, useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
+import { useSelectionStore } from "@/store/selection-store";
+import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
+import { getWorkMode } from "@/lib/workflow/revit-workflow";
+import { resolveRevitIdentity } from "@/lib/bim/revit-identity";
 import type { WorkflowStage } from "@/lib/workflow/stages";
 
 export interface StatusBarProps {
@@ -33,6 +36,11 @@ const STAGE_HINTS: Record<WorkflowStage, PromptEntry> = {
     en: "Upload a CAD floor plan (.dxf) for this building",
     ko: "건물의 CAD 도면(.dxf)을 업로드하세요",
   },
+  // P2-24 — cad-first only; ledger mode never reaches this stage id
+  params: {
+    en: "Enter floors, year, and region for this draft",
+    ko: "층수·준공연도·지역을 입력하세요",
+  },
   twin: {
     en: "View and configure the digital twin",
     ko: "층을 고치거나(2) 코어·설비를 확인하세요(3). 저장은 자동입니다.",
@@ -54,19 +62,43 @@ export function StatusBar({ buildingPk: buildingPkProp, sigunguCd }: StatusBarPr
 
   const buildingPk = useActiveBuildingPk(buildingPkProp);
 
-  const metrics = useEnergyMetrics(buildingPk, sigunguCd);
+  // P1-08 (d): fall back to the active building's sigunguCd so the status bar
+  // and every other panel compute from the same regional climate.
+  const activeSigunguCd = useActiveSigunguCd();
+  const metrics = useEnergyMetrics(buildingPk, sigunguCd ?? activeSigunguCd);
 
   const promptText = getStageHint(stage, language);
+  const workMode = useRevitWorkflowStore((s) => s.workMode);
+  const selectedType = useSelectionStore((s) => s.selectedType);
+  const selectedEquipment = useSelectionStore((s) => s.selectedEquipment);
+  const identity =
+    stage === "twin"
+      ? resolveRevitIdentity({
+          kind: selectedType ?? "wall",
+          equipment: selectedEquipment,
+        })
+      : null;
+  const modeHint =
+    stage === "twin" || stage === "report"
+      ? language === "ko"
+        ? getWorkMode(workMode).hintKo
+        : getWorkMode(workMode).hintEn
+      : promptText;
 
   return (
     <div className="flex h-full w-full items-center justify-between px-4">
-      {/* Left: stage hint */}
+      {/* Left: stage hint + Revit identity (status bar analog) */}
       <div className="flex items-center gap-2 min-w-0">
         <span
           className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/40"
           aria-hidden="true"
         />
-        <span className="text-xs text-muted-foreground truncate">{promptText}</span>
+        <span className="text-xs text-muted-foreground truncate">{modeHint}</span>
+        {identity && (
+          <span className="hidden truncate text-[10px] text-muted-foreground/80 md:inline">
+            {language === "ko" ? identity.displayKo : identity.displayEn}
+          </span>
+        )}
       </div>
 
       {/* Right: energy status */}

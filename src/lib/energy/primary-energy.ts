@@ -7,10 +7,11 @@ export const PRIMARY_ENERGY_FACTORS = {
   gas: 1.1,                 // kWh primary per kWh delivered
   districtHeating: 0.728,   // kWh primary per kWh delivered
   districtCooling: 0.937,   // kWh primary per kWh delivered
-  /** On-site renewables substitute grid electricity BEFORE conversion, so
-   *  their effective primary credit is 2.75 per kWh substituted (capped at
-   *  the electric consumption). See calculatePrimaryEnergy. */
-  renewable: 0.0,
+  // P2-02: on-site renewable generation displaces grid electricity, so it
+  // offsets primary energy at the ELECTRICITY primary factor. Substitution
+  // is capped at the electric leg (accuracy wave) so a large PV array cannot
+  // drive delivered/primary electric negative.
+  renewable: 2.75,
 } as const;
 
 export interface DeliveredEnergy {
@@ -22,7 +23,7 @@ export interface DeliveredEnergy {
 }
 
 export interface PrimaryEnergyBreakdown {
-  electric: number;        // kWh/year primary from electricity
+  electric: number;        // kWh/year primary from electricity (after renewable substitution)
   gas: number;             // kWh/year primary from gas
   districtHeating: number; // kWh/year primary from district heating
   districtCooling: number; // kWh/year primary from district cooling
@@ -70,9 +71,10 @@ export function calculatePrimaryEnergy(
   const primaryGas = delivered.gas * PRIMARY_ENERGY_FACTORS.gas;
   const primaryDH = dh * PRIMARY_ENERGY_FACTORS.districtHeating;
   const primaryDC = dc * PRIMARY_ENERGY_FACTORS.districtCooling;
-  // Report the credit renewables earned (≤ 0 by interface convention).
+  // Report the credit renewables earned (≤ 0). Already netted from electric,
+  // so it is NOT added again into primaryTotal.
   const primaryRenewable =
-    reUsed > 0 ? -reUsed * PRIMARY_ENERGY_FACTORS.electricity : 0;
+    reUsed > 0 ? -reUsed * PRIMARY_ENERGY_FACTORS.renewable : 0;
 
   const primaryTotal = primaryElectric + primaryGas + primaryDH + primaryDC;
 

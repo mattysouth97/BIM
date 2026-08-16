@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { useAnnotationStore } from "../annotation-store";
+import { useAnnotationStore, annotationsForBuilding } from "../annotation-store";
+import { useActiveBuildingStore } from "../active-building-store";
+import type { ScopedAnnotation } from "../annotation-store";
 import type {
   DimensionAnnotation,
   AreaLabelAnnotation,
@@ -68,6 +70,7 @@ function makeSectionPlane(overrides: Partial<SectionPlaneAnnotation> = {}): Sect
 
 beforeEach(() => {
   useAnnotationStore.setState({ annotations: [], selectedAnnotationId: null });
+  useActiveBuildingStore.getState().clearActiveBuilding();
 });
 
 // ── addAnnotation ─────────────────────────────────────────────────────────────
@@ -277,7 +280,7 @@ describe("persist partialize", () => {
     useAnnotationStore.getState().addAnnotation(dim);
 
     const serialised = JSON.stringify({ annotations: useAnnotationStore.getState().annotations });
-    const parsed = JSON.parse(serialised) as { annotations: typeof dim[] };
+    const parsed = JSON.parse(serialised) as { annotations: ScopedAnnotation[] };
 
     // Restore into a fresh state
     useAnnotationStore.setState({ annotations: parsed.annotations, selectedAnnotationId: null });
@@ -287,5 +290,93 @@ describe("persist partialize", () => {
     expect(restored.kind).toBe("dimension");
     expect(restored.params.end.x).toBe(5);
     expect(restored.createdAt).toBe("2026-04-12T00:00:00Z");
+  });
+});
+
+// ── building scoping (P2-16) ──────────────────────────────────────────────────
+
+describe("building scoping (P2-16)", () => {
+  it("stamps the active buildingPk at add time", () => {
+    useActiveBuildingStore.getState().setActiveBuilding("bldg-A");
+    useAnnotationStore.getState().addAnnotation(makeDimension());
+    expect(useAnnotationStore.getState().annotations[0].buildingPk).toBe("bldg-A");
+  });
+
+  it("stamps null when no building is active", () => {
+    useAnnotationStore.getState().addAnnotation(makeDimension());
+    expect(useAnnotationStore.getState().annotations[0].buildingPk).toBeNull();
+  });
+
+  it("isolates two buildings — A's annotations never appear on B", () => {
+    useActiveBuildingStore.getState().setActiveBuilding("bldg-A");
+    useAnnotationStore.getState().addAnnotation(makeDimension({ id: "a-dim" }));
+    useAnnotationStore.getState().addAnnotation(makeAreaLabel({ id: "a-area" }));
+
+    useActiveBuildingStore.getState().setActiveBuilding("bldg-B");
+    // Same anchorElementId as could collide across buildings — the original bug
+    useAnnotationStore
+      .getState()
+      .addAnnotation(makeDimension({ id: "b-dim", anchorElementId: "elem-1" as ElementId }));
+
+    const all = useAnnotationStore.getState().annotations;
+    expect(annotationsForBuilding(all, "bldg-A").map((a) => a.id)).toEqual(["a-dim", "a-area"]);
+    expect(annotationsForBuilding(all, "bldg-B").map((a) => a.id)).toEqual(["b-dim"]);
+  });
+
+  it("same-building reload still shows them (scope survives JSON round-trip)", () => {
+    useActiveBuildingStore.getState().setActiveBuilding("bldg-A");
+    useAnnotationStore.getState().addAnnotation(makeDimension({ id: "keep-a" }));
+
+    const serialised = JSON.stringify({ annotations: useAnnotationStore.getState().annotations });
+    const parsed = JSON.parse(serialised) as { annotations: ScopedAnnotation[] };
+    useAnnotationStore.setState({ annotations: parsed.annotations, selectedAnnotationId: null });
+
+    const forA = annotationsForBuilding(useAnnotationStore.getState().annotations, "bldg-A");
+    expect(forA.map((a) => a.id)).toEqual(["keep-a"]);
+  });
+
+  it("legacy null-scoped annotations are not attributed to any specific building", () => {
+    const legacy: ScopedAnnotation = { ...makeDimension({ id: "legacy" }), buildingPk: null };
+    useAnnotationStore.setState({ annotations: [legacy], selectedAnnotationId: null });
+    expect(annotationsForBuilding(useAnnotationStore.getState().annotations, "bldg-A")).toEqual([]);
+    expect(
+      annotationsForBuilding(useAnnotationStore.getState().annotations, null).map((a) => a.id)
+    ).toEqual(["legacy"]);
+  });
+});
+
+// ── persist migrate v2 (P2-16) ────────────────────────────────────────────────
+
+describe("persist migrate v2 (P2-16)", () => {
+  const getMigrate = () => {
+    const storeApi = useAnnotationStore as unknown as {
+      persist: { getOptions: () => { migrate: (p: unknown, v: number) => unknown } };
+    };
+    return storeApi.persist.getOptions().migrate;
+  };
+
+  it("stamps legacy v1 annotations with buildingPk null", () => {
+    const migrated = getMigrate()(
+      { annotations: [makeDimension({ id: "old-1" }), makeAreaLabel({ id: "old-2" })] },
+      1
+    ) as { annotations: ScopedAnnotation[] };
+    expect(migrated.annotations.map((a) => a.buildingPk)).toEqual([null, null]);
+    expect(migrated.annotations.map((a) => a.id)).toEqual(["old-1", "old-2"]);
+  });
+
+  it("adopts unversioned v0 payloads the same way", () => {
+    const migrated = getMigrate()({ annotations: [makeDimension({ id: "v0" })] }, 0) as {
+      annotations: ScopedAnnotation[];
+    };
+    expect(migrated.annotations[0].buildingPk).toBeNull();
+  });
+
+  it("falls back to defaults for unknown future versions", () => {
+    expect(getMigrate()({ annotations: [] }, 3)).toBeUndefined();
+  });
+
+  it("falls back to defaults for malformed legacy payloads", () => {
+    expect(getMigrate()({ annotations: "garbage" }, 1)).toBeUndefined();
+    expect(getMigrate()(null, 1)).toBeUndefined();
   });
 });

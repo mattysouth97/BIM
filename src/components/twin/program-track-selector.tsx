@@ -6,6 +6,7 @@
 // Phase A/B/C behavior; the four presets come from cost-database.ts.
 
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 import type { ProgramTrack } from "@/lib/retrofit/cost-database";
 
 interface ProgramTrackSelectorProps {
@@ -20,16 +21,23 @@ interface ProgramTrackSelectorProps {
   suggestedTrack?: ProgramTrack;
 }
 
-const TRACK_OPTIONS: { track: ProgramTrack; label: string; detail: string }[] = [
-  { track: "none", label: "프로그램 없음", detail: "무보조" },
-  { track: "public-seoul-or-central", label: "공공 서울·중앙", detail: "CAPEX 50%" },
-  { track: "public-local", label: "공공 지자체", detail: "CAPEX 70%" },
-  { track: "private-base", label: "민간 기본", detail: "이자 4.5%p" },
-  { track: "private-tier2", label: "민간 2단계", detail: "이자 4.0%p" },
-  { track: "private-high-perf", label: "민간 고성능", detail: "이자 5.5%p" },
+// P2-06: bilingual catalog. Official 그린리모델링 program names carry an
+// English gloss rather than a machine translation.
+const TRACK_OPTIONS: {
+  track: ProgramTrack;
+  label: { ko: string; en: string };
+  detail: { ko: string; en: string };
+}[] = [
+  { track: "none", label: { ko: "프로그램 없음", en: "No program" }, detail: { ko: "무보조", en: "Unsubsidised" } },
+  { track: "public-seoul-or-central", label: { ko: "공공 서울·중앙", en: "Public · Seoul/central" }, detail: { ko: "CAPEX 50%", en: "CAPEX 50%" } },
+  { track: "public-local", label: { ko: "공공 지자체", en: "Public · local gov" }, detail: { ko: "CAPEX 70%", en: "CAPEX 70%" } },
+  { track: "private-base", label: { ko: "민간 기본", en: "Private · base" }, detail: { ko: "이자 4.5%p", en: "Rate −4.5%p" } },
+  { track: "private-tier2", label: { ko: "민간 2단계", en: "Private · tier 2" }, detail: { ko: "이자 4.0%p", en: "Rate −4.0%p" } },
+  { track: "private-high-perf", label: { ko: "민간 고성능", en: "Private · high-perf" }, detail: { ko: "이자 5.5%p", en: "Rate −5.5%p" } },
 ];
 
 export function ProgramTrackSelector({ value, onChange, suggestedTrack }: ProgramTrackSelectorProps) {
+  const { t, lang } = useT(); // P2-06
   return (
     <div
       className={cn(
@@ -38,10 +46,10 @@ export function ProgramTrackSelector({ value, onChange, suggestedTrack }: Progra
       )}
       data-twin-track-selector
       role="radiogroup"
-      aria-label="그린리모델링 지원 트랙"
+      aria-label={t("그린리모델링 지원 트랙", "Green Remodeling support track")}
     >
       <span className="text-[10px] font-medium text-muted-foreground pr-2 border-r border-border">
-        그린리모델링
+        {t("그린리모델링", "Green Remodeling")}
       </span>
       {TRACK_OPTIONS.map(({ track, label, detail }) => {
         const active = track === value;
@@ -62,9 +70,9 @@ export function ProgramTrackSelector({ value, onChange, suggestedTrack }: Progra
             )}
           >
             <span className="text-[10px] font-medium leading-tight whitespace-nowrap">
-              {label}
+              {label[lang]}
               {suggested && (
-                <span className="ml-1 text-[8px] font-semibold text-emerald-600">추천</span>
+                <span className="ml-1 text-[8px] font-semibold text-emerald-600">{t("추천", "Suggested")}</span>
               )}
             </span>
             <span
@@ -73,7 +81,7 @@ export function ProgramTrackSelector({ value, onChange, suggestedTrack }: Progra
                 active ? "text-cyan-600 dark:text-cyan-400" : "text-muted-foreground/60",
               )}
             >
-              {detail}
+              {detail[lang]}
             </span>
           </button>
         );

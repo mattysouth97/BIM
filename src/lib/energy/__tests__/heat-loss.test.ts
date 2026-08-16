@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { calculateHeatLoss } from "../heat-loss";
 import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe, FloorSpec } from "@/lib/procedural/types";
-import type { ClimateData } from "../climate-data";
 import { SEOUL_CLIMATE } from "../climate-data";
 
 /** Helper: create a realistic 84m2 Korean apartment MaterialProperties */
@@ -122,20 +121,93 @@ describe("calculateHeatLoss", () => {
     expect(result.totalHeatLoss).toBeLessThan(100000);
 
     // 5 elements: envelope transmission + the infiltration/ventilation term
-    // (H_ve = 0.34·ACH·V per ISO 13789 — previously missing entirely).
+    // (H_ve = 0.34·ACH·V per ISO 13789 / P2-01).
     expect(result.elements).toHaveLength(5);
     expect(result.elements.map((e) => e.element)).toEqual([
       "Walls",
       "Windows",
       "Roof",
       "Ground Floor",
-      "Ventilation",
+      "Infiltration/Ventilation",
     ]);
     // Every element exposes its coefficient for basis-correct annualization.
     for (const el of result.elements) {
       expect(el.hCoefficient).toBeGreaterThanOrEqual(0);
       expect(el.heatLoss).toBeCloseTo(el.hCoefficient * el.deltaT, 6);
     }
+  });
+
+  // ── P2-01: infiltration / ventilation heat loss ──────────────────────────
+
+  /** Mutate airtightness + ventilation on a fresh materials object. */
+  function withAir(
+    ach50: number,
+    vent: MaterialProperties["hvac"]["ventilation"]
+  ): MaterialProperties {
+    const m = makeApartmentMaterials();
+    m.envelope.airtightness.ach50 = ach50;
+    m.hvac.ventilation = vent;
+    return m;
+  }
+
+  it("adds an Infiltration/Ventilation element sized by Q = 0.34 × ACH × V × ΔT (P2-01 s1)", () => {
+    const materials = withAir(3.0, { type: "natural", heatRecoveryEfficiency: 0, airflowRate: 0 });
+    const recipe = makeApartmentRecipe(15);
+    const result = calculateHeatLoss(materials, recipe, SEOUL_CLIMATE);
+
+    const el = result.elements.find((e) => e.element === "Infiltration/Ventilation")!;
+    expect(el).toBeDefined();
+
+    // ACH = ach50/20 (natural leakage only) = 0.15; V = 84 m² × 43.5 m = 3654 m³
+    const V = 11.2 * 7.5 * (15 * 2.9);
+    const deltaT = 20 - -11.3;
+    const expectedQ = 0.34 * (3.0 / 20) * V * deltaT;
+    expect(el.heatLoss).toBeCloseTo(expectedQ, 1);
+    // It contributes to the total.
+    const envelopeOnly = result.elements
+      .filter((e) => e.element !== "Infiltration/Ventilation")
+      .reduce((s, e) => s + e.heatLoss, 0);
+    expect(result.totalHeatLoss).toBeCloseTo(envelopeOnly + el.heatLoss, 1);
+  });
+
+  it("reduces the ventilation term when HRV recovers heat (P2-01 s2)", () => {
+    const recipe = makeApartmentRecipe(15);
+    const exhaust = withAir(1.5, { type: "mechanical-exhaust", heatRecoveryEfficiency: 0, airflowRate: 0.5 });
+    const hrv = withAir(1.5, { type: "heat-recovery", heatRecoveryEfficiency: 0.8, airflowRate: 0.5 });
+
+    const exhaustEl = calculateHeatLoss(exhaust, recipe, SEOUL_CLIMATE)
+      .elements.find((e) => e.element === "Infiltration/Ventilation")!;
+    const hrvEl = calculateHeatLoss(hrv, recipe, SEOUL_CLIMATE)
+      .elements.find((e) => e.element === "Infiltration/Ventilation")!;
+
+    // Same leakage, but the mechanical share is cut 80% by the HRV.
+    expect(hrvEl.heatLoss).toBeLessThan(exhaustEl.heatLoss);
+  });
+
+  it("is zero and backward-compatible when airtightness and airflow are zero (P2-01 s3)", () => {
+    const materials = withAir(0, { type: "natural", heatRecoveryEfficiency: 0, airflowRate: 0 });
+    const recipe = makeApartmentRecipe(15);
+    const result = calculateHeatLoss(materials, recipe, SEOUL_CLIMATE);
+
+    const el = result.elements.find((e) => e.element === "Infiltration/Ventilation")!;
+    expect(el.heatLoss).toBe(0);
+    // Total equals the sum of the 4 envelope elements exactly.
+    const envelopeOnly = result.elements
+      .filter((e) => e.element !== "Infiltration/Ventilation")
+      .reduce((s, e) => s + e.heatLoss, 0);
+    expect(result.totalHeatLoss).toBeCloseTo(envelopeOnly, 6);
+  });
+
+  it("infiltration share of the standard fixture is a plausible fraction (P2-01 s4)", () => {
+    const materials = makeApartmentMaterials(); // ach50 1.5, mech-exhaust 0.5
+    const recipe = makeApartmentRecipe(15);
+    const result = calculateHeatLoss(materials, recipe, SEOUL_CLIMATE);
+
+    const el = result.elements.find((e) => e.element === "Infiltration/Ventilation")!;
+    const share = el.heatLoss / result.totalHeatLoss;
+    // Sanity band — a real, non-fabricated fraction of total loss.
+    expect(share).toBeGreaterThan(0.05);
+    expect(share).toBeLessThan(0.45);
   });
 
   it("wall heat loss exceeds roof heat loss for typical apartment", () => {
@@ -201,5 +273,26 @@ describe("calculateHeatLoss", () => {
     const expectedDeltaT = 20 - (-11.3); // 31.3
     const expectedWallHeatLoss = wallEl.uValue * wallEl.area * expectedDeltaT;
     expect(wallEl.heatLoss).toBeCloseTo(expectedWallHeatLoss, 1);
+  });
+
+  it("uses the CAD ring for wall area instead of the bounding box", () => {
+    const materials = makeApartmentMaterials({ wwr: 0 });
+    const box = makeApartmentRecipe(1);
+    const triangle: BuildingRecipe = {
+      ...box,
+      footprintPolygon: [
+        [
+          [0, 0],
+          [box.footprintWidth, 0],
+          [0, box.footprintDepth],
+        ],
+      ],
+    };
+    const boxLoss = calculateHeatLoss(materials, box, SEOUL_CLIMATE);
+    const triLoss = calculateHeatLoss(materials, triangle, SEOUL_CLIMATE);
+    const boxWalls = boxLoss.elements.find((e) => e.element === "Walls")!;
+    const triWalls = triLoss.elements.find((e) => e.element === "Walls")!;
+    expect(triWalls.area).toBeLessThan(boxWalls.area);
+    expect(triLoss.totalHeatLoss).toBeLessThan(boxLoss.totalHeatLoss);
   });
 });

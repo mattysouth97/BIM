@@ -107,6 +107,13 @@ export class LayerManager {
     if (child) child.visible = visible;
   }
 
+  /** Toggle only the animated airflow batch, leaving HVAC equipment visible. */
+  setAirflowVisible(visible: boolean): void {
+    const mepGroup = this.groups.get("mep");
+    const airflow = mepGroup?.getObjectByName("airflow-streamlines");
+    if (airflow) airflow.visible = visible;
+  }
+
   /** Whether a layer is currently visible. */
   isVisible(id: LayerId): boolean {
     return this.groups.get(id)?.visible ?? false;
@@ -133,7 +140,7 @@ export class LayerManager {
   updateAnimations(elapsedTime: number): void {
     this.groups.forEach((group) => {
       if (!group.visible) return;
-      group.traverse((obj) => {
+      group.traverseVisible((obj) => {
         if (
           obj instanceof THREE.Mesh ||
           obj instanceof THREE.InstancedMesh ||

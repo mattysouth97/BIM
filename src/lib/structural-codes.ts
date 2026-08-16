@@ -59,6 +59,191 @@ export const KBC_COLUMN_SIZING: ColumnSizingEntry[] = [
 // Column position helper
 // ---------------------------------------------------------------------------
 
+type FootprintPoint = { x: number; z: number };
+
+const GEOMETRY_EPSILON = 1e-7;
+
+function pointOnSegment(
+  point: FootprintPoint,
+  start: FootprintPoint,
+  end: FootprintPoint,
+): boolean {
+  const cross =
+    (point.z - start.z) * (end.x - start.x) -
+    (point.x - start.x) * (end.z - start.z);
+  if (Math.abs(cross) > GEOMETRY_EPSILON) return false;
+
+  const dot =
+    (point.x - start.x) * (end.x - start.x) +
+    (point.z - start.z) * (end.z - start.z);
+  if (dot < -GEOMETRY_EPSILON) return false;
+
+  const squaredLength =
+    (end.x - start.x) ** 2 + (end.z - start.z) ** 2;
+  return dot <= squaredLength + GEOMETRY_EPSILON;
+}
+
+function pointInRing(point: FootprintPoint, ring: [number, number][]): boolean {
+  let inside = false;
+  const count =
+    ring.length > 1 &&
+    ring[0][0] === ring[ring.length - 1][0] &&
+    ring[0][1] === ring[ring.length - 1][1]
+      ? ring.length - 1
+      : ring.length;
+
+  for (let i = 0, j = count - 1; i < count; j = i++) {
+    const [xi, zi] = ring[i];
+    const [xj, zj] = ring[j];
+    if (
+      pointOnSegment(
+        point,
+        { x: xj, z: zj },
+        { x: xi, z: zi },
+      )
+    ) {
+      return true;
+    }
+    const crosses =
+      zi > point.z !== zj > point.z &&
+      point.x < ((xj - xi) * (point.z - zi)) / (zj - zi) + xi;
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}
+
+function orientation(
+  first: FootprintPoint,
+  second: FootprintPoint,
+  third: FootprintPoint,
+): number {
+  return (
+    (second.x - first.x) * (third.z - first.z) -
+    (second.z - first.z) * (third.x - first.x)
+  );
+}
+
+function segmentsIntersect(
+  firstStart: FootprintPoint,
+  firstEnd: FootprintPoint,
+  secondStart: FootprintPoint,
+  secondEnd: FootprintPoint,
+): boolean {
+  const o1 = orientation(firstStart, firstEnd, secondStart);
+  const o2 = orientation(firstStart, firstEnd, secondEnd);
+  const o3 = orientation(secondStart, secondEnd, firstStart);
+  const o4 = orientation(secondStart, secondEnd, firstEnd);
+
+  if (
+    ((o1 > GEOMETRY_EPSILON && o2 < -GEOMETRY_EPSILON) ||
+      (o1 < -GEOMETRY_EPSILON && o2 > GEOMETRY_EPSILON)) &&
+    ((o3 > GEOMETRY_EPSILON && o4 < -GEOMETRY_EPSILON) ||
+      (o3 < -GEOMETRY_EPSILON && o4 > GEOMETRY_EPSILON))
+  ) {
+    return true;
+  }
+
+  return (
+    (Math.abs(o1) <= GEOMETRY_EPSILON &&
+      pointOnSegment(secondStart, firstStart, firstEnd)) ||
+    (Math.abs(o2) <= GEOMETRY_EPSILON &&
+      pointOnSegment(secondEnd, firstStart, firstEnd)) ||
+    (Math.abs(o3) <= GEOMETRY_EPSILON &&
+      pointOnSegment(firstStart, secondStart, secondEnd)) ||
+    (Math.abs(o4) <= GEOMETRY_EPSILON &&
+      pointOnSegment(firstEnd, secondStart, secondEnd))
+  );
+}
+
+function ringEdges(ring: [number, number][]): [FootprintPoint, FootprintPoint][] {
+  const count =
+    ring.length > 1 &&
+    ring[0][0] === ring[ring.length - 1][0] &&
+    ring[0][1] === ring[ring.length - 1][1]
+      ? ring.length - 1
+      : ring.length;
+  const edges: [FootprintPoint, FootprintPoint][] = [];
+  for (let index = 0; index < count; index++) {
+    const [startX, startZ] = ring[index];
+    const [endX, endZ] = ring[(index + 1) % count];
+    edges.push([
+      { x: startX, z: startZ },
+      { x: endX, z: endZ },
+    ]);
+  }
+  return edges;
+}
+
+/**
+ * Test whether a complete axis-aligned rectangle fits inside a footprint.
+ * Corners alone are insufficient for concave footprints: a courtyard or notch
+ * can cross the rectangle between probe points. Boundary/edge intersection and
+ * contained polygon vertices are therefore checked as well.
+ */
+export function axisAlignedRectangleFitsFootprint(
+  center: FootprintPoint,
+  halfWidth: number,
+  halfDepth: number,
+  footprintPolygon?: [number, number][][],
+): boolean {
+  if (!footprintPolygon?.[0]?.length) return true;
+  const corners: FootprintPoint[] = [
+    { x: center.x - halfWidth, z: center.z - halfDepth },
+    { x: center.x + halfWidth, z: center.z - halfDepth },
+    { x: center.x + halfWidth, z: center.z + halfDepth },
+    { x: center.x - halfWidth, z: center.z + halfDepth },
+  ];
+  const outerRing = footprintPolygon[0];
+  const holes = footprintPolygon.slice(1);
+
+  if (!corners.every((corner) => pointInRing(corner, outerRing))) return false;
+  if (holes.some((hole) => corners.some((corner) => pointInRing(corner, hole)))) {
+    return false;
+  }
+
+  const rectangleEdges = corners.map(
+    (corner, index) =>
+      [corner, corners[(index + 1) % corners.length]] as [
+        FootprintPoint,
+        FootprintPoint,
+      ],
+  );
+  const rectangleContains = (point: FootprintPoint) =>
+    point.x >= center.x - halfWidth - GEOMETRY_EPSILON &&
+    point.x <= center.x + halfWidth + GEOMETRY_EPSILON &&
+    point.z >= center.z - halfDepth - GEOMETRY_EPSILON &&
+    point.z <= center.z + halfDepth + GEOMETRY_EPSILON;
+
+  for (const ring of footprintPolygon) {
+    for (const [ringStart, ringEnd] of ringEdges(ring)) {
+      if (
+        rectangleEdges.some(([rectStart, rectEnd]) =>
+          segmentsIntersect(rectStart, rectEnd, ringStart, ringEnd),
+        )
+      ) {
+        return false;
+      }
+      if (rectangleContains(ringStart)) return false;
+    }
+  }
+
+  return true;
+}
+
+function columnFitsFootprint(
+  point: FootprintPoint,
+  size: number,
+  footprintPolygon?: [number, number][][],
+): boolean {
+  const half = size / 2;
+  return axisAlignedRectangleFitsFootprint(
+    point,
+    half,
+    half,
+    footprintPolygon,
+  );
+}
+
 /**
  * Returns the structural column grid positions for a given building recipe.
  * Mirrors the exact logic used in structure-generator.ts (lines 64-85) to
@@ -86,10 +271,13 @@ export function getColumnPositions(
 
     for (let ix = 0; ix < colsX; ix++) {
       for (let iz = 0; iz < colsZ; iz++) {
-        columnPositions.push({
+        const position = {
           x: colsX > 1 ? -innerW / 2 + ix * spacingX : 0,
           z: colsZ > 1 ? -innerD / 2 + iz * spacingZ : 0,
-        });
+        };
+        if (columnFitsFootprint(position, column.size, recipe.footprintPolygon)) {
+          columnPositions.push(position);
+        }
       }
     }
   }

@@ -2,24 +2,28 @@
 
 import { useState, useRef, useMemo, useEffect, useCallback, lazy, Suspense } from "react";
 import * as THREE from "three";
-import { Canvas, useThree, useFrame } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber";
 import { useEnvironment } from "@react-three/drei";
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-import { SAOPass } from "three/examples/jsm/postprocessing/SAOPass.js";
-import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import type { BrTitleInfo, BrFloorInfo } from "@/lib/types";
 import { generateBuildingGeometry, toRecipe, type FloorGeometry } from "@/lib/building-geometry";
 import { inferMaterialProperties } from "@/lib/material-inference";
 import { saveModel, loadModel } from "@/lib/model-storage";
 import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
+import { useScenarioStore } from "@/store/scenario-store";
 import { useWorkspaceStore } from "@/store/workspace-store";
+import { useLayerStore } from "@/store/layer-store";
+import { useReviewHighlightStore } from "@/store/review-highlight-store";
+import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
+import { classifyElement, ifcDisplayLine } from "@/lib/bim/ifc-classification";
+import { SolarPanels } from "./solar-panels";
+import { RetrofitHvacUnits } from "./retrofit-hvac-units";
+import { ContextMassing } from "./context-massing";
 import { applyOverrides } from "@/lib/procedural/recipe";
 import { Loader2 } from "lucide-react";
 import { createSceneProjection } from "@/lib/gis/gis-transform";
 import { ringBboxCenter } from "@/lib/gis/ring-utils";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { formatArea } from "@/lib/constants";
 import type { CampusData } from "@/lib/campus/campus-types";
 import { computeSiteLayout } from "@/lib/campus/site-layout";
@@ -40,7 +44,11 @@ import { ErrorBoundary, ViewerErrorBoundary } from "@/components/error-boundary"
 import { StructuralTooltip } from "./structural-tooltip";
 import { EquipmentClickHandler } from "./equipment-click-handler";
 import { EquipmentHoverCard } from "./equipment-hover-card";
-import { ScenePostProcessing } from "./outline-post-processing";
+import { EquipmentInteractionHandler } from "./equipment-interaction-handler";
+import { AuthoringFamilyLayer } from "./authoring-family-layer";
+import { SceneHighlightProcessing } from "./scene-highlight-processing";
+import { EnergyCards } from "./energy-cards";
+import { ConfigPanel } from "./config-panel";
 import { TwinStageOverlay } from "@/components/twin/twin-stage-overlay";
 import type { FootprintGeometry } from "@/lib/portfolio/types";
 
@@ -70,67 +78,24 @@ function SceneSetup() {
   const envMap = useEnvironment({ files: "/hdr/studio.hdr" });
 
   useEffect(() => {
-    if (envMap) {
-      const pmrem = new THREE.PMREMGenerator(gl);
-      const processed = pmrem.fromEquirectangular(envMap);
-      // eslint-disable-next-line react-hooks/immutability
-      scene.environment = processed.texture;
-      // Do NOT set scene.background to envMap — keep solid color
-      pmrem.dispose();
-    }
+    if (!envMap) return;
+    // PMREMGenerator pre-filters the equirectangular HDR into a mip-mapped
+    // environment map used for image-based reflections (WebGL pipeline).
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const processed = pmrem.fromEquirectangular(envMap);
+    // eslint-disable-next-line react-hooks/immutability
+    scene.environment = processed.texture;
+    // Do NOT set scene.background to envMap — keep solid color
+    pmrem.dispose();
   }, [envMap, scene, gl]);
 
   return null;
 }
 
-/**
- * SAOPass-based ambient occlusion using three.js native post-processing.
- * Replaces the previous SSAO + Bloom + Vignette pipeline.
- */
-function SAOPostProcessing() {
-  const { gl, scene, camera, size } = useThree();
-  const composerRef = useRef<EffectComposer | null>(null);
-
-  useEffect(() => {
-    const composer = new EffectComposer(gl);
-
-    const renderPass = new RenderPass(scene, camera);
-    composer.addPass(renderPass);
-
-    const saoPass = new SAOPass(scene, camera);
-    saoPass.params.saoBias = 1.0;
-    saoPass.params.saoIntensity = 0.004;
-    saoPass.params.saoScale = 2;
-    saoPass.params.saoKernelRadius = 15;
-    saoPass.params.saoMinResolution = 0;
-    saoPass.params.saoBlur = true;
-    saoPass.params.saoBlurRadius = 12;
-    saoPass.params.saoBlurStdDev = 6;
-    saoPass.params.saoBlurDepthCutoff = 0.01;
-    composer.addPass(saoPass);
-
-    const outputPass = new OutputPass();
-    composer.addPass(outputPass);
-
-    composerRef.current = composer;
-
-    return () => {
-      composer.dispose();
-    };
-  }, [gl, scene, camera]);
-
-  // Resize composer when viewport changes
-  useEffect(() => {
-    composerRef.current?.setSize(size.width, size.height);
-  }, [size]);
-
-  // Take over the render loop
-  useFrame(() => {
-    composerRef.current?.render();
-  }, 1);
-
-  return null;
-}
+// P2-08: the legacy SAOPass post-processing component was defined here but never
+// mounted — the live pipeline is OutlinePass-based via <ScenePostProcessing />
+// (outline-post-processing.tsx). Removed along with its dead SAOPass/EffectComposer
+// imports.
 
 // ─── Campus rendering ────────────────────────────────────────────────────────
 
@@ -197,6 +162,14 @@ function CampusSceneContent({ campusData, onBuildingSelect, activeBuildingPk }: 
 
 interface FootprintResult {
   polygon: number[][][] | null;
+  /** Which VWorld layer produced the polygon (P2-25): building outline or parcel fallback. */
+  source?: "building" | "parcel" | null;
+  /** Measured attributes from GIS건물통합정보 — null per field when unavailable. */
+  attributes?: {
+    height: number | null;
+    groundFloors: number | null;
+    undergroundFloors: number | null;
+  } | null;
   error: string | null;
 }
 
@@ -227,8 +200,10 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
   // Panel open state — extracted to workspace-store per D-06.
   // The toolbar toggles layerPanelOpen directly on the store; this component
   // only reads it to mount the LayerPanel (single source of truth).
+  const configPanelOpen = useWorkspaceStore((s) => s.configPanelOpen);
   const layerPanelOpen = useWorkspaceStore((s) => s.layerPanelOpen);
   const uploadDialogOpen = useWorkspaceStore((s) => s.uploadDialogOpen);
+  const setConfigPanelOpen = useWorkspaceStore((s) => s.setConfigPanelOpen);
   const setLayerPanelOpen = useWorkspaceStore((s) => s.setLayerPanelOpen);
   const setUploadDialogOpen = useWorkspaceStore((s) => s.setUploadDialogOpen);
   const [uploadedModel, setUploadedModel] = useState<{
@@ -245,8 +220,29 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
   // and ProceduralBuildingModel renders a rectangular box automatically.
   const footprintPolygon = footprintDataProp?.polygon ?? undefined;
 
+  // P2-26: WGS84 centroid of the subject outer ring — used as the context-massing query center.
+  const contextCenter = useMemo<[number, number] | null>(() => {
+    if (!footprintPolygon || footprintPolygon.length < 1 || footprintPolygon[0].length < 3) {
+      return null;
+    }
+    const outer = footprintPolygon[0];
+    const lng = outer.reduce((s, p) => s + p[0], 0) / outer.length;
+    const lat = outer.reduce((s, p) => s + p[1], 0) / outer.length;
+    return [lng, lat];
+  }, [footprintPolygon]);
+
+  // P2-26: subject outer ring for neighbor exclusion (WGS84 [lng, lat] pairs).
+  const subjectOuterRing = useMemo<[number, number][] | null>(() => {
+    if (!footprintPolygon || footprintPolygon.length < 1) return null;
+    return footprintPolygon[0] as [number, number][];
+  }, [footprintPolygon]);
+
+  // P2-25: VWorld measured height fills the gap when the ledger heit is 0.
+  // Chain (named in building-geometry.ts): ledger heit → measured → era estimate.
+  const measuredHeightM = footprintDataProp?.attributes?.height ?? undefined;
+
   const geometry = useMemo(() => {
-    const geo = generateBuildingGeometry(title, floors);
+    const geo = generateBuildingGeometry(title, floors, { measuredHeightM });
 
     if (footprintPolygon && footprintPolygon.length >= 1 && footprintPolygon[0].length >= 3) {
       try {
@@ -287,7 +283,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     }
 
     return geo;
-  }, [title, floors, footprintPolygon]);
+  }, [title, floors, footprintPolygon, measuredHeightM]);
 
   // ── Portfolio-feature-vector geometry shape (area / perimeter / aspect)
   // Used by the TwinStageOverlay to derive the 20-field feature vector.
@@ -378,14 +374,6 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     [buildingPk]
   );
 
-  const handleToggleModelSource = useCallback(() => {
-    if (uploadedModel) {
-      setModelSource((prev) => (prev === "parametric" ? "uploaded" : "parametric"));
-    } else {
-      setUploadDialogOpen(true);
-    }
-  }, [uploadedModel]);
-
   // Store base recipe and apply overrides from config panel
   const setBaseRecipe = useRecipeStore((s) => s.setBaseRecipe);
   const recipeOverrides = useRecipeStore((s) => s.overrides[buildingPk]);
@@ -402,7 +390,21 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     [baseRecipe, recipeOverrides]
   );
 
-  const isKo = useAppStore((s) => s.language) === "ko";
+  // P2-20 — applied retrofit measures drive the visual state (tints + PV).
+  const appliedMeasureIds = useScenarioStore((s) => s.appliedMeasureIds);
+  const retrofitVisuals = useMemo(
+    () => deriveVisualState(appliedMeasureIds),
+    [appliedMeasureIds]
+  );
+
+  // P2-22 — structural isolation view (load-bearing solid, rest ghosted).
+  const structuralIsolation = useLayerStore((s) => s.structuralIsolation);
+
+  // HITL review highlight — a fidelity-panel flag click pulses the matching
+  // element category (category-level, not per-element).
+  const reviewHighlightKind = useReviewHighlightStore((s) => s.highlightKind);
+
+  const { t, lang } = useT();
 
   const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 1.8;
 
@@ -417,6 +419,18 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
 
   const activeCameraDistance = campusData ? campusCameraDistance : cameraDistance;
   const activeTotalHeight = campusData ? 20 : geometry.totalHeight;
+
+  // P2-11: shadow camera frustum derived from site extents (no hardcoded ±60).
+  // Campus mode: use the larger of width/depth so all buildings cast shadows.
+  // Single-building mode: use footprint dimensions + height with a 20% margin.
+  const shadowHalfExtent = useMemo(() => {
+    if (campusSiteLayout) {
+      return Math.max(campusSiteLayout.extents.width, campusSiteLayout.extents.depth) / 2 * 1.2;
+    }
+    return (
+      Math.max(geometry.footprintWidth, geometry.footprintDepth, geometry.totalHeight) * 0.5 + 60
+    );
+  }, [campusSiteLayout, geometry.footprintWidth, geometry.footprintDepth, geometry.totalHeight]);
 
   const handleViewChange = (view: "front" | "side" | "top" | "iso") => {
     controlsRef.current?.setView(view);
@@ -484,7 +498,8 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             args={["#b1e1ff", "#b97a20", 0.6]}
           />
 
-          {/* Single directional light with soft VSM shadows */}
+          {/* Single directional light with soft VSM shadows.
+              P2-11: frustum bounds derived from shadowHalfExtent (site extents), not hardcoded ±60. */}
           <directionalLight
             position={[40, 60, 30]}
             intensity={2.0}
@@ -492,11 +507,11 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             castShadow
             shadow-mapSize-width={2048}
             shadow-mapSize-height={2048}
-            shadow-camera-far={200}
-            shadow-camera-left={-60}
-            shadow-camera-right={60}
-            shadow-camera-top={60}
-            shadow-camera-bottom={-60}
+            shadow-camera-far={shadowHalfExtent * 4}
+            shadow-camera-left={-shadowHalfExtent}
+            shadow-camera-right={shadowHalfExtent}
+            shadow-camera-top={shadowHalfExtent}
+            shadow-camera-bottom={-shadowHalfExtent}
             shadow-bias={-0.0004}
             shadow-radius={4}
           />
@@ -511,12 +526,22 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           ) : (
             modelSource === "parametric" && (
               <>
-                <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} />
+                <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} retrofitVisuals={retrofitVisuals} structuralIsolation={structuralIsolation} reviewHighlightKind={reviewHighlightKind} />
                 <SiteContext recipe={recipe} showDemoNeighbors={buildingPk === DEMO_BUILDING_PK} />
+                {retrofitVisuals.solarInstalled && <SolarPanels recipe={recipe} />}
+                {retrofitVisuals.hvacUpgraded && <RetrofitHvacUnits recipe={recipe} />}
                 <BuildingLayers buildingPk={buildingPk} />
+                <AuthoringFamilyLayer recipe={recipe} />
                 <StructuralTooltip />
                 <EquipmentClickHandler />
                 <EquipmentHoverCard />
+                <EquipmentInteractionHandler />
+                {footprintPolygon && (
+                  <ContextMassing
+                    centerLngLat={contextCenter}
+                    subjectOuterRing={subjectOuterRing}
+                  />
+                )}
               </>
             )
           )}
@@ -536,8 +561,8 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             distance={activeCameraDistance}
           />
 
-          {/* Outline + post-processing (OutlinePass-based, SAOPass scaffold kept inside) */}
-          <ScenePostProcessing />
+          {/* Outline + post-processing — OutlinePass via the WebGL EffectComposer. */}
+          <SceneHighlightProcessing />
         </Suspense>
       </Canvas>
       </ViewerErrorBoundary>
@@ -548,22 +573,26 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           <p className="text-sm font-semibold">
             {selectedFloor.label}
             <span className="ml-2 text-xs font-normal text-muted-foreground">
-              ({selectedFloor.type === "below" ? (isKo ? "지하" : "Underground") : (isKo ? "지상" : "Above ground")})
+              ({selectedFloor.type === "below" ? t("지하", "Underground") : t("지상", "Above ground")})
             </span>
           </p>
           <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-            <span>{isKo ? "면적" : "Area"}</span>
+            <span>{t("면적", "Area")}</span>
             <span className="font-medium text-foreground">{formatArea(selectedFloor.area)}</span>
-            <span>{isKo ? "용도" : "Use"}</span>
+            <span>{t("용도", "Use")}</span>
             <span className="font-medium text-foreground">{selectedFloor.use || "-"}</span>
-            <span>{isKo ? "구조" : "Structure"}</span>
+            <span>{t("구조", "Structure")}</span>
             <span className="font-medium text-foreground">{selectedFloor.structure || "-"}</span>
+            <span>IFC</span>
+            <span className="font-medium text-foreground">
+              {ifcDisplayLine(classifyElement("slab", { strctCd: recipe.strctCd })!, lang)}
+            </span>
           </div>
         </div>
       )}
 
       <div className="pointer-events-none absolute right-3 bottom-28 z-10 text-[10px] text-muted-foreground/60">
-        {isKo ? "클릭: 층 선택 · 드래그: 회전 · 스크롤: 줌" : "Click: select floor · Drag: rotate · Scroll: zoom"}
+        {t("클릭: 층 선택 · 드래그: 회전 · 스크롤: 줌", "Click: select floor · Drag: rotate · Scroll: zoom")}
       </div>
 
       {/* Twin-stage data-product overlay — release rail, prediction readout,
@@ -576,6 +605,20 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           />
         </ErrorBoundary>
       )}
+
+      {modelSource === "parametric" && (
+        <ErrorBoundary>
+          <EnergyCards buildingPk={buildingPk} variant="stack" />
+        </ErrorBoundary>
+      )}
+
+      <ErrorBoundary>
+        <ConfigPanel
+          buildingPk={buildingPk}
+          visible={configPanelOpen}
+          onClose={() => setConfigPanelOpen(false)}
+        />
+      </ErrorBoundary>
 
       <LayerPanel
         visible={layerPanelOpen}

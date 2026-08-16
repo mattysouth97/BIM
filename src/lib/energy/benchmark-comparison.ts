@@ -76,7 +76,7 @@ function classifyPerformance(
  * relative to its peer group.
  */
 function buildInsight(
-  demand: number,
+  _demand: number,
   percentile: number,
   performance: BenchmarkResult["performance"],
   peerGroup: { useType: string; era: string; region: string },

@@ -9,6 +9,7 @@ import {
   View,
   StyleSheet,
 } from '@react-pdf/renderer';
+import './pdf-fonts'; // side effect: registers NotoSansKR before any render (P0-03)
 import type { ReportData, ReportSection, ReportSectionContent } from './report-types';
 
 // ---------------------------------------------------------------------------
@@ -17,7 +18,7 @@ import type { ReportData, ReportSection, ReportSectionContent } from './report-t
 
 const styles = StyleSheet.create({
   page: {
-    fontFamily: 'Helvetica',
+    fontFamily: 'NotoSansKR',
     fontSize: 10,
     paddingTop: 48,
     paddingBottom: 56,
@@ -27,7 +28,7 @@ const styles = StyleSheet.create({
   },
   // Cover page
   coverPage: {
-    fontFamily: 'Helvetica',
+    fontFamily: 'NotoSansKR',
     fontSize: 10,
     padding: 48,
     color: '#1a1a1a',
@@ -51,7 +52,8 @@ const styles = StyleSheet.create({
   },
   coverBuildingName: {
     fontSize: 26,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'NotoSansKR',
+    fontWeight: 700,
     color: '#111827',
     marginBottom: 8,
   },
@@ -97,7 +99,8 @@ const styles = StyleSheet.create({
   // Section page
   sectionTitle: {
     fontSize: 14,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'NotoSansKR',
+    fontWeight: 700,
     color: '#111827',
     marginBottom: 4,
   },
@@ -127,7 +130,8 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 9,
     color: '#111827',
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'NotoSansKR',
+    fontWeight: 700,
   },
   // Table
   table: {
@@ -146,7 +150,8 @@ const styles = StyleSheet.create({
   tableHeaderCell: {
     flex: 1,
     fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'NotoSansKR',
+    fontWeight: 700,
     color: '#374151',
     textTransform: 'uppercase',
   },
@@ -179,7 +184,8 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     fontSize: 32,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'NotoSansKR',
+    fontWeight: 700,
     color: '#111827',
   },
   metricUnit: {

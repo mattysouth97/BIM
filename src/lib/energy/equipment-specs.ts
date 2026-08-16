@@ -116,8 +116,14 @@ export const EQUIPMENT_GRADE_COLORS: Record<EquipmentEfficiencyGrade, string> = 
 // Use-code → operating hours (ASHRAE 90.1 defaults)
 // ---------------------------------------------------------------------------
 
-/** Annual operating hours by Korean use code (주용도코드) */
-const USE_CODE_OPERATING_HOURS: Record<string, number> = {
+/**
+ * Annual operating hours by Korean use code (주용도코드).
+ * P1-04: office hours moved from the mislabeled "12000" (수련시설 per MOLIT)
+ * to "14000" (업무시설). 12xxx buildings now fall back to the 2500 h default —
+ * correct-by-ignorance rather than mislabeled. Exported for the use-code
+ * consistency test.
+ */
+export const USE_CODE_OPERATING_HOURS: Record<string, number> = {
   "01000": 2920,  // 단독주택 (residential)
   "02000": 2920,  // 공동주택 (multi-family residential)
   "03000": 3000,  // 제1종 근린생활시설
@@ -126,7 +132,7 @@ const USE_CODE_OPERATING_HOURS: Record<string, number> = {
   "07000": 4000,  // 판매시설 (retail)
   "09000": 3500,  // 의료시설 (medical)
   "10000": 2500,  // 교육연구시설 (education)
-  "14000": 4380,  // 업무시설 (office, 8760/2) — 14000 is the 건축물대장 office code
+  "14000": 4380,  // 업무시설 (office, 8760/2) — MOLIT 14 / 건축물대장 office code
 };
 
 function getOperatingHours(mainPurpsCd: string): number {

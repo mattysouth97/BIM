@@ -8,6 +8,9 @@
 // rail.
 
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { formatKrw, formatYears } from "@/lib/twin-formatters";
+import { effectiveDiscountRate } from "@/lib/retrofit/economic-model";
 import type { BudgetSelection, EconomicAssumptions } from "@/lib/retrofit/economic-model";
 
 interface ScenarioRailProps {
@@ -17,26 +20,8 @@ interface ScenarioRailProps {
   totalCandidateMeasures: number;
 }
 
-const KRW_EOK = 100_000_000;
-
-function formatKrwBig(krw: number): string {
-  const sign = krw < 0 ? "-" : "";
-  const abs = Math.abs(krw);
-  if (abs >= KRW_EOK) {
-    const eok = abs / KRW_EOK;
-    return `${sign}₩${eok % 1 === 0 ? eok.toFixed(0) : eok.toFixed(1)}억`;
-  }
-  if (abs >= 10_000) return `${sign}₩${(abs / 10_000).toFixed(0)}만`;
-  return `${sign}₩${abs.toLocaleString()}`;
-}
-
 function formatPercent(n: number, decimals = 1): string {
   return `${(n * 100).toFixed(decimals)}%`;
-}
-
-function formatYears(years: number): string {
-  if (!Number.isFinite(years)) return "—";
-  return `${years.toFixed(1)}년`;
 }
 
 function irrLetter(irr: number | null | undefined): string {
@@ -59,6 +44,8 @@ export function ScenarioRail({
   const effectiveCapex = selection?.effectiveCapex ?? 0;
   const selectedCount = selection?.selected.length ?? 0;
   const utilisation = capexBudgetKrw > 0 ? effectiveCapex / capexBudgetKrw : 0;
+  const { t, lang } = useT(); // P2-06
+  const effectiveRate = effectiveDiscountRate(assumptions);
   const irr = selection?.selected.length
     ? selection.selected.reduce((best, m) => {
         const v = m.financials?.irr;
@@ -75,54 +62,62 @@ export function ScenarioRail({
     >
       <div className="flex flex-col justify-center px-3 sm:px-5 py-2.5 border-r border-border min-w-[140px] sm:min-w-[240px] shrink-0">
         <span className="text-[10px] font-medium text-muted-foreground">
-          투자 시나리오
+          {t("투자 시나리오", "Investment scenario")}
         </span>
         <span className="text-[16px] font-semibold tracking-tight text-foreground leading-tight">
-          CAPEX → ROI 시뮬레이션
+          {t("CAPEX → ROI 시뮬레이션", "CAPEX → ROI simulation")}
         </span>
         <span className="text-[10px] text-muted-foreground tabular-nums">
-          {selectedCount}/{totalCandidateMeasures}개 선택 · 예산 ₩
-          {(capexBudgetKrw / KRW_EOK).toFixed(1)}억 중 {formatPercent(utilisation, 0)} 사용
+          {t(
+            `${selectedCount}/${totalCandidateMeasures}개 선택 · 예산 ${formatKrw(capexBudgetKrw, "ko")} 중 ${formatPercent(utilisation, 0)} 사용`,
+            `${selectedCount}/${totalCandidateMeasures} selected · ${formatPercent(utilisation, 0)} of ${formatKrw(capexBudgetKrw, "en")} budget used`,
+          )}
         </span>
       </div>
 
-      <Cell label="NPV" sublabel={`IRR ${irrBand} · 할인율 ${formatPercent(assumptions.discountRate, 0)}`}>
+      <Cell
+        label={t("NPV", "NPV")}
+        sublabel={t(
+          `IRR ${irrBand} · 유효할인율 ${formatPercent(effectiveRate, 1)}`,
+          `IRR ${irrBand} · ${formatPercent(effectiveRate, 1)} eff. rate`,
+        )}
+      >
         <span
           className={cn(
             "text-[19px] font-semibold tabular-nums tracking-tight",
             npvPositive ? "text-emerald-600" : "text-orange-600",
           )}
         >
-          {formatKrwBig(npv)}
+          {formatKrw(npv, lang)}
         </span>
       </Cell>
 
-      <Cell label="회수기간" sublabel="할인 기준">
+      <Cell label={t("회수기간", "Payback")} sublabel={t("할인 기준", "Discounted")}>
         <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
-          {formatYears(payback)}
+          {formatYears(payback, lang)}
         </span>
       </Cell>
 
-      <Cell label="실효 투자비" sublabel="보조금 반영">
+      <Cell label={t("실효 투자비", "Effective CAPEX")} sublabel={t("보조금 반영", "Post-subsidy")}>
         <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
-          {formatKrwBig(effectiveCapex)}
+          {formatKrw(effectiveCapex, lang)}
         </span>
       </Cell>
 
-      <Cell label="분석 기간" sublabel="DCF 기준">
+      <Cell label={t("분석 기간", "Horizon")} sublabel={t("DCF 기준", "DCF basis")}>
         <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
-          {assumptions.analysisHorizonYears}년
+          {t(`${assumptions.analysisHorizonYears}년`, `${assumptions.analysisHorizonYears} yr`)}
         </span>
       </Cell>
 
       <div className="flex flex-col justify-center px-4 py-2.5 min-w-[132px]">
         <span className="text-[10px] font-medium text-muted-foreground">
-          에너지 가격 상승률
+          {t("에너지 가격 상승률", "Energy price escalation")}
         </span>
         <div className="text-[10px] tabular-nums text-foreground/80 leading-tight pt-0.5">
-          <div>전기 {formatPercent(assumptions.energyEscalation.electricity, 1)}</div>
-          <div>가스 {formatPercent(assumptions.energyEscalation.gas, 1)}</div>
-          <div>지역난방 {formatPercent(assumptions.energyEscalation.districtHeating, 1)}</div>
+          <div>{t("전기", "Elec")} {formatPercent(assumptions.energyEscalation.electricity, 1)}</div>
+          <div>{t("가스", "Gas")} {formatPercent(assumptions.energyEscalation.gas, 1)}</div>
+          <div>{t("지역난방", "District")} {formatPercent(assumptions.energyEscalation.districtHeating, 1)}</div>
         </div>
       </div>
     </div>

@@ -98,6 +98,50 @@ describe("LayerManager — 5-layer Digital Twin system", () => {
     expect(manager.isVisible("retrofit-targets")).toBe(true);
   });
 
+  it("setAirflowVisible hides only the named airflow batch", () => {
+    const hvacGroup = new THREE.Group();
+    hvacGroup.name = "sub-mep-hvac";
+    const equipment = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.MeshStandardMaterial()
+    );
+    equipment.name = "ahu-equipment";
+    const airflow = new THREE.LineSegments(
+      new THREE.BufferGeometry(),
+      new THREE.LineBasicMaterial()
+    );
+    airflow.name = "airflow-streamlines";
+    hvacGroup.add(equipment, airflow);
+    manager.getGroup("mep").add(hvacGroup);
+
+    manager.setAirflowVisible(false);
+    expect(airflow.visible).toBe(false);
+    expect(equipment.visible).toBe(true);
+    expect(hvacGroup.visible).toBe(true);
+
+    manager.setAirflowVisible(true);
+    expect(airflow.visible).toBe(true);
+  });
+
+  it("does not advance shaders beneath a hidden MEP sub-layer", () => {
+    const hvacGroup = new THREE.Group();
+    hvacGroup.name = "sub-mep-hvac";
+    const material = new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 } },
+    });
+    const airflow = new THREE.LineSegments(new THREE.BufferGeometry(), material);
+    hvacGroup.add(airflow);
+    manager.getGroup("mep").add(hvacGroup);
+
+    hvacGroup.visible = false;
+    manager.updateAnimations(4.5);
+    expect(material.uniforms.uTime.value).toBe(0);
+
+    hvacGroup.visible = true;
+    manager.updateAnimations(4.5);
+    expect(material.uniforms.uTime.value).toBe(4.5);
+  });
+
   // ---------------------------------------------------------------------------
   // getLayerForComponent — component type to layer mapping
   // ---------------------------------------------------------------------------

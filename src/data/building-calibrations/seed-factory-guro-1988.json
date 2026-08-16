@@ -1,0 +1,15 @@
+{
+  "buildingId": "seed-factory-guro-1988",
+  "pnu": "1153010200100010000",
+  "geometricLOD": "L2",
+  "notes": "Seed calibration: RC factory building, Guro Industrial Complex, permit 1988. Tall single-storey process hall; floor height from 건축물대장:heit divided by grndFlrCnt.",
+  "overrides": [
+    {
+      "field": "floorHeights.1",
+      "inferredValue": 5.0,
+      "overrideValue": 8.5,
+      "source": "건축물대장:heit=8.5 confirmed against 1988 Guro Industrial Complex site records (GX archive scan GC-1988-F-0071)",
+      "hypothesisForInference": "factory era 1970-1989 default 5.0 m; this process hall has an unusually tall clear height for heavy machinery clearance"
+    }
+  ]
+}

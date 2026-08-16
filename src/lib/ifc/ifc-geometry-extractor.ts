@@ -190,7 +190,6 @@ export function extractGeometry(ifcData: Record<string, unknown>): IFCGeometryRe
         elType === "IFCROOF" ||
         elType === "IFCROOFTYPE" ||
         predefined === "ROOF" ||
-        predefined === "BASESLAB" ||
         predefined.includes("ROOF")
       ) {
         roofArea += area;

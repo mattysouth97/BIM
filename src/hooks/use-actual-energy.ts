@@ -8,6 +8,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
+import { isCadDraftPk } from "@/lib/workflow/cad-draft";
 import {
   normalizeConsumption,
   type MonthlyConsumptionRecord,
@@ -62,7 +63,9 @@ export function useActualEnergy(mgmBldrgstPk: string) {
   return useQuery<AnnualConsumption[]>({
     queryKey: ["energy", "consumption", mgmBldrgstPk, years],
     queryFn: () => fetchConsumptionYears(mgmBldrgstPk, years),
-    enabled: !!mgmBldrgstPk,
+    // P2-24: cad-first drafts have no ledger identity — querying the HUB with
+    // a synthetic PK would be a fabricated request; skip and stay empty.
+    enabled: !!mgmBldrgstPk && !isCadDraftPk(mgmBldrgstPk),
     staleTime: 1000 * 60 * 5, // 5 minutes
     placeholderData: [],
   });

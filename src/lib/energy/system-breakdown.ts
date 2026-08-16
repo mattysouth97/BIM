@@ -4,6 +4,7 @@
 
 import { calculateAnnualDemand } from "./annual-demand";
 import { calculateHeatLoss } from "./heat-loss";
+import { envelopeQuantities } from "./envelope-quantities";
 import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe, FloorSpec } from "@/lib/procedural/types";
 import type { ClimateData } from "./climate-data";
@@ -27,17 +28,24 @@ export type EnergyDataSource =
 // NOTE: RESEARCH.md listed office as 40/35/7/18 — those values are SUPERSEDED.
 //       CONTEXT.md D6 specifies 55/25/10/10 for Korean office buildings.
 //
-const SYSTEM_RATIOS: Record<
+// P1-04: keys re-bound to the REAL MOLIT 건축물대장 주용도코드 table
+// (건축법 시행령 별표1). The ratio VALUES are unchanged (CONTEXT.md D6/D7);
+// only the code↔use binding was wrong. Former keys "11" (노유자시설) and
+// "13" (운동시설) were removed deliberately: no researched profile exists for
+// them, so falling back to DEFAULT_RATIOS is honest — a wrong specific
+// binding is not. Exported so the use-code consistency test can iterate it.
+export const SYSTEM_RATIOS: Record<
   string,
   { hvac: number; lighting: number; dhw: number; plug: number }
 > = {
   // Keys follow the standard 건축물대장 주용도코드 used across this repo
-  // (korean-building-codes.ts): 14000 업무시설, 01000 단독/02000 공동주택,
-  // 07000 판매시설. (Earlier revision was mis-keyed 02→office, 13→retail.)
-  "14": { hvac: 0.55, lighting: 0.25, dhw: 0.10, plug: 0.10 }, // 업무시설 office   (0.55+0.25+0.10+0.10 = 1.00)
-  "01": { hvac: 0.50, lighting: 0.07, dhw: 0.25, plug: 0.18 }, // 단독주택 residential
-  "02": { hvac: 0.50, lighting: 0.07, dhw: 0.25, plug: 0.18 }, // 공동주택 residential (0.50+0.07+0.25+0.18 = 1.00)
-  "07": { hvac: 0.45, lighting: 0.40, dhw: 0.03, plug: 0.12 }, // 판매시설 retail   (0.45+0.40+0.03+0.12 = 1.00)
+  // (korean-building-codes.ts / MOLIT 건축법 시행령 별표1):
+  // 01000 단독, 02000 공동주택, 07000 판매시설, 14000 업무시설.
+  // (Earlier revision was mis-keyed 02→office, 13→retail.)
+  "01": { hvac: 0.50, lighting: 0.07, dhw: 0.25, plug: 0.18 }, // 단독주택 single-family residential (MOLIT 01)
+  "02": { hvac: 0.50, lighting: 0.07, dhw: 0.25, plug: 0.18 }, // 공동주택 multi-family residential (MOLIT 02)
+  "07": { hvac: 0.45, lighting: 0.40, dhw: 0.03, plug: 0.12 }, // 판매시설 retail (MOLIT 07)
+  "14": { hvac: 0.55, lighting: 0.25, dhw: 0.10, plug: 0.10 }, // 업무시설 office (MOLIT 14)
 };
 
 // Default ratios for all other building types (mixed-use average).
@@ -116,7 +124,7 @@ export function calculateSystemBreakdown(
   // Step 4: Per-floor distribution across above-grade floors only (D3).
   // Array index matches Phase 25 heatmap convention — DO NOT include below-grade floors.
   const aboveFloors = recipe.floors.filter((f: FloorSpec) => f.type === "above");
-  const floorArea = recipe.footprintWidth * recipe.footprintDepth;
+  const floorArea = envelopeQuantities(recipe).planAreaSqm;
   const perFloorIntensity =
     aboveFloors.length > 0 && floorArea > 0
       ? total / (aboveFloors.length * floorArea) // uniform kWh/m² distribution

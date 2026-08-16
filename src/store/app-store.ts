@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { versionedMigrate } from "./persist-migrate";
 import { persist } from "zustand/middleware";
 
 interface AppState {
@@ -25,6 +26,10 @@ interface AppState {
   // Onboarding tour
   hasSeenTour: boolean;
   setHasSeenTour: (seen: boolean) => void;
+  hasSeenHomeTour: boolean;
+  setHasSeenHomeTour: (seen: boolean) => void;
+  hasSeenTwinTour: boolean;
+  setHasSeenTwinTour: (seen: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -46,14 +51,22 @@ export const useAppStore = create<AppState>()(
 
       hasSeenTour: false,
       setHasSeenTour: (seen) => set({ hasSeenTour: seen }),
+      hasSeenHomeTour: false,
+      setHasSeenHomeTour: (seen) => set({ hasSeenHomeTour: seen }),
+      hasSeenTwinTour: false,
+      setHasSeenTwinTour: (seen) => set({ hasSeenTwinTour: seen }),
     }),
     {
       name: "korea-building-info-storage",
+      version: 1, // P2-07: initial version stamp
+      migrate: versionedMigrate,
       partialize: (state) => ({
         apiKey: state.apiKey,
         language: state.language,
         sidePanelOpen: state.sidePanelOpen,
         hasSeenTour: state.hasSeenTour,
+        hasSeenHomeTour: state.hasSeenHomeTour,
+        hasSeenTwinTour: state.hasSeenTwinTour,
       }),
     }
   )

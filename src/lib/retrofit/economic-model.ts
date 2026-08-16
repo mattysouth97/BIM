@@ -17,7 +17,7 @@
 // Plus a grouped 0/1 knapsack `selectMeasuresForBudget` so the question
 // "If I were to input this much CAPEX, when would I see returns?" has
 // a sharp answer: the optimal NPV-maximising subset of measures within
-// the user's budget (at most one measure per `exclusiveGroup`).
+// the user's budget (at most one measure per `conflictGroup ?? exclusiveGroup`).
 //
 // Defaults reflect Korean GX context (see `DEFAULT_ECONOMIC_ASSUMPTIONS`
 // in `./cost-database.ts`):
@@ -42,6 +42,10 @@ export type Fuel = "electricity" | "gas" | "districtHeating";
  * discounted at the base rate and surfaced as `MeasureFinancials.subsidyValue`.
  * It does NOT change the discount rate (the old blended-WACC model wrongly
  * extended a 5-year support period across the whole 20-year horizon).
+ *
+ * P2-10 (a) — when `loanTermYears` is omitted the engine falls back to the
+ * legacy permanent-WACC NPV so the "buy-down over the full horizon" path
+ * remains comparable. Presets always set `loanTermYears`.
  */
 export interface FinancingMix {
   /** Fraction of effective CAPEX financed via subsidized loan (0..1). */
@@ -50,8 +54,42 @@ export interface FinancingMix {
   loanRatePreSubsidy: number;
   /** Interest-support buy-down, percentage points (e.g., 0.045 for 4.5pp). */
   interestSupportPp: number;
-  /** Optional program cap on the loan principal (KRW). Uncapped if absent. */
+  /**
+   * P2-10 (a) — loan term in years. The interest-support buy-down applies
+   * only over the loan term. After year `loanTermYears` the discount
+   * schedule reverts to the pure-equity `discountRate`. Absent ⇒ legacy
+   * behavior (buy-down applied over the full horizon via permanent WACC).
+   */
+  loanTermYears?: number;
+  /**
+   * P2-10 (g) — program per-applicant loan cap, KRW. When the financed portion
+   * (debtFraction × selected effective CAPEX) exceeds this, `selectMeasuresForBudget`
+   * sets `loanCapExceeded` (flag, not a silent clamp). Absent ⇒ uncapped.
+   */
   loanCapKrw?: number;
+}
+
+/**
+ * P2-10 (c)/(e) — a single escalation component of a measure's saving stream.
+ * Some measures blend cash flows that escalate differently (a heat pump saves
+ * gas while spending electricity; solar self-consumption tracks the retail
+ * electricity price while its feed-in portion is a fixed SMP/REC tariff). When
+ * a measure carries `escalationComponents`, `projectCashFlow` escalates each
+ * component independently instead of applying one fuel rate to the blended
+ * `annualCostSaving`.
+ */
+export interface EscalationComponent {
+  /** Year-1 nominal amount, KRW. May be negative (e.g. electricity SPENT). */
+  amount: number;
+  /**
+   * Fuel whose escalation applies. Omit together with an explicit `escalation`
+   * for a flat (non-escalating) stream such as a fixed feed-in tariff.
+   */
+  fuel?: Fuel;
+  /** Explicit escalation fraction; overrides the fuel lookup. 0 = flat. */
+  escalation?: number;
+  /** Annual output/performance degradation fraction (e.g. 0.005 = 0.5%/yr). */
+  degradationRate?: number;
 }
 
 export interface EconomicAssumptions {
@@ -76,8 +114,9 @@ export interface EconomicAssumptions {
   subsidyByCategory?: Partial<Record<RetrofitCategory, number>>;
   /**
    * Loan financing + interest-support structure (그린리모델링 민간 track).
-   * When present, the effective discount rate becomes a WACC blending the
-   * subsidized loan rate with `discountRate`. Absent = pure-equity analysis.
+   * When present, the interest support is valued as `subsidyValue` (accuracy
+   * wave) unless `loanTermYears` is omitted, in which case NPV uses the
+   * legacy permanent WACC (P2-10 comparison path).
    */
   financingMix?: FinancingMix;
 }
@@ -96,6 +135,22 @@ export interface EconomicAssumptions {
  */
 export function effectiveDiscountRate(assumptions: EconomicAssumptions): number {
   return assumptions.discountRate;
+}
+
+/**
+ * Legacy blended WACC used only when `financingMix.loanTermYears` is absent
+ * (P2-10 permanent-buy-down comparison). Not used by 2026 presets.
+ */
+function financingWacc(assumptions: EconomicAssumptions): number {
+  const { discountRate, financingMix } = assumptions;
+  if (!financingMix) return discountRate;
+  const debtFraction = Math.min(1, Math.max(0, financingMix.debtFraction));
+  if (debtFraction === 0) return discountRate;
+  const effectiveLoanRate = Math.max(
+    0,
+    financingMix.loanRatePreSubsidy - financingMix.interestSupportPp,
+  );
+  return debtFraction * effectiveLoanRate + (1 - debtFraction) * discountRate;
 }
 
 /**
@@ -143,7 +198,8 @@ export function computeInterestSavedSchedule(
 export interface MeasureFinancials {
   /**
    * Net present value: -effectiveCapex + discounted savings + `subsidyValue`.
-   * All discounting at the base `discountRate`. KRW.
+   * All discounting at the base `discountRate` (except the legacy permanent-WACC
+   * path when `loanTermYears` is omitted). KRW.
    */
   npv: number;
   /**
@@ -164,7 +220,8 @@ export interface MeasureFinancials {
   effectiveCapex: number;
   /**
    * PV of interest saved via the 이자지원 loan buy-down (audit finding #7).
-   * 0 when no `financingMix` is configured. Already included in `npv`. KRW.
+   * 0 when no `financingMix` is configured. Already included in `npv` on the
+   * accuracy-wave path. KRW.
    */
   subsidyValue: number;
   /** Fuel used for escalation (resolved from measure or inferred). */
@@ -172,10 +229,46 @@ export interface MeasureFinancials {
 }
 
 /**
+ * P1-03 — map the material model's heating descriptor onto the Fuel union.
+ * The single mapping point: generators never parse fuelType/systemType
+ * strings themselves.
+ *
+ * Mapping table:
+ *   fuelType "gas"           → "gas"
+ *   fuelType "district-heat" → "districtHeating"
+ *   fuelType "electric"      → "electricity"
+ *   fuelType "heat-pump"     → "electricity" (heat pumps run on electricity)
+ *   fuelType "oil"           → "gas" — PROXY: ENERGY_PRICES has no oil
+ *                              tariff; gas is the closest KRW/kWh benchmark.
+ *   otherwise: systemType "district" ⇒ "districtHeating" (corroborating
+ *   signal); both absent/unknown ⇒ "gas" (legacy default).
+ */
+export function resolveHeatingFuel(heating: {
+  systemType: string;
+  fuelType: string;
+}): Fuel {
+  switch (heating.fuelType) {
+    case "gas":
+      return "gas";
+    case "district-heat":
+      return "districtHeating";
+    case "electric":
+    case "heat-pump":
+      return "electricity";
+    case "oil":
+      return "gas"; // documented proxy — no oil tariff in ENERGY_PRICES
+  }
+  if (heating.systemType === "district") return "districtHeating";
+  return "gas";
+}
+
+/**
  * Resolve which fuel's escalation to apply to a measure.
  *
  * Preference order:
- *   1. measure.fuel if present (explicit)
+ *   1. measure.fuel if present (explicit — P1-03 generators always set it on
+ *      heating-side measures, so the heuristics below are unreachable for
+ *      generator-produced measures)
  *   2. inferred from measure.id prefix
  *   3. inferred from measure.category
  *   4. fallback to electricity (most common)
@@ -202,6 +295,11 @@ function resolveFuel(measure: RetrofitMeasure): Fuel {
   return "electricity";
 }
 
+/** Mutual-exclusion key: pivot `conflictGroup` wins, else local `exclusiveGroup`. */
+function exclusionKey(measure: RetrofitMeasure): string | undefined {
+  return measure.conflictGroup ?? measure.exclusiveGroup;
+}
+
 /**
  * Build the year-1..N cash-flow vector for a single measure.
  *
@@ -214,13 +312,107 @@ export function projectCashFlow(
   assumptions: EconomicAssumptions,
 ): { cashFlow: number[]; resolvedFuel: Fuel } {
   const fuel = resolveFuel(measure);
-  const escalation = assumptions.energyEscalation[fuel];
   const horizon = assumptions.analysisHorizonYears;
+  // P1-02: savings stop at the equipment's useful life; the vector stays
+  // horizon-length (zero-padded tail) so aggregation/indexing is unchanged.
+  // TODO(P1-02-followup): replacement CAPEX, O&M costs, and salvage value
+  // would extend the model here — deliberately out of scope for now.
+  const years = Math.min(measure.lifetimeYears ?? horizon, horizon);
   const cashFlow: number[] = new Array(horizon);
+
+  // P2-10 (c)/(e): blended streams escalate per-component. A heat pump's
+  // gas-saved side escalates at the gas rate while its electricity-spent side
+  // escalates faster; solar self-consumption tracks the electricity price while
+  // the fixed feed-in tariff stays flat, and both degrade with panel age.
+  const components = measure.escalationComponents;
+  if (components && components.length > 0) {
+    for (let t = 1; t <= horizon; t++) {
+      if (t > years) {
+        cashFlow[t - 1] = 0;
+        continue;
+      }
+      let sum = 0;
+      for (const c of components) {
+        const esc =
+          c.escalation ?? (c.fuel ? assumptions.energyEscalation[c.fuel] : 0);
+        const deg = c.degradationRate ?? 0;
+        sum +=
+          c.amount * Math.pow(1 + esc, t - 1) * Math.pow(1 - deg, t - 1);
+      }
+      cashFlow[t - 1] = sum;
+    }
+    return { cashFlow, resolvedFuel: fuel };
+  }
+
+  const escalation = assumptions.energyEscalation[fuel];
   for (let t = 1; t <= horizon; t++) {
-    cashFlow[t - 1] = measure.annualCostSaving * Math.pow(1 + escalation, t - 1);
+    cashFlow[t - 1] =
+      t <= years ? measure.annualCostSaving * Math.pow(1 + escalation, t - 1) : 0;
   }
   return { cashFlow, resolvedFuel: fuel };
+}
+
+/**
+ * P2-10 (a) — per-year cumulative discount factors for a set of assumptions.
+ *
+ * `factors[t-1]` = Π_{i=1..t} (1 + rate_i), where rate_i is the effective
+ * discount rate in year i. With a `financingMix.loanTermYears`, the rate
+ * during the term is `effectiveDiscountRate` and the pure-equity
+ * `discountRate` applies afterward. Without a loanTermYears the rate is
+ * constant (legacy behavior).
+ */
+export function buildDiscountFactors(assumptions: EconomicAssumptions): number[] {
+  const horizon = assumptions.analysisHorizonYears;
+  const wacc = effectiveDiscountRate(assumptions);
+  const equity = assumptions.discountRate;
+  const loanTerm = assumptions.financingMix?.loanTermYears;
+  const factors: number[] = new Array(horizon);
+  let acc = 1;
+  for (let t = 1; t <= horizon; t++) {
+    const rate = loanTerm !== undefined && t > loanTerm ? equity : wacc;
+    acc *= 1 + rate;
+    factors[t - 1] = acc;
+  }
+  return factors;
+}
+
+/**
+ * NPV discounted by an explicit per-year cumulative-factor schedule.
+ * NPV = -outflow + Σ_t cashFlow[t-1] / factors[t-1].
+ */
+export function computeNpvScheduled(
+  outflow: number,
+  cashFlow: number[],
+  discountFactors: number[],
+): number {
+  let pv = -outflow;
+  for (let t = 1; t <= cashFlow.length; t++) {
+    pv += cashFlow[t - 1] / discountFactors[t - 1];
+  }
+  return pv;
+}
+
+/**
+ * Discounted payback using an explicit per-year cumulative-factor schedule.
+ * Returns Infinity when cumulative discounted savings never cover outflow.
+ */
+export function computeDiscountedPaybackScheduled(
+  outflow: number,
+  cashFlow: number[],
+  discountFactors: number[],
+): number {
+  if (outflow <= 0) return 0;
+  let cumulative = 0;
+  for (let t = 1; t <= cashFlow.length; t++) {
+    const pv = cashFlow[t - 1] / discountFactors[t - 1];
+    if (cumulative + pv >= outflow) {
+      const remaining = outflow - cumulative;
+      const fraction = pv > 0 ? remaining / pv : 0;
+      return t - 1 + fraction;
+    }
+    cumulative += pv;
+  }
+  return Infinity;
 }
 
 function discount(amount: number, rate: number, year: number): number {
@@ -371,6 +563,9 @@ function applyEffectiveCapex(
  * amortizing loan is (a) discounted into an additive `subsidyValue` included
  * in `npv`, and (b) added to the yearly cash-flow vector used for IRR and
  * discounted payback (audit finding #7).
+ *
+ * P2-10 (a): if `loanTermYears` is omitted the NPV uses the legacy permanent
+ * WACC so a full-horizon buy-down remains comparable to the scoped path.
  */
 export function computeFinancials(
   measure: RetrofitMeasure,
@@ -380,7 +575,6 @@ export function computeFinancials(
   const { cashFlow, resolvedFuel } = projectCashFlow(measure, assumptions);
   const rate = effectiveDiscountRate(assumptions);
 
-  // Interest-subsidy PV (additive term; zeros without a financingMix).
   let subsidyValue = 0;
   let flowWithSubsidy = cashFlow;
   if (assumptions.financingMix) {
@@ -393,6 +587,20 @@ export function computeFinancials(
       subsidyValue += discount(interestSaved[t - 1], rate, t);
     }
     flowWithSubsidy = cashFlow.map((v, i) => v + interestSaved[i]);
+  }
+
+  // Legacy permanent-WACC path (loanTermYears omitted) — P2-10 comparison only.
+  if (assumptions.financingMix && assumptions.financingMix.loanTermYears === undefined) {
+    const wacc = financingWacc(assumptions);
+    return {
+      npv: computeNpv(effectiveCapex, cashFlow, wacc),
+      irr: computeIrr(effectiveCapex, cashFlow),
+      discountedPayback: computeDiscountedPayback(effectiveCapex, cashFlow, wacc),
+      cashFlow,
+      effectiveCapex,
+      subsidyValue,
+      resolvedFuel,
+    };
   }
 
   const npv = computeNpv(effectiveCapex, cashFlow, rate) + subsidyValue;
@@ -424,20 +632,27 @@ export interface BudgetSelection {
   aggregateCashFlow: number[];
   /** Discounted payback of the aggregate. */
   discountedPayback: number;
+  /**
+   * P2-10 (g) — set when the loan-financed portion of the selected subset
+   * (debtFraction × effectiveCapex) exceeds the program loan cap
+   * (`financingMix.loanCapKrw`). The engine does not silently clamp the
+   * budget — it flags so the UI can disclose that the scenario exceeds the
+   * program's per-applicant loan limit. Absent/false when within the cap or
+   * when no financingMix is configured.
+   */
+  loanCapExceeded?: boolean;
 }
 
 /**
  * Grouped 0/1 knapsack: pick the subset of measures that maximises summed
  * NPV subject to summed effective CAPEX ≤ budget, selecting AT MOST ONE
- * measure per `exclusiveGroup` (audit finding #8 — e.g. boiler upgrade vs
- * heat-pump conversion are alternatives, never additive).
+ * measure per `conflictGroup ?? exclusiveGroup` (audit finding #8 / P1-01 —
+ * e.g. boiler upgrade vs heat-pump conversion are alternatives, never additive).
  *
- * Approach: pseudo-polynomial DP over groups after quantising CAPEX to whole
- * units of `quantizationKrw` (default 1,000,000 KRW = ₩1M). Each group offers
- * its members as alternatives plus "none". Ungrouped measures form singleton
- * groups (plain 0/1 behavior). Memory cost is O(G × W) where
- * W = ⌈budget / quantization⌉ — trivial for typical Korean retrofit projects
- * (N ≤ 15 measures, budget ≤ 2 × 10^9 KRW).
+ * Approach: branch over every feasible combination of group representatives
+ * ({none} ∪ members per group) and run a plain 0/1 knapsack on each branch.
+ * Groups are tiny (one pair today); branching is exact and cheap. Cap: beyond
+ * 64 combinations fall back to greedy best-NPV-per-group representatives.
  *
  * Measures with negative NPV (would lose money even if free) are excluded
  * upfront — including them never improves the optimum.
@@ -481,71 +696,103 @@ export function selectMeasuresForBudget(
     };
   }
 
-  // Quantise budget + each measure's effective CAPEX.
   const W = Math.floor(capexBudget / quantizationKrw);
-  const weights = enriched.map((e) =>
-    Math.max(1, Math.ceil(e.fin.effectiveCapex / quantizationKrw)),
-  );
-  const values = enriched.map((e) => e.fin.npv);
 
-  // Group indices by exclusiveGroup; ungrouped measures are singleton groups.
-  const groupIndex = new Map<string, number>();
-  const groups: number[][] = [];
-  for (let i = 0; i < enriched.length; i++) {
-    const key = enriched[i].measure.exclusiveGroup;
-    if (key === undefined) {
-      groups.push([i]);
-      continue;
-    }
-    const gi = groupIndex.get(key);
-    if (gi === undefined) {
-      groupIndex.set(key, groups.length);
-      groups.push([i]);
-    } else {
-      groups[gi].push(i);
-    }
-  }
+  function solveKnapsack(candidates: typeof enriched): {
+    selected: RetrofitMeasure[];
+    npv: number;
+    effectiveCapex: number;
+  } {
+    const weights = candidates.map((e) =>
+      Math.max(1, Math.ceil(e.fin.effectiveCapex / quantizationKrw)),
+    );
+    const values = candidates.map((e) => e.fin.npv);
 
-  // Grouped-knapsack DP: dp[w] = max NPV over the groups processed so far
-  // with capex ≤ w; each group contributes at most one of its members.
-  // `choice[g][w]` records which member (index into `enriched`) the optimum
-  // takes for group g at capacity w, or -1 for "none".
-  let dp = new Array<number>(W + 1).fill(0);
-  const choice: number[][] = groups.map(() => new Array<number>(W + 1).fill(-1));
+    const dp = new Array(W + 1).fill(0);
+    const keep: boolean[][] = candidates.map(() => new Array(W + 1).fill(false));
 
-  for (let g = 0; g < groups.length; g++) {
-    const prev = dp;
-    dp = new Array<number>(W + 1);
-    for (let w = 0; w <= W; w++) {
-      let best = prev[w]; // take nothing from this group
-      let bestItem = -1;
-      for (const i of groups[g]) {
-        const wi = weights[i];
-        if (wi <= w) {
-          const candidate = prev[w - wi] + values[i];
-          if (candidate > best) {
-            best = candidate;
-            bestItem = i;
-          }
+    for (let i = 0; i < candidates.length; i++) {
+      const wi = weights[i];
+      const vi = values[i];
+      if (wi > W) continue;
+      for (let w = W; w >= wi; w--) {
+        const candidate = dp[w - wi] + vi;
+        if (candidate > dp[w]) {
+          dp[w] = candidate;
+          keep[i][w] = true;
         }
       }
-      dp[w] = best;
-      choice[g][w] = bestItem;
+    }
+
+    const selected: RetrofitMeasure[] = [];
+    let w = W;
+    let npv = 0;
+    let effectiveCapex = 0;
+    for (let i = candidates.length - 1; i >= 0; i--) {
+      if (keep[i][w]) {
+        selected.push(candidates[i].measure);
+        npv += candidates[i].fin.npv;
+        effectiveCapex += candidates[i].fin.effectiveCapex;
+        w -= weights[i];
+      }
+    }
+    selected.reverse();
+    return { selected, npv, effectiveCapex };
+  }
+
+  // P1-01 / audit #8: at most one measure per conflictGroup ?? exclusiveGroup.
+  const freeMeasures = enriched.filter((e) => !exclusionKey(e.measure));
+  const groups = new Map<string, typeof enriched>();
+  for (const e of enriched) {
+    const g = exclusionKey(e.measure);
+    if (!g) continue;
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g)!.push(e);
+  }
+
+  const groupList = [...groups.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, members]) =>
+      [...members].sort((a, b) => a.measure.id.localeCompare(b.measure.id)),
+    );
+
+  const comboCount = groupList.reduce((n, g) => n * (g.length + 1), 1);
+  let combos: (typeof enriched)[];
+  if (comboCount > 64) {
+    combos = [
+      groupList.map((members) =>
+        members.reduce((best, e) => (e.fin.npv > best.fin.npv ? e : best)),
+      ),
+    ];
+  } else {
+    combos = [[]];
+    for (const members of groupList) {
+      const next: (typeof enriched)[] = [];
+      for (const combo of combos) {
+        next.push(combo);
+        for (const member of members) next.push([...combo, member]);
+      }
+      combos = next;
     }
   }
 
-  // Backtrack to recover the selected set (original measure order preserved).
-  const selectedIdx: number[] = [];
-  let w = W;
-  for (let g = groups.length - 1; g >= 0; g--) {
-    const i = choice[g][w];
-    if (i >= 0) {
-      selectedIdx.push(i);
-      w -= weights[i];
+  let best: { selected: RetrofitMeasure[]; npv: number; effectiveCapex: number } | null =
+    null;
+  for (const combo of combos) {
+    const result = solveKnapsack([...freeMeasures, ...combo]);
+    if (
+      best === null ||
+      result.npv > best.npv ||
+      (result.npv === best.npv && result.effectiveCapex < best.effectiveCapex) ||
+      (result.npv === best.npv &&
+        result.effectiveCapex === best.effectiveCapex &&
+        result.selected.map((m) => m.id).join(",") <
+          best.selected.map((m) => m.id).join(","))
+    ) {
+      best = result;
     }
   }
-  selectedIdx.sort((a, b) => a - b);
-  let selected: RetrofitMeasure[] = selectedIdx.map((i) => enriched[i].measure);
+  let selected = best?.selected ?? [];
 
   // Baseline savings cap (audit finding #9): total savings cannot exceed the
   // building's annual energy cost. Scale the heating-side (non-electricity)
@@ -572,7 +819,6 @@ export function selectMeasuresForBudget(
     }
   }
 
-  // Aggregate metrics over the selected (possibly savings-capped) subset.
   const horizon = assumptions.analysisHorizonYears;
   const aggregateCashFlow = new Array(horizon).fill(0);
   let totalEffectiveCapex = 0;
@@ -586,17 +832,22 @@ export function selectMeasuresForBudget(
     }
   }
 
-  const discountedPayback = computeDiscountedPayback(
+  const discountedPayback = computeDiscountedPaybackScheduled(
     totalEffectiveCapex,
     aggregateCashFlow,
-    effectiveDiscountRate(assumptions),
+    buildDiscountFactors(assumptions),
   );
 
-  // Re-attach DCF so the report/twin takeaway does not show "—" per measure.
   selected = selected.map((measure) => ({
     ...measure,
     financials: computeFinancials(measure, assumptions),
   }));
+
+  const financing = assumptions.financingMix;
+  const loanCapExceeded =
+    financing?.loanCapKrw !== undefined
+      ? financing.debtFraction * totalEffectiveCapex > financing.loanCapKrw
+      : false;
 
   return {
     selected,
@@ -604,5 +855,6 @@ export function selectMeasuresForBudget(
     effectiveCapex: totalEffectiveCapex,
     aggregateCashFlow,
     discountedPayback,
+    loanCapExceeded,
   };
 }

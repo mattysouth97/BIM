@@ -1,7 +1,9 @@
-# Vercel Deployment — Known Issues + Setup
+# Production Deployment — Known Issues + Setup
 
 **First deploy:** 2026-04-30
-**Vercel project:** `matts-projects-d0677dc4/bim`
+**Current host:** OpenAI Sites
+**Production URL:** `https://greenretrofit-bim-nam.gnakkk.chatgpt.site`
+**Legacy Vercel project:** `matts-projects-d0677dc4/bim`
 **GitHub repo:** [`mattysouth97/BIM`](https://github.com/mattysouth97/BIM) (private)
 **Production branch:** `feat/digital-twin-pivot`
 
@@ -9,7 +11,10 @@
 
 - **CAPEX/ROI simulator** (the main Twin-stage feature) — runs entirely client-side from material inference + the economic-model knapsack. No external API dependency. Works out of the box.
 - **3D procedural building viewer** — pure client-side R3F rendering of inferred building geometry. Works.
-- **Building search via 건축물대장** — works once the user supplies their own data.go.kr API key via the in-app settings (key is per-user, stored in Zustand persist; not a server env var).
+- **Building search via 건축물대장** — works with either a visitor-supplied
+  data.go.kr key from the in-app settings or the hosted
+  `DATA_GO_KR_API_KEY` fallback. The visitor key takes priority and the shared
+  fallback is restricted to same-origin requests with a per-IP rate limit.
 - **Cadastral footprint via VWorld** (`/api/vworld/footprint`) — works **if** `VWORLD_DOMAIN` env var is set to the deployed domain (see below).
 
 ## Known Vercel-serverless issues
@@ -32,7 +37,14 @@ Fix path (deferred): nothing required — the client-side WASM path handles 95%+
 |---|---|---|
 | `VWORLD_API_KEY` | ✅ Set | Required for `/api/vworld/footprint`. Copied from local `.env` at deploy time. |
 | `VWORLD_DOMAIN` | ❌ Not set | Defaults to `"localhost"` per the route code. The deployed domain (e.g. `bim-*.vercel.app`) needs to be registered with the VWorld developer portal AND set in Vercel as the value. Until both are done, the cadastral footprint API will return errors from VWorld about domain mismatch. |
-| `data.go.kr` API key | N/A (per-user) | Not a server env var. Each user enters their own key via the app's API-Settings panel (stored in Zustand persist, sent via `x-api-key` header). |
+| `DATA_GO_KR_API_KEY` | ✅ Set in Sites | Secret server-side fallback for same-origin visitors. A visitor can still supply their own key through API Settings; it is sent as `x-api-key` and takes priority. |
+
+## Applying hosted environment changes
+
+Runtime values are managed through Sites and are not stored in
+`.openai/hosting.json` or committed to Git. After changing a hosted environment
+value, redeploy the latest saved site version so the new environment revision
+is attached to production.
 
 ## To enable VWorld cadastral footprint on production
 

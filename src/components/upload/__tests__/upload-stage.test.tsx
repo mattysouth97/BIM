@@ -5,6 +5,7 @@ import { UploadStage } from "../upload-stage";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useMaterialStore } from "@/store/material-store";
+import { useActiveBuildingStore } from "@/store/active-building-store";
 import type { MaterialProperties } from "@/lib/material-types";
 
 // Two closed LWPOLYLINE entities on different layers.
@@ -76,7 +77,8 @@ function seedBuilding() {
 function resetStores() {
   useWorkflowStore.setState({
     stage: "upload",
-    completion: { search: false, upload: false, twin: false, report: false },
+    completion: { search: false, upload: false, params: false, twin: false, report: false },
+    cadSkipped: {},
   });
   useRecipeStore.setState({
     baseRecipes: {},
@@ -87,6 +89,7 @@ function resetStores() {
     activePk: "",
     selectedElement: { type: null },
   });
+  useActiveBuildingStore.getState().clearActiveBuilding();
 }
 
 describe("UploadStage", () => {
@@ -115,6 +118,29 @@ describe("UploadStage", () => {
   it("offers a sample drawing so the CAD door is not a dead end", () => {
     render(<UploadStage />);
     expect(screen.getByTestId("upload-sample-dxf")).toBeTruthy();
+  });
+
+  // P2-17 — CAD-less path
+  it("Continue without CAD advances to twin and records the skip, writing no footprint", () => {
+    render(<UploadStage />);
+    fireEvent.click(screen.getByTestId("upload-skip"));
+
+    expect(useWorkflowStore.getState().stage).toBe("twin");
+    expect(useWorkflowStore.getState().cadSkipped[TEST_PK]).toBe(true);
+    // No footprint override was invented for the skipped building
+    expect(useRecipeStore.getState().overrides[TEST_PK]?.footprintPolygon).toBeUndefined();
+  });
+
+  it("Continue without CAD shows an error and stays on upload when no building is active", () => {
+    // Clear the seeded building so useActiveBuildingPk resolves to ""
+    useMaterialStore.setState({ properties: {}, activePk: "", selectedElement: { type: null } });
+    useActiveBuildingStore.getState().clearActiveBuilding();
+    render(<UploadStage />);
+    fireEvent.click(screen.getByTestId("upload-skip"));
+
+    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(useWorkflowStore.getState().stage).toBe("upload");
+    expect(useWorkflowStore.getState().cadSkipped).toEqual({});
   });
 
   it("processing a valid DXF enables Continue and stores footprintPolygon on confirm", async () => {
@@ -281,5 +307,52 @@ describe("UploadStage", () => {
     const overrides = useRecipeStore.getState().overrides[TEST_PK];
     expect(overrides?.footprintPolygon).toBeDefined();
     expect(useWorkflowStore.getState().stage).toBe("twin");
+  });
+});
+
+// ─── P2-24 — cad-first mode: CAD is mandatory, search does not exist ─────────
+
+describe("UploadStage in cad-first mode (P2-24)", () => {
+  const CAD_PK = "cad-test-draft";
+
+  beforeEach(() => {
+    resetStores();
+    useActiveBuildingStore.getState().setActiveBuilding(CAD_PK);
+  });
+
+  afterEach(() => {
+    cleanup();
+    useActiveBuildingStore.getState().clearActiveBuilding();
+  });
+
+  it("hides the skip button and the back-to-search button", () => {
+    render(<UploadStage />);
+    expect(screen.queryByTestId("upload-skip")).toBeNull();
+    expect(screen.queryByText("검색으로 돌아가기")).toBeNull();
+  });
+
+  it("committing a DXF advances to params, not twin", async () => {
+    const file = new File([RECT_DXF], "plan.dxf", { type: "application/dxf" });
+    if (typeof (file as { text?: () => Promise<string> }).text !== "function") {
+      Object.defineProperty(file, "text", {
+        value: async () => RECT_DXF,
+      });
+    }
+
+    render(<UploadStage />);
+    const input = screen.getByTestId("upload-file-input") as HTMLInputElement;
+    Object.defineProperty(input, "files", {
+      value: [file],
+      configurable: true,
+    });
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      expect((screen.getByTestId("upload-continue") as HTMLButtonElement).disabled).toBe(false);
+    });
+    fireEvent.click(screen.getByTestId("upload-continue"));
+
+    expect(useRecipeStore.getState().overrides[CAD_PK]?.footprintPolygon).toBeDefined();
+    expect(useWorkflowStore.getState().stage).toBe("params");
   });
 });

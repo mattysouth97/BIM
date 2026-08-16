@@ -40,6 +40,8 @@ export interface BuildingGeometry {
   mainPurpsCd: string;
   windowRatio: number;
   footprintPolygon?: [number, number][][];
+  /** totArea when > 0; omitted when unavailable (AFF-6). */
+  officialFloorAreaSqm?: number;
   wallThickness: number;
   slabThickness: number;
   columnSpacing: number;
@@ -69,6 +71,32 @@ function estimateFootprint(area: number): { width: number; depth: number } {
   return { width: Math.round(width * 10) / 10, depth: Math.round(depth * 10) / 10 };
 }
 
+/**
+ * The floor-outline endpoint can return rows for multiple building registers
+ * and multiple use/area rows for one physical floor. Scope them to the chosen
+ * title and keep one representative per floor so geometry is never duplicated.
+ */
+function normalizeFloorRows(title: BrTitleInfo, floors: BrFloorInfo[]): BrFloorInfo[] {
+  const titlePk = String(title.mgmBldrgstPk || "");
+  const scoped = floors.filter((floor) => {
+    const floorPk = String(floor.mgmBldrgstPk || "");
+    return !titlePk || !floorPk || floorPk === titlePk;
+  });
+  const byFloor = new Map<string, BrFloorInfo>();
+
+  for (const floor of scoped) {
+    const floorNo = Number(floor.flrNo);
+    if (!Number.isFinite(floorNo)) continue;
+    const key = `${floor.flrGbCd || (floorNo < 0 ? "below" : "above")}:${floorNo}`;
+    const existing = byFloor.get(key);
+    if (!existing || Number(floor.area) > Number(existing.area)) {
+      byFloor.set(key, floor);
+    }
+  }
+
+  return [...byFloor.values()];
+}
+
 function getUseCategory(mainPurpsCd: string): "residential" | "office" | "factory" | "retail" | "default" {
   if (["01000", "02000"].includes(mainPurpsCd)) return "residential";
   if (mainPurpsCd === "14000") return "office";
@@ -83,9 +111,19 @@ function getFloorHeightCategory(mainPurpsCd: string): "residential" | "commercia
   return "commercial";
 }
 
+export interface GenerateGeometryOptions {
+  /**
+   * Measured building height in meters from an external GIS source
+   * (VWorld GIS건물통합정보 `buld_hg`, P2-25). Height fallback chain:
+   * ledger `heit` → measuredHeightM → era-based floor-count estimate.
+   */
+  measuredHeightM?: number;
+}
+
 export function generateBuildingGeometry(
   title: BrTitleInfo,
-  floors: BrFloorInfo[]
+  floors: BrFloorInfo[],
+  opts?: GenerateGeometryOptions
 ): BuildingGeometry {
   const era = classifyEra(title.pmsDay);
   const mainPurpsCd = title.mainPurpsCd || "";
@@ -95,12 +133,18 @@ export function generateBuildingGeometry(
 
   const eraFloorHeight = FLOOR_HEIGHTS[era]?.[floorHeightCat] || 3.2;
   const aboveCount = Number(title.grndFlrCnt) || 1;
-  const totalHeight = Number(title.heit) || aboveCount * eraFloorHeight;
+  // Height fallback chain (named, per AFF-6): ledger heit → VWorld measured → era estimate.
+  const measuredHeight = Number(opts?.measuredHeightM);
+  const totalHeight =
+    Number(title.heit) ||
+    (Number.isFinite(measuredHeight) && measuredHeight > 0 ? measuredHeight : aboveCount * eraFloorHeight);
   const floorHeight = totalHeight / aboveCount;
   const basementFloorHeight = 3.0;
 
   const windowRatio = WINDOW_RATIOS[era]?.[useCategory] || WINDOW_RATIOS[era]?.default || 0.3;
 
+  const totArea = Number(title.totArea);
+  const officialFloorAreaSqm = totArea > 0 ? totArea : undefined;
   const buildingFootprint = estimateFootprint(Number(title.archArea) || 100);
   const siteFootprint = estimateFootprint(Number(title.platArea) || Number(title.archArea) * 2);
 
@@ -111,9 +155,10 @@ export function generateBuildingGeometry(
     roofCode.includes("모임") || roofCode === "3" ? "hip" : "flat";
 
   const floorGeometries: FloorGeometry[] = [];
+  const normalizedFloors = normalizeFloorRows(title, floors);
 
-  if (floors.length > 0) {
-    for (const f of floors) {
+  if (normalizedFloors.length > 0) {
+    for (const f of normalizedFloors) {
       const flrNo = Number(f.flrNo);
       const isBelow = (f.flrGbCdNm || "").includes("지하") || flrNo < 0;
       const absFloor = Math.abs(flrNo);
@@ -192,6 +237,7 @@ export function generateBuildingGeometry(
     footprintWidth: buildingFootprint.width, footprintDepth: buildingFootprint.depth,
     siteWidth: siteFootprint.width, siteDepth: siteFootprint.depth,
     roofType, buildingName: title.bldNm || "", address: title.platPlcNm || "",
+    officialFloorAreaSqm,
     era, strctCd, mainPurpsCd, windowRatio,
     wallThickness, slabThickness, columnSpacing, columnSize,
   };
@@ -224,6 +270,7 @@ export function toRecipe(geo: BuildingGeometry): BuildingRecipe {
     footprintWidth: geo.footprintWidth,
     footprintDepth: geo.footprintDepth,
     footprintPolygon: geo.footprintPolygon,
+    officialFloorAreaSqm: geo.officialFloorAreaSqm,
     floors,
     totalHeight: geo.totalHeight,
     wallThickness: geo.wallThickness,

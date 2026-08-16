@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { BrTitleInfo } from "@/lib/types";
 import { DEMO_BUILDING_PK, DRAWING_BUILDING_PK } from "@/lib/constants";
 import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { useHydration } from "@/hooks/use-hydration";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,12 +31,12 @@ export function BuildingToolbar({
   loading,
 }: BuildingToolbarProps) {
   const hydrated = useHydration();
-  const language = useAppStore((s) => s.language);
+  const { t, lang } = useT();
   const setLanguage = useAppStore((s) => s.setLanguage);
   const sidePanelOpen = useAppStore((s) => s.sidePanelOpen);
   const toggleSidePanel = useAppStore((s) => s.toggleSidePanel);
 
-  const isKo = language === "ko";
+  const isKo = lang === "ko";
   const isDemo = title?.mgmBldrgstPk === DEMO_BUILDING_PK;
   const isDrawing = title?.mgmBldrgstPk === DRAWING_BUILDING_PK;
   const displayName = title
@@ -52,7 +53,7 @@ export function BuildingToolbar({
         >
           <ArrowLeft className="size-4" />
           <span className="hidden sm:inline">
-            {isKo ? "검색" : "Back"}
+            {t("검색", "Back")}
           </span>
         </Link>
 
@@ -101,8 +102,8 @@ export function BuildingToolbar({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => setLanguage(isKo ? "en" : "ko")}
-          title={isKo ? "Switch to English" : "한국어로 전환"}
+          onClick={() => setLanguage(lang === "ko" ? "en" : "ko")}
+          title={t("Switch to English", "한국어로 전환")}
         >
           <Globe className="size-4" />
         </Button>
@@ -113,15 +114,7 @@ export function BuildingToolbar({
             size="icon"
             className="h-8 w-8"
             onClick={toggleSidePanel}
-            title={
-              sidePanelOpen
-                ? isKo
-                  ? "패널 닫기"
-                  : "Close panel"
-                : isKo
-                  ? "패널 열기"
-                  : "Open panel"
-            }
+            title={sidePanelOpen ? t("패널 닫기", "Close panel") : t("패널 열기", "Open panel")}
           >
             {sidePanelOpen ? (
               <PanelRightClose className="size-4" />

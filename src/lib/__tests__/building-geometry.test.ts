@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateBuildingGeometry, toRecipe } from "../building-geometry";
-import type { BrTitleInfo, BrFloorInfo } from "../types";
+import type { BrFloorInfo, BrTitleInfo } from "../types";
 
 function makeTitle(overrides?: Partial<BrTitleInfo>): BrTitleInfo {
   return {
@@ -42,6 +42,28 @@ describe("generateBuildingGeometry", () => {
     expect(geo.totalHeight).toBe(43.5);
   });
 
+  // P2-25 — height fallback chain: ledger heit → VWorld measured → era estimate
+  it("uses VWorld measured height when ledger heit is 0", () => {
+    const title = makeTitle({ heit: 0, grndFlrCnt: 12 });
+    const geo = generateBuildingGeometry(title, [], { measuredHeightM: 43.5 });
+    expect(geo.totalHeight).toBe(43.5);
+    const above = geo.floors.find((f) => f.type === "above");
+    expect(above?.height).toBeCloseTo(43.5 / 12, 5);
+  });
+
+  it("ledger heit wins over measured height when both are present", () => {
+    const title = makeTitle({ heit: 43.5 });
+    const geo = generateBuildingGeometry(title, [], { measuredHeightM: 99 });
+    expect(geo.totalHeight).toBe(43.5);
+  });
+
+  it("ignores non-positive measured height (era estimate still applies)", () => {
+    const title = makeTitle({ heit: 0, grndFlrCnt: 5 });
+    const geo = generateBuildingGeometry(title, [], { measuredHeightM: 0 });
+    expect(geo.totalHeight).toBeGreaterThan(10);
+    expect(geo.totalHeight).toBeLessThan(25);
+  });
+
   it("footprint dimensions are positive and reasonable", () => {
     const title = makeTitle({ archArea: 84 });
     const geo = generateBuildingGeometry(title, []);
@@ -75,6 +97,21 @@ describe("generateBuildingGeometry", () => {
     const rcGeo = generateBuildingGeometry(makeTitle({ strctCd: "11" }), []);
     expect(rcGeo.wallThickness).toBeGreaterThan(0.1);
     expect(rcGeo.wallThickness).toBeLessThan(1.0);
+  });
+
+  it("scopes floor rows to the selected register and emits one geometry per physical floor", () => {
+    const title = makeTitle({ mgmBldrgstPk: "selected", grndFlrCnt: 2, ugrndFlrCnt: 0 });
+    const rows = [
+      { mgmBldrgstPk: "selected", flrNo: 1, flrGbCd: "20", area: 70 },
+      { mgmBldrgstPk: "selected", flrNo: 1, flrGbCd: "20", area: 20 },
+      { mgmBldrgstPk: "selected", flrNo: 2, flrGbCd: "20", area: 70 },
+      { mgmBldrgstPk: "other", flrNo: 1, flrGbCd: "20", area: 100 },
+    ] as BrFloorInfo[];
+
+    const geo = generateBuildingGeometry(title, rows);
+
+    expect(geo.floors.map((floor) => floor.floorNo)).toEqual([1, 2]);
+    expect(geo.floors[0].area).toBe(70);
   });
 });
 

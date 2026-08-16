@@ -17,6 +17,12 @@ export interface CampusBuilding {
   building: BrTitleInfo;
   footprint?: GeoJsonPolygon;
   position?: { x: number; y: number }; // relative position in meters from campus center
+  /**
+   * Measured building height in meters from VWorld GIS건물통합정보 (buld_hg).
+   * Null when the building layer had no feature for this PNU or the field was absent/zero.
+   * Feeds the ledger → measured → era fallback chain in generateBuildingGeometry (AFF-6).
+   */
+  measuredHeightM?: number | null;
 }
 
 export interface CampusData {

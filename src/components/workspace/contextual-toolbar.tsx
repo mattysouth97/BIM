@@ -3,8 +3,8 @@
 import React from "react";
 import type { FloorGeometry } from "@/lib/building-geometry";
 import type { BuildingEra } from "@/lib/material-types";
-import { useAppStore } from "@/store/app-store";
 import { useWorkflowStore } from "@/store/workflow-store";
+import { useT, type Lang } from "@/lib/i18n";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import {
   TOOLBAR_CONFIGS,
@@ -15,10 +15,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  RotateCcw, ArrowUp, ArrowRight, ArrowDown, Maximize2,
+  RotateCcw, ArrowUp, ArrowRight, ArrowDown, Maximize2, Landmark,
 } from "lucide-react";
 import { ModeIndicator } from "./mode-indicator";
 import { BimViewBar } from "./bim-view-bar";
+import { useLayerStore } from "@/store/layer-store";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -27,6 +28,11 @@ import { BimViewBar } from "./bim-view-bar";
 export interface ContextualToolbarProps {
   /** View change handler — passed from building-scene parent */
   onViewChange: (view: "front" | "side" | "top" | "iso") => void;
+  /** Panel toggle handlers */
+  onToggleConfigPanel?: () => void;
+  configPanelOpen?: boolean;
+  onToggleLayerPanel?: () => void;
+  layerPanelOpen?: boolean;
   /** Building info for badges */
   buildingName?: string;
   era?: BuildingEra;
@@ -35,27 +41,48 @@ export interface ContextualToolbarProps {
 }
 
 // ---------------------------------------------------------------------------
-// Toggle state — every `activeWhen` expression maps to exactly one
-// workspace-store field. The toolbar reads the store directly, and actions
-// dispatch store methods directly: panel state has a single source of truth
-// (no prop mirroring, no double dispatch).
+// PropActions — prop-based handlers for panel toggles
 // ---------------------------------------------------------------------------
 
+interface PropActions {
+  onToggleConfigPanel?: () => void;
+  configPanelOpen?: boolean;
+  onToggleLayerPanel?: () => void;
+  layerPanelOpen?: boolean;
+}
+
 type ToolbarConditions = Record<string, boolean>;
+
+// ---------------------------------------------------------------------------
+// resolveCondition — evaluate activeWhen/visibleWhen expressions
+// Store fields are the source of truth; optional props can override.
+// ---------------------------------------------------------------------------
 
 function resolveCondition(
   expr: string | undefined,
   conditions: ToolbarConditions,
+  props: PropActions,
 ): boolean {
   if (!expr) return false;
+  if (expr === "configPanelOpen") {
+    return props.configPanelOpen ?? !!conditions.configPanelOpen;
+  }
+  if (expr === "layerPanelOpen") {
+    return props.layerPanelOpen ?? !!conditions.layerPanelOpen;
+  }
   return !!conditions[expr];
 }
 
 // ---------------------------------------------------------------------------
 // dispatchAction — dispatch a TOOLBAR_ACTIONS descriptor via store.getState()
+// and mirror panel state via optional prop callbacks.
 // ---------------------------------------------------------------------------
 
-function dispatchAction(item: ToolbarItem, isActive: boolean): void {
+function dispatchAction(
+  item: ToolbarItem,
+  isActive: boolean,
+  props: PropActions,
+): void {
   const descriptor = TOOLBAR_ACTIONS[item.id];
   if (!descriptor) return;
 
@@ -73,6 +100,13 @@ function dispatchAction(item: ToolbarItem, isActive: boolean): void {
   if (typeof method === "function") {
     (method as (...a: unknown[]) => void)(...(descriptor.args ?? []));
   }
+
+  // Mirror panel state via props callbacks
+  if (descriptor.method === "toggleConfigPanel") {
+    props.onToggleConfigPanel?.();
+  } else if (descriptor.method === "toggleLayerPanel") {
+    props.onToggleLayerPanel?.();
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -81,22 +115,24 @@ function dispatchAction(item: ToolbarItem, isActive: boolean): void {
 
 function ToolbarItemRenderer({
   item,
-  isKo,
+  lang,
   conditions,
+  props,
 }: {
   item: ToolbarItem;
-  isKo: boolean;
+  lang: Lang;
   conditions: ToolbarConditions;
+  props: PropActions;
 }) {
   if (item.type === "separator") {
     return <VerticalDivider />;
   }
 
-  if (item.visibleWhen && !resolveCondition(item.visibleWhen, conditions)) {
+  if (item.visibleWhen && !resolveCondition(item.visibleWhen, conditions, props)) {
     return null;
   }
 
-  const isActive = resolveCondition(item.activeWhen, conditions);
+  const isActive = resolveCondition(item.activeWhen, conditions, props);
   const Icon = item.icon;
 
   return (
@@ -104,8 +140,8 @@ function ToolbarItemRenderer({
       variant={isActive ? "default" : "ghost"}
       size="icon"
       className="h-7 w-7"
-      onClick={() => dispatchAction(item, isActive)}
-      title={isKo ? item.labelKo : item.labelEn}
+      onClick={() => dispatchAction(item, isActive, props)}
+      title={lang === "ko" ? item.labelKo : item.labelEn}
     >
       {Icon && <Icon className="h-3.5 w-3.5" />}
     </Button>
@@ -118,12 +154,14 @@ function ToolbarItemRenderer({
 
 function ToolbarGroupRenderer({
   group,
-  isKo,
+  lang,
   conditions,
+  props,
 }: {
   group: ToolbarGroup;
-  isKo: boolean;
+  lang: Lang;
   conditions: ToolbarConditions;
+  props: PropActions;
 }) {
   return (
     <>
@@ -131,8 +169,9 @@ function ToolbarGroupRenderer({
         <ToolbarItemRenderer
           key={item.id}
           item={item}
-          isKo={isKo}
+          lang={lang}
           conditions={conditions}
+          props={props}
         />
       ))}
     </>
@@ -145,12 +184,14 @@ function ToolbarGroupRenderer({
 
 function StageToolbar({
   stage,
-  isKo,
+  lang,
   conditions,
+  props,
 }: {
   stage: string;
-  isKo: boolean;
+  lang: Lang;
   conditions: ToolbarConditions;
+  props: PropActions;
 }) {
   const groups = TOOLBAR_CONFIGS[stage as keyof typeof TOOLBAR_CONFIGS] ?? [];
   if (groups.length === 0) return null;
@@ -161,8 +202,9 @@ function StageToolbar({
           {i > 0 && <VerticalDivider />}
           <ToolbarGroupRenderer
             group={group}
-            isKo={isKo}
+            lang={lang}
             conditions={conditions}
+            props={props}
           />
         </React.Fragment>
       ))}
@@ -184,29 +226,57 @@ function VerticalDivider() {
 
 function GlobalToolbarSection({
   onViewChange,
-  isKo,
+  lang,
 }: {
   onViewChange: (view: "front" | "side" | "top" | "iso") => void;
-  isKo: boolean;
+  lang: Lang;
 }) {
   return (
     <div className="flex items-center gap-0.5 shrink-0">
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("front")} title={isKo ? "앞면" : "Front"}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("front")} title={lang === "ko" ? "앞면" : "Front"}>
         <ArrowUp className="h-3.5 w-3.5" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("side")} title={isKo ? "측면" : "Side"}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("side")} title={lang === "ko" ? "측면" : "Side"}>
         <ArrowRight className="h-3.5 w-3.5" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("top")} title={isKo ? "위" : "Top"}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("top")} title={lang === "ko" ? "위" : "Top"}>
         <ArrowDown className="h-3.5 w-3.5" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("iso")} title={isKo ? "등각" : "Isometric"}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("iso")} title={lang === "ko" ? "등각 (기본 뷰)" : "Isometric (default view)"}>
         <Maximize2 className="h-3.5 w-3.5" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("iso")} title={isKo ? "뷰 초기화" : "Reset View"}>
+      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onViewChange("iso")} title={lang === "ko" ? "뷰 초기화" : "Reset View"}>
         <RotateCcw className="h-3.5 w-3.5" />
       </Button>
+      <VerticalDivider />
+      <StructuralViewToggle lang={lang} />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// StructuralViewToggle — P2-22 structural isolation (load-bearing solid,
+// non-structural context ghosted; Revit structural-discipline analog)
+// ---------------------------------------------------------------------------
+
+function StructuralViewToggle({ lang }: { lang: Lang }) {
+  const active = useLayerStore((s) => s.structuralIsolation);
+  const toggle = useLayerStore((s) => s.toggleStructuralIsolation);
+  return (
+    <Button
+      variant={active ? "default" : "ghost"}
+      size="icon"
+      className="h-7 w-7"
+      aria-pressed={active}
+      onClick={toggle}
+      title={
+        lang === "ko"
+          ? "구조 보기 — 내력 부재만 표시, 나머지는 반투명"
+          : "Structural view — load-bearing solid, context ghosted"
+      }
+    >
+      <Landmark className="h-3.5 w-3.5" />
+    </Button>
   );
 }
 
@@ -216,15 +286,28 @@ function GlobalToolbarSection({
 
 export function ContextualToolbar({
   onViewChange,
+  onToggleConfigPanel,
+  configPanelOpen,
+  onToggleLayerPanel,
+  layerPanelOpen,
   buildingName,
   era,
   selectedFloor: _selectedFloor,
 }: ContextualToolbarProps) {
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { lang } = useT();
   const stage = useWorkflowStore((s) => s.stage);
-  const layerPanelOpen = useWorkspaceStore((s) => s.layerPanelOpen);
+  const storeLayerPanelOpen = useWorkspaceStore((s) => s.layerPanelOpen);
+  const storeConfigPanelOpen = useWorkspaceStore((s) => s.configPanelOpen);
 
   const conditions: ToolbarConditions = {
+    layerPanelOpen: storeLayerPanelOpen,
+    configPanelOpen: storeConfigPanelOpen,
+  };
+
+  const propActions: PropActions = {
+    onToggleConfigPanel,
+    configPanelOpen,
+    onToggleLayerPanel,
     layerPanelOpen,
   };
 
@@ -236,7 +319,7 @@ export function ContextualToolbar({
         {/* Mode indicator */}
         <ModeIndicator />
 
-        {/* Building info badges — always visible when building loaded */}
+        {/* Building identity — leads the strip when a building is loaded */}
         {buildingName && (
           <>
             <VerticalDivider />
@@ -248,25 +331,29 @@ export function ContextualToolbar({
                 {era === "pre-1970" ? "~1970" : era}
               </Badge>
             )}
+            <VerticalDivider />
           </>
         )}
-
-        <VerticalDivider />
 
         {/* Center: Stage-specific toolbar groups — data-driven from TOOLBAR_CONFIGS[stage] */}
         <StageToolbar
           stage={stage}
-          isKo={isKo}
+          lang={lang}
           conditions={conditions}
+          props={propActions}
         />
 
         {/* Spacer */}
         <div className="flex-1" />
 
         {stage === "twin" ? (
-          <BimViewBar />
+          <div className="flex items-center gap-0.5 shrink-0">
+            <BimViewBar />
+            <VerticalDivider />
+            <StructuralViewToggle lang={lang} />
+          </div>
         ) : (
-          <GlobalToolbarSection onViewChange={onViewChange} isKo={isKo} />
+          <GlobalToolbarSection onViewChange={onViewChange} lang={lang} />
         )}
       </div>
     </div>

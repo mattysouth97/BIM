@@ -7,6 +7,8 @@
 
 import { useId } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { formatKrw } from "@/lib/twin-formatters";
 
 interface CapexInputProps {
   /** Current CAPEX budget in KRW. */
@@ -24,19 +26,6 @@ interface CapexInputProps {
 }
 
 const KRW_MAN = 10_000;        // 만 = 10,000 KRW
-const KRW_EOK = 100_000_000;   // 억 = 100,000,000 KRW
-
-/** Format KRW into 억/만 idiom that Korean users read natively. */
-function formatKrw(krw: number): string {
-  if (krw >= KRW_EOK) {
-    const eok = krw / KRW_EOK;
-    return `${eok % 1 === 0 ? eok.toFixed(0) : eok.toFixed(1)}억`;
-  }
-  if (krw >= KRW_MAN) {
-    return `${(krw / KRW_MAN).toFixed(0)}만`;
-  }
-  return krw.toLocaleString();
-}
 
 export function CapexInput({
   value,
@@ -48,6 +37,7 @@ export function CapexInput({
 }: CapexInputProps) {
   const sliderId = useId();
   const numericId = useId();
+  const { t, lang } = useT(); // P2-06
 
   // Snap to common Korean budget tiers for tick marks.
   const tickMarks = [
@@ -66,10 +56,10 @@ export function CapexInput({
       {/* Label column */}
       <div className="flex flex-col items-start justify-center sm:pr-4 sm:border-r border-border min-w-0 sm:min-w-[100px]">
         <label htmlFor={sliderId} className="text-[10px] font-medium text-muted-foreground">
-          투자 예산 (CAPEX)
+          {t("투자 예산 (CAPEX)", "Investment budget (CAPEX)")}
         </label>
         <span className="text-[18px] font-semibold tabular-nums text-foreground leading-tight">
-          ₩{formatKrw(value)}
+          {formatKrw(value, lang)}
         </span>
       </div>
 
@@ -110,7 +100,7 @@ export function CapexInput({
                   : "text-muted-foreground",
               )}
             >
-              {formatKrw(tick)}
+              {formatKrw(tick, lang)}
             </button>
           ))}
         </div>
@@ -119,7 +109,7 @@ export function CapexInput({
       {/* Numeric input + summary column */}
       <div className="hidden sm:flex flex-col items-end justify-center gap-1 pl-4 border-l border-border min-w-[140px]">
         <label htmlFor={numericId} className="text-[10px] font-medium text-muted-foreground">
-          직접 입력 (만원)
+          {t("직접 입력 (만원)", "Direct input (10k KRW)")}
         </label>
         <input
           id={numericId}
@@ -130,7 +120,8 @@ export function CapexInput({
           value={Math.round(value / KRW_MAN)}
           onChange={(e) => {
             const v = Number(e.target.value);
-            if (Number.isFinite(v) && v >= 0) onChange(v * KRW_MAN);
+            // P1-07 (f): clamp to [min, max] so slider + number never desync.
+            if (Number.isFinite(v)) onChange(Math.min(Math.max(v * KRW_MAN, min), max));
           }}
           className={cn(
             "w-full text-right text-[12px] tabular-nums text-foreground",

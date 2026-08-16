@@ -3,7 +3,8 @@
 // All formulas per Korean energy assessment methodology.
 
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
-import { RETROFIT_COSTS, ENERGY_PRICES, CO2_FACTORS } from "@/lib/retrofit/cost-database";
+import type { Fuel } from "@/lib/retrofit/economic-model";
+import { RETROFIT_COSTS, ENERGY_PRICES, CO2_FACTORS, MEASURE_LIFETIMES } from "@/lib/retrofit/cost-database";
 
 /** 2020+ Korean building energy standard target U-values (W/m²K) */
 export const KOREAN_2020_TARGET_U_VALUES = {
@@ -28,10 +29,10 @@ const GROUND_HDD_REDUCTION_FACTOR = 0.5;
  * Derive priority from simple payback period.
  * < 5 years = high, 5–10 years = medium, > 10 years = low
  */
-function paybackPriority(paybackYears: number): 'high' | 'medium' | 'low' {
-  if (paybackYears < 5) return 'high';
-  if (paybackYears <= 10) return 'medium';
-  return 'low';
+export function paybackPriority(paybackYears: number): "high" | "medium" | "low" {
+  if (paybackYears < 5) return "high";
+  if (paybackYears <= 10) return "medium";
+  return "low";
 }
 
 /**
@@ -45,6 +46,9 @@ function paybackPriority(paybackYears: number): 'high' | 'medium' | 'low' {
  * @param areas             - Surface areas of each envelope element (m²)
  * @param hdd               - Heating degree days (°C·days/year) for the site
  * @param heatingEfficiency - Heating system efficiency (0–1, e.g. 0.87 for 87% boiler)
+ * @param heatingFuel       - Building's heating fuel (P1-03); prices/CO2 for wall/roof/floor
+ *                            (and window, HDD-derived heating) savings follow this fuel.
+ *                            Default "gas" = legacy behavior.
  * @returns Array of RetrofitMeasure, sorted by payback period (shortest first)
  */
 export function generateEnvelopeRetrofits(
@@ -52,7 +56,8 @@ export function generateEnvelopeRetrofits(
   targetUValues: { wall: number; roof: number; window: number; floor: number },
   areas: { wall: number; roof: number; window: number; floor: number },
   hdd: number,
-  heatingEfficiency: number
+  heatingEfficiency: number,
+  heatingFuel: Fuel = "gas"
 ): RetrofitMeasure[] {
   const measures: RetrofitMeasure[] = [];
 
@@ -61,24 +66,27 @@ export function generateEnvelopeRetrofits(
   }
 
   // CO2_FACTORS are in tCO2/MWh — convert to tCO2/kWh by dividing by 1000
-  const co2PerKwhGas = CO2_FACTORS.gas / 1000;
+  const heatingPrice = ENERGY_PRICES[heatingFuel];
+  const co2PerKwhHeating = CO2_FACTORS[heatingFuel] / 1000;
 
   // --- Wall insulation ---
   if (currentUValues.wall > targetUValues.wall) {
     const energySaving = calcEnergySaving(currentUValues.wall, targetUValues.wall, areas.wall);
     const totalCost = areas.wall * RETROFIT_COSTS.wallInsulation.perM2;
-    const annualCostSaving = energySaving * ENERGY_PRICES.gas;
+    const annualCostSaving = energySaving * heatingPrice;
     const simplePayback = annualCostSaving > 0 ? totalCost / annualCostSaving : Infinity;
 
     measures.push({
-      id: 'envelope-wall-insulation',
-      name: 'Wall Insulation Upgrade',
-      category: 'envelope',
-      description: 'Add external wall insulation to meet 2020+ Korean energy standard (U ≤ 0.15 W/m²K)',
+      id: "envelope-wall-insulation",
+      fuel: heatingFuel, // P1-03: escalation follows the building's heating fuel
+      lifetimeYears: MEASURE_LIFETIMES["envelope-wall-insulation"], // P1-02
+      name: "Wall Insulation Upgrade",
+      category: "envelope",
+      description: "Add external wall insulation to meet 2020+ Korean energy standard (U ≤ 0.15 W/m²K)",
       estimatedCost: totalCost,
       annualEnergySaving: energySaving,
       annualCostSaving,
-      co2Reduction: energySaving * co2PerKwhGas,
+      co2Reduction: energySaving * co2PerKwhHeating,
       paybackYears: simplePayback,
     });
   }
@@ -87,18 +95,20 @@ export function generateEnvelopeRetrofits(
   if (currentUValues.roof > targetUValues.roof) {
     const energySaving = calcEnergySaving(currentUValues.roof, targetUValues.roof, areas.roof);
     const totalCost = areas.roof * RETROFIT_COSTS.roofInsulation.perM2;
-    const annualCostSaving = energySaving * ENERGY_PRICES.gas;
+    const annualCostSaving = energySaving * heatingPrice;
     const simplePayback = annualCostSaving > 0 ? totalCost / annualCostSaving : Infinity;
 
     measures.push({
-      id: 'envelope-roof-insulation',
-      name: 'Roof Insulation Upgrade',
-      category: 'envelope',
-      description: 'Upgrade roof insulation to meet 2020+ Korean energy standard (U ≤ 0.15 W/m²K)',
+      id: "envelope-roof-insulation",
+      fuel: heatingFuel, // P1-03
+      lifetimeYears: MEASURE_LIFETIMES["envelope-roof-insulation"], // P1-02
+      name: "Roof Insulation Upgrade",
+      category: "envelope",
+      description: "Upgrade roof insulation to meet 2020+ Korean energy standard (U ≤ 0.15 W/m²K)",
       estimatedCost: totalCost,
       annualEnergySaving: energySaving,
       annualCostSaving,
-      co2Reduction: energySaving * co2PerKwhGas,
+      co2Reduction: energySaving * co2PerKwhHeating,
       paybackYears: simplePayback,
     });
   }
@@ -107,22 +117,24 @@ export function generateEnvelopeRetrofits(
   if (currentUValues.window > targetUValues.window) {
     const energySaving = calcEnergySaving(currentUValues.window, targetUValues.window, areas.window);
     const totalCost = areas.window * RETROFIT_COSTS.windowReplacement.perM2;
-    // The saving is HDD-derived HEATING energy, so it displaces gas — price
-    // at the gas tariff (audit finding #3; the old electricity proxy
-    // overstated the saving by ~1.9×).
-    const annualCostSaving = energySaving * ENERGY_PRICES.gas;
+    // The saving is HDD-derived HEATING energy, so it displaces the building's
+    // heating fuel — not electricity (audit finding #3; the old electricity
+    // proxy overstated the saving by ~1.9× when the fuel is gas).
+    const annualCostSaving = energySaving * heatingPrice;
     const simplePayback = annualCostSaving > 0 ? totalCost / annualCostSaving : Infinity;
 
     measures.push({
-      id: 'envelope-window-replacement',
-      name: 'High-Performance Window Replacement',
-      category: 'envelope',
-      description: 'Replace windows with high-performance glazing (Low-E, triple or double-pane) to meet 2020+ standard (U ≤ 0.9 W/m²K)',
+      id: "envelope-window-replacement",
+      fuel: heatingFuel, // audit #3 + P1-03: heating fuel, not electricity
+      lifetimeYears: MEASURE_LIFETIMES["envelope-window-replacement"], // P1-02
+      name: "High-Performance Window Replacement",
+      category: "envelope",
+      description: "Replace windows with high-performance glazing (Low-E, triple or double-pane) to meet 2020+ standard (U ≤ 0.9 W/m²K)",
       estimatedCost: totalCost,
       annualEnergySaving: energySaving,
       annualCostSaving,
-      // Gas factor, matching the heating fuel (audit finding #4).
-      co2Reduction: energySaving * co2PerKwhGas,
+      // Heating-fuel factor, matching the HDD-derived saving (audit finding #4).
+      co2Reduction: energySaving * co2PerKwhHeating,
       paybackYears: simplePayback,
     });
   }
@@ -134,18 +146,20 @@ export function generateEnvelopeRetrofits(
       GROUND_HDD_REDUCTION_FACTOR *
       calcEnergySaving(currentFloorU, targetUValues.floor, areas.floor);
     const totalCost = areas.floor * RETROFIT_COSTS.floorInsulation.perM2;
-    const annualCostSaving = energySaving * ENERGY_PRICES.gas;
+    const annualCostSaving = energySaving * heatingPrice;
     const simplePayback = annualCostSaving > 0 ? totalCost / annualCostSaving : Infinity;
 
     measures.push({
-      id: 'envelope-floor-insulation',
-      name: 'Ground Floor Insulation Upgrade',
-      category: 'envelope',
-      description: 'Upgrade ground floor insulation to meet 2020+ Korean energy standard (U ≤ 0.18 W/m²K)',
+      id: "envelope-floor-insulation",
+      fuel: heatingFuel, // P1-03
+      lifetimeYears: MEASURE_LIFETIMES["envelope-floor-insulation"], // P1-02
+      name: "Ground Floor Insulation Upgrade",
+      category: "envelope",
+      description: "Upgrade ground floor insulation to meet 2020+ Korean energy standard (U ≤ 0.18 W/m²K)",
       estimatedCost: totalCost,
       annualEnergySaving: energySaving,
       annualCostSaving,
-      co2Reduction: energySaving * co2PerKwhGas,
+      co2Reduction: energySaving * co2PerKwhHeating,
       paybackYears: simplePayback,
     });
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { useAppStore } from "@/store/app-store";
+import { useT } from "@/lib/i18n";
 import { useMaterialStore } from "@/store/material-store";
 import { SliderRow } from "./slider-row";
 import {
@@ -38,7 +38,7 @@ interface EnvelopeTabProps {
 }
 
 export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
-  const isKo = useAppStore((s) => s.language) === "ko";
+  const { t } = useT();
   const properties = useMaterialStore((s) => s.properties[buildingPk]);
   const overrideProperty = useMaterialStore((s) => s.overrideProperty);
   const setProperties = useMaterialStore((s) => s.setProperties);
@@ -47,30 +47,30 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
   const validateWallU = useCallback(
     (v: number) =>
       v > 2.5
-        ? (isKo ? "대부분 지역의 건축법 기준 초과" : "Exceeds Korean code limit for most zones")
+        ? t("대부분 지역의 건축법 기준 초과", "Exceeds Korean code limit for most zones")
         : null,
-    [isKo]
+    [t]
   );
   const validateSHGC = useCallback(
     (v: number) =>
-      v > 0.95 ? (isKo ? "최대값 초과" : "Exceeds maximum") :
-      v < 0.05 ? (isKo ? "최소값 미만" : "Below minimum") : null,
-    [isKo]
+      v > 0.95 ? t("최대값 초과", "Exceeds maximum") :
+      v < 0.05 ? t("최소값 미만", "Below minimum") : null,
+    [t]
   );
   const validateWWR = useCallback(
     (v: number) =>
       v > 80
-        ? (isKo ? "한국 건축법 WWR 제한(80%) 초과" : "Exceeds Korean code WWR limit (80%)")
+        ? t("한국 건축법 WWR 제한(80%) 초과", "Exceeds Korean code WWR limit (80%)")
         : v > 60
-          ? (isKo ? "건축법 기준 초과 가능" : "May exceed Korean code limit")
+          ? t("건축법 기준 초과 가능", "May exceed Korean code limit")
           : null,
-    [isKo]
+    [t]
   );
 
   if (!properties) {
     return (
       <div className="p-4 text-sm text-muted-foreground">
-        {isKo ? "건물 데이터를 불러오는 중..." : "Loading building data..."}
+        {t("건물 데이터를 불러오는 중...", "Loading building data...")}
       </div>
     );
   }
@@ -155,18 +155,18 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
       {/* Source badge */}
       {isUserInput && (
         <Badge variant="default" className="text-[10px]">
-          {isKo ? "사용자 입력" : "User Input"}
+          {t("사용자 입력", "User Input")}
         </Badge>
       )}
 
       {/* ── Wall ── */}
       <section>
         <h4 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {isKo ? "외벽" : "Wall"}
+          {t("외벽", "Wall")}
         </h4>
         <div className="space-y-3">
           <SliderRow
-            label={isKo ? "벽체 열관류율" : "Wall U-value"}
+            label={t("벽체 열관류율", "Wall U-value")}
             value={wallU}
             min={0.1} max={5.0} step={0.01} unit="W/(m²K)"
             validate={validateWallU}
@@ -180,16 +180,16 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
 
           <div className="space-y-1.5">
             <div className="text-xs text-muted-foreground">
-              {isKo ? "단열재 종류" : "Insulation Type"}
+              {t("단열재 종류", "Insulation Type")}
             </div>
             <Select onValueChange={handleInsulationPreset}>
               <SelectTrigger className="h-8 w-full text-xs">
-                <SelectValue placeholder={isKo ? "선택..." : "Select..."} />
+                <SelectValue placeholder={t("선택...", "Select...")} />
               </SelectTrigger>
               <SelectContent>
                 {INSULATION_PRESETS.map((p) => (
                   <SelectItem key={p.key} value={p.key}>
-                    {isKo ? p.ko : p.en}
+                    {t(p.ko, p.en)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -201,11 +201,11 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
       {/* ── Window ── */}
       <section>
         <h4 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {isKo ? "창호" : "Window"}
+          {t("창호", "Window")}
         </h4>
         <div className="space-y-3">
           <SliderRow
-            label={isKo ? "창호 열관류율" : "Window U-value"}
+            label={t("창호 열관류율", "Window U-value")}
             value={env.windows.uValue}
             min={0.5} max={6.0} step={0.1} unit="W/(m²K)"
             decimals={1}
@@ -219,7 +219,7 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
             validate={validateSHGC}
           />
           <SliderRow
-            label={isKo ? "창면적비 (WWR)" : "WWR"}
+            label={t("창면적비 (WWR)", "WWR")}
             value={env.windows.windowToWallRatio.S * 100}
             min={0} max={80} step={5} unit="%"
             decimals={0}
@@ -237,7 +237,7 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
 
           <div className="space-y-1.5">
             <div className="text-xs text-muted-foreground">
-              {isKo ? "유리 종류" : "Glass Type"}
+              {t("유리 종류", "Glass Type")}
             </div>
             <Select value={currentGlassKey} onValueChange={handleGlassType}>
               <SelectTrigger className="h-8 w-full text-xs">
@@ -246,7 +246,7 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
               <SelectContent>
                 {GLASS_TYPES.map((g) => (
                   <SelectItem key={g.key} value={g.key}>
-                    {isKo ? g.ko : g.en}
+                    {t(g.ko, g.en)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -258,17 +258,17 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
       {/* ── Roof & Floor ── */}
       <section>
         <h4 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {isKo ? "지붕 / 바닥" : "Roof & Floor"}
+          {t("지붕 / 바닥", "Roof & Floor")}
         </h4>
         <div className="space-y-3">
           <SliderRow
-            label={isKo ? "지붕 열관류율" : "Roof U-value"}
+            label={t("지붕 열관류율", "Roof U-value")}
             value={env.roof.uValue}
             min={0.1} max={2.0} step={0.01} unit="W/(m²K)"
             onChange={(val) => setEnvelope("roof.uValue", val)}
           />
           <SliderRow
-            label={isKo ? "바닥 열관류율" : "Floor U-value"}
+            label={t("바닥 열관류율", "Floor U-value")}
             value={env.groundFloor.uValue}
             min={0.15} max={2.0} step={0.01} unit="W/(m²K)"
             onChange={(val) => setEnvelope("groundFloor.uValue", val)}
@@ -279,7 +279,7 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
       {/* ── Airtightness ── */}
       <section>
         <h4 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {isKo ? "기밀성" : "Airtightness"}
+          {t("기밀성", "Airtightness")}
         </h4>
         <div className="space-y-3">
           <SliderRow
@@ -300,7 +300,7 @@ export function EnvelopeTab({ buildingPk }: EnvelopeTabProps) {
         onClick={handleReset}
       >
         <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-        {isKo ? "규정 기본값 복원" : "Reset to Code Defaults"}
+        {t("규정 기본값 복원", "Reset to Code Defaults")}
       </Button>
     </div>
   );

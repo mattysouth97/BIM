@@ -77,7 +77,15 @@ export interface CalibrationJson {
   version: string;
   tier?: string;
   tierLabel?: string;
-  metrics: {
+  /**
+   * P2-05 — false ⇒ no model has been trained/validated; accuracy `metrics`
+   * are intentionally absent (never fabricated). Consumers must not present
+   * validated-accuracy claims when this is false/omitted-with-no-metrics.
+   */
+  validated?: boolean;
+  notes?: string;
+  /** Present only for a genuinely validated release (P2-05). */
+  metrics?: {
     mape: number;
     cvRmse?: number;
     rmse?: number;

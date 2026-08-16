@@ -1,39 +1,19 @@
-// src/lib/layers/__tests__/layer-15-structural.test.ts
-// Unit tests for StructuralAnalysisLayer generator output.
-
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import * as THREE from "three";
+
 import { StructuralAnalysisLayer } from "../layer-15-structural";
 import type { BuildingRecipe } from "@/lib/procedural/types";
-
-// ---------------------------------------------------------------------------
-// Helper: find the structural-column InstancedMesh (traverses entire group)
-// ---------------------------------------------------------------------------
-
-function findStructuralColumnMesh(group: THREE.Group): THREE.InstancedMesh | undefined {
-  let found: THREE.InstancedMesh | undefined;
-  group.traverse((obj) => {
-    if (obj instanceof THREE.InstancedMesh && obj.userData.type === "structural-column") {
-      found = obj;
-    }
-  });
-  return found;
-}
-
-// ---------------------------------------------------------------------------
-// Mock recipe fixture — 3 above-ground floors, 4-column grid
-// ---------------------------------------------------------------------------
 
 function makeRecipe(): BuildingRecipe {
   return {
     footprintWidth: 12,
     footprintDepth: 10,
     floors: [
-      { floorNo: 1, label: "1F", type: "above", y: 0, height: 3.0, isGroundFloor: true },
-      { floorNo: 2, label: "2F", type: "above", y: 3.0, height: 3.0, isGroundFloor: false },
-      { floorNo: 3, label: "3F", type: "above", y: 6.0, height: 3.0, isGroundFloor: false },
+      { floorNo: 1, label: "1F", type: "above", y: 0, height: 3, isGroundFloor: true },
+      { floorNo: 2, label: "2F", type: "above", y: 3, height: 3, isGroundFloor: false },
+      { floorNo: 3, label: "3F", type: "above", y: 6, height: 3, isGroundFloor: false },
     ],
-    totalHeight: 9.0,
+    totalHeight: 9,
     wallThickness: 0.2,
     era: "2000-2009",
     strctCd: "21",
@@ -60,19 +40,15 @@ function makeRecipe(): BuildingRecipe {
     address: "Seoul, Korea",
     materials: {
       wall: { color: "#cccccc", roughness: 0.8, metalness: 0.1 },
-      glass: { color: "#88aacc", roughness: 0.1, metalness: 0.0, transparent: true, opacity: 0.4 },
+      glass: { color: "#88aacc", roughness: 0.1, metalness: 0, transparent: true, opacity: 0.4 },
       mullion: { color: "#888888", roughness: 0.4, metalness: 0.6 },
-      slab: { color: "#aaaaaa", roughness: 0.9, metalness: 0.0 },
-      column: { color: "#999999", roughness: 0.8, metalness: 0.0 },
+      slab: { color: "#aaaaaa", roughness: 0.9, metalness: 0 },
+      column: { color: "#999999", roughness: 0.8, metalness: 0 },
       roof: { color: "#888888", roughness: 0.7, metalness: 0.1 },
-      groundFloor: { color: "#bbbbbb", roughness: 0.9, metalness: 0.0 },
+      groundFloor: { color: "#bbbbbb", roughness: 0.9, metalness: 0 },
     },
   };
 }
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
 
 describe("StructuralAnalysisLayer", () => {
   let layer: StructuralAnalysisLayer;
@@ -83,87 +59,68 @@ describe("StructuralAnalysisLayer", () => {
     recipe = makeRecipe();
   });
 
-  it("1. generate() returns a Group named 'layer-15-structural'", () => {
+  it("returns the named analysis group", () => {
     const group = layer.generate(recipe);
     expect(group).toBeInstanceOf(THREE.Group);
     expect(group.name).toBe("layer-15-structural");
   });
 
-  it("2. Group has a child named 'structural-arrows'", () => {
+  it("contains load-path and foundation annotation groups", () => {
     const group = layer.generate(recipe);
-    const arrowsGroup = group.getObjectByName("structural-arrows");
-    expect(arrowsGroup).toBeDefined();
-    expect(arrowsGroup).toBeInstanceOf(THREE.Group);
+    expect(group.getObjectByName("structural-arrows")).toBeInstanceOf(THREE.Group);
+    expect(group.getObjectByName("structural-foundations")).toBeInstanceOf(THREE.Group);
   });
 
-  it("3. Group has a child named 'structural-foundations'", () => {
+  it("does not duplicate the physical structural column volume", () => {
     const group = layer.generate(recipe);
-    const foundationsGroup = group.getObjectByName("structural-foundations");
-    expect(foundationsGroup).toBeDefined();
-    expect(foundationsGroup).toBeInstanceOf(THREE.Group);
-  });
-
-  it("4. Group contains at least one InstancedMesh (stress-colored columns)", () => {
-    const group = layer.generate(recipe);
-    let found = false;
-    group.traverse((obj) => {
-      if (obj instanceof THREE.InstancedMesh) found = true;
-    });
-    expect(found).toBe(true);
-  });
-
-  it("5. InstancedMesh has userData.type === 'structural-column'", () => {
-    const group = layer.generate(recipe);
-    let foundType: string | undefined;
-    group.traverse((obj) => {
-      if (obj instanceof THREE.InstancedMesh && obj.userData.type === "structural-column") {
-        foundType = obj.userData.type;
+    let duplicates = 0;
+    group.traverse((object) => {
+      if (object instanceof THREE.InstancedMesh && object.userData.type === "structural-column") {
+        duplicates++;
       }
     });
-    expect(foundType).toBe("structural-column");
+    expect(duplicates).toBe(0);
   });
 
-  it("6. InstancedMesh instanceCount matches floors * columns (3 floors * 4 columns = 12)", () => {
+  it("creates load arrows and one or more foundation markers", () => {
     const group = layer.generate(recipe);
-    // With footprintWidth=12, footprintDepth=10, column.spacing=6, inset=1:
-    // innerW=10, innerD=8, colsX=3, colsZ=2 → positions = 6
-    // Actually let's just count what we get and check it equals floors * positions
-    const aboveFloors = recipe.floors.filter((f) => f.type === "above");
-    const instancedMesh = findStructuralColumnMesh(group);
-    expect(instancedMesh).not.toBeUndefined();
-    // The count should equal aboveFloors.length * columnPositions.length
-    // For this recipe: 3 above floors * column grid positions
-    expect(instancedMesh!.count).toBeGreaterThan(0);
-    // Verify the count is a multiple of aboveFloors.length
-    expect(instancedMesh!.count % aboveFloors.length).toBe(0);
+    let arrowCount = 0;
+    let foundationCount = 0;
+    let foundationY = 0;
+    group.traverse((object) => {
+      if (object.userData.type === "load-path-arrow") arrowCount++;
+      if (object.userData.type === "structural-foundation") {
+        foundationCount++;
+        foundationY = object.position.y;
+      }
+    });
+    expect(arrowCount).toBeGreaterThan(0);
+    expect(foundationCount).toBeGreaterThan(0);
+    expect(foundationY).toBeGreaterThan(recipe.slab.thickness);
   });
 
-  it("7. InstancedMesh has userData.sizingLabels array with length === instanceCount", () => {
+  it("places load arrows beside columns and fully above the slab", () => {
     const group = layer.generate(recipe);
-    const instancedMesh = findStructuralColumnMesh(group);
-    expect(instancedMesh).not.toBeUndefined();
-    const mesh = instancedMesh!;
-    expect(Array.isArray(mesh.userData.sizingLabels)).toBe(true);
-    expect(mesh.userData.sizingLabels.length).toBe(mesh.count);
+    const arrows = group.getObjectByName("structural-arrows") as THREE.Group;
+    const first = arrows.children[0] as THREE.Group;
+    const anchor = first.userData.columnAnchor as { x: number; z: number };
+    const head = first.children.find(
+      (child) => child instanceof THREE.Mesh && child.geometry.type === "ConeGeometry",
+    ) as THREE.Mesh<THREE.ConeGeometry>;
+    const horizontalDistance = Math.hypot(
+      head.position.x - anchor.x,
+      head.position.z - anchor.z,
+    );
+    const headBottom = head.position.y - head.geometry.parameters.height / 2;
+
+    expect(horizontalDistance).toBeGreaterThan(recipe.column.size / 2 + 0.12);
+    expect(headBottom).toBeGreaterThan(recipe.slab.thickness);
   });
 
-  it("8. dispose() clears internal state; second generate() after dispose() works", () => {
+  it("dispose is idempotent and generate works again", () => {
     layer.generate(recipe);
-    // First dispose should not throw
     expect(() => layer.dispose()).not.toThrow();
-    // Second dispose should not throw (double-dispose guard)
     expect(() => layer.dispose()).not.toThrow();
-    // After dispose, generate() should work again
-    const group2 = layer.generate(recipe);
-    expect(group2).toBeInstanceOf(THREE.Group);
-    expect(group2.name).toBe("layer-15-structural");
-  });
-
-  it("9. structural-arrows group contains Mesh children (ConeGeometry + CylinderGeometry)", () => {
-    const group = layer.generate(recipe);
-    const arrowsGroup = group.getObjectByName("structural-arrows") as THREE.Group;
-    expect(arrowsGroup).toBeDefined();
-    // Arrows group should have sub-groups or meshes
-    expect(arrowsGroup.children.length).toBeGreaterThan(0);
+    expect(layer.generate(recipe).name).toBe("layer-15-structural");
   });
 });

@@ -7,7 +7,11 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import * as THREE from "three";
 import type { ViewDefinition } from "./view-definition";
-import { computeDefaultViewsForBuilding, type ViewFloorInput } from "./view-engine";
+import {
+  computeDefaultViewsForBuilding,
+  create3dView,
+  type ViewFloorInput,
+} from "./view-engine";
 
 // ─── State shape ──────────────────────────────────────────────────────────────
 
@@ -43,8 +47,8 @@ interface ViewState {
 
   /**
    * Populate the store with the full default view set for a building.
-   * Any existing auto-generated views (plan-*, elev-*) are replaced.
-   * User-created views (section-*, custom ids) are preserved.
+   * Any existing auto-generated views (plan-*, elev-*, 3d-iso, section-long)
+   * are replaced. User-created views are preserved for the same twin.
    *
    * @param floors  Floor specs (recipe or FloorGeometry)
    * @param bbox    Full building bounding box (THREE.Box3)
@@ -85,6 +89,10 @@ export const useViewStore = create<ViewState>()(
 
       initializeDefaultViews: (floors, bbox, buildingPk) => {
         const generated = computeDefaultViewsForBuilding(floors, bbox);
+        if (!generated.some((v) => v.id === "3d-iso")) {
+          generated.push(create3dView(bbox));
+        }
+
         const sameBuilding =
           buildingPk !== undefined && buildingPk === get().activeBuildingPk;
 
