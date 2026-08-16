@@ -19,8 +19,16 @@ describe("RevitWorkRail", () => {
   it("renders the six work modes and switches on click", () => {
     render(<RevitWorkRail />);
     expect(screen.getByTestId("revit-work-rail")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Authoring" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Schedules" }));
     expect(useRevitWorkflowStore.getState().workMode).toBe("schedules");
     expect(useRevitWorkflowStore.getState().schedulePanelOpen).toBe(true);
+  });
+
+  it("opens building authoring from the rail", () => {
+    render(<RevitWorkRail />);
+    fireEvent.click(screen.getByRole("button", { name: "Authoring" }));
+    expect(useRevitWorkflowStore.getState().workMode).toBe("authoring");
+    expect(useRevitWorkflowStore.getState().activeAuthoringTool).toBe("wall");
   });
 });

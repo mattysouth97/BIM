@@ -2,6 +2,7 @@
 
 import { REVIT_WORK_MODES } from "@/lib/workflow/revit-workflow";
 import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
+import { useWorkspaceStore } from "@/store/workspace-store";
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +10,7 @@ export function RevitWorkRail() {
   const { t, lang } = useT();
   const workMode = useRevitWorkflowStore((s) => s.workMode);
   const setWorkMode = useRevitWorkflowStore((s) => s.setWorkMode);
+  const setLeftDockOpen = useWorkspaceStore((s) => s.setLeftDockOpen);
   const active = REVIT_WORK_MODES.find((m) => m.id === workMode);
 
   return (
@@ -25,7 +27,10 @@ export function RevitWorkRail() {
           <button
             key={mode.id}
             type="button"
-            onClick={() => setWorkMode(mode.id)}
+            onClick={() => {
+              setWorkMode(mode.id);
+              if (mode.id === "authoring") setLeftDockOpen(true);
+            }}
             className={cn(
               "h-6 rounded-md px-2 text-[11px] font-medium transition-colors",
               selected

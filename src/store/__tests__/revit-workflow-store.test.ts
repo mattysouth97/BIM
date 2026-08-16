@@ -9,6 +9,8 @@ describe("useRevitWorkflowStore", () => {
       schedulePanelOpen: false,
       sheetPanelOpen: false,
       activeScheduleId: "wall-schedule-v1",
+      selectedFamilyId: null,
+      activeAuthoringTool: null,
     });
   });
 
@@ -31,5 +33,22 @@ describe("useRevitWorkflowStore", () => {
     const state = useRevitWorkflowStore.getState();
     expect(state.sheetPanelOpen).toBe(true);
     expect(state.schedulePanelOpen).toBe(false);
+  });
+
+  it("enters building authoring with a wall type selected", () => {
+    useRevitWorkflowStore.getState().setWorkMode("authoring");
+    const state = useRevitWorkflowStore.getState();
+    expect(state.workMode).toBe("authoring");
+    expect(state.leftDockTab).toBe("browser");
+    expect(state.activeAuthoringTool).toBe("wall");
+    expect(state.selectedFamilyId).toBe("wall-basic-generic-200");
+  });
+
+  it("switching authoring tools picks that tool's default type", () => {
+    useRevitWorkflowStore.getState().setActiveAuthoringTool("door");
+    const state = useRevitWorkflowStore.getState();
+    expect(state.workMode).toBe("authoring");
+    expect(state.activeAuthoringTool).toBe("door");
+    expect(state.selectedFamilyId).toBe("door-single-flush-910");
   });
 });

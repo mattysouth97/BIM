@@ -8,7 +8,11 @@ import { useSheetStore } from "@/lib/bim/sheets/sheet-store";
 import { SEED_SCHEDULES } from "@/lib/bim/schedules/schedule-definitions";
 import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
 import { REVIT_FEATURE_MAP } from "@/lib/workflow/revit-workflow";
-import { AUTHORING_FAMILY_IDS } from "@/lib/bim/family-catalog";
+import {
+  AUTHORING_TOOLS,
+  familiesForTool,
+  familyTypeLabel,
+} from "@/lib/bim/family-catalog";
 import { cn } from "@/lib/utils";
 import {
   Accordion,
@@ -18,7 +22,7 @@ import {
 } from "@/components/ui/accordion";
 
 export function ProjectBrowser() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const views = useViewStore((s) => s.views);
   const activeViewId = useViewStore((s) => s.activeViewId);
   const setActiveView = useViewStore((s) => s.setActiveView);
@@ -53,7 +57,7 @@ export function ProjectBrowser() {
       <div className="flex-1 overflow-y-auto">
         <Accordion
           type="multiple"
-          defaultValue={["views", "schedules", "sheets"]}
+          defaultValue={["views", "schedules", "sheets", "families"]}
           className="w-full"
         >
           <AccordionItem value="views" className="border-b">
@@ -188,20 +192,29 @@ export function ProjectBrowser() {
             <AccordionContent className="px-1 pb-2">
               <p className="px-3 pb-1 text-[10px] text-muted-foreground">
                 {t(
-                  "클릭하면 건물 옆에 타입 프리뷰가 놓입니다.",
-                  "Click to place a type preview beside the building."
+                  "타입을 고르면 건물 작성 모드에서 해당 패밀리가 적용됩니다.",
+                  "Pick a type to apply it on the building in Authoring."
                 )}
               </p>
-              {AUTHORING_FAMILY_IDS.map((id) => (
-                <BrowserRow
-                  key={id}
-                  label={id}
-                  active={selectedFamilyId === id}
-                  onClick={() => {
-                    setSelectedFamilyId(selectedFamilyId === id ? null : id);
-                    setWorkMode("model");
-                  }}
-                />
+              {AUTHORING_TOOLS.map((tool) => (
+                <BrowserGroup
+                  key={tool.id}
+                  label={t(tool.categoryKo, tool.categoryEn)}
+                >
+                  {familiesForTool(tool.id).map((family) => (
+                    <BrowserRow
+                      key={family.id}
+                      label={familyTypeLabel(family, lang === "ko" ? "ko" : "en")}
+                      active={selectedFamilyId === family.id}
+                      onClick={() => {
+                        setSelectedFamilyId(
+                          selectedFamilyId === family.id ? null : family.id
+                        );
+                        setWorkMode("authoring");
+                      }}
+                    />
+                  ))}
+                </BrowserGroup>
               ))}
             </AccordionContent>
           </AccordionItem>

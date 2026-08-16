@@ -10,6 +10,7 @@ import { WorkflowStepper } from "./workflow-stepper";
 import { PropertiesPanel } from "./properties-panel";
 import { TwinLeftDock } from "./twin-left-dock";
 import { RevitWorkRail } from "./revit-work-rail";
+import { AuthoringPalette } from "./authoring-palette";
 import { StatusBar } from "./status-bar";
 import { Button } from "@/components/ui/button";
 import { PanelLeft, PanelRight } from "lucide-react";
@@ -66,6 +67,7 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
   const stage = useWorkflowStore((s) => s.stage);
   const buildingPk = useActiveBuildingPk();
   useInitializeBimViews(buildingPk);
+  const workMode = useRevitWorkflowStore((s) => s.workMode);
   const schedulePanelOpen = useRevitWorkflowStore((s) => s.schedulePanelOpen);
   const sheetPanelOpen = useRevitWorkflowStore((s) => s.sheetPanelOpen);
   const setSchedulePanelOpen = useRevitWorkflowStore((s) => s.setSchedulePanelOpen);
@@ -93,6 +95,7 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
         <WorkflowStepper />
       </div>
       {(stage === "twin" || stage === "report") && <RevitWorkRail />}
+      {stage === "twin" && workMode === "authoring" && <AuthoringPalette />}
 
       {/* Full-bleed viewport with floating panels */}
       <div className="relative flex-1 min-h-0" data-tour="viewport">

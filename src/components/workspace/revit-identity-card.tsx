@@ -8,6 +8,11 @@ import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import { useMaterialStore } from "@/store/material-store";
 import { resolveRevitIdentity } from "@/lib/bim/revit-identity";
 import { resolveAssetSlot } from "@/lib/bim/asset-slots";
+import {
+  familyIdentityLabel,
+  getAuthoringFamily,
+} from "@/lib/bim/family-catalog";
+import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
 import { Badge } from "@/components/ui/badge";
 
 export function RevitIdentityCard() {
@@ -17,6 +22,8 @@ export function RevitIdentityCard() {
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
   const selectedType = useSelectionStore((s) => s.selectedType);
   const selectedEquipment = useSelectionStore((s) => s.selectedEquipment);
+  const selectedFamilyId = useRevitWorkflowStore((s) => s.selectedFamilyId);
+  const authored = getAuthoringFamily(selectedFamilyId);
 
   const identity = useMemo(
     () =>
@@ -40,7 +47,11 @@ export function RevitIdentityCard() {
         {t("카테고리 · 패밀리 · 타입", "Category · Family · Type")}
       </p>
       <p className="text-xs font-medium leading-snug">
-        {lang === "ko" ? identity.displayKo : identity.displayEn}
+        {authored
+          ? familyIdentityLabel(authored, lang)
+          : lang === "ko"
+            ? identity.displayKo
+            : identity.displayEn}
       </p>
       <div className="mt-1.5 flex flex-wrap items-center gap-1">
         <Badge variant="outline" className="h-4 px-1.5 text-[9px]">

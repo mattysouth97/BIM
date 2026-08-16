@@ -10,7 +10,7 @@ import {
 describe("REVIT_WORK_MODES", () => {
   it("covers the six Revit-aligned authoring modes", () => {
     expect(REVIT_WORK_MODES.map((m) => m.id)).toEqual([
-      "model",
+      "authoring",
       "views",
       "annotate",
       "schedules",
@@ -33,6 +33,7 @@ describe("REVIT_FEATURE_MAP", () => {
     const topics = REVIT_FEATURE_MAP.map((f) => f.courseTopic);
     expect(topics).toEqual(
       expect.arrayContaining([
+        "Architecture tab / building authoring",
         "BIM vs CAD",
         "Level of Development",
         "Category / Family / Type",
@@ -68,6 +69,6 @@ describe("helpers", () => {
   it("energy mode opens insights; other modes open the browser", () => {
     expect(defaultLeftDockTab("energy")).toBe("insights");
     expect(defaultLeftDockTab("views")).toBe("browser");
-    expect(defaultLeftDockTab("model")).toBe("browser");
+    expect(defaultLeftDockTab("authoring")).toBe("browser");
   });
 });

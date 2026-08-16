@@ -62,10 +62,24 @@ describe("planAuthoringInstances", () => {
     expect(poses.every((p) => p.url.endsWith(".glb"))).toBe(true);
   });
 
-  it("adds a preview pad pose for a selected library family", () => {
-    const poses = planAuthoringInstances(makeRecipe(), "door-single-flush-910");
-    const preview = poses.find((p) => p.id === "preview:door-single-flush-910");
-    expect(preview?.url).toBe("/models/authoring/door-single-flush-910.glb");
+  it("applies a selected door type on the building entry", () => {
+    const poses = planAuthoringInstances(makeRecipe(), "door-glass-storefront");
+    const door = poses.find((p) => p.id === "door:entry");
+    expect(door?.url).toBe("/models/authoring/door-glass-storefront.glb");
+    expect(poses.some((p) => p.id.startsWith("preview:"))).toBe(false);
+  });
+
+  it("places selected wall types on the four building sides", () => {
+    const poses = planAuthoringInstances(makeRecipe(), "wall-exterior-brick-on-cmu");
+    const walls = poses.filter((p) => p.id.startsWith("wall:"));
+    expect(walls).toHaveLength(4);
+    expect(walls.every((p) => p.url.endsWith("wall-exterior-brick-on-cmu.glb"))).toBe(true);
+  });
+
+  it("adds a preview pad pose for furniture and other components", () => {
+    const poses = planAuthoringInstances(makeRecipe(), "furniture-desk");
+    const preview = poses.find((p) => p.id === "preview:furniture-desk");
+    expect(preview?.url).toBe("/models/authoring/furniture-desk.glb");
     expect(preview?.position[0]).toBeGreaterThan(10);
   });
 });

@@ -50,11 +50,14 @@ interface AuthoringFamilyLayerProps {
 }
 
 export function AuthoringFamilyLayer({ recipe }: AuthoringFamilyLayerProps) {
+  const workMode = useRevitWorkflowStore((s) => s.workMode);
   const selectedFamilyId = useRevitWorkflowStore((s) => s.selectedFamilyId);
   const poses = useMemo(
     () => planAuthoringInstances(recipe, selectedFamilyId),
     [recipe, selectedFamilyId]
   );
+
+  if (workMode !== "authoring") return null;
 
   return (
     <group name="authoring-family-layer">

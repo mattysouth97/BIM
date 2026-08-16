@@ -3,7 +3,11 @@
 
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import { AUTHORING_ASSET_MANIFEST } from "./authoring-asset-manifest";
-import { authoringFamilyUrl } from "./family-catalog";
+import {
+  authoringFamilyUrl,
+  getAuthoringFamily,
+  type AuthoringToolId,
+} from "./family-catalog";
 
 export interface FamilyInstancePose {
   id: string;
@@ -15,6 +19,16 @@ export interface FamilyInstancePose {
 
 function slotUrl(slot: keyof typeof AUTHORING_ASSET_MANIFEST): string {
   return AUTHORING_ASSET_MANIFEST[slot]?.uri ?? "";
+}
+
+function urlForTool(
+  tool: AuthoringToolId,
+  selectedFamilyId: string | null | undefined,
+  fallbackSlot: keyof typeof AUTHORING_ASSET_MANIFEST
+): string {
+  const selected = getAuthoringFamily(selectedFamilyId);
+  if (selected?.tool === tool) return authoringFamilyUrl(selected.id);
+  return slotUrl(fallbackSlot);
 }
 
 /**
@@ -31,9 +45,15 @@ export function planAuthoringInstances(
   const d = recipe.footprintDepth;
   const inset = recipe.column.inset;
   const spacing = Math.max(recipe.column.spacing, 1);
-  const columnUrl = slotUrl("family.column.rectangular");
-  const windowUrl = slotUrl("family.window.fixed");
-  const doorUrl = slotUrl("family.door.single-flush");
+  const columnUrl = urlForTool(
+    "column",
+    selectedFamilyId,
+    "family.column.rectangular"
+  );
+  const windowUrl = urlForTool("window", selectedFamilyId, "family.window.fixed");
+  const doorUrl = urlForTool("door", selectedFamilyId, "family.door.single-flush");
+  const wallUrl = urlForTool("wall", selectedFamilyId, "family.wall.basic");
+  const selected = getAuthoringFamily(selectedFamilyId);
 
   const xs: number[] = [];
   for (let x = -w / 2 + inset; x <= w / 2 - inset + 0.01; x += spacing) xs.push(x);
@@ -86,6 +106,40 @@ export function planAuthoringInstances(
     });
   }
 
+  if (selected?.tool === "wall" && wallUrl && ground) {
+    const wallH = Math.max(ground.height, 0.1) / 3;
+    poses.push(
+      {
+        id: "wall:front",
+        url: wallUrl,
+        position: [-w / 2, ground.y, d / 2],
+        scale: [w, wallH, 1],
+        rotation: [0, 0, 0],
+      },
+      {
+        id: "wall:back",
+        url: wallUrl,
+        position: [w / 2, ground.y, -d / 2],
+        scale: [w, wallH, 1],
+        rotation: [0, Math.PI, 0],
+      },
+      {
+        id: "wall:east",
+        url: wallUrl,
+        position: [w / 2, ground.y, d / 2],
+        scale: [d, wallH, 1],
+        rotation: [0, -Math.PI / 2, 0],
+      },
+      {
+        id: "wall:west",
+        url: wallUrl,
+        position: [-w / 2, ground.y, -d / 2],
+        scale: [d, wallH, 1],
+        rotation: [0, Math.PI / 2, 0],
+      }
+    );
+  }
+
   const roofY = recipe.totalHeight;
   const plant: Array<[string, keyof typeof AUTHORING_ASSET_MANIFEST, number, number]> = [
     ["mep:chiller", "family.mep.chiller", w * 0.22, 0],
@@ -118,7 +172,13 @@ export function planAuthoringInstances(
     }
   }
 
-  if (selectedFamilyId) {
+  const onBuilding =
+    selected?.tool === "door" ||
+    selected?.tool === "window" ||
+    selected?.tool === "column" ||
+    selected?.tool === "wall" ||
+    selected?.tool === "lighting";
+  if (selectedFamilyId && !onBuilding) {
     poses.push({
       id: `preview:${selectedFamilyId}`,
       url: authoringFamilyUrl(selectedFamilyId),

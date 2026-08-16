@@ -5,7 +5,7 @@
 // Inside Twin/Report, these work modes are the Revit-aligned authoring path.
 
 export type RevitWorkMode =
-  | "model"
+  | "authoring"
   | "views"
   | "annotate"
   | "schedules"
@@ -36,12 +36,17 @@ export interface RevitFeatureMapEntry {
 
 export const REVIT_WORK_MODES: RevitWorkModeDef[] = [
   {
-    id: "model",
-    labelKo: "모델",
-    labelEn: "Model",
-    hintKo: "단일 3D 모델이 원본입니다. 카테고리·패밀리·타입으로 요소를 읽습니다.",
-    hintEn: "The 3D model is the source of truth. Elements carry Category / Family / Type.",
-    courseChapters: ["LOD", "Category/Family/Type", "Hosts & components", "Levels"],
+    id: "authoring",
+    labelKo: "작성",
+    labelEn: "Authoring",
+    hintKo: "건물 작성 — 벽·문·창·기둥 등 건축 패밀리로 모델을 다룹니다.",
+    hintEn: "Building authoring — walls, doors, windows, and columns on the live model.",
+    courseChapters: [
+      "Architecture tab",
+      "Walls / Doors / Windows",
+      "Columns",
+      "Sketch-based floors/roofs/stairs",
+    ],
   },
   {
     id: "views",
@@ -93,11 +98,19 @@ export const REVIT_WORK_MODES: RevitWorkModeDef[] = [
  */
 export const REVIT_FEATURE_MAP: RevitFeatureMapEntry[] = [
   {
+    id: "building-authoring",
+    courseTopic: "Architecture tab / building authoring",
+    revitConcept: "Wall, door, window, column, floor, roof, stair tools place typed families",
+    appCapability: "Authoring palette + family types applied onto the live building",
+    workMode: "authoring",
+    status: "wired",
+  },
+  {
     id: "single-model",
     courseTopic: "BIM vs CAD",
     revitConcept: "One coordinated 3D model; views cannot go out of sync",
     appCapability: "Procedural / IFC twin is the single source; views/schedules/sheets read it",
-    workMode: "model",
+    workMode: "authoring",
     status: "wired",
   },
   {
@@ -105,7 +118,7 @@ export const REVIT_FEATURE_MAP: RevitFeatureMapEntry[] = [
     courseTopic: "Level of Development",
     revitConcept: "Generic type vs construction-layer type",
     appCapability: "LOD 200 ledger twin → LOD 300 IFC / user materials → LOD 350 calibrated",
-    workMode: "model",
+    workMode: "authoring",
     status: "wired",
   },
   {
@@ -113,7 +126,7 @@ export const REVIT_FEATURE_MAP: RevitFeatureMapEntry[] = [
     courseTopic: "Category / Family / Type",
     revitConcept: "Built-in categories; system vs loadable families; types",
     appCapability: "Revit identity on selection (IFC class + structure family + type label)",
-    workMode: "model",
+    workMode: "authoring",
     status: "wired",
   },
   {
@@ -121,7 +134,7 @@ export const REVIT_FEATURE_MAP: RevitFeatureMapEntry[] = [
     courseTopic: "Model / Annotation / View / Datum",
     revitConcept: "Four element groups",
     appCapability: "ElementKind + annotation store + view store + floor levels as datums",
-    workMode: "model",
+    workMode: "authoring",
     status: "wired",
   },
   {
@@ -137,7 +150,7 @@ export const REVIT_FEATURE_MAP: RevitFeatureMapEntry[] = [
     courseTopic: "Properties Palette",
     revitConcept: "Type vs instance properties",
     appCapability: "Properties dock shows identity + instance energy/equipment params",
-    workMode: "model",
+    workMode: "authoring",
     status: "wired",
   },
   {
@@ -217,7 +230,7 @@ export const REVIT_FEATURE_MAP: RevitFeatureMapEntry[] = [
     courseTopic: "Loadable families",
     revitConcept: "User-authored families",
     appCapability: "v8 family editor",
-    workMode: "model",
+    workMode: "authoring",
     status: "deferred",
   },
   {
@@ -246,4 +259,8 @@ export function defaultLeftDockTab(
   mode: RevitWorkMode
 ): "insights" | "browser" {
   return mode === "energy" ? "insights" : "browser";
+}
+
+export function isBuildingAuthoringMode(mode: RevitWorkMode): boolean {
+  return mode === "authoring";
 }
