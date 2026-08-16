@@ -2,6 +2,7 @@
 // Incremental invalidation: level change → hosted elements → rooms → views.
 
 import type { BimElement, BimLevel, BimModelSnapshot } from "./types";
+import { hostedInsertY } from "../family-insert";
 
 export type GraphEffect =
   | { kind: "level-moved"; levelId: string }
@@ -48,11 +49,18 @@ export function applyLevelMove(
 
     if (el.origin === "authored") {
       effects.push({ kind: "hosted-moved", elementId: el.id });
-      const offsetM = Number(el.instanceParameters.baseOffsetMm ?? 0) / 1000;
-      const sillM = Number(el.instanceParameters.sillHeightMm ?? 0) / 1000;
       return {
         ...el,
-        placement: { ...el.placement, y: level.elevation + offsetM + sillM },
+        placement: {
+          ...el.placement,
+          y: hostedInsertY({
+            typeId: el.typeId,
+            kind: el.kind,
+            levelElevation: level.elevation,
+            sillHeightMm: Number(el.instanceParameters.sillHeightMm ?? 0),
+            baseOffsetMm: Number(el.instanceParameters.baseOffsetMm ?? 0),
+          }),
+        },
       };
     }
     return el;

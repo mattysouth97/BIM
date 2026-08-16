@@ -320,6 +320,28 @@ describe("Green-retrofit equipment scenario", () => {
     expect(findByType(withPv, "microgrid-pv-panel")).toBeDefined();
     expect(findByType(withPv, "microgrid-bess")).toBeDefined();
   });
+
+  it("seats tilted PV modules and racks on the finished roof top", () => {
+    const group = new MicrogridLayer().generate(makeRecipe(), 1.0, {
+      heating: "baseline",
+      lightingLed: false,
+      solarPv: true,
+      windowUpgrade: false,
+      wallInsulation: false,
+    });
+    const panels = findByType(group, "microgrid-pv-panel") as THREE.InstancedMesh;
+    const racks = findByType(group, "microgrid-pv-frame") as THREE.InstancedMesh;
+    expect(panels.count).toBeGreaterThan(0);
+    const mat4 = new THREE.Matrix4();
+    const pos = new THREE.Vector3();
+    panels.getMatrixAt(0, mat4);
+    mat4.decompose(pos, new THREE.Quaternion(), new THREE.Vector3());
+    // roofTopY = 9.15; centre-origin tilt lift + 0.02 stack offset
+    expect(pos.y).toBeGreaterThan(9.15);
+    racks.getMatrixAt(0, mat4);
+    mat4.decompose(pos, new THREE.Quaternion(), new THREE.Vector3());
+    expect(pos.y).toBeGreaterThan(9.15);
+  });
 });
 
 describe("New site kit (not remakes)", () => {

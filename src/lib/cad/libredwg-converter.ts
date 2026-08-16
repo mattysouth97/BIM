@@ -14,26 +14,33 @@
 // License note: LibreDWG is GPL-3.0. It is loaded as an unmodified,
 // dynamically-imported module isolated behind this facade.
 
-import type { LibreDwgEx } from "@mlightcad/libredwg-web";
+interface LibreDwgModule {
+  dwg_write_dxf(buffer: ArrayBuffer): Uint8Array | null;
+}
 
 /** Directory (URL path) the emscripten loader fetches the .wasm from. */
 const WASM_DIR = "/wasm";
 
-let libredwgPromise: Promise<LibreDwgEx> | null = null;
+let libredwgPromise: Promise<LibreDwgModule> | null = null;
 
 /**
  * Lazy singleton for the LibreDWG WASM instance. Resets on failure so the
  * next upload retries instead of caching a rejected promise forever
  * (mirrors the libdxfrw loader in dwg-parser.ts).
  */
-async function getLibreDwg(): Promise<LibreDwgEx> {
+async function getLibreDwg(): Promise<LibreDwgModule> {
   if (!libredwgPromise) {
     libredwgPromise = (async () => {
       if (typeof window === "undefined") {
         throw new Error("LibreDWG WASM conversion requires a browser environment");
       }
-      const { LibreDwg } = await import("@mlightcad/libredwg-web");
-      return LibreDwg.create(WASM_DIR);
+      // Built as a string so the bundler does not fail the whole workspace
+      // when the optional ~10 MB package is not installed.
+      const spec = "@mlightcad/" + "libredwg-web";
+      const mod = (await import(/* webpackIgnore: true */ spec)) as {
+        LibreDwg: { create: (dir: string) => LibreDwgModule };
+      };
+      return mod.LibreDwg.create(WASM_DIR);
     })();
   }
 

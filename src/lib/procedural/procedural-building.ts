@@ -11,6 +11,7 @@ import {
   generateBeams,
   generateRoof,
   generateRoofFurniture,
+  generateRoofPergola,
 } from "./structure-generator";
 import {
   SHOWCASE_EQUIPMENT_SCENARIO,
@@ -104,6 +105,12 @@ export class ProceduralBuilding {
     if (roofFurniture) {
       roofFurniture.name = "roof-furniture";
       group.add(roofFurniture);
+    }
+
+    const roofPergola = generateRoofPergola(this.recipe);
+    if (roofPergola) {
+      roofPergola.name = "roof-pergola";
+      group.add(roofPergola);
     }
 
     this.group = group;

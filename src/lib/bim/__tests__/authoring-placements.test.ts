@@ -60,6 +60,9 @@ describe("planAuthoringInstances", () => {
       expect.arrayContaining(["mep:chiller", "mep:boiler", "mep:dhw", "mep:ahu"])
     );
     expect(poses.every((p) => p.url.endsWith(".glb"))).toBe(true);
+    const plant = poses.find((p) => p.id === "mep:chiller");
+    // Finished roof top: last floor 6.7 + flatThickness 0.25
+    expect(plant?.position[1]).toBeCloseTo(6.95, 5);
   });
 
   it("applies a selected door type on the building entry", () => {

@@ -5,6 +5,10 @@ import { generateFacade } from "../facade-generator";
 import { ProceduralBuilding } from "../procedural-building";
 import { generateColumns, generateRoof } from "../structure-generator";
 import type { BuildingRecipe } from "../types";
+import {
+  __injectEquipmentAssetForTest,
+  __resetEquipmentAssetsForTest,
+} from "@/lib/equipment-assets";
 import { StructuralAnalysisLayer } from "@/lib/layers/layer-15-structural";
 import {
   axisAlignedRectangleFitsFootprint,
@@ -148,6 +152,48 @@ describe("procedural geometry fit", () => {
     );
   });
 
+  it("fills the wall with cladding around punched openings", () => {
+    const recipe = makeRecipe({ floors: [makeRecipe().floors[0]], totalHeight: 3 });
+    const facade = generateFacade(recipe, { includeParapet: false });
+    const panels = instancedByType(facade, "solidPanel");
+    // Window replacements alone used to be a handful of bay-sized boxes.
+    // Sill + head + piers make a continuous 외피.
+    expect(panels.count).toBeGreaterThan(8);
+    const tall = Array.from({ length: panels.count }, (_, i) => matrixParts(panels, i))
+      .some((part) => part.scale.y > 0.5 && part.scale.x > 2);
+    expect(tall).toBe(true);
+    facade.traverse((object) => {
+      if (object instanceof THREE.BufferGeometry) object.dispose();
+    });
+  });
+
+  it("hosts balconies on upper-floor vision bays when the asset is loaded", () => {
+    const proto = new THREE.Group();
+    proto.add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.2, 1.4)));
+    __injectEquipmentAssetForTest("balcony-module", proto);
+    const recipe = makeRecipe({
+      facade: { ...makeRecipe().facade, solidPanelChance: 0 },
+    });
+    const facade = generateFacade(recipe);
+    const balconies = facade.getObjectByName("balconies");
+    expect(balconies).toBeDefined();
+    expect(balconies!.children.length).toBeGreaterThan(0);
+    __resetEquipmentAssetsForTest();
+  });
+
+  it("seats parapet cladding on the finished roof top, not inside the slab", () => {
+    const recipe = makeRecipe({ floors: [makeRecipe().floors[0]], totalHeight: 3 });
+    const facade = generateFacade(recipe);
+    const panels = instancedByType(facade, "solidPanel");
+    const roofTop = recipe.totalHeight + recipe.roof.flatThickness;
+    const parapets = Array.from({ length: panels.count }, (_, i) => matrixParts(panels, i))
+      .filter((part) => part.position.y > recipe.totalHeight);
+    expect(parapets.length).toBe(4);
+    for (const part of parapets) {
+      expect(part.position.y - part.scale.y / 2).toBeCloseTo(roofTop, 5);
+    }
+  });
+
   it("renders a single parapet for a multi-section facade", () => {
     const base = makeRecipe();
     const recipe = makeRecipe({
@@ -161,7 +207,7 @@ describe("procedural geometry fit", () => {
     let parapetBars = 0;
 
     group.traverse((object) => {
-      if (!(object instanceof THREE.InstancedMesh) || object.userData.type !== "hMullion") return;
+      if (!(object instanceof THREE.InstancedMesh) || object.userData.type !== "solidPanel") return;
       for (let index = 0; index < object.count; index++) {
         if (matrixParts(object, index).position.y > recipe.totalHeight) parapetBars++;
       }

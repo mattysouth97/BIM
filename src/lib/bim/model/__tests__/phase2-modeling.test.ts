@@ -91,4 +91,28 @@ describe("sketch wall + hosted door", () => {
     expect(validateModel(hosted.model).some((i) => i.code === "UNHOSTED_OPENING")).toBe(false);
     expect(quantifyModel(hosted.model).some((r) => r.category === "Doors" && r.count >= 1)).toBe(true);
   });
+
+  it("hosts a rebuilt LOD3 window on the sill, not the floor", () => {
+    const base = model();
+    const wall = createWall({
+      model: base,
+      typeId: "wall-basic-generic-200",
+      buildingPk: "pk",
+      levelId: "level:1",
+      start: { x: -4, z: 0 },
+      end: { x: 4, z: 0 },
+      heightM: 4,
+    });
+    const hosted = hostOnNearestWall({
+      model: wall.model,
+      typeId: "window-double-hung-900x1500",
+      buildingPk: "pk",
+      levelId: "level:1",
+      point: { x: 0, z: 0.1 },
+      y: 0,
+    });
+    const win = hosted.model.elements.find((e) => e.origin === "authored" && e.kind === "window");
+    expect(win?.hostId).toBeTruthy();
+    expect(win?.placement.y).toBeCloseTo(0.9, 5);
+  });
 });

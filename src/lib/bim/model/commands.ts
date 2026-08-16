@@ -9,6 +9,7 @@ import { typeFromAuthoringFamily } from "./parameters";
 import { wallAxis, rectangleFromCorners, type Xz } from "./geometry";
 import { nearestWall } from "./snap";
 import { familySemantics } from "../family-semantics";
+import { hostedInsertY } from "../family-insert";
 import type {
   BimDocumentItem,
   BimElement,
@@ -40,11 +41,26 @@ export function setInstanceParameter(
   name: string,
   value: BimParamValue,
 ): CommandResult {
-  const elements = model.elements.map((el) =>
-    el.id === elementId
-      ? { ...el, instanceParameters: { ...el.instanceParameters, [name]: value }, mark: name === "mark" ? String(value) : el.mark }
-      : el,
-  );
+  const elements = model.elements.map((el) => {
+    if (el.id !== elementId) return el;
+    const instanceParameters = { ...el.instanceParameters, [name]: value };
+    const mark = name === "mark" ? String(value) : el.mark;
+    let placement = el.placement;
+    if (name === "sillHeightMm" || name === "baseOffsetMm") {
+      const level = model.levels.find((l) => l.id === el.levelId);
+      placement = {
+        ...el.placement,
+        y: hostedInsertY({
+          typeId: el.typeId,
+          kind: el.kind,
+          levelElevation: level?.elevation ?? el.placement.y,
+          sillHeightMm: Number(instanceParameters.sillHeightMm ?? 0),
+          baseOffsetMm: Number(instanceParameters.baseOffsetMm ?? 0),
+        }),
+      };
+    }
+    return { ...el, instanceParameters, mark, placement };
+  });
   return {
     model: { ...model, elements },
     effects: [{ kind: "schedule-dirty" }],
@@ -300,13 +316,24 @@ export function hostOnNearestWall(input: {
   const heading = host
     ? Number(host.placement.rotationY)
     : 0;
+  const family = getAuthoringFamily(input.typeId);
+  const type = input.model.types[input.typeId] ?? (family ? typeFromAuthoringFamily(family) : undefined);
+  const kind = type ? kindFromCategory(type.category) : "window";
+  const level = input.model.levels.find((l) => l.id === (input.levelId ?? host?.levelId));
+  const y = hostedInsertY({
+    typeId: input.typeId,
+    kind,
+    levelElevation: level?.elevation ?? input.y,
+    sillHeightMm: kind === "window" ? 900 : 0,
+    baseOffsetMm: 0,
+  });
   return placeInstance({
     model: input.model,
     typeId: input.typeId,
     buildingPk: input.buildingPk,
     levelId: input.levelId ?? host?.levelId ?? null,
     hostId: host?.id ?? null,
-    placement: { x: point.x, y: input.y, z: point.z, rotationY: heading },
+    placement: { x: point.x, y, z: point.z, rotationY: heading },
   });
 }
 

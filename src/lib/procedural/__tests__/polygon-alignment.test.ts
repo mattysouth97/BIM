@@ -100,11 +100,14 @@ describe("generateRoof with a footprint polygon", () => {
     mesh.geometry.computeBoundingBox();
     const bb = mesh.geometry.boundingBox!;
 
-    // Roof spans the ring bounds in plan…
-    expect(bb.min.x).toBeCloseTo(-10, 3);
-    expect(bb.max.x).toBeCloseTo(10, 3);
-    expect(bb.min.z).toBeCloseTo(-8, 3);
-    expect(bb.max.z).toBeCloseTo(8, 3);
+    // Roof follows the ring, pulled back by wallThickness/2 so the deck
+    // sits on the inner face of the parapet instead of overlapping it.
+    expect(bb.min.x).toBeGreaterThan(-10);
+    expect(bb.min.x).toBeLessThan(-9.85);
+    expect(bb.max.x).toBeLessThan(10);
+    expect(bb.max.x).toBeGreaterThan(9.85);
+    expect(bb.min.z).toBeGreaterThan(-8);
+    expect(bb.max.z).toBeLessThan(8);
     // …sits on top of the building (baseY encodes the height)…
     expect(bb.min.y).toBeCloseTo(9.0, 3);
     expect(bb.max.y).toBeCloseTo(9.15, 3);
@@ -137,8 +140,8 @@ describe("generateRoof with a footprint polygon", () => {
     const mesh = generateRoof(makeRecipe(false));
     mesh.geometry.computeBoundingBox();
     const bb = mesh.geometry.boundingBox!;
-    expect(bb.max.x - bb.min.x).toBeCloseTo(20, 3);
-    expect(bb.max.z - bb.min.z).toBeCloseTo(16, 3);
+    expect(bb.max.x - bb.min.x).toBeCloseTo(19.8, 3);
+    expect(bb.max.z - bb.min.z).toBeCloseTo(15.8, 3);
     expect(mesh.position.y).toBeCloseTo(9.0 + 0.15 / 2, 5);
   });
 });

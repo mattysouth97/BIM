@@ -83,7 +83,12 @@ export type EquipmentAssetId =
   | "ev-charger"
   | "exhaust-fan"
   | "fire-pump"
-  | "emergency-generator";
+  | "emergency-generator"
+  // Architectural envelope kit (Blender MCP, 2026-08-17)
+  | "facade-cladding"
+  | "parapet-cap"
+  | "balcony-module"
+  | "roof-pergola";
 
 export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "chiller",
@@ -140,6 +145,10 @@ export const EQUIPMENT_ASSET_IDS: EquipmentAssetId[] = [
   "exhaust-fan",
   "fire-pump",
   "emergency-generator",
+  "facade-cladding",
+  "parapet-cap",
+  "balcony-module",
+  "roof-pergola",
 ];
 
 const ASSET_BASE_PATH = "/models/equipment";
@@ -221,6 +230,11 @@ export const ASSET_NATIVE_DIMS: Record<
   "exhaust-fan": { w: 0.84, h: 0.6, d: 0.84 }, // base origin
   "fire-pump": { w: 1.55, h: 0.78, d: 0.62 }, // base origin
   "emergency-generator": { w: 2.15, h: 1.14, d: 0.95 }, // base origin
+  // Envelope kit — three.js axes after glTF Y-up (w=X, h=Y, d=Z).
+  "facade-cladding": { w: 1, h: 1, d: 1 }, // unit-normalized, raised face +Z
+  "parapet-cap": { w: 1.0, h: 0.07, d: 0.38 }, // base origin, 1 m module
+  "balcony-module": { w: 2.4, h: 1.2, d: 1.4 }, // wall-face origin, slab top
+  "roof-pergola": { w: 5.4, h: 2.4, d: 3.2 }, // base origin
 };
 
 interface CachedAsset {

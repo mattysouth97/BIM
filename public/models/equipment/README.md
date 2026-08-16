@@ -122,6 +122,19 @@ These ids are **new** — they do not replace any existing GLB.
 | Fire pump | fire-pump.glb | 1.55×0.78×0.62 | base | layer-13-safety `safety-fire-pump` (ground plant, detailed-only) |
 | Emergency generator | emergency-generator.glb | 2.15×1.14×0.95 | base | layer-14-microgrid `microgrid-generator` (roof plant band, detailed-only) |
 
+## Architectural envelope kit (2026-08-17)
+
+Authored in the live Blender MCP session (`scripts/blender/envelope_assets.py`).
+These are the 외피 pieces — cladding, coping, hosted balcony, roof terrace —
+so the twin reads as a finished building skin, not an exposed frame.
+
+| Asset | File | Native dims (W×H×D m) | Origin | Consumer |
+|---|---|---|---|---|
+| Cladding tile | facade-cladding.glb | unit 1×1×1, raised face +Z | centre | facade-generator solid panels |
+| Parapet coping | parapet-cap.glb | 1.00 × 0.07 × 0.38 | base | facade-generator parapet cap (instanced) |
+| Balcony + glass rail | balcony-module.glb | 2.40 × 1.20 × 1.40 | wall face, slab top | facade-generator `balconies` |
+| Roof pergola | roof-pergola.glb | 5.40 × 2.40 × 3.20 | base | structure-generator `generateRoofPergola` |
+
 Notes:
 - Instanced consumers require single-mesh/single-material assets (1 draw call).
 - Slabs/floors intentionally stay parametric: fixed GLBs cannot adapt to

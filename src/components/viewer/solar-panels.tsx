@@ -8,6 +8,10 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
+import {
+  finishedRoofTopY,
+  tiltedBoxClearance,
+} from "@/lib/procedural/roof-surface";
 
 const PANEL_W = 1.7; // m, landscape module width
 const PANEL_D = 1.1; // m, module depth
@@ -23,14 +27,12 @@ export function SolarPanels({ recipe }: { recipe: BuildingRecipe }) {
     const above = recipe.floors.filter((f) => f.type === "above");
     if (above.length === 0) return null;
 
-    const topY = Math.max(...above.map((f) => f.y + f.height));
-    // Clear pitched roofs; sit just above a flat roof's parapet.
-    const roofType = recipe.roof?.type ?? "flat";
-    const roofClearance =
-      roofType === "flat"
-        ? (recipe.roof?.flatThickness ?? 0.3) + 0.15
-        : (recipe.roof?.gableHeight ?? 2) + 0.25;
-    const y = topY + roofClearance;
+    // Sit on the finished roof top, then lift by the tilted-module sag so
+    // the trailing edge does not cut through the slab / ridge.
+    const y =
+      finishedRoofTopY(recipe) +
+      tiltedBoxClearance(PANEL_D / 2, PANEL_T / 2, TILT_RAD) +
+      0.04;
 
     const usableW = recipe.footprintWidth - 2 * ROOF_MARGIN;
     const usableD = recipe.footprintDepth - 2 * ROOF_MARGIN;

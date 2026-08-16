@@ -3,14 +3,18 @@
 // Pure Three.js, no React.
 
 import * as THREE from "three";
-import type { BuildingRecipe, FacadeConfig } from "./types";
+import type { BuildingRecipe, FacadeConfig, FloorSpec } from "./types";
 import type { PBRMaterialConfig } from "@/lib/pbr-materials";
-import { getEquipmentGeometryClone } from "@/lib/equipment-assets";
+import {
+  getEquipmentGeometryClone,
+  getEquipmentObjectClone,
+} from "@/lib/equipment-assets";
 import { pointInRing } from "@/lib/gis/ring-utils";
 import {
   SHOWCASE_EQUIPMENT_SCENARIO,
   type EquipmentScenario,
 } from "@/lib/layers/equipment-scenario";
+import { finishedRoofTopY } from "./roof-surface";
 
 /** Extra depth (m) an externally-insulated solid panel adds to the wall. */
 const WALL_INSULATION_DEPTH = 0.08;
@@ -167,6 +171,97 @@ function seededRandom(floorNo: number, colIndex: number, faceIndex: number): num
   return ((seed * 16807) % 2147483647) / 2147483647;
 }
 
+interface WindowLayout {
+  adjustedCols: number;
+  startX: number;
+  winH: number;
+  sillH: number;
+}
+
+function windowLayoutForFace(
+  face: FaceDesc,
+  floor: FloorSpec,
+  facade: FacadeConfig,
+  slabThickness: number,
+  faceIndex: number,
+  faceCount: number,
+): WindowLayout {
+  const cols = countWindowColumns(face.length, facade);
+  const sideRatio = (face.side === "left" || face.side === "right") ? 0.6 : 1.0;
+  const adjustedCols = Math.max(0, Math.round(cols * sideRatio));
+  const clearHeight = floor.height - slabThickness;
+  const sillH = Math.max(0.15, Math.min(facade.sillHeight, Math.max(0.15, clearHeight - 0.4)));
+  const winH = Math.min(facade.windowHeight, Math.max(0.4, clearHeight - sillH - 0.15));
+  const totalSpan = adjustedCols > 0
+    ? adjustedCols * facade.windowWidth + (adjustedCols - 1) * (facade.windowSpacing - facade.windowWidth)
+    : 0;
+  const startX = -totalSpan / 2 + facade.windowWidth / 2;
+  void faceIndex;
+  void faceCount;
+  return { adjustedCols, startX, winH, sillH };
+}
+
+/**
+ * Continuous cladding that fills the wall around punched openings.
+ * Sill/head bands hide the slab and beam line; piers hide the columns.
+ * Without this the envelope is only glass + rails and the structure reads
+ * as the outer skin.
+ */
+function claddingSlotsForFace(
+  face: FaceDesc,
+  floor: FloorSpec,
+  facade: FacadeConfig,
+  slabThickness: number,
+  layout: WindowLayout,
+): { x: number; y: number; sx: number; sy: number }[] {
+  const slots: { x: number; y: number; sx: number; sy: number }[] = [];
+  const barWidth = face.length - 2 * facade.cornerInset;
+  if (barWidth < 0.08) return slots;
+
+  const wallBaseY = floor.y + slabThickness;
+  const floorTop = floor.y + floor.height;
+  const { adjustedCols, startX, winH, sillH } = layout;
+
+  if (adjustedCols === 0) {
+    const h = floor.height;
+    if (h > 0.08) slots.push({ x: 0, y: floor.y + h / 2, sx: barWidth, sy: h });
+    return slots;
+  }
+
+  const windowBottom = wallBaseY + sillH;
+  const windowTop = windowBottom + winH;
+  const sillBandH = windowBottom - floor.y;
+  const headH = floorTop - windowTop;
+
+  if (sillBandH > 0.08) {
+    slots.push({ x: 0, y: floor.y + sillBandH / 2, sx: barWidth, sy: sillBandH });
+  }
+  if (headH > 0.08) {
+    slots.push({ x: 0, y: windowTop + headH / 2, sx: barWidth, sy: headH });
+  }
+
+  const leftEdge = -face.length / 2 + facade.cornerInset;
+  const rightEdge = face.length / 2 - facade.cornerInset;
+  const xs: number[] = [leftEdge];
+  for (let c = 0; c < adjustedCols; c++) {
+    const cx = adjustedCols === 1 ? 0 : startX + c * facade.windowSpacing;
+    xs.push(cx - facade.windowWidth / 2, cx + facade.windowWidth / 2);
+  }
+  xs.push(rightEdge);
+  for (let i = 0; i + 1 < xs.length; i += 2) {
+    const w = xs[i + 1] - xs[i];
+    if (w > 0.08) {
+      slots.push({
+        x: (xs[i] + xs[i + 1]) / 2,
+        y: windowBottom + winH / 2,
+        sx: w,
+        sy: winH,
+      });
+    }
+  }
+  return slots;
+}
+
 /**
  * Detect curtain wall mode: enabled when recipe has curtainWall config
  * and window ratio exceeds 0.65. Adjusts facade parameters in-place for
@@ -256,17 +351,17 @@ export function generateFacade(
   let vMullionCount = 0;
 
   for (const floor of aboveFloors) {
-    for (const face of faces) {
-      const cols = countWindowColumns(face.length, facade);
-      const sideRatio = (face.side === "left" || face.side === "right") ? 0.6 : 1.0;
-      const adjustedCols = Math.max(0, Math.round(cols * sideRatio));
+    for (let fi = 0; fi < faces.length; fi++) {
+      const face = faces[fi];
+      const layout = windowLayoutForFace(face, floor, facade, slab.thickness, fi, faces.length);
+      solidCount += claddingSlotsForFace(face, floor, facade, slab.thickness, layout).length;
 
-      for (let c = 0; c < adjustedCols; c++) {
-        const isCenterDoor = floor.isGroundFloor && face.side === "front" && adjustedCols > 2
-          && c >= Math.floor(adjustedCols / 2) - 1 && c <= Math.floor(adjustedCols / 2);
+      for (let c = 0; c < layout.adjustedCols; c++) {
+        const isCenterDoor = floor.isGroundFloor && face.side === "front" && layout.adjustedCols > 2
+          && c >= Math.floor(layout.adjustedCols / 2) - 1 && c <= Math.floor(layout.adjustedCols / 2);
         if (isCenterDoor) {
           solidCount++;
-        } else if (seededRandom(floor.floorNo, c, faces.indexOf(face)) < facade.solidPanelChance) {
+        } else if (seededRandom(floor.floorNo, c, fi) < facade.solidPanelChance) {
           solidCount++;
         } else {
           glassCount++;
@@ -275,11 +370,12 @@ export function generateFacade(
       // Horizontal mullions: at slab line + at top of wall for this floor
       hMullionCount += 2;
       // Vertical mullions: at each window column edge (left + right) = adjustedCols + 1 total bars
-      vMullionCount += adjustedCols + 1;
+      vMullionCount += layout.adjustedCols + 1;
     }
   }
   const includeParapet = options.includeParapet ?? recipe.roof.type === "flat";
-  if (includeParapet) hMullionCount += faces.length;
+  // Parapet is cladding (solid panels sitting on the roof), not a mullion rail.
+  if (includeParapet) solidCount += faces.length;
 
   // --- Create InstancedMesh objects ---
   const glassGeo = new THREE.PlaneGeometry(1, 1);
@@ -303,8 +399,9 @@ export function generateFacade(
   // never worse than the pre-retrofit look just because one GLB dropped out.
   const solidGeo =
     getEquipmentGeometryClone(
-      scenario.wallInsulation ? "facade-panel-insulated" : "facade-panel",
+      scenario.wallInsulation ? "facade-panel-insulated" : "facade-cladding",
     ) ??
+    getEquipmentGeometryClone("facade-cladding") ??
     getEquipmentGeometryClone("facade-panel") ??
     new THREE.BoxGeometry(1, 1, 1);
   const solidMat = pbrToMaterial(recipe.materials.wall);
@@ -366,20 +463,20 @@ export function generateFacade(
 
     for (let fi = 0; fi < faces.length; fi++) {
       const face = faces[fi];
-      const cols = countWindowColumns(face.length, facade);
-      const sideRatio = (face.side === "left" || face.side === "right") ? 0.6 : 1.0;
-      const adjustedCols = Math.max(0, Math.round(cols * sideRatio));
+      const layout = windowLayoutForFace(face, floor, facade, slab.thickness, fi, faces.length);
+      const { adjustedCols, startX, winH, sillH } = layout;
 
-      // Window column positions (local X, centered)
-      const totalSpan = adjustedCols > 0
-        ? adjustedCols * facade.windowWidth + (adjustedCols - 1) * (facade.windowSpacing - facade.windowWidth)
-        : 0;
-      const startX = -totalSpan / 2 + facade.windowWidth / 2;
+      for (const slot of claddingSlotsForFace(face, floor, facade, slab.thickness, layout)) {
+        pos.set(slot.x, slot.y, 0);
+        pos.applyQuaternion(face.quaternion).add(face.position);
+        scl.set(slot.sx, slot.sy, solidPanelDepth);
+        mat4.compose(pos, face.quaternion, scl);
+        solidIM.setMatrixAt(si++, mat4);
+      }
 
       for (let c = 0; c < adjustedCols; c++) {
         const localX = adjustedCols === 1 ? 0 : startX + c * facade.windowSpacing;
-        const localY = facade.sillHeight + facade.windowHeight / 2;
-        const winH = Math.min(facade.windowHeight, clearHeight - facade.sillHeight - 0.2);
+        const localY = sillH + winH / 2;
 
         const isCenterDoor = floor.isGroundFloor && face.side === "front" && adjustedCols > 2
           && c >= Math.floor(adjustedCols / 2) - 1 && c <= Math.floor(adjustedCols / 2);
@@ -447,17 +544,17 @@ export function generateFacade(
   }
 
   if (includeParapet) {
-    const parapetBaseY =
-      options.parapetBaseY ??
-      recipe.totalHeight + (recipe.roof.type === "flat" ? recipe.roof.flatThickness : 0);
+    const parapetBaseY = options.parapetBaseY ?? finishedRoofTopY(recipe);
     for (const face of faces) {
       const barWidth = face.length - 2 * facade.cornerInset;
       if (barWidth <= 0) continue;
-      pos.set(0, parapetBaseY + facade.parapetHeight / 2, wallThickness / 2 + facade.mullionDepth / 2);
+      // Continue the wall cladding above the roof deck — same centerline as
+      // the storey panels, so the parapet does not sit in the roof volume.
+      pos.set(0, parapetBaseY + facade.parapetHeight / 2, 0);
       pos.applyQuaternion(face.quaternion).add(face.position);
-      scl.set(barWidth, facade.parapetHeight, facade.mullionDepth);
+      scl.set(barWidth, facade.parapetHeight, solidPanelDepth);
       mat4.compose(pos, face.quaternion, scl);
-      hIM.setMatrixAt(hi++, mat4);
+      solidIM.setMatrixAt(si++, mat4);
     }
   }
 
@@ -473,5 +570,83 @@ export function generateFacade(
 
   const group = new THREE.Group();
   group.add(glassIM, solidIM, hIM, vIM);
+
+  // Parapet coping — 1 m Blender modules tiled along each face, sitting on
+  // the cladding (not inside the roof slab).
+  if (includeParapet) {
+    const capGeo = getEquipmentGeometryClone("parapet-cap");
+    if (capGeo) {
+      const parapetBaseY = options.parapetBaseY ?? finishedRoofTopY(recipe);
+      const capY = parapetBaseY + facade.parapetHeight;
+      let capSlots = 0;
+      for (const face of faces) {
+        const barWidth = face.length - 2 * facade.cornerInset;
+        if (barWidth > 0.3) capSlots += Math.max(1, Math.ceil(barWidth));
+      }
+      const capIM = new THREE.InstancedMesh(
+        capGeo,
+        pbrToMaterial(recipe.materials.roof),
+        Math.max(1, capSlots),
+      );
+      capIM.castShadow = true;
+      capIM.receiveShadow = true;
+      capIM.userData = { type: "parapetCap" };
+      let ci = 0;
+      for (const face of faces) {
+        const barWidth = face.length - 2 * facade.cornerInset;
+        if (barWidth <= 0.3) continue;
+        const n = Math.max(1, Math.ceil(barWidth));
+        const piece = barWidth / n;
+        const start = -barWidth / 2 + piece / 2;
+        for (let k = 0; k < n; k++) {
+          pos.set(start + k * piece, capY, 0);
+          pos.applyQuaternion(face.quaternion).add(face.position);
+          scl.set(piece, 1, 1);
+          mat4.compose(pos, face.quaternion, scl);
+          capIM.setMatrixAt(ci++, mat4);
+        }
+      }
+      capIM.count = ci;
+      capIM.instanceMatrix.needsUpdate = true;
+      group.add(capIM);
+    }
+  }
+
+  // Hosted balconies — glass rail matching the Revit 외피 reference.
+  // Skip the ground floor and solid/door bays; every other vision bay on
+  // the long faces so the skin reads as architecture, not a frame.
+  if (getEquipmentObjectClone("balcony-module")) {
+    const balconyGroup = new THREE.Group();
+    balconyGroup.name = "balconies";
+    const outward = wallThickness / 2 + 0.02;
+    for (const floor of aboveFloors) {
+      if (floor.isGroundFloor) continue;
+      for (let fi = 0; fi < faces.length; fi++) {
+        const face = faces[fi];
+        if (face.side !== "front" && face.side !== "back") continue;
+        const layout = windowLayoutForFace(face, floor, facade, slab.thickness, fi, faces.length);
+        for (let c = 0; c < layout.adjustedCols; c++) {
+          if (c % 2 !== 0) continue;
+          const isCenterDoor = false;
+          const isSolid =
+            isCenterDoor ||
+            seededRandom(floor.floorNo, c, fi) < facade.solidPanelChance;
+          if (isSolid) continue;
+          const localX =
+            layout.adjustedCols === 1 ? 0 : layout.startX + c * facade.windowSpacing;
+          const inst = getEquipmentObjectClone("balcony-module");
+          if (!inst) continue;
+          pos.set(localX, floor.y + slab.thickness, outward);
+          pos.applyQuaternion(face.quaternion).add(face.position);
+          inst.position.copy(pos);
+          inst.quaternion.copy(face.quaternion);
+          inst.userData = { type: "balcony" };
+          balconyGroup.add(inst);
+        }
+      }
+    }
+    if (balconyGroup.children.length > 0) group.add(balconyGroup);
+  }
+
   return group;
 }

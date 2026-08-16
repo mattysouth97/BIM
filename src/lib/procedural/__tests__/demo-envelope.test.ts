@@ -65,6 +65,9 @@ function collectOffenders(group: THREE.Group): Offender[] {
     }
     const pathStr = path.join(" < ");
 
+    if (o.userData?.type === "balcony" || o.userData?.type === "roofPergola") {
+      return;
+    }
     if ((o as THREE.InstancedMesh).isInstancedMesh) {
       const im = o as THREE.InstancedMesh;
       for (let i = 0; i < im.count; i++) {

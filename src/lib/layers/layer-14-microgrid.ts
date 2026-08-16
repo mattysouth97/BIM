@@ -4,6 +4,10 @@
 
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
+import {
+  MICROGRID_PV_TILT,
+  rooftopPvSeatY,
+} from "@/lib/procedural/roof-surface";
 import type { LayerGenerator } from "./types";
 import { computeCoreLayout } from "./core-layout";
 import {
@@ -161,6 +165,7 @@ export class MicrogridLayer implements LayerGenerator {
       Math.floor(availableD / (pvPanelDepth + pvSpacing))
     );
     const pvCount = pvColsX * pvColsZ;
+    const pvSeat = rooftopPvSeatY(recipe);
 
     // Detailed PV module Blender asset (authored 1.6×1.0, centre origin — the
     // same footprint as the coarse box) or plain-box fallback.
@@ -179,7 +184,7 @@ export class MicrogridLayer implements LayerGenerator {
     // Tilt quaternion: ~15 degrees toward south (Z+)
     const pvTiltQuat = new THREE.Quaternion().setFromAxisAngle(
       new THREE.Vector3(1, 0, 0),
-      -0.26 // ~15 degrees
+      -MICROGRID_PV_TILT,
     );
 
     let pvIdx = 0;
@@ -197,7 +202,7 @@ export class MicrogridLayer implements LayerGenerator {
           cz * (pvPanelDepth + pvSpacing);
         // Rear roof band is reserved for plant (hoists, chiller, ASHP row)
         if (z < layout.roofPlantBandMaxZ) continue;
-        pos.set(x, totalHeight + 0.15, z);
+        pos.set(x, pvSeat.panelY, z);
         mat4.compose(pos, pvTiltQuat, scl);
         pvIM.setMatrixAt(pvIdx++, mat4);
       }
@@ -241,7 +246,7 @@ export class MicrogridLayer implements LayerGenerator {
           cz * (pvPanelDepth + pvSpacing);
         // Same rear plant-band skip as the panel loop above
         if (z < layout.roofPlantBandMaxZ) continue;
-        pos.set(x, totalHeight + 0.14, z);
+        pos.set(x, pvSeat.rackY, z);
         mat4.compose(pos, pvTiltQuat, scl);
         pvFrameIM.setMatrixAt(pvIdx++, mat4);
       }

@@ -6,7 +6,8 @@ import * as THREE from "three";
 import type { BuildingRecipe, FloorSpec } from "./types";
 import type { PBRMaterialConfig } from "@/lib/pbr-materials";
 import { extrudePolygon } from "@/lib/gis/earcut-extrude";
-import { pointInRing } from "@/lib/gis/ring-utils";
+import { insetRing, pointInRing } from "@/lib/gis/ring-utils";
+import { finishedRoofTopY } from "./roof-surface";
 import {
   getEquipmentGeometryClone,
   getEquipmentObjectClone,
@@ -348,6 +349,41 @@ export function generateRoofFurniture(recipe: BuildingRecipe): THREE.Group | nul
 }
 
 /**
+ * Roof-terrace timber pergola — the architectural 외피 finish on a flat roof.
+ * Base-origin asset sits on the finished roof top, opposite the plant band.
+ */
+export function generateRoofPergola(recipe: BuildingRecipe): THREE.Group | null {
+  const { roof, footprintWidth, footprintDepth, footprintPolygon } = recipe;
+  if (roof.type !== "flat") return null;
+  if (Math.min(footprintWidth, footprintDepth) < 12) return null;
+
+  const pergola = getEquipmentObjectClone("roof-pergola");
+  if (!pergola) return null;
+
+  const roofTopY = finishedRoofTopY(recipe);
+  // Sit in the rear plant keep-out (PV skips z below roofPlantBandMaxZ)
+  // so the canopy does not land in the solar field.
+  const x = -Math.min(footprintWidth / 2 - 3.0, footprintWidth * 0.22);
+  const z = Math.max(-(footprintDepth / 2 - 2.2), -footprintDepth * 0.28);
+
+  if (
+    footprintPolygon &&
+    footprintPolygon.length >= 1 &&
+    footprintPolygon[0].length >= 3 &&
+    !pointInRing(x, z, footprintPolygon[0])
+  ) {
+    return null;
+  }
+  pergola.position.set(x, roofTopY, z);
+  tagEquipmentObject(
+    pergola,
+    { type: "roofPergola" },
+    { castShadow: true, receiveShadow: true },
+  );
+  return pergola;
+}
+
+/**
  * Generate hip roof geometry — four-sided sloped roof converging to a ridge.
  */
 function generateHipGeometry(
@@ -480,8 +516,11 @@ function isAxisAlignedRectangle(rings?: [number, number][][]): boolean {
 }
 
 export function generateRoof(recipe: BuildingRecipe): THREE.Mesh {
-  const { roof, footprintWidth, footprintDepth, totalHeight, footprintPolygon } = recipe;
+  const { roof, footprintWidth, footprintDepth, totalHeight, footprintPolygon, wallThickness } = recipe;
   const mat = pbrToMaterial(recipe.materials.roof);
+  // Pull the deck back to the inner face of the wall so it does not occupy
+  // the same volume as the parapet cladding.
+  const deckInset = Math.max(0, wallThickness / 2);
 
   // POLYGON PATH: flat roofs follow the real outline exactly like the slabs —
   // a bbox rectangle would cantilever over concave regions (L-notches) and
@@ -492,7 +531,11 @@ export function generateRoof(recipe: BuildingRecipe): THREE.Mesh {
     footprintPolygon.length >= 1 &&
     footprintPolygon[0].length >= 3
   ) {
-    const geo = extrudePolygon(footprintPolygon, roof.flatThickness, totalHeight);
+    const inset = [
+      insetRing(footprintPolygon[0], deckInset),
+      ...footprintPolygon.slice(1),
+    ];
+    const geo = extrudePolygon(inset, roof.flatThickness, totalHeight);
     const mesh = new THREE.Mesh(geo, mat);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -511,7 +554,11 @@ export function generateRoof(recipe: BuildingRecipe): THREE.Mesh {
     // Bounding-box roofs cross concave footprints and courtyard voids. Keep
     // the exact footprint; irregular pitched roofs use a collision-free flat
     // cap until a polygon-aware pitch solver is available.
-    geo = extrudePolygon(recipe.footprintPolygon!, roof.flatThickness, 0);
+    const inset = [
+      insetRing(recipe.footprintPolygon![0], deckInset),
+      ...recipe.footprintPolygon!.slice(1),
+    ];
+    geo = extrudePolygon(inset, roof.flatThickness, 0);
     y = totalHeight;
     effectiveRoofType = "flat";
   } else if (roof.type === "gable") {
@@ -537,7 +584,11 @@ export function generateRoof(recipe: BuildingRecipe): THREE.Mesh {
     geo = generateHipGeometry(footprintWidth, footprintDepth, roof.gableHeight, roof.hipInset);
     y = totalHeight;
   } else {
-    geo = new THREE.BoxGeometry(footprintWidth, roof.flatThickness, footprintDepth);
+    geo = new THREE.BoxGeometry(
+      Math.max(1, footprintWidth - wallThickness),
+      roof.flatThickness,
+      Math.max(1, footprintDepth - wallThickness),
+    );
     y = totalHeight + roof.flatThickness / 2;
   }
 

@@ -306,6 +306,32 @@ def torus(col, mat, name, R, r, x=0, y=0, z=0, axis="Z", major=24, minor=8):
     return _new_mesh_obj(name, bm, col, mat, (x, y, z))
 
 
+def tube(col, mat, name, r_out, r_in, depth, x=0, y=0, z=0, axis="Z", verts=16):
+    """Closed annular cylinder — hollow pipe / column wall."""
+    bm = bmesh.new()
+    h = depth / 2.0
+    out_b, in_b, out_t, in_t = [], [], [], []
+    for i in range(verts):
+        a = 2.0 * math.pi * i / verts
+        ca, sa = math.cos(a), math.sin(a)
+        out_b.append(bm.verts.new((r_out * ca, r_out * sa, -h)))
+        in_b.append(bm.verts.new((r_in * ca, r_in * sa, -h)))
+        out_t.append(bm.verts.new((r_out * ca, r_out * sa, h)))
+        in_t.append(bm.verts.new((r_in * ca, r_in * sa, h)))
+    bm.verts.ensure_lookup_table()
+    for i in range(verts):
+        j = (i + 1) % verts
+        bm.faces.new((out_b[i], out_b[j], out_t[j], out_t[i]))
+        bm.faces.new((in_b[j], in_b[i], in_t[i], in_t[j]))
+        bm.faces.new((out_b[i], in_b[i], in_b[j], out_b[j]))
+        bm.faces.new((out_t[j], in_t[j], in_t[i], out_t[i]))
+    if axis == "X":
+        bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=Euler((0, math.radians(90), 0)).to_matrix())
+    elif axis == "Y":
+        bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=Euler((math.radians(90), 0, 0)).to_matrix())
+    return _new_mesh_obj(name, bm, col, mat, (x, y, z))
+
+
 def apply_mods(o):
     """Apply modifiers in local space. Do not bake object transforms — that
     recenters walls/doors on the origin and breaks insertion points."""

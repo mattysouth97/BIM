@@ -34,6 +34,67 @@ export function ringBboxCenter(ring: number[][]): [number, number] {
  * Points exactly on an edge may land on either side — callers placing
  * geometry should keep a margin rather than rely on boundary behavior.
  */
+/**
+ * Inset an open or closed ring by `distance` metres toward its interior.
+ * Used so a roof deck sits on the inner face of the wall/parapet instead of
+ * overlapping the cladding. Tight corners use a simple averaged inward
+ * normal — good enough for the 0.1–0.3 m wall half-thickness we pass.
+ */
+export function insetRing(
+  ring: [number, number][],
+  distance: number,
+): [number, number][] {
+  if (distance === 0 || ring.length < 3) return ring.map(([x, z]) => [x, z] as [number, number]);
+
+  const pts: [number, number][] = ring.map(([x, z]) => [x, z]);
+  if (
+    pts.length > 1 &&
+    Math.abs(pts[0][0] - pts[pts.length - 1][0]) < 1e-6 &&
+    Math.abs(pts[0][1] - pts[pts.length - 1][1]) < 1e-6
+  ) {
+    pts.pop();
+  }
+  if (pts.length < 3) return ring.map(([x, z]) => [x, z] as [number, number]);
+
+  let area = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const [x0, z0] = pts[i];
+    const [x1, z1] = pts[(i + 1) % pts.length];
+    area += x0 * z1 - x1 * z0;
+  }
+  // CCW (area > 0): interior is to the left of each edge. Inset = left normal.
+  const sign = area < 0 ? -1 : 1;
+
+  const out: [number, number][] = [];
+  for (let i = 0; i < pts.length; i++) {
+    const prev = pts[(i - 1 + pts.length) % pts.length];
+    const cur = pts[i];
+    const next = pts[(i + 1) % pts.length];
+    const d0x = cur[0] - prev[0];
+    const d0z = cur[1] - prev[1];
+    const d1x = next[0] - cur[0];
+    const d1z = next[1] - cur[1];
+    const l0 = Math.hypot(d0x, d0z);
+    const l1 = Math.hypot(d1x, d1z);
+    const n0x = l0 > 1e-8 ? (-d0z / l0) * sign : 0;
+    const n0z = l0 > 1e-8 ? (d0x / l0) * sign : 0;
+    const n1x = l1 > 1e-8 ? (-d1z / l1) * sign : 0;
+    const n1z = l1 > 1e-8 ? (d1x / l1) * sign : 0;
+    let nx = n0x + n1x;
+    let nz = n0z + n1z;
+    const nl = Math.hypot(nx, nz);
+    if (nl < 1e-8) {
+      nx = n0x;
+      nz = n0z;
+    } else {
+      nx /= nl;
+      nz /= nl;
+    }
+    out.push([cur[0] + nx * distance, cur[1] + nz * distance]);
+  }
+  return out;
+}
+
 export function pointInRing(x: number, y: number, ring: number[][]): boolean {
   let inside = false;
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {

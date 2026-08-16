@@ -2,6 +2,8 @@
 // Origins follow public/models/authoring/README.md (Y-up, metres).
 
 import type { BuildingRecipe } from "@/lib/procedural/types";
+import { finishedRoofTopY } from "@/lib/procedural/roof-surface";
+import { hostedInsertY } from "./family-insert";
 import { AUTHORING_ASSET_MANIFEST } from "./authoring-asset-manifest";
 import {
   authoringFamilyUrl,
@@ -76,7 +78,13 @@ export function planAuthoringInstances(
     }
 
     if (windowUrl && floor.type === "above") {
-      const y = floor.y + recipe.facade.sillHeight + recipe.facade.windowHeight / 2;
+      const windowTypeId = selected?.tool === "window" ? selected.id : "window-fixed-1200x1500";
+      const y = hostedInsertY({
+        typeId: windowTypeId,
+        kind: "window",
+        levelElevation: floor.y,
+        sillHeightMm: recipe.facade.sillHeight * 1000,
+      });
       let count = 0;
       for (
         let x = -w / 2 + recipe.facade.windowSpacing;
@@ -140,7 +148,7 @@ export function planAuthoringInstances(
     );
   }
 
-  const roofY = recipe.totalHeight;
+  const roofY = finishedRoofTopY(recipe);
   const plant: Array<[string, keyof typeof AUTHORING_ASSET_MANIFEST, number, number]> = [
     ["mep:chiller", "family.mep.chiller", w * 0.22, 0],
     ["mep:boiler", "family.mep.boiler", -w * 0.22, 0],

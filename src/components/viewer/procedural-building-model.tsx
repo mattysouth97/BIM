@@ -204,7 +204,9 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
         n === "facade" ||
         n.startsWith("facade-section-") ||
         n === "roof" ||
-        n === "roof-furniture"
+        n === "roof-furniture" ||
+        n === "roof-pergola" ||
+        n === "balconies"
       ) {
         child.visible = layerVisibility["envelope"] ?? true;
       }
