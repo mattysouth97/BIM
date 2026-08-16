@@ -73,23 +73,23 @@ describe("resolveAccuracyPath — explicit precedence routing", () => {
 
   it("IFC beats DXF when both present", () => {
     const result = resolveAccuracyPath([ifcIngested, dxfIngested]);
-    expect(result.source).toBe("ifc");
+    expect(result!.source).toBe("ifc");
   });
 
   it("IFC beats PDF when both present", () => {
     const result = resolveAccuracyPath([pdfIngested, ifcIngested]);
-    expect(result.source).toBe("ifc");
+    expect(result!.source).toBe("ifc");
   });
 
   it("DXF beats PDF when IFC not present", () => {
     const result = resolveAccuracyPath([pdfIngested, dxfIngested]);
-    expect(result.source).toBe("dxf");
+    expect(result!.source).toBe("dxf");
   });
 
   it("single IFC result selected directly", () => {
     const result = resolveAccuracyPath([ifcIngested]);
-    expect(result.source).toBe("ifc");
-    expect(result.confidence).toBe("measured");
+    expect(result!.source).toBe("ifc");
+    expect(result!.confidence).toBe("measured");
   });
 
   it("returns null for empty array (no ingest results → procedural path)", () => {

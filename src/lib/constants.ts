@@ -125,6 +125,7 @@ export const DEMO_BUILDING_PARAMS = {
 export function isDemoParams(params: {
   sigunguCd?: string;
   bjdongCd?: string;
+  [key: string]: unknown;
 }): boolean {
   return (
     params.sigunguCd === DEMO_BUILDING_PARAMS.sigunguCd &&

@@ -114,7 +114,7 @@ function drawWindow(ctx: CanvasRenderingContext2D, x: number, y: number, w: numb
   ctx.fillRect(x + 2, y + 2, w * 0.4, h * 0.3);
 }
 
-function drawRetailWindows(ctx: CanvasRenderingContext2D, canvasW: number, canvasH: number, era: BuildingEra) {
+function drawRetailWindows(ctx: CanvasRenderingContext2D, canvasW: number, canvasH: number, _era: BuildingEra) {
   const margin = 20;
   const doorWidth = 60;
 

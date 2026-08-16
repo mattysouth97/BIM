@@ -183,10 +183,10 @@ function makeMetrics(): EnergyMetrics {
   return {
     heatLoss: {
       elements: [
-        { element: "Walls", area: 80, uValue: 0.36, heatLoss: 1200, heatLossPerSqm: 4 },
-        { element: "Windows", area: 24, uValue: 1.5, heatLoss: 800, heatLossPerSqm: 2.7 },
-        { element: "Roof", area: 300, uValue: 0.25, heatLoss: 500, heatLossPerSqm: 1.67 },
-        { element: "Ground Floor", area: 300, uValue: 0.45, heatLoss: 400, heatLossPerSqm: 1.33 },
+        { element: "Walls", area: 80, uValue: 0.36, hCoefficient: 28.8, deltaT: 41.7, heatLoss: 1200, heatLossPerSqm: 4 },
+        { element: "Windows", area: 24, uValue: 1.5, hCoefficient: 36, deltaT: 22.2, heatLoss: 800, heatLossPerSqm: 2.7 },
+        { element: "Roof", area: 300, uValue: 0.25, hCoefficient: 75, deltaT: 6.67, heatLoss: 500, heatLossPerSqm: 1.67 },
+        { element: "Ground Floor", area: 300, uValue: 0.45, hCoefficient: 135, deltaT: 2.96, heatLoss: 400, heatLossPerSqm: 1.33 },
       ],
       totalHeatLoss: 2900,
       totalHeatLossPerSqm: 9.7,
@@ -201,6 +201,20 @@ function makeMetrics(): EnergyMetrics {
     gradeColor: "#FFA500",
     // P1-05 field — fixture value (kWh/m²·yr primary energy), grade-3 band
     primaryEnergyPerArea: 230,
+    primaryPerSqm: 230,
+    siteTotal: 90000,
+    breakdown: {
+      hvac: 63000,
+      lighting: 12000,
+      dhw: 8000,
+      plugLoads: 7000,
+      total: 90000,
+      perFloor: [45000, 45000],
+      hvacDataSource: "estimated-ratio",
+      lightingDataSource: "estimated-ratio",
+      dhwDataSource: "estimated-ratio",
+      plugLoadsDataSource: "estimated-ratio",
+    },
     co2: {
       totalCO2: 28.95,
       co2PerSqm: 48.25,

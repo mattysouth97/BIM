@@ -16,7 +16,6 @@ interface MaterialPanelProps {
 export function MaterialPanel({ buildingPk, visible, onClose }: MaterialPanelProps) {
   const isKo = useAppStore((s) => s.language) === "ko";
   const properties = useMaterialStore((s) => s.properties[buildingPk]);
-  const selectedElement = useMaterialStore((s) => s.selectedElement);
 
   if (!visible || !properties) return null;
 

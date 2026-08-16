@@ -37,11 +37,6 @@ describe("parseEnergyBillCSV — kepco", () => {
   });
 
   it("handles comma-separated numbers (1,234 → 1234)", () => {
-    const csv = [
-      "사용년월,사용량(kWh),요금(원)",
-      '202305,"1,234","156,000"',
-    ].join("\n");
-
     // CSV with quoted cells — parser splits on comma so test the inline variant
     const csv2 = "사용년월,사용량(kWh),요금(원)\n202305,1234,156000";
     const result = parseEnergyBillCSV(csv2, "kepco");

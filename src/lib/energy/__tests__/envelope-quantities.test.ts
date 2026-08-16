@@ -50,6 +50,8 @@ function recipe(partial: Partial<BuildingRecipe> = {}): BuildingRecipe {
     },
     siteWidth: 30,
     siteDepth: 20,
+    buildingName: "Test",
+    address: "Seoul",
     ...partial,
   };
 }
