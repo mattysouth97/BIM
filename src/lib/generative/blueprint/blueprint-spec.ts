@@ -566,6 +566,35 @@ export const DimensionConstraintSchema = z.object({
 export type DimensionConstraint = z.infer<typeof DimensionConstraintSchema>;
 
 /* ------------------------------------------------------------------ */
+/* Authored families (columns, lights, furniture)                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Point-placed families the user drops on the schematic. These are design
+ * authority — generate compiles them into the BIM graph; the 3D view only
+ * shows the result. The tool set is the point-placed authoring families a
+ * plan can honestly decide; walls, hosted doors and sketches stay as
+ * dedicated schematic tools.
+ */
+export const SchematicPlacementTool = z.enum([
+  "column",
+  "lighting",
+  "furniture",
+]);
+export type SchematicPlacementTool = z.infer<typeof SchematicPlacementTool>;
+
+export const BlueprintPlacementSchema = z.object({
+  id: IdSchema,
+  /** An `AUTHORING_FAMILIES` id, e.g. `column-struct-round-450`. */
+  familyId: z.string().min(1).max(80),
+  tool: SchematicPlacementTool,
+  positionMm: PointMmSchema,
+  rotationRad: RadiansSchema,
+  floorNos: z.array(FloorNoSchema).min(1).max(128),
+});
+export type BlueprintPlacement = z.infer<typeof BlueprintPlacementSchema>;
+
+/* ------------------------------------------------------------------ */
 /* Assumptions + uncertainty                                           */
 /* ------------------------------------------------------------------ */
 
@@ -630,6 +659,11 @@ export const BlueprintSpecSchema = z.object({
   facadeRules: z.array(FacadeRuleSchema).max(128),
   relationships: z.array(DesignRelationshipSchema).max(256),
   dimensions: z.array(DimensionConstraintSchema).max(256),
+  /**
+   * Optional so a schematic drawn before this field existed still parses.
+   * Absent means none were placed. Builders always write an array.
+   */
+  placements: z.array(BlueprintPlacementSchema).max(512).optional(),
 
   assumptions: z.array(BlueprintAssumptionSchema).max(64),
   uncertainty: z.array(InterpretationUncertaintySchema).max(64),
@@ -637,6 +671,11 @@ export const BlueprintSpecSchema = z.object({
 
 export type BlueprintSpec = z.infer<typeof BlueprintSpecSchema>;
 export type BlueprintAssumption = BlueprintSpec["assumptions"][number];
+
+/** Placements on a spec that predates the field, or one that omitted them. */
+export function blueprintPlacements(spec: BlueprintSpec): BlueprintPlacement[] {
+  return spec.placements ?? [];
+}
 
 /* ------------------------------------------------------------------ */
 /* JSON Schema emission (Claude tool contract)                         */

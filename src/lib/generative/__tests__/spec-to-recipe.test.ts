@@ -180,4 +180,12 @@ describe("compileSpecToRecipe", () => {
     const { recipe } = compileSpecToRecipe(spec);
     expect(recipe.address).toBe("");
   });
+
+  it("stamps the solver core onto recipe.serviceCore in metres", async () => {
+    const spec = await specFor("Create a five-story office building.");
+    spec.core.offsetXMm = 4200;
+    spec.core.offsetZMm = -1800;
+    const { recipe } = compileSpecToRecipe(spec);
+    expect(recipe.serviceCore).toEqual({ x: 4.2, z: -1.8 });
+  });
 });

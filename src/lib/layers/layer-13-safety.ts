@@ -4,6 +4,7 @@
 
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
+import { createPlateShape, plateRings, samplePlateGrid } from "./plate";
 import type { LayerGenerator } from "./types";
 import { getBuildingCodeRules } from "./building-code-rules";
 import {
@@ -90,14 +91,15 @@ export class SafetyLayer implements LayerGenerator {
     const quat = new THREE.Quaternion();
     const scl = new THREE.Vector3(1, 1, 1);
 
-    // --- Volumetric fire-zone forcefields: one per floor ---
+    const rings = plateRings(recipe);
     for (let fi = 0; fi < aboveFloors.length; fi++) {
       const floor = aboveFloors[fi];
-      const zoneWidth = footprintWidth * 0.92;
-      const zoneDepth = footprintDepth * 0.92;
       const zoneHeight = floor.height * 0.9;
-
-      const zoneGeo = new THREE.BoxGeometry(zoneWidth, zoneHeight, zoneDepth);
+      const zoneGeo = new THREE.ExtrudeGeometry(createPlateShape(rings), {
+        depth: zoneHeight,
+        bevelEnabled: false,
+      });
+      zoneGeo.rotateX(-Math.PI / 2);
       const zoneMat = new THREE.ShaderMaterial({
         uniforms: {
           uTime: { value: fi * 0.5 }, // Phase offset per floor
@@ -113,7 +115,7 @@ export class SafetyLayer implements LayerGenerator {
       });
 
       const zoneMesh = new THREE.Mesh(zoneGeo, zoneMat);
-      zoneMesh.position.set(0, floor.y + floor.height / 2, 0);
+      zoneMesh.position.set(0, floor.y + floor.height * 0.05, 0);
       zoneMesh.userData = {
         type: "safety-fire-zone",
         animated: true,
@@ -190,9 +192,8 @@ export class SafetyLayer implements LayerGenerator {
     const sprinklersRequired = getBuildingCodeRules(recipe).sprinklersRequired;
     if (sprinklersRequired) {
     const sprinklerSpacing = density >= 0.7 ? 3.0 : 4.5;
-    const colsX = Math.max(1, Math.floor(footprintWidth / sprinklerSpacing));
-    const colsZ = Math.max(1, Math.floor(footprintDepth / sprinklerSpacing));
-    const sprinklersPerFloor = colsX * colsZ;
+    const sprinklerCells = samplePlateGrid(recipe, sprinklerSpacing, sprinklerSpacing * 0.4);
+    const sprinklersPerFloor = Math.max(1, sprinklerCells.length);
     const totalSprinklers = sprinklersPerFloor * aboveFloors.length;
 
     // Sprinkler head: small downward-facing cone + sphere (combined as two IMs)
@@ -228,25 +229,16 @@ export class SafetyLayer implements LayerGenerator {
     let spIdx = 0;
     for (const floor of aboveFloors) {
       const ceilingY = floor.y + floor.height - 0.05;
-      for (let cx = 0; cx < colsX; cx++) {
-        for (let cz = 0; cz < colsZ; cz++) {
-          const x =
-            -halfW + sprinklerSpacing * 0.5 + cx * sprinklerSpacing;
-          const z =
-            -halfD + sprinklerSpacing * 0.5 + cz * sprinklerSpacing;
+      for (const cell of sprinklerCells) {
+        pos.set(cell.x, ceilingY - 0.05, cell.z);
+        mat4.compose(pos, quat, scl);
+        headIM.setMatrixAt(spIdx, mat4);
 
-          // Cone (head)
-          pos.set(x, ceilingY - 0.05, z);
-          mat4.compose(pos, quat, scl);
-          headIM.setMatrixAt(spIdx, mat4);
+        pos.set(cell.x, ceilingY - 0.14, cell.z);
+        mat4.compose(pos, quat, scl);
+        bulbIM.setMatrixAt(spIdx, mat4);
 
-          // Bulb (below cone)
-          pos.set(x, ceilingY - 0.14, z);
-          mat4.compose(pos, quat, scl);
-          bulbIM.setMatrixAt(spIdx, mat4);
-
-          spIdx++;
-        }
+        spIdx++;
       }
     }
     headIM.count = spIdx;

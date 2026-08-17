@@ -20,6 +20,7 @@
 
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
+import { plateRings, pointInPlate } from "./plate";
 import type { LayerGenerator } from "./types";
 import {
   getEquipmentGeometryClone,
@@ -43,6 +44,7 @@ export class ElectricalRoutingLayer implements LayerGenerator {
     group.name = "electrical-routing";
 
     const { floors, footprintWidth, footprintDepth, totalHeight } = recipe;
+    const plate = plateRings(recipe);
     const aboveFloors = floors.filter((f) => f.type === "above");
     if (aboveFloors.length === 0) {
       this.group = group;
@@ -99,29 +101,32 @@ export class ElectricalRoutingLayer implements LayerGenerator {
         );
 
       let ti = 0;
+      const placeTray = (
+        x: number,
+        y: number,
+        z: number,
+        q: THREE.Quaternion,
+        sx: number,
+      ) => {
+        if (ti >= totalModules) return;
+        if (!pointInPlate(x, z, plate)) return;
+        pos.set(x, y, z);
+        scl.set(sx, 1, 1);
+        mat4.compose(pos, q, scl);
+        trayIM.setMatrixAt(ti++, mat4);
+      };
       // Vertical main feeder (full-width modules)
       for (let i = 0; i < riserModules && ti < totalModules; i++) {
-        pos.set(riserX, i + 0.5, PANEL_Z);
-        scl.set(1, 1, 1);
-        mat4.compose(pos, idQuat, scl);
-        trayIM.setMatrixAt(ti++, mat4);
+        placeTray(riserX, i + 0.5, PANEL_Z, idQuat, 1);
       }
       for (const floor of aboveFloors) {
         if (ti >= totalModules) break;
         const trayY = floor.y + floor.height - 0.35;
-        // Primary run along X — 0.8× width
         for (let j = 0; j < mainRunLen && ti < totalModules; j++) {
-          pos.set(-mainRunLen / 2 + j + 0.5, trayY, mainRunZ);
-          scl.set(0.8, 1, 1);
-          mat4.compose(pos, xRunQuat, scl);
-          trayIM.setMatrixAt(ti++, mat4);
+          placeTray(-mainRunLen / 2 + j + 0.5, trayY, mainRunZ, xRunQuat, 0.8);
         }
-        // Secondary run along Z — narrower (0.55×) and slightly lower
         for (let j = 0; j < zRunLen && ti < totalModules; j++) {
-          pos.set(zRunX, trayY - 0.12, -zRunLen / 2 + j + 0.5);
-          scl.set(0.55, 1, 1);
-          mat4.compose(pos, zRunQuat, scl);
-          trayIM.setMatrixAt(ti++, mat4);
+          placeTray(zRunX, trayY - 0.12, -zRunLen / 2 + j + 0.5, zRunQuat, 0.55);
         }
       }
       trayIM.count = ti;

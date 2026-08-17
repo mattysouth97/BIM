@@ -5,6 +5,13 @@
 
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
+import { computeCoreLayout } from "./core-layout";
+import {
+  createPlateShape,
+  plateRings,
+  pointInPlateInset,
+  samplePlateGrid,
+} from "./plate";
 import type { LayerGenerator } from "./types";
 
 /**
@@ -23,12 +30,15 @@ export class ShellLayer implements LayerGenerator {
     const group = new THREE.Group();
     group.name = "layer-1-shell";
 
-    const { floors, footprintWidth, footprintDepth, column, totalHeight } = recipe;
+    const { floors, column, totalHeight } = recipe;
     const aboveFloors = floors.filter((f) => f.type === "above");
     if (aboveFloors.length === 0) {
       this.group = group;
       return group;
     }
+
+    const rings = plateRings(recipe);
+    const plateShape = createPlateShape(rings);
 
     // --- Glass-box shell material ---
     const shellMaterial = new THREE.MeshPhysicalMaterial({
@@ -43,18 +53,9 @@ export class ShellLayer implements LayerGenerator {
     });
     this.disposables.push(shellMaterial);
 
-    // --- Floor slabs via ExtrudeGeometry ---
+    // --- Floor slabs via ExtrudeGeometry of the schematic plate ---
     const slabThickness = recipe.slab.thickness || 0.25;
-    const slabShape = new THREE.Shape();
-    const hw = footprintWidth / 2;
-    const hd = footprintDepth / 2;
-    slabShape.moveTo(-hw, -hd);
-    slabShape.lineTo(hw, -hd);
-    slabShape.lineTo(hw, hd);
-    slabShape.lineTo(-hw, hd);
-    slabShape.closePath();
-
-    const slabGeo = new THREE.ExtrudeGeometry(slabShape, {
+    const slabGeo = new THREE.ExtrudeGeometry(plateShape, {
       depth: slabThickness,
       bevelEnabled: false,
     });
@@ -79,23 +80,13 @@ export class ShellLayer implements LayerGenerator {
       group.add(slab);
     }
 
-    // --- Columns on structural grid (InstancedMesh) ---
+    // --- Columns on structural grid, only on the solid plate ---
     const colSpacing = column.spacing || 6;
     const colSize = column.size || 0.4;
     const colInset = column.inset || 1.0;
-
-    // Calculate column grid positions
-    const colPositions: { x: number; z: number }[] = [];
-    const startX = -hw + colInset;
-    const endX = hw - colInset;
-    const startZ = -hd + colInset;
-    const endZ = hd - colInset;
-
-    for (let x = startX; x <= endX + 0.01; x += colSpacing) {
-      for (let z = startZ; z <= endZ + 0.01; z += colSpacing) {
-        colPositions.push({ x, z });
-      }
-    }
+    const colPositions = samplePlateGrid(recipe, colSpacing, colInset).filter(
+      (p) => pointInPlateInset(p.x, p.z, rings, colSize / 2 + 0.1),
+    );
 
     if (colPositions.length > 0) {
       const colHeight = totalHeight;
@@ -124,9 +115,14 @@ export class ShellLayer implements LayerGenerator {
       group.add(colIM);
     }
 
-    // --- Core walls at building center ---
-    const coreW = footprintWidth * 0.15;
-    const coreD = footprintDepth * 0.15;
+    // --- Core walls at the schematic / layout core, not the bbox centre ---
+    const layout = computeCoreLayout(recipe);
+    const coreCx =
+      layout.elevator.shafts.reduce((s, sh) => s + sh.x, 0) /
+      Math.max(1, layout.elevator.shafts.length);
+    const coreCz = layout.elevator.bankZ;
+    const coreW = Math.max(layout.elevator.maxX - layout.elevator.minX, 2.4);
+    const coreD = layout.elevator.shaftDepth;
     const wallThick = recipe.wallThickness || 0.2;
 
     const coreMaterial = new THREE.MeshPhysicalMaterial({
@@ -139,12 +135,11 @@ export class ShellLayer implements LayerGenerator {
     });
     this.disposables.push(coreMaterial);
 
-    // 4 core walls forming a rectangle at center
     const coreWalls: { w: number; h: number; d: number; x: number; z: number }[] = [
-      { w: coreW, h: totalHeight, d: wallThick, x: 0, z: -coreD / 2 }, // north
-      { w: coreW, h: totalHeight, d: wallThick, x: 0, z: coreD / 2 },  // south
-      { w: wallThick, h: totalHeight, d: coreD, x: -coreW / 2, z: 0 }, // west
-      { w: wallThick, h: totalHeight, d: coreD, x: coreW / 2, z: 0 },  // east
+      { w: coreW, h: totalHeight, d: wallThick, x: coreCx, z: coreCz - coreD / 2 },
+      { w: coreW, h: totalHeight, d: wallThick, x: coreCx, z: coreCz + coreD / 2 },
+      { w: wallThick, h: totalHeight, d: coreD, x: coreCx - coreW / 2, z: coreCz },
+      { w: wallThick, h: totalHeight, d: coreD, x: coreCx + coreW / 2, z: coreCz },
     ];
 
     for (const cw of coreWalls) {
@@ -156,11 +151,14 @@ export class ShellLayer implements LayerGenerator {
       group.add(mesh);
     }
 
-    // --- Outer shell wireframe for reference ---
-    const shellGeo = new THREE.BoxGeometry(footprintWidth, totalHeight, footprintDepth);
+    // --- Outer shell of the schematic plate, not a bounding box ---
+    const shellGeo = new THREE.ExtrudeGeometry(createPlateShape(rings), {
+      depth: totalHeight,
+      bevelEnabled: false,
+    });
+    shellGeo.rotateX(-Math.PI / 2);
     this.geometries.push(shellGeo);
     const shellMesh = new THREE.Mesh(shellGeo, shellMaterial);
-    shellMesh.position.set(0, totalHeight / 2, 0);
     shellMesh.userData = { type: "shell-envelope" };
     group.add(shellMesh);
 

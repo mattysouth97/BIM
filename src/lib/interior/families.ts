@@ -26,7 +26,11 @@
 // src/lib/plan-symbols/catalog-dims.ts; this file mirrors both.
 
 import catalogJson from "../../../public/models/authoring/catalog.json";
-import { AUTHORING_FAMILIES, authoringFamilyUrl } from "@/lib/bim/family-catalog";
+import {
+  AUTHORING_FAMILIES,
+  authoringFamilyUrl,
+  getAuthoringFamily,
+} from "@/lib/bim/family-catalog";
 import { familySillLocalY } from "@/lib/bim/family-insert";
 import type { BimElement, BimLevel, BimModelSnapshot } from "@/lib/bim/model/types";
 
@@ -108,11 +112,18 @@ export const RAILING_FAMILY_ID = "railing-guard-1m";
  */
 export const ELEVATOR_FAMILY_ID: string | null = null;
 
+export const COLUMN_FAMILY_ID = "column-struct-round-450";
+export const LIGHT_FAMILY_ID = "light-troffer-600";
+export const FURNITURE_FAMILY_ID = "furniture-desk";
+
 export const INTERIOR_FAMILY_IDS = [
   DOOR_FAMILY_ID,
   WINDOW_FAMILY_ID,
   STAIR_FAMILY_ID,
   RAILING_FAMILY_ID,
+  COLUMN_FAMILY_ID,
+  LIGHT_FAMILY_ID,
+  FURNITURE_FAMILY_ID,
 ] as const;
 
 /** Every family this layer can place actually exists in the catalog + family list. */
@@ -129,6 +140,23 @@ function componentKind(element: BimElement): string | null {
   return stringParam(element, "componentKind");
 }
 
+/**
+ * A schematic-authored family instance (pillar, light, desk). Generated
+ * structural columns use type `generated-column` and stay with the massing
+ * shell; only placements whose typeId is a real authoring family are posed.
+ */
+export function isSchematicFamilyElement(element: BimElement): boolean {
+  if (isAuthored(element) || element.visible === false) return false;
+  if (
+    element.kind !== "column" &&
+    element.kind !== "lighting" &&
+    element.kind !== "furniture"
+  ) {
+    return false;
+  }
+  return getAuthoringFamily(element.typeId) !== undefined;
+}
+
 /** Is this element one this layer draws as a family GLB? */
 export function isPoseLaneElement(element: BimElement): boolean {
   if (isAuthored(element)) return false;
@@ -137,6 +165,7 @@ export function isPoseLaneElement(element: BimElement): boolean {
   if (element.kind === "stair") return true;
   // Lift cars and shafts: attempted, so their absence is logged rather than silent.
   if (element.kind === "mep-instance" && element.system === "core") return true;
+  if (isSchematicFamilyElement(element)) return true;
   return false;
 }
 
@@ -173,7 +202,9 @@ export function buildFamilyPoses(
       ? poseOpening(snapshot, element, level, byId, options)
       : element.kind === "stair"
         ? poseStair(element, level, levels)
-        : poseCoreEquipment(element);
+        : isSchematicFamilyElement(element)
+          ? poseSchematicFamily(element, level, levels)
+          : poseCoreEquipment(element);
 
     if (result === null) continue; // out of scope, counted by build.ts
     if ("reason" in result) {
@@ -371,6 +402,57 @@ function poseStair(
     position,
     rotationY: round6(runAlongZ ? 0 : Math.PI / 2),
     scale: roundTriple([widthScale, riseScale, goingScale]),
+    mirrored: false,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Schematic columns, lights, furniture                                */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A point-placed family compiled from the schematic. World Y follows the
+ * family's host: columns and furniture sit on the finished floor; ceiling
+ * lights sit on the storey soffit. Columns stretch in Y so they fill the
+ * storey they were placed on.
+ */
+function poseSchematicFamily(
+  element: BimElement,
+  level: BimLevel,
+  levels: LevelIndex,
+): FamilyPose | PoseFailure {
+  const familyId = element.typeId;
+  const dims = nativeDims(familyId);
+  if (!dims) return { reason: "no-family", detail: `${familyId} missing from catalog.json` };
+
+  const family = getAuthoringFamily(familyId);
+  const riseM = storeyRiseM(level, levels);
+  const ceilingHosted =
+    family?.host === "ceiling" || family?.origin === "ceiling-plane";
+
+  let y = level.elevation;
+  let scale: [number, number, number] = [1, 1, 1];
+
+  if (element.kind === "column") {
+    const scaleY = riseM / dims.heightM;
+    if (scaleY < MIN_GEOMETRY_M) {
+      return { reason: "zero-geometry", detail: `storey rise ${riseM.toFixed(3)} m` };
+    }
+    scale = [1, scaleY, 1];
+  } else if (ceilingHosted) {
+    y = level.elevation + riseM;
+  }
+
+  return {
+    id: `${element.id}#f`,
+    elementId: element.id,
+    familyId,
+    url: authoringFamilyUrl(familyId),
+    kind: element.kind,
+    floorNo: level.floorNo,
+    position: roundTriple([element.placement.x, y, element.placement.z]),
+    rotationY: round6(element.placement.rotationY),
+    scale: roundTriple(scale),
     mirrored: false,
   };
 }

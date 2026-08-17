@@ -7,6 +7,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { BuildingRecipe } from "@/lib/procedural/types";
+import { plateRings, pointInPlate, samplePlateGrid } from "./plate";
 import type { LayerGenerator } from "./types";
 import type { LightingFixtureParams, ElectricalPanelParams } from "./mep-equipment-params";
 import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "./mep-equipment-params";
@@ -153,22 +154,9 @@ export class LightingLayer implements LayerGenerator {
     const hw = footprintWidth / 2;
     const hd = footprintDepth / 2;
 
-    // --- Fixture grid parameters ---
+    // --- Fixture grid on the solid plate, not the bounding rectangle ---
     const gridSpacingX = Math.max(1.5, 3.0 / density);
-    const gridSpacingZ = Math.max(1.5, 3.0 / density);
-
-    // Calculate grid positions (same for each floor)
-    const gridPositions: { x: number; z: number }[] = [];
-    const startX = -hw + 1.0;
-    const endX = hw - 1.0;
-    const startZ = -hd + 1.0;
-    const endZ = hd - 1.0;
-
-    for (let x = startX; x <= endX; x += gridSpacingX) {
-      for (let z = startZ; z <= endZ; z += gridSpacingZ) {
-        gridPositions.push({ x, z });
-      }
-    }
+    const gridPositions = samplePlateGrid(recipe, gridSpacingX, 1.0);
 
     const fixturesPerFloor = gridPositions.length;
     const totalFixtures = fixturesPerFloor * aboveFloors.length;
@@ -254,6 +242,12 @@ export class LightingLayer implements LayerGenerator {
 
     let sIdx = 0;
     const sensorMat4 = new THREE.Matrix4();
+    const rings = plateRings(recipe);
+    const placeSensor = (x: number, y: number, z: number) => {
+      if (!pointInPlate(x, z, rings)) return;
+      sensorMat4.makeTranslation(x, y, z);
+      sensorIM.setMatrixAt(sIdx++, sensorMat4);
+    };
 
     for (const floor of aboveFloors) {
       const sensorY = floor.y + floor.height - 0.4;
@@ -261,23 +255,15 @@ export class LightingLayer implements LayerGenerator {
       // Front and back walls (-Z and +Z)
       for (let i = 0; i < sensorsPerSide; i++) {
         const x = -hw + (i + 1) * (footprintWidth / (sensorsPerSide + 1));
-        // Front
-        sensorMat4.makeTranslation(x, sensorY, -hd + 0.3);
-        sensorIM.setMatrixAt(sIdx++, sensorMat4);
-        // Back
-        sensorMat4.makeTranslation(x, sensorY, hd - 0.3);
-        sensorIM.setMatrixAt(sIdx++, sensorMat4);
+        placeSensor(x, sensorY, -hd + 0.3);
+        placeSensor(x, sensorY, hd - 0.3);
       }
 
       // Left and right walls (-X and +X)
       for (let i = 0; i < sensorsPerSide; i++) {
         const z = -hd + (i + 1) * (footprintDepth / (sensorsPerSide + 1));
-        // Left
-        sensorMat4.makeTranslation(-hw + 0.3, sensorY, z);
-        sensorIM.setMatrixAt(sIdx++, sensorMat4);
-        // Right
-        sensorMat4.makeTranslation(hw - 0.3, sensorY, z);
-        sensorIM.setMatrixAt(sIdx++, sensorMat4);
+        placeSensor(-hw + 0.3, sensorY, z);
+        placeSensor(hw - 0.3, sensorY, z);
       }
     }
 

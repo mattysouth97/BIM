@@ -14,6 +14,7 @@
 // this function returns.
 
 import {
+  applySchematicPlacements,
   BlueprintSpecSchema,
   compileBlueprintToSpec,
   measureBlueprintFidelity,
@@ -242,6 +243,13 @@ export function runBlueprintGeneration(
     onStage: relay,
   });
 
+  const snapshot = applySchematicPlacements({
+    snapshot: built.snapshot,
+    blueprint,
+    buildingPk,
+    generationId,
+  });
+
   stage("validating", "Validating building", BLUEPRINT_TOTAL_STAGES - 1);
 
   return {
@@ -253,7 +261,7 @@ export function runBlueprintGeneration(
       seed,
       spec: compiled.spec,
       recipe: built.recipe,
-      snapshot: built.snapshot,
+      snapshot,
       metrics: built.metrics,
       validation: built.validation,
       status: built.status,

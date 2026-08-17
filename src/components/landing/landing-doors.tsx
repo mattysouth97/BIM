@@ -46,16 +46,19 @@ export function StudioDoor({
   testId,
   variant = "default",
   title,
+  href = "/studio",
 }: {
   children: React.ReactNode;
   className?: string;
   testId?: string;
   variant?: "default" | "outline";
   title?: string;
+  /** Defaults to /studio (describe). The draw door passes ?start=draw. */
+  href?: string;
 }) {
   return (
     <Button asChild size="sm" variant={variant} className={cn(className)}>
-      <Link href="/studio" data-testid={testId} title={title}>
+      <Link href={href} data-testid={testId} title={title}>
         {children}
       </Link>
     </Button>

@@ -32,15 +32,15 @@ test.describe("First door", () => {
   test("studio door is the generative-first primary CTA", async ({ page }) => {
     const studio = page.getByTestId("landing-studio-start");
     await expect(studio).toBeVisible();
-    await expect(studio).toHaveAttribute("href", "/studio");
+    await expect(studio).toHaveAttribute("href", "/studio?start=draw");
     const importDoor = page.getByTestId("landing-import-start");
     await expect(importDoor).toBeVisible();
-    await expect(importDoor).toHaveAttribute("href", "/studio");
+    await expect(importDoor).toHaveAttribute("href", "/studio?start=draw");
 
     await studio.click();
-    await expect(page).toHaveURL(/\/studio/);
+    await expect(page).toHaveURL(/\/studio\?start=draw/);
     await expect(
-      page.getByRole("button", { name: "Describe a building" }),
+      page.getByRole("button", { name: "Draw schematic", pressed: true }),
     ).toBeVisible();
   });
 

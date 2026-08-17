@@ -16,6 +16,7 @@ import type { Provenanced, SpaceType } from "../spec/building-spec";
 import type {
   AnchorKind,
   BlueprintBoundary,
+  BlueprintPlacement,
   BlueprintSpec,
   BoundaryLoop,
   CirculationEdge,
@@ -27,9 +28,11 @@ import type {
   Hold,
   PointMm,
   Region,
+  SchematicPlacementTool,
   SpatialZone,
   VoidIntent,
 } from "./blueprint-spec";
+import { blueprintPlacements } from "./blueprint-spec";
 
 type BoundaryRole = BlueprintBoundary["role"];
 type VoidKind = VoidIntent["kind"]["value"];
@@ -138,6 +141,7 @@ export function emptyBlueprint(name: string): BlueprintSpec {
     facadeRules: [],
     relationships: [],
     dimensions: [],
+    placements: [],
     assumptions: [],
     uncertainty: [],
   };
@@ -293,5 +297,30 @@ export function addCirculationEdge(
   return {
     ...spec,
     circulation: { ...spec.circulation, edges: [...spec.circulation.edges, edge] },
+  };
+}
+
+export function addPlacement(
+  spec: BlueprintSpec,
+  input: {
+    id: string;
+    familyId: string;
+    tool: SchematicPlacementTool;
+    positionMm: PointMm;
+    floorNos: number[];
+    rotationRad?: number;
+  },
+): BlueprintSpec {
+  const item: BlueprintPlacement = {
+    id: input.id,
+    familyId: input.familyId,
+    tool: input.tool,
+    positionMm: point(input.positionMm.xMm, input.positionMm.zMm),
+    rotationRad: input.rotationRad ?? 0,
+    floorNos: [...input.floorNos],
+  };
+  return {
+    ...spec,
+    placements: [...blueprintPlacements(spec), item],
   };
 }

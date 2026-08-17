@@ -129,6 +129,37 @@ describe("drawing through the builders", () => {
     expect(validation.counts.critical).toBe(0);
   });
 
+  it("places a column and a light on the schematic as family instances", () => {
+    drawPlate();
+    useBlueprintStore.getState().setTool("column");
+    expect(useBlueprintStore.getState().tool).toBe("column");
+    useBlueprintStore.getState().placePlacement(mm(6_000, 4_000));
+
+    useBlueprintStore.getState().setTool("lighting");
+    useBlueprintStore.getState().placePlacement(mm(10_000, 8_000));
+
+    const { blueprint, validation, selectedId } = useBlueprintStore.getState();
+    const placements = blueprint.placements ?? [];
+    expect(placements).toHaveLength(2);
+    expect(placements[0]).toMatchObject({
+      tool: "column",
+      familyId: "column-struct-round-450",
+      positionMm: mm(6_000, 4_000),
+      floorNos: [1, 2, 3],
+    });
+    expect(placements[1]).toMatchObject({
+      tool: "lighting",
+      familyId: "light-troffer-600",
+    });
+    expect(selectedId).toBe(placements[1].id);
+    expect(validation.counts.critical).toBe(0);
+
+    useBlueprintStore.getState().select(placements[0].id);
+    useBlueprintStore.getState().deleteSelected();
+    expect(useBlueprintStore.getState().blueprint.placements).toHaveLength(1);
+    expect(useBlueprintStore.getState().blueprint.placements?.[0].tool).toBe("lighting");
+  });
+
   it("records a zone's program as provenanced user intent", () => {
     drawPlate();
     const store = useBlueprintStore.getState();

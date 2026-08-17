@@ -13,7 +13,10 @@
 //   P3 optimisation / advisory
 
 import { tessellateCurve } from "../geom";
+import { getAuthoringFamily } from "@/lib/bim/family-catalog";
+
 import {
+  blueprintPlacements,
   segmentEnd,
   segmentStart,
   type BlueprintSpec,
@@ -268,6 +271,7 @@ function checkIdentity(spec: BlueprintSpec): {
   for (const item of spec.facadeRules) declare(item.id, "Facade rule");
   for (const item of spec.relationships) declare(item.id, "Relationship");
   for (const item of spec.dimensions) declare(item.id, "Dimension");
+  for (const item of blueprintPlacements(spec)) declare(item.id, "Placement");
 
   return { violations, ids };
 }
@@ -718,6 +722,36 @@ function checkScale(spec: BlueprintSpec): BlueprintViolation[] {
   return [];
 }
 
+function checkPlacements(spec: BlueprintSpec): BlueprintViolation[] {
+  const out: BlueprintViolation[] = [];
+  for (const item of blueprintPlacements(spec)) {
+    const family = getAuthoringFamily(item.familyId);
+    if (!family) {
+      out.push(
+        violation(
+          "UNKNOWN_FAMILY",
+          "P1",
+          `Placement ${item.id} names family "${item.familyId}", which is not in the authoring library.`,
+          [item.id],
+          { suggestion: "Pick a family from the Column, Light or Furniture type list." },
+        ),
+      );
+      continue;
+    }
+    if (family.tool !== item.tool) {
+      out.push(
+        violation(
+          "FAMILY_TOOL_MISMATCH",
+          "P2",
+          `Placement ${item.id} is a ${item.tool} but family "${item.familyId}" is a ${family.tool}.`,
+          [item.id],
+        ),
+      );
+    }
+  }
+  return out;
+}
+
 /* ------------------------------------------------------------------ */
 /* Entry point                                                         */
 /* ------------------------------------------------------------------ */
@@ -734,6 +768,7 @@ export function validateBlueprint(spec: BlueprintSpec): BlueprintValidationRepor
     ...checkGrids(spec),
     ...checkLevelMapping(spec),
     ...checkScale(spec),
+    ...checkPlacements(spec),
   ];
 
   const counts = {

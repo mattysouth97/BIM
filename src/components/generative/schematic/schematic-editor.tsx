@@ -50,6 +50,9 @@ interface Props {
   designGenerationId?: string | null;
   /** Bumped by the plan view's fidelity badge to reveal the report. */
   fidelityFocusToken?: number;
+  /** Override the generate button; default is "Generate BIM". */
+  generateLabel?: string;
+  generateBusyLabel?: string;
 }
 
 export function SchematicEditor({
@@ -58,6 +61,8 @@ export function SchematicEditor({
   locks,
   designGenerationId = null,
   fidelityFocusToken,
+  generateLabel = "Generate BIM",
+  generateBusyLabel = "Generating…",
 }: Props) {
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const validation = useBlueprintStore((s) => s.validation);
@@ -159,7 +164,7 @@ export function SchematicEditor({
               className="min-w-0 flex-1 rounded border bg-background px-2 py-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <Button size="sm" onClick={() => void run()} disabled={!canGenerate}>
-              {busy ? "Generating…" : "Generate BIM"}
+              {busy ? generateBusyLabel : generateLabel}
             </Button>
             {busy && (
               <Button

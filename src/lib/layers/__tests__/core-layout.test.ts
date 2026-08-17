@@ -151,6 +151,25 @@ describe("computeCoreLayout — coordinated risers and plant", () => {
     }
   });
 
+  it("does not park the bank in the missing arm of an L-plate", () => {
+    const L: [number, number][] = [
+      [-10, -8],
+      [10, -8],
+      [10, 0],
+      [0, 0],
+      [0, 8],
+      [-10, 8],
+    ];
+    const recipe = makeRecipe(20, 16, 5);
+    recipe.footprintPolygon = [L];
+    // Bbox rear-centre is on the plate; the NE void is the trap.
+    recipe.serviceCore = { x: 6, z: 5 };
+    const layout = computeCoreLayout(recipe);
+    const shaft = layout.elevator.shafts[0];
+    // The missing arm is x>0 and z>0. The bank must not sit there.
+    expect(shaft.x > 0 && shaft.z > 0).toBe(false);
+  });
+
   it("is deterministic — identical recipes yield identical layouts", () => {
     const a = computeCoreLayout(makeRecipe(20, 14, 10));
     const b = computeCoreLayout(makeRecipe(20, 14, 10));

@@ -27,8 +27,10 @@ import {
   addCirculationEdge,
   addCirculationNode,
   addCore,
+  addPlacement,
   addVoid,
   addZone,
+  blueprintPlacements,
   emptyBlueprint,
   makePolyLoop,
   makeRectLoop,
@@ -42,7 +44,12 @@ import {
   type PointMm,
   type PreservationPlan,
   type Region,
+  type SchematicPlacementTool,
 } from "@/lib/generative/blueprint";
+import {
+  defaultFamilyForTool,
+  getAuthoringFamily,
+} from "@/lib/bim/family-catalog";
 import type {
   CadImportReport,
   CadLayerAssignments,
@@ -61,7 +68,20 @@ export type SchematicTool =
   | "core"
   | "entrance"
   | "circulation"
-  | "zone";
+  | "zone"
+  | "column"
+  | "lighting"
+  | "furniture";
+
+export const PLACEMENT_TOOLS: SchematicPlacementTool[] = [
+  "column",
+  "lighting",
+  "furniture",
+];
+
+export function isPlacementTool(tool: string): tool is SchematicPlacementTool {
+  return tool === "column" || tool === "lighting" || tool === "furniture";
+}
 
 /** Tools that can be drawn either as a dragged rectangle or a clicked polygon. */
 export type ShapeMode = "rect" | "polygon";
@@ -295,6 +315,7 @@ export function removeObject(spec: BlueprintSpec, id: string): BlueprintSpec {
   const cores = spec.cores.filter((c) => c.id !== id && regionLoopId(c.region) !== id);
   const zones = spec.zones.filter((z) => z.id !== id && regionLoopId(z.region) !== id);
   const anchors = spec.anchors.filter((a) => a.id !== id);
+  const placements = blueprintPlacements(spec).filter((p) => p.id !== id);
   const nodes = spec.circulation.nodes.filter((n) => n.id !== id);
   const nodeIds = new Set(nodes.map((n) => n.id));
   const edges = spec.circulation.edges.filter(
@@ -307,6 +328,7 @@ export function removeObject(spec: BlueprintSpec, id: string): BlueprintSpec {
     ...cores.map((c) => c.id),
     ...zones.map((z) => z.id),
     ...anchors.map((a) => a.id),
+    ...placements.map((p) => p.id),
     ...nodes.map((n) => n.id),
     ...edges.map((e) => e.id),
   ]);
@@ -318,6 +340,7 @@ export function removeObject(spec: BlueprintSpec, id: string): BlueprintSpec {
     cores,
     zones,
     anchors,
+    placements,
     circulation: { nodes, edges },
     // A zone that listed the deleted object as a member, and any fidelity
     // override naming it, would both dangle.
@@ -349,6 +372,7 @@ export function highestIdSuffix(spec: BlueprintSpec): number {
     ...spec.cores.flatMap((c) => [c.id, regionLoopId(c.region) ?? ""]),
     ...spec.zones.flatMap((z) => [z.id, regionLoopId(z.region) ?? ""]),
     ...spec.anchors.map((a) => a.id),
+    ...blueprintPlacements(spec).map((p) => p.id),
     ...spec.circulation.nodes.map((n) => n.id),
     ...spec.circulation.edges.map((e) => e.id),
   ];
@@ -378,6 +402,8 @@ interface BlueprintState {
   voidKind: VoidKind;
   zoneProgram: SpaceType;
   circulationNodeKind: CirculationNodeKind;
+  /** Family the Column / Light / Furniture tool will drop on the next click. */
+  placementFamilyId: string;
   snapMm: number;
   /** Storeys every newly drawn object is assigned to. */
   floorFrom: number;
@@ -418,6 +444,7 @@ interface BlueprintState {
   setVoidKind: (kind: VoidKind) => void;
   setZoneProgram: (program: SpaceType) => void;
   setCirculationNodeKind: (kind: CirculationNodeKind) => void;
+  setPlacementFamily: (familyId: string) => void;
   setSnap: (snapMm: number) => void;
   setFloors: (from: number, to: number) => void;
   setFidelityMode: (mode: FidelityMode) => void;
@@ -431,6 +458,7 @@ interface BlueprintState {
   commitRect: () => void;
   placeEntrance: (point: PointMm) => void;
   placeCirculationNode: (point: PointMm) => void;
+  placePlacement: (point: PointMm) => void;
   cancelDraft: () => void;
 
   /* --- editing --- */
@@ -488,6 +516,7 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     voidKind: "atrium",
     zoneProgram: "office-open",
     circulationNodeKind: "junction",
+    placementFamilyId: defaultFamilyForTool("column").id,
     snapMm: DEFAULT_SNAP_MM,
     floorFrom: 1,
     floorTo: 3,
@@ -510,11 +539,30 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     canRedo: () => get().future.length > 0,
     activeImport: () => activeImportOf(get()),
 
-    setTool: (tool) => set({ tool, draft: null, chainFromNodeId: null }),
+    setTool: (tool) =>
+      set((state) => {
+        const next: Partial<BlueprintState> = {
+          tool,
+          draft: null,
+          chainFromNodeId: null,
+        };
+        if (isPlacementTool(tool)) {
+          const current = getAuthoringFamily(state.placementFamilyId);
+          if (!current || current.tool !== tool) {
+            next.placementFamilyId = defaultFamilyForTool(tool).id;
+          }
+        }
+        return next;
+      }),
     setShapeMode: (shapeMode) => set({ shapeMode, draft: null }),
     setVoidKind: (voidKind) => set({ voidKind }),
     setZoneProgram: (zoneProgram) => set({ zoneProgram }),
     setCirculationNodeKind: (circulationNodeKind) => set({ circulationNodeKind }),
+    setPlacementFamily: (familyId) => {
+      const family = getAuthoringFamily(familyId);
+      if (!family || !isPlacementTool(family.tool)) return;
+      set({ placementFamilyId: family.id, tool: family.tool });
+    },
     setSnap: (snapMm) => set({ snapMm: Math.max(0, Math.round(snapMm)) }),
     setFloors: (from, to) =>
       set({
@@ -784,6 +832,28 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
       }
 
       set(apply(next, { seq, chainFromNodeId: nodeStep.id, selectedId: nodeStep.id }));
+    },
+
+    placePlacement: (point) => {
+      const state = get();
+      if (!isPlacementTool(state.tool)) return;
+      const family = getAuthoringFamily(state.placementFamilyId);
+      if (!family || family.tool !== state.tool) return;
+      const prefix =
+        state.tool === "column" ? "column" : state.tool === "lighting" ? "light" : "furn";
+      const { id, seq } = nextId(prefix);
+      set(
+        apply(
+          addPlacement(state.blueprint, {
+            id,
+            familyId: family.id,
+            tool: state.tool,
+            positionMm: snap(point),
+            floorNos: floorRange(state.floorFrom, state.floorTo),
+          }),
+          { seq, selectedId: id },
+        ),
+      );
     },
 
     cancelDraft: () => set({ draft: null, chainFromNodeId: null }),

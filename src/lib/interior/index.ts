@@ -66,15 +66,19 @@
 
 export { buildInteriorModel, buildRailingRuns } from "./build";
 export {
+  COLUMN_FAMILY_ID,
   DOOR_FAMILY_ID,
   ELEVATOR_FAMILY_ID,
+  FURNITURE_FAMILY_ID,
   INTERIOR_FAMILY_IDS,
+  LIGHT_FAMILY_ID,
   RAILING_FAMILY_ID,
   STAIR_FAMILY_ID,
   WINDOW_FAMILY_ID,
   assertFamiliesExist,
   buildFamilyPoses,
   isPoseLaneElement,
+  isSchematicFamilyElement,
   nativeDims,
   storeyRiseM,
   type FamilyBuildResult,

@@ -14,3 +14,4 @@ export * from "./fidelity";
 export * from "./builders";
 export * from "./compile";
 export * from "./metrics";
+export * from "./apply-placements";

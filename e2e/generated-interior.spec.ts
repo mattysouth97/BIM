@@ -27,7 +27,7 @@ test.describe("Generated interior integration", () => {
 
   test("studio generate opens the design in the workspace", async ({ page }) => {
     test.setTimeout(180_000);
-    await page.getByTestId("landing-studio-start").click();
+    await page.goto("/studio");
     await expect(page).toHaveURL(/\/studio/);
     await expect(
       page.getByRole("heading", { name: "Generate a building" }),

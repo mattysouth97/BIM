@@ -14,15 +14,20 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
+  familiesForTool,
+  getAuthoringFamily,
+} from "@/lib/bim/family-catalog";
+import {
   CIRCULATION_NODE_KINDS,
   ZONE_PROGRAMS,
+  isPlacementTool,
   useBlueprintStore,
   type SchematicTool,
 } from "@/store/blueprint-store";
 
 import { ImportCadDialog } from "./import-cad-dialog";
 
-const TOOLS: Array<{ id: SchematicTool; label: string; hint: string }> = [
+const PLAN_TOOLS: Array<{ id: SchematicTool; label: string; hint: string }> = [
   { id: "select", label: "Select", hint: "Select and pan (drag to pan, Delete removes)" },
   { id: "boundary", label: "Boundary", hint: "The floor plate outline" },
   { id: "void", label: "Void", hint: "Atrium or courtyard punched through the plate" },
@@ -32,6 +37,43 @@ const TOOLS: Array<{ id: SchematicTool; label: string; hint: string }> = [
   { id: "zone", label: "Zone", hint: "A programmed area" },
 ];
 
+const AUTHORING_TOOLS: Array<{ id: SchematicTool; label: string; hint: string }> = [
+  { id: "column", label: "Column", hint: "Place a pillar on the plan — generate compiles it into the BIM" },
+  { id: "lighting", label: "Light", hint: "Place a light on the plan — generate compiles it into the BIM" },
+  { id: "furniture", label: "Furniture", hint: "Place furniture on the plan — generate compiles it into the BIM" },
+];
+
+function ToolButton({
+  id,
+  label,
+  hint,
+  active,
+}: {
+  id: SchematicTool;
+  label: string;
+  hint: string;
+  active: boolean;
+}) {
+  return (
+    <button
+      key={id}
+      type="button"
+      title={hint}
+      aria-pressed={active}
+      data-testid={`schematic-tool-${id}`}
+      onClick={() => useBlueprintStore.getState().setTool(id)}
+      className={cn(
+        "rounded border px-2 py-1 text-xs transition-colors",
+        active
+          ? "border-primary bg-primary text-primary-foreground"
+          : "hover:bg-muted",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 const SNAP_STEPS = [0, 100, 500, 1_000, 5_000];
 
 export function SchematicToolbar() {
@@ -40,6 +82,7 @@ export function SchematicToolbar() {
   const voidKind = useBlueprintStore((s) => s.voidKind);
   const zoneProgram = useBlueprintStore((s) => s.zoneProgram);
   const nodeKind = useBlueprintStore((s) => s.circulationNodeKind);
+  const placementFamilyId = useBlueprintStore((s) => s.placementFamilyId);
   const snapMm = useBlueprintStore((s) => s.snapMm);
   const floorFrom = useBlueprintStore((s) => s.floorFrom);
   const floorTo = useBlueprintStore((s) => s.floorTo);
@@ -49,26 +92,34 @@ export function SchematicToolbar() {
   const [importOpen, setImportOpen] = useState(false);
 
   const supportsShape = tool === "boundary" || tool === "void" || tool === "zone";
+  const placementFamily = getAuthoringFamily(placementFamilyId);
+  const placementTypes = isPlacementTool(tool) ? familiesForTool(tool) : [];
 
   return (
     <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
       <div className="flex flex-wrap items-center gap-1">
-        {TOOLS.map((entry) => (
-          <button
+        {PLAN_TOOLS.map((entry) => (
+          <ToolButton
             key={entry.id}
-            type="button"
-            title={entry.hint}
-            aria-pressed={tool === entry.id}
-            onClick={() => useBlueprintStore.getState().setTool(entry.id)}
-            className={cn(
-              "rounded border px-2 py-1 text-xs transition-colors",
-              tool === entry.id
-                ? "border-primary bg-primary text-primary-foreground"
-                : "hover:bg-muted",
-            )}
-          >
-            {entry.label}
-          </button>
+            id={entry.id}
+            label={entry.label}
+            hint={entry.hint}
+            active={tool === entry.id}
+          />
+        ))}
+      </div>
+
+      <span className="mx-1 h-5 w-px bg-border" aria-hidden />
+
+      <div className="flex flex-wrap items-center gap-1">
+        {AUTHORING_TOOLS.map((entry) => (
+          <ToolButton
+            key={entry.id}
+            id={entry.id}
+            label={entry.label}
+            hint={entry.hint}
+            active={tool === entry.id}
+          />
         ))}
       </div>
 
@@ -144,6 +195,27 @@ export function SchematicToolbar() {
             {CIRCULATION_NODE_KINDS.map((kind) => (
               <option key={kind} value={kind}>
                 {kind}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {isPlacementTool(tool) && (
+        <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          Type
+          <select
+            value={placementFamily?.id ?? placementFamilyId}
+            onChange={(e) =>
+              useBlueprintStore.getState().setPlacementFamily(e.target.value)
+            }
+            className="max-w-[14rem] rounded border bg-background px-1 py-0.5 text-[11px]"
+            aria-label="Family type to place"
+            data-testid="schematic-placement-type"
+          >
+            {placementTypes.map((family) => (
+              <option key={family.id} value={family.id}>
+                {family.family} · {family.type}
               </option>
             ))}
           </select>

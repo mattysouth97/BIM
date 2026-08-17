@@ -16,9 +16,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { BlueprintValidationReport, PointMm } from "@/lib/generative/blueprint";
+import {
+  blueprintPlacements,
+  type BlueprintValidationReport,
+  type PointMm,
+} from "@/lib/generative/blueprint";
 import { cn } from "@/lib/utils";
 import {
+  isPlacementTool,
   useBlueprintStore,
   type SchematicTool,
   type ShapeMode,
@@ -31,6 +36,8 @@ import {
   ZONE_DEFAULT_FILL,
   ZONE_FILL,
 } from "./schematic-geometry";
+import type { PlanSymbolInstance } from "./plan-model";
+import { PlanSymbolsLayer } from "./plan-symbols-layer";
 import {
   fitTransform,
   panBy,
@@ -54,6 +61,9 @@ function drawModeOf(tool: SchematicTool, shapeMode: ShapeMode): "rect" | "polygo
       return "rect";
     case "entrance":
     case "circulation":
+    case "column":
+    case "lighting":
+    case "furniture":
       return "click";
     case "boundary":
     case "void":
@@ -70,6 +80,26 @@ function failingIds(validation: BlueprintValidationReport): Set<string> {
     for (const id of violation.elementIds) out.add(id);
   }
   return out;
+}
+
+function nearestPlacement(
+  placements: readonly { id: string; positionMm: PointMm }[],
+  point: PointMm,
+  thresholdMm: number,
+): string | null {
+  let bestId: string | null = null;
+  let best = thresholdMm;
+  for (const item of placements) {
+    const distance = Math.hypot(
+      item.positionMm.xMm - point.xMm,
+      item.positionMm.zMm - point.zMm,
+    );
+    if (distance < best) {
+      best = distance;
+      bestId = item.id;
+    }
+  }
+  return bestId;
 }
 
 function pointInPolygon(point: PointMm, ring: readonly PointMm[]): boolean {
@@ -174,6 +204,13 @@ export function SchematicCanvas({ className }: { className?: string }) {
       if (event.button === 1 || mode === "pan") {
         panRef.current = { x: event.clientX, y: event.clientY };
         if (mode === "pan" && event.button === 0) {
+          const placements = blueprintPlacements(store.blueprint);
+          const thresholdMm = 14 / Math.max(activeView.scale, 1e-6);
+          const nearPlacement = nearestPlacement(placements, world, thresholdMm);
+          if (nearPlacement) {
+            store.select(nearPlacement);
+            return;
+          }
           const hit = shapes.find(
             (shape) => shape.pointsMm.length > 2 && pointInPolygon(world, shape.pointsMm),
           );
@@ -198,9 +235,13 @@ export function SchematicCanvas({ className }: { className?: string }) {
       }
       if (tool === "circulation") {
         store.placeCirculationNode(world);
+        return;
+      }
+      if (isPlacementTool(tool)) {
+        store.placePlacement(world);
       }
     },
-    [pointerToWorld, mode, tool, shapes],
+    [pointerToWorld, mode, tool, shapes, activeView.scale],
   );
 
   const onPointerMove = useCallback(
@@ -323,6 +364,24 @@ export function SchematicCanvas({ className }: { className?: string }) {
     () => new Map(blueprint.circulation.nodes.map((node) => [node.id, node])),
     [blueprint.circulation.nodes],
   );
+
+  const placementSymbols = useMemo((): PlanSymbolInstance[] => {
+    return blueprintPlacements(blueprint).map((item) => ({
+      id: item.id,
+      familyId: item.familyId,
+      typeId: item.familyId,
+      kind:
+        item.tool === "column"
+          ? "column"
+          : item.tool === "lighting"
+            ? "lighting"
+            : "furniture",
+      xMm: item.positionMm.xMm,
+      zMm: item.positionMm.zMm,
+      rotationRad: item.rotationRad,
+      params: {},
+    }));
+  }, [blueprint]);
 
   return (
     <div
@@ -484,6 +543,24 @@ export function SchematicCanvas({ className }: { className?: string }) {
           );
         })}
 
+        <PlanSymbolsLayer symbols={placementSymbols} view={activeView} />
+
+        {placementSymbols.map((item) => {
+          if (item.id !== selectedId) return null;
+          const p = project({ xMm: item.xMm, zMm: item.zMm });
+          return (
+            <circle
+              key={`sel-${item.id}`}
+              cx={p.x}
+              cy={p.y}
+              r="10"
+              fill="none"
+              stroke="#2563eb"
+              strokeWidth="2"
+            />
+          );
+        })}
+
         {blueprint.anchors.map((anchor) => {
           const p = project(anchor.positionMm);
           return (
@@ -573,7 +650,9 @@ export function SchematicCanvas({ className }: { className?: string }) {
               ? "Drag a rectangle · Shift for a square · Esc cancels"
               : tool === "entrance"
                 ? "Click near a boundary edge to place an entrance"
-                : "Click to place circulation nodes · each click links to the last · Esc ends the run"}
+                : isPlacementTool(tool)
+                  ? `Click to place a ${tool === "lighting" ? "light" : tool} on the plan · Delete removes · Generate BIM compiles it`
+                  : "Click to place circulation nodes · each click links to the last · Esc ends the run"}
         </div>
       )}
     </div>

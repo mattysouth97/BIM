@@ -21,6 +21,7 @@
 //                interior / PV field  (+Z)
 //
 import type { BuildingRecipe } from "@/lib/procedural/types";
+import { keepOnPlate, plateBounds, plateRings } from "./plate";
 
 export interface CoreSlot {
   x: number;
@@ -131,6 +132,10 @@ export function computeCoreLayout(recipe: BuildingRecipe): CoreLayout {
   const { footprintWidth, footprintDepth, floors } = recipe;
   const hw = footprintWidth / 2;
   const hd = footprintDepth / 2;
+  const rings = plateRings(recipe);
+  const bounds = plateBounds(rings);
+  const onPlate = (x: number, z: number, inset = WALL_CLEARANCE + 0.4) =>
+    keepOnPlate(x, z, rings, inset);
   const aboveFloorCount = floors.filter((f) => f.type === "above").length;
 
   // --- Elevator bank -------------------------------------------------------
@@ -147,15 +152,27 @@ export function computeCoreLayout(recipe: BuildingRecipe): CoreLayout {
   // Default: bank sits against the rear (-Z) wall — typical Korean office
   // core. An authored serviceCore (CAD pin or slot-plan nudge) replaces
   // that default so MEP follows *this* plate.
-  const defaultBankZ = -Math.max(0, hd - WALL_CLEARANCE - SHAFT_DEPTH / 2);
+  // Rear of the actual plate, not the bbox — a courtyard or L-notch often
+  // sits at the bbox's rear-centre and would park the bank in empty air.
+  const defaultRear = onPlate(
+    (bounds.minX + bounds.maxX) / 2,
+    bounds.minZ + WALL_CLEARANCE + SHAFT_DEPTH / 2,
+  );
   const insetX = hw - SHAFT_WIDTH / 2 - WALL_CLEARANCE;
   const insetZ = hd - SHAFT_DEPTH / 2 - WALL_CLEARANCE;
-  const bankX = clamp(recipe.serviceCore?.x ?? 0, -Math.max(0, insetX), Math.max(0, insetX));
-  const bankZ = clamp(
-    recipe.serviceCore?.z ?? defaultBankZ,
+  const rawBankX = clamp(
+    recipe.serviceCore?.x ?? defaultRear.x,
+    -Math.max(0, insetX),
+    Math.max(0, insetX),
+  );
+  const rawBankZ = clamp(
+    recipe.serviceCore?.z ?? defaultRear.z,
     -Math.max(0, insetZ),
     Math.max(0, insetZ),
   );
+  const parked = onPlate(rawBankX, rawBankZ);
+  const bankX = parked.x;
+  const bankZ = parked.z;
 
   const span = (shaftCount - 1) * (SHAFT_WIDTH + SHAFT_GAP);
   const shafts: CoreSlot[] = [];
@@ -182,25 +199,25 @@ export function computeCoreLayout(recipe: BuildingRecipe): CoreLayout {
   // --- Vertical risers ------------------------------------------------------
   // Wet riser: right of the bank, pulled slightly toward the interior so
   // per-floor branch fans clear the shaft volume.
-  const serviceRiser: CoreSlot = {
-    x: clamp(bankMaxX + 1.0, -hw + 1.0, hw - 1.0),
-    z: clamp(bankZ + SHAFT_DEPTH / 2 + 0.8, -hd + 1.0, hd - 1.0),
-  };
+  const serviceRiser: CoreSlot = onPlate(
+    clamp(bankMaxX + 1.0, -hw + 1.0, hw - 1.0),
+    clamp(bankZ + SHAFT_DEPTH / 2 + 0.8, -hd + 1.0, hd - 1.0),
+  );
 
   // Electrical backbone: mirrored to the left of the bank, hugging the rear
   // wall on the same line as the basement battery row.
-  const electricalRiser: CoreSlot = {
-    x: clamp(bankMinX - 1.2, -hw + 0.8, hw - 0.8),
-    z: -Math.max(0, hd - 1.5),
-  };
+  const electricalRiser: CoreSlot = onPlate(
+    clamp(bankMinX - 1.2, -hw + 0.8, hw - 0.8),
+    clamp(bankZ, -hd + 0.8, hd - 0.8),
+  );
 
   // --- Rooftop plant ---------------------------------------------------------
   // The chiller lands directly on the wet riser so the vertical pipe run
   // reads as one continuous system.
-  const roofChiller: CoreSlot = {
-    x: clamp(serviceRiser.x, -hw + 1.5, hw - 1.5),
-    z: clamp(serviceRiser.z, -hd + 1.5, hd - 1.5),
-  };
+  const roofChiller: CoreSlot = onPlate(
+    clamp(serviceRiser.x, -hw + 1.5, hw - 1.5),
+    clamp(serviceRiser.z, -hd + 1.5, hd - 1.5),
+  );
 
   // ASHP/EHP outdoor units pack leftward from the bank's left edge inside the
   // rear plant band, wrapping forward on narrow roofs.
@@ -213,7 +230,7 @@ export function computeCoreLayout(recipe: BuildingRecipe): CoreLayout {
     hw - 1.0,
     bankZ,
     1.6
-  );
+  ).map((slot) => onPlate(slot.x, slot.z));
 
   // Rear strip reserved for hoists + chiller + tower + ASHP row. PV panels
   // whose centre falls behind this line are skipped by the microgrid layer.
@@ -223,31 +240,28 @@ export function computeCoreLayout(recipe: BuildingRecipe): CoreLayout {
   // Boiler stays at the plant-room centre (0,0); GSHP sits at +X (existing
   // convention); the DHW tank cluster gets the -X side so tanks no longer
   // interpenetrate the boiler body.
-  const basementDhw: CoreSlot = {
-    x: clamp(-2.6, -hw + 1.5, 0),
-    z: 0.5,
-  };
+  const basementDhw: CoreSlot = onPlate(clamp(-2.6, -hw + 1.5, 0), 0.5);
 
   // --- Wet zones (stacked vertically) ----------------------------------------
   // Restroom hugs the wet service shaft (short branch runs, straight risers);
   // kitchen sits toward the front (+Z) facade where the exterior gas riser
   // climbs. Identical x/z on every floor — Korean plumbing practice.
   const wetZones = {
-    restroom: {
-      x: clamp(serviceRiser.x + 2.4, -hw + 1.5, hw - 1.5),
-      z: clamp(serviceRiser.z + 1.6, -hd + 1.5, hd - 1.5),
-    },
-    kitchen: {
-      x: clamp(-hw * 0.4, -hw + 1.5, hw - 1.5),
-      z: clamp(hd * 0.55, -hd + 1.5, hd - 1.5),
-    },
+    restroom: onPlate(
+      clamp(serviceRiser.x + 2.4, -hw + 1.5, hw - 1.5),
+      clamp(serviceRiser.z + 1.6, -hd + 1.5, hd - 1.5),
+    ),
+    kitchen: onPlate(
+      clamp(-hw * 0.4, -hw + 1.5, hw - 1.5),
+      clamp(hd * 0.55, -hd + 1.5, hd - 1.5),
+    ),
   };
 
   // Cold-water riser joins the DHW supply/return pair in the wet shaft.
-  const coldRiser: CoreSlot = {
-    x: clamp(serviceRiser.x - 0.7, -hw + 0.8, hw - 0.8),
-    z: serviceRiser.z,
-  };
+  const coldRiser: CoreSlot = onPlate(
+    clamp(serviceRiser.x - 0.7, -hw + 0.8, hw - 0.8),
+    serviceRiser.z,
+  );
 
   // Municipal water service enters from the street (front, +Z); the meter
   // sits at the property side of the front wall.

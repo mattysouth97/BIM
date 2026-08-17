@@ -319,6 +319,14 @@ describe("GenerativeStudio — a seed handed over from the twin workspace", () =
       screen.getByRole("button", { name: "Describe a building", pressed: true }),
     ).toBeTruthy();
   });
+
+  it("opens on the schematic when the landing draw door asked it to", () => {
+    render(<GenerativeStudio initialStart="draw" />);
+    expect(
+      screen.getByRole("button", { name: "Draw schematic", pressed: true }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Generate BIM" })).toBeTruthy();
+  });
 });
 
 describe("GenerativeStudio — the workspace", () => {

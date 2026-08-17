@@ -36,6 +36,7 @@ import {
   type LoadedDesign,
 } from "@/lib/generative/design-storage";
 import { publishGeneratedDesign } from "@/lib/generative/energy/publish-design";
+import { prepareGeneratedWorkspaceSession } from "@/lib/generative/workspace-handoff";
 import { syntheticTitleForGeneratedDesign } from "@/lib/generative/energy/seed-from-design";
 import { useT } from "@/lib/i18n";
 import type { BrTitleInfo } from "@/lib/types";
@@ -120,6 +121,7 @@ export function GeneratedWorkspace({ generationId }: { generationId: string }) {
         // panel ever renders against the previous building's records.
         const seed = publishGeneratedDesign(design, publishedPk.current);
         publishedPk.current = seed.pk;
+        prepareGeneratedWorkspaceSession();
 
         setState({
           kind: "ready",

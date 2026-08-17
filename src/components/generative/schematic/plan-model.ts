@@ -108,6 +108,7 @@ export const KIND_TO_TOOL: Partial<Record<BimKind, AuthoringToolId>> = {
   window: "window",
   furniture: "furniture",
   lighting: "lighting",
+  column: "column",
   stair: "stair",
   railing: "railing",
   // Generated MEP instances (src/lib/bim/model/hydrate.ts) are always
@@ -261,11 +262,17 @@ export function readLevelPlan(
     }
 
     if (element.kind === "column") {
-      columns.push({
-        id: element.id,
-        x: element.placement.x * M_TO_MM,
-        z: element.placement.z * M_TO_MM,
-      });
+      // A schematic pillar carries a real authoring family — draw its plan
+      // symbol. The engine's structural grid stays a simple mark.
+      if (getAuthoringFamily(element.typeId)) {
+        symbols.push(symbolInstance(snapshot, element));
+      } else {
+        columns.push({
+          id: element.id,
+          x: element.placement.x * M_TO_MM,
+          z: element.placement.z * M_TO_MM,
+        });
+      }
       continue;
     }
 

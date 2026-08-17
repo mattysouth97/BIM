@@ -203,11 +203,17 @@ export function CadSheet({ copy }: { copy: LandingCopy }) {
                 {copy.leadSecondary}
               </p>
               <div className="flex flex-wrap items-center gap-1.5 sm:ml-auto">
-                <StudioDoor testId="landing-studio-start" className="max-sm:flex-1" title={copy.studioSub}>
+                <StudioDoor
+                  testId="landing-studio-start"
+                  href="/studio?start=draw"
+                  className="max-sm:flex-1"
+                  title={copy.studioSub}
+                >
                   {copy.studio}
                 </StudioDoor>
                 <StudioDoor
                   testId="landing-import-start"
+                  href="/studio?start=draw"
                   variant="outline"
                   className="max-sm:flex-1"
                   title={copy.importDrawingSub}

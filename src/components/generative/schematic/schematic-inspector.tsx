@@ -19,13 +19,14 @@
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type {
-  BlueprintFidelityReport,
-  BlueprintSpec,
-  BlueprintValidationReport,
-  BlueprintViolation,
-  FidelityMode,
-  PreservationPlan,
+import {
+  blueprintPlacements,
+  type BlueprintFidelityReport,
+  type BlueprintSpec,
+  type BlueprintValidationReport,
+  type BlueprintViolation,
+  type FidelityMode,
+  type PreservationPlan,
 } from "@/lib/generative/blueprint";
 import type { BlueprintImportProvenance } from "@/store/blueprint-store";
 
@@ -97,6 +98,9 @@ export function SchematicInspector({
     { label: "Anchors", value: blueprint.anchors.length },
     { label: "Circulation nodes", value: blueprint.circulation.nodes.length },
     { label: "Circulation links", value: blueprint.circulation.edges.length },
+    { label: "Columns", value: blueprintPlacements(blueprint).filter((p) => p.tool === "column").length },
+    { label: "Lights", value: blueprintPlacements(blueprint).filter((p) => p.tool === "lighting").length },
+    { label: "Furniture", value: blueprintPlacements(blueprint).filter((p) => p.tool === "furniture").length },
     { label: "Grids", value: blueprint.gridSystems.length },
   ];
 

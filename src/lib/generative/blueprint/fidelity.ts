@@ -10,11 +10,12 @@
 //      (an object that IS a zone uses its own `fidelity`)
 //   3. `spec.fidelityMode`
 
-import type {
-  BlueprintSpec,
-  FidelityMode,
-  Hold,
-  Region,
+import {
+  blueprintPlacements,
+  type BlueprintSpec,
+  type FidelityMode,
+  type Hold,
+  type Region,
 } from "./blueprint-spec";
 
 export function resolveFidelity(spec: BlueprintSpec, objectId: string): FidelityMode {
@@ -169,6 +170,13 @@ export function preservationPlan(spec: BlueprintSpec): PreservationPlan {
         ? `${item.subject.fromId}→${item.subject.toId}`
         : `${item.subject.targetId} ${item.subject.measure}`;
     file(item.id, `Dimension ${subject} = ${item.valueMm.value} mm`, item.hold);
+  }
+
+  for (const item of blueprintPlacements(spec)) {
+    file(
+      item.id,
+      `${item.tool} ${item.id} (${item.familyId}) at (${item.positionMm.xMm}, ${item.positionMm.zMm}) mm on ${formatFloors(item.floorNos)}`,
+    );
   }
 
   return { preserved, flexible };

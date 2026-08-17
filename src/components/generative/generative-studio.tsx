@@ -41,6 +41,7 @@ import {
   type StageEvent,
 } from "@/lib/generative/client";
 import { DesignStorageError, saveDesign } from "@/lib/generative/design-storage";
+import { prepareGeneratedWorkspaceSession } from "@/lib/generative/workspace-handoff";
 import { parseCommand } from "@/lib/generative/session/commands";
 import { SYSTEM_LABEL, parseLock } from "@/lib/generative/session/locks";
 import { buildNavigationTree, isolationFloors } from "@/lib/generative/session/navigation";
@@ -158,7 +159,11 @@ function CameraRig({
 /* Studio                                                              */
 /* ------------------------------------------------------------------ */
 
-export function GenerativeStudio() {
+export function GenerativeStudio({
+  initialStart = "describe",
+}: {
+  initialStart?: StartMode;
+}) {
   const history = useGenerativeSession((s) => s.history);
   const locks = useGenerativeSession((s) => s.locks);
   const designRules = useGenerativeSession((s) => s.designRules);
@@ -192,7 +197,7 @@ export function GenerativeStudio() {
   );
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [repairAttempts, setRepairAttempts] = useState<Record<string, number>>({});
-  const [startMode, setStartMode] = useState<StartMode>("describe");
+  const [startMode, setStartMode] = useState<StartMode>(initialStart);
   const [viewport, setViewport] = useState<Viewport>("model");
   /**
    * Bumped by the plan view's fidelity badge. The full report lives in the
@@ -252,7 +257,7 @@ export function GenerativeStudio() {
   const adoptBlueprintResult = useCallback(
     (result: BlueprintGenerationResult, intent: string) => {
       useGenerativeSession.getState().startFrom(result, intent);
-      setViewport("plan");
+      setViewport("schematic");
     },
     [],
   );
@@ -286,6 +291,7 @@ export function GenerativeStudio() {
         savedAtIso: new Date().toISOString(),
         name: current.spec.project.name,
       });
+      prepareGeneratedWorkspaceSession();
       router.push(`/building/${current.generationId}`);
     } catch (caught) {
       setNotice({

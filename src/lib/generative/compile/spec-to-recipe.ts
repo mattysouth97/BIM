@@ -231,6 +231,13 @@ export function compileSpecToRecipe(spec: BuildingSpec): CompiledBuilding {
     // Generated buildings have no address until a site is supplied. Empty is
     // honest; a placeholder address would be a fabricated fact.
     address: "",
+    // Schematic / solver core, in the same local metres the MEP layout uses.
+    // Without this, computeCoreLayout parks the bank on the bbox rear wall
+    // and an L-plate or courtyard leaves the bank hanging in empty air.
+    serviceCore: {
+      x: mmToM(spec.core.offsetXMm),
+      z: mmToM(spec.core.offsetZMm),
+    },
     // `getRecipe` returns a union; only the office branch carries a curtain-wall
     // config, so narrow with `in` rather than assuming the property exists.
     ...(primarySide.system === "curtain-wall" &&

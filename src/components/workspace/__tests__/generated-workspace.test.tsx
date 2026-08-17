@@ -107,6 +107,8 @@ import type { BuildingSpec } from "@/lib/generative/spec/building-spec";
 import { useActiveBuildingStore } from "@/store/active-building-store";
 import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
+import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
+import { useLayerStore } from "@/store/layer-store";
 
 const GENERATION_ID = "GEN-4242";
 
@@ -137,6 +139,8 @@ beforeEach(async () => {
   useMaterialStore.setState({ properties: {}, activePk: "" });
   useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
   useActiveBuildingStore.getState().clearActiveBuilding();
+  useRevitWorkflowStore.setState({ workMode: "energy" });
+  useLayerStore.getState().setInteriorVisible(false);
 
   await saveDesign({
     generationId: GENERATION_ID,
@@ -239,6 +243,8 @@ describe("GeneratedWorkspace — a saved design", () => {
     expect(useMaterialStore.getState().properties[GENERATION_ID]).toEqual(seed.materials);
     // The generated recipe — not a recipe re-derived from a ledger estimate.
     expect(useRecipeStore.getState().baseRecipes[GENERATION_ID]).toEqual(seed.recipe);
+    expect(useRevitWorkflowStore.getState().workMode).toBe("energy");
+    expect(useLayerStore.getState().interiorVisible).toBe(true);
   });
 
   it("offers the solved storeys to the export menu", async () => {
