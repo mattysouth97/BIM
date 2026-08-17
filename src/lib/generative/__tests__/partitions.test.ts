@@ -312,6 +312,85 @@ describe("generateWalls", () => {
     );
   });
 
+  it("reports the spaces an OBLIQUE plate edge bounds", async () => {
+    const spec = await specFor("A five storey office building.");
+    // A plate with one chamfered corner. `spanFromSegment` has no interval form
+    // for that edge, and returning nothing for it is not neutral: the wall gets
+    // no door, contributes no adjacency, and the room behind it reads as
+    // unreachable to the circulation pass.
+    const chamfered: Polygon = [
+      [
+        [-10, -6],
+        [4, -6],
+        [10, 0],
+        [10, 6],
+        [-10, 6],
+      ],
+    ];
+    const spaces = [
+      space("SPACE-L02-001", rect(-10, -6, 2, 6)), // clear of the chamfer
+      space("SPACE-L02-002", rect(2, -6, 10, 6)), // the chamfer cuts this one's corner
+    ];
+    const walls = generateWalls({
+      spec,
+      floorNo: FLOOR_NO,
+      levelHeightM: LEVEL_HEIGHT_M,
+      plate: PLATE,
+      platePolygon: chamfered,
+      core: coreAt(rect(0, 0, 0, 0)),
+      spaces,
+    });
+
+    const oblique = walls.filter(
+      (w) =>
+        w.role === "exterior" &&
+        Math.abs(w.end[0] - w.start[0]) > 1e-6 &&
+        Math.abs(w.end[1] - w.start[1]) > 1e-6,
+    );
+    expect(oblique).toHaveLength(1);
+    expect(oblique[0].boundsSpaceIds).toEqual(["SPACE-L02-002"]);
+
+    // The orthogonal edges keep the exact interval path, unchanged.
+    const south = walls.find(
+      (w) => w.role === "exterior" && Math.abs(w.start[1] - -6) < 1e-9 && Math.abs(w.end[1] - -6) < 1e-9,
+    );
+    expect(south?.boundsSpaceIds).toEqual(["SPACE-L02-001", "SPACE-L02-002"]);
+  });
+
+  it("reports nothing for an oblique edge with no space behind it", async () => {
+    const spec = await specFor("A five storey office building.");
+    const chamfered: Polygon = [
+      [
+        [-10, -6],
+        [4, -6],
+        [10, 0],
+        [10, 6],
+        [-10, 6],
+      ],
+    ];
+    // The only room is at the far end, so the probe must find nothing rather
+    // than attach the nearest space it can see.
+    const spaces = [space("SPACE-L02-001", rect(-10, -6, -4, 6))];
+    const walls = generateWalls({
+      spec,
+      floorNo: FLOOR_NO,
+      levelHeightM: LEVEL_HEIGHT_M,
+      plate: PLATE,
+      platePolygon: chamfered,
+      core: coreAt(rect(0, 0, 0, 0)),
+      spaces,
+    });
+
+    const oblique = walls.filter(
+      (w) =>
+        w.role === "exterior" &&
+        Math.abs(w.end[0] - w.start[0]) > 1e-6 &&
+        Math.abs(w.end[1] - w.start[1]) > 1e-6,
+    );
+    expect(oblique).toHaveLength(1);
+    expect(oblique[0].boundsSpaceIds).toEqual([]);
+  });
+
   it("is deterministic for the same spec and layout", async () => {
     const first = await specFor("A five storey office building.");
     const second = await specFor("A five storey office building.");

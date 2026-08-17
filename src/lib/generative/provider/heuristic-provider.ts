@@ -38,14 +38,18 @@ import {
   USE_PROFILES,
 } from "../spec/defaults";
 import { createRng } from "../rng";
-import type {
-  BIMReasoningProvider,
-  BimSummary,
-  GenerationRequest,
-  ModificationRequest,
-  ProviderResult,
-  ProviderTrace,
-  RepairRequest,
+import { interpretSegmentsToBlueprint } from "../blueprint/from-segments";
+import type { BlueprintSpec } from "../blueprint/blueprint-spec";
+import {
+  ProviderError,
+  type BIMReasoningProvider,
+  type BimSummary,
+  type GenerationRequest,
+  type InterpretBlueprintRequest,
+  type ModificationRequest,
+  type ProviderResult,
+  type ProviderTrace,
+  type RepairRequest,
 } from "./types";
 
 /* ------------------------------------------------------------------ */
@@ -347,6 +351,42 @@ export class HeuristicReasoningProvider implements BIMReasoningProvider {
       data: heuristicRepair(request),
       trace: trace(this.name, started),
     };
+  }
+
+  /**
+   * "image" has no honest answer offline — the offline provider cannot see,
+   * so it fails loudly rather than fabricating a rectangle (brief §65/§66).
+   * "segments" gets a REAL deterministic reading: `interpretSegmentsToBlueprint`
+   * runs the same loop-detection core the CAD importer uses. `prompt` is
+   * ignored on purpose — free-text interpretation is Claude's job, not a
+   * regex's; a deterministic provider that tried would be guessing, not
+   * reading.
+   */
+  async interpretBlueprint(
+    request: InterpretBlueprintRequest,
+  ): Promise<ProviderResult<BlueprintSpec>> {
+    const started = Date.now();
+
+    if (request.kind === "image") {
+      throw new ProviderError(
+        "UNSUPPORTED_INPUT",
+        "The offline provider cannot read an image; it has no vision.",
+        "Configure ANTHROPIC_API_KEY, or supply the drawing as vector segments instead of a raster.",
+      );
+    }
+
+    let data: BlueprintSpec;
+    try {
+      data = interpretSegmentsToBlueprint(request.segments, request.labels ?? []);
+    } catch (error) {
+      throw new ProviderError(
+        "INTERPRETATION_FAILED",
+        "The deterministic reader could not extract a usable blueprint from the segments.",
+        error instanceof Error ? error.message : undefined,
+      );
+    }
+
+    return { data, trace: trace(this.name, started) };
   }
 
   async evaluateBuilding(
@@ -847,22 +887,46 @@ function heuristicPatch(instruction: string, spec: BuildingSpec): BuildingPatch 
   if (/\badd\s+(?:a|an|one|another|\d+)?\s*(?:more\s+)?(?:floor|storey|story|level)/.test(text)) {
     const top = spec.levels.reduce((max, l) => Math.max(max, l.floorNo), 0);
     const template = spec.levels.find((l) => l.floorNo === top) ?? spec.levels[0];
+    const next = top + 1;
+
+    // A level on its own is a glazed, columned, empty shell. "Add a floor"
+    // means another floor LIKE the one below it, so every program that served
+    // the old top storey has to reach the new one too — otherwise the rebuild
+    // gains area and windows while net area, rooms and doors do not move.
+    const inherited = spec.program.flatMap((item, index) =>
+      item.levels.includes(top)
+        ? [
+            {
+              op: "insert" as const,
+              path: `/program/${index}/levels/-`,
+              value: next,
+            },
+          ]
+        : [],
+    );
+
     return {
       summary: "Add one floor",
-      rationale: "Appended a level matching the current top storey.",
+      rationale:
+        inherited.length > 0
+          ? `Appended a level matching the current top storey and extended ${inherited.length} program item(s) onto it.`
+          : "Appended a level matching the current top storey. No program was assigned to the storey below, so the new level is unprogrammed.",
+      // Still "levels": scope names the subtree the change is ABOUT, and the
+      // program ops follow the level rather than being an unrelated edit.
       scope: "levels",
-      affectedFloorNos: [top + 1],
+      affectedFloorNos: [next],
       operations: [
         {
           op: "insert",
           path: "/levels/-",
           value: {
-            floorNo: top + 1,
-            name: `L${String(top + 1).padStart(2, "0")}`,
+            floorNo: next,
+            name: `L${String(next).padStart(2, "0")}`,
             floorToFloorMm: template.floorToFloorMm,
             usage: "occupied",
           },
         },
+        ...inherited,
       ],
     };
   }

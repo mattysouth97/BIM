@@ -50,8 +50,9 @@ describe("authoring asset manifest", () => {
     expect(door.uri).toBe("/bim-assets/door-single-flush.glb");
   });
 
-  it("lists the 46 course families with stable public URLs", () => {
-    expect(AUTHORING_FAMILY_IDS).toHaveLength(46);
+  it("lists the 102 course families with stable public URLs", () => {
+    expect(AUTHORING_FAMILY_IDS).toHaveLength(102);
+    expect(new Set(AUTHORING_FAMILY_IDS).size).toBe(AUTHORING_FAMILY_IDS.length);
     expect(authoringFamilyUrl("door-single-flush-910")).toBe(
       "/models/authoring/door-single-flush-910.glb",
     );

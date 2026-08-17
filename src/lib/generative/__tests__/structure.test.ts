@@ -316,6 +316,142 @@ describe("generateStructure — slabs", () => {
   });
 });
 
+describe("generateStructure — local grids", () => {
+  const ROTATION_RAD = Math.PI / 6;
+
+  /**
+   * A rotated grid claiming a square region in the middle of the plate. Built by
+   * hand rather than through a prompt: the heuristic provider has no way to ask
+   * for one, which is exactly the gap local grids close.
+   */
+  function withLocalGrid(spec: BuildingSpec, region: boolean): BuildingSpec {
+    return {
+      ...spec,
+      structure: {
+        ...spec.structure,
+        localGrids: {
+          value: [
+            {
+              id: "wing",
+              ...(region
+                ? {
+                    regionPolygonMm: [
+                      [
+                        [-12_000, -12_000],
+                        [12_000, -12_000],
+                        [12_000, 12_000],
+                        [-12_000, 12_000],
+                      ] as [number, number][],
+                    ],
+                  }
+                : {}),
+              originMm: { x: -8_000, z: -8_000 },
+              rotationRad: ROTATION_RAD,
+              xSpacingsMm: [6_000, 6_000],
+              zSpacingsMm: [6_000],
+            },
+          ],
+          source: "USER_PROVIDED" as const,
+          confidence: 1,
+          reason: "Rotated wing grid under test.",
+        },
+      },
+    };
+  }
+
+  it("places the local columns on the rotated lattice, not the world axes", async () => {
+    const spec = withLocalGrid(await specFor(RECTANGULAR), true);
+    const { levels, plate } = contextFor(spec);
+    const grids = generateGrid({ spec, plate });
+    const { columns } = generateStructure({ spec, levels, grids, plate });
+
+    const local = columns.filter((c) => c.gridRef.startsWith("wing:"));
+    expect(local.length).toBeGreaterThan(0);
+
+    const cos = Math.cos(ROTATION_RAD);
+    const sin = Math.sin(ROTATION_RAD);
+    for (const column of local) {
+      // Inverse of the frame transform: world → local must land on a node.
+      const dx = column.x - -8;
+      const dz = column.z - -8;
+      const u = dx * cos + dz * sin;
+      const v = -dx * sin + dz * cos;
+      expect([0, 6, 12].some((n) => Math.abs(n - u) < 1e-9)).toBe(true);
+      expect([0, 6].some((n) => Math.abs(n - v) < 1e-9)).toBe(true);
+    }
+
+    const a1 = local.find((c) => c.gridRef === "wing:A-1");
+    const b1 = local.find((c) => c.gridRef === "wing:B-1");
+    expect(a1).toBeDefined();
+    expect(b1).toBeDefined();
+    expect(Math.hypot(b1!.x - a1!.x, b1!.z - a1!.z)).toBeCloseTo(6, 9);
+    expect(Math.atan2(b1!.z - a1!.z, b1!.x - a1!.x)).toBeCloseTo(ROTATION_RAD, 9);
+  });
+
+  it("keeps global columns out of the region a local grid claimed", async () => {
+    const base = await specFor(RECTANGULAR);
+    const spec = withLocalGrid(base, true);
+    const { levels, plate } = contextFor(spec);
+    const grids = generateGrid({ spec, plate });
+
+    const before = generateStructure({ spec: base, levels, grids, plate }).columns;
+    const after = generateStructure({ spec, levels, grids, plate }).columns;
+
+    const globalBefore = before.length;
+    const globalAfter = after.filter((c) => !c.gridRef.includes(":")).length;
+    expect(globalAfter).toBeLessThan(globalBefore);
+
+    for (const column of after.filter((c) => !c.gridRef.includes(":"))) {
+      const inside =
+        column.x > -12 + 1e-9 &&
+        column.x < 12 - 1e-9 &&
+        column.z > -12 + 1e-9 &&
+        column.z < 12 - 1e-9;
+      expect(inside).toBe(false);
+    }
+    expect(new Set(after.map((c) => c.id)).size).toBe(after.length);
+  });
+
+  it("lets a region-less local grid claim the whole plate", async () => {
+    const spec = withLocalGrid(await specFor(RECTANGULAR), false);
+    const { levels, plate } = contextFor(spec);
+    const grids = generateGrid({ spec, plate });
+    const { columns } = generateStructure({ spec, levels, grids, plate });
+
+    expect(columns.length).toBeGreaterThan(0);
+    expect(columns.every((c) => c.gridRef.startsWith("wing:"))).toBe(true);
+  });
+
+  it("never spans a beam between two grid families", async () => {
+    const spec = withLocalGrid(await specFor(RECTANGULAR), true);
+    const { levels, plate } = contextFor(spec);
+    const grids = generateGrid({ spec, plate });
+    const { columns, beams } = generateStructure({ spec, levels, grids, plate });
+
+    const family = new Map(
+      columns.map((c) => [
+        `${c.floorNo}|${c.x.toFixed(6)}|${c.z.toFixed(6)}`,
+        c.gridRef.includes(":") ? c.gridRef.split(":")[0] : "global",
+      ]),
+    );
+    expect(beams.length).toBeGreaterThan(0);
+    for (const beam of beams) {
+      const from = family.get(`${beam.floorNo}|${beam.start[0].toFixed(6)}|${beam.start[1].toFixed(6)}`);
+      const to = family.get(`${beam.floorNo}|${beam.end[0].toFixed(6)}|${beam.end[1].toFixed(6)}`);
+      expect(from).toBeDefined();
+      expect(from).toBe(to);
+    }
+  });
+
+  it("leaves a spec without local grids on exactly the global lattice", async () => {
+    const spec = await specFor(RECTANGULAR);
+    const { levels, plate } = contextFor(spec);
+    const grids = generateGrid({ spec, plate });
+    const { columns } = generateStructure({ spec, levels, grids, plate });
+    expect(columns.every((c) => !c.gridRef.includes(":"))).toBe(true);
+  });
+});
+
 describe("generateStructure — determinism", () => {
   it("returns identical geometry for the same spec", async () => {
     const a = await frameFor(RECTANGULAR);

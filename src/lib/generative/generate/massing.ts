@@ -10,6 +10,7 @@
 //
 // The mm→m conversion happens here and in spec-to-recipe.ts only.
 
+import { ensurePolygonWinding } from "../geom";
 import type { BuildingSpec, MassingStrategy } from "../spec/building-spec";
 
 export type Ring = [number, number][];
@@ -225,7 +226,9 @@ function ringForStrategy(
       );
     // rectangle, bar, courtyard, atrium, podium-tower and stepped are all
     // rectangular in outline; the first two differ only in proportion, the
-    // rest add a hole or vary per level below.
+    // rest add a hole or vary per level below. "custom" reaches here only when
+    // `customPlates` is missing or unusable — the declared bounding box is the
+    // honest fallback for a footprint that never arrived.
     default:
       return rectRing(widthM, depthM);
   }
@@ -258,6 +261,65 @@ function holesForStrategy(
 }
 
 /* ------------------------------------------------------------------ */
+/* Custom plates                                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Plates read straight off `massing.customPlates` — the free-form path, where
+ * the outline is authored rather than derived from width/depth/parameters.
+ *
+ * Rules, all of them observable:
+ *   • mm → m here, like every other massing conversion.
+ *   • winding is repaired to outer-CCW / holes-CW, so a producer that traced a
+ *     plan clockwise still gets a valid polygon instead of an inverted slab.
+ *   • the FIRST entry naming a floor wins; a later entry does not silently
+ *     overwrite an earlier one.
+ *   • a level named by no entry inherits the nearest named level's plate,
+ *     preferring the one BELOW on a tie — a tower continues the last plate that
+ *     was actually drawn rather than vanishing.
+ *
+ * Returns null when there is nothing to build from, so the caller can fall
+ * through to the parametric path rather than emit an empty building.
+ */
+function customPlatesFor(spec: BuildingSpec, floorNos: number[]): LevelPlate[] | null {
+  const entries = spec.massing.customPlates?.value ?? [];
+  if (entries.length === 0 || floorNos.length === 0) return null;
+
+  const byFloor = new Map<number, Polygon>();
+  for (const entry of entries) {
+    const polygon = ensurePolygonWinding(
+      entry.polygonMm.map((ring) => ring.map(([x, z]): [number, number] => [mmToM(x), mmToM(z)])),
+    );
+    if (polygon.length === 0 || polygon[0].length < 3) continue;
+    for (const floorNo of entry.floorNos) {
+      if (!byFloor.has(floorNo)) byFloor.set(floorNo, polygon);
+    }
+  }
+
+  const named = [...byFloor.keys()].sort((a, b) => a - b);
+  if (named.length === 0) return null;
+
+  const nearest = (floorNo: number): Polygon => {
+    let best = named[0];
+    let bestRank = Infinity;
+    for (const candidate of named) {
+      // Doubling the distance leaves the +1 as a pure tie-break towards below.
+      const rank = Math.abs(candidate - floorNo) * 2 + (candidate > floorNo ? 1 : 0);
+      if (rank < bestRank) {
+        bestRank = rank;
+        best = candidate;
+      }
+    }
+    return byFloor.get(best)!;
+  };
+
+  return floorNos.map((floorNo) => {
+    const polygon = byFloor.get(floorNo) ?? nearest(floorNo);
+    return { floorNo, polygon, areaSqm: polygonArea(polygon) };
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /* Entry point                                                         */
 /* ------------------------------------------------------------------ */
 
@@ -276,7 +338,15 @@ export function generateMassing(spec: BuildingSpec): MassingResult {
   let plates: LevelPlate[];
   let variesByLevel = false;
 
-  if (strategy === "podium-tower") {
+  const custom = strategy === "custom" ? customPlatesFor(spec, floorNos) : null;
+
+  if (custom !== null) {
+    plates = custom;
+    // Reference identity is enough: `customPlatesFor` shares ONE polygon object
+    // between every level an entry names, so two distinct objects mean two
+    // genuinely different plates.
+    variesByLevel = new Set(plates.map((plate) => plate.polygon)).size > 1;
+  } else if (strategy === "podium-tower") {
     const podiumLevels = params.podiumLevels ?? 2;
     const podiumW = mmToM(params.podiumWidthMm ?? spec.massing.widthMm.value);
     const podiumD = mmToM(params.podiumDepthMm ?? spec.massing.depthMm.value);

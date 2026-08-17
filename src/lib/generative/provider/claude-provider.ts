@@ -25,10 +25,16 @@ import {
 } from "../spec/building-spec";
 import { defaultsReferenceTable } from "../spec/defaults";
 import {
+  BlueprintSpecSchema,
+  blueprintToolInputSchema,
+  type BlueprintSpec,
+} from "../blueprint/blueprint-spec";
+import {
   ProviderError,
   type BIMReasoningProvider,
   type BimSummary,
   type GenerationRequest,
+  type InterpretBlueprintRequest,
   type ModificationRequest,
   type ProviderResult,
   type RepairRequest,
@@ -136,6 +142,98 @@ that pretends.
 
 Call the \`emit_building_patch\` tool exactly once. Do not write prose.`;
 
+const INTERPRET_BLUEPRINT_SYSTEM = `You are the schematic interpretation engine inside a generative BIM authoring
+system. You are handed a drawing a designer imported — a floor plan image, a
+hand sketch, or vector geometry lifted from a CAD file — and must read it into
+a BlueprintSpec. This is Mode B: the drawing is design authority, and your job
+is to INTERPRET it, never to redesign it.
+
+CLASSIFY, at minimum:
+- the outer boundary (one BoundaryLoop per plan, mapped to the levels it governs)
+- voids (courtyard / atrium / shaft) — any interior hole in the plate
+- the vertical core (stairs, elevators, shafts, restrooms it contains)
+- entrances — a DesignAnchor of kind "entrance" at every point people enter
+- circulation — the corridor/lobby graph legible on the drawing
+- program zones — labelled or clearly bounded areas, tagged with a SpaceType
+
+HARD RULES
+- NEVER invent a precise dimension when the scale is unknown or unreliable. If
+  \`coordinateSystem.calibrated\` would be false or low-confidence, emit
+  geometry as PROPORTIONS of the drawing's own extent rather than a guessed
+  absolute size, set \`coordinateSystem.method\` to "assumed", and mark every
+  size you derived from it INFERRED with an honestly low confidence.
+- Every classification is a judgement call, not a fact off the page — even
+  "this loop is the boundary" is a read, not a given. Use Provenanced values
+  with source INFERRED (never USER_PROVIDED unless a label or dimension on
+  the drawing states it explicitly) and a real confidence.
+- Record every genuine doubt as an \`uncertainty\` entry naming the object and
+  the evidence kind (visual / label / geometry / inferred). An honest "I am
+  not sure this loop is a shaft" beats a confident wrong guess with no trace.
+- The schematic is design authority: read what is drawn. Do not add rooms,
+  resize the plate, or "improve" the layout — that is the generator's job on
+  a LATER pass, once the user has reviewed what you read.
+- Millimetres, integers, XZ plane (+X right, +Z forward), matching the
+  drawing's own coordinate frame — never the geometry engine's world frame.
+
+Call the \`emit_blueprint_spec\` tool exactly once. Do not write prose.`;
+
+const MAX_SEGMENT_LINES = 400;
+const MAX_LABEL_LINES = 200;
+
+function interpretImagePromptText(request: {
+  prompt?: string;
+  scaleHintMmPerPx?: number;
+}): string {
+  return [
+    "SOURCE: a raster image of a schematic drawing (floor plan, hand sketch, or scanned CAD sheet).",
+    request.prompt ? `\nDESIGNER NOTE:\n${request.prompt}` : "",
+    request.scaleHintMmPerPx
+      ? `\nSCALE HINT: approximately ${request.scaleHintMmPerPx} mm per pixel. Use it to seed coordinateSystem, but a hint is not a measured dimension — keep the calibration confidence honest.`
+      : '\nNo scale hint was given. Unless a dimension string is legible in the image, treat the scale as UNCALIBRATED: coordinateSystem.calibrated = false, method "assumed", and emit every size as a proportion of the drawing\'s own extent rather than an invented absolute number.',
+    "\nschemaVersion must be 1. source must be \"image\".",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function interpretSegmentsPromptText(request: {
+  segments: Array<{
+    startMm: { xMm: number; zMm: number };
+    endMm: { xMm: number; zMm: number };
+    layer?: string;
+  }>;
+  labels?: Array<{ text: string; positionMm: { xMm: number; zMm: number }; heightMm?: number }>;
+  prompt?: string;
+}): string {
+  const segmentLines = request.segments
+    .slice(0, MAX_SEGMENT_LINES)
+    .map(
+      (s, i) =>
+        `${i}: (${s.startMm.xMm}, ${s.startMm.zMm}) → (${s.endMm.xMm}, ${s.endMm.zMm})` +
+        (s.layer ? ` [layer: ${s.layer}]` : ""),
+    );
+  const omittedSegments = request.segments.length - MAX_SEGMENT_LINES;
+
+  const labels = request.labels ?? [];
+  const labelLines = labels
+    .slice(0, MAX_LABEL_LINES)
+    .map((l) => `"${l.text}" at (${l.positionMm.xMm}, ${l.positionMm.zMm})`);
+  const omittedLabels = labels.length - MAX_LABEL_LINES;
+
+  return [
+    `SOURCE: ${request.segments.length} vector segments extracted from a CAD/vector drawing — already millimetres, a MEASURED coordinate frame, not a raster to interpret visually.`,
+    `\nSEGMENTS:\n${segmentLines.join("\n")}${omittedSegments > 0 ? `\n… ${omittedSegments} more segment(s) omitted.` : ""}`,
+    labelLines.length > 0
+      ? `\nTEXT LABELS:\n${labelLines.join("\n")}${omittedLabels > 0 ? `\n… ${omittedLabels} more label(s) omitted.` : ""}`
+      : "\nNo text labels were extracted.",
+    request.prompt ? `\nDESIGNER NOTE:\n${request.prompt}` : "",
+    '\nThese coordinates are already measured millimetres, so coordinateSystem should normally be calibrated = true with high confidence — you are not guessing the SCALE here, only the CLASSIFICATION of what each loop and label means.',
+    "\nschemaVersion must be 1. source must be \"dxf\".",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 const REVIEW_SYSTEM = `${ROLE}
 
 You are reviewing a building that has ALREADY been generated. You receive its specification
@@ -185,15 +283,26 @@ export class ClaudeReasoningProvider implements BIMReasoningProvider {
     schema: z.ZodType<T>;
     maxTokens: number;
     signal?: AbortSignal;
+    /**
+     * Zod → JSON Schema for the tool's `input_schema`. Defaults to the
+     * BuildingSpec-family emitter; `interpretBlueprint` passes
+     * `blueprintToolInputSchema` instead. Both are `z.toJSONSchema(schema,
+     * {target:"draft-7", unrepresentable:"any"})` today — kept as separate
+     * functions (not one shared call) because the two schema families are
+     * free to diverge (e.g. one adopting a `.default()`) without silently
+     * breaking the other's `additionalProperties:false` strictness.
+     */
+    toJsonSchema?: (schema: z.ZodType) => Record<string, unknown>;
   }): Promise<ProviderResult<T>> {
     const client = this.getClient();
     const model = resolveModel();
     const started = Date.now();
+    const toJsonSchema = input.toJsonSchema ?? toolInputSchema;
 
     const tool: Anthropic.Messages.Tool = {
       name: input.toolName,
       description: input.toolDescription,
-      input_schema: toolInputSchema(
+      input_schema: toJsonSchema(
         input.schema as unknown as z.ZodType,
       ) as Anthropic.Messages.Tool.InputSchema,
     };
@@ -421,6 +530,38 @@ export class ClaudeReasoningProvider implements BIMReasoningProvider {
         "Explain why this building looks the way it does, using only the supplied state.",
       schema: BuildingReviewSchema,
       maxTokens: 3_000,
+    });
+  }
+
+  async interpretBlueprint(
+    request: InterpretBlueprintRequest,
+  ): Promise<ProviderResult<BlueprintSpec>> {
+    const content: Anthropic.Messages.ContentBlockParam[] = [];
+
+    if (request.kind === "image") {
+      content.push({
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: request.mediaType as "image/png",
+          data: request.dataBase64,
+        },
+      });
+      content.push({ type: "text", text: interpretImagePromptText(request) });
+    } else {
+      content.push({ type: "text", text: interpretSegmentsPromptText(request) });
+    }
+
+    return this.callTool({
+      system: INTERPRET_BLUEPRINT_SYSTEM,
+      userContent: content,
+      toolName: "emit_blueprint_spec",
+      toolDescription:
+        "Emit the BlueprintSpec interpreted from the supplied schematic. Classify, do not redesign.",
+      schema: BlueprintSpecSchema,
+      maxTokens: 12_000,
+      signal: request.signal,
+      toJsonSchema: blueprintToolInputSchema,
     });
   }
 }

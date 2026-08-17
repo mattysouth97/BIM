@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { HeuristicReasoningProvider } from "../provider/heuristic-provider";
+import { ProviderError, type BlueprintSegmentInput } from "../provider/types";
 import {
   BuildingSpecSchema,
   toolInputSchema,
   type BuildingSpec,
 } from "../spec/building-spec";
 import { seedFromPrompt } from "../rng";
+import type { PointMm } from "../blueprint/blueprint-spec";
 
 const provider = new HeuristicReasoningProvider();
 
@@ -171,8 +173,11 @@ describe("HeuristicReasoningProvider", () => {
 describe("heuristic modification", () => {
   const base = async (): Promise<BuildingSpec> => gen("Create a five-story office building.");
 
-  it("adds a level as a single scoped patch", async () => {
+  it("adds a level and carries the program of the storey below onto it", async () => {
     const spec = await base();
+    const top = spec.levels.reduce((max, l) => Math.max(max, l.floorNo), 0);
+    const inheriting = spec.program.filter((item) => item.levels.includes(top));
+
     const { data } = await provider.modifyBuilding({
       spec,
       summary: {} as never,
@@ -180,9 +185,20 @@ describe("heuristic modification", () => {
       scope: { kind: "building", label: "Building" },
       locked: [],
     });
+
     expect(data.scope).toBe("levels");
-    expect(data.operations).toHaveLength(1);
     expect(data.operations[0].path).toBe("/levels/-");
+
+    // The level alone would be a glazed, columned shell with no rooms in it —
+    // gross area and window count would move while net area, room count and
+    // door count did not. Every program on the old top storey extends upward.
+    const programOps = data.operations.filter((op) =>
+      /^\/program\/\d+\/levels\/-$/.test(op.path),
+    );
+    expect(programOps).toHaveLength(inheriting.length);
+    expect(programOps.length).toBeGreaterThan(0);
+    expect(programOps.every((op) => op.value === top + 1)).toBe(true);
+    expect(data.operations).toHaveLength(1 + inheriting.length);
   });
 
   it("reports honestly when no rule matches instead of inventing a change", async () => {
@@ -195,5 +211,61 @@ describe("heuristic modification", () => {
       locked: [],
     });
     expect(data.summary).toMatch(/no deterministic rule/i);
+  });
+});
+
+describe("heuristic blueprint interpretation", () => {
+  const pt = (xMm: number, zMm: number): PointMm => ({ xMm, zMm });
+
+  function rectSegments(points: PointMm[]): BlueprintSegmentInput[] {
+    return points.map((start, i) => ({
+      startMm: start,
+      endMm: points[(i + 1) % points.length],
+    }));
+  }
+
+  it("fails honestly on an image — the offline provider has no vision", async () => {
+    await expect(
+      provider.interpretBlueprint({
+        kind: "image",
+        mediaType: "image/png",
+        dataBase64: "AAAA",
+      }),
+    ).rejects.toMatchObject(
+      expect.objectContaining({ code: "UNSUPPORTED_INPUT" }),
+    );
+    await expect(
+      provider.interpretBlueprint({
+        kind: "image",
+        mediaType: "image/png",
+        dataBase64: "AAAA",
+      }),
+    ).rejects.toBeInstanceOf(ProviderError);
+  });
+
+  it("reads a real BlueprintSpec off vector segments", async () => {
+    const boundary = rectSegments([
+      pt(0, 0),
+      pt(10_000, 0),
+      pt(10_000, 10_000),
+      pt(0, 10_000),
+    ]);
+    const { data } = await provider.interpretBlueprint({
+      kind: "segments",
+      segments: boundary,
+    });
+    expect(data.boundaries).toHaveLength(1);
+    expect(data.source).toBe("dxf");
+  });
+
+  it("fails honestly when the segments contain no closed loop", async () => {
+    await expect(
+      provider.interpretBlueprint({
+        kind: "segments",
+        segments: [{ startMm: pt(0, 0), endMm: pt(1_000, 0) }],
+      }),
+    ).rejects.toMatchObject(
+      expect.objectContaining({ code: "INTERPRETATION_FAILED" }),
+    );
   });
 });

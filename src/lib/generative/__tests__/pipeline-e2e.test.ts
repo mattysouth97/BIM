@@ -14,6 +14,7 @@ import { compileSpecToRecipe } from "../compile/spec-to-recipe";
 import { emitSnapshot, mergeGenerated } from "../graph/emit";
 import { validateBuilding } from "../validate/rules";
 import { rectsOverlap } from "../generate/types";
+import { clipRectToPolygon } from "../geom";
 import { seedFromPrompt } from "../rng";
 import type { BimElement } from "@/lib/bim/model/types";
 
@@ -163,6 +164,33 @@ describe("generative pipeline — end to end", () => {
         rectsOverlap(component.rect, voidRect, 0.01),
         `${component.id} sits in the void`,
       ).toBe(false);
+    }
+  });
+
+  it("sites the core on solid floor of an L-shape, not in its missing quadrant", async () => {
+    // The courtyard case above is the hole variant; this is the non-convex one
+    // the old four-bands-around-the-void workaround could not express at all.
+    const { data: base } = await provider.generateBuilding({
+      prompt: "A five storey office building.",
+      seed: seedFromPrompt("A five storey office building."),
+    });
+    const spec = {
+      ...base,
+      massing: {
+        ...base.massing,
+        strategy: { ...base.massing.strategy, value: "l-shape" as const },
+        parameters: { wingDepthMm: 16_000 },
+      },
+    };
+    const building = generateBuildingFromSpec(spec);
+    const level = building.levels.find((l) => l.floorNo > 0)!;
+
+    expect(clipRectToPolygon(building.core.rect, level.polygon, 1e-6)).toBe(true);
+    for (const component of building.core.components) {
+      expect(
+        clipRectToPolygon(component.rect, level.polygon, 1e-6),
+        `${component.id} is off the plate`,
+      ).toBe(true);
     }
   });
 

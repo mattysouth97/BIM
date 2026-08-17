@@ -24,6 +24,7 @@ import {
 } from "@/lib/bim/model/types";
 
 import type { BuildingSpec } from "../spec/building-spec";
+import { polygonBounds, ringArea, type Polygon } from "../generate/massing";
 import { rectCentre, rectArea, type GeneratedBuilding } from "../generate/types";
 
 const GENERATED_COLUMN_TYPE = "generated-column";
@@ -52,6 +53,39 @@ export interface EmitInput {
 }
 
 const round = (n: number, dp = 3) => Number(n.toFixed(dp));
+
+/* ------------------------------------------------------------------ */
+/* Plate outlines                                                      */
+/* ------------------------------------------------------------------ */
+
+// A slab's own outline, carried into the BIM graph.
+//
+// Without this the level's real plate stops at the geometry layer: `areaM2`
+// alone cannot tell a courtyard ring from a solid rectangle of the same area,
+// and holes are never walled (see partitions.ts), so nothing else in the
+// snapshot records that the plate has one. `BuildingRecipe` carries the
+// footprint for the renderer; the slab element is where the BIM graph carries
+// it — the same place IFC keeps a slab's profile.
+
+/** Millimetre resolution: the units the spec is authored in, so no outline the
+ *  compiler could produce loses anything on the way through. */
+const OUTLINE_DP = 3;
+
+function roundPolygon(polygon: Polygon): [number, number][][] {
+  return polygon.map((ring) =>
+    ring.map(([x, z]): [number, number] => [round(x, OUTLINE_DP), round(z, OUTLINE_DP)]),
+  );
+}
+
+function ringPerimeter(ring: [number, number][]): number {
+  let total = 0;
+  for (let i = 0; i < ring.length; i += 1) {
+    const [x1, z1] = ring[i];
+    const [x2, z2] = ring[(i + 1) % ring.length];
+    total += Math.hypot(x2 - x1, z2 - z1);
+  }
+  return total;
+}
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -272,6 +306,16 @@ export function emitElements(input: EmitInput): BimElement[] {
 
   /* --- slabs --- */
   for (const slab of building.slabs) {
+    const outline = roundPolygon(slab.polygon);
+    const [outer, ...holes] = outline;
+    const voidAreaM2 = holes.reduce((sum, hole) => sum + ringArea(hole), 0);
+    // `polygonBounds` reports ±Infinity for an outline with no vertices, and a
+    // non-finite placement is worse than an honest origin.
+    const bounds =
+      outer && outer.length > 0
+        ? polygonBounds(outline)
+        : { minX: 0, maxX: 0, minZ: 0, maxZ: 0 };
+
     elements.push({
       ...mk(
         slab.id,
@@ -286,8 +330,26 @@ export function emitElements(input: EmitInput): BimElement[] {
       instanceParameters: {
         areaM2: round(slab.areaSqm, 2),
         thicknessMm: Math.round(slab.thicknessM * 1000),
+        // The plate itself. `[outer, ...holes]` in the engine's world XZ metres
+        // — the same rings and the same winding as
+        // `BuildingRecipe.footprintPolygon`, so a consumer reads one contract.
+        outlineJson: JSON.stringify(outline),
+        vertexCount: outer?.length ?? 0,
+        voidCount: holes.length,
+        voidAreaM2: round(voidAreaM2, 2),
+        perimeterM: round(ringPerimeter(outer ?? []), 3),
+        widthM: round(bounds.maxX - bounds.minX, 3),
+        depthM: round(bounds.maxZ - bounds.minZ, 3),
       },
-      placement: { x: 0, y: 0, z: 0, rotationY: 0 },
+      // The outline is world-space, so the placement is the plate's own centre
+      // rather than the model origin — the convention every other element in
+      // this file already follows.
+      placement: {
+        x: round((bounds.minX + bounds.maxX) / 2),
+        y: 0,
+        z: round((bounds.minZ + bounds.maxZ) / 2),
+        rotationY: 0,
+      },
     });
   }
 

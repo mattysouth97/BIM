@@ -21,6 +21,7 @@ import { solveFloorPlan } from "./space-plan";
 import { generateGrid, generateStructure } from "./structure";
 import { generateWalls } from "./partitions";
 import { generateOpenings } from "./openings";
+import { largestInscribedAxisAlignedRect } from "../geom";
 import {
   rectArea,
   type BuildingMetrics,
@@ -86,35 +87,58 @@ function boundsToRect(polygon: ReturnType<typeof generateMassing>["primary"]): R
   return { minX: b.minX, minZ: b.minZ, maxX: b.maxX, maxZ: b.maxZ };
 }
 
+/** Is this polygon nothing more than its own bounding box? */
+function isPlainRectangle(
+  polygon: ReturnType<typeof generateMassing>["primary"],
+  plate: Rect,
+): boolean {
+  if (polygon.length !== 1) return false;
+  const ring = polygon[0] ?? [];
+  const corners = ring.filter(
+    (point, index) =>
+      index === 0 ||
+      Math.abs(point[0] - ring[index - 1][0]) > 1e-9 ||
+      Math.abs(point[1] - ring[index - 1][1]) > 1e-9,
+  );
+  if (corners.length !== 4) return false;
+  return corners.every(
+    ([x, z]) =>
+      (Math.abs(x - plate.minX) < 1e-9 || Math.abs(x - plate.maxX) < 1e-9) &&
+      (Math.abs(z - plate.minZ) < 1e-9 || Math.abs(z - plate.maxZ) < 1e-9),
+  );
+}
+
 /**
  * The largest SOLID rectangle of a plate, for siting the core.
  *
- * A courtyard or atrium plate is a ring: its bounding box is mostly void. Siting
- * the core on that box centres it in the void — a core standing in open air,
- * connected to nothing. So when the plate has holes, cut the ring into the four
- * bands around the void and hand back the biggest one.
+ * The core has to stand on floor. A courtyard or atrium plate is a ring whose
+ * bounding box is mostly void, and an L or a cross has a whole quadrant of box
+ * that is not building — site the core on either and it is a lift shaft standing
+ * in open air, which the space solver, the circulation graph and egress all then
+ * inherit. So the plate's real outline decides: the largest axis-aligned rect
+ * that fits inside it, holes respected. `generateCore` centres the core in
+ * whatever rect it is handed, which puts it at the centroid of the largest solid
+ * region — the honest generalisation of "roughly central".
  *
- * Only the first hole is considered: the massing generator emits at most one,
- * and quietly mis-siting the core on a hypothetical second is worse than the
- * obvious behaviour of ignoring it.
+ * A plain rectangle short-circuits to its own bounds rather than to the
+ * inscribed-rect approximation, so the ordinary building's core does not move by
+ * a grid step for no reason.
  */
 function solidPlateForCore(
   polygon: ReturnType<typeof generateMassing>["primary"],
 ): Rect {
   const plate = boundsToRect(polygon);
-  const [, ...holes] = polygon;
-  if (holes.length === 0) return plate;
+  if (isPlainRectangle(polygon, plate)) return plate;
 
-  const h = polygonBounds([holes[0]]);
-  const bands: Rect[] = [
-    { minX: plate.minX, maxX: h.minX, minZ: plate.minZ, maxZ: plate.maxZ }, // west
-    { minX: h.maxX, maxX: plate.maxX, minZ: plate.minZ, maxZ: plate.maxZ }, // east
-    { minX: plate.minX, maxX: plate.maxX, minZ: plate.minZ, maxZ: h.minZ }, // south
-    { minX: plate.minX, maxX: plate.maxX, minZ: h.maxZ, maxZ: plate.maxZ }, // north
-  ].filter((b) => b.maxX - b.minX > 0.1 && b.maxZ - b.minZ > 0.1);
-
-  if (bands.length === 0) return plate;
-  return bands.reduce((best, band) => (rectArea(band) > rectArea(best) ? band : best));
+  // Deterministic, resolution-independent: the step is a fraction of the plate,
+  // so the same shape at any size yields the same relative answer.
+  const step = Math.max(
+    0.25,
+    Math.min(plate.maxX - plate.minX, plate.maxZ - plate.minZ) / 40,
+  );
+  const inscribed = largestInscribedAxisAlignedRect(polygon, step);
+  if (inscribed === null || rectArea(inscribed) <= 0) return plate;
+  return inscribed;
 }
 
 /* ------------------------------------------------------------------ */
@@ -273,12 +297,14 @@ export function generateBuildingFromSpec(
       continue;
     }
     report("spaces", level.name);
-    const levelPlate = boundsToRect(level.polygon);
     spaces.push(
       ...solveFloorPlan({
         spec,
         floorNo: level.floorNo,
-        plate: levelPlate,
+        // Bounds AND outline: the solver bands the box but places only on the
+        // real plate, so a notch or a void can never take rooms.
+        plate: boundsToRect(level.polygon),
+        platePolygon: level.polygon,
         core,
         rng: rng.fork(`level-${level.floorNo}`),
       }),

@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,11 +30,8 @@ export function BimPropertiesInspector() {
   const editingType = editingTypeId ? snapshot?.types[editingTypeId] : type;
   const defs = parameterDefsForKind(element?.kind ?? "wall");
 
-  const siblingTypes = useMemo(() => {
-    if (!element) return [];
-    const tool = kindToTool(element.kind);
-    return tool ? familiesForTool(tool) : [];
-  }, [element]);
+  const siblingTool = element ? kindToTool(element.kind) : null;
+  const siblingTypes = siblingTool ? familiesForTool(siblingTool) : [];
 
   if (!snapshot) {
     return (

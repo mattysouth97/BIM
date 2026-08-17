@@ -17,10 +17,26 @@
 // a room that does not touch circulation is not a room, it is a void. Slicing
 // perpendicular to the corridor makes "every room opens onto a corridor" true
 // by construction instead of true by later repair.
+//
+// POLYGON PLATES. The guillotine still cuts the plate's BOUNDING BOX into four
+// bands, because band orientation is what gives corridors their relationship to
+// the core. What changed is that a band is no longer assumed to be floor: it is
+// decomposed into `solidCells` — axis-aligned rectangles that lie WHOLLY inside
+// the real plate polygon, holes respected — and each cell is laid out
+// independently. Every strip, every corridor and every room is a sub-rect of a
+// verified cell, so "no space escapes the plate" is structural rather than
+// checked after the fact. On a plain rectangle a band decomposes to itself, so
+// that path is unchanged to the last bit.
+//
+// LIMITATION: rooms remain world-axis-aligned. A rotated wing needs the solve to
+// run in that wing's LocalFrame (geom/frame.ts) and the result rotated back;
+// that is a later phase and is deliberately not attempted here.
 
 import type { Rng } from "../rng";
 import type { BuildingSpec, ProgramItem, SpaceType } from "../spec/building-spec";
 import { MIN_AREA_SQM } from "../spec/defaults";
+import { clipRectToPolygon, rectToPolygon, GEOM_EPS_M } from "../geom";
+import type { Polygon } from "./massing";
 import {
   rectArea,
   rectDepth,
@@ -76,13 +92,36 @@ function intersect(a: Rect, b: Rect): Rect {
   };
 }
 
-function touchesPerimeter(rect: Rect, plate: Rect): boolean {
-  return (
+/**
+ * Does this rect have a face on the building envelope?
+ *
+ * The bounding-box test is kept as the fast path AND as the compatibility path:
+ * on a rectangular plate it is exactly the ring test. The ring test is what a
+ * non-convex plate needs — a room on the inside face of an L's notch touches the
+ * real perimeter while sitting nowhere near the bbox edge.
+ *
+ * `outerOnly` is the outer ring WITHOUT holes on purpose: partitions.ts does not
+ * wall a courtyard void yet, so a room facing one has no exterior wall to host a
+ * window on, and claiming otherwise would make the model lie.
+ */
+function touchesPerimeter(rect: Rect, plate: Rect, outerOnly: Polygon): boolean {
+  if (
     Math.abs(rect.minX - plate.minX) < PERIMETER_TOL_M ||
     Math.abs(rect.maxX - plate.maxX) < PERIMETER_TOL_M ||
     Math.abs(rect.minZ - plate.minZ) < PERIMETER_TOL_M ||
     Math.abs(rect.maxZ - plate.maxZ) < PERIMETER_TOL_M
-  );
+  ) {
+    return true;
+  }
+  // Grown by the same tolerance: if the enlarged rect no longer fits the ring,
+  // the original had a face on it.
+  const grown: Rect = {
+    minX: rect.minX - PERIMETER_TOL_M,
+    maxX: rect.maxX + PERIMETER_TOL_M,
+    minZ: rect.minZ - PERIMETER_TOL_M,
+    maxZ: rect.maxZ + PERIMETER_TOL_M,
+  };
+  return !clipRectToPolygon(grown, outerOnly, GEOM_EPS_M);
 }
 
 const otherAxis = (axis: Axis): Axis => (axis === "x" ? "z" : "x");
@@ -101,6 +140,145 @@ function fromBandCoords(
   return outAxis === "x"
     ? { minX: outMin, maxX: outMax, minZ: alongMin, maxZ: alongMax }
     : { minX: alongMin, maxX: alongMax, minZ: outMin, maxZ: outMax };
+}
+
+/* ------------------------------------------------------------------ */
+/* Solid decomposition                                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * How far inside a slab the inside-test is sampled. Small enough that no real
+ * plate feature is stepped over, large enough that a sample never lands exactly
+ * on a vertex — which is the one input the even-odd crossing rule cannot answer.
+ */
+const SLAB_SAMPLE_INSET_M = 1e-4;
+
+type ZInterval = [number, number];
+
+/**
+ * The z-intervals the vertical line `x` spends inside the polygon, even-odd over
+ * every ring at once — which is exactly right for `[outer, ...holes]`, since a
+ * hole adds a second pair of crossings and so subtracts its own interior.
+ *
+ * `x` must not coincide with a vertex; callers sample strictly inside a slab.
+ */
+function verticalInsideIntervals(polygon: Polygon, x: number): ZInterval[] {
+  const crossings: number[] = [];
+  for (const ring of polygon) {
+    const n = ring.length;
+    if (n < 3) continue;
+    for (let i = 0; i < n; i += 1) {
+      const [ax, az] = ring[i];
+      const [bx, bz] = ring[(i + 1) % n];
+      if (ax === bx) continue;
+      // Half-open in x, so a vertex shared by two edges is counted once.
+      if (x < Math.min(ax, bx) || x >= Math.max(ax, bx)) continue;
+      crossings.push(az + ((x - ax) / (bx - ax)) * (bz - az));
+    }
+  }
+  crossings.sort((a, b) => a - b);
+
+  const intervals: ZInterval[] = [];
+  for (let i = 0; i + 1 < crossings.length; i += 2) {
+    if (crossings[i + 1] - crossings[i] > EPS) {
+      intervals.push([crossings[i], crossings[i + 1]]);
+    }
+  }
+  return intervals;
+}
+
+/** Both lists are sorted and disjoint, so one linear walk suffices. */
+function intersectIntervals(a: ZInterval[], b: ZInterval[]): ZInterval[] {
+  const out: ZInterval[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < a.length && j < b.length) {
+    const lo = Math.max(a[i][0], b[j][0]);
+    const hi = Math.min(a[i][1], b[j][1]);
+    if (hi - lo > EPS) out.push([lo, hi]);
+    if (a[i][1] < b[j][1]) i += 1;
+    else j += 1;
+  }
+  return out;
+}
+
+function sameIntervals(a: ZInterval[], b: ZInterval[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every(
+    (interval, i) =>
+      Math.abs(interval[0] - b[i][0]) <= EPS && Math.abs(interval[1] - b[i][1]) <= EPS,
+  );
+}
+
+/**
+ * `region ∩ polygon`, expressed as axis-aligned rectangles that are each WHOLLY
+ * inside the polygon.
+ *
+ * Vertical-slab decomposition: cut at every polygon vertex x inside the region,
+ * then take the inside-intervals of each slab. For a rectilinear plate — every
+ * massing strategy in the library — this is EXACT, and a slab whose intervals
+ * match its neighbour's is merged back, so a plain rectangle decomposes to
+ * itself rather than to a row of pieces. For an oblique edge the three samples
+ * per slab make the answer a conservative UNDER-estimate: floor is lost near the
+ * diagonal, none is invented. Either way every cell is verified with
+ * `clipRectToPolygon` before it is returned, which is what lets the packing
+ * below treat "inside the plate" as structural.
+ */
+function solidCells(region: Rect, polygon: Polygon): Rect[] {
+  if (rectWidth(region) <= EPS || rectDepth(region) <= EPS) return [];
+
+  const cuts = [region.minX, region.maxX];
+  for (const ring of polygon) {
+    for (const [x] of ring) {
+      if (x > region.minX + EPS && x < region.maxX - EPS) cuts.push(x);
+    }
+  }
+  cuts.sort((a, b) => a - b);
+
+  const slabs: Array<{ minX: number; maxX: number; intervals: ZInterval[] }> = [];
+  for (let i = 0; i + 1 < cuts.length; i += 1) {
+    const x0 = cuts[i];
+    const x1 = cuts[i + 1];
+    if (x1 - x0 <= EPS) continue;
+
+    const inset = Math.min(SLAB_SAMPLE_INSET_M, (x1 - x0) / 4);
+    let intervals = verticalInsideIntervals(polygon, x0 + inset);
+    for (const x of [(x0 + x1) / 2, x1 - inset]) {
+      if (intervals.length === 0) break;
+      intervals = intersectIntervals(intervals, verticalInsideIntervals(polygon, x));
+    }
+
+    const clipped = intervals
+      .map(([lo, hi]): ZInterval => [Math.max(lo, region.minZ), Math.min(hi, region.maxZ)])
+      .filter(([lo, hi]) => hi - lo > EPS);
+    if (clipped.length === 0) continue;
+
+    const previous = slabs[slabs.length - 1];
+    if (
+      previous &&
+      Math.abs(previous.maxX - x0) <= EPS &&
+      sameIntervals(previous.intervals, clipped)
+    ) {
+      previous.maxX = x1;
+      continue;
+    }
+    slabs.push({ minX: x0, maxX: x1, intervals: clipped });
+  }
+
+  const cells: Rect[] = [];
+  for (const slab of slabs) {
+    for (const [minZ, maxZ] of slab.intervals) {
+      const cell: Rect = { minX: slab.minX, maxX: slab.maxX, minZ, maxZ };
+      if (clipRectToPolygon(cell, polygon, GEOM_EPS_M)) cells.push(cell);
+    }
+  }
+  return cells;
+}
+
+/** A usable plate polygon, or the bounding rect when the caller supplied none. */
+function platePolygonOf(plate: Rect, supplied: Polygon | undefined): Polygon {
+  if (supplied && supplied.length > 0 && (supplied[0]?.length ?? 0) >= 3) return supplied;
+  return rectToPolygon(plate);
 }
 
 /* ------------------------------------------------------------------ */
@@ -349,6 +527,7 @@ function chooseStrip(
   item: ProgramItem,
   targetAreaSqm: number,
   plate: Rect,
+  outerOnly: Polygon,
   core: Rect,
   rng: Rng,
   /**
@@ -390,7 +569,9 @@ function chooseStrip(
     const areaErr = Math.abs(areaSqm - targetAreaSqm) / Math.max(1, targetAreaSqm);
 
     let penalty = 0;
-    if (wants(item, "REQUIRES_EXTERIOR") && !touchesPerimeter(rect, plate)) penalty += 1;
+    if (wants(item, "REQUIRES_EXTERIOR") && !touchesPerimeter(rect, plate, outerOnly)) {
+      penalty += 1;
+    }
     if (wants(item, "REQUIRES_CORE") && sharedEdgeLength(rect, core) < ADJACENT_EDGE_M) {
       penalty += 1;
     }
@@ -451,11 +632,20 @@ export function solveFloorPlan(input: {
   floorNo: number;
   /** Usable plate bounds for THIS level, metres. */
   plate: Rect;
+  /**
+   * The level's REAL outline, `[outer, ...holes]`. Omitted means "the plate is
+   * its own bounding box", which keeps every rectangular caller and test exact;
+   * supplied, it is what every placed space is held inside.
+   */
+  platePolygon?: Polygon;
   core: CoreLayout;
   rng: Rng;
 }): PlacedSpace[] {
   const { spec, floorNo, plate, core, rng } = input;
   if (rectWidth(plate) <= EPS || rectDepth(plate) <= EPS) return [];
+
+  const polygon = platePolygonOf(plate, input.platePolygon);
+  const outerOnly: Polygon = [polygon[0]];
 
   const corridorWidthM = spec.dimensions.corridorWidthMm.value / 1000;
   // Room depth is judged against one structural bay: that is the depth the
@@ -472,7 +662,19 @@ export function solveFloorPlan(input: {
   const corridorRects: Rect[] = [];
   const strips: Strip[] = [];
   for (const band of bandsAroundCore(plate, coreRect)) {
-    layoutBand(band, coreRect, corridorWidthM, targetRoomDepthM, corridorRects, strips);
+    // A band is a bounding-box remainder, so on a non-convex plate part of it
+    // may be notch or void. Lay out only the solid cells it actually covers;
+    // on a rectangle that is the band itself, unchanged.
+    for (const cell of solidCells(band.rect, polygon)) {
+      layoutBand(
+        { rect: cell, outAxis: band.outAxis, outSign: band.outSign },
+        coreRect,
+        corridorWidthM,
+        targetRoomDepthM,
+        corridorRects,
+        strips,
+      );
+    }
   }
 
   /* --- 2. pack the program --- */
@@ -495,7 +697,7 @@ export function solveFloorPlan(input: {
     );
     let placedForItem = 0;
     for (let n = 1; n <= item.countPerLevel; n += 1) {
-      let chosen = chooseStrip(strips, item, perRoomTarget, plate, coreRect, rng);
+      let chosen = chooseStrip(strips, item, perRoomTarget, plate, outerOnly, coreRect, rng);
 
       // Placing an item FEWER times than asked is a reportable shortfall.
       // Placing it ZERO times deletes a requirement from the building, and for
@@ -503,7 +705,16 @@ export function solveFloorPlan(input: {
       // it. So if nothing has been placed yet, try again without the declared
       // area floor before giving up.
       if (chosen === null && placedForItem === 0) {
-        chosen = chooseStrip(strips, item, perRoomTarget, plate, coreRect, rng, true);
+        chosen = chooseStrip(
+          strips,
+          item,
+          perRoomTarget,
+          plate,
+          outerOnly,
+          coreRect,
+          rng,
+          true,
+        );
       }
 
       // Nothing can take a room this size, so nothing can take the next one
@@ -566,7 +777,7 @@ export function solveFloorPlan(input: {
       rect,
       areaSqm: rectArea(rect),
       isCirculation: true,
-      hasExteriorWall: touchesPerimeter(rect, plate),
+      hasExteriorWall: touchesPerimeter(rect, plate, outerOnly),
       reachable: false,
     });
   });
@@ -582,7 +793,7 @@ export function solveFloorPlan(input: {
         rect,
         areaSqm: rectArea(rect),
         isCirculation: false,
-        hasExteriorWall: touchesPerimeter(rect, plate),
+        hasExteriorWall: touchesPerimeter(rect, plate, outerOnly),
         reachable: false,
       });
     }

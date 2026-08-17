@@ -20,7 +20,19 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import { ClaudeReasoningProvider } from "../provider/claude-provider";
 import { BuildingSpecSchema } from "../spec/building-spec";
+import { BlueprintSpecSchema } from "../blueprint/blueprint-spec";
 import { seedFromPrompt } from "../rng";
+
+/**
+ * A tiny (8×8) black-square PNG. The point of this fixture is NOT a
+ * realistic floor plan — it is deliberately content-free, so the assertions
+ * below only check the mechanical contract (image content block wiring,
+ * forced tool use, schema satisfiability) and the honesty behaviour the
+ * system prompt demands (an illegible image must not produce confidently
+ * invented dimensions).
+ */
+const BLANK_TEST_PNG_BASE64 =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
 const LIVE = process.env.RUN_LIVE_API === "1";
 
@@ -137,5 +149,32 @@ describe.skipIf(!LIVE)("ClaudeReasoningProvider (live)", () => {
       expect(patch.summary.toLowerCase()).toMatch(/floor|level|storey|story/);
     },
     240_000,
+  );
+
+  it(
+    "interprets an image schematic into a schema-valid BlueprintSpec, honestly",
+    async () => {
+      const { data, trace } = await provider.interpretBlueprint({
+        kind: "image",
+        mediaType: "image/png",
+        dataBase64: BLANK_TEST_PNG_BASE64,
+        prompt: "This is a test fixture, not a real drawing.",
+      });
+
+      expect(() => BlueprintSpecSchema.parse(data)).not.toThrow();
+      expect(data.schemaVersion).toBe(1);
+      expect(data.source).toBe("image");
+
+      // Nothing in a blank image is a measured dimension — the system prompt
+      // requires the model to say so rather than invent a scale.
+      expect(data.coordinateSystem.sourceScaleRatio.source).not.toBe("USER_PROVIDED");
+
+      console.log(
+        `[live] interpretBlueprint(image): ${trace.latencyMs}ms out=${trace.outputTokens} ` +
+          `retries=${trace.retries} boundaries=${data.boundaries.length} ` +
+          `uncertainty=${data.uncertainty.length}`,
+      );
+    },
+    180_000,
   );
 });

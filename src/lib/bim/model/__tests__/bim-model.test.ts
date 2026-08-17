@@ -139,7 +139,7 @@ describe("transactions", () => {
   it("undo restores the previous snapshot", () => {
     const before = model();
     const after = setTypeParameter(before, "generated-wall-exterior", "thicknessMm", 250).model;
-    let log = beginCommit({ past: [], future: [] }, "Edit Type", before, after);
+    const log = beginCommit({ past: [], future: [] }, "Edit Type", before, after);
     expect(lastCommandName(log)).toBe("Edit Type");
     const undone = undo(log);
     expect(undone.model?.types["generated-wall-exterior"].parameters.thicknessMm).toBe(200);

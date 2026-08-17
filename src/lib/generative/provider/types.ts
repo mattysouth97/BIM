@@ -13,6 +13,7 @@ import type {
   BuildingReview,
   BuildingSpec,
 } from "../spec/building-spec";
+import type { BlueprintSpec, PointMm } from "../blueprint/blueprint-spec";
 
 /** Compact semantic digest of the model. Never the geometry database (§49). */
 export interface BimSummary {
@@ -105,6 +106,62 @@ export interface RepairRequest {
   signal?: AbortSignal;
 }
 
+/* ------------------------------------------------------------------ */
+/* Blueprint interpretation — Mode B (imported drawings)                */
+/* ------------------------------------------------------------------ */
+//
+// The native schematic editor needs no interpretation: a blueprint drawn
+// there is already semantic (builders.ts stamps every object USER_PROVIDED).
+// This is the seam for everything that ISN'T born semantic — a raster image
+// of a plan, or vector geometry lifted from a CAD import — read into the
+// same BlueprintSpec the editor produces.
+
+/** One measured edge, already millimetres — vector geometry, never a raster. */
+export interface BlueprintSegmentInput {
+  startMm: PointMm;
+  endMm: PointMm;
+  /** Originating CAD/drawing layer, when known — the strongest hint available. */
+  layer?: string;
+}
+
+/** A text label lifted off the drawing, in the same mm frame as the segments. */
+export interface BlueprintLabelInput {
+  text: string;
+  positionMm: PointMm;
+  /** Text height in millimetres, when known. Informational only. */
+  heightMm?: number;
+}
+
+interface InterpretBlueprintRequestBase {
+  signal?: AbortSignal;
+}
+
+/**
+ * Two ways a schematic can arrive: a raster the model has to LOOK at (no
+ * ground truth beyond what is visually legible — ask for measurements and
+ * you get a guess), or vector segments that are already measured geometry
+ * (a deterministic provider can read these honestly, no vision required).
+ * The discriminant is `kind`, matched the same way `GenerationRequest.images`
+ * and `ModificationRequest.scope` are read downstream.
+ */
+export type InterpretBlueprintRequest = InterpretBlueprintRequestBase &
+  (
+    | {
+        kind: "image";
+        mediaType: string;
+        dataBase64: string;
+        prompt?: string;
+        /** Millimetres represented by one pixel, when the caller knows it. */
+        scaleHintMmPerPx?: number;
+      }
+    | {
+        kind: "segments";
+        segments: BlueprintSegmentInput[];
+        labels?: BlueprintLabelInput[];
+        prompt?: string;
+      }
+  );
+
 /** Telemetry surfaced in the developer view only (§91, §94). */
 export interface ProviderTrace {
   provider: string;
@@ -143,6 +200,11 @@ export interface BIMReasoningProvider {
   repairBuilding(
     request: RepairRequest,
   ): Promise<ProviderResult<BuildingPatch>>;
+
+  /** Read a BlueprintSpec off an imported drawing (image or vector segments). */
+  interpretBlueprint(
+    request: InterpretBlueprintRequest,
+  ): Promise<ProviderResult<BlueprintSpec>>;
 }
 
 /** Structured error surface — every tool returns these, never raw exceptions (§65). */
@@ -152,7 +214,11 @@ export type ProviderErrorCode =
   | "UPSTREAM_ERROR"
   | "RATE_LIMITED"
   | "CANCELLED"
-  | "TIMEOUT";
+  | "TIMEOUT"
+  /** This provider variant cannot process this input kind at all (e.g. the offline provider given an image). */
+  | "UNSUPPORTED_INPUT"
+  /** The input kind was processable, but nothing usable could be read from it (e.g. no closed loop in the segments). */
+  | "INTERPRETATION_FAILED";
 
 export class ProviderError extends Error {
   readonly code: ProviderErrorCode;

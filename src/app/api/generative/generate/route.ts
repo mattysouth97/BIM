@@ -13,12 +13,11 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
+import { buildDesign, generationIdFor } from "@/lib/generative/build";
 import { resolveReasoningProvider, ProviderError } from "@/lib/generative/provider";
-import { compileSpecToRecipe } from "@/lib/generative/compile/spec-to-recipe";
-import { generateBuildingFromSpec } from "@/lib/generative/generate/pipeline";
-import { emitSnapshot } from "@/lib/generative/graph/emit";
-import { validateBuilding } from "@/lib/generative/validate/rules";
-import { deriveDesignStatus } from "@/lib/generative/spec/status";
+import { specCoherenceIssues } from "@/lib/generative/spec/coherence";
+import { providerTraceOf } from "@/lib/generative/server/edit";
+import { badRequest, sseResponse } from "@/lib/generative/server/stream";
 import { seedFromPrompt } from "@/lib/generative/rng";
 
 // Generation calls a reasoning model and can take a minute; never cache it.
@@ -42,170 +41,114 @@ const RequestSchema = z.object({
     })
     .optional(),
   designRules: z.array(z.string().max(300)).max(40).optional(),
+  /** Carried into the rebuild so a regeneration honours existing locks (§42). */
+  locks: z.array(z.string().min(3).max(120)).max(200).default([]),
 });
 
-type SseEvent =
-  | { type: "stage"; stage: string; label: string; index: number; total: number; detail?: string }
-  | { type: "result"; payload: unknown }
-  | { type: "error"; code: string; message: string };
-
-function sse(event: SseEvent): string {
-  return `data: ${JSON.stringify(event)}\n\n`;
-}
+const TOTAL_STAGES = 13;
 
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return Response.json(
-      { success: false, error: { code: "BAD_REQUEST", message: "Body must be JSON." } },
-      { status: 400 },
-    );
+    return badRequest("BAD_REQUEST", "Body must be JSON.");
   }
 
   const parsed = RequestSchema.safeParse(body);
   if (!parsed.success) {
-    return Response.json(
-      {
-        success: false,
-        error: {
-          code: "INVALID_REQUEST",
-          message: "The generation request was not valid.",
-          detail: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
-        },
-      },
-      { status: 400 },
+    return badRequest(
+      "INVALID_REQUEST",
+      "The generation request was not valid.",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
     );
   }
 
-  const { prompt, buildingPk, hints, designRules } = parsed.data;
+  const { prompt, buildingPk, hints, designRules, locks } = parsed.data;
   const seed = parsed.data.seed ?? seedFromPrompt(prompt);
-  const encoder = new TextEncoder();
 
-  const stream = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      const send = (event: SseEvent) => controller.enqueue(encoder.encode(sse(event)));
+  return sseResponse("GENERATION_FAILED", async (send) => {
+    /* --- 1. reasoning --- */
+    send({
+      type: "stage",
+      stage: "interpreting",
+      label: "Interpreting design intent",
+      index: 0,
+      total: TOTAL_STAGES,
+    });
 
-      try {
-        /* --- 1. reasoning --- */
+    const provider = resolveReasoningProvider();
+    const proposal = await provider.generateBuilding({
+      prompt,
+      hints,
+      seed,
+      designRules,
+      signal: request.signal,
+    });
+
+    // Schema-valid but incoherent output (two levels numbered 3, a program on a
+    // storey that does not exist) would build into a model with colliding
+    // element ids. Fail loudly rather than quietly produce a corrupt building.
+    const incoherent = specCoherenceIssues(proposal.data);
+    if (incoherent.length > 0) {
+      throw new ProviderError(
+        "SCHEMA_VALIDATION_FAILED",
+        "The generated specification was internally inconsistent.",
+        incoherent.map((issue) => `- ${issue.message}`).join("\n"),
+      );
+    }
+
+    send({
+      type: "stage",
+      stage: "program",
+      label: "Building program created",
+      index: 1,
+      total: TOTAL_STAGES,
+    });
+
+    /* --- 2. deterministic geometry, graph and validation --- */
+    const generationId = generationIdFor(seed, 0);
+    const built = buildDesign({
+      spec: proposal.data,
+      buildingPk,
+      generationId,
+      locks,
+      onStage: (progress) =>
         send({
           type: "stage",
-          stage: "interpreting",
-          label: "Interpreting design intent",
-          index: 0,
-          total: 12,
-        });
+          stage: progress.stage,
+          label: progress.label,
+          // Offset by the two reasoning stages already reported.
+          index: progress.index + 2,
+          total: TOTAL_STAGES,
+          ...(progress.detail ? { detail: progress.detail } : {}),
+        }),
+    });
 
-        const provider = resolveReasoningProvider();
-        const { data: spec, trace } = await provider.generateBuilding({
-          prompt,
-          hints,
-          seed,
-          designRules,
-          signal: request.signal,
-        });
+    send({
+      type: "stage",
+      stage: "validating",
+      label: "Validating building",
+      index: TOTAL_STAGES - 1,
+      total: TOTAL_STAGES,
+    });
 
-        send({
-          type: "stage",
-          stage: "program",
-          label: "Building program created",
-          index: 1,
-          total: 12,
-        });
-
-        /* --- 2. deterministic geometry --- */
-        const building = generateBuildingFromSpec(spec, (progress) => {
-          send({
-            type: "stage",
-            stage: progress.stage,
-            label: progress.label,
-            // Offset by the two reasoning stages already reported.
-            index: progress.index + 2,
-            total: 12,
-            detail: progress.detail,
-          });
-        });
-
-        /* --- 3. compile to the shared geometry engine --- */
-        const compiled = compileSpecToRecipe(spec);
-
-        /* --- 4. semantic BIM graph --- */
-        const generationId = `GEN-${String(seed % 10_000).padStart(4, "0")}`;
-        const snapshot = emitSnapshot({
-          buildingPk,
-          generationId,
-          spec,
-          building,
-        });
-
-        /* --- 5. deterministic validation --- */
-        send({
-          type: "stage",
-          stage: "validating",
-          label: "Validating building",
-          index: 11,
-          total: 12,
-        });
-        const validation = validateBuilding(building, spec);
-
-        const status = deriveDesignStatus({
-          hasGeometry: snapshot.elements.length > 0,
-          criticalViolations: validation.counts.critical,
-          warningViolations: validation.counts.warning,
-          // No jurisdictional ruleset has been supplied, so the model can never
-          // be promoted past GEOMETRICALLY_VALIDATED here.
-          jurisdictionRulesetId: null,
-        });
-
-        send({
-          type: "result",
-          payload: {
-            success: true,
-            generationId,
-            seed,
-            spec,
-            recipe: compiled.recipe,
-            snapshot,
-            metrics: building.metrics,
-            validation,
-            status,
-            approximations: compiled.approximations,
-            provider: {
-              name: trace.provider,
-              model: trace.model,
-              latencyMs: trace.latencyMs,
-              inputTokens: trace.inputTokens,
-              outputTokens: trace.outputTokens,
-              retries: trace.retries,
-            },
-          },
-        });
-      } catch (error) {
-        // Surface an actionable code, never raw upstream text (§95).
-        if (error instanceof ProviderError) {
-          send({ type: "error", code: error.code, message: error.message });
-        } else if (error instanceof Error && error.name === "AbortError") {
-          send({ type: "error", code: "CANCELLED", message: "Generation was cancelled." });
-        } else {
-          console.error("[generative] generation failed", error);
-          send({
-            type: "error",
-            code: "GENERATION_FAILED",
-            message: "The building could not be generated.",
-          });
-        }
-      } finally {
-        controller.close();
-      }
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-    },
+    send({
+      type: "result",
+      payload: {
+        success: true,
+        generationId,
+        revision: 0,
+        seed,
+        spec: proposal.data,
+        recipe: built.recipe,
+        snapshot: built.snapshot,
+        metrics: built.metrics,
+        validation: built.validation,
+        status: built.status,
+        approximations: built.approximations,
+        provider: providerTraceOf(proposal),
+      },
+    });
   });
 }

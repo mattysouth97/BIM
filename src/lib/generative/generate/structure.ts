@@ -9,8 +9,17 @@
 // Nothing in this module is stochastic and no `Rng` is threaded through it on
 // purpose: a frame is a *consequence* of the grid and the plate, not a choice.
 // Jittering a column would only make the building harder to build.
+//
+// GRID FAMILIES. There is one global orthogonal lattice (`generateGrid`) plus
+// one family per `spec.structure.localGrids` entry, each in its own rotated
+// `LocalFrame`. A local grid's region is subtracted from the global one, so a
+// wing rotated 30° gets columns marching with the wing instead of two overlaid
+// sets. `GeneratedGridLine` can only describe an axis-aligned line, so local
+// families publish no grid lines — their columns carry the reference in
+// `gridRef` (`"<gridId>:A-1"`), namespaced against the global "A-1".
 
-import type { BuildingSpec } from "../spec/building-spec";
+import { makeFrame, toWorldPoint, type LocalFrame } from "../geom";
+import type { BuildingSpec, LocalGrid } from "../spec/building-spec";
 import { polygonArea, type Polygon, type Ring } from "./massing";
 import type {
   GeneratedBeam,
@@ -149,6 +158,18 @@ function isInsideRing(ring: Ring, x: number, z: number): boolean {
 }
 
 /**
+ * Inside the polygon's material: within the outer ring (its edge counts) and
+ * not strictly inside any hole. A point ON a hole's edge is material — it is
+ * where the edge beam bears.
+ */
+function isInsidePolygon(polygon: Polygon, x: number, z: number): boolean {
+  if (polygon.length === 0) return false;
+  const [outer, ...holes] = polygon;
+  if (!isInsideRing(outer, x, z) && !isOnRing(outer, x, z)) return false;
+  return !holes.some((hole) => isInsideRing(hole, x, z) && !isOnRing(hole, x, z));
+}
+
+/**
  * Does this grid intersection carry floor?
  *
  * Tested against the plate rect AND the level's own outline. The rect alone is
@@ -168,12 +189,103 @@ function carriesFloor(x: number, z: number, plate: Rect, polygon: Polygon | unde
   }
 
   if (!polygon || polygon.length === 0) return true;
-  const [outer, ...holes] = polygon;
-  if (!isInsideRing(outer, x, z) && !isOnRing(outer, x, z)) return false;
-
   // A column standing ON a courtyard edge is fine — it is the edge beam's
   // support. Only the void interior is off-plate.
-  return !holes.some((hole) => isInsideRing(hole, x, z) && !isOnRing(hole, x, z));
+  return isInsidePolygon(polygon, x, z);
+}
+
+/* ------------------------------------------------------------------ */
+/* Grid families                                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * One lattice: the global orthogonal one (`id === null`, offsets already in
+ * world) or a local grid (offsets in its own frame, carried out through
+ * `frame`). Columns and beams are generated per family and beams NEVER cross
+ * between families — two grids meeting at a wing seam do not share a bay, and
+ * inventing a span there would be a structural claim this pass cannot support.
+ */
+interface GridFamily {
+  id: string | null;
+  frame: LocalFrame | null;
+  xOffsets: number[];
+  zOffsets: number[];
+  xNames: string[];
+  zNames: string[];
+  /** World-space rings this family claims. Undefined ⇒ the whole plate. */
+  region?: Polygon;
+}
+
+/** Line positions along one local axis: cumulative bays from the frame origin. */
+function cumulativeOffsets(spacingsMm: number[]): number[] {
+  const offsets = [0];
+  for (const spacing of spacingsMm) {
+    offsets.push(offsets[offsets.length - 1] + mmToM(spacing));
+  }
+  return offsets;
+}
+
+function localFamily(grid: LocalGrid): GridFamily {
+  const xOffsets = cumulativeOffsets(grid.xSpacingsMm);
+  const zOffsets = cumulativeOffsets(grid.zSpacingsMm);
+  return {
+    id: grid.id,
+    frame: makeFrame(mmToM(grid.originMm.x), mmToM(grid.originMm.z), grid.rotationRad),
+    xOffsets,
+    zOffsets,
+    xNames: xOffsets.map((_, index) => gridLetter(index)),
+    zNames: zOffsets.map((_, index) => String(index + 1)),
+    ...(grid.regionPolygonMm
+      ? {
+          region: grid.regionPolygonMm.map((ring) =>
+            ring.map(([x, z]): [number, number] => [mmToM(x), mmToM(z)]),
+          ),
+        }
+      : {}),
+  };
+}
+
+/**
+ * World position of a node. The global family is returned verbatim rather than
+ * pushed through an identity frame, so its columns land on EXACTLY the offsets
+ * `generateGrid` published — bit-for-bit, not within a tolerance.
+ */
+function nodeWorld(family: GridFamily, xu: number, zv: number): [number, number] {
+  if (family.frame === null) return [xu, zv];
+  const [x, z] = toWorldPoint(family.frame, [xu, zv]);
+  return [x, z];
+}
+
+function buildFamilies(spec: BuildingSpec, grids: GeneratedGridLine[]): GridFamily[] {
+  const locals = (spec.structure.localGrids?.value ?? []).map(localFamily);
+
+  const xLines = grids.filter((g) => g.axis === "x").sort((a, b) => a.offset - b.offset);
+  const zLines = grids.filter((g) => g.axis === "z").sort((a, b) => a.offset - b.offset);
+
+  const global: GridFamily = {
+    id: null,
+    frame: null,
+    xOffsets: xLines.map((line) => line.offset),
+    zOffsets: zLines.map((line) => line.offset),
+    xNames: xLines.map((line) => line.name),
+    zNames: zLines.map((line) => line.name),
+  };
+
+  return [global, ...locals];
+}
+
+/**
+ * Has a local grid claimed this point? A local grid with no region claims the
+ * whole plan (the blueprint's own reading of an unscoped grid), which
+ * suppresses the global lattice entirely rather than doubling it up.
+ */
+function claimedByLocal(families: GridFamily[], x: number, z: number): boolean {
+  for (const family of families) {
+    if (family.id === null) continue;
+    if (family.region === undefined) return true;
+    if (isInsidePolygon(family.region, x, z)) return true;
+  }
+  return false;
 }
 
 /* ------------------------------------------------------------------ */
@@ -188,8 +300,7 @@ export function generateStructure(input: {
 }): { columns: GeneratedColumn[]; beams: GeneratedBeam[]; slabs: GeneratedSlab[] } {
   const { spec, levels, grids, plate } = input;
 
-  const xLines = grids.filter((g) => g.axis === "x").sort((a, b) => a.offset - b.offset);
-  const zLines = grids.filter((g) => g.axis === "z").sort((a, b) => a.offset - b.offset);
+  const families = buildFamilies(spec, grids);
 
   const columnSizeM = mmToM(spec.structure.columnMm.value);
   const beamDepthM = mmToM(spec.structure.beamDepthMm.value);
@@ -203,64 +314,72 @@ export function generateStructure(input: {
   const slabs: GeneratedSlab[] = [];
 
   for (const level of levels) {
-    // Occupancy lattice for THIS level. Beams may only span pairs that were
-    // actually placed, otherwise a stepped or courtyard plate grows beams
-    // flying through open air.
-    const placed: boolean[][] = xLines.map(() => zLines.map(() => false));
-
-    // Columns are per-storey elements: each level carries its own set, so the
-    // frame can change as the plate steps back.
-    for (let xi = 0; xi < xLines.length; xi += 1) {
-      for (let zi = 0; zi < zLines.length; zi += 1) {
-        const x = xLines[xi].offset;
-        const z = zLines[zi].offset;
-        if (!carriesFloor(x, z, plate, level.polygon)) continue;
-
-        placed[xi][zi] = true;
-        const gridRef = `${xLines[xi].name}-${zLines[zi].name}`;
-        columns.push({
-          id: `COL-L${level.floorNo}-${gridRef}`,
-          floorNo: level.floorNo,
-          x,
-          z,
-          sizeM: columnSizeM,
-          gridRef,
-        });
-      }
-    }
-
     let beamIndex = 0;
     const pushBeam = (start: [number, number], end: [number, number]) => {
       beams.push({
         id: `BEAM-L${level.floorNo}-${beamIndex}`,
         floorNo: level.floorNo,
-        start,
-        end,
+        // Copied, not aliased: the node table is shared between every beam that
+        // touches a node.
+        start: [start[0], start[1]],
+        end: [end[0], end[1]],
         depthM: beamDepthM,
         widthM: beamWidthM,
       });
       beamIndex += 1;
     };
 
-    // Spans along X, between adjacent lettered lines on the same numbered line.
-    for (let zi = 0; zi < zLines.length; zi += 1) {
-      for (let xi = 0; xi < xLines.length - 1; xi += 1) {
-        if (!placed[xi][zi] || !placed[xi + 1][zi]) continue;
-        pushBeam(
-          [xLines[xi].offset, zLines[zi].offset],
-          [xLines[xi + 1].offset, zLines[zi].offset],
-        );
-      }
-    }
+    for (const family of families) {
+      // Occupancy lattice for THIS level and THIS family. Beams may only span
+      // pairs that were actually placed, otherwise a stepped or courtyard plate
+      // grows beams flying through open air.
+      const world: Array<Array<[number, number]>> = family.xOffsets.map((xu) =>
+        family.zOffsets.map((zv) => nodeWorld(family, xu, zv)),
+      );
+      const placed: boolean[][] = family.xOffsets.map(() => family.zOffsets.map(() => false));
 
-    // Spans along Z, between adjacent numbered lines on the same lettered line.
-    for (let xi = 0; xi < xLines.length; xi += 1) {
-      for (let zi = 0; zi < zLines.length - 1; zi += 1) {
-        if (!placed[xi][zi] || !placed[xi][zi + 1]) continue;
-        pushBeam(
-          [xLines[xi].offset, zLines[zi].offset],
-          [xLines[xi].offset, zLines[zi + 1].offset],
-        );
+      // Columns are per-storey elements: each level carries its own set, so the
+      // frame can change as the plate steps back.
+      for (let xi = 0; xi < family.xOffsets.length; xi += 1) {
+        for (let zi = 0; zi < family.zOffsets.length; zi += 1) {
+          const [x, z] = world[xi][zi];
+          if (!carriesFloor(x, z, plate, level.polygon)) continue;
+          if (family.region !== undefined && !isInsidePolygon(family.region, x, z)) continue;
+          // The global lattice yields the ground a local grid has taken over,
+          // so a rotated wing gets its own columns rather than two overlaid
+          // sets that no framing plan could reconcile.
+          if (family.id === null && claimedByLocal(families, x, z)) continue;
+
+          placed[xi][zi] = true;
+          // Local refs are namespaced by grid id, so "A-1" on a rotated wing is
+          // never confused with "A-1" on the global frame.
+          const local = `${family.xNames[xi]}-${family.zNames[zi]}`;
+          const gridRef = family.id === null ? local : `${family.id}:${local}`;
+          columns.push({
+            id: `COL-L${level.floorNo}-${gridRef}`,
+            floorNo: level.floorNo,
+            x,
+            z,
+            sizeM: columnSizeM,
+            gridRef,
+          });
+        }
+      }
+
+      // Spans along X, between adjacent lettered lines on the same numbered line.
+      for (let zi = 0; zi < family.zOffsets.length; zi += 1) {
+        for (let xi = 0; xi < family.xOffsets.length - 1; xi += 1) {
+          if (!placed[xi][zi] || !placed[xi + 1][zi]) continue;
+          pushBeam(world[xi][zi], world[xi + 1][zi]);
+        }
+      }
+
+      // Spans along Z, between adjacent numbered lines on the same lettered line.
+      for (let xi = 0; xi < family.xOffsets.length; xi += 1) {
+        for (let zi = 0; zi < family.zOffsets.length - 1; zi += 1) {
+          if (!placed[xi][zi] || !placed[xi][zi + 1]) continue;
+          pushBeam(world[xi][zi], world[xi][zi + 1]);
+        }
       }
     }
 

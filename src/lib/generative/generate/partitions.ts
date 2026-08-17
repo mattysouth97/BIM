@@ -35,6 +35,17 @@ const TOUCH_TOLERANCE_M = 1e-3;
  */
 const MIN_WALL_LENGTH_M = 0.9;
 
+/**
+ * How far inside an OBLIQUE wall its bounded spaces are probed for.
+ *
+ * Half the shallowest room the space solver will emit (MIN_ROOM_DIM_M is 2 m),
+ * so the probe lands inside the space that owns the wall rather than past it.
+ */
+const OBLIQUE_PROBE_INSET_M = 1.0;
+
+/** Probed at three points, not one: a wall may bound a different space per run. */
+const OBLIQUE_PROBE_FRACTIONS = [0.25, 0.5, 0.75];
+
 type Point = [number, number];
 
 /** A wall before it has an id — ids are positional, so they are assigned last. */
@@ -134,7 +145,7 @@ export function generateWalls(input: {
       thicknessM: exteriorThicknessM,
       heightM: levelHeightM,
       role: "exterior",
-      boundsSpaceIds: spacesTouching(spanFromSegment(start, end), ordered),
+      boundsSpaceIds: spacesBoundedBySegment(start, end, outerClockwise, ordered),
       side: compassSide(start, end, outerClockwise),
     });
   }
@@ -404,6 +415,60 @@ function spacesTouching(span: AxisSpan | null, spaces: PlacedSpace[]): string[] 
   return spaces
     .filter((space) => rectEdges(space.rect).some((edge) => spanOverlap(span, edge) !== null))
     .map((space) => space.id);
+}
+
+const pointInRect = (x: number, z: number, rect: Rect): boolean =>
+  x >= rect.minX - TOUCH_TOLERANCE_M &&
+  x <= rect.maxX + TOUCH_TOLERANCE_M &&
+  z >= rect.minZ - TOUCH_TOLERANCE_M &&
+  z <= rect.maxZ + TOUCH_TOLERANCE_M;
+
+/**
+ * The spaces a plate-ring segment bounds.
+ *
+ * Orthogonal edges keep the interval path: it is exact, and it is what every
+ * massing ring in the library produces today. An OBLIQUE edge has no interval
+ * form, and reporting nothing for it is not neutral — a wall with no bounded
+ * spaces gets no door, contributes no adjacency, and leaves the rooms behind it
+ * looking unreachable to the circulation pass. So probe instead: step inward
+ * along the edge's own normal and take whichever space rects contain the probe.
+ *
+ * Approximate by construction, and only ever consulted for an edge the exact
+ * path cannot describe. Rooms are still world-axis-aligned rects (see the
+ * limitation noted in space-plan.ts), so a probe is the honest answer until they
+ * are not.
+ */
+function spacesBoundedBySegment(
+  start: Point,
+  end: Point,
+  clockwise: boolean,
+  spaces: PlacedSpace[],
+): string[] {
+  const span = spanFromSegment(start, end);
+  if (span) return spacesTouching(span, spaces);
+
+  const dx = end[0] - start[0];
+  const dz = end[1] - start[1];
+  const length = Math.hypot(dx, dz);
+  if (length <= TOUCH_TOLERANCE_M) return [];
+
+  // Outward normal of a counter-clockwise ring edge is (dz, -dx) — the same
+  // derivation `compassSide` uses — so inward is its negative.
+  const sign = clockwise ? -1 : 1;
+  const inwardX = (-sign * dz) / length;
+  const inwardZ = (sign * dx) / length;
+
+  const hits = new Set<string>();
+  for (const t of OBLIQUE_PROBE_FRACTIONS) {
+    const px = start[0] + dx * t + inwardX * OBLIQUE_PROBE_INSET_M;
+    const pz = start[1] + dz * t + inwardZ * OBLIQUE_PROBE_INSET_M;
+    for (const space of spaces) {
+      if (pointInRect(px, pz, space.rect)) hits.add(space.id);
+    }
+  }
+  // Filtered over `spaces` rather than emitted from the set, so the order is the
+  // caller's stable one and not insertion order.
+  return spaces.filter((space) => hits.has(space.id)).map((space) => space.id);
 }
 
 /**

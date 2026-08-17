@@ -17,7 +17,6 @@ import {
   type GenerationResult,
   type StageEvent,
 } from "@/lib/generative/client";
-import { STATUS_LABEL } from "@/lib/generative/spec/status";
 import { cn } from "@/lib/utils";
 
 const EXAMPLES = [
@@ -28,10 +27,13 @@ const EXAMPLES = [
 ];
 
 interface Props {
-  onGenerated: (result: GenerationResult) => void;
+  /** The prompt travels with the result: design options are regenerated from it. */
+  onGenerated: (result: GenerationResult, prompt: string) => void;
+  /** Persistent project rules honoured by this generation (§120). */
+  designRules?: string[];
 }
 
-export function GeneratePanel({ onGenerated }: Props) {
+export function GeneratePanel({ onGenerated, designRules }: Props) {
   const [prompt, setPrompt] = useState("");
   const [showOptional, setShowOptional] = useState(false);
   const [floors, setFloors] = useState("");
@@ -57,6 +59,7 @@ export function GeneratePanel({ onGenerated }: Props) {
           ...(floors ? { floors: Number(floors) } : {}),
           ...(area ? { grossAreaSqm: Number(area) } : {}),
         },
+        designRules,
         signal: controller.signal,
         onStage: (event) =>
           setStages((previous) =>
@@ -65,7 +68,7 @@ export function GeneratePanel({ onGenerated }: Props) {
               : [...previous, event],
           ),
       });
-      onGenerated(result);
+      onGenerated(result, prompt.trim());
     } catch (caught) {
       if (caught instanceof GenerationError) {
         setError({ code: caught.code, message: caught.message });
@@ -81,7 +84,7 @@ export function GeneratePanel({ onGenerated }: Props) {
       setBusy(false);
       abortRef.current = null;
     }
-  }, [prompt, floors, area, busy, onGenerated]);
+  }, [prompt, floors, area, busy, designRules, onGenerated]);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-8">
@@ -212,102 +215,6 @@ export function GeneratePanel({ onGenerated }: Props) {
           <p className="mt-1 text-xs text-muted-foreground">Code: {error.code}</p>
         </div>
       )}
-    </div>
-  );
-}
-
-/** Post-generation summary. Deliberately compact — not every object (§12). */
-export function GenerationSummary({ result }: { result: GenerationResult }) {
-  const m = result.metrics;
-  const rows: Array<[string, string]> = [
-    ["Floors", String(m.floorCount)],
-    ["Gross area", `${Math.round(m.grossAreaSqm).toLocaleString()} m²`],
-    ["Net area", `${Math.round(m.netAreaSqm).toLocaleString()} m²`],
-    ["Height", `${m.buildingHeightM.toFixed(1)} m`],
-    ["Spaces", String(m.roomCount)],
-    ["Structural bay", `${(result.spec.structure.gridXMm.value / 1000).toFixed(1)} m`],
-    ["Circulation", `${(m.circulationRatio * 100).toFixed(1)}%`],
-    ["Window-to-wall", `${(m.windowToWallRatio * 100).toFixed(0)}%`],
-    ["Doors", String(m.doorCount)],
-    ["Windows", String(m.windowCount)],
-    ["Columns", String(m.columnCount)],
-  ];
-
-  return (
-    <div className="flex flex-col gap-4 p-4 text-sm">
-      <div>
-        <h2 className="text-base font-medium">{result.spec.project.name}</h2>
-        {/* Status is derived from evidence and can never read "approved" (§10). */}
-        <span className="mt-1 inline-block rounded border px-2 py-0.5 font-mono text-[11px] uppercase tracking-wide">
-          {STATUS_LABEL[result.status.level]}
-        </span>
-      </div>
-
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-xs">
-        {rows.map(([label, value]) => (
-          <div key={label} className="flex justify-between border-b py-1">
-            <dt className="text-muted-foreground">{label}</dt>
-            <dd>{value}</dd>
-          </div>
-        ))}
-      </dl>
-
-      {result.validation.violations.length > 0 && (
-        <section>
-          <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Issues ({result.validation.counts.critical} critical ·{" "}
-            {result.validation.counts.warning} warning ·{" "}
-            {result.validation.counts.advisory} advisory)
-          </h3>
-          <ul className="mt-2 flex flex-col gap-1 text-xs">
-            {result.validation.violations.slice(0, 12).map((v, i) => (
-              <li key={`${v.code}-${i}`} className="flex gap-2">
-                <span className="font-mono text-[10px] uppercase text-muted-foreground">
-                  {v.severity}
-                </span>
-                <span>{v.message}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <section>
-        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Design assumptions ({result.spec.assumptions.length})
-        </h3>
-        <ul className="mt-2 flex flex-col gap-2 text-xs">
-          {result.spec.assumptions.map((a) => (
-            <li key={a.id} className="border-l-2 pl-2">
-              <div className="font-medium">{a.label}</div>
-              <div className="text-muted-foreground">{a.statement}</div>
-              <div className="font-mono text-[10px] uppercase text-muted-foreground">
-                {a.source.replace("_", " ")} · confidence{" "}
-                {(a.confidence * 100).toFixed(0)}%
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {result.approximations.length > 0 && (
-        <section>
-          <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Approximations
-          </h3>
-          <ul className="mt-2 list-disc pl-4 text-xs text-muted-foreground">
-            {result.approximations.map((a) => (
-              <li key={a}>{a}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <p className="font-mono text-[10px] text-muted-foreground">
-        {result.generationId} · seed {result.seed} · {result.provider.name}
-        {result.provider.model ? ` (${result.provider.model})` : ""} ·{" "}
-        {(result.provider.latencyMs / 1000).toFixed(1)}s
-      </p>
     </div>
   );
 }

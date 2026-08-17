@@ -70,6 +70,15 @@ export type Provenanced<T> = {
 const mm = (min: number, max: number, describe: string) =>
   z.number().int().min(min).max(max).describe(`${describe} (millimetres)`);
 
+/** Signed plan coordinate. ±100 km is far past any plausible site. */
+const coordMm = (describe: string) =>
+  z
+    .number()
+    .int()
+    .min(-100_000_000)
+    .max(100_000_000)
+    .describe(`${describe} (millimetres, XZ plane)`);
+
 /* ------------------------------------------------------------------ */
 /* Project + intent                                                    */
 /* ------------------------------------------------------------------ */
@@ -159,8 +168,39 @@ export const MassingStrategy = z.enum([
   "twin-bar",
   "atrium",
   "stepped",
+  /**
+   * Free-form footprint supplied as explicit polygons in `massing.customPlates`.
+   * The only strategy whose outline is not derived from width/depth/parameters,
+   * so it is the ingestion path for a traced or drawn plan; `widthMm`/`depthMm`
+   * degrade to the bounding box of the largest plate.
+   */
+  "custom",
 ]);
 export type MassingStrategy = z.infer<typeof MassingStrategy>;
+
+/**
+ * One ring of a plate outline: `[x, z]` pairs in millimetres, XZ plane, OPEN
+ * (the closing edge is implied). Winding is normalised by the massing pass, so
+ * a producer need not get outer-CCW / hole-CW right.
+ */
+const RingMmSchema = z
+  .array(z.tuple([coordMm("Ring vertex X"), coordMm("Ring vertex Z")]))
+  .min(3)
+  .max(512);
+
+/**
+ * An explicit footprint and the levels it governs. `polygonMm` is
+ * `[outer, ...holes]` — the same shape as `BuildingRecipe.footprintPolygon`,
+ * in millimetres rather than metres.
+ *
+ * A level named by no entry inherits the nearest named level's plate, so a
+ * blueprint that traced only the ground floor still builds a whole building.
+ */
+export const CustomPlateSchema = z.object({
+  floorNos: z.array(z.number().int().min(-8).max(120)).min(1).max(128),
+  polygonMm: z.array(RingMmSchema).min(1).max(16),
+});
+export type CustomPlate = z.infer<typeof CustomPlateSchema>;
 
 export const MassingSchema = z.object({
   strategy: provenanced(MassingStrategy, "Parametric massing family."),
@@ -190,6 +230,16 @@ export const MassingSchema = z.object({
       gapMm: mm(2_000, 100_000, "Gap between bars").optional(),
     })
     .describe("Only the keys used by the chosen strategy need values."),
+  /**
+   * Read ONLY when `strategy` is "custom"; every parametric strategy ignores it.
+   * Provenanced as a whole rather than per plate because the plates share one
+   * origin — a traced plan, a drawn outline or an imported footprint is one act
+   * of authorship, not one per level.
+   */
+  customPlates: provenanced(
+    z.array(CustomPlateSchema).min(1).max(128),
+    "Explicit per-level footprint polygons for the 'custom' strategy.",
+  ).optional(),
 });
 
 /* ------------------------------------------------------------------ */
@@ -238,6 +288,35 @@ export const StructuralSystem = z.enum([
   "hybrid",
 ]);
 
+/**
+ * A grid that governs a REGION rather than the building — the thing a rotated
+ * wing needs and `gridXMm`/`gridZMm` cannot express, because those describe one
+ * lattice aligned to the world axes.
+ *
+ * `originMm` + `rotationRad` are the region's local frame; the lines sit at the
+ * cumulative sums of `xSpacingsMm` / `zSpacingsMm` FROM that origin along the
+ * frame's own axes. Spacings are per-bay distances in order, not a repeat count,
+ * and the sequence is not extended to fill the region: the author declared the
+ * bays they wanted.
+ */
+export const LocalGridSchema = z.object({
+  id: z.string().min(1).max(48).describe('Stable slug, e.g. "wing-north".'),
+  /**
+   * Rings the grid claims, `[outer, ...holes]` in millimetres. Omitted ⇒ the
+   * grid claims the whole plate, which suppresses the global grid entirely.
+   */
+  regionPolygonMm: z.array(RingMmSchema).min(1).max(16).optional(),
+  originMm: z.object({ x: coordMm("Grid origin X"), z: coordMm("Grid origin Z") }),
+  rotationRad: z
+    .number()
+    .min(-Math.PI * 2)
+    .max(Math.PI * 2)
+    .describe("Radians, +X towards +Z — the same sense as geom/frame."),
+  xSpacingsMm: z.array(mm(600, 200_000, "Bay along local X")).min(1).max(64),
+  zSpacingsMm: z.array(mm(600, 200_000, "Bay along local Z")).min(1).max(64),
+});
+export type LocalGrid = z.infer<typeof LocalGridSchema>;
+
 export const StructureSchema = z.object({
   system: provenanced(StructuralSystem, "Primary structural system."),
   gridXMm: provenanced(mm(3_000, 20_000, "Grid spacing along X"), "Bay size X."),
@@ -245,6 +324,15 @@ export const StructureSchema = z.object({
   columnMm: provenanced(mm(200, 1_600, "Square column size"), "Column section."),
   slabThicknessMm: provenanced(mm(120, 600, "Slab thickness"), "Floor slab."),
   beamDepthMm: provenanced(mm(200, 1_500, "Beam depth"), "Primary beam depth."),
+  /**
+   * Rotated per-region grids layered over the global `gridXMm`/`gridZMm`
+   * lattice. The global grid keeps whatever area no local region claims, so
+   * omitting this field leaves the single-lattice behaviour untouched.
+   */
+  localGrids: provenanced(
+    z.array(LocalGridSchema).max(32),
+    "Per-region structural grids for rotated wings.",
+  ).optional(),
 });
 
 /* ------------------------------------------------------------------ */

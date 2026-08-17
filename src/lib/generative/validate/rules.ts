@@ -12,10 +12,12 @@
 //   P3 optimisation        — circulation budget, structural regularity
 
 import type { BuildingSpec } from "../spec/building-spec";
-import { polygonArea, polygonBounds } from "../generate/massing";
+import { polygonArea } from "../generate/massing";
+import { clipRectToPolygon, pointInPolygon } from "../geom";
 import {
   rectsOverlap,
   type GeneratedBuilding,
+  type GeneratedLevel,
   type Rect,
 } from "../generate/types";
 
@@ -64,6 +66,20 @@ const rectInside = (inner: Rect, outer: Rect, tolerance = 0.05) =>
   inner.minZ >= outer.minZ - tolerance &&
   inner.maxZ <= outer.maxZ + tolerance;
 
+/**
+ * Containment slack for every plate test below, metres.
+ *
+ * 50 mm — the same figure the core and column checks already used. Wide enough
+ * that a wall thickness or a millimetre of float never raises a false critical,
+ * far too narrow to hide a room sitting in an L-shape's missing quadrant.
+ */
+const PLATE_TOLERANCE_M = 0.05;
+
+/** A level whose outline is real geometry rather than a degenerate placeholder. */
+function hasUsablePlate(level: GeneratedLevel | undefined): level is GeneratedLevel {
+  return level !== undefined && (level.polygon?.[0]?.length ?? 0) >= 3;
+}
+
 /* ------------------------------------------------------------------ */
 /* Geometry                                                            */
 /* ------------------------------------------------------------------ */
@@ -84,6 +100,31 @@ function checkGeometry(building: GeneratedBuilding): ConstraintViolation[] {
         ),
       );
     }
+  }
+
+  // Rooms standing off the plate.
+  //
+  // The aggregate PROGRAM_EXCEEDS_PLATE test cannot see this: a room in an
+  // L-shape's missing quadrant is invisible to it as long as other rooms
+  // undershoot by the same area. This is the per-room constraint, and it is
+  // the only rule that reads the level's REAL outline for a space.
+  const levelByFloor = new Map(building.levels.map((l) => [l.floorNo, l]));
+  for (const space of building.spaces) {
+    const level = levelByFloor.get(space.floorNo);
+    if (!hasUsablePlate(level)) continue;
+    if (clipRectToPolygon(space.rect, level.polygon, PLATE_TOLERANCE_M)) continue;
+    out.push(
+      violation(
+        "SPACE_OUTSIDE_PLATE",
+        "P0",
+        `${space.label} is not wholly on the level ${space.floorNo} floor plate.`,
+        [space.id],
+        {
+          floorNo: space.floorNo,
+          suggestion: "Move the space onto solid floor, or shrink it to fit the plate.",
+        },
+      ),
+    );
   }
 
   // Overlapping rooms on the same level.
@@ -276,6 +317,33 @@ function checkSpatial(building: GeneratedBuilding): ConstraintViolation[] {
     }
   }
 
+  // A level with NO spaces at all never appears in `byFloor`, so every check
+  // above skips it — leaving the rules inverted: two rooms without a corridor
+  // is flagged, while a wholly unprogrammed storey passes in silence. That is
+  // exactly what "add a floor" produces when the patch appends a level without
+  // extending any program to it: a glazed, columned, empty shell that validates
+  // clean and promotes the design to GEOMETRICALLY_VALIDATED.
+  for (const level of building.levels) {
+    const usage = level.usage;
+    // Parking, plant and roof levels are legitimately roomless.
+    if (usage !== "occupied" && usage !== "lobby" && usage !== "retail") continue;
+    if ((byFloor.get(level.floorNo)?.length ?? 0) > 0) continue;
+
+    out.push(
+      violation(
+        "UNPROGRAMMED_LEVEL",
+        "P2",
+        `Level ${level.floorNo} (${level.name}) is marked "${usage}" but contains no spaces.`,
+        [],
+        {
+          floorNo: level.floorNo,
+          suggestion:
+            "Assign program to this storey, or change its usage to one that is expected to be empty.",
+        },
+      ),
+    );
+  }
+
   return out;
 }
 
@@ -314,6 +382,32 @@ function checkCore(building: GeneratedBuilding): ConstraintViolation[] {
           "P0",
           `${component.kind} ${component.id} extends outside the core footprint.`,
           [component.id],
+        ),
+      );
+    }
+
+    // The core is ONE rect for the whole building, so a plate that steps back or
+    // is cut by a notch can leave a shaft hanging over nothing on some levels
+    // only. Reported against the first offending level rather than every one:
+    // the defect is the siting, and it is repaired once.
+    const offending = building.levels.find(
+      (level) =>
+        level.floorNo >= component.fromFloorNo &&
+        level.floorNo <= component.toFloorNo &&
+        hasUsablePlate(level) &&
+        !clipRectToPolygon(component.rect, level.polygon, PLATE_TOLERANCE_M),
+    );
+    if (offending) {
+      out.push(
+        violation(
+          "CORE_OUTSIDE_PLATE",
+          "P1",
+          `${component.kind} ${component.id} does not stand on solid floor at level ${offending.floorNo}.`,
+          [component.id],
+          {
+            floorNo: offending.floorNo,
+            suggestion: "Site the core on the largest solid region of the plate.",
+          },
         ),
       );
     }
@@ -367,13 +461,14 @@ function checkStructure(building: GeneratedBuilding): ConstraintViolation[] {
       );
       continue;
     }
-    const bounds = polygonBounds(level.polygon);
-    const outside =
-      column.x < bounds.minX - 0.05 ||
-      column.x > bounds.maxX + 0.05 ||
-      column.z < bounds.minZ - 0.05 ||
-      column.z > bounds.maxZ + 0.05;
-    if (outside) {
+    // Point-in-polygon, not point-in-box: the bounding box of an L-shape covers
+    // the quadrant that was removed, so the box test passed a column standing in
+    // thin air. `structure.ts` never creates one, but validation that is only
+    // correct because generation happens to agree is not validation.
+    if (
+      hasUsablePlate(level) &&
+      !pointInPolygon([column.x, column.z], level.polygon, PLATE_TOLERANCE_M)
+    ) {
       out.push(
         violation(
           "COLUMN_OUTSIDE_PLATE",
