@@ -34,7 +34,9 @@ import {
   emptyBlueprint,
   makePolyLoop,
   makeRectLoop,
+  moveObjectVertex,
   preservationPlan,
+  translateObject,
   validateBlueprint,
   type BlueprintFidelityReport,
   type BlueprintSpec,
@@ -463,6 +465,12 @@ interface BlueprintState {
 
   /* --- editing --- */
   select: (id: string | null) => void;
+  /**
+   * One undo step. A live drag previews in the canvas and only calls this
+   * when the pointer comes up, so undo is "put it back" not "nudge one pixel".
+   */
+  translateSelected: (dxMm: number, dzMm: number) => void;
+  moveSelectedVertex: (vertexIndex: number, point: PointMm) => void;
   deleteSelected: () => void;
   undo: () => void;
   redo: () => void;
@@ -861,6 +869,22 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     /* --- editing --- */
 
     select: (id) => set({ selectedId: id }),
+
+    translateSelected: (dxMm, dzMm) => {
+      const state = get();
+      if (!state.selectedId) return;
+      const next = translateObject(state.blueprint, state.selectedId, dxMm, dzMm);
+      if (next === state.blueprint) return;
+      set(apply(next));
+    },
+
+    moveSelectedVertex: (vertexIndex, point) => {
+      const state = get();
+      if (!state.selectedId) return;
+      const next = moveObjectVertex(state.blueprint, state.selectedId, vertexIndex, point);
+      if (next === state.blueprint) return;
+      set(apply(next, { selectedId: state.selectedId }));
+    },
 
     deleteSelected: () => {
       const state = get();

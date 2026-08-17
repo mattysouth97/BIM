@@ -13,7 +13,6 @@ import { WorkflowStepper } from "./workflow-stepper";
 import { PropertiesPanel } from "./properties-panel";
 import { TwinLeftDock } from "./twin-left-dock";
 import { RevitWorkRail } from "./revit-work-rail";
-import { AuthoringPalette } from "./authoring-palette";
 import { StatusBar } from "./status-bar";
 import { BimSchedulePanel } from "./bim-schedule-panel";
 import { useBimDocumentStore } from "@/store/bim-document-store";
@@ -88,7 +87,6 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
   useEffect(() => {
     if (sceneSelectedId) selectBimElement(sceneSelectedId);
   }, [sceneSelectedId, selectBimElement]);
-  const workMode = useRevitWorkflowStore((s) => s.workMode);
   const schedulePanelOpen = useRevitWorkflowStore((s) => s.schedulePanelOpen);
   const sheetPanelOpen = useRevitWorkflowStore((s) => s.sheetPanelOpen);
   const setSchedulePanelOpen = useRevitWorkflowStore((s) => s.setSchedulePanelOpen);
@@ -122,7 +120,6 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
         <WorkflowStepper />
       </div>
       {(stage === "twin" || stage === "report") && <RevitWorkRail />}
-      {stage === "twin" && workMode === "authoring" && <AuthoringPalette />}
 
       {/* Viewport — twin uses reserved side columns so drawers cannot cover the answer */}
       <div className="relative flex min-h-0 flex-1 overflow-hidden" data-tour="viewport">

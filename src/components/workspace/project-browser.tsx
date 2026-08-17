@@ -107,7 +107,6 @@ export function ProjectBrowser() {
                     active={selectedElementId === el.id}
                     onClick={() => {
                       selectElement(el.id);
-                      setWorkMode("authoring");
                     }}
                   />
                 ))}
@@ -120,7 +119,6 @@ export function ProjectBrowser() {
                     active={selectedElementId === el.id}
                     onClick={() => {
                       selectElement(el.id);
-                      setWorkMode("authoring");
                     }}
                   />
                 ))}
@@ -270,8 +268,8 @@ export function ProjectBrowser() {
             <AccordionContent className="px-1 pb-2">
               <p className="px-3 pb-1 text-[10px] text-muted-foreground">
                 {t(
-                  "타입을 고르면 건물 작성 모드에서 해당 패밀리가 적용됩니다.",
-                  "Pick a type to apply it on the building in Authoring."
+                  "패밀리 작성은 스튜디오 도면에서 합니다. 3D는 생성된 결과를 봅니다.",
+                  "Place families on the studio schematic. 3D reviews the compiled result."
                 )}
               </p>
               {AUTHORING_TOOLS.map((tool) => (
@@ -288,7 +286,6 @@ export function ProjectBrowser() {
                         setSelectedFamilyId(
                           selectedFamilyId === family.id ? null : family.id
                         );
-                        setWorkMode("authoring");
                       }}
                     />
                   ))}

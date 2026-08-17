@@ -18,12 +18,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   blueprintPlacements,
+  nearestVertexIndex,
+  objectVertices,
+  translatePoint,
   type BlueprintValidationReport,
   type PointMm,
 } from "@/lib/generative/blueprint";
 import { cn } from "@/lib/utils";
 import {
   isPlacementTool,
+  snapPoint,
   useBlueprintStore,
   type SchematicTool,
   type ShapeMode,
@@ -36,6 +40,7 @@ import {
   ZONE_DEFAULT_FILL,
   ZONE_FILL,
 } from "./schematic-geometry";
+import { DimensionLabels } from "./live-dimensions";
 import type { PlanSymbolInstance } from "./plan-model";
 import { PlanSymbolsLayer } from "./plan-symbols-layer";
 import {
@@ -82,14 +87,35 @@ function failingIds(validation: BlueprintValidationReport): Set<string> {
   return out;
 }
 
-function nearestPlacement(
-  placements: readonly { id: string; positionMm: PointMm }[],
+type EditDrag =
+  | { kind: "pan"; x: number; y: number }
+  | { kind: "move"; id: string; start: PointMm }
+  | { kind: "vertex"; id: string; index: number };
+
+type EditPreview =
+  | { kind: "move"; id: string; dxMm: number; dzMm: number }
+  | { kind: "vertex"; id: string; index: number; point: PointMm };
+
+function previewRing(
+  id: string,
+  points: readonly PointMm[],
+  preview: EditPreview | null,
+): PointMm[] {
+  if (!preview || preview.id !== id) return [...points];
+  if (preview.kind === "move") {
+    return points.map((p) => translatePoint(p, preview.dxMm, preview.dzMm));
+  }
+  return points.map((p, i) => (i === preview.index ? preview.point : p));
+}
+
+function nearestPointId(
+  items: readonly { id: string; positionMm: PointMm }[],
   point: PointMm,
   thresholdMm: number,
 ): string | null {
   let bestId: string | null = null;
   let best = thresholdMm;
-  for (const item of placements) {
+  for (const item of items) {
     const distance = Math.hypot(
       item.positionMm.xMm - point.xMm,
       item.positionMm.zMm - point.zMm,
@@ -133,7 +159,12 @@ export function SchematicCanvas({ className }: { className?: string }) {
   const [view, setView] = useState<ViewTransform | null>(null);
   const [cursor, setCursor] = useState<PointMm | null>(null);
   const [shiftHeld, setShiftHeld] = useState(false);
-  const panRef = useRef<{ x: number; y: number } | null>(null);
+  const dragRef = useRef<EditDrag | null>(null);
+  const [preview, setPreview] = useState<EditPreview | null>(null);
+  const previewRef = useRef<EditPreview | null>(null);
+  useEffect(() => {
+    previewRef.current = preview;
+  }, [preview]);
 
   const shapes = useMemo(() => schematicShapes(blueprint), [blueprint]);
   const failing = useMemo(() => failingIds(validation), [validation]);
@@ -187,6 +218,23 @@ export function SchematicCanvas({ className }: { className?: string }) {
     [activeView],
   );
 
+  const handleThresholdMm = 14 / Math.max(activeView.scale, 1e-6);
+
+  const commitDrag = useCallback(() => {
+    const drag = dragRef.current;
+    const live = previewRef.current;
+    dragRef.current = null;
+    previewRef.current = null;
+    setPreview(null);
+    if (!drag || drag.kind === "pan" || !live) return;
+    const store = useBlueprintStore.getState();
+    if (live.kind === "move") {
+      store.translateSelected(live.dxMm, live.dzMm);
+      return;
+    }
+    store.moveSelectedVertex(live.index, live.point);
+  }, []);
+
   /* --- pointer contracts --- */
 
   const onPointerDown = useCallback(
@@ -200,26 +248,61 @@ export function SchematicCanvas({ className }: { className?: string }) {
       const store = useBlueprintStore.getState();
       (event.target as Element).setPointerCapture?.(event.pointerId);
 
-      // Middle button always pans, whatever tool is in hand.
-      if (event.button === 1 || mode === "pan") {
-        panRef.current = { x: event.clientX, y: event.clientY };
-        if (mode === "pan" && event.button === 0) {
-          const placements = blueprintPlacements(store.blueprint);
-          const thresholdMm = 14 / Math.max(activeView.scale, 1e-6);
-          const nearPlacement = nearestPlacement(placements, world, thresholdMm);
-          if (nearPlacement) {
-            store.select(nearPlacement);
-            return;
-          }
-          const hit = shapes.find(
-            (shape) => shape.pointsMm.length > 2 && pointInPolygon(world, shape.pointsMm),
-          );
-          store.select(hit?.id ?? null);
-        }
+      if (event.button === 1) {
+        dragRef.current = { kind: "pan", x: event.clientX, y: event.clientY };
         return;
       }
-
       if (event.button !== 0) return;
+
+      if (mode === "pan") {
+        const thresholdMm = handleThresholdMm;
+        const selected = store.selectedId;
+        if (selected) {
+          const verts = objectVertices(store.blueprint, selected);
+          if (verts) {
+            const index = nearestVertexIndex(verts, world, thresholdMm);
+            if (index !== null) {
+              store.select(selected);
+              dragRef.current = { kind: "vertex", id: selected, index };
+              setPreview({ kind: "vertex", id: selected, index, point: verts[index] });
+              return;
+            }
+          }
+        }
+
+        const pointHits = [
+          ...blueprintPlacements(store.blueprint).map((p) => ({
+            id: p.id,
+            positionMm: p.positionMm,
+          })),
+          ...store.blueprint.anchors.map((a) => ({ id: a.id, positionMm: a.positionMm })),
+          ...store.blueprint.circulation.nodes.map((n) => ({
+            id: n.id,
+            positionMm: n.positionMm,
+          })),
+        ];
+        const nearPoint = nearestPointId(pointHits, world, thresholdMm);
+        if (nearPoint) {
+          store.select(nearPoint);
+          dragRef.current = { kind: "move", id: nearPoint, start: world };
+          setPreview({ kind: "move", id: nearPoint, dxMm: 0, dzMm: 0 });
+          return;
+        }
+
+        const hit = [...shapes]
+          .reverse()
+          .find((shape) => shape.pointsMm.length > 2 && pointInPolygon(world, shape.pointsMm));
+        if (hit) {
+          store.select(hit.id);
+          dragRef.current = { kind: "move", id: hit.id, start: world };
+          setPreview({ kind: "move", id: hit.id, dxMm: 0, dzMm: 0 });
+          return;
+        }
+
+        store.select(null);
+        dragRef.current = { kind: "pan", x: event.clientX, y: event.clientY };
+        return;
+      }
 
       if (mode === "rect") {
         store.startRect(world);
@@ -241,7 +324,7 @@ export function SchematicCanvas({ className }: { className?: string }) {
         store.placePlacement(world);
       }
     },
-    [pointerToWorld, mode, tool, shapes, activeView.scale],
+    [pointerToWorld, mode, tool, shapes, handleThresholdMm],
   );
 
   const onPointerMove = useCallback(
@@ -250,11 +333,37 @@ export function SchematicCanvas({ className }: { className?: string }) {
       if (world) setCursor(world);
       setShiftHeld(event.shiftKey);
 
-      if (panRef.current) {
-        const dx = event.clientX - panRef.current.x;
-        const dy = event.clientY - panRef.current.y;
-        panRef.current = { x: event.clientX, y: event.clientY };
+      const drag = dragRef.current;
+      if (drag?.kind === "pan") {
+        const dx = event.clientX - drag.x;
+        const dy = event.clientY - drag.y;
+        dragRef.current = { kind: "pan", x: event.clientX, y: event.clientY };
         setView(panBy(activeView, dx, dy));
+        return;
+      }
+
+      if (drag?.kind === "move" && world) {
+        const raw = {
+          xMm: world.xMm - drag.start.xMm,
+          zMm: world.zMm - drag.start.zMm,
+        };
+        const snapped = snapPoint(raw, useBlueprintStore.getState().snapMm);
+        setPreview({ kind: "move", id: drag.id, dxMm: snapped.xMm, dzMm: snapped.zMm });
+        return;
+      }
+
+      if (drag?.kind === "vertex" && world) {
+        const store = useBlueprintStore.getState();
+        let next = snapPoint(world, store.snapMm);
+        const verts = objectVertices(store.blueprint, drag.id);
+        const origin = verts?.[drag.index];
+        if (event.shiftKey && origin) {
+          next =
+            Math.abs(next.xMm - origin.xMm) >= Math.abs(next.zMm - origin.zMm)
+              ? { xMm: next.xMm, zMm: origin.zMm }
+              : { xMm: origin.xMm, zMm: next.zMm };
+        }
+        setPreview({ kind: "vertex", id: drag.id, index: drag.index, point: next });
         return;
       }
 
@@ -268,15 +377,19 @@ export function SchematicCanvas({ className }: { className?: string }) {
   const onPointerUp = useCallback(
     (event: React.PointerEvent<SVGSVGElement>) => {
       (event.target as Element).releasePointerCapture?.(event.pointerId);
-      if (panRef.current) {
-        panRef.current = null;
+      if (dragRef.current?.kind === "pan") {
+        dragRef.current = null;
+        return;
+      }
+      if (dragRef.current) {
+        commitDrag();
         return;
       }
       if (mode === "rect" && draft?.kind === "rect") {
         useBlueprintStore.getState().commitRect();
       }
     },
-    [mode, draft],
+    [mode, draft, commitDrag],
   );
 
   const onWheel = useCallback(
@@ -296,6 +409,9 @@ export function SchematicCanvas({ className }: { className?: string }) {
   const onKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     const store = useBlueprintStore.getState();
     if (event.key === "Escape") {
+      dragRef.current = null;
+      previewRef.current = null;
+      setPreview(null);
       store.cancelDraft();
       return;
     }
@@ -366,22 +482,57 @@ export function SchematicCanvas({ className }: { className?: string }) {
   );
 
   const placementSymbols = useMemo((): PlanSymbolInstance[] => {
-    return blueprintPlacements(blueprint).map((item) => ({
-      id: item.id,
-      familyId: item.familyId,
-      typeId: item.familyId,
-      kind:
-        item.tool === "column"
-          ? "column"
-          : item.tool === "lighting"
-            ? "lighting"
-            : "furniture",
-      xMm: item.positionMm.xMm,
-      zMm: item.positionMm.zMm,
-      rotationRad: item.rotationRad,
-      params: {},
-    }));
-  }, [blueprint]);
+    return blueprintPlacements(blueprint).map((item) => {
+      const [pos] = previewRing(item.id, [item.positionMm], preview);
+      return {
+        id: item.id,
+        familyId: item.familyId,
+        typeId: item.familyId,
+        kind:
+          item.tool === "column"
+            ? "column"
+            : item.tool === "lighting"
+              ? "lighting"
+              : "furniture",
+        xMm: pos?.xMm ?? item.positionMm.xMm,
+        zMm: pos?.zMm ?? item.positionMm.zMm,
+        rotationRad: item.rotationRad,
+        params: {},
+      };
+    });
+  }, [blueprint, preview]);
+
+  const selectedRing = useMemo(() => {
+    if (!selectedId) return null;
+    const verts = objectVertices(blueprint, selectedId);
+    if (!verts || verts.length === 0) return null;
+    return previewRing(selectedId, verts, preview);
+  }, [blueprint, selectedId, preview]);
+
+  const draftRing = useMemo((): { points: PointMm[]; closed: boolean } | null => {
+    if (!draft) return null;
+    if (draft.kind === "polygon") {
+      const live = cursor ?? draft.pointsMm[draft.pointsMm.length - 1];
+      const points = live ? [...draft.pointsMm, live] : [...draft.pointsMm];
+      return { points, closed: false };
+    }
+    return {
+      points: [
+        { xMm: draft.startMm.xMm, zMm: draft.startMm.zMm },
+        { xMm: draft.endMm.xMm, zMm: draft.startMm.zMm },
+        { xMm: draft.endMm.xMm, zMm: draft.endMm.zMm },
+        { xMm: draft.startMm.xMm, zMm: draft.endMm.zMm },
+      ],
+      closed: true,
+    };
+  }, [draft, cursor]);
+
+  const hoverCursor = useMemo(() => {
+    if (mode !== "pan") return "cursor-crosshair";
+    if (preview?.kind === "vertex") return "cursor-nwse-resize";
+    if (preview?.kind === "move") return "cursor-move";
+    return "cursor-grab";
+  }, [mode, preview]);
 
   return (
     <div
@@ -400,16 +551,14 @@ export function SchematicCanvas({ className }: { className?: string }) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerLeave={() => {
-          panRef.current = null;
+          if (dragRef.current && dragRef.current.kind !== "pan") commitDrag();
+          else dragRef.current = null;
           setCursor(null);
         }}
         onDoubleClick={() => useBlueprintStore.getState().closePolygon()}
         onWheel={onWheel}
         onContextMenu={(event) => event.preventDefault()}
-        className={cn(
-          "touch-none select-none",
-          mode === "pan" ? "cursor-grab" : "cursor-crosshair",
-        )}
+        className={cn("touch-none select-none", hoverCursor)}
         role="application"
         aria-label="Schematic drawing canvas"
       >
@@ -441,20 +590,22 @@ export function SchematicCanvas({ className }: { className?: string }) {
         {/* Zones sit under the fabric they are programmed into. */}
         {shapes
           .filter((shape) => shape.kind === "zone")
-          .map((shape) => (
+          .map((shape) => {
+            const ring = previewRing(shape.id, shape.pointsMm, preview);
+            return (
             <g key={shape.id}>
               <path
-                d={pathOf(shape.pointsMm.map(project))}
+                d={pathOf(ring.map(project))}
                 fill={ZONE_FILL[shape.detail ?? ""] ?? ZONE_DEFAULT_FILL}
                 fillOpacity={shape.id === selectedId ? 0.42 : 0.22}
                 stroke={failing.has(shape.id) ? "#dc2626" : "#475569"}
                 strokeWidth={shape.id === selectedId ? 2 : 1}
                 strokeDasharray="4 3"
               />
-              {shape.pointsMm.length > 2 && (
+              {ring.length > 2 && (
                 <text
-                  x={project(shape.pointsMm[0]).x + 6}
-                  y={project(shape.pointsMm[0]).y + 14}
+                  x={project(ring[0]).x + 6}
+                  y={project(ring[0]).y + 14}
                   className="fill-slate-700 text-[10px]"
                   style={{ fontSize: 10 }}
                 >
@@ -462,14 +613,15 @@ export function SchematicCanvas({ className }: { className?: string }) {
                 </text>
               )}
             </g>
-          ))}
+            );
+          })}
 
         {shapes
           .filter((shape) => shape.kind === "boundary")
           .map((shape) => (
             <path
               key={shape.id}
-              d={pathOf(shape.pointsMm.map(project))}
+              d={pathOf(previewRing(shape.id, shape.pointsMm, preview).map(project))}
               fill="#0f172a"
               fillOpacity={0.04}
               stroke={
@@ -488,7 +640,7 @@ export function SchematicCanvas({ className }: { className?: string }) {
           .map((shape) => (
             <path
               key={shape.id}
-              d={pathOf(shape.pointsMm.map(project))}
+              d={pathOf(previewRing(shape.id, shape.pointsMm, preview).map(project))}
               fill="url(#void-hatch)"
               fillOpacity={0.5}
               stroke={failing.has(shape.id) ? "#dc2626" : "#475569"}
@@ -501,7 +653,7 @@ export function SchematicCanvas({ className }: { className?: string }) {
           .map((shape) => (
             <path
               key={shape.id}
-              d={pathOf(shape.pointsMm.map(project))}
+              d={pathOf(previewRing(shape.id, shape.pointsMm, preview).map(project))}
               fill="#1e293b"
               fillOpacity={0.85}
               stroke={
@@ -521,13 +673,16 @@ export function SchematicCanvas({ className }: { className?: string }) {
             const from = nodeById.get(edge.fromNodeId);
             const to = nodeById.get(edge.toNodeId);
             if (!from || !to) return null;
-            const a = project(from.positionMm);
-            const b = project(to.positionMm);
+            const [fromP] = previewRing(from.id, [from.positionMm], preview);
+            const [toP] = previewRing(to.id, [to.positionMm], preview);
+            const a = project(fromP ?? from.positionMm);
+            const b = project(toP ?? to.positionMm);
             return <line key={edge.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
           })}
         </g>
         {blueprint.circulation.nodes.map((node) => {
-          const p = project(node.positionMm);
+          const [pos] = previewRing(node.id, [node.positionMm], preview);
+          const p = project(pos ?? node.positionMm);
           return (
             <g key={node.id}>
               <circle
@@ -562,7 +717,8 @@ export function SchematicCanvas({ className }: { className?: string }) {
         })}
 
         {blueprint.anchors.map((anchor) => {
-          const p = project(anchor.positionMm);
+          const [pos] = previewRing(anchor.id, [anchor.positionMm], preview);
+          const p = project(pos ?? anchor.positionMm);
           return (
             <g key={anchor.id}>
               <polygon
@@ -609,18 +765,45 @@ export function SchematicCanvas({ className }: { className?: string }) {
               strokeWidth="2"
               strokeDasharray="6 4"
             />
-            <text
-              x={draftPreview.x + draftPreview.width / 2}
-              y={draftPreview.y - 6}
-              textAnchor="middle"
-              style={{ fontSize: 11 }}
-              className="fill-blue-700"
-            >
-              {(draftPreview.widthMm / 1000).toFixed(1)} ×{" "}
-              {(draftPreview.depthMm / 1000).toFixed(1)} m
-            </text>
           </g>
         )}
+
+        {draftRing && draftRing.points.length >= 2 && (
+          <DimensionLabels
+            points={draftRing.points}
+            closed={draftRing.closed}
+            project={project}
+            showArea={draftRing.closed}
+          />
+        )}
+
+        {!draftRing && selectedRing && selectedRing.length >= 2 && (
+          <DimensionLabels
+            points={selectedRing}
+            closed={selectedRing.length >= 3}
+            project={project}
+            showArea={selectedRing.length >= 3}
+          />
+        )}
+
+        {mode === "pan" &&
+          selectedRing &&
+          selectedRing.map((vertex, index) => {
+            const p = project(vertex);
+            return (
+              <rect
+                key={`vh-${index}`}
+                data-testid={`vertex-handle-${index}`}
+                x={p.x - 4}
+                y={p.y - 4}
+                width="8"
+                height="8"
+                fill="#ffffff"
+                stroke="#2563eb"
+                strokeWidth="1.5"
+              />
+            );
+          })}
       </svg>
 
       <div className="pointer-events-none absolute bottom-2 left-2 flex items-center gap-3 font-mono text-[10px] text-muted-foreground">
@@ -642,9 +825,10 @@ export function SchematicCanvas({ className }: { className?: string }) {
         Fit
       </button>
 
-      {mode !== "pan" && (
-        <div className="pointer-events-none absolute left-2 top-2 rounded bg-background/85 px-2 py-1 text-[10px] text-muted-foreground shadow-sm">
-          {mode === "polygon"
+      <div className="pointer-events-none absolute left-2 top-2 rounded bg-background/85 px-2 py-1 text-[10px] text-muted-foreground shadow-sm">
+        {mode === "pan"
+          ? "Drag a shape to move · drag a handle to reshape · drag empty space to pan · Delete removes"
+          : mode === "polygon"
             ? "Click to place vertices · double-click or Enter closes · Shift for ortho · Esc cancels"
             : mode === "rect"
               ? "Drag a rectangle · Shift for a square · Esc cancels"
@@ -653,8 +837,7 @@ export function SchematicCanvas({ className }: { className?: string }) {
                 : isPlacementTool(tool)
                   ? `Click to place a ${tool === "lighting" ? "light" : tool} on the plan · Delete removes · Generate BIM compiles it`
                   : "Click to place circulation nodes · each click links to the last · Esc ends the run"}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

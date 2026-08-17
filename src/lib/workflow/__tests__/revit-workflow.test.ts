@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  REVIT_RAIL_MODES,
   REVIT_WORK_MODES,
   REVIT_FEATURE_MAP,
   getWorkMode,
@@ -8,9 +9,16 @@ import {
 } from "../revit-workflow";
 
 describe("REVIT_WORK_MODES", () => {
-  it("covers the six Revit-aligned authoring modes", () => {
+  it("keeps authoring as lookup-only; the 3D rail does not show 작성", () => {
     expect(REVIT_WORK_MODES.map((m) => m.id)).toEqual([
       "authoring",
+      "views",
+      "annotate",
+      "schedules",
+      "sheets",
+      "energy",
+    ]);
+    expect(REVIT_RAIL_MODES.map((m) => m.id)).toEqual([
       "views",
       "annotate",
       "schedules",

@@ -160,6 +160,28 @@ describe("drawing through the builders", () => {
     expect(useBlueprintStore.getState().blueprint.placements?.[0].tool).toBe("lighting");
   });
 
+  it("moves and reshapes a plate as one undo step each", () => {
+    drawPlate();
+    const loopId = useBlueprintStore.getState().blueprint.boundaries[0].loop.id;
+    useBlueprintStore.getState().select(loopId);
+    useBlueprintStore.getState().translateSelected(2_000, 0);
+
+    const moved = useBlueprintStore.getState().blueprint.boundaries[0].loop.segments[0];
+    expect(moved.kind === "line" && moved.startMm.xMm).toBe(2_000);
+
+    useBlueprintStore.getState().moveSelectedVertex(0, mm(0, 0));
+    const reshaped = useBlueprintStore.getState().blueprint.boundaries[0].loop;
+    expect(reshaped.segments[0].kind === "line" && reshaped.segments[0].startMm).toEqual(mm(0, 0));
+
+    useBlueprintStore.getState().undo();
+    const afterUndo = useBlueprintStore.getState().blueprint.boundaries[0].loop.segments[0];
+    expect(afterUndo.kind === "line" && afterUndo.startMm.xMm).toBe(2_000);
+
+    useBlueprintStore.getState().undo();
+    const restored = useBlueprintStore.getState().blueprint.boundaries[0].loop.segments[0];
+    expect(restored.kind === "line" && restored.startMm).toEqual(mm(0, 0));
+  });
+
   it("records a zone's program as provenanced user intent", () => {
     drawPlate();
     const store = useBlueprintStore.getState();
