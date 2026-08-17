@@ -9,11 +9,22 @@ import {
 } from "../revit-workflow";
 
 describe("REVIT_WORK_MODES", () => {
-  it("puts 작성 on the 3D rail — family placement is a live-model mode", () => {
-    const expected = ["authoring", "views", "annotate", "schedules", "sheets", "energy"];
-    expect(REVIT_WORK_MODES.map((m) => m.id)).toEqual(expected);
-    // The rail IS the mode list: a mode the rail cannot reach is a dead mode.
-    expect(REVIT_RAIL_MODES.map((m) => m.id)).toEqual(expected);
+  it("keeps authoring as lookup-only; the 3D rail does not show 작성", () => {
+    expect(REVIT_WORK_MODES.map((m) => m.id)).toEqual([
+      "authoring",
+      "views",
+      "annotate",
+      "schedules",
+      "sheets",
+      "energy",
+    ]);
+    expect(REVIT_RAIL_MODES.map((m) => m.id)).toEqual([
+      "views",
+      "annotate",
+      "schedules",
+      "sheets",
+      "energy",
+    ]);
   });
 
   it("every mode has bilingual labels and course chapters", () => {
