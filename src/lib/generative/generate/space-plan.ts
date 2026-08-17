@@ -351,12 +351,29 @@ function chooseStrip(
   plate: Rect,
   core: Rect,
   rng: Rng,
+  /**
+   * Drop the declared `minAreaSqm` floor, keeping only the hard geometric one.
+   *
+   * Used as a second pass when an item would otherwise be placed ZERO times.
+   * A large declared minimum ("an open office floor is not an open office floor
+   * below 300 m²") is architecturally correct, but on a plate whose strips are
+   * all shorter than that it rejected every candidate and the dominant space in
+   * the building silently vanished. A smaller-than-asked room that the
+   * validator reports as SPACE_BELOW_TARGET_AREA is far more useful than a
+   * missing one — the shortfall stays visible either way, but the building
+   * still has its offices in it.
+   */
+  relaxed = false,
 ): Candidate | null {
   let best: Candidate | null = null;
 
   for (const strip of strips) {
     const remaining = strip.lengthU - strip.cursorU;
-    const minThickness = Math.max(item.minAreaSqm / strip.depthM, MIN_ROOM_DIM_M);
+    // MIN_ROOM_DIM_M is never relaxed: it is what stops a sliver, and a sliver
+    // is not a cheaper room, it is a defect.
+    const minThickness = relaxed
+      ? MIN_ROOM_DIM_M
+      : Math.max(item.minAreaSqm / strip.depthM, MIN_ROOM_DIM_M);
     // Jitter is drawn for every candidate, not only the winner, so the draw
     // order stays a pure function of the strip list.
     const jitter = rng.next() * 0.02;
@@ -364,7 +381,7 @@ function chooseStrip(
 
     const thicknessU = clamp(targetAreaSqm / strip.depthM, minThickness, remaining);
     const areaSqm = thicknessU * strip.depthM;
-    if (areaSqm < item.minAreaSqm - EPS) continue;
+    if (!relaxed && areaSqm < item.minAreaSqm - EPS) continue;
 
     const rect = stripRect(strip, strip.cursorU, strip.cursorU + thicknessU);
     const aspect =
@@ -476,11 +493,23 @@ export function solveFloorPlan(input: {
       item.minAreaSqm,
       item.targetAreaSqmPerLevel / item.countPerLevel,
     );
+    let placedForItem = 0;
     for (let n = 1; n <= item.countPerLevel; n += 1) {
-      const chosen = chooseStrip(strips, item, perRoomTarget, plate, coreRect, rng);
+      let chosen = chooseStrip(strips, item, perRoomTarget, plate, coreRect, rng);
+
+      // Placing an item FEWER times than asked is a reportable shortfall.
+      // Placing it ZERO times deletes a requirement from the building, and for
+      // the dominant item that means a five-storey office with no offices in
+      // it. So if nothing has been placed yet, try again without the declared
+      // area floor before giving up.
+      if (chosen === null && placedForItem === 0) {
+        chosen = chooseStrip(strips, item, perRoomTarget, plate, coreRect, rng, true);
+      }
+
       // Nothing can take a room this size, so nothing can take the next one
       // either. Dropping the remainder is honest; a sliver room is not.
       if (chosen === null) break;
+      placedForItem += 1;
 
       chosen.strip.placements.push({
         item,
