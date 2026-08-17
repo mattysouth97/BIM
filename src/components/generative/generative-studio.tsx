@@ -18,10 +18,11 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, Environment } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 
 import { InteriorLayer } from "@/components/viewer/interior-layer";
+import { SceneEnvironment } from "@/components/viewer/scene-environment";
 import { ProceduralBuildingModel } from "@/components/viewer/procedural-building-model";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -801,8 +802,8 @@ export function GenerativeStudio({
                   enabled
                   floors={isolatedFloors}
                 />
-                <Environment preset="city" background={false} />
               </Suspense>
+              <SceneEnvironment />
               <OrbitControls
                 makeDefault
                 target={[0, displayRecipe.totalHeight / 2, 0]}

@@ -12,10 +12,11 @@
 
 import { Suspense, useEffect, useRef } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, Environment } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 
 import { InteriorLayer } from "@/components/viewer/interior-layer";
+import { SceneEnvironment } from "@/components/viewer/scene-environment";
 import { ProceduralBuildingModel } from "@/components/viewer/procedural-building-model";
 import type { BimModelSnapshot } from "@/lib/bim/model/types";
 import type { BuildingRecipe } from "@/lib/procedural/types";
@@ -84,8 +85,8 @@ export function LeanModelView({
       <Suspense fallback={null}>
         <ProceduralBuildingModel recipeOverride={recipe} />
         <InteriorLayer snapshot={snapshot} enabled floors={null} />
-        <Environment preset="city" background={false} />
       </Suspense>
+      <SceneEnvironment />
       <OrbitControls makeDefault target={[0, recipe.totalHeight / 2, 0]} maxPolarAngle={Math.PI / 2.05} />
       <CameraRig span={span} height={recipe.totalHeight} />
     </Canvas>
