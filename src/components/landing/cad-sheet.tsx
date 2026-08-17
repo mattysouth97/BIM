@@ -12,17 +12,11 @@ import {
   prevBannerLayer,
   type BannerLayerId,
 } from "@/lib/landing/layers";
-import { CadDoor, DemoDoor } from "./landing-doors";
+import { DemoDoor, StudioDoor } from "./landing-doors";
 import { LayerRail } from "./layer-rail";
 import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
 
-export function CadSheet({
-  copy,
-  onOpenLookup,
-}: {
-  copy: LandingCopy;
-  onOpenLookup: () => void;
-}) {
+export function CadSheet({ copy }: { copy: LandingCopy }) {
   const reduced = usePrefersReducedMotion();
   const stageRef = useRef<HTMLDivElement>(null);
   const [spot, setSpot] = useState({ x: 72, y: 44 });
@@ -162,9 +156,9 @@ export function CadSheet({
           style={{ fontFamily: "var(--font-ko-display), var(--font-display-release), serif" }}
         >
           <span className="sr-only">BIMFIT. </span>
-          {copy.display === "대장에서 트윈까지" ? (
+          {copy.display === "구상에서 트윈까지" ? (
             <>
-              대장에서
+              구상에서
               <br />
               트윈까지
             </>
@@ -209,19 +203,20 @@ export function CadSheet({
                 {copy.leadSecondary}
               </p>
               <div className="flex flex-wrap items-center gap-1.5 sm:ml-auto">
-                <DemoDoor testId="landing-demo-start" className="max-sm:flex-1">
+                <StudioDoor testId="landing-studio-start" className="max-sm:flex-1" title={copy.studioSub}>
+                  {copy.studio}
+                </StudioDoor>
+                <StudioDoor
+                  testId="landing-import-start"
+                  variant="outline"
+                  className="max-sm:flex-1"
+                  title={copy.importDrawingSub}
+                >
+                  {copy.importDrawing}
+                </StudioDoor>
+                <DemoDoor testId="landing-demo-start" variant="outline" className="max-sm:flex-1">
                   {copy.demo}
                 </DemoDoor>
-                <CadDoor testId="landing-cad-start" className="max-sm:flex-1">
-                  {copy.cad}
-                </CadDoor>
-                <button
-                  type="button"
-                  className="inline-flex h-8 items-center justify-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:w-full"
-                  onClick={onOpenLookup}
-                >
-                  {copy.lookupJump}
-                </button>
               </div>
             </div>
           </section>

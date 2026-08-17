@@ -35,6 +35,10 @@ import { useTwinProvenanceStore } from "@/store/twin-provenance-store";
 import { DEMO_BUILDING_PK } from "@/lib/constants";
 import { ProceduralBuildingModel } from "./procedural-building-model";
 import { BuildingLayers } from "./building-layers";
+import { EnvelopeLayer } from "./envelope-layer";
+import { StructureLayer } from "./structure-layer";
+import { EnergyZoneLayer } from "./energy-zone-layer";
+import { AnalysisLegend } from "./analysis-legend";
 import { SceneControls, type SceneControlsRef } from "./scene-controls";
 import { useViewStore } from "@/lib/bim/views/view-store";
 import { ContextualToolbar } from "@/components/workspace/contextual-toolbar";
@@ -530,6 +534,12 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
                 {retrofitVisuals.solarInstalled && <SolarPanels recipe={recipe} />}
                 {retrofitVisuals.hvacUpgraded && <RetrofitHvacUnits recipe={recipe} />}
                 <BuildingLayers buildingPk={buildingPk} />
+                {/* Semantic analysis overlays — 외피 / 구조 / 에너지존.
+                    Each mounts its own group and self-gates on the layer
+                    store's analysisOverlays slice. */}
+                <EnvelopeLayer buildingPk={buildingPk} />
+                <StructureLayer buildingPk={buildingPk} />
+                <EnergyZoneLayer buildingPk={buildingPk} />
                 <AuthoringFamilyLayer recipe={recipe} />
                 <StructuralTooltip />
                 <EquipmentClickHandler />
@@ -612,6 +622,12 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           onClose={() => setConfigPanelOpen(false)}
         />
       </ErrorBoundary>
+
+      {!campusData && (
+        <ErrorBoundary>
+          <AnalysisLegend buildingPk={buildingPk} />
+        </ErrorBoundary>
+      )}
 
       <LayerPanel
         visible={layerPanelOpen}

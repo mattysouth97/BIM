@@ -5,6 +5,8 @@ import { versionedMigrate } from "./persist-migrate";
 import { persist } from "zustand/middleware";
 import type { LayerId, MepSubLayerId } from "@/lib/layers/types";
 import { ALL_LAYER_IDS, MEP_SUB_IDS } from "@/lib/layers/types";
+import type { AnalysisOverlayId } from "@/lib/layers/analysis/overlay-types";
+import { ANALYSIS_OVERLAY_IDS } from "@/lib/layers/analysis/overlay-types";
 
 interface LayerState {
   /** Visibility toggle per layer — envelope + structure on; diagnostics off */
@@ -56,6 +58,20 @@ interface LayerState {
 
   /** Set a single MEP sub-layer's visibility explicitly */
   setMepSubVisible: (id: MepSubLayerId, visible: boolean) => void;
+
+  /**
+   * Analysis overlays (외피 열손실 / 구조 분리 / 에너지존). Separate from
+   * `visibility` because these are physics/BIM read-outs drawn ON TOP of the
+   * twin, not the twin's own envelope and structure geometry. Off by default —
+   * an analysis x-ray should be opted into.
+   */
+  analysisOverlays: Record<AnalysisOverlayId, boolean>;
+
+  /** Toggle one analysis overlay. */
+  toggleAnalysisOverlay: (id: AnalysisOverlayId) => void;
+
+  /** Set one analysis overlay's visibility explicitly. */
+  setAnalysisOverlayVisible: (id: AnalysisOverlayId, visible: boolean) => void;
 }
 
 function buildDefault<T>(value: T): Record<LayerId, T> {
@@ -75,6 +91,10 @@ const defaultDensity = buildDefault(50);
 const defaultMepSubVisibility = Object.fromEntries(
   MEP_SUB_IDS.map((id) => [id, true])
 ) as Record<MepSubLayerId, boolean>;
+
+const defaultAnalysisOverlays = Object.fromEntries(
+  ANALYSIS_OVERLAY_IDS.map((id) => [id, false])
+) as Record<AnalysisOverlayId, boolean>;
 
 export const useLayerStore = create<LayerState>()(
   persist(
@@ -115,7 +135,23 @@ export const useLayerStore = create<LayerState>()(
           mepSubVisibility: { ...defaultMepSubVisibility },
           airflowVisible: true,
           structuralIsolation: false,
+          analysisOverlays: { ...defaultAnalysisOverlays },
         }),
+
+      analysisOverlays: { ...defaultAnalysisOverlays },
+
+      toggleAnalysisOverlay: (id) =>
+        set((state) => ({
+          analysisOverlays: {
+            ...state.analysisOverlays,
+            [id]: !state.analysisOverlays[id],
+          },
+        })),
+
+      setAnalysisOverlayVisible: (id, visible) =>
+        set((state) => ({
+          analysisOverlays: { ...state.analysisOverlays, [id]: visible },
+        })),
 
       mepSubVisibility: { ...defaultMepSubVisibility },
       airflowVisible: true,
@@ -145,6 +181,7 @@ export const useLayerStore = create<LayerState>()(
       partialize: (s) => ({
         mepSubVisibility: s.mepSubVisibility,
         airflowVisible: s.airflowVisible,
+        analysisOverlays: s.analysisOverlays,
       }),
       // Deep-merge persisted sub-visibility OVER the defaults so newly added
       // sub-layer ids (absent from older persisted snapshots) fall back to
@@ -157,6 +194,10 @@ export const useLayerStore = create<LayerState>()(
           mepSubVisibility: {
             ...defaultMepSubVisibility,
             ...(p?.mepSubVisibility ?? {}),
+          },
+          analysisOverlays: {
+            ...defaultAnalysisOverlays,
+            ...(p?.analysisOverlays ?? {}),
           },
         };
       },

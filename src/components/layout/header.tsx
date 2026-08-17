@@ -42,16 +42,27 @@ export function Header() {
     <>
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between px-4">
-          <Link
-            href="/"
-            className="flex items-baseline gap-2 no-underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="홈으로 / Home"
-          >
-            <span className="text-sm font-semibold tracking-tight">BIMFIT</span>
-            <span className="hidden text-[10px] font-medium text-muted-foreground sm:inline">
-              {language === "ko" ? "대장에서 트윈까지" : "Ledger to Twin"}
-            </span>
-          </Link>
+          <div className="flex items-baseline gap-4">
+            <Link
+              href="/"
+              className="flex items-baseline gap-2 no-underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="홈으로 / Home"
+            >
+              <span className="text-sm font-semibold tracking-tight">BIMFIT</span>
+              <span className="hidden text-[10px] font-medium text-muted-foreground sm:inline">
+                {language === "ko" ? "구상에서 트윈까지" : "Concept to Twin"}
+              </span>
+            </Link>
+
+            <Link
+              href="/studio"
+              aria-current={pathname?.startsWith("/studio") ? "page" : undefined}
+              title={language === "ko" ? "Studio" : "스튜디오"}
+              className="rounded-sm text-sm font-medium text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:text-foreground"
+            >
+              {language === "ko" ? "스튜디오" : "Studio"}
+            </Link>
+          </div>
 
           <div className="flex items-center gap-1">
             {showGuide && (

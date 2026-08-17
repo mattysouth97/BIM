@@ -3,6 +3,10 @@
 import { Fragment, useState } from "react";
 import { useLayerStore } from "@/store/layer-store";
 import { LAYER_CONFIGS, ALL_LAYER_IDS, MEP_SUB_IDS, MEP_SUB_CONFIGS } from "@/lib/layers/types";
+import {
+  ANALYSIS_OVERLAY_IDS,
+  ANALYSIS_OVERLAY_CONFIGS,
+} from "@/lib/layers/analysis/overlay-types";
 import { useT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { X, ChevronDown } from "lucide-react";
@@ -26,6 +30,8 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
   const toggleMepSub = useLayerStore((s) => s.toggleMepSub);
   const airflowVisible = useLayerStore((s) => s.airflowVisible);
   const toggleAirflow = useLayerStore((s) => s.toggleAirflow);
+  const analysisOverlays = useLayerStore((s) => s.analysisOverlays);
+  const toggleAnalysisOverlay = useLayerStore((s) => s.toggleAnalysisOverlay);
   const { t } = useT();
 
   const [mepExpanded, setMepExpanded] = useState(true);
@@ -140,6 +146,44 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
                 );
               })}
             </Fragment>
+          );
+        })}
+      </div>
+
+      {/* Analysis overlays — physics / BIM read-outs drawn on top of the twin.
+          Separate section (and separate store slice) from the model layers
+          above, which toggle the twin's own geometry. */}
+      <div className="border-t p-2 space-y-0.5">
+        <p className="px-3 pb-1 pt-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("분석 오버레이", "Analysis overlays")}
+        </p>
+        {ANALYSIS_OVERLAY_IDS.map((id) => {
+          const config = ANALYSIS_OVERLAY_CONFIGS[id];
+          const active = analysisOverlays[id];
+          return (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => toggleAnalysisOverlay(id)}
+              className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-accent/50"
+            >
+              <span
+                className="mt-0.5 size-2.5 shrink-0 rounded-full border-2 transition-colors"
+                style={{
+                  borderColor: config.color,
+                  backgroundColor: active ? config.color : "transparent",
+                }}
+              />
+              <span className="flex-1 min-w-0">
+                <span className={`block ${active ? "font-medium" : "text-muted-foreground"}`}>
+                  {t(config.nameKo, config.name)}
+                </span>
+                <span className="block text-[10px] text-muted-foreground leading-tight mt-0.5 truncate">
+                  {t(config.descriptionKo, config.description)}
+                </span>
+              </span>
+            </button>
           );
         })}
       </div>

@@ -1,12 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { DEMO_BUILDING_ID, DRAWING_BUILDING_ID, DRAWING_BUILDING_PK } from "@/lib/constants";
+import { DEMO_BUILDING_ID } from "@/lib/constants";
 import { doorStage } from "@/lib/workflow/doors";
 import { useWorkflowStore } from "@/store/workflow-store";
-import { useRecipeStore } from "@/store/recipe-store";
-import { useMaterialStore } from "@/store/material-store";
-import { useTwinProvenanceStore } from "@/store/twin-provenance-store";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -14,13 +11,15 @@ export function DemoDoor({
   children,
   className,
   testId,
+  variant = "default",
 }: {
   children: React.ReactNode;
   className?: string;
   testId?: string;
+  variant?: "default" | "outline";
 }) {
   return (
-    <Button asChild size="sm" className={cn(className)}>
+    <Button asChild size="sm" variant={variant} className={cn(className)}>
       <Link
         href={`/building/${DEMO_BUILDING_ID}`}
         data-testid={testId}
@@ -34,29 +33,29 @@ export function DemoDoor({
   );
 }
 
-export function CadDoor({
+/**
+ * The generative studio — every non-demo building starts here now, whether
+ * described in a sentence or drawn as a schematic (both live behind the same
+ * route, see StartMode in generative-studio.tsx). Two landing doors point
+ * here with different copy: the primary "describe or draw" CTA and the
+ * "import a drawing" door that calls out the schematic-import path.
+ */
+export function StudioDoor({
   children,
   className,
   testId,
+  variant = "default",
+  title,
 }: {
   children: React.ReactNode;
   className?: string;
   testId?: string;
+  variant?: "default" | "outline";
+  title?: string;
 }) {
   return (
-    <Button asChild size="sm" variant="outline" className={cn(className)}>
-      <Link
-        href={`/building/${DRAWING_BUILDING_ID}`}
-        data-testid={testId}
-        onClick={() => {
-          const wf = useWorkflowStore.getState();
-          wf.resetWorkflow();
-          wf.setStage(doorStage("cad"));
-          useRecipeStore.getState().resetOverrides(DRAWING_BUILDING_PK);
-          useTwinProvenanceStore.getState().reset(DRAWING_BUILDING_PK);
-          useMaterialStore.getState().setActivePk(DRAWING_BUILDING_PK);
-        }}
-      >
+    <Button asChild size="sm" variant={variant} className={cn(className)}>
+      <Link href="/studio" data-testid={testId} title={title}>
         {children}
       </Link>
     </Button>

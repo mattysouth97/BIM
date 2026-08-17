@@ -56,6 +56,10 @@ vi.mock("@/components/viewer/procedural-building-model", () => ({
   ProceduralBuildingModel: () => null,
 }));
 
+// The header's "Open in workspace" action navigates. There is no app router
+// around a bare render, so the hook gets a stand-in; nothing here clicks it.
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: () => {} }) }));
+
 /* ------------------------------------------------------------------ */
 
 import { GenerativeStudio } from "../generative-studio";
@@ -66,6 +70,12 @@ import { diffMetrics, diffSpecs } from "@/lib/generative/patch/diff";
 import { STATUS_LABEL } from "@/lib/generative/spec/status";
 import type { AppliedEdit, GenerationResult } from "@/lib/generative/client";
 import { useGenerativeSession } from "@/store/generative-session-store";
+import { useBlueprintStore } from "@/store/blueprint-store";
+import { footprintToBlueprint } from "@/lib/generative/blueprint/from-footprint";
+import {
+  clearSeedBlueprint,
+  stashSeedBlueprint,
+} from "@/lib/generative/blueprint/seed-handoff";
 
 const PROMPT =
   "Create a five-story office building, approximately 6,000 m2, with a central core.";
@@ -234,6 +244,76 @@ describe("GenerativeStudio — the empty session", () => {
     expect(screen.queryByRole("heading", { name: "Model" })).toBeNull();
     expect(screen.queryByLabelText(/Describe a change/i)).toBeNull();
     expect(screen.queryByRole("button", { name: "New building" })).toBeNull();
+  });
+});
+
+describe("GenerativeStudio — a seed handed over from the twin workspace", () => {
+  // "Generate alternative" in the building toolbar stashes the plate the user
+  // was looking at and navigates here. Arriving on the prompt box with an empty
+  // schematic behind it would read as the handoff having silently failed.
+  const seed = () =>
+    footprintToBlueprint({
+      name: "Seeded plate",
+      footprintPolygonM: [
+        [
+          [-10, -6],
+          [10, -6],
+          [10, 6],
+          [-10, 6],
+        ],
+      ],
+      floors: 3,
+    });
+
+  beforeEach(() => {
+    clearSeedBlueprint();
+    useGenerativeSession.getState().reset();
+  });
+  afterEach(() => clearSeedBlueprint());
+
+  it("opens on the schematic, carrying the stashed drawing", () => {
+    const stashed = seed();
+    stashSeedBlueprint(stashed);
+
+    render(<GenerativeStudio />);
+
+    // The draw door is the one that is open.
+    expect(
+      screen.getByRole("button", { name: "Draw schematic", pressed: true }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Describe a building", pressed: false }),
+    ).toBeTruthy();
+
+    // And it is THIS drawing, not a blank one.
+    const loaded = useBlueprintStore.getState().blueprint;
+    expect(loaded.boundaries.length).toBe(stashed.boundaries.length);
+    expect(loaded.boundaries.length).toBeGreaterThan(0);
+    expect(JSON.stringify(loaded.boundaries)).toBe(JSON.stringify(stashed.boundaries));
+  });
+
+  it("consumes the seed once, so a later visit is not re-seeded", () => {
+    stashSeedBlueprint(seed());
+
+    render(<GenerativeStudio />);
+    expect(
+      screen.getByRole("button", { name: "Draw schematic", pressed: true }),
+    ).toBeTruthy();
+    cleanup();
+
+    // Second visit: nothing was stashed this time, so the studio opens on its
+    // own default door rather than re-opening the drawing the user moved on from.
+    render(<GenerativeStudio />);
+    expect(
+      screen.getByRole("button", { name: "Describe a building", pressed: true }),
+    ).toBeTruthy();
+  });
+
+  it("opens on the prompt box when nothing was handed over", () => {
+    render(<GenerativeStudio />);
+    expect(
+      screen.getByRole("button", { name: "Describe a building", pressed: true }),
+    ).toBeTruthy();
   });
 });
 

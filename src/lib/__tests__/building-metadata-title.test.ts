@@ -7,6 +7,7 @@ import {
   buildingMetadataTitle,
   isRoutableBuildingId,
 } from "@/app/building/[id]/page";
+import { parseBuildingId } from "@/lib/constants";
 
 describe("buildingMetadataTitle (P2-14)", () => {
   it("produces a title containing sigunguCd and bjdongCd for a valid id", () => {
@@ -51,6 +52,15 @@ describe("buildingMetadataTitle (P2-14)", () => {
     const title = buildingMetadataTitle("cad-c8a95604-8b0d-4cbc-8044-d6683475a1d4");
     expect(title).toBe("CAD 트윈 드래프트 | BIMFIT");
   });
+
+  // ─── Generated designs route through /building/[id] too ───────────────────
+
+  it("titles a generated design by its id — the only fact the server has", () => {
+    // The design's name lives in the browser's IndexedDB, which generateMetadata
+    // runs too early (and on the wrong machine) to read.
+    expect(buildingMetadataTitle("GEN-0042")).toBe("생성 설계 GEN-0042 | BIMFIT");
+    expect(buildingMetadataTitle("GEN-0042.3")).toBe("생성 설계 GEN-0042.3 | BIMFIT");
+  });
 });
 
 describe("isRoutableBuildingId (P2-24)", () => {
@@ -67,9 +77,26 @@ describe("isRoutableBuildingId (P2-24)", () => {
     expect(isRoutableBuildingId("drawing")).toBe(true);
   });
 
+  it("accepts a generated design id (the studio's 'Open in workspace' target)", () => {
+    expect(isRoutableBuildingId("GEN-0042")).toBe(true);
+    expect(isRoutableBuildingId("GEN-0042.3")).toBe(true);
+  });
+
   it("rejects malformed ids", () => {
     expect(isRoutableBuildingId("bad-id")).toBe(false);
     expect(isRoutableBuildingId("")).toBe(false);
     expect(isRoutableBuildingId("11110-10100-0-0001-0000-extra")).toBe(false);
+    // Near-misses of the generated shape are not routable either.
+    expect(isRoutableBuildingId("GEN-42")).toBe(false);
+    expect(isRoutableBuildingId("GEN-0042.")).toBe(false);
+  });
+});
+
+describe("parseBuildingId stays a ledger parser", () => {
+  it("does not invent ledger coordinates for a generated design", () => {
+    // A design has no 시군구/법정동/번지. Returning sentinel codes here would
+    // hand the ledger hooks a location nobody surveyed — the workspace branches
+    // on isGeneratedPk before any of this runs.
+    expect(parseBuildingId("GEN-0042")).toBeNull();
   });
 });

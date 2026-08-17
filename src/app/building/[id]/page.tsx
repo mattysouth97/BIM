@@ -11,6 +11,7 @@ import {
   parseBuildingId,
 } from "@/lib/constants";
 import { isCadDraftPk } from "@/lib/workflow/cad-draft";
+import { isGeneratedPk } from "@/lib/generative/design-storage";
 import BuildingWorkspace from "./building-workspace";
 
 type Props = {
@@ -18,15 +19,22 @@ type Props = {
 };
 
 /**
- * P2-24 — a /building/[id] segment is routable when it is either a valid
- * 5-part ledger id or a cad-first draft id (cad-<uuid>). Pure function —
- * unit-tested in src/lib/__tests__/building-metadata-title.test.ts.
+ * A /building/[id] segment is routable when it is a valid 5-part ledger id, a
+ * cad-first draft id (cad-<uuid>), or a generated design id (GEN-0042[.3]).
+ * Pure function — unit-tested in
+ * src/lib/__tests__/building-metadata-title.test.ts.
+ *
+ * `parseBuildingId` is deliberately NOT extended to generated ids: a design has
+ * no 시군구/법정동/번지, and returning sentinel codes for one would hand the
+ * ledger hooks coordinates nobody surveyed. The workspace branches on
+ * `isGeneratedPk` before any ledger parsing happens.
  */
 export function isRoutableBuildingId(id: string): boolean {
   return (
     id === DEMO_BUILDING_ID ||
     id === DRAWING_BUILDING_ID ||
     isCadDraftPk(id) ||
+    isGeneratedPk(id) ||
     parseBuildingId(id) !== null
   );
 }
@@ -41,6 +49,9 @@ export function buildingMetadataTitle(id: string): string {
   if (id === DEMO_BUILDING_ID) return "데모 오피스 타워 | BIMFIT";
   if (id === DRAWING_BUILDING_ID) return "도면에서 시작 | BIMFIT";
   if (isCadDraftPk(id)) return "CAD 트윈 드래프트 | BIMFIT";
+  // The design's own name lives in IndexedDB, which the server cannot read —
+  // the id is the only honest title available at metadata time.
+  if (isGeneratedPk(id)) return `생성 설계 ${id} | BIMFIT`;
   const parsed = parseBuildingId(id);
   if (!parsed) return "건물 정보 | BIMFIT";
   return `건물 ${parsed.sigunguCd}-${parsed.bjdongCd} | BIMFIT`;

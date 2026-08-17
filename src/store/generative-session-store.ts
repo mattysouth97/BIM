@@ -22,10 +22,10 @@ import type {
   ProviderSummary,
   RejectedEdit,
 } from "@/lib/generative/client";
-import { seedBuildingFromGeneratedDesign } from "@/lib/generative/energy/seed-from-design";
-import { useActiveBuildingStore } from "@/store/active-building-store";
-import { useMaterialStore } from "@/store/material-store";
-import { useRecipeStore } from "@/store/recipe-store";
+import {
+  publishGeneratedDesign,
+  unpublishGeneratedDesign,
+} from "@/lib/generative/energy/publish-design";
 import {
   branchTips,
   canRedo,
@@ -188,79 +188,15 @@ function stateFromEdit(edit: AppliedEdit, seed: number): DesignState {
 /* Energy publication                                                  */
 /* ------------------------------------------------------------------ */
 
-/**
- * Hand the current design to the energy stack under its own generationId, so
- * `useEnergyMetrics` / `useRetrofitScenario` see it exactly as they see a
- * ledger building (mirrors `use-ensure-building-model.ts`).
- *
- * Unlike the ledger seeding, this OVERWRITES: a modified design is the same
- * conversation continuing, and its recalculated envelope must replace the old
- * one rather than lose to a "keep the first value" guard.
- */
-function publishDesignEnergy(design: DesignState, previousPk: string | null): void {
-  const seed = seedBuildingFromGeneratedDesign({
-    spec: design.spec,
-    recipe: design.recipe,
-    metrics: design.metrics,
-    generationId: design.generationId,
-  });
+// The publish/unpublish pair lives in `lib/generative/energy/publish-design.ts`
+// so the /building/GEN-… workspace seeds the same three stores the same way.
 
-  useMaterialStore.getState().setProperties(seed.pk, seed.materials);
-  useMaterialStore.getState().setActivePk(seed.pk);
-  useRecipeStore.getState().setBaseRecipe(seed.pk, seed.recipe);
-  useActiveBuildingStore.getState().setActiveBuilding(seed.pk, seed.sigunguCd);
+/** Session-local alias — the store publishes whatever design is current. */
+const publishDesignEnergy = (design: DesignState, previousPk: string | null): void => {
+  publishGeneratedDesign(design, previousPk);
+};
 
-  if (previousPk && previousPk !== seed.pk) unpublishDesignEnergy(previousPk);
-
-  // The session is not persisted but the material store IS, so a design left
-  // behind by a previous TAB or reload has no `previousPk` to prune it by.
-  // Sweep those too: exactly one generated building may hold records at a time.
-  for (const pk of Object.keys(useMaterialStore.getState().properties)) {
-    if (pk !== seed.pk && isGeneratedPk(pk)) unpublishDesignEnergy(pk);
-  }
-}
-
-/**
- * Ids minted by `generationIdFor` — `GEN-0042`, `GEN-0042.3`. A 건축물대장
- * 관리번호 is numeric and can never take this shape, so the sweep above cannot
- * touch a ledger building's records.
- */
-const GENERATED_PK = /^GEN-\d{4}(\.\d+)?$/;
-
-function isGeneratedPk(pk: string): boolean {
-  return GENERATED_PK.test(pk);
-}
-
-/**
- * Drop one design's energy records. Exactly ONE generated design is published
- * at a time: a session that regenerates fifty times would otherwise leave fifty
- * buildings in the material store — which is persisted, so the leak survives
- * reloads. Nothing is lost by pruning: re-publishing is a pure re-seed from the
- * history payload, which `undo`/`redo`/`goTo` do.
- *
- * Neither store exposes a remove API (`properties` and `baseRecipes` only ever
- * grow), so the prune goes through zustand's own `setState` rather than adding
- * surface area to stores this feature does not own.
- */
-function unpublishDesignEnergy(pk: string): void {
-  useMaterialStore.setState((s) => {
-    if (!(pk in s.properties)) return s;
-    const { [pk]: _dropped, ...rest } = s.properties;
-    return { properties: rest };
-  });
-  useRecipeStore.setState((s) => {
-    if (!(pk in s.baseRecipes)) return s;
-    const { [pk]: _dropped, ...rest } = s.baseRecipes;
-    return { baseRecipes: rest };
-  });
-  useRecipeStore.getState().resetOverrides(pk);
-  if (useMaterialStore.getState().activePk === pk) {
-    useMaterialStore.setState({ activePk: "" });
-  }
-  if (useActiveBuildingStore.getState().buildingPk === pk) {
-    useActiveBuildingStore.getState().clearActiveBuilding();
-  }
-}
+const unpublishDesignEnergy = unpublishGeneratedDesign;
 
 export const useGenerativeSession = create<SessionState>((set, get) => {
   /**

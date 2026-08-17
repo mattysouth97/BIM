@@ -1,9 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import type { BrTitleInfo } from "@/lib/types";
 import { DEMO_BUILDING_PK, DRAWING_BUILDING_PK } from "@/lib/constants";
 import { useAppStore } from "@/store/app-store";
+import { useRecipeStore } from "@/store/recipe-store";
+import { useBlueprintStore } from "@/store/blueprint-store";
+import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import { mergeRecipeOverrides } from "@/lib/procedural/recipe";
+import {
+  footprintRingsOfRecipe,
+  footprintToBlueprint,
+} from "@/lib/generative/blueprint/from-footprint";
+import { stashSeedBlueprint } from "@/lib/generative/blueprint/seed-handoff";
 import { useT } from "@/lib/i18n";
 import { useHydration } from "@/hooks/use-hydration";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +26,7 @@ import {
   PanelRightOpen,
   PanelRightClose,
   Globe,
+  Shapes,
 } from "lucide-react";
 
 interface BuildingToolbarProps {
@@ -35,6 +47,41 @@ export function BuildingToolbar({
   const setLanguage = useAppStore((s) => s.setLanguage);
   const sidePanelOpen = useAppStore((s) => s.sidePanelOpen);
   const toggleSidePanel = useAppStore((s) => s.toggleSidePanel);
+
+  const router = useRouter();
+  const buildingPk = useActiveBuildingPk();
+  const baseRecipe = useRecipeStore((s) => s.baseRecipes[buildingPk]);
+  const recipeOverrides = useRecipeStore((s) => s.overrides[buildingPk]);
+
+  // The plate the user is looking at, overrides included — a footprint edited
+  // in the workspace is the one a new design should start from.
+  const seedFootprint = useMemo(() => {
+    if (!baseRecipe) return null;
+    const recipe = recipeOverrides
+      ? mergeRecipeOverrides(baseRecipe, recipeOverrides)
+      : baseRecipe;
+    const rings = footprintRingsOfRecipe(recipe);
+    if (!rings) return null;
+    return {
+      rings,
+      name: recipe.buildingName || title?.bldNm || buildingPk,
+      floors: Math.max(1, recipe.floors.filter((f) => f.type === "above").length),
+    };
+  }, [baseRecipe, recipeOverrides, title?.bldNm, buildingPk]);
+
+  const generateAlternative = () => {
+    if (!seedFootprint) return;
+    const seed = footprintToBlueprint({
+      name: seedFootprint.name,
+      footprintPolygonM: seedFootprint.rings,
+      floors: seedFootprint.floors,
+    });
+    // The editor picks this up directly on a soft navigation; the stash covers
+    // a reload of /studio. Replacing the working blueprint is one Ctrl+Z away.
+    useBlueprintStore.getState().loadBlueprint(seed);
+    stashSeedBlueprint(seed);
+    router.push("/studio");
+  };
 
   const isKo = lang === "ko";
   const isDemo = title?.mgmBldrgstPk === DEMO_BUILDING_PK;
@@ -96,6 +143,32 @@ export function BuildingToolbar({
 
       {/* Right side */}
       <div className="flex items-center gap-1.5 shrink-0">
+        {hydrated && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5"
+            onClick={generateAlternative}
+            disabled={!seedFootprint}
+            title={
+              seedFootprint
+                ? t(
+                    "이 건물의 평면 윤곽으로 스케치를 시작합니다",
+                    "Start a schematic from this building's footprint",
+                  )
+                : t(
+                    "평면 윤곽이 없어 새 설계를 시작할 수 없습니다",
+                    "No footprint is available to start a design from",
+                  )
+            }
+          >
+            <Shapes className="size-4" />
+            <span className="hidden md:inline">
+              {t("다른 설계 생성", "Generate alternative")}
+            </span>
+          </Button>
+        )}
+
         <ExportDropdown data={exportData} filename={exportFilename} />
 
         <Button

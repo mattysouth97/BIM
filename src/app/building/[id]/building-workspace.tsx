@@ -4,7 +4,9 @@ import { use, lazy, Suspense, useEffect } from "react";
 import { notFound } from "next/navigation";
 import { parseBuildingId } from "@/lib/constants";
 import { isCadDraftPk } from "@/lib/workflow/cad-draft";
+import { isGeneratedPk } from "@/lib/generative/design-storage";
 import { CadWorkspace } from "@/components/workspace/cad-workspace";
+import { GeneratedWorkspace } from "@/components/workspace/generated-workspace";
 import { useActiveBuildingStore } from "@/store/active-building-store";
 import { useCompositeBuilding } from "@/hooks/use-composite-building";
 import { useBuildingFootprint } from "@/hooks/use-building-footprint";
@@ -37,6 +39,9 @@ export default function BuildingWorkspace({
   // they have no ledger coordinates and must never fire a ledger/VWorld fetch.
   // (Branching here keeps each workspace's hooks unconditional.)
   if (isCadDraftPk(id)) return <CadWorkspace pk={id} />;
+  // Generated designs (GEN-0042[.3]) likewise: the building came out of the
+  // engine, so there is no 건축물대장 row to query and no address to geocode.
+  if (isGeneratedPk(id)) return <GeneratedWorkspace generationId={id} />;
   return <LedgerWorkspace id={id} />;
 }
 

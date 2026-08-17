@@ -16,6 +16,7 @@
 // user accepts it (§55).
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, Environment } from "@react-three/drei";
 import * as THREE from "three";
@@ -38,6 +39,7 @@ import {
   type ModificationScope,
   type StageEvent,
 } from "@/lib/generative/client";
+import { DesignStorageError, saveDesign } from "@/lib/generative/design-storage";
 import { parseCommand } from "@/lib/generative/session/commands";
 import { SYSTEM_LABEL, parseLock } from "@/lib/generative/session/locks";
 import { buildNavigationTree, isolationFloors } from "@/lib/generative/session/navigation";
@@ -49,6 +51,7 @@ import {
   flatten,
 } from "@/lib/generative/session/history";
 import { STATUS_LABEL } from "@/lib/generative/spec/status";
+import { takeSeedBlueprint } from "@/lib/generative/blueprint/seed-handoff";
 import { fidelityForDesign, useBlueprintStore } from "@/store/blueprint-store";
 import { useGenerativeSession, type DesignOption } from "@/store/generative-session-store";
 
@@ -197,7 +200,32 @@ export function GenerativeStudio() {
    * to open the arithmetic behind it is not evidence.
    */
   const [fidelityFocus, setFidelityFocus] = useState(0);
+  const [savingToWorkspace, setSavingToWorkspace] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const router = useRouter();
+
+  /**
+   * "Generate alternative" in the twin workspace hands over the plate the user
+   * was looking at. Picking it up here is what makes the studio open ON that
+   * drawing instead of on the prompt box — arriving at an empty schematic after
+   * asking for an alternative would read as the handoff having failed.
+   *
+   * Mount-only: `takeSeedBlueprint` clears the stash, so a seed is consumed
+   * exactly once and does not re-open the drawing on every later visit.
+   */
+  useEffect(() => {
+    const seed = takeSeedBlueprint();
+    if (!seed) return;
+    const store = useBlueprintStore.getState();
+    // The toolbar also loads the seed directly before navigating, which is what
+    // carries it when sessionStorage is unavailable. When that already landed,
+    // re-applying an identical blueprint would only add a history entry that
+    // undoes to itself.
+    if (JSON.stringify(store.blueprint) !== JSON.stringify(seed)) {
+      store.loadBlueprint(seed);
+    }
+    setStartMode("draw");
+  }, []);
 
   /** The schematic behind the current design, when it came from one. */
   const lastGeneratedBlueprint = useBlueprintStore((s) => s.lastGenerated);
@@ -227,6 +255,49 @@ export function GenerativeStudio() {
     },
     [],
   );
+
+  /**
+   * Save the design and open it in the building workspace.
+   *
+   * Only the SPEC is persisted (see design-storage): the workspace rebuilds the
+   * rest deterministically, so the building it shows is this one and not a copy
+   * that can drift. A pending candidate is refused rather than saved — the
+   * workspace would open the design in history, which is not what is on screen.
+   */
+  const openInWorkspace = useCallback(async () => {
+    const current = useGenerativeSession.getState().current();
+    if (!current || savingToWorkspace) return;
+    if (useGenerativeSession.getState().pending) {
+      setNotice({
+        tone: "info",
+        text: "Apply or discard the proposed change first — the workspace opens the design in history, not the candidate on screen.",
+      });
+      return;
+    }
+
+    setSavingToWorkspace(true);
+    try {
+      await saveDesign({
+        generationId: current.generationId,
+        spec: current.spec,
+        seed: current.seed,
+        revision: current.revision,
+        savedAtIso: new Date().toISOString(),
+        name: current.spec.project.name,
+      });
+      router.push(`/building/${current.generationId}`);
+    } catch (caught) {
+      setNotice({
+        tone: "error",
+        text:
+          caught instanceof DesignStorageError
+            ? `${caught.message} (${caught.code})`
+            : "The design could not be saved to this browser's storage.",
+      });
+    } finally {
+      setSavingToWorkspace(false);
+    }
+  }, [savingToWorkspace, router]);
 
   const revealFidelity = useCallback(() => {
     setViewport("schematic");
@@ -630,6 +701,19 @@ export function GenerativeStudio() {
           </Button>
           <Button size="xs" variant="ghost" onClick={() => setFitToken((t) => t + 1)}>
             Fit
+          </Button>
+          <Button
+            size="xs"
+            variant="secondary"
+            onClick={() => void openInWorkspace()}
+            disabled={savingToWorkspace || Boolean(pending)}
+            title={
+              pending
+                ? "Apply or discard the proposed change first — the workspace opens the design in history, not the candidate on screen."
+                : "Save this design and open it in the building workspace"
+            }
+          >
+            {savingToWorkspace ? "Saving…" : "Open in workspace"}
           </Button>
           <Button size="xs" variant="outline" onClick={() => store.reset()}>
             New building

@@ -7,6 +7,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { DerivedTwinElements } from "@/lib/bim/derive/twin-elements";
+import { AUTHORING_FAMILIES } from "@/lib/bim/family-catalog";
 import {
   addDocument,
   beginCommit,
@@ -27,6 +28,7 @@ import {
   setLevelElevation,
   setLevelName,
   setTypeParameter,
+  typeFromAuthoringFamily,
   undo,
   type BimDocumentItem,
   type BimElement,
@@ -55,6 +57,15 @@ interface BimModelState {
     buildingPk: string;
     recipe: BuildingRecipe;
     derived: DerivedTwinElements;
+  }) => void;
+  /**
+   * Ingest a BIM snapshot that is already complete — the generative engine's
+   * `buildDesign` output — instead of re-deriving one from a recipe. The
+   * authored overlay is identical to `hydrate`'s; only the base model differs.
+   */
+  hydrateFromSnapshot: (input: {
+    buildingPk: string;
+    snapshot: BimModelSnapshot;
   }) => void;
   selectElement: (id: string | null) => void;
   setActiveLevel: (id: string | null) => void;
@@ -118,6 +129,65 @@ function persistAuthored(snapshot: BimModelSnapshot): BuildingBimState {
   };
 }
 
+/* --- overlay helpers, shared by the two hydration paths ------------- */
+//
+// `hydrateBimModel` derives its base model from a recipe and then overlays the
+// persisted authored work on top. A generative snapshot arrives already built,
+// so only the OVERLAY half applies — these three helpers are that half, kept
+// identical to `hydrate.ts` so a building authored over a generated design and
+// one authored over a ledger twin behave the same.
+
+/**
+ * The authoring catalogue, which the generative emitter has no reason to ship:
+ * it emits the types it generated. A generative type always wins an id clash —
+ * it describes geometry that exists.
+ */
+function withAuthoringTypes(types: Record<string, BimType>): Record<string, BimType> {
+  const catalogue: Record<string, BimType> = {};
+  for (const family of AUTHORING_FAMILIES) {
+    catalogue[family.id] = typeFromAuthoringFamily(family);
+  }
+  return { ...catalogue, ...types };
+}
+
+/** Same merge as `hydrateBimModel`: patch over base, parameters merged. */
+function withTypeOverrides(
+  types: Record<string, BimType>,
+  overrides: Record<string, Partial<BimType>>,
+): Record<string, BimType> {
+  const merged = { ...types };
+  for (const [id, patch] of Object.entries(overrides)) {
+    const base = merged[id];
+    merged[id] = {
+      ...(base ?? {
+        id,
+        category: "Generic",
+        categoryKo: "일반",
+        family: "Generic",
+        familyKo: "일반",
+        typeName: id,
+        typeNameKo: id,
+        parameters: {},
+      }),
+      ...patch,
+      parameters: { ...(base?.parameters ?? {}), ...(patch.parameters ?? {}) },
+    };
+  }
+  return merged;
+}
+
+/** Authored elements sit at their level's elevation plus their own offsets. */
+function rebaseAuthored(elements: BimElement[], levels: BimModelSnapshot["levels"]): BimElement[] {
+  const levelById = new Map(levels.map((l) => [l.id, l]));
+  return elements.map((el) => {
+    const level = el.levelId ? levelById.get(el.levelId) : undefined;
+    if (!level) return el;
+    const offsetM = Number(el.instanceParameters.baseOffsetMm ?? 0) / 1000;
+    const sillM = Number(el.instanceParameters.sillHeightMm ?? 0) / 1000;
+    return { ...el, placement: { ...el.placement, y: level.elevation + offsetM + sillM } };
+  });
+}
+
 function commit(
   name: string,
   before: BimModelSnapshot,
@@ -178,6 +248,70 @@ export const useBimModelStore = create<BimModelState>()(
         set({
           snapshot,
           activeLevelId: get().activeLevelId ?? snapshot.levels[0]?.id ?? null,
+        });
+      },
+
+      hydrateFromSnapshot: ({ buildingPk, snapshot }) => {
+        const saved = get().byBuilding[buildingPk] ?? emptyBuilding();
+        const types = withTypeOverrides(withAuthoringTypes(snapshot.types), saved.typeOverrides);
+
+        // Generation-sourced records are taken verbatim — generationSource,
+        // locked, system and dependsOn are the engine's statements about the
+        // design, and re-deriving them here would be a second opinion. The only
+        // field that can move is the owning pk, and only when it disagrees with
+        // the pk this model is filed under.
+        const generated = snapshot.elements
+          .filter((el) => el.origin !== "authored")
+          .map((el) => (el.buildingPk === buildingPk ? el : { ...el, buildingPk }));
+
+        // Authored work can arrive from two places: carried inside the stored
+        // design, or persisted here by this browser. The store is the later
+        // record of the two, so it wins on id.
+        const authoredById = new Map<string, BimElement>();
+        for (const el of snapshot.elements) {
+          if (el.origin === "authored") authoredById.set(el.id, el);
+        }
+        for (const el of saved.authored) {
+          if (el.buildingPk !== buildingPk || el.origin !== "authored") continue;
+          authoredById.set(el.id, el);
+        }
+        const authored = rebaseAuthored([...authoredById.values()], snapshot.levels);
+
+        const next: BimModelSnapshot = {
+          buildingPk,
+          levels: snapshot.levels,
+          grids: snapshot.grids,
+          types,
+          elements: [...generated, ...authored],
+          documents: snapshot.documents ?? [],
+          visibility: snapshot.visibility ?? {},
+        };
+
+        const current = get().snapshot;
+        if (
+          current &&
+          current.buildingPk === buildingPk &&
+          current.elements.length === next.elements.length &&
+          current.levels.length === next.levels.length
+        ) {
+          // Same rule as `hydrate`: a re-run must not throw away edits made
+          // since the last one. Only the generated half is refreshed.
+          const inSession = current.elements.filter((el) => el.origin === "authored");
+          set({
+            snapshot: {
+              ...next,
+              types: { ...next.types, ...current.types },
+              elements: [...generated, ...inSession],
+              documents: current.documents ?? [],
+              visibility: current.visibility ?? {},
+            },
+          });
+          return;
+        }
+
+        set({
+          snapshot: next,
+          activeLevelId: get().activeLevelId ?? next.levels[0]?.id ?? null,
         });
       },
 
