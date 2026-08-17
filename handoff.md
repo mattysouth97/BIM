@@ -5,6 +5,30 @@ parallel agent fleets (Opus 5 / Sonnet 5 / Haiku 4.5). This file is the live
 handoff for whoever continues; fold it into `docs/work-plan/handoffs/` and delete
 it once its in-flight sections resolve.
 
+## DEPLOY GOTCHA — read before deploying (2026-08-18)
+
+`vercel --prod` from the CLI returns state **BLOCKED** (not a build failure) when
+the HEAD commit's author email is not an address on the Vercel account. The
+GitHub noreply form (`77391415+mattysouth97@users.noreply.github.com`) is
+rejected: Vercel cannot identify the author, so it refuses the deployment. Three
+production deploys were lost to this before the cause was found; the build
+itself was green every time. GitHub-integration builds are unaffected, which is
+what makes the failure look like a permissions puzzle.
+
+Fix: `git config user.email "namseunghun97@gmail.com"` (the Vercel account
+address) and ensure HEAD carries it — `git log -1 --format=%ae` must match.
+
+## Final product configuration (2026-08-18)
+
+작성 (manual 3D family authoring) is **removed** from the product: off
+`REVIT_RAIL_MODES`, `AuthoringPalette` unmounted. Every 3D element **asset
+stays** — 102 authoring family GLBs + 58 equipment GLBs, `family-catalog`,
+`src/lib/interior/` (renders solved walls/doors/windows/stairs from those GLBs),
+`src/lib/plan-symbols/`, the MEP kit (`BuildingLayers` + solar/HVAC retrofit
+visuals), and the 외피/구조/에너지존 overlays. Family placement lives on the
+schematic. `AuthoringFamilyLayer` stays mounted but is inert without the mode —
+delete it only together with its authored-element rendering story.
+
 ## Product direction (user decisions, authoritative)
 
 1. **The ledger (건축물대장 / data.go.kr) is no longer a data source.** Buildings
