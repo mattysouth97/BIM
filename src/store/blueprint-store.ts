@@ -34,6 +34,7 @@ import {
   makeRectLoop,
   preservationPlan,
   validateBlueprint,
+  type BlueprintFidelityReport,
   type BlueprintSpec,
   type BlueprintValidationReport,
   type CirculationNode,
@@ -141,6 +142,30 @@ export interface GeneratedFromBlueprint {
   blueprint: BlueprintSpec;
   blueprintValidation: BlueprintValidationReport;
   compiledLocks: string[];
+  /**
+   * The measured deviation between `blueprint` and the building generation
+   * produced. Kept HERE, beside the blueprint it was measured against, because
+   * the two are one artefact: a report shown next to a different building would
+   * be a number describing geometry nobody is looking at.
+   */
+  fidelity: BlueprintFidelityReport;
+}
+
+/**
+ * The fidelity report, but only while the design on screen is the one it
+ * measured. `designGenerationId` is `DesignState.generationId`; an edit, an
+ * undo to another branch or a fresh prompt generation all change it, and the
+ * report must disappear rather than be silently re-attributed to a building it
+ * never saw. Same binding rule the plan overlay uses for the blueprint itself.
+ */
+export function fidelityForDesign(
+  lastGenerated: GeneratedFromBlueprint | null,
+  designGenerationId: string | null | undefined,
+): BlueprintFidelityReport | null {
+  if (!lastGenerated || !designGenerationId) return null;
+  return lastGenerated.generationId === designGenerationId
+    ? lastGenerated.fidelity
+    : null;
 }
 
 /* ------------------------------------------------------------------ */

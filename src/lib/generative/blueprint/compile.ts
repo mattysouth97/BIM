@@ -38,22 +38,17 @@
 // seed is carried into the spec for the stages that do use an RNG.
 
 import {
-  arc,
-  bezier,
   ensurePolygonWinding,
   largestInscribedAxisAlignedRect,
   largestPolygon,
-  line,
   makeFrame,
   minimumAreaObbOfRing,
   polygonArea,
   polygonDifference,
-  polyline,
   rectToWorldRing,
   ringBounds,
   unionAll,
   curveLoopToRing,
-  type PlanCurve,
   type Polygon,
   type Rect,
   type Ring,
@@ -86,11 +81,12 @@ import {
 import type {
   BlueprintSpec,
   BoundaryLoop,
-  CurveSegment,
   PointMm,
   Region,
+  VoidIntent,
 } from "./blueprint-spec";
 import { resolveFidelity } from "./fidelity";
+import { segmentToCurve, TESSELLATION_TOLERANCE_MM } from "./segment-curves";
 
 /* ------------------------------------------------------------------ */
 /* Options + result                                                    */
@@ -123,63 +119,22 @@ export interface CompiledBlueprint {
   locks: string[];
 }
 
-/**
- * Chord tolerance for turning curved boundary segments into rings, in
- * millimetres. 50 mm is a twentieth of a typical drawn wall thickness — far
- * below anything a plan reader could have resolved, and coarse enough that a
- * traced arc does not explode into hundreds of vertices.
- */
-export const TESSELLATION_TOLERANCE_MM = 50;
-
 /** Endpoints closer than this are one point when a loop is chained. */
 const JOIN_TOLERANCE_MM = 1;
+
+/**
+ * `BuildingSpecSchema` caps an assumption statement and a `Provenanced.reason`
+ * at 240 characters, and this module builds some of both from blueprint ids
+ * (64 chars each, attacker-choosable in the ingest path). Truncating here turns
+ * "a long id makes the whole compile throw at the final `parse`" into "the
+ * sentence ends in an ellipsis", which is the right failure for prose.
+ */
+const clip240 = (text: string): string =>
+  text.length <= 240 ? text : `${text.slice(0, 239)}…`;
 
 /* ------------------------------------------------------------------ */
 /* Curves → rings (millimetre space)                                   */
 /* ------------------------------------------------------------------ */
-
-const pointVec = (p: PointMm): Vec2 => [p.xMm, p.zMm];
-
-/**
- * Blueprint arcs store centre + endpoints + sweep; `geom`'s arc stores centre +
- * radius + start/end angle, where the SIGNED difference carries the direction.
- * The angles are derived from the centre↔endpoint vectors, exactly as
- * blueprint-spec.ts promises, and the sweep is unwrapped into the requested
- * direction so a half-turn is never mistaken for its complement.
- */
-function arcCurve(segment: Extract<CurveSegment, { kind: "arc" }>): PlanCurve {
-  const centre = pointVec(segment.centerMm);
-  const start = pointVec(segment.startMm);
-  const end = pointVec(segment.endMm);
-  const radius = Math.hypot(start[0] - centre[0], start[1] - centre[1]);
-  const a0 = Math.atan2(start[1] - centre[1], start[0] - centre[0]);
-  let a1 = Math.atan2(end[1] - centre[1], end[0] - centre[0]);
-  const TAU = Math.PI * 2;
-  if (segment.sweep === "ccw") {
-    while (a1 <= a0) a1 += TAU;
-  } else {
-    while (a1 >= a0) a1 -= TAU;
-  }
-  return arc(centre, radius, a0, a1);
-}
-
-function segmentToCurve(segment: CurveSegment): PlanCurve {
-  switch (segment.kind) {
-    case "line":
-      return line(pointVec(segment.startMm), pointVec(segment.endMm));
-    case "polyline":
-      return polyline(segment.pointsMm.map(pointVec), false);
-    case "bezier":
-      return bezier(
-        pointVec(segment.startMm),
-        pointVec(segment.control1Mm),
-        pointVec(segment.control2Mm),
-        pointVec(segment.endMm),
-      );
-    case "arc":
-      return arcCurve(segment);
-  }
-}
 
 /** Counter-clockwise ring in millimetres, or null for a loop that encloses nothing. */
 export function loopToRingMm(loop: BoundaryLoop): Ring | null {
@@ -244,6 +199,13 @@ interface PlateMm {
   areaMm2: number;
 }
 
+/** Every level a boundary names, ascending. The set of plates that can exist. */
+function boundaryFloorNos(blueprint: BlueprintSpec): number[] {
+  return [
+    ...new Set(blueprint.boundaries.flatMap((boundary) => boundary.floorNos)),
+  ].sort((a, b) => a - b);
+}
+
 /**
  * One plate per level named by a boundary.
  *
@@ -253,15 +215,22 @@ interface PlateMm {
  * whose level span includes the level are then subtracted, which is what turns
  * a courtyard into a real hole rather than a decorative annotation.
  *
+ * `extraVoids` are voids the compiler DERIVED rather than read — today only the
+ * slab openings a double-height rule implies (see `doubleHeightVoids` below).
+ * They are subtracted by the same loop as drawn voids, after them, so a derived
+ * opening and a drawn courtyard cannot behave differently.
+ *
  * LIMITATION: a boolean that yields several disjoint pieces keeps only the
  * largest. `LevelPlate.polygon` is one `[outer, ...holes]` polygon by contract,
  * so a plan whose wings do not touch loses the smaller wing here rather than
  * further downstream where the loss would be harder to see.
  */
-function platesFor(blueprint: BlueprintSpec, loops: Map<string, BoundaryLoop>): PlateMm[] {
-  const floorNos = [
-    ...new Set(blueprint.boundaries.flatMap((boundary) => boundary.floorNos)),
-  ].sort((a, b) => a - b);
+function platesFor(
+  blueprint: BlueprintSpec,
+  loops: Map<string, BoundaryLoop>,
+  extraVoids: readonly VoidIntent[] = [],
+): PlateMm[] {
+  const floorNos = boundaryFloorNos(blueprint);
 
   const plates: PlateMm[] = [];
   for (const floorNo of floorNos) {
@@ -276,14 +245,17 @@ function platesFor(blueprint: BlueprintSpec, loops: Map<string, BoundaryLoop>): 
     let polygon = parts.length === 1 ? ensurePolygonWinding(parts[0]) : largestPolygon(unionAll(parts));
     if (polygon === null) continue;
 
-    for (const item of blueprint.voids) {
+    for (const item of [...blueprint.voids, ...extraVoids]) {
       if (!item.floorNos.includes(floorNo)) continue;
       const hole = regionToPolygonMm(item.region, loops);
       if (hole === null) continue;
       const cut = largestPolygon(polygonDifference(polygon, hole));
       // A void that swallowed the plate is a blueprint error, not an
       // instruction to delete the level; keep the uncut plate and let
-      // `validateBlueprint` report VOID_OUTSIDE_BOUNDARY.
+      // `validateBlueprint` report VOID_OUTSIDE_BOUNDARY. A DERIVED void can
+      // swallow the plate too — a double-height rule over a whole boundary
+      // loop — and the same guard is the right answer there: the level stays,
+      // and the compiler's own `double-height` assumption says what it did.
       if (cut !== null) polygon = cut;
     }
 
@@ -301,6 +273,160 @@ const translatePolygon = (polygon: Polygon, dx: number, dz: number): Polygon =>
 /** `[outer, ...holes]` as the integer-mm tuples `CustomPlateSchema` accepts. */
 const toPolygonMm = (polygon: Polygon): [number, number][][] =>
   polygon.map((ring) => ring.map(([x, z]): [number, number] => [x, z]));
+
+/* ------------------------------------------------------------------ */
+/* Double-height rules → openings in the plate above                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A double-height space IS a hole in the slab above it. That sentence is the
+ * whole implementation strategy.
+ *
+ * `VerticalRuleSchema`'s `double-height` variant names a target, the level the
+ * space stands on, and how many storeys tall it is. Nothing in BuildingSpec can
+ * carry "this room is 2× the storey height" — `LevelSchema.floorToFloorMm` is
+ * per LEVEL, not per space, and raising the whole storey would lift every other
+ * room on it. What the spec CAN carry, exactly and losslessly, is the plate
+ * outline of each level. So the rule is compiled the way it would be drawn:
+ * the storey below keeps its slab, and the slab(s) above are OPENED over the
+ * target's footprint, through `platesFor`'s existing void subtraction. Slab
+ * emission, space exclusion and `validateBuilding`'s plate containment checks
+ * then all see the opening for free, because every one of them already reads
+ * `LevelPlate.polygon`.
+ *
+ * WHERE THE COURTYARD ANALOGY BREAKS
+ * ----------------------------------
+ * Columns. `generate/structure.ts` deletes any column whose grid intersection
+ * is not on the level's plate material, which is right for a courtyard — no
+ * column stands in open air — and wrong for a double-height interior volume,
+ * whose columns run through it exposed. Both arrive downstream as a hole in one
+ * polygon, so the engine cannot tell them apart: a double-height opening drawn
+ * ACROSS a column line loses that column on the opened level, and
+ * `validateBuilding` then reports UNSUPPORTED_COLUMN for the column bearing on
+ * it above. That is a real limitation of the model, not of this derivation —
+ * separating "interior slab opening" from "open-air void" is a change in
+ * `generate/`, which this module does not own. Until then, a double-height
+ * volume that fits inside a structural bay compiles cleanly and one that
+ * swallows a column line reports its own problem, loudly, which is the right
+ * order of events.
+ *
+ * HOW MANY SLABS
+ * --------------
+ * `ceil(heightMultiplier) - 1`. A 2× space consumes its own storey and the one
+ * above: one slab opens. A 1.5× space still cannot have a slab running through
+ * it, so it opens one too. A 3× (triple-height) space opens two. The rule is
+ * applied against the levels the BLUEPRINT actually draws, skipping the
+ * non-existent storey 0, so a rule on B1 opens L1 rather than a phantom level.
+ *
+ * WHAT IT REFUSES TO INVENT
+ * -------------------------
+ * A rule on the topmost drawn level has no slab above to open; the extra height
+ * is then simply not modelled, and that is reported (`short`) instead of being
+ * approximated by inflating a storey height nobody asked to change. A target
+ * whose region does not resolve is reported (`unresolved`) rather than skipped
+ * in silence — an unread design instruction is the one failure this whole
+ * ingestion path exists to prevent.
+ *
+ * PROVENANCE
+ * ----------
+ * The derived void's id is `dh-<ruleId>`, so anything that inspects the
+ * derivation — the preservation plan, a future "why is there a hole here" UI —
+ * can name the rule that caused the opening rather than reporting an
+ * unattributed courtyard.
+ */
+export interface DoubleHeightDerivation {
+  /** Synthesised slab openings, ready for `platesFor`'s void subtraction. */
+  voids: VoidIntent[];
+  /** Rules that opened at least one slab, and which levels they opened. */
+  applied: Array<{ ruleId: string; targetId: string; floorNos: number[] }>;
+  /**
+   * Rules that ran out of building — `opened` slabs of the `wanted` count. A
+   * rule may appear in BOTH `applied` and here: a triple-height space one storey
+   * below the roof opens the one slab that exists and is short by the other.
+   */
+  short: Array<{ ruleId: string; targetId: string; opened: number; wanted: number }>;
+  /** Rules whose target named no region this compiler can read. */
+  unresolved: Array<{ ruleId: string; targetId: string }>;
+}
+
+/**
+ * The region a `double-height` rule's target stands on. Zones are the ordinary
+ * case; cores and voids carry regions too, and a rule may also name a loop
+ * directly (a boundary, or a loop inlined in some other object's region), which
+ * is how "this whole wing is double height" is said. Anything else — an anchor,
+ * an axis, a circulation node — has no footprint, and the caller reports that
+ * rather than guessing one.
+ */
+function regionOfTarget(
+  blueprint: BlueprintSpec,
+  targetId: string,
+  loops: Map<string, BoundaryLoop>,
+): Region | null {
+  for (const zone of blueprint.zones) if (zone.id === targetId) return zone.region;
+  for (const core of blueprint.cores) if (core.id === targetId) return core.region;
+  for (const item of blueprint.voids) if (item.id === targetId) return item.region;
+  if (loops.has(targetId)) return { kind: "loopRef", loopId: targetId };
+  return null;
+}
+
+/**
+ * Every `double-height` rule in the blueprint, resolved to the slab openings it
+ * implies. Pure and exported: `blueprintPlateFrame` uses it so the compiler and
+ * `metrics.ts` measure the SAME plates, and a UI can call it to explain a hole.
+ */
+export function blueprintDoubleHeightVoids(
+  blueprint: BlueprintSpec,
+  loops: Map<string, BoundaryLoop> = loopIndex(blueprint),
+): DoubleHeightDerivation {
+  const out: DoubleHeightDerivation = {
+    voids: [],
+    applied: [],
+    short: [],
+    unresolved: [],
+  };
+  const floorNos = boundaryFloorNos(blueprint);
+
+  for (const rule of blueprint.verticalRules) {
+    if (rule.kind !== "double-height") continue;
+
+    const region = regionOfTarget(blueprint, rule.targetId, loops);
+    if (region === null || regionToPolygonMm(region, loops) === null) {
+      out.unresolved.push({ ruleId: rule.id, targetId: rule.targetId });
+      continue;
+    }
+
+    const wanted = Math.max(1, Math.ceil(rule.heightMultiplier) - 1);
+    const above = floorNos.filter((floorNo) => floorNo > rule.floorNo).slice(0, wanted);
+
+    if (above.length > 0) {
+      out.voids.push({
+        id: `dh-${rule.id}`.slice(0, 64),
+        kind: {
+          value: "atrium",
+          source: "DERIVED",
+          confidence: 0.8,
+          reason: clip240(
+            `Opening in the slab above, derived from the double-height rule "${rule.id}".`,
+          ),
+        },
+        label: `Double height over ${rule.targetId}`.slice(0, 60),
+        region,
+        floorNos: above,
+      });
+      out.applied.push({ ruleId: rule.id, targetId: rule.targetId, floorNos: above });
+    }
+    if (above.length < wanted) {
+      out.short.push({
+        ruleId: rule.id,
+        targetId: rule.targetId,
+        opened: above.length,
+        wanted,
+      });
+    }
+  }
+
+  return out;
+}
 
 /* ------------------------------------------------------------------ */
 /* The blueprint → engine transform, in one place                      */
@@ -342,7 +468,11 @@ export function blueprintPlateFrame(
   blueprint: BlueprintSpec,
   loops: Map<string, BoundaryLoop> = loopIndex(blueprint),
 ): BlueprintPlateFrame | null {
-  const rawPlates = platesFor(blueprint, loops);
+  const rawPlates = platesFor(
+    blueprint,
+    loops,
+    blueprintDoubleHeightVoids(blueprint, loops).voids,
+  );
   if (rawPlates.length === 0) return null;
 
   const primaryRaw = rawPlates.reduce((a, b) => (b.areaMm2 > a.areaMm2 ? b : a));
@@ -538,6 +668,57 @@ export function compileBlueprintToSpec(
     if (source === "USER_PROVIDED") return;
     assumptions.push({ id, label, statement, source, confidence });
   };
+
+  /* --- double-height rules: what the derivation did, and what it could not --- */
+  //
+  // The OPENINGS are already in `plates` above — `blueprintPlateFrame` fed the
+  // derived voids through the same subtraction a drawn courtyard takes. What is
+  // left to do here is say so. A rule the user drew themselves needs no
+  // assumption filed (`note` drops USER_PROVIDED), exactly as the core and the
+  // entrance do; a rule read off a traced drawing files at the tracing's own
+  // confidence. The two failure modes ALWAYS file, whatever the source, because
+  // they describe something the compiler did NOT do.
+  const doubleHeight = blueprintDoubleHeightVoids(blueprint, loops);
+  if (doubleHeight.applied.length > 0) {
+    const openedFloorNos = [
+      ...new Set(doubleHeight.applied.flatMap((entry) => entry.floorNos)),
+    ].sort((a, b) => a - b);
+    note(
+      "double-height",
+      "Double-height spaces",
+      clip240(
+        `${doubleHeight.applied.length} double-height rule(s) opened the slab over their target on level(s) ${openedFloorNos.join(", ")}; the storey height itself is unchanged, so the extra height reads as a hole in the plate above.`,
+      ),
+      geometrySource,
+      geometryConfidence,
+    );
+  }
+  if (doubleHeight.short.length > 0) {
+    const worst = doubleHeight.short.reduce((a, b) =>
+      b.wanted - b.opened > a.wanted - a.opened ? b : a,
+    );
+    note(
+      "double-height-extent",
+      "Double-height extent not modelled",
+      clip240(
+        `${doubleHeight.short.length} double-height rule(s) ask for more storeys than the blueprint draws above them — ${worst.opened} of ${worst.wanted} slab opening(s) for "${worst.ruleId}". That extra height is not modelled.`,
+      ),
+      "INFERRED",
+      0.5,
+    );
+  }
+  if (doubleHeight.unresolved.length > 0) {
+    const first = doubleHeight.unresolved[0];
+    note(
+      "double-height-target",
+      "Double-height target unresolved",
+      clip240(
+        `${doubleHeight.unresolved.length} double-height rule(s) name a target with no footprint this compiler can read, so no slab was opened for them — rule "${first.ruleId}", target "${first.targetId}".`,
+      ),
+      "INFERRED",
+      0.2,
+    );
+  }
 
   /* --- zones → program, and the use they imply --- */
   interface ZoneFacts {

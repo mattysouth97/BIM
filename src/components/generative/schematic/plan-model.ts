@@ -9,7 +9,9 @@
 // Elements carry metres (the model's unit); plans are drawn in millimetres so
 // one transform serves both the schematic and the generated building.
 
-import type { BimElement, BimModelSnapshot } from "@/lib/bim/model/types";
+import { getAuthoringFamily, type AuthoringToolId } from "@/lib/bim/family-catalog";
+import { resolveParameter } from "@/lib/bim/model/parameters";
+import type { BimElement, BimKind, BimModelSnapshot, BimType } from "@/lib/bim/model/types";
 
 import { mergeBounds, type BoundsMm } from "./view-transform";
 
@@ -43,13 +45,75 @@ export interface PlanColumn {
   z: number;
 }
 
+/** Numeric/string overrides a symbol's evaluation cares about — only the ones present on this element. */
+export interface PlanSymbolParams {
+  widthMm?: number;
+  heightMm?: number;
+  hand?: "left" | "right";
+  facing?: "in" | "out";
+}
+
+/**
+ * One placed family, ready for the symbol registry: `symbolFor(familyId)` for
+ * an authored element (whose typeId IS the AuthoringFamily id), or the
+ * `KIND_TO_TOOL` tool-default for a GENERATED_*-typed element, which has no
+ * family id to look up.
+ */
+export interface PlanSymbolInstance {
+  id: string;
+  familyId: string | null;
+  typeId: string;
+  kind: BimKind;
+  xMm: number;
+  zMm: number;
+  rotationRad: number;
+  params: PlanSymbolParams;
+  /** The host wall's real thickness, when resolvable — sizes a hosted door/window's wall-cut lines. */
+  hostWallThicknessMm?: number;
+}
+
 export interface LevelPlan {
   rooms: PlanRect[];
   coreParts: PlanRect[];
   walls: PlanLine[];
   columns: PlanColumn[];
+  symbols: PlanSymbolInstance[];
   bounds: BoundsMm | null;
 }
+
+/**
+ * The kinds a plan symbol is drawn for, beyond the room/core/wall/column
+ * shapes this file already renders directly. `annotation` elements (tags,
+ * dimensions, notes) live in `BimModelSnapshot.documents`, not `elements`,
+ * and carry no AuthoringToolId — nothing here to symbolise.
+ */
+const SYMBOL_KINDS: ReadonlySet<BimKind> = new Set<BimKind>([
+  "door",
+  "window",
+  "furniture",
+  "lighting",
+  "stair",
+  "railing",
+  "mep-instance",
+]);
+
+/**
+ * Tool bucket a GENERATED_*-typed element's kind maps to, so a generated
+ * instance (no resolvable AuthoringFamily id) still gets a real tool-default
+ * symbol instead of the registry's bare bbox fallback. Authored elements never
+ * need this — their typeId already resolves via `getAuthoringFamily`.
+ */
+export const KIND_TO_TOOL: Partial<Record<BimKind, AuthoringToolId>> = {
+  door: "door",
+  window: "window",
+  furniture: "furniture",
+  lighting: "lighting",
+  stair: "stair",
+  railing: "railing",
+  // Generated MEP instances (src/lib/bim/model/hydrate.ts) are always
+  // category "Mechanical Equipment" — no finer discrimination is available.
+  "mep-instance": "equipment",
+};
 
 const numberParam = (element: BimElement, key: string): number | null => {
   const value = element.instanceParameters[key];
@@ -87,6 +151,64 @@ function rectFromCentre(
   };
 }
 
+/** First element of kind "wall" with this id, searched across the whole snapshot (a hosted opening's wall need not share its exact filter pass). */
+function findWall(snapshot: BimModelSnapshot, wallId: string | null): BimElement | null {
+  if (!wallId) return null;
+  return snapshot.elements.find((el) => el.id === wallId && el.kind === "wall") ?? null;
+}
+
+function symbolParams(kind: BimKind, type: BimType | undefined, element: BimElement): PlanSymbolParams {
+  const params: PlanSymbolParams = {};
+  const widthMm = resolveParameter(type, element.instanceParameters, "widthMm");
+  if (typeof widthMm === "number") params.widthMm = widthMm;
+  const heightMm = resolveParameter(type, element.instanceParameters, "heightMm");
+  if (typeof heightMm === "number") params.heightMm = heightMm;
+  if (kind === "door") {
+    const hand = stringParam(element, "hand");
+    if (hand === "left" || hand === "right") params.hand = hand;
+  }
+  if (kind === "door" || kind === "window") {
+    const facing = stringParam(element, "facing");
+    if (facing === "in" || facing === "out") params.facing = facing;
+  }
+  return params;
+}
+
+/**
+ * A door/window's own placement.rotationY is not trustworthy for orientation
+ * — generated openings (src/lib/generative/graph/emit.ts) always emit 0
+ * regardless of the host wall's heading. The host wall's own rotationY (its
+ * run direction) is the real orientation; fall back to the element's own
+ * rotation only when no host wall resolves.
+ */
+function symbolInstance(snapshot: BimModelSnapshot, element: BimElement): PlanSymbolInstance {
+  const family = getAuthoringFamily(element.typeId);
+  const type = snapshot.types[element.typeId];
+
+  let rotationRad = element.placement.rotationY;
+  let hostWallThicknessMm: number | undefined;
+  if (element.kind === "door" || element.kind === "window") {
+    const host = findWall(snapshot, element.hostId);
+    if (host) {
+      rotationRad = host.placement.rotationY;
+      const thicknessMm = numberParam(host, "thicknessMm");
+      if (thicknessMm !== null) hostWallThicknessMm = thicknessMm;
+    }
+  }
+
+  return {
+    id: element.id,
+    familyId: family ? family.id : null,
+    typeId: element.typeId,
+    kind: element.kind,
+    xMm: element.placement.x * M_TO_MM,
+    zMm: element.placement.z * M_TO_MM,
+    rotationRad,
+    params: symbolParams(element.kind, type, element),
+    ...(hostWallThicknessMm !== undefined ? { hostWallThicknessMm } : {}),
+  };
+}
+
 export function readLevelPlan(
   snapshot: BimModelSnapshot,
   levelId: string,
@@ -95,6 +217,7 @@ export function readLevelPlan(
   const coreParts: PlanRect[] = [];
   const walls: PlanLine[] = [];
   const columns: PlanColumn[] = [];
+  const symbols: PlanSymbolInstance[] = [];
 
   for (const element of snapshot.elements) {
     if (element.levelId !== levelId || element.visible === false) continue;
@@ -143,6 +266,11 @@ export function readLevelPlan(
         x: element.placement.x * M_TO_MM,
         z: element.placement.z * M_TO_MM,
       });
+      continue;
+    }
+
+    if (SYMBOL_KINDS.has(element.kind)) {
+      symbols.push(symbolInstance(snapshot, element));
     }
   }
 
@@ -164,5 +292,5 @@ export function readLevelPlan(
     });
   }
 
-  return { rooms, coreParts, walls, columns, bounds };
+  return { rooms, coreParts, walls, columns, symbols, bounds };
 }

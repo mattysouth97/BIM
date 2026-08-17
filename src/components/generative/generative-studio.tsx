@@ -49,13 +49,14 @@ import {
   flatten,
 } from "@/lib/generative/session/history";
 import { STATUS_LABEL } from "@/lib/generative/spec/status";
-import { useBlueprintStore } from "@/store/blueprint-store";
+import { fidelityForDesign, useBlueprintStore } from "@/store/blueprint-store";
 import { useGenerativeSession, type DesignOption } from "@/store/generative-session-store";
 
 import { PlanOverlay } from "./schematic/plan-overlay";
 import { SchematicEditor } from "./schematic/schematic-editor";
 import { CommandBar } from "./command-bar";
 import { DiffPreview, RejectionNotice } from "./diff-preview";
+import { EnergyPanel } from "./energy-panel";
 import { GeneratePanel } from "./generate-panel";
 import { HistoryPanel } from "./history-panel";
 import { IssuesPanel } from "./issues-panel";
@@ -169,6 +170,13 @@ export function GenerativeStudio() {
   const node = currentNode(history);
   const design = node?.payload ?? null;
   const nodeId = history.currentId;
+  /**
+   * The design this one was edited from. A generated building has no measured
+   * history, so its predecessor is the only baseline the energy panel can
+   * honestly compare against.
+   */
+  const previousDesign =
+    node?.parentId != null ? (history.nodes[node.parentId]?.payload ?? null) : null;
 
   const [busy, setBusy] = useState<BusyKind | null>(null);
   const [stage, setStage] = useState<StageEvent | null>(null);
@@ -182,6 +190,13 @@ export function GenerativeStudio() {
   const [repairAttempts, setRepairAttempts] = useState<Record<string, number>>({});
   const [startMode, setStartMode] = useState<StartMode>("describe");
   const [viewport, setViewport] = useState<Viewport>("model");
+  /**
+   * Bumped by the plan view's fidelity badge. The full report lives in the
+   * schematic inspector, which is a different viewport — so the badge switches
+   * to it and asks it to scroll itself into view. A headline number with no way
+   * to open the arithmetic behind it is not evidence.
+   */
+  const [fidelityFocus, setFidelityFocus] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   /** The schematic behind the current design, when it came from one. */
@@ -190,6 +205,15 @@ export function GenerativeStudio() {
     design && lastGeneratedBlueprint?.generationId === design.generationId
       ? lastGeneratedBlueprint.blueprint
       : null;
+  /**
+   * The measured fidelity of THAT pairing. Same binding rule as the blueprint
+   * above — an edit or an undo moves the design to a generation the report
+   * never saw, and the report goes with it.
+   */
+  const fidelityOfDesign = fidelityForDesign(
+    lastGeneratedBlueprint,
+    design?.generationId ?? null,
+  );
 
   /**
    * A schematic generation is adopted exactly as a prompt generation is — one
@@ -203,6 +227,11 @@ export function GenerativeStudio() {
     },
     [],
   );
+
+  const revealFidelity = useCallback(() => {
+    setViewport("schematic");
+    setFidelityFocus((token) => token + 1);
+  }, []);
 
   /* --- viewport source: the candidate while one is pending (§55) --- */
   const viewRecipe = pending ? pending.edit.recipe : (design?.recipe ?? null);
@@ -686,6 +715,10 @@ export function GenerativeStudio() {
               spec={pending ? pending.edit.spec : design.spec}
               snapshot={pending ? pending.edit.snapshot : design.snapshot}
               blueprint={blueprintOfDesign}
+              // A pending candidate is a DIFFERENT building from the one that
+              // was measured, so the badge goes away rather than describing it.
+              fidelity={pending ? null : fidelityOfDesign}
+              onFocusFidelity={revealFidelity}
             />
           )}
 
@@ -694,6 +727,8 @@ export function GenerativeStudio() {
               buildingPk={buildingPk}
               locks={locks}
               onGenerated={adoptBlueprintResult}
+              designGenerationId={design.generationId}
+              fidelityFocusToken={fidelityFocus}
             />
           )}
 
@@ -731,7 +766,8 @@ export function GenerativeStudio() {
             onValueChange={setTab}
             className="flex min-h-0 flex-1 flex-col gap-0"
           >
-            <TabsList className="w-full justify-start rounded-none border-b px-2">
+            {/* Six tabs in a 380px rail: scroll rather than squeeze the labels. */}
+            <TabsList className="w-full justify-start overflow-x-auto rounded-none border-b px-2">
               <TabsTrigger value="summary" className="text-xs">
                 Summary
               </TabsTrigger>
@@ -742,6 +778,9 @@ export function GenerativeStudio() {
                     {design.validation.counts.critical}
                   </span>
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="energy" className="text-xs">
+                Energy
               </TabsTrigger>
               <TabsTrigger value="explain" className="text-xs">
                 Explain
@@ -776,6 +815,10 @@ export function GenerativeStudio() {
                   attempt={attemptsSpent}
                   maxAttempts={MAX_REPAIR_ATTEMPTS}
                 />
+              </TabsContent>
+
+              <TabsContent value="energy" className="m-0">
+                <EnergyPanel design={design} previous={previousDesign} />
               </TabsContent>
 
               <TabsContent value="explain" className="m-0">

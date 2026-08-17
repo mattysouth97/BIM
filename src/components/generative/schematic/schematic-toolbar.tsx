@@ -197,10 +197,10 @@ export function SchematicToolbar() {
           size="xs"
           variant="outline"
           onClick={() => setImportOpen(true)}
-          title="Read a DWG or DXF drawing into this schematic, after reviewing the layer mapping"
+          title="Read a DWG, DXF or SVG drawing into this schematic, after reviewing the layer mapping"
           data-testid="schematic-import-cad"
         >
-          Import DWG/DXF
+          Import DWG/DXF/SVG
         </Button>
         <ImportCadDialog open={importOpen} onOpenChange={setImportOpen} />
         <Button

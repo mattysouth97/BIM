@@ -18,7 +18,7 @@
 
 import { z } from "zod";
 
-import { buildDesign, generationIdFor } from "../build";
+import { buildDesign, buildDesignPartial, generationIdFor } from "../build";
 import { applySpecPatch } from "../patch/apply";
 import { diffMetrics, diffSpecs } from "../patch/diff";
 import { lockDescriptions, type LockToken } from "../session/locks";
@@ -97,6 +97,11 @@ export type EditOutcome =
       validation: BuiltDesign["validation"];
       status: BuiltDesign["status"];
       approximations: string[];
+      /**
+       * How the patch's declared floor scope was honoured — including when it
+       * was refused. Absent for a patch that never claimed one.
+       */
+      partialRegeneration?: BuiltDesign["partialRegeneration"];
     }
   | {
       kind: "rejected";
@@ -146,7 +151,14 @@ export function completeEdit(input: {
   const nextRevision = input.revision + 1;
   const generationId = generationIdFor(application.spec.generationSeed, nextRevision);
 
-  const next = buildDesign({
+  // `input.current` is the pre-patch design, rebuilt deterministically by
+  // `readCurrentDesign`, so both sides of the edit are in hand — which is what
+  // makes honouring the patch's declared floor scope possible at all. A patch
+  // that declared none (or declared the whole building) comes out of
+  // `buildDesignPartial` as an ordinary full rebuild, unchanged.
+  const next = buildDesignPartial({
+    previous: input.current,
+    patch: input.patch,
     spec: application.spec,
     buildingPk: input.buildingPk,
     generationId,
@@ -194,6 +206,9 @@ export function completeEdit(input: {
     validation: next.validation,
     status: next.status,
     approximations: next.approximations,
+    ...(next.partialRegeneration
+      ? { partialRegeneration: next.partialRegeneration }
+      : {}),
   };
 }
 

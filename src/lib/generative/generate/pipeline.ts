@@ -24,6 +24,7 @@ import { generateOpenings } from "./openings";
 import { largestInscribedAxisAlignedRect } from "../geom";
 import {
   rectArea,
+  rectCentre,
   type BuildingMetrics,
   type GeneratedBuilding,
   type GeneratedLevel,
@@ -123,6 +124,9 @@ function isPlainRectangle(
  * A plain rectangle short-circuits to its own bounds rather than to the
  * inscribed-rect approximation, so the ordinary building's core does not move by
  * a grid step for no reason.
+ *
+ * This rect answers "where may the core stand", NOT "what is a stated offset
+ * measured from" — the caller passes the footprint centre separately for that.
  */
 function solidPlateForCore(
   polygon: ReturnType<typeof generateMassing>["primary"],
@@ -278,8 +282,29 @@ export function generateBuildingFromSpec(
 
   /* --- core --- */
   report("core");
-  // Site the core on solid floor, not on the bounding box — see solidPlateForCore.
-  const core = generateCore({ spec, plate: solidPlateForCore(massing.primary), floorNos });
+  // Two different questions, two different rects, and conflating them is what
+  // used to put a blueprint's core in the wrong wing:
+  //
+  //   • WHERE MAY IT STAND — the largest solid rectangle of the plate, so a
+  //     courtyard or a notch can never take the core (see solidPlateForCore).
+  //   • WHAT IS THE OFFSET MEASURED FROM — the FOOTPRINT's centre, always.
+  //     `spec.core.offsetXMm/offsetZMm` are footprint-local by definition
+  //     (spec/building-spec.ts), and both producers write them that way: the
+  //     heuristic provider as a fraction of `massing.widthMm`, the blueprint
+  //     compiler as the drawn core's centre in the engine frame — a frame whose
+  //     origin is precisely this bounding box's centre.
+  //
+  // Passing only the solid rect made `generateCore` answer the second question
+  // with the first rect's centre, adding the narrowing to the author's offset
+  // instead of resolving it against the frame the offset was written in. On a
+  // hole-free plate the two rects are identical, so the prompt-driven path is
+  // unaffected either way; on a plate with voids they are metres apart.
+  const core = generateCore({
+    spec,
+    plate: solidPlateForCore(massing.primary),
+    offsetOrigin: rectCentre(plate),
+    floorNos,
+  });
 
   /* --- spaces, per level --- */
   report("spaces");

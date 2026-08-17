@@ -78,6 +78,12 @@ let schemeB: GenerationResult;
 let researchScheme: GenerationResult;
 let courtyardScheme: GenerationResult;
 
+// The critical-issue row needs its own pair. Both schemes above now validate
+// clean, so neither can show that row marking anything — see the comment on
+// "the fixtures really do disagree" below. This is still a real generation:
+// an L-plate whose wings the space solver leaves with no route to the core.
+let severedScheme: GenerationResult;
+
 beforeAll(async () => {
   schemeA = await makeResult(4242);
   schemeB = await makeResult(99);
@@ -88,6 +94,10 @@ beforeAll(async () => {
   courtyardScheme = await makeResult(
     22,
     "Create a 5 storey courtyard office building of 6,000 m² with a central core.",
+  );
+  severedScheme = await makeResult(
+    20,
+    "Create a 5 storey L-shaped office of 6,000 m² with a central core.",
   );
 });
 
@@ -314,6 +324,25 @@ describe("OptionsPanel — which value is better", () => {
     ];
   }
 
+  function schemesDifferingOnCriticals(): DesignOption[] {
+    return [
+      {
+        id: "opt-research",
+        label: "Research bar",
+        seed: 20,
+        state: "ready",
+        result: researchScheme,
+      },
+      {
+        id: "opt-severed",
+        label: "Severed L",
+        seed: 20,
+        state: "ready",
+        result: severedScheme,
+      },
+    ];
+  }
+
   it("the fixtures really do disagree on every directional row", () => {
     // Guards the tests below: if the generator ever produces a tie here, the
     // marking assertions would pass vacuously.
@@ -326,12 +355,23 @@ describe("OptionsPanel — which value is better", () => {
     expect(researchScheme.metrics.coreRatio).toBeGreaterThan(
       courtyardScheme.metrics.coreRatio,
     );
-    expect(researchScheme.validation.counts.critical).toBeLessThan(
-      courtyardScheme.validation.counts.critical,
-    );
+
+    // The critical row is NOT a contest between these two any more, and that is
+    // an engine repair rather than a weakened test. The courtyard fixture used
+    // to report 12 × SPACE_NOT_ACCESSIBLE: on a void-cut plate the thin solid
+    // cell adjoining the core took no rooms, was dropped as "unserved", and
+    // severed the door graph to both wings. `retainedCirculation` in
+    // `generate/space-plan.ts` now reinstates a dropped cell that something
+    // still needs to reach the core, so the courtyard block is a valid building
+    // — and the price of those reinstated walk-throughs is the circulation
+    // ratio asserted above (11.6% → 35.9%, an advisory, not a violation).
+    // Both fixtures are therefore critical-free, and the critical row gets its
+    // own pair below.
+    expect(researchScheme.validation.counts.critical).toBe(0);
+    expect(courtyardScheme.validation.counts.critical).toBe(0);
   });
 
-  it("marks more net area, less circulation, less core and fewer critical issues", () => {
+  it("marks more net area, less circulation and less core", () => {
     renderPanel(twoDifferentSchemes());
 
     // Bigger net area wins.
@@ -341,7 +381,19 @@ describe("OptionsPanel — which value is better", () => {
     // Less core wins — and here the OTHER column is better, so the marker is
     // genuinely per-row rather than a whole-column "winner".
     expect(markedLabels("Core")).toEqual(["Courtyard block"]);
-    // Fewer critical issues wins.
+  });
+
+  it("marks the option with fewer critical issues", () => {
+    // The L-plate fixture is a genuinely invalid generation: its wings still
+    // have no route to the core, because `retainedCirculation` repairs plates
+    // cut by voids and not concave plates. That gap is real and registered in
+    // docs/work-plan/handoffs/2026-08-17-schematic-pivot.md; when it is closed
+    // this fixture stops being critical-bearing and this test fails loudly,
+    // which is the intended signal to pick a new one.
+    expect(severedScheme.validation.counts.critical).toBeGreaterThan(0);
+    expect(researchScheme.validation.counts.critical).toBe(0);
+
+    renderPanel(schemesDifferingOnCriticals());
     expect(markedLabels("Critical issues")).toEqual(["Research bar"]);
   });
 

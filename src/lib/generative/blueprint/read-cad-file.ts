@@ -16,9 +16,20 @@
 import { mapDxfTextToDoc } from "@/lib/cad/doc/map-dxf-to-doc";
 import type { CadDocument } from "@/lib/cad/doc/types";
 
-export type CadFileFormat = "dxf" | "dwg";
+/**
+ * Drawing formats the schematic importer accepts. `"svg"` does NOT become a
+ * `CadDocument` — it has no CAD document model at all; it is read as text and
+ * interpreted by `from-svg.ts` / `import-svg-file.ts`. The format name lives
+ * here anyway because it is the same vocabulary the store's import provenance
+ * records, and a schematic must be able to say which kind of file it came from.
+ */
+export type CadFileFormat = "dxf" | "dwg" | "svg";
 
+/** Formats that go through `readCadFile` into a `CadDocument`. */
 export const ACCEPTED_CAD_EXTENSIONS = [".dxf", ".dwg"] as const;
+
+/** Everything the import dialog accepts, CAD document or not. */
+export const ACCEPTED_DRAWING_EXTENSIONS = [".dxf", ".dwg", ".svg"] as const;
 
 export interface DwgConversionResult {
   /** Converted DXF text; absent when every conversion tier failed. */
@@ -55,6 +66,61 @@ function extensionOf(fileName: string): string {
   const lower = fileName.toLowerCase();
   const dot = lower.lastIndexOf(".");
   return dot === -1 ? "" : lower.slice(dot);
+}
+
+/**
+ * Which reader a picked file belongs to, by extension alone — `null` for
+ * anything the importer does not accept. Extension, not sniffing: DXF and SVG
+ * are both text, and a file the user named `.svg` is a claim worth reporting
+ * back verbatim when it turns out not to parse.
+ */
+export function classifyDrawingFile(fileName: string): CadFileFormat | null {
+  switch (extensionOf(fileName)) {
+    case ".dxf":
+      return "dxf";
+    case ".dwg":
+      return "dwg";
+    case ".svg":
+      return "svg";
+    default:
+      return null;
+  }
+}
+
+export type SvgFileReadResult =
+  | { ok: true; text: string; format: "svg" }
+  | { ok: false; error: { code: CadFileReadErrorCode; message: string } };
+
+/**
+ * SVG upload → raw text. There is no document model to build: `from-svg.ts`
+ * parses the markup itself (deliberately, see its header), so the only failure
+ * this step can have is a file that is not an SVG or holds nothing at all.
+ * Malformed markup is NOT diagnosed here — it surfaces, with the parser's own
+ * message, at the interpretation step.
+ */
+export async function readSvgFile(file: File): Promise<SvgFileReadResult> {
+  if (extensionOf(file.name) !== ".svg") {
+    return {
+      ok: false,
+      error: {
+        code: "UNSUPPORTED_EXTENSION",
+        message: `"${file.name}" is not an SVG file.`,
+      },
+    };
+  }
+
+  const text = await file.text();
+  if (text.trim().length === 0) {
+    return {
+      ok: false,
+      error: {
+        code: "EMPTY_DRAWING",
+        message: `"${file.name}" is empty — there is no markup to read.`,
+      },
+    };
+  }
+
+  return { ok: true, text, format: "svg" };
 }
 
 /** The default DWG tier chain — loaded only when a DWG is actually opened. */

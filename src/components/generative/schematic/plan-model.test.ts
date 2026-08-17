@@ -16,7 +16,7 @@ import {
 import { runBlueprintGeneration } from "@/lib/generative/server/generate-from-blueprint";
 
 import { blueprintShiftMm } from "./alignment";
-import { readLevelPlan } from "./plan-model";
+import { M_TO_MM, readLevelPlan } from "./plan-model";
 
 const FLOORS = [1, 2];
 
@@ -121,5 +121,84 @@ describe("readLevelPlan", () => {
     expect(plan.bounds!.maxX).toBeLessThanOrEqual(maxX + tolerance);
     expect(plan.bounds!.minZ).toBeGreaterThanOrEqual(minZ - tolerance);
     expect(plan.bounds!.maxZ).toBeLessThanOrEqual(maxZ + tolerance);
+  });
+});
+
+describe("readLevelPlan: symbols", () => {
+  it("emits a symbol instance for every generated door and window, sitting on its host wall", () => {
+    const payload = build();
+    const level = payload.snapshot.levels.find((l) => l.floorNo === 1)!;
+    const plan = readLevelPlan(payload.snapshot, level.id);
+
+    const openings = payload.snapshot.elements.filter(
+      (e) => e.levelId === level.id && (e.kind === "door" || e.kind === "window"),
+    );
+    expect(openings.length).toBeGreaterThan(0);
+    expect(plan.symbols.length).toBe(openings.length);
+
+    const wallsById = new Map(
+      payload.snapshot.elements.filter((e) => e.kind === "wall").map((e) => [e.id, e]),
+    );
+
+    for (const symbol of plan.symbols) {
+      expect(symbol.kind === "door" || symbol.kind === "window").toBe(true);
+      // Generated elements carry no AuthoringFamily id — the renderer falls
+      // back to the kind's tool default via KIND_TO_TOOL.
+      expect(symbol.familyId).toBeNull();
+      expect(Number.isFinite(symbol.xMm)).toBe(true);
+      expect(Number.isFinite(symbol.zMm)).toBe(true);
+
+      const opening = openings.find((o) => o.id === symbol.id)!;
+      expect(opening).toBeTruthy();
+      expect(symbol.xMm).toBeCloseTo(opening.placement.x * M_TO_MM, 3);
+      expect(symbol.zMm).toBeCloseTo(opening.placement.z * M_TO_MM, 3);
+
+      const host = wallsById.get(opening.hostId!)!;
+      expect(host).toBeTruthy();
+      // The host wall's own rotationY, not the opening's own (always-0) placement.rotationY.
+      expect(symbol.rotationRad).toBeCloseTo(host.placement.rotationY, 6);
+      expect(symbol.hostWallThicknessMm).toBe(host.instanceParameters.thicknessMm);
+
+      // On the host wall's centreline: the opening's world position, walked back by
+      // its distance from the wall's own start, lands on the wall's start point.
+      const startX = host.instanceParameters.startX as number;
+      const startZ = host.instanceParameters.startZ as number;
+      const endX = host.instanceParameters.endX as number;
+      const endZ = host.instanceParameters.endZ as number;
+      const wallDx = endX - startX;
+      const wallDz = endZ - startZ;
+      const wallLen = Math.hypot(wallDx, wallDz);
+      const openX = symbol.xMm / M_TO_MM;
+      const openZ = symbol.zMm / M_TO_MM;
+      const alongWall = ((openX - startX) * wallDx + (openZ - startZ) * wallDz) / wallLen;
+      const perpDist = Math.abs((openX - startX) * (wallDz / wallLen) - (openZ - startZ) * (wallDx / wallLen));
+      expect(alongWall).toBeGreaterThanOrEqual(-0.01);
+      expect(alongWall).toBeLessThanOrEqual(wallLen + 0.01);
+      expect(perpDist).toBeLessThan(0.01);
+    }
+  });
+
+  it("carries widthMm/heightMm from the door/window type", () => {
+    const payload = build();
+    const level = payload.snapshot.levels[0];
+    const plan = readLevelPlan(payload.snapshot, level.id);
+    const doors = plan.symbols.filter((s) => s.kind === "door");
+    expect(doors.length).toBeGreaterThan(0);
+    for (const door of doors) {
+      expect(door.params.widthMm).toBeGreaterThan(0);
+      expect(door.params.heightMm).toBeGreaterThan(0);
+    }
+  });
+
+  it("leaves non-hosted kinds (furniture, lighting, stairs, railings, MEP) out when none are placed", () => {
+    // The generation pipeline this build() drives never places furniture/lighting/
+    // MEP as their own elements outside the core — only doors and windows reach
+    // readLevelPlan's symbol branch here.
+    const payload = build();
+    const level = payload.snapshot.levels[0];
+    const plan = readLevelPlan(payload.snapshot, level.id);
+    for (const symbol of plan.symbols) {
+      expect(["door", "window"]).toContain(symbol.kind);
+    }
   });
 });

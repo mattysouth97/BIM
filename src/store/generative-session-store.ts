@@ -22,6 +22,10 @@ import type {
   ProviderSummary,
   RejectedEdit,
 } from "@/lib/generative/client";
+import { seedBuildingFromGeneratedDesign } from "@/lib/generative/energy/seed-from-design";
+import { useActiveBuildingStore } from "@/store/active-building-store";
+import { useMaterialStore } from "@/store/material-store";
+import { useRecipeStore } from "@/store/recipe-store";
 import {
   branchTips,
   canRedo,
@@ -64,7 +68,20 @@ export interface DesignOption {
 }
 
 interface SessionState {
+  /**
+   * The pk the API routes stamp onto emitted BIM elements. It is a REQUEST
+   * parameter, not an identity: every route defaults it to "generated" and
+   * element provenance has always read that way. Left alone deliberately —
+   * the energy stores key on `energyPk` instead, so two designs no longer
+   * collide on one record (see `publishDesignEnergy`).
+   */
   buildingPk: string;
+  /**
+   * pk the CURRENT design is published under in the material/recipe/active
+   * building stores — always `DesignState.generationId`. null when the
+   * session holds no design.
+   */
+  energyPk: string | null;
   history: DesignHistory<DesignState>;
 
   /**
@@ -167,8 +184,101 @@ function stateFromEdit(edit: AppliedEdit, seed: number): DesignState {
   };
 }
 
-export const useGenerativeSession = create<SessionState>((set, get) => ({
+/* ------------------------------------------------------------------ */
+/* Energy publication                                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Hand the current design to the energy stack under its own generationId, so
+ * `useEnergyMetrics` / `useRetrofitScenario` see it exactly as they see a
+ * ledger building (mirrors `use-ensure-building-model.ts`).
+ *
+ * Unlike the ledger seeding, this OVERWRITES: a modified design is the same
+ * conversation continuing, and its recalculated envelope must replace the old
+ * one rather than lose to a "keep the first value" guard.
+ */
+function publishDesignEnergy(design: DesignState, previousPk: string | null): void {
+  const seed = seedBuildingFromGeneratedDesign({
+    spec: design.spec,
+    recipe: design.recipe,
+    metrics: design.metrics,
+    generationId: design.generationId,
+  });
+
+  useMaterialStore.getState().setProperties(seed.pk, seed.materials);
+  useMaterialStore.getState().setActivePk(seed.pk);
+  useRecipeStore.getState().setBaseRecipe(seed.pk, seed.recipe);
+  useActiveBuildingStore.getState().setActiveBuilding(seed.pk, seed.sigunguCd);
+
+  if (previousPk && previousPk !== seed.pk) unpublishDesignEnergy(previousPk);
+
+  // The session is not persisted but the material store IS, so a design left
+  // behind by a previous TAB or reload has no `previousPk` to prune it by.
+  // Sweep those too: exactly one generated building may hold records at a time.
+  for (const pk of Object.keys(useMaterialStore.getState().properties)) {
+    if (pk !== seed.pk && isGeneratedPk(pk)) unpublishDesignEnergy(pk);
+  }
+}
+
+/**
+ * Ids minted by `generationIdFor` — `GEN-0042`, `GEN-0042.3`. A 건축물대장
+ * 관리번호 is numeric and can never take this shape, so the sweep above cannot
+ * touch a ledger building's records.
+ */
+const GENERATED_PK = /^GEN-\d{4}(\.\d+)?$/;
+
+function isGeneratedPk(pk: string): boolean {
+  return GENERATED_PK.test(pk);
+}
+
+/**
+ * Drop one design's energy records. Exactly ONE generated design is published
+ * at a time: a session that regenerates fifty times would otherwise leave fifty
+ * buildings in the material store — which is persisted, so the leak survives
+ * reloads. Nothing is lost by pruning: re-publishing is a pure re-seed from the
+ * history payload, which `undo`/`redo`/`goTo` do.
+ *
+ * Neither store exposes a remove API (`properties` and `baseRecipes` only ever
+ * grow), so the prune goes through zustand's own `setState` rather than adding
+ * surface area to stores this feature does not own.
+ */
+function unpublishDesignEnergy(pk: string): void {
+  useMaterialStore.setState((s) => {
+    if (!(pk in s.properties)) return s;
+    const { [pk]: _dropped, ...rest } = s.properties;
+    return { properties: rest };
+  });
+  useRecipeStore.setState((s) => {
+    if (!(pk in s.baseRecipes)) return s;
+    const { [pk]: _dropped, ...rest } = s.baseRecipes;
+    return { baseRecipes: rest };
+  });
+  useRecipeStore.getState().resetOverrides(pk);
+  if (useMaterialStore.getState().activePk === pk) {
+    useMaterialStore.setState({ activePk: "" });
+  }
+  if (useActiveBuildingStore.getState().buildingPk === pk) {
+    useActiveBuildingStore.getState().clearActiveBuilding();
+  }
+}
+
+export const useGenerativeSession = create<SessionState>((set, get) => {
+  /**
+   * History navigation changes which design is current, so the energy stores
+   * must follow it — an undo that left the panel reading the abandoned design
+   * would be showing numbers for a building nobody can see.
+   */
+  const navigate = (next: DesignHistory<DesignState>): void => {
+    const previousPk = get().energyPk;
+    const payload = currentNode(next)?.payload ?? null;
+    set({ history: next, pending: null, energyPk: payload?.generationId ?? null });
+    if (payload) publishDesignEnergy(payload, previousPk);
+    else if (previousPk) unpublishDesignEnergy(previousPk);
+  };
+
+  return {
   buildingPk: "generated",
+  energyPk: null,
   history: emptyHistory<DesignState>(),
   sourcePrompt: null,
   locks: [],
@@ -187,7 +297,9 @@ export const useGenerativeSession = create<SessionState>((set, get) => ({
   rows: () => flatten(get().history),
   tips: () => branchTips(get().history),
 
-  startFrom: (result, prompt) =>
+  startFrom: (result, prompt) => {
+    const payload = stateFromGeneration(result);
+    const previousPk = get().energyPk;
     set((s) => ({
       history: commit(s.history, {
         id: nextNodeId("gen"),
@@ -195,16 +307,19 @@ export const useGenerativeSession = create<SessionState>((set, get) => ({
         label: prompt.length > 64 ? `${prompt.slice(0, 64)}…` : prompt,
         detail: `${result.metrics.floorCount} levels · ${Math.round(result.metrics.grossAreaSqm).toLocaleString()} m²`,
         createdAt: Date.now(),
-        payload: stateFromGeneration(result),
+        payload,
         // A fresh generation is a new root, never a child of the old design.
         parentId: null,
       }),
+      energyPk: payload.generationId,
       sourcePrompt: prompt,
       pending: null,
       lastRejection: null,
       selection: null,
       isolate: false,
-    })),
+    }));
+    publishDesignEnergy(payload, previousPk);
+  },
 
   proposeEdit: (edit, kind) =>
     set((s) => {
@@ -215,39 +330,43 @@ export const useGenerativeSession = create<SessionState>((set, get) => ({
 
   rejectEdit: (edit) => set({ lastRejection: edit, pending: null }),
 
-  acceptPending: () =>
-    set((s) => {
-      const pending = s.pending;
-      if (!pending) return s;
+  acceptPending: () => {
+    const state = get();
+    const pending = state.pending;
+    if (!pending) return;
 
-      const base = s.history.nodes[pending.baseNodeId];
-      const seed = base?.payload.seed ?? pending.edit.spec.generationSeed;
+    const base = state.history.nodes[pending.baseNodeId];
+    const seed = base?.payload.seed ?? pending.edit.spec.generationSeed;
+    const payload = stateFromEdit(pending.edit, seed);
+    const previousPk = state.energyPk;
 
-      // Branch from the design the edit was computed against, not from whatever
-      // happens to be current — the diff the user approved describes THAT pair.
-      return {
-        history: commit(s.history, {
-          id: nextNodeId(pending.kind),
-          kind: pending.kind,
-          label: pending.edit.patch.summary,
-          detail:
-            pending.kind === "repair"
-              ? `resolved ${pending.edit.resolvedCodes?.length ?? 0} issue(s)`
-              : (pending.edit.scope?.label ?? undefined),
-          createdAt: Date.now(),
-          payload: stateFromEdit(pending.edit, seed),
-          parentId: pending.baseNodeId,
-        }),
-        pending: null,
-      };
-    }),
+    // Branch from the design the edit was computed against, not from whatever
+    // happens to be current — the diff the user approved describes THAT pair.
+    set((s) => ({
+      history: commit(s.history, {
+        id: nextNodeId(pending.kind),
+        kind: pending.kind,
+        label: pending.edit.patch.summary,
+        detail:
+          pending.kind === "repair"
+            ? `resolved ${pending.edit.resolvedCodes?.length ?? 0} issue(s)`
+            : (pending.edit.scope?.label ?? undefined),
+        createdAt: Date.now(),
+        payload,
+        parentId: pending.baseNodeId,
+      }),
+      energyPk: payload.generationId,
+      pending: null,
+    }));
+    publishDesignEnergy(payload, previousPk);
+  },
 
   discardPending: () => set({ pending: null }),
   clearRejection: () => set({ lastRejection: null }),
 
-  undo: () => set((s) => ({ history: undo(s.history), pending: null })),
-  redo: () => set((s) => ({ history: redo(s.history), pending: null })),
-  goTo: (nodeId) => set((s) => ({ history: goTo(s.history, nodeId), pending: null })),
+  undo: () => navigate(undo(get().history)),
+  redo: () => navigate(redo(get().history)),
+  goTo: (nodeId) => navigate(goTo(get().history, nodeId)),
 
   toggleLock: (token) =>
     set((s) => ({
@@ -278,34 +397,42 @@ export const useGenerativeSession = create<SessionState>((set, get) => ({
         option.id === id ? { ...option, ...patch } : option,
       ),
     })),
-  adoptOption: (id) =>
-    set((s) => {
-      const option = s.options.find((o) => o.id === id);
-      if (!option?.result) return s;
+  adoptOption: (id) => {
+    const state = get();
+    const option = state.options.find((o) => o.id === id);
+    const result = option?.result;
+    if (!option || !result) return;
 
-      const current = currentNode(s.history);
-      return {
-        history: commit(s.history, {
-          id: nextNodeId("option"),
-          kind: "option",
-          label: option.label,
-          detail: `seed ${option.seed} · ${Math.round(option.result.metrics.grossAreaSqm).toLocaleString()} m²`,
-          createdAt: Date.now(),
-          payload: stateFromGeneration(option.result),
-          // An option is an ALTERNATIVE to the current design, so it hangs off
-          // the same parent — a sibling, not a descendant.
-          parentId: current?.parentId ?? null,
-        }),
-        options: [],
-        optionPrompt: null,
-        pending: null,
-      };
-    }),
+    const payload = stateFromGeneration(result);
+    const previousPk = state.energyPk;
+    const current = currentNode(state.history);
+
+    set((s) => ({
+      history: commit(s.history, {
+        id: nextNodeId("option"),
+        kind: "option",
+        label: option.label,
+        detail: `seed ${option.seed} · ${Math.round(result.metrics.grossAreaSqm).toLocaleString()} m²`,
+        createdAt: Date.now(),
+        payload,
+        // An option is an ALTERNATIVE to the current design, so it hangs off
+        // the same parent — a sibling, not a descendant.
+        parentId: current?.parentId ?? null,
+      }),
+      energyPk: payload.generationId,
+      options: [],
+      optionPrompt: null,
+      pending: null,
+    }));
+    publishDesignEnergy(payload, previousPk);
+  },
   clearOptions: () => set({ options: [], optionPrompt: null }),
 
-  reset: () =>
+  reset: () => {
+    const previousPk = get().energyPk;
     set({
       history: emptyHistory<DesignState>(),
+      energyPk: null,
       sourcePrompt: null,
       locks: [],
       designRules: [],
@@ -315,5 +442,9 @@ export const useGenerativeSession = create<SessionState>((set, get) => ({
       lastRejection: null,
       options: [],
       optionPrompt: null,
-    }),
-}));
+    });
+    // "New building" abandons the session — its energy records go with it.
+    if (previousPk) unpublishDesignEnergy(previousPk);
+  },
+  };
+});

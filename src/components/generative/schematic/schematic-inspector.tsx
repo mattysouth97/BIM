@@ -11,11 +11,16 @@
 //   3. what will survive?         — the preservation plan, split PRESERVED /
 //                                   FLEXIBLE by the fidelity rules
 //
+// And, once a building exists, the fourth question the first three cannot
+// answer: what ACTUALLY survived — `<FidelityReport />`, measured from the
+// generated geometry rather than promised from the rules.
+//
 // No raw JSON. A blueprint dump is not an explanation.
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type {
+  BlueprintFidelityReport,
   BlueprintSpec,
   BlueprintValidationReport,
   BlueprintViolation,
@@ -23,6 +28,8 @@ import type {
   PreservationPlan,
 } from "@/lib/generative/blueprint";
 import type { BlueprintImportProvenance } from "@/store/blueprint-store";
+
+import { FidelityReport } from "./fidelity-report";
 
 const SEVERITY_STYLE: Record<BlueprintViolation["severity"], string> = {
   critical: "text-destructive",
@@ -61,6 +68,15 @@ interface Props {
   onSelect: (id: string) => void;
   /** Set when the working blueprint was read from a CAD file rather than drawn. */
   importProvenance?: BlueprintImportProvenance | null;
+  /**
+   * The measured report for the design currently on screen — null whenever the
+   * design was not produced by this schematic (or by any schematic), because a
+   * report shown beside a building it did not measure would be a fabrication.
+   * The caller does that binding; see `fidelityForDesign`.
+   */
+  fidelity?: BlueprintFidelityReport | null;
+  /** Bumped by the plan overlay's badge to scroll the report into view. */
+  fidelityFocusToken?: number;
 }
 
 export function SchematicInspector({
@@ -70,6 +86,8 @@ export function SchematicInspector({
   onFidelityChange,
   onSelect,
   importProvenance = null,
+  fidelity = null,
+  fidelityFocusToken,
 }: Props) {
   const counts = [
     { label: "Boundaries", value: blueprint.boundaries.length },
@@ -299,6 +317,10 @@ export function SchematicInspector({
           </div>
         )}
       </section>
+
+      {fidelity && (
+        <FidelityReport report={fidelity} focusToken={fidelityFocusToken} />
+      )}
     </div>
   );
 }

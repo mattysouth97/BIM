@@ -22,7 +22,11 @@ import {
   type StageEvent,
 } from "@/lib/generative/client";
 import { cn } from "@/lib/utils";
-import { activeImportOf, useBlueprintStore } from "@/store/blueprint-store";
+import {
+  activeImportOf,
+  fidelityForDesign,
+  useBlueprintStore,
+} from "@/store/blueprint-store";
 
 import { SchematicCanvas } from "./schematic-canvas";
 import { SchematicInspector } from "./schematic-inspector";
@@ -37,11 +41,27 @@ interface Props {
   onGenerated: (result: BlueprintGenerationResult, intent: string) => void;
   buildingPk?: string;
   locks?: string[];
+  /**
+   * `DesignState.generationId` of the design currently on screen, when there is
+   * one. It is what binds the retained fidelity report to a building: the
+   * report is shown only while the design it measured is still the design being
+   * looked at. Absent on the start screen, where no building exists yet.
+   */
+  designGenerationId?: string | null;
+  /** Bumped by the plan view's fidelity badge to reveal the report. */
+  fidelityFocusToken?: number;
 }
 
-export function SchematicEditor({ onGenerated, buildingPk, locks }: Props) {
+export function SchematicEditor({
+  onGenerated,
+  buildingPk,
+  locks,
+  designGenerationId = null,
+  fidelityFocusToken,
+}: Props) {
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const validation = useBlueprintStore((s) => s.validation);
+  const lastGenerated = useBlueprintStore((s) => s.lastGenerated);
   // Null once history is undone back past the import, so the panel never claims
   // a file the working blueprint no longer came from.
   const importProvenance = useBlueprintStore(activeImportOf);
@@ -94,6 +114,9 @@ export function SchematicEditor({ onGenerated, buildingPk, locks }: Props) {
         blueprint: result.blueprint,
         blueprintValidation: result.blueprintValidation,
         compiledLocks: result.compiledLocks,
+        // Kept with the blueprint it measured, not recomputed here: the client
+        // has neither the generated geometry nor any business re-deriving it.
+        fidelity: result.fidelity,
       });
       onGenerated(result, prompt.trim());
     } catch (caught) {
@@ -208,6 +231,8 @@ export function SchematicEditor({ onGenerated, buildingPk, locks }: Props) {
           validation={validation}
           preservation={preservation}
           importProvenance={importProvenance}
+          fidelity={fidelityForDesign(lastGenerated, designGenerationId)}
+          fidelityFocusToken={fidelityFocusToken}
           onFidelityChange={(mode) =>
             useBlueprintStore.getState().setFidelityMode(mode)
           }

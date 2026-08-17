@@ -237,7 +237,13 @@ function closedAreaSqm(entity: CadEntity): number {
   return chains.length > 0 ? chainAreaSqm(chains[0]) : 0;
 }
 
-interface LayerCounts {
+/**
+ * The countable facts about one layer, independent of WHICH drawing format
+ * produced them. Exported because the SVG importer (`import-svg-file.ts`)
+ * derives the same facts from a segment soup and must run them through the
+ * same guess policy — one role-guessing rule for every drawing source.
+ */
+export interface LayerCounts {
   entityCount: number;
   closedShapeCount: number;
   textCount: number;
@@ -293,7 +299,17 @@ function heuristicRole(layerName: string): Exclude<CadLayerRole, "ignore"> | nul
  * boundary guess at all rather than a fabricated one.
  */
 export function summariseLayers(doc: CadDocument): CadLayerSummary[] {
-  const counts = countByLayer(doc);
+  return summariseLayerCounts(countByLayer(doc));
+}
+
+/**
+ * The guess policy itself, over already-counted layers — extracted so the SVG
+ * importer applies the identical rule (name heuristics, then a single
+ * largest-closed-shape boundary nomination) instead of a look-alike copy.
+ */
+export function summariseLayerCounts(
+  counts: Map<string, LayerCounts>,
+): CadLayerSummary[] {
   const summaries: CadLayerSummary[] = [...counts.entries()]
     .map(([name, c]) => {
       const role = heuristicRole(name);
@@ -442,7 +458,10 @@ function skippedFromDocument(
  * the drawing's units are almost certainly misdeclared; anything else is
  * reported verbatim rather than dressed up as one of those two.
  */
-function classifyFailure(caught: unknown, boundaryLayers: string[]): CadImportError {
+export function classifyImportFailure(
+  caught: unknown,
+  boundaryLayers: string[],
+): CadImportError {
   if (caught instanceof ZodError) {
     const outOfRange = caught.issues.some(
       (issue) =>
@@ -585,7 +604,11 @@ export function importCadDocument(
       calibrationConfidence: units.calibrationConfidence,
     });
   } catch (caught) {
-    return { ok: false, error: classifyFailure(caught, boundaryLayers), report: baseReport };
+    return {
+      ok: false,
+      error: classifyImportFailure(caught, boundaryLayers),
+      report: baseReport,
+    };
   }
 
   const { blueprint, stats } = read;

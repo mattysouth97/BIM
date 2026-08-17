@@ -220,6 +220,47 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
+/**
+ * 시도-level location, recognised ONLY from an explicit place name. A prompt
+ * that names nowhere gets no region, and the energy model then discloses its
+ * Seoul default instead of inheriting a guess — so this table must never grow
+ * an inference from language, use type or currency.
+ *
+ * Codes are the 2-digit 시도 prefixes the climate tables key on
+ * (`REGIONAL_CLIMATE`). A district is not knowable from a province name, so
+ * none is invented. 전북 uses the new 52 code, matching region-codes.json.
+ */
+const REGION_KEYWORDS: Array<[RegExp, string]> = [
+  [/서울|\bseoul\b/i, "11"],
+  [/부산|\bbusan\b/i, "26"],
+  [/대구|\bdaegu\b/i, "27"],
+  [/인천|\bincheon\b/i, "28"],
+  [/광주|\bgwangju\b/i, "29"],
+  [/대전|\bdaejeon\b/i, "30"],
+  [/울산|\bulsan\b/i, "31"],
+  [/세종|\bsejong\b/i, "36"],
+  [/경기|\bgyeonggi\b/i, "41"],
+  [/충청북도|충북|\bchungbuk\b/i, "43"],
+  [/충청남도|충남|\bchungnam\b/i, "44"],
+  [/전라남도|전남|\bjeonnam\b/i, "46"],
+  [/경상북도|경북|\bgyeongbuk\b/i, "47"],
+  [/경상남도|경남|\bgyeongnam\b/i, "48"],
+  [/제주|\bjeju\b/i, "50"],
+  [/강원|\bgangwon\b/i, "51"],
+  [/전라북도|전북|\bjeonbuk\b/i, "52"],
+];
+
+function detectSiteRegion(
+  prompt: string,
+): { sigunguCd: string; label: string } | null {
+  for (const [pattern, sigunguCd] of REGION_KEYWORDS) {
+    const match = pattern.exec(prompt);
+    // The label is the user's own wording, not a canonical name we prefer.
+    if (match) return { sigunguCd, label: match[0] };
+  }
+  return null;
+}
+
 /* ------------------------------------------------------------------ */
 /* Program templates                                                   */
 /* ------------------------------------------------------------------ */
@@ -665,6 +706,7 @@ function buildSpec(request: GenerationRequest): BuildingSpec {
   // stored on the spec — two sources of truth would drift apart.
   const siteWidthMm = hints.siteWidthMm ?? Math.round(plate.widthMm * 1.6);
   const siteDepthMm = hints.siteDepthMm ?? Math.round(plate.depthMm * 1.6);
+  const siteRegion = detectSiteRegion(prompt);
 
   const P = <T,>(value: T, source: ValueSource, confidence: number, reason: string) => ({
     value,
@@ -707,6 +749,18 @@ function buildSpec(request: GenerationRequest): BuildingSpec {
         0.5,
         "Site sized to give the building a reasonable setback.",
       ),
+      // Omitted entirely when the prompt names no place — absent region is what
+      // makes the energy model's Seoul default visible as a default.
+      ...(siteRegion
+        ? {
+            region: P(
+              siteRegion,
+              "USER_PROVIDED" as const,
+              1,
+              "The prompt named this location; it selects the regional climate.",
+            ),
+          }
+        : {}),
     },
     massing: {
       strategy: P(strategy, massingSource, 0.7, "Simple massing keeps the plate efficient."),

@@ -19,12 +19,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { BimModelSnapshot } from "@/lib/bim/model/types";
-import type { BlueprintSpec } from "@/lib/generative/blueprint";
+import type {
+  BlueprintFidelityReport,
+  BlueprintSpec,
+} from "@/lib/generative/blueprint";
 import type { BuildingSpec } from "@/lib/generative/spec/building-spec";
 import { cn } from "@/lib/utils";
 
 import { blueprintShiftMm } from "./alignment";
+import { BAND_TEXT, bandForDeviation, formatRatioPercent } from "./fidelity-report";
 import { readLevelPlan } from "./plan-model";
+import { PlanSymbolsLayer } from "./plan-symbols-layer";
 import { pathOf, schematicShapes } from "./schematic-geometry";
 import {
   boundsOfPoints,
@@ -68,10 +73,28 @@ interface Props {
   snapshot: BimModelSnapshot;
   /** The schematic this building came from, when it came from one. */
   blueprint: BlueprintSpec | null;
+  /**
+   * The measured report for THIS design, bound by generation id upstream. The
+   * badge is the headline the overlay can honestly show; the full per-dimension
+   * breakdown lives in the schematic inspector.
+   */
+  fidelity?: BlueprintFidelityReport | null;
+  /**
+   * Reveal the inspector's fidelity section. Without it the badge renders as
+   * plain text rather than a button that does nothing.
+   */
+  onFocusFidelity?: () => void;
   className?: string;
 }
 
-export function PlanOverlay({ spec, snapshot, blueprint, className }: Props) {
+export function PlanOverlay({
+  spec,
+  snapshot,
+  blueprint,
+  fidelity = null,
+  onFocusFidelity,
+  className,
+}: Props) {
   const levels = useMemo(
     () => [...snapshot.levels].sort((a, b) => a.floorNo - b.floorNo),
     [snapshot.levels],
@@ -217,9 +240,13 @@ export function PlanOverlay({ spec, snapshot, blueprint, className }: Props) {
         </label>
 
         <div className="ml-auto flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
+          {fidelity && (
+            <FidelityBadge report={fidelity} onFocus={onFocusFidelity} />
+          )}
           <span>{plan?.rooms.length ?? 0} rooms</span>
           <span>{plan?.walls.length ?? 0} walls</span>
           <span>{plan?.columns.length ?? 0} columns</span>
+          <span>{plan?.symbols.length ?? 0} symbols</span>
           <button type="button" onClick={fit} className="rounded border px-1.5 py-0.5">
             Fit
           </button>
@@ -366,6 +393,8 @@ export function PlanOverlay({ spec, snapshot, blueprint, className }: Props) {
                   />
                 );
               })}
+
+              <PlanSymbolsLayer symbols={plan.symbols} view={activeView} />
             </g>
           )}
 
@@ -406,5 +435,49 @@ export function PlanOverlay({ spec, snapshot, blueprint, className }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * One number, chosen and named: the WORST symmetric difference between a drawn
+ * plate and the plate that got built, across the levels that were comparable.
+ * Not a fidelity score — the report has no such thing — and it says which
+ * dimension it is so nobody reads it as one. The full breakdown is a click
+ * away; without a handler to open it, this is text rather than a dead button.
+ */
+function FidelityBadge({
+  report,
+  onFocus,
+}: {
+  report: BlueprintFidelityReport;
+  onFocus?: () => void;
+}) {
+  const worst = report.boundary.worstSymmetricDifferenceRatio;
+  const label = `plate diff ${formatRatioPercent(worst)}`;
+  const title =
+    worst === null
+      ? "No level was drawn and built in common, so the boundary could not be compared."
+      : "Worst boundary outline difference across the measured levels — the drawn plate versus the built one.";
+  const className = cn(
+    "rounded border px-1.5 py-0.5 font-mono text-[10px]",
+    BAND_TEXT[bandForDeviation(worst)],
+  );
+
+  if (!onFocus) {
+    return (
+      <span className={className} title={title}>
+        {label}
+      </span>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onFocus}
+      title={`${title} Opens the measured fidelity report.`}
+      className={cn(className, "transition-colors hover:bg-muted")}
+    >
+      {label}
+    </button>
   );
 }

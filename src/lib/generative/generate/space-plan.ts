@@ -624,6 +624,168 @@ function stretchStrip(strip: Strip): void {
 }
 
 /* ------------------------------------------------------------------ */
+/* Circulation that survives                                           */
+/* ------------------------------------------------------------------ */
+
+/** One rect in the reachability walk below: a placed room or a corridor. */
+interface ReachNode {
+  rect: Rect;
+  isCirculation: boolean;
+  /** Emitted whatever the walk decides, so routing through it is free. */
+  fixed: boolean;
+  /** Corridor index this node would reinstate; -1 when it is already kept. */
+  reinstates: number;
+}
+
+/**
+ * The floor an unserved corridor sits in: the corridor plus every strip it was
+ * going to serve.
+ *
+ * A cell is only ever cut into PARALLEL slabs — corridor + one row (single
+ * loaded), or one row + spine + one row (double loaded) — so those slabs are
+ * contiguous and their bounding box is their exact union, not an over-estimate.
+ */
+function corridorCellRect(corridor: Rect, strips: Strip[], corridorIndex: number): Rect {
+  let cell = corridor;
+  for (const strip of strips) {
+    if (strip.corridorIndex !== corridorIndex) continue;
+    const full = stripRect(strip, 0, strip.lengthU);
+    cell = {
+      minX: Math.min(cell.minX, full.minX),
+      maxX: Math.max(cell.maxX, full.maxX),
+      minZ: Math.min(cell.minZ, full.minZ),
+      maxZ: Math.max(cell.maxZ, full.maxZ),
+    };
+  }
+  return cell;
+}
+
+/**
+ * Which of the reserved corridors actually get built — and at what size.
+ *
+ * The base rule is unchanged, and it is about honesty: a corridor whose own room
+ * strip took no rooms serves nothing, so emitting it would bill the plan for
+ * circulation nobody walks. A passage-only band (no strips of its own) is kept
+ * while the level has rooms somewhere, because that IS its whole job.
+ *
+ * What that rule cannot see is TOPOLOGY. On a plate cut up by voids a band is
+ * decomposed into independent solid cells, and the cell that happens to adjoin
+ * the core is often a thin one. A thin cell loses the greedy area/aspect
+ * competition in `chooseStrip`, takes no rooms, and was then dropped — severing
+ * the only door-graph path from the lift lobby to whole wings, so
+ * `validate/rules.ts` reported SPACE_NOT_ACCESSIBLE on geometry that is
+ * perfectly buildable. Re-tuning the packing weights would only move the failure
+ * to the next plate, because the defect is structural; so the repair is
+ * structural too. Before an unserved cell is dropped, ask whether anything still
+ * needs it to reach the core, and reinstate it as real circulation if so.
+ *
+ * A reinstated cell is emitted at FULL size — corridor plus the strips it was
+ * going to serve — because "unserved" means every one of those strips is empty.
+ * That floor is not rooms and never was; it is a walk-through, exactly the way
+ * `layoutBand` already declares a band too tight for a corridor AND a room to be
+ * circulation. Emitting the corridor slice alone would leave the empty strip
+ * beside it as a gap no door can cross.
+ *
+ * The connectivity model deliberately mirrors the one `generate/openings.ts`
+ * derives doors from: a door exists between a room and circulation, never
+ * between two circulation spaces (those are the same loop, not a doorway). So
+ * two corridors merely touching does not join them here either — reinstating a
+ * cell that touches nothing but other corridors would add floor without adding a
+ * route, and this pass will not pretend otherwise.
+ *
+ * Deterministic: nodes are built in corridor-then-room order and every tie in
+ * the walk resolves to the lower index, so no Set or Map iteration order can
+ * reach the result.
+ */
+function retainedCirculation(input: {
+  corridorRects: Rect[];
+  strips: Strip[];
+  core: Rect;
+  roomCount: number;
+}): Rect[] {
+  const { corridorRects, strips, core, roomCount } = input;
+
+  const served = new Set(
+    strips.filter((s) => s.placements.length > 0).map((s) => s.corridorIndex),
+  );
+  const stripped = new Set(strips.map((s) => s.corridorIndex));
+
+  const keptRect: Array<Rect | null> = corridorRects.map((rect, index) =>
+    served.has(index) || (!stripped.has(index) && roomCount > 0) ? rect : null,
+  );
+
+  const nodes: ReachNode[] = [];
+  corridorRects.forEach((rect, index) => {
+    const alreadyKept = keptRect[index];
+    if (alreadyKept !== null) {
+      nodes.push({ rect: alreadyKept, isCirculation: true, fixed: true, reinstates: -1 });
+      return;
+    }
+    const cell = corridorCellRect(rect, strips, index);
+    // Below this it is not a route, it is a gap between two walls.
+    if (rectArea(cell) < MIN_AREA_SQM.corridor) return;
+    nodes.push({ rect: cell, isCirculation: true, fixed: false, reinstates: index });
+  });
+  for (const strip of strips) {
+    for (const p of strip.placements) {
+      nodes.push({
+        rect: stripRect(strip, p.offsetU, p.offsetU + p.thicknessU),
+        isCirculation: false,
+        fixed: true,
+        reinstates: -1,
+      });
+    }
+  }
+
+  // Dijkstra from the core, where the cost of a route is the number of dropped
+  // cells it has to reinstate. Zero-cost edges are fine — every weight is
+  // non-negative — and settling the lowest index first makes ties stable.
+  const cost = nodes.map(() => Number.POSITIVE_INFINITY);
+  const previous = nodes.map(() => -1);
+  const settled = nodes.map(() => false);
+
+  nodes.forEach((node, index) => {
+    if (!node.isCirculation) return;
+    if (sharedEdgeLength(node.rect, core) <= ADJACENT_EDGE_M) return;
+    cost[index] = node.fixed ? 0 : 1;
+  });
+
+  for (;;) {
+    let at = -1;
+    for (let i = 0; i < nodes.length; i += 1) {
+      if (settled[i] || cost[i] === Number.POSITIVE_INFINITY) continue;
+      if (at === -1 || cost[i] < cost[at]) at = i;
+    }
+    if (at === -1) break;
+    settled[at] = true;
+
+    for (let j = 0; j < nodes.length; j += 1) {
+      if (settled[j]) continue;
+      // Exactly one side circulation — the rule openings.ts hangs a door on.
+      if (nodes[at].isCirculation === nodes[j].isCirculation) continue;
+      if (sharedEdgeLength(nodes[at].rect, nodes[j].rect) <= ADJACENT_EDGE_M) continue;
+      const next = cost[at] + (nodes[j].fixed ? 0 : 1);
+      if (next < cost[j]) {
+        cost[j] = next;
+        previous[j] = at;
+      }
+    }
+  }
+
+  // Anything that is being emitted anyway and cannot reach the core for free
+  // pays for its route: every dropped cell on that route comes back.
+  for (let i = 0; i < nodes.length; i += 1) {
+    if (!nodes[i].fixed || cost[i] === 0 || cost[i] === Number.POSITIVE_INFINITY) continue;
+    for (let at = i; at >= 0; at = previous[at]) {
+      const node = nodes[at];
+      if (node.reinstates >= 0) keptRect[node.reinstates] = node.rect;
+    }
+  }
+
+  return keptRect.filter((rect): rect is Rect => rect !== null);
+}
+
+/* ------------------------------------------------------------------ */
 /* Entry point                                                         */
 /* ------------------------------------------------------------------ */
 
@@ -737,10 +899,6 @@ export function solveFloorPlan(input: {
 
   /* --- 3. emit --- */
   const roomCount = strips.reduce((sum, s) => sum + s.placements.length, 0);
-  const servedCorridors = new Set(
-    strips.filter((s) => s.placements.length > 0).map((s) => s.corridorIndex),
-  );
-  const strippedCorridors = new Set(strips.map((s) => s.corridorIndex));
 
   const spaces: PlacedSpace[] = [];
   const emit = (space: Omit<PlacedSpace, "id" | "adjacentSpaceIds">) => {
@@ -751,13 +909,12 @@ export function solveFloorPlan(input: {
     });
   };
 
-  const keptCorridors = corridorRects.filter(
-    (_, index) =>
-      servedCorridors.has(index) ||
-      // A passage-only band (no rooms of its own) still earns its place while
-      // the level has rooms somewhere; on an empty level it is just slack.
-      (!strippedCorridors.has(index) && roomCount > 0),
-  );
+  const keptCorridors = retainedCirculation({
+    corridorRects,
+    strips,
+    core: coreRect,
+    roomCount,
+  });
 
   keptCorridors.forEach((rect, index) => {
     emit({

@@ -27,22 +27,27 @@ const mmToM = (mm: number) => mm / 1000;
  * era. Era drives PBR material selection in the existing pipeline (clean
  * concrete/glass rather than weathered), which is exactly right here.
  */
-const GENERATED_ERA: BuildingEra = "2020+";
+export const GENERATED_ERA: BuildingEra = "2020+";
 
 /**
  * Internal material/structure taxonomy used by the existing PBR and facade
  * pipelines. These are NOT a building-registry lookup — no external data source
  * is consulted — they are the enum the geometry engine already speaks. Mapping
  * to them is what lets a generated building reuse that engine unchanged.
+ *
+ * Exported because the energy seed (`../energy/seed-from-design`) must produce
+ * the SAME codes this compiler stamps on the recipe. Two copies of these tables
+ * would let the material inference and the geometry disagree about what the
+ * building is made of.
  */
-const STRUCTURE_TO_CODE: Record<string, string> = {
+export const STRUCTURE_TO_CODE: Record<string, string> = {
   "rc-frame": "11",
   "bearing-wall": "21",
   "steel-frame": "31",
   hybrid: "41",
 };
 
-const USE_TO_CODE: Record<BuildingUse, string> = {
+export const USE_TO_CODE: Record<BuildingUse, string> = {
   office: "14000",
   residential: "02000",
   retail: "07000",

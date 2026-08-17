@@ -207,6 +207,10 @@ describe("ACCEPTANCE: a U-shaped boundary reaches the recipe and the BIM graph",
 
   it("carries the U into the emitted slab outlines", () => {
     const slabs = chain.snapshot.elements.filter((element) => element.kind === "slab");
+    // Pin the built storeys to the DRAWN storeys first: every later count in
+    // this suite is relative to the generated level list, so without this a
+    // compile regression that silently drops floors 2–3 passes everything.
+    expect(chain.building.levels.map((level) => level.floorNo)).toEqual(FLOORS);
     expect(slabs).toHaveLength(chain.building.levels.length);
     for (const slab of slabs) {
       const outline = outlineOf(slab);
@@ -310,6 +314,10 @@ describe("ACCEPTANCE: an H-shaped boundary reaches the recipe and the BIM graph"
 
   it("carries the H into the emitted slab outlines", () => {
     const slabs = chain.snapshot.elements.filter((element) => element.kind === "slab");
+    // Pin the built storeys to the DRAWN storeys first: every later count in
+    // this suite is relative to the generated level list, so without this a
+    // compile regression that silently drops floors 2–3 passes everything.
+    expect(chain.building.levels.map((level) => level.floorNo)).toEqual(FLOORS);
     expect(slabs).toHaveLength(chain.building.levels.length);
     for (const slab of slabs) {
       const outline = outlineOf(slab);
@@ -395,6 +403,10 @@ describe("ACCEPTANCE: a T-shaped boundary reaches the recipe and the BIM graph",
 
   it("carries the T into the emitted slab outlines", () => {
     const slabs = chain.snapshot.elements.filter((element) => element.kind === "slab");
+    // Pin the built storeys to the DRAWN storeys first: every later count in
+    // this suite is relative to the generated level list, so without this a
+    // compile regression that silently drops floors 2–3 passes everything.
+    expect(chain.building.levels.map((level) => level.floorNo)).toEqual(FLOORS);
     expect(slabs).toHaveLength(chain.building.levels.length);
     for (const slab of slabs) {
       const outline = outlineOf(slab);
@@ -485,6 +497,10 @@ describe("ACCEPTANCE: a trapezoidal boundary keeps its slanted legs through the 
 
   it("carries the trapezoid into the emitted slab outlines", () => {
     const slabs = chain.snapshot.elements.filter((element) => element.kind === "slab");
+    // Pin the built storeys to the DRAWN storeys first: every later count in
+    // this suite is relative to the generated level list, so without this a
+    // compile regression that silently drops floors 2–3 passes everything.
+    expect(chain.building.levels.map((level) => level.floorNo)).toEqual(FLOORS);
     expect(slabs).toHaveLength(chain.building.levels.length);
     for (const slab of slabs) {
       const outline = outlineOf(slab);

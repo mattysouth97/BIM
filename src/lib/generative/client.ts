@@ -10,6 +10,7 @@ import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { BimModelSnapshot } from "@/lib/bim/model/types";
 import type { BuildingPatch, BuildingReview, BuildingSpec } from "./spec/building-spec";
 import type {
+  BlueprintFidelityReport,
   BlueprintSpec,
   BlueprintValidationReport,
 } from "./blueprint";
@@ -284,6 +285,14 @@ export interface BlueprintGenerationResult extends GenerationResult {
   blueprint: BlueprintSpec;
   blueprintValidation: BlueprintValidationReport;
   compiledLocks: string[];
+  /**
+   * MEASURED deviation between the drawing and the building, per dimension.
+   * `runBlueprintGeneration` puts it in every successful payload and the route
+   * streams the payload verbatim, so it is always present here — required, not
+   * optional, because a caller allowed to skip it would show a building with no
+   * evidence of how faithful it is.
+   */
+  fidelity: BlueprintFidelityReport;
 }
 
 export interface GenerateFromBlueprintOptions {

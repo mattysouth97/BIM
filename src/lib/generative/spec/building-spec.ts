@@ -148,9 +148,38 @@ export const OrientationSchema = z.object({
   primaryEntranceFacade: z.enum(["north", "south", "east", "west"]),
 });
 
+/**
+ * Where the site actually is. Present ONLY when a real place was named — a
+ * generated building with no stated location has no region, and the energy
+ * model then discloses its Seoul default rather than borrowing a fabricated
+ * one. `sigunguCd` accepts the 5-digit 시군구 code or its 2-digit 시도 prefix
+ * because that is the honest granularity a prompt usually supports; both
+ * downstream readers (regional climate, ground temperature) key on the first
+ * two digits, so padding a province out to five digits would invent a district.
+ */
+export const SiteRegionSchema = z.object({
+  sigunguCd: z
+    .string()
+    .regex(/^\d{2}(\d{3})?$/)
+    .describe(
+      'Korean 시군구 code ("11110") or its 시도 prefix ("11"). Only when the user named a real Korean location.',
+    ),
+  label: z.string().max(60).describe("Place name as the user gave it.").optional(),
+});
+export type SiteRegion = z.infer<typeof SiteRegionSchema>;
+
 export const SiteSchema = z.object({
   widthMm: provenanced(mm(5_000, 1_000_000, "Site width"), "Site X extent."),
   depthMm: provenanced(mm(5_000, 1_000_000, "Site depth"), "Site Z extent."),
+  /**
+   * Omit unless the prompt names a location. Never infer a region from a
+   * building type, a language, or a plausible guess: an invented site code
+   * silently reroutes the whole energy model to another climate.
+   */
+  region: provenanced(
+    SiteRegionSchema,
+    "Site location, only when the user named one.",
+  ).optional(),
 });
 
 /* ------------------------------------------------------------------ */

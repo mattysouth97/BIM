@@ -12,25 +12,16 @@
 //   P2 strong preference
 //   P3 optimisation / advisory
 
-import {
-  arc,
-  bezier,
-  line,
-  polyline,
-  tessellateCurve,
-  type PlanCurve,
-  type Vec2,
-} from "../geom";
+import { tessellateCurve } from "../geom";
 import {
   segmentEnd,
   segmentStart,
   type BlueprintSpec,
   type BoundaryLoop,
   type CurveSegment,
-  type PointMm,
   type Region,
 } from "./blueprint-spec";
-import { TESSELLATION_TOLERANCE_MM } from "./compile";
+import { segmentToCurve, TESSELLATION_TOLERANCE_MM } from "./segment-curves";
 
 export type BlueprintViolationPriority = "P0" | "P1" | "P2" | "P3";
 export type BlueprintViolationSeverity = "critical" | "warning" | "advisory";
@@ -82,14 +73,16 @@ function violation(
 /* Tessellation                                                        */
 /* ------------------------------------------------------------------ */
 
-// Curves are flattened by `geom/curves.ts`, at the same tolerance
-// `blueprint/compile.ts` compiles them with. Sharing the kernel AND the
-// constant is the whole point: "is this loop closed and does it cross itself"
-// and "what ring does this loop become" have to be statements about the same
-// polygon. A second tessellation here — however carefully written — could put
-// the two on opposite sides of a tolerance, so that a loop passes validation
-// and then fails to compile, or compiles fine after being reported broken, on
-// input neither module actually got wrong.
+// Curves are flattened by `geom/curves.ts`, via the SAME `segmentToCurve`
+// adapter and the SAME `TESSELLATION_TOLERANCE_MM` that `blueprint/compile.ts`
+// compiles them with — both imported from `./segment-curves` rather than
+// reimplemented here. Sharing the kernel AND the constant is the whole point:
+// "is this loop closed and does it cross itself" and "what ring does this
+// loop become" have to be statements about the same polygon. A second
+// tessellation here — however carefully written — could put the two on
+// opposite sides of a tolerance, so that a loop passes validation and then
+// fails to compile, or compiles fine after being reported broken, on input
+// neither module actually got wrong.
 //
 // `geom/` is documented in metres; this module works in millimetres. That is
 // not a conflict, because every function in `geom/` is pure arithmetic that
@@ -109,50 +102,6 @@ const DEDUPE_TOLERANCE_MM = 1e-6;
 const CROSS_EPSILON = 1e-9;
 
 const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.z - b.z);
-
-const pointVec = (p: PointMm): Vec2 => [p.xMm, p.zMm];
-
-/**
- * Blueprint arcs store centre + endpoints + sweep; `geom`'s arc stores centre +
- * radius + start/end angle, where the SIGNED difference carries the direction.
- * The reading is the one `blueprint-spec.ts` promises — radius from
- * |centre→start|, angles from the centre↔endpoint vectors, the sweep unwrapped
- * into the requested direction so a half-turn is never mistaken for its
- * complement — and it is deliberately identical to `compile.ts`'s `arcCurve`.
- */
-function arcCurve(segment: Extract<CurveSegment, { kind: "arc" }>): PlanCurve {
-  const centre = pointVec(segment.centerMm);
-  const start = pointVec(segment.startMm);
-  const end = pointVec(segment.endMm);
-  const radius = Math.hypot(start[0] - centre[0], start[1] - centre[1]);
-  const a0 = Math.atan2(start[1] - centre[1], start[0] - centre[0]);
-  let a1 = Math.atan2(end[1] - centre[1], end[0] - centre[0]);
-  const TAU = Math.PI * 2;
-  if (segment.sweep === "ccw") {
-    while (a1 <= a0) a1 += TAU;
-  } else {
-    while (a1 >= a0) a1 -= TAU;
-  }
-  return arc(centre, radius, a0, a1);
-}
-
-function segmentToCurve(segment: CurveSegment): PlanCurve {
-  switch (segment.kind) {
-    case "line":
-      return line(pointVec(segment.startMm), pointVec(segment.endMm));
-    case "polyline":
-      return polyline(segment.pointsMm.map(pointVec), false);
-    case "bezier":
-      return bezier(
-        pointVec(segment.startMm),
-        pointVec(segment.control1Mm),
-        pointVec(segment.control2Mm),
-        pointVec(segment.endMm),
-      );
-    case "arc":
-      return arcCurve(segment);
-  }
-}
 
 /** The segment as points, millimetres, including both endpoints. */
 export function tessellateSegment(segment: CurveSegment): Pt[] {

@@ -93,14 +93,24 @@ interface PackConfig {
 
 export function generateCore(input: {
   spec: BuildingSpec;
-  /** The level plate bounds, metres. */
+  /**
+   * The region the core must stand in, metres. Usually the level plate bounds;
+   * the pipeline narrows it to the largest SOLID rectangle when the plate has
+   * voids, because a core over a courtyard is not a core.
+   */
   plate: Rect;
+  /**
+   * The point `spec.core.offsetXMm/offsetZMm` are measured from, metres.
+   * Defaults to the centre of `plate`. Pass it whenever `plate` is NOT the
+   * footprint the offsets were written against — see `placeCoreRect`.
+   */
+  offsetOrigin?: readonly [number, number];
   /** Every level the core must serve, sorted ascending. */
   floorNos: number[];
 }): CoreLayout {
-  const { spec, plate, floorNos } = input;
+  const { spec, plate, offsetOrigin, floorNos } = input;
 
-  const rect = placeCoreRect(spec, plate);
+  const rect = placeCoreRect(spec, plate, offsetOrigin);
 
   // The core is one continuous shaft, so every component spans the full served
   // range. Reduced rather than trusting the caller's sort — an unsorted list
@@ -137,8 +147,42 @@ export function generateCore(input: {
 /* Placement                                                           */
 /* ------------------------------------------------------------------ */
 
-function placeCoreRect(spec: BuildingSpec, plate: Rect): Rect {
+/**
+ * THE TWO FRAMES, because getting them confused put cores in the wrong wing.
+ *
+ * `plate` is the region the core must END UP in: the caller's honest answer to
+ * "where is there floor to stand on". Everything positional except the offset
+ * reads from it — `end` pins to its +Z edge, `perimeter-split` to its -X edge,
+ * `central` to its centre, and the final clamp keeps the 1.5 m ring inside it.
+ * That is right: those are all statements ABOUT the available floor.
+ *
+ * `spec.core.offsetXMm/offsetZMm` are not. They are a displacement from the
+ * FOOTPRINT's centre — "Footprint-local offset from the plate centre", per
+ * `spec/building-spec.ts` — and every producer writes them in that one frame:
+ *
+ *   • `provider/heuristic-provider.ts` emits `0.22 × massing.widthMm`, i.e. a
+ *     fraction of the footprint measured from its centre;
+ *   • `blueprint/compile.ts` emits the drawn core's centre in the engine frame,
+ *     whose origin IS the footprint's bounding-box centre (`blueprintPlate-
+ *     Frame` shifts every piece of blueprint geometry by exactly that, and
+ *     `generate/massing.ts` builds every parametric plate centred on the
+ *     origin too). Same number, same frame.
+ *
+ * So when `plate` is not the footprint — the pipeline narrows it to the largest
+ * solid rect on a plate with courtyards — measuring the offset from its centre
+ * counts that narrowing twice and slides the core off by the difference (21.5 m
+ * on the fixture in `__tests__/core-offset-frame.test.ts`). `offsetOrigin` is
+ * that difference made explicit: the caller states which point the offsets were
+ * authored against, and only the offset uses it. Omitted, it degrades to the
+ * plate centre, which is exactly right when `plate` IS the footprint.
+ */
+function placeCoreRect(
+  spec: BuildingSpec,
+  plate: Rect,
+  offsetOrigin?: readonly [number, number],
+): Rect {
   const [plateCx, plateCz] = rectCentre(plate);
+  const [originX, originZ] = offsetOrigin ?? [plateCx, plateCz];
   const marginX = marginFor(rectWidth(plate));
   const marginZ = marginFor(rectDepth(plate));
 
@@ -153,10 +197,10 @@ function placeCoreRect(spec: BuildingSpec, plate: Rect): Rect {
 
   switch (spec.core.strategy.value) {
     case "offset":
-      cx = plateCx + spec.core.offsetXMm / 1000;
+      cx = originX + spec.core.offsetXMm / 1000;
       // offsetZMm is part of the same displacement; ignoring half of a stated
       // offset would silently contradict the spec the user can see.
-      cz = plateCz + spec.core.offsetZMm / 1000;
+      cz = originZ + spec.core.offsetZMm / 1000;
       break;
     case "end":
       // Pushed hard against the +Z end; the clamp decides exactly how far,

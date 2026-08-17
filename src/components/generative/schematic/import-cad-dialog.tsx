@@ -2,24 +2,38 @@
 
 // src/components/generative/schematic/import-cad-dialog.tsx
 //
-// Import a DWG/DXF drawing as a schematic — under review, never behind the
+// Import a DWG/DXF/SVG drawing as a schematic — under review, never behind the
 // user's back.
 //
 // The flow is deliberately three separate acts:
 //
-//   1. READ    — the file becomes a CadDocument through the same path the CAD
-//                viewer uses (DXF text, or DWG via `parseDwgFile`'s converter
-//                tiers). Failures name the file and the reason.
-//   2. CONFIRM — every layer is listed with its entity count and the role that
-//                was GUESSED for it. Nothing is applied until the user has seen
+//   1. READ    — the file becomes geometry through the same path the rest of
+//                the app uses. DXF text and DWG (via `parseDwgFile`'s converter
+//                tiers) become a CadDocument; an SVG is read as text and walked
+//                by `from-svg.ts`. Failures name the file and the reason.
+//   2. CONFIRM — every layer is listed with its count and the role that was
+//                GUESSED for it. Nothing is applied until the user has seen
 //                this table; a guess made from geometry rather than a layer
-//                name says so.
+//                name says so. For SVG, "layer" means an element's
+//                `data-layer` (or `id`), inherited through `<g>` ancestors.
 //   3. ADOPT   — "Use as schematic" hands the interpreted blueprint to the
 //                store as ONE undo step, with the confirmed mapping recorded.
 //
 // The preview re-runs the real import pipeline on every mapping change and
 // draws its output with the editor's own display tessellation, so what is on
 // screen is the blueprint that would be adopted — not an illustration of it.
+//
+// BOTH SOURCES, ONE FLOW. The DXF/DWG and SVG readers differ only in how they
+// reach a segment soup; from there they share the role vocabulary, the guess
+// policy, the interpretation core, the report shape and this table/preview/
+// adopt sequence. The two format-specific facts this dialog states out loud:
+//
+//   · units — a DXF can declare `$INSUNITS`; an SVG never declares a
+//     real-world unit, so its scale comes from the field below and is reported
+//     as ASSUMED until the person importing sets it.
+//   · counts — an SVG layer is counted in EDGES, not entities, and its text
+//     labels are not attributable to a layer at that seam, so the text column
+//     reads "—" rather than a fabricated 0.
 
 import { useCallback, useMemo, useRef, useState } from "react";
 
@@ -33,20 +47,30 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { CadDocument } from "@/lib/cad/doc/types";
+import type { BlueprintSpec } from "@/lib/generative/blueprint/blueprint-spec";
+import { svgToSegments } from "@/lib/generative/blueprint/from-svg";
 import {
   CAD_LAYER_ROLES,
   DEFAULT_ZONE_PROGRAM,
   guessLayerAssignments,
   importCadDocument,
-  summariseLayers,
   type CadImportOutcome,
+  type CadImportReport,
   type CadLayerAssignments,
   type CadLayerRole,
   type CadLayerSummary,
 } from "@/lib/generative/blueprint/import-cad-file";
 import {
-  ACCEPTED_CAD_EXTENSIONS,
+  guessSvgLayerAssignments,
+  importSvgString,
+  type SvgImportOutcome,
+  type SvgReadFacts,
+} from "@/lib/generative/blueprint/import-svg-file";
+import {
+  ACCEPTED_DRAWING_EXTENSIONS,
+  classifyDrawingFile,
   readCadFile,
+  readSvgFile,
   type CadFileFormat,
 } from "@/lib/generative/blueprint/read-cad-file";
 import type { SpaceType } from "@/lib/generative/spec/building-spec";
@@ -72,12 +96,32 @@ const BASIS_NOTE: Record<CadLayerSummary["basis"], string> = {
   "no-match": "no keyword matched, so it is left out unless you say otherwise",
 };
 
-interface LoadedFile {
-  file: File;
-  doc: CadDocument;
-  format: CadFileFormat;
-  layers: CadLayerSummary[];
-  warnings: string[];
+/** What the SVG reader does not read, stated whether or not the file uses it. */
+const SVG_COVERAGE_NOTE =
+  "SVG geometry is read from <line>, <polyline>, <polygon>, <rect> and <path>. " +
+  "<circle>, <ellipse>, <image> and anything reachable only through <use> are not read.";
+
+/** The file, once read — the only thing that differs between the two sources. */
+type LoadedFile =
+  | { kind: "cad"; file: File; doc: CadDocument; format: CadFileFormat; warnings: string[] }
+  | { kind: "svg"; file: File; text: string };
+
+/**
+ * The parts of an import outcome this dialog renders. Both `CadImportOutcome`
+ * and `SvgImportOutcome` satisfy it, which is what lets one table, one preview
+ * and one adopt button serve both readers.
+ */
+type ImportOutcomeView =
+  | { ok: true; blueprint: BlueprintSpec; report: CadImportReport }
+  | { ok: false; error: { code: string; message: string }; report: CadImportReport };
+
+/** The outcome with its source still attached, so SVG-only facts stay typed. */
+type Preview =
+  | { source: "cad"; outcome: CadImportOutcome }
+  | { source: "svg"; outcome: SvgImportOutcome };
+
+function baseName(fileName: string): string {
+  return fileName.replace(/\.(dxf|dwg|svg)$/i, "");
 }
 
 export function ImportCadDialog({
@@ -90,14 +134,27 @@ export function ImportCadDialog({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState<LoadedFile | null>(null);
-  const [assignments, setAssignments] = useState<CadLayerAssignments>({});
+  /**
+   * Roles the user CHANGED. The effective mapping is the guess with these laid
+   * over it, so re-guessing (an SVG scale change moves which loops are
+   * detected, and therefore which layer holds the largest closed shape) never
+   * discards a decision the user already made.
+   */
+  const [overrides, setOverrides] = useState<CadLayerAssignments>({});
+  /** SVG only: millimetres per SVG user unit, as typed and as parsed. */
+  const [unitInput, setUnitInput] = useState("1");
+  const [unitScale, setUnitScale] = useState(1);
+  const [scaleTouched, setScaleTouched] = useState(false);
   const [readError, setReadError] = useState<{ code: string; message: string } | null>(
     null,
   );
 
   const reset = useCallback(() => {
     setLoaded(null);
-    setAssignments({});
+    setOverrides({});
+    setUnitInput("1");
+    setUnitScale(1);
+    setScaleTouched(false);
     setReadError(null);
     setBusy(false);
   }, []);
@@ -106,36 +163,98 @@ export function ImportCadDialog({
     setBusy(true);
     setReadError(null);
     setLoaded(null);
+    setOverrides({});
+    setUnitInput("1");
+    setUnitScale(1);
+    setScaleTouched(false);
     try {
+      const format = classifyDrawingFile(file.name);
+      if (format === null) {
+        setReadError({
+          code: "UNSUPPORTED_EXTENSION",
+          message: `"${file.name}" is not a DXF, DWG or SVG file. Export the drawing as DXF or SVG, or upload the original DWG.`,
+        });
+        return;
+      }
+
+      if (format === "svg") {
+        const result = await readSvgFile(file);
+        if (!result.ok) {
+          setReadError(result.error);
+          return;
+        }
+        setLoaded({ kind: "svg", file, text: result.text });
+        return;
+      }
+
       const result = await readCadFile(file);
       if (!result.ok) {
         setReadError(result.error);
         return;
       }
       setLoaded({
+        kind: "cad",
         file,
         doc: result.doc,
         format: result.format,
-        layers: summariseLayers(result.doc),
         warnings: result.warnings,
       });
-      setAssignments(guessLayerAssignments(result.doc));
     } finally {
       setBusy(false);
     }
   }, []);
 
+  // Guesses are derived, never stored: for SVG they depend on the unit scale
+  // (loop detection has a 1 m² floor), so a scale correction re-guesses the
+  // untouched layers instead of stranding a table full of "ignore".
+  const guesses: CadLayerAssignments = useMemo(() => {
+    if (!loaded) return {};
+    if (loaded.kind === "cad") return guessLayerAssignments(loaded.doc);
+    try {
+      return guessSvgLayerAssignments(svgToSegments(loaded.text, unitScale).segments);
+    } catch {
+      // Malformed SVG has no layers to guess. The failure itself is not
+      // swallowed — `importSvgString` below reports it with the parser's own
+      // message, which is what the user sees.
+      return {};
+    }
+  }, [loaded, unitScale]);
+
+  const assignments: CadLayerAssignments = useMemo(
+    () => ({ ...guesses, ...overrides }),
+    [guesses, overrides],
+  );
+
   // The preview IS the import: same function, same mapping, same result.
-  const outcome: CadImportOutcome | null = useMemo(() => {
+  const preview: Preview | null = useMemo(() => {
     if (!loaded) return null;
-    return importCadDocument(loaded.doc, assignments, {
-      fileName: loaded.file.name,
-      name: loaded.file.name.replace(/\.(dxf|dwg)$/i, ""),
-    });
-  }, [loaded, assignments]);
+    if (loaded.kind === "cad") {
+      return {
+        source: "cad",
+        outcome: importCadDocument(loaded.doc, assignments, {
+          fileName: loaded.file.name,
+          name: baseName(loaded.file.name),
+        }),
+      };
+    }
+    return {
+      source: "svg",
+      outcome: importSvgString(loaded.text, assignments, {
+        fileName: loaded.file.name,
+        name: baseName(loaded.file.name),
+        svgUnitsToMm: unitScale,
+        scaleConfirmed: scaleTouched,
+      }),
+    };
+  }, [loaded, assignments, unitScale, scaleTouched]);
+
+  const outcome: ImportOutcomeView | null = preview?.outcome ?? null;
+  const layers = outcome?.report.layers ?? [];
+  const svgFacts: SvgReadFacts | null =
+    preview?.source === "svg" ? preview.outcome.report.svg : null;
 
   const setRole = useCallback((layer: string, role: CadLayerRole) => {
-    setAssignments((current) => ({
+    setOverrides((current) => ({
       ...current,
       [layer]: {
         role,
@@ -147,21 +266,37 @@ export function ImportCadDialog({
   }, []);
 
   const setProgram = useCallback((layer: string, program: SpaceType) => {
-    setAssignments((current) => ({ ...current, [layer]: { role: "zone", program } }));
+    setOverrides((current) => ({ ...current, [layer]: { role: "zone", program } }));
+  }, []);
+
+  const onUnitInput = useCallback((raw: string) => {
+    setUnitInput(raw);
+    const parsed = Number.parseFloat(raw);
+    // Only a usable scale is committed; an in-progress edit ("2.", "1e") keeps
+    // the last valid one, and the field says so rather than silently reverting.
+    if (Number.isFinite(parsed) && parsed > 0) {
+      setUnitScale(parsed);
+      setScaleTouched(true);
+    }
   }, []);
 
   const adopt = useCallback(() => {
     if (!loaded || !outcome?.ok) return;
     useBlueprintStore.getState().loadBlueprint(outcome.blueprint, {
       fileName: loaded.file.name,
-      format: loaded.format,
-      documentId: loaded.doc.id,
+      format: loaded.kind === "cad" ? loaded.format : "svg",
+      documentId: outcome.report.documentId,
       assignments,
       report: outcome.report,
     });
     onOpenChange(false);
     reset();
   }, [loaded, outcome, assignments, onOpenChange, reset]);
+
+  const unitValid = (() => {
+    const parsed = Number.parseFloat(unitInput);
+    return Number.isFinite(parsed) && parsed > 0;
+  })();
 
   return (
     <Dialog
@@ -173,7 +308,7 @@ export function ImportCadDialog({
     >
       <DialogContent className="max-h-[88vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Import DWG/DXF as a schematic</DialogTitle>
+          <DialogTitle>Import DWG/DXF/SVG as a schematic</DialogTitle>
           <DialogDescription>
             The drawing is read into a blueprint you review here first. Layer roles
             below are guesses — confirm them before adopting anything.
@@ -185,7 +320,7 @@ export function ImportCadDialog({
             <input
               ref={inputRef}
               type="file"
-              accept={ACCEPTED_CAD_EXTENSIONS.join(",")}
+              accept={ACCEPTED_DRAWING_EXTENSIONS.join(",")}
               className="sr-only"
               data-testid="import-cad-file-input"
               onChange={(event) => {
@@ -200,15 +335,32 @@ export function ImportCadDialog({
               onClick={() => inputRef.current?.click()}
               disabled={busy}
             >
-              {busy ? "Reading…" : loaded ? "Choose another file" : "Choose a .dxf or .dwg file"}
+              {busy
+                ? "Reading…"
+                : loaded
+                  ? "Choose another file"
+                  : "Choose a .dxf, .dwg or .svg file"}
             </Button>
             {loaded && (
               <span className="font-mono text-[11px] text-muted-foreground">
-                {loaded.file.name} · {loaded.format.toUpperCase()} ·{" "}
-                {loaded.doc.stats.mapped} entities · {loaded.layers.length} layers
+                {loaded.file.name} ·{" "}
+                {loaded.kind === "cad"
+                  ? `${loaded.format.toUpperCase()} · ${loaded.doc.stats.mapped} entities`
+                  : `SVG · ${svgFacts?.segmentCount ?? 0} edges`}{" "}
+                · {layers.length} layers
               </span>
             )}
           </div>
+
+          {loaded?.kind === "svg" && (
+            <SvgScaleField
+              value={unitInput}
+              valid={unitValid}
+              activeScale={unitScale}
+              touched={scaleTouched}
+              onChange={onUnitInput}
+            />
+          )}
 
           {readError && (
             <div role="alert" className="rounded border border-destructive/40 px-3 py-2">
@@ -219,13 +371,24 @@ export function ImportCadDialog({
             </div>
           )}
 
-          {loaded && loaded.warnings.length > 0 && (
+          {loaded && (
             <ul className="flex flex-col gap-0.5">
-              {loaded.warnings.map((warning) => (
-                <li key={warning} className="text-[11px] text-amber-700">
-                  {warning}
+              {loaded.kind === "cad" &&
+                loaded.warnings.map((warning) => (
+                  <li key={warning} className="text-[11px] text-amber-700">
+                    {warning}
+                  </li>
+                ))}
+              {loaded.kind === "svg" && (
+                <li className="text-[11px] text-muted-foreground">{SVG_COVERAGE_NOTE}</li>
+              )}
+              {svgFacts && svgFacts.unlayeredSegmentCount > 0 && (
+                <li className="text-[11px] text-amber-700">
+                  {svgFacts.unlayeredSegmentCount} edge(s) carry no data-layer or id, so
+                  no role can be given to them. They still take part in loop detection
+                  and cannot be excluded.
                 </li>
-              ))}
+              )}
             </ul>
           )}
 
@@ -233,8 +396,10 @@ export function ImportCadDialog({
             <div className="flex flex-col gap-4 lg:flex-row">
               <div className="min-w-0 flex-1">
                 <LayerTable
-                  layers={loaded.layers}
+                  layers={layers}
                   assignments={assignments}
+                  countLabel={loaded.kind === "svg" ? "Edges" : "Entities"}
+                  showTextCounts={loaded.kind === "cad"}
                   onRole={setRole}
                   onProgram={setProgram}
                 />
@@ -242,7 +407,7 @@ export function ImportCadDialog({
 
               <div className="flex w-full shrink-0 flex-col gap-2 lg:w-[420px]">
                 <BlueprintPreview outcome={outcome} />
-                <ImportSummary outcome={outcome} />
+                <ImportSummary outcome={outcome} svgFacts={svgFacts} />
               </div>
             </div>
           )}
@@ -262,17 +427,81 @@ export function ImportCadDialog({
 }
 
 /* ------------------------------------------------------------------ */
+/* SVG scale                                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * An SVG user unit means nothing on its own, so this field is the only place
+ * the real-world size of an SVG import can come from. Untouched, the import is
+ * reported as an ASSUMED scale (and lands carrying SCALE_UNCALIBRATED), which
+ * is what the note below says in words.
+ */
+function SvgScaleField({
+  value,
+  valid,
+  activeScale,
+  touched,
+  onChange,
+}: {
+  value: string;
+  valid: boolean;
+  activeScale: number;
+  touched: boolean;
+  onChange: (raw: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1 rounded border px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2 text-[11px]">
+        <label htmlFor="import-svg-unit-scale">1 SVG user unit =</label>
+        <input
+          id="import-svg-unit-scale"
+          data-testid="import-svg-unit-scale"
+          type="number"
+          min="0"
+          step="any"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={cn(
+            "w-24 rounded border bg-background px-1 py-0.5 font-mono text-[11px]",
+            !valid && "border-destructive",
+          )}
+        />
+        <span>mm</span>
+      </div>
+      <p
+        className={cn("text-[10px]", touched ? "text-muted-foreground" : "text-amber-700")}
+        data-testid="import-svg-scale-note"
+      >
+        {touched
+          ? `Scale supplied by you: 1 unit = ${activeScale} mm. The file declares no real-world unit — this is your statement, not the drawing's.`
+          : "Assumed: the SVG declares no real-world unit, so 1 unit is being read as 1 mm. Sizes are proportional until you set this."}
+      </p>
+      {!valid && (
+        <p className="text-[10px] text-destructive">
+          Not a positive number — still reading at {activeScale} mm per unit.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Mapping table                                                       */
 /* ------------------------------------------------------------------ */
 
 function LayerTable({
   layers,
   assignments,
+  countLabel,
+  showTextCounts,
   onRole,
   onProgram,
 }: {
   layers: CadLayerSummary[];
   assignments: CadLayerAssignments;
+  countLabel: string;
+  /** False for SVG: labels are not attributable to a layer at that seam. */
+  showTextCounts: boolean;
   onRole: (layer: string, role: CadLayerRole) => void;
   onProgram: (layer: string, program: SpaceType) => void;
 }) {
@@ -282,7 +511,7 @@ function LayerTable({
         <thead className="bg-muted/50">
           <tr>
             <th className="px-2 py-1 font-medium">Layer</th>
-            <th className="px-2 py-1 font-medium">Entities</th>
+            <th className="px-2 py-1 font-medium">{countLabel}</th>
             <th className="px-2 py-1 font-medium">Closed</th>
             <th className="px-2 py-1 font-medium">Largest</th>
             <th className="px-2 py-1 font-medium">Read as</th>
@@ -299,16 +528,31 @@ function LayerTable({
                   <div className="text-[10px] text-muted-foreground">
                     guessed {layer.guess.role} — {BASIS_NOTE[layer.basis]}
                   </div>
-                  {layer.entityCount > 0 && layer.textCount === layer.entityCount && (
-                    <div className="text-[10px] text-muted-foreground">
-                      text only — its labels are read whatever role you pick
-                    </div>
-                  )}
+                  {showTextCounts &&
+                    layer.entityCount > 0 &&
+                    layer.textCount === layer.entityCount && (
+                      <div className="text-[10px] text-muted-foreground">
+                        text only — its labels are read whatever role you pick
+                      </div>
+                    )}
                 </td>
                 <td className="px-2 py-1 font-mono">
                   {layer.entityCount}
-                  {layer.textCount > 0 && (
-                    <span className="text-muted-foreground"> ({layer.textCount} text)</span>
+                  {showTextCounts ? (
+                    layer.textCount > 0 && (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        ({layer.textCount} text)
+                      </span>
+                    )
+                  ) : (
+                    <span
+                      className="text-muted-foreground"
+                      title="SVG labels are not attributable to a layer, so no per-layer text count exists"
+                    >
+                      {" "}
+                      (text —)
+                    </span>
                   )}
                 </td>
                 <td className="px-2 py-1 font-mono">{layer.closedShapeCount}</td>
@@ -367,7 +611,7 @@ function LayerTable({
 /* Preview + report                                                    */
 /* ------------------------------------------------------------------ */
 
-function BlueprintPreview({ outcome }: { outcome: CadImportOutcome }) {
+function BlueprintPreview({ outcome }: { outcome: ImportOutcomeView }) {
   const shapes = useMemo(
     () => (outcome.ok ? schematicShapes(outcome.blueprint) : []),
     [outcome],
@@ -475,7 +719,13 @@ function BlueprintPreview({ outcome }: { outcome: CadImportOutcome }) {
   );
 }
 
-function ImportSummary({ outcome }: { outcome: CadImportOutcome }) {
+function ImportSummary({
+  outcome,
+  svgFacts,
+}: {
+  outcome: ImportOutcomeView;
+  svgFacts: SvgReadFacts | null;
+}) {
   const { report } = outcome;
   const loops = report.loops;
 
@@ -495,11 +745,40 @@ function ImportSummary({ outcome }: { outcome: CadImportOutcome }) {
         )}
       </div>
 
-      <div className={report.units.declared ? "text-muted-foreground" : "text-amber-700"}>
-        {report.units.declared
-          ? `units: $INSUNITS ${report.units.insUnits} → ${report.units.unitScaleToMeters} m/unit → mm ×1000 (confidence ${report.units.calibrationConfidence})`
-          : `units assumed: ${report.units.assumption} (confidence ${report.units.calibrationConfidence})`}
-      </div>
+      {svgFacts ? (
+        <>
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-muted-foreground">
+            <span>edges {svgFacts.segmentCount}</span>
+            <span>labels {svgFacts.labelCount}</span>
+            {svgFacts.ignoredSegmentCount > 0 && (
+              <span>ignored {svgFacts.ignoredSegmentCount}</span>
+            )}
+            {svgFacts.unlayeredSegmentCount > 0 && (
+              <span className="text-amber-700">
+                unlayered {svgFacts.unlayeredSegmentCount}
+              </span>
+            )}
+          </div>
+          <div
+            className={
+              svgFacts.scale.confirmed ? "text-muted-foreground" : "text-amber-700"
+            }
+            data-testid="import-svg-scale-report"
+          >
+            {`scale: 1 unit → ${svgFacts.scale.svgUnitsToMm} mm (${
+              svgFacts.scale.confirmed ? "stated at import" : "assumed"
+            }, confidence ${svgFacts.scale.calibrationConfidence})`}
+          </div>
+        </>
+      ) : (
+        <div
+          className={report.units.declared ? "text-muted-foreground" : "text-amber-700"}
+        >
+          {report.units.declared
+            ? `units: $INSUNITS ${report.units.insUnits} → ${report.units.unitScaleToMeters} m/unit → mm ×1000 (confidence ${report.units.calibrationConfidence})`
+            : `units assumed: ${report.units.assumption} (confidence ${report.units.calibrationConfidence})`}
+        </div>
+      )}
 
       {report.boundaryLayer && (
         <div className="text-muted-foreground">
