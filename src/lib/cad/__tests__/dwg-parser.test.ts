@@ -279,4 +279,146 @@ describe("parseDwgFile", () => {
       result.warnings.some((w) => w.includes("no DXF output")),
     ).toBe(true);
   });
+
+  // -------------------------------------------------------------------------
+  // Version-gated tier selection — a tier that cannot read the detected
+  // version is SKIPPED with that reason, never attempted.
+  // -------------------------------------------------------------------------
+
+  describe("tier gating and diagnostics", () => {
+    /** Outcome for one tier, or undefined when it was never considered. */
+    const outcomeFor = (
+      result: Awaited<ReturnType<typeof parseDwgFile>>,
+      tier: string,
+    ) => result.diagnostics.outcomes.find((o) => o.tier === tier);
+
+    it("skips libdxfrw for AC1032 instead of letting it fail obscurely", async () => {
+      mockedLibreDwg.mockReset().mockResolvedValue(LIBREDWG_DXF);
+      globalThis.fetch = vi.fn();
+
+      const result = await parseDwgFile(
+        makeFile("modern.dwg", headerBuffer("AC1032", 1024)),
+      );
+
+      const libdxfrw = outcomeFor(result, "libdxfrw");
+      expect(libdxfrw?.status).toBe("skipped");
+      expect(libdxfrw?.detail).toContain("AC1032");
+      // …and the skip reason names the ceiling, so the user learns WHY.
+      expect(libdxfrw?.detail).toContain("AutoCAD 2013");
+    });
+
+    it("attempts libdxfrw for AC1027, which it does support", async () => {
+      mockedLibreDwg.mockReset().mockResolvedValue(LIBREDWG_DXF);
+      globalThis.fetch = vi.fn();
+
+      const result = await parseDwgFile(
+        makeFile("legacy.dwg", headerBuffer("AC1027", 1024)),
+      );
+
+      // No WASM in vitest, so it is attempted and fails — but attempted.
+      expect(outcomeFor(result, "libdxfrw")?.status).toBe("failed");
+    });
+
+    it("records the detected version on every result, success or failure", async () => {
+      mockedLibreDwg.mockReset().mockResolvedValue(LIBREDWG_DXF);
+      globalThis.fetch = vi.fn();
+
+      const ok = await parseDwgFile(makeFile("a.dwg", headerBuffer("AC1032", 512)));
+      expect(ok.diagnostics.version).toMatchObject({
+        versionId: "AC1032",
+        label: "AutoCAD 2018",
+        known: true,
+      });
+
+      mockedLibreDwg.mockReset().mockRejectedValue(new Error("nope"));
+      globalThis.fetch = vi
+        .fn()
+        .mockResolvedValue(new Response("{}", { status: 502 }));
+      const bad = await parseDwgFile(makeFile("b.dwg", headerBuffer("AC1032", 512)));
+      expect(bad.diagnostics.version?.versionId).toBe("AC1032");
+    });
+
+    it("marks the succeeding tier and stops there", async () => {
+      mockedLibreDwg.mockReset().mockResolvedValue(LIBREDWG_DXF);
+      const fetchSpy = vi.fn();
+      globalThis.fetch = fetchSpy;
+
+      const result = await parseDwgFile(
+        makeFile("modern.dwg", headerBuffer("AC1032", 1024)),
+      );
+
+      expect(outcomeFor(result, "libredwg")?.status).toBe("succeeded");
+      // The server tier is never even considered once a tier succeeded.
+      expect(outcomeFor(result, "server")).toBeUndefined();
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it("keeps going after a tier throws — one failure never aborts the chain", async () => {
+      mockedLibreDwg
+        .mockReset()
+        .mockRejectedValue(new Error("Failed to resolve module specifier"));
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(LIBREDWG_DXF, { status: 200 }),
+      );
+
+      const result = await parseDwgFile(
+        makeFile("modern.dwg", headerBuffer("AC1032", 1024)),
+      );
+
+      expect(outcomeFor(result, "libredwg")?.status).toBe("failed");
+      expect(outcomeFor(result, "libredwg")?.detail).toContain(
+        "Failed to resolve module specifier",
+      );
+      expect(outcomeFor(result, "server")?.status).toBe("succeeded");
+      expect(result.candidates).toHaveLength(1);
+    });
+
+    it("surfaces the server's own reason as the server tier's failure detail", async () => {
+      mockedLibreDwg.mockReset().mockRejectedValue(new Error("boom"));
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: "AutoCAD 2018 (AC1032) 파일을 서버에서 변환하지 못했습니다",
+            detail: "LibreDWG: 해독 실패",
+          }),
+          { status: 502, headers: { "content-type": "application/json" } },
+        ),
+      );
+
+      const result = await parseDwgFile(
+        makeFile("modern.dwg", headerBuffer("AC1032", 1024)),
+      );
+
+      expect(outcomeFor(result, "server")?.detail).toContain("LibreDWG: 해독 실패");
+    });
+
+    it("reports every tier's outcome in the final failure warning", async () => {
+      mockedLibreDwg.mockReset().mockRejectedValue(new Error("wasm gone"));
+      globalThis.fetch = vi
+        .fn()
+        .mockResolvedValue(new Response("{}", { status: 502 }));
+
+      const result = await parseDwgFile(
+        makeFile("modern.dwg", headerBuffer("AC1032", 1024)),
+      );
+
+      expect(result.diagnostics.outcomes).toHaveLength(3);
+      expect(result.diagnostics.outcomes.map((o) => o.status)).toEqual([
+        "skipped",
+        "failed",
+        "failed",
+      ]);
+      // The headline names the format rather than repeating generic advice.
+      expect(result.warnings.at(-1)).toContain("AutoCAD 2018 (AC1032)");
+    });
+
+    it("reports a non-DWG upload as a bad file, with no tier outcomes", async () => {
+      const result = await parseDwgFile(makeFile("bad.dwg", headerBuffer("NOTDWG")));
+      expect(result.diagnostics.version).toBeNull();
+      expect(result.diagnostics.outcomes).toEqual([]);
+      expect(result.warnings.some((w) => w.includes("DWG 파일로 보이지 않습니다"))).toBe(
+        true,
+      );
+    });
+  });
 });

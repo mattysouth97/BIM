@@ -126,6 +126,41 @@ describe("readCadFile — DWG seam", () => {
     expect(result.warnings).toHaveLength(2);
   });
 
+  it("reports the DWG version and every tier's outcome when diagnostics exist", async () => {
+    const convertDwg = vi.fn(async () => ({
+      warnings: ["something generic and unhelpful"],
+      diagnostics: {
+        version: {
+          versionId: "AC1032",
+          label: "AutoCAD 2018",
+          year: 2018,
+          known: true,
+          fileSize: 2048,
+        },
+        outcomes: [
+          { tier: "libdxfrw" as const, status: "skipped" as const, detail: "AC1032 미지원" },
+          { tier: "libredwg" as const, status: "failed" as const, detail: "wasm 404" },
+          { tier: "server" as const, status: "failed" as const, detail: "502" },
+        ],
+      },
+    }));
+
+    const result = await readCadFile(file("plan.dwg", new Uint8Array([1, 2, 3])), {
+      convertDwg,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe("DWG_CONVERSION_FAILED");
+    // The headline names the format instead of repeating stock advice…
+    expect(result.error.message).toContain("AutoCAD 2018 (AC1032)");
+    expect(result.error.message).toContain("plan.dwg");
+    // …and each tier is accounted for, skip reason included.
+    expect(result.error.detail).toHaveLength(3);
+    expect(result.error.detail![0]).toContain("AC1032 미지원");
+    expect(result.error.detail![1]).toContain("wasm 404");
+  });
+
   it("does not call the converter for a DXF", async () => {
     const convertDwg = vi.fn(async () => ({ warnings: [] }));
     await readCadFile(file("plan.dxf", DXF_TEXT), { convertDwg });

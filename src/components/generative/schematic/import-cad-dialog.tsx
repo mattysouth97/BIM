@@ -145,9 +145,12 @@ export function ImportCadDialog({
   const [unitInput, setUnitInput] = useState("1");
   const [unitScale, setUnitScale] = useState(1);
   const [scaleTouched, setScaleTouched] = useState(false);
-  const [readError, setReadError] = useState<{ code: string; message: string } | null>(
-    null,
-  );
+  const [readError, setReadError] = useState<{
+    code: string;
+    message: string;
+    /** Per-step explanation of the headline (DWG: one line per tier). */
+    detail?: string[];
+  } | null>(null);
 
   const reset = useCallback(() => {
     setLoaded(null);
@@ -365,6 +368,15 @@ export function ImportCadDialog({
           {readError && (
             <div role="alert" className="rounded border border-destructive/40 px-3 py-2">
               <p className="text-xs">{readError.message}</p>
+              {readError.detail && readError.detail.length > 0 && (
+                <ul className="mt-1.5 flex flex-col gap-0.5">
+                  {readError.detail.map((line) => (
+                    <li key={line} className="text-[11px] text-muted-foreground">
+                      · {line}
+                    </li>
+                  ))}
+                </ul>
+              )}
               <p className="mt-1 font-mono text-[10px] text-muted-foreground">
                 {readError.code}
               </p>

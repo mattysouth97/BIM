@@ -15,6 +15,10 @@
 
 import { mapDxfTextToDoc } from "@/lib/cad/doc/map-dxf-to-doc";
 import type { CadDocument } from "@/lib/cad/doc/types";
+import {
+  summariseDwgFailure,
+  type DwgDiagnostics,
+} from "@/lib/cad/dwg-version";
 
 /**
  * Drawing formats the schematic importer accepts. `"svg"` does NOT become a
@@ -35,6 +39,11 @@ export interface DwgConversionResult {
   /** Converted DXF text; absent when every conversion tier failed. */
   dxfText?: string;
   warnings: string[];
+  /**
+   * What the file is and what every tier did about it. Present whenever the
+   * DWG tier chain ran, so a failure can name the format instead of guessing.
+   */
+  diagnostics?: DwgDiagnostics;
 }
 
 export interface ReadCadFileDeps {
@@ -48,6 +57,18 @@ export type CadFileReadErrorCode =
   | "DXF_UNPARSEABLE"
   | "EMPTY_DRAWING";
 
+/**
+ * A typed failure. `detail` holds per-step lines that explain the headline —
+ * for a DWG, one line per conversion tier saying whether it was attempted or
+ * skipped and why. The `{ code, message }` shape is unchanged; `detail` is
+ * additive, so callers that only render the message keep working.
+ */
+export interface CadFileReadError {
+  code: CadFileReadErrorCode;
+  message: string;
+  detail?: string[];
+}
+
 export type CadFileReadResult =
   | {
       ok: true;
@@ -58,7 +79,7 @@ export type CadFileReadResult =
     }
   | {
       ok: false;
-      error: { code: CadFileReadErrorCode; message: string };
+      error: CadFileReadError;
       warnings: string[];
     };
 
@@ -130,6 +151,7 @@ async function convertDwgViaViewerPipeline(file: File): Promise<DwgConversionRes
   return {
     ...(parsed.dxfText ? { dxfText: parsed.dxfText } : {}),
     warnings: parsed.warnings,
+    diagnostics: parsed.diagnostics,
   };
 }
 
@@ -158,13 +180,22 @@ export async function readCadFile(
     const converted = await convert(file);
     warnings.push(...converted.warnings);
     if (!converted.dxfText) {
+      // Prefer the assembled diagnostic — it names the DWG version and lists
+      // each tier's outcome. Only when the tier chain produced no diagnostics
+      // at all (an injected converter in tests) does this fall back to the
+      // last warning, and then to generic advice.
+      const report = converted.diagnostics
+        ? summariseDwgFailure(converted.diagnostics, file.name)
+        : null;
       return {
         ok: false,
         error: {
           code: "DWG_CONVERSION_FAILED",
           message:
+            report?.message ??
             converted.warnings[converted.warnings.length - 1] ??
             "The DWG could not be converted to DXF. In your CAD tool, save it as 'AutoCAD 2013 DWG' or export DXF, then try again.",
+          ...(report && report.detail.length > 0 ? { detail: report.detail } : {}),
         },
         warnings,
       };

@@ -1,26 +1,34 @@
 // src/lib/cad/dwg-parser.ts
-// Client-side DWG → DXF conversion using the libdxfrw WASM module.
+// Client-side DWG → DXF conversion, tried across three tiers.
 //
-// Converts DWG binary data to DXF text entirely in the browser via
-// fileHandler.fileImport() + fileHandler.fileExport(), then pipes the
-// result through parseDxfText() so the rest of the pipeline (unit
-// conversion, candidate ranking, area filtering) stays the same.
+//   1. libdxfrw WASM   (~1.4 MB, /wasm/libdxfrw.js)      R10 … AC1027 (2013)
+//   2. LibreDWG WASM   (~10 MB, lazy npm chunk)          R10 … AC1032 (2018+)
+//   3. /api/cad/convert (LibreDWG under Node, + optional external binary)
 //
-// The WASM module (~1.4 MB) is lazy-loaded on first use and cached.
-// Supports AutoCAD R14 through AutoCAD 2020 DWG files.
+// The DWG version is read from the file's 6-byte header BEFORE any tier runs.
+// A tier that provably cannot read that version is skipped with that reason
+// rather than attempted — an attempt would fail with a message about internal
+// parser state, which tells a user nothing about their file. Every tier's
+// outcome is recorded, and a total failure reports the whole list.
+//
+// Each tier is independently guarded: one tier throwing never aborts the
+// chain, it only records a `failed` outcome and moves to the next.
 
 import { parseDxfText, type ParsedDxf } from "./dxf-parser";
+import {
+  readDwgVersion,
+  tierSupports,
+  summariseDwgFailure,
+  formatTierOutcome,
+  type DwgDiagnostics,
+  type DwgTierName,
+  type DwgTierOutcome,
+  type DwgVersionInfo,
+} from "./dwg-version";
 
-/** Recognised DWG version strings (bytes 0–5 of the file header). */
-export const DWG_VERSIONS: Record<string, string> = {
-  AC1014: "AutoCAD R14 (1997)",
-  AC1015: "AutoCAD 2000",
-  AC1018: "AutoCAD 2004",
-  AC1021: "AutoCAD 2007",
-  AC1024: "AutoCAD 2010",
-  AC1027: "AutoCAD 2013",
-  AC1032: "AutoCAD 2018+",
-};
+// Re-exported so existing importers (viewer, upload stage) keep working.
+export { DWG_VERSIONS, readDwgVersion } from "./dwg-version";
+export type { DwgVersionInfo, DwgDiagnostics, DwgTierOutcome } from "./dwg-version";
 
 export interface DwgHeaderInfo {
   versionId: string;
@@ -31,21 +39,17 @@ export interface DwgHeaderInfo {
 /**
  * Read and validate the DWG binary header.
  *
- * Returns `null` when the buffer is too small or does not start with a
- * recognised "ACxxxx" magic string.
+ * Thin adapter over `readDwgVersion` kept for callers that want the flat
+ * `{ versionId, versionLabel, fileSize }` shape. Returns `null` when the
+ * buffer is too small or does not start with a well-formed "ACxxxx" tag.
  */
 export function readDwgHeader(buffer: ArrayBuffer): DwgHeaderInfo | null {
-  if (buffer.byteLength < 6) return null;
-
-  const bytes = new Uint8Array(buffer, 0, 6);
-  const versionId = String.fromCharCode(...bytes);
-
-  if (!/^AC\d{4}$/.test(versionId)) return null;
-
+  const version = readDwgVersion(buffer);
+  if (!version) return null;
   return {
-    versionId,
-    versionLabel: DWG_VERSIONS[versionId] ?? "Unknown",
-    fileSize: buffer.byteLength,
+    versionId: version.versionId,
+    versionLabel: version.label,
+    fileSize: version.fileSize,
   };
 }
 
@@ -79,8 +83,19 @@ async function getWasmModule(): Promise<any> {
       locateFile: (name: string) => `/wasm/${name}`,
     });
 
-    if (typeof mod.DRW_FileHandler !== "object" || !mod.DRW_FileHandler) {
-      throw new Error("WASM module loaded but DRW_FileHandler is missing");
+    // Embind exposes a bound C++ class as its CONSTRUCTOR — a function, not an
+    // object. The original guard demanded `typeof === "object"` and so rejected
+    // every successfully-loaded module, killing tier 1 for all DWG versions
+    // (not just the AC1032 ones it genuinely cannot read). Check for the thing
+    // actually used below: a constructor whose instances have fileImport.
+    if (
+      typeof mod.DRW_FileHandler !== "function" ||
+      typeof mod.DRW_FileHandler.prototype?.fileImport !== "function" ||
+      typeof mod.DRW_Database !== "function"
+    ) {
+      throw new Error(
+        "libdxfrw WASM loaded but does not expose the DRW_FileHandler/DRW_Database classes",
+      );
     }
 
     return mod;
@@ -116,82 +131,142 @@ export interface ParseDwgOptions {
   signal?: AbortSignal;
 }
 
+export type ParsedDwg = ParsedDxf & {
+  dxfText?: string;
+  /** What the file is, and what every tier did about it. Always present. */
+  diagnostics: DwgDiagnostics;
+};
+
 /**
- * Convert a DWG file to `ParsedDxf` using the client-side WASM converter.
+ * What one conversion attempt produced.
  *
- * Flow: validate header → load WASM (lazy) → DWG→DXF via libdxfrw
- *       fileImport/fileExport → parseDxfText().
+ * `dxfText === null` means the tier ran cleanly but yielded nothing, and the
+ * chain continues. `parsed` lets a tier hand back candidates it already parsed
+ * (the server tier parses the response itself); when absent the caller parses
+ * `dxfText`. `detail` overrides the tier's generic empty-output message with a
+ * specific reason — the server route's own explanation of why it declined.
+ */
+interface TierResult {
+  dxfText: string | null;
+  parsed?: ParsedDxf;
+  detail?: string;
+}
+
+interface Tier {
+  name: DwgTierName;
+  run: () => Promise<TierResult>;
+  /** Warning text when the tier runs but yields no output and gives no reason. */
+  emptyMessage: string;
+  /** Prefix for the warning text when the tier throws. */
+  failurePrefix: string;
+}
+
+/**
+ * Convert a DWG file to `ParsedDxf` using the tier chain above.
  *
- * Falls back to the server route `/api/cad/convert` if the WASM module
- * cannot be loaded (e.g. SSR context or script-loading failure).
+ * On success the converted `dxfText` is returned alongside the parsed
+ * candidates — callers that build a CadDocument (viewer, schematic import)
+ * have nothing to work with without it.
  */
 export async function parseDwgFile(
   file: File,
   options?: ParseDwgOptions,
-): Promise<ParsedDxf & { dxfText?: string }> {
+): Promise<ParsedDwg> {
   const warnings: string[] = [];
+  const outcomes: DwgTierOutcome[] = [];
 
   const buffer = await file.arrayBuffer();
-  const header = readDwgHeader(buffer);
+  const version: DwgVersionInfo | null = readDwgVersion(buffer);
 
-  if (!header) {
+  if (!version) {
+    const diagnostics: DwgDiagnostics = { version: null, outcomes };
     return {
       candidates: [],
       unitScaleToMeters: 1,
       warnings: [
         "File does not appear to be a valid DWG — missing AC‑version header.",
+        summariseDwgFailure(diagnostics, file.name).message,
       ],
+      diagnostics,
     };
   }
 
-  if (header.versionLabel === "Unknown") {
+  if (!version.known) {
     warnings.push(
-      `Unrecognised DWG version '${header.versionId}' — conversion may fail.`,
+      `Unrecognised DWG version '${version.versionId}' — conversion may fail.`,
     );
   }
 
-  // --- Tier 1: libdxfrw WASM (fast, 1.4 MB; best for R14–2013) ------------
-  try {
-    const dxfText = await convertDwgToDxf(buffer);
-    if (dxfText) {
-      const parsed = parseDxfText(dxfText);
-      return { ...parsed, warnings: [...warnings, ...parsed.warnings], dxfText };
+  const tiers: Tier[] = [
+    {
+      name: "libdxfrw",
+      run: async () => ({ dxfText: await convertDwgToDxf(buffer) }),
+      emptyMessage: "DWG read succeeded but DXF export returned empty output.",
+      failurePrefix: "Client-side DWG conversion failed",
+    },
+    {
+      name: "libredwg",
+      run: async () => {
+        const { convertDwgViaLibreDwg } = await import("./libredwg-converter");
+        return { dxfText: await convertDwgViaLibreDwg(buffer) };
+      },
+      emptyMessage: "LibreDWG conversion produced no DXF output.",
+      failurePrefix: "LibreDWG conversion failed",
+    },
+    {
+      // Sends `file`, not the buffer: the route re-reads and re-validates the
+      // upload itself rather than trusting anything the client claims.
+      name: "server",
+      run: () => convertViaServer(file, options),
+      emptyMessage: "Server conversion produced no DXF output.",
+      failurePrefix: "Server DWG conversion failed",
+    },
+  ];
+
+  for (const tier of tiers) {
+    const support = tierSupports(tier.name, version);
+    if (!support.supported) {
+      const outcome: DwgTierOutcome = {
+        tier: tier.name,
+        status: "skipped",
+        detail: support.reason,
+      };
+      outcomes.push(outcome);
+      warnings.push(formatTierOutcome(outcome));
+      continue;
     }
-    warnings.push("DWG read succeeded but DXF export returned empty output.");
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    warnings.push(`Client-side DWG conversion failed: ${msg}`);
+
+    try {
+      const { dxfText, parsed: preParsed, detail } = await tier.run();
+      if (dxfText) {
+        outcomes.push({ tier: tier.name, status: "succeeded" });
+        const parsed = preParsed ?? parseDxfText(dxfText);
+        return {
+          ...parsed,
+          warnings: [...warnings, ...parsed.warnings],
+          dxfText,
+          diagnostics: { version, outcomes },
+        };
+      }
+      const reason = detail ?? tier.emptyMessage;
+      outcomes.push({ tier: tier.name, status: "failed", detail: reason });
+      warnings.push(reason);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      outcomes.push({ tier: tier.name, status: "failed", detail: msg });
+      warnings.push(`${tier.failurePrefix}: ${msg}`);
+    }
   }
 
-  // --- Tier 2: LibreDWG WASM (10 MB lazy; reads modern AC1032 files) ------
-  try {
-    const { convertDwgViaLibreDwg } = await import("./libredwg-converter");
-    const dxfText = await convertDwgViaLibreDwg(buffer);
-    if (dxfText) {
-      const parsed = parseDxfText(dxfText);
-      // `dxfText` is returned on every successful tier: callers that build a
-      // CadDocument (viewer, schematic import) have nothing to parse without it.
-      return { ...parsed, warnings: [...warnings, ...parsed.warnings], dxfText };
-    }
-    warnings.push("LibreDWG conversion produced no DXF output.");
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    warnings.push(`LibreDWG conversion failed: ${msg}`);
-  }
+  const diagnostics: DwgDiagnostics = { version, outcomes };
+  const report = summariseDwgFailure(diagnostics, file.name);
 
-  // --- Tier 3: server round-trip ------------------------------------------
-  try {
-    return await convertViaServer(file, warnings, options);
-  } catch {
-    return {
-      candidates: [],
-      unitScaleToMeters: 1,
-      warnings: [
-        ...warnings,
-        "DWG conversion failed. In your CAD tool, save the file as 'AutoCAD 2013 DWG' or export it as DXF, then re-upload.",
-      ],
-    };
-  }
+  return {
+    candidates: [],
+    unitScaleToMeters: 1,
+    warnings: [...warnings, report.message],
+    diagnostics,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -234,11 +309,18 @@ async function convertDwgToDxf(buffer: ArrayBuffer): Promise<string | null> {
   }
 }
 
+/**
+ * POST the upload to `/api/cad/convert`.
+ *
+ * A non-OK response is NOT thrown: the route's JSON body carries the reason
+ * the server could not convert (which converter ran, what it said), and that
+ * reason is worth more than a status code. It comes back as the result's last
+ * warning, which the tier loop records as this tier's failure detail.
+ */
 async function convertViaServer(
   file: File,
-  warnings: string[],
   options?: ParseDwgOptions,
-): Promise<ParsedDxf & { dxfText?: string }> {
+): Promise<TierResult> {
   const form = new FormData();
   form.set("file", file);
 
@@ -251,18 +333,14 @@ async function convertViaServer(
   if (!res.ok) {
     const body = await res
       .json()
-      .catch(() => ({} as Record<string, unknown>));
-    const hint = (body as Record<string, string>).hint;
-    const error = (body as Record<string, string>).error;
-    const msg = hint ?? error ?? `DWG conversion failed (HTTP ${res.status})`;
-    return {
-      candidates: [],
-      unitScaleToMeters: 1,
-      warnings: [...warnings, msg],
-    };
+      .catch(() => ({}) as Record<string, unknown>);
+    const fields = body as Record<string, string>;
+    const detail =
+      [fields.error, fields.detail, fields.hint].filter(Boolean).join(" — ") ||
+      `DWG conversion failed (HTTP ${res.status})`;
+    return { dxfText: null, detail };
   }
 
   const dxfText = await res.text();
-  const parsed = parseDxfText(dxfText);
-  return { ...parsed, warnings: [...warnings, ...parsed.warnings], dxfText };
+  return { dxfText, parsed: parseDxfText(dxfText) };
 }
