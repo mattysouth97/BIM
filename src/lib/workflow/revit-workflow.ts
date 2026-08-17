@@ -35,10 +35,24 @@ export interface RevitFeatureMapEntry {
 }
 
 /**
- * Modes shown on the 3D twin rail. 작성 / family placement is schematic-only
- * and is not a 3D work mode.
+ * Modes shown on the 3D twin rail. 작성 places families on the live 3D model;
+ * the schematic editor authors the same catalog at design-intent level. Both
+ * surfaces are real — a generated building is editable from either side.
  */
 export const REVIT_RAIL_MODES: RevitWorkModeDef[] = [
+  {
+    id: "authoring",
+    labelKo: "작성",
+    labelEn: "Authoring",
+    hintKo: "건물 작성 — 벽·문·창·기둥 등 건축 패밀리로 모델을 다룹니다.",
+    hintEn: "Building authoring — walls, doors, windows, and columns on the live model.",
+    courseChapters: [
+      "Architecture tab",
+      "Walls / Doors / Windows",
+      "Columns",
+      "Sketch-based floors/roofs/stairs",
+    ],
+  },
   {
     id: "views",
     labelKo: "뷰",
@@ -81,20 +95,8 @@ export const REVIT_RAIL_MODES: RevitWorkModeDef[] = [
   },
 ];
 
-/** Kept for leftover session state / feature-map lookup. Not shown on the 3D rail. */
-const SCHEMATIC_AUTHORING_MODE: RevitWorkModeDef = {
-  id: "authoring",
-  labelKo: "작성",
-  labelEn: "Authoring",
-  hintKo: "작성은 도면(스케매틱)에서 합니다. 3D는 컴파일된 결과를 봅니다.",
-  hintEn: "Authoring happens on the schematic. The 3D twin is a review of the compile.",
-  courseChapters: ["Architecture tab"],
-};
-
-export const REVIT_WORK_MODES: RevitWorkModeDef[] = [
-  SCHEMATIC_AUTHORING_MODE,
-  ...REVIT_RAIL_MODES,
-];
+/** Every work mode is on the rail; the alias keeps existing call sites stable. */
+export const REVIT_WORK_MODES: RevitWorkModeDef[] = REVIT_RAIL_MODES;
 
 /**
  * Course-to-product map. Status:
@@ -107,7 +109,8 @@ export const REVIT_FEATURE_MAP: RevitFeatureMapEntry[] = [
     id: "building-authoring",
     courseTopic: "Architecture tab / building authoring",
     revitConcept: "Wall, door, window, column, floor, roof, stair tools place typed families",
-    appCapability: "Schematic tools place typed families; 3D reviews the compiled BIM",
+    appCapability:
+      "Authoring palette places typed families on the live building; the schematic authors the same catalog as design intent",
     workMode: "authoring",
     status: "wired",
   },

@@ -16,10 +16,12 @@ describe("RevitWorkRail", () => {
   });
   afterEach(cleanup);
 
-  it("renders review modes and switches on click — 작성 is not a 3D mode", () => {
+  it("renders every mode incl. 작성, and switches on click", () => {
     render(<RevitWorkRail />);
     expect(screen.getByTestId("revit-work-rail")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Authoring" })).toBeNull();
+    // Authoring reaches the palette + AuthoringFamilyLayer; without the rail
+    // button both are unreachable code.
+    expect(screen.getByRole("button", { name: "Authoring" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Views" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Schedules" }));
     expect(useRevitWorkflowStore.getState().workMode).toBe("schedules");
