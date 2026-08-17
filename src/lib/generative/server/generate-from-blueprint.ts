@@ -16,7 +16,9 @@
 import {
   BlueprintSpecSchema,
   compileBlueprintToSpec,
+  measureBlueprintFidelity,
   validateBlueprint,
+  type BlueprintFidelityReport,
   type BlueprintSpec,
   type BlueprintValidationReport,
   type BlueprintViolation,
@@ -78,6 +80,13 @@ export interface BlueprintGenerationPayload {
   blueprintValidation: BlueprintValidationReport;
   /** Locks the blueprint's "exact" fidelity implies, merged with the request's. */
   compiledLocks: string[];
+  /**
+   * MEASURED schematic fidelity — boundary, void, core, anchor, zone and
+   * topology deviations computed from the generated geometry, one number per
+   * dimension and never an aggregate score. This is the proof step: "the
+   * building follows the drawing" as arithmetic, not reassurance.
+   */
+  fidelity: BlueprintFidelityReport;
 }
 
 export type BlueprintGenerationFailureCode =
@@ -253,6 +262,7 @@ export function runBlueprintGeneration(
       blueprint,
       blueprintValidation,
       compiledLocks,
+      fidelity: measureBlueprintFidelity(blueprint, built.building),
     },
   };
 }

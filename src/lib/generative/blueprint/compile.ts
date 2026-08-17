@@ -380,6 +380,32 @@ export function blueprintRegionToPolygonMm(
   return regionToPolygonMm(region, loops);
 }
 
+/**
+ * The `ProgramItem` id a blueprint zone compiles to: the zone id truncated to
+ * 48 chars, suffixed on collision. Exported because `metrics.ts` must REPLAY
+ * this derivation to find a zone's placed spaces — a second copy of the rule
+ * would let the metric drift from the compiler and quietly measure nothing.
+ *
+ * The suffix carries its own attempt counter. Deriving it from `usedIds.size`
+ * — the previous form — had a reachable fixed point: the size never changes
+ * inside the loop, so three schema-valid ids sharing a 48-char prefix could
+ * recompute the same taken candidate forever and pin the server on
+ * attacker-choosable JSON. A counter makes every retry a NEW string, so the
+ * loop is bounded by the number of ids already taken. Worst case stays within
+ * the 48-char cap: 44 + "-" + 3 digits (zones are capped at 128 by schema).
+ *
+ * MUTATES `usedIds` by adding the returned id — claiming and deriving are one
+ * step on purpose, so no caller can derive without claiming.
+ */
+export function deriveZoneSpecId(rawId: string, usedIds: Set<string>): string {
+  let id = rawId.slice(0, 48);
+  for (let attempt = 2; usedIds.has(id); attempt += 1) {
+    id = `${rawId.slice(0, 44)}-${attempt}`;
+  }
+  usedIds.add(id);
+  return id;
+}
+
 /* ------------------------------------------------------------------ */
 /* Use + program                                                       */
 /* ------------------------------------------------------------------ */
@@ -528,9 +554,7 @@ export function compileBlueprintToSpec(
     if (polygon === null) continue;
     const levels = [...new Set(zone.floorNos)].sort((a, b) => a - b);
     if (levels.length === 0) continue;
-    let id = zone.id.slice(0, 48);
-    while (usedIds.has(id)) id = `${id.slice(0, 44)}-${usedIds.size}`;
-    usedIds.add(id);
+    const id = deriveZoneSpecId(zone.id, usedIds);
     zoneFacts.push({
       id,
       type: zone.program.value,
@@ -766,6 +790,51 @@ export function compileBlueprintToSpec(
     0.5,
   );
 
+  /* --- entrance: the drawn entrance anchor decides the front door --- */
+  //
+  // A blueprint may carry several entrance anchors; `OrientationSchema` carries
+  // exactly one primary entrance, so ONE anchor has to win. A hard hold is a
+  // decision and a soft hold is a preference (`blueprint-spec.ts` HoldSchema),
+  // so the first HARD entrance anchor wins even if a soft one was drawn first,
+  // and blueprint order breaks the remaining ties — never plate proximity,
+  // which would make the answer wobble as the footprint is edited. Any further
+  // entrance anchors stay in the blueprint untouched and are reported below;
+  // multi-entrance buildings are not modelled by the spec yet, and silently
+  // dropping the extras would hide that.
+  //
+  // `primaryEntranceFacade` is a bare enum rather than a `Provenanced` value,
+  // so provenance rides on `assumptions` exactly as the core's does: nothing is
+  // filed when the user drew the anchor themselves, a traced blueprint files it
+  // as INFERRED at the tracing's own confidence, and the "south" fallback is
+  // filed as DEFAULT so the Assumptions panel can offer to change it.
+  const entranceAnchors = blueprint.anchors.filter(
+    (anchor) => anchor.kind.value === "entrance",
+  );
+  const entranceAnchor =
+    entranceAnchors.find((anchor) => anchor.hold.mode === "hard") ?? entranceAnchors[0];
+  const entranceFacade: CompassFacade =
+    entranceAnchor === undefined
+      ? "south"
+      : facadeNearestPoint(entranceAnchor.positionMm, shiftX, shiftZ, bounds);
+  note(
+    "entrance",
+    "Primary entrance",
+    entranceAnchor
+      ? `The ${entranceFacade} elevation carries the entrance, from the drawn anchor "${entranceAnchor.id}".`
+      : "No entrance anchor was drawn; the south elevation is assumed to carry the entrance.",
+    entranceAnchor ? geometrySource : "DEFAULT",
+    entranceAnchor ? geometryConfidence : 0.5,
+  );
+  if (entranceAnchors.length > 1) {
+    note(
+      "entrance-secondary",
+      "Secondary entrances",
+      `${entranceAnchors.length - 1} further entrance anchor(s) were drawn. The spec carries one primary entrance, so they are preserved in the blueprint but do not yet shape geometry.`,
+      "INFERRED",
+      0.5,
+    );
+  }
+
   const description =
     `${levels.length}-level ${use} building compiled from the blueprint "${blueprint.name}". ` +
     `The footprint follows ${customPlates.length} drawn plate outline(s) on a ` +
@@ -796,7 +865,7 @@ export function compileBlueprintToSpec(
         0.5,
         "The blueprint carries no north point; its own frame is used unrotated.",
       ),
-      primaryEntranceFacade: "south",
+      primaryEntranceFacade: entranceFacade,
     },
     site: {
       widthMm: P(
@@ -1015,6 +1084,52 @@ function coreRectFor(polygon: Polygon): CoreRectMm | null {
     centreXMm: (inscribed.minX + inscribed.maxX) / 2,
     centreZMm: (inscribed.minZ + inscribed.maxZ) / 2,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Entrance anchor → facade                                            */
+/* ------------------------------------------------------------------ */
+
+type CompassFacade = BuildingSpec["orientation"]["primaryEntranceFacade"];
+
+/**
+ * Which elevation of the footprint an anchor was drawn against.
+ *
+ * The anchor is in the blueprint's own coordinates and `bounds` is the largest
+ * plate's bounding box in the ENGINE's frame, so the same `shift` the compiler
+ * applied to every other piece of geometry is applied here rather than a second
+ * translation derived independently.
+ *
+ * The engine's frame is +Z north (`generate/partitions.ts`), so the high-Z edge
+ * is the north elevation and the low-Z edge the south one. Each distance is
+ * measured perpendicular to one edge and is NEGATIVE for a point outside the
+ * box — which is the normal case, because a door marker is usually dropped just
+ * outside the wall line; the most negative distance still names the edge it was
+ * drawn against, so no clamping is wanted here.
+ *
+ * A point equidistant from two edges resolves to the Z axis, the same tie-break
+ * `partitions.ts` applies to a 45° wall.
+ */
+function facadeNearestPoint(
+  positionMm: PointMm,
+  shiftXMm: number,
+  shiftZMm: number,
+  bounds: Rect,
+): CompassFacade {
+  const x = positionMm.xMm + shiftXMm;
+  const z = positionMm.zMm + shiftZMm;
+  const candidates: Array<[CompassFacade, number]> = [
+    ["north", bounds.maxZ - z],
+    ["south", z - bounds.minZ],
+    ["east", bounds.maxX - x],
+    ["west", x - bounds.minX],
+  ];
+  let best = candidates[0];
+  // Strictly less-than, so a tie keeps the earlier (north/south) candidate.
+  for (const candidate of candidates) {
+    if (candidate[1] < best[1]) best = candidate;
+  }
+  return best[0];
 }
 
 /* ------------------------------------------------------------------ */

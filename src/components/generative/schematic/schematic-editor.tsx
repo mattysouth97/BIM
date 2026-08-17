@@ -22,7 +22,7 @@ import {
   type StageEvent,
 } from "@/lib/generative/client";
 import { cn } from "@/lib/utils";
-import { useBlueprintStore } from "@/store/blueprint-store";
+import { activeImportOf, useBlueprintStore } from "@/store/blueprint-store";
 
 import { SchematicCanvas } from "./schematic-canvas";
 import { SchematicInspector } from "./schematic-inspector";
@@ -42,6 +42,9 @@ interface Props {
 export function SchematicEditor({ onGenerated, buildingPk, locks }: Props) {
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const validation = useBlueprintStore((s) => s.validation);
+  // Null once history is undone back past the import, so the panel never claims
+  // a file the working blueprint no longer came from.
+  const importProvenance = useBlueprintStore(activeImportOf);
   // Derived per render from the blueprint, not through a store selector: a
   // selector that builds a new object every call breaks the store's snapshot
   // identity check.
@@ -204,6 +207,7 @@ export function SchematicEditor({ onGenerated, buildingPk, locks }: Props) {
           blueprint={blueprint}
           validation={validation}
           preservation={preservation}
+          importProvenance={importProvenance}
           onFidelityChange={(mode) =>
             useBlueprintStore.getState().setFidelityMode(mode)
           }

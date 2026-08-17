@@ -24,7 +24,13 @@ import {
   type ShapeMode,
 } from "@/store/blueprint-store";
 
-import { blueprintBounds, pathOf, schematicShapes } from "./schematic-geometry";
+import {
+  blueprintBounds,
+  pathOf,
+  schematicShapes,
+  ZONE_DEFAULT_FILL,
+  ZONE_FILL,
+} from "./schematic-geometry";
 import {
   fitTransform,
   panBy,
@@ -55,23 +61,6 @@ function drawModeOf(tool: SchematicTool, shapeMode: ShapeMode): "rect" | "polygo
       return shapeMode;
   }
 }
-
-const ZONE_FILL: Record<string, string> = {
-  "office-open": "#60a5fa",
-  "office-cellular": "#38bdf8",
-  meeting: "#a78bfa",
-  lobby: "#fbbf24",
-  reception: "#fcd34d",
-  retail: "#f472b6",
-  laboratory: "#34d399",
-  classroom: "#4ade80",
-  "residential-unit": "#fb923c",
-  atrium: "#93c5fd",
-  circulation: "#f97316",
-  storage: "#94a3b8",
-};
-
-const ZONE_DEFAULT_FILL = "#94a3b8";
 
 /** Ids named by a P0/P1 issue — drawn in the destructive colour. */
 function failingIds(validation: BlueprintValidationReport): Set<string> {

@@ -169,7 +169,9 @@ export async function parseDwgFile(
     const dxfText = await convertDwgViaLibreDwg(buffer);
     if (dxfText) {
       const parsed = parseDxfText(dxfText);
-      return { ...parsed, warnings: [...warnings, ...parsed.warnings] };
+      // `dxfText` is returned on every successful tier: callers that build a
+      // CadDocument (viewer, schematic import) have nothing to parse without it.
+      return { ...parsed, warnings: [...warnings, ...parsed.warnings], dxfText };
     }
     warnings.push("LibreDWG conversion produced no DXF output.");
   } catch (err) {

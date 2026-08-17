@@ -60,6 +60,14 @@ export interface CadDocument {
   layers: CadLayer[];
   entities: CadEntity[];
   unitScaleToMeters: number;
+  /**
+   * Raw DXF `$INSUNITS` header code, when the file carried one. 0 means the
+   * file declared itself unitless. Undefined means the header was absent (or
+   * the document was not built from DXF text), so `unitScaleToMeters` is an
+   * ASSUMPTION rather than a reading — consumers that care about calibration
+   * confidence must not treat the two cases as the same.
+   */
+  insUnits?: number;
   extents: { min: Vec2; max: Vec2 };
   warnings: string[];
   stats: CadDocumentStats;

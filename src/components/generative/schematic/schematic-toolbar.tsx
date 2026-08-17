@@ -9,6 +9,8 @@
 // rectangle and an atrium on levels 1–6. They sit next to the tool that uses
 // them so the choice is made BEFORE the mark, not repaired afterwards.
 
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -17,6 +19,8 @@ import {
   useBlueprintStore,
   type SchematicTool,
 } from "@/store/blueprint-store";
+
+import { ImportCadDialog } from "./import-cad-dialog";
 
 const TOOLS: Array<{ id: SchematicTool; label: string; hint: string }> = [
   { id: "select", label: "Select", hint: "Select and pan (drag to pan, Delete removes)" },
@@ -42,6 +46,7 @@ export function SchematicToolbar() {
   const selectedId = useBlueprintStore((s) => s.selectedId);
   const past = useBlueprintStore((s) => s.past);
   const future = useBlueprintStore((s) => s.future);
+  const [importOpen, setImportOpen] = useState(false);
 
   const supportsShape = tool === "boundary" || tool === "void" || tool === "zone";
 
@@ -188,6 +193,16 @@ export function SchematicToolbar() {
       </label>
 
       <div className="ml-auto flex items-center gap-1">
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={() => setImportOpen(true)}
+          title="Read a DWG or DXF drawing into this schematic, after reviewing the layer mapping"
+          data-testid="schematic-import-cad"
+        >
+          Import DWG/DXF
+        </Button>
+        <ImportCadDialog open={importOpen} onOpenChange={setImportOpen} />
         <Button
           size="xs"
           variant="ghost"

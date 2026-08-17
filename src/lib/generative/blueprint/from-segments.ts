@@ -78,6 +78,11 @@ export interface LayerRoles {
   boundary?: string[];
   /** Layer names whose loop becomes a `CoreIntent`. */
   core?: string[];
+  /**
+   * Layer names whose loop becomes a `VoidIntent`. The void's KIND is still
+   * read from its area — a layer name says there is a hole, not what it is for.
+   */
+  void?: string[];
   /** Layer name → explicit zone program, bypassing keyword/label inference. */
   zoneProgramByLayer?: Record<string, SpaceType>;
 }
@@ -292,16 +297,35 @@ function selectBoundary(
 /* ------------------------------------------------------------------ */
 
 /**
- * Read a BlueprintSpec off a segment soup. Throws a plain `Error` (not a
- * `ProviderError` — this module has no provider-layer concerns) when no
- * closed loop exists at all; a boundary is the one thing every blueprint
- * needs, and there is nothing honest to emit without one.
+ * What the read actually saw, for importers that have to REPORT the reading
+ * rather than just use it. Derived from the same pass that builds the spec, so
+ * an import report can never describe a different interpretation than the one
+ * the user is about to adopt.
  */
-export function interpretSegmentsToBlueprint(
+export interface SegmentInterpretationStats {
+  segmentsIn: number;
+  loopsDetected: number;
+  /** Dominant layer of the loop chosen as the boundary, when recoverable. */
+  boundaryLayer?: string;
+  /** True when a mapped boundary layer picked the loop, not sheer area. */
+  boundaryExplicit: boolean;
+  boundaryAreaSqm: number;
+  /** Loops detected but dropped because they lay outside the boundary. */
+  loopsOutsideBoundary: number;
+}
+
+/**
+ * Read a BlueprintSpec off a segment soup, together with the statistics of the
+ * read. Throws a plain `Error` (not a `ProviderError` — this module has no
+ * provider-layer concerns) when no closed loop exists at all; a boundary is the
+ * one thing every blueprint needs, and there is nothing honest to emit without
+ * one.
+ */
+export function interpretSegments(
   segments: SegmentInputMm[],
   labels: LabelInputMm[] = [],
   options: InterpretSegmentsOptions = {},
-): BlueprintSpec {
+): { blueprint: BlueprintSpec; stats: SegmentInterpretationStats } {
   const geomSegments: GeomSegment[] = segments.map((s) => ({
     start: pointToM(s.startMm),
     end: pointToM(s.endMm),
@@ -345,6 +369,7 @@ export function interpretSegmentsToBlueprint(
   const uncertainty: InterpretationUncertainty[] = [];
 
   const coreLayerSet = new Set((options.layerRoles?.core ?? []).map((n) => n.toLowerCase()));
+  const voidLayerSet = new Set((options.layerRoles?.void ?? []).map((n) => n.toLowerCase()));
   const zoneProgramByLayer = new Map<string, SpaceType>();
   for (const [layer, program] of Object.entries(options.layerRoles?.zoneProgramByLayer ?? {})) {
     zoneProgramByLayer.set(layer.toLowerCase(), program);
@@ -357,6 +382,43 @@ export function interpretSegmentsToBlueprint(
   let coreSeq = 0;
   let zoneSeq = 0;
   let discardedCount = 0;
+
+  /**
+   * A hole in the plate. `layerConfirmed` says only that a mapped layer put it
+   * there; the shaft/courtyard split is still an area guess either way, so the
+   * uncertainty entry is emitted in both cases — with the confidence the
+   * evidence actually supports.
+   */
+  const pushVoid = (
+    ring: Ring,
+    areaSqm: number,
+    label: LabelInputMm | undefined,
+    layerConfirmed: boolean,
+  ): void => {
+    voidSeq += 1;
+    const id = `void-${voidSeq}`;
+    const kind: VoidKindValue = areaSqm < shaftMaxAreaSqm ? "shaft" : "courtyard";
+    const confidence = layerConfirmed ? 0.7 : 0.55;
+    voids.push({
+      id,
+      kind: inferred(
+        kind,
+        `Classified by area (${areaSqm.toFixed(1)} m², shaft/courtyard threshold ${shaftMaxAreaSqm} m²).`,
+        confidence,
+      ),
+      region: { kind: "loop", loop: makePolyLoop(`${id}-loop`, ringToPointsMm(ring)) },
+      floorNos,
+      ...(label ? { label: label.text.slice(0, 60) } : {}),
+    });
+    uncertainty.push({
+      targetId: id,
+      interpretation: layerConfirmed
+        ? `Void "${id}" was mapped from its layer, but its kind (${kind}) was inferred from area alone.`
+        : `Void "${id}" kind (${kind}) was inferred purely from area; no layer or label confirmed it.`,
+      confidence,
+      evidence: "geometry",
+    });
+  };
 
   for (let i = 0; i < loops.length; i += 1) {
     if (i === boundaryIndex) continue;
@@ -381,8 +443,23 @@ export function interpretSegmentsToBlueprint(
     const layerLower = layer?.toLowerCase();
     const label = findContainingLabel(ring, labels);
     const explicitCore = layerLower !== undefined && coreLayerSet.has(layerLower);
+    const explicitVoid = layerLower !== undefined && voidLayerSet.has(layerLower);
     const explicitZoneProgram =
       layerLower !== undefined ? zoneProgramByLayer.get(layerLower) : undefined;
+
+    // An explicit void mapping outranks the generic layer-name hints below —
+    // a layer the user named as a void is evidence, "CORE" in the name is not.
+    if (explicitVoid && !explicitCore) {
+      pushVoid(ring, areaSqm, label, true);
+      assumptions.push({
+        id: `void-${voidSeq}-classification`,
+        label: "Void classification",
+        statement: `Loop on layer "${layer}" mapped to a void by the import layer mapping.`,
+        source: "INFERRED",
+        confidence: 0.9,
+      });
+      continue;
+    }
 
     if (explicitCore || (layer && CORE_LAYER_HINT.test(layer))) {
       coreSeq += 1;
@@ -441,26 +518,7 @@ export function interpretSegmentsToBlueprint(
       continue;
     }
 
-    voidSeq += 1;
-    const id = `void-${voidSeq}`;
-    const kind: VoidKindValue = areaSqm < shaftMaxAreaSqm ? "shaft" : "courtyard";
-    voids.push({
-      id,
-      kind: inferred(
-        kind,
-        `Classified by area (${areaSqm.toFixed(1)} m², shaft/courtyard threshold ${shaftMaxAreaSqm} m²).`,
-        0.55,
-      ),
-      region: { kind: "loop", loop: makePolyLoop(`${id}-loop`, ringToPointsMm(ring)) },
-      floorNos,
-      ...(label ? { label: label.text.slice(0, 60) } : {}),
-    });
-    uncertainty.push({
-      targetId: id,
-      interpretation: `Void "${id}" kind (${kind}) was inferred purely from area; no layer or label confirmed it.`,
-      confidence: 0.55,
-      evidence: "geometry",
-    });
+    pushVoid(ring, areaSqm, label, false);
   }
 
   if (discardedCount > 0) {
@@ -505,7 +563,26 @@ export function interpretSegmentsToBlueprint(
     uncertainty,
   };
 
-  // The fallback must satisfy the same contract a provider's output does —
-  // a drift in the schema breaks tests here first, not silently downstream.
-  return BlueprintSpecSchema.parse(spec);
+  return {
+    // The fallback must satisfy the same contract a provider's output does —
+    // a drift in the schema breaks tests here first, not silently downstream.
+    blueprint: BlueprintSpecSchema.parse(spec),
+    stats: {
+      segmentsIn: segments.length,
+      loopsDetected: loops.length,
+      ...(boundaryLayer !== undefined ? { boundaryLayer } : {}),
+      boundaryExplicit,
+      boundaryAreaSqm,
+      loopsOutsideBoundary: discardedCount,
+    },
+  };
+}
+
+/** The spec alone — the shape every pre-import caller already expects. */
+export function interpretSegmentsToBlueprint(
+  segments: SegmentInputMm[],
+  labels: LabelInputMm[] = [],
+  options: InterpretSegmentsOptions = {},
+): BlueprintSpec {
+  return interpretSegments(segments, labels, options).blueprint;
 }

@@ -24,8 +24,13 @@ export function mapDxfTextToDoc(text: string, docId: string): CadDocument {
   if (!dxf) return emptyDoc(docId, warnings);
 
   const rawInsUnits = dxf.header?.["$INSUNITS"];
-  const insUnits =
-    typeof rawInsUnits === "number" && Number.isFinite(rawInsUnits) ? rawInsUnits : 0;
+  // `declaredInsUnits` stays undefined when the header is absent, so downstream
+  // consumers can tell "the file says unitless" from "the file said nothing".
+  const declaredInsUnits =
+    typeof rawInsUnits === "number" && Number.isFinite(rawInsUnits)
+      ? rawInsUnits
+      : undefined;
+  const insUnits = declaredInsUnits ?? 0;
   const scale = INSUNITS_TO_METERS[insUnits] ?? 1;
   if (insUnits === 0) warnings.push("Unitless DXF — assuming meters.");
 
@@ -44,6 +49,7 @@ export function mapDxfTextToDoc(text: string, docId: string): CadDocument {
     layers: extractLayers(dxf, entities),
     entities,
     unitScaleToMeters: scale,
+    ...(declaredInsUnits !== undefined ? { insUnits: declaredInsUnits } : {}),
     extents: computeExtents(entities),
     warnings,
     stats: {

@@ -143,6 +143,28 @@ export function regionPoints(
   }
 }
 
+/**
+ * Fill per zone program. Shared by the drawing canvas and the CAD-import
+ * preview so an interpreted zone is drawn exactly like a drawn one — a preview
+ * in a different palette would be a different picture of the same thing.
+ */
+export const ZONE_FILL: Record<string, string> = {
+  "office-open": "#60a5fa",
+  "office-cellular": "#38bdf8",
+  meeting: "#a78bfa",
+  lobby: "#fbbf24",
+  reception: "#fcd34d",
+  retail: "#f472b6",
+  laboratory: "#34d399",
+  classroom: "#4ade80",
+  "residential-unit": "#fb923c",
+  atrium: "#93c5fd",
+  circulation: "#f97316",
+  storage: "#94a3b8",
+};
+
+export const ZONE_DEFAULT_FILL = "#94a3b8";
+
 export type SchematicShapeKind = "boundary" | "void" | "core" | "zone";
 
 export interface SchematicShape {

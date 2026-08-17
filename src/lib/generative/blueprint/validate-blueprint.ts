@@ -13,13 +13,24 @@
 //   P3 optimisation / advisory
 
 import {
+  arc,
+  bezier,
+  line,
+  polyline,
+  tessellateCurve,
+  type PlanCurve,
+  type Vec2,
+} from "../geom";
+import {
   segmentEnd,
   segmentStart,
   type BlueprintSpec,
   type BoundaryLoop,
   type CurveSegment,
+  type PointMm,
   type Region,
 } from "./blueprint-spec";
+import { TESSELLATION_TOLERANCE_MM } from "./compile";
 
 export type BlueprintViolationPriority = "P0" | "P1" | "P2" | "P3";
 export type BlueprintViolationSeverity = "critical" | "warning" | "advisory";
@@ -68,20 +79,30 @@ function violation(
 }
 
 /* ------------------------------------------------------------------ */
-/* Local tessellation                                                  */
+/* Tessellation                                                        */
 /* ------------------------------------------------------------------ */
 
-// TODO(geom): replace local tessellation with geom/curves once that module
-// lands. Everything below is deliberately coarse — it exists to answer "is this
-// loop closed and does it cross itself", not to produce render geometry.
+// Curves are flattened by `geom/curves.ts`, at the same tolerance
+// `blueprint/compile.ts` compiles them with. Sharing the kernel AND the
+// constant is the whole point: "is this loop closed and does it cross itself"
+// and "what ring does this loop become" have to be statements about the same
+// polygon. A second tessellation here — however carefully written — could put
+// the two on opposite sides of a tolerance, so that a loop passes validation
+// and then fails to compile, or compiles fine after being reported broken, on
+// input neither module actually got wrong.
+//
+// `geom/` is documented in metres; this module works in millimetres. That is
+// not a conflict, because every function in `geom/` is pure arithmetic that
+// takes its tolerance as an argument — the same reasoning `compile.ts` states
+// at length. So the curves are built in mm and flattened at a mm tolerance,
+// and the only conversion is `Vec2` (`[x, z]`) → this file's `Pt`.
 
+/** A point in the blueprint's own millimetre XZ space. */
 interface Pt {
   x: number;
   z: number;
 }
 
-const ARC_SAMPLES = 24;
-const BEZIER_SAMPLES = 24;
 /** Endpoints closer than this are considered chained. */
 export const CHAIN_TOLERANCE_MM = 1;
 const DEDUPE_TOLERANCE_MM = 1e-6;
@@ -89,81 +110,55 @@ const CROSS_EPSILON = 1e-9;
 
 const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.z - b.z);
 
-function tessellateArc(
-  start: Pt,
-  end: Pt,
-  center: Pt,
-  sweep: "cw" | "ccw",
-): Pt[] {
-  const radius = dist(center, start);
-  if (radius === 0) return [start, end];
+const pointVec = (p: PointMm): Vec2 => [p.xMm, p.zMm];
 
-  const a0 = Math.atan2(start.z - center.z, start.x - center.x);
-  const a1 = Math.atan2(end.z - center.z, end.x - center.x);
+/**
+ * Blueprint arcs store centre + endpoints + sweep; `geom`'s arc stores centre +
+ * radius + start/end angle, where the SIGNED difference carries the direction.
+ * The reading is the one `blueprint-spec.ts` promises — radius from
+ * |centre→start|, angles from the centre↔endpoint vectors, the sweep unwrapped
+ * into the requested direction so a half-turn is never mistaken for its
+ * complement — and it is deliberately identical to `compile.ts`'s `arcCurve`.
+ */
+function arcCurve(segment: Extract<CurveSegment, { kind: "arc" }>): PlanCurve {
+  const centre = pointVec(segment.centerMm);
+  const start = pointVec(segment.startMm);
+  const end = pointVec(segment.endMm);
+  const radius = Math.hypot(start[0] - centre[0], start[1] - centre[1]);
+  const a0 = Math.atan2(start[1] - centre[1], start[0] - centre[0]);
+  let a1 = Math.atan2(end[1] - centre[1], end[0] - centre[0]);
   const TAU = Math.PI * 2;
-
-  let delta = a1 - a0;
-  if (sweep === "ccw") {
-    while (delta <= 0) delta += TAU;
+  if (segment.sweep === "ccw") {
+    while (a1 <= a0) a1 += TAU;
   } else {
-    while (delta >= 0) delta -= TAU;
+    while (a1 >= a0) a1 -= TAU;
   }
-
-  const out: Pt[] = [start];
-  for (let i = 1; i <= ARC_SAMPLES; i += 1) {
-    const angle = a0 + (delta * i) / ARC_SAMPLES;
-    out.push({
-      x: center.x + radius * Math.cos(angle),
-      z: center.z + radius * Math.sin(angle),
-    });
-  }
-  // Land exactly on the declared endpoint; the sampled last point is only
-  // as accurate as the stored centre.
-  out[out.length - 1] = end;
-  return out;
+  return arc(centre, radius, a0, a1);
 }
 
-function tessellateBezier(p0: Pt, p1: Pt, p2: Pt, p3: Pt): Pt[] {
-  const out: Pt[] = [p0];
-  for (let i = 1; i <= BEZIER_SAMPLES; i += 1) {
-    const t = i / BEZIER_SAMPLES;
-    const u = 1 - t;
-    const b0 = u * u * u;
-    const b1 = 3 * u * u * t;
-    const b2 = 3 * u * t * t;
-    const b3 = t * t * t;
-    out.push({
-      x: b0 * p0.x + b1 * p1.x + b2 * p2.x + b3 * p3.x,
-      z: b0 * p0.z + b1 * p1.z + b2 * p2.z + b3 * p3.z,
-    });
-  }
-  return out;
-}
-
-export function tessellateSegment(segment: CurveSegment): Pt[] {
+function segmentToCurve(segment: CurveSegment): PlanCurve {
   switch (segment.kind) {
     case "line":
-      return [
-        { x: segment.startMm.xMm, z: segment.startMm.zMm },
-        { x: segment.endMm.xMm, z: segment.endMm.zMm },
-      ];
+      return line(pointVec(segment.startMm), pointVec(segment.endMm));
     case "polyline":
-      return segment.pointsMm.map((p) => ({ x: p.xMm, z: p.zMm }));
-    case "arc":
-      return tessellateArc(
-        { x: segment.startMm.xMm, z: segment.startMm.zMm },
-        { x: segment.endMm.xMm, z: segment.endMm.zMm },
-        { x: segment.centerMm.xMm, z: segment.centerMm.zMm },
-        segment.sweep,
-      );
+      return polyline(segment.pointsMm.map(pointVec), false);
     case "bezier":
-      return tessellateBezier(
-        { x: segment.startMm.xMm, z: segment.startMm.zMm },
-        { x: segment.control1Mm.xMm, z: segment.control1Mm.zMm },
-        { x: segment.control2Mm.xMm, z: segment.control2Mm.zMm },
-        { x: segment.endMm.xMm, z: segment.endMm.zMm },
+      return bezier(
+        pointVec(segment.startMm),
+        pointVec(segment.control1Mm),
+        pointVec(segment.control2Mm),
+        pointVec(segment.endMm),
       );
+    case "arc":
+      return arcCurve(segment);
   }
+}
+
+/** The segment as points, millimetres, including both endpoints. */
+export function tessellateSegment(segment: CurveSegment): Pt[] {
+  return tessellateCurve(segmentToCurve(segment), TESSELLATION_TOLERANCE_MM).map(
+    ([x, z]) => ({ x, z }),
+  );
 }
 
 /** Closed ring of points, consecutive duplicates removed. */

@@ -21,9 +21,10 @@ import type { CadDocument } from "@/lib/cad/doc/types";
 import { entityToChains } from "@/lib/cad/doc/entity-geometry";
 import type { SpaceType } from "../spec/building-spec";
 import {
-  interpretSegmentsToBlueprint,
+  interpretSegments,
   type InterpretSegmentsOptions,
   type LabelInputMm,
+  type SegmentInterpretationStats,
   type SegmentInputMm,
 } from "./from-segments";
 import type { BlueprintSpec } from "./blueprint-spec";
@@ -32,21 +33,46 @@ import type { BlueprintSpec } from "./blueprint-spec";
 export interface CadLayerMapping {
   boundary?: string[];
   core?: string[];
+  /** Layers whose loops are holes in the plate; the kind is still read from area. */
+  void?: string[];
+  /**
+   * Layers whose loops are movement space. A schematic circulation GRAPH cannot
+   * be read off closed outlines without inventing nodes, so these become zones
+   * programmed "circulation" — the honest reading of a drawn corridor outline.
+   */
+  circulation?: string[];
   /** Layer name → the zone program it always means, e.g. `{"A-ROOM-OFFICE": "office-open"}`. */
   zone?: Record<string, SpaceType>;
+  /**
+   * Layers whose GEOMETRY is excluded before loop detection — grids,
+   * dimensions, title blocks. It never reaches the interpreter, so it can
+   * neither form a spurious loop nor be silently absorbed into one. Their TEXT
+   * is still read: a label only ever names a loop some other layer drew, and
+   * annotation living on its own layer is the normal drafting convention.
+   */
+  ignore?: string[];
 }
 
 const M_TO_MM = 1000;
 
+const lowerSet = (names: string[] | undefined): Set<string> =>
+  new Set((names ?? []).map((n) => n.toLowerCase()));
+
 /** Extract every measured edge + text label from a CadDocument, in millimetres. */
-export function cadDocumentToSegments(doc: CadDocument): {
+export function cadDocumentToSegments(
+  doc: CadDocument,
+  /** Layer names (case-insensitive) whose GEOMETRY is dropped; text survives. */
+  ignoreLayers: string[] = [],
+): {
   segments: SegmentInputMm[];
   labels: LabelInputMm[];
 } {
   const segments: SegmentInputMm[] = [];
   const labels: LabelInputMm[] = [];
+  const ignored = lowerSet(ignoreLayers);
 
   for (const entity of doc.entities) {
+    if (entity.kind !== "text" && ignored.has(entity.layer.toLowerCase())) continue;
     if (entity.kind === "text") {
       labels.push({
         text: entity.text,
@@ -93,23 +119,41 @@ export function cadDocumentToInterpretRequest(
 
 /**
  * Direct CAD → BlueprintSpec conversion, no reasoning provider involved.
- * Reuses `interpretSegmentsToBlueprint`'s loop detection; `layerMapping`
- * only narrows classification confidence upward, it never invents a loop
- * that geometry does not contain.
+ * Reuses `interpretSegments`' loop detection; `layerMapping` only narrows
+ * classification confidence upward, it never invents a loop that geometry
+ * does not contain.
  */
-export function fromCadDocument(
+export function interpretCadDocument(
   doc: CadDocument,
   layerMapping: CadLayerMapping = {},
   options: InterpretSegmentsOptions = {},
-): BlueprintSpec {
-  const { segments, labels } = cadDocumentToSegments(doc);
-  return interpretSegmentsToBlueprint(segments, labels, {
+): { blueprint: BlueprintSpec; stats: SegmentInterpretationStats } {
+  const { segments, labels } = cadDocumentToSegments(doc, layerMapping.ignore);
+
+  // Circulation layers ride the zone channel with a fixed program; merged here
+  // rather than in `from-segments` so the interpreter keeps one zone concept.
+  const zoneProgramByLayer: Record<string, SpaceType> = { ...(layerMapping.zone ?? {}) };
+  for (const layer of layerMapping.circulation ?? []) {
+    zoneProgramByLayer[layer] = "circulation";
+  }
+
+  return interpretSegments(segments, labels, {
     ...options,
     source: options.source ?? "dxf",
     layerRoles: {
       boundary: layerMapping.boundary,
       core: layerMapping.core,
-      zoneProgramByLayer: layerMapping.zone,
+      void: layerMapping.void,
+      zoneProgramByLayer,
     },
   });
+}
+
+/** The spec alone, for callers that do not report on the reading. */
+export function fromCadDocument(
+  doc: CadDocument,
+  layerMapping: CadLayerMapping = {},
+  options: InterpretSegmentsOptions = {},
+): BlueprintSpec {
+  return interpretCadDocument(doc, layerMapping, options).blueprint;
 }

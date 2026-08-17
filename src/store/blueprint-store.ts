@@ -42,6 +42,11 @@ import {
   type PreservationPlan,
   type Region,
 } from "@/lib/generative/blueprint";
+import type {
+  CadImportReport,
+  CadLayerAssignments,
+} from "@/lib/generative/blueprint/import-cad-file";
+import type { CadFileFormat } from "@/lib/generative/blueprint/read-cad-file";
 import type { SpaceType } from "@/lib/generative/spec/building-spec";
 
 /* ------------------------------------------------------------------ */
@@ -98,6 +103,37 @@ export type Draft =
   | { kind: "polygon"; tool: SchematicTool; pointsMm: PointMm[] }
   | { kind: "rect"; tool: SchematicTool; startMm: PointMm; endMm: PointMm }
   | null;
+
+/**
+ * Where an imported blueprint came from, kept so the inspector can say it out
+ * loud: a schematic the user did not draw must never be presented as one they
+ * did. Carries no timestamp — the store is deterministic, and "when" is not
+ * something the schematic depends on.
+ */
+export interface BlueprintImportProvenance {
+  fileName: string;
+  format: CadFileFormat;
+  /** CadDocument id — the file name the CAD reader was given. */
+  documentId: string;
+  /** The layer→role mapping the user CONFIRMED, not the one that was guessed. */
+  assignments: CadLayerAssignments;
+  report: CadImportReport;
+}
+
+/**
+ * The provenance, but only while it still describes the CURRENT blueprint —
+ * i.e. history has not been undone back past the import that set it. One
+ * definition, used by both the store getter and the inspector's selector.
+ */
+export function activeImportOf(state: {
+  importProvenance: BlueprintImportProvenance | null;
+  importDepth: number;
+  past: unknown[];
+}): BlueprintImportProvenance | null {
+  return state.importProvenance && state.past.length >= state.importDepth
+    ? state.importProvenance
+    : null;
+}
 
 /** What the last successful generation was built from. */
 export interface GeneratedFromBlueprint {
@@ -274,6 +310,33 @@ function regionLoopId(region: Region): string | null {
   return region.kind === "loop" ? region.loop.id : null;
 }
 
+/**
+ * Highest `-<n>` suffix among a blueprint's ids.
+ *
+ * An imported blueprint arrives with ids the store's own counter would happily
+ * mint again ("core-1"), and a duplicate id is a P0 violation. Loading one
+ * therefore pushes `seq` past everything already in it.
+ */
+export function highestIdSuffix(spec: BlueprintSpec): number {
+  const ids: string[] = [
+    ...spec.boundaries.map((b) => b.loop.id),
+    ...spec.voids.flatMap((v) => [v.id, regionLoopId(v.region) ?? ""]),
+    ...spec.cores.flatMap((c) => [c.id, regionLoopId(c.region) ?? ""]),
+    ...spec.zones.flatMap((z) => [z.id, regionLoopId(z.region) ?? ""]),
+    ...spec.anchors.map((a) => a.id),
+    ...spec.circulation.nodes.map((n) => n.id),
+    ...spec.circulation.edges.map((e) => e.id),
+  ];
+
+  let highest = 0;
+  for (const id of ids) {
+    const match = /-(\d+)(?:-loop)?$/.exec(id);
+    if (!match) continue;
+    highest = Math.max(highest, Number(match[1]));
+  }
+  return highest;
+}
+
 /* ------------------------------------------------------------------ */
 /* Store                                                               */
 /* ------------------------------------------------------------------ */
@@ -307,11 +370,22 @@ interface BlueprintState {
 
   lastGenerated: GeneratedFromBlueprint | null;
 
+  /** Set by `loadBlueprint`; null for a natively drawn schematic. */
+  importProvenance: BlueprintImportProvenance | null;
+  /**
+   * `past.length` at the moment the import landed. The provenance describes the
+   * CURRENT blueprint only while history sits at or above that depth — undoing
+   * past the import must not leave the inspector claiming a file the working
+   * blueprint no longer came from.
+   */
+  importDepth: number;
+
   /* --- derived --- */
   floorNos: () => number[];
   preservation: () => PreservationPlan;
   canUndo: () => boolean;
   canRedo: () => boolean;
+  activeImport: () => BlueprintImportProvenance | null;
 
   /* --- settings --- */
   setTool: (tool: SchematicTool) => void;
@@ -340,6 +414,14 @@ interface BlueprintState {
   undo: () => void;
   redo: () => void;
   reset: (name?: string) => void;
+  /**
+   * Replace the working blueprint wholesale — the CAD import's landing point.
+   * One history entry, so a mapping the user regrets is one Ctrl+Z away.
+   */
+  loadBlueprint: (
+    spec: BlueprintSpec,
+    provenance?: BlueprintImportProvenance | null,
+  ) => void;
 
   noteGenerated: (result: GeneratedFromBlueprint) => void;
 }
@@ -394,11 +476,14 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
     seq: 0,
 
     lastGenerated: null,
+    importProvenance: null,
+    importDepth: 0,
 
     floorNos: () => floorRange(get().floorFrom, get().floorTo),
     preservation: () => preservationPlan(get().blueprint),
     canUndo: () => get().past.length > 0,
     canRedo: () => get().future.length > 0,
+    activeImport: () => activeImportOf(get()),
 
     setTool: (tool) => set({ tool, draft: null, chainFromNodeId: null }),
     setShapeMode: (shapeMode) => set({ shapeMode, draft: null }),
@@ -728,7 +813,23 @@ export const useBlueprintStore = create<BlueprintState>((set, get) => {
         future: [],
         seq: 0,
         lastGenerated: null,
+        importProvenance: null,
+        importDepth: 0,
       });
+    },
+
+    loadBlueprint: (spec, provenance = null) => {
+      const state = get();
+      set(
+        apply(spec, {
+          selectedId: null,
+          chainFromNodeId: null,
+          // Ids arriving with the import must never be minted a second time.
+          seq: Math.max(state.seq, highestIdSuffix(spec)),
+          importProvenance: provenance,
+          importDepth: Math.min(state.past.length + 1, UNDO_CAP),
+        }),
+      );
     },
 
     noteGenerated: (result) => set({ lastGenerated: result }),

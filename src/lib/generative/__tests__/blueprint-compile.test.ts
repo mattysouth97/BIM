@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  addAnchor,
   addBoundary,
   addCore,
   addVoid,
@@ -712,5 +713,151 @@ describe("compileBlueprintToSpec — contract", () => {
     const before = JSON.stringify(blueprint);
     compileBlueprintToSpec(blueprint, { seed: SEED });
     expect(JSON.stringify(blueprint)).toBe(before);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Entrance anchors                                                    */
+/* ------------------------------------------------------------------ */
+
+/** 40 × 30 m rectangle drawn from the origin corner, levels 1–2. */
+function rectBlueprint(): BlueprintSpec {
+  return addBoundary(emptyBlueprint("Entrance Plan"), {
+    loop: makeRectLoop("outline", { xMm: 0, zMm: 0, widthMm: 40_000, depthMm: 30_000 }),
+    floorNos: [1, 2],
+  });
+}
+
+describe("compileBlueprintToSpec — entrance anchors", () => {
+  // +Z is north (`generate/partitions.ts`), so the high-Z edge of the drawn
+  // rectangle is its north elevation.
+  const cases: Array<[string, PointMm, string]> = [
+    ["north", p(20_000, 29_500), "north"],
+    ["south", p(20_000, 500), "south"],
+    ["east", p(39_500, 15_000), "east"],
+    ["west", p(500, 15_000), "west"],
+  ];
+
+  for (const [edge, positionMm, facade] of cases) {
+    it(`puts the entrance on the ${edge} facade when that is where it was drawn`, () => {
+      const blueprint = addAnchor(rectBlueprint(), {
+        id: "front-door",
+        kind: "entrance",
+        positionMm,
+      });
+      const { spec } = compileBlueprintToSpec(blueprint, { seed: SEED });
+      expect(spec.orientation.primaryEntranceFacade).toBe(facade);
+    });
+  }
+
+  it("reads a door marker dropped just outside the wall line", () => {
+    const blueprint = addAnchor(rectBlueprint(), {
+      id: "front-door",
+      kind: "entrance",
+      positionMm: p(20_000, 30_800),
+    });
+    const { spec } = compileBlueprintToSpec(blueprint, { seed: SEED });
+    expect(spec.orientation.primaryEntranceFacade).toBe("north");
+  });
+
+  it("keeps the south default when no entrance anchor was drawn", () => {
+    for (const blueprint of [lShapedBlueprint(), rectBlueprint()]) {
+      const { spec } = compileBlueprintToSpec(blueprint, { seed: SEED });
+      expect(spec.orientation.primaryEntranceFacade).toBe("south");
+      const entrance = spec.assumptions.find((a) => a.id === "entrance");
+      expect(entrance?.source).toBe("DEFAULT");
+    }
+  });
+
+  it("ignores anchors that are not entrances", () => {
+    const blueprint = addAnchor(rectBlueprint(), {
+      id: "north-core",
+      kind: "core",
+      positionMm: p(20_000, 29_500),
+    });
+    const { spec } = compileBlueprintToSpec(blueprint, { seed: SEED });
+    expect(spec.orientation.primaryEntranceFacade).toBe("south");
+  });
+
+  it("lets a hard anchor beat a soft one drawn earlier", () => {
+    let blueprint = addAnchor(rectBlueprint(), {
+      id: "maybe-west",
+      kind: "entrance",
+      positionMm: p(500, 15_000),
+      hold: { mode: "soft", toleranceMm: 5_000 },
+    });
+    blueprint = addAnchor(blueprint, {
+      id: "definitely-north",
+      kind: "entrance",
+      positionMm: p(20_000, 29_500),
+      hold: { mode: "hard" },
+    });
+
+    const { spec } = compileBlueprintToSpec(blueprint, { seed: SEED });
+    expect(spec.orientation.primaryEntranceFacade).toBe("north");
+    // The extras are neither obeyed nor silently dropped.
+    expect(spec.assumptions.some((a) => a.id === "entrance-secondary")).toBe(true);
+  });
+
+  it("takes the first of two equally held entrances and says so", () => {
+    let blueprint = addAnchor(rectBlueprint(), {
+      id: "east-door",
+      kind: "entrance",
+      positionMm: p(39_500, 15_000),
+    });
+    blueprint = addAnchor(blueprint, {
+      id: "west-door",
+      kind: "entrance",
+      positionMm: p(500, 15_000),
+    });
+
+    const { spec } = compileBlueprintToSpec(blueprint, { seed: SEED });
+    expect(spec.orientation.primaryEntranceFacade).toBe("east");
+    expect(spec.assumptions.some((a) => a.id === "entrance-secondary")).toBe(true);
+  });
+
+  it("files the entrance as user-drawn, not as an assumption to review", () => {
+    const drawn = addAnchor(rectBlueprint(), {
+      id: "front-door",
+      kind: "entrance",
+      positionMm: p(20_000, 29_500),
+    });
+    const { spec } = compileBlueprintToSpec(drawn, { seed: SEED });
+    // Nothing to review: the user drew it, so no assumption is filed.
+    expect(spec.assumptions.find((a) => a.id === "entrance")).toBeUndefined();
+
+    const traced: BlueprintSpec = {
+      ...drawn,
+      source: "image",
+      coordinateSystem: {
+        units: "mm",
+        sourceScaleRatio: {
+          value: 100,
+          source: "INFERRED",
+          confidence: 0.6,
+          reason: "Read from a title block.",
+        },
+        method: "known-element",
+        calibrated: true,
+        calibrationConfidence: 0.6,
+      },
+    };
+    const tracedSpec = compileBlueprintToSpec(traced, { seed: SEED }).spec;
+    expect(tracedSpec.orientation.primaryEntranceFacade).toBe("north");
+    const entrance = tracedSpec.assumptions.find((a) => a.id === "entrance");
+    expect(entrance?.source).toBe("INFERRED");
+    expect(entrance?.confidence).toBeCloseTo(0.6, 6);
+  });
+
+  it("still produces a schema-valid, deterministic spec", () => {
+    const blueprint = addAnchor(rectBlueprint(), {
+      id: "front-door",
+      kind: "entrance",
+      positionMm: p(20_000, 29_500),
+    });
+    const a = compileBlueprintToSpec(blueprint, { seed: SEED });
+    const b = compileBlueprintToSpec(blueprint, { seed: SEED });
+    expect(() => BuildingSpecSchema.parse(a.spec)).not.toThrow();
+    expect(JSON.stringify(a.spec)).toBe(JSON.stringify(b.spec));
   });
 });

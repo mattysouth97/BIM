@@ -22,6 +22,7 @@ import type {
   FidelityMode,
   PreservationPlan,
 } from "@/lib/generative/blueprint";
+import type { BlueprintImportProvenance } from "@/store/blueprint-store";
 
 const SEVERITY_STYLE: Record<BlueprintViolation["severity"], string> = {
   critical: "text-destructive",
@@ -58,6 +59,8 @@ interface Props {
   preservation: PreservationPlan;
   onFidelityChange: (mode: FidelityMode) => void;
   onSelect: (id: string) => void;
+  /** Set when the working blueprint was read from a CAD file rather than drawn. */
+  importProvenance?: BlueprintImportProvenance | null;
 }
 
 export function SchematicInspector({
@@ -66,6 +69,7 @@ export function SchematicInspector({
   preservation,
   onFidelityChange,
   onSelect,
+  importProvenance = null,
 }: Props) {
   const counts = [
     { label: "Boundaries", value: blueprint.boundaries.length },
@@ -97,6 +101,43 @@ export function SchematicInspector({
             : " · no levels yet"}
         </p>
       </section>
+
+      {importProvenance && (
+        <section className="flex flex-col gap-1">
+          <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Imported from
+          </h3>
+          <p className="font-mono text-[11px]">
+            {importProvenance.fileName}{" "}
+            <span className="text-muted-foreground">
+              ({importProvenance.format.toUpperCase()})
+            </span>
+          </p>
+          <ul className="flex flex-col gap-0.5 font-mono text-[10px] text-muted-foreground">
+            {importProvenance.report.mapping
+              .filter((row) => row.role !== "ignore")
+              .map((row) => (
+                <li key={row.layer}>
+                  {row.layer} → {row.role}
+                  {row.program ? ` (${row.program})` : ""} · {row.entityCount} entities
+                </li>
+              ))}
+          </ul>
+          {!importProvenance.report.units.declared && (
+            <p className="text-[10px] text-amber-700">
+              {importProvenance.report.units.assumption}
+            </p>
+          )}
+          {importProvenance.report.skipped.length > 0 && (
+            <p className="font-mono text-[10px] text-muted-foreground">
+              skipped:{" "}
+              {importProvenance.report.skipped
+                .map((entry) => `${entry.count} ${entry.subject} (${entry.reason})`)
+                .join(", ")}
+            </p>
+          )}
+        </section>
+      )}
 
       <section className="flex flex-col gap-2">
         <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

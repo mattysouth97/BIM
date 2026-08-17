@@ -8,14 +8,21 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { validateBlueprint, BlueprintSpecSchema } from "@/lib/generative/blueprint";
+import { mapDxfTextToDoc } from "@/lib/cad/doc/map-dxf-to-doc";
+import {
+  guessLayerAssignments,
+  importCadDocument,
+} from "@/lib/generative/blueprint/import-cad-file";
 import {
   floorRange,
+  highestIdSuffix,
   nearestBoundaryPoint,
   orthoPoint,
   rectRegion,
   removeObject,
   snapPoint,
   useBlueprintStore,
+  type BlueprintImportProvenance,
 } from "@/store/blueprint-store";
 
 const mm = (xMm: number, zMm: number) => ({ xMm, zMm });
@@ -306,6 +313,138 @@ describe("boundary projection", () => {
     const spec = useBlueprintStore.getState().blueprint;
     expect(nearestBoundaryPoint(spec, mm(30_400, 10_000))).toEqual(mm(30_000, 10_000));
     expect(nearestBoundaryPoint(emptyLike(spec), mm(0, 0))).toBeNull();
+  });
+});
+
+describe("loading an imported blueprint", () => {
+  /** A real DXF import: L-shaped wall, core rectangle, room rectangle. */
+  function importedFixture() {
+    const dxf = [
+      "0", "SECTION", "2", "HEADER", "9", "$INSUNITS", "70", "4", "0", "ENDSEC",
+      "0", "SECTION", "2", "ENTITIES",
+      "0", "LWPOLYLINE", "8", "A-WALL", "90", "6", "70", "1",
+      "10", "0", "20", "0",
+      "10", "20000", "20", "0",
+      "10", "20000", "20", "12000",
+      "10", "12000", "20", "12000",
+      "10", "12000", "20", "20000",
+      "10", "0", "20", "20000",
+      "0", "LWPOLYLINE", "8", "A-CORE", "90", "4", "70", "1",
+      "10", "14000", "20", "2000",
+      "10", "18000", "20", "2000",
+      "10", "18000", "20", "6000",
+      "10", "14000", "20", "6000",
+      "0", "ENDSEC", "0", "EOF",
+    ].join("\n");
+    const doc = mapDxfTextToDoc(dxf, "plan.dxf");
+    const outcome = importCadDocument(doc, guessLayerAssignments(doc), {
+      fileName: "plan.dxf",
+    });
+    if (!outcome.ok) throw new Error(`fixture import failed: ${outcome.error.code}`);
+    const provenance: BlueprintImportProvenance = {
+      fileName: "plan.dxf",
+      format: "dxf",
+      documentId: doc.id,
+      assignments: guessLayerAssignments(doc),
+      report: outcome.report,
+    };
+    return { blueprint: outcome.blueprint, provenance };
+  }
+
+  it("replaces the working blueprint and re-derives validation", () => {
+    drawPlate();
+    const { blueprint, provenance } = importedFixture();
+
+    useBlueprintStore.getState().loadBlueprint(blueprint, provenance);
+
+    const state = useBlueprintStore.getState();
+    expect(state.blueprint.source).toBe("dxf");
+    expect(state.blueprint.boundaries).toHaveLength(1);
+    expect(state.blueprint.cores).toHaveLength(1);
+    // Validation is the store's, computed from what was loaded — not carried in.
+    expect(state.validation).toEqual(validateBlueprint(blueprint));
+    expect(state.validation.counts.critical).toBe(0);
+    expect(state.selectedId).toBeNull();
+    expect(state.draft).toBeNull();
+  });
+
+  it("is ONE undo step, so a bad import is one Ctrl+Z", () => {
+    drawPlate();
+    const before = useBlueprintStore.getState().blueprint;
+    const depthBefore = useBlueprintStore.getState().past.length;
+
+    const { blueprint, provenance } = importedFixture();
+    useBlueprintStore.getState().loadBlueprint(blueprint, provenance);
+
+    expect(useBlueprintStore.getState().past).toHaveLength(depthBefore + 1);
+
+    useBlueprintStore.getState().undo();
+    const after = useBlueprintStore.getState();
+    expect(after.blueprint).toEqual(before);
+    expect(after.blueprint.source).toBe("native-editor");
+    expect(after.past).toHaveLength(depthBefore);
+
+    useBlueprintStore.getState().redo();
+    expect(useBlueprintStore.getState().blueprint.source).toBe("dxf");
+  });
+
+  it("records the file and the confirmed mapping, and drops it when undone past", () => {
+    const { blueprint, provenance } = importedFixture();
+    useBlueprintStore.getState().loadBlueprint(blueprint, provenance);
+
+    expect(useBlueprintStore.getState().activeImport()).toBe(provenance);
+    expect(useBlueprintStore.getState().activeImport()?.fileName).toBe("plan.dxf");
+    expect(
+      useBlueprintStore
+        .getState()
+        .activeImport()
+        ?.report.mapping.find((row) => row.layer === "A-WALL")?.role,
+    ).toBe("boundary");
+
+    // Editing after the import keeps the provenance: the blueprint still
+    // descends from that file.
+    const store = useBlueprintStore.getState();
+    store.setTool("core");
+    store.startRect(mm(1_000, 1_000));
+    store.updateRect(mm(4_000, 4_000));
+    store.commitRect();
+    expect(useBlueprintStore.getState().activeImport()).toBe(provenance);
+
+    // Undoing past the import does not: that blueprint came from nowhere.
+    useBlueprintStore.getState().undo();
+    useBlueprintStore.getState().undo();
+    expect(useBlueprintStore.getState().activeImport()).toBeNull();
+  });
+
+  it("never mints an id the imported blueprint already used", () => {
+    const { blueprint, provenance } = importedFixture();
+    expect(highestIdSuffix(blueprint)).toBeGreaterThan(0);
+
+    useBlueprintStore.getState().loadBlueprint(blueprint, provenance);
+    const importedCoreId = useBlueprintStore.getState().blueprint.cores[0].id;
+
+    const store = useBlueprintStore.getState();
+    store.setTool("core");
+    store.startRect(mm(1_000, 1_000));
+    store.updateRect(mm(4_000, 4_000));
+    store.commitRect();
+
+    const cores = useBlueprintStore.getState().blueprint.cores;
+    expect(cores).toHaveLength(2);
+    expect(cores[1].id).not.toBe(importedCoreId);
+    expect(
+      useBlueprintStore.getState().validation.violations.some(
+        (v) => v.code === "DUPLICATE_ID",
+      ),
+    ).toBe(false);
+  });
+
+  it("clears the provenance on reset", () => {
+    const { blueprint, provenance } = importedFixture();
+    useBlueprintStore.getState().loadBlueprint(blueprint, provenance);
+    useBlueprintStore.getState().reset();
+    expect(useBlueprintStore.getState().importProvenance).toBeNull();
+    expect(useBlueprintStore.getState().activeImport()).toBeNull();
   });
 });
 

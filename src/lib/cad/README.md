@@ -64,6 +64,10 @@ UploadStage (src/components/upload/upload-stage.tsx)
               CadViewer (src/components/cad-viewer/) — layers, measure,
               markups (idb-keyval per doc), select polyline →
               "바닥 외곽선으로 사용" → same footprint override path
+
+  .dxf/.dwg also → readCadFile → CadDocument → importCadDocument
+              (src/lib/generative/blueprint/) — layer→role mapping confirmed in
+              the schematic editor's Import DWG/DXF dialog → BlueprintSpec
 ```
 
 The upload stage guard (`src/lib/workflow/stages.ts`) blocks advancing to
