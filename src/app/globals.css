@@ -255,54 +255,122 @@
   background: var(--muted-foreground);
 }
 
-/* ─── Landing: twin-stage instrument, no page scroll ─────────────────────── */
+/* ─── Landing: one dark poster under the site header ─────────────────────── */
 
-body:has(.landing-stage) {
-  height: 100dvh;
-  overflow: hidden;
-}
-
-body:has(.landing-stage) main {
-  overflow: hidden;
-  min-height: 0;
-}
-
+/*
+ * The landing is a poster, not a page of the app — it commits to one dark
+ * palette in light and dark mode alike. Re-pointing the shared tokens here
+ * (rather than restyling components) lets Button, LayerRail, and the focus
+ * ring inherit the poster palette unchanged: `@theme inline` resolves the
+ * utilities down to these vars at the use site, so the override cascades.
+ */
 .landing-stage {
-  height: calc(100dvh - 3.5rem);
-  overflow: hidden;
-  position: relative;
+  min-height: calc(100dvh - 3.5rem);
+
+  --landing-ink: oklch(0.16 0.012 240);
+  --landing-accent: oklch(0.79 0.13 205);
+
+  --background: var(--landing-ink);
+  --foreground: oklch(0.985 0 0);
+  --muted-foreground: oklch(0.74 0.012 240);
+  --border: oklch(0.36 0.012 240);
+  --input: oklch(0.36 0.012 240);
+  --ring: var(--landing-accent);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: var(--landing-ink);
+  --secondary: oklch(0.28 0.012 240);
+  --secondary-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.3 0.012 240);
+  --accent-foreground: oklch(0.985 0 0);
+
+  background-color: var(--landing-ink);
+  color: var(--foreground);
 }
 
-.landing-layer-stage {
-  perspective: 1600px;
-  transform-style: preserve-3d;
+/*
+ * The copy is centred over the plate, so the plate has to become texture: a
+ * near-uniform ink veil that keeps the layers legible as a ghosted technical
+ * drawing, plus a vignette that pulls the corners down and the type forward.
+ */
+.landing-scrim {
+  /* Each plate sets its own --landing-veil (see BANNER_LAYER_META.veil) — the
+     gradient below is the shape, this is how hard it lands. */
+  opacity: var(--landing-veil, 0.75);
+  transition: opacity 420ms ease-out;
+  background:
+    radial-gradient(
+      76% 56% at 50% 42%,
+      var(--landing-ink) 0%,
+      color-mix(in oklab, var(--landing-ink) 84%, transparent) 58%,
+      color-mix(in oklab, var(--landing-ink) 32%, transparent) 100%
+    ),
+    linear-gradient(
+      to bottom,
+      var(--landing-ink) 0%,
+      transparent 16%,
+      transparent 84%,
+      var(--landing-ink) 100%
+    );
 }
 
-.landing-layer-plate {
-  z-index: 0;
-  opacity: 0;
-  transform: translate3d(36px, 0, -80px) scale(1.04);
-  transition:
-    opacity 720ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 720ms cubic-bezier(0.22, 1, 0.36, 1),
-    clip-path 720ms cubic-bezier(0.22, 1, 0.36, 1);
-  clip-path: inset(0 0 0 18%);
-  pointer-events: none;
+/* A soft oval of ink sat directly behind the copy column. The plate scrim
+   above only takes the whole frame down a stop; this is what actually buys the
+   small type its contrast, and it leaves the flanks of the plate untouched. */
+.landing-focus {
+  background: radial-gradient(
+    closest-side ellipse at 50% 50%,
+    var(--landing-ink) 0%,
+    var(--landing-ink) 44%,
+    color-mix(in oklab, var(--landing-ink) 80%, transparent) 62%,
+    color-mix(in oklab, var(--landing-ink) 40%, transparent) 80%,
+    transparent 100%
+  );
 }
 
-.landing-layer-plate[data-active="true"] {
-  z-index: 1;
-  opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-  clip-path: inset(0);
+/* Swapping a layer remounts the plate — fade it in so the rail feels like a
+   peel rather than a cut. */
+.landing-plate {
+  animation: landing-plate-in 420ms ease-out both;
+}
+
+@keyframes landing-plate-in {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-layer-plate {
-    transition: opacity 1ms linear;
-    transform: none;
-    clip-path: none;
+  .landing-plate {
+    animation: none;
   }
+}
+
+/* The one statement on the page: the name, set as large as the column allows.
+   Everything else is set small around it. */
+.landing-display {
+  font-family: var(--font-ko-display), var(--font-display-release), serif;
+  font-size: clamp(3.5rem, 13vw, 10rem);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+}
+
+.landing-tagline {
+  font-family: var(--font-ko-display), var(--font-display-release), serif;
+  font-size: clamp(1.15rem, 2.6vw, 1.75rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.landing-stamp {
+  font-family: var(--font-mono-data), ui-monospace, monospace;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 
 .cad-svg {

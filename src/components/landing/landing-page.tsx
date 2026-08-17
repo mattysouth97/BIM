@@ -12,7 +12,7 @@ export function LandingPage() {
   return (
     <div className="landing-stage relative">
       <a
-        className="absolute left-3 top-[-3rem] z-50 rounded-md bg-primary px-2.5 py-1.5 text-xs text-primary-foreground focus:top-2"
+        className="fixed left-3 top-0 z-[60] -translate-y-full rounded-md bg-primary px-2.5 py-1.5 text-xs text-primary-foreground focus:translate-y-2"
         href="#bimfit-title"
       >
         {copy.skip}
