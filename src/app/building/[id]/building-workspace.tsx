@@ -2,12 +2,12 @@
 
 import { use, lazy, Suspense, useEffect } from "react";
 import { notFound } from "next/navigation";
-import { parseBuildingId } from "@/lib/constants";
-import { isCadDraftPk } from "@/lib/workflow/cad-draft";
+import { DEMO_BUILDING_PK, parseBuildingId } from "@/lib/constants";
+import { prepareDemoWorkspaceSession } from "@/lib/generative/workspace-handoff";
 import { isGeneratedPk } from "@/lib/generative/design-storage";
-import { CadWorkspace } from "@/components/workspace/cad-workspace";
 import { GeneratedWorkspace } from "@/components/workspace/generated-workspace";
 import { useActiveBuildingStore } from "@/store/active-building-store";
+import { useLayerStore } from "@/store/layer-store";
 import { useCompositeBuilding } from "@/hooks/use-composite-building";
 import { useBuildingFootprint } from "@/hooks/use-building-footprint";
 import { useEnsureBuildingModel } from "@/hooks/use-ensure-building-model";
@@ -35,12 +35,10 @@ export default function BuildingWorkspace({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  // P2-24: cad-first drafts (cad-<uuid>) branch BEFORE ledger-id parsing —
-  // they have no ledger coordinates and must never fire a ledger/VWorld fetch.
-  // (Branching here keeps each workspace's hooks unconditional.)
-  if (isCadDraftPk(id)) return <CadWorkspace pk={id} />;
-  // Generated designs (GEN-0042[.3]) likewise: the building came out of the
-  // engine, so there is no 건축물대장 row to query and no address to geocode.
+  // Generated designs (GEN-0042[.3]) branch BEFORE ledger-id parsing: the
+  // building came out of the engine, so there is no 건축물대장 row to query and
+  // no address to geocode. (Branching here keeps each workspace's hooks
+  // unconditional.) The cad-draft branch was retired with the drafting surface.
   if (isGeneratedPk(id)) return <GeneratedWorkspace generationId={id} />;
   return <LedgerWorkspace id={id} />;
 }
@@ -72,6 +70,10 @@ function LedgerWorkspace({ id }: { id: string }) {
     if (activePk) {
       setActiveBuilding(activePk, buildingId.sigunguCd);
     }
+    if (activePk !== DEMO_BUILDING_PK) return;
+    const apply = () => prepareDemoWorkspaceSession();
+    if (useLayerStore.persist.hasHydrated()) apply();
+    return useLayerStore.persist.onFinishHydration(apply);
   }, [activePk, buildingId.sigunguCd, setActiveBuilding]);
 
   // Derive address from title once it resolves and fire footprint fetch at page level.

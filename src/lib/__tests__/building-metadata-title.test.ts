@@ -48,9 +48,11 @@ describe("buildingMetadataTitle (P2-14)", () => {
     expect(buildingMetadataTitle("drawing")).toBe("도면에서 시작 | BIMFIT");
   });
 
-  it("gives cad drafts a distinct draft title (no fabricated ledger codes)", () => {
+  it("gives retired cad-draft ids only the fallback title (surface removed)", () => {
+    // The CAD drafting surface was cut from the product; a stale cad- URL is
+    // just a malformed id now, never a fabricated ledger title.
     const title = buildingMetadataTitle("cad-c8a95604-8b0d-4cbc-8044-d6683475a1d4");
-    expect(title).toBe("CAD 트윈 드래프트 | BIMFIT");
+    expect(title).toBe("건물 정보 | BIMFIT");
   });
 
   // ─── Generated designs route through /building/[id] too ───────────────────
@@ -68,8 +70,8 @@ describe("isRoutableBuildingId (P2-24)", () => {
     expect(isRoutableBuildingId("11110-10100-0-0001-0000")).toBe(true);
   });
 
-  it("accepts a cad-first draft id (server must not 404 it)", () => {
-    expect(isRoutableBuildingId("cad-c8a95604-8b0d-4cbc-8044-d6683475a1d4")).toBe(true);
+  it("404s a cad-first draft id (the drafting surface was retired)", () => {
+    expect(isRoutableBuildingId("cad-c8a95604-8b0d-4cbc-8044-d6683475a1d4")).toBe(false);
   });
 
   it("accepts the reserved demo and drawing slugs", () => {

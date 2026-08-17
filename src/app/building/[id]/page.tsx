@@ -10,7 +10,6 @@ import {
   DRAWING_BUILDING_ID,
   parseBuildingId,
 } from "@/lib/constants";
-import { isCadDraftPk } from "@/lib/workflow/cad-draft";
 import { isGeneratedPk } from "@/lib/generative/design-storage";
 import BuildingWorkspace from "./building-workspace";
 
@@ -33,7 +32,6 @@ export function isRoutableBuildingId(id: string): boolean {
   return (
     id === DEMO_BUILDING_ID ||
     id === DRAWING_BUILDING_ID ||
-    isCadDraftPk(id) ||
     isGeneratedPk(id) ||
     parseBuildingId(id) !== null
   );
@@ -48,7 +46,6 @@ export function isRoutableBuildingId(id: string): boolean {
 export function buildingMetadataTitle(id: string): string {
   if (id === DEMO_BUILDING_ID) return "데모 오피스 타워 | BIMFIT";
   if (id === DRAWING_BUILDING_ID) return "도면에서 시작 | BIMFIT";
-  if (isCadDraftPk(id)) return "CAD 트윈 드래프트 | BIMFIT";
   // The design's own name lives in IndexedDB, which the server cannot read —
   // the id is the only honest title available at metadata time.
   if (isGeneratedPk(id)) return `생성 설계 ${id} | BIMFIT`;
