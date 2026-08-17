@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppStore } from "@/store/app-store";
-import { useLayerStore } from "@/store/layer-store";
+import { INTERIOR_LAYER_META, useLayerStore } from "@/store/layer-store";
 import {
   LAYER_CONFIGS,
   ALL_LAYER_IDS,
@@ -18,6 +18,8 @@ export function SceneLayerList() {
   const toggleLayer = useLayerStore((s) => s.toggleLayer);
   const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
   const toggleMepSub = useLayerStore((s) => s.toggleMepSub);
+  const interiorVisible = useLayerStore((s) => s.interiorVisible);
+  const toggleInterior = useLayerStore((s) => s.toggleInterior);
 
   return (
     <div className="border-b px-2 py-2" data-testid="scene-layer-list">
@@ -74,6 +76,28 @@ export function SceneLayerList() {
             </li>
           );
         })}
+        <li>
+          <button
+            type="button"
+            data-testid="interior-layer-toggle"
+            aria-pressed={interiorVisible}
+            onClick={toggleInterior}
+            className="flex w-full items-center gap-2 rounded px-1.5 py-1 text-left text-xs hover:bg-accent/50"
+          >
+            <span
+              className="size-2 shrink-0 rounded-full border-2"
+              style={{
+                borderColor: INTERIOR_LAYER_META.color,
+                backgroundColor: interiorVisible
+                  ? INTERIOR_LAYER_META.color
+                  : "transparent",
+              }}
+            />
+            <span className={interiorVisible ? "font-medium" : "text-muted-foreground"}>
+              {isKo ? INTERIOR_LAYER_META.nameKo : INTERIOR_LAYER_META.name}
+            </span>
+          </button>
+        </li>
       </ul>
     </div>
   );

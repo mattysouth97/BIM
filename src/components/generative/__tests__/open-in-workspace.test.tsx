@@ -42,6 +42,10 @@ vi.mock("@/components/viewer/procedural-building-model", () => ({
   ProceduralBuildingModel: () => null,
 }));
 
+vi.mock("@/components/viewer/interior-layer", () => ({
+  InteriorLayer: () => null,
+}));
+
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 

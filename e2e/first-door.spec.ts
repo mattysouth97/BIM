@@ -29,8 +29,27 @@ test.describe("First door", () => {
     ).toHaveCount(0);
   });
 
+  test("studio door is the generative-first primary CTA", async ({ page }) => {
+    const studio = page.getByTestId("landing-studio-start");
+    await expect(studio).toBeVisible();
+    await expect(studio).toHaveAttribute("href", "/studio");
+    const importDoor = page.getByTestId("landing-import-start");
+    await expect(importDoor).toBeVisible();
+    await expect(importDoor).toHaveAttribute("href", "/studio");
+
+    await studio.click();
+    await expect(page).toHaveURL(/\/studio/);
+    await expect(
+      page.getByRole("button", { name: "Describe a building" }),
+    ).toBeVisible();
+  });
+
+  // The pre-pivot ledger-drawing draft (/building/drawing) is no longer a
+  // landing door — the generative studio's schematic import is the front
+  // door now — but the route itself is still owned by /building and stays
+  // reachable directly while that lane migrates it.
   test("CAD door still lands on upload", async ({ page }) => {
-    await page.getByTestId("landing-cad-start").click();
+    await page.goto("/building/drawing");
     await expect(page).toHaveURL(/\/building\/drawing/);
     await expect(
       page.getByRole("button", { name: /도면 업로드/ }),
@@ -55,7 +74,7 @@ test.describe("First door", () => {
   });
 
   test("sample drawing completes the CAD door into the twin", async ({ page }) => {
-    await page.getByTestId("landing-cad-start").click();
+    await page.goto("/building/drawing");
     await expect(page.getByTestId("upload-sample-dxf")).toBeVisible();
     await page.getByTestId("upload-sample-dxf").click();
     await expect(page.getByText("외곽선 준비 완료")).toBeVisible({ timeout: 15000 });

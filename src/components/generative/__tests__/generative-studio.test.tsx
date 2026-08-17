@@ -56,6 +56,10 @@ vi.mock("@/components/viewer/procedural-building-model", () => ({
   ProceduralBuildingModel: () => null,
 }));
 
+vi.mock("@/components/viewer/interior-layer", () => ({
+  InteriorLayer: () => null,
+}));
+
 // The header's "Open in workspace" action navigates. There is no app router
 // around a bare render, so the hook gets a stand-in; nothing here clicks it.
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: () => {} }) }));

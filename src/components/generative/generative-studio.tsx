@@ -21,6 +21,7 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, Environment } from "@react-three/drei";
 import * as THREE from "three";
 
+import { InteriorLayer } from "@/components/viewer/interior-layer";
 import { ProceduralBuildingModel } from "@/components/viewer/procedural-building-model";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -778,6 +779,22 @@ export function GenerativeStudio() {
                 {/* No ledger geometry exists for a generated building — the recipe
                     alone drives the renderer. */}
                 <ProceduralBuildingModel recipeOverride={displayRecipe} />
+                {/* The solved interior — walls, hosted doors and windows,
+                    stairs, guards. `enabled` is forced rather than read from
+                    the layer store: this canvas exists to show what the
+                    engine solved, and the studio mounts no layer panel to
+                    switch the toggle back on with. The snapshot follows the
+                    same rule as the recipe and the plan above — a pending
+                    candidate owns the viewport (§55) — and `floors` mirrors
+                    the isolation already applied to `displayRecipe`. Not
+                    selectable: this design is not what `bim-model-store`
+                    holds, so a click would name an element no inspector
+                    here can resolve. */}
+                <InteriorLayer
+                  snapshot={pending ? pending.edit.snapshot : design.snapshot}
+                  enabled
+                  floors={isolatedFloors}
+                />
                 <Environment preset="city" background={false} />
               </Suspense>
               <OrbitControls

@@ -257,6 +257,9 @@ export function GeneratedWorkspace({ generationId }: { generationId: string }) {
             title={state.title}
             floors={[]}
             isCompositeLoading={false}
+            buildingPk={state.design.generationId}
+            recipeOverride={state.design.recipe}
+            snapshot={state.design.snapshot}
           />
         </Suspense>
       </WorkspaceShell>

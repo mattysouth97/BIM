@@ -20,6 +20,12 @@ import { SolarPanels } from "./solar-panels";
 import { RetrofitHvacUnits } from "./retrofit-hvac-units";
 import { ContextMassing } from "./context-massing";
 import { applyOverrides } from "@/lib/procedural/recipe";
+import type { BuildingRecipe } from "@/lib/procedural/types";
+import type { BimModelSnapshot } from "@/lib/bim/model/types";
+import { workspaceBuildingPk } from "@/lib/generative/design-storage";
+import { floorNoFromPlanLevelId } from "@/lib/interior/visible-floors";
+import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import { useBimModelStore } from "@/store/bim-model-store";
 import { Loader2 } from "lucide-react";
 import { createSceneProjection } from "@/lib/gis/gis-transform";
 import { ringBboxCenter } from "@/lib/gis/ring-utils";
@@ -35,6 +41,7 @@ import { useTwinProvenanceStore } from "@/store/twin-provenance-store";
 import { DEMO_BUILDING_PK } from "@/lib/constants";
 import { ProceduralBuildingModel } from "./procedural-building-model";
 import { BuildingLayers } from "./building-layers";
+import { InteriorLayer } from "./interior-layer";
 import { EnvelopeLayer } from "./envelope-layer";
 import { StructureLayer } from "./structure-layer";
 import { EnergyZoneLayer } from "./energy-zone-layer";
@@ -193,9 +200,45 @@ interface BuildingSceneProps {
    * Overlay disappears automatically when this becomes false.
    */
   isCompositeLoading?: boolean;
+  /**
+   * A recipe that REPLACES the one derived from `title`/`floors`.
+   *
+   * The ledger, demo and CAD paths never pass this: their building IS the
+   * ledger row, so deriving the recipe from it is right. A GENERATED building
+   * has no ledger row — its footprint polygon, storey stack and facade were
+   * solved by the engine, and the synthetic title carries only totals, so
+   * deriving from it would show a box that merely has the right area. Passing
+   * the design's own recipe is what puts the solved footprint on screen. This
+   * is the same prop `ProceduralBuildingModel` already takes, and the studio
+   * viewport already uses.
+   *
+   * Config-panel overrides still apply on top, exactly as they do to a derived
+   * recipe — an override edits whichever recipe is in play.
+   */
+  recipeOverride?: BuildingRecipe;
+  /**
+   * Store key. Required when `title.mgmBldrgstPk` is empty (generated designs
+   * carry an empty ledger pk on purpose). Falls back to the active-building
+   * store, then to the title pk.
+   */
+  buildingPk?: string;
+  /**
+   * Solved BIM snapshot. The workspace also hydrates `bim-model-store`; this
+   * prop lets the interior layer paint on the first frame without waiting.
+   */
+  snapshot?: BimModelSnapshot | null;
 }
 
-export function BuildingScene({ title, floors, campusData, footprintData: footprintDataProp, isCompositeLoading }: BuildingSceneProps) {
+export function BuildingScene({
+  title,
+  floors,
+  campusData,
+  footprintData: footprintDataProp,
+  isCompositeLoading,
+  recipeOverride,
+  buildingPk: buildingPkProp,
+  snapshot: snapshotProp,
+}: BuildingSceneProps) {
   const [selectedFloor, setSelectedFloor] = useState<FloorGeometry | null>(null);
   const [modelSource, setModelSource] = useState<ModelSource>("parametric");
   const [activeCampusBuilding, setActiveCampusBuilding] = useState<string | null>(null);
@@ -216,7 +259,24 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
   } | null>(null);
   const controlsRef = useRef<SceneControlsRef>(null);
 
-  const buildingPk = String(title.mgmBldrgstPk || "unknown");
+  const activePk = useActiveBuildingPk();
+  const buildingPk = workspaceBuildingPk({
+    generationId: buildingPkProp,
+    titlePk: title.mgmBldrgstPk,
+    activePk,
+  });
+  const storeSnapshot = useBimModelStore((s) => s.snapshot);
+  const bimSnapshot =
+    snapshotProp ??
+    (storeSnapshot?.buildingPk === buildingPk ? storeSnapshot : null);
+  const activeViewId = useViewStore((s) => s.activeViewId);
+  const views = useViewStore((s) => s.views);
+  const interiorFloors = useMemo(() => {
+    const view = views.find((v) => v.id === activeViewId);
+    if (!view || view.kind !== "plan") return null;
+    const floorNo = floorNoFromPlanLevelId(view.levelId);
+    return floorNo === null ? null : [floorNo];
+  }, [views, activeViewId]);
 
   // Footprint data is provided by the page (hoisted parallel fetch).
   // If absent (e.g. component used standalone), footprintPolygon stays undefined
@@ -245,6 +305,10 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
   const measuredHeightM = footprintDataProp?.attributes?.height ?? undefined;
 
   const geometry = useMemo(() => {
+    // A generated design already has a solved recipe. Deriving geometry from
+    // the synthetic title invents a 100 m² box (archArea is 0) and must not
+    // be what the camera, shadows or massing are measured from.
+    if (recipeOverride) return null;
     const geo = generateBuildingGeometry(title, floors, { measuredHeightM });
 
     if (footprintPolygon && footprintPolygon.length >= 1 && footprintPolygon[0].length >= 3) {
@@ -286,7 +350,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     }
 
     return geo;
-  }, [title, floors, footprintPolygon, measuredHeightM]);
+  }, [recipeOverride, title, floors, footprintPolygon, measuredHeightM]);
 
   // ── Portfolio-feature-vector geometry shape (area / perimeter / aspect)
   // Used by the TwinStageOverlay to derive the 20-field feature vector.
@@ -381,17 +445,27 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
   const setBaseRecipe = useRecipeStore((s) => s.setBaseRecipe);
   const recipeOverrides = useRecipeStore((s) => s.overrides[buildingPk]);
 
-  const baseRecipe = useMemo(() => toRecipe(geometry), [geometry]);
+  // A generated design supplies its own solved recipe; everything else derives
+  // one from the ledger geometry. Config-panel overrides apply on top of
+  // whichever it is, so `recipe` below is unchanged for every existing path.
+  const baseRecipe = useMemo(() => {
+    if (recipeOverride) return recipeOverride;
+    if (!geometry) return null;
+    return toRecipe(geometry);
+  }, [recipeOverride, geometry]);
 
-  // Register base recipe so config tabs can read effective values
+  // Register base recipe so config tabs can read effective values.
+  // A generated design is already published under this pk — re-registering
+  // the same solved recipe is idempotent and keeps config tabs in sync.
   useEffect(() => {
+    if (!baseRecipe) return;
     setBaseRecipe(buildingPk, baseRecipe);
   }, [buildingPk, baseRecipe, setBaseRecipe]);
 
-  const recipe = useMemo(
-    () => recipeOverrides ? applyOverrides(baseRecipe, recipeOverrides) : baseRecipe,
-    [baseRecipe, recipeOverrides]
-  );
+  const recipe = useMemo(() => {
+    if (!baseRecipe) return null;
+    return recipeOverrides ? applyOverrides(baseRecipe, recipeOverrides) : baseRecipe;
+  }, [baseRecipe, recipeOverrides]);
 
   // P2-20 — applied retrofit measures drive the visual state (tints + PV).
   const appliedMeasureIds = useScenarioStore((s) => s.appliedMeasureIds);
@@ -409,7 +483,10 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
 
   const { t, lang } = useT();
 
-  const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 2.3;
+  const extentW = recipe?.footprintWidth ?? geometry?.footprintWidth ?? 20;
+  const extentD = recipe?.footprintDepth ?? geometry?.footprintDepth ?? 20;
+  const extentH = recipe?.totalHeight ?? geometry?.totalHeight ?? 20;
+  const cameraDistance = Math.max(extentH, extentW, extentD) * 2.3;
 
   // Campus camera: position far enough to see all buildings
   const campusSiteLayout = useMemo(
@@ -421,7 +498,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     : cameraDistance;
 
   const activeCameraDistance = campusData ? campusCameraDistance : cameraDistance;
-  const activeTotalHeight = campusData ? 20 : geometry.totalHeight;
+  const activeTotalHeight = campusData ? 20 : extentH;
 
   // P2-11: shadow camera frustum derived from site extents (no hardcoded ±60).
   // Campus mode: use the larger of width/depth so all buildings cast shadows.
@@ -430,10 +507,8 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
     if (campusSiteLayout) {
       return Math.max(campusSiteLayout.extents.width, campusSiteLayout.extents.depth) / 2 * 1.2;
     }
-    return (
-      Math.max(geometry.footprintWidth, geometry.footprintDepth, geometry.totalHeight) * 0.5 + 60
-    );
-  }, [campusSiteLayout, geometry.footprintWidth, geometry.footprintDepth, geometry.totalHeight]);
+    return Math.max(extentW, extentD, extentH) * 0.5 + 60;
+  }, [campusSiteLayout, extentW, extentD, extentH]);
 
   const handleViewChange = (view: "front" | "side" | "top" | "iso") => {
     controlsRef.current?.setView(view);
@@ -441,7 +516,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
 
   const initializeDefaultViews = useViewStore((s) => s.initializeDefaultViews);
   useEffect(() => {
-    if (campusData) return;
+    if (campusData || !recipe) return;
     const halfW = recipe.footprintWidth / 2;
     const halfD = recipe.footprintDepth / 2;
     const bbox = new THREE.Box3(
@@ -456,8 +531,8 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
       {/* Contextual toolbar strip — replaces ViewerOverlay */}
       <ContextualToolbar
         onViewChange={handleViewChange}
-        buildingName={geometry.buildingName}
-        era={geometry.era}
+        buildingName={recipe?.buildingName ?? geometry?.buildingName}
+        era={recipe?.era ?? geometry?.era}
         selectedFloor={modelSource === "parametric" ? selectedFloor : null}
       />
 
@@ -529,18 +604,29 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
           ) : (
             modelSource === "parametric" && (
               <>
-                <ProceduralBuildingModel geometry={geometry} recipeOverride={recipe} onFloorSelect={setSelectedFloor} retrofitVisuals={retrofitVisuals} structuralIsolation={structuralIsolation} reviewHighlightKind={reviewHighlightKind} />
-                <SiteContext recipe={recipe} showDemoNeighbors={buildingPk === DEMO_BUILDING_PK} />
-                {retrofitVisuals.solarInstalled && <SolarPanels recipe={recipe} />}
-                {retrofitVisuals.hvacUpgraded && <RetrofitHvacUnits recipe={recipe} />}
+                {recipe && (
+                  <>
+                    <ProceduralBuildingModel geometry={geometry ?? undefined} recipeOverride={recipe} onFloorSelect={setSelectedFloor} retrofitVisuals={retrofitVisuals} structuralIsolation={structuralIsolation} reviewHighlightKind={reviewHighlightKind} />
+                    <SiteContext recipe={recipe} showDemoNeighbors={buildingPk === DEMO_BUILDING_PK} />
+                    {retrofitVisuals.solarInstalled && <SolarPanels recipe={recipe} />}
+                    {retrofitVisuals.hvacUpgraded && <RetrofitHvacUnits recipe={recipe} />}
+                  </>
+                )}
                 <BuildingLayers buildingPk={buildingPk} />
+                {/* The solved interior, from the BIM snapshot the workspace
+                    already hydrated (WorkspaceShell → useBimModel). Self-gated
+                    on the persisted 내부 요소 toggle, off by default — the
+                    massing shell is opaque, so this is geometry the user asks
+                    for. `selectable` because a click here resolves to a real
+                    element in the same store the inspector reads. */}
+                <InteriorLayer snapshot={bimSnapshot} floors={interiorFloors} selectable />
                 {/* Semantic analysis overlays — 외피 / 구조 / 에너지존.
                     Each mounts its own group and self-gates on the layer
                     store's analysisOverlays slice. */}
                 <EnvelopeLayer buildingPk={buildingPk} />
                 <StructureLayer buildingPk={buildingPk} />
                 <EnergyZoneLayer buildingPk={buildingPk} />
-                <AuthoringFamilyLayer recipe={recipe} />
+                {recipe && <AuthoringFamilyLayer recipe={recipe} />}
                 <StructuralTooltip />
                 <EquipmentClickHandler />
                 <EquipmentHoverCard />
@@ -594,7 +680,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             <span className="font-medium text-foreground">{selectedFloor.structure || "-"}</span>
             <span>IFC</span>
             <span className="font-medium text-foreground">
-              {ifcDisplayLine(classifyElement("slab", { strctCd: recipe.strctCd })!, lang)}
+              {ifcDisplayLine(classifyElement("slab", { strctCd: recipe?.strctCd })!, lang)}
             </span>
           </div>
         </div>

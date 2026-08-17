@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import * as THREE from "three";
+import { useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import type { BuildingRecipe } from "@/lib/procedural/types";
+import { FamilyInstance } from "./family-instance";
 import { planAuthoringInstances } from "@/lib/bim/authoring-placements";
 import { AUTHORING_ASSET_MANIFEST } from "@/lib/bim/authoring-asset-manifest";
 import { authoringFamilyUrl, getAuthoringFamily } from "@/lib/bim/family-catalog";
@@ -16,46 +16,8 @@ for (const entry of Object.values(AUTHORING_ASSET_MANIFEST)) {
   if (entry?.uri) useGLTF.preload(entry.uri);
 }
 
-function FamilyInstance({
-  url,
-  position,
-  scale,
-  rotation,
-  instanceId,
-}: {
-  url: string;
-  position: [number, number, number];
-  scale: [number, number, number];
-  rotation: [number, number, number];
-  instanceId?: string;
-}) {
-  const { scene } = useGLTF(url);
-  const clone = useMemo(() => scene.clone(true), [scene]);
-  const selectElement = useBimModelStore((s) => s.selectElement);
-
-  useEffect(() => {
-    clone.traverse((obj) => {
-      const mesh = obj as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-    });
-  }, [clone]);
-
-  return (
-    <primitive
-      object={clone}
-      position={position}
-      scale={scale}
-      rotation={rotation}
-      onClick={(e: ThreeEvent<MouseEvent>) => {
-        if (!instanceId) return;
-        e.stopPropagation();
-        selectElement(instanceId);
-      }}
-    />
-  );
-}
+// `FamilyInstance` now lives in ./family-instance so the solved-interior layer
+// places families through the same loader and the same GLTF cache.
 
 interface AuthoringFamilyLayerProps {
   recipe: BuildingRecipe;

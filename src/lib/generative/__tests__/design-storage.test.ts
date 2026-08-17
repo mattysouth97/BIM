@@ -40,6 +40,7 @@ import {
   listDesigns,
   loadDesignRecord,
   saveDesign,
+  workspaceBuildingPk,
   type StoredDesignRecord,
 } from "@/lib/generative/design-storage";
 import type { BuildingSpec } from "@/lib/generative/spec/building-spec";
@@ -98,6 +99,37 @@ describe("isGeneratedPk", () => {
     expect(isGeneratedPk("GEN-00420")).toBe(false);
     expect(isGeneratedPk("gen-0042")).toBe(false);
     expect(isGeneratedPk("")).toBe(false);
+  });
+});
+
+describe("workspaceBuildingPk", () => {
+  it("prefers the generation id over an empty synthetic title pk", () => {
+    expect(
+      workspaceBuildingPk({
+        generationId: "GEN-0042",
+        titlePk: "",
+        activePk: "GEN-0042",
+      }),
+    ).toBe("GEN-0042");
+  });
+
+  it("falls back to the published active pk when the scene forgot to pass the id", () => {
+    expect(
+      workspaceBuildingPk({
+        generationId: null,
+        titlePk: "",
+        activePk: "GEN-0007.2",
+      }),
+    ).toBe("GEN-0007.2");
+  });
+
+  it("keeps a ledger title pk for a 건축물대장 building", () => {
+    expect(
+      workspaceBuildingPk({
+        titlePk: "11680-12345678",
+        activePk: "11680-12345678",
+      }),
+    ).toBe("11680-12345678");
   });
 });
 

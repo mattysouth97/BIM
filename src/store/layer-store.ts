@@ -72,6 +72,34 @@ interface LayerState {
 
   /** Set one analysis overlay's visibility explicitly. */
   setAnalysisOverlayVisible: (id: AnalysisOverlayId, visible: boolean) => void;
+
+  /**
+   * 내부 요소 — the SOLVED interior (partitions, hosted doors/windows, stairs,
+   * guards) from `src/lib/interior`, drawn inside the massing shell. Not a
+   * LayerId: LayerManager's five groups are recipe generators, and this layer
+   * is snapshot-driven.
+   *
+   * OFF by default, and the default belongs to the WORKSPACE viewport: its
+   * massing shell is opaque, so an interior nobody asked for is geometry that
+   * cannot be seen and shadow work that is still paid for. The studio viewport
+   * mounts `InteriorLayer` with an explicit `enabled` prop instead of reading
+   * this — showing the solve is the whole point of that canvas, and it has no
+   * layer panel to switch the toggle back on with. One field, two mount-site
+   * defaults; a second field would let the two viewports disagree about what is
+   * really one user preference.
+   */
+  interiorVisible: boolean;
+  toggleInterior: () => void;
+  setInteriorVisible: (visible: boolean) => void;
+
+  /**
+   * Include the envelope walls (and the windows hosted on them) in the interior
+   * layer. Off by default: the procedural massing shell already draws the
+   * facade, and drawing it twice z-fights. Governs walls and their openings
+   * together — the interior never draws a window without the wall it punches.
+   */
+  interiorIncludeExterior: boolean;
+  toggleInteriorIncludeExterior: () => void;
 }
 
 function buildDefault<T>(value: T): Record<LayerId, T> {
@@ -95,6 +123,14 @@ const defaultMepSubVisibility = Object.fromEntries(
 const defaultAnalysisOverlays = Object.fromEntries(
   ANALYSIS_OVERLAY_IDS.map((id) => [id, false])
 ) as Record<AnalysisOverlayId, boolean>;
+
+export const INTERIOR_LAYER_META = {
+  name: "Interior",
+  nameKo: "내부 요소",
+  color: "#c4a574",
+  description: "Solved walls, doors, windows, and stairs",
+  descriptionKo: "해석된 벽·문·창·계단",
+} as const;
 
 export const useLayerStore = create<LayerState>()(
   persist(
@@ -136,7 +172,20 @@ export const useLayerStore = create<LayerState>()(
           airflowVisible: true,
           structuralIsolation: false,
           analysisOverlays: { ...defaultAnalysisOverlays },
+          interiorVisible: false,
+          interiorIncludeExterior: false,
         }),
+
+      interiorVisible: false,
+      toggleInterior: () =>
+        set((state) => ({ interiorVisible: !state.interiorVisible })),
+      setInteriorVisible: (visible) => set({ interiorVisible: visible }),
+
+      interiorIncludeExterior: false,
+      toggleInteriorIncludeExterior: () =>
+        set((state) => ({
+          interiorIncludeExterior: !state.interiorIncludeExterior,
+        })),
 
       analysisOverlays: { ...defaultAnalysisOverlays },
 
@@ -182,6 +231,8 @@ export const useLayerStore = create<LayerState>()(
         mepSubVisibility: s.mepSubVisibility,
         airflowVisible: s.airflowVisible,
         analysisOverlays: s.analysisOverlays,
+        interiorVisible: s.interiorVisible,
+        interiorIncludeExterior: s.interiorIncludeExterior,
       }),
       // Deep-merge persisted sub-visibility OVER the defaults so newly added
       // sub-layer ids (absent from older persisted snapshots) fall back to
@@ -191,6 +242,9 @@ export const useLayerStore = create<LayerState>()(
         return {
           ...current,
           ...p,
+          interiorVisible: p?.interiorVisible ?? current.interiorVisible,
+          interiorIncludeExterior:
+            p?.interiorIncludeExterior ?? current.interiorIncludeExterior,
           mepSubVisibility: {
             ...defaultMepSubVisibility,
             ...(p?.mepSubVisibility ?? {}),

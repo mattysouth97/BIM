@@ -49,6 +49,29 @@ export function isGeneratedPk(id: string): boolean {
   return typeof id === "string" && GENERATED_PK.test(id);
 }
 
+/**
+ * Store key the workspace scene and energy panels must use.
+ *
+ * A generated design's synthetic title carries an EMPTY `mgmBldrgstPk` on
+ * purpose (consumption / official-grade lookups must miss). The 3D scene used
+ * to fall through to `"unknown"` and re-derive a rectangular box from that
+ * title. The generation id is the real pk — it is what `publishGeneratedDesign`
+ * already seeded.
+ */
+export function workspaceBuildingPk(input: {
+  generationId?: string | null;
+  titlePk?: string | null;
+  activePk?: string | null;
+}): string {
+  if (input.generationId && isGeneratedPk(input.generationId)) {
+    return input.generationId;
+  }
+  const title = String(input.titlePk || "");
+  if (title) return title;
+  if (input.activePk && isGeneratedPk(input.activePk)) return input.activePk;
+  return title || input.activePk || "unknown";
+}
+
 /** Everything needed to reconstruct a design, and nothing that can go stale. */
 export interface StoredDesignRecord {
   generationId: string;

@@ -35,7 +35,11 @@ test.describe("Twin authoring", () => {
   test("CAD continue still reaches the twin after core classification", async ({
     page,
   }) => {
-    await page.getByTestId("landing-cad-start").click();
+    // The CAD-first draft (/building/drawing) is no longer a landing
+    // door post-pivot — the generative studio's schematic import replaced it
+    // there — but the route itself is still owned by /building, so this
+    // deep-dives it directly rather than via a removed landing button.
+    await page.goto("/building/drawing");
     await expect(page.getByTestId("upload-sample-dxf")).toBeVisible();
     await page.getByTestId("upload-sample-dxf").click();
     await expect(page.getByText("외곽선 준비 완료")).toBeVisible({ timeout: 15000 });

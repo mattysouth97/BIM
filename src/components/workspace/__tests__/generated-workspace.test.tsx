@@ -47,10 +47,26 @@ vi.mock("idb-keyval", () => ({
 // The scene is the one place the synthetic title is consumed, so the stub
 // reports the fields the workspace is responsible for handing it.
 vi.mock("@/components/viewer/building-scene", () => ({
-  BuildingScene: ({ title, floors }: { title: { mgmBldrgstPk: string; bldNm: string; totArea: number; grndFlrCnt: number }; floors: unknown[] }) => (
+  BuildingScene: ({
+    title,
+    floors,
+    buildingPk,
+    recipeOverride,
+    snapshot,
+  }: {
+    title: { mgmBldrgstPk: string; bldNm: string; totArea: number; grndFlrCnt: number };
+    floors: unknown[];
+    buildingPk?: string;
+    recipeOverride?: { footprintPolygon?: unknown };
+    snapshot?: { elements?: unknown[] };
+  }) => (
     <div
       data-testid="scene"
       data-pk={title.mgmBldrgstPk}
+      data-scene-pk={buildingPk ?? ""}
+      data-has-recipe={recipeOverride ? "1" : "0"}
+      data-has-polygon={recipeOverride?.footprintPolygon ? "1" : "0"}
+      data-has-snapshot={snapshot?.elements?.length ? "1" : "0"}
       data-name={title.bldNm}
       data-tot-area={String(title.totArea)}
       data-grnd-flr={String(title.grndFlrCnt)}
@@ -183,9 +199,15 @@ describe("GeneratedWorkspace — a saved design", () => {
     });
 
     expect(scene.getAttribute("data-name")).toBe(spec.project.name);
-    // Empty pk, deliberately: no 건축물대장 entry exists, so consumption and
-    // official-grade lookups must find nothing rather than a plausible fake.
+    // Empty title pk, deliberately: no 건축물대장 entry exists, so consumption
+    // and official-grade lookups must find nothing rather than a plausible fake.
     expect(scene.getAttribute("data-pk")).toBe("");
+    // The scene itself is keyed on the generation id and handed the solved
+    // recipe + snapshot — not a box re-derived from the empty title.
+    expect(scene.getAttribute("data-scene-pk")).toBe(GENERATION_ID);
+    expect(scene.getAttribute("data-has-recipe")).toBe("1");
+    expect(scene.getAttribute("data-has-polygon")).toBe("1");
+    expect(scene.getAttribute("data-has-snapshot")).toBe("1");
     // Measured off the solved building, not estimated from an era table.
     expect(scene.getAttribute("data-tot-area")).toBe(String(built.metrics.grossAreaSqm));
     expect(scene.getAttribute("data-grnd-flr")).toBe(

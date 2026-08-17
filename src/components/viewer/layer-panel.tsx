@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { useLayerStore } from "@/store/layer-store";
+import { INTERIOR_LAYER_META, useLayerStore } from "@/store/layer-store";
 import { LAYER_CONFIGS, ALL_LAYER_IDS, MEP_SUB_IDS, MEP_SUB_CONFIGS } from "@/lib/layers/types";
 import {
   ANALYSIS_OVERLAY_IDS,
@@ -32,6 +32,12 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
   const toggleAirflow = useLayerStore((s) => s.toggleAirflow);
   const analysisOverlays = useLayerStore((s) => s.analysisOverlays);
   const toggleAnalysisOverlay = useLayerStore((s) => s.toggleAnalysisOverlay);
+  const interiorVisible = useLayerStore((s) => s.interiorVisible);
+  const toggleInterior = useLayerStore((s) => s.toggleInterior);
+  const interiorIncludeExterior = useLayerStore((s) => s.interiorIncludeExterior);
+  const toggleInteriorIncludeExterior = useLayerStore(
+    (s) => s.toggleInteriorIncludeExterior,
+  );
   const { t } = useT();
 
   const [mepExpanded, setMepExpanded] = useState(true);
@@ -148,6 +154,57 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
             </Fragment>
           );
         })}
+
+        {/* 내부 요소 — the solved interior (src/lib/interior). Model content,
+            not an analysis read-out, so it belongs in this section rather than
+            the overlay section below. Off by default: the massing shell is
+            opaque, so this is geometry the user has to ask to see. */}
+        <button
+          type="button"
+          data-testid="interior-layer-toggle"
+          aria-pressed={interiorVisible}
+          onClick={toggleInterior}
+          className="flex w-full items-start gap-3 rounded-md px-3 py-2 text-left text-xs transition-colors hover:bg-accent/50"
+        >
+          <span
+            className="mt-0.5 size-2.5 shrink-0 rounded-full border-2 transition-colors"
+            style={{
+              borderColor: INTERIOR_LAYER_META.color,
+              backgroundColor: interiorVisible ? INTERIOR_LAYER_META.color : "transparent",
+            }}
+          />
+          <span className="flex-1 min-w-0">
+            <span className={`block ${interiorVisible ? "font-medium" : "text-muted-foreground"}`}>
+              {t(INTERIOR_LAYER_META.nameKo, INTERIOR_LAYER_META.name)}
+            </span>
+            <span className="block text-[10px] text-muted-foreground leading-tight mt-0.5 truncate">
+              {t(INTERIOR_LAYER_META.descriptionKo, INTERIOR_LAYER_META.description)}
+            </span>
+          </span>
+        </button>
+
+        {interiorVisible && (
+          <button
+            type="button"
+            aria-pressed={interiorIncludeExterior}
+            onClick={toggleInteriorIncludeExterior}
+            className="flex w-full items-center gap-3 rounded-md pl-8 pr-3 py-1.5 text-left text-[11px] transition-colors hover:bg-accent/50"
+          >
+            <span
+              className="size-1.5 shrink-0 rounded-full border transition-colors"
+              style={{
+                borderColor: INTERIOR_LAYER_META.color,
+                backgroundColor: interiorIncludeExterior
+                  ? INTERIOR_LAYER_META.color
+                  : "transparent",
+              }}
+            />
+            <span className={interiorIncludeExterior ? "font-medium" : "text-muted-foreground"}>
+              {/* The shell already draws the facade — this overlaps it. */}
+              {t("외벽·창 포함 (외피와 겹침)", "Include exterior walls (overlaps the shell)")}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Analysis overlays — physics / BIM read-outs drawn on top of the twin.

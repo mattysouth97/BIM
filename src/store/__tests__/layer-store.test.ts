@@ -38,6 +38,17 @@ describe("useLayerStore", () => {
     expect(useLayerStore.getState().airflowVisible).toBe(true);
   });
 
+  it("interior is off by default in the workspace and can be toggled independently", () => {
+    expect(useLayerStore.getState().interiorVisible).toBe(false);
+    expect(useLayerStore.getState().interiorIncludeExterior).toBe(false);
+    useLayerStore.getState().toggleInterior();
+    expect(useLayerStore.getState().interiorVisible).toBe(true);
+    useLayerStore.getState().setInteriorVisible(false);
+    expect(useLayerStore.getState().interiorVisible).toBe(false);
+    useLayerStore.getState().toggleInteriorIncludeExterior();
+    expect(useLayerStore.getState().interiorIncludeExterior).toBe(true);
+  });
+
   it("all 5 layers have default entries", () => {
     const { visibility, generated, density } = useLayerStore.getState();
     for (const id of ALL_LAYER_IDS) {
@@ -89,6 +100,8 @@ describe("useLayerStore", () => {
     useLayerStore.getState().setDensity("structure", 90);
     useLayerStore.getState().setGenerated("energy-zones");
     useLayerStore.getState().setAirflowVisible(false);
+    useLayerStore.getState().setInteriorVisible(true);
+    useLayerStore.getState().toggleInteriorIncludeExterior();
 
     // Reset
     useLayerStore.getState().resetAll();
@@ -99,6 +112,8 @@ describe("useLayerStore", () => {
     expect(useLayerStore.getState().density["structure"]).toBe(50);
     expect(useLayerStore.getState().generated["energy-zones"]).toBe(false);
     expect(useLayerStore.getState().airflowVisible).toBe(true);
+    expect(useLayerStore.getState().interiorVisible).toBe(false);
+    expect(useLayerStore.getState().interiorIncludeExterior).toBe(false);
   });
 
   it("default density is 50 for all layers", () => {

@@ -94,6 +94,19 @@ export {
   isExteriorWall,
   wallAxisOf,
 } from "./snapshot-read";
+export {
+  floorNoFromPlanLevelId,
+  groupWallsForInstancing,
+  interiorDrawList,
+  itemsOnFloors,
+  visibleFloorNos,
+} from "./visible-floors";
+export {
+  interiorModelFor,
+  interiorOptionsKey,
+  planInteriorView,
+  selectInteriorFloors,
+} from "./view-select";
 export type {
   FamilyPose,
   InteriorBuildOptions,
