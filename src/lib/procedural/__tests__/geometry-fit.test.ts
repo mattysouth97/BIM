@@ -167,6 +167,20 @@ describe("procedural geometry fit", () => {
     });
   });
 
+  it("does not hang apartment balconies on a curtain-wall office", () => {
+    const proto = new THREE.Group();
+    proto.add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.2, 1.4)));
+    __injectEquipmentAssetForTest("balcony-module", proto);
+    const recipe = makeRecipe({
+      mainPurpsCd: "14000",
+      curtainWall: { enabled: true, mullionWidth: 0.03, glassTint: "#88BBCC", glassOpacity: 0.45 },
+      facade: { ...makeRecipe().facade, windowRatio: 0.75, solidPanelChance: 0.03 },
+    });
+    const facade = generateFacade(recipe);
+    expect(facade.getObjectByName("balconies")).toBeUndefined();
+    __resetEquipmentAssetsForTest();
+  });
+
   it("hosts balconies on upper-floor vision bays when the asset is loaded", () => {
     const proto = new THREE.Group();
     proto.add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.2, 1.4)));

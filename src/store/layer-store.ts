@@ -7,7 +7,7 @@ import type { LayerId, MepSubLayerId } from "@/lib/layers/types";
 import { ALL_LAYER_IDS, MEP_SUB_IDS } from "@/lib/layers/types";
 
 interface LayerState {
-  /** Visibility toggle per layer — all layers visible by default */
+  /** Visibility toggle per layer — envelope + structure on; diagnostics off */
   visibility: Record<LayerId, boolean>;
 
   /**
@@ -62,7 +62,13 @@ function buildDefault<T>(value: T): Record<LayerId, T> {
   return Object.fromEntries(ALL_LAYER_IDS.map((id) => [id, value])) as Record<LayerId, T>;
 }
 
-const defaultVisibility = buildDefault(true);
+const defaultVisibility: Record<LayerId, boolean> = {
+  envelope: true,
+  structure: true,
+  mep: false,
+  "energy-zones": false,
+  "retrofit-targets": false,
+};
 const defaultGenerated = buildDefault(false);
 const defaultDensity = buildDefault(50);
 

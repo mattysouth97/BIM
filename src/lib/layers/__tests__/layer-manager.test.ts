@@ -37,10 +37,12 @@ describe("LayerManager — 5-layer Digital Twin system", () => {
     }
   });
 
-  it("all 5 layers are visible by default", () => {
-    for (const id of ALL_LAYER_IDS) {
-      expect(manager.isVisible(id)).toBe(true);
-    }
+  it("envelope and structure start visible; diagnostic layers start hidden", () => {
+    expect(manager.isVisible("envelope")).toBe(true);
+    expect(manager.isVisible("structure")).toBe(true);
+    expect(manager.isVisible("mep")).toBe(false);
+    expect(manager.isVisible("energy-zones")).toBe(false);
+    expect(manager.isVisible("retrofit-targets")).toBe(false);
   });
 
   it("getParentGroup returns a Group named 'building-layers'", () => {
@@ -80,22 +82,21 @@ describe("LayerManager — 5-layer Digital Twin system", () => {
   });
 
   it("toggle() flips visibility and returns new state", () => {
-    // Starts visible
     const afterFirst = manager.toggle("retrofit-targets");
-    expect(afterFirst).toBe(false);
-    expect(manager.isVisible("retrofit-targets")).toBe(false);
+    expect(afterFirst).toBe(true);
+    expect(manager.isVisible("retrofit-targets")).toBe(true);
 
     const afterSecond = manager.toggle("retrofit-targets");
-    expect(afterSecond).toBe(true);
-    expect(manager.isVisible("retrofit-targets")).toBe(true);
+    expect(afterSecond).toBe(false);
+    expect(manager.isVisible("retrofit-targets")).toBe(false);
   });
 
   it("hiding one layer does not affect others", () => {
-    manager.hide("mep");
+    manager.hide("structure");
     expect(manager.isVisible("envelope")).toBe(true);
-    expect(manager.isVisible("structure")).toBe(true);
-    expect(manager.isVisible("energy-zones")).toBe(true);
-    expect(manager.isVisible("retrofit-targets")).toBe(true);
+    expect(manager.isVisible("structure")).toBe(false);
+    expect(manager.isVisible("mep")).toBe(false);
+    expect(manager.isVisible("energy-zones")).toBe(false);
   });
 
   it("setAirflowVisible hides only the named airflow batch", () => {
@@ -133,6 +134,7 @@ describe("LayerManager — 5-layer Digital Twin system", () => {
     hvacGroup.add(airflow);
     manager.getGroup("mep").add(hvacGroup);
 
+    manager.setVisible("mep", true);
     hvacGroup.visible = false;
     manager.updateAnimations(4.5);
     expect(material.uniforms.uTime.value).toBe(0);

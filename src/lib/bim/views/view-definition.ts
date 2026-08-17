@@ -78,7 +78,7 @@ export interface PlanView extends ViewBase {
   levelHeight: number;
   /** Level identifier from FloorGeometry */
   levelId: string;
-  /** View range — display metadata; clipping still uses level slab + height. */
+  /** View range — cut plane drives the plan clip (Revit 1.2 m AFF default). */
   viewRange?: ViewRange;
 }
 

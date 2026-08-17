@@ -28,7 +28,6 @@ import { useInitializeBimViews } from "@/hooks/use-initialize-bim-views";
 import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
 import { SchedulePanel } from "@/components/schedules/schedule-panel";
 import { SheetComposer } from "@/components/sheets/sheet-composer";
-import { ViewSwitcher } from "@/components/viewer/view-switcher";
 
 const ReportStage = lazy(() =>
   import("@/components/report/report-stage").then((module) => ({
@@ -194,10 +193,6 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
 
         {stage === "twin" && (
           <>
-            <div className="pointer-events-none absolute top-[76px] left-1/2 z-20 -translate-x-1/2">
-              <ViewSwitcher />
-            </div>
-
             <FloatingPanel
               title="Schedules"
               visible={schedulePanelOpen}

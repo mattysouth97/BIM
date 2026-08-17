@@ -18,11 +18,13 @@ describe("useLayerStore", () => {
     useLayerStore.getState().resetAll();
   });
 
-  it("default: all 5 layers are visible", () => {
+  it("default: envelope and structure are on; diagnostic layers are off", () => {
     const { visibility } = useLayerStore.getState();
-    for (const id of ALL_LAYER_IDS) {
-      expect(visibility[id]).toBe(true);
-    }
+    expect(visibility.envelope).toBe(true);
+    expect(visibility.structure).toBe(true);
+    expect(visibility.mep).toBe(false);
+    expect(visibility["energy-zones"]).toBe(false);
+    expect(visibility["retrofit-targets"]).toBe(false);
   });
 
   it("airflow is visible by default and can be toggled independently", () => {
@@ -55,9 +57,9 @@ describe("useLayerStore", () => {
   });
 
   it("toggleLayer hides a visible layer", () => {
-    expect(useLayerStore.getState().visibility["mep"]).toBe(true);
-    useLayerStore.getState().toggleLayer("mep");
-    expect(useLayerStore.getState().visibility["mep"]).toBe(false);
+    expect(useLayerStore.getState().visibility["envelope"]).toBe(true);
+    useLayerStore.getState().toggleLayer("envelope");
+    expect(useLayerStore.getState().visibility["envelope"]).toBe(false);
   });
 
   it("setDensity updates density for specific layer", () => {
@@ -93,7 +95,7 @@ describe("useLayerStore", () => {
 
     // Verify defaults
     expect(useLayerStore.getState().visibility["envelope"]).toBe(true);
-    expect(useLayerStore.getState().visibility["mep"]).toBe(true);
+    expect(useLayerStore.getState().visibility["mep"]).toBe(false);
     expect(useLayerStore.getState().density["structure"]).toBe(50);
     expect(useLayerStore.getState().generated["energy-zones"]).toBe(false);
     expect(useLayerStore.getState().airflowVisible).toBe(true);

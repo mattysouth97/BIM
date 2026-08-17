@@ -18,7 +18,6 @@ import {
   calcColumnLoad,
   getColumnPositions,
   getRecommendedColumnSize,
-  getStressColor,
 } from "@/lib/structural-codes";
 
 function pbrToMaterial(config: PBRMaterialConfig): THREE.MeshStandardMaterial {
@@ -194,7 +193,6 @@ export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
   const pos = new THREE.Vector3();
   const quat = new THREE.Quaternion();
   const scl = new THREE.Vector3();
-  const color = new THREE.Color();
   const capacity = calcColumnCapacity(recipe);
   const loads = calcColumnLoad(recipe, columnPositions.length);
 
@@ -206,14 +204,12 @@ export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
     const y = floor.y + slab.thickness + colHeight / 2;
     const floorLoad = loads[floorIndex] ?? 0;
     const utilization = capacity > 0 ? floorLoad / capacity : 0;
-    color.set(getStressColor(utilization));
 
     for (const cp of columnPositions) {
       pos.set(cp.x, y, cp.z);
       scl.set(column.size, colHeight, column.size);
       mat4.compose(pos, quat, scl);
       im.setMatrixAt(idx, mat4);
-      im.setColorAt(idx, color);
       im.userData.sizingLabels[idx] =
         `${getRecommendedColumnSize(floorLoad)} | ${Math.round(floorLoad)} kN | ${Math.round(utilization * 100)}% cap.`;
       idx++;
@@ -222,7 +218,6 @@ export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
 
   im.count = idx;
   im.instanceMatrix.needsUpdate = true;
-  if (im.instanceColor) im.instanceColor.needsUpdate = true;
 
   return im;
 }
@@ -355,6 +350,7 @@ export function generateRoofFurniture(recipe: BuildingRecipe): THREE.Group | nul
 export function generateRoofPergola(recipe: BuildingRecipe): THREE.Group | null {
   const { roof, footprintWidth, footprintDepth, footprintPolygon } = recipe;
   if (roof.type !== "flat") return null;
+  if (recipe.curtainWall?.enabled) return null;
   if (Math.min(footprintWidth, footprintDepth) < 12) return null;
 
   const pergola = getEquipmentObjectClone("roof-pergola");

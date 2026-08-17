@@ -60,6 +60,7 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
   const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
   const airflowVisible = useLayerStore((s) => s.airflowVisible);
   const density = useLayerStore((s) => s.density);
+  const structuralIsolation = useLayerStore((s) => s.structuralIsolation);
   const activeViewId = useViewStore((s) => s.activeViewId);
   const views = useViewStore((s) => s.views);
   const activeViewKind = useMemo(() => {
@@ -152,6 +153,7 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     // Bail when prerequisites are missing
     if (!buildingPk || !breakdown || !effectiveRecipe) return;
     if (!breakdown.perFloor?.length) return;
+    if (!visibility["energy-zones"]) return;
 
     const heatmap = buildEnergyHeatmap(
       effectiveRecipe.floors,
@@ -159,7 +161,7 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
       effectiveRecipe
     );
     energyGroup.add(heatmap);
-  }, [buildingPk, breakdown, effectiveRecipe]);
+  }, [buildingPk, breakdown, effectiveRecipe, visibility]);
 
   // MEP geometry generation — runs when recipe or equipment params change.
   // Disposes previous MEP children (but NOT the named sub-groups themselves, which are
@@ -315,7 +317,7 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
   const structuralLayerRef = useRef<StructuralAnalysisLayer | null>(null);
   useEffect(() => {
     const manager = managerRef.current;
-    if (!manager || !effectiveRecipe) return;
+    if (!manager || !effectiveRecipe || !structuralIsolation) return;
 
     const structureGroup = manager.getGroup("structure");
     structuralLayerRef.current?.dispose();
@@ -329,7 +331,7 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
       layer.dispose();
       structuralLayerRef.current = null;
     };
-  }, [effectiveRecipe]);
+  }, [effectiveRecipe, structuralIsolation]);
 
   // P2-20 — applied HVAC/lighting measures recolor their MEP sub-groups to
   // "new equipment" green. Materials are cloned per-mesh (they are shared

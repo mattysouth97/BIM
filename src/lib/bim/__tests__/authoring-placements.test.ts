@@ -51,32 +51,24 @@ function makeRecipe(): BuildingRecipe {
 }
 
 describe("planAuthoringInstances", () => {
-  it("instances columns, a door, windows, roof MEP, and lights from slot GLBs", () => {
+  it("does not scatter a sample family set onto the live twin", () => {
     const poses = planAuthoringInstances(makeRecipe());
-    expect(poses.some((p) => p.id.startsWith("col:"))).toBe(true);
-    expect(poses.some((p) => p.id === "door:entry")).toBe(true);
-    expect(poses.filter((p) => p.id.startsWith("win:")).length).toBeGreaterThan(0);
-    expect(poses.map((p) => p.id)).toEqual(
-      expect.arrayContaining(["mep:chiller", "mep:boiler", "mep:dhw", "mep:ahu"])
-    );
-    expect(poses.every((p) => p.url.endsWith(".glb"))).toBe(true);
-    const plant = poses.find((p) => p.id === "mep:chiller");
-    // Finished roof top: last floor 6.7 + flatThickness 0.25
-    expect(plant?.position[1]).toBeCloseTo(6.95, 5);
+    expect(poses).toEqual([]);
   });
 
-  it("applies a selected door type on the building entry", () => {
+  it("parks the selected type on a preview pad beside the building", () => {
     const poses = planAuthoringInstances(makeRecipe(), "door-glass-storefront");
-    const door = poses.find((p) => p.id === "door:entry");
-    expect(door?.url).toBe("/models/authoring/door-glass-storefront.glb");
-    expect(poses.some((p) => p.id.startsWith("preview:"))).toBe(false);
+    expect(poses).toHaveLength(1);
+    expect(poses[0]?.id).toBe("preview:door-glass-storefront");
+    expect(poses[0]?.url).toBe("/models/authoring/door-glass-storefront.glb");
+    expect(poses[0]?.position[0]).toBeGreaterThan(10);
   });
 
-  it("places selected wall types on the four building sides", () => {
+  it("uses the same pad for walls instead of wrapping the facade", () => {
     const poses = planAuthoringInstances(makeRecipe(), "wall-exterior-brick-on-cmu");
-    const walls = poses.filter((p) => p.id.startsWith("wall:"));
-    expect(walls).toHaveLength(4);
-    expect(walls.every((p) => p.url.endsWith("wall-exterior-brick-on-cmu.glb"))).toBe(true);
+    expect(poses).toHaveLength(1);
+    expect(poses[0]?.id).toBe("preview:wall-exterior-brick-on-cmu");
+    expect(poses.some((p) => p.id.startsWith("wall:"))).toBe(false);
   });
 
   it("adds a preview pad pose for furniture and other components", () => {

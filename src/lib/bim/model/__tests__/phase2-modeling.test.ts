@@ -36,6 +36,21 @@ function model() {
   });
 }
 
+describe("generated quantities", () => {
+  it("gives windows and doors a unit area so the schedule is not 0 m²", () => {
+    const snapshot = model();
+    const windows = snapshot.elements.filter((el) => el.kind === "window");
+    const doors = snapshot.elements.filter((el) => el.kind === "door");
+    expect(windows.length).toBeGreaterThan(0);
+    expect(doors.length).toBeGreaterThan(0);
+    expect(windows.every((el) => Number(el.instanceParameters.areaM2) > 0)).toBe(true);
+    expect(doors.every((el) => Number(el.instanceParameters.areaM2) > 0)).toBe(true);
+    const qty = quantifyModel(snapshot);
+    const windowRow = qty.find((r) => r.category === "Windows");
+    expect(windowRow?.areaM2).toBeGreaterThan(0);
+  });
+});
+
 describe("geometry + snap", () => {
   it("aligns wall +X with the drawn axis", () => {
     const axis = wallAxis({ x: 0, z: 0 }, { x: 4, z: 0 });

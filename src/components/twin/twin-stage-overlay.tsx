@@ -20,6 +20,8 @@ import { CapexInput } from "./capex-input";
 import { ProgramTrackSelector } from "./program-track-selector";
 import { SelectedMeasuresStrip } from "./selected-measures-strip";
 import { EnergyCards } from "@/components/viewer/energy-cards";
+import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
+import { useViewStore } from "@/lib/bim/views/view-store";
 
 interface TwinStageOverlayProps {
   title: BrTitleInfo;
@@ -88,6 +90,16 @@ export function TwinStageOverlay({ title, footprintGeometry }: TwinStageOverlayP
     const total = scenario.allMeasures.length;
     return `${sel}/${total} measures`;
   }, [scenario.selection, scenario.allMeasures.length]);
+
+  const workMode = useRevitWorkflowStore((s) => s.workMode);
+  const activeViewId = useViewStore((s) => s.activeViewId);
+  const views = useViewStore((s) => s.views);
+  const activeKind = views.find((v) => v.id === activeViewId)?.kind ?? "3d";
+  // Scenario still publishes to the store above. The HUD itself belongs on
+  // the energy/FM 3D twin — it was covering plans, sections, and authoring.
+  const showHud = workMode === "energy" && activeKind === "3d";
+
+  if (!showHud) return null;
 
   return (
     <TwinInstrumentFrame

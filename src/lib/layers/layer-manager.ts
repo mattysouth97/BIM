@@ -80,7 +80,7 @@ export class LayerManager {
     for (const id of ALL_LAYER_IDS) {
       const group = new THREE.Group();
       group.name = `layer-${id}`;
-      group.visible = true; // All layers visible by default
+      group.visible = id === "envelope" || id === "structure";
       this.groups.set(id, group);
       this.parentGroup.add(group);
     }

@@ -147,6 +147,7 @@ function generatedElements(
         count: opening.count,
         widthMm: Math.round(opening.width * 1000),
         heightMm: Math.round(opening.height * 1000),
+        areaM2: Math.round(opening.width * opening.height * 100) / 100,
         sillHeightMm: isDoor ? 0 : Math.round(recipe.facade.sillHeight * 1000),
         material: opening.material,
       },

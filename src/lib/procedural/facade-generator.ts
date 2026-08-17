@@ -213,10 +213,22 @@ function claddingSlotsForFace(
   facade: FacadeConfig,
   slabThickness: number,
   layout: WindowLayout,
+  curtainSkin: boolean,
 ): { x: number; y: number; sx: number; sy: number }[] {
   const slots: { x: number; y: number; sx: number; sy: number }[] = [];
   const barWidth = face.length - 2 * facade.cornerInset;
   if (barWidth < 0.08) return slots;
+
+  // Curtain-wall offices stay glass-forward. Only a thin slab-edge
+  // spandrel hides the beam line — full punched-window fill belongs
+  // on residential / solid facades.
+  if (curtainSkin) {
+    const band = Math.min(0.4, slabThickness + 0.16);
+    if (band > 0.08) {
+      slots.push({ x: 0, y: floor.y + band / 2, sx: barWidth, sy: band });
+    }
+    return slots;
+  }
 
   const wallBaseY = floor.y + slabThickness;
   const floorTop = floor.y + floor.height;
@@ -339,6 +351,8 @@ export function generateFacade(
   // Apply curtain wall overrides if applicable
   const { facade: cwFacade, glassMaterialOverride } = applyCurtainWallOverrides(recipe.facade, recipe);
   const facade = cwFacade;
+  const curtainSkin =
+    recipe.curtainWall?.enabled === true && facade.windowRatio > 0.65;
 
   const faces = recipe.footprintPolygon && recipe.footprintPolygon[0]?.length >= 3
     ? getPolygonFaces(recipe.footprintPolygon[0], wallThickness)
@@ -354,7 +368,7 @@ export function generateFacade(
     for (let fi = 0; fi < faces.length; fi++) {
       const face = faces[fi];
       const layout = windowLayoutForFace(face, floor, facade, slab.thickness, fi, faces.length);
-      solidCount += claddingSlotsForFace(face, floor, facade, slab.thickness, layout).length;
+      solidCount += claddingSlotsForFace(face, floor, facade, slab.thickness, layout, curtainSkin).length;
 
       for (let c = 0; c < layout.adjustedCols; c++) {
         const isCenterDoor = floor.isGroundFloor && face.side === "front" && layout.adjustedCols > 2
@@ -466,7 +480,7 @@ export function generateFacade(
       const layout = windowLayoutForFace(face, floor, facade, slab.thickness, fi, faces.length);
       const { adjustedCols, startX, winH, sillH } = layout;
 
-      for (const slot of claddingSlotsForFace(face, floor, facade, slab.thickness, layout)) {
+      for (const slot of claddingSlotsForFace(face, floor, facade, slab.thickness, layout, curtainSkin)) {
         pos.set(slot.x, slot.y, 0);
         pos.applyQuaternion(face.quaternion).add(face.position);
         scl.set(slot.sx, slot.sy, solidPanelDepth);
@@ -615,7 +629,7 @@ export function generateFacade(
   // Hosted balconies — glass rail matching the Revit 외피 reference.
   // Skip the ground floor and solid/door bays; every other vision bay on
   // the long faces so the skin reads as architecture, not a frame.
-  if (getEquipmentObjectClone("balcony-module")) {
+  if (!curtainSkin && getEquipmentObjectClone("balcony-module")) {
     const balconyGroup = new THREE.Group();
     balconyGroup.name = "balconies";
     const outward = wallThickness / 2 + 0.02;

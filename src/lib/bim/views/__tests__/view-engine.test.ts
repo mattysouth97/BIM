@@ -67,25 +67,25 @@ describe("createPlanView", () => {
     expect(Math.abs(cz)).toBeLessThan(1); // near zero
   });
 
-  it("clips at correct elevation — lower plane constant equals -elevation", () => {
+  it("clips just below the slab so the floor plate stays in the cut", () => {
     const elevation = 6;
     const view = createPlanView({ id: "2", name: "2F", elevation, height: 3 });
     const planes = view.clippingPlanes!;
-    // lower plane: normal = [0,1,0], constant = -elevation
     const lower = planes.find((p) => p.normal[1] === 1);
     expect(lower).toBeDefined();
-    expect(lower!.constant).toBeCloseTo(-elevation, 4);
+    expect(lower!.constant).toBeCloseTo(-(elevation + (view.viewRange?.viewDepth ?? 0)), 4);
   });
 
-  it("clips at level top — upper plane constant equals elevation + height", () => {
+  it("cuts at the view-range cut, not the ceiling slab", () => {
     const elevation = 6;
-    const height = 3.2;
+    const height = 4.15;
     const view = createPlanView({ id: "2", name: "2F", elevation, height });
     const planes = view.clippingPlanes!;
-    // upper plane: normal = [0,-1,0], constant = elevation + height
     const upper = planes.find((p) => p.normal[1] === -1);
     expect(upper).toBeDefined();
-    expect(upper!.constant).toBeCloseTo(elevation + height, 4);
+    expect(view.viewRange?.cut).toBeCloseTo(1.2, 4);
+    expect(upper!.constant).toBeCloseTo(elevation + 1.2, 4);
+    expect(upper!.constant).toBeLessThan(elevation + height);
   });
 
   it("stores levelElevation and levelHeight correctly", () => {
@@ -263,7 +263,7 @@ describe("computeDefaultViewsForBuilding", () => {
     }
   });
 
-  it("plan view clipping lower bound matches floor elevation", () => {
+  it("plan view clipping lower bound includes view-depth below the slab", () => {
     const floorHeight = 3;
     const floors = makeFloors(3, floorHeight);
     const bbox = makeBbox(-6, 0, -4, 6, 9, 4);
@@ -273,7 +273,8 @@ describe("computeDefaultViewsForBuilding", () => {
     const secondFloor = planViews.find((v) => v.levelElevation === floorHeight);
     expect(secondFloor).toBeDefined();
     const lowerPlane = secondFloor!.clippingPlanes!.find((p) => p.normal[1] === 1);
-    expect(lowerPlane!.constant).toBeCloseTo(-floorHeight, 4);
+    const depth = secondFloor!.viewRange?.viewDepth ?? 0;
+    expect(lowerPlane!.constant).toBeCloseTo(-(floorHeight + depth), 4);
   });
 });
 

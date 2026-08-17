@@ -31,6 +31,7 @@ import {
   type RetrofitVisualState,
 } from "@/lib/retrofit/measure-visuals";
 import { classifyElement } from "@/lib/bim/ifc-classification";
+import { useViewStore } from "@/lib/bim/views/view-store";
 
 interface ProceduralBuildingModelProps {
   geometry: BuildingGeometry;
@@ -193,6 +194,9 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
   // Sync Digital Twin layer visibility to named mesh groups.
   // Depends on `group` state so it re-runs after building generation completes.
   const layerVisibility = useLayerStore((s) => s.visibility);
+  const activeViewId = useViewStore((s) => s.activeViewId);
+  const views = useViewStore((s) => s.views);
+  const planView = views.find((v) => v.id === activeViewId)?.kind === "plan";
   useEffect(() => {
     if (!group) return;
 
@@ -203,22 +207,27 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       if (
         n === "facade" ||
         n.startsWith("facade-section-") ||
-        n === "roof" ||
-        n === "roof-furniture" ||
-        n === "roof-pergola" ||
         n === "balconies"
       ) {
         child.visible = layerVisibility["envelope"] ?? true;
       }
 
+      // Roof decks fill a plan the same way slabs do — hide them in plan.
+      if (n === "roof" || n === "roof-furniture" || n === "roof-pergola") {
+        child.visible = (layerVisibility["envelope"] ?? true) && !planView;
+      }
+
       // Structure layer: floor slabs, columns, and beams
-      if (n === "slabs" || n === "columns" || n === "beams") {
+      if (n === "slabs") {
+        child.visible = (layerVisibility["structure"] ?? true) && !planView;
+      }
+      if (n === "columns" || n === "beams") {
         child.visible = layerVisibility["structure"] ?? true;
       }
 
       // MEP / energy-zones / retrofit-targets: no geometry yet — no-op
     });
-  }, [group, layerVisibility]);
+  }, [group, layerVisibility, planView]);
 
   // P2-20 — retint renewed elements when applied measures change. Materials
   // are cloned per-mesh before tinting (they are shared across meshes, so

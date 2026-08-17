@@ -47,7 +47,6 @@ import { EquipmentHoverCard } from "./equipment-hover-card";
 import { EquipmentInteractionHandler } from "./equipment-interaction-handler";
 import { AuthoringFamilyLayer } from "./authoring-family-layer";
 import { SceneHighlightProcessing } from "./scene-highlight-processing";
-import { EnergyCards } from "./energy-cards";
 import { ConfigPanel } from "./config-panel";
 import { TwinStageOverlay } from "@/components/twin/twin-stage-overlay";
 import type { FootprintGeometry } from "@/lib/portfolio/types";
@@ -406,7 +405,7 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
 
   const { t, lang } = useT();
 
-  const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 1.8;
+  const cameraDistance = Math.max(geometry.totalHeight, geometry.footprintWidth, geometry.footprintDepth) * 2.3;
 
   // Campus camera: position far enough to see all buildings
   const campusSiteLayout = useMemo(
@@ -603,12 +602,6 @@ export function BuildingScene({ title, floors, campusData, footprintData: footpr
             title={title}
             footprintGeometry={portfolioFootprint}
           />
-        </ErrorBoundary>
-      )}
-
-      {modelSource === "parametric" && (
-        <ErrorBoundary>
-          <EnergyCards buildingPk={buildingPk} variant="stack" />
         </ErrorBoundary>
       )}
 

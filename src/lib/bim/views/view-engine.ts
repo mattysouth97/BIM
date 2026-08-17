@@ -68,29 +68,28 @@ export function createPlanView(level: {
     footprintDepth = 20,
   } = level;
 
-  // Camera hovers 100 m above level mid-point looking down
-  const midY = elevation + height / 2;
+  // Camera hovers 100 m above the cut looking down. Target the cut height
+  // so the slice sits in the middle of the frustum, not the ceiling slab.
+  const cut = Math.min(1.2, Math.max(0.3, height * 0.35));
+  const viewDepth = -0.3;
+  const lowerY = elevation + viewDepth;
+  const upperY = elevation + cut;
   const cameraY = elevation + height + 100;
 
   const cameraState: OrthoCameraState = {
     kind: "ortho",
     position: [0, cameraY, 0.001], // tiny Z offset keeps "up" direction stable
-    target: [0, midY, 0],
+    target: [0, elevation + cut / 2, 0],
     zoom: fitOrthoZoom(footprintWidth, footprintDepth),
     near: 0.1,
     far: cameraY + 10,
   };
 
-  // Lower clip: normal points up (+Y), constant = -(elevation)
-  // Plane equation: dot(normal, point) + constant >= 0 → point.y >= elevation
-  const lowerPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -elevation);
+  // Lower clip: keep the floor slab and a little view-depth below it.
+  const lowerPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -lowerY);
 
-  // Upper clip: normal points down (-Y), constant = elevation + height
-  // Plane equation: dot(normal, point) + constant >= 0 → -point.y + (elevation+height) >= 0 → point.y <= elevation+height
-  const upperPlane = new THREE.Plane(
-    new THREE.Vector3(0, -1, 0),
-    elevation + height
-  );
+  // Upper clip: cut at ~1.2 m AFF so the ceiling slab cannot fill the view.
+  const upperPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), upperY);
 
   return {
     id: `plan-${id}`,
@@ -102,9 +101,9 @@ export function createPlanView(level: {
     levelId: id,
     viewRange: {
       top: height,
-      cut: Math.min(1.2, Math.max(0.3, height * 0.35)),
+      cut,
       bottom: 0,
-      viewDepth: -0.3,
+      viewDepth,
     },
     clippingPlanes: [
       planeToDescriptor(lowerPlane),
@@ -236,7 +235,7 @@ export function create3dView(bbox: THREE.Box3, id = "3d-iso"): PerspectiveView {
   const center = bbox.getCenter(new THREE.Vector3());
   const size = bbox.getSize(new THREE.Vector3());
   const span = Math.max(size.x, size.y, size.z);
-  const d = span * 1.8 + 8 || 20;
+  const d = span * 2.3 + 8 || 20;
 
   const cameraState: PerspCameraState = {
     kind: "persp",
