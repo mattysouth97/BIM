@@ -69,7 +69,12 @@ export type BimKind =
   | "ceiling"
   | "furniture"
   | "lighting"
-  | "beam";
+  | "beam"
+  // Generative additions — the brief requires stairs, shafts and railings to be
+  // real semantic objects, not meshes.
+  | "stair"
+  | "railing"
+  | "shaft";
 
 export interface BimConnector {
   id: string;
@@ -94,6 +99,41 @@ export interface BimViewVisibility {
   isolatedIds: string[];
 }
 
+/**
+ * Which building system an element belongs to. Drives semantic navigation,
+ * system-level selection ("Isolate Core"), and system-level locking — you lock
+ * "structure", not 42 individual columns.
+ */
+export type BimSystem =
+  | "massing"
+  | "structure"
+  | "envelope"
+  | "core"
+  | "circulation"
+  | "partitions"
+  | "openings"
+  | "mep"
+  | "roof";
+
+/**
+ * How an element came to exist. `AUTHORED` is a human drawing it; `MODIFIED` is
+ * a generated element a human has since edited — that distinction is what lets
+ * regeneration preserve the architect's work instead of overwriting it.
+ */
+export type BimGenerationSourceType =
+  | "GENERATED"
+  | "AUTHORED"
+  | "MODIFIED"
+  | "IMPORTED";
+
+export interface BimGenerationSource {
+  type: BimGenerationSourceType;
+  /** The generation that produced it, e.g. "GEN-0042". */
+  generationId: string;
+  /** Bumped whenever a regeneration rewrites this element. */
+  version: number;
+}
+
 export interface BimElement {
   id: string;
   origin: BimOrigin;
@@ -113,6 +153,26 @@ export interface BimElement {
   emsTag?: string;
   ifcClass?: string;
   connectors?: BimConnector[];
+
+  /* --- generative additions (all optional: existing elements are unaffected) --- */
+
+  /** Provenance. Absent on legacy elements, which are treated as AUTHORED. */
+  generationSource?: BimGenerationSource;
+  /**
+   * User-protected. Regeneration must never alter or delete a locked element
+   * without explicit authorisation.
+   */
+  locked?: boolean;
+  /** Building system, for semantic selection and system-level locking. */
+  system?: BimSystem;
+  /**
+   * Upstream ids this element was derived from (grid line, level, space, host
+   * wall). This is the edge set of the dependency graph that makes partial
+   * regeneration possible — without it, every edit is a full rebuild.
+   */
+  dependsOn?: string[];
+  /** Spaces this element bounds. Walls use it; the validator reads it. */
+  boundsSpaceIds?: string[];
 }
 
 export interface BimLevel {

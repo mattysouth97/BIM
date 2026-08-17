@@ -34,7 +34,12 @@ import { classifyElement } from "@/lib/bim/ifc-classification";
 import { useViewStore } from "@/lib/bim/views/view-store";
 
 interface ProceduralBuildingModelProps {
-  geometry: BuildingGeometry;
+  /**
+   * Ledger-derived geometry. Optional: a generatively authored building has no
+   * ledger record, and supplies `recipeOverride` directly instead. Exactly one
+   * of `geometry` or `recipeOverride` must be present.
+   */
+  geometry?: BuildingGeometry;
   /** If provided, use this recipe instead of computing from geometry */
   recipeOverride?: BuildingRecipe;
   onFloorSelect?: (floor: FloorGeometry | null) => void;
@@ -134,8 +139,15 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
   const selectedRef = useRef<number | null>(null);
   const [group, setGroup] = useState<THREE.Group | null>(null);
 
-  const baseRecipe = useMemo(() => toRecipe(geometry), [geometry]);
+  // A generated building arrives as a recipe with no ledger geometry behind it,
+  // so only derive one when geometry was actually supplied.
+  const baseRecipe = useMemo(() => (geometry ? toRecipe(geometry) : null), [geometry]);
   const recipe = recipeOverride ?? baseRecipe;
+  if (!recipe) {
+    throw new Error(
+      "ProceduralBuildingModel requires either `geometry` or `recipeOverride`.",
+    );
+  }
 
   // Detailed Blender structural kit (columns, beams, mullions, panels, roof
   // furniture) — regenerate once the GLB cache is preloaded.
@@ -363,7 +375,10 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
     selectedRef.current = newSelection;
 
     if (onFloorSelect) {
-      if (newSelection !== null) {
+      // Floor→FloorGeometry needs the ledger geometry. A generated building has
+      // none, and reports floor selection through the BIM graph instead, so
+      // there is nothing to hand back here.
+      if (newSelection !== null && geometry) {
         onFloorSelect(floorSpecToGeometry(floorSpec, geometry));
       } else {
         onFloorSelect(null);
@@ -381,8 +396,14 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
 
   return (
     <>
+      {/* The recipe carries site extent and era too, so a generated building
+          gets its ground plane without any ledger geometry. */}
       {!hideGroundPlane && (
-        <GroundPlane siteWidth={geometry.siteWidth} siteDepth={geometry.siteDepth} era={geometry.era} />
+        <GroundPlane
+          siteWidth={geometry?.siteWidth ?? recipe.siteWidth}
+          siteDepth={geometry?.siteDepth ?? recipe.siteDepth}
+          era={geometry?.era ?? recipe.era}
+        />
       )}
       {group && (
         <primitive

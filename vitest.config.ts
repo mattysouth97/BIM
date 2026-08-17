@@ -21,6 +21,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
+      // `server-only` throws by design outside an RSC environment. Stub it so
+      // server modules (the Claude provider and the generative API routes) are
+      // testable in Node; the real guard still protects the Next.js build.
+      "server-only": path.resolve(__dirname, "src/test/server-only-stub.ts"),
     },
   },
 });
