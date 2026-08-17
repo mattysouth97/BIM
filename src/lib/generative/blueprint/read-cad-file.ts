@@ -13,12 +13,15 @@
 // run under vitest, so tests exercise the DXF path for real and the DWG branch
 // at this seam.
 
+import { extractMeshFacesFromDxfText } from "@/lib/cad/doc/extract-mesh-faces";
 import { mapDxfTextToDoc } from "@/lib/cad/doc/map-dxf-to-doc";
 import type { CadDocument } from "@/lib/cad/doc/types";
 import {
   summariseDwgFailure,
   type DwgDiagnostics,
 } from "@/lib/cad/dwg-version";
+
+import { toMeshDrawing, type MeshDrawing } from "./import-mesh-file";
 
 /**
  * Drawing formats the schematic importer accepts. `"svg"` does NOT become a
@@ -55,7 +58,15 @@ export type CadFileReadErrorCode =
   | "UNSUPPORTED_EXTENSION"
   | "DWG_CONVERSION_FAILED"
   | "DXF_UNPARSEABLE"
-  | "EMPTY_DRAWING";
+  /** No 2D geometry AND no mesh: there is genuinely nothing in the file. */
+  | "EMPTY_DRAWING"
+  /**
+   * No 2D geometry, but the file DOES hold a 3D mesh. Not a dead end: the
+   * result carries the mesh, and the caller can offer to extract a plan from
+   * it. Reported as a failure of the 2D read because that is what it is —
+   * nothing about the drawing has been interpreted yet.
+   */
+  | "MESH_ONLY_DRAWING";
 
 /**
  * A typed failure. `detail` holds per-step lines that explain the headline —
@@ -81,6 +92,12 @@ export type CadFileReadResult =
       ok: false;
       error: CadFileReadError;
       warnings: string[];
+      /**
+       * Present only with `MESH_ONLY_DRAWING`: the 3D mesh the file holds, ready
+       * for `importMeshDrawing`. Additive — callers that only render
+       * `error.message` are unaffected.
+       */
+      mesh?: MeshDrawing;
     };
 
 function extensionOf(fileName: string): string {
@@ -221,6 +238,41 @@ export async function readCadFile(
   }
 
   if (doc.entities.length === 0) {
+    // Before calling the drawing empty, look for the other thing a DXF can be:
+    // a 3D mesh export. A file made of 3DFACEs holds no 2D entity at all, and
+    // saying so and stopping would be true but useless — the building is right
+    // there, in a form this reader can cut a plan out of.
+    const mesh = extractMeshFacesFromDxfText(dxfText);
+    warnings.push(...mesh.warnings);
+
+    if (mesh.faces.length > 0) {
+      const drawing = toMeshDrawing({
+        faces: mesh.faces,
+        extraction: mesh.stats,
+        documentId: doc.id,
+        ...(mesh.insUnits !== undefined ? { insUnits: mesh.insUnits } : {}),
+        unitScaleToMeters: mesh.unitScaleToMeters,
+        parserWarnings: [...doc.warnings, ...mesh.warnings],
+      });
+      return {
+        ok: false,
+        error: {
+          code: "MESH_ONLY_DRAWING",
+          message:
+            `"${file.name}" holds no 2D drawing — it is a 3D model ` +
+            `(${Object.keys(doc.stats.skipped).join(", ") || "mesh entities"}). ` +
+            `A floor plan can be extracted from it.`,
+          detail: [
+            `${drawing.stats.faceCount} mesh face(s), ${drawing.stats.triangleCount} triangle(s).`,
+            `Height range ${drawing.stats.minZ.toFixed(2)}–${drawing.stats.maxZ.toFixed(2)} m (${drawing.stats.zRangeM.toFixed(2)} m).`,
+            `About ${drawing.stats.estimatedFloors} storey(s) at an assumed 3.5 m floor-to-floor.`,
+          ],
+        },
+        mesh: drawing,
+        warnings,
+      };
+    }
+
     return {
       ok: false,
       error: {

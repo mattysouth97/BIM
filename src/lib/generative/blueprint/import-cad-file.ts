@@ -404,7 +404,16 @@ const DECLARED_CONFIDENCE = 0.95;
  */
 const ASSUMED_CONFIDENCE = 0.4;
 
-export function decideUnits(doc: CadDocument): CadUnitDecision {
+/**
+ * The unit decision, over anything that carries the two facts a DXF read
+ * produces. Widened from `CadDocument` so the 3D-mesh importer states the
+ * scale in exactly the same words — one unit policy, one wording, whichever
+ * half of the file the geometry came from.
+ */
+export function decideUnits(doc: {
+  insUnits?: number;
+  unitScaleToMeters: number;
+}): CadUnitDecision {
   const declared = doc.insUnits !== undefined && doc.insUnits !== 0;
   return {
     ...(doc.insUnits !== undefined ? { insUnits: doc.insUnits } : {}),

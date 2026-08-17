@@ -12,6 +12,39 @@ import { computeExtents } from "./extents";
 /* dxf-parser's entity typings are partial; we read loosely and validate. */
 type RawEntity = Record<string, unknown> & { type: string; layer?: string };
 
+/** The one reading of a DXF's `$INSUNITS`, shared with `extract-mesh-faces.ts`. */
+export interface DxfUnitScale {
+  /**
+   * Raw `$INSUNITS`, or undefined when the header is absent — downstream
+   * consumers can tell "the file says unitless" from "the file said nothing".
+   */
+  declaredInsUnits?: number;
+  /** Metres per drawing unit. 1 when the file declared nothing usable. */
+  scale: number;
+  /** True when the effective `$INSUNITS` is 0 and metres were ASSUMED. */
+  unitless: boolean;
+}
+
+/**
+ * Resolve the drawing's unit scale. Exported so the 3D-mesh extractor applies
+ * the SAME factor to the same file rather than keeping a second copy of the
+ * `$INSUNITS` table — a mesh read at a different scale than the 2D entities
+ * would be a silent, invisible disagreement about how big the building is.
+ */
+export function resolveDxfUnitScale(dxf: IDxf): DxfUnitScale {
+  const rawInsUnits = dxf.header?.["$INSUNITS"];
+  const declaredInsUnits =
+    typeof rawInsUnits === "number" && Number.isFinite(rawInsUnits)
+      ? rawInsUnits
+      : undefined;
+  const insUnits = declaredInsUnits ?? 0;
+  return {
+    ...(declaredInsUnits !== undefined ? { declaredInsUnits } : {}),
+    scale: INSUNITS_TO_METERS[insUnits] ?? 1,
+    unitless: insUnits === 0,
+  };
+}
+
 export function mapDxfTextToDoc(text: string, docId: string): CadDocument {
   const warnings: string[] = [];
   const skipped: Record<string, number> = {};
@@ -23,16 +56,8 @@ export function mapDxfTextToDoc(text: string, docId: string): CadDocument {
   }
   if (!dxf) return emptyDoc(docId, warnings);
 
-  const rawInsUnits = dxf.header?.["$INSUNITS"];
-  // `declaredInsUnits` stays undefined when the header is absent, so downstream
-  // consumers can tell "the file says unitless" from "the file said nothing".
-  const declaredInsUnits =
-    typeof rawInsUnits === "number" && Number.isFinite(rawInsUnits)
-      ? rawInsUnits
-      : undefined;
-  const insUnits = declaredInsUnits ?? 0;
-  const scale = INSUNITS_TO_METERS[insUnits] ?? 1;
-  if (insUnits === 0) warnings.push("Unitless DXF — assuming meters.");
+  const { declaredInsUnits, scale, unitless } = resolveDxfUnitScale(dxf);
+  if (unitless) warnings.push("Unitless DXF — assuming meters.");
 
   let nextId = 0;
   const idGen = () => `e${nextId++}`;

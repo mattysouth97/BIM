@@ -60,6 +60,12 @@ import {
   type CadLayerRole,
   type CadLayerSummary,
 } from "@/lib/generative/blueprint/import-cad-file";
+import type { MeshExtractionFacts } from "@/lib/generative/blueprint/from-mesh";
+import {
+  importMeshDrawing,
+  type MeshDrawing,
+  type MeshImportOutcome,
+} from "@/lib/generative/blueprint/import-mesh-file";
 import {
   guessSvgLayerAssignments,
   importSvgString,
@@ -101,10 +107,22 @@ const SVG_COVERAGE_NOTE =
   "SVG geometry is read from <line>, <polyline>, <polygon>, <rect> and <path>. " +
   "<circle>, <ellipse>, <image> and anything reachable only through <use> are not read.";
 
-/** The file, once read — the only thing that differs between the two sources. */
+/** The file, once read — the only thing that differs between the sources. */
 type LoadedFile =
   | { kind: "cad"; file: File; doc: CadDocument; format: CadFileFormat; warnings: string[] }
-  | { kind: "svg"; file: File; text: string };
+  | { kind: "svg"; file: File; text: string }
+  /**
+   * A DXF/DWG holding a 3D mesh and no 2D drawing. There is no layer mapping to
+   * confirm here; what the user confirms instead is the cut height, which is
+   * the whole of the interpretation.
+   */
+  | {
+      kind: "mesh";
+      file: File;
+      format: CadFileFormat;
+      mesh: MeshDrawing;
+      warnings: string[];
+    };
 
 /**
  * The parts of an import outcome this dialog renders. Both `CadImportOutcome`
@@ -115,10 +133,11 @@ type ImportOutcomeView =
   | { ok: true; blueprint: BlueprintSpec; report: CadImportReport }
   | { ok: false; error: { code: string; message: string }; report: CadImportReport };
 
-/** The outcome with its source still attached, so SVG-only facts stay typed. */
+/** The outcome with its source still attached, so per-source facts stay typed. */
 type Preview =
   | { source: "cad"; outcome: CadImportOutcome }
-  | { source: "svg"; outcome: SvgImportOutcome };
+  | { source: "svg"; outcome: SvgImportOutcome }
+  | { source: "mesh"; outcome: MeshImportOutcome };
 
 function baseName(fileName: string): string {
   return fileName.replace(/\.(dxf|dwg|svg)$/i, "");
@@ -145,6 +164,10 @@ export function ImportCadDialog({
   const [unitInput, setUnitInput] = useState("1");
   const [unitScale, setUnitScale] = useState(1);
   const [scaleTouched, setScaleTouched] = useState(false);
+  /** Mesh only: cut height in metres, as typed and as parsed. */
+  const [sliceInput, setSliceInput] = useState("");
+  const [sliceZ, setSliceZ] = useState<number | null>(null);
+  const [useProjection, setUseProjection] = useState(false);
   const [readError, setReadError] = useState<{
     code: string;
     message: string;
@@ -158,6 +181,9 @@ export function ImportCadDialog({
     setUnitInput("1");
     setUnitScale(1);
     setScaleTouched(false);
+    setSliceInput("");
+    setSliceZ(null);
+    setUseProjection(false);
     setReadError(null);
     setBusy(false);
   }, []);
@@ -170,6 +196,9 @@ export function ImportCadDialog({
     setUnitInput("1");
     setUnitScale(1);
     setScaleTouched(false);
+    setSliceInput("");
+    setSliceZ(null);
+    setUseProjection(false);
     try {
       const format = classifyDrawingFile(file.name);
       if (format === null) {
@@ -192,6 +221,19 @@ export function ImportCadDialog({
 
       const result = await readCadFile(file);
       if (!result.ok) {
+        // A mesh-only DXF is not a dead end — it becomes an extraction offer.
+        if (result.mesh) {
+          setLoaded({
+            kind: "mesh",
+            file,
+            format: classifyDrawingFile(file.name) === "dwg" ? "dwg" : "dxf",
+            mesh: result.mesh,
+            warnings: result.warnings,
+          });
+          setSliceZ(result.mesh.stats.suggestedSliceZ);
+          setSliceInput(result.mesh.stats.suggestedSliceZ.toFixed(2));
+          return;
+        }
         setReadError(result.error);
         return;
       }
@@ -213,6 +255,8 @@ export function ImportCadDialog({
   const guesses: CadLayerAssignments = useMemo(() => {
     if (!loaded) return {};
     if (loaded.kind === "cad") return guessLayerAssignments(loaded.doc);
+    // A mesh has no layer roles to guess: the roles come out of the cut.
+    if (loaded.kind === "mesh") return {};
     try {
       return guessSvgLayerAssignments(svgToSegments(loaded.text, unitScale).segments);
     } catch {
@@ -240,6 +284,17 @@ export function ImportCadDialog({
         }),
       };
     }
+    if (loaded.kind === "mesh") {
+      return {
+        source: "mesh",
+        outcome: importMeshDrawing(loaded.mesh, {
+          fileName: loaded.file.name,
+          name: baseName(loaded.file.name),
+          ...(sliceZ !== null ? { sliceZ } : {}),
+          useProjection,
+        }),
+      };
+    }
     return {
       source: "svg",
       outcome: importSvgString(loaded.text, assignments, {
@@ -249,12 +304,14 @@ export function ImportCadDialog({
         scaleConfirmed: scaleTouched,
       }),
     };
-  }, [loaded, assignments, unitScale, scaleTouched]);
+  }, [loaded, assignments, unitScale, scaleTouched, sliceZ, useProjection]);
 
   const outcome: ImportOutcomeView | null = preview?.outcome ?? null;
   const layers = outcome?.report.layers ?? [];
   const svgFacts: SvgReadFacts | null =
     preview?.source === "svg" ? preview.outcome.report.svg : null;
+  const meshFacts =
+    preview?.source === "mesh" && preview.outcome.ok ? preview.outcome.facts : null;
 
   const setRole = useCallback((layer: string, role: CadLayerRole) => {
     setOverrides((current) => ({
@@ -283,11 +340,19 @@ export function ImportCadDialog({
     }
   }, []);
 
+  const onSliceInput = useCallback((raw: string) => {
+    setSliceInput(raw);
+    const parsed = Number.parseFloat(raw);
+    // Only a usable height is committed; a half-typed value keeps the last one
+    // rather than silently snapping the preview back to the suggestion.
+    if (Number.isFinite(parsed)) setSliceZ(parsed);
+  }, []);
+
   const adopt = useCallback(() => {
     if (!loaded || !outcome?.ok) return;
     useBlueprintStore.getState().loadBlueprint(outcome.blueprint, {
       fileName: loaded.file.name,
-      format: loaded.kind === "cad" ? loaded.format : "svg",
+      format: loaded.kind === "svg" ? "svg" : loaded.format,
       documentId: outcome.report.documentId,
       assignments,
       report: outcome.report,
@@ -348,9 +413,10 @@ export function ImportCadDialog({
               <span className="font-mono text-[11px] text-muted-foreground">
                 {loaded.file.name} ·{" "}
                 {loaded.kind === "cad"
-                  ? `${loaded.format.toUpperCase()} · ${loaded.doc.stats.mapped} entities`
-                  : `SVG · ${svgFacts?.segmentCount ?? 0} edges`}{" "}
-                · {layers.length} layers
+                  ? `${loaded.format.toUpperCase()} · ${loaded.doc.stats.mapped} entities · ${layers.length} layers`
+                  : loaded.kind === "mesh"
+                    ? `${loaded.format.toUpperCase()} 3D · ${loaded.mesh.stats.faceCount} faces`
+                    : `SVG · ${svgFacts?.segmentCount ?? 0} edges · ${layers.length} layers`}
               </span>
             )}
           </div>
@@ -362,6 +428,16 @@ export function ImportCadDialog({
               activeScale={unitScale}
               touched={scaleTouched}
               onChange={onUnitInput}
+            />
+          )}
+
+          {loaded?.kind === "mesh" && (
+            <MeshExtractionField
+              mesh={loaded.mesh}
+              sliceInput={sliceInput}
+              useProjection={useProjection}
+              onSliceInput={onSliceInput}
+              onUseProjection={setUseProjection}
             />
           )}
 
@@ -385,7 +461,7 @@ export function ImportCadDialog({
 
           {loaded && (
             <ul className="flex flex-col gap-0.5">
-              {loaded.kind === "cad" &&
+              {(loaded.kind === "cad" || loaded.kind === "mesh") &&
                 loaded.warnings.map((warning) => (
                   <li key={warning} className="text-[11px] text-amber-700">
                     {warning}
@@ -407,14 +483,18 @@ export function ImportCadDialog({
           {loaded && outcome && (
             <div className="flex flex-col gap-4 lg:flex-row">
               <div className="min-w-0 flex-1">
-                <LayerTable
-                  layers={layers}
-                  assignments={assignments}
-                  countLabel={loaded.kind === "svg" ? "Edges" : "Entities"}
-                  showTextCounts={loaded.kind === "cad"}
-                  onRole={setRole}
-                  onProgram={setProgram}
-                />
+                {loaded.kind === "mesh" ? (
+                  <MeshReadNotes mesh={loaded.mesh} facts={meshFacts} />
+                ) : (
+                  <LayerTable
+                    layers={layers}
+                    assignments={assignments}
+                    countLabel={loaded.kind === "svg" ? "Edges" : "Entities"}
+                    showTextCounts={loaded.kind === "cad"}
+                    onRole={setRole}
+                    onProgram={setProgram}
+                  />
+                )}
               </div>
 
               <div className="flex w-full shrink-0 flex-col gap-2 lg:w-[420px]">
@@ -435,6 +515,138 @@ export function ImportCadDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Mesh extraction                                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The mesh path's one real control. A 3D model holds no plan, so the plan has
+ * to be CUT out of it, and the height of that cut is the whole interpretation —
+ * which is why it is a field the person importing sets, defaulted to a
+ * suggestion and labelled as one, rather than a constant buried in the reader.
+ */
+function MeshExtractionField({
+  mesh,
+  sliceInput,
+  useProjection,
+  onSliceInput,
+  onUseProjection,
+}: {
+  mesh: MeshDrawing;
+  sliceInput: string;
+  useProjection: boolean;
+  onSliceInput: (raw: string) => void;
+  onUseProjection: (next: boolean) => void;
+}) {
+  const { stats } = mesh;
+  const valid = Number.isFinite(Number.parseFloat(sliceInput));
+
+  return (
+    <div
+      className="flex flex-col gap-2 rounded border px-3 py-2"
+      data-testid="import-mesh-panel"
+    >
+      <p className="text-xs font-medium">3D 모델에서 평면 추출</p>
+      <p className="text-[11px] text-muted-foreground">
+        이 파일에는 2D 도면이 없고 3D 메시만 있습니다. 아래 높이에서 모델을 수평으로
+        잘라 평면을 만듭니다 — 측정값이 아니라 해석입니다.
+      </p>
+      <div
+        className="flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[10px] text-muted-foreground"
+        data-testid="import-mesh-stats"
+      >
+        <span>faces {stats.faceCount}</span>
+        <span>triangles {stats.triangleCount}</span>
+        <span>
+          Z {stats.minZ.toFixed(2)}–{stats.maxZ.toFixed(2)} m
+        </span>
+        <span>~{stats.estimatedFloors} floors</span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 text-[11px]">
+        <label htmlFor="import-mesh-slice-z">절단 높이 Z =</label>
+        <input
+          id="import-mesh-slice-z"
+          data-testid="import-mesh-slice-z"
+          type="number"
+          step="any"
+          value={sliceInput}
+          disabled={useProjection}
+          onChange={(event) => onSliceInput(event.target.value)}
+          className={cn(
+            "w-24 rounded border bg-background px-1 py-0.5 font-mono text-[11px]",
+            !valid && "border-destructive",
+            useProjection && "opacity-50",
+          )}
+        />
+        <span>m</span>
+        <label className="ml-2 flex items-center gap-1">
+          <input
+            type="checkbox"
+            data-testid="import-mesh-use-projection"
+            checked={useProjection}
+            onChange={(event) => onUseProjection(event.target.checked)}
+          />
+          바닥 투영 사용
+        </label>
+      </div>
+
+      <p className="text-[10px] text-amber-700">
+        {useProjection
+          ? "바닥 투영: 모든 면을 지면에 눌러 외곽선만 얻습니다. 건물이 어디 서 있는지는 말해 주지만 내부는 말해 주지 않습니다."
+          : `제안된 높이는 모델 최저점 + 1.2 m (${stats.suggestedSliceZ.toFixed(2)} m)입니다. 층수 ~${stats.estimatedFloors}은(는) 3.5 m 층고 가정에서 나온 추정치입니다.`}
+      </p>
+    </div>
+  );
+}
+
+/** What the extraction did, beside the preview it produced. */
+function MeshReadNotes({
+  mesh,
+  facts,
+}: {
+  mesh: MeshDrawing;
+  facts: MeshExtractionFacts | null;
+}) {
+  const rows: Array<[string, string]> = [
+    ["mesh faces", `${mesh.stats.faceCount}`],
+    ["triangles", `${mesh.stats.triangleCount}`],
+    ["degenerate faces", `${mesh.stats.degenerateFaceCount}`],
+    ["3DFACE entities", `${mesh.extraction.threeDFaceCount}`],
+    ["polyface meshes", `${mesh.extraction.polyfaceMeshCount}`],
+    [
+      "height range",
+      `${mesh.stats.minZ.toFixed(2)} – ${mesh.stats.maxZ.toFixed(2)} m`,
+    ],
+    ["storeys (assumed 3.5 m)", `~${mesh.stats.estimatedFloors}`],
+  ];
+  if (facts) {
+    rows.push([
+      "method",
+      facts.method === "slice"
+        ? `horizontal cut at Z = ${(facts.sliceZ ?? 0).toFixed(2)} m`
+        : "footprint projection (no cut closed an outline)",
+    ]);
+    rows.push(["boundary area", `${facts.boundaryAreaSqm.toFixed(1)} m²`]);
+    rows.push(["coplanar faces skipped", `${facts.slice.coplanarTrianglesSkipped}`]);
+  }
+
+  return (
+    <div className="overflow-x-auto rounded border" data-testid="import-mesh-notes">
+      <table className="w-full text-left text-[11px]">
+        <tbody>
+          {rows.map(([label, value]) => (
+            <tr key={label} className="border-t first:border-t-0">
+              <td className="px-2 py-1 text-muted-foreground">{label}</td>
+              <td className="px-2 py-1 font-mono">{value}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
