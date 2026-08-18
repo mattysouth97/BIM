@@ -223,12 +223,22 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
     );
   }
 
-  const { grade, gradeColor, demand, co2, heatLoss } = metrics;
+  const { grade, gradeColor, demand, co2, heatLoss, siteTotal } = metrics;
   const actualData = actual.data ?? [];
   const hasActual = actualData.length > 0;
-  // Grade and certified demand are not available from the consumption API
+  // Official MOTIE grade is not on the consumption feed.
   const hasActualGrade = false;
-  const hasActualDemand = false;
+  const floorAreaSqm = effectiveRecipe?.officialFloorAreaSqm ?? 0;
+  const latestActual = hasActual
+    ? actualData.reduce((a, b) => (b.year > a.year ? b : a))
+    : null;
+  const actualEui =
+    latestActual && floorAreaSqm > 0
+      ? latestActual.total_kwh / floorAreaSqm
+      : null;
+  const modeledSiteEui =
+    floorAreaSqm > 0 && siteTotal > 0 ? siteTotal / floorAreaSqm : null;
+  const hasActualDemand = actualEui != null && modeledSiteEui != null;
 
   // Tree equivalent: 1 tree absorbs ~22 kg CO2/yr
   const treeEquivalent = co2.co2PerSqm > 0 ? co2.co2PerSqm / 22 : 0;
@@ -331,13 +341,16 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
         <p className="text-sm font-semibold tabular-nums">
           <AnimatedValue value={demand.demandPerSqm} suffix=" kWh/m²·yr" />
         </p>
-        {hasActual ? (
+        {hasActualDemand ? (
+          <DeltaIndicator
+            modeled={modeledSiteEui}
+            actual={actualEui}
+            suffix=" kWh/m²·yr"
+          />
+        ) : hasActual ? (
           <p className="text-[9px] text-muted-foreground/60 italic mt-0.5">
             {t("실측 수요 데이터 없음", "No actual demand data")}
           </p>
-        ) : null}
-        {hasActualDemand ? (
-          <DeltaIndicator modeled={demand.demandPerSqm} actual={0} suffix=" kWh/m²·yr" />
         ) : null}
         <div className="mt-1 flex gap-3 text-[10px] text-muted-foreground">
           <span>

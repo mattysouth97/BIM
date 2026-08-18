@@ -37,6 +37,32 @@ export function stringParam(element: BimElement, key: string): string | null {
   return typeof value === "string" ? value : null;
 }
 
+/** A plate outline in world XZ metres. Null when the parameter is missing or not a ring. */
+export function outlineOf(element: BimElement): [number, number][][] | null {
+  const raw = stringParam(element, "outlineJson");
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
+    const rings: [number, number][][] = [];
+    for (const ring of parsed) {
+      if (!Array.isArray(ring) || ring.length < 3) return null;
+      const points: [number, number][] = [];
+      for (const point of ring) {
+        if (!Array.isArray(point) || point.length < 2) return null;
+        const x = Number(point[0]);
+        const z = Number(point[1]);
+        if (!Number.isFinite(x) || !Number.isFinite(z)) return null;
+        points.push([x, z]);
+      }
+      rings.push(points);
+    }
+    return rings;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Instance parameter, falling back to the element's TYPE parameter — the
  * Revit rule, and the reason a generated window (whose `generated-window` type

@@ -89,6 +89,29 @@ describe("buildInteriorModel — a real generated building", () => {
     expect(model.stats.wallCount).toBe(allOf(model.wallsByFloor).length);
     expect(model.stats.poseCount).toBe(allOf(model.posesByFloor).length);
     expect(model.stats.railingCount).toBe(allOf(model.railingsByFloor).length);
+    expect(model.stats.plateCount).toBe(0);
+  });
+
+  it("mounts floor, ceiling and roof plates on the schematic outline when asked", async () => {
+    const snapshot = await snapshotPromise;
+    const model = buildInteriorModel(snapshot, { includeExterior: true });
+    const plates = allOf(model.platesByFloor);
+    expect(model.stats.plateCount).toBe(plates.length);
+    expect(plates.some((p) => p.role === "floor")).toBe(true);
+    expect(plates.some((p) => p.role === "ceiling")).toBe(true);
+    expect(plates.some((p) => p.role === "roof")).toBe(true);
+
+    for (const floorNo of model.floors) {
+      const plate = plateBounds(snapshot, floorNo);
+      const onFloor = model.platesByFloor[floorNo] ?? [];
+      for (const item of onFloor) {
+        const ring = item.polygon[0] ?? [];
+        expect(Math.min(...ring.map((p) => p[0]))).toBeCloseTo(plate.minX, 5);
+        expect(Math.max(...ring.map((p) => p[0]))).toBeCloseTo(plate.maxX, 5);
+        expect(Math.min(...ring.map((p) => p[1]))).toBeCloseTo(plate.minZ, 5);
+        expect(Math.max(...ring.map((p) => p[1]))).toBeCloseTo(plate.maxZ, 5);
+      }
+    }
   });
 
   it("stands every wall box inside its own level plate, between floor and ceiling", async () => {
@@ -362,6 +385,7 @@ describe("buildInteriorModel — honesty", () => {
       const drawn = new Set([
         ...allOf(model.wallsByFloor).map((w) => w.elementId),
         ...allOf(model.posesByFloor).map((p) => p.elementId),
+        ...allOf(model.platesByFloor).map((p) => p.elementId),
       ]);
       const outOfScope = Object.values(model.stats.outOfScope).reduce((a, b) => a + b, 0);
       expect(drawn.size + model.stats.skipped.length + outOfScope).toBe(
@@ -373,11 +397,11 @@ describe("buildInteriorModel — honesty", () => {
   it("names what it left out rather than dropping it silently", async () => {
     const model = buildInteriorModel(await snapshotPromise);
     expect(Object.keys(model.stats.outOfScope).sort()).toEqual([
+      "envelope plate (includeExterior === false)",
       "exterior wall (includeExterior === false)",
       "not an interior kind: beam",
       "not an interior kind: column",
       "not an interior kind: room",
-      "not an interior kind: slab",
       "opening on an exterior wall (includeExterior === false)",
     ]);
   });
@@ -505,6 +529,7 @@ describe("buildInteriorModel — determinism", () => {
       ...allOf(model.wallsByFloor),
       ...allOf(model.posesByFloor),
       ...allOf(model.railingsByFloor),
+      ...allOf(model.platesByFloor),
     ];
 
     expect(new Set(all.map((i) => i.id)).size).toBe(all.length);

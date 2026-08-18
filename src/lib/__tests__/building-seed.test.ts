@@ -8,6 +8,9 @@ describe("seedBuildingFromLedger", () => {
     expect(seeded).not.toBeNull();
     expect(seeded?.pk).toBe(demoTitle.mgmBldrgstPk);
     expect(seeded?.recipe.floors.length).toBeGreaterThan(0);
+    expect(seeded?.recipe.footprintWidth).toBeCloseTo(34, 5);
+    expect(seeded?.recipe.footprintDepth).toBeCloseTo(24, 5);
+    expect(seeded?.recipe.footprintPolygon?.[0].length).toBeGreaterThanOrEqual(4);
     expect(seeded?.materials.envelope.walls[0]?.uValue).toBeGreaterThan(0);
   });
 

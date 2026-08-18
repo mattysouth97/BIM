@@ -222,11 +222,12 @@ describe("NavigationPanel — systems with nothing to browse", () => {
     const chips = within(alsoLockable())
       .getAllByRole("listitem")
       .map((item) => item.textContent);
-    expect(chips).toEqual(["Massing", "Roof", "MEP"]);
+    expect(chips).toEqual(["Massing", "MEP"]);
 
     // Systems the tree can show are not duplicated down here.
     expect(within(alsoLockable()).queryByRole("button", { name: "Structure" })).toBeNull();
     expect(within(alsoLockable()).queryByRole("button", { name: "Core" })).toBeNull();
+    expect(within(alsoLockable()).queryByRole("button", { name: "Roof" })).toBeNull();
   });
 
   it("explains why a chip has no branch in the tree", () => {
@@ -237,8 +238,8 @@ describe("NavigationPanel — systems with nothing to browse", () => {
   it("a chip toggles its own system token", () => {
     renderPanel();
 
-    fireEvent.click(within(alsoLockable()).getByRole("button", { name: "Roof" }));
-    expect(handlers.onToggleLock).toHaveBeenCalledWith("system:roof");
+    fireEvent.click(within(alsoLockable()).getByRole("button", { name: "MEP" }));
+    expect(handlers.onToggleLock).toHaveBeenCalledWith("system:mep");
 
     fireEvent.click(within(alsoLockable()).getByRole("button", { name: "Massing" }));
     expect(handlers.onToggleLock).toHaveBeenLastCalledWith("system:massing");

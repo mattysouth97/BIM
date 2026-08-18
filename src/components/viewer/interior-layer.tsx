@@ -34,6 +34,7 @@ import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 
 import type { BimModelSnapshot } from "@/lib/bim/model/types";
+import { extrudePolygon } from "@/lib/gis/earcut-extrude";
 import { planInteriorView } from "@/lib/interior/view-select";
 import { disposeObject3D } from "@/lib/layers/analysis/overlay-types";
 import { useLayerStore } from "@/store/layer-store";
@@ -52,6 +53,9 @@ const PARTITION_COLOR = 0xd8d4cb;
 /** Core walls: the same hue, darker — a shaft wall is not a partition. */
 const CORE_COLOR = 0xa49f96;
 const RAILING_COLOR = 0x64748b;
+const FLOOR_COLOR = 0xcfc8bc;
+const CEILING_COLOR = 0xe8e4dc;
+const ROOF_COLOR = 0x7d7a74;
 /** A guard is drawn as one thin box, not the 1 m module GLB (see below). */
 const RAILING_THICKNESS_M = 0.05;
 
@@ -165,7 +169,8 @@ export function InteriorLayer({
     for (const floorNo of view.floors) {
       const walls = view.model.wallsByFloor[floorNo] ?? [];
       const railings = view.model.railingsByFloor[floorNo] ?? [];
-      if (walls.length === 0 && railings.length === 0) continue;
+      const plates = view.model.platesByFloor[floorNo] ?? [];
+      if (walls.length === 0 && railings.length === 0 && plates.length === 0) continue;
 
       const floorGroup = new THREE.Group();
       floorGroup.name = `interior-floor-${floorNo}`;
@@ -211,6 +216,30 @@ export function InteriorLayer({
           mesh.setMatrixAt(i, matrix);
         }
         mesh.instanceMatrix.needsUpdate = true;
+        floorGroup.add(mesh);
+      }
+
+      for (const plate of plates) {
+        const geo = extrudePolygon(plate.polygon, plate.thicknessM, plate.y);
+        const mat = new THREE.MeshStandardMaterial({
+          color:
+            plate.role === "roof"
+              ? ROOF_COLOR
+              : plate.role === "ceiling"
+                ? CEILING_COLOR
+                : FLOOR_COLOR,
+          roughness: plate.role === "roof" ? 0.72 : 0.95,
+          metalness: 0,
+          side: plate.role === "ceiling" ? THREE.DoubleSide : THREE.FrontSide,
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.name = `interior-${plate.role}-${plate.elementId}`;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.userData = {
+          type: `interior-${plate.role}`,
+          elementId: plate.elementId,
+        };
         floorGroup.add(mesh);
       }
 

@@ -100,6 +100,7 @@ interface LayerState {
    */
   interiorIncludeExterior: boolean;
   toggleInteriorIncludeExterior: () => void;
+  setInteriorIncludeExterior: (include: boolean) => void;
 }
 
 function buildDefault<T>(value: T): Record<LayerId, T> {
@@ -186,6 +187,8 @@ export const useLayerStore = create<LayerState>()(
         set((state) => ({
           interiorIncludeExterior: !state.interiorIncludeExterior,
         })),
+      setInteriorIncludeExterior: (include) =>
+        set({ interiorIncludeExterior: include }),
 
       analysisOverlays: { ...defaultAnalysisOverlays },
 

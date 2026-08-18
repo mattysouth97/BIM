@@ -28,6 +28,7 @@ import {
   numberParam,
 } from "./snapshot-read";
 import { round6, roundTriple } from "./transform";
+import { buildEnvelopePlates, isPlateLaneElement } from "./plates";
 import { buildWallInstances, isWallLaneElement } from "./walls";
 import type { InteriorBuildOptions, InteriorModel, RailingRun } from "./types";
 
@@ -37,26 +38,33 @@ export function buildInteriorModel(
 ): InteriorModel {
   const wallResult = buildWallInstances(snapshot, options);
   const poseResult = buildFamilyPoses(snapshot, options);
+  const plateResult = buildEnvelopePlates(snapshot, options);
   const railings = buildRailingRuns(snapshot);
 
-  const skipped = [...wallResult.skipped, ...poseResult.skipped].sort(
+  const skipped = [...wallResult.skipped, ...poseResult.skipped, ...plateResult.skipped].sort(
     (a, b) =>
       (a.elementId < b.elementId ? -1 : a.elementId > b.elementId ? 1 : 0) ||
       (a.reason < b.reason ? -1 : a.reason > b.reason ? 1 : 0),
   );
 
-  const drawn = new Set([...wallResult.drawnElementIds, ...poseResult.drawnElementIds]);
+  const drawn = new Set([
+    ...wallResult.drawnElementIds,
+    ...poseResult.drawnElementIds,
+    ...plateResult.drawnElementIds,
+  ]);
   const logged = new Set(skipped.map((entry) => entry.elementId));
 
   const wallsByFloor = groupByFloor(wallResult.walls);
   const posesByFloor = groupByFloor(poseResult.poses);
   const railingsByFloor = groupByFloor(railings);
+  const platesByFloor = groupByFloor(plateResult.plates);
 
   const floors = [
     ...new Set([
       ...Object.keys(wallsByFloor),
       ...Object.keys(posesByFloor),
       ...Object.keys(railingsByFloor),
+      ...Object.keys(platesByFloor),
     ]),
   ]
     .map(Number)
@@ -67,10 +75,12 @@ export function buildInteriorModel(
     wallsByFloor,
     posesByFloor,
     railingsByFloor,
+    platesByFloor,
     stats: {
       wallCount: wallResult.walls.length,
       poseCount: poseResult.poses.length,
       railingCount: railings.length,
+      plateCount: plateResult.plates.length,
       skipped,
       outOfScope: census(snapshot, options, drawn, logged),
     },
@@ -206,6 +216,14 @@ function reasonFor(
       return "opening on an exterior wall (includeExterior === false)";
     }
   }
+
+  if (
+    (element.kind === "slab" || element.kind === "ceiling" || element.kind === "roof") &&
+    !options.includeExterior
+  ) {
+    return "envelope plate (includeExterior === false)";
+  }
+  if (isPlateLaneElement(element, options)) return "plate with no drawable outline";
 
   if (isPoseLaneElement(element)) return `unrepresented ${element.kind}`;
   return `not an interior kind: ${element.kind}`;

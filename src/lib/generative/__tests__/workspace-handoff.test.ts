@@ -30,6 +30,7 @@ describe("prepareGeneratedWorkspaceSession", () => {
 describe("prepareDemoWorkspaceSession", () => {
   beforeEach(() => {
     useLayerStore.getState().setInteriorVisible(false);
+    useLayerStore.getState().setInteriorIncludeExterior(false);
     useLayerStore.getState().setLayerVisible("envelope", true);
     useLayerStore.getState().setLayerVisible("mep", false);
     useWorkflowStore.getState().setStage("search");
@@ -39,6 +40,7 @@ describe("prepareDemoWorkspaceSession", () => {
     prepareDemoWorkspaceSession();
     const layers = useLayerStore.getState();
     expect(layers.interiorVisible).toBe(true);
+    expect(layers.interiorIncludeExterior).toBe(true);
     expect(layers.visibility.envelope).toBe(false);
     expect(layers.visibility.structure).toBe(true);
     expect(layers.visibility.mep).toBe(true);

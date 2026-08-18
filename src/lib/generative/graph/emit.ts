@@ -9,8 +9,10 @@
 // module's output and not the reasoning transcript — is the source of truth.
 
 import {
+  GENERATED_CEILING_TYPE,
   GENERATED_DOOR_TYPE,
   GENERATED_FLOOR_TYPE,
+  GENERATED_ROOF_TYPE,
   GENERATED_ROOM_TYPE,
   GENERATED_WALL_TYPE,
   GENERATED_WINDOW_TYPE,
@@ -87,6 +89,37 @@ function ringPerimeter(ring: [number, number][]): number {
   return total;
 }
 
+/** Shared outline payload for a floor / ceiling / roof that follows a plate. */
+function plateOutlineFields(polygon: Polygon, thicknessMm: number) {
+  const outline = roundPolygon(polygon);
+  const [outer, ...holes] = outline;
+  const voidAreaM2 = holes.reduce((sum, hole) => sum + ringArea(hole), 0);
+  const bounds =
+    outer && outer.length > 0
+      ? polygonBounds(outline)
+      : { minX: 0, maxX: 0, minZ: 0, maxZ: 0 };
+  return {
+    outline,
+    instanceParameters: {
+      areaM2: round(Math.max(0, ringArea(outer ?? []) - voidAreaM2), 2),
+      thicknessMm,
+      outlineJson: JSON.stringify(outline),
+      vertexCount: outer?.length ?? 0,
+      voidCount: holes.length,
+      voidAreaM2: round(voidAreaM2, 2),
+      perimeterM: round(ringPerimeter(outer ?? []), 3),
+      widthM: round(bounds.maxX - bounds.minX, 3),
+      depthM: round(bounds.maxZ - bounds.minZ, 3),
+    },
+    placement: {
+      x: round((bounds.minX + bounds.maxX) / 2),
+      y: 0,
+      z: round((bounds.minZ + bounds.maxZ) / 2),
+      rotationY: 0,
+    },
+  };
+}
+
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
 /* ------------------------------------------------------------------ */
@@ -140,6 +173,28 @@ function generatedTypes(spec: BuildingSpec): Record<string, BimType> {
       typeNameKo: `슬래브 ${spec.structure.slabThicknessMm.value}mm`,
       parameters: { thicknessMm: spec.structure.slabThicknessMm.value },
       ifcClass: "IfcSlab",
+    },
+    [GENERATED_CEILING_TYPE]: {
+      id: GENERATED_CEILING_TYPE,
+      category: "Ceilings",
+      categoryKo: "천장",
+      family: "Compound Ceiling",
+      familyKo: "복합 천장",
+      typeName: "Gypsum 15mm",
+      typeNameKo: "석고 15mm",
+      parameters: { thicknessMm: 15 },
+      ifcClass: "IfcCovering",
+    },
+    [GENERATED_ROOF_TYPE]: {
+      id: GENERATED_ROOF_TYPE,
+      category: "Roofs",
+      categoryKo: "지붕",
+      family: "Basic Roof",
+      familyKo: "기본 지붕",
+      typeName: spec.roof.type.value === "flat" ? "Warm Roof – Flat" : "Basic Roof",
+      typeNameKo: spec.roof.type.value === "flat" ? "평지붕" : "기본 지붕",
+      parameters: { thicknessMm: spec.structure.slabThicknessMm.value },
+      ifcClass: "IfcRoof",
     },
     [GENERATED_COLUMN_TYPE]: {
       id: GENERATED_COLUMN_TYPE,
@@ -304,18 +359,17 @@ export function emitElements(input: EmitInput): BimElement[] {
       dependsOn,
     });
 
-  /* --- slabs --- */
-  for (const slab of building.slabs) {
-    const outline = roundPolygon(slab.polygon);
-    const [outer, ...holes] = outline;
-    const voidAreaM2 = holes.reduce((sum, hole) => sum + ringArea(hole), 0);
-    // `polygonBounds` reports ±Infinity for an outline with no vertices, and a
-    // non-finite placement is worse than an honest origin.
-    const bounds =
-      outer && outer.length > 0
-        ? polygonBounds(outline)
-        : { minX: 0, maxX: 0, minZ: 0, maxZ: 0 };
+  /* --- slabs, ceilings, roof --- */
+  // Floors, ceilings and the roof share one outline contract: the level's
+  // plate in world XZ metres, the same rings `BuildingRecipe.footprintPolygon`
+  // uses. That is what lets the 3D envelope mount to the schematic instead of
+  // a bounding-box stand-in.
+  const ceilingThicknessMm = 15;
+  const plenumMm = spec.mep.ceilingPlenumMm;
+  const levelByFloor = new Map(building.levels.map((level) => [level.floorNo, level]));
 
+  for (const slab of building.slabs) {
+    const plate = plateOutlineFields(slab.polygon, Math.round(slab.thicknessM * 1000));
     elements.push({
       ...mk(
         slab.id,
@@ -328,28 +382,67 @@ export function emitElements(input: EmitInput): BimElement[] {
         [levelIdForFloor(slab.floorNo)],
       ),
       instanceParameters: {
+        ...plate.instanceParameters,
         areaM2: round(slab.areaSqm, 2),
-        thicknessMm: Math.round(slab.thicknessM * 1000),
-        // The plate itself. `[outer, ...holes]` in the engine's world XZ metres
-        // — the same rings and the same winding as
-        // `BuildingRecipe.footprintPolygon`, so a consumer reads one contract.
-        outlineJson: JSON.stringify(outline),
-        vertexCount: outer?.length ?? 0,
-        voidCount: holes.length,
-        voidAreaM2: round(voidAreaM2, 2),
-        perimeterM: round(ringPerimeter(outer ?? []), 3),
-        widthM: round(bounds.maxX - bounds.minX, 3),
-        depthM: round(bounds.maxZ - bounds.minZ, 3),
       },
-      // The outline is world-space, so the placement is the plate's own centre
-      // rather than the model origin — the convention every other element in
-      // this file already follows.
-      placement: {
-        x: round((bounds.minX + bounds.maxX) / 2),
-        y: 0,
-        z: round((bounds.minZ + bounds.maxZ) / 2),
-        rotationY: 0,
-      },
+      placement: plate.placement,
+    });
+
+    const level = levelByFloor.get(slab.floorNo);
+    if (level && level.usage !== "roof") {
+      const heightAboveFloorMm = Math.max(
+        0,
+        Math.round(level.heightM * 1000) - plenumMm,
+      );
+      const ceiling = plateOutlineFields(slab.polygon, ceilingThicknessMm);
+      elements.push({
+        ...mk(
+          `ceil:${slab.id}`,
+          "ceiling",
+          "Ceilings",
+          "Compound Ceiling",
+          GENERATED_CEILING_TYPE,
+          "envelope",
+          slab.floorNo,
+          [levelIdForFloor(slab.floorNo), slab.id],
+        ),
+        instanceParameters: {
+          ...ceiling.instanceParameters,
+          plenumMm,
+          heightAboveFloorMm,
+        },
+        placement: ceiling.placement,
+      });
+    }
+  }
+
+  const topLevel = building.levels
+    .filter((level) => level.floorNo > 0 && level.usage !== "roof")
+    .reduce<(typeof building.levels)[number] | null>(
+      (best, level) => (!best || level.floorNo > best.floorNo ? level : best),
+      null,
+    );
+  const topSlab = topLevel
+    ? building.slabs.find((slab) => slab.floorNo === topLevel.floorNo)
+    : undefined;
+  if (topLevel && topSlab) {
+    const roof = plateOutlineFields(
+      topSlab.polygon,
+      spec.structure.slabThicknessMm.value,
+    );
+    elements.push({
+      ...mk(
+        `roof:${topSlab.id}`,
+        "roof",
+        "Roofs",
+        "Basic Roof",
+        GENERATED_ROOF_TYPE,
+        "roof",
+        topLevel.floorNo,
+        [levelIdForFloor(topLevel.floorNo), topSlab.id],
+      ),
+      instanceParameters: roof.instanceParameters,
+      placement: roof.placement,
     });
   }
 

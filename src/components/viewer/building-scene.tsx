@@ -203,14 +203,16 @@ interface BuildingSceneProps {
   /**
    * A recipe that REPLACES the one derived from `title`/`floors`.
    *
-   * The ledger, demo and CAD paths never pass this: their building IS the
-   * ledger row, so deriving the recipe from it is right. A GENERATED building
-   * has no ledger row — its footprint polygon, storey stack and facade were
+   * The ledger and CAD paths never pass this: their building IS the ledger
+   * row, so deriving the recipe from it is right. A GENERATED building has
+   * no ledger row — its footprint polygon, storey stack and facade were
    * solved by the engine, and the synthetic title carries only totals, so
-   * deriving from it would show a box that merely has the right area. Passing
-   * the design's own recipe is what puts the solved footprint on screen. This
-   * is the same prop `ProceduralBuildingModel` already takes, and the studio
-   * viewport already uses.
+   * deriving from it would show a box that merely has the right area. The
+   * reserved demo office also passes its spec-compiled recipe so the 외피
+   * (walls, floors, roof) sits on the same 34 × 24 m plate as the schematic
+   * BIM, not the ledger area-estimate box. This is the same prop
+   * `ProceduralBuildingModel` already takes, and the studio viewport already
+   * uses.
    *
    * Config-panel overrides still apply on top, exactly as they do to a derived
    * recipe — an override edits whichever recipe is in play.

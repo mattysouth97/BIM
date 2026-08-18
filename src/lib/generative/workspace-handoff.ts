@@ -21,6 +21,7 @@ export function prepareGeneratedWorkspaceSession(): void {
 export function prepareDemoWorkspaceSession(): void {
   const layers = useLayerStore.getState();
   layers.setInteriorVisible(true);
+  layers.setInteriorIncludeExterior(true);
   layers.setLayerVisible("envelope", false);
   layers.setLayerVisible("structure", true);
   layers.setLayerVisible("mep", true);

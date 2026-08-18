@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTwinDocument } from "@/hooks/use-twin-document";
 import { useBimModelStore } from "@/store/bim-model-store";
+import { DEMO_BUILDING_PK } from "@/lib/constants";
+import { getDemoBimSnapshot } from "@/lib/demo/demo-design";
 import { getOrBuildDesign, isGeneratedPk } from "@/lib/generative/design-storage";
 import type { BimModelSnapshot } from "@/lib/bim/model";
 
@@ -15,9 +17,12 @@ export function useBimModel(buildingPk: string, locale: "ko" | "en" = "ko") {
   // A generated building's model is the one the engine emitted — columns,
   // stairs, cores, provenance and locks included. Re-deriving it from the
   // recipe would produce a generic twin that throws all of that away, so the
-  // stored design is loaded and ingested whole. Every other pk class (ledger,
-  // demo, CAD draft) keeps the recipe path unchanged.
+  // stored design is loaded and ingested whole. The reserved demo office is
+  // the same shape: its floor plan lives in `getDemoBimSnapshot`, not in the
+  // ledger-derived recipe. Every other pk class (ledger, CAD draft) keeps
+  // the recipe path unchanged.
   const generated = isGeneratedPk(buildingPk);
+  const demo = buildingPk === DEMO_BUILDING_PK;
   // The pk is carried alongside the snapshot so a design loaded for the
   // previous building can never be hydrated under the current one.
   const [loaded, setLoaded] = useState<{
@@ -46,6 +51,10 @@ export function useBimModel(buildingPk: string, locale: "ko" | "en" = "ko") {
 
   useEffect(() => {
     if (!buildingPk) return;
+    if (demo) {
+      hydrateFromSnapshot({ buildingPk, snapshot: getDemoBimSnapshot() });
+      return;
+    }
     if (generated) {
       if (designSnapshot) hydrateFromSnapshot({ buildingPk, snapshot: designSnapshot });
       return;
@@ -55,6 +64,7 @@ export function useBimModel(buildingPk: string, locale: "ko" | "en" = "ko") {
   }, [
     buildingPk,
     generated,
+    demo,
     designSnapshot,
     twin.recipe,
     twin.elements,

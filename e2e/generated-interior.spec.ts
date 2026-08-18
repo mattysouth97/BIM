@@ -20,6 +20,8 @@ test.describe("Generated interior integration", () => {
 
     const toggle = page.getByTestId("interior-layer-toggle");
     await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+    await toggle.click();
     await expect(toggle).toHaveAttribute("aria-pressed", "false");
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-pressed", "true");

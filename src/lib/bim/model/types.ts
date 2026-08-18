@@ -214,6 +214,8 @@ export interface BimQuery {
 
 export const GENERATED_WALL_TYPE = "generated-wall-exterior";
 export const GENERATED_FLOOR_TYPE = "generated-floor";
+export const GENERATED_CEILING_TYPE = "generated-ceiling";
+export const GENERATED_ROOF_TYPE = "generated-roof";
 export const GENERATED_DOOR_TYPE = "generated-door";
 export const GENERATED_WINDOW_TYPE = "generated-window";
 export const GENERATED_ROOM_TYPE = "generated-room";

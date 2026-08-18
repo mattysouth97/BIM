@@ -91,6 +91,12 @@ export {
   wallThicknessM,
   type WallBuildResult,
 } from "./walls";
+export {
+  buildEnvelopePlates,
+  isPlateLaneElement,
+  plateBaseY,
+  type PlateBuildResult,
+} from "./plates";
 export { composeTrs } from "./transform";
 export {
   MIN_GEOMETRY_M,
@@ -112,6 +118,8 @@ export {
   selectInteriorFloors,
 } from "./view-select";
 export type {
+  EnvelopePlate,
+  EnvelopePlateRole,
   FamilyPose,
   InteriorBuildOptions,
   InteriorModel,

@@ -3,6 +3,7 @@
 import { use, lazy, Suspense, useEffect } from "react";
 import { notFound } from "next/navigation";
 import { DEMO_BUILDING_PK, parseBuildingId } from "@/lib/constants";
+import { getDemoRecipe } from "@/lib/demo/demo-design";
 import { prepareDemoWorkspaceSession } from "@/lib/generative/workspace-handoff";
 import { isGeneratedPk } from "@/lib/generative/design-storage";
 import { GeneratedWorkspace } from "@/components/workspace/generated-workspace";
@@ -139,6 +140,9 @@ function LedgerWorkspace({ id }: { id: string }) {
               floors={floorsData}
               footprintData={footprintResult.data}
               isCompositeLoading={compositeLoading}
+              recipeOverride={
+                activePk === DEMO_BUILDING_PK ? getDemoRecipe() : undefined
+              }
             />
           </Suspense>
         ) : isLoading ? (

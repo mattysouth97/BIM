@@ -151,10 +151,29 @@ export interface SkippedElement {
   detail: string;
 }
 
+export type EnvelopePlateRole = "floor" | "ceiling" | "roof";
+
+/**
+ * One schematic-mounted envelope plate (floor slab, ceiling, or roof).
+ * `polygon` is world XZ metres — the same rings emit.ts wrote as `outlineJson`.
+ * `y` is the BASE of the extrusion (thickness goes up), matching
+ * `extrudePolygon` and `generateSlabs`.
+ */
+export interface EnvelopePlate {
+  id: string;
+  elementId: string;
+  floorNo: number;
+  role: EnvelopePlateRole;
+  polygon: [number, number][][];
+  y: number;
+  thicknessM: number;
+}
+
 export interface InteriorStats {
   wallCount: number;
   poseCount: number;
   railingCount: number;
+  plateCount: number;
   /** Elements this layer tried and failed to represent. Never silently empty. */
   skipped: SkippedElement[];
   /**
@@ -176,6 +195,7 @@ export interface InteriorModel {
   wallsByFloor: Record<number, WallInstance[]>;
   posesByFloor: Record<number, FamilyPose[]>;
   railingsByFloor: Record<number, RailingRun[]>;
+  platesByFloor: Record<number, EnvelopePlate[]>;
   stats: InteriorStats;
 }
 

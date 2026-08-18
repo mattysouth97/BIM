@@ -1,4 +1,6 @@
 import { generateBuildingGeometry, toRecipe } from "@/lib/building-geometry";
+import { DEMO_BUILDING_PK } from "@/lib/constants";
+import { getDemoRecipe } from "@/lib/demo/demo-design";
 import { inferMaterialProperties } from "@/lib/material-inference";
 import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe } from "@/lib/procedural/types";
@@ -20,6 +22,9 @@ export function seedBuildingFromLedger(
   return {
     pk,
     materials: inferMaterialProperties(title, floors),
-    recipe: toRecipe(generateBuildingGeometry(title, floors)),
+    recipe:
+      pk === DEMO_BUILDING_PK
+        ? getDemoRecipe()
+        : toRecipe(generateBuildingGeometry(title, floors)),
   };
 }

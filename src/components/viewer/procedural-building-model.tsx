@@ -206,6 +206,12 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
   // Sync Digital Twin layer visibility to named mesh groups.
   // Depends on `group` state so it re-runs after building generation completes.
   const layerVisibility = useLayerStore((s) => s.visibility);
+  const interiorVisible = useLayerStore((s) => s.interiorVisible);
+  const interiorIncludeExterior = useLayerStore((s) => s.interiorIncludeExterior);
+  // When the interior is drawing schematic floors/ceilings/roofs, the
+  // procedural slabs and roof would sit on a (possibly different) plate and
+  // z-fight. The facade stays — it is cladding, not the BIM envelope.
+  const interiorOwnsEnvelope = interiorVisible && interiorIncludeExterior;
   const activeViewId = useViewStore((s) => s.activeViewId);
   const views = useViewStore((s) => s.views);
   const planView = views.find((v) => v.id === activeViewId)?.kind === "plan";
@@ -226,12 +232,14 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
 
       // Roof decks fill a plan the same way slabs do — hide them in plan.
       if (n === "roof" || n === "roof-furniture" || n === "roof-pergola") {
-        child.visible = (layerVisibility["envelope"] ?? true) && !planView;
+        child.visible =
+          (layerVisibility["envelope"] ?? true) && !planView && !interiorOwnsEnvelope;
       }
 
       // Structure layer: floor slabs, columns, and beams
       if (n === "slabs") {
-        child.visible = (layerVisibility["structure"] ?? true) && !planView;
+        child.visible =
+          (layerVisibility["structure"] ?? true) && !planView && !interiorOwnsEnvelope;
       }
       if (n === "columns" || n === "beams") {
         child.visible = layerVisibility["structure"] ?? true;
@@ -239,7 +247,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
 
       // MEP / energy-zones / retrofit-targets: no geometry yet — no-op
     });
-  }, [group, layerVisibility, planView]);
+  }, [group, layerVisibility, planView, interiorOwnsEnvelope]);
 
   // P2-20 — retint renewed elements when applied measures change. Materials
   // are cloned per-mesh before tinting (they are shared across meshes, so

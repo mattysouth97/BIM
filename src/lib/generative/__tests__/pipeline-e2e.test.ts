@@ -66,6 +66,8 @@ describe("generative pipeline — end to end", () => {
     for (const required of [
       "Walls",
       "Floors",
+      "Ceilings",
+      "Roofs",
       "Rooms",
       "Structural Columns",
       "Structural Framing",

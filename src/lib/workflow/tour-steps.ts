@@ -26,8 +26,8 @@ export function twinTourSteps(isKo: boolean): TwinTourStep[] {
       element: '[data-tour="viewport"]',
       title: isKo ? "이 건물의 트윈" : "This building’s twin",
       description: isKo
-        ? "돌려보고, 아래 예산을 움직이면 에너지와 투자 숫자가 같이 바뀝니다."
-        : "Rotate the model. Move the budget and the energy and investment numbers move with it.",
+        ? "10층 업무시설입니다. 1층 로비·휴게음식점, 기준층 오픈오피스와 회의실이 들어 있습니다. 돌려보고 아래 예산을 움직이면 에너지와 투자 숫자가 같이 바뀝니다."
+        : "A 10-storey office. Lobby and café on the ground floor, open office and meeting rooms above. Rotate the model. Move the budget and the energy and investment numbers move with it.",
     },
     {
       element: '[data-tour="left-dock"]',

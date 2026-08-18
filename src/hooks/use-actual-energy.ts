@@ -8,6 +8,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAppStore } from "@/store/app-store";
+import { DEMO_BUILDING_PK } from "@/lib/constants";
+import { getDemoAnnualConsumption } from "@/lib/demo/demo-energy";
 import { isCadDraftPk } from "@/lib/workflow/cad-draft";
 import {
   normalizeConsumption,
@@ -62,9 +64,13 @@ export function useActualEnergy(mgmBldrgstPk: string) {
 
   return useQuery<AnnualConsumption[]>({
     queryKey: ["energy", "consumption", mgmBldrgstPk, years],
-    queryFn: () => fetchConsumptionYears(mgmBldrgstPk, years),
+    queryFn: () =>
+      mgmBldrgstPk === DEMO_BUILDING_PK
+        ? Promise.resolve(getDemoAnnualConsumption(currentYear))
+        : fetchConsumptionYears(mgmBldrgstPk, years),
     // P2-24: cad-first drafts have no ledger identity — querying the HUB with
     // a synthetic PK would be a fabricated request; skip and stay empty.
+    // The demo office carries bundled meter years and does not need a key.
     enabled: !!mgmBldrgstPk && !isCadDraftPk(mgmBldrgstPk),
     staleTime: 1000 * 60 * 5, // 5 minutes
     placeholderData: [],
