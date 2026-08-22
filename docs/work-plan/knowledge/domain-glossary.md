@@ -53,6 +53,36 @@
 
 ## Energy Model
 
+- **Canonical Energy Model (정규 에너지 모델)** — versioned, serialisable
+  project record shared by drawing extraction, BIM geometry, simulation and 3D
+  diagnosis. It contains stable object mappings, `EnergyFact` inputs,
+  assumptions/conflicts/readiness, scenario deltas and exact simulation runs;
+  source file bytes are deliberately stored separately by content hash
+  (`src/lib/energy-diagnostics/types.ts`).
+- **EnergyFact (에너지 사실)** — one simulation-relevant value plus unit,
+  evidence status, confidence, source references, extraction method, authority,
+  assumption/conflict links and user-review timestamps. A fact is never
+  material merely because it has a number; its origin remains inspectable.
+- **EvidenceStatus** — `verified | user_confirmed | extracted | inferred |
+  defaulted | conflicted | missing`, the user-facing vocabulary for whether an
+  energy fact is known, assumed, contradictory or absent.
+- **SourceReference (출처 참조)** — link from an energy fact/model object to a
+  document, page/sheet, CAD layer, entity or bounding region, revision and
+  extraction run, plus an optional existing 3D object ID.
+- **Drawing Set (도면 세트)** — revision- and discipline-aware collection of
+  source documents. Tier 1 supports an early estimate; Tier 2/3 sources reduce
+  uncertainty rather than acting as a binary admission gate.
+- **Readiness category** — independent geometry, envelope, usage, systems and
+  simulation state, each `ready | assumptions_required | blocked` with explicit
+  missing/conflict record IDs. It replaces misleading single completion scores.
+- **Scenario delta** — source-linked replacement fact stored against an
+  immutable baseline model. Running an alternative compiles the delta without
+  rewriting the baseline drawing evidence.
+- **Degree-day screening adapter** — the versioned boundary that maps canonical
+  facts to the existing `calculateHeatLoss` → `calculateAnnualDemand` →
+  `calculateSystemBreakdown` stack. Lighting/DHW/plug splits and spatial zone
+  allocation remain named ratio/area approximations until richer physics exists.
+
 - **ECO2** — German DIN V 18599 energy-certificate format; import/export interop for the
   energy model (`src/lib/energy/eco2-export.ts`, `src/lib/energy/eco2-import.ts`,
   API `src/app/api/v1/eco2-imports/route.ts`).

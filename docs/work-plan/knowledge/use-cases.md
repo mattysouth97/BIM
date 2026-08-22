@@ -1,4 +1,4 @@
-# Use-Case Catalog — UC-01 … UC-11
+# Use-Case Catalog — UC-01 … UC-12
 
 > Stage-1 artifact of `docs/work-plan/AI_PROCESS.md`. Every work item references ≥1 UC id
 > (rule R1.1). Domain terms used here are defined in `domain-glossary.md`.
@@ -210,6 +210,34 @@
   `src/store/cad-draft-store.ts`, `src/components/params/params-stage.tsx`,
   `src/components/workspace/cad-workspace.tsx`, `src/lib/workflow/stages.ts`.
 
+## UC-12 — Diagnose a design from a drawing set
+
+- **Actor**: Architect, building-services designer, or energy consultant.
+- **Trigger**: User chooses `도면 가져오기` and registers one or more design
+  drawings without requiring a complete construction-document package.
+- **Main flow**:
+  1. The app validates, hashes, revision-groups and classifies each source into
+     a coherent `도면 세트`, preferring vector geometry and requiring explicit
+     scale/calibration for otherwise unscaled raster input.
+  2. Deterministic adapters extract energy-relevant geometry, envelope/system
+     values and operating assumptions into versioned `EnergyFact` records with
+     sheet/layer/entity evidence, confidence and review state.
+  3. The user reviews overlays, corrects classifications/zones, resolves
+     conflicts, and explicitly confirms allowed assumptions. Readiness remains
+     categorical (geometry/envelope/usage/systems/simulation), not one opaque
+     score.
+  4. A versioned adapter compiles the canonical model into the existing
+     degree-day engine, stores the exact input/version/logs, and maps annual
+     results to stable BIM/zone IDs in the existing 3D viewer. Unsupported
+     monthly/peak/zonal physics is displayed as unavailable or approximation.
+  5. A scenario records deltas only, compares real reruns against the immutable
+     baseline, and save/reload reproduces evidence, assumptions, inputs and
+     results. Source bytes are stored separately by content hash.
+- **Primary modules**: `src/lib/energy-diagnostics/**`,
+  `src/components/energy-diagnostics/**`, existing `src/lib/cad/**`,
+  `src/lib/energy/**`, `src/components/viewer/building-scene.tsx`, and
+  `src/store/selection-store.ts`.
+
 ---
 
 ## Traceability matrix
@@ -227,3 +255,4 @@
 | UC-09 | campus, ux | normalized metrics; explicit gaps |
 | UC-10 | api, ml | 400/404/429/503 contract; rate limit; no secret/path leakage |
 | UC-11 | ux, state | mode derived from `cad-` PK prefix; CAD mandatory (no skip); zero ledger/VWorld calls; derived-or-unavailable values only |
+| UC-12 | energy, viewer, state | every material input traceable; blocking gaps stop the run; baseline immutable; existing engine/viewer reused |
