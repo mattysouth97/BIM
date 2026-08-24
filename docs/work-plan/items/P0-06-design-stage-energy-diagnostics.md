@@ -3,11 +3,11 @@ id: P0-06
 title: Source-traceable design-stage energy diagnosis vertical slice
 priority: P0
 area: energy
-status: in-progress
+status: in-review
 owner: codex-gpt5
 effort: XL
 created: 2026-08-23
-updated: 2026-08-23
+updated: 2026-08-24
 use_cases: [UC-12]
 ---
 

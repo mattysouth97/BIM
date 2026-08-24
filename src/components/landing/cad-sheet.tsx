@@ -84,7 +84,7 @@ export function CadSheet({ copy }: { copy: LandingCopy }) {
               </span>
               <StudioDoor
                 testId="landing-import-start"
-                href="/studio?start=draw"
+                href="/studio?start=diagnose"
                 variant="link"
                 className="h-auto p-0 underline"
                 title={copy.importDrawingSub}

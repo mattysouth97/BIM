@@ -13,7 +13,10 @@ vi.mock("three", () => ({
 }));
 
 import { useSelectionStore } from "../selection-store";
-import type { SelectedEquipmentInfo } from "../selection-store";
+import type {
+  CanonicalSelection,
+  SelectedEquipmentInfo,
+} from "../selection-store";
 import type { EquipmentSpec } from "@/lib/energy/equipment-specs";
 
 // ---------------------------------------------------------------------------
@@ -51,6 +54,7 @@ beforeEach(() => {
     selectedId: null,
     buildingPk: null,
     selectedEquipment: null,
+    selectedCanonical: null,
   });
 });
 
@@ -66,6 +70,13 @@ describe("useSelectionStore — initial state", () => {
   it("exposes selectEquipment and clearEquipment actions", () => {
     expect(typeof useSelectionStore.getState().selectEquipment).toBe("function");
     expect(typeof useSelectionStore.getState().clearEquipment).toBe("function");
+  });
+
+  it("exposes an empty canonical selection and its actions", () => {
+    const state = useSelectionStore.getState();
+    expect(state.selectedCanonical).toBeNull();
+    expect(typeof state.selectCanonical).toBe("function");
+    expect(typeof state.clearCanonicalSelection).toBe("function");
   });
 });
 
@@ -145,12 +156,21 @@ describe("useSelectionStore — clearEquipment", () => {
 // ---------------------------------------------------------------------------
 
 describe("useSelectionStore — clearSelection composite clear", () => {
-  it("clears selectedType, selectedId, buildingPk AND selectedEquipment", () => {
+  it("clears legacy, equipment, and canonical selections", () => {
     useSelectionStore.setState({
       selectedType: "component",
       selectedId: "comp-789",
       buildingPk: "building-pk-003",
       selectedEquipment: mockEquipmentInfo,
+      selectedCanonical: {
+        kind: "thermal_zone",
+        buildingPk: "energy-diagnostics:test",
+        id: "zone-west-1f",
+        documentId: "drawing-plan-1f",
+        canonicalObjectIds: ["zone-west-1f", "room-west-1f"],
+        threeObjectIds: ["energy-zone:zone-west-1f"],
+        roomId: "room-west-1f",
+      },
     });
 
     useSelectionStore.getState().clearSelection();
@@ -160,6 +180,85 @@ describe("useSelectionStore — clearSelection composite clear", () => {
     expect(state.selectedId).toBeNull();
     expect(state.buildingPk).toBeNull();
     expect(state.selectedEquipment).toBeNull();
+    expect(state.selectedCanonical).toBeNull();
+  });
+});
+
+describe("useSelectionStore — canonical energy selection", () => {
+  const selections: CanonicalSelection[] = [
+    {
+      kind: "energy_fact",
+      buildingPk: "energy-diagnostics:test",
+      id: "fact-window-u-value",
+      documentId: "window-schedule-a",
+      canonicalObjectIds: ["window-type-w1"],
+      threeObjectIds: ["window:w1"],
+    },
+    {
+      kind: "thermal_zone",
+      buildingPk: "energy-diagnostics:test",
+      id: "zone-west-1f",
+      documentId: "floor-plan-1f",
+      canonicalObjectIds: ["zone-west-1f", "room-west-1f"],
+      threeObjectIds: ["energy-zone:zone-west-1f"],
+      roomId: "room-west-1f",
+    },
+    {
+      kind: "source_reference",
+      buildingPk: "energy-diagnostics:test",
+      id: "source-ref-w1",
+      documentId: "window-schedule-a",
+      canonicalObjectIds: ["fact-window-u-value"],
+      threeObjectIds: ["window:w1"],
+    },
+    {
+      kind: "simulation_series",
+      buildingPk: "energy-diagnostics:test",
+      id: "series-zone-west-cooling",
+      documentId: null,
+      canonicalObjectIds: ["zone-west-1f"],
+      threeObjectIds: ["energy-zone:zone-west-1f"],
+      runId: "run-baseline-001",
+    },
+  ];
+
+  it.each(selections)("stores a JSON-only $kind selection", (selection) => {
+    useSelectionStore.getState().selectCanonical(selection);
+
+    const stored = useSelectionStore.getState().selectedCanonical;
+    expect(stored).toBe(selection);
+    expect(JSON.parse(JSON.stringify(stored))).toEqual(selection);
+  });
+
+  it("does not mutate existing scene or equipment selection", () => {
+    useSelectionStore.setState({
+      selectedType: "wall",
+      selectedId: "wall-123",
+      buildingPk: "building-pk-001",
+      selectedEquipment: mockEquipmentInfo,
+    });
+
+    useSelectionStore.getState().selectCanonical(selections[0]);
+
+    const state = useSelectionStore.getState();
+    expect(state.selectedType).toBe("wall");
+    expect(state.selectedId).toBe("wall-123");
+    expect(state.buildingPk).toBe("building-pk-001");
+    expect(state.selectedEquipment).toBe(mockEquipmentInfo);
+  });
+
+  it("can clear only the canonical selection", () => {
+    useSelectionStore.setState({
+      selectedType: "room",
+      selectedId: "room-456",
+      selectedCanonical: selections[1],
+    });
+
+    useSelectionStore.getState().clearCanonicalSelection();
+
+    expect(useSelectionStore.getState().selectedCanonical).toBeNull();
+    expect(useSelectionStore.getState().selectedType).toBe("room");
+    expect(useSelectionStore.getState().selectedId).toBe("room-456");
   });
 });
 

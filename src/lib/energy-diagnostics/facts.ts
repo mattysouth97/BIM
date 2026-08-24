@@ -277,14 +277,27 @@ export function replaceFact<T>(value: T, replacement: EnergyFact<unknown>): T {
 }
 
 export function assertMaterialFactsHaveProvenance(
-  facts: readonly EnergyFact<unknown>[],
+  model: Pick<CanonicalEnergyModel, "facts" | "assumptions">,
 ): void {
-  for (const fact of facts) {
+  const knownAssumptionIds = new Set(
+    model.assumptions.map((assumption) => assumption.id),
+  );
+  for (const fact of model.facts) {
     if (fact.status === "missing") continue;
+    const hasIndependentOrigin =
+      fact.sourceRefs.length > 0 || fact.extractionMethod === "user_input";
+    if (
+      !hasIndependentOrigin &&
+      fact.assumptionId != null &&
+      !knownAssumptionIds.has(fact.assumptionId)
+    ) {
+      throw new Error(
+        `Fact ${fact.id} references unknown assumption ${fact.assumptionId}.`,
+      );
+    }
     const hasOrigin =
-      fact.sourceRefs.length > 0 ||
-      fact.extractionMethod === "user_input" ||
-      Boolean(fact.assumptionId);
+      hasIndependentOrigin ||
+      (fact.assumptionId != null && knownAssumptionIds.has(fact.assumptionId));
     if (!hasOrigin) throw new Error(`Fact ${fact.id} has no traceable origin.`);
   }
 }

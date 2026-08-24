@@ -1,6 +1,7 @@
-import { get, set } from "idb-keyval";
+import { get, keys as idbKeys, set } from "idb-keyval";
 
-import { sha256Hex } from "./hashing";
+import { sha256Hex, toBytes } from "./hashing";
+import type { DrawingSourceInput } from "./ingestion";
 import {
   CANONICAL_ENERGY_MODEL_VERSION,
   type CanonicalEnergyModel,
@@ -36,6 +37,7 @@ export type EnergyDiagnosticsStorageErrorCode =
   | "MIGRATION_FAILED"
   | "SOURCE_SAVE_FAILED"
   | "SOURCE_LOAD_FAILED"
+  | "SOURCE_MISSING"
   | "CORRUPT_SOURCE"
   | "INVALID_CONTENT_HASH"
   | "SOURCE_HASH_MISMATCH"
@@ -79,6 +81,13 @@ export type StoredEnergyDiagnosticsProject = Readonly<{
   model: CanonicalEnergyModel;
 }>;
 
+export type StoredEnergyDiagnosticsProjectSummary = Readonly<{
+  projectId: string;
+  projectName: string;
+  modelId: string;
+  savedAtIso: IsoDateTime;
+}>;
+
 type StoredEnergySourceBytes = Readonly<{
   kind: typeof SOURCE_RECORD_KIND;
   storageVersion: typeof ENERGY_SOURCE_STORAGE_VERSION;
@@ -93,6 +102,11 @@ export type StoredEnergySourceDescriptor = Omit<StoredEnergySourceBytes, "bytes"
 
 export type SaveEnergyDiagnosticsProjectOptions = Readonly<{
   savedAtIso?: IsoDateTime;
+}>;
+
+export type LoadedEnergyDiagnosticsBundle = Readonly<{
+  model: CanonicalEnergyModel;
+  sources: readonly DrawingSourceInput[];
 }>;
 
 /** Public key helpers make backup/inspection code use the exact same namespace. */
@@ -495,6 +509,59 @@ export async function loadEnergyDiagnosticsProject(
   return (await loadEnergyDiagnosticsProjectRecord(projectId))?.model ?? null;
 }
 
+/**
+ * Lists current project envelopes without mixing content-addressed source
+ * records into the result. This is the recovery entry point after a full page
+ * reload, when no in-memory model exists to supply a project id.
+ */
+export async function listEnergyDiagnosticsProjects(): Promise<
+  readonly StoredEnergyDiagnosticsProjectSummary[]
+> {
+  const prefix = `${STORAGE_NAMESPACE}:project:v${ENERGY_DIAGNOSTICS_STORAGE_VERSION}:`;
+  let storedKeys: IDBValidKey[];
+  try {
+    storedKeys = await idbKeys();
+  } catch (cause) {
+    throw new EnergyDiagnosticsStorageError(
+      "LOAD_FAILED",
+      "Saved energy-diagnostics projects could not be listed from this browser's storage.",
+      { cause, recordKey: prefix },
+    );
+  }
+
+  const projectIds = storedKeys.flatMap((key) => {
+    if (typeof key !== "string" || !key.startsWith(prefix)) return [];
+    try {
+      return [decodeURIComponent(key.slice(prefix.length))];
+    } catch {
+      return [];
+    }
+  });
+  const records = await Promise.all(
+    projectIds.map((projectId) => loadEnergyDiagnosticsProjectRecord(projectId)),
+  );
+
+  return Object.freeze(
+    records
+      .filter(
+        (record): record is StoredEnergyDiagnosticsProject => record != null,
+      )
+      .map((record) =>
+        Object.freeze({
+          projectId: record.projectId,
+          projectName: record.model.project.name,
+          modelId: record.modelId,
+          savedAtIso: record.savedAtIso,
+        }),
+      )
+      .sort(
+        (left, right) =>
+          right.savedAtIso.localeCompare(left.savedAtIso) ||
+          left.projectId.localeCompare(right.projectId),
+      ),
+  );
+}
+
 function copyBytes(bytes: ArrayBuffer | Uint8Array): ArrayBuffer {
   const source = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   const copy = new Uint8Array(source.byteLength);
@@ -617,4 +684,117 @@ export async function loadEnergySourceBytes(contentHash: string): Promise<ArrayB
     );
   }
   return record.bytes.slice(0);
+}
+
+function missingSourceError(contentHash: string): EnergyDiagnosticsStorageError {
+  const normalizedHash = normalizeContentHash(contentHash);
+  return new EnergyDiagnosticsStorageError(
+    "SOURCE_MISSING",
+    `The source drawing bytes for SHA-256 ${normalizedHash} are missing. The project was not saved or restored.`,
+    { recordKey: energySourceStorageKey(normalizedHash) },
+  );
+}
+
+/**
+ * Saves a complete content-addressed bundle. Source records are verified and
+ * persisted before the project pointer is replaced, so a partial source write
+ * can never make an incomplete project look successfully saved.
+ */
+export async function saveEnergyDiagnosticsBundle(
+  model: CanonicalEnergyModel,
+  sources: readonly DrawingSourceInput[],
+  options: SaveEnergyDiagnosticsProjectOptions = {},
+): Promise<StoredEnergyDiagnosticsProject> {
+  try {
+    validateCanonicalModel(model);
+    if (options.savedAtIso !== undefined) {
+      assertIsoDateTime(options.savedAtIso, "savedAtIso");
+    }
+  } catch (cause) {
+    throw new EnergyDiagnosticsStorageError(
+      "INVALID_RECORD",
+      `The canonical energy model cannot be persisted. ${cause instanceof Error ? cause.message : ""}`.trim(),
+      { cause },
+    );
+  }
+
+  const suppliedByHash = new Map<string, ArrayBuffer>();
+  for (const source of sources) {
+    const bytes = copyBytes(toBytes(source.content));
+    const contentHash = await computeSourceContentHash(bytes);
+    suppliedByHash.set(contentHash, bytes);
+  }
+
+  const documentsByHash = new Map<string, CanonicalEnergyModel["drawingSet"]["documents"]>();
+  for (const document of model.drawingSet.documents) {
+    const contentHash = normalizeContentHash(document.contentHash);
+    const documents = documentsByHash.get(contentHash) ?? [];
+    documentsByHash.set(contentHash, [...documents, document]);
+  }
+
+  await Promise.all(
+    [...documentsByHash.entries()].map(async ([contentHash, documents]) => {
+      const supplied = suppliedByHash.get(contentHash);
+      const bytes = supplied ?? (await loadEnergySourceBytes(contentHash));
+      if (!bytes) throw missingSourceError(contentHash);
+      for (const document of documents) {
+        if (document.byteLength !== bytes.byteLength) {
+          throw new EnergyDiagnosticsStorageError(
+            "CORRUPT_SOURCE",
+            `The source drawing bytes for ${document.fileName} do not match its declared byte length.`,
+            { recordKey: energySourceStorageKey(contentHash) },
+          );
+        }
+      }
+      if (supplied) {
+        await saveEnergySourceBytes({
+          contentHash,
+          bytes,
+          ...(options.savedAtIso ? { storedAtIso: options.savedAtIso } : {}),
+        });
+      }
+    }),
+  );
+
+  return saveEnergyDiagnosticsProject(model, options);
+}
+
+/** Loads the canonical model only when every hash-addressed source is present. */
+export async function loadEnergyDiagnosticsBundle(
+  projectId: string,
+): Promise<LoadedEnergyDiagnosticsBundle | null> {
+  const record = await loadEnergyDiagnosticsProjectRecord(projectId);
+  if (!record) return null;
+
+  const bytesByHash = new Map<string, ArrayBuffer>();
+  await Promise.all(
+    record.sourceContentHashes.map(async (contentHash) => {
+      const bytes = await loadEnergySourceBytes(contentHash);
+      if (!bytes) throw missingSourceError(contentHash);
+      bytesByHash.set(normalizeContentHash(contentHash), bytes);
+    }),
+  );
+
+  const sources = record.model.drawingSet.documents.map((document) => {
+    const contentHash = normalizeContentHash(document.contentHash);
+    const bytes = bytesByHash.get(contentHash);
+    if (!bytes) throw missingSourceError(contentHash);
+    if (bytes.byteLength !== document.byteLength) {
+      throw new EnergyDiagnosticsStorageError(
+        "CORRUPT_SOURCE",
+        `The source drawing bytes for ${document.fileName} do not match its declared byte length.`,
+        { recordKey: energySourceStorageKey(contentHash) },
+      );
+    }
+    return Object.freeze({
+      fileName: document.fileName,
+      mimeType: document.mimeType,
+      content: bytes.slice(0),
+    } satisfies DrawingSourceInput);
+  });
+
+  return Object.freeze({
+    model: record.model,
+    sources: Object.freeze(sources),
+  });
 }

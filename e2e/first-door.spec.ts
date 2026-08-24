@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
 
+import { seedSeenTours } from "./helpers/app-state";
+
 test.describe("First door", () => {
   test.beforeEach(async ({ page }) => {
+    await seedSeenTours(page);
     await page.goto("/");
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
   });
 
   test("demo door is the primary verb and opens the twin", async ({ page }) => {
@@ -35,7 +36,7 @@ test.describe("First door", () => {
     await expect(studio).toHaveAttribute("href", "/studio?start=draw");
     const importDoor = page.getByTestId("landing-import-start");
     await expect(importDoor).toBeVisible();
-    await expect(importDoor).toHaveAttribute("href", "/studio?start=draw");
+    await expect(importDoor).toHaveAttribute("href", "/studio?start=diagnose");
 
     await studio.click();
     await expect(page).toHaveURL(/\/studio\?start=draw/);
@@ -44,21 +45,17 @@ test.describe("First door", () => {
     ).toBeVisible();
   });
 
-  // The pre-pivot ledger-drawing draft (/building/drawing) is no longer a
-  // landing door — the generative studio's schematic import is the front
-  // door now — but the route itself is still owned by /building and stays
-  // reachable directly while that lane migrates it.
-  test("CAD door still lands on upload", async ({ page }) => {
-    await page.goto("/building/drawing");
-    await expect(page).toHaveURL(/\/building\/drawing/);
+  test("import door opens source-traceable energy diagnosis", async ({ page }) => {
+    await page.getByTestId("landing-import-start").click();
+    await expect(page).toHaveURL(/\/studio\?start=diagnose/);
     await expect(
-      page.getByRole("button", { name: /도면 업로드/ }),
-    ).toHaveAttribute("aria-current", "step");
-    await expect(page.getByText("도면 업로드").first()).toBeVisible();
-    await expect(page.getByTitle("데모 오피스 타워")).toHaveCount(0);
-    await expect(page.getByTitle("도면에서 시작")).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText("건물 데이터 없음")).toHaveCount(0);
-    await expect(page.getByText("간이 모델")).toBeVisible({ timeout: 15000 });
+      page.getByRole("button", { name: "Energy diagnosis", pressed: true }),
+    ).toBeVisible();
+    await expect(page.getByTestId("energy-diagnosis-workspace")).toBeVisible();
+    await expect(page.getByTestId("drawing-set-input")).toHaveAttribute(
+      "accept",
+      /\.dwg.*\.dxf.*\.svg/,
+    );
   });
 
   test("report takes the twin retrofit answer away", async ({ page }) => {
@@ -73,27 +70,32 @@ test.describe("First door", () => {
     await expect(page.getByText("에너지 감사 보고서")).toBeVisible();
   });
 
-  test("sample drawing completes the CAD door into the twin", async ({ page }) => {
-    await page.goto("/building/drawing");
-    await expect(page.getByTestId("upload-sample-dxf")).toBeVisible();
-    await page.getByTestId("upload-sample-dxf").click();
-    await expect(page.getByText("외곽선 준비 완료")).toBeVisible({ timeout: 15000 });
-    await page.getByTestId("upload-continue").click();
+  test("DXF import is reviewed before schematic adoption", async ({ page }) => {
+    await page.goto("/studio?start=draw");
+    await expect(page.getByRole("button", { name: "Generate BIM" })).toBeDisabled();
+
+    await page.getByTestId("schematic-import-cad").click();
     await expect(
-      page.getByRole("button", { name: /디지털 트윈/ }),
-    ).toHaveAttribute("aria-current", "step");
+      page.getByRole("heading", { name: "Import DWG/DXF/SVG as a schematic" }),
+    ).toBeVisible();
+    await page
+      .getByTestId("import-cad-file-input")
+      .setInputFiles("public/samples/sample-footprint.dxf");
+
+    await expect(page.getByTestId("import-cad-preview")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/boundary from layer BIM_OUTLINE/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Use as schematic" })).toBeEnabled();
+
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(page.getByTestId("import-cad-preview")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Generate BIM" })).toBeDisabled();
   });
 
   test("reopening keeps the CAPEX the person set", async ({ page }) => {
     await page.getByTestId("landing-demo-start").click();
     await expect(page.getByTitle("데모 오피스 타워")).toBeVisible({ timeout: 15000 });
-    const tour = page.locator(".driver-popover");
-    if (await tour.isVisible().catch(() => false)) {
-      await page.keyboard.press("Escape");
-      await expect(tour).toHaveCount(0);
-    }
     const capex = page.locator("[data-twin-capex-input]");
-    await capex.getByRole("button", { name: /^5억$/ }).click({ force: true });
+    await capex.getByRole("button", { name: "₩5억", exact: true }).click();
     await expect(capex).toContainText("₩5억");
     await page.reload();
     await expect(page.getByTitle("데모 오피스 타워")).toBeVisible({ timeout: 15000 });
@@ -105,15 +107,10 @@ test.describe("Twin on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
   test("shows the measures the budget picked", async ({ page }) => {
+    await seedSeenTours(page);
     await page.goto("/");
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
     await page.getByTestId("landing-demo-start").click();
     await expect(page.getByTitle("데모 오피스 타워")).toBeVisible({ timeout: 15000 });
-    const pop = page.locator(".driver-popover");
-    if (await pop.isVisible().catch(() => false)) {
-      await page.keyboard.press("Escape");
-    }
     await expect(page.locator("[data-twin-selected-measures]")).toBeVisible({
       timeout: 10000,
     });

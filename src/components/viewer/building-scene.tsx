@@ -43,8 +43,10 @@ import { ProceduralBuildingModel } from "./procedural-building-model";
 import { BuildingLayers } from "./building-layers";
 import { InteriorLayer } from "./interior-layer";
 import { EnvelopeLayer } from "./envelope-layer";
+import type { EnvelopeAnalysis } from "./envelope-layer";
 import { StructureLayer } from "./structure-layer";
 import { EnergyZoneLayer } from "./energy-zone-layer";
+import type { EnergyZone } from "@/lib/layers/analysis/zone-overlay";
 import { AnalysisLegend } from "./analysis-legend";
 import { SceneControls, type SceneControlsRef } from "./scene-controls";
 import { useViewStore } from "@/lib/bim/views/view-store";
@@ -229,6 +231,18 @@ interface BuildingSceneProps {
    * prop lets the interior layer paint on the first frame without waiting.
    */
   snapshot?: BimModelSnapshot | null;
+  /**
+   * Embedded canonical-energy workspace mode. It keeps the existing scene and
+   * analysis layers, but hides controls that edit only the legacy store and
+   * would otherwise diverge from the source-traceable scenario model.
+   */
+  diagnosticsMode?: boolean;
+  /** Stable canonical zone selection emitted by the existing 3D zone layer. */
+  onEnergyZoneSelect?: (zoneId: string, roomId: string | null) => void;
+  /** Exact selected-run envelope analysis; undefined keeps the ordinary viewer hook. */
+  envelopeAnalysisOverride?: EnvelopeAnalysis | null;
+  /** Exact selected-run zone analysis; undefined keeps the ordinary viewer hook. */
+  energyZoneAnalysisOverride?: readonly EnergyZone[] | null;
 }
 
 export function BuildingScene({
@@ -240,6 +254,10 @@ export function BuildingScene({
   recipeOverride,
   buildingPk: buildingPkProp,
   snapshot: snapshotProp,
+  diagnosticsMode = false,
+  onEnergyZoneSelect,
+  envelopeAnalysisOverride,
+  energyZoneAnalysisOverride,
 }: BuildingSceneProps) {
   const [selectedFloor, setSelectedFloor] = useState<FloorGeometry | null>(null);
   const [modelSource, setModelSource] = useState<ModelSource>("parametric");
@@ -531,12 +549,14 @@ export function BuildingScene({
   return (
     <div className="relative h-full w-full overflow-hidden flex flex-col">
       {/* Contextual toolbar strip — replaces ViewerOverlay */}
-      <ContextualToolbar
-        onViewChange={handleViewChange}
-        buildingName={recipe?.buildingName ?? geometry?.buildingName}
-        era={recipe?.era ?? geometry?.era}
-        selectedFloor={modelSource === "parametric" ? selectedFloor : null}
-      />
+      {!diagnosticsMode && (
+        <ContextualToolbar
+          onViewChange={handleViewChange}
+          buildingName={recipe?.buildingName ?? geometry?.buildingName}
+          era={recipe?.era ?? geometry?.era}
+          selectedFloor={modelSource === "parametric" ? selectedFloor : null}
+        />
+      )}
 
       {/* 3D Canvas — fills remaining space */}
       <div className="relative flex-1 min-h-0">
@@ -625,10 +645,19 @@ export function BuildingScene({
                 {/* Semantic analysis overlays — 외피 / 구조 / 에너지존.
                     Each mounts its own group and self-gates on the layer
                     store's analysisOverlays slice. */}
-                <EnvelopeLayer buildingPk={buildingPk} />
+                <EnvelopeLayer
+                  buildingPk={buildingPk}
+                  analysisOverride={envelopeAnalysisOverride}
+                />
                 <StructureLayer buildingPk={buildingPk} />
-                <EnergyZoneLayer buildingPk={buildingPk} />
-                {recipe && <AuthoringFamilyLayer recipe={recipe} />}
+                <EnergyZoneLayer
+                  buildingPk={buildingPk}
+                  onSelectZone={onEnergyZoneSelect}
+                  analysisOverride={energyZoneAnalysisOverride}
+                />
+                {recipe && !diagnosticsMode && (
+                  <AuthoringFamilyLayer recipe={recipe} />
+                )}
                 <StructuralTooltip />
                 <EquipmentClickHandler />
                 <EquipmentHoverCard />
@@ -694,7 +723,7 @@ export function BuildingScene({
 
       {/* Twin-stage data-product overlay — release rail, prediction readout,
           feature vector. Only for single-building mode. */}
-      {!campusData && (
+      {!campusData && !diagnosticsMode && (
         <ErrorBoundary>
           <TwinStageOverlay
             title={title}
@@ -703,30 +732,40 @@ export function BuildingScene({
         </ErrorBoundary>
       )}
 
-      <ErrorBoundary>
-        <ConfigPanel
-          buildingPk={buildingPk}
-          visible={configPanelOpen}
-          onClose={() => setConfigPanelOpen(false)}
-        />
-      </ErrorBoundary>
-
-      {!campusData && (
+      {!diagnosticsMode && (
         <ErrorBoundary>
-          <AnalysisLegend buildingPk={buildingPk} />
+          <ConfigPanel
+            buildingPk={buildingPk}
+            visible={configPanelOpen}
+            onClose={() => setConfigPanelOpen(false)}
+          />
         </ErrorBoundary>
       )}
 
-      <LayerPanel
-        visible={layerPanelOpen}
-        onClose={() => setLayerPanelOpen(false)}
-      />
+      {!campusData && (
+        <ErrorBoundary>
+          <AnalysisLegend
+            buildingPk={buildingPk}
+            envelopeAnalysisOverride={envelopeAnalysisOverride}
+            zoneAnalysisOverride={energyZoneAnalysisOverride}
+          />
+        </ErrorBoundary>
+      )}
 
-      <ModelUploader
-        open={uploadDialogOpen}
-        onOpenChange={setUploadDialogOpen}
-        onFileLoaded={handleFileLoaded}
-      />
+      {!diagnosticsMode && (
+        <>
+          <LayerPanel
+            visible={layerPanelOpen}
+            onClose={() => setLayerPanelOpen(false)}
+          />
+
+          <ModelUploader
+            open={uploadDialogOpen}
+            onOpenChange={setUploadDialogOpen}
+            onFileLoaded={handleFileLoaded}
+          />
+        </>
+      )}
       </div>
     </div>
   );

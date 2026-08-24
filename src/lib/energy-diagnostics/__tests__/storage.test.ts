@@ -14,6 +14,7 @@ vi.mock("idb-keyval", () => ({
     if (writeFailure) throw writeFailure;
     database.set(key, structuredClone(value));
   },
+  keys: async () => [...database.keys()],
 }));
 
 import {
@@ -21,10 +22,13 @@ import {
   computeSourceContentHash,
   energyDiagnosticsProjectStorageKey,
   energySourceStorageKey,
+  loadEnergyDiagnosticsBundle,
   loadEnergyDiagnosticsProject,
   loadEnergyDiagnosticsProjectRecord,
+  listEnergyDiagnosticsProjects,
   loadEnergySourceBytes,
   saveEnergyDiagnosticsProject,
+  saveEnergyDiagnosticsBundle,
   saveEnergySourceBytes,
   type StoredEnergyDiagnosticsProjectV1,
 } from "../storage";
@@ -390,6 +394,49 @@ describe("canonical energy project persistence", () => {
     expect(loadedBytes).not.toBe((database.get(sourceKey) as { bytes: ArrayBuffer }).bytes);
   });
 
+  it("lists saved projects newest first without reading source-byte records", async () => {
+    const contentHash = await computeSourceContentHash(
+      new TextEncoder().encode(SOURCE_TEXT),
+    );
+    const older = makeModel(contentHash);
+    const newer = {
+      ...older,
+      id: "canonical-model-office-2",
+      project: {
+        ...older.project,
+        id: "energy-project-2",
+        name: "Newest traceable office",
+      },
+    } satisfies CanonicalEnergyModel;
+
+    await saveEnergyDiagnosticsProject(older, {
+      savedAtIso: "2026-08-22T01:02:03.000Z",
+    });
+    await saveEnergyDiagnosticsProject(newer, {
+      savedAtIso: "2026-08-23T01:02:03.000Z",
+    });
+    await saveEnergySourceBytes({
+      contentHash,
+      bytes: new TextEncoder().encode(SOURCE_TEXT),
+      storedAtIso: NOW,
+    });
+
+    await expect(listEnergyDiagnosticsProjects()).resolves.toEqual([
+      {
+        projectId: "energy-project-2",
+        projectName: "Newest traceable office",
+        modelId: "canonical-model-office-2",
+        savedAtIso: "2026-08-23T01:02:03.000Z",
+      },
+      {
+        projectId: "energy-project-1",
+        projectName: "Traceable office diagnosis",
+        modelId: "canonical-model-office-1",
+        savedAtIso: "2026-08-22T01:02:03.000Z",
+      },
+    ]);
+  });
+
   it("returns null for a project and source hash that were never saved", async () => {
     const missingHash = "0".repeat(64);
     expect(await loadEnergyDiagnosticsProject("missing-project")).toBeNull();
@@ -527,6 +574,61 @@ describe("validation and typed failures", () => {
 });
 
 describe("content-addressed source integrity", () => {
+  it("round-trips a complete project and source bundle", async () => {
+    const bytes = new TextEncoder().encode(SOURCE_TEXT);
+    const contentHash = await computeSourceContentHash(bytes);
+    const model = makeModel(contentHash);
+
+    await saveEnergyDiagnosticsBundle(
+      model,
+      [
+        {
+          fileName: model.drawingSet.documents[0].fileName,
+          mimeType: model.drawingSet.documents[0].mimeType,
+          content: bytes,
+        },
+      ],
+      { savedAtIso: NOW },
+    );
+
+    await expect(loadEnergyDiagnosticsBundle(model.project.id)).resolves.toEqual({
+      model,
+      sources: [
+        {
+          fileName: model.drawingSet.documents[0].fileName,
+          mimeType: model.drawingSet.documents[0].mimeType,
+          content: bytes.buffer,
+        },
+      ],
+    });
+  });
+
+  it("does not write a project record when required source bytes are missing", async () => {
+    const contentHash = await computeSourceContentHash(
+      new TextEncoder().encode(SOURCE_TEXT),
+    );
+    const model = makeModel(contentHash);
+
+    await expect(
+      saveEnergyDiagnosticsBundle(model, [], { savedAtIso: NOW }),
+    ).rejects.toMatchObject({ code: "SOURCE_MISSING" });
+    expect(database.has(energyDiagnosticsProjectStorageKey(model.project.id))).toBe(
+      false,
+    );
+  });
+
+  it("refuses a partial reload when a manifest source is missing", async () => {
+    const contentHash = await computeSourceContentHash(
+      new TextEncoder().encode(SOURCE_TEXT),
+    );
+    const model = makeModel(contentHash);
+    await saveEnergyDiagnosticsProject(model, { savedAtIso: NOW });
+
+    await expect(
+      loadEnergyDiagnosticsBundle(model.project.id),
+    ).rejects.toMatchObject({ code: "SOURCE_MISSING" });
+  });
+
   it("refuses mismatched declared hashes without writing bytes", async () => {
     const bytes = new TextEncoder().encode(SOURCE_TEXT);
     await expect(

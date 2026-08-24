@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
 
+import { seedSeenTours } from "./helpers/app-state";
+
 test.describe("Twin authoring", () => {
   test.beforeEach(async ({ page }) => {
+    await seedSeenTours(page);
     await page.goto("/");
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
   });
 
   test("floor-edit and object-edit expose real authoring, not dead chrome", async ({
@@ -13,12 +14,6 @@ test.describe("Twin authoring", () => {
     await page.getByTestId("landing-demo-start").click();
     await expect(page).toHaveURL(/\/building\/demo/);
     await expect(page.getByTitle("데모 오피스 타워")).toBeVisible({ timeout: 15000 });
-
-    const tour = page.locator(".driver-popover");
-    if (await tour.isVisible().catch(() => false)) {
-      await page.keyboard.press("Escape");
-      await expect(tour).toHaveCount(0);
-    }
 
     await expect(page.getByTestId("scene-layer-list")).toBeVisible();
     await expect(page.getByTestId("equipment-schedule-ingest")).toBeVisible();
@@ -32,22 +27,35 @@ test.describe("Twin authoring", () => {
     await expect(page.getByText("서비스 코어")).toBeVisible();
   });
 
-  test("CAD continue still reaches the twin after core classification", async ({
+  test("an imported DXF remains authorable after adoption", async ({
     page,
   }) => {
-    // The CAD-first draft (/building/drawing) is no longer a landing
-    // door post-pivot — the generative studio's schematic import replaced it
-    // there — but the route itself is still owned by /building, so this
-    // deep-dives it directly rather than via a removed landing button.
-    await page.goto("/building/drawing");
-    await expect(page.getByTestId("upload-sample-dxf")).toBeVisible();
-    await page.getByTestId("upload-sample-dxf").click();
-    await expect(page.getByText("외곽선 준비 완료")).toBeVisible({ timeout: 15000 });
-    await page.getByTestId("upload-continue").click();
-    await expect(page.getByRole("button", { name: /디지털 트윈/ })).toHaveAttribute(
-      "aria-current",
-      "step",
-    );
-    await expect(page.getByTestId("scene-layer-list")).toBeVisible({ timeout: 15000 });
+    await page.goto("/studio?start=draw");
+    await page.getByTestId("schematic-import-cad").click();
+    await page
+      .getByTestId("import-cad-file-input")
+      .setInputFiles("public/samples/sample-footprint.dxf");
+    await expect(page.getByTestId("import-cad-preview")).toBeVisible({ timeout: 15000 });
+    await page.getByRole("button", { name: "Use as schematic" }).click();
+
+    const importedFrom = page
+      .getByRole("heading", { name: "Imported from" })
+      .locator("..");
+    await expect(importedFrom).toContainText("sample-footprint.dxf");
+    await expect(importedFrom).toContainText("BIM_OUTLINE → boundary");
+
+    const canvas = page.getByRole("application", { name: "Schematic drawing canvas" });
+    const box = await canvas.boundingBox();
+    expect(box).toBeTruthy();
+    if (!box) return;
+
+    await page.getByTestId("schematic-tool-core").click();
+    await page.mouse.move(box.x + box.width / 2 - 25, box.y + box.height / 2 - 25);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 25, box.y + box.height / 2 + 25);
+    await page.mouse.up();
+
+    await expect(page.getByText("Cores", { exact: true }).locator("..")).toContainText("1");
+    await expect(page.getByRole("button", { name: "Generate BIM" })).toBeEnabled();
   });
 });

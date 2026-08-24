@@ -47,10 +47,16 @@ vi.mock("@react-three/fiber", async () => {
   };
 });
 
-vi.mock("@react-three/drei", () => ({
-  OrbitControls: () => null,
-  Environment: () => null,
-}));
+vi.mock("@react-three/drei", () => {
+  const useGLTF = Object.assign(() => ({ scene: null }), {
+    preload: vi.fn(),
+  });
+  return {
+    OrbitControls: () => null,
+    Environment: () => null,
+    useGLTF,
+  };
+});
 
 vi.mock("@/components/viewer/procedural-building-model", () => ({
   ProceduralBuildingModel: () => null,
@@ -74,6 +80,7 @@ import { diffMetrics, diffSpecs } from "@/lib/generative/patch/diff";
 import { STATUS_LABEL } from "@/lib/generative/spec/status";
 import type { AppliedEdit, GenerationResult } from "@/lib/generative/client";
 import { useGenerativeSession } from "@/store/generative-session-store";
+import { useAppStore } from "@/store/app-store";
 import { useBlueprintStore } from "@/store/blueprint-store";
 import { footprintToBlueprint } from "@/lib/generative/blueprint/from-footprint";
 import {
@@ -224,6 +231,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   store().reset();
+  useAppStore.setState({ language: "ko" });
 });
 
 afterEach(() => {
@@ -248,6 +256,20 @@ describe("GenerativeStudio — the empty session", () => {
     expect(screen.queryByRole("heading", { name: "Model" })).toBeNull();
     expect(screen.queryByLabelText(/Describe a change/i)).toBeNull();
     expect(screen.queryByRole("button", { name: "New building" })).toBeNull();
+  });
+
+  it("keeps the diagnosis workspace synchronized with the global language", () => {
+    const { rerender } = render(<GenerativeStudio initialStart="diagnose" />);
+    expect(
+      screen.getByRole("heading", { name: "설계단계 에너지 진단" }),
+    ).toBeTruthy();
+
+    act(() => useAppStore.getState().setLanguage("en"));
+    rerender(<GenerativeStudio initialStart="diagnose" />);
+
+    expect(
+      screen.getByRole("heading", { name: "Design-stage energy diagnosis" }),
+    ).toBeTruthy();
   });
 });
 

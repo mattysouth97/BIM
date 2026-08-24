@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { GenerativeStudio } from "@/components/generative/generative-studio";
 
 export const metadata: Metadata = {
-  title: "Generate a building",
+  title: "Building studio",
   description:
-    "Draw a floor plan or describe a building and generate an editable BIM model.",
+    "Describe, draw, or diagnose a source-traceable building energy model.",
 };
 
 type Props = {
@@ -15,9 +15,11 @@ type Props = {
 export default async function StudioPage({ searchParams }: Props) {
   const params = await searchParams;
   const start = Array.isArray(params.start) ? params.start[0] : params.start;
+  const initialStart =
+    start === "draw" || start === "diagnose" ? start : "describe";
   return (
     <div className="h-[calc(100vh-var(--header-height,3.5rem))] w-full">
-      <GenerativeStudio initialStart={start === "draw" ? "draw" : "describe"} />
+      <GenerativeStudio initialStart={initialStart} />
     </div>
   );
 }

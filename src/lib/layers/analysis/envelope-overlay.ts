@@ -205,7 +205,26 @@ export interface EnvelopeOverlayInput {
    * abstraction of the glazed fraction, not a window schedule.
    */
   avgWwr: number;
+  resultSemantics?: EnvelopeResultSemantics;
 }
+
+export type EnvelopeResultSemantics = Readonly<{
+  metric: "heat_loss_coefficient";
+  unit: "W/K";
+  source: "viewer_energy_metrics" | "selected_simulation_run";
+  inputHash: string | null;
+  spatialResultCount: number;
+  missingSpatialResultCount: number;
+}>;
+
+export const DEFAULT_ENVELOPE_RESULT_SEMANTICS: EnvelopeResultSemantics = {
+  metric: "heat_loss_coefficient",
+  unit: "W/K",
+  source: "viewer_energy_metrics",
+  inputHash: null,
+  spatialResultCount: 0,
+  missingSpatialResultCount: 0,
+};
 
 /**
  * Build the 외피 overlay group. One named child per drawable element class:
@@ -214,6 +233,8 @@ export interface EnvelopeOverlayInput {
  */
 export function buildEnvelopeOverlay(input: EnvelopeOverlayInput): THREE.Group {
   const { recipe, shares, avgWwr } = input;
+  const resultSemantics =
+    input.resultSemantics ?? DEFAULT_ENVELOPE_RESULT_SEMANTICS;
   const group = new THREE.Group();
   group.name = ENVELOPE_OVERLAY_GROUP;
 
@@ -237,6 +258,7 @@ export function buildEnvelopeOverlay(input: EnvelopeOverlayInput): THREE.Group {
       element: share.element,
       share: share.share,
       hCoefficientWPerK: share.hCoefficientWPerK,
+      resultSemantics,
     };
     group.add(mesh);
   }

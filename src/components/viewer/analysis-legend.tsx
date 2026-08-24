@@ -12,13 +12,21 @@ import {
   ANALYSIS_OVERLAY_CONFIGS,
 } from "@/lib/layers/analysis/overlay-types";
 import { STRUCTURE_ROLE_COLORS } from "@/lib/layers/analysis/structure-overlay";
-import { summariseZonesByProgram } from "@/lib/layers/analysis/zone-overlay";
-import { useEnvelopeAnalysis } from "./envelope-layer";
+import {
+  summariseZonesByProgram,
+  type EnergyZone,
+} from "@/lib/layers/analysis/zone-overlay";
+import {
+  useEnvelopeAnalysis,
+  type EnvelopeAnalysis,
+} from "./envelope-layer";
 import { useStructureAnalysis } from "./structure-layer";
 import { useEnergyZoneAnalysis } from "./energy-zone-layer";
 
 interface AnalysisLegendProps {
   buildingPk: string;
+  envelopeAnalysisOverride?: EnvelopeAnalysis | null;
+  zoneAnalysisOverride?: readonly EnergyZone[] | null;
 }
 
 const int = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
@@ -37,13 +45,23 @@ function Dot({ color }: { color: string }) {
   );
 }
 
-export function AnalysisLegend({ buildingPk }: AnalysisLegendProps) {
+export function AnalysisLegend({
+  buildingPk,
+  envelopeAnalysisOverride,
+  zoneAnalysisOverride,
+}: AnalysisLegendProps) {
   const overlays = useLayerStore((s) => s.analysisOverlays);
   const { t } = useT();
 
-  const envelope = useEnvelopeAnalysis(buildingPk);
+  const viewerEnvelope = useEnvelopeAnalysis(buildingPk);
   const structure = useStructureAnalysis(buildingPk);
-  const zones = useEnergyZoneAnalysis(buildingPk);
+  const viewerZones = useEnergyZoneAnalysis(buildingPk);
+  const envelope =
+    envelopeAnalysisOverride === undefined
+      ? viewerEnvelope
+      : envelopeAnalysisOverride;
+  const zones =
+    zoneAnalysisOverride === undefined ? viewerZones : zoneAnalysisOverride;
 
   const anyOn =
     overlays["overlay-envelope"] ||
@@ -78,7 +96,9 @@ export function AnalysisLegend({ buildingPk }: AnalysisLegendProps) {
               ANALYSIS_OVERLAY_CONFIGS["overlay-envelope"].name,
             )}
             <span className="ml-1.5 font-normal text-[10px] text-muted-foreground">
-              {t("추정", "estimated")}
+              {envelope?.resultSemantics.source === "selected_simulation_run"
+                ? t("선택 실행", "selected run")
+                : t("추정", "estimated")}
             </span>
           </p>
           {!envelope ? (
@@ -208,7 +228,9 @@ export function AnalysisLegend({ buildingPk }: AnalysisLegendProps) {
               ANALYSIS_OVERLAY_CONFIGS["overlay-zone"].name,
             )}
             <span className="ml-1.5 font-normal text-[10px] text-muted-foreground">
-              {t("추정", "estimated")}
+              {zones?.[0]?.resultSemantics.source === "selected_simulation_run"
+                ? t("선택 실행", "selected run")
+                : t("추정", "estimated")}
             </span>
           </p>
           {zoneRows.length === 0 ? (
@@ -234,7 +256,11 @@ export function AnalysisLegend({ buildingPk }: AnalysisLegendProps) {
                       {int.format(row.areaSqm)} m²
                     </span>
                     <span className="w-16 text-right tabular-nums font-medium">
-                      {int.format(row.demandKwhPerYear)} kWh
+                      {row.resultValueKwhPerYear == null
+                        ? row.notApplicableZoneCount > 0
+                          ? t("해당 없음", "N/A")
+                          : t("값 없음", "Missing")
+                        : `${int.format(row.resultValueKwhPerYear)} kWh/yr`}
                     </span>
                   </li>
                 ))}

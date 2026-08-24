@@ -24,6 +24,10 @@ import * as THREE from "three";
 import { InteriorLayer } from "@/components/viewer/interior-layer";
 import { SceneEnvironment } from "@/components/viewer/scene-environment";
 import { ProceduralBuildingModel } from "@/components/viewer/procedural-building-model";
+import {
+  EnergyDiagnosisScene,
+  EnergyDiagnosisWorkspace,
+} from "@/components/energy-diagnostics";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,6 +60,7 @@ import {
 import { STATUS_LABEL } from "@/lib/generative/spec/status";
 import { takeSeedBlueprint } from "@/lib/generative/blueprint/seed-handoff";
 import { fidelityForDesign, useBlueprintStore } from "@/store/blueprint-store";
+import { useAppStore } from "@/store/app-store";
 import { useGenerativeSession, type DesignOption } from "@/store/generative-session-store";
 
 import { PlanOverlay } from "./schematic/plan-overlay";
@@ -74,8 +79,8 @@ import { SummaryPanel } from "./summary-panel";
 type BusyKind = "modify" | "repair" | "explain" | "options";
 type Notice = { tone: "info" | "error"; text: string };
 
-/** How a session is started: from a sentence, or from a drawn schematic. */
-type StartMode = "describe" | "draw";
+/** How a session is started: prose, schematic, or a traceable drawing set. */
+type StartMode = "describe" | "draw" | "diagnose";
 /** What occupies the main area once a design exists. */
 type Viewport = "model" | "plan" | "schematic";
 
@@ -165,6 +170,7 @@ export function GenerativeStudio({
 }: {
   initialStart?: StartMode;
 }) {
+  const language = useAppStore((state) => state.language);
   const history = useGenerativeSession((s) => s.history);
   const locks = useGenerativeSession((s) => s.locks);
   const designRules = useGenerativeSession((s) => s.designRules);
@@ -622,6 +628,44 @@ export function GenerativeStudio({
 
   /* --- empty state --- */
 
+  if (startMode === "diagnose") {
+    return (
+      <div className="flex h-full w-full flex-col">
+        <div className="flex items-center justify-center gap-1 border-b px-3 py-2">
+          {(
+            [
+              ["describe", "Describe a building"],
+              ["draw", "Draw schematic"],
+              ["diagnose", "Energy diagnosis"],
+            ] as Array<[StartMode, string]>
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={startMode === value}
+              onClick={() => setStartMode(value)}
+              className={cn(
+                "rounded border px-3 py-1 text-xs transition-colors",
+                startMode === value
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "hover:bg-muted",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="min-h-0 flex-1 overflow-auto p-2 sm:p-3">
+          <EnergyDiagnosisWorkspace
+            className="min-h-full"
+            locale={language}
+            renderScene={(context) => <EnergyDiagnosisScene context={context} />}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (!design || !displayRecipe || !navTree) {
     return (
       <div className="flex h-full w-full flex-col">
@@ -630,6 +674,7 @@ export function GenerativeStudio({
             [
               ["describe", "Describe a building"],
               ["draw", "Draw schematic"],
+              ["diagnose", "Energy diagnosis"],
             ] as Array<[StartMode, string]>
           ).map(([value, label]) => (
             <button

@@ -34,6 +34,54 @@ describe("canonical model degree-day adapter", () => {
     },
   );
 
+  it("carries canonical opening dimensions and sill placement into the exact recipe", () => {
+    const baseline = getEnergyDiagnosticFixture("fixture-d").model;
+    const opening = baseline.geometry.openings[0];
+    const model = {
+      ...baseline,
+      geometry: {
+        ...baseline.geometry,
+        openings: [
+          {
+            ...opening,
+            sillHeightM: { ...opening.sillHeightM, value: 1.2 },
+          },
+        ],
+      },
+    };
+
+    const input = compileCanonicalModelToEngineInput(model);
+
+    expect(input.payload.recipe.facade).toMatchObject({
+      windowWidth: opening.widthM.value,
+      windowHeight: opening.heightM.value,
+      sillHeight: 1.2,
+    });
+    expect(input.payload.recipe.facade.windowRatio).toBeGreaterThan(0);
+    expect(
+      input.payload.provenance.find(
+        (entry) => entry.inputPath === "recipe.facade.sillHeight",
+      )?.factIds,
+    ).toContain(opening.sillHeightM.id);
+
+    const zeroSill = {
+      ...baseline,
+      geometry: {
+        ...baseline.geometry,
+        openings: [
+          {
+            ...opening,
+            sillHeightM: { ...opening.sillHeightM, value: 0 },
+          },
+        ],
+      },
+    };
+    expect(
+      compileCanonicalModelToEngineInput(zeroSill).payload.recipe.facade
+        .sillHeight,
+    ).toBe(0);
+  });
+
   it("validates, compiles, runs the existing engine, and exposes approximations", () => {
     const model = getEnergyDiagnosticFixture("fixture-a").model;
     const validation = validateCanonicalEnergyModel(model);
@@ -50,6 +98,39 @@ describe("canonical model degree-day adapter", () => {
     )?.transformation).toContain("multiplied by 3.6");
     expect(input.payload.approximations.map((entry) => entry.kind)).toEqual(
       expect.arrayContaining(["screening_method", "ratio_attribution", "area_apportionment"]),
+    );
+    expect(input.payload.materials.envelope.foundation.groundTemperature).toBe(13.5);
+    expect(
+      input.payload.approximations.find(
+        (entry) => entry.id === "engine-assumption:thermal-bridge-zero",
+      ),
+    ).toMatchObject({
+      kind: "engine_default",
+      affectedInputPaths: ["materials.envelope.walls[].thermalBridge"],
+      sourceFactIds: [model.envelope.thermalBridgeNotes.id],
+    });
+    expect(
+      input.payload.approximations.find(
+        (entry) => entry.id === "engine-assumption:ground-temperature",
+      ),
+    ).toMatchObject({
+      kind: "engine_default",
+      affectedInputPaths: [
+        "materials.envelope.foundation.groundTemperature",
+      ],
+    });
+    expect(
+      input.payload.provenance.find(
+        (entry) =>
+          entry.inputPath ===
+          "materials.envelope.foundation.groundTemperature",
+      )?.factIds,
+    ).toEqual(
+      expect.arrayContaining([
+        model.site.weatherSource.id,
+        model.site.location.id,
+        model.site.groundRelationship.id,
+      ]),
     );
 
     const simulation = run(input);

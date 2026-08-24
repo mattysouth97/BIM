@@ -18,6 +18,8 @@ import {
   buildEnvelopeOverlay,
   computeEnvelopeShares,
   computeOrientationWwr,
+  DEFAULT_ENVELOPE_RESULT_SEMANTICS,
+  type EnvelopeResultSemantics,
   type EnvelopeShare,
   type OrientationWwrRow,
 } from "@/lib/layers/analysis/envelope-overlay";
@@ -29,6 +31,7 @@ export interface EnvelopeAnalysis {
   /** Σ h over every element, W/K. */
   totalHWPerK: number;
   avgWwr: number;
+  resultSemantics: EnvelopeResultSemantics;
 }
 
 /**
@@ -54,18 +57,25 @@ export function useEnvelopeAnalysis(buildingPk: string): EnvelopeAnalysis | null
       // Same average the heat-loss model uses for its window area, so the band
       // on screen and the number in the legend describe one quantity.
       avgWwr: (wwr.N + wwr.S + wwr.E + wwr.W) / 4,
+      resultSemantics: DEFAULT_ENVELOPE_RESULT_SEMANTICS,
     };
   }, [metrics, recipe, materials]);
 }
 
-interface EnvelopeLayerProps {
+export interface EnvelopeLayerProps {
   buildingPk: string;
+  analysisOverride?: EnvelopeAnalysis | null;
 }
 
-export function EnvelopeLayer({ buildingPk }: EnvelopeLayerProps) {
+export function EnvelopeLayer({
+  buildingPk,
+  analysisOverride,
+}: EnvelopeLayerProps) {
   const enabled = useLayerStore((s) => s.analysisOverlays["overlay-envelope"]);
   const recipe = useEffectiveRecipe(buildingPk);
-  const analysis = useEnvelopeAnalysis(buildingPk);
+  const viewerAnalysis = useEnvelopeAnalysis(buildingPk);
+  const analysis =
+    analysisOverride === undefined ? viewerAnalysis : analysisOverride;
 
   // Lazy state initializer, not a ref: the group must be readable during render
   // to be handed to <primitive>, and this keeps one instance for the lifetime
@@ -83,6 +93,7 @@ export function EnvelopeLayer({ buildingPk }: EnvelopeLayerProps) {
       recipe,
       shares: analysis.shares,
       avgWwr: analysis.avgWwr,
+      resultSemantics: analysis.resultSemantics,
     });
     root.add(group);
 

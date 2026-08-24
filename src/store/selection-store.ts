@@ -26,6 +26,38 @@ export interface SelectedEquipmentInfo {
   specs: EquipmentSpec;
 }
 
+/** Energy-diagnosis object kinds that can be traced across 2D, data, and 3D. */
+export type CanonicalSelectionKind =
+  | "energy_fact"
+  | "thermal_zone"
+  | "source_reference"
+  | "simulation_series";
+
+/**
+ * JSON-only selection bridge for the canonical energy-diagnosis workflow.
+ *
+ * Stable application ids are stored instead of THREE objects or transient
+ * scene UUIDs. `threeObjectIds` therefore contains authored object names/ids
+ * such as `energy-zone:zone-west`, never `Object3D.uuid`.
+ */
+export type CanonicalSelection = Readonly<{
+  kind: CanonicalSelectionKind;
+  /** Building whose authored scene ids this selection belongs to. */
+  buildingPk: string | null;
+  /** Stable id of the selected fact, zone, source reference, or chart series. */
+  id: string;
+  /** Source document when the selection has drawing evidence. */
+  documentId: string | null;
+  /** Canonical model ids affected by this selection. */
+  canonicalObjectIds: readonly string[];
+  /** Stable authored scene object ids linked to the selection. */
+  threeObjectIds: readonly string[];
+  /** Selected room instance for an instanced thermal-zone mesh, when known. */
+  roomId?: string;
+  /** Exact simulation run backing a selected result series, when applicable. */
+  runId?: string;
+}>;
+
 interface SelectionState {
   // ── Existing fields (do not remove) ──
   selectedType: SelectableType;
@@ -45,6 +77,14 @@ interface SelectionState {
   selectEquipment: (info: SelectedEquipmentInfo) => void;
   /** Clear equipment selection only — does NOT mutate selectedType/selectedId/buildingPk */
   clearEquipment: () => void;
+
+  // ── Canonical energy-diagnosis selection (additive) ──
+  /** Current 2D/data/3D diagnosis selection. JSON-only and transient. */
+  selectedCanonical: CanonicalSelection | null;
+  /** Select a canonical energy fact, zone, source reference, or result series. */
+  selectCanonical: (selection: CanonicalSelection) => void;
+  /** Clear only the canonical diagnosis selection. */
+  clearCanonicalSelection: () => void;
 }
 
 /**
@@ -54,6 +94,7 @@ interface SelectionState {
  * Usage in R3F components:
  *   useSelectionStore.getState().select("wall", wall.id)
  *   useSelectionStore.getState().selectEquipment(info)
+ *   useSelectionStore.getState().selectCanonical(selection)
  *
  * Usage in React components:
  *   const { selectedType, selectedId, selectedEquipment } = useSelectionStore()
@@ -63,16 +104,29 @@ export const useSelectionStore = create<SelectionState>()((set) => ({
   selectedId: null,
   buildingPk: null,
   selectedEquipment: null,
+  selectedCanonical: null,
 
   select: (type, id, buildingPk) =>
     set({ selectedType: type, selectedId: id, buildingPk: buildingPk ?? null }),
 
   clearSelection: () =>
-    set({ selectedType: null, selectedId: null, buildingPk: null, selectedEquipment: null }),
+    set({
+      selectedType: null,
+      selectedId: null,
+      buildingPk: null,
+      selectedEquipment: null,
+      selectedCanonical: null,
+    }),
 
   selectEquipment: (info) =>
     set({ selectedEquipment: info }),
 
   clearEquipment: () =>
     set({ selectedEquipment: null }),
+
+  selectCanonical: (selection) =>
+    set({ selectedCanonical: selection }),
+
+  clearCanonicalSelection: () =>
+    set({ selectedCanonical: null }),
 }));

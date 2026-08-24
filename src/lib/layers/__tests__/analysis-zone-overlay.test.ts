@@ -9,6 +9,8 @@ import {
   hasRoomElements,
   summariseZonesByProgram,
   SPACE_TYPE_LABELS_KO,
+  ZONE_RESULT_SEMANTICS,
+  zoneRoomInstanceId,
 } from "../analysis/zone-overlay";
 
 const HVAC_KWH = 120_000;
@@ -23,6 +25,7 @@ function room(input: {
   z: number;
   widthM: number;
   depthM: number;
+  canonicalZoneId?: string;
 }): BimElement {
   return {
     id: input.id,
@@ -42,6 +45,9 @@ function room(input: {
       areaM2: input.widthM * input.depthM,
       widthM: input.widthM,
       depthM: input.depthM,
+      ...(input.canonicalZoneId
+        ? { canonicalZoneId: input.canonicalZoneId }
+        : {}),
     },
     placement: { x: input.x, y: 0, z: input.z, rotationY: 0 },
     phaseCreated: "new",
@@ -108,6 +114,29 @@ describe("buildEnergyZones", () => {
     const office1F = zones.find((z) => z.key === "level:1::open-office")!;
     expect(office1F.rooms).toHaveLength(2);
     expect(office1F.areaSqm).toBeCloseTo(300, 6);
+  });
+
+  it("uses canonical zone ids when supplied while preserving fallback grouping", () => {
+    const snapshot = makeSnapshot({
+      elements: [
+        room({ id: "C1", levelId: "level:1", programId: "office", spaceType: "office-open", name: "West", x: -5, z: 0, widthM: 10, depthM: 10, canonicalZoneId: "zone-west" }),
+        room({ id: "C2", levelId: "level:1", programId: "office", spaceType: "office-open", name: "Core", x: 5, z: 0, widthM: 10, depthM: 10, canonicalZoneId: "zone-core" }),
+        room({ id: "F1", levelId: "level:2", programId: "office", spaceType: "office-open", name: "Fallback", x: 0, z: 0, widthM: 10, depthM: 10 }),
+      ],
+    });
+
+    const zones = buildEnergyZones(snapshot, HVAC_KWH);
+    expect(zones.map((zone) => zone.key)).toEqual([
+      "zone-core",
+      "zone-west",
+      "level:2::office",
+    ]);
+    expect(zones.find((zone) => zone.key === "zone-west")?.keySource).toBe(
+      "canonical_zone_id",
+    );
+    expect(zones.find((zone) => zone.key === "level:2::office")?.keySource).toBe(
+      "level_program_fallback",
+    );
   });
 
   it("apportions demand by floor-area share and leaves intensity uniform", () => {
@@ -191,6 +220,77 @@ describe("buildZoneOverlay", () => {
       const mesh = group.getObjectByName(`energy-zone:${zone.key}`) as THREE.InstancedMesh;
       expect(mesh.count).toBe(zone.rooms.length);
     }
+  });
+
+  it("exposes stable room instance ids and explicit result semantics", () => {
+    const group = buildZoneOverlay(zones);
+    const zone = zones.find((candidate) => candidate.rooms.length > 1)!;
+    const mesh = group.getObjectByName(
+      `energy-zone:${zone.key}`,
+    ) as THREE.InstancedMesh;
+
+    expect(mesh.userData.roomIdsByInstance).toEqual(
+      zone.rooms.map((roomValue) => roomValue.id),
+    );
+    expect(mesh.userData.roomInstanceIdsByInstance).toEqual(
+      zone.rooms.map((roomValue) =>
+        zoneRoomInstanceId(zone.key, roomValue.id),
+      ),
+    );
+    expect(mesh.userData.resultSemantics).toEqual(ZONE_RESULT_SEMANTICS);
+    expect(mesh.userData.resultSemantics.unit).toBe("kWh/year");
+    expect(mesh.userData.resultSemantics.evidenceStatus).toBe("inferred");
+  });
+
+  it("distinguishes a selected zone by wireframe, scale, and peer opacity", () => {
+    const selectedZone = zones[1];
+    const defaultGroup = buildZoneOverlay(zones);
+    const selectedGroup = buildZoneOverlay(zones, {
+      selectedZoneKey: selectedZone.key,
+    });
+    const defaultMesh = defaultGroup.getObjectByName(
+      `energy-zone:${selectedZone.key}`,
+    ) as THREE.InstancedMesh;
+    const selectedMesh = selectedGroup.getObjectByName(
+      `energy-zone:${selectedZone.key}`,
+    ) as THREE.InstancedMesh;
+    const peerMesh = selectedGroup.children.find(
+      (child) => child.name !== selectedMesh.name,
+    ) as THREE.InstancedMesh;
+    const defaultScale = new THREE.Vector3();
+    const selectedScale = new THREE.Vector3();
+    const matrix = new THREE.Matrix4();
+    defaultMesh.getMatrixAt(0, matrix);
+    defaultScale.setFromMatrixScale(matrix);
+    selectedMesh.getMatrixAt(0, matrix);
+    selectedScale.setFromMatrixScale(matrix);
+
+    expect((selectedMesh.material as THREE.MeshBasicMaterial).wireframe).toBe(true);
+    expect((selectedMesh.material as THREE.MeshBasicMaterial).opacity).toBeGreaterThan(
+      (peerMesh.material as THREE.MeshBasicMaterial).opacity,
+    );
+    expect(selectedScale.x).toBeGreaterThan(defaultScale.x);
+    expect(selectedMesh.userData.selected).toBe(true);
+    expect(peerMesh.userData.selectionStyle).toBe("dimmed_peer");
+  });
+
+  it("highlights every canonical zone linked to a selected result series", () => {
+    const selected = zones.slice(0, 2);
+    const group = buildZoneOverlay(zones, {
+      selectedZoneKeys: selected.map((zone) => zone.key),
+    });
+
+    for (const zone of selected) {
+      expect(
+        group.getObjectByName(`energy-zone:${zone.key}`)?.userData.selected,
+      ).toBe(true);
+    }
+    const peer = zones.find(
+      (zone) => !selected.some((candidate) => candidate.key === zone.key),
+    );
+    expect(
+      group.getObjectByName(`energy-zone:${peer?.key}`)?.userData.selectionStyle,
+    ).toBe("dimmed_peer");
   });
 
   it("sits each zone volume on its level", () => {

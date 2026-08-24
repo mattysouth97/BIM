@@ -6,7 +6,6 @@ import {
   polygonArea,
 } from "./geometry";
 import { stableId } from "./ids";
-import type { DrawingSourceInput, ExtractionSignal } from "./ingestion";
 import type {
   AssumptionRecord,
   CanonicalEnergyModel,
@@ -138,7 +137,9 @@ const FIXTURE_CONFIGS: readonly FixtureConfig[] = [
       2: [rect(10, 8, 12, 12)],
     },
     spaces: multiStoreySpaces(),
-    expected: expectation(1_184, 1_160, 3_600, 3, 16, 13, [], [
+    expected: expectation(1_184, 1_160, 3_600, 3, 16, 13, [
+      { openingId: "opening-fixture-d-1", hostSurfaceId: "surface-fixture-d-0-wall-0" },
+    ], [
       "Duplicating an identical conditioned floor approximately scales area and loads.",
       "Atrium volume remains distinct from occupied floor area.",
     ]),
@@ -170,87 +171,6 @@ export function getEnergyDiagnosticFixture(
   const fixture = ENERGY_DIAGNOSTIC_FIXTURES.find((candidate) => candidate.id === fixtureId);
   if (!fixture) throw new Error(`Unknown energy diagnostic fixture ${fixtureId}.`);
   return fixture;
-}
-
-/**
- * Non-proprietary reference inputs for upload -> classify -> extract -> review.
- * Schedule values are explicit adapter signals with source regions; numerical
- * geometry is extracted only from the real DXF payload.
- */
-export function representativeOfficeDrawingSetInputs(): readonly DrawingSourceInput[] {
-  const planDxf = rectangularDxf(20, 20, "BIM_OUTLINE");
-  return Object.freeze([
-    {
-      fileName: "A101-office-floor-plan-rev-A.dxf",
-      mimeType: "application/dxf",
-      content: planDxf,
-      revision: "A",
-      northOrientationDeg: 0,
-      textSample: "OFFICE FLOOR PLAN LEVELS 01-03 REPEATED BIM_OUTLINE",
-      extractionSignals: [
-        signal("geometry.repeatedStoreyCount", 3, "count", "drawing_annotation", "LEVELS 01-03 TYPICAL", 0.96),
-      ],
-    },
-    {
-      fileName: "A201-east-elevation-rev-A.svg",
-      mimeType: "image/svg+xml",
-      content: safeSvg("EAST ELEVATION W01 1500 x 1500"),
-      revision: "A",
-      extractionSignals: [
-        signal("opening.W01.widthM", 1.5, "m", "drawing_annotation", "W01 width 1500", 0.88),
-        signal("opening.W01.heightM", 1.5, "m", "drawing_annotation", "W01 height 1500", 0.88),
-      ],
-    },
-    {
-      fileName: "A301-building-section-rev-A.svg",
-      mimeType: "image/svg+xml",
-      content: safeSvg("BUILDING SECTION FLOOR TO FLOOR 3000"),
-      revision: "A",
-      extractionSignals: [
-        signal("geometry.floorToFloorHeightM", 3, "m", "drawing_annotation", "FLOOR TO FLOOR 3000", 0.96),
-      ],
-    },
-    {
-      fileName: "A601-window-schedule-rev-A.svg",
-      mimeType: "image/svg+xml",
-      content: safeSvg("WINDOW SCHEDULE W01 1800 x 1500 U=1.6 SHGC=0.35"),
-      revision: "A",
-      extractionSignals: [
-        signal("opening.W01.widthM", 1.8, "m", "explicit_schedule_or_specification", "W01 WIDTH 1800", 0.99, "schedule_table"),
-        signal("construction.window.W01.uValue", 1.6, "W/m2K", "explicit_schedule_or_specification", "W01 U-VALUE 1.60", 0.99, "schedule_table"),
-        signal("construction.window.W01.shgc", 0.35, undefined, "explicit_schedule_or_specification", "W01 SHGC 0.35", 0.99, "schedule_table"),
-      ],
-    },
-    {
-      fileName: "A602-exterior-wall-detail-rev-A.svg",
-      mimeType: "image/svg+xml",
-      content: safeSvg("EXTERIOR WALL DETAIL EW01 U=0.32"),
-      revision: "A",
-      extractionSignals: [
-        signal("construction.wall.EW01.uValue", 0.32, "W/m2K", "explicit_schedule_or_specification", "EW01 U-VALUE 0.32", 0.98, "schedule_table"),
-      ],
-    },
-    {
-      fileName: "M601-hvac-equipment-schedule-rev-A.svg",
-      mimeType: "image/svg+xml",
-      content: safeSvg("HVAC EQUIPMENT SCHEDULE HP01 CAPACITY 120kW COP 3.6"),
-      revision: "A",
-      extractionSignals: [
-        signal("system.HP01.systemType", "air_source_heat_pump", undefined, "explicit_schedule_or_specification", "HP01 AIR SOURCE HEAT PUMP", 0.99, "schedule_table"),
-        signal("system.HP01.capacityKw", 120, "kW", "explicit_schedule_or_specification", "HP01 CAPACITY 120 kW", 0.99, "schedule_table"),
-        signal("system.HP01.coolingCop", 3.6, undefined, "explicit_schedule_or_specification", "HP01 COOLING COP 3.6", 0.99, "schedule_table"),
-      ],
-    },
-    {
-      fileName: "E201-lighting-plan-rev-A.svg",
-      mimeType: "image/svg+xml",
-      content: safeSvg("LIGHTING PLAN OFFICE LPD 8 W/M2"),
-      revision: "A",
-      extractionSignals: [
-        signal("usage.office.lightingPowerDensity", 8, "W/m2", "drawing_annotation", "OFFICE LPD 8 W/M2", 0.92),
-      ],
-    },
-  ]);
 }
 
 function buildFixture(config: FixtureConfig): EnergyDiagnosticFixture {
@@ -455,7 +375,11 @@ function buildSurfaces(
         azimuthDeg: verifiedFact(`surface.${id}.azimuthDeg`, edge.outwardAzimuthDeg, "deg", source, "rule_inference", "deterministic_rule_inference"),
         tiltDeg: verifiedFact(`surface.${id}.tiltDeg`, 90, "deg", source),
         constructionId: verifiedFact(`surface.${id}.constructionId`, "construction-wall", undefined, source),
-        openingIds: config.id === "fixture-a" && storeyIndex === 0 && edge.index === 0 ? ["opening-fixture-a-1"] : [],
+        openingIds:
+          storeyIndex === 0 && edge.index === 0 &&
+          (config.id === "fixture-a" || config.id === "fixture-d")
+            ? [`opening-${config.id}-1`]
+            : [],
         threeObjectId: `three-${id}`,
       }));
     }
@@ -498,15 +422,33 @@ function planarSurface(
 }
 
 function buildOpenings(config: FixtureConfig, source: SourceReference): readonly Opening[] {
-  if (config.id !== "fixture-a") return Object.freeze([]);
-  const id = "opening-fixture-a-1";
+  if (config.id !== "fixture-a" && config.id !== "fixture-d") {
+    return Object.freeze([]);
+  }
+  const id = `opening-${config.id}-1`;
+  const isReferenceOffice = config.id === "fixture-d";
   return Object.freeze([Object.freeze({
     id,
     type: "window" as const,
-    hostSurfaceId: "surface-fixture-a-0-wall-0",
-    areaSqm: verifiedFact(`opening.${id}.areaSqm`, 3, "m2", source),
-    widthM: verifiedFact(`opening.${id}.widthM`, 2, "m", source),
-    heightM: verifiedFact(`opening.${id}.heightM`, 1.5, "m", source),
+    hostSurfaceId: `surface-${config.id}-0-wall-0`,
+    areaSqm: verifiedFact(
+      `opening.${id}.areaSqm`,
+      isReferenceOffice ? 2.7 : 3,
+      "m2",
+      source,
+    ),
+    widthM: verifiedFact(
+      `opening.${id}.widthM`,
+      isReferenceOffice ? 1.8 : 2,
+      "m",
+      source,
+    ),
+    heightM: verifiedFact(
+      `opening.${id}.heightM`,
+      1.5,
+      "m",
+      source,
+    ),
     sillHeightM: verifiedFact(`opening.${id}.sillHeightM`, 0.9, "m", source),
     constructionId: verifiedFact(`opening.${id}.constructionId`, "construction-window", undefined, source),
     geometryRef: verifiedFact(`opening.${id}.geometryRef`, "fixture-window-region", undefined, source),
@@ -677,43 +619,6 @@ function fixtureSource(
     extractionRunId,
     previewCoordinates: [],
   });
-}
-
-function signal(
-  key: string,
-  value: unknown,
-  unit: string | undefined,
-  authority: ExtractionSignal["authority"],
-  originalText: string,
-  confidence: number,
-  extractionMethod: ExtractionSignal["extractionMethod"] = "drawing_text",
-): ExtractionSignal {
-  return {
-    key,
-    value,
-    ...(unit ? { unit } : {}),
-    confidence,
-    extractionMethod,
-    authority,
-    pageNumber: 1,
-    sheetId: "SCHEDULE-1",
-    boundingBox: { x: 10, y: 10, width: 120, height: 24 },
-    originalText,
-  };
-}
-
-function safeSvg(text: string): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700"><text x="10" y="30">${text}</text></svg>`;
-}
-
-function rectangularDxf(widthM: number, heightM: number, layer: string): string {
-  const pairs: readonly (readonly [number, string | number])[] = [
-    [0, "SECTION"], [2, "HEADER"], [9, "$INSUNITS"], [70, 6], [0, "ENDSEC"],
-    [0, "SECTION"], [2, "ENTITIES"], [0, "LWPOLYLINE"], [8, layer], [90, 4], [70, 1],
-    [10, 0], [20, 0], [10, widthM], [20, 0], [10, widthM], [20, heightM], [10, 0], [20, heightM],
-    [0, "ENDSEC"], [0, "EOF"],
-  ];
-  return `${pairs.map(([code, value]) => `${code}\n${value}`).join("\n")}\n`;
 }
 
 function rect(minX: number, minY: number, maxX: number, maxY: number): Polygon2D {

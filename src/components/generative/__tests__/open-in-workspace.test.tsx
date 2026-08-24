@@ -33,10 +33,16 @@ vi.mock("@react-three/fiber", async () => {
   };
 });
 
-vi.mock("@react-three/drei", () => ({
-  OrbitControls: () => null,
-  Environment: () => null,
-}));
+vi.mock("@react-three/drei", () => {
+  const useGLTF = Object.assign(() => ({ scene: null }), {
+    preload: vi.fn(),
+  });
+  return {
+    OrbitControls: () => null,
+    Environment: () => null,
+    useGLTF,
+  };
+});
 
 vi.mock("@/components/viewer/procedural-building-model", () => ({
   ProceduralBuildingModel: () => null,

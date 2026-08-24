@@ -190,7 +190,10 @@ function windowLayoutForFace(
   const sideRatio = (face.side === "left" || face.side === "right") ? 0.6 : 1.0;
   const adjustedCols = Math.max(0, Math.round(cols * sideRatio));
   const clearHeight = floor.height - slabThickness;
-  const sillH = Math.max(0.15, Math.min(facade.sillHeight, Math.max(0.15, clearHeight - 0.4)));
+  const sillH = Math.max(
+    0,
+    Math.min(facade.sillHeight, Math.max(0, clearHeight - 0.4)),
+  );
   const winH = Math.min(facade.windowHeight, Math.max(0.4, clearHeight - sillH - 0.15));
   const totalSpan = adjustedCols > 0
     ? adjustedCols * facade.windowWidth + (adjustedCols - 1) * (facade.windowSpacing - facade.windowWidth)

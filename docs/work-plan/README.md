@@ -41,6 +41,7 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | [P0-03](./items/P0-03-korean-pdf-font.md) | Register a CJK font so Korean PDF export stops rendering tofu | report | S | UC-08 | ✅ |
 | [P0-04](./items/P0-04-polygon-floor-selection.md) | Fix floor selection on the polygon-footprint rendering path | viewer | S | UC-05 | ✅ |
 | [P0-05](./items/P0-05-ci-pipeline.md) | Add GitHub Actions CI, coverage thresholds, and close the release-guard hole | infra | M | UC-01, 05–08 | ✅ |
+| [P0-06](./items/P0-06-design-stage-energy-diagnostics.md) | Source-traceable design-stage energy diagnosis vertical slice | energy | XL | UC-12 | 🟣 |
 
 ### P1 — Correctness of the savings engine (month 1)
 
@@ -106,6 +107,7 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 
 | Date | Item | Change | Agent/session |
 |---|---|---|---|
+| 2026-08-24 | P0-06 | Source-traceable canonical drawing-set diagnosis shipped for review: visible Tier-1 assumption acceptance, deterministic simulation, evidence/3D/result round trips, alternatives, and all-or-nothing persistence; 3,839 Vitest passed (4 skipped), 28 Playwright passed (1 skipped), build and CI checks green | codex-gpt5 |
 | 2026-07-21 | all | Work plan created from 11-track code review (23 items; process + knowledge base seeded) | orchestrator swarm |
 | 2026-07-21 | P0-01 | Twin-data routes hardened: slug+containment validation, timing-safe POST auth (fail-closed), 64 KB cap, no path leak, honest lastUpdated | claude-fable-5-ultrawork |
 | 2026-07-21 | P0-04 | Polygon-path floor clicks now select via userData.floorNo fallback (resolvePickedFloor helper + getFloorByFloorNo); manual viewer smoke still pending | claude-fable-5-ultrawork |

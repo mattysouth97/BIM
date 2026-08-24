@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { representativeOfficeDrawingSetInputs } from "../fixtures";
+import { representativeOfficeDrawingSetInputs } from "../reference-office-sources";
 import {
   ingestDrawingSet,
   validateDrawingSource,

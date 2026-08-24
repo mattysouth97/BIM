@@ -473,6 +473,56 @@ function compileGeometry(
   const conditionedArea = model.geometry.thermalZones
     .filter((zone) => zone.conditioned.value === true)
     .reduce((sum, zone) => sum + numberOf(zone.floorAreaSqm, scenario, "conditioned zone area"), 0);
+  const glazedOpenings = model.geometry.openings.filter(
+    (opening) =>
+      opening.type === "window" || opening.type === "curtain_wall",
+  );
+  const averageOpeningWidth = glazedOpenings.length > 0
+    ? glazedOpenings.reduce(
+        (sum, opening) =>
+          sum + numberOf(opening.widthM, scenario, "window width"),
+        0,
+      ) / glazedOpenings.length
+    : 1;
+  const averageOpeningHeight = glazedOpenings.length > 0
+    ? glazedOpenings.reduce(
+        (sum, opening) =>
+          sum + numberOf(opening.heightM, scenario, "window height"),
+        0,
+      ) / glazedOpenings.length
+    : 1;
+  const averageSillHeight = glazedOpenings.length > 0
+    ? glazedOpenings.reduce(
+        (sum, opening) =>
+          sum + numberOf(
+            opening.sillHeightM,
+            scenario,
+            "window sill height",
+            true,
+          ),
+        0,
+      ) / glazedOpenings.length
+    : 0.9;
+  const exteriorWallArea = model.geometry.surfaces
+    .filter(
+      (surface) =>
+        surface.type === "exterior_wall" &&
+        valueOf(surface.boundaryCondition, scenario) === "outdoors",
+    )
+    .reduce(
+      (sum, surface) =>
+        sum + numberOf(surface.areaSqm, scenario, "exterior wall area"),
+      0,
+    );
+  const glazedArea = glazedOpenings.reduce(
+    (sum, opening) =>
+      sum + numberOf(opening.areaSqm, scenario, "window area"),
+    0,
+  );
+  const visualWindowRatio =
+    exteriorWallArea > 0
+      ? Math.min(Math.max(glazedArea / exteriorWallArea, 0), 0.85)
+      : 0;
   provenance.push(
     provenanceEntry("recipe.footprintPolygon", [plate.boundary], scenario),
     provenanceEntry("recipe.totalHeight", storeys.flatMap((storey) => [
@@ -488,6 +538,43 @@ function compileGeometry(
       "sum of conditioned thermal-zone floor areas",
     ),
   );
+  if (glazedOpenings.length > 0) {
+    provenance.push(
+      provenanceEntry(
+        "recipe.facade.windowWidth",
+        glazedOpenings.map((opening) => opening.widthM),
+        scenario,
+        "arithmetic mean of reviewed glazed-opening widths for display",
+      ),
+      provenanceEntry(
+        "recipe.facade.windowHeight",
+        glazedOpenings.map((opening) => opening.heightM),
+        scenario,
+        "arithmetic mean of reviewed glazed-opening heights for display",
+      ),
+      provenanceEntry(
+        "recipe.facade.sillHeight",
+        glazedOpenings.map((opening) => opening.sillHeightM),
+        scenario,
+        "arithmetic mean of reviewed glazed-opening sill heights for display",
+      ),
+      provenanceEntry(
+        "recipe.facade.windowRatio",
+        [
+          ...glazedOpenings.map((opening) => opening.areaSqm),
+          ...model.geometry.surfaces
+            .filter(
+              (surface) =>
+                surface.type === "exterior_wall" &&
+                valueOf(surface.boundaryCondition, scenario) === "outdoors",
+            )
+            .map((surface) => surface.areaSqm),
+        ],
+        scenario,
+        "reviewed glazed area divided by reviewed exterior-wall area for display",
+      ),
+    );
+  }
   if (model.geometry.floorPlates.length > 1) {
     const signatures = new Set(model.geometry.floorPlates.map((candidate) =>
       stableStringify(candidate.boundary.value),
@@ -524,11 +611,11 @@ function compileGeometry(
     strctCd: "",
     mainPurpsCd: mainPurposeCode(useType),
     facade: {
-      windowWidth: 1,
-      windowHeight: 1,
-      sillHeight: 0.9,
-      windowSpacing: 2,
-      windowRatio: 0,
+      windowWidth: Math.max(averageOpeningWidth, 0.2),
+      windowHeight: Math.max(averageOpeningHeight, 0.2),
+      sillHeight: Math.max(averageSillHeight, 0),
+      windowSpacing: Math.max(averageOpeningWidth + 1, 1.2),
+      windowRatio: visualWindowRatio,
       mullionDepth: 0,
       mullionWidth: 0,
       glassInset: 0,
@@ -771,9 +858,57 @@ function compileMaterials(
   const averageOccupancy = usageRows.reduce((sum, row) => sum + row.occupancy, 0) / Math.max(usageRows.length, 1);
 
   const wallOrientations: WallAssembly["orientation"][] = ["N", "S", "E", "W"];
+  const containsAssumedInputs = model.facts.some(
+    (fact) =>
+      fact.assumptionId != null ||
+      fact.status === "defaulted" ||
+      fact.status === "inferred",
+  );
+  provenance.push(
+    provenanceEntry(
+      "materials.envelope.walls[].thermalBridge",
+      [model.envelope.thermalBridgeNotes],
+      scenario,
+      "fixed zero additive U-value surcharge; see engine-assumption:thermal-bridge-zero",
+    ),
+    provenanceEntry(
+      "materials.envelope.foundation.groundTemperature",
+      [
+        model.site.weatherSource,
+        model.site.location,
+        model.site.groundRelationship,
+      ],
+      scenario,
+      "fixed 13.5 degC legacy-engine screening default; see engine-assumption:ground-temperature",
+    ),
+  );
+  approximations.push({
+    id: "engine-assumption:thermal-bridge-zero",
+    kind: "engine_default",
+    title: "Zero thermal-bridge surcharge",
+    explanation:
+      "The legacy material boundary has no canonical numeric thermal-bridge input, so every wall uses a zero additive U-value surcharge. This can understate wall transmission where junction losses are material.",
+    affectedInputPaths: ["materials.envelope.walls[].thermalBridge"],
+    sourceFactIds: [model.envelope.thermalBridgeNotes.id],
+  });
+  approximations.push({
+    id: "engine-assumption:ground-temperature",
+    kind: "engine_default",
+    title: "Ground-temperature screening default",
+    explanation:
+      "The legacy degree-day engine uses a fixed 13.5 °C ground temperature because the canonical model has no ground-temperature field. This affects ground-floor design and annual heat loss and is not measured site data.",
+    affectedInputPaths: [
+      "materials.envelope.foundation.groundTemperature",
+    ],
+    sourceFactIds: [
+      model.site.weatherSource.id,
+      model.site.location.id,
+      model.site.groundRelationship.id,
+    ],
+  });
   return {
-    source: "user-input",
-    confidence: "measured",
+    source: containsAssumedInputs ? "code-estimate" : "user-input",
+    confidence: containsAssumedInputs ? "estimated" : "measured",
     codeYear: 2026,
     envelope: {
       walls: wallOrientations.map((orientation) => ({
@@ -979,6 +1114,32 @@ export function compileCanonicalModelToEngineInput(
     affectedInputPaths: ["result.monthly", "result.zones[].timeSeries", "result.zones[].peakHeatingKw", "result.zones[].peakCoolingKw", "result.peakCoolingKw"],
     sourceFactIds: [],
   }];
+  const tierOneAssumption = model.assumptions.find(
+    (assumption) =>
+      assumption.id === "assumption.tier1-office-screening-template",
+  );
+  if (tierOneAssumption) {
+    approximations.push({
+      id: "engine-assumption:tier1-office-screening-template",
+      kind: "engine_default",
+      title: tierOneAssumption.title,
+      explanation:
+        "Assumption-heavy Tier-1 office screening template inputs are active; this run is not measured data or a compliance prediction.",
+      affectedInputPaths: [
+        "recipe.floors",
+        "recipe.totalHeight",
+        "recipe.facade",
+        "materials.envelope",
+        "materials.hvac",
+        "materials.lighting",
+        "materials.occupancy",
+        "climate",
+      ],
+      sourceFactIds: model.facts
+        .filter((fact) => fact.assumptionId === tierOneAssumption.id)
+        .map((fact) => fact.id),
+    });
+  }
   const { recipe } = compileGeometry(model, scenario, provenance, approximations);
   const materials = compileMaterials(model, scenario, provenance, approximations);
   const climate = resolveClimate(model, scenario, provenance, approximations);

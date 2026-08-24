@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   ENERGY_DIAGNOSTIC_FIXTURES,
   getEnergyDiagnosticFixture,
-  representativeOfficeDrawingSetInputs,
 } from "../fixtures";
 import { relativeError } from "../geometry";
+import { representativeOfficeDrawingSetInputs } from "../reference-office-sources";
 import {
   compileCanonicalModelToEngineInput,
   runSimulation,
@@ -74,6 +74,13 @@ describe("controlled energy-diagnostics fixtures A-E", () => {
     expect(sources.some((source) => source.fileName.includes("window-schedule"))).toBe(true);
     expect(sources.some((source) => source.fileName.includes("hvac-equipment"))).toBe(true);
     expect(sources.some((source) => source.fileName.includes("lighting-plan"))).toBe(true);
+    const planBytes = sources[0].content;
+    expect(typeof planBytes).toBe("string");
+    if (typeof planBytes === "string") {
+      expect(planBytes).toContain("LEVELS 01-03 TYPICAL");
+      expect(planBytes).toContain("NORTH ARROW 0 DEG");
+      expect(planBytes).toContain("BIM_NORTH");
+    }
   });
 
   it.each(["fixture-a", "fixture-b", "fixture-d"] as const)(

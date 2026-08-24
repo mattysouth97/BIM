@@ -57,20 +57,25 @@ function hasExpectedUnit(
   return normalized == null || expected.has(normalized);
 }
 
-function hasTraceableOrigin(fact: EnergyFact<unknown>): boolean {
+function hasTraceableOrigin(
+  fact: EnergyFact<unknown>,
+  knownAssumptionIds: ReadonlySet<string>,
+): boolean {
   if (fact.value == null || fact.status === "missing") return false;
-  if (fact.sourceRefs.length > 0) return true;
-  if (
-    fact.extractionMethod === "user_input" &&
-    (fact.status === "user_confirmed" || fact.status === "verified")
-  ) {
-    return true;
-  }
+  if (hasIndependentTraceableOrigin(fact)) return true;
   return (
     fact.assumptionId != null &&
+    knownAssumptionIds.has(fact.assumptionId) &&
     (fact.extractionMethod === "rule_inference" ||
       fact.extractionMethod === "project_default" ||
       fact.extractionMethod === "engine_default")
+  );
+}
+
+function hasIndependentTraceableOrigin(fact: EnergyFact<unknown>): boolean {
+  return fact.sourceRefs.length > 0 || (
+    fact.extractionMethod === "user_input" &&
+    (fact.status === "user_confirmed" || fact.status === "verified")
   );
 }
 
@@ -246,6 +251,111 @@ function makeIssue(
   };
 }
 
+const TIER_ONE_SCREENING_ASSUMPTION_ID =
+  "assumption.tier1-office-screening-template";
+const TIER_ONE_ASSUMPTION_ACCEPTANCE_KEY =
+  "simulation.tier1OfficeScreeningTemplateAccepted";
+
+function tierOneTemplateDependentFacts(
+  model: CanonicalEnergyModel,
+): readonly EnergyFact<unknown>[] {
+  return [
+    model.building.name,
+    model.building.useType,
+    model.site.location,
+    model.site.latitudeDeg,
+    model.site.longitudeDeg,
+    ...(model.site.northOrientationDeg.extractionMethod === "user_input"
+      ? []
+      : [model.site.northOrientationDeg]),
+    model.site.weatherSource,
+    model.site.groundRelationship,
+    model.geometry.coordinateSystem,
+    ...model.geometry.storeys.flatMap((storey) => [
+      storey.elevationM,
+      storey.floorToFloorHeightM,
+    ]),
+    ...model.geometry.spaces.flatMap((space) => [
+      space.name,
+      space.boundary,
+      space.floorAreaSqm,
+      space.volumeM3,
+      space.conditioned,
+      space.spaceType,
+    ]),
+    ...model.geometry.thermalZones.flatMap((zone) => [
+      zone.name,
+      zone.conditioned,
+      zone.floorAreaSqm,
+      zone.volumeM3,
+      zone.orientationBand,
+    ]),
+    ...model.geometry.surfaces.flatMap((surface) => [
+      surface.boundaryCondition,
+      surface.geometry,
+      surface.areaSqm,
+      surface.azimuthDeg,
+      surface.tiltDeg,
+      surface.constructionId,
+    ]),
+    ...model.geometry.openings.flatMap((opening) => [
+      opening.areaSqm,
+      opening.widthM,
+      opening.heightM,
+      opening.sillHeightM,
+      opening.constructionId,
+      opening.geometryRef,
+    ]),
+    ...model.envelope.constructions.flatMap((construction) => [
+      construction.name,
+      construction.uValueWPerM2K,
+      construction.rValueM2KPerW,
+      construction.shgc,
+      construction.visibleTransmittance,
+      ...construction.layers.flatMap((layer) => [
+        layer.name,
+        layer.thicknessM,
+        layer.conductivityWPerMK,
+        layer.densityKgPerM3,
+        layer.specificHeatJPerKgK,
+      ]),
+    ]),
+    model.envelope.infiltrationAirChangesPerHour,
+    model.envelope.airTightnessNotes,
+    model.envelope.thermalBridgeNotes,
+    ...model.usageProfiles.flatMap((profile) => [
+      profile.name,
+      profile.spaceType,
+      profile.occupancyDensityPeoplePerSqm,
+      profile.occupancySchedule,
+      profile.lightingPowerDensityWPerSqm,
+      profile.lightingSchedule,
+      profile.equipmentPowerDensityWPerSqm,
+      profile.equipmentSchedule,
+      profile.ventilationLpsPerPerson,
+      profile.heatingSetpointC,
+      profile.coolingSetpointC,
+      profile.operatingHours,
+      profile.holidaySchedule,
+    ]),
+    ...model.systems.hvac.flatMap((system) => [
+      system.name,
+      system.systemType,
+      system.servedZoneIds,
+      system.heatingSource,
+      system.coolingSource,
+      system.distributionSystem,
+      system.capacityKw,
+      system.heatingEfficiency,
+      system.coolingCop,
+      system.outdoorAirStrategy,
+      system.heatRecoveryEfficiency,
+      system.ventilationLps,
+      system.controlSchedule,
+    ]),
+  ];
+}
+
 /**
  * Validates the canonical model before it crosses the real degree-day engine
  * boundary. It never repairs or mutates exact geometry.
@@ -255,6 +365,9 @@ export function validateCanonicalEnergyModel(
 ): CanonicalModelValidation {
   const issues: ValidationIssue[] = [];
   const issueKeys = new Set<string>();
+  const knownAssumptionIds = new Set(
+    model.assumptions.map((assumption) => assumption.id),
+  );
   const add = (issue: ValidationIssue) => {
     const key = `${issue.code}:${issue.affectedObjectIds.join(",")}:${issue.factIds.join(",")}`;
     if (!issueKeys.has(key)) {
@@ -262,6 +375,59 @@ export function validateCanonicalEnergyModel(
       issues.push(issue);
     }
   };
+
+  const tierOneModel =
+    model.modelVersion.startsWith("tier1-office-screening-") ||
+    model.assumptions.some(
+      (assumption) => assumption.id === TIER_ONE_SCREENING_ASSUMPTION_ID,
+    );
+  if (tierOneModel) {
+    const assumption = model.assumptions.find(
+      (candidate) => candidate.id === TIER_ONE_SCREENING_ASSUMPTION_ID,
+    );
+    if (!assumption) {
+      add(makeIssue(
+        "TIER_ONE_TEMPLATE_RECORD_MISSING", "error", "simulation",
+        "The Tier-1 model has no matching visible screening-template record.",
+        "Restore the versioned Tier-1 assumption record before simulation.",
+        [model.building.id],
+      ));
+    }
+    const uncoveredFacts = tierOneTemplateDependentFacts(model).filter(
+      (fact) => fact.assumptionId !== TIER_ONE_SCREENING_ASSUMPTION_ID,
+    );
+    for (const fact of uncoveredFacts) {
+      add(makeIssue(
+        "TIER_ONE_ASSUMPTION_COVERAGE", "error", categoryForKey(fact.key),
+        `Tier-1 template-dependent fact ${fact.key} is not linked to the versioned screening assumption.`,
+        "Rebuild the Tier-1 model or restore the fact's template assumption reference.",
+        [model.building.id], [fact.id],
+      ));
+    }
+    const acceptanceRecordPresent = model.missingValues.some(
+      (missing) => missing.key === TIER_ONE_ASSUMPTION_ACCEPTANCE_KEY,
+    );
+    const unreviewedTemplateFacts = tierOneTemplateDependentFacts(model).filter(
+      (fact) => !fact.reviewedByUser,
+    );
+    const unreviewedBoundaryFacts = model.geometry.floorPlates.flatMap((plate) =>
+      [plate.boundary, plate.areaSqm].filter((fact) => !fact.reviewedByUser),
+    );
+    if (
+      acceptanceRecordPresent ||
+      model.modelVersion !== "tier1-office-screening-v1-accepted" ||
+      unreviewedTemplateFacts.length > 0 ||
+      unreviewedBoundaryFacts.length > 0
+    ) {
+      add(makeIssue(
+        "TIER_ONE_ACCEPTANCE_REQUIRED", "error", "simulation",
+        "The selected floor boundary and versioned Tier-1 screening assumptions have not both been explicitly accepted.",
+        "Review the boundary and exact template values, then use the Tier-1 acceptance action.",
+        [model.building.id],
+        [...unreviewedBoundaryFacts, ...unreviewedTemplateFacts].map((fact) => fact.id),
+      ));
+    }
+  }
 
   if (model.geometry.storeys.length === 0) {
     add(makeIssue(
@@ -603,11 +769,11 @@ export function validateCanonicalEnergyModel(
   }
 
   for (const conflict of model.conflicts) {
-    if (conflict.blocking && conflict.resolutionStatus === "unresolved") {
+    if (conflict.blocking && conflict.resolutionStatus !== "user_resolved") {
       add(makeIssue(
         "SIMULATION_BLOCKING_CONFLICT", "error", categoryForKey(conflict.key),
-        `Blocking conflict ${conflict.id} is unresolved: ${conflict.downstreamImpact}`,
-        "Select a candidate with a visible rationale or correct the source drawing.",
+        `Blocking conflict ${conflict.id} has not been explicitly resolved by a user: ${conflict.downstreamImpact}`,
+        "Explicitly resolve the conflict as a user, or correct the source drawing and regenerate it.",
         conflict.affectedObjectIds, conflict.candidates.map((candidate) => candidate.fact.id),
       ));
     } else if (conflict.resolutionStatus !== "user_resolved") {
@@ -669,7 +835,18 @@ export function validateCanonicalEnergyModel(
     ]),
   ];
   for (const fact of engineMaterialFacts) {
-    if (!hasTraceableOrigin(fact)) {
+    const danglingAssumptionId =
+      !hasIndependentTraceableOrigin(fact) &&
+      fact.assumptionId != null &&
+      !knownAssumptionIds.has(fact.assumptionId);
+    if (danglingAssumptionId) {
+      add(makeIssue(
+        "PROVENANCE_DANGLING_ASSUMPTION", "error", categoryForKey(fact.key),
+        `Engine input ${fact.key} references missing assumption ${fact.assumptionId}.`,
+        "Restore the named assumption record or remove the stale assumption reference.",
+        [], [fact.id],
+      ));
+    } else if (!hasTraceableOrigin(fact, knownAssumptionIds)) {
       add(makeIssue(
         "PROVENANCE_UNKNOWN_ENGINE_INPUT", "error", categoryForKey(fact.key),
         `Engine input ${fact.key} has no traceable source, user confirmation, or explicit assumption.`,
