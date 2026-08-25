@@ -2,7 +2,10 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { CanonicalSimulationResult } from "@/lib/energy-diagnostics/types";
+import type {
+  CanonicalSimulationResult,
+  EnergyScenario,
+} from "@/lib/energy-diagnostics/types";
 
 import { ResultComparison } from "../result-comparison";
 
@@ -107,5 +110,30 @@ describe("ResultComparison end-use method disclosure", () => {
         screen.getByTestId("result-energyUseIntensityKwhPerM2-scenario"),
       ).getByText("0.004 kWh/m²·yr"),
     ).toBeTruthy();
+  });
+
+  it("identifies a stale draft as a prior run and names the evaluated scenario", () => {
+    const evaluatedScenario = {
+      id: "scenario-window-u-1-30",
+      name: "Improvement window-u-1.30",
+      deltas: [],
+    } as unknown as EnergyScenario;
+
+    render(
+      <ResultComparison
+        locale="en"
+        baseline={result({ heating: 400 })}
+        scenario={result({ heating: 350 })}
+        evaluatedScenario={evaluatedScenario}
+        scenarioIsPrior
+      />,
+    );
+
+    expect(screen.getByTestId("comparison-scenario-prior")).toBeTruthy();
+    expect(screen.getAllByText("Prior alternative").length).toBeGreaterThan(0);
+    expect(
+      screen.getByTestId("comparison-evaluated-scenario").textContent,
+    ).toContain(evaluatedScenario.name);
+    expect(screen.getByTestId("result-annualEnergyKwh-scenario")).toBeTruthy();
   });
 });

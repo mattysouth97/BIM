@@ -76,7 +76,16 @@ function ToolButton({
 
 const SNAP_STEPS = [0, 100, 500, 1_000, 5_000];
 
-export function SchematicToolbar() {
+export function SchematicToolbar({
+  initialImportOpen = false,
+}: Readonly<{
+  /**
+   * Opens the existing reviewed drawing importer when this editor was entered
+   * from the canonical Upload method. The importer remains contextual to the
+   * diagnostic; this does not create a second upload product or parser path.
+   */
+  initialImportOpen?: boolean;
+}>) {
   const tool = useBlueprintStore((s) => s.tool);
   const shapeMode = useBlueprintStore((s) => s.shapeMode);
   const voidKind = useBlueprintStore((s) => s.voidKind);
@@ -89,7 +98,7 @@ export function SchematicToolbar() {
   const selectedId = useBlueprintStore((s) => s.selectedId);
   const past = useBlueprintStore((s) => s.past);
   const future = useBlueprintStore((s) => s.future);
-  const [importOpen, setImportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(initialImportOpen);
 
   const supportsShape = tool === "boundary" || tool === "void" || tool === "zone";
   const placementFamily = getAuthoringFamily(placementFamilyId);

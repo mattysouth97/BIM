@@ -16,6 +16,10 @@ import {
   type Polygon2D,
 } from "@/lib/cad/dxf-parser";
 import { parseDwgFile } from "@/lib/cad/dwg-parser";
+import {
+  CAD_CLIENT_MAX_FILE_BYTES,
+  formatFileSizeMiB,
+} from "@/lib/cad/import-limits";
 import { mapDxfTextToDoc } from "@/lib/cad/doc/map-dxf-to-doc";
 import type { CadDocument } from "@/lib/cad/doc/types";
 import { useCadViewerStore } from "@/store/cad-viewer-store";
@@ -27,7 +31,6 @@ import { LayerPicker } from "./layer-picker";
 import { PdfTracer } from "./pdf-tracer";
 
 const ACCEPTED_EXTENSIONS = [".dxf", ".dwg", ".pdf"];
-const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 type UploadStatus =
   | { kind: "idle" }
@@ -43,7 +46,11 @@ export function UploadStage() {
   const [status, setStatus] = useState<UploadStatus>({ kind: "idle" });
   const [pendingLayer, setPendingLayer] = useState<string | null>(null);
   const [cadDoc, setCadDoc] = useState<CadDocument | null>(null);
-  const fileNameRef = useRef<string>("drawing.dxf");
+  const importGenerationRef = useRef(0);
+  const activeImportRef = useRef<{
+    generation: number;
+    controller: AbortController;
+  } | null>(null);
   const openViewer = useCadViewerStore((s) => s.openViewer);
   const closeViewer = useCadViewerStore((s) => s.closeViewer);
   const startDraft = useCadDraftStore((s) => s.startDraft);
@@ -68,6 +75,43 @@ export function UploadStage() {
   const draftPk = buildingPk || "anon";
   const draftKey = `cad-draft:${draftPk}`;
 
+  const invalidatePendingImport = useCallback(() => {
+    importGenerationRef.current += 1;
+    activeImportRef.current?.controller.abort();
+    activeImportRef.current = null;
+  }, []);
+
+  const beginImport = useCallback(() => {
+    activeImportRef.current?.controller.abort();
+    const generation = importGenerationRef.current + 1;
+    importGenerationRef.current = generation;
+    const controller = new AbortController();
+    activeImportRef.current = { generation, controller };
+
+    return {
+      generation,
+      controller,
+      isCurrent: () =>
+        importGenerationRef.current === generation &&
+        !controller.signal.aborted,
+    };
+  }, []);
+
+  const finishImport = useCallback((generation: number) => {
+    if (activeImportRef.current?.generation === generation) {
+      activeImportRef.current = null;
+    }
+  }, []);
+
+  useEffect(
+    () => () => {
+      // File and WASM readers are not universally interruptible, so changing
+      // the generation is the final guard against an unmounted late result.
+      invalidatePendingImport();
+    },
+    [invalidatePendingImport],
+  );
+
   useEffect(() => {
     let alive = true;
     void loadDraft(draftKey).then((d) => { if (alive) setSavedDraft(d); });
@@ -75,19 +119,37 @@ export function UploadStage() {
   }, [draftKey, loadDraft]);
 
   const openDraft = useCallback(() => {
+    // Drawing from scratch replaces any file import that is still resolving.
+    invalidatePendingImport();
+    setPendingLayer(null);
+    setCadDoc(null);
+    setStatus({ kind: "idle" });
     if (savedDraft) startDraft(savedDraft, draftKey);
     else newDrawing(`draft-${draftPk}`, draftKey);
     const doc = useCadDraftStore.getState().doc;
     if (doc) openViewer(doc);
-  }, [savedDraft, draftKey, draftPk, startDraft, newDrawing, openViewer]);
+  }, [
+    savedDraft,
+    draftKey,
+    draftPk,
+    startDraft,
+    newDrawing,
+    openViewer,
+    invalidatePendingImport,
+  ]);
 
   const ingestDxf = useCallback(
-    (text: string) => {
+    (text: string, fileName: string, isCurrent: () => boolean) => {
+      if (!isCurrent()) return;
       const parsed = parseDxfText(text);
+      if (!isCurrent()) return;
       // Full-drawing document for the viewer — independent of footprint
       // candidate extraction, so it exists even when no outline is found.
-      setCadDoc(mapDxfTextToDoc(text, fileNameRef.current));
+      const nextCadDoc = mapDxfTextToDoc(text, fileName);
+      if (!isCurrent()) return;
+      setCadDoc(nextCadDoc);
       if (parsed.candidates.length === 0) {
+        if (!isCurrent()) return;
         setStatus({
           kind: "error",
           message: t(
@@ -99,6 +161,7 @@ export function UploadStage() {
       }
       if (parsed.candidates.length === 1) {
         const c = parsed.candidates[0];
+        if (!isCurrent()) return;
         setStatus({
           kind: "ready",
           polygon: c.polygon,
@@ -107,6 +170,7 @@ export function UploadStage() {
           warnings: parsed.warnings,
         });
       } else {
+        if (!isCurrent()) return;
         setStatus({
           kind: "needs-pick",
           candidates: parsed.candidates,
@@ -118,13 +182,22 @@ export function UploadStage() {
   );
 
   const loadSampleDrawing = useCallback(async () => {
+    const { generation, controller, isCurrent } = beginImport();
+    if (!isCurrent()) return;
+    setPendingLayer(null);
+    setCadDoc(null);
     setStatus({ kind: "parsing" });
     try {
-      const res = await fetch("/samples/sample-footprint.dxf");
+      const res = await fetch("/samples/sample-footprint.dxf", {
+        signal: controller.signal,
+      });
+      if (!isCurrent()) return;
       if (!res.ok) throw new Error(String(res.status));
-      fileNameRef.current = "sample-footprint.dxf";
-      ingestDxf(await res.text());
+      const text = await res.text();
+      if (!isCurrent()) return;
+      ingestDxf(text, "sample-footprint.dxf", isCurrent);
     } catch {
+      if (!isCurrent()) return;
       setStatus({
         kind: "error",
         message: t(
@@ -132,15 +205,24 @@ export function UploadStage() {
           "Could not load the sample drawing. Try again or upload your own file.",
         ),
       });
+    } finally {
+      finishImport(generation);
     }
-  }, [ingestDxf, t]);
+  }, [beginImport, finishImport, ingestDxf, t]);
 
   const processFile = useCallback(
     async (file: File) => {
+      // The newest selection owns all future import output. Abort interrupts
+      // fetch-backed DWG conversion; the generation also covers File/WASM
+      // work that the browser cannot cancel once it has started.
+      const { generation, controller, isCurrent } = beginImport();
       const name = file.name.toLowerCase();
       const ext = name.slice(name.lastIndexOf("."));
 
       if (!ACCEPTED_EXTENSIONS.includes(ext)) {
+        if (!isCurrent()) return;
+        setPendingLayer(null);
+        setCadDoc(null);
         setStatus({
           kind: "error",
           message: t(
@@ -148,40 +230,54 @@ export function UploadStage() {
             `Unsupported file type: ${ext}`,
           ),
         });
+        finishImport(generation);
         return;
       }
 
-      if (file.size > MAX_FILE_SIZE_BYTES) {
+      if (file.size > CAD_CLIENT_MAX_FILE_BYTES) {
+        if (!isCurrent()) return;
+        setPendingLayer(null);
+        setCadDoc(null);
         setStatus({
           kind: "error",
           message: t(
-            "파일 크기가 50MB를 초과합니다",
-            "File exceeds 50 MB limit",
+            `파일 크기가 ${formatFileSizeMiB(CAD_CLIENT_MAX_FILE_BYTES)} 제한을 초과합니다`,
+            `File exceeds the ${formatFileSizeMiB(CAD_CLIENT_MAX_FILE_BYTES)} browser import limit`,
           ),
         });
+        finishImport(generation);
         return;
       }
 
+      if (!isCurrent()) return;
+      setPendingLayer(null);
+      setCadDoc(null);
       setStatus({ kind: "parsing" });
-      fileNameRef.current = file.name;
 
       try {
         if (ext === ".dxf") {
           const text = await file.text();
-          ingestDxf(text);
+          if (!isCurrent()) return;
+          ingestDxf(text, file.name, isCurrent);
         } else if (ext === ".pdf") {
           // Rendering and tracing happen in <PdfTracer>; we only ferry the bytes.
           // PDFs are raster sources — no CadDocument, no viewer.
-          setCadDoc(null);
           const buf = await file.arrayBuffer();
+          if (!isCurrent()) return;
           setStatus({ kind: "pdf-tracing", pdfBytes: buf });
         } else {
           // .dwg — validate header, then LibreDWG / server round-trip.
-          const parsed = await parseDwgFile(file);
-          setCadDoc(
-            parsed.dxfText ? mapDxfTextToDoc(parsed.dxfText, file.name) : null,
-          );
+          const parsed = await parseDwgFile(file, {
+            signal: controller.signal,
+          });
+          if (!isCurrent()) return;
+          const nextCadDoc = parsed.dxfText
+            ? mapDxfTextToDoc(parsed.dxfText, file.name)
+            : null;
+          if (!isCurrent()) return;
+          setCadDoc(nextCadDoc);
           if (parsed.candidates.length === 0) {
+            if (!isCurrent()) return;
             setStatus({
               kind: "error",
               message:
@@ -195,6 +291,7 @@ export function UploadStage() {
           }
           if (parsed.candidates.length === 1) {
             const c = parsed.candidates[0];
+            if (!isCurrent()) return;
             setStatus({
               kind: "ready",
               polygon: c.polygon,
@@ -203,6 +300,7 @@ export function UploadStage() {
               warnings: parsed.warnings,
             });
           } else {
+            if (!isCurrent()) return;
             setStatus({
               kind: "needs-pick",
               candidates: parsed.candidates,
@@ -211,13 +309,16 @@ export function UploadStage() {
           }
         }
       } catch (err) {
+        if (!isCurrent()) return;
         setStatus({
           kind: "error",
           message: err instanceof Error ? err.message : String(err),
         });
+      } finally {
+        finishImport(generation);
       }
     },
-    [ingestDxf, t]
+    [beginImport, finishImport, ingestDxf, t]
   );
 
   const handleDrop = useCallback(

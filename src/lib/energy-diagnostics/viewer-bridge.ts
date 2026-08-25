@@ -46,8 +46,31 @@ export type CanonicalViewerBridge = Readonly<{
   floors: readonly BrFloorInfo[];
   recipe: BuildingRecipe;
   snapshot: BimModelSnapshot;
+  /** Canonical plan coordinate translated to the viewer's [0, 0] origin. */
+  displayOrigin: readonly [x: number, y: number];
   warnings: readonly string[];
 }>;
+
+/**
+ * Translate an engine recipe's canonical plan coordinates into the viewer's
+ * origin-centred frame. This is a render-only copy: source facts and the
+ * hashed simulation input remain in their original coordinate system.
+ */
+export function recipeAtViewerOrigin(
+  recipe: BuildingRecipe,
+  displayOrigin: readonly [x: number, y: number],
+): BuildingRecipe {
+  if (!recipe.footprintPolygon) return recipe;
+  return {
+    ...recipe,
+    footprintPolygon: recipe.footprintPolygon.map((ring) =>
+      ring.map(
+        ([x, y]) =>
+          [x - displayOrigin[0], y - displayOrigin[1]] as [number, number],
+      ),
+    ),
+  };
+}
 
 type Bounds = Readonly<{
   minX: number;
@@ -443,6 +466,7 @@ export function canonicalModelToViewerBridge(
     floors: Object.freeze(floorRows),
     recipe: Object.freeze(recipe),
     snapshot: Object.freeze(snapshot),
+    displayOrigin: Object.freeze([bounds.centerX, bounds.centerY] as const),
     warnings: Object.freeze(warnings),
   });
 }

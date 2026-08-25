@@ -52,6 +52,11 @@ export interface EnergyZoneLayerProps {
   analysisOverride?: readonly EnergyZone[] | null;
 }
 
+/** OrbitControls drags can end over a zone; only a short pointer gesture selects. */
+export function isIntentionalZoneSelection(deltaPx: number): boolean {
+  return Number.isFinite(deltaPx) && deltaPx <= 4;
+}
+
 export function EnergyZoneLayer({
   buildingPk,
   onSelectZone,
@@ -144,6 +149,7 @@ function EnergyZoneOverlayMount({
     (event: ThreeEvent<MouseEvent>) => {
       const object = event.object;
       if (object.userData.type !== "analysis-energy-zone") return;
+      if (!isIntentionalZoneSelection(event.delta)) return;
 
       const zoneId =
         typeof object.userData.zoneKey === "string"

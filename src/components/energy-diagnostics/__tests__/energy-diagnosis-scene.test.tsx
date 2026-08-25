@@ -11,6 +11,10 @@ vi.mock("@/components/viewer/building-scene", () => ({
     energyZoneAnalysisOverride?: readonly {
       resultSemantics: { source: string };
     }[] | null;
+    diagnosticSpatialTarget?: {
+      precision: string;
+      patches: readonly unknown[];
+    } | null;
   }) => (
     <div
       data-testid="mock-building-scene"
@@ -23,6 +27,8 @@ vi.mock("@/components/viewer/building-scene", () => ({
       data-zone-source={
         props.energyZoneAnalysisOverride?.[0]?.resultSemantics.source ?? "none"
       }
+      data-focus-precision={props.diagnosticSpatialTarget?.precision ?? "none"}
+      data-focus-patch-count={props.diagnosticSpatialTarget?.patches.length ?? 0}
     />
   ),
 }));
@@ -131,5 +137,64 @@ describe("EnergyDiagnosisScene selected-run bridge", () => {
       useLayerStore.getState().analysisOverlays["overlay-envelope"],
     ).toBe(false);
     expect(useSelectionStore.getState().selectedCanonical).toBeNull();
+  });
+
+  it("passes an exact finding surface to the viewer and announces camera focus", async () => {
+    const reference = await loadRepresentativeCase();
+    const surface = reference.model.geometry.surfaces.find(
+      (candidate) => candidate.type === "exterior_wall",
+    );
+    if (!surface) throw new Error("reference model has no exterior wall");
+    const onSelectZone = vi.fn();
+    useSelectionStore.setState({
+      selectedCanonical: {
+        kind: "thermal_zone",
+        buildingPk: `energy-diagnostics:${reference.model.building.id}`,
+        id: reference.model.geometry.thermalZones[0].id,
+        documentId: null,
+        canonicalObjectIds: [reference.model.geometry.thermalZones[0].id],
+        threeObjectIds: [],
+      },
+    });
+
+    render(
+      <EnergyDiagnosisScene
+        context={{
+          locale: "en",
+          model: reference.model,
+          selected: {
+            kind: "diagnostic_finding",
+            id: "finding:selected-wall",
+            documentId: null,
+            canonicalObjectIds: [surface.id],
+            threeObjectIds: surface.threeObjectId
+              ? [surface.threeObjectId]
+              : [],
+          },
+          baselineRun: null,
+          scenarioRun: null,
+          activeRun: null,
+          spatialResults: null,
+          onSelectZone,
+          onSelectObject: vi.fn(),
+        }}
+      />,
+    );
+
+    const viewport = screen.getByTestId("energy-diagnosis-scene");
+    const scene = screen.getByTestId("mock-building-scene");
+    const status = screen.getByTestId("diagnostic-spatial-selection-status");
+    expect(viewport.getAttribute("data-focus-precision")).toBe("exact_surface");
+    expect(viewport.getAttribute("data-highlighted-object-count")).toBe("1");
+    expect(scene.getAttribute("data-focus-precision")).toBe("exact_surface");
+    expect(scene.getAttribute("data-focus-patch-count")).toBe("1");
+    expect(status.getAttribute("role")).toBe("status");
+    expect(status.textContent).toContain("camera focused");
+    await waitFor(() => {
+      expect(useSelectionStore.getState().selectedCanonical?.kind).toBe(
+        "diagnostic_finding",
+      );
+    });
+    expect(onSelectZone).not.toHaveBeenCalled();
   });
 });

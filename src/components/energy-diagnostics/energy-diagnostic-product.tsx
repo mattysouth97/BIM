@@ -22,6 +22,7 @@ import {
   type StoredEnergyDiagnosticsProjectSummary,
 } from "@/lib/energy-diagnostics/storage";
 import { useAppStore } from "@/store/app-store";
+import { useBlueprintStore } from "@/store/blueprint-store";
 
 import { EnergyDiagnosisScene } from "./energy-diagnosis-scene";
 import { EnergyDiagnosisWorkspace } from "./energy-diagnosis-workspace";
@@ -97,6 +98,14 @@ export function EnergyDiagnosticProduct({
     setEditingGeometry(false);
   }, []);
 
+  const openReviewedDrawingImport = useCallback(() => {
+    // A new Upload-method import must not inherit geometry from a previous
+    // editor session. The diagnostic workspace is left untouched until the
+    // user explicitly adopts a reviewed drawing.
+    useBlueprintStore.getState().reset();
+    setEditingGeometry(true);
+  }, []);
+
   const bindSavedProject = useCallback(
     (projectId: string) => {
       if (!initialMethod || routedProjectIdRef.current === projectId) return;
@@ -165,12 +174,12 @@ export function EnergyDiagnosticProduct({
             >
               <FileUp className="size-6 text-cyan-300" aria-hidden="true" />
               <h2 className="mt-8 text-lg font-semibold text-white">
-                {locale === "ko" ? "DXF 도면 업로드" : "Upload a DXF drawing"}
+                {locale === "ko" ? "건물 도면 업로드" : "Upload a building drawing"}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-400">
                 {locale === "ko"
-                  ? "벡터 평면도를 가져와 추출 결과와 출처를 확인합니다."
-                  : "Import a vector floor plan and review every extracted boundary and source."}
+                  ? "DXF는 바로 검증하고, DWG·SVG는 형상과 레이어를 먼저 검토합니다."
+                  : "Validate DXF directly, or review DWG and SVG geometry and layers before adoption."}
               </p>
               <span className="mt-6 flex items-center gap-2 text-xs font-semibold text-cyan-200">
                 {locale === "ko" ? "도면 선택" : "Choose drawing"}
@@ -250,26 +259,49 @@ export function EnergyDiagnosticProduct({
   }
 
   const methodLabel = METHOD_LABEL[initialMethod][locale];
+  const geometryEditorOpen =
+    (initialMethod === "create" || initialMethod === "upload") &&
+    editingGeometry;
+  const reviewingUploadedDrawing =
+    geometryEditorOpen && initialMethod === "upload";
 
-  if (initialMethod === "create" && editingGeometry) {
-    return (
+  return (
+    <>
+      {geometryEditorOpen && (
       <section className="flex h-[calc(100dvh-var(--header-height,3.5rem))] min-h-[680px] flex-col overflow-hidden bg-background">
         <header className="flex flex-wrap items-center gap-3 border-b bg-card px-3 py-2 sm:px-4">
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/diagnostics/new">
+          {reviewingUploadedDrawing ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setEditingGeometry(false)}
+              data-testid="back-to-direct-dxf-upload"
+            >
               <ArrowLeft className="size-4" />
-              {locale === "ko" ? "입력 방식" : "Input methods"}
-            </Link>
-          </Button>
+              {locale === "ko" ? "DXF 직접 업로드" : "Direct DXF upload"}
+            </Button>
+          ) : (
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/diagnostics/new">
+                <ArrowLeft className="size-4" />
+                {locale === "ko" ? "입력 방식" : "Input methods"}
+              </Link>
+            </Button>
+          )}
           <div className="h-5 w-px bg-border" aria-hidden="true" />
           <div className="min-w-0">
             <p className="text-xs font-semibold">
               {locale === "ko" ? "새 에너지 진단" : "New Energy Diagnostic"}
             </p>
             <p className="truncate text-[10px] text-muted-foreground">
-              {locale === "ko"
-                ? "진단 준비 · 건물 형상 편집"
-                : "Model preparation · edit building geometry"}
+              {reviewingUploadedDrawing
+                ? locale === "ko"
+                  ? "진단 준비 · DWG·SVG 형상 및 레이어 검토"
+                  : "Model preparation · review DWG or SVG geometry and layers"
+                : locale === "ko"
+                  ? "진단 준비 · 건물 형상 편집"
+                  : "Model preparation · edit building geometry"}
             </p>
           </div>
         </header>
@@ -278,14 +310,17 @@ export function EnergyDiagnosticProduct({
             onBlueprintReady={acceptBlueprint}
             generateLabel={locale === "ko" ? "모델 검토" : "Review building model"}
             generateBusyLabel={locale === "ko" ? "준비 중…" : "Preparing…"}
+            initialImportOpen={reviewingUploadedDrawing}
           />
         </div>
       </section>
-    );
-  }
-
-  return (
-    <section className="min-h-[calc(100dvh-var(--header-height,3.5rem))] bg-muted/20">
+      )}
+      {(!geometryEditorOpen || reviewingUploadedDrawing) && (
+        <section
+          className="min-h-[calc(100dvh-var(--header-height,3.5rem))] bg-muted/20"
+          hidden={reviewingUploadedDrawing}
+          aria-hidden={reviewingUploadedDrawing || undefined}
+        >
       <header className="flex min-h-12 flex-wrap items-center gap-3 border-b bg-background px-3 py-2 sm:px-4">
         <Button asChild variant="ghost" size="sm">
           <Link href="/diagnostics/new">
@@ -308,6 +343,18 @@ export function EnergyDiagnosticProduct({
             {locale === "ko" ? "형상 편집" : "Edit geometry"}
           </Button>
         )}
+        {initialMethod === "upload" && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={openReviewedDrawingImport}
+            data-testid="diagnostic-review-dwg-svg"
+          >
+            <PencilRuler className="size-3.5" />
+            {locale === "ko" ? "DWG·SVG 가져오기" : "Import DWG or SVG"}
+          </Button>
+        )}
       </header>
       <EnergyDiagnosisWorkspace
         key={`${initialMethod}-${geometryRevision}`}
@@ -320,6 +367,8 @@ export function EnergyDiagnosticProduct({
         renderScene={renderScene}
         onProjectSaved={bindSavedProject}
       />
-    </section>
+        </section>
+      )}
+    </>
   );
 }

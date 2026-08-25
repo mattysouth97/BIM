@@ -374,6 +374,7 @@ export function runImprovementScenario(
 }> {
   const baseline = reconcileCanonicalModelFingerprint(model);
   const changes: ScenarioChange<unknown>[] = [];
+  const idParts: string[] = [];
   const nameParts: string[] = [];
   if (values.windowUValueWPerM2K != null) {
     const windowIndex = baseline.envelope.constructions.findIndex(
@@ -387,7 +388,10 @@ export function runImprovementScenario(
       value: values.windowUValueWPerM2K,
       unit: "W/m2K",
     });
-    nameParts.push(`window-u-${values.windowUValueWPerM2K.toFixed(2)}`);
+    idParts.push(`window-u-${values.windowUValueWPerM2K.toFixed(2)}`);
+    nameParts.push(
+      `Window U-value ${values.windowUValueWPerM2K.toFixed(2)} W/m²·K`,
+    );
   }
   if (values.windowShgc != null) {
     const windowIndex = baseline.envelope.constructions.findIndex(
@@ -400,7 +404,8 @@ export function runImprovementScenario(
       baselineFact: baseline.envelope.constructions[windowIndex].shgc,
       value: values.windowShgc,
     });
-    nameParts.push(`shgc-${values.windowShgc.toFixed(2)}`);
+    idParts.push(`shgc-${values.windowShgc.toFixed(2)}`);
+    nameParts.push(`Window SHGC ${values.windowShgc.toFixed(2)}`);
   }
   if (values.infiltrationAch != null) {
     changes.push({
@@ -410,7 +415,8 @@ export function runImprovementScenario(
       value: values.infiltrationAch,
       unit: "ACH",
     });
-    nameParts.push(`ach-${values.infiltrationAch.toFixed(2)}`);
+    idParts.push(`ach-${values.infiltrationAch.toFixed(2)}`);
+    nameParts.push(`Infiltration ${values.infiltrationAch.toFixed(2)} ACH`);
   }
   if (values.heatingCop != null) {
     if (baseline.systems.hvac.length === 0) {
@@ -422,7 +428,8 @@ export function runImprovementScenario(
       baselineFact: baseline.systems.hvac[0].heatingEfficiency,
       value: values.heatingCop,
     });
-    nameParts.push(`cop-${values.heatingCop.toFixed(2)}`);
+    idParts.push(`cop-${values.heatingCop.toFixed(2)}`);
+    nameParts.push(`Heating COP ${values.heatingCop.toFixed(2)}`);
   }
   if (values.openingAreaScale != null) {
     if (!(values.openingAreaScale > 0)) {
@@ -439,14 +446,17 @@ export function runImprovementScenario(
         unit: baseline.unit ?? "m2",
       });
     });
-    nameParts.push(`glazing-x${values.openingAreaScale.toFixed(2)}`);
+    idParts.push(`glazing-x${values.openingAreaScale.toFixed(2)}`);
+    nameParts.push(
+      `Glazing area ${(values.openingAreaScale * 100).toFixed(0)}% of baseline`,
+    );
   }
   if (changes.length === 0) {
     throw new Error("An improvement scenario needs at least one changed value.");
   }
   const scenario = createEnergyScenario({
-    id: `scenario-${nameParts.join("-").replaceAll(".", "-")}`,
-    name: `Improvement ${nameParts.join(" · ")}`,
+    id: `scenario-${idParts.join("-").replaceAll(".", "-")}`,
+    name: `Improvement · ${nameParts.join(" · ")}`,
     baseline,
     changes,
   });

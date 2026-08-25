@@ -49,6 +49,8 @@ import { EnergyZoneLayer } from "./energy-zone-layer";
 import type { EnergyZone } from "@/lib/layers/analysis/zone-overlay";
 import { AnalysisLegend } from "./analysis-legend";
 import { SceneControls, type SceneControlsRef } from "./scene-controls";
+import { DiagnosticSelectionLayer } from "./diagnostic-selection-layer";
+import type { DiagnosticSpatialTarget } from "./diagnostic-selection-types";
 import { useViewStore } from "@/lib/bim/views/view-store";
 import { ContextualToolbar } from "@/components/workspace/contextual-toolbar";
 import { LayerPanel } from "./layer-panel";
@@ -243,6 +245,8 @@ interface BuildingSceneProps {
   envelopeAnalysisOverride?: EnvelopeAnalysis | null;
   /** Exact selected-run zone analysis; undefined keeps the ordinary viewer hook. */
   energyZoneAnalysisOverride?: readonly EnergyZone[] | null;
+  /** Evidence-backed finding geometry and camera target for diagnostic mode. */
+  diagnosticSpatialTarget?: DiagnosticSpatialTarget | null;
 }
 
 export function BuildingScene({
@@ -258,6 +262,7 @@ export function BuildingScene({
   onEnergyZoneSelect,
   envelopeAnalysisOverride,
   energyZoneAnalysisOverride,
+  diagnosticSpatialTarget,
 }: BuildingSceneProps) {
   const [selectedFloor, setSelectedFloor] = useState<FloorGeometry | null>(null);
   const [modelSource, setModelSource] = useState<ModelSource>("parametric");
@@ -655,6 +660,9 @@ export function BuildingScene({
                   onSelectZone={onEnergyZoneSelect}
                   analysisOverride={energyZoneAnalysisOverride}
                 />
+                {diagnosticsMode && (
+                  <DiagnosticSelectionLayer target={diagnosticSpatialTarget ?? null} />
+                )}
                 {recipe && !diagnosticsMode && (
                   <AuthoringFamilyLayer recipe={recipe} />
                 )}
@@ -685,6 +693,7 @@ export function BuildingScene({
             ref={controlsRef}
             targetHeight={activeTotalHeight}
             distance={activeCameraDistance}
+            focusTarget={diagnosticSpatialTarget?.focus ?? null}
           />
 
           {/* Outline + post-processing — OutlinePass via the WebGL EffectComposer. */}

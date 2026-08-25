@@ -30,8 +30,12 @@ import {
   loadRepresentativeCase,
   resolveVisibleConflict,
   runBaselineModel,
+  runImprovementScenario,
 } from "../model-operations";
-import { saveEnergyDiagnosticsProject } from "@/lib/energy-diagnostics/storage";
+import {
+  saveEnergyDiagnosticsBundle,
+  saveEnergyDiagnosticsProject,
+} from "@/lib/energy-diagnostics/storage";
 import { representativeOfficeDrawingSetInputs } from "@/lib/energy-diagnostics/reference-office-sources";
 import { validateCanonicalEnergyModel } from "@/lib/energy-diagnostics/validation";
 
@@ -201,12 +205,15 @@ describe("EnergyDiagnosisWorkspace", () => {
       conflict.selectedFactId,
     );
     const completed = runBaselineModel(ready);
+    const alternative = runImprovementScenario(completed.model, {
+      windowUValueWPerM2K: 1.3,
+    });
     const onSelectionChange = vi.fn();
 
     render(
       <EnergyDiagnosisWorkspace
         locale="en"
-        initialModel={completed.model}
+        initialModel={alternative.model}
         onSelectionChange={onSelectionChange}
         renderScene={(context) => (
           <div>
@@ -230,6 +237,26 @@ describe("EnergyDiagnosisWorkspace", () => {
     );
 
     fireEvent.click(screen.getByTestId("diagnosis-stage-compare"));
+
+    const resultSummary = screen.getByTestId("results-at-a-glance");
+    const summaryFinding = within(resultSummary).getAllByTestId(
+      /^results-glance-finding-/,
+    )[0];
+    fireEvent.click(summaryFinding);
+    await waitFor(() => {
+      const selection = onSelectionChange.mock.calls.at(-1)?.[0];
+      expect(selection).toMatchObject({ kind: "diagnostic_finding" });
+      expect(selection.canonicalObjectIds.length).toBeGreaterThan(0);
+      expect(
+        screen.getByTestId("selected-result-scene").getAttribute("data-run-id"),
+      ).toBe(completed.run.id);
+      expect(
+        screen
+          .getByTestId("selected-result-scene")
+          .getAttribute("data-selection-kind"),
+      ).toBe("diagnostic_finding");
+    });
+
     fireEvent.click(screen.getByTestId("result-annualEnergyKwh-baseline"));
 
     await waitFor(() => {
@@ -260,6 +287,106 @@ describe("EnergyDiagnosisWorkspace", () => {
       expect(selection.documentId).toBeTruthy();
       expect(screen.getByTestId("evidence-inspector")).toBeTruthy();
     });
+  });
+
+  it("marks a completed comparison as prior when the alternative draft changes", async () => {
+    const reference = await loadRepresentativeCase();
+    let ready = applyInfiltrationAssumption(reference.model);
+    const conflict = ready.conflicts[0];
+    if (!conflict.selectedFactId) {
+      throw new Error("reference conflict has no visible selection");
+    }
+    ready = resolveVisibleConflict(ready, conflict.id, conflict.selectedFactId);
+    const completed = runBaselineModel(ready);
+    const alternative = runImprovementScenario(completed.model, {
+      windowUValueWPerM2K: 1.3,
+    });
+
+    render(
+      <EnergyDiagnosisWorkspace locale="en" initialModel={alternative.model} />,
+    );
+    fireEvent.click(screen.getByTestId("diagnosis-stage-compare"));
+
+    expect(screen.getByTestId("comparison-scenario-current")).toBeTruthy();
+    expect(screen.queryByTestId("results-glance-scenario-prior")).toBeNull();
+    expect(
+      screen.getAllByText(alternative.scenario.name, { exact: false }).length,
+    ).toBeGreaterThanOrEqual(2);
+
+    fireEvent.click(screen.getByTestId("toggle-improvement-editor"));
+    const windowUValue = screen.getByTestId(
+      "scenario-window-u-value",
+    ) as HTMLInputElement;
+    expect(windowUValue.value).toBe("1.3");
+
+    fireEvent.change(windowUValue, { target: { value: "1.1" } });
+    expect(screen.getByTestId("results-glance-scenario-prior")).toBeTruthy();
+    expect(screen.getByTestId("comparison-scenario-prior")).toBeTruthy();
+    expect(
+      screen.getByTestId("comparison-evaluated-scenario").textContent,
+    ).toContain(alternative.scenario.name);
+
+    fireEvent.change(windowUValue, { target: { value: "1.3" } });
+    expect(screen.queryByTestId("results-glance-scenario-prior")).toBeNull();
+    expect(screen.queryByTestId("comparison-scenario-prior")).toBeNull();
+    expect(screen.getByTestId("comparison-scenario-current")).toBeTruthy();
+  });
+
+  it("clears values absent from a restored scenario instead of retaining another draft", async () => {
+    const reference = await loadRepresentativeCase();
+    let ready = applyInfiltrationAssumption(reference.model);
+    const conflict = ready.conflicts[0];
+    if (!conflict.selectedFactId) {
+      throw new Error("reference conflict has no visible selection");
+    }
+    ready = resolveVisibleConflict(ready, conflict.id, conflict.selectedFactId);
+    const completed = runBaselineModel(ready);
+    const windowAlternative = runImprovementScenario(completed.model, {
+      windowUValueWPerM2K: 1.3,
+    });
+    const infiltrationAlternative = runImprovementScenario(completed.model, {
+      infiltrationAch: 0.25,
+    });
+    await saveEnergyDiagnosticsBundle(
+      infiltrationAlternative.model,
+      reference.sources,
+    );
+
+    render(
+      <EnergyDiagnosisWorkspace
+        locale="en"
+        initialModel={windowAlternative.model}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("diagnosis-stage-compare"));
+    fireEvent.click(screen.getByTestId("toggle-improvement-editor"));
+    expect(
+      (screen.getByTestId("scenario-window-u-value") as HTMLInputElement)
+        .value,
+    ).toBe("1.3");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reload saved project" }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("diagnosis-feedback").textContent).toContain(
+        "Restored the saved model",
+      ),
+    );
+    expect(
+      (screen.getByTestId("scenario-window-u-value") as HTMLInputElement)
+        .value,
+    ).toBe("");
+    expect(
+      (
+        screen.getByRole("spinbutton", {
+          name: "Alternative infiltration rate",
+        }) as HTMLInputElement
+      ).value,
+    ).toBe("0.25");
+    expect(screen.queryByTestId("comparison-scenario-prior")).toBeNull();
+    expect(screen.getByTestId("comparison-scenario-current")).toBeTruthy();
   });
 
   it("registers a real safe SVG without pretending a canonical model exists", async () => {

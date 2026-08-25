@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { POST } from "../route";
 import { NextRequest } from "next/server";
+import {
+  CAD_SERVER_FALLBACK_MAX_FILE_BYTES,
+  CAD_SERVER_FALLBACK_MAX_REQUEST_BYTES,
+} from "@/lib/cad/import-limits";
 
 /** Build a NextRequest carrying a multipart form with an optional file. */
 function makeRequest(form: FormData): NextRequest {
@@ -9,6 +13,23 @@ function makeRequest(form: FormData): NextRequest {
     body: form,
   });
   return req as unknown as NextRequest;
+}
+
+/** Minimal request double for guards that must run before multipart parsing. */
+function makePreflightRequest(headers: Record<string, string>): NextRequest {
+  const normalized = new Map(
+    Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value]),
+  );
+  return {
+    headers: {
+      get: (name: string) => normalized.get(name.toLowerCase()) ?? null,
+    },
+    url: "http://localhost/api/cad/convert",
+    signal: new AbortController().signal,
+    formData: () => {
+      throw new Error("multipart body must not be parsed by a preflight guard");
+    },
+  } as unknown as NextRequest;
 }
 
 /** Build a File whose first bytes are a DWG-style AC version header. */
@@ -31,6 +52,66 @@ function makeFakeFile(name: string, bytes: number): File {
 }
 
 describe("POST /api/cad/convert", () => {
+  it("rejects cross-origin browser requests before parsing the body", async () => {
+    const req = makePreflightRequest({ Origin: "https://example.invalid" });
+
+    const res = await POST(req);
+    expect(res.status).toBe(403);
+  });
+
+  it("rejects an oversized declared multipart body before formData allocation", async () => {
+    const req = makePreflightRequest({
+      "Content-Length": String(CAD_SERVER_FALLBACK_MAX_REQUEST_BYTES + 1),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(413);
+    const body = await res.json();
+    expect(body.limitBytes).toBe(CAD_SERVER_FALLBACK_MAX_REQUEST_BYTES);
+  });
+
+  it("applies per-instance back-pressure before parsing a second request", async () => {
+    let release!: (form: FormData) => void;
+    const pendingForm = new Promise<FormData>((resolve) => {
+      release = resolve;
+    });
+    const firstRequest = {
+      headers: new Headers(),
+      url: "http://localhost/api/cad/convert",
+      signal: new AbortController().signal,
+      formData: () => pendingForm,
+    } as unknown as NextRequest;
+    const firstResponse = POST(firstRequest);
+    await Promise.resolve();
+
+    try {
+      const secondResponse = await POST(makeRequest(new FormData()));
+      expect(secondResponse.status).toBe(429);
+      expect(secondResponse.headers.get("retry-after")).toBe("5");
+    } finally {
+      release(new FormData());
+    }
+    expect((await firstResponse).status).toBe(400);
+  });
+
+  it("does not enter a converter after the request has been canceled", async () => {
+    const form = new FormData();
+    form.set("file", makeDwgFile("cancelled.dwg", 1_024));
+    const controller = new AbortController();
+    controller.abort();
+    const req = {
+      headers: { get: () => null },
+      url: "http://localhost/api/cad/convert",
+      signal: controller.signal,
+      formData: async () => form,
+    } as unknown as NextRequest;
+
+    await expect(POST(req)).rejects.toMatchObject({ name: "AbortError" });
+
+    // The semaphore is released by the aborted request.
+    expect(await POST(makeRequest(new FormData()))).toMatchObject({ status: 400 });
+  });
+
   it("returns 400 when 'file' is missing", async () => {
     const form = new FormData();
     const res = await POST(makeRequest(form));
@@ -48,15 +129,19 @@ describe("POST /api/cad/convert", () => {
     expect(body.error).toMatch(/\.dwg/i);
   });
 
-  it("returns 413 when DWG exceeds 50 MB", async () => {
-    const tooBig = 50 * 1024 * 1024 + 1;
+  it("returns 413 before conversion when DWG exceeds the production fallback limit", async () => {
+    const tooBig = CAD_SERVER_FALLBACK_MAX_FILE_BYTES + 1;
     const form = new FormData();
     form.set("file", makeDwgFile("huge.dwg", tooBig));
     const res = await POST(makeRequest(form));
     expect(res.status).toBe(413);
     const body = await res.json();
     expect(body.error).toMatch(/exceeds/i);
+    expect(body.error).toContain("4 MB");
+    expect(body.detail).toContain("50 MB");
+    expect(body.hint).toMatch(/browser|DXF/i);
     expect(body.size).toBe(tooBig);
+    expect(body.limitBytes).toBe(CAD_SERVER_FALLBACK_MAX_FILE_BYTES);
   });
 
   it("returns 422 when file has .dwg extension but invalid header", async () => {

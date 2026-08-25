@@ -1,12 +1,25 @@
 /* @vitest-environment happy-dom */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { UploadStage } from "../upload-stage";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useMaterialStore } from "@/store/material-store";
 import { useActiveBuildingStore } from "@/store/active-building-store";
 import type { MaterialProperties } from "@/lib/material-types";
+import * as dwgParser from "@/lib/cad/dwg-parser";
+
+// PdfTracer imports pdfjs eagerly when its branch mounts. These tests exercise
+// only the upload handoff, so keep the browser-only renderer behind one stable
+// module-level mock (Vitest hoists module mocks).
+vi.mock("pdfjs-dist", () => ({
+  GlobalWorkerOptions: { workerSrc: "" },
+  getDocument: () => ({
+    promise: new Promise<never>(() => {
+      /* intentionally unresolved */
+    }),
+  }),
+}));
 
 // Two closed LWPOLYLINE entities on different layers.
 // Both rectangles are well above the MIN_AREA_SQM=10 threshold:
@@ -99,6 +112,7 @@ describe("UploadStage", () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     cleanup();
   });
 
@@ -231,20 +245,110 @@ describe("UploadStage", () => {
     expect(useWorkflowStore.getState().stage).toBe("upload");
   });
 
+  it("keeps a newer DXF when an older DWG resolves after it", async () => {
+    let resolveSlowDwg: (
+      result: Awaited<ReturnType<typeof dwgParser.parseDwgFile>>,
+    ) => void = () => {
+      throw new Error("slow DWG resolver was not initialized");
+    };
+    const slowDwg = new Promise<
+      Awaited<ReturnType<typeof dwgParser.parseDwgFile>>
+    >((resolve) => {
+      resolveSlowDwg = resolve;
+    });
+    let firstSignal: AbortSignal | undefined;
+    vi.spyOn(dwgParser, "parseDwgFile").mockImplementation(
+      async (_file, options) => {
+        firstSignal = options?.signal;
+        return slowDwg;
+      },
+    );
+
+    const oldFile = new File([new Uint8Array(32)], "old-plan.dwg", {
+      type: "application/acad",
+    });
+    const currentFile = new File([RECT_DXF], "current-plan.dxf", {
+      type: "application/dxf",
+    });
+    if (
+      typeof (currentFile as { text?: () => Promise<string> }).text !==
+      "function"
+    ) {
+      Object.defineProperty(currentFile, "text", {
+        value: async () => RECT_DXF,
+      });
+    }
+
+    render(<UploadStage />);
+    const input = screen.getByTestId("upload-file-input") as HTMLInputElement;
+    Object.defineProperty(input, "files", {
+      value: [oldFile],
+      configurable: true,
+    });
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      expect(firstSignal).toBeDefined();
+      expect(
+        (screen.getByTestId("upload-continue") as HTMLButtonElement).disabled,
+      ).toBe(true);
+    });
+
+    Object.defineProperty(input, "files", {
+      value: [currentFile],
+      configurable: true,
+    });
+    fireEvent.change(input);
+
+    await waitFor(() => {
+      expect(firstSignal?.aborted).toBe(true);
+      expect(
+        (screen.getByTestId("upload-continue") as HTMLButtonElement).disabled,
+      ).toBe(false);
+    });
+
+    await act(async () => {
+      resolveSlowDwg({
+        candidates: [
+          {
+            polygon: [
+              [0, 0],
+              [30, 0],
+              [30, 30],
+              [0, 30],
+            ],
+            layer: "STALE_DWG",
+            areaSqm: 900,
+            vertexCount: 4,
+          },
+        ],
+        unitScaleToMeters: 1,
+        warnings: [],
+        diagnostics: { version: null, outcomes: [] },
+      });
+      await slowDwg;
+      await Promise.resolve();
+    });
+
+    fireEvent.click(screen.getByTestId("upload-continue"));
+    expect(
+      useRecipeStore.getState().overrides[TEST_PK]?.footprintPolygon,
+    ).toEqual([
+      [
+        [-5, -4],
+        [5, -4],
+        [5, 4],
+        [-5, 4],
+      ],
+    ]);
+    expect(useWorkflowStore.getState().stage).toBe("twin");
+  });
+
   it("accepts .pdf and transitions to the PDF tracing UI", async () => {
     // pdfjs-dist pulls wasm/canvas machinery that happy-dom can't satisfy, so
-    // we stub the module before the component mounts. Only `getDocument` is
+    // the module-level test stub keeps it out. Only `getDocument` is
     // called during mount; we resolve it with a never-settling promise so the
     // loading branch stays on-screen long enough for the assertion.
-    vi.mock("pdfjs-dist", () => ({
-      GlobalWorkerOptions: { workerSrc: "" },
-      getDocument: () => ({
-        promise: new Promise<never>(() => {
-          /* intentionally unresolved */
-        }),
-      }),
-    }));
-
     const file = new File([new Uint8Array([37, 80, 68, 70])], "plan.pdf", {
       type: "application/pdf",
     });
@@ -261,8 +365,6 @@ describe("UploadStage", () => {
         screen.getByText(/Trace the footprint|외곽선 추적/)
       ).toBeTruthy();
     });
-
-    vi.doUnmock("pdfjs-dist");
   });
 
   it("multi-candidate DXF: card click previews but does not enable Continue; Confirm enables it", async () => {

@@ -20,6 +20,10 @@ import {
   summariseDwgFailure,
   type DwgDiagnostics,
 } from "@/lib/cad/dwg-version";
+import {
+  CAD_CLIENT_MAX_FILE_BYTES,
+  formatFileSizeMiB,
+} from "@/lib/cad/import-limits";
 
 import { toMeshDrawing, type MeshDrawing } from "./import-mesh-file";
 
@@ -51,11 +55,17 @@ export interface DwgConversionResult {
 
 export interface ReadCadFileDeps {
   /** DWG → DXF text. Defaults to the viewer's `parseDwgFile` tier chain. */
-  convertDwg?: (file: File) => Promise<DwgConversionResult>;
+  convertDwg?: (
+    file: File,
+    options?: { signal?: AbortSignal },
+  ) => Promise<DwgConversionResult>;
+  /** Cancels server fallback and invalidates results from non-abortable readers. */
+  signal?: AbortSignal;
 }
 
 export type CadFileReadErrorCode =
   | "UNSUPPORTED_EXTENSION"
+  | "FILE_TOO_LARGE"
   | "DWG_CONVERSION_FAILED"
   | "DXF_UNPARSEABLE"
   /** No 2D geometry AND no mesh: there is genuinely nothing in the file. */
@@ -136,7 +146,10 @@ export type SvgFileReadResult =
  * Malformed markup is NOT diagnosed here — it surfaces, with the parser's own
  * message, at the interpretation step.
  */
-export async function readSvgFile(file: File): Promise<SvgFileReadResult> {
+export async function readSvgFile(
+  file: File,
+  options: { signal?: AbortSignal } = {},
+): Promise<SvgFileReadResult> {
   if (extensionOf(file.name) !== ".svg") {
     return {
       ok: false,
@@ -147,7 +160,16 @@ export async function readSvgFile(file: File): Promise<SvgFileReadResult> {
     };
   }
 
+  if (file.size > CAD_CLIENT_MAX_FILE_BYTES) {
+    return {
+      ok: false,
+      error: fileTooLargeError(file),
+    };
+  }
+
+  throwIfAborted(options.signal);
   const text = await file.text();
+  throwIfAborted(options.signal);
   if (text.trim().length === 0) {
     return {
       ok: false,
@@ -162,9 +184,14 @@ export async function readSvgFile(file: File): Promise<SvgFileReadResult> {
 }
 
 /** The default DWG tier chain — loaded only when a DWG is actually opened. */
-async function convertDwgViaViewerPipeline(file: File): Promise<DwgConversionResult> {
+async function convertDwgViaViewerPipeline(
+  file: File,
+  options?: { signal?: AbortSignal },
+): Promise<DwgConversionResult> {
   const { parseDwgFile } = await import("@/lib/cad/dwg-parser");
-  const parsed = await parseDwgFile(file);
+  throwIfAborted(options?.signal);
+  const parsed = await parseDwgFile(file, options);
+  throwIfAborted(options?.signal);
   return {
     ...(parsed.dxfText ? { dxfText: parsed.dxfText } : {}),
     warnings: parsed.warnings,
@@ -189,12 +216,23 @@ export async function readCadFile(
     };
   }
 
+  if (file.size > CAD_CLIENT_MAX_FILE_BYTES) {
+    return {
+      ok: false,
+      error: fileTooLargeError(file),
+      warnings: [],
+    };
+  }
+
   const warnings: string[] = [];
   let dxfText: string;
 
+  throwIfAborted(deps.signal);
+
   if (extension === ".dwg") {
     const convert = deps.convertDwg ?? convertDwgViaViewerPipeline;
-    const converted = await convert(file);
+    const converted = await convert(file, { signal: deps.signal });
+    throwIfAborted(deps.signal);
     warnings.push(...converted.warnings);
     if (!converted.dxfText) {
       // Prefer the assembled diagnostic — it names the DWG version and lists
@@ -220,6 +258,7 @@ export async function readCadFile(
     dxfText = converted.dxfText;
   } else {
     dxfText = await file.text();
+    throwIfAborted(deps.signal);
   }
 
   const doc = mapDxfTextToDoc(dxfText, file.name);
@@ -286,4 +325,25 @@ export async function readCadFile(
   }
 
   return { ok: true, doc, format: extension === ".dwg" ? "dwg" : "dxf", warnings };
+}
+
+function fileTooLargeError(file: File): CadFileReadError {
+  return {
+    code: "FILE_TOO_LARGE",
+    message:
+      `"${file.name}" is ${formatFileSizeMiB(file.size)}. ` +
+      `BIMFIT can process drawing files up to ${formatFileSizeMiB(CAD_CLIENT_MAX_FILE_BYTES)} in the browser. ` +
+      "Export a smaller file or simplify the drawing, then try again.",
+  };
+}
+
+function abortError(signal: AbortSignal): Error {
+  if (signal.reason instanceof Error) return signal.reason;
+  const error = new Error("Drawing import was cancelled.");
+  error.name = "AbortError";
+  return error;
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw abortError(signal);
 }

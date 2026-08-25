@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { getEnergyDiagnosticFixture } from "../fixtures";
+import { compileCanonicalModelToEngineInput } from "../adapter";
 import {
   canonicalModelToViewerBridge,
   ENERGY_DIAGNOSTICS_BUILDING_PREFIX,
+  recipeAtViewerOrigin,
 } from "../viewer-bridge";
 
 describe("canonical energy model to existing viewer bridge", () => {
@@ -112,5 +114,24 @@ describe("canonical energy model to existing viewer bridge", () => {
         ),
       ),
     ).toBeLessThanOrEqual(bridge.recipe.footprintDepth / 2);
+  });
+
+  it("aligns the absolute engine recipe with viewer-local evidence geometry", () => {
+    const model = getEnergyDiagnosticFixture("fixture-d").model;
+    const bridge = canonicalModelToViewerBridge(model);
+    const compiled = compileCanonicalModelToEngineInput(model);
+    const displayRecipe = recipeAtViewerOrigin(
+      compiled.payload.recipe,
+      bridge.displayOrigin,
+    );
+
+    expect(bridge.displayOrigin).not.toEqual([0, 0]);
+    expect(compiled.payload.recipe.footprintPolygon).not.toEqual(
+      bridge.recipe.footprintPolygon,
+    );
+    expect(displayRecipe.footprintPolygon).toEqual(
+      bridge.recipe.footprintPolygon,
+    );
+    expect(compiled.payload.recipe.footprintPolygon?.[0]?.[0]).toEqual([0, 0]);
   });
 });

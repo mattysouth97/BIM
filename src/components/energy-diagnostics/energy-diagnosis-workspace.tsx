@@ -63,6 +63,7 @@ import type {
   CanonicalEnergyModel,
   DrawingDocumentType,
   EnergyFact,
+  EnergyScenario,
   ReadinessCategory,
 } from "@/lib/energy-diagnostics/types";
 import {
@@ -103,6 +104,7 @@ import {
   ResultComparison,
   type ResultMetric,
 } from "./result-comparison";
+import { ResultsAtAGlance } from "./results-at-a-glance";
 import { SourceReviewCanvas } from "./source-review-canvas";
 import type {
   DiagnosisLocale,
@@ -127,6 +129,189 @@ type Operation =
   | "save"
   | "reload"
   | null;
+
+type ImprovementScenarioDraft = Readonly<{
+  windowUValueWPerM2K: number | "";
+  infiltrationAch: number | "";
+  heatingCop: number | "";
+  windowShgc: number | "";
+  openingAreaScale: number | "";
+}>;
+
+const EMPTY_IMPROVEMENT_SCENARIO_DRAFT: ImprovementScenarioDraft = {
+  windowUValueWPerM2K: "",
+  infiltrationAch: "",
+  heatingCop: "",
+  windowShgc: "",
+  openingAreaScale: "",
+};
+
+function numericReplacement(
+  scenario: EnergyScenario,
+  path: string,
+): number | "" {
+  const value = scenario.deltas.find((delta) => delta.path === path)
+    ?.replacement.value;
+  return typeof value === "number" && Number.isFinite(value) ? value : "";
+}
+
+function improvementDraftForScenario(
+  model: CanonicalEnergyModel,
+  scenario: EnergyScenario,
+): ImprovementScenarioDraft {
+  const windowIndex = model.envelope.constructions.findIndex(
+    (construction) => construction.kind === "window",
+  );
+  const openingAreaDeltas = scenario.deltas.filter((delta) =>
+    /^geometry\.openings\.\d+\.areaSqm$/.test(delta.path),
+  );
+  const openingAreaScales = openingAreaDeltas.flatMap((delta) => {
+    const baselineValue = model.geometry.openings
+      .map((opening) => opening.areaSqm)
+      .find((fact) => fact.id === delta.baselineFactId)?.value;
+    const replacementValue = delta.replacement.value;
+    return typeof baselineValue === "number" &&
+      Number.isFinite(baselineValue) &&
+      baselineValue > 0 &&
+      typeof replacementValue === "number" &&
+      Number.isFinite(replacementValue)
+      ? [replacementValue / baselineValue]
+      : [];
+  });
+  const firstAreaScale = openingAreaScales[0];
+  const areaScaleIsConsistent =
+    openingAreaDeltas.length > 0 &&
+    openingAreaScales.length === openingAreaDeltas.length &&
+    firstAreaScale != null &&
+    openingAreaScales.every(
+      (candidate) =>
+        Math.abs(candidate - firstAreaScale) <=
+        Math.max(1, Math.abs(firstAreaScale)) * 1e-9,
+    );
+
+  return {
+    windowUValueWPerM2K:
+      windowIndex < 0
+        ? ""
+        : numericReplacement(
+            scenario,
+            `envelope.constructions.${windowIndex}.uValueWPerM2K`,
+          ),
+    infiltrationAch: numericReplacement(
+      scenario,
+      "envelope.infiltrationAirChangesPerHour",
+    ),
+    heatingCop: numericReplacement(
+      scenario,
+      "systems.hvac.0.heatingEfficiency",
+    ),
+    windowShgc:
+      windowIndex < 0
+        ? ""
+        : numericReplacement(
+            scenario,
+            `envelope.constructions.${windowIndex}.shgc`,
+          ),
+    openingAreaScale: areaScaleIsConsistent ? firstAreaScale : "",
+  };
+}
+
+function initialImprovementScenarioDraft(
+  model: CanonicalEnergyModel | null,
+): ImprovementScenarioDraft {
+  if (!model) return EMPTY_IMPROVEMENT_SCENARIO_DRAFT;
+  const run = model.simulationRuns.findLast(
+    (candidate) =>
+      candidate.scenarioId !== "baseline" && candidate.status === "succeeded",
+  );
+  const scenario = run
+    ? model.scenarios.find((candidate) => candidate.id === run.scenarioId)
+    : undefined;
+  return scenario
+    ? improvementDraftForScenario(model, scenario)
+    : EMPTY_IMPROVEMENT_SCENARIO_DRAFT;
+}
+
+function finiteDraftValue(value: number | ""): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function expectedScenarioReplacements(
+  model: CanonicalEnergyModel,
+  draft: ImprovementScenarioDraft,
+): ReadonlyMap<string, number> | null {
+  const replacements = new Map<string, number>();
+  const windowIndex = model.envelope.constructions.findIndex(
+    (construction) => construction.kind === "window",
+  );
+  if (finiteDraftValue(draft.windowUValueWPerM2K)) {
+    if (windowIndex < 0) return null;
+    replacements.set(
+      `envelope.constructions.${windowIndex}.uValueWPerM2K`,
+      draft.windowUValueWPerM2K,
+    );
+  } else if (draft.windowUValueWPerM2K !== "") {
+    return null;
+  }
+  if (finiteDraftValue(draft.windowShgc)) {
+    if (windowIndex < 0) return null;
+    replacements.set(
+      `envelope.constructions.${windowIndex}.shgc`,
+      draft.windowShgc,
+    );
+  } else if (draft.windowShgc !== "") {
+    return null;
+  }
+  if (finiteDraftValue(draft.infiltrationAch)) {
+    replacements.set(
+      "envelope.infiltrationAirChangesPerHour",
+      draft.infiltrationAch,
+    );
+  } else if (draft.infiltrationAch !== "") {
+    return null;
+  }
+  if (finiteDraftValue(draft.heatingCop)) {
+    replacements.set("systems.hvac.0.heatingEfficiency", draft.heatingCop);
+  } else if (draft.heatingCop !== "") {
+    return null;
+  }
+  const openingAreaScale = draft.openingAreaScale;
+  if (finiteDraftValue(openingAreaScale)) {
+    model.geometry.openings.forEach((opening, index) => {
+      const baselineValue = opening.areaSqm.value;
+      if (typeof baselineValue !== "number" || !Number.isFinite(baselineValue)) {
+        return;
+      }
+      replacements.set(
+        `geometry.openings.${index}.areaSqm`,
+        baselineValue * openingAreaScale,
+      );
+    });
+  } else if (openingAreaScale !== "") {
+    return null;
+  }
+  return replacements;
+}
+
+function scenarioMatchesImprovementDraft(
+  model: CanonicalEnergyModel,
+  scenario: EnergyScenario,
+  draft: ImprovementScenarioDraft,
+): boolean {
+  const expected = expectedScenarioReplacements(model, draft);
+  if (!expected || expected.size !== scenario.deltas.length) return false;
+  return scenario.deltas.every((delta) => {
+    const expectedValue = expected.get(delta.path);
+    const evaluatedValue = delta.replacement.value;
+    return (
+      expectedValue != null &&
+      typeof evaluatedValue === "number" &&
+      Number.isFinite(evaluatedValue) &&
+      Math.abs(expectedValue - evaluatedValue) <=
+        Math.max(1, Math.abs(evaluatedValue)) * 1e-9
+    );
+  });
+}
 
 const NAVIGATION_STAGES = [
   "drawings",
@@ -233,7 +418,18 @@ function operationLabel(operation: Exclude<Operation, null>, locale: DiagnosisLo
 }
 
 function sceneObjectIds(model: CanonicalEnergyModel, canonicalId: string): readonly string[] {
-  return model.mappings.find((mapping) => mapping.canonicalObjectId === canonicalId)?.threeObjectIds ?? [];
+  const mapped = model.mappings.find(
+    (mapping) => mapping.canonicalObjectId === canonicalId,
+  )?.threeObjectIds ?? [];
+  if (mapped.length > 0) return mapped;
+  const surface = model.geometry.surfaces.find(
+    (candidate) => candidate.id === canonicalId,
+  );
+  if (surface?.threeObjectId) return [surface.threeObjectId];
+  const opening = model.geometry.openings.find(
+    (candidate) => candidate.id === canonicalId,
+  );
+  return opening?.threeObjectId ? [opening.threeObjectId] : [];
 }
 
 function diagnosticOverlayObjectIds(
@@ -252,15 +448,25 @@ function diagnosticOverlayObjectIds(
     const surface = model.geometry.surfaces.find(
       (candidate) => candidate.id === canonicalId,
     );
-    if (surface?.type === "exterior_wall") ids.add("envelope-shell:Walls");
-    if (surface?.type === "roof") ids.add("envelope-shell:Roof");
-    if (surface?.type === "ground_floor") {
-      ids.add("envelope-shell:Ground Floor");
+    if (surface) {
+      if (sceneObjectIds(model, surface.id).length > 0) continue;
+      if (surface.type === "exterior_wall") ids.add("envelope-shell:Walls");
+      if (surface.type === "roof") ids.add("envelope-shell:Roof");
+      if (surface.type === "ground_floor") {
+        ids.add("envelope-shell:Ground Floor");
+      }
+      continue;
     }
-    if (
-      model.geometry.openings.some((candidate) => candidate.id === canonicalId)
-    ) {
-      ids.add("envelope-shell:Windows");
+    const opening = model.geometry.openings.find(
+      (candidate) => candidate.id === canonicalId,
+    );
+    if (opening) {
+      const hostIds = sceneObjectIds(model, opening.hostSurfaceId);
+      if (hostIds.length > 0) {
+        for (const hostId of hostIds) ids.add(hostId);
+      } else {
+        ids.add("envelope-shell:Windows");
+      }
     }
   }
   return [...ids];
@@ -370,6 +576,7 @@ export function EnergyDiagnosisWorkspace({
   const copy = diagnosisCopy(locale);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const automaticEntryStartedRef = useRef(false);
+  const lastInitialModelPropRef = useRef(initialModel);
   const priorModelReviewRef = useRef<Readonly<{
     ingestion: DrawingSetIngestionResult | null;
     sources: readonly DrawingSourceInput[];
@@ -377,6 +584,11 @@ export function EnergyDiagnosisWorkspace({
     selectedFact: EnergyFact<unknown> | null;
   }> | null>(null);
   const simulationInFlightRef = useRef(false);
+  const initialScenarioDraftRef = useRef<ImprovementScenarioDraft | null>(null);
+  if (initialScenarioDraftRef.current == null) {
+    initialScenarioDraftRef.current = initialImprovementScenarioDraft(initialModel);
+  }
+  const initialScenarioDraft = initialScenarioDraftRef.current;
   const [model, setModel] = useState<CanonicalEnergyModel | null>(initialModel);
   const [ingestion, setIngestion] = useState<DrawingSetIngestionResult | null>(null);
   const [sources, setSources] = useState<readonly DrawingSourceInput[]>([]);
@@ -390,11 +602,21 @@ export function EnergyDiagnosisWorkspace({
   const [operation, setOperation] = useState<Operation>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [scenarioUValue, setScenarioUValue] = useState<number | "">("");
-  const [scenarioAch, setScenarioAch] = useState<number | "">("");
-  const [scenarioCop, setScenarioCop] = useState<number | "">("");
-  const [scenarioShgc, setScenarioShgc] = useState<number | "">("");
-  const [scenarioAreaScale, setScenarioAreaScale] = useState<number | "">("");
+  const [scenarioUValue, setScenarioUValue] = useState<number | "">(
+    initialScenarioDraft.windowUValueWPerM2K,
+  );
+  const [scenarioAch, setScenarioAch] = useState<number | "">(
+    initialScenarioDraft.infiltrationAch,
+  );
+  const [scenarioCop, setScenarioCop] = useState<number | "">(
+    initialScenarioDraft.heatingCop,
+  );
+  const [scenarioShgc, setScenarioShgc] = useState<number | "">(
+    initialScenarioDraft.windowShgc,
+  );
+  const [scenarioAreaScale, setScenarioAreaScale] = useState<number | "">(
+    initialScenarioDraft.openingAreaScale,
+  );
   const [tierOneOutcome, setTierOneOutcome] =
     useState<TierOneModelBuildOutcome | null>(null);
   const [zoneSelection, setZoneSelection] = useState<readonly string[]>([]);
@@ -407,6 +629,8 @@ export function EnergyDiagnosisWorkspace({
     useState<StoredEnergyDiagnosticsProjectSummary | null>(null);
 
   useEffect(() => {
+    if (initialModel === lastInitialModelPropRef.current) return;
+    lastInitialModelPropRef.current = initialModel;
     if (
       !initialModel ||
       (initialModel === model) ||
@@ -640,6 +864,42 @@ export function EnergyDiagnosisWorkspace({
     },
     [model],
   );
+  const evaluatedScenario = useMemo(
+    () =>
+      scenarioRun
+        ? model?.scenarios.find(
+            (candidate) => candidate.id === scenarioRun.scenarioId,
+          ) ?? null
+        : null,
+    [model, scenarioRun],
+  );
+  const scenarioDraft = useMemo<ImprovementScenarioDraft>(
+    () => ({
+      windowUValueWPerM2K: scenarioUValue,
+      infiltrationAch: scenarioAch,
+      heatingCop: scenarioCop,
+      windowShgc: scenarioShgc,
+      openingAreaScale: scenarioAreaScale,
+    }),
+    [
+      scenarioAch,
+      scenarioAreaScale,
+      scenarioCop,
+      scenarioShgc,
+      scenarioUValue,
+    ],
+  );
+  const scenarioComparisonIsPrior = Boolean(
+    scenarioRun?.status === "succeeded" &&
+      scenarioRun.result != null &&
+      (!model ||
+        !evaluatedScenario ||
+        !scenarioMatchesImprovementDraft(
+          model,
+          evaluatedScenario,
+          scenarioDraft,
+        )),
+  );
 
   const evaluateFinding = useCallback(
     (finding: DiagnosticFinding) => {
@@ -663,6 +923,24 @@ export function EnergyDiagnosisWorkspace({
       );
     },
     [canEvaluateFinding, locale, model, selectFinding],
+  );
+
+  const selectBaselineFinding = useCallback(
+    (finding: DiagnosticFinding) => {
+      if (baselineRun?.status !== "succeeded") return;
+      setSelectedRunId(baselineRun.id);
+      selectFinding(finding);
+    },
+    [baselineRun, selectFinding],
+  );
+
+  const evaluateBaselineFinding = useCallback(
+    (finding: DiagnosticFinding) => {
+      if (baselineRun?.status !== "succeeded") return;
+      setSelectedRunId(baselineRun.id);
+      evaluateFinding(finding);
+    },
+    [baselineRun, evaluateFinding],
   );
 
   const loadReference = useCallback(async () => {
@@ -1040,66 +1318,19 @@ export function EnergyDiagnosisWorkspace({
         const restoredBaseline = loaded.simulationRuns.findLast(
           (run) => run.scenarioId === "baseline" && run.status === "succeeded",
         );
-        if (restoredScenario) {
-          const scenario = loaded.scenarios.find(
-            (candidate) => candidate.id === restoredScenario.scenarioId,
-          );
-          const restoredWindowU = scenario?.deltas.find((delta) =>
-            delta.path.endsWith(".uValueWPerM2K"),
-          )?.replacement.value;
-          if (
-            typeof restoredWindowU === "number" &&
-            Number.isFinite(restoredWindowU)
-          ) {
-            setScenarioUValue(restoredWindowU);
-          }
-          const restoredAch = scenario?.deltas.find(
-            (delta) => delta.path === "envelope.infiltrationAirChangesPerHour",
-          )?.replacement.value;
-          setScenarioAch(
-            typeof restoredAch === "number" && Number.isFinite(restoredAch)
-              ? restoredAch
-              : "",
-          );
-          const restoredCop = scenario?.deltas.find((delta) =>
-            delta.path.endsWith(".heatingEfficiency"),
-          )?.replacement.value;
-          setScenarioCop(
-            typeof restoredCop === "number" && Number.isFinite(restoredCop)
-              ? restoredCop
-              : "",
-          );
-          const restoredShgc = scenario?.deltas.find((delta) =>
-            delta.path.endsWith(".shgc"),
-          )?.replacement.value;
-          setScenarioShgc(
-            typeof restoredShgc === "number" && Number.isFinite(restoredShgc)
-              ? restoredShgc
-              : "",
-          );
-          const restoredAreaDelta = scenario?.deltas.find((delta) =>
-            /^geometry\.openings\.\d+\.areaSqm$/.test(delta.path),
-          );
-          const restoredAreaBaseline = restoredAreaDelta
-            ? loaded.geometry.openings
-                .map((opening) => opening.areaSqm)
-                .find((fact) => fact.id === restoredAreaDelta.baselineFactId)
-                ?.value
-            : null;
-          const restoredAreaScale =
-            typeof restoredAreaDelta?.replacement.value === "number" &&
-            typeof restoredAreaBaseline === "number" &&
-            Number.isFinite(restoredAreaBaseline) &&
-            restoredAreaBaseline > 0
-              ? restoredAreaDelta.replacement.value / restoredAreaBaseline
-              : null;
-          setScenarioAreaScale(
-            typeof restoredAreaScale === "number" &&
-              Number.isFinite(restoredAreaScale)
-              ? restoredAreaScale
-              : "",
-          );
-        }
+        const restoredScenarioDefinition = restoredScenario
+          ? loaded.scenarios.find(
+              (candidate) => candidate.id === restoredScenario.scenarioId,
+            )
+          : undefined;
+        const restoredDraft = restoredScenarioDefinition
+          ? improvementDraftForScenario(loaded, restoredScenarioDefinition)
+          : EMPTY_IMPROVEMENT_SCENARIO_DRAFT;
+        setScenarioUValue(restoredDraft.windowUValueWPerM2K);
+        setScenarioAch(restoredDraft.infiltrationAch);
+        setScenarioCop(restoredDraft.heatingCop);
+        setScenarioShgc(restoredDraft.windowShgc);
+        setScenarioAreaScale(restoredDraft.openingAreaScale);
         setActiveStage(
           restoredBaseline ? "compare" : "review",
         );
@@ -1256,6 +1487,24 @@ export function EnergyDiagnosisWorkspace({
     });
   }, [baselineRun, locale, model, selectedSuccessfulRun, validation]);
 
+  const baselineFindings = useMemo(() => {
+    if (
+      !model ||
+      !validation ||
+      baselineRun?.status !== "succeeded" ||
+      baselineRun.result == null
+    ) {
+      return [];
+    }
+    return generateDiagnosticFindings({
+      model,
+      validation,
+      run: baselineRun,
+      baselineRun,
+      locale,
+    });
+  }, [baselineRun, locale, model, validation]);
+
   const retrofitAnalysis = useMemo(
     () =>
       baselineRun != null
@@ -1354,6 +1603,8 @@ export function EnergyDiagnosisWorkspace({
         selectedDocumentFacts,
         baselineRun,
         scenarioRun,
+        evaluatedScenario,
+        scenarioComparisonIsPrior,
         scenarioUValue,
         onScenarioUValue: setScenarioUValue,
         scenarioAch,
@@ -1589,7 +1840,10 @@ export function EnergyDiagnosisWorkspace({
           </div>
         </div>
       ) : (
-        <div className="grid min-h-0 flex-1 lg:grid-cols-[220px_minmax(0,1fr)_320px]">
+        <div
+          className="grid min-h-0 min-w-0 flex-1 grid-cols-[minmax(0,1fr)] lg:grid-cols-[220px_minmax(0,1fr)_320px]"
+          data-testid="diagnosis-workspace-layout"
+        >
           <aside className="border-b bg-card lg:border-b-0 lg:border-r" aria-label={locale === "ko" ? "등록 도면 목록" : "Registered drawings"}>
             <div className="flex items-center justify-between border-b px-3 py-2.5">
               <span className="text-[10px] font-semibold uppercase tracking-[0.13em] text-muted-foreground">{copy.sourceDrawing}</span>
@@ -1646,6 +1900,25 @@ export function EnergyDiagnosisWorkspace({
                 {model ? (model.drawingSet.tier > 1 ? copy.tierDetailed : copy.tierEarly) : copy.tierEarly}
               </span>
             </div>
+
+            {activeStage === "compare" && baselineRun ? (
+              <ResultsAtAGlance
+                baselineRun={baselineRun}
+                scenarioRun={scenarioRun}
+                evaluatedScenario={evaluatedScenario}
+                scenarioIsPrior={scenarioComparisonIsPrior}
+                findings={baselineFindings}
+                selectedFindingId={
+                  selectedSuccessfulRun?.id === baselineRun.id
+                    ? selectedFindingId
+                    : null
+                }
+                locale={locale}
+                onSelectFinding={selectBaselineFinding}
+                canEvaluateFinding={canEvaluateFinding}
+                onEvaluateFinding={evaluateBaselineFinding}
+              />
+            ) : null}
 
             <div
               className="border-b"
@@ -1911,6 +2184,8 @@ function renderStagePanel({
   selectedDocumentFacts,
   baselineRun,
   scenarioRun,
+  evaluatedScenario,
+  scenarioComparisonIsPrior,
   scenarioUValue,
   onScenarioUValue,
   scenarioAch,
@@ -1951,6 +2226,8 @@ function renderStagePanel({
   selectedDocumentFacts: readonly EnergyFact<unknown>[];
   baselineRun: DegreeDaySimulationRun | null;
   scenarioRun: DegreeDaySimulationRun | null;
+  evaluatedScenario: EnergyScenario | null;
+  scenarioComparisonIsPrior: boolean;
   scenarioUValue: number | "";
   onScenarioUValue: (value: number | "") => void;
   scenarioAch: number | "";
@@ -2312,6 +2589,8 @@ function renderStagePanel({
       <ResultComparison
         baseline={baselineRun?.result ?? null}
         scenario={scenarioRun?.result ?? null}
+        evaluatedScenario={evaluatedScenario}
+        scenarioIsPrior={scenarioComparisonIsPrior}
         locale={locale}
         baselineRunId={baselineRun?.id}
         scenarioRunId={scenarioRun?.id}

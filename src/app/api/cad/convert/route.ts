@@ -25,17 +25,33 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { convertDwgToDxfOnServer } from "@/lib/cad/libredwg-node";
 import { readDwgVersion, describeVersion } from "@/lib/cad/dwg-version";
+import {
+  CAD_CLIENT_MAX_FILE_BYTES,
+  CAD_SERVER_FALLBACK_MAX_FILE_BYTES,
+  CAD_SERVER_FALLBACK_MAX_REQUEST_BYTES,
+  formatFileSizeMiB,
+} from "@/lib/cad/import-limits";
 
 const execFileAsync = promisify(execFile);
 
 /** WASM instantiation plus a large drawing can outrun the 10 s default. */
 export const maxDuration = 60;
 
-/** Max file size — 50 MB. Mirrors the client-side dropzone limit. */
-const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
-
 /** P1-06 (a): converter hard timeout so a hung binary can't hold the route open. */
 const CONVERTER_TIMEOUT_MS = 60_000;
+
+/**
+ * Best-effort per-instance back-pressure for the CPU-heavy converter. A
+ * platform-level limiter can span instances; this guard still prevents one
+ * warm server process from starting overlapping WASM/child-process jobs.
+ */
+let conversionSlotOccupied = false;
+
+function throwIfRequestAborted(signal: AbortSignal): void {
+  if (!signal.aborted) return;
+  if (signal.reason instanceof Error) throw signal.reason;
+  throw new DOMException("The DWG conversion request was aborted", "AbortError");
+}
 
 /**
  * P1-06 (a): reject filenames that could escape the temp work dir — path
@@ -83,6 +99,7 @@ function converterAvailable(): boolean {
 async function convertWithOda(
   inputDir: string,
   outputDir: string,
+  signal?: AbortSignal,
 ): Promise<void> {
   await execFileAsync(
     /* turbopackIgnore: true */ CONVERTER_PATH,
@@ -94,33 +111,37 @@ async function convertWithOda(
       "0", // recurse = no
       "1", // audit = yes
     ],
-    { timeout: CONVERTER_TIMEOUT_MS },
+    { timeout: CONVERTER_TIMEOUT_MS, signal },
   );
 }
 
 async function convertSimple(
   inputPath: string,
   outputPath: string,
+  signal?: AbortSignal,
 ): Promise<void> {
   await execFileAsync(/* turbopackIgnore: true */ CONVERTER_PATH, [inputPath, outputPath], {
     timeout: CONVERTER_TIMEOUT_MS,
+    signal,
   });
 }
 
 /**
  * Run the operator-configured external binary. Returns the DXF text, or
- * `null` with a reason when it is not configured / produced nothing / threw.
- * Never throws: the caller still has the WASM strategy to try.
+ * `null` with a reason when it is not configured, produced nothing, or failed.
+ * Request cancellation propagates so the caller never starts the WASM tier
+ * after the client disconnects.
  */
 async function tryExternalConverter(
   buffer: ArrayBuffer,
+  signal?: AbortSignal,
 ): Promise<{ dxfText: string | null; detail: string }> {
   if (!converterAvailable()) {
     return {
       dxfText: null,
       detail: CONVERTER_PATH.length === 0
         ? "DWG_CONVERTER_PATH가 설정되지 않음 (건너뜀)"
-        : `DWG_CONVERTER_PATH 경로에 실행 파일이 없음: ${CONVERTER_PATH} (건너뜀)`,
+        : "설정된 외부 변환기를 사용할 수 없음 (건너뜀)",
     };
   }
 
@@ -136,11 +157,12 @@ async function tryExternalConverter(
     await writeFile(inputPath, Buffer.from(buffer));
 
     if (CONVERTER_MODE === "oda") {
-      await convertWithOda(inputDir, outputDir);
+      await convertWithOda(inputDir, outputDir, signal);
     } else {
       await convertSimple(
         inputPath,
         join(outputDir, UPLOAD_BASENAME.replace(/\.dwg$/i, ".dxf")),
+        signal,
       );
     }
 
@@ -155,9 +177,13 @@ async function tryExternalConverter(
       detail: "외부 변환기 성공",
     };
   } catch (err) {
+    // Do not fall through into the in-process WASM converter after the
+    // requesting client has canceled the external conversion.
+    if (signal?.aborted) throw err;
+    console.error("[cad-convert] External converter failed", err);
     return {
       dxfText: null,
-      detail: `외부 변환기 오류: ${err instanceof Error ? err.message : String(err)}`,
+      detail: "외부 변환기가 파일을 변환하지 못함",
     };
   } finally {
     await rm(workDir, { recursive: true, force: true }).catch(() => {});
@@ -178,25 +204,82 @@ async function tryLibreDwg(
       ? { dxfText, detail: "LibreDWG WASM 성공" }
       : { dxfText: null, detail: "LibreDWG WASM이 이 도면을 해독하지 못함 (손상되었거나 지원하지 않는 요소 포함)" };
   } catch (err) {
+    console.error("[cad-convert] LibreDWG module failed", err);
     return {
       dxfText: null,
-      detail: `LibreDWG WASM 모듈 로드 실패 (서버 배포 문제): ${
-        err instanceof Error ? err.message : String(err)
-      }`,
+      detail: "LibreDWG WASM 모듈을 사용할 수 없음 (서버 배포 상태 확인 필요)",
     };
   }
 }
 
+function requestRejectedBeforeParsing(req: NextRequest): NextResponse | null {
+  // This is a browser CSRF check, not an authentication boundary. Production
+  // also enforces an IP-keyed Vercel Firewall quota on this exact POST route;
+  // the in-process semaphore below is defense in depth for each warm instance.
+  const origin = req.headers.get("origin");
+  if (origin && origin !== new URL(req.url).origin) {
+    return NextResponse.json(
+      {
+        error: "Cross-origin DWG conversion requests are not allowed",
+        hint: "Open the BIMFIT importer on this site and choose the drawing there.",
+      },
+      { status: 403 },
+    );
+  }
+
+  const rawLength = req.headers.get("content-length");
+  const declaredLength = rawLength == null ? null : Number(rawLength);
+  if (
+    declaredLength != null &&
+    Number.isFinite(declaredLength) &&
+    declaredLength > CAD_SERVER_FALLBACK_MAX_REQUEST_BYTES
+  ) {
+    return NextResponse.json(
+      {
+        error: "Multipart request exceeds the server fallback body limit",
+        hint: "Use browser conversion, export DXF, or simplify the DWG before retrying.",
+        declaredBytes: declaredLength,
+        limitBytes: CAD_SERVER_FALLBACK_MAX_REQUEST_BYTES,
+      },
+      { status: 413 },
+    );
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const rejected = requestRejectedBeforeParsing(req);
+  if (rejected) return rejected;
+
+  if (conversionSlotOccupied) {
+    return NextResponse.json(
+      {
+        error: "DWG converter is busy",
+        hint: "Wait a few seconds, then retry. Your drawing has not been changed.",
+      },
+      { status: 429, headers: { "Retry-After": "5" } },
+    );
+  }
+  conversionSlotOccupied = true;
+
+  try {
+    return await convertRequest(req);
+  } finally {
+    conversionSlotOccupied = false;
+  }
+}
+
+async function convertRequest(req: NextRequest): Promise<NextResponse> {
   // --- Parse multipart body -----------------------------------------------
   let formData: FormData;
   try {
     formData = await req.formData();
   } catch (err) {
+    console.warn("[cad-convert] Rejected invalid multipart body", err);
     return NextResponse.json(
       {
         error: "Invalid multipart/form-data body",
-        detail: err instanceof Error ? err.message : String(err),
+        hint: "Choose the DWG again in BIMFIT and retry the import.",
       },
       { status: 400 },
     );
@@ -240,11 +323,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // --- Validate size -------------------------------------------------------
-  if (file.size > MAX_FILE_SIZE_BYTES) {
+  if (file.size > CAD_SERVER_FALLBACK_MAX_FILE_BYTES) {
     return NextResponse.json(
       {
-        error: `File exceeds ${MAX_FILE_SIZE_BYTES / (1024 * 1024)} MB limit`,
+        error: `File exceeds the ${formatFileSizeMiB(CAD_SERVER_FALLBACK_MAX_FILE_BYTES)} server fallback limit`,
+        detail:
+          "The production upload path cannot reliably receive a larger multipart body. " +
+          `Browser DWG conversion remains available for files up to ${formatFileSizeMiB(CAD_CLIENT_MAX_FILE_BYTES)}.`,
+        hint: "Use the browser import first. If it cannot read this drawing, export it as DXF or simplify the DWG before retrying.",
         size: file.size,
+        limitBytes: CAD_SERVER_FALLBACK_MAX_FILE_BYTES,
       },
       { status: 413 },
     );
@@ -266,7 +354,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // --- Convert -------------------------------------------------------------
   const attempts: string[] = [];
 
-  const external = await tryExternalConverter(buffer);
+  throwIfRequestAborted(req.signal);
+  const external = await tryExternalConverter(buffer, req.signal);
   attempts.push(`외부 변환기: ${external.detail}`);
   if (external.dxfText) {
     return new NextResponse(external.dxfText, {
@@ -275,6 +364,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   }
 
+  // LibreDWG cannot be interrupted once its synchronous WASM work begins.
+  // Observe cancellation immediately before entering it.
+  throwIfRequestAborted(req.signal);
   const libredwg = await tryLibreDwg(buffer);
   attempts.push(`LibreDWG: ${libredwg.detail}`);
   if (libredwg.dxfText) {

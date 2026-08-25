@@ -62,6 +62,8 @@ interface Props {
   /** Override the generate button; default is "Generate BIM". */
   generateLabel?: string;
   generateBusyLabel?: string;
+  /** Open the reviewed DWG/DXF/SVG importer on the editor's first render. */
+  initialImportOpen?: boolean;
 }
 
 export function SchematicEditor({
@@ -73,6 +75,7 @@ export function SchematicEditor({
   fidelityFocusToken,
   generateLabel = "Generate BIM",
   generateBusyLabel = "Generating…",
+  initialImportOpen = false,
 }: Props) {
   const blueprint = useBlueprintStore((s) => s.blueprint);
   const validation = useBlueprintStore((s) => s.validation);
@@ -177,7 +180,7 @@ export function SchematicEditor({
   return (
     <div className="flex h-full min-h-0 w-full">
       <div className="flex min-w-0 flex-1 flex-col">
-        <SchematicToolbar />
+        <SchematicToolbar initialImportOpen={initialImportOpen} />
         <div className="min-h-0 flex-1">
           <SchematicCanvas />
         </div>

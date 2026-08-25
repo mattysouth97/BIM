@@ -13,6 +13,7 @@ import {
   ACCEPTED_CAD_EXTENSIONS,
   readCadFile,
 } from "../blueprint/read-cad-file";
+import { CAD_CLIENT_MAX_FILE_BYTES } from "@/lib/cad/import-limits";
 
 const ENTITIES = [
   "0", "SECTION", "2", "ENTITIES",
@@ -59,6 +60,21 @@ describe("readCadFile", () => {
     if (result.ok) return;
     expect(result.error.code).toBe("UNSUPPORTED_EXTENSION");
     expect(result.error.message).toContain("plan.pdf");
+  });
+
+  it("rejects a drawing above the browser limit before reading its bytes", async () => {
+    const oversized = file("oversized.dxf", "not read");
+    Object.defineProperty(oversized, "size", {
+      value: CAD_CLIENT_MAX_FILE_BYTES + 1,
+    });
+
+    const result = await readCadFile(oversized);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe("FILE_TOO_LARGE");
+    expect(result.error.message).toContain("50 MB");
+    expect(result.error.message).toContain("oversized.dxf");
   });
 
   it("reports an unparseable DXF as unparseable, not as an empty drawing", async () => {

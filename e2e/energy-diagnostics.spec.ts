@@ -1,7 +1,16 @@
 import { expect, test, type Page } from "@playwright/test";
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 
 const APP_STORAGE_KEY = "korea-building-info-storage";
 const ALTERNATIVE_WINDOW_U_VALUE = "1.3";
+const BUNDLED_DWG_FIXTURE = resolve(
+  process.cwd(),
+  "e2e/fixtures/libredwg-example-2018.dwg.base64",
+);
+const BUNDLED_DWG_SHA256 =
+  "7bc7721224003062b237845842b7a976e46771c37eba6833b9ed3712e7a5a65a";
 const CALIBRATED_FLOOR_PLAN_DXF = [
   "0", "SECTION", "2", "HEADER", "9", "$INSUNITS", "70", "6",
   "0", "ENDSEC", "0", "SECTION", "2", "ENTITIES", "0", "LWPOLYLINE",
@@ -125,6 +134,77 @@ test.describe("Canonical energy diagnostic", () => {
     });
   });
 
+  test("keeps mobile results and the spatial model inside the viewport", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openMethod(page, "sample");
+
+    await page
+      .getByRole("button", { name: "Confirm selected value", exact: true })
+      .click();
+    const nextAction = page.getByTestId("next-diagnosis-action");
+    await expect(nextAction).toContainText("Apply 0.5 ACH assumption");
+    await nextAction.click();
+    await expect(nextAction).toContainText("Run baseline simulation");
+    await nextAction.click();
+
+    const results = page.getByTestId("results-at-a-glance");
+    const scene = page.getByTestId("energy-diagnosis-scene");
+    await expect(results).toBeVisible();
+    await expect(scene).toBeVisible();
+    await page.getByTestId(/^results-glance-finding-/).first().click();
+
+    const layout = await page.evaluate(() => {
+      const workspace = document.querySelector<HTMLElement>(
+        '[data-testid="energy-diagnosis-workspace"]',
+      );
+      const workspaceLayout = document.querySelector<HTMLElement>(
+        '[data-testid="diagnosis-workspace-layout"]',
+      );
+      const summary = document.querySelector<HTMLElement>(
+        '[data-testid="results-at-a-glance"]',
+      );
+      const viewer = document.querySelector<HTMLElement>(
+        '[data-testid="energy-diagnosis-scene"]',
+      );
+      if (!workspace || !workspaceLayout || !summary || !viewer) {
+        throw new Error("The mobile diagnostic result layout is incomplete.");
+      }
+      const measure = (element: HTMLElement) => {
+        const box = element.getBoundingClientRect();
+        return {
+          left: Math.round(box.left),
+          right: Math.round(box.right),
+          width: Math.round(box.width),
+          clientWidth: element.clientWidth,
+          scrollWidth: element.scrollWidth,
+        };
+      };
+      return {
+        viewportWidth: window.innerWidth,
+        documentScrollWidth: document.documentElement.scrollWidth,
+        workspace: measure(workspace),
+        workspaceLayout: measure(workspaceLayout),
+        summary: measure(summary),
+        viewer: measure(viewer),
+      };
+    });
+
+    expect(layout.viewportWidth).toBe(390);
+    expect(layout.documentScrollWidth).toBe(390);
+    expect(layout.workspace.scrollWidth).toBe(layout.workspace.clientWidth);
+    expect(layout.workspaceLayout.scrollWidth).toBe(
+      layout.workspaceLayout.clientWidth,
+    );
+    for (const element of [layout.summary, layout.viewer]) {
+      expect(element.left).toBeGreaterThanOrEqual(0);
+      expect(element.right).toBeLessThanOrEqual(layout.viewportWidth);
+      expect(element.width).toBeLessThanOrEqual(layout.viewportWidth);
+    }
+  });
+
   test("authored geometry enters validation and the real diagnostic engine", async ({
     page,
   }) => {
@@ -163,6 +243,111 @@ test.describe("Canonical energy diagnostic", () => {
     );
     await expect(page.getByTestId("diagnostic-findings")).toBeVisible();
     await expectCanonicalMethodUrl(page, "create");
+  });
+
+  test("offers reviewed DWG/SVG import from Upload while direct input remains DXF", async ({
+    page,
+  }) => {
+    await openMethod(page, "upload");
+
+    await expect(page.getByTestId("drawing-set-input")).toHaveAttribute(
+      "accept",
+      ".dxf",
+    );
+    await page.getByTestId("diagnostic-review-dwg-svg").click();
+
+    await expect(page.getByTestId("diagnostic-geometry-editor")).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: "Import DWG/DXF/SVG as a schematic",
+      }),
+    ).toBeVisible();
+    await expect(page.getByTestId("import-cad-file-input")).toHaveAttribute(
+      "accept",
+      ".dxf,.dwg,.svg",
+    );
+    await expect(page.getByTestId("drawing-set-input")).not.toBeVisible();
+
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await page.getByTestId("back-to-direct-dxf-upload").click();
+    await expect(page.getByTestId("drawing-set-input")).toBeVisible();
+    await expectCanonicalMethodUrl(page, "upload");
+  });
+
+  test("canceling reviewed import preserves the current model and running diagnostic", async ({
+    page,
+  }) => {
+    await openMethod(page, "upload");
+    await page.getByTestId("drawing-set-input").setInputFiles({
+      name: "A101-in-progress-floor-plan.dxf",
+      mimeType: "application/dxf",
+      buffer: Buffer.from(CALIBRATED_FLOOR_PLAN_DXF, "utf8"),
+    });
+
+    await expect(page.getByTestId("tier-one-assumption-card")).toBeVisible({
+      timeout: 20_000,
+    });
+    await page.getByTestId("accept-tier-one-assumptions").click();
+    const nextAction = page.getByTestId("next-diagnosis-action");
+    await expect(nextAction).toContainText("Run baseline simulation");
+
+    await nextAction.click();
+    await page.getByTestId("diagnostic-review-dwg-svg").click();
+    await expect(page.getByTestId("diagnostic-geometry-editor")).toBeVisible();
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await page.getByTestId("back-to-direct-dxf-upload").click();
+
+    await expect(page.getByTestId("result-comparison")).toContainText(
+      "Real engine result",
+      { timeout: 20_000 },
+    );
+    await expect(page.getByTestId("diagnostic-findings")).toBeVisible();
+    await expectCanonicalMethodUrl(page, "upload");
+  });
+
+  test("a genuine reviewed DWG reaches the canonical engine", async ({ page }) => {
+    test.setTimeout(120_000);
+    const overridePath = process.env.BIMFIT_E2E_DWG_FIXTURE?.trim();
+    const fixture = overridePath
+      ? await readFile(overridePath)
+      : Buffer.from(await readFile(BUNDLED_DWG_FIXTURE, "utf8"), "base64");
+    expect(fixture.subarray(0, 6).toString("ascii")).toMatch(/^AC\d{4}$/);
+    if (!overridePath) {
+      expect(fixture).toHaveLength(149_218);
+      expect(createHash("sha256").update(fixture).digest("hex")).toBe(
+        BUNDLED_DWG_SHA256,
+      );
+    }
+
+    await openMethod(page, "upload");
+    await page.getByTestId("diagnostic-review-dwg-svg").click();
+    await page.getByTestId("import-cad-file-input").setInputFiles({
+      name: "representative-building.dwg",
+      mimeType: "application/acad",
+      buffer: fixture,
+    });
+
+    await expect(page.getByRole("button", { name: "Use as schematic" })).toBeEnabled({
+      timeout: 60_000,
+    });
+    await page.getByRole("button", { name: "Use as schematic" }).click();
+    await page.getByRole("button", { name: "Review building model" }).click();
+
+    await expect(page.getByTestId("tier-one-assumption-card")).toBeVisible({
+      timeout: 30_000,
+    });
+    await expectCanonicalPhases(page);
+    await page.getByTestId("accept-tier-one-assumptions").click();
+    await expect(page.getByTestId("next-diagnosis-action")).toContainText(
+      "Run baseline simulation",
+    );
+    await page.getByTestId("next-diagnosis-action").click();
+
+    await expect(page.getByTestId("result-comparison")).toContainText(
+      "Real engine result",
+    );
+    await expect(page.getByTestId("diagnostic-findings")).toBeVisible();
+    await expectCanonicalMethodUrl(page, "upload");
   });
 
   test("a DXF stays blocked until its visible Tier-1 assumptions are accepted", async ({

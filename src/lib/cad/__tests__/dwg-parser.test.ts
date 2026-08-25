@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readDwgHeader, parseDwgFile, DWG_VERSIONS } from "../dwg-parser";
 import { convertDwgViaLibreDwg } from "../libredwg-converter";
+import { CAD_SERVER_FALLBACK_MAX_FILE_BYTES } from "../import-limits";
 
 // Tier-2 LibreDWG converter is mocked for all tests in this file: the real
 // module loads a 10 MB WASM binary, which is neither possible nor desirable
@@ -260,6 +261,52 @@ describe("parseDwgFile", () => {
     expect(
       result.warnings.some((w) => w.includes("LibreDWG conversion failed")),
     ).toBe(true);
+  });
+
+  it("does not send a large DWG to a server fallback that cannot receive it", async () => {
+    mockedLibreDwg
+      .mockReset()
+      .mockRejectedValue(new Error("browser converter could not decode drawing"));
+    const fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy;
+
+    const bytes = CAD_SERVER_FALLBACK_MAX_FILE_BYTES + 1;
+    const result = await parseDwgFile(
+      makeFile("large.dwg", headerBuffer("AC1032", bytes)),
+    );
+
+    const server = result.diagnostics.outcomes.find(
+      (outcome) => outcome.tier === "server",
+    );
+    expect(server).toMatchObject({ status: "skipped" });
+    expect(server?.detail).toContain("4 MB");
+    expect(server?.detail).toContain("50 MB");
+    expect(server?.detail).toMatch(/not sent/i);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects a late browser-converter result after cancellation", async () => {
+    let finishConversion!: (value: string | null) => void;
+    mockedLibreDwg.mockReset().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishConversion = resolve;
+        }),
+    );
+    globalThis.fetch = vi.fn();
+    const controller = new AbortController();
+
+    const pending = parseDwgFile(
+      makeFile("cancelled.dwg", headerBuffer("AC1032", 1024)),
+      { signal: controller.signal },
+    );
+
+    await vi.waitFor(() => expect(mockedLibreDwg).toHaveBeenCalledTimes(1));
+    controller.abort();
+    finishConversion(LIBREDWG_DXF);
+
+    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
   it("warns when LibreDWG returns empty output and continues to server", async () => {

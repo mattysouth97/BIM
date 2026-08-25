@@ -35,7 +35,7 @@
 //     labels are not attributable to a layer at that seam, so the text column
 //     reads "—" rather than a fabricated 0.
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -151,6 +151,11 @@ export function ImportCadDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const readGenerationRef = useRef(0);
+  const activeReadRef = useRef<{
+    generation: number;
+    controller: AbortController;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState<LoadedFile | null>(null);
   /**
@@ -175,7 +180,13 @@ export function ImportCadDialog({
     detail?: string[];
   } | null>(null);
 
-  const reset = useCallback(() => {
+  const invalidatePendingRead = useCallback(() => {
+    readGenerationRef.current += 1;
+    activeReadRef.current?.controller.abort();
+    activeReadRef.current = null;
+  }, []);
+
+  const clearReadState = useCallback(() => {
     setLoaded(null);
     setOverrides({});
     setUnitInput("1");
@@ -188,7 +199,37 @@ export function ImportCadDialog({
     setBusy(false);
   }, []);
 
+  const reset = useCallback(() => {
+    invalidatePendingRead();
+    clearReadState();
+  }, [clearReadState, invalidatePendingRead]);
+
+  // An external close (for example, the containing editor unmounting this
+  // dialog) has the same cancellation semantics as the visible Cancel action.
+  useEffect(() => {
+    if (!open) reset();
+  }, [open, reset]);
+
+  useEffect(
+    () => () => {
+      // Browser WASM work cannot always be interrupted, but changing the
+      // generation guarantees that its eventual result cannot update state.
+      invalidatePendingRead();
+    },
+    [invalidatePendingRead],
+  );
+
   const onPick = useCallback(async (file: File) => {
+    activeReadRef.current?.controller.abort();
+    const generation = readGenerationRef.current + 1;
+    readGenerationRef.current = generation;
+    const controller = new AbortController();
+    activeReadRef.current = { generation, controller };
+
+    const isCurrent = () =>
+      activeReadRef.current?.generation === generation &&
+      !controller.signal.aborted;
+
     setBusy(true);
     setReadError(null);
     setLoaded(null);
@@ -202,6 +243,7 @@ export function ImportCadDialog({
     try {
       const format = classifyDrawingFile(file.name);
       if (format === null) {
+        if (!isCurrent()) return;
         setReadError({
           code: "UNSUPPORTED_EXTENSION",
           message: `"${file.name}" is not a DXF, DWG or SVG file. Export the drawing as DXF or SVG, or upload the original DWG.`,
@@ -210,7 +252,8 @@ export function ImportCadDialog({
       }
 
       if (format === "svg") {
-        const result = await readSvgFile(file);
+        const result = await readSvgFile(file, { signal: controller.signal });
+        if (!isCurrent()) return;
         if (!result.ok) {
           setReadError(result.error);
           return;
@@ -219,7 +262,8 @@ export function ImportCadDialog({
         return;
       }
 
-      const result = await readCadFile(file);
+      const result = await readCadFile(file, { signal: controller.signal });
+      if (!isCurrent()) return;
       if (!result.ok) {
         // A mesh-only DXF is not a dead end — it becomes an extraction offer.
         if (result.mesh) {
@@ -244,8 +288,20 @@ export function ImportCadDialog({
         format: result.format,
         warnings: result.warnings,
       });
+    } catch (error) {
+      if (!isCurrent()) return;
+      setReadError({
+        code: "FILE_READ_FAILED",
+        message:
+          `Could not read "${file.name}". ` +
+          `${error instanceof Error ? error.message : String(error)} ` +
+          "Choose another drawing or export it as DXF, then try again.",
+      });
     } finally {
-      setBusy(false);
+      if (isCurrent()) {
+        activeReadRef.current = null;
+        setBusy(false);
+      }
     }
   }, []);
 
@@ -357,9 +413,14 @@ export function ImportCadDialog({
       assignments,
       report: outcome.report,
     });
-    onOpenChange(false);
     reset();
+    onOpenChange(false);
   }, [loaded, outcome, assignments, onOpenChange, reset]);
+
+  const closeDialog = useCallback(() => {
+    reset();
+    onOpenChange(false);
+  }, [onOpenChange, reset]);
 
   const unitValid = (() => {
     const parsed = Number.parseFloat(unitInput);
@@ -370,8 +431,8 @@ export function ImportCadDialog({
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        onOpenChange(next);
-        if (!next) reset();
+        if (next) onOpenChange(true);
+        else closeDialog();
       }}
     >
       <DialogContent className="max-h-[88vh] max-w-4xl overflow-y-auto">
@@ -401,14 +462,22 @@ export function ImportCadDialog({
               size="sm"
               variant="outline"
               onClick={() => inputRef.current?.click()}
-              disabled={busy}
             >
               {busy
-                ? "Reading…"
+                ? "Choose a different file"
                 : loaded
                   ? "Choose another file"
                   : "Choose a .dxf, .dwg or .svg file"}
             </Button>
+            {busy && (
+              <span
+                role="status"
+                aria-live="polite"
+                className="text-[11px] text-muted-foreground"
+              >
+                Reading drawing… You can replace or cancel this import.
+              </span>
+            )}
             {loaded && (
               <span className="font-mono text-[11px] text-muted-foreground">
                 {loaded.file.name} ·{" "}
@@ -506,8 +575,8 @@ export function ImportCadDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-            Cancel
+          <Button variant="ghost" size="sm" onClick={closeDialog}>
+            {busy ? "Cancel import" : "Cancel"}
           </Button>
           <Button size="sm" onClick={adopt} disabled={!outcome?.ok}>
             Use as schematic

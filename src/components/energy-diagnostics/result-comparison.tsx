@@ -1,7 +1,15 @@
-import { ArrowDownRight, ArrowRight, CircleSlash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowDownRight,
+  ArrowRight,
+  CircleSlash2,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import type { CanonicalSimulationResult } from "@/lib/energy-diagnostics/types";
+import type {
+  CanonicalSimulationResult,
+  EnergyScenario,
+} from "@/lib/energy-diagnostics/types";
 
 import { diagnosisCopy } from "./copy";
 import type { DiagnosisLocale } from "./types";
@@ -67,6 +75,8 @@ function EndUseBar({
 export function ResultComparison({
   baseline,
   scenario,
+  evaluatedScenario,
+  scenarioIsPrior = false,
   locale,
   baselineRunId,
   scenarioRunId,
@@ -74,6 +84,8 @@ export function ResultComparison({
 }: Readonly<{
   baseline: CanonicalSimulationResult | null;
   scenario: CanonicalSimulationResult | null;
+  evaluatedScenario?: EnergyScenario | null;
+  scenarioIsPrior?: boolean;
   locale: DiagnosisLocale;
   baselineRunId?: string | null;
   scenarioRunId?: string | null;
@@ -92,6 +104,15 @@ export function ResultComparison({
     );
   }
 
+  const comparisonIsPrior = Boolean(
+    scenario && (scenarioIsPrior || !evaluatedScenario),
+  );
+  const scenarioColumnLabel = comparisonIsPrior
+    ? locale === "ko"
+      ? "이전 대안"
+      : "Prior alternative"
+    : copy.alternative;
+
   const maxEndUse = Math.max(
     ...Object.values(baseline.annualByEndUseKwh),
     ...(scenario ? Object.values(scenario.annualByEndUseKwh) : []),
@@ -106,12 +127,53 @@ export function ResultComparison({
 
   return (
     <section className="overflow-hidden rounded-lg border bg-card" data-testid="result-comparison">
+      {scenario ? (
+        <div
+          className={cn(
+            "flex items-start gap-2 border-b px-3 py-2 text-[10px] leading-relaxed",
+            comparisonIsPrior
+              ? "border-amber-500/30 bg-amber-500/[0.08] text-amber-900 dark:text-amber-100"
+              : "border-cyan-500/25 bg-cyan-500/[0.05] text-muted-foreground",
+          )}
+          data-testid={
+            comparisonIsPrior
+              ? "comparison-scenario-prior"
+              : "comparison-scenario-current"
+          }
+          data-state={comparisonIsPrior ? "prior" : "current"}
+        >
+          {comparisonIsPrior ? (
+            <AlertTriangle
+              className="mt-0.5 size-3.5 shrink-0 text-amber-700 dark:text-amber-300"
+              aria-hidden="true"
+            />
+          ) : null}
+          <p>
+            <span className="font-semibold">
+              {comparisonIsPrior
+                ? locale === "ko"
+                  ? "대안 초안이 변경되어 이전 실행 결과를 표시합니다."
+                  : "The alternative draft changed; this comparison shows the prior run."
+                : locale === "ko"
+                  ? "현재 대안 초안과 일치하는 실행 결과입니다."
+                  : "This run matches the current alternative draft."}
+            </span>{" "}
+            <span data-testid="comparison-evaluated-scenario">
+              {locale === "ko" ? "평가 입력" : "Evaluated input"}: {" "}
+              {evaluatedScenario?.name ??
+                (locale === "ko"
+                  ? "저장된 입력 기록을 사용할 수 없음"
+                  : "stored input record unavailable")}
+            </span>
+          </p>
+        </div>
+      ) : null}
       <div className="grid grid-cols-[1.15fr_1fr_1fr] border-b bg-muted/20 text-xs">
         <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.13em] text-muted-foreground">
           {locale === "ko" ? "실제 엔진 결과" : "Real engine result"}
         </div>
         <div className="border-l px-3 py-2 font-semibold">{copy.baseline}</div>
-        <div className="border-l px-3 py-2 font-semibold">{scenario ? copy.alternative : "—"}</div>
+        <div className="border-l px-3 py-2 font-semibold">{scenario ? scenarioColumnLabel : "—"}</div>
       </div>
       {RESULT_ROWS.map(([key, label]) => {
         const unit = key === "annualEnergyKwh" ? "kWh/yr" : "kWh/m²·yr";
@@ -139,7 +201,7 @@ export function ResultComparison({
               onClick={() =>
                 scenarioRunId && onSelectResult?.(scenarioRunId, key)
               }
-              aria-label={`${copy.alternative} ${copy[label]}`}
+              aria-label={`${scenarioColumnLabel} ${copy[label]}`}
               className="border-l px-3 py-3 text-left font-mono text-xs font-semibold tabular-nums transition-colors enabled:hover:bg-cyan-500/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-default"
               data-testid={`result-${key}-scenario`}
             >
@@ -178,7 +240,7 @@ export function ResultComparison({
           ))}
         </div>
         <div className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-muted-foreground">{copy.alternative}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-muted-foreground">{scenarioColumnLabel}</p>
           {scenario ? endUses.map(([key, label, tone, method]) => (
             <EndUseBar
               key={key}

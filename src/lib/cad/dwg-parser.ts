@@ -25,6 +25,11 @@ import {
   type DwgTierOutcome,
   type DwgVersionInfo,
 } from "./dwg-version";
+import {
+  CAD_CLIENT_MAX_FILE_BYTES,
+  CAD_SERVER_FALLBACK_MAX_FILE_BYTES,
+  formatFileSizeMiB,
+} from "./import-limits";
 
 // Re-exported so existing importers (viewer, upload stage) keep working.
 export { DWG_VERSIONS, readDwgVersion } from "./dwg-version";
@@ -155,6 +160,8 @@ interface TierResult {
 interface Tier {
   name: DwgTierName;
   run: () => Promise<TierResult>;
+  /** A runtime constraint that makes this tier unavailable for this file. */
+  skipReason?: () => string | null;
   /** Warning text when the tier runs but yields no output and gives no reason. */
   emptyMessage: string;
   /** Prefix for the warning text when the tier throws. */
@@ -175,7 +182,22 @@ export async function parseDwgFile(
   const warnings: string[] = [];
   const outcomes: DwgTierOutcome[] = [];
 
+  throwIfAborted(options?.signal);
+
+  if (file.size > CAD_CLIENT_MAX_FILE_BYTES) {
+    const diagnostics: DwgDiagnostics = { version: null, outcomes };
+    return {
+      candidates: [],
+      unitScaleToMeters: 1,
+      warnings: [
+        `"${file.name}" is ${formatFileSizeMiB(file.size)}. BIMFIT can process DWG files up to ${formatFileSizeMiB(CAD_CLIENT_MAX_FILE_BYTES)} in the browser. Export a smaller DXF or simplify the DWG, then try again.`,
+      ],
+      diagnostics,
+    };
+  }
+
   const buffer = await file.arrayBuffer();
+  throwIfAborted(options?.signal);
   const version: DwgVersionInfo | null = readDwgVersion(buffer);
 
   if (!version) {
@@ -218,12 +240,30 @@ export async function parseDwgFile(
       // upload itself rather than trusting anything the client claims.
       name: "server",
       run: () => convertViaServer(file, options),
+      skipReason: () =>
+        file.size > CAD_SERVER_FALLBACK_MAX_FILE_BYTES
+          ? `File is ${formatFileSizeMiB(file.size)}. Server fallback is limited to ${formatFileSizeMiB(CAD_SERVER_FALLBACK_MAX_FILE_BYTES)} by the production upload path, so the file was not sent. Browser conversion was still attempted (up to ${formatFileSizeMiB(CAD_CLIENT_MAX_FILE_BYTES)}). Export DXF or simplify the DWG, then try again.`
+          : null,
       emptyMessage: "Server conversion produced no DXF output.",
       failurePrefix: "Server DWG conversion failed",
     },
   ];
 
   for (const tier of tiers) {
+    throwIfAborted(options?.signal);
+
+    const runtimeSkip = tier.skipReason?.() ?? null;
+    if (runtimeSkip) {
+      const outcome: DwgTierOutcome = {
+        tier: tier.name,
+        status: "skipped",
+        detail: runtimeSkip,
+      };
+      outcomes.push(outcome);
+      warnings.push(formatTierOutcome(outcome));
+      continue;
+    }
+
     const support = tierSupports(tier.name, version);
     if (!support.supported) {
       const outcome: DwgTierOutcome = {
@@ -238,6 +278,7 @@ export async function parseDwgFile(
 
     try {
       const { dxfText, parsed: preParsed, detail } = await tier.run();
+      throwIfAborted(options?.signal);
       if (dxfText) {
         outcomes.push({ tier: tier.name, status: "succeeded" });
         const parsed = preParsed ?? parseDxfText(dxfText);
@@ -252,6 +293,7 @@ export async function parseDwgFile(
       outcomes.push({ tier: tier.name, status: "failed", detail: reason });
       warnings.push(reason);
     } catch (err) {
+      if (options?.signal?.aborted) throw abortError(options.signal);
       const msg = err instanceof Error ? err.message : String(err);
       outcomes.push({ tier: tier.name, status: "failed", detail: msg });
       warnings.push(`${tier.failurePrefix}: ${msg}`);
@@ -267,6 +309,17 @@ export async function parseDwgFile(
     warnings: [...warnings, report.message],
     diagnostics,
   };
+}
+
+function abortError(signal: AbortSignal): Error {
+  if (signal.reason instanceof Error) return signal.reason;
+  const error = new Error("DWG import was cancelled.");
+  error.name = "AbortError";
+  return error;
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw abortError(signal);
 }
 
 // ---------------------------------------------------------------------------

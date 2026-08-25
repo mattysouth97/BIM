@@ -5,7 +5,10 @@ import { useEffect, useMemo } from "react";
 import { BuildingScene } from "@/components/viewer/building-scene";
 import type { EnvelopeAnalysis } from "@/components/viewer/envelope-layer";
 import type { CompiledDegreeDayInput } from "@/lib/energy-diagnostics/adapter";
-import { canonicalModelToViewerBridge } from "@/lib/energy-diagnostics/viewer-bridge";
+import {
+  canonicalModelToViewerBridge,
+  recipeAtViewerOrigin,
+} from "@/lib/energy-diagnostics/viewer-bridge";
 import {
   computeEnvelopeShares,
   computeOrientationWwr,
@@ -21,6 +24,40 @@ import { useRecipeStore } from "@/store/recipe-store";
 import { useSelectionStore } from "@/store/selection-store";
 
 import type { EnergyDiagnosisSceneContext } from "./types";
+import { deriveDiagnosticSpatialTarget } from "./diagnostic-spatial-target";
+import type {
+  DiagnosticSpatialPrecision,
+  DiagnosticSpatialTarget,
+} from "@/components/viewer/diagnostic-selection-types";
+
+function spatialSelectionMessage(
+  target: DiagnosticSpatialTarget,
+  locale: EnergyDiagnosisSceneContext["locale"],
+): string {
+  const count = target.patches.length;
+  const messages: Record<
+    DiagnosticSpatialPrecision,
+    Record<EnergyDiagnosisSceneContext["locale"], string>
+  > = {
+    exact_surface: {
+      en: `${count} source-linked surface${count === 1 ? "" : "s"} highlighted · camera focused`,
+      ko: `도면 근거와 연결된 표면 ${count}개 강조 · 카메라 초점 이동`,
+    },
+    host_surface: {
+      en: "Known host surface highlighted · exact opening position is not available",
+      ko: "확인된 개구부 호스트 표면 강조 · 정확한 개구부 위치 정보는 없음",
+    },
+    category: {
+      en: `${target.fallbackObjectIds.length} related envelope categor${target.fallbackObjectIds.length === 1 ? "y" : "ies"} highlighted · component geometry unavailable`,
+      ko: `관련 외피 범주 ${target.fallbackObjectIds.length}개 강조 · 개별 구성요소 형상 정보는 없음`,
+    },
+    building: {
+      en: "Building-wide finding · whole envelope highlighted and framed",
+      ko: "건물 전체 소견 · 외피 전체 강조 및 화면 맞춤",
+    },
+  };
+  return messages[target.precision][locale];
+}
 
 function asCompiledInput(
   context: EnergyDiagnosisSceneContext,
@@ -43,6 +80,17 @@ export function EnergyDiagnosisScene({
     [context.model],
   );
   const compiled = useMemo(() => asCompiledInput(context), [context]);
+  const displayRecipe = useMemo(
+    () =>
+      compiled
+        ? recipeAtViewerOrigin(compiled.payload.recipe, bridge.displayOrigin)
+        : bridge.recipe,
+    [bridge.displayOrigin, bridge.recipe, compiled],
+  );
+  const diagnosticSpatialTarget = useMemo(
+    () => deriveDiagnosticSpatialTarget(context.model, bridge, context.selected),
+    [bridge, context.model, context.selected],
+  );
   const zoneAnalysis = useMemo(() => {
     if (!context.spatialResults) return null;
     const results = context.spatialResults.zones.flatMap((result) => {
@@ -123,7 +171,7 @@ export function EnergyDiagnosisScene({
     });
     useRecipeStore.getState().setBaseRecipe(
       bridge.buildingPk,
-      compiled?.payload.recipe ?? bridge.recipe,
+      displayRecipe,
     );
     if (compiled) {
       useMaterialStore
@@ -172,7 +220,7 @@ export function EnergyDiagnosisScene({
         .getState()
         .setAnalysisOverlayVisible("overlay-envelope", priorEnvelopeVisible);
     };
-  }, [bridge, compiled]);
+  }, [bridge, compiled, displayRecipe]);
 
   useEffect(() => {
     const priorSelection = useSelectionStore.getState().selectedCanonical;
@@ -204,13 +252,14 @@ export function EnergyDiagnosisScene({
   }, [bridge.buildingPk, context.selected]);
 
   useEffect(() => {
+    const currentCanonical = useSelectionStore.getState().selectedCanonical;
     if (
-      selectedCanonical?.kind === "thermal_zone" &&
-      selectedCanonical.buildingPk === bridge.buildingPk &&
+      currentCanonical?.kind === "thermal_zone" &&
+      currentCanonical.buildingPk === bridge.buildingPk &&
       (context.selected?.kind !== "thermal_zone" ||
-        context.selected.id !== selectedCanonical.id)
+        context.selected.id !== currentCanonical.id)
     ) {
-      context.onSelectZone(selectedCanonical.id);
+      context.onSelectZone(currentCanonical.id);
     }
   }, [bridge.buildingPk, context, selectedCanonical]);
 
@@ -220,31 +269,35 @@ export function EnergyDiagnosisScene({
       data-testid="energy-diagnosis-scene"
       data-selection-kind={context.selected?.kind ?? "none"}
       data-highlighted-object-count={
-        context.selected?.kind === "diagnostic_finding"
-          ? context.selected.threeObjectIds.length
+        diagnosticSpatialTarget
+          ? diagnosticSpatialTarget.patches.length > 0
+            ? diagnosticSpatialTarget.patches.length
+            : diagnosticSpatialTarget.fallbackObjectIds.length
           : 0
       }
+      data-focus-precision={diagnosticSpatialTarget?.precision ?? "none"}
     >
       <BuildingScene
         title={bridge.title}
         floors={[...bridge.floors]}
-        recipeOverride={compiled?.payload.recipe ?? bridge.recipe}
+        recipeOverride={displayRecipe}
         buildingPk={bridge.buildingPk}
         snapshot={bridge.snapshot}
         diagnosticsMode
         envelopeAnalysisOverride={envelopeAnalysis}
         energyZoneAnalysisOverride={zoneAnalysis}
+        diagnosticSpatialTarget={diagnosticSpatialTarget}
         onEnergyZoneSelect={(zoneId) => context.onSelectZone(zoneId)}
       />
       <div className="pointer-events-none absolute bottom-3 left-3 right-3 max-w-[calc(100%-1.5rem)] rounded-md border bg-background/90 px-2.5 py-2 text-[9px] leading-relaxed text-muted-foreground shadow-sm backdrop-blur sm:right-auto sm:max-w-xs">
-        {context.selected?.kind === "diagnostic_finding" && (
+        {diagnosticSpatialTarget && (
           <span
             className="mb-1 block font-semibold text-cyan-700 dark:text-cyan-300"
             data-testid="diagnostic-spatial-selection-status"
+            role="status"
+            aria-live="polite"
           >
-            {context.locale === "ko"
-              ? `선택한 진단 소견 · 관련 모델 오버레이 ${context.selected.threeObjectIds.length}개 강조`
-              : `Selected finding · ${context.selected.threeObjectIds.length} related model overlays highlighted`}
+            {spatialSelectionMessage(diagnosticSpatialTarget, context.locale)}
           </span>
         )}
         {compiled

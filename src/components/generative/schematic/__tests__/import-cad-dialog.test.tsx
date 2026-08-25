@@ -10,7 +10,7 @@
 // as the DXF ones — that is the point of the shared flow — plus the one control
 // only an SVG needs: the unit scale, which is disclosed as ASSUMED until set.
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { useBlueprintStore } from "@/store/blueprint-store";
@@ -75,10 +75,27 @@ function svgFile(name = "plan.svg", text = PLAN_SVG): File {
   return dxfFile(name, text);
 }
 
-async function upload(file: File) {
+function deferredDxfFile(name: string) {
+  let resolve!: (text: string) => void;
+  const text = new Promise<string>((done) => {
+    resolve = done;
+  });
+  const file = new File(["pending"], name, { type: "application/dxf" });
+  Object.defineProperty(file, "text", {
+    value: () => text,
+    configurable: true,
+  });
+  return { file, resolve, text };
+}
+
+function selectFile(file: File) {
   const input = screen.getByTestId("import-cad-file-input") as HTMLInputElement;
   Object.defineProperty(input, "files", { value: [file], configurable: true });
   fireEvent.change(input);
+}
+
+async function upload(file: File) {
+  selectFile(file);
   await waitFor(() => expect(screen.getByTestId("import-cad-preview")).toBeTruthy());
 }
 
@@ -98,6 +115,55 @@ afterEach(() => {
 });
 
 describe("ImportCadDialog", () => {
+  it("cancels an in-flight read and ignores its late result", async () => {
+    const onOpenChange = vi.fn();
+    const slow = deferredDxfFile("slow-plan.dxf");
+    render(<ImportCadDialog open onOpenChange={onOpenChange} />);
+
+    selectFile(slow.file);
+    await waitFor(() => expect(screen.getByText("Cancel import")).toBeTruthy());
+    expect(screen.getByRole("status").textContent).toContain("replace or cancel");
+
+    fireEvent.click(screen.getByText("Cancel import"));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+
+    slow.resolve(PLAN_DXF);
+    await slow.text;
+    await Promise.resolve();
+    expect(screen.queryByTestId("import-cad-preview")).toBeNull();
+    expect(useBlueprintStore.getState().blueprint.source).toBe("native-editor");
+  });
+
+  it("keeps the replacement file when an older read finishes later", async () => {
+    const slow = deferredDxfFile("first-plan.dxf");
+    render(<ImportCadDialog open onOpenChange={() => {}} />);
+
+    selectFile(slow.file);
+    await waitFor(() => expect(screen.getByText("Choose a different file")).toBeTruthy());
+
+    selectFile(dxfFile("second-plan.dxf"));
+    await waitFor(() => expect(screen.getByTestId("import-cad-preview")).toBeTruthy());
+    expect(screen.getByText(/second-plan\.dxf/)).toBeTruthy();
+
+    slow.resolve(PLAN_DXF);
+    await slow.text;
+    await Promise.resolve();
+    expect(screen.getByText(/second-plan\.dxf/)).toBeTruthy();
+    expect(screen.queryByText(/first-plan\.dxf/)).toBeNull();
+  });
+
+  it("rejects files above the 50 MB browser limit with recovery guidance", async () => {
+    render(<ImportCadDialog open onOpenChange={() => {}} />);
+    const oversized = dxfFile("oversized-plan.dxf");
+    Object.defineProperty(oversized, "size", { value: 50 * 1024 * 1024 + 1 });
+
+    selectFile(oversized);
+
+    await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy());
+    expect(screen.getByRole("alert").textContent).toContain("50 MB");
+    expect(screen.getByRole("alert").textContent).toContain("simplify");
+  });
+
   it("shows every layer with its guessed role instead of applying it", async () => {
     render(<ImportCadDialog open onOpenChange={() => {}} />);
     await upload(dxfFile());
