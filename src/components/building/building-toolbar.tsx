@@ -69,18 +69,18 @@ export function BuildingToolbar({
     };
   }, [baseRecipe, recipeOverrides, title?.bldNm, buildingPk]);
 
-  const generateAlternative = () => {
+  const startEnergyDiagnostic = () => {
     if (!seedFootprint) return;
     const seed = footprintToBlueprint({
       name: seedFootprint.name,
       footprintPolygonM: seedFootprint.rings,
       floors: seedFootprint.floors,
     });
-    // The editor picks this up directly on a soft navigation; the stash covers
-    // a reload of /studio. Replacing the working blueprint is one Ctrl+Z away.
+    // Preserve the current footprint as contextual geometry authoring input.
+    // The destination remains the single Energy Diagnostic product workflow.
     useBlueprintStore.getState().loadBlueprint(seed);
     stashSeedBlueprint(seed);
-    router.push("/studio");
+    router.push("/diagnostics/new?method=create");
   };
 
   const isKo = lang === "ko";
@@ -148,23 +148,23 @@ export function BuildingToolbar({
             variant="outline"
             size="sm"
             className="h-8 gap-1.5"
-            onClick={generateAlternative}
+            onClick={startEnergyDiagnostic}
             disabled={!seedFootprint}
             title={
               seedFootprint
                 ? t(
-                    "이 건물의 평면 윤곽으로 스케치를 시작합니다",
-                    "Start a schematic from this building's footprint",
+                    "이 건물의 평면 윤곽으로 에너지 진단을 시작합니다",
+                    "Start an energy diagnostic from this building's footprint",
                   )
                 : t(
-                    "평면 윤곽이 없어 새 설계를 시작할 수 없습니다",
-                    "No footprint is available to start a design from",
+                    "평면 윤곽이 없어 진단 모델을 시작할 수 없습니다",
+                    "No footprint is available to start a diagnostic model",
                   )
             }
           >
             <Shapes className="size-4" />
             <span className="hidden md:inline">
-              {t("다른 설계 생성", "Generate alternative")}
+              {t("에너지 진단", "Energy diagnostic")}
             </span>
           </Button>
         )}

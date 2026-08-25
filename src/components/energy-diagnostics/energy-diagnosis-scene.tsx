@@ -215,7 +215,16 @@ export function EnergyDiagnosisScene({
   }, [bridge.buildingPk, context, selectedCanonical]);
 
   return (
-    <div className="relative h-full min-h-[430px] bg-muted/20" data-testid="energy-diagnosis-scene">
+    <div
+      className="relative isolate h-[clamp(28rem,62svh,52rem)] min-h-[28rem] w-full min-w-0 max-w-full overflow-hidden bg-muted/20 sm:h-[clamp(30rem,65svh,54rem)]"
+      data-testid="energy-diagnosis-scene"
+      data-selection-kind={context.selected?.kind ?? "none"}
+      data-highlighted-object-count={
+        context.selected?.kind === "diagnostic_finding"
+          ? context.selected.threeObjectIds.length
+          : 0
+      }
+    >
       <BuildingScene
         title={bridge.title}
         floors={[...bridge.floors]}
@@ -227,7 +236,17 @@ export function EnergyDiagnosisScene({
         energyZoneAnalysisOverride={zoneAnalysis}
         onEnergyZoneSelect={(zoneId) => context.onSelectZone(zoneId)}
       />
-      <div className="pointer-events-none absolute bottom-3 left-3 max-w-xs rounded-md border bg-background/90 px-2.5 py-2 text-[9px] leading-relaxed text-muted-foreground shadow-sm backdrop-blur">
+      <div className="pointer-events-none absolute bottom-3 left-3 right-3 max-w-[calc(100%-1.5rem)] rounded-md border bg-background/90 px-2.5 py-2 text-[9px] leading-relaxed text-muted-foreground shadow-sm backdrop-blur sm:right-auto sm:max-w-xs">
+        {context.selected?.kind === "diagnostic_finding" && (
+          <span
+            className="mb-1 block font-semibold text-cyan-700 dark:text-cyan-300"
+            data-testid="diagnostic-spatial-selection-status"
+          >
+            {context.locale === "ko"
+              ? `선택한 진단 소견 · 관련 모델 오버레이 ${context.selected.threeObjectIds.length}개 강조`
+              : `Selected finding · ${context.selected.threeObjectIds.length} related model overlays highlighted`}
+          </span>
+        )}
         {compiled
           ? context.locale === "ko"
             ? "3D 열구역 · 선택 실행의 연간 수요를 바닥면적 비율로 배분한 추정값 · kWh/yr"

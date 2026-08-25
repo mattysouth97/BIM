@@ -94,6 +94,12 @@ describe("EnergyDiagnosisScene selected-run bridge", () => {
     );
 
     const scene = await screen.findByTestId("mock-building-scene");
+    const viewport = screen.getByTestId("energy-diagnosis-scene");
+    expect(viewport.className).toContain("h-[clamp(28rem,62svh,52rem)]");
+    expect(viewport.className).toContain("min-h-[28rem]");
+    expect(viewport.className).toContain("min-w-0");
+    expect(viewport.className).toContain("max-w-full");
+    expect(viewport.className).toContain("overflow-hidden");
     expect(scene.getAttribute("data-zone-source")).toBe(
       "selected_simulation_run",
     );

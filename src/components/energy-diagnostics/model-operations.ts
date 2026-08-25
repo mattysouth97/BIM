@@ -25,6 +25,7 @@ import {
   createEnergyScenario,
   type ScenarioChange,
 } from "@/lib/energy-diagnostics/scenarios";
+import { reconcileCanonicalModelFingerprint } from "@/lib/energy-diagnostics/simulation";
 import type {
   CanonicalEnergyModel,
   ConflictRecord,
@@ -62,10 +63,10 @@ function refreshModel(
     facts: collectEnergyFacts(shell),
   };
   const validation = validateCanonicalEnergyModel(indexed);
-  return Object.freeze({
+  return reconcileCanonicalModelFingerprint(Object.freeze({
     ...indexed,
     readiness: Object.freeze([...validation.readiness]),
-  });
+  }));
 }
 
 export async function loadRepresentativeCase(): Promise<RepresentativeCase> {
@@ -233,13 +234,14 @@ export function resolveVisibleConflict(
 export function runBaselineModel(
   model: CanonicalEnergyModel,
 ): Readonly<{ model: CanonicalEnergyModel; run: DegreeDaySimulationRun }> {
-  const input = compileCanonicalModelToEngineInput(model);
+  const baseline = reconcileCanonicalModelFingerprint(model);
+  const input = compileCanonicalModelToEngineInput(baseline);
   const run = runSimulation(input);
   return Object.freeze({
     model: refreshModel({
-      ...model,
+      ...baseline,
       simulationRuns: Object.freeze([
-        ...model.simulationRuns.filter(
+        ...baseline.simulationRuns.filter(
           (candidate) => candidate.scenarioId !== "baseline",
         ),
         run,
@@ -257,15 +259,16 @@ export function runWindowScenario(
   scenario: EnergyScenario;
   run: DegreeDaySimulationRun;
 }> {
-  const windowIndex = model.envelope.constructions.findIndex(
+  const baseline = reconcileCanonicalModelFingerprint(model);
+  const windowIndex = baseline.envelope.constructions.findIndex(
     (construction) => construction.kind === "window",
   );
   if (windowIndex < 0) throw new Error("The model has no window construction.");
-  const baselineFact = model.envelope.constructions[windowIndex].uValueWPerM2K;
+  const baselineFact = baseline.envelope.constructions[windowIndex].uValueWPerM2K;
   const scenario = createEnergyScenario({
     id: `scenario-window-u-${uValueWPerM2K.toFixed(2).replace(".", "-")}`,
     name: `Window U ${uValueWPerM2K.toFixed(2)} W/(m²·K)`,
-    baseline: model,
+    baseline,
     changes: [
       {
         id: `delta-window-u-${windowIndex}`,
@@ -276,17 +279,17 @@ export function runWindowScenario(
       },
     ],
   });
-  const input = compileCanonicalModelToEngineInput(model, scenario);
+  const input = compileCanonicalModelToEngineInput(baseline, scenario);
   const run = runSimulation(input);
   return Object.freeze({
     model: refreshModel({
-      ...model,
+      ...baseline,
       scenarios: Object.freeze([
-        ...model.scenarios.filter((candidate) => candidate.id !== scenario.id),
+        ...baseline.scenarios.filter((candidate) => candidate.id !== scenario.id),
         scenario,
       ]),
       simulationRuns: Object.freeze([
-        ...model.simulationRuns.filter(
+        ...baseline.simulationRuns.filter(
           (candidate) => candidate.scenarioId !== scenario.id,
         ),
         run,
@@ -369,31 +372,32 @@ export function runImprovementScenario(
   scenario: EnergyScenario;
   run: DegreeDaySimulationRun;
 }> {
+  const baseline = reconcileCanonicalModelFingerprint(model);
   const changes: ScenarioChange<unknown>[] = [];
   const nameParts: string[] = [];
   if (values.windowUValueWPerM2K != null) {
-    const windowIndex = model.envelope.constructions.findIndex(
+    const windowIndex = baseline.envelope.constructions.findIndex(
       (construction) => construction.kind === "window",
     );
     if (windowIndex < 0) throw new Error("The model has no window construction.");
     changes.push({
       id: `delta-window-u-${windowIndex}`,
       path: `envelope.constructions.${windowIndex}.uValueWPerM2K`,
-      baselineFact: model.envelope.constructions[windowIndex].uValueWPerM2K,
+      baselineFact: baseline.envelope.constructions[windowIndex].uValueWPerM2K,
       value: values.windowUValueWPerM2K,
       unit: "W/m2K",
     });
     nameParts.push(`window-u-${values.windowUValueWPerM2K.toFixed(2)}`);
   }
   if (values.windowShgc != null) {
-    const windowIndex = model.envelope.constructions.findIndex(
+    const windowIndex = baseline.envelope.constructions.findIndex(
       (construction) => construction.kind === "window",
     );
     if (windowIndex < 0) throw new Error("The model has no window construction.");
     changes.push({
       id: `delta-window-shgc-${windowIndex}`,
       path: `envelope.constructions.${windowIndex}.shgc`,
-      baselineFact: model.envelope.constructions[windowIndex].shgc,
+      baselineFact: baseline.envelope.constructions[windowIndex].shgc,
       value: values.windowShgc,
     });
     nameParts.push(`shgc-${values.windowShgc.toFixed(2)}`);
@@ -402,20 +406,20 @@ export function runImprovementScenario(
     changes.push({
       id: "delta-infiltration-ach",
       path: "envelope.infiltrationAirChangesPerHour",
-      baselineFact: model.envelope.infiltrationAirChangesPerHour,
+      baselineFact: baseline.envelope.infiltrationAirChangesPerHour,
       value: values.infiltrationAch,
       unit: "ACH",
     });
     nameParts.push(`ach-${values.infiltrationAch.toFixed(2)}`);
   }
   if (values.heatingCop != null) {
-    if (model.systems.hvac.length === 0) {
+    if (baseline.systems.hvac.length === 0) {
       throw new Error("The model has no HVAC system.");
     }
     changes.push({
       id: "delta-heating-cop-0",
       path: "systems.hvac.0.heatingEfficiency",
-      baselineFact: model.systems.hvac[0].heatingEfficiency,
+      baselineFact: baseline.systems.hvac[0].heatingEfficiency,
       value: values.heatingCop,
     });
     nameParts.push(`cop-${values.heatingCop.toFixed(2)}`);
@@ -424,7 +428,7 @@ export function runImprovementScenario(
     if (!(values.openingAreaScale > 0)) {
       throw new Error("The opening-area scale must be positive.");
     }
-    model.geometry.openings.forEach((opening, index) => {
+    baseline.geometry.openings.forEach((opening, index) => {
       const baseline = opening.areaSqm;
       if (typeof baseline.value !== "number" || !Number.isFinite(baseline.value)) return;
       changes.push({
@@ -443,20 +447,20 @@ export function runImprovementScenario(
   const scenario = createEnergyScenario({
     id: `scenario-${nameParts.join("-").replaceAll(".", "-")}`,
     name: `Improvement ${nameParts.join(" · ")}`,
-    baseline: model,
+    baseline,
     changes,
   });
-  const input = compileCanonicalModelToEngineInput(model, scenario);
+  const input = compileCanonicalModelToEngineInput(baseline, scenario);
   const run = runSimulation(input);
   return Object.freeze({
     model: refreshModel({
-      ...model,
+      ...baseline,
       scenarios: Object.freeze([
-        ...model.scenarios.filter((candidate) => candidate.id !== scenario.id),
+        ...baseline.scenarios.filter((candidate) => candidate.id !== scenario.id),
         scenario,
       ]),
       simulationRuns: Object.freeze([
-        ...model.simulationRuns.filter(
+        ...baseline.simulationRuns.filter(
           (candidate) => candidate.scenarioId !== scenario.id,
         ),
         run,

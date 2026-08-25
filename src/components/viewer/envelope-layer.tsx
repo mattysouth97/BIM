@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { useLayerStore } from "@/store/layer-store";
 import { useMaterialStore } from "@/store/material-store";
+import { useSelectionStore } from "@/store/selection-store";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { disposeObject3D } from "@/lib/layers/analysis/overlay-types";
@@ -74,8 +75,21 @@ export function EnvelopeLayer({
   const enabled = useLayerStore((s) => s.analysisOverlays["overlay-envelope"]);
   const recipe = useEffectiveRecipe(buildingPk);
   const viewerAnalysis = useEnvelopeAnalysis(buildingPk);
+  const canonicalSelection = useSelectionStore(
+    (state) => state.selectedCanonical,
+  );
   const analysis =
     analysisOverride === undefined ? viewerAnalysis : analysisOverride;
+  const highlightedEnvelopeNames = useMemo(
+    () =>
+      canonicalSelection?.buildingPk === buildingPk &&
+      canonicalSelection.kind === "diagnostic_finding"
+        ? canonicalSelection.threeObjectIds.filter((id) =>
+            id.startsWith("envelope-shell:"),
+          )
+        : [],
+    [buildingPk, canonicalSelection],
+  );
 
   // Lazy state initializer, not a ref: the group must be readable during render
   // to be handed to <primitive>, and this keeps one instance for the lifetime
@@ -95,13 +109,31 @@ export function EnvelopeLayer({
       avgWwr: analysis.avgWwr,
       resultSemantics: analysis.resultSemantics,
     });
+    if (highlightedEnvelopeNames.length > 0) {
+      const highlighted = new Set(highlightedEnvelopeNames);
+      group.traverse((object) => {
+        if (!(object instanceof THREE.Mesh)) return;
+        const isHighlighted = highlighted.has(object.name);
+        const materials = Array.isArray(object.material)
+          ? object.material
+          : [object.material];
+        for (const material of materials) {
+          if (!(material instanceof THREE.MeshBasicMaterial)) continue;
+          material.opacity = isHighlighted ? 0.9 : 0.08;
+          material.depthWrite = false;
+          if (isHighlighted) material.color.set("#22d3ee");
+        }
+        object.renderOrder = isHighlighted ? 8 : 3;
+        object.userData.diagnosticHighlighted = isHighlighted;
+      });
+    }
     root.add(group);
 
     return () => {
       root.remove(group);
       disposeObject3D(group);
     };
-  }, [enabled, recipe, analysis, root]);
+  }, [enabled, recipe, analysis, root, highlightedEnvelopeNames]);
 
   // Dispose anything still mounted when the component unmounts.
   useEffect(() => {

@@ -2,6 +2,7 @@ import { get, keys as idbKeys, set } from "idb-keyval";
 
 import { sha256Hex, toBytes } from "./hashing";
 import type { DrawingSourceInput } from "./ingestion";
+import { reconcileCanonicalModelFingerprint } from "./simulation";
 import {
   CANONICAL_ENERGY_MODEL_VERSION,
   type CanonicalEnergyModel,
@@ -298,6 +299,11 @@ function validateCanonicalModel(value: unknown, expectedProjectId?: string): Can
   for (const [scenarioIndex, scenario] of scenarios.entries()) {
     if (!isRecord(scenario)) continue;
     requiredString(scenario, "baselineModelId", `model.scenarios[${scenarioIndex}]`);
+    requiredString(
+      scenario,
+      "baselineModelVersion",
+      `model.scenarios[${scenarioIndex}]`,
+    );
     const deltas = requiredArray(scenario, "deltas", `model.scenarios[${scenarioIndex}]`);
     assertUniqueEntityIds(deltas, `model.scenarios[${scenarioIndex}].deltas`);
     for (const [deltaIndex, delta] of deltas.entries()) {
@@ -377,7 +383,9 @@ function parseCurrentRecord(
     }
     assertIsoDateTime(raw.savedAtIso, "savedAtIso");
     if (raw.projectId !== expectedProjectId) throw new Error("projectId does not match its key.");
-    const model = validateCanonicalModel(raw.model, expectedProjectId);
+    const model = reconcileCanonicalModelFingerprint(
+      validateCanonicalModel(raw.model, expectedProjectId),
+    );
     if (raw.modelId !== model.id) throw new Error("modelId does not match the canonical model.");
     if (!Array.isArray(raw.sourceContentHashes)) throw new Error("sourceContentHashes must be an array.");
     const storedHashes = raw.sourceContentHashes.map((hash) => normalizeContentHash(String(hash))).sort();
@@ -388,7 +396,7 @@ function parseCurrentRecord(
     ) {
       throw new Error("The source hash manifest does not match the drawing set.");
     }
-    return raw as StoredEnergyDiagnosticsProject;
+    return currentRecordFor(model, raw.savedAtIso as IsoDateTime);
   } catch (cause) {
     if (cause instanceof EnergyDiagnosticsStorageError && cause.code === "UNSUPPORTED_VERSION") {
       throw cause;
@@ -416,8 +424,15 @@ function parseV1Record(
       throw new Error("The storage version is missing.");
     }
     assertIsoDateTime(raw.savedAtIso, "savedAtIso");
-    validateCanonicalModel(raw.model, expectedProjectId);
-    return raw as StoredEnergyDiagnosticsProjectV1;
+    const model = reconcileCanonicalModelFingerprint(
+      validateCanonicalModel(raw.model, expectedProjectId),
+    );
+    return {
+      kind: PROJECT_RECORD_KIND,
+      storageVersion: 1,
+      savedAtIso: raw.savedAtIso as IsoDateTime,
+      model,
+    };
   } catch (cause) {
     if (cause instanceof EnergyDiagnosticsStorageError && cause.code === "UNSUPPORTED_VERSION") {
       throw cause;
@@ -433,7 +448,7 @@ export async function saveEnergyDiagnosticsProject(
   let validated: CanonicalEnergyModel;
   let savedAtIso: string;
   try {
-    validated = validateCanonicalModel(model);
+    validated = reconcileCanonicalModelFingerprint(validateCanonicalModel(model));
     savedAtIso = options.savedAtIso ?? new Date().toISOString();
     assertIsoDateTime(savedAtIso, "savedAtIso");
   } catch (cause) {
@@ -517,7 +532,8 @@ export async function loadEnergyDiagnosticsProject(
 export async function listEnergyDiagnosticsProjects(): Promise<
   readonly StoredEnergyDiagnosticsProjectSummary[]
 > {
-  const prefix = `${STORAGE_NAMESPACE}:project:v${ENERGY_DIAGNOSTICS_STORAGE_VERSION}:`;
+  const currentPrefix = `${STORAGE_NAMESPACE}:project:v${ENERGY_DIAGNOSTICS_STORAGE_VERSION}:`;
+  const legacyPrefix = `${STORAGE_NAMESPACE}:project:v1:`;
   let storedKeys: IDBValidKey[];
   try {
     storedKeys = await idbKeys();
@@ -525,20 +541,25 @@ export async function listEnergyDiagnosticsProjects(): Promise<
     throw new EnergyDiagnosticsStorageError(
       "LOAD_FAILED",
       "Saved energy-diagnostics projects could not be listed from this browser's storage.",
-      { cause, recordKey: prefix },
+      { cause, recordKey: currentPrefix },
     );
   }
 
-  const projectIds = storedKeys.flatMap((key) => {
-    if (typeof key !== "string" || !key.startsWith(prefix)) return [];
-    try {
-      return [decodeURIComponent(key.slice(prefix.length))];
-    } catch {
-      return [];
+  const projectIds = new Set<string>();
+  for (const key of storedKeys) {
+    if (typeof key !== "string") continue;
+    for (const prefix of [currentPrefix, legacyPrefix]) {
+      if (!key.startsWith(prefix)) continue;
+      try {
+        projectIds.add(decodeURIComponent(key.slice(prefix.length)));
+      } catch {
+        // Ignore malformed foreign keys in the shared IndexedDB store.
+      }
+      break;
     }
-  });
+  }
   const records = await Promise.all(
-    projectIds.map((projectId) => loadEnergyDiagnosticsProjectRecord(projectId)),
+    [...projectIds].map((projectId) => loadEnergyDiagnosticsProjectRecord(projectId)),
   );
 
   return Object.freeze(

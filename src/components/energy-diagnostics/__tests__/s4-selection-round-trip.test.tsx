@@ -250,7 +250,7 @@ describe("S4 canonical selection round trip", () => {
       canonicalObjectIds: [selectedZone.id],
     });
 
-    fireEvent.click(screen.getByTestId("diagnosis-stage-simulation"));
+    fireEvent.click(screen.getByTestId("diagnosis-stage-compare"));
     fireEvent.click(screen.getByTestId("result-annualEnergyKwh-baseline"));
     const run = model.simulationRuns[0];
     const resultSelection = onSelectionChange.mock.calls.at(-1)?.[0];

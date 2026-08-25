@@ -43,9 +43,9 @@ describe("buildingMetadataTitle (P2-14)", () => {
 
   // ─── P2-24 — cad-first drafts route through /building/[id] ────────────────
 
-  it("names the reserved demo and drawing doors", () => {
-    expect(buildingMetadataTitle("demo")).toBe("데모 오피스 타워 | BIMFIT");
-    expect(buildingMetadataTitle("drawing")).toBe("도면에서 시작 | BIMFIT");
+  it("reframes the reserved legacy slugs as diagnostic entry methods", () => {
+    expect(buildingMetadataTitle("demo")).toBe("Sample Energy Diagnostic | BIMFIT");
+    expect(buildingMetadataTitle("drawing")).toBe("Create Energy Diagnostic | BIMFIT");
   });
 
   it("gives retired cad-draft ids only the fallback title (surface removed)", () => {

@@ -261,14 +261,14 @@ describe("GenerativeStudio — the empty session", () => {
   it("keeps the diagnosis workspace synchronized with the global language", () => {
     const { rerender } = render(<GenerativeStudio initialStart="diagnose" />);
     expect(
-      screen.getByRole("heading", { name: "설계단계 에너지 진단" }),
+      screen.getByRole("heading", { name: "건물 에너지 진단" }),
     ).toBeTruthy();
 
     act(() => useAppStore.getState().setLanguage("en"));
     rerender(<GenerativeStudio initialStart="diagnose" />);
 
     expect(
-      screen.getByRole("heading", { name: "Design-stage energy diagnosis" }),
+      screen.getByRole("heading", { name: "Building Energy Diagnostic" }),
     ).toBeTruthy();
   });
 });

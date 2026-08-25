@@ -56,8 +56,11 @@ export function ReadinessStrip({
       data-testid="energy-readiness-strip"
     >
       {validation.readiness.map((category) => {
+        const readyWithAssumptions =
+          validation.validForSimulation &&
+          category.status === "assumptions_required";
         const Icon =
-          category.status === "ready"
+          category.status === "ready" || readyWithAssumptions
             ? Check
             : category.status === "blocked"
               ? LockKeyhole
@@ -94,17 +97,21 @@ export function ReadinessStrip({
                 {CATEGORY_LABEL[locale][category.category]}
               </span>
               <span className="mt-0.5 block text-xs font-medium">
-                {STATUS_LABEL[locale][category.status]}
+                {readyWithAssumptions
+                  ? locale === "ko"
+                    ? "가정 포함 · 실행 가능"
+                    : "Ready with assumptions"
+                  : STATUS_LABEL[locale][category.status]}
               </span>
               <span
                 className="block truncate text-[9px] text-muted-foreground"
                 title={
                   locale === "ko"
-                    ? "확인: 도면 또는 사용자로 검증된 입력 · 가정: 추론값과 기본값 · 누락: 값이 없는 입력"
-                    : "Verified: drawing- or user-confirmed inputs · Assumed: inferred values and defaults · Missing: inputs without a value"
+                    ? "확인: 도면 또는 사용자가 검증한 입력 · 가정: 표시된 추론값과 기본값 · 미제공: 선택 입력 또는 현재 사용할 수 없는 입력"
+                    : "Verified: drawing- or user-confirmed inputs · Assumed: visible inferred values and defaults · Not provided: optional or currently unavailable inputs"
                 }
               >
-                {COUNT_LABEL[locale].verified} {category.verifiedCount} · {COUNT_LABEL[locale].assumed} {category.assumedCount} · {COUNT_LABEL[locale].missing} {category.missingCount}
+                {COUNT_LABEL[locale].verified} {category.verifiedCount} · {COUNT_LABEL[locale].assumed} {category.assumedCount} · {locale === "ko" ? "미제공" : "not provided"} {category.missingCount}
               </span>
             </span>
           </button>

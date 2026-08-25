@@ -17,6 +17,12 @@ function format(value: number, unit: string): string {
   return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(value)} ${unit}`;
 }
 
+function formatDelta(value: number, unit: string): string {
+  return `${new Intl.NumberFormat(undefined, {
+    maximumSignificantDigits: 3,
+  }).format(Math.abs(value))} ${unit}`;
+}
+
 function EndUseBar({
   label,
   value,
@@ -141,7 +147,7 @@ export function ResultComparison({
               {delta != null && (
                 <span className={cn("ml-2 inline-flex items-center gap-0.5 text-[9px]", delta < 0 ? "text-emerald-600" : "text-amber-600")}>
                   {delta < 0 ? <ArrowDownRight className="size-3" /> : <ArrowRight className="size-3" />}
-                  {format(Math.abs(delta), unit)}
+                  {formatDelta(delta, unit)}
                 </span>
               )}
             </button>

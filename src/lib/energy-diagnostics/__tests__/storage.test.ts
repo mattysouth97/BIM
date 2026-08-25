@@ -38,6 +38,7 @@ import {
   type EnergyFact,
   type SourceReference,
 } from "../types";
+import { canonicalModelContentFingerprint } from "../simulation";
 
 const NOW = "2026-08-23T01:02:03.000Z";
 const SOURCE_TEXT = "representative office drawing set bytes";
@@ -105,7 +106,7 @@ function makeModel(contentHash: string): CanonicalEnergyModel {
     unit: "W/m2K",
   };
 
-  return {
+  const model: CanonicalEnergyModel = {
     id: "canonical-model-office-1",
     schemaVersion: CANONICAL_ENERGY_MODEL_VERSION,
     modelVersion: "office-r1-reviewed",
@@ -332,6 +333,25 @@ function makeModel(contentHash: string): CanonicalEnergyModel {
     createdAt: NOW,
     updatedAt: NOW,
   };
+  const modelVersion = canonicalModelContentFingerprint(model);
+  return {
+    ...model,
+    modelVersion,
+    scenarios: model.scenarios.map((scenario) => ({
+      ...scenario,
+      baselineModelVersion: modelVersion,
+    })),
+    simulationRuns: model.simulationRuns.map((run) => ({
+      ...run,
+      engineInput: {
+        ...run.engineInput,
+        payload: {
+          ...(run.engineInput.payload as Record<string, unknown>),
+          canonicalModelVersion: modelVersion,
+        },
+      },
+    })),
+  };
 }
 
 function containsBinary(value: unknown, visited = new WeakSet<object>()): boolean {
@@ -467,6 +487,70 @@ describe("V1 migration", () => {
     expect(loaded?.sourceContentHashes).toEqual([contentHash]);
     expect(database.has(v1Key)).toBe(true);
     expect(database.has(v2Key)).toBe(true);
+  });
+
+  it("discovers a V1-only project in recent projects and migrates it", async () => {
+    const contentHash = await computeSourceContentHash(
+      new TextEncoder().encode(SOURCE_TEXT),
+    );
+    const model = makeModel(contentHash);
+    const v1Key = energyDiagnosticsProjectStorageKey(model.project.id, 1);
+    const v2Key = energyDiagnosticsProjectStorageKey(model.project.id, 2);
+    database.set(v1Key, {
+      kind: "bimfit.energy-diagnostics.project",
+      storageVersion: 1,
+      savedAtIso: NOW,
+      model,
+    } satisfies StoredEnergyDiagnosticsProjectV1);
+
+    await expect(listEnergyDiagnosticsProjects()).resolves.toEqual([
+      {
+        projectId: model.project.id,
+        projectName: model.project.name,
+        modelId: model.id,
+        savedAtIso: NOW,
+      },
+    ]);
+    expect(database.has(v1Key)).toBe(true);
+    expect(database.has(v2Key)).toBe(true);
+  });
+
+  it("preserves a legacy base model but drops results that lack a verifiable fingerprint", async () => {
+    const contentHash = await computeSourceContentHash(
+      new TextEncoder().encode(SOURCE_TEXT),
+    );
+    const current = makeModel(contentHash);
+    const legacyModel = {
+      ...current,
+      modelVersion: "office-r1-reviewed",
+      scenarios: current.scenarios.map((scenario) => ({
+        ...scenario,
+        baselineModelVersion: CANONICAL_ENERGY_MODEL_VERSION,
+      })),
+      simulationRuns: current.simulationRuns.map((run) => ({
+        ...run,
+        engineInput: {
+          ...run.engineInput,
+          payload: {
+            ...(run.engineInput.payload as Record<string, unknown>),
+            canonicalModelVersion: "office-r1-reviewed",
+          },
+        },
+      })),
+    } satisfies CanonicalEnergyModel;
+    database.set(energyDiagnosticsProjectStorageKey(current.project.id, 1), {
+      kind: "bimfit.energy-diagnostics.project",
+      storageVersion: 1,
+      savedAtIso: NOW,
+      model: legacyModel,
+    } satisfies StoredEnergyDiagnosticsProjectV1);
+
+    const loaded = await loadEnergyDiagnosticsProject(current.project.id);
+
+    expect(loaded?.project).toEqual(current.project);
+    expect(loaded?.modelVersion).toBe(canonicalModelContentFingerprint(current));
+    expect(loaded?.scenarios).toEqual([]);
+    expect(loaded?.simulationRuns).toEqual([]);
   });
 
   it("does not overwrite V1 when its canonical payload is corrupt", async () => {

@@ -5,6 +5,7 @@ import type {
   IsoDateTime,
   ScenarioDelta,
 } from "./types";
+import { canonicalModelContentFingerprint } from "./simulation";
 
 export type ScenarioChange<T> = Readonly<{
   id: string;
@@ -102,7 +103,8 @@ export function createScenarioDelta<T>(
 
 /**
  * Creates a delta-only scenario. The baseline model is referenced by identity
- * and version; none of its facts are copied into or changed by the scenario.
+ * and exact content fingerprint; none of its facts are copied into or changed
+ * by the scenario.
  */
 export function createEnergyScenario({
   id,
@@ -128,7 +130,7 @@ export function createEnergyScenario({
     id,
     name: name.trim(),
     baselineModelId: baseline.id,
-    baselineModelVersion: baseline.schemaVersion,
+    baselineModelVersion: canonicalModelContentFingerprint(baseline),
     deltas,
     createdAt: now,
     updatedAt: now,
@@ -139,14 +141,15 @@ export function assertScenarioMatchesBaseline(
   scenario: EnergyScenario,
   baseline: CanonicalEnergyModel,
 ): void {
+  const baselineFingerprint = canonicalModelContentFingerprint(baseline);
   if (scenario.baselineModelId !== baseline.id) {
     throw new Error(
       `Scenario ${scenario.id} belongs to model ${scenario.baselineModelId}, not ${baseline.id}.`,
     );
   }
-  if (scenario.baselineModelVersion !== baseline.schemaVersion) {
+  if (scenario.baselineModelVersion !== baselineFingerprint) {
     throw new Error(
-      `Scenario ${scenario.id} targets canonical schema ${scenario.baselineModelVersion}, not ${baseline.schemaVersion}.`,
+      `Scenario ${scenario.id} targets model content ${scenario.baselineModelVersion}, not ${baselineFingerprint}.`,
     );
   }
   for (const delta of scenario.deltas) {

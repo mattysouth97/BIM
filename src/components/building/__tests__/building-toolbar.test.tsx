@@ -84,7 +84,7 @@ describe("BuildingToolbar demo badge", () => {
   });
 });
 
-describe("BuildingToolbar 다른 설계 생성", () => {
+describe("BuildingToolbar 에너지 진단 handoff", () => {
   beforeEach(() => {
     push.mockReset();
     useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
@@ -92,7 +92,7 @@ describe("BuildingToolbar 다른 설계 생성", () => {
     useBlueprintStore.getState().reset();
   });
 
-  it("seeds a blueprint from the footprint and opens the studio", async () => {
+  it("seeds diagnostic geometry from the footprint and opens the canonical flow", async () => {
     seedRecipe();
     render(
       <BuildingToolbar
@@ -103,11 +103,11 @@ describe("BuildingToolbar 다른 설계 생성", () => {
       />,
     );
 
-    const button = await screen.findByRole("button", { name: /다른 설계 생성/ });
+    const button = await screen.findByRole("button", { name: /에너지 진단/ });
     expect(button.hasAttribute("disabled")).toBe(false);
     fireEvent.click(button);
 
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/studio"));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/diagnostics/new?method=create"));
 
     const blueprint = useBlueprintStore.getState().blueprint;
     expect(blueprint.boundaries).toHaveLength(1);
@@ -130,7 +130,7 @@ describe("BuildingToolbar 다른 설계 생성", () => {
       />,
     );
 
-    const button = await screen.findByRole("button", { name: /다른 설계 생성/ });
+    const button = await screen.findByRole("button", { name: /에너지 진단/ });
     expect(button.hasAttribute("disabled")).toBe(true);
     expect(button.getAttribute("title")).toContain("평면 윤곽이 없어");
     fireEvent.click(button);

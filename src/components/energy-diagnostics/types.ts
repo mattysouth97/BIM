@@ -42,6 +42,9 @@ export type DiagnosisSelection = Readonly<
       kind: "simulation_result";
       runId: string;
     }
+  | {
+      kind: "diagnostic_finding";
+    }
   )
 >;
 
@@ -61,6 +64,21 @@ export type EnergyDiagnosisWorkspaceProps = Readonly<{
   className?: string;
   locale?: DiagnosisLocale;
   initialModel?: CanonicalEnergyModel | null;
+  /**
+   * Starts the bundled sample through the same ingestion, validation, engine,
+   * persistence, and result pipeline as uploaded sources. It is an entry
+   * method, not a parallel demo mode.
+   */
+  autoLoadSample?: boolean;
+  /** Restore one durable diagnostic before initializing a new entry method. */
+  restoreProjectId?: string;
+  /**
+   * Sources produced by an in-product geometry authoring tool. They enter the
+   * exact same ingestion boundary as uploaded files and retain their origin.
+   */
+  initialDrawingSources?: readonly DrawingSourceInput[];
+  /** Hide the sample shortcut after the user explicitly chose Upload. */
+  showSampleOption?: boolean;
   /** Existing BuildingScene is supplied here; this feature never creates a parallel viewer. */
   renderScene?: (context: EnergyDiagnosisSceneContext) => ReactNode;
   onModelChange?: (model: CanonicalEnergyModel) => void;
@@ -70,4 +88,6 @@ export type EnergyDiagnosisWorkspaceProps = Readonly<{
   ) => void;
   onSelectionChange?: (selection: DiagnosisSelection | null) => void;
   onSimulationRun?: (run: SimulationRun) => void;
+  /** Called only after IndexedDB has durably accepted the project bundle. */
+  onProjectSaved?: (projectId: string) => void;
 }>;

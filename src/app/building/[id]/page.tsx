@@ -4,7 +4,7 @@
 // or env values are ever forwarded into metadata (AFF-2).
 
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   DEMO_BUILDING_ID,
   DRAWING_BUILDING_ID,
@@ -44,8 +44,8 @@ export function isRoutableBuildingId(id: string): boolean {
  * src/lib/__tests__/building-metadata-title.test.ts.
  */
 export function buildingMetadataTitle(id: string): string {
-  if (id === DEMO_BUILDING_ID) return "데모 오피스 타워 | BIMFIT";
-  if (id === DRAWING_BUILDING_ID) return "도면에서 시작 | BIMFIT";
+  if (id === DEMO_BUILDING_ID) return "Sample Energy Diagnostic | BIMFIT";
+  if (id === DRAWING_BUILDING_ID) return "Create Energy Diagnostic | BIMFIT";
   // The design's own name lives in IndexedDB, which the server cannot read —
   // the id is the only honest title available at metadata time.
   if (isGeneratedPk(id)) return `생성 설계 ${id} | BIMFIT`;
@@ -61,6 +61,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BuildingDetailPage({ params }: Props) {
   const { id } = await params;
+  // Legacy Demo and Drawing URLs remain compatibility doors, not product
+  // modes. Both enter the one Energy Diagnostic state machine.
+  if (id === DEMO_BUILDING_ID) redirect("/diagnostics/new?method=sample");
+  if (id === DRAWING_BUILDING_ID) redirect("/diagnostics/new?method=create");
+  if (isGeneratedPk(id)) redirect("/diagnostics/new?method=create");
   // Validate the id at the server layer so a bad URL 404s before the client
   // component even mounts (complements the client-side parseBuildingId guard).
   // P2-24: cad-first draft ids (cad-<uuid>) are routable too.

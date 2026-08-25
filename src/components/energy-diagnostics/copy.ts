@@ -1,14 +1,14 @@
 import type { DiagnosisLocale } from "./types";
 
 const ko = {
-  title: "설계단계 에너지 진단",
-  subtitle: "도면의 근거를 확인하고, 실제 BIMFIT 엔진 입력으로 연결합니다.",
-  referenceCase: "대표 오피스 도면 세트 열기",
-  upload: "내 도면 세트 등록",
+  title: "건물 에너지 진단",
+  subtitle: "건물 모델의 근거를 확인하고, 검증한 입력으로 진단합니다.",
+  referenceCase: "샘플 진단 시작",
+  upload: "DXF 도면 업로드",
   replaceUpload: "새 도면 세트 검토",
   emptyTitle: "도면에서 진단까지, 한 흐름으로 시작하세요",
   emptyBody:
-    "Tier 1 도면만으로도 시작할 수 있습니다. 이후 상세·설비 도면을 더하면 가정이 줄고 신뢰도가 높아집니다.",
+    "현재 지원되는 DXF 벡터 평면도로 시작하세요. BIMFIT이 해석한 경계와 모든 가정을 실행 전에 확인할 수 있습니다.",
   sourceDrawing: "원본 도면",
   modelView: "3D 에너지 모델",
   facts: "추출 근거",
@@ -73,14 +73,14 @@ const ko = {
 type DiagnosisCopy = { readonly [Key in keyof typeof ko]: string };
 
 const en: DiagnosisCopy = {
-  title: "Design-stage energy diagnosis",
-  subtitle: "Verify drawing evidence and connect it to real BIMFIT engine inputs.",
-  referenceCase: "Open representative office set",
-  upload: "Register my drawing set",
+  title: "Building Energy Diagnostic",
+  subtitle: "Verify the building model, then diagnose it from traceable inputs.",
+  referenceCase: "Start sample diagnostic",
+  upload: "Upload DXF drawing",
   replaceUpload: "Review new drawing set",
   emptyTitle: "Move from drawings to diagnosis in one workflow",
   emptyBody:
-    "Start with Tier 1 drawings. Adding details and services drawings later reduces assumptions and improves confidence.",
+    "Start with a supported DXF vector floor plan. Review every interpreted boundary and material assumption before the diagnostic runs.",
   sourceDrawing: "Source drawing",
   modelView: "3D energy model",
   facts: "Extracted evidence",

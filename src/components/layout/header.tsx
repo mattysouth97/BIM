@@ -3,11 +3,10 @@
 import { useState, lazy, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sun, Moon, Key, Globe, CircleHelp } from "lucide-react";
+import { Sun, Moon, Key, Globe, Plus } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAppStore } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
-import { requestGuide } from "@/lib/guide-events";
 
 const ApiKeyDialog = lazy(() =>
   import("@/components/settings/api-key-dialog").then((m) => ({ default: m.ApiKeyDialog }))
@@ -26,9 +25,20 @@ export function Header() {
     return null;
   }
 
-  const showGuide = pathname === "/";
-  const guideLabel =
-    language === "ko" ? "가이드 / 도움말" : "Guide / Help";
+  const newDiagnosticLabel =
+    language === "ko" ? "새 에너지 진단" : "New Energy Diagnostic";
+  const languageLabel =
+    language === "ko" ? "Switch to English" : "한국어로 전환";
+  const themeLabel =
+    language === "ko"
+      ? theme === "dark"
+        ? "라이트 모드"
+        : "다크 모드"
+      : theme === "dark"
+        ? "Light mode"
+        : "Dark mode";
+  const apiKeyLabel =
+    language === "ko" ? "API 키 설정" : "API key settings";
 
   const toggleLanguage = () => {
     setLanguage(language === "ko" ? "en" : "ko");
@@ -41,59 +51,40 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between px-4">
-          <div className="flex items-baseline gap-4">
-            <Link
-              href="/"
-              className="flex items-baseline gap-2 no-underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="홈으로 / Home"
-            >
-              <span className="text-sm font-semibold tracking-tight">BIMFIT</span>
-              <span className="hidden text-[10px] font-medium text-muted-foreground sm:inline">
-                {language === "ko" ? "구상에서 트윈까지" : "Concept to Twin"}
-              </span>
-            </Link>
+        <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between gap-2 px-4">
+          <Link
+            href="/"
+            className="flex min-w-0 items-baseline gap-2 rounded-sm no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={language === "ko" ? "BIMFIT 홈" : "BIMFIT home"}
+          >
+            <span className="text-sm font-semibold tracking-tight">BIMFIT</span>
+            <span className="hidden truncate text-[10px] font-medium text-muted-foreground lg:inline">
+              {language === "ko" ? "건물 에너지 진단" : "Building Energy Diagnostic"}
+            </span>
+          </Link>
 
-            <Link
-              href="/studio"
-              aria-current={pathname?.startsWith("/studio") ? "page" : undefined}
-              title={language === "ko" ? "Studio" : "스튜디오"}
-              className="rounded-sm text-sm font-medium text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-[current=page]:text-foreground"
-            >
-              {language === "ko" ? "스튜디오" : "Studio"}
-            </Link>
-
-            <Link
-              href="/studio?start=diagnose"
-              title={language === "ko" ? "Energy diagnosis" : "에너지 진단"}
-              className="rounded-sm text-sm font-medium text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {language === "ko" ? "에너지 진단" : "Energy diagnosis"}
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-1">
-            {showGuide && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={requestGuide}
-                data-tour="guide-replay"
-                title={guideLabel}
-                aria-label={guideLabel}
+          <div className="flex shrink-0 items-center gap-1">
+            <Button asChild variant="outline" size="sm" className="px-2 sm:px-3">
+              <Link
+                href="/diagnostics/new"
+                data-testid="header-new-diagnostic"
+                aria-label={newDiagnosticLabel}
+                aria-current={pathname?.startsWith("/diagnostics") ? "page" : undefined}
               >
-                <CircleHelp className="mr-1 h-4 w-4" />
-                <span className="hidden sm:inline">
-                  {language === "ko" ? "가이드" : "Guide"}
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">{newDiagnosticLabel}</span>
+                <span aria-hidden className="sm:hidden">
+                  {language === "ko" ? "새 진단" : "New"}
                 </span>
-              </Button>
-            )}
+              </Link>
+            </Button>
 
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleLanguage}
-              title={language === "ko" ? "Switch to English" : "한국어로 전환"}
+              title={languageLabel}
+              aria-label={languageLabel}
             >
               <Globe className="mr-1 h-4 w-4" />
               {language === "ko" ? "KO" : "EN"}
@@ -106,7 +97,8 @@ export function Header() {
               // icon to this button (the shared button base has no `relative`).
               className="relative"
               onClick={toggleTheme}
-              title={theme === "dark" ? "Light mode" : "Dark mode"}
+              title={themeLabel}
+              aria-label={themeLabel}
             >
               <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -117,7 +109,8 @@ export function Header() {
               variant="ghost"
               size="icon"
               onClick={() => setApiKeyDialogOpen(true)}
-              title="API Key Settings"
+              title={apiKeyLabel}
+              aria-label={apiKeyLabel}
             >
               <Key className="h-4 w-4" />
               <span className="sr-only">API Key settings</span>

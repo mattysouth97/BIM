@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import type { DegreeDayEnginePayload } from "@/lib/energy-diagnostics/adapter";
+import {
+  compileCanonicalModelToEngineInput,
+  type DegreeDayEnginePayload,
+} from "@/lib/energy-diagnostics/adapter";
 import { sha256Hex, toBytes } from "@/lib/energy-diagnostics/hashing";
+import {
+  canonicalModelContentFingerprint,
+  isSimulationRunCurrentForModel,
+} from "@/lib/energy-diagnostics/simulation";
+import type { CanonicalEnergyModel } from "@/lib/energy-diagnostics/types";
 import { validateCanonicalEnergyModel } from "@/lib/energy-diagnostics/validation";
 
 import {
@@ -16,6 +24,16 @@ import {
   spatialResultsForRun,
   splitModelZoneBySpace,
 } from "../model-operations";
+
+async function completedDiagnosticModel(): Promise<CanonicalEnergyModel> {
+  const reference = await loadRepresentativeCase();
+  let model = applyInfiltrationAssumption(reference.model);
+  const conflict = model.conflicts[0];
+  if (!conflict.selectedFactId) throw new Error("reference conflict has no selection");
+  model = resolveVisibleConflict(model, conflict.id, conflict.selectedFactId);
+  model = runBaselineModel(model).model;
+  return runImprovementScenario(model, { windowUValueWPerM2K: 1.1 }).model;
+}
 
 describe("representative diagnosis model operations", () => {
   it("builds from exactly the seven registered documents with hash-matching source bytes", async () => {
@@ -433,6 +451,103 @@ describe("representative diagnosis model operations", () => {
     }
     // Baseline opening facts stay untouched.
     expect(alternative.model.geometry.openings).toEqual(baseline.model.geometry.openings);
+  });
+
+  it("invalidates derived runs and scenarios after every representative model mutation", async () => {
+    const completed = await completedDiagnosticModel();
+    expect(completed.scenarios.length).toBeGreaterThan(0);
+    expect(completed.simulationRuns.length).toBeGreaterThan(1);
+    expect(completed.modelVersion).toBe(canonicalModelContentFingerprint(completed));
+
+    const reference = await loadRepresentativeCase();
+    const pendingAssumption = Object.freeze({
+      ...completed,
+      envelope: Object.freeze({
+        ...completed.envelope,
+        infiltrationAirChangesPerHour:
+          reference.model.envelope.infiltrationAirChangesPerHour,
+      }),
+      missingValues: reference.model.missingValues,
+      assumptions: reference.model.assumptions,
+    });
+    const assumed = applyInfiltrationAssumption(
+      pendingAssumption,
+      "2026-01-15T02:00:00.000Z",
+    );
+    expect(assumed.modelVersion).not.toBe(completed.modelVersion);
+    expect(assumed.scenarios).toEqual([]);
+    expect(assumed.simulationRuns).toEqual([]);
+
+    const unresolved = applyInfiltrationAssumption(reference.model);
+    const staleUnresolved = Object.freeze({
+      ...unresolved,
+      modelVersion: completed.modelVersion,
+      scenarios: completed.scenarios,
+      simulationRuns: completed.simulationRuns,
+    });
+    const conflict = staleUnresolved.conflicts[0];
+    if (!conflict.selectedFactId) throw new Error("reference conflict has no selection");
+    const resolved = resolveVisibleConflict(
+      staleUnresolved,
+      conflict.id,
+      conflict.selectedFactId,
+      "2026-01-15T02:01:00.000Z",
+    );
+    expect(resolved.scenarios).toEqual([]);
+    expect(resolved.simulationRuns).toEqual([]);
+
+    const [first, second] = completed.geometry.thermalZones;
+    const merged = mergeModelZones(
+      completed,
+      [first.id, second.id],
+      "Fingerprint merge",
+      "2026-01-15T02:02:00.000Z",
+    );
+    expect(merged.modelVersion).not.toBe(completed.modelVersion);
+    expect(merged.scenarios).toEqual([]);
+    expect(merged.simulationRuns).toEqual([]);
+
+    const mergedZone = merged.geometry.thermalZones.find(
+      (zone) => zone.name.value === "Fingerprint merge",
+    );
+    if (!mergedZone) throw new Error("merged zone was not created");
+    const rerun = runBaselineModel(merged).model;
+    const withScenario = runImprovementScenario(rerun, {
+      infiltrationAch: 0.25,
+    }).model;
+    const split = splitModelZoneBySpace(
+      withScenario,
+      mergedZone.id,
+      "2026-01-15T02:03:00.000Z",
+    );
+    expect(split.modelVersion).not.toBe(withScenario.modelVersion);
+    expect(split.scenarios).toEqual([]);
+    expect(split.simulationRuns).toEqual([]);
+  });
+
+  it("binds runs to the current fingerprint and rejects a stale scenario", async () => {
+    const completed = await completedDiagnosticModel();
+    const scenario = completed.scenarios[0];
+    const run = completed.simulationRuns.find(
+      (candidate) => candidate.scenarioId === scenario.id,
+    );
+    if (!run) throw new Error("scenario run was not created");
+
+    expect(scenario.baselineModelVersion).toBe(completed.modelVersion);
+    expect(isSimulationRunCurrentForModel(run, completed)).toBe(true);
+    expect(
+      (run.engineInput.payload as DegreeDayEnginePayload).canonicalModelVersion,
+    ).toBe(completed.modelVersion);
+
+    const [first, second] = completed.geometry.thermalZones;
+    const changed = mergeModelZones(
+      completed,
+      [first.id, second.id],
+      "Changed baseline",
+    );
+    expect(() =>
+      compileCanonicalModelToEngineInput(changed, scenario),
+    ).toThrow(/targets model content/);
   });
 
   it("rejects an improvement scenario with no changed values", async () => {

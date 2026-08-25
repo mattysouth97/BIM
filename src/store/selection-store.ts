@@ -31,6 +31,7 @@ export type CanonicalSelectionKind =
   | "energy_fact"
   | "thermal_zone"
   | "source_reference"
+  | "diagnostic_finding"
   | "simulation_series";
 
 /**

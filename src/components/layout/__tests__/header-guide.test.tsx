@@ -1,10 +1,6 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Header } from "../header";
-import {
-  GUIDE_REQUEST_EVENT,
-  type GuideRequestDetail,
-} from "@/lib/guide-events";
 import { useAppStore } from "@/store/app-store";
 
 const navigation = vi.hoisted(() => ({ pathname: "/" }));
@@ -14,42 +10,30 @@ vi.mock("next/navigation", () => ({
 
 afterEach(cleanup);
 
-describe("Header guide control", () => {
+describe("Header diagnostic control", () => {
   beforeEach(() => {
     navigation.pathname = "/";
     useAppStore.setState({ language: "en" });
   });
 
-  it("dispatches the typed global guide request event", () => {
-    const listener = vi.fn<(event: CustomEvent<GuideRequestDetail>) => void>();
-    window.addEventListener(GUIDE_REQUEST_EVENT, listener);
-
+  it("exposes the single primary product destination", () => {
     render(<Header />);
-    fireEvent.click(screen.getByRole("button", { name: "Guide / Help" }));
-
-    expect(listener).toHaveBeenCalledTimes(1);
-    expect(listener.mock.calls[0][0].detail).toEqual({ source: "header" });
-    window.removeEventListener(GUIDE_REQUEST_EVENT, listener);
+    const link = screen.getByRole("link", { name: "New Energy Diagnostic" });
+    expect(link.getAttribute("href")).toBe("/diagnostics/new");
+    expect(screen.queryByRole("button", { name: "Guide / Help" })).toBeNull();
   });
 
-  it("is hidden outside home and building routes", () => {
-    navigation.pathname = "/releases";
+  it("hides the marketing header in the full-screen building workspace", () => {
+    navigation.pathname = "/building/example";
     render(<Header />);
-
-    expect(
-      screen.queryByRole("button", { name: "Guide / Help" }),
-    ).toBeNull();
+    expect(screen.queryByRole("banner")).toBeNull();
   });
 
-  it("localizes its visible and accessible label", () => {
+  it("localizes the primary action's visible and accessible label", () => {
     useAppStore.setState({ language: "ko" });
     render(<Header />);
-
-    expect(
-      screen
-        .getByRole("button", { name: "가이드 / 도움말" })
-        .getAttribute("title"),
-    ).toBe("가이드 / 도움말");
-    expect(screen.getByText("가이드")).toBeTruthy();
+    const link = screen.getByRole("link", { name: "새 에너지 진단" });
+    expect(link.getAttribute("href")).toBe("/diagnostics/new");
+    expect(screen.getAllByText("새 에너지 진단").length).toBeGreaterThan(0);
   });
 });

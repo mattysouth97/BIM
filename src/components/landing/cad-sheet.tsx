@@ -4,15 +4,13 @@ import { useCallback, useState } from "react";
 import Image from "next/image";
 import type { LandingCopy } from "@/lib/landing/copy";
 import { BANNER_LAYER_META, type BannerLayerId } from "@/lib/landing/layers";
-import { DemoDoor, StudioDoor } from "./landing-doors";
+import { NewDiagnosticDoor, SampleDiagnosticDoor } from "./landing-doors";
 import { LayerRail } from "./layer-rail";
 
 /**
- * One screen, one statement: the name at poster scale, centred over a
- * full-bleed BIM plate that the scrim holds back to a watermark. Under it the
- * tagline, the spec stamp, one primary door, and the two studio doors set
- * quiet. The layer rail stays — it *is* the argument, the same building peeled
- * — but it swaps the plate underneath instead of owning a figure of its own.
+ * One screen, one product: BIMFIT's diagnostic entry point, centred over the
+ * layered building plate. The rail keeps the visual argument spatial while a
+ * single primary door establishes the canonical workflow.
  */
 export function CadSheet({ copy }: { copy: LandingCopy }) {
   const [layer, setLayer] = useState<BannerLayerId>("all");
@@ -45,7 +43,11 @@ export function CadSheet({ copy }: { copy: LandingCopy }) {
 
       <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10 lg:py-20">
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
-          <h1 id="bimfit-title" className="landing-display text-foreground">
+          <h1
+            id="bimfit-title"
+            aria-label={`${copy.brand}: ${copy.display}`}
+            className="landing-display text-foreground"
+          >
             {copy.brand}
           </h1>
 
@@ -61,37 +63,21 @@ export function CadSheet({ copy }: { copy: LandingCopy }) {
           </p>
 
           <div className="flex flex-col items-center gap-4 pt-3">
-            <DemoDoor
-              testId="landing-demo-start"
+            <NewDiagnosticDoor
+              testId="landing-new-diagnostic"
               size="lg"
               className="h-12 px-8 text-base font-semibold"
             >
-              {copy.demo}
-            </DemoDoor>
+              {copy.newDiagnostic}
+            </NewDiagnosticDoor>
 
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-              <StudioDoor
-                testId="landing-studio-start"
-                href="/studio?start=draw"
-                variant="link"
-                className="h-auto p-0 underline"
-                title={copy.studioSub}
-              >
-                {copy.studio}
-              </StudioDoor>
-              <span aria-hidden className="text-border">
-                /
-              </span>
-              <StudioDoor
-                testId="landing-import-start"
-                href="/studio?start=diagnose"
-                variant="link"
-                className="h-auto p-0 underline"
-                title={copy.importDrawingSub}
-              >
-                {copy.importDrawing}
-              </StudioDoor>
-            </div>
+            <SampleDiagnosticDoor
+              testId="landing-sample-diagnostic"
+              variant="link"
+              className="h-auto p-0 text-foreground/75 underline decoration-foreground/35 underline-offset-4 hover:text-foreground"
+            >
+              {copy.sampleDiagnostic}
+            </SampleDiagnosticDoor>
           </div>
 
           <div className="mt-4 w-full max-w-md border-t border-border/60 pt-5">

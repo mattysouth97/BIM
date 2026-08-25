@@ -415,7 +415,6 @@ export function validateCanonicalEnergyModel(
     );
     if (
       acceptanceRecordPresent ||
-      model.modelVersion !== "tier1-office-screening-v1-accepted" ||
       unreviewedTemplateFacts.length > 0 ||
       unreviewedBoundaryFacts.length > 0
     ) {

@@ -8,6 +8,7 @@ export * from "./hashing";
 export * from "./ids";
 export * from "./ingestion";
 export * from "./scenarios";
+export * from "./simulation";
 export * from "./storage";
 export * from "./tier-one-model";
 export * from "./types";

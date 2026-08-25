@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { AlertCircle, AlertTriangle, Info, TrendingDown } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -50,12 +51,21 @@ export function FindingsPanel({
   model,
   locale,
   onSelectFact,
+  selectedFindingId,
+  onSelectFinding,
+  canEvaluateFinding,
+  onEvaluateFinding,
 }: Readonly<{
   findings: readonly DiagnosticFinding[];
   model: CanonicalEnergyModel;
   locale: DiagnosisLocale;
   onSelectFact: (fact: EnergyFact<unknown>) => void;
+  selectedFindingId?: string;
+  onSelectFinding?: (finding: DiagnosticFinding) => void;
+  canEvaluateFinding?: (finding: DiagnosticFinding) => boolean;
+  onEvaluateFinding?: (finding: DiagnosticFinding) => void;
 }>) {
+  const panelId = useId();
   if (findings.length === 0) return null;
   const ranked = [...findings].sort(
     (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity],
@@ -80,17 +90,44 @@ export function FindingsPanel({
       <ol className="space-y-2">
         {ranked.map((finding, index) => {
           const Icon = severityIcon(finding.severity);
+          const selected = finding.id === selectedFindingId;
+          const titleId = `${panelId}-finding-${index}-title`;
+          const descriptionId = `${panelId}-finding-${index}-description`;
+          const actionId = `${panelId}-finding-${index}-action`;
+          const canEvaluate = Boolean(
+            finding.impactSimulated &&
+              onEvaluateFinding &&
+              (canEvaluateFinding?.(finding) ?? true),
+          );
           return (
             <li
               key={finding.id}
               className={cn(
-                "rounded-lg border bg-card p-3",
+                "relative isolate overflow-hidden rounded-lg border bg-card transition-[border-color,box-shadow] duration-150",
                 finding.severity === "blocking" && "border-rose-500/40",
                 finding.severity === "high" && "border-amber-500/45",
+                selected &&
+                  "border-cyan-500/70 ring-1 ring-cyan-500/35",
               )}
               data-testid={`finding-${finding.id}`}
+              data-selected={selected ? "true" : "false"}
             >
-              <div className="flex items-start gap-2.5">
+              {onSelectFinding ? (
+                <button
+                  type="button"
+                  className="absolute inset-0 z-0 cursor-pointer rounded-lg bg-transparent transition-colors duration-150 hover:bg-cyan-500/[0.04] active:bg-cyan-500/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                  aria-labelledby={titleId}
+                  aria-describedby={`${descriptionId} ${actionId}`}
+                  aria-pressed={selected}
+                  onClick={() => onSelectFinding(finding)}
+                />
+              ) : null}
+              <div
+                className={cn(
+                  "relative z-10 flex items-start gap-2.5 p-3",
+                  onSelectFinding && "pointer-events-none",
+                )}
+              >
                 <span
                   className={cn(
                     "mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border font-mono text-[10px]",
@@ -108,18 +145,80 @@ export function FindingsPanel({
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <p className="text-xs font-semibold">{finding.title}</p>
+                    <p id={titleId} className="text-xs font-semibold">
+                      {finding.title}
+                    </p>
                     <Badge variant="outline" className="text-[8px]">
                       <Icon className="mr-0.5 size-2.5" aria-hidden="true" />
                       {SEVERITY_LABEL[locale][finding.severity]}
                     </Badge>
+                    <Badge
+                      variant="outline"
+                      className="text-[8px] text-muted-foreground"
+                      title={
+                        finding.confidence == null
+                          ? locale === "ko"
+                            ? "신뢰도를 계산할 근거가 부족합니다."
+                            : "There is not enough evidence to calculate confidence."
+                          : locale === "ko"
+                            ? "연결된 입력 근거의 신뢰도"
+                            : "Confidence derived from linked input evidence"
+                      }
+                    >
+                      {locale === "ko" ? "신뢰도" : "Confidence"}{" "}
+                      {finding.confidence == null
+                        ? "—"
+                        : `${Math.round(finding.confidence * 100)}%`}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="text-[8px] text-muted-foreground"
+                      title={
+                        finding.relatedSourceRefs.length > 0
+                          ? finding.relatedSourceRefs
+                              .map((source) =>
+                                [
+                                  source.documentId,
+                                  source.sheetId,
+                                  source.cadLayer,
+                                  source.entityRef,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" / "),
+                              )
+                              .join(" · ")
+                          : locale === "ko"
+                            ? "직접 연결된 도면 근거 없음"
+                            : "No directly linked drawing source"
+                      }
+                    >
+                      {finding.relatedSourceRefs.length > 0
+                        ? locale === "ko"
+                          ? `출처 ${finding.relatedSourceRefs.length}`
+                          : `${finding.relatedSourceRefs.length} source${finding.relatedSourceRefs.length === 1 ? "" : "s"}`
+                        : locale === "ko"
+                          ? "모델/엔진 근거"
+                          : "Model/engine evidence"}
+                    </Badge>
+                    {selected ? (
+                      <Badge
+                        variant="outline"
+                        className="border-cyan-500/50 bg-cyan-500/10 text-[8px] text-cyan-700 dark:text-cyan-300"
+                        aria-hidden="true"
+                      >
+                        {locale === "ko" ? "선택됨" : "Selected"}
+                      </Badge>
+                    ) : null}
                     {!finding.impactSimulated && (
                       <Badge variant="outline" className="text-[8px] text-muted-foreground">
                         {locale === "ko" ? "정보성" : "informational"}
                       </Badge>
                     )}
                   </div>
-                  <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
+                  <p
+                    id={descriptionId}
+                    className="mt-1 text-[10px] leading-relaxed text-muted-foreground"
+                  >
                     {finding.explanation}
                   </p>
                   {finding.evidence.length > 0 && (
@@ -141,8 +240,11 @@ export function FindingsPanel({
                           <button
                             key={`${finding.id}:${item.label}`}
                             type="button"
-                            onClick={() => onSelectFact(fact)}
-                            className="rounded border bg-muted/25 px-2 py-1 text-[9px] transition-colors hover:border-cyan-500/40 hover:bg-cyan-500/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onSelectFact(fact);
+                            }}
+                            className="pointer-events-auto relative z-20 rounded border bg-muted/25 px-2 py-1 text-[9px] transition-colors hover:border-cyan-500/40 hover:bg-cyan-500/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             {content}
                           </button>
@@ -157,12 +259,29 @@ export function FindingsPanel({
                       })}
                     </div>
                   )}
-                  <p className="mt-2 border-l-2 border-cyan-500/50 pl-2 text-[10px] leading-relaxed">
+                  <p
+                    id={actionId}
+                    className="mt-2 border-l-2 border-cyan-500/50 pl-2 text-[10px] leading-relaxed"
+                  >
                     <span className="font-semibold">
                       {locale === "ko" ? "권장 조치: " : "Recommended action: "}
                     </span>
                     {finding.recommendedDesignAction}
                   </p>
+                  {canEvaluate ? (
+                    <button
+                      type="button"
+                      className="pointer-events-auto relative z-20 mt-2 rounded-md border border-cyan-500/40 bg-cyan-500/[0.08] px-2.5 py-1.5 text-[10px] font-semibold text-cyan-800 transition-colors hover:bg-cyan-500/[0.14] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:text-cyan-200"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onEvaluateFinding?.(finding);
+                      }}
+                    >
+                      {locale === "ko"
+                        ? "개선안 평가 준비"
+                        : "Evaluate this improvement"}
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </li>

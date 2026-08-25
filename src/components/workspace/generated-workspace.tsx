@@ -235,10 +235,10 @@ export function GeneratedWorkspace({ generationId }: { generationId: string }) {
           </div>
         ) : null}
         <Link
-          href="/studio"
+          href="/diagnostics/new?method=create"
           className="mt-4 text-sm text-primary underline underline-offset-4"
         >
-          {t("스튜디오에서 새 설계 만들기", "Create a design in the studio")}
+          {t("새 에너지 진단 시작", "Start a new energy diagnostic")}
         </Link>
       </NoticeScreen>
     );

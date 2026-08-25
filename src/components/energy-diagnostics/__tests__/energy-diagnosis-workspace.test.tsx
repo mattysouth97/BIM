@@ -51,7 +51,7 @@ describe("EnergyDiagnosisWorkspace", () => {
     );
 
     expect(screen.getByRole("heading", { name: "도면에서 진단까지, 한 흐름으로 시작하세요" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "대표 오피스 도면 세트 열기" }));
+    fireEvent.click(screen.getByRole("button", { name: "샘플 진단 시작" }));
 
     await waitFor(() => expect(screen.getByTestId("stage-panel-review")).toBeTruthy());
     expect(screen.getByTestId("energy-readiness-strip")).toBeTruthy();
@@ -81,7 +81,15 @@ describe("EnergyDiagnosisWorkspace", () => {
     expect(screen.getByTestId("existing-building-scene")).toBeTruthy();
     expect(screen.getByText(/월별·시간별·냉방피크/)).toBeTruthy();
 
-    fireEvent.click(screen.getByTestId("next-diagnosis-action"));
+    await waitFor(() =>
+      expect(screen.getByTestId("stage-panel-compare")).toBeTruthy(),
+    );
+    expect(screen.getByTestId("next-diagnosis-action").textContent).toContain("프로젝트 저장");
+    fireEvent.click(screen.getByTestId("toggle-improvement-editor"));
+    fireEvent.change(screen.getByTestId("scenario-window-u-value"), {
+      target: { value: "1.1" },
+    });
+    fireEvent.click(screen.getByTestId("run-improvement-scenario"));
     await waitFor(() => expect(onSimulationRun).toHaveBeenCalledTimes(2));
     expect(screen.getByTestId("stage-panel-compare")).toBeTruthy();
     expect(screen.getAllByText("개선 대안").length).toBeGreaterThan(0);
@@ -142,8 +150,8 @@ describe("EnergyDiagnosisWorkspace", () => {
   it("offers the same workflow labels in English", async () => {
     render(<EnergyDiagnosisWorkspace locale="en" />);
     expect(screen.getByRole("heading", { name: "Move from drawings to diagnosis in one workflow" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Open representative office set" })).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: "Register my drawing set" }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: "Start sample diagnostic" })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Upload DXF drawing" }).length).toBeGreaterThan(0);
   });
 
   it("shows the affected fact and object IDs for preflight issues", async () => {
@@ -221,7 +229,7 @@ describe("EnergyDiagnosisWorkspace", () => {
       />,
     );
 
-    fireEvent.click(screen.getByTestId("diagnosis-stage-simulation"));
+    fireEvent.click(screen.getByTestId("diagnosis-stage-compare"));
     fireEvent.click(screen.getByTestId("result-annualEnergyKwh-baseline"));
 
     await waitFor(() => {
@@ -373,7 +381,7 @@ describe("EnergyDiagnosisWorkspace", () => {
       "Restored the saved model",
     );
     expect(
-      screen.getByRole("button", { name: "Open representative office set" }),
+      screen.getByRole("button", { name: "Start sample diagnostic" }),
     ).toBeTruthy();
   });
 });

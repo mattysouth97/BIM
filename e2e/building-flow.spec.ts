@@ -6,12 +6,11 @@ import { TITLE_RESPONSE, EMPTY_LEDGER } from "./fixtures/ledger";
 // If no server is available in CI, tests will be skipped via the beforeEach check.
 
 test.describe("Building Flow", () => {
-  test("homepage loads with search input", async ({ page }) => {
+  test("homepage exposes the canonical diagnostic action", async ({ page }) => {
     await page.goto("/");
     // The homepage should render without crashing
     await expect(page.locator("body")).toBeVisible();
-    // Search input should be present (region or address search)
-    await expect(page.getByTestId("landing-demo-start")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("landing-new-diagnostic")).toBeVisible({ timeout: 10000 });
   });
 
   test("homepage has main content area", async ({ page }) => {
@@ -73,32 +72,23 @@ test.describe("Building Flow", () => {
 // named data and deterministic behavior, and mock data.go.kr at the network
 // layer (no live API, no API key in CI).
 
-test.describe("Landing + search chrome", () => {
-  test("hero states the GreenRetrofit value proposition", async ({ page }) => {
+test.describe("Landing diagnostic chrome", () => {
+  test("hero states the Building Energy Diagnostic value proposition", async ({ page }) => {
     await page.goto("/");
     // Retitled in P2-04 — assert the actual product identity, not just "a page".
     await expect(
-      page.getByRole("heading", { name: /GreenRetrofit Simulator|그린리모델링 투자 시뮬레이터|BIMFIT/ }),
+      page.getByRole("heading", { name: /building energy diagnostic|건물 에너지 진단/i }),
     ).toBeVisible({ timeout: 15000 });
   });
 
-  test("search UI (tabs or input) is present", async ({ page }) => {
+  test("the new-diagnostic action is present", async ({ page }) => {
     await page.goto("/");
-    const searchArea = page
-      .getByRole("tablist")
-      .or(page.locator("input"))
-      .or(page.getByTestId("landing-demo-start"))
-      .first();
-    await expect(searchArea).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId("landing-new-diagnostic")).toBeVisible({ timeout: 15000 });
   });
 
-  test("shows the API-key banner when no key is configured", async ({ page }) => {
+  test("keeps one persistent diagnostic action in the header", async ({ page }) => {
     await page.goto("/");
-    // Shared demo key / no-key chrome: landing or search may surface this,
-    // and the cinematic landing still has a live document.
-    const banner = page.getByText(/No API key configured|API 키가 설정되지 않았습니다/);
-    const landing = page.getByTestId("landing-demo-start");
-    await expect(banner.or(landing).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId("header-new-diagnostic")).toBeVisible({ timeout: 15000 });
   });
 });
 

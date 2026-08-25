@@ -1,12 +1,4 @@
-import type { Metadata } from "next";
-
-import { GenerativeStudio } from "@/components/generative/generative-studio";
-
-export const metadata: Metadata = {
-  title: "Building studio",
-  description:
-    "Describe, draw, or diagnose a source-traceable building energy model.",
-};
+import { redirect } from "next/navigation";
 
 type Props = {
   searchParams: Promise<{ start?: string | string[] }>;
@@ -15,11 +7,7 @@ type Props = {
 export default async function StudioPage({ searchParams }: Props) {
   const params = await searchParams;
   const start = Array.isArray(params.start) ? params.start[0] : params.start;
-  const initialStart =
-    start === "draw" || start === "diagnose" ? start : "describe";
-  return (
-    <div className="h-[calc(100vh-var(--header-height,3.5rem))] w-full">
-      <GenerativeStudio initialStart={initialStart} />
-    </div>
-  );
+  if (start === "draw") redirect("/diagnostics/new?method=create");
+  if (start === "diagnose") redirect("/diagnostics/new?method=upload");
+  redirect("/diagnostics/new");
 }

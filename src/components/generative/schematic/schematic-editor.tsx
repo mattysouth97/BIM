@@ -14,7 +14,10 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { preservationPlan } from "@/lib/generative/blueprint";
+import {
+  preservationPlan,
+  type BlueprintSpec,
+} from "@/lib/generative/blueprint";
 import {
   GenerationError,
   generateFromBlueprint,
@@ -38,7 +41,13 @@ interface Props {
    * travels with it and becomes the session brief — empty when the user drew
    * without writing one, which is the honest answer to "what was the brief?".
    */
-  onGenerated: (result: BlueprintGenerationResult, intent: string) => void;
+  onGenerated?: (result: BlueprintGenerationResult, intent: string) => void;
+  /**
+   * Hands user-authored geometry directly to a downstream workflow. This is
+   * used by Energy Diagnostic so drawing stays an editing tool and does not
+   * create a separate generated-building product or silently alter geometry.
+   */
+  onBlueprintReady?: (blueprint: BlueprintSpec, intent: string) => void;
   buildingPk?: string;
   locks?: string[];
   /**
@@ -57,6 +66,7 @@ interface Props {
 
 export function SchematicEditor({
   onGenerated,
+  onBlueprintReady,
   buildingPk,
   locks,
   designGenerationId = null,
@@ -87,11 +97,30 @@ export function SchematicEditor({
 
   const blocking = validation.violations.filter((v) => v.priority === "P0");
   const hasBoundary = blueprint.boundaries.length > 0;
-  const canGenerate = !busy && hasBoundary && blocking.length === 0;
+  const canGenerate =
+    !busy &&
+    hasBoundary &&
+    blocking.length === 0 &&
+    Boolean(onGenerated || onBlueprintReady);
 
   const run = useCallback(async () => {
     const store = useBlueprintStore.getState();
     if (busy) return;
+
+    if (onBlueprintReady) {
+      setError(null);
+      setStages([]);
+      onBlueprintReady(store.blueprint, prompt.trim());
+      return;
+    }
+
+    if (!onGenerated) {
+      setError({
+        code: "NO_DESTINATION",
+        message: "This building has no destination workflow.",
+      });
+      return;
+    }
 
     setBusy(true);
     setError(null);
@@ -143,7 +172,7 @@ export function SchematicEditor({
       setBusy(false);
       abortRef.current = null;
     }
-  }, [busy, prompt, buildingPk, locks, onGenerated]);
+  }, [busy, prompt, buildingPk, locks, onBlueprintReady, onGenerated]);
 
   return (
     <div className="flex h-full min-h-0 w-full">

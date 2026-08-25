@@ -70,7 +70,10 @@ import {
   type CanonicalModelValidation,
 } from "@/lib/energy-diagnostics/validation";
 
-import { generateDiagnosticFindings } from "@/lib/energy-diagnostics/findings";
+import {
+  generateDiagnosticFindings,
+  type DiagnosticFinding,
+} from "@/lib/energy-diagnostics/findings";
 import {
   analyzeRetrofitEconomics,
   type DiagnosticsRetrofitAnalysis,
@@ -125,15 +128,39 @@ type Operation =
   | "reload"
   | null;
 
-const STAGES: readonly WorkflowStage[] = [
+const NAVIGATION_STAGES = [
   "drawings",
-  "review",
   "model",
-  "assumptions",
   "preflight",
   "simulation",
   "compare",
-];
+] as const satisfies readonly WorkflowStage[];
+
+const NAVIGATION_LABEL: Record<
+  DiagnosisLocale,
+  Record<(typeof NAVIGATION_STAGES)[number], string>
+> = {
+  ko: {
+    drawings: "건물 입력",
+    model: "건물 모델",
+    preflight: "검증",
+    simulation: "진단 실행",
+    compare: "결과",
+  },
+  en: {
+    drawings: "Building input",
+    model: "Building model",
+    preflight: "Validate",
+    simulation: "Run diagnostic",
+    compare: "Results",
+  },
+};
+
+function navigationStage(stage: WorkflowStage): (typeof NAVIGATION_STAGES)[number] {
+  if (stage === "review") return "drawings";
+  if (stage === "assumptions") return "preflight";
+  return stage;
+}
 
 const STAGE_LABEL: Record<DiagnosisLocale, Record<WorkflowStage, string>> = {
   ko: {
@@ -143,7 +170,7 @@ const STAGE_LABEL: Record<DiagnosisLocale, Record<WorkflowStage, string>> = {
     assumptions: "가정 및 누락값",
     preflight: "모델 검사",
     simulation: "시뮬레이션",
-    compare: "결과 비교",
+    compare: "진단 결과",
   },
   en: {
     drawings: "Drawing set",
@@ -151,8 +178,8 @@ const STAGE_LABEL: Record<DiagnosisLocale, Record<WorkflowStage, string>> = {
     model: "Building model",
     assumptions: "Assumptions",
     preflight: "Preflight",
-    simulation: "Simulation",
-    compare: "Comparison",
+    simulation: "Run diagnostic",
+    compare: "Diagnostic results",
   },
 };
 
@@ -209,6 +236,36 @@ function sceneObjectIds(model: CanonicalEnergyModel, canonicalId: string): reado
   return model.mappings.find((mapping) => mapping.canonicalObjectId === canonicalId)?.threeObjectIds ?? [];
 }
 
+function diagnosticOverlayObjectIds(
+  model: CanonicalEnergyModel,
+  canonicalIds: readonly string[],
+): readonly string[] {
+  const ids = new Set<string>();
+  for (const canonicalId of canonicalIds) {
+    if (canonicalId === model.building.id) {
+      ids.add("envelope-shell:Walls");
+      ids.add("envelope-shell:Windows");
+      ids.add("envelope-shell:Roof");
+      ids.add("envelope-shell:Ground Floor");
+      continue;
+    }
+    const surface = model.geometry.surfaces.find(
+      (candidate) => candidate.id === canonicalId,
+    );
+    if (surface?.type === "exterior_wall") ids.add("envelope-shell:Walls");
+    if (surface?.type === "roof") ids.add("envelope-shell:Roof");
+    if (surface?.type === "ground_floor") {
+      ids.add("envelope-shell:Ground Floor");
+    }
+    if (
+      model.geometry.openings.some((candidate) => candidate.id === canonicalId)
+    ) {
+      ids.add("envelope-shell:Windows");
+    }
+  }
+  return [...ids];
+}
+
 function mappingsForSourceIds(
   model: CanonicalEnergyModel,
   sourceIds: readonly string[],
@@ -225,7 +282,6 @@ function stageComplete(
   ingestion: DrawingSetIngestionResult | null,
   validation: CanonicalModelValidation | null,
   baselineRun: DegreeDaySimulationRun | null,
-  scenarioRun: DegreeDaySimulationRun | null,
 ): boolean {
   if (stage === "drawings") {
     return Boolean(
@@ -248,7 +304,7 @@ function stageComplete(
   if (stage === "assumptions") return Boolean(model && model.missingValues.every((missing) => !missing.blocking));
   if (stage === "preflight") return validation?.validForSimulation ?? false;
   if (stage === "simulation") return baselineRun?.status === "succeeded";
-  return scenarioRun?.status === "succeeded";
+  return baselineRun?.status === "succeeded";
 }
 
 async function nextPaint(): Promise<void> {
@@ -299,21 +355,28 @@ export function EnergyDiagnosisWorkspace({
   className,
   locale: localeProp,
   initialModel = null,
+  autoLoadSample = false,
+  restoreProjectId,
+  initialDrawingSources = [],
+  showSampleOption = true,
   renderScene,
   onModelChange,
   onDrawingSetIngested,
   onSelectionChange,
   onSimulationRun,
+  onProjectSaved,
 }: EnergyDiagnosisWorkspaceProps) {
   const locale = localeProp ?? initialModel?.project.locale ?? "ko";
   const copy = diagnosisCopy(locale);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const automaticEntryStartedRef = useRef(false);
   const priorModelReviewRef = useRef<Readonly<{
     ingestion: DrawingSetIngestionResult | null;
     sources: readonly DrawingSourceInput[];
     selectedDocumentId: string | null;
     selectedFact: EnergyFact<unknown> | null;
   }> | null>(null);
+  const simulationInFlightRef = useRef(false);
   const [model, setModel] = useState<CanonicalEnergyModel | null>(initialModel);
   const [ingestion, setIngestion] = useState<DrawingSetIngestionResult | null>(null);
   const [sources, setSources] = useState<readonly DrawingSourceInput[]>([]);
@@ -327,7 +390,7 @@ export function EnergyDiagnosisWorkspace({
   const [operation, setOperation] = useState<Operation>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [scenarioUValue, setScenarioUValue] = useState(1.1);
+  const [scenarioUValue, setScenarioUValue] = useState<number | "">("");
   const [scenarioAch, setScenarioAch] = useState<number | "">("");
   const [scenarioCop, setScenarioCop] = useState<number | "">("");
   const [scenarioShgc, setScenarioShgc] = useState<number | "">("");
@@ -338,6 +401,8 @@ export function EnergyDiagnosisWorkspace({
   const [programTrack, setProgramTrack] = useState<ProgramTrack>("none");
   const [autosavedAt, setAutosavedAt] = useState<string | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
+  const [improvementEditorOpen, setImprovementEditorOpen] = useState(false);
   const [recentSavedProject, setRecentSavedProject] =
     useState<StoredEnergyDiagnosticsProjectSummary | null>(null);
 
@@ -407,9 +472,17 @@ export function EnergyDiagnosisWorkspace({
   const emitModel = useCallback(
     (next: CanonicalEnergyModel) => {
       setModel(next);
+      setSelectedRunId((current) =>
+        current && next.simulationRuns.some((run) => run.id === current)
+          ? current
+          : null,
+      );
+      setSelectedFindingId(null);
+      setSelection(null);
+      onSelectionChange?.(null);
       onModelChange?.(next);
     },
-    [onModelChange],
+    [onModelChange, onSelectionChange],
   );
 
   const emitSelection = useCallback(
@@ -422,6 +495,7 @@ export function EnergyDiagnosisWorkspace({
 
   const selectDocument = useCallback(
     (documentId: string) => {
+      setSelectedFindingId(null);
       setSelectedDocumentId(documentId);
       setActiveView("source");
       if (!model) return;
@@ -438,6 +512,7 @@ export function EnergyDiagnosisWorkspace({
 
   const selectFact = useCallback(
     (fact: EnergyFact<unknown>) => {
+      setSelectedFindingId(null);
       setSelectedFact(fact);
       const source = fact.sourceRefs[0];
       if (source) setSelectedDocumentId(source.documentId);
@@ -467,6 +542,7 @@ export function EnergyDiagnosisWorkspace({
   const selectSourceReference = useCallback(
     (sourceReference: EnergyFact<unknown>["sourceRefs"][number]) => {
       if (!model) return;
+      setSelectedFindingId(null);
       setSelectedDocumentId(sourceReference.documentId);
       setActiveView("source");
       const mappings = mappingsForSourceIds(model, [sourceReference.id]);
@@ -492,6 +568,7 @@ export function EnergyDiagnosisWorkspace({
   const selectZone = useCallback(
     (zoneId: string) => {
       if (!model) return;
+      setSelectedFindingId(null);
       const mapping = model.mappings.find(
         (candidate) => candidate.canonicalObjectId === zoneId,
       );
@@ -515,6 +592,77 @@ export function EnergyDiagnosisWorkspace({
       });
     },
     [emitSelection, model],
+  );
+
+  const selectFinding = useCallback(
+    (finding: DiagnosticFinding) => {
+      if (!model) return;
+      const supportingFact = finding.relatedFactIds
+        .map((id) => model.facts.find((fact) => fact.id === id))
+        .find((fact) => fact != null);
+      const sourceReference =
+        supportingFact?.sourceRefs[0] ?? finding.relatedSourceRefs[0];
+      if (supportingFact) setSelectedFact(supportingFact);
+      if (sourceReference) setSelectedDocumentId(sourceReference.documentId);
+
+      const canonicalObjectIds = [...new Set(finding.affectedObjectIds)];
+      const threeObjectIds = [
+        ...new Set(
+          [
+            ...canonicalObjectIds.flatMap((canonicalId) =>
+              sceneObjectIds(model, canonicalId),
+            ),
+            ...diagnosticOverlayObjectIds(model, canonicalObjectIds),
+          ],
+        ),
+      ];
+      setSelectedFindingId(finding.id);
+      setActiveView("model");
+      emitSelection({
+        kind: "diagnostic_finding",
+        id: finding.id,
+        documentId: sourceReference?.documentId ?? null,
+        canonicalObjectIds,
+        threeObjectIds,
+      });
+    },
+    [emitSelection, model],
+  );
+
+  const canEvaluateFinding = useCallback(
+    (finding: DiagnosticFinding) => {
+      if (!model || !finding.impactSimulated) return false;
+      if (finding.id === "finding:infiltration-share") return true;
+      const openingIds = new Set(
+        model.geometry.openings.map((opening) => opening.id),
+      );
+      return finding.affectedObjectIds.some((id) => openingIds.has(id));
+    },
+    [model],
+  );
+
+  const evaluateFinding = useCallback(
+    (finding: DiagnosticFinding) => {
+      if (!model || !canEvaluateFinding(finding)) return;
+      selectFinding(finding);
+      setScenarioUValue("");
+      setScenarioAch("");
+      setScenarioCop("");
+      setScenarioShgc("");
+      setScenarioAreaScale("");
+      setActiveStage("compare");
+      setImprovementEditorOpen(true);
+      setNotice(
+        finding.id === "finding:infiltration-share"
+          ? locale === "ko"
+            ? "대안 침기율을 입력하세요. 값을 입력하기 전에는 어떤 개선 효과도 계산하지 않습니다."
+            : "Enter a proposed infiltration rate. No improvement effect is calculated until you provide a value and run the alternative."
+          : locale === "ko"
+            ? "대안 창호 U값, SHGC 또는 면적 비율을 입력하세요. 값을 입력하기 전에는 어떤 개선 효과도 계산하지 않습니다."
+            : "Enter a proposed window U-value, SHGC, or glazing-area scale. No improvement effect is calculated until you provide a value and run the alternative.",
+      );
+    },
+    [canEvaluateFinding, locale, model, selectFinding],
   );
 
   const loadReference = useCallback(async () => {
@@ -547,25 +695,19 @@ export function EnergyDiagnosisWorkspace({
     }
   }, [emitModel, onDrawingSetIngested]);
 
-  const handleFiles = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files ?? []);
-      event.target.value = "";
-      if (files.length === 0) return;
+  const ingestSources = useCallback(
+    async (
+      uploadedSources: readonly DrawingSourceInput[],
+      setName: string,
+    ) => {
+      if (uploadedSources.length === 0) return;
       setOperation("upload");
       setError(null);
       setNotice(null);
       await nextPaint();
       try {
-        const uploadedSources: DrawingSourceInput[] = await Promise.all(
-          files.map(async (file) => ({
-            fileName: file.name,
-            mimeType: file.type || "application/octet-stream",
-            content: await file.arrayBuffer(),
-          })),
-        );
         const result = await ingestDrawingSet(uploadedSources, {
-          setName: files.length === 1 ? files[0].name : `${files[0].name} +${files.length - 1}`,
+          setName,
           ingestedAt: new Date().toISOString(),
         });
         const uploadOutcome = buildTierOneCanonicalModel(result, locale);
@@ -617,6 +759,28 @@ export function EnergyDiagnosisWorkspace({
       }
     },
     [emitModel, ingestion, locale, model, onDrawingSetIngested, selectedDocumentId, selectedFact, sources],
+  );
+
+  const handleFiles = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files ?? []);
+      event.target.value = "";
+      if (files.length === 0) return;
+      const uploadedSources: DrawingSourceInput[] = await Promise.all(
+        files.map(async (file) => ({
+          fileName: file.name,
+          mimeType: file.type || "application/octet-stream",
+          content: await file.arrayBuffer(),
+        })),
+      );
+      await ingestSources(
+        uploadedSources,
+        files.length === 1
+          ? files[0].name
+          : `${files[0].name} +${files.length - 1}`,
+      );
+    },
+    [ingestSources],
   );
 
   const returnToCurrentModel = useCallback(() => {
@@ -772,7 +936,8 @@ export function EnergyDiagnosisWorkspace({
   );
 
   const runBaseline = useCallback(async () => {
-    if (!model) return;
+    if (!model || simulationInFlightRef.current) return;
+    simulationInFlightRef.current = true;
     setOperation("baseline");
     setError(null);
     setNotice(null);
@@ -785,25 +950,29 @@ export function EnergyDiagnosisWorkspace({
         setError(completed.run.error?.message ?? copy.simulationFailed);
       } else {
         setSelectedRunId(completed.run.id);
-        setActiveStage("simulation");
+        setActiveStage("compare");
         setActiveView("model");
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : copy.simulationFailed);
     } finally {
+      simulationInFlightRef.current = false;
       setOperation(null);
     }
   }, [copy.simulationFailed, emitModel, model, onSimulationRun]);
 
   const runScenario = useCallback(async () => {
-    if (!model) return;
+    if (!model || simulationInFlightRef.current) return;
+    simulationInFlightRef.current = true;
     setOperation("scenario");
     setError(null);
     setNotice(null);
     await nextPaint();
     try {
       const values: ImprovementScenarioValues = {
-        windowUValueWPerM2K: scenarioUValue,
+        ...(scenarioUValue === ""
+          ? {}
+          : { windowUValueWPerM2K: scenarioUValue }),
         ...(scenarioAch === "" ? {} : { infiltrationAch: scenarioAch }),
         ...(scenarioCop === "" ? {} : { heatingCop: scenarioCop }),
         ...(scenarioShgc === "" ? {} : { windowShgc: scenarioShgc }),
@@ -822,6 +991,7 @@ export function EnergyDiagnosisWorkspace({
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : copy.simulationFailed);
     } finally {
+      simulationInFlightRef.current = false;
       setOperation(null);
     }
   }, [copy.simulationFailed, emitModel, model, onSimulationRun, scenarioAch, scenarioAreaScale, scenarioCop, scenarioShgc, scenarioUValue]);
@@ -838,13 +1008,14 @@ export function EnergyDiagnosisWorkspace({
         modelId: saved.modelId,
         savedAtIso: saved.savedAtIso,
       });
+      onProjectSaved?.(saved.projectId);
       setNotice(copy.saved);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Project save failed.");
     } finally {
       setOperation(null);
     }
-  }, [copy.saved, model, sources]);
+  }, [copy.saved, model, onProjectSaved, sources]);
 
   const restoreProject = useCallback(async (projectId: string) => {
     setOperation("reload");
@@ -854,6 +1025,7 @@ export function EnergyDiagnosisWorkspace({
       const loadedBundle = await loadEnergyDiagnosticsBundle(projectId);
       if (!loadedBundle) {
         setNotice(copy.noSaved);
+        return false;
       } else {
         const { model: loaded, sources: restoredSources } = loadedBundle;
         setIngestion(null);
@@ -897,20 +1069,84 @@ export function EnergyDiagnosisWorkspace({
               ? restoredCop
               : "",
           );
+          const restoredShgc = scenario?.deltas.find((delta) =>
+            delta.path.endsWith(".shgc"),
+          )?.replacement.value;
+          setScenarioShgc(
+            typeof restoredShgc === "number" && Number.isFinite(restoredShgc)
+              ? restoredShgc
+              : "",
+          );
+          const restoredAreaDelta = scenario?.deltas.find((delta) =>
+            /^geometry\.openings\.\d+\.areaSqm$/.test(delta.path),
+          );
+          const restoredAreaBaseline = restoredAreaDelta
+            ? loaded.geometry.openings
+                .map((opening) => opening.areaSqm)
+                .find((fact) => fact.id === restoredAreaDelta.baselineFactId)
+                ?.value
+            : null;
+          const restoredAreaScale =
+            typeof restoredAreaDelta?.replacement.value === "number" &&
+            typeof restoredAreaBaseline === "number" &&
+            Number.isFinite(restoredAreaBaseline) &&
+            restoredAreaBaseline > 0
+              ? restoredAreaDelta.replacement.value / restoredAreaBaseline
+              : null;
+          setScenarioAreaScale(
+            typeof restoredAreaScale === "number" &&
+              Number.isFinite(restoredAreaScale)
+              ? restoredAreaScale
+              : "",
+          );
         }
         setActiveStage(
-          restoredScenario ? "compare" : restoredBaseline ? "simulation" : "review",
+          restoredBaseline ? "compare" : "review",
         );
         setSelectedRunId(restoredScenario?.id ?? restoredBaseline?.id ?? null);
         setActiveView(restoredBaseline ? "model" : "source");
         setNotice(copy.reloaded);
+        return true;
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Project reload failed.");
+      return false;
     } finally {
       setOperation(null);
     }
   }, [copy.noSaved, copy.reloaded, emitModel]);
+
+  useEffect(() => {
+    if (automaticEntryStartedRef.current || model || ingestion) return;
+    automaticEntryStartedRef.current = true;
+    if (restoreProjectId) {
+      void restoreProject(restoreProjectId).then((restored) => {
+        if (!restored && autoLoadSample) void loadReference();
+      });
+      return;
+    }
+    if (autoLoadSample) {
+      void loadReference();
+      return;
+    }
+    if (initialDrawingSources.length > 0) {
+      const firstName = initialDrawingSources[0]?.fileName ?? "Created building";
+      const setName =
+        initialDrawingSources.length === 1
+          ? firstName
+          : `${firstName} +${initialDrawingSources.length - 1}`;
+      void ingestSources(initialDrawingSources, setName);
+    }
+  }, [
+    autoLoadSample,
+    ingestion,
+    ingestSources,
+    initialDrawingSources,
+    loadReference,
+    model,
+    restoreProject,
+    restoreProjectId,
+  ]);
 
   const reloadProject = useCallback(async () => {
     if (!model) return;
@@ -937,6 +1173,7 @@ export function EnergyDiagnosisWorkspace({
   const selectSimulationResult = useCallback(
     (runId: string, metric: ResultMetric) => {
       if (!model) return;
+      setSelectedFindingId(null);
       const run = model.simulationRuns.find(
         (candidate) => candidate.id === runId,
       ) as DegreeDaySimulationRun | undefined;
@@ -987,16 +1224,24 @@ export function EnergyDiagnosisWorkspace({
             savedAtIso: saved.savedAtIso,
           });
           setAutosavedAt(saved.savedAtIso);
+          onProjectSaved?.(saved.projectId);
         })
-        .catch(() => {
-          // Autosave never surfaces storage errors; the manual save path does.
+        .catch((cause) => {
+          if (cancelled) return;
+          setError(
+            cause instanceof Error
+              ? `${locale === "ko" ? "자동 저장 실패" : "Automatic save failed"}: ${cause.message}`
+              : locale === "ko"
+                ? "자동 저장에 실패했습니다. 현재 작업은 메모리에 남아 있습니다."
+                : "Automatic save failed. Your current work remains in memory.",
+          );
         });
     }, 1500);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [model, operation, sources]);
+  }, [locale, model, onProjectSaved, operation, sources]);
 
   const findings = useMemo(() => {
     if (!model || !validation) return [];
@@ -1085,9 +1330,8 @@ export function EnergyDiagnosisWorkspace({
     }
     if (!validation?.validForSimulation) return { label: copy.preflight, run: () => setActiveStage("preflight"), stage: "preflight" as WorkflowStage };
     if (baselineRun?.status !== "succeeded") return { label: copy.runBaseline, run: runBaseline, stage: "simulation" as WorkflowStage };
-    if (scenarioRun?.status !== "succeeded") return { label: copy.runScenario, run: runScenario, stage: "compare" as WorkflowStage };
     return { label: copy.save, run: saveProject, stage: "compare" as WorkflowStage };
-  }, [adoptStagedTierOneModel, applyAssumption, baselineRun?.status, copy, detachedIngestion, loadReference, locale, model, resolveConflict, runBaseline, runScenario, saveProject, scenarioRun?.status, tierOneOutcome?.status, validation?.validForSimulation]);
+  }, [adoptStagedTierOneModel, applyAssumption, baselineRun?.status, copy, detachedIngestion, loadReference, locale, model, resolveConflict, runBaseline, saveProject, tierOneOutcome?.status, validation?.validForSimulation]);
 
   const stagePanel = detachedIngestion && ingestion
     ? renderDetachedIngestionPanel({
@@ -1120,6 +1364,9 @@ export function EnergyDiagnosisWorkspace({
         onScenarioShgc: setScenarioShgc,
         scenarioAreaScale,
         onScenarioAreaScale: setScenarioAreaScale,
+        operation,
+        improvementEditorOpen,
+        onImprovementEditorOpen: setImprovementEditorOpen,
         findings,
         retrofitAnalysis,
         programTrack,
@@ -1129,6 +1376,10 @@ export function EnergyDiagnosisWorkspace({
         onMergeZones: mergeSelectedZones,
         onSplitZone: splitZone,
         onSelectFact: selectFact,
+        selectedFindingId,
+        onSelectFinding: selectFinding,
+        canEvaluateFinding,
+        onEvaluateFinding: evaluateFinding,
         onSelectZone: selectZone,
         onApplyAssumption: applyAssumption,
         onRunBaseline: runBaseline,
@@ -1143,7 +1394,7 @@ export function EnergyDiagnosisWorkspace({
         ref={fileInputRef}
         type="file"
         multiple
-        accept=".dwg,.dxf,.svg,.pdf,.png,.jpg,.jpeg,.webp,.tif,.tiff,.bimfit-schematic.json,.bimfit-model.json"
+        accept=".dxf"
         className="sr-only"
         aria-label={copy.upload}
         onChange={handleFiles}
@@ -1195,21 +1446,26 @@ export function EnergyDiagnosisWorkspace({
       </header>
 
       <nav aria-label={locale === "ko" ? "에너지 진단 단계" : "Energy diagnosis stages"} className="flex overflow-x-auto border-b bg-muted/20" data-testid="diagnosis-stage-nav">
-        {STAGES.map((stage, index) => {
+        {NAVIGATION_STAGES.map((stage, index) => {
           const complete = stageComplete(
             stage,
             detachedIngestion ? null : model,
             ingestion,
             detachedIngestion ? null : validation,
             detachedIngestion ? null : baselineRun,
-            detachedIngestion ? null : scenarioRun,
           );
-          const active = stage === activeStage;
+          const active = stage === navigationStage(activeStage);
           return (
             <button
               key={stage}
               type="button"
-              onClick={() => setActiveStage(stage)}
+              onClick={() => {
+                if (stage === "drawings" && model) {
+                  setActiveStage("review");
+                  return;
+                }
+                setActiveStage(stage);
+              }}
               aria-current={active ? "step" : undefined}
               className={cn(
                 "group relative flex h-11 shrink-0 items-center gap-1.5 border-r px-3 text-[10px] font-medium text-muted-foreground outline-none transition-colors hover:bg-accent/50 hover:text-foreground focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
@@ -1220,7 +1476,7 @@ export function EnergyDiagnosisWorkspace({
               <span className={cn("grid size-4 place-items-center rounded-full border font-mono text-[8px]", complete && "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300", active && !complete && "border-cyan-500/50 text-cyan-600")}>
                 {complete ? <Check className="size-2.5" /> : index + 1}
               </span>
-              {STAGE_LABEL[locale][stage]}
+              {NAVIGATION_LABEL[locale][stage]}
             </button>
           );
         })}
@@ -1284,9 +1540,11 @@ export function EnergyDiagnosisWorkspace({
                 <h2 className="mt-3 max-w-lg text-2xl font-semibold leading-tight tracking-[-0.02em] sm:text-3xl">{copy.emptyTitle}</h2>
                 <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">{copy.emptyBody}</p>
                 <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-                  <Button type="button" onClick={loadReference} disabled={operation != null}>
-                    <Sparkles className="size-4" /> {copy.referenceCase}
-                  </Button>
+                  {showSampleOption && (
+                    <Button type="button" onClick={loadReference} disabled={operation != null}>
+                      <Sparkles className="size-4" /> {copy.referenceCase}
+                    </Button>
+                  )}
                   <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={operation != null}>
                     <FolderOpen className="size-4" /> {copy.upload}
                   </Button>
@@ -1663,6 +1921,9 @@ function renderStagePanel({
   onScenarioShgc,
   scenarioAreaScale,
   onScenarioAreaScale,
+  operation,
+  improvementEditorOpen,
+  onImprovementEditorOpen,
   findings,
   retrofitAnalysis,
   programTrack,
@@ -1672,6 +1933,10 @@ function renderStagePanel({
   onMergeZones,
   onSplitZone,
   onSelectFact,
+  selectedFindingId,
+  onSelectFinding,
+  canEvaluateFinding,
+  onEvaluateFinding,
   onSelectZone,
   onApplyAssumption,
   onRunBaseline,
@@ -1686,8 +1951,8 @@ function renderStagePanel({
   selectedDocumentFacts: readonly EnergyFact<unknown>[];
   baselineRun: DegreeDaySimulationRun | null;
   scenarioRun: DegreeDaySimulationRun | null;
-  scenarioUValue: number;
-  onScenarioUValue: (value: number) => void;
+  scenarioUValue: number | "";
+  onScenarioUValue: (value: number | "") => void;
   scenarioAch: number | "";
   onScenarioAch: (value: number | "") => void;
   scenarioCop: number | "";
@@ -1696,6 +1961,9 @@ function renderStagePanel({
   onScenarioShgc: (value: number | "") => void;
   scenarioAreaScale: number | "";
   onScenarioAreaScale: (value: number | "") => void;
+  operation: Operation;
+  improvementEditorOpen: boolean;
+  onImprovementEditorOpen: (open: boolean) => void;
   findings: readonly import("@/lib/energy-diagnostics/findings").DiagnosticFinding[];
   retrofitAnalysis: DiagnosticsRetrofitAnalysis | null;
   programTrack: ProgramTrack;
@@ -1705,6 +1973,10 @@ function renderStagePanel({
   onMergeZones: () => void;
   onSplitZone: (zoneId: string) => void;
   onSelectFact: (fact: EnergyFact<unknown>) => void;
+  selectedFindingId: string | null;
+  onSelectFinding: (finding: DiagnosticFinding) => void;
+  canEvaluateFinding: (finding: DiagnosticFinding) => boolean;
+  onEvaluateFinding: (finding: DiagnosticFinding) => void;
   onSelectZone: (zoneId: string) => void;
   onApplyAssumption: () => void;
   onRunBaseline: () => void;
@@ -1996,28 +2268,102 @@ function renderStagePanel({
   if (stage === "simulation") {
     return (
       <section>
-        <PanelHeading eyebrow={STAGE_LABEL[locale].simulation} title={baselineRun?.status === "succeeded" ? copy.readyToRun : copy.runBaseline} action={<Button type="button" size="sm" onClick={onRunBaseline} disabled={!validation.validForSimulation}><Play className="size-3.5" /> {copy.runBaseline}</Button>} />
-        <ResultComparison
-          baseline={baselineRun?.result ?? null}
-          scenario={null}
-          locale={locale}
-          baselineRunId={baselineRun?.id}
-          onSelectResult={onSelectResult}
+        <PanelHeading
+          eyebrow={STAGE_LABEL[locale].simulation}
+          title={locale === "ko" ? "검증된 모델로 진단 실행" : "Run the validated diagnostic model"}
+          action={
+            <Button
+              type="button"
+              size="sm"
+              onClick={onRunBaseline}
+              disabled={!validation.validForSimulation || operation != null}
+            >
+              <Play className="size-3.5" /> {copy.runBaseline}
+            </Button>
+          }
         />
-        <FindingsPanel findings={findings} model={model} locale={locale} onSelectFact={onSelectFact} />
-        {baselineRun && <details className="mt-3 rounded-lg border bg-card p-3"><summary className="cursor-pointer text-[10px] font-semibold">{locale === "ko" ? "엔진 로그 및 근사" : "Engine logs and approximations"}</summary><div className="mt-2 space-y-1 font-mono text-[9px] leading-relaxed text-muted-foreground">{baselineRun.logs.map((log) => <p key={log}>{log}</p>)}{baselineRun.warnings.map((warning) => <p key={warning} className="text-amber-700 dark:text-amber-300">WARN · {warning}</p>)}</div></details>}
+        <div className="rounded-lg border border-cyan-500/25 bg-cyan-500/[0.04] p-4">
+          <p className="text-xs font-semibold">
+            {locale === "ko"
+              ? "실행이 완료되면 에너지 진단 결과로 이동합니다."
+              : "When the run completes, BIMFIT will open Energy Diagnostic Results."}
+          </p>
+          <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
+            {locale === "ko"
+              ? "현재 검증된 모델과 표시된 가정을 사용합니다. 중복 제출은 방지되며 기준 모델은 변경하지 않습니다."
+              : "The run uses the validated model and visible assumptions. Duplicate submissions are prevented, and the baseline model is not modified."}
+          </p>
+        </div>
       </section>
     );
   }
 
   return (
     <section>
-      <PanelHeading eyebrow={STAGE_LABEL[locale].compare} title={locale === "ko" ? "기준안과 비파괴 대안 비교" : "Baseline vs non-destructive alternative"} />
-      <div className="mb-3 rounded-lg border bg-card p-3" data-testid="improvement-scenario-controls">
+      <PanelHeading
+        eyebrow={STAGE_LABEL[locale].compare}
+        title={locale === "ko" ? "에너지 진단 결과" : "Energy Diagnostic Results"}
+        action={baselineRun?.result ? (
+          <Badge variant="outline" className="border-emerald-500/35 font-mono text-[9px] text-emerald-700 dark:text-emerald-300">
+            {locale === "ko" ? "실제 엔진 결과" : "Real engine result"}
+          </Badge>
+        ) : undefined}
+      />
+      <ResultComparison
+        baseline={baselineRun?.result ?? null}
+        scenario={scenarioRun?.result ?? null}
+        locale={locale}
+        baselineRunId={baselineRun?.id}
+        scenarioRunId={scenarioRun?.id}
+        onSelectResult={onSelectResult}
+      />
+      <FindingsPanel
+        findings={findings}
+        model={model}
+        locale={locale}
+        onSelectFact={onSelectFact}
+        selectedFindingId={selectedFindingId ?? undefined}
+        onSelectFinding={onSelectFinding}
+        canEvaluateFinding={canEvaluateFinding}
+        onEvaluateFinding={onEvaluateFinding}
+      />
+      <details
+        className="mt-4 rounded-lg border bg-card"
+        data-testid="improvement-scenario-controls"
+        open={improvementEditorOpen}
+        onToggle={(event) => onImprovementEditorOpen(event.currentTarget.open)}
+      >
+        <summary
+          className="cursor-pointer px-3 py-3 text-xs font-semibold"
+          data-testid="toggle-improvement-editor"
+        >
+          {locale === "ko"
+            ? "개선 대안 평가"
+            : "Evaluate an improvement alternative"}
+        </summary>
+        <div className="border-t p-3">
         <div className="flex flex-wrap items-end gap-2">
           <label className="min-w-40 flex-1 text-[10px] font-medium text-muted-foreground">
             {copy.scenarioValue}
-            <Input type="number" min="0.5" max="5" step="0.1" value={scenarioUValue} onChange={(event) => onScenarioUValue(Number(event.target.value))} className="mt-1.5 h-8 font-mono text-xs" />
+            <Input
+              type="number"
+              min="0.5"
+              max="5"
+              step="0.1"
+              value={scenarioUValue}
+              placeholder={String(
+                model.envelope.constructions.find(
+                  (construction) => construction.kind === "window",
+                )?.uValueWPerM2K.value ?? "",
+              )}
+              onChange={(event) =>
+                onScenarioUValue(
+                  event.target.value === "" ? "" : Number(event.target.value),
+                )
+              }
+              className="mt-1.5 h-8 font-mono text-xs"
+              data-testid="scenario-window-u-value"
+            />
           </label>
           <span className="pb-2 font-mono text-[10px] text-muted-foreground">W/(m²·K)</span>
           <label className="min-w-40 flex-1 text-[10px] font-medium text-muted-foreground">
@@ -2053,7 +2399,27 @@ function renderStagePanel({
               aria-label={locale === "ko" ? "대안 난방 COP" : "Alternative heating COP"}
             />
           </label>
-          <Button type="button" size="sm" onClick={onRunScenario} disabled={!baselineRun?.result || !Number.isFinite(scenarioUValue) || scenarioUValue <= 0}><Gauge className="size-3.5" /> {copy.runScenario}</Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={onRunScenario}
+            data-testid="run-improvement-scenario"
+            disabled={
+              operation != null ||
+              !baselineRun?.result ||
+              ![
+                scenarioUValue,
+                scenarioAch,
+                scenarioCop,
+                scenarioShgc,
+                scenarioAreaScale,
+              ].some((value) => value !== "") ||
+              (scenarioUValue !== "" &&
+                (!Number.isFinite(scenarioUValue) || scenarioUValue <= 0))
+            }
+          >
+            <Gauge className="size-3.5" /> {copy.runScenario}
+          </Button>
         </div>
         <details className="mt-2 border-t pt-2">
           <summary className="cursor-pointer text-[10px] font-semibold text-muted-foreground">
@@ -2097,16 +2463,23 @@ function renderStagePanel({
             ? "선택한 값만 변경한 비파괴 대안입니다. 기준 모델의 도면 근거는 바뀌지 않으며, 비워 둔 항목은 기준값을 유지합니다."
             : "A non-destructive alternative changing only the values you set. Baseline drawing evidence is untouched; blank fields keep their baseline values."}
         </p>
-      </div>
-      <ResultComparison
-        baseline={baselineRun?.result ?? null}
-        scenario={scenarioRun?.result ?? null}
-        locale={locale}
-        baselineRunId={baselineRun?.id}
-        scenarioRunId={scenarioRun?.id}
-        onSelectResult={onSelectResult}
-      />
-      <FindingsPanel findings={findings} model={model} locale={locale} onSelectFact={onSelectFact} />
+        </div>
+      </details>
+      {baselineRun && (
+        <details className="mt-3 rounded-lg border bg-card p-3">
+          <summary className="cursor-pointer text-[10px] font-semibold">
+            {locale === "ko" ? "엔진 로그 및 근사" : "Engine logs and approximations"}
+          </summary>
+          <div className="mt-2 space-y-1 font-mono text-[9px] leading-relaxed text-muted-foreground">
+            {baselineRun.logs.map((log) => <p key={log}>{log}</p>)}
+            {baselineRun.warnings.map((warning) => (
+              <p key={warning} className="text-amber-700 dark:text-amber-300">
+                WARN · {warning}
+              </p>
+            ))}
+          </div>
+        </details>
+      )}
       <RetrofitEconomicsPanel
         analysis={retrofitAnalysis}
         locale={locale}

@@ -10,19 +10,55 @@ const CALIBRATED_FLOOR_PLAN_DXF = [
   "0", "ENDSEC", "0", "EOF", "",
 ].join("\n");
 
-async function openDiagnosis(page: Page): Promise<void> {
-  await page.goto("/studio?start=diagnose");
+const VISIBLE_PHASES = [
+  "drawings",
+  "model",
+  "preflight",
+  "simulation",
+  "compare",
+] as const;
+
+async function expectCanonicalPhases(page: Page): Promise<void> {
+  const navigation = page.getByTestId("diagnosis-stage-nav");
+  await expect(navigation).toBeVisible();
+  for (const phase of VISIBLE_PHASES) {
+    await expect(page.getByTestId(`diagnosis-stage-${phase}`)).toBeVisible();
+  }
   await expect(
-    page.getByRole("button", { name: "Energy diagnosis", pressed: true }),
-  ).toBeVisible();
-  await expect(page.getByTestId("energy-diagnosis-workspace")).toBeVisible();
+    navigation.locator('[data-testid^="diagnosis-stage-"]'),
+  ).toHaveCount(VISIBLE_PHASES.length);
+}
+
+async function openMethod(
+  page: Page,
+  method: "upload" | "create" | "sample",
+): Promise<void> {
+  await page.goto(`/diagnostics/new?method=${method}`);
+  if (method === "create") {
+    await expect(page.getByTestId("diagnostic-geometry-editor")).toBeVisible();
+  } else {
+    await expect(page.getByTestId("energy-diagnosis-workspace")).toBeVisible();
+    await expectCanonicalPhases(page);
+  }
 }
 
 function normalizedText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
-test.describe("P0-06 energy diagnosis", () => {
+async function expectCanonicalMethodUrl(
+  page: Page,
+  method: "upload" | "create" | "sample",
+): Promise<void> {
+  await expect
+    .poll(() => {
+      const url = new URL(page.url());
+      return { pathname: url.pathname, method: url.searchParams.get("method") };
+    })
+    .toEqual({ pathname: "/diagnostics/new", method });
+}
+
+test.describe("Canonical energy diagnostic", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(({ storageKey }) => {
       localStorage.setItem(
@@ -42,33 +78,97 @@ test.describe("P0-06 energy diagnosis", () => {
     }, { storageKey: APP_STORAGE_KEY });
   });
 
-  test("diagnosis entry preserves the describe and draw start-mode switches", async ({
+  test("offers upload, create, and sample as methods of one diagnostic", async ({
     page,
   }) => {
-    await openDiagnosis(page);
+    await page.goto("/diagnostics/new");
 
-    await page.getByRole("button", { name: "Describe a building" }).click();
+    await expect(page.getByTestId("diagnostic-start")).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Describe a building", pressed: true }),
+      page.getByRole("heading", {
+        level: 1,
+        name: "Start a new energy diagnostic",
+      }),
     ).toBeVisible();
-
-    await page.getByRole("button", { name: "Draw schematic" }).click();
-    await expect(
-      page.getByRole("button", { name: "Draw schematic", pressed: true }),
-    ).toBeVisible();
-    await expect(page.getByTestId("schematic-tool-column")).toBeVisible();
-
-    await page.getByRole("button", { name: "Energy diagnosis" }).click();
-    await expect(
-      page.getByRole("button", { name: "Energy diagnosis", pressed: true }),
-    ).toBeVisible();
-    await expect(page.getByTestId("energy-diagnosis-workspace")).toBeVisible();
+    await expect(page.getByTestId("diagnostic-method-upload")).toHaveAttribute(
+      "href",
+      "/diagnostics/new?method=upload",
+    );
+    await expect(page.getByTestId("diagnostic-method-create")).toHaveAttribute(
+      "href",
+      "/diagnostics/new?method=create",
+    );
+    await expect(page.getByTestId("diagnostic-method-sample")).toHaveAttribute(
+      "href",
+      "/diagnostics/new?method=sample",
+    );
+    await expect(page.locator('a[href^="/studio"]')).toHaveCount(0);
+    await expect(page.locator('a[href^="/building/demo"]')).toHaveCount(0);
+    await expect(page.locator('a[href^="/building/drawing"]')).toHaveCount(0);
   });
 
-  test("a calibrated plan stays locked until its visible Tier-1 assumptions are accepted", async ({
+  test("redirects legacy product URLs into canonical input methods", async ({
     page,
   }) => {
-    await openDiagnosis(page);
+    await page.goto("/studio?start=diagnose");
+    await expectCanonicalMethodUrl(page, "upload");
+    await expect(page.getByTestId("energy-diagnosis-workspace")).toBeVisible();
+
+    await page.goto("/building/drawing");
+    await expectCanonicalMethodUrl(page, "create");
+    await expect(page.getByTestId("diagnostic-geometry-editor")).toBeVisible();
+
+    await page.goto("/building/demo");
+    await expectCanonicalMethodUrl(page, "sample");
+    await expect(page.getByTestId("stage-panel-review")).toBeVisible({
+      timeout: 20_000,
+    });
+  });
+
+  test("authored geometry enters validation and the real diagnostic engine", async ({
+    page,
+  }) => {
+    await openMethod(page, "create");
+    const canvas = page.getByRole("application", {
+      name: "Schematic drawing canvas",
+    });
+    await expect(canvas).toBeVisible();
+    await page.getByTestId("schematic-tool-boundary").click();
+    const bounds = await canvas.boundingBox();
+    if (!bounds) throw new Error("Schematic canvas has no measurable bounds.");
+
+    await page.mouse.move(
+      bounds.x + bounds.width * 0.2,
+      bounds.y + bounds.height * 0.22,
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      bounds.x + bounds.width * 0.72,
+      bounds.y + bounds.height * 0.7,
+    );
+    await page.mouse.up();
+
+    await page.getByRole("button", { name: "Review building model" }).click();
+    await expect(page.getByTestId("tier-one-assumption-card")).toBeVisible();
+    await expect(page.getByTestId("energy-diagnosis-workspace")).toBeVisible();
+    await expectCanonicalPhases(page);
+    await page.getByTestId("accept-tier-one-assumptions").click();
+    await expect(page.getByTestId("next-diagnosis-action")).toContainText(
+      "Run baseline simulation",
+    );
+    await page.getByTestId("next-diagnosis-action").click();
+
+    await expect(page.getByTestId("result-comparison")).toContainText(
+      "Real engine result",
+    );
+    await expect(page.getByTestId("diagnostic-findings")).toBeVisible();
+    await expectCanonicalMethodUrl(page, "create");
+  });
+
+  test("a DXF stays blocked until its visible Tier-1 assumptions are accepted", async ({
+    page,
+  }) => {
+    await openMethod(page, "upload");
 
     await page.getByTestId("drawing-set-input").setInputFiles({
       name: "A101-office-floor-plan-rev-A.dxf",
@@ -77,7 +177,7 @@ test.describe("P0-06 energy diagnosis", () => {
     });
 
     const assumptionCard = page.getByTestId("tier-one-assumption-card");
-    await expect(assumptionCard).toBeVisible();
+    await expect(assumptionCard).toBeVisible({ timeout: 20_000 });
     await expect(assumptionCard).toContainText(
       "Tier-1 office screening template v1",
     );
@@ -88,9 +188,32 @@ test.describe("P0-06 energy diagnosis", () => {
     await expect(assumptionCard).toContainText(
       "not measured data or a compliance prediction",
     );
+    await expect(assumptionCard).toContainText("acceptance required");
     await expect(page.getByTestId("tier-one-uncertainty-banner")).toBeVisible();
     await expect(page.getByTestId("next-diagnosis-action")).toContainText(
       "Confirm footprint & Tier-1 assumptions",
+    );
+
+    await page.getByTestId("diagnosis-stage-preflight").click();
+    const preflight = page.getByTestId("stage-panel-preflight");
+    await expect(preflight).toBeVisible();
+    await expect(preflight).toContainText("2 blocking");
+    await expect(preflight).toContainText("TIER_ONE_ACCEPTANCE_REQUIRED");
+    await expect(preflight).toContainText("MISSING_REQUIRED_VALUE");
+
+    await page.getByTestId("diagnosis-stage-simulation").click();
+    const baselineButton = page
+      .getByTestId("stage-panel-simulation")
+      .getByRole("button", { name: "Run baseline simulation" });
+    await expect(baselineButton).toBeDisabled();
+    await expect(page.getByTestId("stage-panel-simulation")).toContainText(
+      "Run the validated diagnostic model",
+    );
+
+    await page.getByTestId("next-diagnosis-action").click();
+    await expect(assumptionCard).toContainText("accepted");
+    await expect(page.getByTestId("next-diagnosis-action")).toContainText(
+      "Run baseline simulation",
     );
 
     await page.getByTestId("diagnosis-stage-simulation").click();
@@ -98,37 +221,34 @@ test.describe("P0-06 energy diagnosis", () => {
       page
         .getByTestId("stage-panel-simulation")
         .getByRole("button", { name: "Run baseline simulation" }),
-    ).toBeDisabled();
-
-    await page.getByTestId("diagnosis-stage-assumptions").click();
-    await page.getByTestId("accept-tier-one-assumptions").click();
-    await expect(assumptionCard).toContainText("accepted");
-    const nextAction = page.getByTestId("next-diagnosis-action");
-    await expect(nextAction).toContainText("Run baseline simulation");
-
-    await nextAction.click();
-    await expect(page.getByTestId("result-comparison")).toContainText(
-      "Real engine result",
-    );
-    await expect(page.getByTestId("tier-one-uncertainty-banner")).toBeVisible();
+    ).toBeEnabled();
   });
 
-  test("representative review, simulation, comparison, and evidence survive save and reopen", async ({
+  test("sample review, results, finding selection, and comparison survive reopen", async ({
     page,
   }) => {
     test.setTimeout(120_000);
-    await openDiagnosis(page);
+    await openMethod(page, "sample");
 
-    await page
-      .getByRole("button", { name: "Open representative office set" })
-      .click();
-    await expect(page.getByTestId("stage-panel-review")).toBeVisible();
+    await expect(page.getByTestId("stage-panel-review")).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByTestId("diagnosis-stage-drawings")).toHaveAttribute(
+      "aria-current",
+      "step",
+    );
     await expect(page.getByTestId("conflict-resolution-panel")).toBeVisible();
-
     await page
       .getByRole("button", { name: "Confirm selected value", exact: true })
       .click();
     await expect(page.getByText("User selection recorded.")).toBeVisible();
+
+    await page.getByTestId("diagnosis-stage-model").click();
+    await expect(page.getByTestId("stage-panel-model")).toBeVisible();
+    await expect(page.getByTestId("diagnosis-stage-model")).toHaveAttribute(
+      "aria-current",
+      "step",
+    );
 
     const nextAction = page.getByTestId("next-diagnosis-action");
     await expect(nextAction).toContainText("Apply 0.5 ACH assumption");
@@ -136,7 +256,13 @@ test.describe("P0-06 energy diagnosis", () => {
     await expect(page.getByTestId("stage-panel-assumptions")).toContainText(
       "0.5 ACH",
     );
-    await expect(nextAction).toContainText("Run baseline simulation");
+    await expect(page.getByTestId("stage-panel-assumptions")).toContainText(
+      "user_resolved",
+    );
+    await expect(page.getByTestId("diagnosis-stage-preflight")).toHaveAttribute(
+      "aria-current",
+      "step",
+    );
 
     await page.getByTestId("diagnosis-stage-preflight").click();
     const preflight = page.getByTestId("stage-panel-preflight");
@@ -146,36 +272,74 @@ test.describe("P0-06 energy diagnosis", () => {
     );
     await expect(preflight).toContainText("0 blocking");
 
+    await expect(nextAction).toContainText("Run baseline simulation");
     await nextAction.click();
-    await expect(page.getByTestId("stage-panel-simulation")).toBeVisible();
-    await expect(page.getByTestId("result-comparison")).toContainText(
-      "Real engine result",
+    await expect(page.getByTestId("stage-panel-compare")).toBeVisible();
+    await expect(page.getByTestId("diagnosis-stage-compare")).toHaveAttribute(
+      "aria-current",
+      "step",
     );
-    await expect(nextAction).toContainText("Run alternative");
-
-    await page.getByTestId("result-annualEnergyKwh-baseline").click();
-    const diagnosisScene = page.getByTestId("energy-diagnosis-scene");
-    const selectedRunZoneLegend = diagnosisScene
-      .locator("p")
-      .filter({ hasText: "Energy zones" })
-      .locator("..");
-    await expect(selectedRunZoneLegend).toBeVisible();
-    await expect(selectedRunZoneLegend).toContainText("selected run");
     await expect(
-      selectedRunZoneLegend.locator("li").filter({ hasText: /kWh\/yr/ }).first(),
+      page.getByRole("heading", { name: "Energy Diagnostic Results" }),
     ).toBeVisible();
+    const baselineComparison = page.getByTestId("result-comparison");
+    await expect(baselineComparison).toContainText("Real engine result");
+    await expect(baselineComparison).toContainText("Baseline");
+    await expect(page.getByTestId("diagnostic-findings")).toBeVisible();
 
-    await expect(diagnosisScene).toBeVisible();
+    const envelopeFinding = page.getByTestId(
+      /^finding-finding:dominant-envelope:/,
+    );
+    await expect(envelopeFinding).toBeVisible();
+    const findingTitle = normalizedText(
+      await envelopeFinding.locator('p[id$="-title"]').innerText(),
+    );
+
     await page.getByRole("tab", { name: "Source drawing" }).click();
     await expect(page.getByTestId("source-review-canvas")).toBeVisible();
-    await page.getByRole("tab", { name: "3D energy model" }).click();
-    await expect(diagnosisScene).toBeVisible();
     await expect(
-      page.getByTestId("energy-diagnosis-scene").locator("canvas"),
-    ).toBeVisible();
+      page.getByRole("tab", { name: "3D energy model" }),
+    ).toHaveAttribute("aria-selected", "false");
+
+    await envelopeFinding
+      .getByRole("button", { name: findingTitle, exact: true })
+      .click();
+    await expect(envelopeFinding).toHaveAttribute("data-selected", "true");
+    await expect(
+      envelopeFinding.getByRole("button", {
+        name: findingTitle,
+        exact: true,
+      }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      page.getByRole("tab", { name: "3D energy model" }),
+    ).toHaveAttribute("aria-selected", "true");
+
+    const diagnosisScene = page.getByTestId("energy-diagnosis-scene");
+    await expect(diagnosisScene).toBeVisible();
+    await expect(diagnosisScene.locator("canvas")).toBeVisible();
+    const sceneSelectionKind = await diagnosisScene.getAttribute(
+      "data-selection-kind",
+    );
+    const sceneHighlightedObjectCount = await diagnosisScene.getAttribute(
+      "data-highlighted-object-count",
+    );
 
     await page.getByTestId("diagnosis-stage-compare").click();
     const comparePanel = page.getByTestId("stage-panel-compare");
+    await comparePanel.getByTestId("toggle-improvement-editor").click();
+    const alternativeCop = comparePanel.getByRole("spinbutton", {
+      name: "Alternative heating COP",
+    });
+    await alternativeCop.fill("0");
+    await comparePanel.getByTestId("run-improvement-scenario").click();
+    await expect(page.getByTestId("diagnosis-feedback")).toContainText(
+      "must be positive",
+    );
+    await expect(comparePanel.getByTestId("result-comparison")).toContainText(
+      "Baseline",
+    );
+    await alternativeCop.fill("");
     const scenarioValue = comparePanel.getByRole("spinbutton", {
       name: "Alternative window U-value",
     });
@@ -184,45 +348,57 @@ test.describe("P0-06 energy diagnosis", () => {
       .getByRole("button", { name: "Run alternative", exact: true })
       .click();
 
-    await expect(nextAction).toContainText("Save project");
+    await expect(page.getByTestId("diagnosis-stage-compare")).toHaveAttribute(
+      "aria-current",
+      "step",
+    );
     const comparison = page.getByTestId("result-comparison");
     await expect(comparison).toContainText("Improvement alternative");
     await expect(comparison).toContainText("kWh/yr");
     const comparisonBeforeSave = normalizedText(await comparison.innerText());
 
+    await expect(nextAction).toContainText("Save project");
     await nextAction.click();
     await expect(page.getByRole("status")).toContainText(
       "Saved the model, provenance, and exact runs in this browser.",
       { timeout: 20_000 },
     );
 
-    await page.reload();
-    await expect(
-      page.getByRole("button", { name: "Energy diagnosis", pressed: true }),
-    ).toBeVisible();
-    await page
-      .getByRole("button", { name: "Open recent saved diagnosis" })
-      .click();
-    await expect(page.getByTestId("stage-panel-compare")).toBeVisible();
+    await page.goto("/diagnostics/new");
+    const resumeRecent = page.getByTestId("resume-recent-diagnostic");
+    await expect(resumeRecent).toBeVisible();
+    await resumeRecent.click();
+
+    await expect(page.getByTestId("stage-panel-compare")).toBeVisible({
+      timeout: 20_000,
+    });
     await expect(page.getByRole("status")).toContainText(
       "Restored the saved model and simulation runs.",
     );
-
     const comparisonAfterReopen = normalizedText(
       await page.getByTestId("result-comparison").innerText(),
     );
     expect(comparisonAfterReopen).toBe(comparisonBeforeSave);
-
-    await page.getByTestId("diagnosis-stage-assumptions").click();
-    const restoredAssumptions = page.getByTestId("stage-panel-assumptions");
-    await expect(restoredAssumptions).toContainText("0.5 ACH");
-    await expect(restoredAssumptions).toContainText("user_resolved");
-
-    await page.getByTestId("diagnosis-stage-compare").click();
+    await page.getByTestId("toggle-improvement-editor").click();
     await expect(
       page
         .getByTestId("stage-panel-compare")
         .getByRole("spinbutton", { name: "Alternative window U-value" }),
     ).toHaveValue(ALTERNATIVE_WINDOW_U_VALUE);
+
+    expect(sceneSelectionKind).toBe("diagnostic_finding");
+    expect(sceneHighlightedObjectCount).toMatch(/^[1-9]\d*$/);
+  });
+
+  test("switching methods resets method-scoped product state", async ({ page }) => {
+    await openMethod(page, "sample");
+    await expect(page.getByTestId("stage-panel-review")).toBeVisible({
+      timeout: 20_000,
+    });
+    await page.getByRole("link", { name: "Input methods" }).click();
+    await expect(page.getByTestId("diagnostic-start")).toBeVisible();
+    await page.getByTestId("diagnostic-method-create").click();
+    await expect(page.getByTestId("diagnostic-geometry-editor")).toBeVisible();
+    await expect(page.getByTestId("energy-diagnosis-workspace")).toHaveCount(0);
   });
 });

@@ -73,4 +73,39 @@ describe("ResultComparison end-use method disclosure", () => {
       ),
     ).toBeTruthy();
   });
+
+  it("preserves small nonzero baseline-to-alternative deltas", () => {
+    const endUses = {
+      heating: 400,
+      cooling: 100,
+      lighting: 300,
+      equipment: 200,
+    };
+    const baseline = result(endUses);
+    const scenario = {
+      ...result(endUses),
+      annualEnergyKwh: baseline.annualEnergyKwh + 0.04,
+      energyUseIntensityKwhPerM2:
+        baseline.energyUseIntensityKwhPerM2 + 0.004,
+    };
+
+    render(
+      <ResultComparison
+        locale="en"
+        baseline={baseline}
+        scenario={scenario}
+      />,
+    );
+
+    expect(
+      within(screen.getByTestId("result-annualEnergyKwh-scenario")).getByText(
+        "0.04 kWh/yr",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(
+        screen.getByTestId("result-energyUseIntensityKwhPerM2-scenario"),
+      ).getByText("0.004 kWh/m²·yr"),
+    ).toBeTruthy();
+  });
 });

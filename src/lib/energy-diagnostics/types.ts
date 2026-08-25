@@ -10,6 +10,14 @@ export const CANONICAL_ENERGY_MODEL_VERSION = "1.0.0" as const;
 export type CanonicalEnergyModelVersion =
   typeof CANONICAL_ENERGY_MODEL_VERSION;
 
+/**
+ * Deterministic fingerprint of the model inputs that can affect readiness,
+ * simulation, or spatial result mapping. This is deliberately distinct from
+ * `schemaVersion`: changing model content must change this value even when the
+ * persisted data contract itself is unchanged.
+ */
+export type ModelContentFingerprint = string;
+
 export type IsoDateTime = string;
 export type Point2D = readonly [x: number, y: number];
 export type Polygon2D = readonly Point2D[];
@@ -527,7 +535,7 @@ export type EnergyScenario = Readonly<{
   id: string;
   name: string;
   baselineModelId: string;
-  baselineModelVersion: CanonicalEnergyModelVersion;
+  baselineModelVersion: ModelContentFingerprint;
   deltas: readonly ScenarioDelta[];
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;
@@ -606,7 +614,8 @@ export type SimulationRun = Readonly<{
 export type CanonicalEnergyModel = Readonly<{
   id: string;
   schemaVersion: CanonicalEnergyModelVersion;
-  modelVersion: string;
+  /** Current deterministic content fingerprint; never a schema version. */
+  modelVersion: ModelContentFingerprint;
   project: Readonly<{
     id: string;
     name: string;
