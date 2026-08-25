@@ -221,8 +221,10 @@ describe("UploadStage", () => {
     fireEvent.change(input);
 
     await waitFor(() => {
+      // The alert must name the actual problem — a missing AC version header —
+      // in either the Korean summary or the English tier warning.
       expect(screen.getByRole("alert").textContent ?? "").toMatch(
-        /AC[\s‑\-]?version|valid DWG|\.dxf/i
+        /AC[\s‑\-]?(version|버전)|valid DWG|DWG 파일로 보이지 않습니다/i
       );
     });
 

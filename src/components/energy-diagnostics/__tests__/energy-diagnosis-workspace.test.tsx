@@ -84,7 +84,7 @@ describe("EnergyDiagnosisWorkspace", () => {
     fireEvent.click(screen.getByTestId("next-diagnosis-action"));
     await waitFor(() => expect(onSimulationRun).toHaveBeenCalledTimes(2));
     expect(screen.getByTestId("stage-panel-compare")).toBeTruthy();
-    expect(screen.getAllByText("창호 성능 대안").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("개선 대안").length).toBeGreaterThan(0);
     expect(onModelChange).toHaveBeenCalled();
 
     const modelChangeCount = onModelChange.mock.calls.length;
@@ -273,7 +273,8 @@ describe("EnergyDiagnosisWorkspace", () => {
 
     await waitFor(() => expect(onDrawingSetIngested).toHaveBeenCalledTimes(1));
     expect(screen.getByTestId("ingestion-only-review")).toBeTruthy();
-    expect(screen.getByText(/parent model-generation step/)).toBeTruthy();
+    const guidance = screen.getByTestId("tier-one-guidance");
+    expect(guidance.textContent).toContain("How to fix:");
     expect(screen.getByTestId("next-diagnosis-action").textContent).toContain(
       "Review new extraction",
     );

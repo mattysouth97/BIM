@@ -2,6 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /**
+   * Dev only: the e2e runner drives the app at http://127.0.0.1:3000 while
+   * developers browse http://localhost:3000. Without this, dev assets and HMR
+   * are refused for the other host form, so pages served there never hydrate —
+   * which silently fails the whole Playwright suite when it reuses a running
+   * dev server.
+   */
+  allowedDevOrigins: ["localhost", "127.0.0.1"],
+
+  /**
    * LibreDWG ships an emscripten ESM glue module that locates its 10 MB
    * `.wasm` sibling through `import.meta.url` and reads it with `createRequire`
    * + `readFileSync`. Bundling that glue into the server output rewrites

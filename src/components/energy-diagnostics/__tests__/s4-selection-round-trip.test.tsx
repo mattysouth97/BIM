@@ -45,6 +45,7 @@ import { useSelectionStore } from "@/store/selection-store";
 
 import { EnergyDiagnosisScene } from "../energy-diagnosis-scene";
 import { EnergyDiagnosisWorkspace } from "../energy-diagnosis-workspace";
+import { factKeyLabel } from "../fact-label";
 
 const NOW = "2026-08-24T00:00:00.000Z";
 
@@ -147,7 +148,9 @@ describe("S4 canonical selection round trip", () => {
     );
 
     const reviewPanel = screen.getByTestId("stage-panel-review");
-    const factButton = within(reviewPanel).getByText(fact.key).closest("button");
+    const factButton = within(reviewPanel)
+      .getByText(factKeyLabel(fact.key, "en"))
+      .closest("button");
     if (!factButton) throw new Error("Review fact has no selection button");
     fireEvent.click(factButton);
 

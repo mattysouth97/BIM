@@ -1,10 +1,12 @@
 // Composition smoke test.
 //
-// /lean forks nothing: it is an arrangement of modules that already exist. The
-// failure mode that arrangement has, and that no unit test elsewhere can catch,
-// is a broken seam — a renamed export, a moved file, a component that stopped
-// being importable from a client boundary. Importing the page and every module
-// it composes is the cheapest honest check that the arrangement still stands.
+// The lean studio forks nothing: it is an arrangement of modules that already
+// exist. (Its /lean route was retired as an orphaned duplicate of /studio; the
+// component remains the A/B candidate.) The failure mode that arrangement has,
+// and that no unit test elsewhere can catch, is a broken seam — a renamed
+// export, a moved file, a component that stopped being importable from a client
+// boundary. Importing the studio and every module it composes is the cheapest
+// honest check that the arrangement still stands.
 
 import { describe, it, expect, vi } from "vitest";
 
@@ -13,12 +15,8 @@ import { describe, it, expect, vi } from "vitest";
 vi.mock("@react-three/fiber", () => ({ Canvas: () => null, useThree: () => null }));
 vi.mock("@react-three/drei", () => ({ OrbitControls: () => null, Environment: () => null }));
 
-describe("/lean composition", () => {
-  it("resolves the page and the studio it mounts", async () => {
-    const page = await import("@/app/lean/page");
-    expect(typeof page.default).toBe("function");
-    expect(page.metadata.title).toBeTruthy();
-
+describe("lean studio composition", () => {
+  it("resolves the studio component", async () => {
     const studio = await import("../lean-studio");
     expect(typeof studio.LeanStudio).toBe("function");
   });

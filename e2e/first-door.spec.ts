@@ -41,7 +41,7 @@ test.describe("First door", () => {
     await studio.click();
     await expect(page).toHaveURL(/\/studio\?start=draw/);
     await expect(
-      page.getByRole("button", { name: "Draw schematic", pressed: true }),
+      page.getByRole("button", { name: "도면 그리기", pressed: true }),
     ).toBeVisible();
   });
 
@@ -49,7 +49,7 @@ test.describe("First door", () => {
     await page.getByTestId("landing-import-start").click();
     await expect(page).toHaveURL(/\/studio\?start=diagnose/);
     await expect(
-      page.getByRole("button", { name: "Energy diagnosis", pressed: true }),
+      page.getByRole("button", { name: "에너지 진단", pressed: true }),
     ).toBeVisible();
     await expect(page.getByTestId("energy-diagnosis-workspace")).toBeVisible();
     await expect(page.getByTestId("drawing-set-input")).toHaveAttribute(

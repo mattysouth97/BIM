@@ -62,6 +62,14 @@ export function Header() {
             >
               {language === "ko" ? "스튜디오" : "Studio"}
             </Link>
+
+            <Link
+              href="/studio?start=diagnose"
+              title={language === "ko" ? "Energy diagnosis" : "에너지 진단"}
+              className="rounded-sm text-sm font-medium text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {language === "ko" ? "에너지 진단" : "Energy diagnosis"}
+            </Link>
           </div>
 
           <div className="flex items-center gap-1">

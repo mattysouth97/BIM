@@ -628,33 +628,43 @@ export function GenerativeStudio({
 
   /* --- empty state --- */
 
-  if (startMode === "diagnose") {
-    return (
-      <div className="flex h-full w-full flex-col">
-        <div className="flex items-center justify-center gap-1 border-b px-3 py-2">
-          {(
-            [
+  const startModeSwitch = (
+    <div className="flex items-center justify-center gap-1 border-b px-3 py-2">
+      {(
+        language === "ko"
+          ? ([
+              ["describe", "글로 설명하기"],
+              ["draw", "도면 그리기"],
+              ["diagnose", "에너지 진단"],
+            ] as Array<[StartMode, string]>)
+          : ([
               ["describe", "Describe a building"],
               ["draw", "Draw schematic"],
               ["diagnose", "Energy diagnosis"],
-            ] as Array<[StartMode, string]>
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={startMode === value}
-              onClick={() => setStartMode(value)}
-              className={cn(
-                "rounded border px-3 py-1 text-xs transition-colors",
-                startMode === value
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "hover:bg-muted",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+            ] as Array<[StartMode, string]>)
+      ).map(([value, label]) => (
+        <button
+          key={value}
+          type="button"
+          aria-pressed={startMode === value}
+          onClick={() => setStartMode(value)}
+          className={cn(
+            "rounded border px-3 py-1 text-xs transition-colors",
+            startMode === value
+              ? "border-primary bg-primary text-primary-foreground"
+              : "hover:bg-muted",
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (startMode === "diagnose") {
+    return (
+      <div className="flex h-full w-full flex-col">
+        {startModeSwitch}
         <div className="min-h-0 flex-1 overflow-auto p-2 sm:p-3">
           <EnergyDiagnosisWorkspace
             className="min-h-full"
@@ -669,30 +679,7 @@ export function GenerativeStudio({
   if (!design || !displayRecipe || !navTree) {
     return (
       <div className="flex h-full w-full flex-col">
-        <div className="flex items-center justify-center gap-1 border-b px-3 py-2">
-          {(
-            [
-              ["describe", "Describe a building"],
-              ["draw", "Draw schematic"],
-              ["diagnose", "Energy diagnosis"],
-            ] as Array<[StartMode, string]>
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={startMode === value}
-              onClick={() => setStartMode(value)}
-              className={cn(
-                "rounded border px-3 py-1 text-xs transition-colors",
-                startMode === value
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "hover:bg-muted",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {startModeSwitch}
 
         <div className="flex min-h-0 flex-1 items-stretch justify-center">
           {startMode === "describe" ? (

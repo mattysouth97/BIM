@@ -6,7 +6,7 @@ test.describe("Schematic authoring", () => {
   }) => {
     test.setTimeout(180_000);
     await page.goto("/studio?start=draw");
-    await expect(page.getByRole("button", { name: "Draw schematic", pressed: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "도면 그리기", pressed: true })).toBeVisible();
     await expect(page.getByTestId("schematic-tool-column")).toBeVisible();
     await expect(page.getByTestId("schematic-tool-lighting")).toBeVisible();
     await expect(page.getByRole("button", { name: "Generate BIM" })).toBeDisabled();

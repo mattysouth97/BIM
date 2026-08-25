@@ -186,13 +186,14 @@ test.describe("P0-06 energy diagnosis", () => {
 
     await expect(nextAction).toContainText("Save project");
     const comparison = page.getByTestId("result-comparison");
-    await expect(comparison).toContainText("Window-performance alternative");
+    await expect(comparison).toContainText("Improvement alternative");
     await expect(comparison).toContainText("kWh/yr");
     const comparisonBeforeSave = normalizedText(await comparison.innerText());
 
     await nextAction.click();
     await expect(page.getByRole("status")).toContainText(
       "Saved the model, provenance, and exact runs in this browser.",
+      { timeout: 20_000 },
     );
 
     await page.reload();

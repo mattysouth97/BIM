@@ -8,9 +8,27 @@
 
   ## Architecture
 
-  Next.js 16 App Router + React 19 + TypeScript. Korean Building Ledger (건축물대장) query app with 3D viewer.
+  Next.js 16 App Router + React 19 + TypeScript. BIMFIT: generative building-energy
+  app — buildings enter via the generative engine (described prompt, drawn schematic,
+  or imported DWG/DXF/SVG), get a 3D twin, and are diagnosed for energy + retrofit
+  economics. The ledger (건축물대장) path below is legacy: kept working, no longer a
+  primary data source (see handoff.md "Product direction").
 
-  - `src/app/api/bldrgst/*` — Server-side proxy routes to data.go.kr (solves CORS)
+  Routes: `/` landing → `/studio` (start modes describe|draw|diagnose) →
+  `/building/[id]` twin workspace (demo, GEN-xxxx generated designs, legacy ledger ids).
+
+  - `src/components/generative/` — Generative studio: prompt panel, schematic editor,
+    command bar, and the mount point of the energy-diagnosis workspace
+  - `src/lib/generative/` — Blueprint→spec→polygon-BIM engine (geom kernel, solver,
+    compiler, CAD/SVG import adapters, design storage in IndexedDB `gen-design:*`)
+  - `src/components/energy-diagnostics/` + `src/lib/energy-diagnostics/` — Source-traceable
+    design-stage energy diagnosis (P0-06): drawing-set ingestion with provenance facts,
+    Tier-1 screening builder, preflight validation, degree-day adapter over the real
+    engine, findings, improvement scenarios, retrofit-bridge (economics), IndexedDB
+    persistence — see docs/design-stage-energy-diagnostics.md
+  - `src/lib/energy/` — Physics core: ISO-13789-style heat loss, degree-day annual
+    demand, system breakdown, climate data, CO₂/grades
+  - `src/app/api/bldrgst/*` — (legacy) server-side proxy routes to data.go.kr
   - `src/components/viewer/` — Three.js 3D building viewer (React Three Fiber v9)
   - `src/components/viewer/building-scene.tsx` — Main R3F Canvas with renderer config, OutlinePass post-processing (`<ScenePostProcessing />`), lighting
   - `src/components/viewer/procedural-building-model.tsx` — R3F wrapper for ProceduralBuilding class

@@ -12,6 +12,7 @@ import type {
 } from "@/lib/energy-diagnostics/types";
 
 import { diagnosisCopy } from "./copy";
+import { factKeyLabel } from "./fact-label";
 import type { DiagnosisLocale } from "./types";
 
 const STATUS_LABEL: Record<DiagnosisLocale, Record<EvidenceStatus, string>> = {
@@ -142,8 +143,9 @@ export function EvidenceInspector({
             {STATUS_LABEL[locale][effectiveStatus]}
           </Badge>
         </div>
-        <h3 className="mt-2 break-words font-mono text-xs font-semibold leading-relaxed">{fact.key}</h3>
+        <h3 className="mt-2 break-words text-sm font-semibold leading-relaxed">{factKeyLabel(fact.key, locale)}</h3>
         <p className="mt-1 font-mono text-lg font-semibold tabular-nums">{formatValue(fact)}</p>
+        <p className="mt-1 break-all font-mono text-[9px] text-muted-foreground">{fact.key}</p>
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">

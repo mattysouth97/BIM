@@ -1,31 +1,35 @@
-# GreenRetrofit Simulator
+# BIMFIT — Building Energy Retrofit Simulator
 
-> 한국 건축물대장(建築物臺帳) 데이터를 3D 디지털 트윈으로 변환하고, 에너지 성능과
-> 그린리모델링 투자 회수(ROI)를 시뮬레이션하는 웹 애플리케이션.
+> 구상에서 트윈까지: 설명하거나, 그리거나, 도면을 가져오면 시맨틱 BIM과 3D 트윈이
+> 생성되고, 실제 물리 엔진으로 에너지 수요·등급·CO₂와 개보수 경제성을 진단합니다.
 >
-> A web app that turns Korean building-ledger (건축물대장) records into 3D digital
-> twins and simulates energy performance and green-retrofit investment returns.
+> Concept to twin: describe a building, draw a plan, or import a drawing — the app
+> generates a semantic BIM + 3D twin and diagnoses energy demand / grade / CO₂ and
+> retrofit economics with a real physics stack.
 
-한국의 공공 건축물대장 데이터를 조회하여 건물의 3D 모델을 자동 생성하고, 외피·설비
-정보로부터 에너지 수요·등급·CO₂ 배출을 추정한 뒤, 단열·창호·HVAC·태양광 등
-개보수(retrofit) 조치의 NPV·IRR·회수기간을 계산합니다.
+건물은 **생성형 엔진**으로만 진입합니다 — 자연어 설명, 브라우저에서 그린 도면,
+또는 가져온 DWG/DXF/SVG. 에너지가 이 제품의 핵심입니다: 모든 설계는 도일(degree-day)
+엔진으로 수요·EUI를 보고하고, 설계 변경은 에너지 변화량으로 답합니다.
 
-Search public building-ledger records, auto-generate a 3D model, estimate energy
-demand / grade / CO₂ from envelope and system data, then compute NPV, IRR, and
-payback for envelope, HVAC, lighting, and solar retrofit measures.
+Buildings enter only through the generative engine — a described prompt, a drawn
+schematic, or an imported DWG/DXF/SVG. Energy is the point: every design reports
+demand/EUI from the degree-day engine, and modifications answer with their deltas.
 
 ## 주요 기능 · Features
 
-- **건물 검색 (Search)** — 시도/시군구/법정동 계층으로 전국 건축물대장 조회
-  (data.go.kr 건축HUB API 프록시).
-- **디지털 트윈 (Twin)** — 대장 정보 + VWorld 지적 footprint로부터 절차적
-  (procedural) 3D 건물 생성 (React Three Fiber).
-- **에너지 분석 (Energy)** — degree-day 방식 난방/냉방 수요, 침기·환기 손실,
-  1차 에너지 기준 MOTIE/KEMCO 효율등급, 연료별 CO₂.
-- **개보수 리포트 (Retrofit report)** — 예산 기반 measure 선정(knapsack),
-  NPV/IRR/할인 회수기간, 그린리모델링 보조금 트랙, PDF/CSV/JSON 내보내기.
+- **생성형 스튜디오 (`/studio`)** — 글로 설명하기 · 도면 그리기 · 에너지 진단의
+  세 가지 시작 모드. 폴리곤 기반 BIM 생성, 자연어 수정/수리, 2D 평면 기호,
+  102-패밀리 절차적 인테리어.
+- **설계단계 에너지 진단 (`/studio?start=diagnose`)** — 도면 세트 등록 → 추출
+  검토 → Tier-1 스크리닝 모델 → 모델 검사 → 실제 엔진 시뮬레이션 → 진단 소견 →
+  개선 대안 비교 → 개보수 경제성. 모든 입력값은 출처(도면 근거·사용자 확인·가정·
+  기본값)를 추적합니다.
+- **디지털 트윈 (`/building/[id]`)** — 생성된 설계(GEN-xxxx)와 데모 건물의
+  절차적 3D 트윈, 외피/구조/에너지존/MEP 레이어, 일람표·시트, 리포트.
+- **개보수 경제성** — 예산 기반 measure 선정(knapsack), NPV/IRR/할인 회수기간,
+  그린리모델링 보조금 트랙, PDF/CSV/JSON 내보내기.
 
-사용자 여정: **검색 → 트윈 → 리포트** (Search → Twin → Report).
+사용자 여정: **입력(설명/도면) → 건물 모델 → 진단 → 개선 → 리포트**.
 
 ## 시작하기 · Getting started
 
@@ -40,23 +44,14 @@ pnpm install
 pnpm dev          # http://localhost:3000
 ```
 
-### 3. API 키 설정 · API key (required)
+### 3. 환경 변수 · Environment (optional)
 
-건축물대장 조회에는 **공공데이터포털(data.go.kr)** 서비스 키가 필요합니다.
-Building search requires a **data.go.kr** service key.
-
-1. [공공데이터포털](https://www.data.go.kr)에 가입하고 **건축HUB 건축물대장정보
-   서비스**(BldRgstHubService) 활용을 신청합니다.
-   Sign up at data.go.kr and request access to the 건축HUB Building Ledger service.
-2. 발급받은 **일반 인증키(Decoding)** 를 복사합니다.
-   Copy your issued service key (Decoding).
-3. 앱 우상단 **API Key** 버튼(🔑)을 눌러 키를 붙여넣습니다. 키는 브라우저의
-   로컬 저장소에만 보관되며 서버로 커밋되지 않습니다.
-   Paste it via the **API Key** (🔑) button in the app header — it is stored only
-   in your browser's local storage, never committed.
-
-> 선택: VWorld 지적도 footprint를 쓰려면 `VWORLD_API_KEY` 환경변수를 설정하세요.
-> Optional: set `VWORLD_API_KEY` to enable VWorld cadastral footprints.
+- `ANTHROPIC_API_KEY` (`.env.local`) — 자연어 건물 생성/수정(`/api/generative/*`)에
+  필요합니다. Required for natural-language generation and modification.
+- 건축물대장(data.go.kr) 키와 `VWORLD_API_KEY`는 **레거시 대장 조회 경로**에서만
+  쓰입니다 — 대장은 더 이상 기본 데이터 소스가 아닙니다.
+  Ledger (data.go.kr) and VWorld keys serve only the legacy ledger path; the
+  ledger is no longer a primary data source.
 
 ## 명령어 · Commands
 
@@ -66,13 +61,14 @@ Building search requires a **data.go.kr** service key.
 | `pnpm build` | Production build (also type-checks) |
 | `pnpm lint` | ESLint |
 | `pnpm test` | Vitest suite |
+| `pnpm test:e2e` | Playwright e2e (reuses a running dev server) |
 | `pnpm test:coverage` | Vitest with coverage thresholds |
 
 ## 기술 스택 · Tech stack
 
 Next.js 16 (App Router) · React 19 · TypeScript · Zustand · TanStack Query/Table ·
 React Three Fiber + drei/postprocessing · @react-pdf/renderer · Tailwind CSS ·
-shadcn/ui · Vitest.
+shadcn/ui · Vitest · Playwright.
 
 ## 배포 · Deploy
 

@@ -75,7 +75,12 @@ async function checkSchemaDrift() {
 
   const regenerated = result.stdout;
 
-  if (regenerated.trim() !== committedSchema.trim()) {
+  // Git may check the frozen JSON out with CRLF on Windows while the Node
+  // exporter always emits LF.  Schema drift is semantic content drift, not a
+  // platform line-ending difference.
+  const normalizeLineEndings = (value) => value.replace(/\r\n/g, "\n").trim();
+
+  if (normalizeLineEndings(regenerated) !== normalizeLineEndings(committedSchema)) {
     reportFail(
       guard,
       `regenerated schema differs from public/releases/${latest}/schema.json — FEATURE_SCHEMA drifted from the committed release schema. Run "pnpm export:feature-schema" and re-review.`

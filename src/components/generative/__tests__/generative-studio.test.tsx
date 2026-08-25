@@ -305,10 +305,10 @@ describe("GenerativeStudio — a seed handed over from the twin workspace", () =
 
     // The draw door is the one that is open.
     expect(
-      screen.getByRole("button", { name: "Draw schematic", pressed: true }),
+      screen.getByRole("button", { name: "도면 그리기", pressed: true }),
     ).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Describe a building", pressed: false }),
+      screen.getByRole("button", { name: "글로 설명하기", pressed: false }),
     ).toBeTruthy();
 
     // And it is THIS drawing, not a blank one.
@@ -323,7 +323,7 @@ describe("GenerativeStudio — a seed handed over from the twin workspace", () =
 
     render(<GenerativeStudio />);
     expect(
-      screen.getByRole("button", { name: "Draw schematic", pressed: true }),
+      screen.getByRole("button", { name: "도면 그리기", pressed: true }),
     ).toBeTruthy();
     cleanup();
 
@@ -331,21 +331,21 @@ describe("GenerativeStudio — a seed handed over from the twin workspace", () =
     // own default door rather than re-opening the drawing the user moved on from.
     render(<GenerativeStudio />);
     expect(
-      screen.getByRole("button", { name: "Describe a building", pressed: true }),
+      screen.getByRole("button", { name: "글로 설명하기", pressed: true }),
     ).toBeTruthy();
   });
 
   it("opens on the prompt box when nothing was handed over", () => {
     render(<GenerativeStudio />);
     expect(
-      screen.getByRole("button", { name: "Describe a building", pressed: true }),
+      screen.getByRole("button", { name: "글로 설명하기", pressed: true }),
     ).toBeTruthy();
   });
 
   it("opens on the schematic when the landing draw door asked it to", () => {
     render(<GenerativeStudio initialStart="draw" />);
     expect(
-      screen.getByRole("button", { name: "Draw schematic", pressed: true }),
+      screen.getByRole("button", { name: "도면 그리기", pressed: true }),
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Generate BIM" })).toBeTruthy();
   });

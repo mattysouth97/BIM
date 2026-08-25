@@ -33,10 +33,15 @@ export type GenerateFindingsOptions = Readonly<{
   run?: DegreeDaySimulationRun;
   spatial?: SpatialEnergyMapping;
   baselineRun?: DegreeDaySimulationRun;
+  /** Overrides the model's stored locale, e.g. to follow the live UI language. */
+  locale?: "ko" | "en";
 }>;
 
+let activeLocaleOverride: "ko" | "en" | null = null;
+
 function localized(model: CanonicalEnergyModel, ko: string, en: string): string {
-  return model.project.locale === "ko" ? ko : en;
+  const locale = activeLocaleOverride ?? model.project.locale;
+  return locale === "ko" ? ko : en;
 }
 
 function factsForIds(
@@ -131,7 +136,7 @@ function dominantEnvelopeFinding(
     title: localized(
       model,
       `${label[dominant.element] ?? dominant.element} 설계 열손실 비중이 가장 큽니다`,
-      `${label[dominant.element] ?? dominant.element} has the largest design heat-loss share`,
+      `${label[dominant.element] ?? dominant.element}: largest design heat-loss share`,
     ),
     severity: share >= 0.4 ? "high" : share >= 0.25 ? "medium" : "low",
     affectedObjectIds,
@@ -162,6 +167,67 @@ function dominantEnvelopeFinding(
       model,
       `대안 시나리오에서 ${label[dominant.element] ?? dominant.element}의 U값 또는 면적을 변경하고 실제 엔진 결과를 비교하세요.`,
       `Change ${label[dominant.element] ?? dominant.element} U-value or area in a scenario and compare real engine results.`,
+    ),
+    impactSimulated: true,
+    scenarioId: run.scenarioId,
+  };
+}
+
+function infiltrationFinding(
+  model: CanonicalEnergyModel,
+  run: DegreeDaySimulationRun,
+): DiagnosticFinding | undefined {
+  const output = run.engineOutput;
+  if (run.status !== "succeeded" || output == null || output.heatLoss.totalHeatLoss <= 0) {
+    return undefined;
+  }
+  const infiltration = output.heatLoss.elements.find(
+    (element) => element.element === "Infiltration/Ventilation",
+  );
+  if (infiltration == null) return undefined;
+  const share = infiltration.heatLoss / output.heatLoss.totalHeatLoss;
+  if (share < 0.25) return undefined;
+  const infiltrationFact = model.envelope.infiltrationAirChangesPerHour;
+  return {
+    id: "finding:infiltration-share",
+    title: localized(
+      model,
+      `침기·환기가 설계 열손실의 ${(share * 100).toFixed(0)}%를 차지합니다`,
+      `Infiltration/ventilation accounts for ${(share * 100).toFixed(0)}% of design heat loss`,
+    ),
+    severity: share >= 0.5 ? "high" : "medium",
+    affectedObjectIds: [model.building.id],
+    evidence: [{
+      label: localized(model, "전체 설계 열손실 비중", "Share of design heat loss"),
+      value: Number((share * 100).toFixed(1)),
+      unit: "%",
+      sourceFactIds: [infiltrationFact.id],
+    }, {
+      label: localized(model, "침기율 입력", "Infiltration input"),
+      value: infiltrationFact.value == null ? "—" : String(infiltrationFact.value),
+      unit: infiltrationFact.unit ?? "ACH",
+      sourceFactIds: [infiltrationFact.id],
+    }],
+    relatedSourceRefs: infiltrationFact.sourceRefs,
+    relatedFactIds: [infiltrationFact.id],
+    relatedSimulationPaths: [
+      "engineOutput.heatLoss.elements.Infiltration/Ventilation",
+      "engineOutput.heatLoss.totalHeatLoss",
+    ],
+    explanation: localized(
+      model,
+      infiltrationFact.assumptionId != null
+        ? "현재 침기율은 명시적 가정입니다. 기밀 시방이 확인되면 이 비중은 달라질 수 있습니다."
+        : "기존 도일 엔진의 환기·침기 열손실 항을 전체 열손실과 비교한 스크리닝 진단입니다.",
+      infiltrationFact.assumptionId != null
+        ? "The current infiltration rate is an explicit assumption; a confirmed airtightness spec changes this share."
+        : "This screening diagnosis compares the degree-day engine's ventilation/infiltration term against total design heat loss.",
+    ),
+    confidence: infiltrationFact.confidence,
+    recommendedDesignAction: localized(
+      model,
+      "대안 시나리오에서 침기율(ACH)을 낮춰 기밀 개선 효과를 실제 엔진으로 비교하세요.",
+      "Lower the infiltration rate (ACH) in a scenario and compare the airtightness improvement with the real engine.",
     ),
     impactSimulated: true,
     scenarioId: run.scenarioId,
@@ -228,7 +294,7 @@ function scenarioComparisonFinding(
     id: `finding:scenario-comparison:${run.scenarioId}`,
     title: localized(
       model,
-      `대안의 연간 에너지가 기준안 대비 ${Math.abs(percent).toFixed(1)}% ${delta <= 0 ? "uac10소" : "uc99d가"}했습니다`,
+      `대안의 연간 에너지가 기준안 대비 ${Math.abs(percent).toFixed(1)}% ${delta <= 0 ? "감소" : "증가"}했습니다`,
       `Scenario annual energy ${delta <= 0 ? "decreased" : "increased"} ${Math.abs(percent).toFixed(1)}% versus baseline`,
     ),
     severity: delta <= 0 ? "info" : "medium",
@@ -269,7 +335,23 @@ export function generateDiagnosticFindings({
   validation,
   run,
   baselineRun,
+  locale,
 }: GenerateFindingsOptions): readonly DiagnosticFinding[] {
+  // The pipeline below is fully synchronous, so a scoped override is safe.
+  activeLocaleOverride = locale ?? null;
+  try {
+    return buildFindings(model, validation, run, baselineRun);
+  } finally {
+    activeLocaleOverride = null;
+  }
+}
+
+function buildFindings(
+  model: CanonicalEnergyModel,
+  validation: CanonicalModelValidation,
+  run: DegreeDaySimulationRun | undefined,
+  baselineRun: DegreeDaySimulationRun | undefined,
+): readonly DiagnosticFinding[] {
   const findings: DiagnosticFinding[] = validation.issues.map((issue) =>
     validationFinding(model, issue),
   );
@@ -295,8 +377,10 @@ export function generateDiagnosticFindings({
     });
   }
   if (run != null) {
+    const infiltration = infiltrationFinding(model, run);
     const dominant = dominantEnvelopeFinding(model, run);
     const ratio = ratioAttributionFinding(model, run);
+    if (infiltration != null) findings.push(infiltration);
     if (dominant != null) findings.push(dominant);
     if (ratio != null) findings.push(ratio);
     if (baselineRun != null) {

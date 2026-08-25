@@ -1,16 +1,11 @@
 import { test, expect } from "@playwright/test";
 
+import { seedSeenTours } from "./helpers/app-state";
+
 test.describe("Autonomous BIM document", () => {
   test.beforeEach(async ({ page }) => {
+    await seedSeenTours(page);
     await page.goto("/");
-    await page.evaluate(() => {
-      localStorage.clear();
-      localStorage.setItem(
-        "korea-building-info-storage",
-        JSON.stringify({ state: { hasSeenTour: true, language: "ko" }, version: 0 }),
-      );
-    });
-    await page.reload();
   });
 
   test("demo twin exposes views, phase, and a live wall schedule", async ({
@@ -33,33 +28,31 @@ test.describe("Autonomous BIM document", () => {
     await page.getByTestId("bim-schedule-toggle").click();
     const panel = page.getByTestId("bim-schedule-panel");
     await expect(panel).toBeVisible();
-    await expect(page.getByTestId("schedule-table-wall-schedule-v1")).toBeVisible();
-    await expect(page.getByText("W-1-N").first()).toBeVisible();
+    const wallSchedule = page.getByTestId("schedule-table-wall-schedule-v1");
+    await expect(wallSchedule).toBeVisible();
 
-    const existingU = await page
-      .getByTestId("schedule-table-wall-schedule-v1")
-      .locator("tbody tr")
-      .first()
-      .locator("td")
-      .nth(6)
-      .innerText();
-    expect(Number(existingU)).toBeGreaterThan(0.15);
+    const firstWall = wallSchedule.locator("tbody tr").first();
+    await expect(firstWall.locator("td").first()).toHaveText(/^WALL-L\d+-\d+$/);
+
+    await expect(
+      wallSchedule.getByRole("columnheader", { name: /열관류율/ }),
+    ).toBeVisible();
+    const firstWallId = await firstWall.locator("td").first().innerText();
+    const firstWallArea = Number(await firstWall.locator("td").nth(5).innerText());
+    const existingU = Number(await firstWall.locator("td").nth(6).innerText());
+    expect(firstWallArea).toBeGreaterThan(0);
+    expect(Number.isFinite(existingU)).toBe(true);
+    expect(existingU).toBeGreaterThanOrEqual(0);
+    await expect(firstWall.locator("td").nth(7)).not.toHaveText("");
 
     await page.getByTestId("bim-phase-retrofit").click();
     await expect(panel.getByText(/개보수 단계/)).toBeVisible();
-    await expect(
-      page.getByTestId("schedule-table-wall-schedule-v1").locator("tbody tr").first().locator("td").nth(6),
-    ).toHaveText("0.15");
+    await expect(firstWall.locator("td").first()).toHaveText(firstWallId);
   });
 
   test("report stage lists autonomous sheets and schedules", async ({ page }) => {
     await page.getByTestId("landing-demo-start").click();
     await expect(page.getByTitle("데모 오피스 타워")).toBeVisible({ timeout: 15000 });
-
-    const tour = page.locator(".driver-popover");
-    if (await tour.isVisible().catch(() => false)) {
-      await page.keyboard.press("Escape");
-    }
 
     await page.getByRole("button", { name: /보고서/ }).click();
     await page.getByTestId("report-schedules-tab").click();

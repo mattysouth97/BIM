@@ -6,6 +6,7 @@ import {
   type DegreeDaySimulationRun,
   type SpatialEnergyMapping,
 } from "@/lib/energy-diagnostics/adapter";
+import { documentTier } from "@/lib/energy-diagnostics/classification";
 import {
   collectEnergyFacts,
   createEnergyFact,
@@ -20,14 +21,22 @@ import {
   REFERENCE_OFFICE_INFILTRATION_ASSUMPTION_ID,
 } from "@/lib/energy-diagnostics/reference-office-model";
 import { representativeOfficeDrawingSetInputs } from "@/lib/energy-diagnostics/reference-office-sources";
-import { createEnergyScenario } from "@/lib/energy-diagnostics/scenarios";
+import {
+  createEnergyScenario,
+  type ScenarioChange,
+} from "@/lib/energy-diagnostics/scenarios";
 import type {
   CanonicalEnergyModel,
   ConflictRecord,
+  DrawingDocumentType,
   EnergyFact,
   EnergyScenario,
 } from "@/lib/energy-diagnostics/types";
 import { validateCanonicalEnergyModel } from "@/lib/energy-diagnostics/validation";
+import {
+  mergeThermalZones,
+  splitThermalZone,
+} from "@/lib/energy-diagnostics/zoning";
 
 export const REFERENCE_INGESTED_AT = "2026-01-15T00:00:00.000Z";
 export const INFILTRATION_ASSUMPTION_ID =
@@ -286,6 +295,306 @@ export function runWindowScenario(
     scenario,
     run,
   });
+}
+
+/**
+ * Records the user's explicit document-type assignment on an ingested drawing
+ * set. The assignment is authoritative (`method: "user_assignment"`), keeps the
+ * automatic guess visible as an alternative, and re-derives the set tier.
+ */
+export function assignDocumentClassification(
+  ingestion: DrawingSetIngestionResult,
+  documentId: string,
+  documentType: DrawingDocumentType,
+): DrawingSetIngestionResult {
+  const documents = ingestion.drawingSet.documents.map((document) => {
+    if (document.id !== documentId) return document;
+    const previous = document.classification;
+    const alternatives =
+      previous.method === "user_assignment"
+        ? previous.alternatives
+        : Object.freeze([
+            Object.freeze({
+              documentType: previous.documentType,
+              confidence: previous.confidence,
+            }),
+            ...previous.alternatives,
+          ]);
+    return Object.freeze({
+      ...document,
+      classification: Object.freeze({
+        ...previous,
+        documentType,
+        confidence: 1,
+        method: "user_assignment" as const,
+        alternatives,
+      }),
+    });
+  });
+  return Object.freeze({
+    ...ingestion,
+    drawingSet: Object.freeze({
+      ...ingestion.drawingSet,
+      tier: documents.reduce<1 | 2 | 3>(
+        (highest, document) =>
+          Math.max(
+            highest,
+            documentTier(document.classification.documentType),
+          ) as 1 | 2 | 3,
+        1,
+      ),
+      documents: Object.freeze(documents),
+    }),
+  });
+}
+
+export type ImprovementScenarioValues = Readonly<{
+  windowUValueWPerM2K?: number;
+  windowShgc?: number;
+  infiltrationAch?: number;
+  heatingCop?: number;
+  /** Multiplies every opening's area, e.g. 0.8 shrinks all glazing by 20%. */
+  openingAreaScale?: number;
+}>;
+
+/**
+ * Runs one delta-only alternative over any combination of the engine-consumed
+ * improvement parameters. Unset parameters keep their baseline facts.
+ */
+export function runImprovementScenario(
+  model: CanonicalEnergyModel,
+  values: ImprovementScenarioValues,
+): Readonly<{
+  model: CanonicalEnergyModel;
+  scenario: EnergyScenario;
+  run: DegreeDaySimulationRun;
+}> {
+  const changes: ScenarioChange<unknown>[] = [];
+  const nameParts: string[] = [];
+  if (values.windowUValueWPerM2K != null) {
+    const windowIndex = model.envelope.constructions.findIndex(
+      (construction) => construction.kind === "window",
+    );
+    if (windowIndex < 0) throw new Error("The model has no window construction.");
+    changes.push({
+      id: `delta-window-u-${windowIndex}`,
+      path: `envelope.constructions.${windowIndex}.uValueWPerM2K`,
+      baselineFact: model.envelope.constructions[windowIndex].uValueWPerM2K,
+      value: values.windowUValueWPerM2K,
+      unit: "W/m2K",
+    });
+    nameParts.push(`window-u-${values.windowUValueWPerM2K.toFixed(2)}`);
+  }
+  if (values.windowShgc != null) {
+    const windowIndex = model.envelope.constructions.findIndex(
+      (construction) => construction.kind === "window",
+    );
+    if (windowIndex < 0) throw new Error("The model has no window construction.");
+    changes.push({
+      id: `delta-window-shgc-${windowIndex}`,
+      path: `envelope.constructions.${windowIndex}.shgc`,
+      baselineFact: model.envelope.constructions[windowIndex].shgc,
+      value: values.windowShgc,
+    });
+    nameParts.push(`shgc-${values.windowShgc.toFixed(2)}`);
+  }
+  if (values.infiltrationAch != null) {
+    changes.push({
+      id: "delta-infiltration-ach",
+      path: "envelope.infiltrationAirChangesPerHour",
+      baselineFact: model.envelope.infiltrationAirChangesPerHour,
+      value: values.infiltrationAch,
+      unit: "ACH",
+    });
+    nameParts.push(`ach-${values.infiltrationAch.toFixed(2)}`);
+  }
+  if (values.heatingCop != null) {
+    if (model.systems.hvac.length === 0) {
+      throw new Error("The model has no HVAC system.");
+    }
+    changes.push({
+      id: "delta-heating-cop-0",
+      path: "systems.hvac.0.heatingEfficiency",
+      baselineFact: model.systems.hvac[0].heatingEfficiency,
+      value: values.heatingCop,
+    });
+    nameParts.push(`cop-${values.heatingCop.toFixed(2)}`);
+  }
+  if (values.openingAreaScale != null) {
+    if (!(values.openingAreaScale > 0)) {
+      throw new Error("The opening-area scale must be positive.");
+    }
+    model.geometry.openings.forEach((opening, index) => {
+      const baseline = opening.areaSqm;
+      if (typeof baseline.value !== "number" || !Number.isFinite(baseline.value)) return;
+      changes.push({
+        id: `delta-opening-area-${index}`,
+        path: `geometry.openings.${index}.areaSqm`,
+        baselineFact: baseline,
+        value: baseline.value * values.openingAreaScale!,
+        unit: baseline.unit ?? "m2",
+      });
+    });
+    nameParts.push(`glazing-x${values.openingAreaScale.toFixed(2)}`);
+  }
+  if (changes.length === 0) {
+    throw new Error("An improvement scenario needs at least one changed value.");
+  }
+  const scenario = createEnergyScenario({
+    id: `scenario-${nameParts.join("-").replaceAll(".", "-")}`,
+    name: `Improvement ${nameParts.join(" · ")}`,
+    baseline: model,
+    changes,
+  });
+  const input = compileCanonicalModelToEngineInput(model, scenario);
+  const run = runSimulation(input);
+  return Object.freeze({
+    model: refreshModel({
+      ...model,
+      scenarios: Object.freeze([
+        ...model.scenarios.filter((candidate) => candidate.id !== scenario.id),
+        scenario,
+      ]),
+      simulationRuns: Object.freeze([
+        ...model.simulationRuns.filter(
+          (candidate) => candidate.scenarioId !== scenario.id,
+        ),
+        run,
+      ]),
+    }),
+    scenario,
+    run,
+  });
+}
+
+function remapZoneReferences(
+  model: CanonicalEnergyModel,
+  removedZoneIds: ReadonlySet<string>,
+  replacements: readonly CanonicalEnergyModel["geometry"]["thermalZones"][number][],
+  spaceToZone: ReadonlyMap<string, string>,
+  now: string,
+): CanonicalEnergyModel {
+  const keptZones = model.geometry.thermalZones.filter(
+    (zone) => !removedZoneIds.has(zone.id),
+  );
+  const spaces = model.geometry.spaces.map((space) => {
+    const next = spaceToZone.get(space.id);
+    return next != null && next !== space.thermalZoneId
+      ? Object.freeze({ ...space, thermalZoneId: next })
+      : space;
+  });
+  const replacementIds = replacements.map((zone) => zone.id);
+  const hvac = model.systems.hvac.map((system) => {
+    const served = system.servedZoneIds.value ?? [];
+    if (!served.some((id) => removedZoneIds.has(id))) return system;
+    const nextServed = [
+      ...new Set([
+        ...served.filter((id) => !removedZoneIds.has(id)),
+        ...replacementIds,
+      ]),
+    ].sort();
+    return Object.freeze({
+      ...system,
+      servedZoneIds: Object.freeze({
+        ...system.servedZoneIds,
+        value: Object.freeze(nextServed),
+        updatedAt: now,
+      }),
+    });
+  });
+  // The merged/split zones keep their 2D↔3D traceability: removed zones'
+  // object mappings collapse onto the replacements (union for a merge; the
+  // viewer bridge's per-space fallback covers splits without a mapping).
+  const removedMappings = model.mappings.filter((mapping) =>
+    removedZoneIds.has(mapping.canonicalObjectId),
+  );
+  const inheritedThreeIds = Object.freeze([
+    ...new Set(removedMappings.flatMap((mapping) => mapping.threeObjectIds)),
+  ]);
+  const inheritedSourceRefs = Object.freeze([
+    ...new Map(
+      removedMappings
+        .flatMap((mapping) => mapping.sourceEntityRefs)
+        .map((source) => [source.id, source] as const),
+    ).values(),
+  ]);
+  const mappings = Object.freeze([
+    ...model.mappings.filter(
+      (mapping) => !removedZoneIds.has(mapping.canonicalObjectId),
+    ),
+    ...(replacements.length === 1 && removedMappings.length > 0
+      ? [
+          Object.freeze({
+            canonicalObjectId: replacements[0].id,
+            threeObjectIds: inheritedThreeIds,
+            sourceEntityRefs: inheritedSourceRefs,
+          }),
+        ]
+      : []),
+  ]);
+  return refreshModel(
+    {
+      ...model,
+      geometry: Object.freeze({
+        ...model.geometry,
+        thermalZones: Object.freeze([...keptZones, ...replacements]),
+        spaces: Object.freeze(spaces),
+      }),
+      systems: Object.freeze({ ...model.systems, hvac: Object.freeze(hvac) }),
+      mappings,
+    },
+    now,
+  );
+}
+
+/** Merges user-selected zones into one reviewed zone, keeping every reference coherent. */
+export function mergeModelZones(
+  model: CanonicalEnergyModel,
+  zoneIds: readonly string[],
+  name: string,
+  now = new Date().toISOString(),
+): CanonicalEnergyModel {
+  const zones = model.geometry.thermalZones.filter((zone) =>
+    zoneIds.includes(zone.id),
+  );
+  const merged = mergeThermalZones({ zones, name, createdAt: now });
+  const removed = new Set(zones.map((zone) => zone.id));
+  const spaceToZone = new Map(
+    merged.sourceSpaceIds.map((spaceId) => [spaceId, merged.id] as const),
+  );
+  return remapZoneReferences(model, removed, [merged], spaceToZone, now);
+}
+
+/** Splits a zone into one reviewed zone per source space. */
+export function splitModelZoneBySpace(
+  model: CanonicalEnergyModel,
+  zoneId: string,
+  now = new Date().toISOString(),
+): CanonicalEnergyModel {
+  const zone = model.geometry.thermalZones.find((candidate) => candidate.id === zoneId);
+  if (!zone) throw new Error(`Unknown thermal zone ${zoneId}.`);
+  if (zone.sourceSpaceIds.length < 2) {
+    throw new Error("The zone already contains a single space.");
+  }
+  const spaceById = new Map(model.geometry.spaces.map((space) => [space.id, space]));
+  const groups = zone.sourceSpaceIds.map((spaceId) => ({
+    name:
+      spaceById.get(spaceId)?.name.value ??
+      `${zone.name.value ?? zone.stableKey} · ${spaceId}`,
+    sourceSpaceIds: [spaceId] as const,
+  }));
+  const splits = splitThermalZone({
+    zone,
+    spaces: model.geometry.spaces,
+    groups,
+    createdAt: now,
+  });
+  const spaceToZone = new Map(
+    splits.flatMap((split) =>
+      split.sourceSpaceIds.map((spaceId) => [spaceId, split.id] as const),
+    ),
+  );
+  return remapZoneReferences(model, new Set([zone.id]), splits, spaceToZone, now);
 }
 
 export function spatialResultsForRun(

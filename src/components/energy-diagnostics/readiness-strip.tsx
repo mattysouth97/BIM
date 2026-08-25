@@ -25,14 +25,19 @@ const CATEGORY_LABEL = {
 const STATUS_LABEL = {
   ko: {
     ready: "준비됨",
-    assumptions_required: "가정 확인",
-    blocked: "차단",
+    assumptions_required: "가정 확인 필요",
+    blocked: "차단됨",
   },
   en: {
     ready: "Ready",
-    assumptions_required: "Assumptions",
+    assumptions_required: "Assumptions to review",
     blocked: "Blocked",
   },
+} as const;
+
+const COUNT_LABEL = {
+  ko: { verified: "확인", assumed: "가정", missing: "누락" },
+  en: { verified: "verified", assumed: "assumed", missing: "missing" },
 } as const;
 
 export function ReadinessStrip({
@@ -91,8 +96,15 @@ export function ReadinessStrip({
               <span className="mt-0.5 block text-xs font-medium">
                 {STATUS_LABEL[locale][category.status]}
               </span>
-              <span className="block truncate font-mono text-[9px] text-muted-foreground">
-                {category.verifiedCount}V · {category.assumedCount}A · {category.missingCount}M
+              <span
+                className="block truncate text-[9px] text-muted-foreground"
+                title={
+                  locale === "ko"
+                    ? "확인: 도면 또는 사용자로 검증된 입력 · 가정: 추론값과 기본값 · 누락: 값이 없는 입력"
+                    : "Verified: drawing- or user-confirmed inputs · Assumed: inferred values and defaults · Missing: inputs without a value"
+                }
+              >
+                {COUNT_LABEL[locale].verified} {category.verifiedCount} · {COUNT_LABEL[locale].assumed} {category.assumedCount} · {COUNT_LABEL[locale].missing} {category.missingCount}
               </span>
             </span>
           </button>

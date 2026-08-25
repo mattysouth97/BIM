@@ -100,7 +100,7 @@ export function BuildingToolbar({
         >
           <ArrowLeft className="size-4" />
           <span className="hidden sm:inline">
-            {t("검색", "Back")}
+            {t("홈", "Home")}
           </span>
         </Link>
 

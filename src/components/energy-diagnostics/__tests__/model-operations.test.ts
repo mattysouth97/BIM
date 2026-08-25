@@ -6,11 +6,15 @@ import { validateCanonicalEnergyModel } from "@/lib/energy-diagnostics/validatio
 
 import {
   applyInfiltrationAssumption,
+  assignDocumentClassification,
   loadRepresentativeCase,
+  mergeModelZones,
   resolveVisibleConflict,
   runBaselineModel,
+  runImprovementScenario,
   runWindowScenario,
   spatialResultsForRun,
+  splitModelZoneBySpace,
 } from "../model-operations";
 
 describe("representative diagnosis model operations", () => {
@@ -364,6 +368,194 @@ describe("representative diagnosis model operations", () => {
     expect(alternative.run.engineInput.inputHash).not.toBe(baseline.run.engineInput.inputHash);
     expect(alternative.run.result?.annualEnergyKwh).not.toBe(
       baseline.run.result?.annualEnergyKwh,
+    );
+  });
+
+  it("runs a combined improvement scenario over window U, infiltration, and heating COP", async () => {
+    const reference = await loadRepresentativeCase();
+    let model = applyInfiltrationAssumption(reference.model);
+    const conflict = model.conflicts[0];
+    if (!conflict.selectedFactId) throw new Error("reference conflict has no selection");
+    model = resolveVisibleConflict(model, conflict.id, conflict.selectedFactId);
+    const baseline = runBaselineModel(model);
+
+    const alternative = runImprovementScenario(baseline.model, {
+      windowUValueWPerM2K: 1.1,
+      infiltrationAch: 0.25,
+      heatingCop: 4.0,
+    });
+
+    expect(alternative.run.status).toBe("succeeded");
+    expect(alternative.scenario.deltas).toHaveLength(3);
+    const windowIndex = baseline.model.envelope.constructions.findIndex(
+      (construction) => construction.kind === "window",
+    );
+    expect(
+      alternative.scenario.deltas.map((delta) => delta.path).sort(),
+    ).toEqual([
+      `envelope.constructions.${windowIndex}.uValueWPerM2K`,
+      "envelope.infiltrationAirChangesPerHour",
+      "systems.hvac.0.heatingEfficiency",
+    ].sort());
+    // Baseline facts stay untouched: deltas are replacement-only.
+    expect(alternative.model.envelope.infiltrationAirChangesPerHour.value).toBe(
+      baseline.model.envelope.infiltrationAirChangesPerHour.value,
+    );
+    const baselineAnnual = baseline.run.result?.annualEnergyKwh ?? 0;
+    const scenarioAnnual = alternative.run.result?.annualEnergyKwh ?? 0;
+    expect(scenarioAnnual).toBeLessThan(baselineAnnual);
+  });
+
+  it("supports SHGC and glazing-area deltas without touching baseline facts", async () => {
+    const reference = await loadRepresentativeCase();
+    let model = applyInfiltrationAssumption(reference.model);
+    const conflict = model.conflicts[0];
+    if (!conflict.selectedFactId) throw new Error("reference conflict has no selection");
+    model = resolveVisibleConflict(model, conflict.id, conflict.selectedFactId);
+    const baseline = runBaselineModel(model);
+
+    const alternative = runImprovementScenario(baseline.model, {
+      windowShgc: 0.25,
+      openingAreaScale: 0.8,
+    });
+
+    expect(alternative.run.status).toBe("succeeded");
+    const paths = alternative.scenario.deltas.map((delta) => delta.path);
+    expect(paths.some((path) => path.endsWith(".shgc"))).toBe(true);
+    const openingDeltas = alternative.scenario.deltas.filter((delta) =>
+      /^geometry\.openings\.\d+\.areaSqm$/.test(delta.path),
+    );
+    expect(openingDeltas.length).toBe(baseline.model.geometry.openings.length);
+    for (const delta of openingDeltas) {
+      const index = Number(delta.path.split(".")[2]);
+      const baselineArea = baseline.model.geometry.openings[index].areaSqm.value;
+      expect(delta.replacement.value).toBeCloseTo((baselineArea as number) * 0.8, 9);
+    }
+    // Baseline opening facts stay untouched.
+    expect(alternative.model.geometry.openings).toEqual(baseline.model.geometry.openings);
+  });
+
+  it("rejects an improvement scenario with no changed values", async () => {
+    const reference = await loadRepresentativeCase();
+    expect(() => runImprovementScenario(reference.model, {})).toThrow(
+      /at least one changed value/,
+    );
+  });
+
+  it("promotes a user document-type assignment to an authoritative classification", async () => {
+    const reference = await loadRepresentativeCase();
+    const document = reference.ingestion.drawingSet.documents.find(
+      (candidate) => candidate.classification.documentType !== "floor_plan",
+    );
+    if (!document) throw new Error("reference set has no non-plan document");
+    const previousType = document.classification.documentType;
+
+    const updated = assignDocumentClassification(
+      reference.ingestion,
+      document.id,
+      "floor_plan",
+    );
+
+    const reclassified = updated.drawingSet.documents.find(
+      (candidate) => candidate.id === document.id,
+    );
+    expect(reclassified?.classification).toMatchObject({
+      documentType: "floor_plan",
+      confidence: 1,
+      method: "user_assignment",
+    });
+    // The automatic guess stays visible as an alternative.
+    expect(
+      reclassified?.classification.alternatives.some(
+        (candidate) => candidate.documentType === previousType,
+      ),
+    ).toBe(true);
+    // Other documents are untouched.
+    expect(
+      updated.drawingSet.documents.filter((candidate) => candidate.id !== document.id),
+    ).toEqual(
+      reference.ingestion.drawingSet.documents.filter(
+        (candidate) => candidate.id !== document.id,
+      ),
+    );
+  });
+
+  it("merges zones into one user-confirmed zone with coherent references", async () => {
+    const reference = await loadRepresentativeCase();
+    const model = reference.model;
+    const [first, second] = model.geometry.thermalZones;
+    const areaBefore =
+      (first.floorAreaSqm.value ?? 0) + (second.floorAreaSqm.value ?? 0);
+
+    const merged = mergeModelZones(model, [first.id, second.id], "저층부 병합");
+
+    expect(merged.geometry.thermalZones.length).toBe(
+      model.geometry.thermalZones.length - 1,
+    );
+    const mergedZone = merged.geometry.thermalZones.find(
+      (zone) => zone.name.value === "저층부 병합",
+    );
+    expect(mergedZone).toBeDefined();
+    expect(mergedZone!.floorAreaSqm.value).toBeCloseTo(areaBefore, 6);
+    // Spaces point at the merged zone; no space keeps a removed zone id.
+    const removed = new Set([first.id, second.id]);
+    for (const space of merged.geometry.spaces) {
+      expect(space.thermalZoneId == null || !removed.has(space.thermalZoneId)).toBe(true);
+    }
+    // HVAC service references stay resolvable — validation stays clean.
+    for (const system of merged.systems.hvac) {
+      for (const zoneId of system.servedZoneIds.value ?? []) {
+        expect(
+          merged.geometry.thermalZones.some((zone) => zone.id === zoneId),
+        ).toBe(true);
+      }
+    }
+    const validation = validateCanonicalEnergyModel(merged);
+    expect(
+      validation.issues.filter((issue) =>
+        ["GEOMETRY_ORPHAN_ZONE_SPACES"].includes(issue.code) ||
+        issue.code.includes("ZONE_SERVICE"),
+      ),
+    ).toEqual([]);
+    // The merged zone inherits the removed zones' 3D object mappings.
+    const mapping = merged.mappings.find(
+      (candidate) => candidate.canonicalObjectId === mergedZone!.id,
+    );
+    expect(mapping).toBeDefined();
+    expect(mapping!.threeObjectIds.length).toBeGreaterThan(0);
+  });
+
+  it("splits a multi-space zone into one reviewed zone per space", async () => {
+    const reference = await loadRepresentativeCase();
+    const model = reference.model;
+    const splittable = model.geometry.thermalZones.find(
+      (zone) => zone.sourceSpaceIds.length >= 2,
+    );
+    if (!splittable) {
+      // Representative zones are one-space; merge two first, then split back.
+      const [first, second] = model.geometry.thermalZones;
+      const merged = mergeModelZones(model, [first.id, second.id], "병합");
+      const mergedZone = merged.geometry.thermalZones.find(
+        (zone) => zone.name.value === "병합",
+      )!;
+      const split = splitModelZoneBySpace(merged, mergedZone.id);
+      expect(split.geometry.thermalZones.length).toBe(
+        model.geometry.thermalZones.length,
+      );
+      for (const zone of split.geometry.thermalZones) {
+        expect(zone.sourceSpaceIds.length).toBeGreaterThan(0);
+      }
+      const validation = validateCanonicalEnergyModel(split);
+      expect(
+        validation.issues.filter(
+          (issue) => issue.code === "GEOMETRY_ORPHAN_ZONE_SPACES",
+        ),
+      ).toEqual([]);
+      return;
+    }
+    const split = splitModelZoneBySpace(model, splittable.id);
+    expect(split.geometry.thermalZones.length).toBe(
+      model.geometry.thermalZones.length - 1 + splittable.sourceSpaceIds.length,
     );
   });
 });

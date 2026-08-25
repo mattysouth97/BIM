@@ -57,6 +57,7 @@ import {
   TIER_ONE_OFFICE_SCREENING_TEMPLATE_V1,
   TIER_ONE_SCREENING_ASSUMPTION_ID,
   TIER_ONE_SCREENING_ENGINE_PATHS,
+  type TierOneModelBuildOutcome,
 } from "@/lib/energy-diagnostics/tier-one-model";
 import type {
   CanonicalEnergyModel,
@@ -69,17 +70,32 @@ import {
   type CanonicalModelValidation,
 } from "@/lib/energy-diagnostics/validation";
 
+import { generateDiagnosticFindings } from "@/lib/energy-diagnostics/findings";
+import {
+  analyzeRetrofitEconomics,
+  type DiagnosticsRetrofitAnalysis,
+  type ProgramTrack,
+} from "@/lib/energy-diagnostics/retrofit-bridge";
+
 import { diagnosisCopy } from "./copy";
 import { EvidenceInspector } from "./evidence-inspector";
+import { factKeyLabel, factStatusLabel } from "./fact-label";
+import { FindingsPanel } from "./findings-panel";
 import {
   applyInfiltrationAssumption,
+  assignDocumentClassification,
   loadRepresentativeCase,
+  mergeModelZones,
   resolveVisibleConflict,
   runBaselineModel,
-  runWindowScenario,
+  runImprovementScenario,
   spatialResultsForRun,
+  splitModelZoneBySpace,
+  type ImprovementScenarioValues,
 } from "./model-operations";
+import { tierOneGuidance } from "./tier-one-guidance";
 import { ReadinessStrip } from "./readiness-strip";
+import { RetrofitEconomicsPanel } from "./retrofit-economics-panel";
 import {
   ResultComparison,
   type ResultMetric,
@@ -93,11 +109,8 @@ import type {
 
 type WorkflowStage =
   | "drawings"
-  | "classification"
   | "review"
-  | "zones"
-  | "envelope"
-  | "systems"
+  | "model"
   | "assumptions"
   | "preflight"
   | "simulation"
@@ -114,11 +127,8 @@ type Operation =
 
 const STAGES: readonly WorkflowStage[] = [
   "drawings",
-  "classification",
   "review",
-  "zones",
-  "envelope",
-  "systems",
+  "model",
   "assumptions",
   "preflight",
   "simulation",
@@ -128,11 +138,8 @@ const STAGES: readonly WorkflowStage[] = [
 const STAGE_LABEL: Record<DiagnosisLocale, Record<WorkflowStage, string>> = {
   ko: {
     drawings: "도면 세트",
-    classification: "도면 분류",
     review: "추출 검토",
-    zones: "공간 및 열구역",
-    envelope: "외피 성능",
-    systems: "설비 시스템",
+    model: "건물 모델",
     assumptions: "가정 및 누락값",
     preflight: "모델 검사",
     simulation: "시뮬레이션",
@@ -140,11 +147,8 @@ const STAGE_LABEL: Record<DiagnosisLocale, Record<WorkflowStage, string>> = {
   },
   en: {
     drawings: "Drawing set",
-    classification: "Classification",
     review: "Extraction review",
-    zones: "Spaces & zones",
-    envelope: "Envelope",
-    systems: "Systems",
+    model: "Building model",
     assumptions: "Assumptions",
     preflight: "Preflight",
     simulation: "Simulation",
@@ -223,12 +227,24 @@ function stageComplete(
   baselineRun: DegreeDaySimulationRun | null,
   scenarioRun: DegreeDaySimulationRun | null,
 ): boolean {
-  if (stage === "drawings") return Boolean(ingestion || model?.drawingSet.documents.length);
-  if (stage === "classification") return Boolean(model?.drawingSet.documents.every((document) => document.classification.documentType !== "unknown"));
+  if (stage === "drawings") {
+    return Boolean(
+      (ingestion || model?.drawingSet.documents.length) &&
+        model?.drawingSet.documents.every(
+          (document) => document.classification.documentType !== "unknown",
+        ),
+    );
+  }
   if (stage === "review") return Boolean(model && model.conflicts.every((conflict) => conflict.resolutionStatus !== "unresolved"));
-  if (stage === "zones") return Boolean(model?.geometry.thermalZones.length);
-  if (stage === "envelope") return Boolean(model && model.envelope.constructions.length > 0 && model.envelope.infiltrationAirChangesPerHour.value != null);
-  if (stage === "systems") return Boolean(model?.systems.hvac.length);
+  if (stage === "model") {
+    return Boolean(
+      model &&
+        model.geometry.thermalZones.length > 0 &&
+        model.envelope.constructions.length > 0 &&
+        model.envelope.infiltrationAirChangesPerHour.value != null &&
+        model.systems.hvac.length > 0,
+    );
+  }
   if (stage === "assumptions") return Boolean(model && model.missingValues.every((missing) => !missing.blocking));
   if (stage === "preflight") return validation?.validForSimulation ?? false;
   if (stage === "simulation") return baselineRun?.status === "succeeded";
@@ -312,6 +328,15 @@ export function EnergyDiagnosisWorkspace({
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scenarioUValue, setScenarioUValue] = useState(1.1);
+  const [scenarioAch, setScenarioAch] = useState<number | "">("");
+  const [scenarioCop, setScenarioCop] = useState<number | "">("");
+  const [scenarioShgc, setScenarioShgc] = useState<number | "">("");
+  const [scenarioAreaScale, setScenarioAreaScale] = useState<number | "">("");
+  const [tierOneOutcome, setTierOneOutcome] =
+    useState<TierOneModelBuildOutcome | null>(null);
+  const [zoneSelection, setZoneSelection] = useState<readonly string[]>([]);
+  const [programTrack, setProgramTrack] = useState<ProgramTrack>("none");
+  const [autosavedAt, setAutosavedAt] = useState<string | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [recentSavedProject, setRecentSavedProject] =
     useState<StoredEnergyDiagnosticsProjectSummary | null>(null);
@@ -543,11 +568,10 @@ export function EnergyDiagnosisWorkspace({
           setName: files.length === 1 ? files[0].name : `${files[0].name} +${files.length - 1}`,
           ingestedAt: new Date().toISOString(),
         });
-        const tierOneOutcome = model
-          ? null
-          : buildTierOneCanonicalModel(result, locale);
+        const uploadOutcome = buildTierOneCanonicalModel(result, locale);
         const tierOneModel =
-          tierOneOutcome?.status === "created" ? tierOneOutcome.model : null;
+          !model && uploadOutcome.status === "created" ? uploadOutcome.model : null;
+        setTierOneOutcome(uploadOutcome);
         if (model && (!ingestion || ingestion.drawingSet.id === model.drawingSet.id)) {
           priorModelReviewRef.current = {
             ingestion,
@@ -574,7 +598,7 @@ export function EnergyDiagnosisWorkspace({
               : "Created a Tier-1 estimate from the vector boundary. Every non-drawing input is a visible screening assumption.",
           );
         } else {
-          setActiveStage("classification");
+          setActiveStage("drawings");
         }
         setActiveView("source");
         if (model) {
@@ -583,8 +607,8 @@ export function EnergyDiagnosisWorkspace({
               ? "새 도면은 검토용으로 분리했습니다. 현재 모델과 실행 결과는 변경되지 않았습니다."
               : "The new drawings are staged for review. The current model and runs are unchanged.",
           );
-        } else if (tierOneOutcome?.status === "extraction_only") {
-          setNotice(tierOneOutcome.message);
+        } else if (uploadOutcome.status === "extraction_only") {
+          setNotice(tierOneGuidance(uploadOutcome.reason, locale).what);
         }
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : "Drawing ingestion failed.");
@@ -613,6 +637,111 @@ export function EnergyDiagnosisWorkspace({
     );
     priorModelReviewRef.current = null;
   }, [locale, model]);
+
+  const assignDocumentType = useCallback(
+    (documentId: string, documentType: DrawingDocumentType) => {
+      if (!ingestion) return;
+      const updated = assignDocumentClassification(ingestion, documentId, documentType);
+      setIngestion(updated);
+      const outcome = buildTierOneCanonicalModel(updated, locale);
+      setTierOneOutcome(outcome);
+      if (outcome.status === "created" && !model) {
+        priorModelReviewRef.current = null;
+        emitModel(outcome.model);
+        setSelectedFact(outcome.model.geometry.floorPlates[0]?.boundary ?? null);
+        setActiveStage("assumptions");
+        setNotice(
+          locale === "ko"
+            ? "도면 유형을 확인했습니다. 추출된 외곽선으로 Tier-1 추정 모델을 만들었습니다. 모든 비도면 입력은 화면에 표시된 스크리닝 가정입니다."
+            : "Document type confirmed. A Tier-1 estimate was built from the extracted boundary; every non-drawing input is a visible screening assumption.",
+        );
+        return;
+      }
+      if (outcome.status === "extraction_only") {
+        const guidance = tierOneGuidance(outcome.reason, locale);
+        setNotice(`${guidance.what} ${guidance.fix}`);
+        return;
+      }
+      setNotice(
+        locale === "ko"
+          ? "도면 유형을 기록했습니다. ‘이 도면으로 새 진단 시작’을 누르면 현재 모델을 대체합니다."
+          : "Document type recorded. Use “Start a new diagnosis from this drawing” to replace the current model.",
+      );
+    },
+    [emitModel, ingestion, locale, model],
+  );
+
+  const adoptStagedTierOneModel = useCallback(() => {
+    if (!ingestion) return;
+    const outcome = buildTierOneCanonicalModel(ingestion, locale);
+    setTierOneOutcome(outcome);
+    if (outcome.status !== "created") {
+      const guidance = tierOneGuidance(outcome.reason, locale);
+      setError(`${guidance.what} ${guidance.fix}`);
+      return;
+    }
+    priorModelReviewRef.current = null;
+    emitModel(outcome.model);
+    setSelectedFact(outcome.model.geometry.floorPlates[0]?.boundary ?? null);
+    setActiveStage("assumptions");
+    setNotice(
+      locale === "ko"
+        ? "새 도면 세트로 Tier-1 진단을 시작했습니다. 이전 모델은 저장본에서 다시 열 수 있습니다."
+        : "Started a Tier-1 diagnosis from the new drawing set. The previous model remains available from its saved copy.",
+    );
+  }, [emitModel, ingestion, locale]);
+
+  const toggleZoneSelection = useCallback((zoneId: string) => {
+    setZoneSelection((current) =>
+      current.includes(zoneId)
+        ? current.filter((id) => id !== zoneId)
+        : [...current, zoneId],
+    );
+  }, []);
+
+  const mergeSelectedZones = useCallback(() => {
+    if (!model || zoneSelection.length < 2) return;
+    try {
+      const names = model.geometry.thermalZones
+        .filter((zone) => zoneSelection.includes(zone.id))
+        .map((zone) => zone.name.value ?? zone.stableKey);
+      const next = mergeModelZones(
+        model,
+        zoneSelection,
+        locale === "ko"
+          ? `병합 구역 (${names.join(" + ")})`
+          : `Merged zone (${names.join(" + ")})`,
+      );
+      emitModel(next);
+      setZoneSelection([]);
+      setNotice(
+        locale === "ko"
+          ? "열구역을 병합했습니다. 구역별 결과를 보려면 기준안을 다시 실행하세요."
+          : "Zones merged. Re-run the baseline to refresh zone-level results.",
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Zone merge failed.");
+    }
+  }, [emitModel, locale, model, zoneSelection]);
+
+  const splitZone = useCallback(
+    (zoneId: string) => {
+      if (!model) return;
+      try {
+        const next = splitModelZoneBySpace(model, zoneId);
+        emitModel(next);
+        setZoneSelection([]);
+        setNotice(
+          locale === "ko"
+            ? "열구역을 공간별로 분리했습니다. 구역별 결과를 보려면 기준안을 다시 실행하세요."
+            : "Zone split by space. Re-run the baseline to refresh zone-level results.",
+        );
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Zone split failed.");
+      }
+    },
+    [emitModel, locale, model],
+  );
 
   const applyAssumption = useCallback(() => {
     if (!model) return;
@@ -673,7 +802,14 @@ export function EnergyDiagnosisWorkspace({
     setNotice(null);
     await nextPaint();
     try {
-      const completed = runWindowScenario(model, scenarioUValue);
+      const values: ImprovementScenarioValues = {
+        windowUValueWPerM2K: scenarioUValue,
+        ...(scenarioAch === "" ? {} : { infiltrationAch: scenarioAch }),
+        ...(scenarioCop === "" ? {} : { heatingCop: scenarioCop }),
+        ...(scenarioShgc === "" ? {} : { windowShgc: scenarioShgc }),
+        ...(scenarioAreaScale === "" ? {} : { openingAreaScale: scenarioAreaScale }),
+      };
+      const completed = runImprovementScenario(model, values);
       emitModel(completed.model);
       onSimulationRun?.(completed.run);
       if (completed.run.status !== "succeeded") {
@@ -688,7 +824,7 @@ export function EnergyDiagnosisWorkspace({
     } finally {
       setOperation(null);
     }
-  }, [copy.simulationFailed, emitModel, model, onSimulationRun, scenarioUValue]);
+  }, [copy.simulationFailed, emitModel, model, onSimulationRun, scenarioAch, scenarioAreaScale, scenarioCop, scenarioShgc, scenarioUValue]);
 
   const saveProject = useCallback(async () => {
     if (!model) return;
@@ -745,6 +881,22 @@ export function EnergyDiagnosisWorkspace({
           ) {
             setScenarioUValue(restoredWindowU);
           }
+          const restoredAch = scenario?.deltas.find(
+            (delta) => delta.path === "envelope.infiltrationAirChangesPerHour",
+          )?.replacement.value;
+          setScenarioAch(
+            typeof restoredAch === "number" && Number.isFinite(restoredAch)
+              ? restoredAch
+              : "",
+          );
+          const restoredCop = scenario?.deltas.find((delta) =>
+            delta.path.endsWith(".heatingEfficiency"),
+          )?.replacement.value;
+          setScenarioCop(
+            typeof restoredCop === "number" && Number.isFinite(restoredCop)
+              ? restoredCop
+              : "",
+          );
         }
         setActiveStage(
           restoredScenario ? "compare" : restoredBaseline ? "simulation" : "review",
@@ -818,6 +970,55 @@ export function EnergyDiagnosisWorkspace({
     [emitSelection, model],
   );
 
+  // Best-effort autosave: the canonical bundle is idempotent per project id, so
+  // a debounced overwrite after each model change means a reload never loses
+  // reviewed evidence or runs. Manual save stays as the explicit, surfaced path.
+  useEffect(() => {
+    if (!model || operation != null || typeof window === "undefined") return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void saveEnergyDiagnosticsBundle(model, sources)
+        .then((saved) => {
+          if (cancelled) return;
+          setRecentSavedProject({
+            projectId: saved.projectId,
+            projectName: saved.model.project.name,
+            modelId: saved.modelId,
+            savedAtIso: saved.savedAtIso,
+          });
+          setAutosavedAt(saved.savedAtIso);
+        })
+        .catch(() => {
+          // Autosave never surfaces storage errors; the manual save path does.
+        });
+    }, 1500);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [model, operation, sources]);
+
+  const findings = useMemo(() => {
+    if (!model || !validation) return [];
+    const run = selectedSuccessfulRun ?? baselineRun ?? undefined;
+    if (!run) return [];
+    return generateDiagnosticFindings({
+      model,
+      validation,
+      run,
+      baselineRun: baselineRun ?? undefined,
+      locale,
+    });
+  }, [baselineRun, locale, model, selectedSuccessfulRun, validation]);
+
+  const retrofitAnalysis = useMemo(
+    () =>
+      baselineRun != null
+        ? analyzeRetrofitEconomics(baselineRun, programTrack)
+        : null,
+    [baselineRun, programTrack],
+  );
+
   const sceneContext = model
     ? {
         locale,
@@ -836,19 +1037,29 @@ export function EnergyDiagnosisWorkspace({
     : null;
 
   const categoryToStage: Record<ReadinessCategory["category"], WorkflowStage> = {
-    geometry: "zones",
-    envelope: "envelope",
+    geometry: "model",
+    envelope: "model",
     usage: "assumptions",
-    systems: "systems",
+    systems: "model",
     simulation: "preflight",
   };
 
   const nextAction = useMemo(() => {
     if (detachedIngestion) {
+      if (model && tierOneOutcome?.status === "created") {
+        return {
+          label:
+            locale === "ko"
+              ? "이 도면으로 새 진단 시작"
+              : "Start a new diagnosis from this drawing",
+          run: adoptStagedTierOneModel,
+          stage: "drawings" as WorkflowStage,
+        };
+      }
       return {
         label: locale === "ko" ? "새 도면 추출 검토" : "Review new extraction",
-        run: () => setActiveStage("review"),
-        stage: "review" as WorkflowStage,
+        run: () => setActiveStage("drawings"),
+        stage: "drawings" as WorkflowStage,
       };
     }
     if (!model) return { label: copy.referenceCase, run: loadReference, stage: "drawings" as WorkflowStage };
@@ -876,10 +1087,19 @@ export function EnergyDiagnosisWorkspace({
     if (baselineRun?.status !== "succeeded") return { label: copy.runBaseline, run: runBaseline, stage: "simulation" as WorkflowStage };
     if (scenarioRun?.status !== "succeeded") return { label: copy.runScenario, run: runScenario, stage: "compare" as WorkflowStage };
     return { label: copy.save, run: saveProject, stage: "compare" as WorkflowStage };
-  }, [applyAssumption, baselineRun?.status, copy, detachedIngestion, loadReference, locale, model, resolveConflict, runBaseline, runScenario, saveProject, scenarioRun?.status, validation?.validForSimulation]);
+  }, [adoptStagedTierOneModel, applyAssumption, baselineRun?.status, copy, detachedIngestion, loadReference, locale, model, resolveConflict, runBaseline, runScenario, saveProject, scenarioRun?.status, tierOneOutcome?.status, validation?.validForSimulation]);
 
   const stagePanel = detachedIngestion && ingestion
-    ? renderDetachedIngestionPanel(ingestion, locale, selectedDocumentFacts, selectFact)
+    ? renderDetachedIngestionPanel({
+        ingestion,
+        locale,
+        selectedDocumentFacts,
+        onSelectFact: selectFact,
+        tierOneOutcome,
+        hasModel: Boolean(model),
+        onAssignDocumentType: assignDocumentType,
+        onAdopt: adoptStagedTierOneModel,
+      })
     : model
     ? renderStagePanel({
         stage: activeStage,
@@ -892,6 +1112,22 @@ export function EnergyDiagnosisWorkspace({
         scenarioRun,
         scenarioUValue,
         onScenarioUValue: setScenarioUValue,
+        scenarioAch,
+        onScenarioAch: setScenarioAch,
+        scenarioCop,
+        onScenarioCop: setScenarioCop,
+        scenarioShgc,
+        onScenarioShgc: setScenarioShgc,
+        scenarioAreaScale,
+        onScenarioAreaScale: setScenarioAreaScale,
+        findings,
+        retrofitAnalysis,
+        programTrack,
+        onProgramTrack: setProgramTrack,
+        zoneSelection,
+        onToggleZoneSelection: toggleZoneSelection,
+        onMergeZones: mergeSelectedZones,
+        onSplitZone: splitZone,
         onSelectFact: selectFact,
         onSelectZone: selectZone,
         onApplyAssumption: applyAssumption,
@@ -930,6 +1166,12 @@ export function EnergyDiagnosisWorkspace({
           <p className="mt-1 truncate text-[10px] text-muted-foreground">{model?.project.name ?? copy.subtitle}</p>
         </div>
         <div className="flex items-center gap-1.5">
+          {model && !detachedIngestion && autosavedAt && (
+            <span className="hidden font-mono text-[9px] text-muted-foreground md:inline" data-testid="autosave-indicator">
+              {locale === "ko" ? "자동 저장됨" : "Autosaved"}{" "}
+              {new Date(autosavedAt).toLocaleTimeString(locale === "ko" ? "ko-KR" : "en-US", { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          )}
           {model && !detachedIngestion && (
             <>
               <Button type="button" variant="ghost" size="xs" onClick={saveProject} disabled={operation != null}>
@@ -1252,23 +1494,134 @@ function PanelHeading({ eyebrow, title, action }: Readonly<{ eyebrow: string; ti
   );
 }
 
-function renderDetachedIngestionPanel(
-  ingestion: DrawingSetIngestionResult,
-  locale: DiagnosisLocale,
-  selectedDocumentFacts: readonly EnergyFact<unknown>[],
-  onSelectFact: (fact: EnergyFact<unknown>) => void,
-): ReactNode {
+const ASSIGNABLE_DOCUMENT_TYPES: readonly DrawingDocumentType[] = [
+  "floor_plan",
+  "site_plan",
+  "elevation",
+  "section",
+  "window_schedule",
+  "wall_detail",
+  "hvac_equipment_schedule",
+  "lighting_plan",
+  "material_schedule",
+  "unknown",
+];
+
+function renderDetachedIngestionPanel({
+  ingestion,
+  locale,
+  selectedDocumentFacts,
+  onSelectFact,
+  tierOneOutcome,
+  hasModel,
+  onAssignDocumentType,
+  onAdopt,
+}: Readonly<{
+  ingestion: DrawingSetIngestionResult;
+  locale: DiagnosisLocale;
+  selectedDocumentFacts: readonly EnergyFact<unknown>[];
+  onSelectFact: (fact: EnergyFact<unknown>) => void;
+  tierOneOutcome: TierOneModelBuildOutcome | null;
+  hasModel: boolean;
+  onAssignDocumentType: (documentId: string, documentType: DrawingDocumentType) => void;
+  onAdopt: () => void;
+}>): ReactNode {
+  const guidance =
+    tierOneOutcome?.status === "extraction_only"
+      ? tierOneGuidance(tierOneOutcome.reason, locale)
+      : null;
+  const readyToAdopt = hasModel && tierOneOutcome?.status === "created";
   return (
     <section data-testid="detached-ingestion-panel">
       <PanelHeading
         eyebrow={locale === "ko" ? "새 도면 세트 · 모델 적용 전" : "NEW DRAWING SET · NOT YET APPLIED"}
         title={ingestion.drawingSet.name}
-        action={<Badge variant="outline" className="font-mono text-[9px]">{ingestion.drawingSet.documents.length} docs</Badge>}
+        action={<Badge variant="outline" className="font-mono text-[9px]">{ingestion.drawingSet.documents.length}{locale === "ko" ? "개 도면" : " docs"}</Badge>}
       />
-      <div className="rounded-lg border border-amber-500/30 bg-amber-500/[0.05] p-3 text-xs leading-relaxed text-muted-foreground">
-        {locale === "ko"
-          ? "기존 모델과 실행 결과는 변경되지 않았습니다. 분류·추출 결과를 검토한 뒤 상위 모델 생성 단계에서 새 리비전을 적용하세요."
-          : "The existing model and runs are unchanged. Review classification and extraction before the parent model-generation step applies a new revision."}
+      {guidance && (
+        <div
+          className="rounded-lg border border-amber-500/35 bg-amber-500/[0.06] p-3"
+          data-testid="tier-one-guidance"
+        >
+          <p className="text-xs font-semibold">{guidance.what}</p>
+          <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+            <span className="font-semibold text-foreground">
+              {locale === "ko" ? "해결 방법: " : "How to fix: "}
+            </span>
+            {guidance.fix}
+          </p>
+        </div>
+      )}
+      {readyToAdopt && (
+        <div className="rounded-lg border border-emerald-500/35 bg-emerald-500/[0.05] p-3">
+          <p className="text-xs font-semibold">
+            {locale === "ko"
+              ? "이 도면에서 새 Tier-1 모델을 만들 수 있습니다."
+              : "A new Tier-1 model can be built from this drawing."}
+          </p>
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            {locale === "ko"
+              ? "현재 모델과 실행 결과는 마지막 저장본으로 남습니다."
+              : "The current model and runs remain available from their last saved copy."}
+          </p>
+          <Button type="button" size="sm" className="mt-2.5" onClick={onAdopt} data-testid="adopt-staged-drawing">
+            {locale === "ko" ? "이 도면으로 새 진단 시작" : "Start a new diagnosis from this drawing"}
+          </Button>
+        </div>
+      )}
+      {!guidance && !readyToAdopt && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/[0.05] p-3 text-xs leading-relaxed text-muted-foreground">
+          {locale === "ko"
+            ? "기존 모델과 실행 결과는 변경되지 않았습니다. 아래에서 도면 유형을 확인하면 다음 단계를 안내합니다."
+            : "The existing model and runs are unchanged. Confirm the document types below to continue."}
+        </div>
+      )}
+      <div className="mt-3 overflow-x-auto rounded-lg border bg-card">
+        <table className="w-full min-w-[540px] text-left text-[10px]">
+          <thead className="border-b bg-muted/30 text-muted-foreground">
+            <tr>
+              <th className="px-3 py-2 font-medium">{locale === "ko" ? "도면" : "Drawing"}</th>
+              <th className="px-3 py-2 font-medium">{locale === "ko" ? "자동 분류" : "Auto classification"}</th>
+              <th className="px-3 py-2 font-medium">{locale === "ko" ? "도면 유형 지정" : "Assign type"}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {ingestion.drawingSet.documents.map((document) => (
+              <tr key={document.id}>
+                <td className="max-w-64 truncate px-3 py-2.5 font-medium">{document.fileName}</td>
+                <td className="px-3 py-2.5">
+                  {documentTypeLabel(document.classification.documentType, locale)}
+                  <span className="ml-1.5 font-mono text-muted-foreground">
+                    {document.classification.method === "user_assignment"
+                      ? locale === "ko" ? "사용자 지정" : "user-assigned"
+                      : `${Math.round(document.classification.confidence * 100)}%`}
+                  </span>
+                </td>
+                <td className="px-3 py-2.5">
+                  <select
+                    value={document.classification.documentType}
+                    onChange={(event) =>
+                      onAssignDocumentType(document.id, event.target.value as DrawingDocumentType)
+                    }
+                    className="h-7 rounded-md border bg-background px-2 text-[10px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={
+                      locale === "ko"
+                        ? `${document.fileName} 도면 유형 지정`
+                        : `Assign document type for ${document.fileName}`
+                    }
+                    data-testid={`assign-document-type-${document.id}`}
+                  >
+                    {ASSIGNABLE_DOCUMENT_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {documentTypeLabel(type, locale)}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {selectedDocumentFacts.length ? selectedDocumentFacts.slice(0, 12).map((fact) => (
@@ -1278,7 +1631,7 @@ function renderDetachedIngestionPanel(
             onClick={() => onSelectFact(fact)}
             className="rounded-lg border bg-card p-3 text-left hover:border-cyan-500/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="block truncate font-mono text-[9px] text-muted-foreground">{fact.key}</span>
+            <span className="block truncate text-[10px] font-medium">{factKeyLabel(fact.key, locale)}</span>
             <span className="mt-1 block font-mono text-xs font-semibold">{factValue(fact)}</span>
           </button>
         )) : (
@@ -1302,6 +1655,22 @@ function renderStagePanel({
   scenarioRun,
   scenarioUValue,
   onScenarioUValue,
+  scenarioAch,
+  onScenarioAch,
+  scenarioCop,
+  onScenarioCop,
+  scenarioShgc,
+  onScenarioShgc,
+  scenarioAreaScale,
+  onScenarioAreaScale,
+  findings,
+  retrofitAnalysis,
+  programTrack,
+  onProgramTrack,
+  zoneSelection,
+  onToggleZoneSelection,
+  onMergeZones,
+  onSplitZone,
   onSelectFact,
   onSelectZone,
   onApplyAssumption,
@@ -1319,6 +1688,22 @@ function renderStagePanel({
   scenarioRun: DegreeDaySimulationRun | null;
   scenarioUValue: number;
   onScenarioUValue: (value: number) => void;
+  scenarioAch: number | "";
+  onScenarioAch: (value: number | "") => void;
+  scenarioCop: number | "";
+  onScenarioCop: (value: number | "") => void;
+  scenarioShgc: number | "";
+  onScenarioShgc: (value: number | "") => void;
+  scenarioAreaScale: number | "";
+  onScenarioAreaScale: (value: number | "") => void;
+  findings: readonly import("@/lib/energy-diagnostics/findings").DiagnosticFinding[];
+  retrofitAnalysis: DiagnosticsRetrofitAnalysis | null;
+  programTrack: ProgramTrack;
+  onProgramTrack: (track: ProgramTrack) => void;
+  zoneSelection: readonly string[];
+  onToggleZoneSelection: (zoneId: string) => void;
+  onMergeZones: () => void;
+  onSplitZone: (zoneId: string) => void;
   onSelectFact: (fact: EnergyFact<unknown>) => void;
   onSelectZone: (zoneId: string) => void;
   onApplyAssumption: () => void;
@@ -1327,7 +1712,7 @@ function renderStagePanel({
   onSelectResult: (runId: string, metric: ResultMetric) => void;
 }>) {
   const copy = diagnosisCopy(locale);
-  if (stage === "drawings" || stage === "classification") {
+  if (stage === "drawings") {
     return (
       <section>
         <PanelHeading eyebrow={STAGE_LABEL[locale][stage]} title={model.drawingSet.name} action={<Badge variant="outline" className="font-mono text-[9px]">Tier {model.drawingSet.tier}</Badge>} />
@@ -1355,14 +1740,14 @@ function renderStagePanel({
   if (stage === "review") {
     return (
       <section>
-        <PanelHeading eyebrow={STAGE_LABEL[locale].review} title={locale === "ko" ? "선택 도면의 에너지 관련 추출값" : "Energy-relevant facts on the selected drawing"} action={<Badge variant="outline" className="font-mono text-[9px]">{selectedDocumentFacts.length} facts</Badge>} />
+        <PanelHeading eyebrow={STAGE_LABEL[locale].review} title={locale === "ko" ? "선택 도면의 에너지 관련 추출값" : "Energy-relevant facts on the selected drawing"} action={<Badge variant="outline" className="font-mono text-[9px]">{selectedDocumentFacts.length}{locale === "ko" ? "개 추출값" : " facts"}</Badge>} />
         {selectedDocumentFacts.length ? (
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {selectedDocumentFacts.slice(0, 12).map((fact) => (
               <button key={fact.id} type="button" onClick={() => onSelectFact(fact)} className="rounded-lg border bg-card p-3 text-left transition-colors hover:border-cyan-500/35 hover:bg-cyan-500/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <span className="block truncate font-mono text-[9px] text-muted-foreground">{fact.key}</span>
+                <span className="block truncate text-[10px] font-medium">{factKeyLabel(fact.key, locale)}</span>
                 <span className="mt-1 block truncate font-mono text-xs font-semibold">{factValue(fact)}</span>
-                <span className="mt-2 block text-[9px] text-muted-foreground">{fact.status} · {fact.confidence == null ? "—" : `${Math.round(fact.confidence * 100)}%`}</span>
+                <span className="mt-2 block text-[9px] text-muted-foreground">{factStatusLabel(fact.status, locale)} · {fact.confidence == null ? "—" : `${Math.round(fact.confidence * 100)}%`}</span>
               </button>
             ))}
           </div>
@@ -1371,28 +1756,51 @@ function renderStagePanel({
     );
   }
 
-  if (stage === "zones") {
+  if (stage === "model") {
     return (
-      <section>
-        <PanelHeading eyebrow={STAGE_LABEL[locale].zones} title={`${model.geometry.thermalZones.length} ${locale === "ko" ? "개 검토 가능 열구역" : "reviewable thermal zones"}`} />
+      <section className="space-y-6">
+        <section>
+        <PanelHeading eyebrow={locale === "ko" ? "공간 및 열구역" : "Spaces & zones"} title={`${model.geometry.thermalZones.length} ${locale === "ko" ? "개 검토 가능 열구역" : "reviewable thermal zones"}`} />
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {model.geometry.thermalZones.map((zone) => (
-            <button key={zone.id} type="button" onClick={() => onSelectZone(zone.id)} className="flex items-center gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:border-cyan-500/35 hover:bg-cyan-500/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" data-testid={`thermal-zone-${zone.id}`}>
-              <span className={cn("grid size-8 shrink-0 place-items-center rounded border font-mono text-[9px]", zone.conditioned.value ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300" : "border-dashed bg-muted text-muted-foreground")}><CircleDotDashed className="size-4" /></span>
-              <span className="min-w-0 flex-1"><span className="block truncate text-xs font-semibold">{zone.name.value ?? zone.stableKey}</span><span className="mt-1 block font-mono text-[9px] text-muted-foreground">{factValue(zone.floorAreaSqm)} · {factValue(zone.volumeM3)}</span></span>
-              <ArrowRight className="size-3 text-muted-foreground" />
-            </button>
+            <div key={zone.id} className={cn("flex items-center gap-2 rounded-lg border bg-card p-3 transition-colors", zoneSelection.includes(zone.id) && "border-cyan-500/45 bg-cyan-500/[0.05]")} data-testid={`thermal-zone-${zone.id}`}>
+              <input
+                type="checkbox"
+                checked={zoneSelection.includes(zone.id)}
+                onChange={() => onToggleZoneSelection(zone.id)}
+                className="size-3.5 shrink-0 accent-cyan-600"
+                aria-label={locale === "ko" ? `${zone.name.value ?? zone.stableKey} 병합 선택` : `Select ${zone.name.value ?? zone.stableKey} for merge`}
+                data-testid={`zone-merge-select-${zone.id}`}
+              />
+              <button type="button" onClick={() => onSelectZone(zone.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <span className={cn("grid size-8 shrink-0 place-items-center rounded border font-mono text-[9px]", zone.conditioned.value ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300" : "border-dashed bg-muted text-muted-foreground")}><CircleDotDashed className="size-4" /></span>
+                <span className="min-w-0 flex-1"><span className="block truncate text-xs font-semibold">{zone.name.value ?? zone.stableKey}</span><span className="mt-1 block font-mono text-[9px] text-muted-foreground">{factValue(zone.floorAreaSqm)} · {factValue(zone.volumeM3)} · {zone.sourceSpaceIds.length}{locale === "ko" ? "개 공간" : " spaces"}</span></span>
+                <ArrowRight className="size-3 shrink-0 text-muted-foreground" />
+              </button>
+              {zone.sourceSpaceIds.length >= 2 && (
+                <Button type="button" variant="outline" size="xs" onClick={() => onSplitZone(zone.id)} data-testid={`zone-split-${zone.id}`}>
+                  {locale === "ko" ? "공간별 분리" : "Split by space"}
+                </Button>
+              )}
+            </div>
           ))}
         </div>
-        <p className="mt-3 text-[10px] text-muted-foreground">{locale === "ko" ? "용도·외주부 방향·코어·공조 서비스가 같은 공간만 결정론적으로 묶었습니다." : "Spaces are grouped deterministically only when usage, perimeter orientation, core status, and HVAC service agree."}</p>
-      </section>
-    );
-  }
-
-  if (stage === "envelope") {
-    return (
-      <section>
-        <PanelHeading eyebrow={STAGE_LABEL[locale].envelope} title={locale === "ko" ? "외피 입력과 근거 상태" : "Envelope inputs and evidence"} />
+        {zoneSelection.length >= 2 && (
+          <div className="mt-2 flex items-center justify-between rounded-lg border border-cyan-500/35 bg-cyan-500/[0.05] p-2.5" data-testid="zone-merge-bar">
+            <p className="text-[10px]">
+              {locale === "ko"
+                ? `${zoneSelection.length}개 열구역 선택됨 — 하나의 검토 구역으로 병합합니다.`
+                : `${zoneSelection.length} zones selected — merge into one reviewed zone.`}
+            </p>
+            <Button type="button" size="xs" onClick={onMergeZones} data-testid="zone-merge-action">
+              {locale === "ko" ? "선택 구역 병합" : "Merge selected zones"}
+            </Button>
+          </div>
+        )}
+        <p className="mt-3 text-[10px] text-muted-foreground">{locale === "ko" ? "용도·외주부 방향·코어·공조 서비스가 같은 공간만 결정론적으로 묶었습니다. 병합·분리는 사용자 확인 구역으로 기록됩니다." : "Spaces are grouped deterministically only when usage, perimeter orientation, core status, and HVAC service agree. Merges and splits are recorded as user-confirmed zones."}</p>
+        </section>
+        <section>
+        <PanelHeading eyebrow={locale === "ko" ? "외피 성능" : "Envelope"} title={locale === "ko" ? "외피 입력과 근거 상태" : "Envelope inputs and evidence"} />
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           {model.envelope.constructions.map((construction) => (
             <button key={construction.id} type="button" onClick={() => onSelectFact(construction.uValueWPerM2K)} className="rounded-lg border bg-card p-3 text-left hover:border-cyan-500/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -1408,14 +1816,9 @@ function renderStagePanel({
             <span className="mt-3 block font-mono text-sm font-semibold">{factValue(model.envelope.infiltrationAirChangesPerHour)}</span>
           </button>
         </div>
-      </section>
-    );
-  }
-
-  if (stage === "systems") {
-    return (
-      <section>
-        <PanelHeading eyebrow={STAGE_LABEL[locale].systems} title={locale === "ko" ? "열구역에 연결된 설비" : "Systems linked to thermal zones"} />
+        </section>
+        <section>
+        <PanelHeading eyebrow={locale === "ko" ? "설비 시스템" : "Systems"} title={locale === "ko" ? "열구역에 연결된 설비" : "Systems linked to thermal zones"} />
         <div className="grid gap-3 lg:grid-cols-2">
           {model.systems.hvac.map((system) => (
             <article key={system.id} className="rounded-lg border bg-card p-4">
@@ -1428,6 +1831,7 @@ function renderStagePanel({
             </article>
           ))}
         </div>
+        </section>
       </section>
     );
   }
@@ -1600,6 +2004,7 @@ function renderStagePanel({
           baselineRunId={baselineRun?.id}
           onSelectResult={onSelectResult}
         />
+        <FindingsPanel findings={findings} model={model} locale={locale} onSelectFact={onSelectFact} />
         {baselineRun && <details className="mt-3 rounded-lg border bg-card p-3"><summary className="cursor-pointer text-[10px] font-semibold">{locale === "ko" ? "엔진 로그 및 근사" : "Engine logs and approximations"}</summary><div className="mt-2 space-y-1 font-mono text-[9px] leading-relaxed text-muted-foreground">{baselineRun.logs.map((log) => <p key={log}>{log}</p>)}{baselineRun.warnings.map((warning) => <p key={warning} className="text-amber-700 dark:text-amber-300">WARN · {warning}</p>)}</div></details>}
       </section>
     );
@@ -1608,11 +2013,90 @@ function renderStagePanel({
   return (
     <section>
       <PanelHeading eyebrow={STAGE_LABEL[locale].compare} title={locale === "ko" ? "기준안과 비파괴 대안 비교" : "Baseline vs non-destructive alternative"} />
-      <div className="mb-3 flex flex-wrap items-end gap-2 rounded-lg border bg-card p-3">
-        <label className="min-w-48 flex-1 text-[10px] font-medium text-muted-foreground">{copy.scenarioValue}<Input type="number" min="0.5" max="5" step="0.1" value={scenarioUValue} onChange={(event) => onScenarioUValue(Number(event.target.value))} className="mt-1.5 h-8 font-mono text-xs" /></label>
-        <span className="pb-2 font-mono text-[10px] text-muted-foreground">W/(m²·K)</span>
-        <Button type="button" size="sm" onClick={onRunScenario} disabled={!baselineRun?.result || !Number.isFinite(scenarioUValue) || scenarioUValue <= 0}><Gauge className="size-3.5" /> {copy.runScenario}</Button>
-        <p className="w-full text-[10px] text-muted-foreground">{copy.scenarioHelp}</p>
+      <div className="mb-3 rounded-lg border bg-card p-3" data-testid="improvement-scenario-controls">
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="min-w-40 flex-1 text-[10px] font-medium text-muted-foreground">
+            {copy.scenarioValue}
+            <Input type="number" min="0.5" max="5" step="0.1" value={scenarioUValue} onChange={(event) => onScenarioUValue(Number(event.target.value))} className="mt-1.5 h-8 font-mono text-xs" />
+          </label>
+          <span className="pb-2 font-mono text-[10px] text-muted-foreground">W/(m²·K)</span>
+          <label className="min-w-40 flex-1 text-[10px] font-medium text-muted-foreground">
+            {locale === "ko" ? "대안 침기율 (비우면 유지)" : "Alternative infiltration (blank keeps baseline)"}
+            <Input
+              type="number"
+              min="0"
+              max="3"
+              step="0.05"
+              value={scenarioAch}
+              placeholder={factValue(model.envelope.infiltrationAirChangesPerHour)}
+              onChange={(event) =>
+                onScenarioAch(event.target.value === "" ? "" : Number(event.target.value))
+              }
+              className="mt-1.5 h-8 font-mono text-xs"
+              aria-label={locale === "ko" ? "대안 침기율" : "Alternative infiltration rate"}
+            />
+          </label>
+          <span className="pb-2 font-mono text-[10px] text-muted-foreground">ACH</span>
+          <label className="min-w-40 flex-1 text-[10px] font-medium text-muted-foreground">
+            {locale === "ko" ? "대안 난방 COP (비우면 유지)" : "Alternative heating COP (blank keeps baseline)"}
+            <Input
+              type="number"
+              min="0.5"
+              max="8"
+              step="0.1"
+              value={scenarioCop}
+              placeholder={model.systems.hvac[0] ? factValue(model.systems.hvac[0].heatingEfficiency) : ""}
+              onChange={(event) =>
+                onScenarioCop(event.target.value === "" ? "" : Number(event.target.value))
+              }
+              className="mt-1.5 h-8 font-mono text-xs"
+              aria-label={locale === "ko" ? "대안 난방 COP" : "Alternative heating COP"}
+            />
+          </label>
+          <Button type="button" size="sm" onClick={onRunScenario} disabled={!baselineRun?.result || !Number.isFinite(scenarioUValue) || scenarioUValue <= 0}><Gauge className="size-3.5" /> {copy.runScenario}</Button>
+        </div>
+        <details className="mt-2 border-t pt-2">
+          <summary className="cursor-pointer text-[10px] font-semibold text-muted-foreground">
+            {locale === "ko" ? "고급 대안 값 (SHGC · 창 면적)" : "Advanced alternative values (SHGC · glazing area)"}
+          </summary>
+          <div className="mt-2 flex flex-wrap items-end gap-2">
+            <label className="min-w-40 flex-1 text-[10px] font-medium text-muted-foreground">
+              {locale === "ko" ? "대안 창호 SHGC (비우면 유지)" : "Alternative window SHGC (blank keeps baseline)"}
+              <Input
+                type="number"
+                min="0"
+                max="1"
+                step="0.05"
+                value={scenarioShgc}
+                onChange={(event) =>
+                  onScenarioShgc(event.target.value === "" ? "" : Number(event.target.value))
+                }
+                className="mt-1.5 h-8 font-mono text-xs"
+                aria-label={locale === "ko" ? "대안 창호 SHGC" : "Alternative window SHGC"}
+              />
+            </label>
+            <label className="min-w-40 flex-1 text-[10px] font-medium text-muted-foreground">
+              {locale === "ko" ? "창 면적 배율 (예: 0.8 = 20% 축소)" : "Glazing-area scale (e.g. 0.8 = 20% smaller)"}
+              <Input
+                type="number"
+                min="0.1"
+                max="3"
+                step="0.05"
+                value={scenarioAreaScale}
+                onChange={(event) =>
+                  onScenarioAreaScale(event.target.value === "" ? "" : Number(event.target.value))
+                }
+                className="mt-1.5 h-8 font-mono text-xs"
+                aria-label={locale === "ko" ? "창 면적 배율" : "Glazing-area scale"}
+              />
+            </label>
+          </div>
+        </details>
+        <p className="mt-2 w-full text-[10px] text-muted-foreground">
+          {locale === "ko"
+            ? "선택한 값만 변경한 비파괴 대안입니다. 기준 모델의 도면 근거는 바뀌지 않으며, 비워 둔 항목은 기준값을 유지합니다."
+            : "A non-destructive alternative changing only the values you set. Baseline drawing evidence is untouched; blank fields keep their baseline values."}
+        </p>
       </div>
       <ResultComparison
         baseline={baselineRun?.result ?? null}
@@ -1621,6 +2105,13 @@ function renderStagePanel({
         baselineRunId={baselineRun?.id}
         scenarioRunId={scenarioRun?.id}
         onSelectResult={onSelectResult}
+      />
+      <FindingsPanel findings={findings} model={model} locale={locale} onSelectFact={onSelectFact} />
+      <RetrofitEconomicsPanel
+        analysis={retrofitAnalysis}
+        locale={locale}
+        programTrack={programTrack}
+        onProgramTrack={onProgramTrack}
       />
     </section>
   );
