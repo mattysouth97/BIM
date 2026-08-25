@@ -154,7 +154,12 @@ test.describe("Canonical energy diagnostic", () => {
     const scene = page.getByTestId("energy-diagnosis-scene");
     await expect(results).toBeVisible();
     await expect(scene).toBeVisible();
-    await page.getByTestId(/^results-glance-finding-/).first().click();
+    const detailedFinding = page
+      .getByTestId("diagnostic-findings")
+      .locator("button[aria-pressed]")
+      .first();
+    await detailedFinding.click();
+    await expect(detailedFinding).toHaveAttribute("aria-pressed", "true");
 
     const layout = await page.evaluate(() => {
       const workspace = document.querySelector<HTMLElement>(

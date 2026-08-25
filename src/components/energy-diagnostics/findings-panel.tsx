@@ -1,7 +1,13 @@
 "use client";
 
 import { useId } from "react";
-import { AlertCircle, AlertTriangle, Info, TrendingDown } from "lucide-react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  ScanSearch,
+  TrendingDown,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -112,22 +118,7 @@ export function FindingsPanel({
               data-testid={`finding-${finding.id}`}
               data-selected={selected ? "true" : "false"}
             >
-              {onSelectFinding ? (
-                <button
-                  type="button"
-                  className="absolute inset-0 z-0 cursor-pointer rounded-lg bg-transparent transition-colors duration-150 hover:bg-cyan-500/[0.04] active:bg-cyan-500/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                  aria-labelledby={titleId}
-                  aria-describedby={`${descriptionId} ${actionId}`}
-                  aria-pressed={selected}
-                  onClick={() => onSelectFinding(finding)}
-                />
-              ) : null}
-              <div
-                className={cn(
-                  "relative z-10 flex items-start gap-2.5 p-3",
-                  onSelectFinding && "pointer-events-none",
-                )}
-              >
+              <div className="relative flex items-start gap-2.5 p-3">
                 <span
                   className={cn(
                     "mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border font-mono text-[10px]",
@@ -208,6 +199,30 @@ export function FindingsPanel({
                       >
                         {locale === "ko" ? "선택됨" : "Selected"}
                       </Badge>
+                    ) : null}
+                    {onSelectFinding ? (
+                      <button
+                        type="button"
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[8px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          selected
+                            ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-800 dark:text-cyan-200"
+                            : "bg-background text-muted-foreground hover:border-cyan-500/40 hover:bg-cyan-500/[0.06] hover:text-foreground",
+                        )}
+                        aria-label={finding.title}
+                        aria-describedby={`${descriptionId} ${actionId}`}
+                        aria-pressed={selected}
+                        onClick={() => onSelectFinding(finding)}
+                      >
+                        <ScanSearch className="size-2.5" aria-hidden="true" />
+                        {selected
+                          ? locale === "ko"
+                            ? "건물에 표시 중"
+                            : "Shown in building"
+                          : locale === "ko"
+                            ? "건물에서 보기"
+                            : "Show in building"}
+                      </button>
                     ) : null}
                     {!finding.impactSimulated && (
                       <Badge variant="outline" className="text-[8px] text-muted-foreground">
