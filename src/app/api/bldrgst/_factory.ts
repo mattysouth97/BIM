@@ -13,6 +13,17 @@ import { resolveDataGoKrKey } from "@/lib/api-shared-key";
 export const MAX_NUM_OF_ROWS = 100;
 
 /**
+ * Per-floor endpoints need a larger page than a search listing does. A tall
+ * building can register several use rows per storey, so a 100-row cap silently
+ * truncates its 층별개요 — and a truncated register produces a building with
+ * fewer storeys than it has, with nothing to show that anything was dropped.
+ */
+export const MAX_NUM_OF_ROWS_BY_ENDPOINT: Partial<Record<EndpointKey, number>> = {
+  floors: 500,
+  areas: 500,
+};
+
+/**
  * Shared query-param schema. Ledger codes are free-form strings passed through
  * to the upstream API; the numeric paging params are validated + clamped here
  * so a hostile `numOfRows=99999` can't request an unbounded page.
@@ -59,12 +70,18 @@ export function parseBldrgstParams(
 }
 
 /** Build the upstream param record with numOfRows clamped and defaults applied. */
-export function toUpstreamParams(params: BldrgstParams): Record<string, string | number> {
+export function toUpstreamParams(
+  params: BldrgstParams,
+  endpoint?: EndpointKey,
+): Record<string, string | number> {
   const out: Record<string, string | number> = {};
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined) out[key] = value;
   }
-  const numOfRows = Math.min(params.numOfRows ?? 20, MAX_NUM_OF_ROWS);
+  const cap =
+    (endpoint ? MAX_NUM_OF_ROWS_BY_ENDPOINT[endpoint] : undefined) ??
+    MAX_NUM_OF_ROWS;
+  const numOfRows = Math.min(params.numOfRows ?? 20, cap);
   out.numOfRows = numOfRows;
   out.pageNo = params.pageNo ?? 1;
   return out;
@@ -87,7 +104,7 @@ export function createDataGoKrProxy(endpoint: EndpointKey) {
     const parsed = parseBldrgstParams(request.nextUrl.searchParams);
     if (!parsed.ok) return parsed.response;
 
-    const upstream = toUpstreamParams(parsed.params);
+    const upstream = toUpstreamParams(parsed.params, endpoint);
     const { data, error } = await fetchFromDataGoKr(endpoint, upstream, apiKey);
     if (error || !data) {
       return NextResponse.json({ error: error ?? "No data returned" }, { status: 502 });

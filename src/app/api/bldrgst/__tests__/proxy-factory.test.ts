@@ -11,7 +11,11 @@ vi.mock("@/lib/api-proxy", async () => {
   return { ...actual, fetchFromDataGoKr: fetchMock };
 });
 
-import { createDataGoKrProxy, MAX_NUM_OF_ROWS } from "../_factory";
+import {
+  createDataGoKrProxy,
+  MAX_NUM_OF_ROWS,
+  MAX_NUM_OF_ROWS_BY_ENDPOINT,
+} from "../_factory";
 
 function makeReq(query: string, headers: Record<string, string> = {}): NextRequest {
   return new NextRequest(`http://localhost/api/bldrgst/areas?${query}`, { headers });
@@ -53,7 +57,7 @@ describe("createDataGoKrProxy (P1-06)", () => {
 
   it("clamps numOfRows above the maximum and echoes the clamped value", async () => {
     fetchMock.mockResolvedValueOnce(OK_RESPONSE);
-    const GET = createDataGoKrProxy("areas");
+    const GET = createDataGoKrProxy("recap");
     const res = await GET(makeReq("sigunguCd=11110&numOfRows=99999", { "x-api-key": "k" }));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -61,6 +65,35 @@ describe("createDataGoKrProxy (P1-06)", () => {
     // The clamped value must reach the upstream fetcher, not the raw 99999.
     const [, params] = fetchMock.mock.calls[0];
     expect(Number(params.numOfRows)).toBe(MAX_NUM_OF_ROWS);
+  });
+
+  it.each(["floors", "areas"] as const)(
+    "lets %s page far enough to carry a tall building's 층별개요",
+    async (endpoint) => {
+      fetchMock.mockResolvedValueOnce(OK_RESPONSE);
+      const GET = createDataGoKrProxy(endpoint);
+      // The composite building hook asks for 500 rows. At the shared 100-row
+      // cap those storeys were silently dropped, producing a building with
+      // fewer floors than the register records and no sign anything was lost.
+      const res = await GET(
+        makeReq("sigunguCd=11110&numOfRows=500", { "x-api-key": "k" }),
+      );
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.numOfRows).toBe(500);
+      const [, params] = fetchMock.mock.calls[0];
+      expect(Number(params.numOfRows)).toBe(500);
+    },
+  );
+
+  it("still caps the per-floor endpoints at their own maximum", async () => {
+    fetchMock.mockResolvedValueOnce(OK_RESPONSE);
+    const GET = createDataGoKrProxy("floors");
+    const res = await GET(
+      makeReq("sigunguCd=11110&numOfRows=99999", { "x-api-key": "k" }),
+    );
+    const body = await res.json();
+    expect(body.numOfRows).toBe(MAX_NUM_OF_ROWS_BY_ENDPOINT.floors);
   });
 
   it("returns 400 with a zod issue list for a malformed param", async () => {

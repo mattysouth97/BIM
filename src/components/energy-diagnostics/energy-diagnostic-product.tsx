@@ -28,10 +28,11 @@ import { EnergyDiagnosisScene } from "./energy-diagnosis-scene";
 import { EnergyDiagnosisWorkspace } from "./energy-diagnosis-workspace";
 import {
   LedgerBaselineStatus,
-  sampleLedgerRecord,
   useLedgerBaseline,
   type LedgerRecord,
 } from "./ledger-baseline-loader";
+import { LedgerLookup } from "./ledger-lookup";
+import { useLedgerRecord } from "./use-ledger-record";
 import type { EnergyDiagnosisSceneContext } from "./types";
 
 export type DiagnosticEntryMethod =
@@ -83,16 +84,16 @@ export function EnergyDiagnosticProduct({
 
   // Wave 1 resolves the bundled sample register, which needs no API key. The
   // search-driven path supplies a fetched record through the same seam.
-  // The bundled sample register is the only record that resolves without a
-  // data.go.kr key. A record fetched for a real building id enters through
-  // this same seam once the register lookup ships.
+  // `method=ledger` with no building shows the register lookup; with one, the
+  // record is resolved (bundled sample offline, or fetched from 건축물대장)
+  // and turned straight into a running baseline.
+  const showLedgerLookup =
+    initialMethod === "ledger" && !initialBuildingId;
+  const ledgerRecordState = useLedgerRecord(initialBuildingId, locale);
   const ledgerRecord = useMemo<LedgerRecord | null>(() => {
-    if (initialMethod !== "ledger") return null;
-    if (!initialBuildingId || initialBuildingId === "demo") {
-      return sampleLedgerRecord();
-    }
-    return null;
-  }, [initialMethod, initialBuildingId]);
+    if (initialMethod !== "ledger" || showLedgerLookup) return null;
+    return ledgerRecordState.phase === "ready" ? ledgerRecordState.record : null;
+  }, [initialMethod, showLedgerLookup, ledgerRecordState]);
   const ledgerBaseline = useLedgerBaseline(ledgerRecord, locale);
 
   useEffect(() => {
@@ -310,18 +311,50 @@ export function EnergyDiagnosticProduct({
     );
   }
 
+  if (showLedgerLookup) {
+    return (
+      <section
+        className="min-h-[calc(100dvh-var(--header-height,3.5rem))] bg-[#07141d] text-slate-100"
+        data-testid="diagnostic-ledger-start"
+      >
+        <header className="flex min-h-12 flex-wrap items-center gap-3 border-b border-slate-800 px-3 py-2 sm:px-4">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/diagnostics/new">
+              <ArrowLeft className="size-4" />
+              {locale === "ko" ? "입력 방식" : "Input methods"}
+            </Link>
+          </Button>
+          <div className="h-5 w-px bg-slate-700" aria-hidden="true" />
+          <p className="text-xs font-semibold">
+            {locale === "ko" ? "건축물대장으로 시작" : "Start from the register"}
+          </p>
+        </header>
+        <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8">
+          <LedgerLookup locale={locale} />
+          <p className="mt-6 text-xs text-slate-500">
+            {locale === "ko" ? "먼저 둘러보시겠습니까? " : "Want to look around first? "}
+            <Link
+              href="/diagnostics/new?method=ledger&building=demo"
+              className="font-semibold text-cyan-300 underline-offset-4 hover:underline"
+              data-testid="ledger-try-sample"
+            >
+              {locale === "ko" ? "샘플 건물로 진단 열기" : "Open the sample building"}
+            </Link>
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   if (initialMethod === "ledger" && ledgerBaseline.phase !== "ready") {
-    if (!ledgerRecord) {
+    if (ledgerRecordState.phase === "unavailable") {
       return (
         <LedgerBaselineStatus
           locale={locale}
           state={{
             phase: "insufficient",
             reason: "lookup_unavailable",
-            message:
-              locale === "ko"
-                ? "이 건물의 대장 정보를 아직 불러올 수 없습니다. 샘플 건물로 전체 흐름을 확인할 수 있습니다."
-                : "This building's register record cannot be loaded yet. The sample building runs the whole flow.",
+            message: ledgerRecordState.message,
           }}
         />
       );

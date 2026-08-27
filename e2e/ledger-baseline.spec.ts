@@ -19,6 +19,30 @@ test.describe("building register → baseline diagnosis", () => {
     );
   });
 
+  test("opens the register lookup when no building is chosen yet", async ({
+    page,
+  }) => {
+    await page.goto("/diagnostics/new?method=ledger");
+    await expect(page.getByTestId("diagnostic-ledger-start")).toBeVisible();
+    await expect(page.getByTestId("ledger-lookup")).toBeVisible();
+    // Both ways of finding a building are offered.
+    await expect(page.getByRole("tab", { name: /지역|district/i })).toBeVisible();
+    await expect(page.getByRole("tab", { name: /주소|address/i })).toBeVisible();
+    // And a way through without any credentials.
+    await expect(page.getByTestId("ledger-try-sample")).toHaveAttribute(
+      "href",
+      "/diagnostics/new?method=ledger&building=demo",
+    );
+  });
+
+  test("the sample link reaches a running baseline", async ({ page }) => {
+    await page.goto("/diagnostics/new?method=ledger");
+    await page.getByTestId("ledger-try-sample").click();
+    await expect(page.getByTestId("results-at-a-glance")).toBeVisible({
+      timeout: 60_000,
+    });
+  });
+
   test("builds and runs a baseline with zero further input", async ({
     page,
   }) => {

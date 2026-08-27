@@ -31,6 +31,12 @@ import type { BrTitleInfo } from "@/lib/types";
 interface SearchResultsTableProps {
   data: BrTitleInfo[];
   isLoading?: boolean;
+  /**
+   * Where picking a building goes. Defaults to the legacy twin workspace so
+   * existing callers are unchanged; the register front door sends the id into
+   * the energy diagnostic instead.
+   */
+  hrefForBuilding?: (buildingId: string, building: BrTitleInfo) => string;
 }
 
 const ROW_HEIGHT = 48;
@@ -59,7 +65,11 @@ function TableSkeleton() {
   );
 }
 
-export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps) {
+export function SearchResultsTable({
+  data,
+  isLoading,
+  hrefForBuilding,
+}: SearchResultsTableProps) {
   const router = useRouter();
   const { t } = useT();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -278,7 +288,7 @@ export function SearchResultsTable({ data, isLoading }: SearchResultsTableProps)
       row.bun,
       row.ji,
     );
-    router.push(`/building/${id}`);
+    router.push(hrefForBuilding?.(id, row) ?? `/building/${id}`);
   };
 
   // P1-07 (b): make each result row keyboard- and screen-reader-operable.
