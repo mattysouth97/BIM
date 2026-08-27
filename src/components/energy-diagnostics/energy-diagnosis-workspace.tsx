@@ -99,6 +99,11 @@ import {
 } from "./model-operations";
 import { tierOneGuidance } from "./tier-one-guidance";
 import { ReadinessStrip } from "./readiness-strip";
+import { RefinementPanel } from "./refinement-panel";
+import {
+  commitRefinement,
+  type FactUpgrade,
+} from "@/lib/energy-diagnostics/refinement";
 import { RetrofitEconomicsPanel } from "./retrofit-economics-panel";
 import {
   ResultComparison,
@@ -1221,6 +1226,77 @@ export function EnergyDiagnosisWorkspace({
     [emitModel, locale, model],
   );
 
+  /**
+   * Replace assumed values with what the user knows, then re-diagnose. The
+   * previous annual figure is reported alongside the new one so the effect of
+   * the correction is visible rather than implied.
+   */
+  const refineModel = useCallback(
+    async (upgrades: readonly FactUpgrade[]) => {
+      if (!model || upgrades.length === 0 || simulationInFlightRef.current) return;
+      simulationInFlightRef.current = true;
+      setOperation("baseline");
+      setError(null);
+      setNotice(null);
+      await nextPaint();
+      try {
+        const previousKwh =
+          baselineRun?.status === "succeeded"
+            ? (baselineRun.result?.annualEnergyKwh ?? null)
+            : null;
+        const outcome = commitRefinement(model, { upgrades });
+        if (outcome.status !== "applied") {
+          setError(
+            outcome.issues?.length
+              ? `${outcome.message} ${outcome.issues[0]}`
+              : outcome.message,
+          );
+          return;
+        }
+        const completed = runBaselineModel(outcome.model);
+        emitModel(completed.model);
+        onSimulationRun?.(completed.run);
+        if (completed.run.status !== "succeeded") {
+          setError(completed.run.error?.message ?? copy.simulationFailed);
+          return;
+        }
+        setSelectedRunId(completed.run.id);
+        const nextKwh = completed.run.result?.annualEnergyKwh ?? null;
+        const changed = outcome.upgrades.length;
+        if (previousKwh != null && nextKwh != null && previousKwh > 0) {
+          const deltaPct = ((nextKwh - previousKwh) / previousKwh) * 100;
+          const direction = deltaPct <= 0 ? "−" : "+";
+          setNotice(
+            locale === "ko"
+              ? `${changed}개 값을 실제 값으로 바꿨습니다. 연간 수요 ${direction}${Math.abs(deltaPct).toFixed(1)}%.`
+              : `${changed} value(s) replaced. Annual demand ${direction}${Math.abs(deltaPct).toFixed(1)}%.`,
+          );
+        } else {
+          setNotice(
+            locale === "ko"
+              ? `${changed}개 값을 실제 값으로 바꿨습니다.`
+              : `${changed} value(s) replaced.`,
+          );
+        }
+      } catch (cause) {
+        setError(
+          cause instanceof Error ? cause.message : copy.simulationFailed,
+        );
+      } finally {
+        simulationInFlightRef.current = false;
+        setOperation(null);
+      }
+    },
+    [
+      baselineRun,
+      copy.simulationFailed,
+      emitModel,
+      locale,
+      model,
+      onSimulationRun,
+    ],
+  );
+
   const runBaseline = useCallback(async () => {
     if (!model || simulationInFlightRef.current) return;
     simulationInFlightRef.current = true;
@@ -1632,6 +1708,7 @@ export function EnergyDiagnosisWorkspace({
         onProgramTrack: setProgramTrack,
         zoneSelection,
         onToggleZoneSelection: toggleZoneSelection,
+        onRefineModel: refineModel,
         onMergeZones: mergeSelectedZones,
         onSplitZone: splitZone,
         onSelectFact: selectFact,
@@ -2213,6 +2290,7 @@ function renderStagePanel({
   onProgramTrack,
   zoneSelection,
   onToggleZoneSelection,
+  onRefineModel,
   onMergeZones,
   onSplitZone,
   onSelectFact,
@@ -2255,6 +2333,7 @@ function renderStagePanel({
   onProgramTrack: (track: ProgramTrack) => void;
   zoneSelection: readonly string[];
   onToggleZoneSelection: (zoneId: string) => void;
+  onRefineModel: (upgrades: readonly FactUpgrade[]) => void;
   onMergeZones: () => void;
   onSplitZone: (zoneId: string) => void;
   onSelectFact: (fact: EnergyFact<unknown>) => void;
@@ -2316,6 +2395,12 @@ function renderStagePanel({
   if (stage === "model") {
     return (
       <section className="space-y-6">
+        <RefinementPanel
+          model={model}
+          locale={locale}
+          busy={operation != null}
+          onApply={onRefineModel}
+        />
         <section>
         <PanelHeading eyebrow={locale === "ko" ? "공간 및 열구역" : "Spaces & zones"} title={`${model.geometry.thermalZones.length} ${locale === "ko" ? "개 검토 가능 열구역" : "reviewable thermal zones"}`} />
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
