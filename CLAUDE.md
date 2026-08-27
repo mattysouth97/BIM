@@ -8,14 +8,22 @@
 
   ## Architecture
 
-  Next.js 16 App Router + React 19 + TypeScript. BIMFIT: generative building-energy
-  app — buildings enter via the generative engine (described prompt, drawn schematic,
-  or imported DWG/DXF/SVG), get a 3D twin, and are diagnosed for energy + retrofit
-  economics. The ledger (건축물대장) path below is legacy: kept working, no longer a
-  primary data source (see handoff.md "Product direction").
+  Next.js 16 App Router + React 19 + TypeScript. BIMFIT: a building-energy app whose
+  PRIMARY entry is the 건축물대장 (Korean building register). Pick a real building →
+  its register becomes a multi-storey baseline energy model with zero further input →
+  the user refines that baseline toward a digital twin with DWG/DXF plans, hand-drawn
+  floor plans and MEP/electrical data, watching the energy delta move. The generative
+  engine (prompt, schematic, CAD import) is now REFINEMENT input and a secondary door,
+  not the front door.
 
-  Routes: `/` landing → `/studio` (start modes describe|draw|diagnose) →
-  `/building/[id]` twin workspace (demo, GEN-xxxx generated designs, legacy ledger ids).
+  Everything the register states is an evidence-backed fact; everything it does not
+  state (U-values, window ratio, airtightness, HVAC, lighting, occupancy) is a named,
+  visible, reversible assumption from the era-indexed Korean code tables. That
+  distinction is a construction-time invariant, not a convention — see
+  `src/lib/energy-diagnostics/ledger-baseline-model.ts`.
+
+  Routes: `/` landing → `/diagnostics/new` (methods ledger|upload|create|sample|resume)
+  → `/building/[id]` legacy twin workspace (still routable for real ledger ids).
 
   - `src/components/generative/` — Generative studio: prompt panel, schematic editor,
     command bar, and the mount point of the energy-diagnosis workspace
@@ -28,7 +36,19 @@
     persistence — see docs/design-stage-energy-diagnostics.md
   - `src/lib/energy/` — Physics core: ISO-13789-style heat loss, degree-day annual
     demand, system breakdown, climate data, CO₂/grades
-  - `src/app/api/bldrgst/*` — (legacy) server-side proxy routes to data.go.kr
+  - `src/app/api/bldrgst/*` — server-side proxy routes to data.go.kr (건축물대장).
+    The PRIMARY data source. `resolveDataGoKrKey` accepts the caller's own
+    `x-api-key`, else falls back to `DATA_GO_KR_API_KEY` for same-origin requests
+    (rate-limited per IP) so the app works without the visitor holding a key.
+  - `src/lib/ledger/floor-rows.ts` — shared register helpers: `normalizeFloorRows`,
+    use/height categories, and `classifyEraExplicit` (which reports whether a date
+    was actually read; `classifyEra` silently returns 1990-1999 for a blank date,
+    and era drives every U-value, WWR, airtightness and floor height)
+  - `src/lib/energy-diagnostics/ledger-source.ts` — register → DrawingSourceInput,
+    entering the SAME ingestion boundary as any drawing (source document #0)
+  - `src/lib/energy-diagnostics/ledger-baseline-model.ts` — register → multi-storey
+    CanonicalEnergyModel. A sibling of tier-one-model, never an extension of it
+  - `src/lib/energy-diagnostics/ledger-climate.ts` — 시군구코드 → weather region
   - `src/components/viewer/` — Three.js 3D building viewer (React Three Fiber v9)
   - `src/components/viewer/building-scene.tsx` — Main R3F Canvas with renderer config, OutlinePass post-processing (`<ScenePostProcessing />`), lighting
   - `src/components/viewer/procedural-building-model.tsx` — R3F wrapper for ProceduralBuilding class

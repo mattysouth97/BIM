@@ -31,10 +31,12 @@ delete it only together with its authored-element rendering story.
 
 ## Product direction (user decisions, authoritative)
 
-1. **The ledger (건축물대장 / data.go.kr) is no longer a data source.** Buildings
-   enter ONLY via the generative engine: described prompt, drawn schematic, or
-   imported DWG/DXF/SVG. The ledger-era *featureset* (workspace, layers, energy,
-   reports, authoring) survives, repointed at generated designs.
+1. ~~**The ledger is no longer a data source.**~~ **REVERSED 2026-08-27.** The
+   건축물대장 is once again the PRIMARY entry: pick a real building → its register
+   becomes a multi-storey baseline energy model with no further input → the user
+   refines it toward a digital twin with DWG/DXF plans, drawn floor plans and
+   MEP/electrical data. The generative engine (prompt, schematic, CAD import) is
+   now refinement input and a secondary door. See CLAUDE.md "Architecture".
 2. **Energy is the point of the product.** Every design reports demand / EUI /
    grade / CO2 / retrofit economics from the real physics stack; modifications
    show their energy deltas.

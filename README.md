@@ -48,10 +48,16 @@ pnpm dev          # http://localhost:3000
 
 - `ANTHROPIC_API_KEY` (`.env.local`) — 자연어 건물 생성/수정(`/api/generative/*`)에
   필요합니다. Required for natural-language generation and modification.
-- 건축물대장(data.go.kr) 키와 `VWORLD_API_KEY`는 **레거시 대장 조회 경로**에서만
-  쓰입니다 — 대장은 더 이상 기본 데이터 소스가 아닙니다.
-  Ledger (data.go.kr) and VWorld keys serve only the legacy ledger path; the
-  ledger is no longer a primary data source.
+- `DATA_GO_KR_API_KEY` — 건축물대장 조회의 **공용 서버 키**입니다. 설정하면 방문자가
+  자기 키 없이도 건물을 검색할 수 있습니다(같은 출처 요청만, IP당 요청 제한).
+  설정하지 않으면 사용자가 설정에서 자기 키를 넣거나 샘플 건물만 쓸 수 있습니다.
+  The shared server key for register lookup. With it, visitors search without
+  holding their own key (same-origin only, rate-limited per IP). Without it they
+  must supply their own key in Settings, or use the bundled sample building.
+- `VWORLD_API_KEY` / `VWORLD_DOMAIN` — 실측 건물 외곽선(GIS). 없으면 건축면적에서
+  만든 직사각형이 쓰이며, 그 사실이 가정으로 표시됩니다.
+  Real GIS building outlines. Without them a rectangle derived from 건축면적 is
+  used, and that fact is shown as a named assumption.
 
 ## 명령어 · Commands
 
