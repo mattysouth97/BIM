@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -26,11 +26,23 @@ import { useBlueprintStore } from "@/store/blueprint-store";
 
 import { EnergyDiagnosisScene } from "./energy-diagnosis-scene";
 import { EnergyDiagnosisWorkspace } from "./energy-diagnosis-workspace";
+import {
+  LedgerBaselineStatus,
+  sampleLedgerRecord,
+  useLedgerBaseline,
+  type LedgerRecord,
+} from "./ledger-baseline-loader";
 import type { EnergyDiagnosisSceneContext } from "./types";
 
-export type DiagnosticEntryMethod = "upload" | "create" | "sample" | "resume";
+export type DiagnosticEntryMethod =
+  | "ledger"
+  | "upload"
+  | "create"
+  | "sample"
+  | "resume";
 
 const METHOD_LABEL: Record<DiagnosticEntryMethod, { en: string; ko: string }> = {
+  ledger: { en: "Building register", ko: "건축물대장" },
   upload: { en: "Upload drawing", ko: "도면 업로드" },
   create: { en: "Create building", ko: "건물 만들기" },
   sample: { en: "Sample diagnostic", ko: "샘플 진단" },
@@ -44,9 +56,15 @@ function renderScene(context: EnergyDiagnosisSceneContext) {
 export function EnergyDiagnosticProduct({
   initialMethod,
   initialProjectId,
+  initialBuildingId,
 }: Readonly<{
   initialMethod?: DiagnosticEntryMethod;
   initialProjectId?: string;
+  /**
+   * A 건축물대장 building id for `method=ledger`. "demo" selects the bundled
+   * sample register so the whole path runs offline with no API key.
+   */
+  initialBuildingId?: string;
 }>) {
   const router = useRouter();
   const language = useAppStore((state) => state.language);
@@ -62,6 +80,20 @@ export function EnergyDiagnosticProduct({
     initialMethod === "create" && !initialProjectId,
   );
   const routedProjectIdRef = useRef(initialProjectId);
+
+  // Wave 1 resolves the bundled sample register, which needs no API key. The
+  // search-driven path supplies a fetched record through the same seam.
+  // The bundled sample register is the only record that resolves without a
+  // data.go.kr key. A record fetched for a real building id enters through
+  // this same seam once the register lookup ships.
+  const ledgerRecord = useMemo<LedgerRecord | null>(() => {
+    if (initialMethod !== "ledger") return null;
+    if (!initialBuildingId || initialBuildingId === "demo") {
+      return sampleLedgerRecord();
+    }
+    return null;
+  }, [initialMethod, initialBuildingId]);
+  const ledgerBaseline = useLedgerBaseline(ledgerRecord, locale);
 
   useEffect(() => {
     let cancelled = false;
@@ -166,10 +198,30 @@ export function EnergyDiagnosticProduct({
             </p>
           </div>
 
-          <div className="mt-10 grid overflow-hidden rounded-xl border border-slate-700/80 bg-slate-950/55 shadow-2xl backdrop-blur sm:grid-cols-3">
+          <div className="mt-10 grid overflow-hidden rounded-xl border border-slate-700/80 bg-slate-950/55 shadow-2xl backdrop-blur sm:grid-cols-2 lg:grid-cols-4">
+            <Link
+              href="/diagnostics/new?method=ledger"
+              className="group min-w-0 border-b border-slate-700/80 p-6 transition-colors hover:bg-cyan-300/[0.07] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-300 sm:border-r"
+              data-testid="diagnostic-method-ledger"
+            >
+              <Building2 className="size-6 text-cyan-300" aria-hidden="true" />
+              <h2 className="mt-8 text-lg font-semibold text-white">
+                {locale === "ko" ? "건축물대장으로 시작" : "Start from the register"}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-400">
+                {locale === "ko"
+                  ? "건물을 고르면 대장 정보로 기준 모델과 진단 결과가 바로 만들어집니다."
+                  : "Pick a building and its register becomes a baseline model and a diagnostic straight away."}
+              </p>
+              <span className="mt-6 flex items-center gap-2 text-xs font-semibold text-cyan-200">
+                {locale === "ko" ? "건물 선택" : "Choose building"}
+                <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
+              </span>
+            </Link>
+
             <Link
               href="/diagnostics/new?method=upload"
-              className="group min-w-0 border-b border-slate-700/80 p-6 transition-colors hover:bg-cyan-300/[0.07] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-300 sm:border-b-0 sm:border-r"
+              className="group min-w-0 border-b border-slate-700/80 p-6 transition-colors hover:bg-cyan-300/[0.07] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-300 lg:border-r"
               data-testid="diagnostic-method-upload"
             >
               <FileUp className="size-6 text-cyan-300" aria-hidden="true" />
@@ -189,7 +241,7 @@ export function EnergyDiagnosticProduct({
 
             <Link
               href="/diagnostics/new?method=create"
-              className="group min-w-0 border-b border-slate-700/80 p-6 transition-colors hover:bg-cyan-300/[0.07] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-300 sm:border-b-0 sm:border-r"
+              className="group min-w-0 border-b border-slate-700/80 p-6 transition-colors hover:bg-cyan-300/[0.07] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-300 sm:border-r lg:border-b-0"
               data-testid="diagnostic-method-create"
             >
               <PencilRuler className="size-6 text-cyan-300" aria-hidden="true" />
@@ -209,7 +261,7 @@ export function EnergyDiagnosticProduct({
 
             <Link
               href="/diagnostics/new?method=sample"
-              className="group min-w-0 p-6 transition-colors hover:bg-amber-300/[0.07] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-300"
+              className="group min-w-0 p-6 transition-colors hover:bg-amber-300/[0.07] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-300 lg:border-b-0"
               data-testid="diagnostic-method-sample"
             >
               <FlaskConical className="size-6 text-amber-300" aria-hidden="true" />
@@ -256,6 +308,25 @@ export function EnergyDiagnosticProduct({
         </div>
       </section>
     );
+  }
+
+  if (initialMethod === "ledger" && ledgerBaseline.phase !== "ready") {
+    if (!ledgerRecord) {
+      return (
+        <LedgerBaselineStatus
+          locale={locale}
+          state={{
+            phase: "insufficient",
+            reason: "lookup_unavailable",
+            message:
+              locale === "ko"
+                ? "이 건물의 대장 정보를 아직 불러올 수 없습니다. 샘플 건물로 전체 흐름을 확인할 수 있습니다."
+                : "This building's register record cannot be loaded yet. The sample building runs the whole flow.",
+          }}
+        />
+      );
+    }
+    return <LedgerBaselineStatus state={ledgerBaseline} locale={locale} />;
   }
 
   const methodLabel = METHOD_LABEL[initialMethod][locale];
@@ -360,6 +431,16 @@ export function EnergyDiagnosticProduct({
         key={`${initialMethod}-${geometryRevision}`}
         className="min-h-[calc(100dvh-var(--header-height,3.5rem)-3rem)] border-x-0 border-b-0"
         locale={locale}
+        initialModel={
+          ledgerBaseline.phase === "ready" ? ledgerBaseline.model : undefined
+        }
+        initialModelSources={
+          ledgerBaseline.phase === "ready" ? ledgerBaseline.sources : undefined
+        }
+        // A register model arrives already built AND already simulated, so it
+        // opens on its result: choosing a building is the only input the
+        // product asks for, and the answer should be on screen when you land.
+        initialStage={initialMethod === "ledger" ? "compare" : undefined}
         autoLoadSample={initialMethod === "sample"}
         restoreProjectId={geometryRevision === 0 ? initialProjectId : undefined}
         initialDrawingSources={createdSources}

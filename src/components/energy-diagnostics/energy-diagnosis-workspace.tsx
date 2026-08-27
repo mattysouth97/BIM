@@ -561,6 +561,8 @@ export function EnergyDiagnosisWorkspace({
   className,
   locale: localeProp,
   initialModel = null,
+  initialStage,
+  initialModelSources,
   autoLoadSample = false,
   restoreProjectId,
   initialDrawingSources = [],
@@ -591,8 +593,12 @@ export function EnergyDiagnosisWorkspace({
   const initialScenarioDraft = initialScenarioDraftRef.current;
   const [model, setModel] = useState<CanonicalEnergyModel | null>(initialModel);
   const [ingestion, setIngestion] = useState<DrawingSetIngestionResult | null>(null);
-  const [sources, setSources] = useState<readonly DrawingSourceInput[]>([]);
-  const [activeStage, setActiveStage] = useState<WorkflowStage>(initialModel ? "review" : "drawings");
+  const [sources, setSources] = useState<readonly DrawingSourceInput[]>(
+    initialModelSources ?? [],
+  );
+  const [activeStage, setActiveStage] = useState<WorkflowStage>(
+    initialStage ?? (initialModel ? "review" : "drawings"),
+  );
   const [activeView, setActiveView] = useState<"source" | "model">("source");
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
     initialModel?.drawingSet.documents[0]?.id ?? null,
@@ -642,7 +648,9 @@ export function EnergyDiagnosisWorkspace({
     }
     setModel(initialModel);
     setSelectedDocumentId(initialModel.drawingSet.documents[0]?.id ?? null);
-  }, [initialModel, model]);
+    if (initialModelSources) setSources(initialModelSources);
+    if (initialStage) setActiveStage(initialStage);
+  }, [initialModel, initialModelSources, initialStage, model]);
 
   useEffect(() => {
     if (model) return;

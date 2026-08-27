@@ -15,14 +15,21 @@ type Props = Readonly<{
   searchParams: Promise<{
     method?: string | string[];
     project?: string | string[];
+    building?: string | string[];
   }>;
 }>;
 
+const ENTRY_METHODS = [
+  "ledger",
+  "upload",
+  "create",
+  "sample",
+  "resume",
+] as const satisfies readonly DiagnosticEntryMethod[];
+
 function entryMethod(value: string | string[] | undefined) {
   const method = Array.isArray(value) ? value[0] : value;
-  return method === "upload" || method === "create" || method === "sample" || method === "resume"
-    ? (method satisfies DiagnosticEntryMethod)
-    : undefined;
+  return ENTRY_METHODS.find((candidate) => candidate === method);
 }
 
 export default async function NewEnergyDiagnosticPage({ searchParams }: Props) {
@@ -33,11 +40,17 @@ export default async function NewEnergyDiagnosticPage({ searchParams }: Props) {
     : params.project;
   const initialProjectId =
     rawProject && rawProject.length <= 200 ? rawProject : undefined;
+  const rawBuilding = Array.isArray(params.building)
+    ? params.building[0]
+    : params.building;
+  const initialBuildingId =
+    rawBuilding && rawBuilding.length <= 200 ? rawBuilding : undefined;
   return (
     <EnergyDiagnosticProduct
-      key={method ?? "start"}
+      key={`${method ?? "start"}:${initialBuildingId ?? ""}`}
       initialMethod={method}
       initialProjectId={initialProjectId}
+      initialBuildingId={initialBuildingId}
     />
   );
 }

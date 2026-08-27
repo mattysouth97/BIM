@@ -87,7 +87,7 @@ test.describe("Canonical energy diagnostic", () => {
     }, { storageKey: APP_STORAGE_KEY });
   });
 
-  test("offers upload, create, and sample as methods of one diagnostic", async ({
+  test("offers register, upload, create, and sample as methods of one diagnostic", async ({
     page,
   }) => {
     await page.goto("/diagnostics/new");
@@ -99,6 +99,10 @@ test.describe("Canonical energy diagnostic", () => {
         name: "Start a new energy diagnostic",
       }),
     ).toBeVisible();
+    await expect(page.getByTestId("diagnostic-method-ledger")).toHaveAttribute(
+      "href",
+      "/diagnostics/new?method=ledger",
+    );
     await expect(page.getByTestId("diagnostic-method-upload")).toHaveAttribute(
       "href",
       "/diagnostics/new?method=upload",

@@ -11,6 +11,7 @@ import type { BrTitleInfo } from "@/lib/types";
 
 import { collectEnergyFacts } from "../facts";
 import { ingestDrawingSet } from "../ingestion";
+import { buildTierOneCanonicalModel } from "../tier-one-model";
 import {
   LEDGER_BASELINE_MODEL_VERSION,
   LEDGER_BASEMENT_ASSUMPTION_ID,
@@ -112,6 +113,25 @@ describe("buildLedgerBaselineModel — the demo 10F/B2 office", () => {
     expect(run.result?.energyUseIntensityKwhPerM2).toBeGreaterThan(0);
     // 10 zones reported, apportioned by area.
     expect(run.result?.zones).toHaveLength(10);
+  });
+
+  it("is refused by the Tier-1 builder, so it can never become a 1-storey office", async () => {
+    const source = diagnosticSourceFromLedger({
+      title: demoTitle,
+      floors: demoFloors,
+    });
+    const ingestion = await ingestDrawingSet([source], {
+      setName: "register",
+      ingestedAt: INGESTED_AT,
+    });
+    // The workspace's upload path calls buildTierOneCanonicalModel on whatever
+    // it ingests. A register is not a floor plan, so that builder refuses it
+    // rather than silently extruding one storey with office template values.
+    const tierOne = buildTierOneCanonicalModel(ingestion, "ko");
+    expect(tierOne).toMatchObject({
+      status: "extraction_only",
+      reason: "not_floor_plan",
+    });
   });
 
   it("does NOT inherit the Tier-1 office screening gate", async () => {

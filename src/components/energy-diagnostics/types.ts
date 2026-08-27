@@ -60,10 +60,31 @@ export type EnergyDiagnosisSceneContext = Readonly<{
   onSelectObject: (canonicalObjectId: string) => void;
 }>;
 
+/**
+ * Stages an entry method may open on. A model that arrives already built and
+ * already simulated (the building-register path) should land on its result,
+ * not on a drawing-extraction review that has nothing to review.
+ */
+export type DiagnosisEntryStage =
+  | "drawings"
+  | "review"
+  | "model"
+  | "preflight"
+  | "simulation"
+  | "compare";
+
 export type EnergyDiagnosisWorkspaceProps = Readonly<{
   className?: string;
   locale?: DiagnosisLocale;
   initialModel?: CanonicalEnergyModel | null;
+  /** Overrides the stage an initialModel would otherwise open on. */
+  initialStage?: DiagnosisEntryStage;
+  /**
+   * The sources an `initialModel` was built from. Required for a pre-built
+   * model to be savable: persistence is content-addressed, so it needs the
+   * source bytes behind every document hash. These are NOT re-ingested.
+   */
+  initialModelSources?: readonly DrawingSourceInput[];
   /**
    * Starts the bundled sample through the same ingestion, validation, engine,
    * persistence, and result pipeline as uploaded sources. It is an entry
