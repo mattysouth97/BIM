@@ -67,6 +67,17 @@ export function useLedgerRecord(
             : "That building address could not be read. Pick the building again from the list.",
       };
     }
+    // The baseline needs 표제부; 층별개요 only sharpens the per-storey areas
+    // and the builder already falls back to an even share of 연면적 without
+    // it. The register endpoints fail independently and intermittently, so a
+    // blip on a sibling call must not discard a title we actually received.
+    const title = composite.title?.items?.[0];
+    if (title) {
+      return {
+        phase: "ready",
+        record: { title, floors: composite.floors?.items ?? [] },
+      };
+    }
     if (composite.isLoading) return { phase: "loading" };
     if (composite.isError) {
       return {
@@ -77,19 +88,12 @@ export function useLedgerRecord(
             : "The building register could not be loaded. Try again shortly, or add your own data.go.kr key in Settings.",
       };
     }
-    const title = composite.title?.items?.[0];
-    if (!title) {
-      return {
-        phase: "unavailable",
-        message:
-          locale === "ko"
-            ? "이 주소에는 등록된 건축물대장이 없습니다."
-            : "No building register entry is recorded at this address.",
-      };
-    }
     return {
-      phase: "ready",
-      record: { title, floors: composite.floors?.items ?? [] },
+      phase: "unavailable",
+      message:
+        locale === "ko"
+          ? "이 주소에는 등록된 건축물대장이 없습니다."
+          : "No building register entry is recorded at this address.",
     };
   }, [
     sample,
