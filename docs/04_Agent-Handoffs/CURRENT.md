@@ -37,7 +37,17 @@ Validated on 2026-08-27:
 
 ## Work in Progress
 
-Nothing is mid-edit. The working tree was clean at last commit.
+**The working tree is dirty and not all of it is mine.** A concurrent design pass
+is restyling the landing and search surfaces toward the design-system tokens
+(`border-border`, `bg-card`, `rounded-[8px]`, `shadow-xs`). Affected at time of
+writing: `src/components/landing/{cad-sheet,resume-diagnostic}.tsx`,
+`src/components/energy-diagnostics/ledger-lookup.tsx`,
+`src/components/search/{address,region}-search-form.tsx`,
+`src/components/layout/header.tsx`, `src/app/globals.css`, and
+`e2e/first-door.spec.ts`.
+
+Run `git status` before assuming anything about the tree, and do not revert those
+files.
 
 ## Known Issues
 
@@ -75,7 +85,7 @@ Nothing is mid-edit. The working tree was clean at last commit.
 | Path | Why |
 |---|---|
 | `src/lib/energy-diagnostics/facts.ts` | The provenance invariant lives here |
-| `src/lib/energy-diagnostics/validation.ts` | 35 error-severity checks gate simulation |
+| `src/lib/energy-diagnostics/validation.ts` | 40 error-severity checks gate simulation |
 | `src/lib/korean-building-codes.ts` | Era tables; every default traces here |
 | `docs/work-plan/` | Referenced by name from `CLAUDE.md`; do not relocate |
 | `src/app/api/bldrgst/_factory.ts` | Shared-key resolution and per-endpoint row caps |

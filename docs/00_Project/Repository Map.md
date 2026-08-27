@@ -57,8 +57,8 @@ touching them:
 
 - `src/lib/energy-diagnostics/facts.ts` — `createEnergyFact` throws unless a fact
   cites sources, names an assumption, or is explicit user input.
-- `src/lib/energy-diagnostics/validation.ts` — 35 error-severity checks that gate
-  simulation.
+- `src/lib/energy-diagnostics/validation.ts` — 40 error-severity checks (of 44 issue sites) that
+  gate simulation.
 - `src/lib/energy-diagnostics/ledger-baseline-model.ts` — the register → model
   builder, deliberately a *sibling* of `tier-one-model.ts` and never an extension
   of it.

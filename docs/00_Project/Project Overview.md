@@ -12,7 +12,7 @@ retrofit economics are worth acting on.
 
 The product's whole credibility rests on one distinction: what the register
 actually *states*, versus what has been *assumed* on its behalf. That distinction
-is enforced in code, not by convention — see [[Energy Fact Provenance]].
+is enforced in code, not by convention — see [[ADR-002 - Provenance as a Construction-Time Invariant]].
 
 ## The workflow
 

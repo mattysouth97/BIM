@@ -58,3 +58,7 @@ ml/portfolio/data/training.csv
 # Never ignore the documentation itself.
 docs/.obsidian/workspace.json
 docs/.obsidian/workspace-mobile.json
+
+# Obsidian: the vault is docs/, not the repo root. Root-anchored so this can
+# never ignore docs/.obsidian/ (the shared vault config).
+/.obsidian/

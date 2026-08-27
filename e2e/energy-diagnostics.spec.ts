@@ -555,10 +555,12 @@ test.describe("Canonical energy diagnostic", () => {
       { timeout: 20_000 },
     );
 
-    await page.goto("/");
-    const resumeRecent = page.getByTestId("resume-recent-diagnostic");
-    await expect(resumeRecent).toBeVisible();
-    await resumeRecent.click();
+    // Reopening a saved diagnosis happens inside the workspace. The landing
+    // page deliberately does not advertise it: the landing is step 1 of the
+    // 건물 검색 → 도면 업로드 → 디지털 트윈 → 보고서 workflow, and a resume link
+    // into the separate diagnosis route pointed away from that workflow.
+    await page.reload();
+    await page.getByRole("button", { name: "Reload saved project" }).click();
 
     await expect(page.getByTestId("stage-panel-compare")).toBeVisible({
       timeout: 20_000,

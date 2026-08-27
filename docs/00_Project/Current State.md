@@ -31,6 +31,12 @@ Last verified against a production deployment on **2026-08-27**.
 | 3. 디지털 트윈 | **Partial** — see below | twin renders with layers and typed inputs; energy source is the older path |
 | 4. 보고서 | **Implemented** | `report-stage.tsx` — PDF, CSV, JSON |
 
+The landing page deliberately advertises **only** step 1. A "recent diagnostic"
+resume card briefly sat there and was removed: it linked into
+`/diagnostics/new?method=resume`, pointing users at the parallel workspace rather
+than into the workflow. Reopening a saved diagnosis still works from inside that
+workspace.
+
 ### Step 3 is the honest gap
 
 The twin renders, the layers work, and the typed inputs (벽체/창호/지붕 열관류율,
@@ -38,7 +44,7 @@ SHGC, 창면적비, CAPEX) recompute the profile. But the numbers come from the
 **older simplified path** — the UI labels it `간이 모델` — backed by
 `material-store`, not by the source-traceable canonical engine.
 
-The traceable engine ([[Ledger Baseline Energy Model]], [[Energy Fact Provenance]])
+The traceable engine ([[Traceable Energy Diagnostics]], [[ADR-002 - Provenance as a Construction-Time Invariant]])
 exists, is tested, and runs — but at `/diagnostics/new?method=ledger&building=…`,
 which is a **second workspace off the main path**. Integrating it into step 3 is
 the top outstanding work item. Until then, the twin's numbers do not carry
@@ -52,7 +58,10 @@ provenance and the assumption/refinement honesty is not visible where users are.
 - **Ledger baseline energy model** — a register record becomes a multi-storey
   `CanonicalEnergyModel` with no user input. Verified on the bundled demo
   (10F/B2 2008 office): 10 storeys, 42 surfaces, 40 openings, EUI ≈ 331.9
-  kWh/m²·yr, and on a real 15-storey 강남구 apartment (EUI ≈ 227.1).
+  kWh/m²·yr, and on a real 15-storey 강남구 apartment (EUI ≈ 227.1). Those two
+  figures were measured in a session run on 2026-08-27 and are **not** captured in
+  a fixture — the reproducible assertion is the plausibility band in
+  `ledger-baseline-sanity.test.ts`, not the exact numbers.
 - **Provenance invariants** — era defaults carry no source refs and no
   confidence; synthesised outlines are labelled as inference; ACH50 is converted
   to a natural rate; an unreadable date yields a stated era fallback. Each has a
@@ -82,8 +91,7 @@ describe them as features.
 
 | Subsystem | Why unreachable |
 |---|---|
-| `AuthoringFamilyLayer` | Explicitly suppressed whenever `diagnosticsMode` is on |
-| `InteriorLayer` | Defaults off behind a persisted toggle |
+| `AuthoringFamilyLayer` | Returns null unless `workMode === "authoring"`, and `"authoring"` is not in `REVIT_RAIL_MODES` — so no UI can select that mode |
 | Campus / portfolio comparison | Deliberately not restored to the front door — reported energy as `0` behind a placeholder badge |
 | Manual 3D family authoring (작성) | Removed as a product mode; the 102 authoring GLBs were retained |
 

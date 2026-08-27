@@ -103,11 +103,14 @@ Consequences that follow from this constraint, each with a regression test:
 
 - The intended **commercial** model (who pays, per-building or per-seat) is not
   established anywhere in the repository.
-- Whether the generative "describe a building" entry is meant to survive
-  long-term as a secondary door, or to be retired, is not settled in writing.
-  It currently works and is reachable.
+- The generative "describe a building" entry is **not reachable at runtime**.
+  `/studio` has no `describe` branch — it redirects `draw` to `?method=create`,
+  `diagnose` to `?method=upload`, and everything else to the landing page — and
+  the prompt panel's only host, `generative-studio.tsx`, has no importer outside
+  its own test. Whether it is meant to return, or to be deleted along with its
+  API routes, is not settled in writing.
 
 ## Related
 
 - [[Project Overview]] · [[Current State]]
-- [[Energy Fact Provenance]] · [[Ledger Baseline Energy Model]]
+- [[ADR-002 - Provenance as a Construction-Time Invariant]] · [[Traceable Energy Diagnostics]]

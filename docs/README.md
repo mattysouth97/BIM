@@ -46,6 +46,8 @@ docs/
 ├── 03_Development/    How to build, test, and work in this repository
 ├── 04_Agent-Handoffs/ CURRENT.md — verified session state. Archive/ for superseded handoffs
 ├── 05_Research/       Investigations and candidate approaches. NOT specification
+│                     (there is deliberately no 06_Decisions — ADRs live in
+│                      01_Architecture/ADR/, alongside docs/work-plan/adr/)
 ├── 07_QA/             Test architecture, critical journeys, fragile areas
 ├── 08_Operations/     Deployment, environment, keys
 ├── Templates/         Obsidian templates for new documents
