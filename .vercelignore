@@ -9,3 +9,13 @@ dist
 ml
 .git
 scripts/blender/__pycache__
+
+# Test and QA artefacts — never part of a deployment. qa-evidence alone was
+# 81 MB, which pushed the CLI upload past the point where it aborts.
+qa-evidence
+test-results
+playwright-report
+.agents
+/*.png
+/*.url
+tsconfig.tsbuildinfo
