@@ -31,6 +31,17 @@ export const LEDGER_FOOTPRINT_ASSUMPTION_ID =
   "assumption.ledger-derived-footprint";
 
 export type LedgerFootprint =
+  /**
+   * A ring measured off a drawing the user supplied — a DWG/DXF plan or a
+   * plan they drew to scale. The strongest geometry the product accepts.
+   */
+  | Readonly<{
+      kind: "measured_drawing";
+      ringM: Polygon2D;
+      /** The drawing it was taken from, for the evidence trail. */
+      label?: string;
+      cadLayer?: string;
+    }>
   /** A real GIS building outline (VWorld LT_C_SPBD), in metres. */
   | Readonly<{ kind: "vworld_building"; ringM: Polygon2D }>
   /** No outline is known; synthesise a rectangle from 건축면적. */
@@ -185,7 +196,21 @@ export function diagnosticSourceFromLedger(
   // survey, so neither is ever labelled `dimensioned_vector_geometry`.
   const archArea = positiveNumber(title.archArea);
   const vectorBoundaries: VectorBoundaryInput[] = [];
-  if (input.footprint?.kind === "vworld_building") {
+  if (input.footprint?.kind === "measured_drawing") {
+    // A ring taken off a scaled drawing IS dimensioned survey geometry, and is
+    // the one footprint that may be labelled as such.
+    vectorBoundaries.push(
+      Object.freeze({
+        polygon: input.footprint.ringM,
+        cadLayer: input.footprint.cadLayer ?? "BIMFIT_MEASURED_PLAN",
+        entityRef: `drawing:${input.footprint.label ?? "floor-plan"}`,
+        confidence: 0.98,
+        status: "extracted" as const,
+        extractionMethod: "vector_geometry" as const,
+        authority: "dimensioned_vector_geometry" as const,
+      }),
+    );
+  } else if (input.footprint?.kind === "vworld_building") {
     vectorBoundaries.push(
       Object.freeze({
         polygon: input.footprint.ringM,

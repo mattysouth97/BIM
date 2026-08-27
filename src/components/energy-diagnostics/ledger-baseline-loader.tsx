@@ -26,6 +26,10 @@ import {
   diagnosticSourceFromLedger,
   type LedgerFootprint,
 } from "@/lib/energy-diagnostics/ledger-source";
+import {
+  capturedRefinements,
+  reapplyRefinements,
+} from "@/lib/energy-diagnostics/refinement";
 import type { CanonicalEnergyModel } from "@/lib/energy-diagnostics/types";
 import type { BrFloorInfo, BrTitleInfo } from "@/lib/types";
 
@@ -96,6 +100,42 @@ export async function buildLedgerBaseline(
           : "The building register could not be turned into an energy model.",
     };
   }
+}
+
+/**
+ * Rebuild a register baseline around a real outline measured from a drawing,
+ * carrying the user's existing corrections forward.
+ *
+ * A better outline changes the perimeter, and the perimeter sets every
+ * exterior wall and window area — so this is a rebuild, not a fact swap. Fact
+ * ids necessarily change, so corrections are re-applied by key and anything
+ * that no longer exists is reported rather than silently lost.
+ */
+export async function rebuildLedgerBaselineWithFootprint(
+  record: LedgerRecord,
+  footprint: LedgerFootprint,
+  previousModel: CanonicalEnergyModel | null,
+  locale: DiagnosisLocale,
+): Promise<
+  LedgerBaselineState & Readonly<{ droppedRefinementKeys?: readonly string[] }>
+> {
+  const carried = previousModel ? capturedRefinements(previousModel) : [];
+  const rebuilt = await buildLedgerBaseline({ ...record, footprint }, locale);
+  if (rebuilt.phase !== "ready" || carried.length === 0) return rebuilt;
+
+  const { outcome, droppedKeys } = reapplyRefinements(rebuilt.model, carried);
+  if (outcome.status !== "applied") {
+    // The rebuilt geometry is still good; report the corrections that could
+    // not travel rather than discarding the better outline.
+    return { ...rebuilt, droppedRefinementKeys: carried.map((c) => c.key) };
+  }
+  const { model } = runBaselineModel(outcome.model);
+  return {
+    phase: "ready",
+    model,
+    sources: rebuilt.sources,
+    droppedRefinementKeys: droppedKeys,
+  };
 }
 
 export function useLedgerBaseline(

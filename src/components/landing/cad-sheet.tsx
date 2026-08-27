@@ -2,25 +2,32 @@
 
 import { useCallback, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { LandingCopy } from "@/lib/landing/copy";
 import { BANNER_LAYER_META, type BannerLayerId } from "@/lib/landing/layers";
-import { NewDiagnosticDoor, SampleDiagnosticDoor } from "./landing-doors";
+import { LedgerLookup } from "@/components/energy-diagnostics/ledger-lookup";
+import { useAppStore } from "@/store/app-store";
 import { LayerRail } from "./layer-rail";
 
 /**
- * One screen, one product: BIMFIT's diagnostic entry point, centred over the
- * layered building plate. The rail keeps the visual argument spatial while a
- * single primary door establishes the canonical workflow.
+ * One screen, one workflow. The product begins at the 건축물대장: find the real
+ * building, and its register becomes a baseline energy model on the spot.
+ *
+ * The lookup is the landing page rather than something behind a door — every
+ * other entry (a drawing, the sample) is a way into the same diagnosis, and is
+ * offered underneath rather than beside it.
  */
 export function CadSheet({ copy }: { copy: LandingCopy }) {
   const [layer, setLayer] = useState<BannerLayerId>("all");
+  const language = useAppStore((state) => state.language);
+  const locale = language === "ko" ? "ko" : "en";
   const selectLayer = useCallback((id: BannerLayerId) => {
     setLayer(id);
   }, []);
   const meta = BANNER_LAYER_META[layer];
 
   return (
-    <section className="relative isolate flex min-h-[inherit] w-full items-center overflow-hidden">
+    <section className="relative isolate flex min-h-[inherit] w-full flex-col overflow-hidden">
       <Image
         key={meta.poster}
         src={meta.poster}
@@ -41,8 +48,8 @@ export function CadSheet({ copy }: { copy: LandingCopy }) {
         className="landing-focus pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[44rem] w-[56rem] max-w-[160vw] -translate-x-1/2 -translate-y-1/2"
       />
 
-      <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10 lg:py-20">
-        <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
+      <div className="mx-auto w-full max-w-3xl px-5 py-12 sm:px-8 lg:py-16">
+        <div className="flex flex-col items-center gap-3 text-center">
           <h1
             id="bimfit-title"
             aria-label={`${copy.brand}: ${copy.display}`}
@@ -61,28 +68,40 @@ export function CadSheet({ copy }: { copy: LandingCopy }) {
               {copy.version}
             </span>
           </p>
+        </div>
 
-          <div className="flex flex-col items-center gap-4 pt-3">
-            <NewDiagnosticDoor
-              testId="landing-new-diagnostic"
-              size="lg"
-              className="h-12 px-8 text-base font-semibold"
-            >
-              {copy.newDiagnostic}
-            </NewDiagnosticDoor>
+        {/* The workflow starts here. */}
+        <div
+          className="mt-8 rounded-xl border border-border/70 bg-background/85 p-5 shadow-2xl backdrop-blur sm:p-6"
+          data-testid="landing-ledger-lookup"
+        >
+          <LedgerLookup locale={locale} />
+        </div>
 
-            <SampleDiagnosticDoor
-              testId="landing-sample-diagnostic"
-              variant="link"
-              className="h-auto p-0 text-foreground/75 underline decoration-foreground/35 underline-offset-4 hover:text-foreground"
-            >
-              {copy.sampleDiagnostic}
-            </SampleDiagnosticDoor>
-          </div>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-foreground/70">
+          <Link
+            href="/diagnostics/new?method=ledger&building=demo"
+            className="font-semibold text-foreground underline decoration-foreground/35 underline-offset-4 hover:decoration-foreground"
+            data-testid="landing-sample-diagnostic"
+          >
+            {copy.sampleDiagnostic}
+          </Link>
+          <span aria-hidden className="text-foreground/30">
+            ·
+          </span>
+          <Link
+            href="/diagnostics/new"
+            className="underline decoration-foreground/25 underline-offset-4 hover:text-foreground"
+            data-testid="landing-new-diagnostic"
+          >
+            {locale === "ko"
+              ? "대장 없이 도면으로 시작"
+              : "Start from a drawing instead"}
+          </Link>
+        </div>
 
-          <div className="mt-4 w-full max-w-md border-t border-border/60 pt-5">
-            <LayerRail layer={layer} onChange={selectLayer} copy={copy} />
-          </div>
+        <div className="mx-auto mt-8 w-full max-w-md border-t border-border/60 pt-5">
+          <LayerRail layer={layer} onChange={selectLayer} copy={copy} />
         </div>
       </div>
     </section>
