@@ -13,7 +13,7 @@
  */
 
 import { lazy, Suspense, useCallback, useMemo, useState } from "react";
-import { Building2, KeyRound, Loader2 } from "lucide-react";
+import { KeyRound, Loader2 } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,14 +48,14 @@ const SearchPagination = lazy(() =>
 
 function FormSkeleton() {
   return (
-    <div className="space-y-4 rounded-xl border border-slate-700/70 bg-slate-950/40 p-6">
-      <Skeleton className="h-5 w-48" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="space-y-3 rounded-[8px] border border-border bg-card p-4 shadow-xs">
+      <Skeleton className="h-4 w-40" />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-10 w-full" />
+          <Skeleton key={index} className="h-8 w-full" />
         ))}
       </div>
-      <Skeleton className="ml-auto h-10 w-24" />
+      <Skeleton className="ml-auto h-8 w-20" />
     </div>
   );
 }
@@ -96,37 +96,38 @@ export function LedgerLookup({ locale }: Readonly<{ locale: DiagnosisLocale }>) 
 
   return (
     <section
-      className="space-y-5"
+      className="space-y-4"
       data-testid="ledger-lookup"
       aria-label={locale === "ko" ? "건축물대장 조회" : "Building register lookup"}
     >
-      <header className="space-y-1">
-        <h2 className="flex items-center gap-2 text-base font-semibold text-white">
-          <Building2 className="size-4 text-cyan-300" aria-hidden="true" />
-          {locale === "ko" ? "건물 찾기" : "Find a building"}
-        </h2>
-        <p className="text-sm text-slate-400">
-          {locale === "ko"
-            ? "지역이나 주소로 건축물대장을 조회하고, 건물을 고르면 바로 기준 에너지 모델이 만들어집니다."
-            : "Search the building register by district or address. Picking a building builds its baseline energy model straight away."}
-        </p>
-      </header>
+      {/* One line. The sheet header above states the product and the 처리절차
+          strip above that states what picking a building produces, so repeating
+          either here only made the form harder to find. */}
+      <h2 className="text-[13px] font-semibold text-foreground">
+        {locale === "ko" ? "건물 찾기" : "Find a building"}
+      </h2>
 
-      <Tabs defaultValue="region">
-        <TabsList>
-          <TabsTrigger value="region">
+      <Tabs defaultValue="region" className="gap-0">
+        <TabsList className="h-8 rounded-[8px] border border-border bg-muted/40 p-0.5 shadow-none">
+          <TabsTrigger
+            value="region"
+            className="h-7 min-w-24 rounded-md px-3 text-xs data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:shadow-xs"
+          >
             {locale === "ko" ? "지역으로" : "By district"}
           </TabsTrigger>
-          <TabsTrigger value="address">
+          <TabsTrigger
+            value="address"
+            className="h-7 min-w-24 rounded-md px-3 text-xs data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:shadow-xs"
+          >
             {locale === "ko" ? "주소로" : "By address"}
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="region" className="mt-4">
+        <TabsContent value="region" className="mt-3">
           <Suspense fallback={<FormSkeleton />}>
             <RegionSearchForm onSearch={runSearch} isLoading={isLoading} />
           </Suspense>
         </TabsContent>
-        <TabsContent value="address" className="mt-4">
+        <TabsContent value="address" className="mt-3">
           <Suspense fallback={<FormSkeleton />}>
             <AddressSearchForm onSearch={runSearch} isLoading={isLoading} />
           </Suspense>
@@ -135,7 +136,7 @@ export function LedgerLookup({ locale }: Readonly<{ locale: DiagnosisLocale }>) 
 
       {hydrated && !apiKey ? (
         <p
-          className="flex items-start gap-2 rounded-lg border border-slate-700/70 bg-slate-950/40 px-3 py-2 text-xs text-slate-400"
+          className="flex items-start gap-2 rounded-[8px] border border-border bg-muted/30 px-3 py-2 text-[11px] leading-4 text-muted-foreground"
           data-testid="ledger-shared-key-note"
         >
           <KeyRound className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
@@ -149,7 +150,7 @@ export function LedgerLookup({ locale }: Readonly<{ locale: DiagnosisLocale }>) 
 
       {error ? (
         <p
-          className="rounded-lg border border-amber-500/40 bg-amber-500/[0.06] px-3 py-2 text-sm text-amber-200"
+          className="rounded-[8px] border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs leading-5 text-destructive"
           data-testid="ledger-lookup-error"
         >
           {locale === "ko"
@@ -161,8 +162,8 @@ export function LedgerLookup({ locale }: Readonly<{ locale: DiagnosisLocale }>) 
       {params ? (
         <div className="space-y-3">
           {isLoading ? (
-            <p className="flex items-center gap-2 text-sm text-slate-400">
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            <p className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
               {locale === "ko" ? "조회 중…" : "Searching…"}
             </p>
           ) : null}

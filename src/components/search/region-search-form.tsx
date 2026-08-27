@@ -77,27 +77,17 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
     });
   };
 
+  // No card, no heading, no description here: the tab above already says
+  // "지역으로" and the section header above that already explains what a search
+  // does. The same instruction was being given four times in three nested boxes.
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="rounded-xl border bg-card shadow-sm"
-    >
-      <div className="border-b px-6 py-4">
-        <h3 className="text-lg font-semibold">
-          {t("지역 검색 (Region Search)", "Region Search")}
-        </h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t(
-            "시/도, 시/군/구, 법정동을 선택하여 건축물 목록을 조회합니다.",
-            "Select province, city/district, and dong to browse building records.",
-          )}
-        </p>
-      </div>
-
-      <div className="grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-3">
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="grid gap-x-3 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-3">
         {/* 시/도 */}
-        <div className="space-y-2">
-          <Label>{t("시/도", "Province")}</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-medium text-muted-foreground">
+            {t("시/도", "Province")}
+          </Label>
           <Controller
             control={control}
             name="sidoCd"
@@ -110,7 +100,10 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
                   setValue("bjdongCd", "");
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  size="sm"
+                  className="w-full rounded-md border-border bg-background text-xs shadow-none"
+                >
                   <SelectValue placeholder={t("시/도 선택", "Select province")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -127,8 +120,10 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
         </div>
 
         {/* 시/군/구 */}
-        <div className="space-y-2">
-          <Label>{t("시/군/구", "City / District")}</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-medium text-muted-foreground">
+            {t("시/군/구", "City / District")}
+          </Label>
           <Controller
             control={control}
             name="sigunguCd"
@@ -141,7 +136,10 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
                 }}
                 disabled={!selectedSido}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  size="sm"
+                  className="w-full rounded-md border-border bg-background text-xs shadow-none"
+                >
                   <SelectValue
                     placeholder={
                       selectedSido
@@ -164,8 +162,10 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
         </div>
 
         {/* 법정동 */}
-        <div className="space-y-2">
-          <Label>{t("법정동", "Dong (Legal District)")}</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-medium text-muted-foreground">
+            {t("법정동", "Dong (Legal District)")}
+          </Label>
           <Controller
             control={control}
             name="bjdongCd"
@@ -180,7 +180,10 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
                   bjdongOptions.length === 0
                 }
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  size="sm"
+                  className="w-full rounded-md border-border bg-background text-xs shadow-none"
+                >
                   <SelectValue
                     placeholder={
                       !selectedSigungu
@@ -207,14 +210,19 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
         </div>
 
         {/* 용도 */}
-        <div className="space-y-2">
-          <Label>{t("건물 용도", "Building Use")}</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-medium text-muted-foreground">
+            {t("건물 용도", "Building Use")}
+          </Label>
           <Controller
             control={control}
             name="mainPurpsCd"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  size="sm"
+                  className="w-full rounded-md border-border bg-background text-xs shadow-none"
+                >
                   <SelectValue placeholder={t("전체", "All types")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -231,8 +239,10 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
         </div>
 
         {/* 결과 수 */}
-        <div className="space-y-2">
-          <Label>{t("결과 수", "Per Page")}</Label>
+        <div className="space-y-1.5">
+          <Label className="text-[11px] font-medium text-muted-foreground">
+            {t("결과 수", "Per Page")}
+          </Label>
           <Controller
             control={control}
             name="numOfRows"
@@ -241,7 +251,10 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
                 value={String(field.value)}
                 onValueChange={(val) => field.onChange(Number(val))}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  size="sm"
+                  className="w-full rounded-md border-border bg-background text-xs shadow-none"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -257,9 +270,14 @@ export function RegionSearchForm({ onSearch, isLoading }: RegionSearchFormProps)
         </div>
       </div>
 
-      <div className="flex justify-end border-t px-6 py-4">
-        <Button type="submit" disabled={isLoading} className="gap-2">
-          <Search className="h-4 w-4" />
+      <div className="mt-4 flex justify-end">
+        <Button
+          type="submit"
+          size="sm"
+          disabled={isLoading}
+          className="gap-1.5 rounded-md shadow-none"
+        >
+          <Search className="size-3.5" />
           {isLoading
             ? t("검색 중...", "Searching...")
             : t("검색", "Search")}

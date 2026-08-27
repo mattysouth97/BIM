@@ -34,7 +34,9 @@ describe("banner layers", () => {
 
   it("gives each layer a poster and no baked type", () => {
     for (const id of BANNER_LAYER_IDS) {
-      expect(BANNER_LAYER_META[id].poster).toMatch(/^\/landing\/.+\.jpg$/);
+      expect(BANNER_LAYER_META[id].poster).toMatch(
+        /^\/landing\/.+\.(?:avif|jpe?g|png|webp)$/,
+      );
       expect(BANNER_LAYER_META[id].alt.length).toBeGreaterThan(8);
     }
   });

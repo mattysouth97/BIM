@@ -65,7 +65,7 @@ test.describe("First door", () => {
     await expect(
       page.getByRole("button", { name: "API 키 설정" }),
     ).toBeVisible();
-    await expect(page.getByTestId("landing-layer-rail")).toBeVisible();
+    await expect(page.locator("img.landing-plate")).toBeVisible();
 
     await page.getByRole("button", { name: "Switch to English" }).click();
     await expect(

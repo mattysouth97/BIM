@@ -3,8 +3,9 @@
 import { useState, lazy, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sun, Moon, Key, Globe, Plus } from "lucide-react";
+import { Box, Sun, Moon, Key, Globe, Plus } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useHydration } from "@/hooks/use-hydration";
 import { useAppStore } from "@/store/app-store";
 import { Button } from "@/components/ui/button";
 
@@ -15,6 +16,7 @@ const ApiKeyDialog = lazy(() =>
 export function Header() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const hydrated = useHydration();
   const language = useAppStore((state) => state.language);
   const setLanguage = useAppStore((state) => state.setLanguage);
   const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
@@ -25,16 +27,19 @@ export function Header() {
     return null;
   }
 
+  const isLanding = pathname === "/";
+  const isDark = hydrated && theme === "dark";
+
   const newDiagnosticLabel =
     language === "ko" ? "새 에너지 진단" : "New Energy Diagnostic";
   const languageLabel =
     language === "ko" ? "Switch to English" : "한국어로 전환";
   const themeLabel =
     language === "ko"
-      ? theme === "dark"
+      ? isDark
         ? "라이트 모드"
         : "다크 모드"
-      : theme === "dark"
+      : isDark
         ? "Light mode"
         : "Dark mode";
   const apiKeyLabel =
@@ -45,26 +50,32 @@ export function Header() {
   };
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    setTheme(isDark ? "light" : "dark");
   };
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between gap-2 px-4">
+      <header
+        className={`sticky top-0 z-50 border-b bg-background/95 backdrop-blur ${isLanding ? "landing-app-header" : ""}`}
+      >
+        <div className="flex h-12 w-full items-center justify-between gap-2 px-3 sm:px-4">
           <Link
             href="/"
-            className="flex min-w-0 items-baseline gap-2 rounded-sm no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex min-w-0 items-center gap-2 rounded-md no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={language === "ko" ? "BIMFIT 홈" : "BIMFIT home"}
           >
-            <span className="text-sm font-semibold tracking-tight">BIMFIT</span>
-            <span className="hidden truncate text-[10px] font-medium text-muted-foreground lg:inline">
+            <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-md bg-foreground text-background">
+              <Box aria-hidden="true" className="size-3.5" />
+            </span>
+            <span className="text-sm font-bold tracking-[-0.02em]">BIMFIT</span>
+            <span aria-hidden="true" className="hidden h-3 w-px bg-border sm:block" />
+            <span className="hidden truncate text-[10px] font-medium text-muted-foreground sm:inline">
               {language === "ko" ? "건물 에너지 진단" : "Building Energy Diagnostic"}
             </span>
           </Link>
 
           <div className="flex shrink-0 items-center gap-1">
-            <Button asChild variant="outline" size="sm" className="px-2 sm:px-3">
+            <Button asChild variant="outline" size="sm" className="h-8 px-2 shadow-xs sm:px-3">
               <Link
                 href="/"
                 data-testid="header-new-diagnostic"
@@ -82,6 +93,7 @@ export function Header() {
             <Button
               variant="ghost"
               size="sm"
+              className="h-8 px-2"
               onClick={toggleLanguage}
               title={languageLabel}
               aria-label={languageLabel}
@@ -95,7 +107,7 @@ export function Header() {
               size="icon"
               // P1-07 (g): `relative` anchors the absolutely-positioned Moon
               // icon to this button (the shared button base has no `relative`).
-              className="relative"
+              className="relative size-8"
               onClick={toggleTheme}
               title={themeLabel}
               aria-label={themeLabel}
@@ -108,6 +120,7 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
+              className="size-8"
               onClick={() => setApiKeyDialogOpen(true)}
               title={apiKeyLabel}
               aria-label={apiKeyLabel}

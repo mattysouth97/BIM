@@ -41,9 +41,9 @@ export const BANNER_LAYER_META: Record<
   },
   all: {
     color: "#22d3ee",
-    poster: "/landing/bim-layers.jpg",
-    alt: "One building exploded into its BIM layers — photovoltaic roof, curtain wall, cyan HVAC, electrical, steel frame, slabs, foundation",
-    focus: "50% 50%",
+    poster: "/landing/layer-all-peel-hd.png",
+    alt: "One office building shown as a joined facade and exposed BIM services model",
+    focus: "68% 50%",
     veil: 0.4,
   },
 };
