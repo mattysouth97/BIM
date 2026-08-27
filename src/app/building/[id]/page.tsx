@@ -63,7 +63,9 @@ export default async function BuildingDetailPage({ params }: Props) {
   const { id } = await params;
   // Legacy Demo and Drawing URLs remain compatibility doors, not product
   // modes. Both enter the one Energy Diagnostic state machine.
-  if (id === DEMO_BUILDING_ID) redirect("/diagnostics/new?method=sample");
+  // The sample building enters the SAME workflow as a real one — 건물 검색 →
+  // 도면 업로드 → 디지털 트윈 → 보고서 — rather than a parallel demo screen.
+  // Its register data is served from the bundled fixture, so it needs no key.
   if (id === DRAWING_BUILDING_ID) redirect("/diagnostics/new?method=create");
   if (isGeneratedPk(id)) redirect("/diagnostics/new?method=create");
   // Validate the id at the server layer so a bad URL 404s before the client

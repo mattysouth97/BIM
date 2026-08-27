@@ -105,14 +105,13 @@ test.describe("Canonical energy diagnostic", () => {
     );
     await expect(page.getByTestId("landing-sample-diagnostic")).toHaveAttribute(
       "href",
-      "/diagnostics/new?method=ledger&building=demo",
+      "/building/demo",
     );
 
     // There is no second entry screen any more.
     await page.goto("/diagnostics/new");
     await expect(page).toHaveURL(/\/$/);
     await expect(page.locator('a[href^="/studio"]')).toHaveCount(0);
-    await expect(page.locator('a[href^="/building/demo"]')).toHaveCount(0);
     await expect(page.locator('a[href^="/building/drawing"]')).toHaveCount(0);
   });
 
@@ -127,11 +126,13 @@ test.describe("Canonical energy diagnostic", () => {
     await expectCanonicalMethodUrl(page, "create");
     await expect(page.getByTestId("diagnostic-geometry-editor")).toBeVisible();
 
+    // The sample enters the same 4-step workflow as a real building rather
+    // than a parallel demo screen.
     await page.goto("/building/demo");
-    await expectCanonicalMethodUrl(page, "sample");
-    await expect(page.getByTestId("stage-panel-review")).toBeVisible({
-      timeout: 20_000,
-    });
+    await expect(page).toHaveURL(/\/building\/demo$/);
+    await expect(
+      page.getByRole("button", { name: /디지털 트윈|Twin/ }).first(),
+    ).toBeVisible({ timeout: 60_000 });
   });
 
   test("keeps mobile results and the spatial model inside the viewport", async ({

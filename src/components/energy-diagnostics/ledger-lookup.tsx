@@ -87,9 +87,10 @@ export function LedgerLookup({ locale }: Readonly<{ locale: DiagnosisLocale }>) 
     return items.filter((item) => item.mainPurpsCd === useFilter);
   }, [data, useFilter]);
 
+  // Step 1 of the fixed workflow hands off to steps 2-4, which live in the
+  // twin workspace: 건물 검색 → 도면 업로드 → 디지털 트윈 → 보고서.
   const hrefForBuilding = useCallback(
-    (buildingId: string) =>
-      `/diagnostics/new?method=ledger&building=${encodeURIComponent(buildingId)}`,
+    (buildingId: string) => `/building/${encodeURIComponent(buildingId)}`,
     [],
   );
 

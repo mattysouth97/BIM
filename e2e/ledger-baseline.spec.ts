@@ -25,12 +25,16 @@ test.describe("building register → baseline diagnosis", () => {
     await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible();
   });
 
-  test("the sample link reaches a running baseline", async ({ page }) => {
+  test("the sample enters the four-step twin workflow", async ({ page }) => {
     await page.goto("/");
     await page.getByTestId("landing-sample-diagnostic").click();
-    await expect(page.getByTestId("results-at-a-glance")).toBeVisible({
-      timeout: 60_000,
-    });
+    await expect(page).toHaveURL(/\/building\/demo$/);
+    // 건물 검색 → 도면 업로드 → 디지털 트윈 → 보고서
+    const body = page.locator("body");
+    await expect(body).toContainText("건물 검색", { timeout: 60_000 });
+    await expect(body).toContainText("도면 업로드");
+    await expect(body).toContainText("디지털 트윈");
+    await expect(body).toContainText("보고서");
   });
 
   test("builds and runs a baseline with zero further input", async ({

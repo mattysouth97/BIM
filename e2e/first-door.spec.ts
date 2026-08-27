@@ -40,10 +40,7 @@ test.describe("First door", () => {
     const drawing = page.getByTestId("diagnostic-method-upload");
 
     await expect(sample).toBeVisible();
-    await expect(sample).toHaveAttribute(
-      "href",
-      "/diagnostics/new?method=ledger&building=demo",
-    );
+    await expect(sample).toHaveAttribute("href", "/building/demo");
     await expect(drawing).toBeVisible();
     await expect(drawing).toHaveAttribute(
       "href",
@@ -52,7 +49,6 @@ test.describe("First door", () => {
 
     // The retired product surfaces stay unlinked.
     await expect(page.locator('a[href^="/studio"]')).toHaveCount(0);
-    await expect(page.locator('a[href^="/building/demo"]')).toHaveCount(0);
   });
 
   test("keeps the persistent chrome and switches language", async ({
@@ -86,10 +82,10 @@ test.describe("First door", () => {
     page,
   }) => {
     await page.getByTestId("landing-sample-diagnostic").click();
-    await expect(page).toHaveURL(/method=ledger&building=demo/);
-    await expect(page.getByTestId("results-at-a-glance")).toBeVisible({
-      timeout: 60_000,
-    });
+    await expect(page).toHaveURL(/\/building\/demo$/);
+    await expect(
+      page.getByRole("button", { name: /디지털 트윈|Twin/ }).first(),
+    ).toBeVisible({ timeout: 60_000 });
   });
 
   test("the drawing path goes straight to drawing, not to another menu", async ({

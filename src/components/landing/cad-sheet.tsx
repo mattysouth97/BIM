@@ -111,7 +111,7 @@ export function CadSheet({ copy }: { copy: LandingCopy }) {
               ·
             </span>
             <Link
-              href="/diagnostics/new?method=ledger&building=demo"
+              href="/building/demo"
               className="font-semibold text-foreground underline decoration-foreground/35 underline-offset-4 hover:decoration-foreground"
               data-testid="landing-sample-diagnostic"
             >
