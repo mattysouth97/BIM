@@ -10,7 +10,7 @@ test.describe("Building Flow", () => {
     await page.goto("/");
     // The homepage should render without crashing
     await expect(page.locator("body")).toBeVisible();
-    await expect(page.getByTestId("landing-new-diagnostic")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible({ timeout: 10000 });
   });
 
   test("homepage has main content area", async ({ page }) => {
@@ -83,7 +83,7 @@ test.describe("Landing diagnostic chrome", () => {
 
   test("the new-diagnostic action is present", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByTestId("landing-new-diagnostic")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible({ timeout: 15000 });
   });
 
   test("keeps one persistent diagnostic action in the header", async ({ page }) => {

@@ -66,7 +66,7 @@ export function Header() {
           <div className="flex shrink-0 items-center gap-1">
             <Button asChild variant="outline" size="sm" className="px-2 sm:px-3">
               <Link
-                href="/diagnostics/new"
+                href="/"
                 data-testid="header-new-diagnostic"
                 aria-label={newDiagnosticLabel}
                 aria-current={pathname?.startsWith("/diagnostics") ? "page" : undefined}

@@ -8,6 +8,7 @@ import { BANNER_LAYER_META, type BannerLayerId } from "@/lib/landing/layers";
 import { LedgerLookup } from "@/components/energy-diagnostics/ledger-lookup";
 import { useAppStore } from "@/store/app-store";
 import { LayerRail } from "./layer-rail";
+import { ResumeDiagnostic } from "./resume-diagnostic";
 
 /**
  * One screen, one workflow. The product begins at the 건축물대장: find the real
@@ -76,28 +77,47 @@ export function CadSheet({ copy }: { copy: LandingCopy }) {
           data-testid="landing-ledger-lookup"
         >
           <LedgerLookup locale={locale} />
+          <ResumeDiagnostic locale={locale} />
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-foreground/70">
-          <Link
-            href="/diagnostics/new?method=ledger&building=demo"
-            className="font-semibold text-foreground underline decoration-foreground/35 underline-offset-4 hover:decoration-foreground"
-            data-testid="landing-sample-diagnostic"
-          >
-            {copy.sampleDiagnostic}
-          </Link>
-          <span aria-hidden className="text-foreground/30">
-            ·
-          </span>
-          <Link
-            href="/diagnostics/new"
-            className="underline decoration-foreground/25 underline-offset-4 hover:text-foreground"
-            data-testid="landing-new-diagnostic"
-          >
+        {/* Every other way in, on the same page. There is no second landing
+            screen offering these as parallel choices — the register is the
+            workflow, and these are what you do when it cannot serve you. */}
+        <div className="mt-5">
+          <p className="text-center text-[11px] text-foreground/60">
             {locale === "ko"
-              ? "대장 없이 도면으로 시작"
-              : "Start from a drawing instead"}
-          </Link>
+              ? "대장을 찾을 수 없거나 도면이 있다면"
+              : "If the register cannot be found, or you already have drawings"}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
+            <Link
+              href="/diagnostics/new?method=upload"
+              className="underline decoration-foreground/25 underline-offset-4 hover:text-foreground"
+              data-testid="diagnostic-method-upload"
+            >
+              {locale === "ko" ? "도면 업로드" : "Upload a drawing"}
+            </Link>
+            <span aria-hidden className="text-foreground/30">
+              ·
+            </span>
+            <Link
+              href="/diagnostics/new?method=create"
+              className="underline decoration-foreground/25 underline-offset-4 hover:text-foreground"
+              data-testid="diagnostic-method-create"
+            >
+              {locale === "ko" ? "형상 직접 만들기" : "Draw the geometry"}
+            </Link>
+            <span aria-hidden className="text-foreground/30">
+              ·
+            </span>
+            <Link
+              href="/diagnostics/new?method=ledger&building=demo"
+              className="font-semibold text-foreground underline decoration-foreground/35 underline-offset-4 hover:decoration-foreground"
+              data-testid="landing-sample-diagnostic"
+            >
+              {copy.sampleDiagnostic}
+            </Link>
+          </div>
         </div>
 
         <div className="mx-auto mt-8 w-full max-w-md border-t border-border/60 pt-5">

@@ -68,11 +68,13 @@ export function useCompositeBuilding(
   const enabled = !!params.sigunguCd && !!params.bjdongCd;
   const footprintEnabled = !!address && address.trim().length > 0;
 
-  // The upstream proxy already allows 15 s per call, so the default three
-  // retries turn a failing lookup into more than a minute of spinner before
-  // the user is told anything. One retry covers a transient blip and still
-  // fails fast enough to be honest about it.
-  const retry = 1;
+  // data.go.kr commonly 502s the first call after an idle period and serves
+  // the very same request fine immediately after, so a single retry is not
+  // enough. An upstream error comes back fast (unlike a timeout), which makes
+  // extra attempts cheap; the short fixed backoff keeps the worst case —
+  // three 15 s timeouts — bounded rather than the default's exponential wait.
+  const retry = 2;
+  const retryDelay = (attempt: number) => Math.min(400 * 2 ** attempt, 1_500);
 
   const results = useQueries({
     queries: [
@@ -81,24 +83,28 @@ export function useCompositeBuilding(
         queryFn: () => searchBuildings(params),
         enabled,
         retry,
+        retryDelay,
       },
       {
         queryKey: ["buildings", "recap", params],
         queryFn: () => getRecapInfo(params),
         enabled,
         retry,
+        retryDelay,
       },
       {
         queryKey: ["buildings", "floors", params],
         queryFn: () => getFloorInfo({ ...params, numOfRows: 500 }),
         enabled,
         retry,
+        retryDelay,
       },
       {
         queryKey: ["buildings", "areas", params],
         queryFn: () => getAreaInfo(params),
         enabled,
         retry,
+        retryDelay,
       },
       {
         queryKey: ["footprint", address],

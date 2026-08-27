@@ -19,7 +19,7 @@ describe("Header diagnostic control", () => {
   it("exposes the single primary product destination", () => {
     render(<Header />);
     const link = screen.getByRole("link", { name: "New Energy Diagnostic" });
-    expect(link.getAttribute("href")).toBe("/diagnostics/new");
+    expect(link.getAttribute("href")).toBe("/");
     expect(screen.queryByRole("button", { name: "Guide / Help" })).toBeNull();
   });
 
@@ -33,7 +33,7 @@ describe("Header diagnostic control", () => {
     useAppStore.setState({ language: "ko" });
     render(<Header />);
     const link = screen.getByRole("link", { name: "새 에너지 진단" });
-    expect(link.getAttribute("href")).toBe("/diagnostics/new");
+    expect(link.getAttribute("href")).toBe("/");
     expect(screen.getAllByText("새 에너지 진단").length).toBeGreaterThan(0);
   });
 });

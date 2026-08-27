@@ -87,22 +87,14 @@ test.describe("Canonical energy diagnostic", () => {
     }, { storageKey: APP_STORAGE_KEY });
   });
 
-  test("offers register, upload, create, and sample as methods of one diagnostic", async ({
-    page,
-  }) => {
-    await page.goto("/diagnostics/new");
+  test("gathers every way in on the one landing page", async ({ page }) => {
+    await page.goto("/");
 
-    await expect(page.getByTestId("diagnostic-start")).toBeVisible();
-    await expect(
-      page.getByRole("heading", {
-        level: 1,
-        name: "Start a new energy diagnostic",
-      }),
-    ).toBeVisible();
-    await expect(page.getByTestId("diagnostic-method-ledger")).toHaveAttribute(
-      "href",
-      "/diagnostics/new?method=ledger",
-    );
+    // The register lookup is the page, not a choice among choices.
+    await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible();
+    await expect(page.getByTestId("ledger-lookup")).toBeVisible();
+
+    // Everything else is a fallback offered underneath it.
     await expect(page.getByTestId("diagnostic-method-upload")).toHaveAttribute(
       "href",
       "/diagnostics/new?method=upload",
@@ -111,10 +103,14 @@ test.describe("Canonical energy diagnostic", () => {
       "href",
       "/diagnostics/new?method=create",
     );
-    await expect(page.getByTestId("diagnostic-method-sample")).toHaveAttribute(
+    await expect(page.getByTestId("landing-sample-diagnostic")).toHaveAttribute(
       "href",
-      "/diagnostics/new?method=sample",
+      "/diagnostics/new?method=ledger&building=demo",
     );
+
+    // There is no second entry screen any more.
+    await page.goto("/diagnostics/new");
+    await expect(page).toHaveURL(/\/$/);
     await expect(page.locator('a[href^="/studio"]')).toHaveCount(0);
     await expect(page.locator('a[href^="/building/demo"]')).toHaveCount(0);
     await expect(page.locator('a[href^="/building/drawing"]')).toHaveCount(0);
@@ -558,7 +554,7 @@ test.describe("Canonical energy diagnostic", () => {
       { timeout: 20_000 },
     );
 
-    await page.goto("/diagnostics/new");
+    await page.goto("/");
     const resumeRecent = page.getByTestId("resume-recent-diagnostic");
     await expect(resumeRecent).toBeVisible();
     await resumeRecent.click();
@@ -589,8 +585,8 @@ test.describe("Canonical energy diagnostic", () => {
     await expect(page.getByTestId("stage-panel-review")).toBeVisible({
       timeout: 20_000,
     });
-    await page.getByRole("link", { name: "Input methods" }).click();
-    await expect(page.getByTestId("diagnostic-start")).toBeVisible();
+    await page.getByRole("link", { name: "Start over" }).click();
+    await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible();
     await page.getByTestId("diagnostic-method-create").click();
     await expect(page.getByTestId("diagnostic-geometry-editor")).toBeVisible();
     await expect(page.getByTestId("energy-diagnosis-workspace")).toHaveCount(0);

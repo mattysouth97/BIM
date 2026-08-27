@@ -9,35 +9,25 @@ import { expect, test } from "@playwright/test";
 const LEDGER_URL = "/diagnostics/new?method=ledger&building=demo";
 
 test.describe("building register → baseline diagnosis", () => {
-  test("offers the register as an entry method", async ({ page }) => {
-    await page.goto("/diagnostics/new");
-    const door = page.getByTestId("diagnostic-method-ledger");
-    await expect(door).toBeVisible();
-    await expect(door).toHaveAttribute(
-      "href",
-      "/diagnostics/new?method=ledger",
-    );
-  });
-
-  test("opens the register lookup when no building is chosen yet", async ({
-    page,
-  }) => {
-    await page.goto("/diagnostics/new?method=ledger");
-    await expect(page.getByTestId("diagnostic-ledger-start")).toBeVisible();
+  test("the register lookup is the landing page itself", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible();
     await expect(page.getByTestId("ledger-lookup")).toBeVisible();
     // Both ways of finding a building are offered.
     await expect(page.getByRole("tab", { name: /지역|district/i })).toBeVisible();
     await expect(page.getByRole("tab", { name: /주소|address/i })).toBeVisible();
-    // And a way through without any credentials.
-    await expect(page.getByTestId("ledger-try-sample")).toHaveAttribute(
-      "href",
-      "/diagnostics/new?method=ledger&building=demo",
-    );
+  });
+
+  test("the register lookup exists in exactly one place", async ({ page }) => {
+    // It used to live here too, which made two pages say the same thing.
+    await page.goto("/diagnostics/new?method=ledger");
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible();
   });
 
   test("the sample link reaches a running baseline", async ({ page }) => {
-    await page.goto("/diagnostics/new?method=ledger");
-    await page.getByTestId("ledger-try-sample").click();
+    await page.goto("/");
+    await page.getByTestId("landing-sample-diagnostic").click();
     await expect(page.getByTestId("results-at-a-glance")).toBeVisible({
       timeout: 60_000,
     });

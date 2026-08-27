@@ -37,7 +37,7 @@ test.describe("First door", () => {
     page,
   }) => {
     const sample = page.getByTestId("landing-sample-diagnostic");
-    const drawing = page.getByTestId("landing-new-diagnostic");
+    const drawing = page.getByTestId("diagnostic-method-upload");
 
     await expect(sample).toBeVisible();
     await expect(sample).toHaveAttribute(
@@ -45,7 +45,10 @@ test.describe("First door", () => {
       "/diagnostics/new?method=ledger&building=demo",
     );
     await expect(drawing).toBeVisible();
-    await expect(drawing).toHaveAttribute("href", "/diagnostics/new");
+    await expect(drawing).toHaveAttribute(
+      "href",
+      "/diagnostics/new?method=upload",
+    );
 
     // The retired product surfaces stay unlinked.
     await expect(page.locator('a[href^="/studio"]')).toHaveCount(0);
@@ -59,7 +62,7 @@ test.describe("First door", () => {
     const headerAction = page.getByTestId("header-new-diagnostic");
 
     await expect(headerAction).toBeVisible();
-    await expect(headerAction).toHaveAttribute("href", "/diagnostics/new");
+    await expect(headerAction).toHaveAttribute("href", "/");
     await expect(
       page.getByRole("button", { name: /(라이트|다크) 모드/ }),
     ).toBeVisible();
@@ -89,10 +92,14 @@ test.describe("First door", () => {
     });
   });
 
-  test("the drawing path still reaches the input methods", async ({ page }) => {
-    await page.getByTestId("landing-new-diagnostic").click();
-    await expect(page).toHaveURL(/\/diagnostics\/new$/);
-    await expect(page.getByTestId("diagnostic-method-upload")).toBeVisible();
+  test("the drawing path goes straight to drawing, not to another menu", async ({
+    page,
+  }) => {
+    await page.getByTestId("diagnostic-method-create").click();
+    await expect(page).toHaveURL(/method=create/);
+    await expect(page.getByTestId("diagnostic-geometry-editor")).toBeVisible({
+      timeout: 60_000,
+    });
   });
 });
 
