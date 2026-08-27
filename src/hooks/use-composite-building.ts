@@ -68,27 +68,37 @@ export function useCompositeBuilding(
   const enabled = !!params.sigunguCd && !!params.bjdongCd;
   const footprintEnabled = !!address && address.trim().length > 0;
 
+  // The upstream proxy already allows 15 s per call, so the default three
+  // retries turn a failing lookup into more than a minute of spinner before
+  // the user is told anything. One retry covers a transient blip and still
+  // fails fast enough to be honest about it.
+  const retry = 1;
+
   const results = useQueries({
     queries: [
       {
         queryKey: ["buildings", "title", params],
         queryFn: () => searchBuildings(params),
         enabled,
+        retry,
       },
       {
         queryKey: ["buildings", "recap", params],
         queryFn: () => getRecapInfo(params),
         enabled,
+        retry,
       },
       {
         queryKey: ["buildings", "floors", params],
         queryFn: () => getFloorInfo({ ...params, numOfRows: 500 }),
         enabled,
+        retry,
       },
       {
         queryKey: ["buildings", "areas", params],
         queryFn: () => getAreaInfo(params),
         enabled,
+        retry,
       },
       {
         queryKey: ["footprint", address],

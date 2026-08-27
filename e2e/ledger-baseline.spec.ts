@@ -90,11 +90,10 @@ test.describe("building register → baseline diagnosis", () => {
   test("declines a building it cannot model instead of inventing one", async ({
     page,
   }) => {
-    // A real register id has no offline record and no configured key, so the
-    // honest outcome is a refusal, never a fabricated building.
-    await page.goto(
-      "/diagnostics/new?method=ledger&building=11680-10300-1-0012-0000",
-    );
+    // An id that is not a register address at all. Deterministic on purpose:
+    // it is refused without any network call, so the test does not depend on
+    // whether a lookup key happens to be configured.
+    await page.goto("/diagnostics/new?method=ledger&building=not-a-building-id");
     await expect(page.getByTestId("ledger-baseline-unavailable")).toBeVisible({
       timeout: 60_000,
     });
