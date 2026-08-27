@@ -53,3 +53,8 @@ ml/portfolio/__pycache__/
 ml/portfolio/corpus/*.jsonl
 ml/portfolio/data/training.csv
 !ml/portfolio/corpus/.gitkeep
+
+# Obsidian vault — share config, ignore per-machine window state only.
+# Never ignore the documentation itself.
+docs/.obsidian/workspace.json
+docs/.obsidian/workspace-mobile.json
