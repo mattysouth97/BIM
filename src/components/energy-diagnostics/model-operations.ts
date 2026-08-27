@@ -49,7 +49,13 @@ export type RepresentativeCase = Readonly<{
   sources: readonly DrawingSourceInput[];
 }>;
 
-function refreshModel(
+/**
+ * Re-index a mutated model: rebuild `facts`, re-validate, refresh readiness.
+ * Exported because every refinement operation outside this module must end
+ * with it — a model whose `facts` index has drifted from its sub-objects
+ * fails preflight in ways that are hard to trace back.
+ */
+export function refreshModel(
   input: CanonicalEnergyModel,
   updatedAt = new Date().toISOString(),
 ): CanonicalEnergyModel {

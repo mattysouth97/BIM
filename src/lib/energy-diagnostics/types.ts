@@ -114,6 +114,13 @@ export type DrawingDiscipline =
   | "unknown";
 
 export type DrawingDocumentType =
+  /**
+   * A 건축물대장 (Korean building register) record, not a drawing. Kept
+   * outside the plan/elevation/section family on purpose: the register states
+   * areas, storey counts, height, use and structure, but it contains no
+   * geometry to trace and no envelope or systems data at all.
+   */
+  | "building_register_record"
   | "site_plan"
   | "floor_plan"
   | "elevation"

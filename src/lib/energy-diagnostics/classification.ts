@@ -11,6 +11,14 @@ type ClassificationRule = Readonly<{
 }>;
 
 const RULES: readonly ClassificationRule[] = [
+  // The 건축물대장 record. "multidiscipline" because the register states
+  // building-wide use, structure, areas and height rather than the output of
+  // any one design discipline.
+  rule("building_register_record", "multidiscipline", [
+    /building[\s_-]*register|building[\s_-]*ledger/i,
+    /bldrgst|bimfit[\s_-]*ledger/i,
+    /건축물[\s_-]*대장|표제부|층별[\s_-]*개요/,
+  ]),
   rule("window_schedule", "architectural", [
     /window[\s_-]*(schedule|type)/i,
     /창호[\s_-]*(일람|스케줄|표)/,
@@ -175,6 +183,9 @@ export function classifyDrawing(input: Readonly<{
 export function documentTier(documentType: DrawingDocumentType): 1 | 2 | 3 {
   if (
     [
+      // The register is a Tier-1 screening input: it fixes areas, storey
+      // count, height, use and structure without any drawing being read.
+      "building_register_record",
       "site_plan",
       "floor_plan",
       "elevation",

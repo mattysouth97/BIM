@@ -63,6 +63,20 @@ export type VectorBoundaryInput = Readonly<{
   pageNumber?: number;
   sheetId?: string;
   confidence?: number;
+  /**
+   * Provenance overrides for boundaries that are NOT dimensioned survey
+   * geometry. Without these the extractor stamps every supplied ring as
+   * `extracted` / `vector_geometry` / `dimensioned_vector_geometry`, which
+   * would relabel a synthesised outline (e.g. a rectangle derived from a
+   * 건축물대장 건축면적) as if it had been measured off a drawing.
+   *
+   * Defaults preserve the historical CAD behaviour exactly.
+   */
+  status?: Exclude<EvidenceStatus, "missing">;
+  extractionMethod?: ExtractionMethod;
+  authority?: EvidenceAuthority;
+  /** Required by createEnergyFact when the boundary is not source-backed. */
+  assumptionId?: string;
 }>;
 
 export type ExtractionSignal = Readonly<{
@@ -531,7 +545,12 @@ function extractVectorBoundaries(
     entityRef: `dxf-layer:${candidate.layer}`,
     confidence: 0.98,
   }));
-  const inputs = dxfBoundaries ?? adapterBoundaries ?? [];
+  // An explicitly supplied boundary is a reviewed, caller-curated ring (a
+  // layer-mapped CAD import, a user-authored schematic, a register-derived
+  // outline). Raw DXF candidates are area-ranked guesses, so they must not
+  // silently displace it. DXF parsing still wins when the caller supplied
+  // nothing, which is the historical path for a plain .dxf upload.
+  const inputs = adapterBoundaries ?? dxfBoundaries ?? [];
 
   if (source.dxf) warnings.push(...source.dxf.warnings.map((warning) => `${source.input.fileName}: ${warning}`));
   if (inputs.length === 0) {
@@ -589,29 +608,40 @@ function extractVectorBoundaries(
       geometryRef: boundaryId,
       previewCoordinates: input.polygon,
     });
+    // Provenance defaults to measured CAD geometry; a caller that synthesised
+    // the ring must say so, so an inferred outline is never presented as a
+    // dimensioned survey.
+    const boundaryStatus = input.status ?? "extracted";
+    const boundaryMethod = input.extractionMethod ?? "vector_geometry";
+    const boundaryAuthority = input.authority ?? "dimensioned_vector_geometry";
+    const boundaryAssumption = input.assumptionId
+      ? { assumptionId: input.assumptionId }
+      : {};
     const polygon = createEnergyFact<Polygon2D>({
       key: `drawing.${source.documentId}.boundary.${index + 1}.polygon`,
       value: Object.freeze(input.polygon.map((point) => Object.freeze([...point]) as Point2D)),
       unit: "m",
-      status: "extracted",
+      status: boundaryStatus,
       confidence: input.confidence ?? 0.98,
       sourceRefs: [sourceRef],
-      extractionMethod: "vector_geometry",
-      authority: "dimensioned_vector_geometry",
+      extractionMethod: boundaryMethod,
+      authority: boundaryAuthority,
       reviewedByUser: false,
       createdAt,
+      ...boundaryAssumption,
     });
     const areaSqm = createEnergyFact({
       key: `drawing.${source.documentId}.boundary.${index + 1}.areaSqm`,
       value: polygonArea(input.polygon),
       unit: "m2",
-      status: "extracted",
+      status: boundaryStatus,
       confidence: input.confidence ?? 0.98,
       sourceRefs: [sourceRef],
-      extractionMethod: "vector_geometry",
-      authority: "dimensioned_vector_geometry",
+      extractionMethod: boundaryMethod,
+      authority: boundaryAuthority,
       reviewedByUser: false,
       createdAt,
+      ...boundaryAssumption,
     });
     extracted.push(
       Object.freeze({

@@ -7,6 +7,7 @@ import { FLOOR_HEIGHTS, WINDOW_RATIOS, WALL_LAYERS, STRUCTURE_TO_WALL_KEY } from
 import { ROOF_MATERIALS } from "./pbr-materials";
 import type { BuildingRecipe } from "./procedural/types";
 import { getRecipe } from "./procedural/recipe";
+import { normalizeFloorRows } from "./ledger/floor-rows";
 
 export interface FloorGeometry {
   floorNo: number;
@@ -69,32 +70,6 @@ function estimateFootprint(area: number): { width: number; depth: number } {
   const width = Math.sqrt(area * 1.5);
   const depth = Math.sqrt(area / 1.5);
   return { width: Math.round(width * 10) / 10, depth: Math.round(depth * 10) / 10 };
-}
-
-/**
- * The floor-outline endpoint can return rows for multiple building registers
- * and multiple use/area rows for one physical floor. Scope them to the chosen
- * title and keep one representative per floor so geometry is never duplicated.
- */
-function normalizeFloorRows(title: BrTitleInfo, floors: BrFloorInfo[]): BrFloorInfo[] {
-  const titlePk = String(title.mgmBldrgstPk || "");
-  const scoped = floors.filter((floor) => {
-    const floorPk = String(floor.mgmBldrgstPk || "");
-    return !titlePk || !floorPk || floorPk === titlePk;
-  });
-  const byFloor = new Map<string, BrFloorInfo>();
-
-  for (const floor of scoped) {
-    const floorNo = Number(floor.flrNo);
-    if (!Number.isFinite(floorNo)) continue;
-    const key = `${floor.flrGbCd || (floorNo < 0 ? "below" : "above")}:${floorNo}`;
-    const existing = byFloor.get(key);
-    if (!existing || Number(floor.area) > Number(existing.area)) {
-      byFloor.set(key, floor);
-    }
-  }
-
-  return [...byFloor.values()];
 }
 
 function getUseCategory(mainPurpsCd: string): "residential" | "office" | "factory" | "retail" | "default" {
