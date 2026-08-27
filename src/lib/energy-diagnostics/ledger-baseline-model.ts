@@ -431,6 +431,27 @@ export function buildLedgerBaselineModel(
     boundaryAreaFact,
   ]);
 
+  /**
+   * A value derived from other facts, which degrades to a named assumption
+   * when none of its inputs carry evidence.
+   *
+   * This is not a nicety: when the register states no 높이 (a documented zero),
+   * the storey height comes from the era table and carries no source refs, so
+   * anything derived from it alone — window height, sill height — has nothing
+   * to cite. `inferredFact` correctly refuses to invent evidence, so the
+   * honest result is an assumption, not a crash.
+   */
+  const derivedFact = (
+    key: string,
+    value: number,
+    sources: readonly EnergyFact<unknown>[],
+    unit: string,
+    assumptionId: string,
+  ): EnergyFact<number> =>
+    sources.some((fact) => fact.sourceRefs.length > 0)
+      ? inferredFact(key, value, sources, now, unit, assumptionId)
+      : assumptionFact(key, value, now, assumptionId, unit);
+
   // Orientation is not on the register. 0 deg is a stated template value.
   const northOrientationDeg = assumptionFact(
     "site.northOrientationDeg",
@@ -758,19 +779,19 @@ export function buildLedgerBaselineModel(
             "m",
             LEDGER_ENVELOPE_ASSUMPTION_ID,
           ),
-          heightM: inferredFact(
+          heightM: derivedFact(
             `opening.${openingId}.heightM`,
             windowHeightM,
             [storeyHeightFact],
-            now,
             "m",
+            LEDGER_ENVELOPE_ASSUMPTION_ID,
           ),
-          sillHeightM: inferredFact(
+          sillHeightM: derivedFact(
             `opening.${openingId}.sillHeightM`,
             sillHeightM,
             [storeyHeightFact],
-            now,
             "m",
+            LEDGER_ENVELOPE_ASSUMPTION_ID,
           ),
           constructionId: assumptionFact(
             `opening.${openingId}.constructionId`,

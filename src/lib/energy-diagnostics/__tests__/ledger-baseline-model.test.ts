@@ -371,6 +371,43 @@ describe("refusals — a thin register never becomes a confident model", () => {
   });
 });
 
+describe("a register with no recorded 높이", () => {
+  it("still builds, using the era floor height as a named assumption", async () => {
+    // A real 강남구 apartment register carries heit = 0 (unavailable). The
+    // storey height then comes from the era table and cites no evidence, so
+    // anything derived from it alone has nothing to reference.
+    const outcome = await buildFromLedger({ ...demoTitle, heit: 0 });
+    expect(outcome.status).toBe("created");
+    if (outcome.status !== "created") return;
+
+    const storeyHeight = outcome.model.geometry.storeys[0].floorToFloorHeightM;
+    expect(storeyHeight.status).toBe("defaulted");
+    expect(storeyHeight.assumptionId).toBe(LEDGER_ENVELOPE_ASSUMPTION_ID);
+
+    // The windows derived from it degrade to assumptions rather than throwing.
+    const window = outcome.model.geometry.openings[0];
+    expect(window.heightM.value).toBeGreaterThan(0);
+    expect(window.heightM.assumptionId).toBe(LEDGER_ENVELOPE_ASSUMPTION_ID);
+    expect(window.sillHeightM.assumptionId).toBe(LEDGER_ENVELOPE_ASSUMPTION_ID);
+
+    // And the model is still a runnable one.
+    const validation = validateCanonicalEnergyModel(outcome.model);
+    expect(validation.blockingIssueIds).toEqual([]);
+    const run = runSimulation(compileCanonicalModelToEngineInput(outcome.model));
+    expect(run.status).toBe("succeeded");
+  });
+
+  it("builds from a register with no 층별개요 rows at all", async () => {
+    const outcome = await buildFromLedger(demoTitle, []);
+    expect(outcome.status).toBe("created");
+    if (outcome.status !== "created") return;
+    // Falls back to an even share of 연면적, recorded as an inference.
+    expect(outcome.model.geometry.thermalZones).toHaveLength(10);
+    const run = runSimulation(compileCanonicalModelToEngineInput(outcome.model));
+    expect(run.status).toBe("succeeded");
+  });
+});
+
 describe("a register with no cooling plant", () => {
   it("emits the exact lowercase 'none' the validator and adapter require", async () => {
     // 17000 (공장) has coolingEfficiency 0 in the defaults table.
