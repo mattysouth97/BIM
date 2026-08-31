@@ -20,11 +20,11 @@ inside it; do not add a fifth step or a second front door.
 
 ## Verified Working State
 
-Validated on 2026-08-27:
+Validated on 2026-08-31 (after the MEP graph-engine rework):
 
-- Unit: **3952 passed**, 4 skipped, 362 files
+- Unit: **3994 passed**, 4 skipped, 364 files
 - E2E: **35 passed** (Playwright, chromium)
-- `tsc --noEmit`: clean
+- `tsc --noEmit`: clean; `eslint src`: 0 errors
 - Production live at `https://bim-self.vercel.app`, verified against a real
   building (대청아파트306동, `11680-10300-0-0012-0000`)
 
@@ -91,7 +91,35 @@ files.
 | `src/app/api/bldrgst/_factory.ts` | Shared-key resolution and per-endpoint row caps |
 | `public/models/` | 173 GLBs (102 authoring, 58 equipment, 13 bim-assets) |
 
-## Recent Architectural Changes
+## Recent Architectural Changes (2026-08-31: MEP graph engine)
+
+- **The MEP layer is graph-driven.** `src/lib/mep/` plans a canonical,
+  deterministic building-services network (plant → riser → main → branch →
+  terminal; engineered catalog sizes; explicit fittings; elevation-band +
+  channel coordination with a §28 self-repair pass; clash/gravity/connectivity
+  validation and a plausibility score). Layer generators 3/4/5/6/13 and
+  electrical-routing render FROM the model via `src/lib/layers/mep-render.ts`;
+  their group names, userData tags and toggles are unchanged, so the viewer
+  stack carried over (35/35 e2e green untouched).
+- Engineering rules live in `src/lib/mep/rules.ts`, each citing
+  `docs/05_Research/MEP Design Practice Research.md` (U/H/C/M classified).
+- CAD-driven MEP: classified room polygons flow
+  `classify-plan.roomPolygonsFromPlan → RecipeOverrides.cadRooms →
+  MepZone(source:"cad-room")`.
+- `/dev/mep` is the visual-QA harness (six QA buildings, provenance/clash
+  color modes, graph overlay, live validator metrics).
+- Regression thresholds (hard-clash ceilings, score floors) are in
+  `src/lib/mep/__tests__/mep-engine.test.ts` — ratchet down only. Case E
+  (pre-2000 central plant) keeps a documented residual; structure clashes are
+  asserted zero everywhere.
+- **설비 강조 (MEP x-ray)**: `layer-store.mepIsolation` (session-only) —
+  toggle under 기계전기설비 in the scene layer list and layer panel; ghosts
+  the massing via `ProceduralBuildingModel.mepIsolation` and clears
+  interior + analysis overlays on entry. This is how the graph MEP is meant
+  to be seen in the product.
+- Feature doc: [[MEP Systems]].
+
+## Earlier Architectural Changes
 
 - Product reversed to **register-first**; the generative engine became refinement
   input and a secondary door.

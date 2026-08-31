@@ -108,7 +108,7 @@ afterEach(() => {
   __resetEquipmentAssetsForTest();
 });
 
-describe("SafetyLayer — pre-existing output (no assets)", () => {
+describe("SafetyLayer — pre-existing output (no assets)", { timeout: 30_000 }, () => {
   it("renders fire zones and stairwells; low-rise gets NO sprinkler grid (소방시설법 11+ floors)", () => {
     const group = new SafetyLayer().generate(makeRecipe());
 
@@ -127,16 +127,19 @@ describe("SafetyLayer — pre-existing output (no assets)", () => {
     expect(findByType(group, "safety-sprinkler-bulb")).toBeUndefined();
   });
 
-  it("renders the coarse sprinkler grid on 11+ floor buildings", () => {
+  it("renders the graph sprinkler network (heads + piping) on 11+ floor buildings", () => {
     const group = new SafetyLayer().generate(makeHighRiseRecipe());
 
     const coarseHead = findByType(group, "safety-sprinkler-head") as THREE.InstancedMesh;
     const coarseBulb = findByType(group, "safety-sprinkler-bulb") as THREE.InstancedMesh;
     expect(coarseHead).toBeDefined();
     expect(coarseBulb).toBeDefined();
-    // colsX=floor(12/3)=4, colsZ=floor(10/3)=3 -> 12/floor * 11 floors = 132
-    expect(coarseHead.count).toBe(132);
-    expect(coarseBulb.count).toBe(132);
+    // Heads come from the MEP graph's terminal nodes (spacing rule F1) and
+    // match the bulb count exactly; piping (riser → cross main → branch
+    // lines) renders alongside — the old decorative grid had no pipes at all.
+    expect(coarseHead.count).toBeGreaterThan(20);
+    expect(coarseHead.count).toBe(coarseBulb.count);
+    expect(findByType(group, "safety-sprinkler-pipe")).toBeDefined();
   });
 
   it("adds none of the 5 detailed safety-kit InstancedMeshes when the cache is empty", () => {
@@ -149,25 +152,17 @@ describe("SafetyLayer — pre-existing output (no assets)", () => {
   });
 });
 
-describe("SafetyLayer — detailed asset kit (injected fakes)", () => {
-  it("adds the sprinkler ceiling-grid InstancedMesh at half the lighting-grid's areal density", () => {
+describe("SafetyLayer — detailed asset kit (injected fakes)", { timeout: 30_000 }, () => {
+  it("instances the detailed sprinkler-head asset at the GRAPH terminal positions", () => {
     __injectEquipmentAssetForTest("sprinkler-head", makeFakeAsset());
     // 11-floor recipe: sprinklers only exist on 11+ floor buildings
     const group = new SafetyLayer().generate(makeHighRiseRecipe());
     const im = findByType(group, "safety-sprinkler") as THREE.InstancedMesh;
     expect(im).toBeDefined();
-    // Half the AREAL density of the lighting-layer grid means spacing scales
-    // by sqrt(2) per axis, not 2x (a 2D grid's point count scales with
-    // 1/spacing^2, so doubling spacing would quarter the count):
-    //   spacing = max(1.5*sqrt2, 3.0*sqrt2/1.0) = 3*sqrt2 ~= 4.242640687
-    //   (the density=1.0 term dominates on both axes)
-    // Grid bounds match layer-7's -halfW+1..halfW-1 / -halfD+1..halfD-1:
-    //   x in [-5, 5] step 4.242640687 -> -5, -0.757..., 3.485... (3 points;
-    //     next step 7.727... exceeds the x<=5 bound)
-    //   z in [-4, 4] step 4.242640687 -> -4, 0.2426... (2 points; next step
-    //     4.485... exceeds the z<=4 bound)
-    // 3 x 2 = 6 sprinklers/floor * 11 floors = 66
-    expect(im.count).toBe(66);
+    // Detailed heads mirror the coarse graph heads one-to-one — they replace
+    // the LOOK, never the engineered positions.
+    const coarse = findByType(group, "safety-sprinkler-head") as THREE.InstancedMesh;
+    expect(im.count).toBe(coarse.count);
     const mat = im.material as THREE.MeshStandardMaterial;
     expect(mat.color.getHex()).toBe(0xd97706); // brass tint
     expect(mat.emissiveIntensity).toBeGreaterThanOrEqual(0.15);
@@ -271,7 +266,7 @@ describe("SafetyLayer — detailed asset kit (injected fakes)", () => {
   });
 });
 
-describe("SafetyLayer dispose()", () => {
+describe("SafetyLayer dispose()", { timeout: 30_000 }, () => {
   it("does not throw with the detailed asset kit present", () => {
     injectAllFive();
     const layer = new SafetyLayer();

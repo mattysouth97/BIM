@@ -8,7 +8,7 @@ import { useT } from "@/lib/i18n";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useTwinProvenanceStore } from "@/store/twin-provenance-store";
-import { classifyPlanPolylines, serviceCoreFromPlan } from "@/lib/cad/doc/classify-plan";
+import { classifyPlanPolylines, roomPolygonsFromPlan, serviceCoreFromPlan } from "@/lib/cad/doc/classify-plan";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import {
   parseDxfText,
@@ -394,6 +394,12 @@ export function UploadStage() {
         hasCadPlan = true;
       } else if (classified.some((c) => c.role === "room")) {
         hasCadPlan = true;
+      }
+      // Classified room polygons feed the MEP planner as CAD-driven terminal
+      // zones (drawing evidence replaces the procedural grid).
+      const rooms = roomPolygonsFromPlan(classified);
+      if (rooms.length > 0) {
+        setOverride(buildingPk, "cadRooms", rooms);
       }
     }
     patchProvenance(buildingPk, {

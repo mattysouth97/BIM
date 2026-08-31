@@ -501,6 +501,7 @@ export function BuildingScene({
 
   // P2-22 — structural isolation view (load-bearing solid, rest ghosted).
   const structuralIsolation = useLayerStore((s) => s.structuralIsolation);
+  const mepIsolation = useLayerStore((s) => s.mepIsolation);
 
   // HITL review highlight — a fidelity-panel flag click pulses the matching
   // element category (category-level, not per-element).
@@ -633,7 +634,7 @@ export function BuildingScene({
               <>
                 {recipe && (
                   <>
-                    <ProceduralBuildingModel geometry={geometry ?? undefined} recipeOverride={recipe} onFloorSelect={setSelectedFloor} retrofitVisuals={retrofitVisuals} structuralIsolation={structuralIsolation} reviewHighlightKind={reviewHighlightKind} />
+                    <ProceduralBuildingModel geometry={geometry ?? undefined} recipeOverride={recipe} onFloorSelect={setSelectedFloor} retrofitVisuals={retrofitVisuals} structuralIsolation={structuralIsolation} mepIsolation={mepIsolation} reviewHighlightKind={reviewHighlightKind} />
                     <SiteContext recipe={recipe} showDemoNeighbors={buildingPk === DEMO_BUILDING_PK} />
                     {retrofitVisuals.solarInstalled && <SolarPanels recipe={recipe} />}
                     {retrofitVisuals.hvacUpgraded && <RetrofitHvacUnits recipe={recipe} />}

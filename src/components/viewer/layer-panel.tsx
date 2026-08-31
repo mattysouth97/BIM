@@ -30,6 +30,8 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
   const toggleMepSub = useLayerStore((s) => s.toggleMepSub);
   const airflowVisible = useLayerStore((s) => s.airflowVisible);
   const toggleAirflow = useLayerStore((s) => s.toggleAirflow);
+  const mepIsolation = useLayerStore((s) => s.mepIsolation);
+  const toggleMepIsolation = useLayerStore((s) => s.toggleMepIsolation);
   const analysisOverlays = useLayerStore((s) => s.analysisOverlays);
   const toggleAnalysisOverlay = useLayerStore((s) => s.toggleAnalysisOverlay);
   const interiorVisible = useLayerStore((s) => s.interiorVisible);
@@ -104,6 +106,29 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
                   />
                 )}
               </button>
+
+              {/* 설비 강조 (MEP x-ray) — ghosts the whole massing so the
+                  coordinated services read; same convention as 구조 분리. */}
+              {id === "mep" && mepExpanded && (
+                <button
+                  type="button"
+                  data-testid="mep-isolation-toggle"
+                  aria-pressed={mepIsolation}
+                  onClick={toggleMepIsolation}
+                  className="flex w-full items-center gap-3 rounded-md pl-8 pr-3 py-1.5 text-left text-[11px] transition-colors hover:bg-accent/50"
+                >
+                  <span
+                    className="size-1.5 shrink-0 rounded-full border transition-colors"
+                    style={{
+                      borderColor: "#06b6d4",
+                      backgroundColor: mepIsolation ? "#06b6d4" : "transparent",
+                    }}
+                  />
+                  <span className={mepIsolation ? "font-medium" : "text-muted-foreground"}>
+                    {t("설비 강조 (건물 반투명)", "MEP x-ray (ghost the building)")}
+                  </span>
+                </button>
+              )}
 
               {/* MEP sub-toggle rows — only shown when mepExpanded */}
               {id === "mep" && mepExpanded && MEP_SUB_IDS.map((subId) => {

@@ -20,6 +20,8 @@ export function SceneLayerList() {
   const toggleMepSub = useLayerStore((s) => s.toggleMepSub);
   const interiorVisible = useLayerStore((s) => s.interiorVisible);
   const toggleInterior = useLayerStore((s) => s.toggleInterior);
+  const mepIsolation = useLayerStore((s) => s.mepIsolation);
+  const toggleMepIsolation = useLayerStore((s) => s.toggleMepIsolation);
 
   return (
     <div className="border-b px-2 py-2" data-testid="scene-layer-list">
@@ -50,6 +52,27 @@ export function SceneLayerList() {
               </button>
               {id === "mep" && active && (
                 <ul className="ml-5 mb-1 space-y-0.5">
+                  {/* 설비 강조 — ghost the massing so the services read. */}
+                  <li>
+                    <button
+                      type="button"
+                      data-testid="scene-mep-isolation-toggle"
+                      aria-pressed={mepIsolation}
+                      onClick={toggleMepIsolation}
+                      className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-[10px] hover:bg-accent/40"
+                    >
+                      <span
+                        className="size-1.5 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor: mepIsolation ? "#06b6d4" : "transparent",
+                          outline: "1px solid #06b6d4",
+                        }}
+                      />
+                      <span className={mepIsolation ? "font-medium" : "text-muted-foreground"}>
+                        {isKo ? "설비 강조 (건물 반투명)" : "MEP x-ray"}
+                      </span>
+                    </button>
+                  </li>
                   {MEP_SUB_IDS.map((sub) => {
                     const subCfg = MEP_SUB_CONFIGS[sub];
                     const on = mepSubVisibility[sub];

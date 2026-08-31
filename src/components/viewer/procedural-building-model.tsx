@@ -58,6 +58,8 @@ interface ProceduralBuildingModelProps {
    * structural-discipline filter rendered in the Solibri/xeokit x-ray idiom.
    */
   structuralIsolation?: boolean;
+  /** MEP x-ray: ghost the whole massing so the services read (설비 강조). */
+  mepIsolation?: boolean;
   /**
    * Category of a HITL-flagged element to highlight (from a fidelity-panel flag
    * click). Category-level, not per-element: the procedural building has no
@@ -133,7 +135,7 @@ function collectInformationalMeshes(group: THREE.Group): THREE.Mesh[] {
   return result;
 }
 
-export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelect, hideGroundPlane, retrofitVisuals, structuralIsolation, reviewHighlightKind }: ProceduralBuildingModelProps) {
+export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelect, hideGroundPlane, retrofitVisuals, structuralIsolation, mepIsolation, reviewHighlightKind }: ProceduralBuildingModelProps) {
   const builderRef = useRef<ProceduralBuilding | null>(null);
   const groupRef = useRef<THREE.Group | null>(null);
   const selectedRef = useRef<number | null>(null);
@@ -271,7 +273,8 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
     restoreAll();
     const v = retrofitVisuals ?? NO_RETROFIT_VISUALS;
     const isolate = structuralIsolation === true;
-    if (!hasAnyVisual(v) && !isolate && !reviewHighlightKind) return;
+    const mepXray = mepIsolation === true;
+    if (!hasAnyVisual(v) && !isolate && !mepXray && !reviewHighlightKind) return;
 
     const tint = (mesh: THREE.Mesh, apply: (m: THREE.MeshStandardMaterial) => void) => {
       if (Array.isArray(mesh.material)) return;
@@ -326,6 +329,14 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
         return;
       }
 
+      // MEP x-ray (설비 강조): the ENTIRE massing ghosts — slabs, columns,
+      // facade, roof — so the graph-driven services are the subject. Same
+      // Solibri/Navisworks x-ray convention as structural isolation below.
+      if (mepXray) {
+        ghost(obj);
+        return;
+      }
+
       // P2-22 — isolation ghosts every non-load-bearing element first
       // (Revit filters on LoadBearing; masonry walls stay solid because the
       // IFC classification marks them bearing). Ghost wins over retrofit
@@ -361,7 +372,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
     });
 
     return restoreAll;
-  }, [group, retrofitVisuals, structuralIsolation, recipe, reviewHighlightKind]);
+  }, [group, retrofitVisuals, structuralIsolation, mepIsolation, recipe, reviewHighlightKind]);
 
   // Floor selection via raycaster on slabs — handles both the rectangular
   // InstancedMesh path (instanceId) and the polygon Group path (plain meshes

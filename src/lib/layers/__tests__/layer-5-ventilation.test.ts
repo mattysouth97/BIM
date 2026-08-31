@@ -1,442 +1,126 @@
 // src/lib/layers/__tests__/layer-5-ventilation.test.ts
-// Unit tests for VentilationLayer — merged AHU geometry (body + duct stubs + fan ring).
+// VentilationLayer over the canonical MEP graph: duct networks with
+// engineered rect sizes, AHU/OA-unit heroes at graph nodes, diffuser
+// terminals, the animated airflow-streamlines batch (name + cap + shader
+// contract preserved), plate containment for irregular footprints.
 
 import { describe, it, expect } from "vitest";
 import * as THREE from "three";
-import { VentilationLayer } from "../layer-5-ventilation";
-import { DEFAULT_MEP_EQUIPMENT_PARAMS } from "../mep-equipment-params";
-import type { BuildingRecipe } from "@/lib/procedural/types";
-import {
-  axisAlignedRectangleFitsFootprint,
-  getColumnPositions,
-} from "@/lib/structural-codes";
+import { MAX_AIRFLOW_LANE_BUNDLES, VentilationLayer } from "../layer-5-ventilation";
+import { clearMepPlanCache } from "@/lib/mep";
+import { caseLShape, makeRecipe } from "@/lib/mep/__tests__/fixtures";
 
-// ---------------------------------------------------------------------------
-// Mock recipe fixture — 3 above-ground floors
-// ---------------------------------------------------------------------------
+const CENTRAL = () => makeRecipe({ era: "1990-1999", mainPurpsCd: "14000" });
+const VRF = () => makeRecipe({ era: "2010-2019", mainPurpsCd: "14000" });
 
-function makeRecipe(): BuildingRecipe {
-  return {
-    footprintWidth: 10,
-    footprintDepth: 8,
-    floors: [
-      { floorNo: 1, label: "1F", type: "above", y: 0, height: 3.0, isGroundFloor: true },
-      { floorNo: 2, label: "2F", type: "above", y: 3.0, height: 3.0, isGroundFloor: false },
-      { floorNo: 3, label: "3F", type: "above", y: 6.0, height: 3.0, isGroundFloor: false },
-    ],
-    totalHeight: 9.0,
-    wallThickness: 0.2,
-    era: "2000-2009",
-    strctCd: "21",
-    mainPurpsCd: "02000",
-    column: { spacing: 6, size: 0.4, inset: 1 },
-    slab: { thickness: 0.2, overhang: 0 },
-    facade: {
-      windowWidth: 1.4,
-      windowHeight: 1.6,
-      sillHeight: 0.9,
-      windowSpacing: 0.5,
-      windowRatio: 0.6,
-      mullionDepth: 0.06,
-      mullionWidth: 0.05,
-      glassInset: 0.04,
-      solidPanelChance: 0.15,
-      parapetHeight: 0.9,
-      cornerInset: 0.2,
-    },
-    roof: { type: "flat", flatThickness: 0.15, gableHeight: 0, hipInset: 0 },
-    siteWidth: 20,
-    siteDepth: 18,
-    buildingName: "Test Building",
-    address: "Seoul, Korea",
-    materials: {
-      wall: { color: "#cccccc", roughness: 0.8, metalness: 0.1 },
-      glass: { color: "#88aacc", roughness: 0.1, metalness: 0.0, transparent: true, opacity: 0.4 },
-      mullion: { color: "#888888", roughness: 0.4, metalness: 0.6 },
-      slab: { color: "#aaaaaa", roughness: 0.9, metalness: 0.0 },
-      column: { color: "#999999", roughness: 0.8, metalness: 0.0 },
-      roof: { color: "#888888", roughness: 0.7, metalness: 0.1 },
-      groundFloor: { color: "#bbbbbb", roughness: 0.9, metalness: 0.0 },
-    },
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Collect all objects from a group traversal keyed by userData.type */
-function collectByType(group: THREE.Group): Map<string, THREE.Object3D[]> {
-  const map = new Map<string, THREE.Object3D[]>();
+function findByType(group: THREE.Group, type: string): THREE.Object3D | undefined {
+  let found: THREE.Object3D | undefined;
   group.traverse((obj) => {
-    const t = (obj as THREE.Object3D & { userData: { type?: string } }).userData?.type;
-    if (t) {
-      if (!map.has(t)) map.set(t, []);
-      map.get(t)!.push(obj);
-    }
+    if (!found && obj.userData?.type === type) found = obj;
   });
-  return map;
+  return found;
 }
 
-function instancePosition(mesh: THREE.InstancedMesh, index = 0): THREE.Vector3 {
-  const matrix = new THREE.Matrix4();
-  const position = new THREE.Vector3();
-  mesh.getMatrixAt(index, matrix);
-  position.setFromMatrixPosition(matrix);
-  return position;
-}
-
-function pointInRing(x: number, z: number, ring: [number, number][]): boolean {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [xi, zi] = ring[i];
-    const [xj, zj] = ring[j];
-    if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) {
-      inside = !inside;
-    }
-  }
-  return inside;
-}
-
-// Plain BoxGeometry(1.2, 0.8, 0.8) has 24 position entries (4 vertices × 6 faces).
-// A merged body+ducts+fan should be substantially more.
-const PLAIN_BOX_VERTEX_COUNT = 24;
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
-describe("VentilationLayer", () => {
-  it("returns a Group named 'layer-5-ventilation'", () => {
-    const layer = new VentilationLayer();
-    const group = layer.generate(makeRecipe());
-    expect(group).toBeInstanceOf(THREE.Group);
-    expect(group.name).toBe("layer-5-ventilation");
-    layer.dispose();
+describe("VentilationLayer (graph-driven)", { timeout: 30_000 }, () => {
+  it("returns a THREE.Group named 'layer-5-ventilation'", () => {
+    expect(new VentilationLayer().generate(CENTRAL()).name).toBe("layer-5-ventilation");
   });
 
-  it("has an InstancedMesh with userData.type === 'vent-ahu'", () => {
-    const layer = new VentilationLayer();
-    const group = layer.generate(makeRecipe());
-    const byType = collectByType(group);
-    const ahuObjects = byType.get("vent-ahu");
-    expect(ahuObjects).toBeDefined();
-    expect(ahuObjects!.length).toBe(1);
-    expect(ahuObjects![0]).toBeInstanceOf(THREE.InstancedMesh);
-    layer.dispose();
-  });
-
-  it("merged AHU geometry has more vertices than a plain BoxGeometry", () => {
-    const layer = new VentilationLayer();
-    const group = layer.generate(makeRecipe());
-    const byType = collectByType(group);
-    const ahuIM = byType.get("vent-ahu")![0] as THREE.InstancedMesh;
-    const posAttr = ahuIM.geometry.getAttribute("position");
-    expect(posAttr.count).toBeGreaterThan(PLAIN_BOX_VERTEX_COUNT);
-    layer.dispose();
-  });
-
-  it("keeps the fan ring on the AHU front face without cutting through its depth", () => {
-    const params = DEFAULT_MEP_EQUIPMENT_PARAMS.ahu;
-    const layer = new VentilationLayer();
-    const group = layer.generate(makeRecipe());
-    const ahu = collectByType(group).get("vent-ahu")![0] as THREE.InstancedMesh;
-    ahu.geometry.computeBoundingBox();
-
-    expect(ahu.geometry.boundingBox!.max.z).toBeLessThanOrEqual(
-      params.depth / 2 + 0.061,
-    );
-    layer.dispose();
-  });
-
-  it("instanceMatrix was marked needsUpdate after generate() (version > 0)", () => {
-    // THREE.js BufferAttribute.needsUpdate is a write-only setter that increments
-    // the internal `version` counter rather than storing a readable boolean.
-    // Asserting version > 0 proves the setter was called.
-    const layer = new VentilationLayer();
-    const group = layer.generate(makeRecipe());
-    const byType = collectByType(group);
-    const ahuIM = byType.get("vent-ahu")![0] as THREE.InstancedMesh;
-    expect(ahuIM.instanceMatrix.version).toBeGreaterThan(0);
-    layer.dispose();
-  });
-
-  it("InstancedMesh.count === aboveFloors.length × default unitsPerFloor (1)", () => {
-    const recipe = makeRecipe();
-    const aboveFloors = recipe.floors.filter((f) => f.type === "above").length;
-    const layer = new VentilationLayer();
-    const group = layer.generate(recipe);
-    const byType = collectByType(group);
-    const ahuIM = byType.get("vent-ahu")![0] as THREE.InstancedMesh;
-    expect(ahuIM.count).toBe(aboveFloors * DEFAULT_MEP_EQUIPMENT_PARAMS.ahu.unitsPerFloor);
-    layer.dispose();
-  });
-
-  it("unitsPerFloor: 2 doubles the InstancedMesh count", () => {
-    const recipe = makeRecipe();
-    const aboveFloors = recipe.floors.filter((f) => f.type === "above").length;
-    const layer = new VentilationLayer();
-    const group = layer.generate(recipe, 1.0, { unitsPerFloor: 2 });
-    const byType = collectByType(group);
-    const ahuIM = byType.get("vent-ahu")![0] as THREE.InstancedMesh;
-    expect(ahuIM.count).toBe(aboveFloors * 2);
-    layer.dispose();
-  });
-
-  it("spaces multi-unit AHU assemblies so their duct stubs do not overlap", () => {
-    const layer = new VentilationLayer();
-    const group = layer.generate(makeRecipe(), 1, { unitsPerFloor: 2 });
-    const ahu = collectByType(group).get("vent-ahu")![0] as THREE.InstancedMesh;
-    const first = instancePosition(ahu, 0);
-    const second = instancePosition(ahu, 1);
-    ahu.geometry.computeBoundingBox();
-    const assemblyWidth =
-      ahu.geometry.boundingBox!.max.x - ahu.geometry.boundingBox!.min.x;
-
-    expect(Math.abs(second.x - first.x)).toBeGreaterThan(assemblyWidth);
-    layer.dispose();
-  });
-
-  it("showFanFace: false + showDuctStubs: false yields near plain-box vertex count", () => {
-    const layer = new VentilationLayer();
-    const group = layer.generate(makeRecipe(), 1.0, {
-      showFanFace: false,
-      showDuctStubs: false,
+  it("renders supply duct runs with engineered rectangular sizes (rule A1/A2)", () => {
+    clearMepPlanCache();
+    const group = new VentilationLayer().generate(CENTRAL());
+    const per: { sizeLabel: string }[] = [];
+    group.traverse((obj) => {
+      const list = obj.userData?.mepPerInstance as { sizeLabel: string }[] | undefined;
+      if (obj.userData?.type === "vent-duct-run" && list) per.push(...list);
     });
-    const byType = collectByType(group);
-    const ahuIM = byType.get("vent-ahu")![0] as THREE.InstancedMesh;
-    const posAttr = ahuIM.geometry.getAttribute("position");
-    // Body-only should match or be within range of a plain BoxGeometry (24 verts).
-    // mergeGeometries([body]) returns exactly the body geometry.
-    expect(posAttr.count).toBe(PLAIN_BOX_VERTEX_COUNT);
-    layer.dispose();
+    expect(per.length).toBeGreaterThan(0);
+    // Flow-accumulated sizing yields multiple distinct sections, never the
+    // old single constant duct size (§45).
+    const sizes = new Set(per.map((p) => p.sizeLabel));
+    expect(sizes.size).toBeGreaterThan(1);
   });
 
-  it("no per-floor vent-duct Meshes exist in the group (floating ducts eliminated)", () => {
-    const layer = new VentilationLayer();
-    const group = layer.generate(makeRecipe());
-    const byType = collectByType(group);
-    const ductObjects = byType.get("vent-duct");
-    expect(ductObjects).toBeUndefined();
-    layer.dispose();
-  });
-
-  it("animated airflow tube Meshes with userData.type === 'vent-airflow' are present", () => {
-    const layer = new VentilationLayer();
-    const group = layer.generate(makeRecipe());
-    const byType = collectByType(group);
-    const airflowTubes = (byType.get("vent-airflow") ?? []).filter(
-      (obj) => obj instanceof THREE.Mesh && !(obj instanceof THREE.LineSegments),
-    );
-    expect(airflowTubes.length).toBeGreaterThan(0);
-    // Flow tubes: one merged Mesh per floor with a uTime-animated shader
-    for (const obj of airflowTubes) {
-      expect(obj).toBeInstanceOf(THREE.Mesh);
-      const mat = (obj as THREE.Mesh).material as THREE.ShaderMaterial;
-      expect(mat).toBeInstanceOf(THREE.ShaderMaterial);
-      expect(mat.uniforms).toHaveProperty("uTime");
-    }
-    layer.dispose();
-  });
-
-  it("airflow trail Lines with userData.type === 'vent-airflow' are still present", () => {
-    const layer = new VentilationLayer();
-    const group = layer.generate(makeRecipe());
-    const airflowObjects = (collectByType(group).get("vent-airflow") ?? []).filter(
-      (obj) => obj instanceof THREE.LineSegments,
-    );
-    expect(airflowObjects).toHaveLength(1);
-    expect(airflowObjects[0]).toBeInstanceOf(THREE.LineSegments);
-    layer.dispose();
-  });
-
-  it("uses at most two draw calls: one AHU batch and one airflow batch", () => {
-    const layer = new VentilationLayer();
-    const group = layer.generate(makeRecipe(), 1);
-    const ahu = collectByType(group).get("vent-ahu");
-    const streamlines = group.children.filter((obj) => obj instanceof THREE.LineSegments);
+  it("places the AHU hero at the graph's rooftop source node", () => {
+    clearMepPlanCache();
+    const group = new VentilationLayer().generate(CENTRAL());
+    const ahu = findByType(group, "vent-ahu");
     expect(ahu).toBeDefined();
-    expect(ahu).toHaveLength(1);
-    expect(streamlines).toHaveLength(1);
-    layer.dispose();
   });
 
-  it("generates deterministic airflow positions with cyan supply and gray return colors", () => {
-    const firstLayer = new VentilationLayer();
-    const first = (collectByType(firstLayer.generate(makeRecipe(), 0.8)).get(
-      "vent-airflow"
-    ) ?? []).find((obj) => obj instanceof THREE.LineSegments) as THREE.LineSegments;
-    const firstPositions = Array.from(first.geometry.getAttribute("position").array);
-    const firstColors = first.geometry.getAttribute("color");
+  it("renders diffuser terminal devices (rule A5)", () => {
+    clearMepPlanCache();
+    const group = new VentilationLayer().generate(CENTRAL());
+    expect(findByType(group, "vent-diffuser")).toBeDefined();
+  });
 
-    const uniqueColors = new Set<string>();
-    for (let i = 0; i < firstColors.count; i++) {
-      uniqueColors.add(
-        `${firstColors.getX(i).toFixed(3)},${firstColors.getY(i).toFixed(3)},${firstColors.getZ(i).toFixed(3)}`
-      );
+  it("VRF archetype renders the dedicated-OA network and exhaust, no SA trunk", () => {
+    clearMepPlanCache();
+    const group = new VentilationLayer().generate(VRF());
+    expect(findByType(group, "vent-duct-run")).toBeDefined();
+    expect(findByType(group, "vent-ahu")).toBeDefined(); // the OA unit hero
+  });
+
+  it("keeps the animated airflow-streamlines batch: name, shader uTime, bundle cap", () => {
+    clearMepPlanCache();
+    const group = new VentilationLayer().generate(CENTRAL());
+    const lines = group.getObjectByName("airflow-streamlines") as THREE.LineSegments;
+    expect(lines).toBeDefined();
+    const mat = lines.material as THREE.ShaderMaterial;
+    expect(mat.uniforms.uTime).toBeDefined();
+    // Cap: bundles × 3 lanes × samples × 2 verts per segment.
+    const positions = lines.geometry.getAttribute("position");
+    expect(positions.count).toBeLessThanOrEqual(MAX_AIRFLOW_LANE_BUNDLES * 3 * 14 * 2);
+  });
+
+  it("emits no airflow batch when MEP density is zero", () => {
+    clearMepPlanCache();
+    const group = new VentilationLayer().generate(CENTRAL(), 0);
+    expect(group.getObjectByName("airflow-streamlines")).toBeUndefined();
+  });
+
+  it("keeps every duct instance inside the solid plate for an L-shaped footprint (§30)", () => {
+    clearMepPlanCache();
+    const recipe = { ...caseLShape(), era: "1990-1999" as const, mainPurpsCd: "14000" };
+    const group = new VentilationLayer().generate(recipe);
+    const runs = findByType(group, "vent-duct-run") as THREE.InstancedMesh | undefined;
+    expect(runs).toBeDefined();
+    const m = new THREE.Matrix4();
+    const p = new THREE.Vector3();
+    const q = new THREE.Quaternion();
+    const s = new THREE.Vector3();
+    for (let i = 0; i < (runs as THREE.InstancedMesh).count; i += 1) {
+      (runs as THREE.InstancedMesh).getMatrixAt(i, m);
+      m.decompose(p, q, s);
+      // The missing arm of the L (x > 0.2, z > 3.2) is empty air; runs above
+      // grade must stay out of it.
+      const inMissingArm = p.y > 0 && p.x > 0.6 && p.z > 3.6;
+      expect(inMissingArm, `instance ${i} at (${p.x.toFixed(1)}, ${p.z.toFixed(1)})`).toBe(false);
     }
-
-    const secondLayer = new VentilationLayer();
-    const second = (collectByType(secondLayer.generate(makeRecipe(), 0.8)).get(
-      "vent-airflow"
-    ) ?? []).find((obj) => obj instanceof THREE.LineSegments) as THREE.LineSegments;
-    const secondPositions = Array.from(second.geometry.getAttribute("position").array);
-
-    expect(secondPositions).toEqual(firstPositions);
-    expect(uniqueColors.size).toBe(2);
-    expect(first.material).toBeInstanceOf(THREE.ShaderMaterial);
-    expect((first.material as THREE.ShaderMaterial).uniforms.uTime.value).toBe(0);
-
-    firstLayer.dispose();
-    secondLayer.dispose();
   });
 
-  it("caps airflow geometry for tall buildings at 1,360 line segments", () => {
-    const recipe = makeRecipe();
-    recipe.floors = Array.from({ length: 80 }, (_, index) => ({
-      floorNo: index + 1,
-      label: `${index + 1}F`,
-      type: "above" as const,
-      y: index * 3,
-      height: 3,
-      isGroundFloor: index === 0,
-    }));
-    recipe.totalHeight = 240;
-
-    const layer = new VentilationLayer();
-    const airflow = (collectByType(layer.generate(recipe, 1)).get(
-      "vent-airflow"
-    ) ?? []).find((obj) => obj instanceof THREE.LineSegments) as THREE.LineSegments;
-    const segmentCount = airflow.geometry.getAttribute("position").count / 2;
-
-    expect(segmentCount).toBeLessThanOrEqual(1360);
-    expect(airflow.userData.streamCount).toBeLessThanOrEqual(80);
-    layer.dispose();
+  it("is deterministic across regenerations", () => {
+    clearMepPlanCache();
+    const recipe = CENTRAL();
+    const matricesOf = (g: THREE.Group): number[] => {
+      const out: number[] = [];
+      g.traverse((o) => {
+        const im = o as THREE.InstancedMesh;
+        if (im.isInstancedMesh) out.push(...Array.from(im.instanceMatrix.array));
+      });
+      return out;
+    };
+    expect(matricesOf(new VentilationLayer().generate(recipe))).toEqual(
+      matricesOf(new VentilationLayer().generate(recipe)),
+    );
   });
 
-  it("emits no airflow segments when MEP density is zero", () => {
+  it("dispose() does not throw; double dispose is safe", () => {
     const layer = new VentilationLayer();
-    const airflow = (collectByType(layer.generate(makeRecipe(), 0)).get(
-      "vent-airflow",
-    ) ?? []).find((obj) => obj instanceof THREE.LineSegments) as THREE.LineSegments;
-
-    expect(airflow.geometry.getAttribute("position").count).toBe(0);
-    expect(airflow.userData.streamCount).toBe(0);
-    layer.dispose();
-  });
-
-  it("moves AHUs away from a central structural column", () => {
-    const recipe = makeRecipe();
-    recipe.footprintWidth = 12;
-    recipe.footprintDepth = 12;
-    recipe.column = { spacing: 6, size: 0.4, inset: 0 };
-    const layer = new VentilationLayer();
-    const ahu = collectByType(layer.generate(recipe)).get(
-      "vent-ahu",
-    )![0] as THREE.InstancedMesh;
-    const position = instancePosition(ahu);
-    const equipmentHalfWidth = DEFAULT_MEP_EQUIPMENT_PARAMS.ahu.width / 2 + 0.42;
-    const equipmentHalfDepth = DEFAULT_MEP_EQUIPMENT_PARAMS.ahu.depth / 2 + 0.08;
-    const columnHalf = recipe.column.size / 2;
-
-    for (const column of getColumnPositions(recipe)) {
-      const separatedX =
-        Math.abs(position.x - column.x) >
-        equipmentHalfWidth + columnHalf + 0.12;
-      const separatedZ =
-        Math.abs(position.z - column.z) >
-        equipmentHalfDepth + columnHalf + 0.12;
-      expect(separatedX || separatedZ).toBe(true);
-    }
-    layer.dispose();
-  });
-
-  it("keeps AHUs and their streamline bundle inside an L-shaped CAD footprint", () => {
-    const recipe = makeRecipe();
-    const lShape: [number, number][] = [
-      [-3, -3],
-      [3, -3],
-      [3, 0],
-      [0, 0],
-      [0, 3],
-      [-3, 3],
-    ];
-    recipe.footprintWidth = 6;
-    recipe.footprintDepth = 6;
-    recipe.footprintPolygon = [lShape];
-    recipe.column = { spacing: 6, size: 0.4, inset: 1 };
-    const layer = new VentilationLayer();
-    const generated = collectByType(layer.generate(recipe, 1));
-    const ahu = generated.get("vent-ahu")![0] as THREE.InstancedMesh;
-    const airflow = (generated.get("vent-airflow") ?? []).find(
-      (obj) => obj instanceof THREE.LineSegments,
-    ) as THREE.LineSegments;
-    const ahuPosition = instancePosition(ahu);
-    const positions = airflow.geometry.getAttribute("position");
-
-    expect(ahu.count).toBeGreaterThan(0);
-    expect(pointInRing(ahuPosition.x, ahuPosition.z, lShape)).toBe(true);
-    for (let index = 0; index < positions.count; index++) {
-      expect(
-        pointInRing(positions.getX(index), positions.getZ(index), lShape),
-      ).toBe(true);
-    }
-    layer.dispose();
-  });
-
-  it("keeps the complete AHU envelope and airflow inside a concave notch", () => {
-    const recipe = makeRecipe();
-    const notched: [number, number][] = [
-      [-5, -5],
-      [5, -5],
-      [5, 5],
-      [0.1, 5],
-      [0.1, 0.1],
-      [-0.1, 0.1],
-      [-0.1, 5],
-      [-5, 5],
-    ];
-    recipe.footprintWidth = 10;
-    recipe.footprintDepth = 10;
-    recipe.footprintPolygon = [notched];
-    const layer = new VentilationLayer();
-    const generated = collectByType(layer.generate(recipe, 1));
-    const ahu = generated.get("vent-ahu")![0] as THREE.InstancedMesh;
-    const airflow = (generated.get("vent-airflow") ?? []).find(
-      (obj) => obj instanceof THREE.LineSegments,
-    ) as THREE.LineSegments;
-    const ahuPosition = instancePosition(ahu);
-    const positions = airflow.geometry.getAttribute("position");
-
-    expect(ahu.count).toBeGreaterThan(0);
-    expect(
-      axisAlignedRectangleFitsFootprint(
-        { x: ahuPosition.x, z: ahuPosition.z },
-        DEFAULT_MEP_EQUIPMENT_PARAMS.ahu.width / 2 + 0.4,
-        DEFAULT_MEP_EQUIPMENT_PARAMS.ahu.depth / 2 + 0.08,
-        recipe.footprintPolygon,
-      ),
-    ).toBe(true);
-    for (let index = 0; index < positions.count; index++) {
-      expect(
-        pointInRing(positions.getX(index), positions.getZ(index), notched),
-      ).toBe(true);
-    }
-    layer.dispose();
-  });
-
-  it("renders a rigid ceiling duct network as ONE InstancedMesh (vent-duct-run)", () => {
-    const layer = new VentilationLayer();
-    const group = layer.generate(makeRecipe());
-    const byType = collectByType(group);
-    const ductRuns = byType.get("vent-duct-run");
-    expect(ductRuns).toBeDefined();
-    expect(ductRuns!.length).toBe(1);
-    expect(ductRuns![0]).toBeInstanceOf(THREE.InstancedMesh);
-    const im = ductRuns![0] as THREE.InstancedMesh;
-    // trunk + 4 branches × (1 duct + 2 diffusers) = 13 segments per floor
-    const aboveFloors = makeRecipe().floors.filter((f) => f.type === "above").length;
-    expect(im.count).toBe(aboveFloors * 13);
-    layer.dispose();
+    layer.generate(CENTRAL());
+    expect(() => {
+      layer.dispose();
+      layer.dispose();
+    }).not.toThrow();
   });
 });

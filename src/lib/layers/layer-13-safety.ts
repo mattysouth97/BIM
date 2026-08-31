@@ -4,9 +4,11 @@
 
 import * as THREE from "three";
 import type { BuildingRecipe } from "@/lib/procedural/types";
-import { createPlateShape, plateRings, samplePlateGrid } from "./plate";
+import { planMepSystemsForRecipe } from "@/lib/mep";
+import { createPlateShape, plateRings } from "./plate";
 import type { LayerGenerator } from "./types";
 import { getBuildingCodeRules } from "./building-code-rules";
+import { renderMepEquipment, renderMepSystems } from "./mep-render";
 import {
   getEquipmentGeometryClone,
   getEquipmentObjectClone,
@@ -185,69 +187,72 @@ export class SafetyLayer implements LayerGenerator {
 
     stairGeo.dispose();
 
-    // --- Sprinkler heads on ceilings: InstancedMesh grid ---
+    // --- Sprinkler NETWORK from the canonical MEP graph (rules F1–F4) ---
     // 소방시설법 시행령 별표 4: sprinklers are mandatory on all floors of
-    // 11+ floor buildings. Low-rise buildings rely on extinguishers, hydrant
+    // 11+ floor buildings. Since the 2026-08-31 MEP realism rework the layer
+    // renders the full comb — fire pump → riser → floor control valves →
+    // cross mains → branch lines → heads — with NFPA-13-indicative pipe
+    // schedule sizes; heads sit at the graph's terminal positions, never on a
+    // decorative grid. Low-rise buildings rely on extinguishers, hydrant
     // cabinets, and detectors (all rendered below regardless).
     const sprinklersRequired = getBuildingCodeRules(recipe).sprinklersRequired;
+    let sprinklerHeadPositions: { x: number; y: number; z: number }[] = [];
     if (sprinklersRequired) {
-    const sprinklerSpacing = density >= 0.7 ? 3.0 : 4.5;
-    const sprinklerCells = samplePlateGrid(recipe, sprinklerSpacing, sprinklerSpacing * 0.4);
-    const sprinklersPerFloor = Math.max(1, sprinklerCells.length);
-    const totalSprinklers = sprinklersPerFloor * aboveFloors.length;
+      const model = planMepSystemsForRecipe(recipe);
+      renderMepSystems(model, group, {
+        systems: ["fp"],
+        style: {
+          color: 0xef4444,
+          emissiveIntensity: 0.35,
+          opacity: 0.85,
+          runTag: "safety-sprinkler-pipe",
+        },
+        density,
+        includeTerminals: false,
+      });
+      renderMepEquipment(model, group, {
+        systems: ["fp"],
+        filter: (e) => e.tag === "safety-fire-pump",
+      });
+      sprinklerHeadPositions = model.nodes
+        .filter((n) => n.systemId === "fp" && n.terminal)
+        .map((n) => ({ x: n.position.x, y: n.position.y, z: n.position.z }));
 
-    // Sprinkler head: small downward-facing cone + sphere (combined as two IMs)
-    const headGeo = new THREE.ConeGeometry(0.06, 0.1, 6);
-    headGeo.rotateX(Math.PI); // Point downward
-    const headMat = new THREE.MeshStandardMaterial({
-      color: 0xcc3333,
-      metalness: 0.4,
-      roughness: 0.5,
-    });
-    const headIM = new THREE.InstancedMesh(
-      headGeo,
-      headMat,
-      Math.max(1, totalSprinklers)
-    );
-    headIM.userData = { type: "safety-sprinkler-head" };
-
-    const bulbGeo = new THREE.SphereGeometry(0.04, 6, 6);
-    const bulbMat = new THREE.MeshStandardMaterial({
-      color: 0xff3333,
-      emissive: 0xff3333,
-      emissiveIntensity: 0.3,
-      transparent: true,
-      opacity: 0.8,
-    });
-    const bulbIM = new THREE.InstancedMesh(
-      bulbGeo,
-      bulbMat,
-      Math.max(1, totalSprinklers)
-    );
-    bulbIM.userData = { type: "safety-sprinkler-bulb" };
-
-    let spIdx = 0;
-    for (const floor of aboveFloors) {
-      const ceilingY = floor.y + floor.height - 0.05;
-      for (const cell of sprinklerCells) {
-        pos.set(cell.x, ceilingY - 0.05, cell.z);
+      // Coarse head cones + bulbs at the graph positions (fallback look when
+      // the GLB cache is cold; the detailed asset IM below replaces the look,
+      // not the positions).
+      const headGeo = new THREE.ConeGeometry(0.06, 0.1, 6);
+      headGeo.rotateX(Math.PI); // Point downward
+      const headMat = new THREE.MeshStandardMaterial({ color: 0xcc3333, metalness: 0.4, roughness: 0.5 });
+      const headIM = new THREE.InstancedMesh(headGeo, headMat, Math.max(1, sprinklerHeadPositions.length));
+      headIM.userData = { type: "safety-sprinkler-head" };
+      const bulbGeo = new THREE.SphereGeometry(0.04, 6, 6);
+      const bulbMat = new THREE.MeshStandardMaterial({
+        color: 0xff3333,
+        emissive: 0xff3333,
+        emissiveIntensity: 0.3,
+        transparent: true,
+        opacity: 0.8,
+      });
+      const bulbIM = new THREE.InstancedMesh(bulbGeo, bulbMat, Math.max(1, sprinklerHeadPositions.length));
+      bulbIM.userData = { type: "safety-sprinkler-bulb" };
+      let spIdx = 0;
+      for (const p of sprinklerHeadPositions) {
+        pos.set(p.x, p.y - 0.02, p.z);
         mat4.compose(pos, quat, scl);
         headIM.setMatrixAt(spIdx, mat4);
-
-        pos.set(cell.x, ceilingY - 0.14, cell.z);
+        pos.set(p.x, p.y - 0.11, p.z);
         mat4.compose(pos, quat, scl);
         bulbIM.setMatrixAt(spIdx, mat4);
-
         spIdx++;
       }
+      headIM.count = spIdx;
+      bulbIM.count = spIdx;
+      headIM.instanceMatrix.needsUpdate = true;
+      bulbIM.instanceMatrix.needsUpdate = true;
+      group.add(headIM);
+      group.add(bulbIM);
     }
-    headIM.count = spIdx;
-    bulbIM.count = spIdx;
-    headIM.instanceMatrix.needsUpdate = true;
-    bulbIM.instanceMatrix.needsUpdate = true;
-    group.add(headIM);
-    group.add(bulbIM);
-    } // end if (sprinklersRequired) — coarse sprinkler grid
 
     // --- Detailed Blender-asset safety kit: sprinkler heads, smoke detectors,
     // exit signs, extinguishers, hydrant cabinets. Each InstancedMesh is
@@ -270,12 +275,6 @@ export class SafetyLayer implements LayerGenerator {
 
     const sprinklerSpacingX = Math.max(1.5 * Math.SQRT2, (3.0 * Math.SQRT2) / density);
     const sprinklerSpacingZ = Math.max(1.5 * Math.SQRT2, (3.0 * Math.SQRT2) / density);
-    const sprinklerGridPositions: { x: number; z: number }[] = [];
-    for (let x = ceilStartX; x <= ceilEndX; x += sprinklerSpacingX) {
-      for (let z = ceilStartZ; z <= ceilEndZ; z += sprinklerSpacingZ) {
-        sprinklerGridPositions.push({ x, z });
-      }
-    }
 
     const smokeSpacingX = sprinklerSpacingX * 2;
     const smokeSpacingZ = sprinklerSpacingZ * 2;
@@ -332,18 +331,30 @@ export class SafetyLayer implements LayerGenerator {
       group.add(im);
     };
 
-    // Brass-toned sprinkler heads; red-family everything else (safety palette).
-    // Detailed sprinkler kit follows the same 11+ floor code gate as the
-    // coarse grid above.
-    if (sprinklersRequired) {
-      addDetailedCeilingIM(
-        "sprinkler-head",
-        "safety-sprinkler",
-        sprinklerGridPositions,
-        0xd97706,
-        0.2,
-        0.5
-      );
+    // Brass-toned sprinkler heads at the GRAPH terminal positions; red-family
+    // everything else (safety palette). Same 11+ floor code gate as the
+    // network above.
+    if (sprinklersRequired && sprinklerHeadPositions.length > 0) {
+      const detailGeo = getEquipmentGeometryClone("sprinkler-head");
+      if (detailGeo) {
+        const detailMat = new THREE.MeshStandardMaterial({
+          color: 0xd97706,
+          emissive: 0xd97706,
+          emissiveIntensity: 0.2,
+          roughness: 0.45,
+          metalness: 0.5,
+        });
+        const im = new THREE.InstancedMesh(detailGeo, detailMat, sprinklerHeadPositions.length);
+        im.userData = { type: "safety-sprinkler" };
+        let idx = 0;
+        for (const p of sprinklerHeadPositions) {
+          mat4.makeTranslation(p.x, p.y, p.z);
+          im.setMatrixAt(idx++, mat4);
+        }
+        im.count = idx;
+        im.instanceMatrix.needsUpdate = true;
+        group.add(im);
+      }
     }
     addDetailedCeilingIM(
       "smoke-detector",

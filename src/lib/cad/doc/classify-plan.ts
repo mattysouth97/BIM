@@ -188,3 +188,21 @@ export function serviceCoreFromPlan(
     z: core.centroid.y - outline.bboxCenter.y,
   };
 }
+
+/**
+ * Twin-local room polygons: each classified `room` ring re-centred on the
+ * outline bbox centre (same frame as `serviceCoreFromPlan`). DXF Y becomes
+ * world Z. These are the CAD-driven terminal zones for MEP planning
+ * (src/lib/mep/context.ts) — explicit drawing evidence, not a grid guess.
+ */
+export function roomPolygonsFromPlan(
+  classified: ClassifiedPlanPolyline[],
+): [number, number][][] {
+  const outline = classified.find((c) => c.role === "outline");
+  if (!outline) return [];
+  const cx = outline.bboxCenter.x;
+  const cy = outline.bboxCenter.y;
+  return classified
+    .filter((c) => c.role === "room")
+    .map((c) => c.polygon.map(([x, y]) => [x - cx, y - cy] as [number, number]));
+}

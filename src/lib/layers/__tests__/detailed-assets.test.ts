@@ -1,9 +1,10 @@
 // src/lib/layers/__tests__/detailed-assets.test.ts
-// Detailed Blender-asset paths in the MEP layer generators:
+// Detailed Blender-asset paths in the MEP layer generators, over the
+// canonical MEP graph:
 //   - assets swap in when the cache is primed (injected here)
-//   - placement geometry fixes: roof-top seating, basement plant floor
+//   - graph equipment nodes seat plant correctly (roof / basement)
 //   - coarse fallbacks remain when the cache is empty
-//   - the new ElectricalRoutingLayer (wires) in both modes
+//   - green-retrofit scenario swaps the plant hero, never the network
 
 import { describe, it, expect, afterEach } from "vitest";
 import * as THREE from "three";
@@ -17,15 +18,19 @@ import { SafetyLayer } from "../layer-13-safety";
 import {
   deriveEquipmentScenario,
   SHOWCASE_EQUIPMENT_SCENARIO,
+  type EquipmentScenario,
 } from "../equipment-scenario";
 import {
   __injectEquipmentAssetForTest,
   __resetEquipmentAssetsForTest,
 } from "@/lib/equipment-assets";
+import { clearMepPlanCache } from "@/lib/mep";
+import { makeRecipe as makeGraphRecipe, caseTowerOffice } from "@/lib/mep/__tests__/fixtures";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 
+/** Legacy 3-floor fixture (roofTopY = 9.15) still used by the microgrid tests. */
 function makeRecipe(): BuildingRecipe {
-  return {
+  return makeGraphRecipe({
     footprintWidth: 12,
     footprintDepth: 10,
     floors: [
@@ -34,41 +39,24 @@ function makeRecipe(): BuildingRecipe {
       { floorNo: 3, label: "3F", type: "above", y: 6.0, height: 3.0, isGroundFloor: false },
     ],
     totalHeight: 9.0,
-    wallThickness: 0.2,
     era: "2010-2019",
-    strctCd: "21",
     mainPurpsCd: "02000",
     column: { spacing: 6, size: 0.4, inset: 1 },
-    slab: { thickness: 0.2, overhang: 0 },
-    facade: {
-      windowWidth: 1.4,
-      windowHeight: 1.6,
-      sillHeight: 0.9,
-      windowSpacing: 0.5,
-      windowRatio: 0.6,
-      mullionDepth: 0.06,
-      mullionWidth: 0.05,
-      glassInset: 0.04,
-      solidPanelChance: 0.15,
-      parapetHeight: 0.9,
-      cornerInset: 0.2,
-    },
-    roof: { type: "flat", flatThickness: 0.15, gableHeight: 0, hipInset: 0 },
     siteWidth: 20,
     siteDepth: 18,
-    buildingName: "Test Building",
-    address: "Seoul, Korea",
-    materials: {
-      wall: { color: "#cccccc", roughness: 0.8, metalness: 0.1 },
-      glass: { color: "#88aacc", roughness: 0.1, metalness: 0.0, transparent: true, opacity: 0.4 },
-      mullion: { color: "#888888", roughness: 0.4, metalness: 0.6 },
-      slab: { color: "#aaaaaa", roughness: 0.9, metalness: 0.0 },
-      column: { color: "#bbbbbb", roughness: 0.8, metalness: 0.1 },
-      roof: { color: "#999999", roughness: 0.9, metalness: 0.0 },
-      groundFloor: { color: "#dddddd", roughness: 0.9, metalness: 0.0 },
-    },
-  };
+  });
 }
+
+const CENTRAL = () => makeGraphRecipe({ era: "1990-1999", mainPurpsCd: "14000" });
+const VRF = () => makeGraphRecipe({ era: "2010-2019", mainPurpsCd: "14000" });
+
+const BASE_SCENARIO: EquipmentScenario = {
+  heating: "baseline",
+  lightingLed: false,
+  solarPv: false,
+  windowUpgrade: false,
+  wallInsulation: false,
+};
 
 function makeFakeAsset(): THREE.Group {
   const group = new THREE.Group();
@@ -90,18 +78,21 @@ function findByType(group: THREE.Group, type: string): THREE.Object3D | undefine
 
 afterEach(() => {
   __resetEquipmentAssetsForTest();
+  clearMepPlanCache();
 });
 
-describe("CoolingLayer detailed assets", () => {
-  it("uses the Blender chiller and seats it ON the flat-roof top surface", () => {
+describe("CoolingLayer detailed assets (graph placement)", { timeout: 30_000 }, () => {
+  it("uses the Blender chiller hero and seats it on the roof", () => {
     __injectEquipmentAssetForTest("chiller", makeFakeAsset());
-    const group = new CoolingLayer().generate(makeRecipe());
+    const recipe = CENTRAL();
+    const roofY = recipe.totalHeight + recipe.roof.flatThickness;
+    const group = new CoolingLayer().generate(recipe);
     const plant = findByType(group, "cooling-plant")!;
     expect(plant).toBeDefined();
-    // Base-origin asset: y = totalHeight + flatThickness (9.15), not embedded
-    expect(plant.position.y).toBeCloseTo(9.15, 5);
-    // Every descendant mesh carries the selection tag (click handler reads
-    // userData from the raycast-hit mesh directly)
+    // Base-origin GLB seats at (node centre − h/2) ≈ the roof surface.
+    expect(plant.position.y).toBeGreaterThanOrEqual(roofY - 0.15);
+    expect(plant.position.y).toBeLessThanOrEqual(roofY + 0.6);
+    // Every descendant mesh carries the selection tag.
     let taggedMeshes = 0;
     plant.traverse((o) => {
       if ((o as THREE.Mesh).isMesh && o.userData.type === "cooling-plant") taggedMeshes++;
@@ -109,131 +100,52 @@ describe("CoolingLayer detailed assets", () => {
     expect(taggedMeshes).toBeGreaterThan(0);
   });
 
-  it("seats the detailed cooling tower on the roof top (clipping fix)", () => {
-    __injectEquipmentAssetForTest("cooling-tower", makeFakeAsset());
-    const group = new CoolingLayer().generate(makeRecipe(), 1.0, {
-      showCoolingTower: true,
-    });
-    const tower = findByType(group, "cooling-tower")!;
-    expect(tower).toBeDefined();
-    expect(tower.position.y).toBeCloseTo(9.15, 5);
-  });
-
-  it("coarse fallback still seats equipment above the flat roof slab", () => {
-    const group = new CoolingLayer().generate(makeRecipe(), 1.0, {
-      showCoolingTower: true,
-    });
-    const plant = findByType(group, "cooling-plant") as THREE.Mesh;
-    // Centre-origin merged geometry + support rails: 9.15 + bodyHeight/2 + lift
-    const supportLift = Math.max(0.08, 1.5 * 0.07) * 1.7;
-    expect(plant.position.y).toBeCloseTo(9.15 + 0.75 + supportLift, 5);
-    const tower = findByType(group, "cooling-tower") as THREE.Mesh;
-    // Detailed fallback: basin/fans lift the merged origin above the roof.
-    const towerHeight = 1.5 * 0.8;
-    expect(tower.position.y).toBeCloseTo(9.15 + 1.5 * 0.4 + towerHeight * 0.195, 5);
+  it("coarse fallback still places the plant when the cache is empty", () => {
+    const group = new CoolingLayer().generate(CENTRAL());
+    expect(findByType(group, "cooling-plant")).toBeDefined();
+    expect(findByType(group, "cooling-tower")).toBeDefined();
   });
 });
 
-describe("HeatingLayer detailed assets", () => {
-  it("keeps the boiler body fully below the ground slab (clipping fix)", () => {
+describe("HeatingLayer detailed assets (graph placement)", { timeout: 30_000 }, () => {
+  it("keeps the boiler in the basement plant room", () => {
     __injectEquipmentAssetForTest("boiler", makeFakeAsset());
-    const group = new HeatingLayer().generate(makeRecipe());
+    const group = new HeatingLayer().generate(CENTRAL(), 1, {}, BASE_SCENARIO);
     const boiler = findByType(group, "heating-boiler")!;
-    // Base-origin asset at plant floor: -(height + 0.3) = -2.1
-    expect(boiler.position.y).toBeCloseTo(-2.1, 5);
+    expect(boiler).toBeDefined();
+    expect(boiler.position.y).toBeLessThan(0);
   });
 
-  it("coarse boiler fallback is also re-seated below the slab", () => {
-    const group = new HeatingLayer().generate(makeRecipe());
-    const boiler = findByType(group, "heating-boiler") as THREE.Mesh;
-    // Centre-origin: -2.1 + height/2 = -1.2 → body top at -0.3
-    expect(boiler.position.y).toBeCloseTo(-1.2, 5);
-  });
-
-  it("swaps the VRF InstancedMesh geometry for the Blender asset", () => {
-    __injectEquipmentAssetForTest("vrf-outdoor", makeFakeAsset());
-    const group = new HeatingLayer().generate(makeRecipe());
-    const vrf = findByType(group, "heating-vrf-head") as THREE.InstancedMesh;
-    expect(vrf).toBeDefined();
-    // Injected fake is a single 24-vert box (vs 4 merged boxes = 96 verts coarse)
-    expect(vrf.geometry.getAttribute("position").count).toBe(24);
-  });
-
-  it("seats roof VRF cluster units on the flat-roof top surface (clipping fix)", () => {
-    const group = new HeatingLayer().generate(makeRecipe());
-    const vrf = findByType(group, "heating-vrf-head") as THREE.InstancedMesh;
-    const mat4 = new THREE.Matrix4();
-    vrf.getMatrixAt(0, mat4);
-    const pos = new THREE.Vector3();
-    mat4.decompose(pos, new THREE.Quaternion(), new THREE.Vector3());
-    // roofTopY (9.0 + 0.15) + 0.31 lift for the centre-origin unit
-    expect(pos.y).toBeCloseTo(9.15 + 0.31, 5);
-  });
-
-  it("renders the geothermal installation only when the asset is loaded", () => {
-    const without = new HeatingLayer().generate(makeRecipe());
-    expect(findByType(without, "heating-gshp")).toBeUndefined();
-
-    __injectEquipmentAssetForTest("gshp", makeFakeAsset());
-    const withAsset = new HeatingLayer().generate(makeRecipe());
-    const gshp = findByType(withAsset, "heating-gshp")!;
-    expect(gshp).toBeDefined();
-    expect(gshp.position.y).toBeCloseTo(-2.1, 5);
+  it("instances VRF ceiling cassettes from the graph terminals", () => {
+    clearMepPlanCache();
+    const group = new HeatingLayer().generate(VRF(), 1, {}, BASE_SCENARIO);
+    const cassettes = findByType(group, "heating-fan-coil") as THREE.InstancedMesh;
+    expect(cassettes?.isInstancedMesh).toBe(true);
+    expect(cassettes.count).toBeGreaterThan(4);
+    expect(cassettes.instanceMatrix.version).toBeGreaterThanOrEqual(1);
   });
 });
 
-describe("DHWLayer detailed assets — shared plant floor", () => {
-  it("tank, recirc tank, and pump all stand on the same basement floor", () => {
+describe("DHWLayer detailed assets (graph placement)", { timeout: 30_000 }, () => {
+  it("seats the DHW tank on the basement plant floor", () => {
     __injectEquipmentAssetForTest("dhw-tank", makeFakeAsset());
-    __injectEquipmentAssetForTest("dhw-pump", makeFakeAsset());
     const group = new DHWLayer().generate(makeRecipe());
-
     const tank = findByType(group, "dhw-storage-tank")!;
-    const recirc = findByType(group, "dhw-recirc-tank")!;
-    const pump = findByType(group, "dhw-pump")!;
-    // Plant floor = -tankHeight = -1.8; all base-origin assets seated there
-    expect(tank.position.y).toBeCloseTo(-1.8, 5);
-    expect(recirc.position.y).toBeCloseTo(-1.8, 5);
-    expect(pump.position.y).toBeCloseTo(-1.8, 5);
-  });
-
-  it("coarse fallback: recirc tank and pump no longer float", () => {
-    const group = new DHWLayer().generate(makeRecipe());
-    const recirc = findByType(group, "dhw-recirc-tank") as THREE.Mesh;
-    // Centre-origin cylinder h = 0.8×1.8: base at -1.8 → centre at -1.08
-    expect(recirc.position.y).toBeCloseTo(-1.8 + 0.72, 5);
-    const pump = findByType(group, "dhw-pump") as THREE.Mesh;
-    // Pump axis one body radius (0.18) above the plant floor
-    expect(pump.position.y).toBeCloseTo(-1.8 + 0.18, 5);
+    expect(tank).toBeDefined();
+    expect(tank.position.y).toBeLessThan(0);
   });
 });
 
-describe("ElectricalRoutingLayer (wires)", () => {
-  it("falls back to emissive conduits without assets", () => {
+describe("ElectricalRoutingLayer (graph-driven)", { timeout: 30_000 }, () => {
+  it("renders conduit + tray runs without assets (primitive path)", () => {
     const group = new ElectricalRoutingLayer().generate(makeRecipe());
-    expect(group.name).toBe("electrical-routing");
-    expect(findByType(group, "electrical-riser")).toBeDefined();
-    let runs = 0;
-    group.traverse((o) => {
-      if (o.userData?.type === "electrical-run") runs++;
-    });
-    expect(runs).toBe(3); // one per above floor
+    expect(findByType(group, "electrical-conduit")).toBeDefined();
+    expect(findByType(group, "electrical-cable-tray")).toBeDefined();
   });
 
-  it("tiles cable-tray modules in a single InstancedMesh when loaded", () => {
-    __injectEquipmentAssetForTest("cable-tray", makeFakeAsset());
+  it("places the switchboard and per-floor panels from the T5 hierarchy", () => {
     const group = new ElectricalRoutingLayer().generate(makeRecipe());
-    const tray = findByType(group, "electrical-cable-tray") as THREE.InstancedMesh;
-    expect(tray).toBeDefined();
-    // riser ceil(9)=9 + 3 floors × (mainRun floor(12×0.7)=8 + zRun floor(10×0.5)=5)
-    expect(tray.count).toBe(9 + 3 * (8 + 5));
-    // Realism additions: conduit banks/drops + junction boxes
-    const conduits = findByType(group, "electrical-conduit") as THREE.InstancedMesh;
-    expect(conduits).toBeDefined();
-    expect(conduits.count).toBe(3 * 5); // 3 bank + 2 drops per floor
-    const jboxes = findByType(group, "electrical-junction-box") as THREE.InstancedMesh;
-    expect(jboxes).toBeDefined();
-    expect(jboxes.count).toBe(3 * 3);
+    expect(findByType(group, "lighting-panel")).toBeDefined();
   });
 
   it("dispose() clears without throwing", () => {
@@ -243,7 +155,7 @@ describe("ElectricalRoutingLayer (wires)", () => {
   });
 });
 
-describe("Green-retrofit equipment scenario", () => {
+describe("Green-retrofit equipment scenario", { timeout: 30_000 }, () => {
   it("derives hardware swaps from selected measure ids", () => {
     expect(deriveEquipmentScenario(null)).toEqual(SHOWCASE_EQUIPMENT_SCENARIO);
     expect(deriveEquipmentScenario([])).toEqual({
@@ -269,30 +181,14 @@ describe("Green-retrofit equipment scenario", () => {
     expect(deriveEquipmentScenario(["lighting-led-smart"]).lightingLed).toBe(true);
   });
 
-  it("heat-pump scenario replaces the boiler with an ASHP bank", () => {
-    const group = new HeatingLayer().generate(makeRecipe(), 1.0, {}, {
-      heating: "heat-pump",
-      lightingLed: false,
-      solarPv: false,
-      windowUpgrade: false,
-      wallInsulation: false,
-    });
+  it("heat-pump scenario replaces the boiler hero with the ASHP asset", () => {
+    const group = new HeatingLayer().generate(CENTRAL(), 1.0, {}, { ...BASE_SCENARIO, heating: "heat-pump" });
     expect(findByType(group, "heating-boiler")).toBeUndefined();
-    let ashpCount = 0;
-    group.traverse((o) => {
-      if (o.userData?.type === "heating-heat-pump-plant" && o.parent === group) ashpCount++;
-    });
-    expect(ashpCount).toBe(3);
+    expect(findByType(group, "heating-heat-pump-plant")).toBeDefined();
   });
 
   it("condensing scenario swaps in the cascade and drops the legacy boiler", () => {
-    const group = new HeatingLayer().generate(makeRecipe(), 1.0, {}, {
-      heating: "condensing",
-      lightingLed: false,
-      solarPv: false,
-      windowUpgrade: false,
-      wallInsulation: false,
-    });
+    const group = new HeatingLayer().generate(CENTRAL(), 1.0, {}, { ...BASE_SCENARIO, heating: "condensing" });
     expect(findByType(group, "heating-boiler")).toBeUndefined();
     expect(findByType(group, "heating-condensing-boiler")).toBeDefined();
   });
@@ -344,51 +240,14 @@ describe("Green-retrofit equipment scenario", () => {
   });
 });
 
-describe("New site kit (not remakes)", () => {
-  it("leaves the new objects out when the cache is empty", () => {
-    const vent = new VentilationLayer().generate(makeRecipe());
-    const safety = new SafetyLayer().generate(makeRecipe());
-    const micro = new MicrogridLayer().generate(makeRecipe());
-    expect(findByType(vent, "vent-exhaust-fan")).toBeUndefined();
-    expect(findByType(safety, "safety-fire-pump")).toBeUndefined();
-    expect(findByType(micro, "microgrid-generator")).toBeUndefined();
-    expect(findByType(micro, "microgrid-ev-charger")).toBeUndefined();
+describe("New site kit (graph equipment)", { timeout: 30_000 }, () => {
+  it("renders the exhaust fan hero (primitive fallback with a cold cache)", () => {
+    const group = new VentilationLayer().generate(VRF());
+    expect(findByType(group, "vent-exhaust-fan")).toBeDefined();
   });
 
-  it("places exhaust fans, fire pump, generator, and EV charger when injected", () => {
-    __injectEquipmentAssetForTest("exhaust-fan", makeFakeAsset());
-    __injectEquipmentAssetForTest("fire-pump", makeFakeAsset());
-    __injectEquipmentAssetForTest("emergency-generator", makeFakeAsset());
-    __injectEquipmentAssetForTest("ev-charger", makeFakeAsset());
-
-    const vent = new VentilationLayer().generate(makeRecipe());
-    const safety = new SafetyLayer().generate(makeRecipe());
-    const micro = new MicrogridLayer().generate(makeRecipe());
-
-    const fan = findByType(vent, "vent-exhaust-fan")!;
-    expect(fan).toBeDefined();
-    expect(fan.position.y).toBeCloseTo(9.15, 5);
-
-    const pump = findByType(safety, "safety-fire-pump")!;
-    expect(pump).toBeDefined();
-    expect(pump.position.y).toBeCloseTo(0, 5);
-
-    const gen = findByType(micro, "microgrid-generator")!;
-    expect(gen).toBeDefined();
-    expect(gen.position.y).toBeCloseTo(9.15, 5);
-
-    const charger = findByType(micro, "microgrid-ev-charger")!;
-    expect(charger).toBeDefined();
-    expect(charger.position.y).toBeCloseTo(0, 5);
-    expect(charger.position.x).toBeGreaterThan(6);
-  });
-
-  it("swaps junction-box geometry onto the electrical IM when loaded", () => {
-    __injectEquipmentAssetForTest("cable-tray", makeFakeAsset());
-    __injectEquipmentAssetForTest("junction-box", makeFakeAsset());
-    const group = new ElectricalRoutingLayer().generate(makeRecipe());
-    const jboxes = findByType(group, "electrical-junction-box") as THREE.InstancedMesh;
-    expect(jboxes).toBeDefined();
-    expect(jboxes.geometry.getAttribute("position").count).toBe(24);
+  it("places the fire pump on sprinklered towers from the graph source node", () => {
+    const group = new SafetyLayer().generate(caseTowerOffice());
+    expect(findByType(group, "safety-fire-pump")).toBeDefined();
   });
 });

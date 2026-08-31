@@ -121,4 +121,25 @@ describe("useLayerStore", () => {
       expect(useLayerStore.getState().density[id]).toBe(50);
     }
   });
+it("MEP x-ray (설비 강조) forces the services visible and clears occluders", () => {
+    useLayerStore.getState().resetAll();
+    useLayerStore.getState().setLayerVisible("mep", false);
+    useLayerStore.getState().setInteriorVisible(true);
+    useLayerStore.getState().setAnalysisOverlayVisible("overlay-structure", true);
+
+    useLayerStore.getState().toggleMepIsolation();
+
+    const s1 = useLayerStore.getState();
+    expect(s1.mepIsolation).toBe(true);
+    expect(s1.visibility["mep"]).toBe(true);
+    expect(s1.interiorVisible).toBe(false);
+    expect(s1.analysisOverlays["overlay-structure"]).toBe(false);
+
+    // Leaving the x-ray restores nothing behind the user's back.
+    useLayerStore.getState().toggleMepIsolation();
+    const s2 = useLayerStore.getState();
+    expect(s2.mepIsolation).toBe(false);
+    expect(s2.visibility["mep"]).toBe(true);
+    expect(s2.interiorVisible).toBe(false);
+  });
 });

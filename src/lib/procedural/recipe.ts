@@ -337,6 +337,7 @@ export function mergeRecipeOverrides(
     ...(overrides.column ? { column: { ...recipe.column, ...overrides.column } } : {}),
     ...(overrides.roof ? { roof: { ...recipe.roof, ...overrides.roof } } : {}),
     ...(overrides.serviceCore ? { serviceCore: overrides.serviceCore } : {}),
+    ...(overrides.cadRooms !== undefined ? { cadRooms: overrides.cadRooms } : {}),
     ...(floorTouched
       ? { floors: floorResult.floors, totalHeight: floorResult.totalHeight }
       : {}),

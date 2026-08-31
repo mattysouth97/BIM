@@ -13,6 +13,24 @@ export type SelectableType = "wall" | "room" | "component" | null;
  * Per CONTEXT.md D-05 / PITFALLS.md Pitfall 9 — storing THREE objects here
  * leaks GPU memory when LayerManager rebuilds the MEP group on building change.
  */
+/**
+ * Per-element MEP network record (plain JSON) — present when the clicked
+ * geometry derives from the canonical MEP graph (src/lib/mep): the user can
+ * see which system a run belongs to, its engineered size, accumulated flow,
+ * and the basis of every number (§25 interactive inspection).
+ */
+export interface MepSelectionInfo {
+  mepId: string;
+  systemName: string;
+  systemNameKo: string;
+  role?: string;
+  sizeLabel?: string;
+  flowLabel?: string;
+  /** calculated | estimated | defaulted | imported | user */
+  basis?: string;
+  label?: string;
+}
+
 export interface SelectedEquipmentInfo {
   /** Stable identifier, e.g. "mep-hvac-floor-3-cooling-branch" — derived at click time. */
   equipmentId: string;
@@ -24,6 +42,8 @@ export interface SelectedEquipmentInfo {
   floorNo: number | null;
   /** Inferred spec — plain object, pre-computed at click time. */
   specs: EquipmentSpec;
+  /** Canonical MEP graph record for this element, when it has one. */
+  mep?: MepSelectionInfo;
 }
 
 /** Energy-diagnosis object kinds that can be traced across 2D, data, and 3D. */

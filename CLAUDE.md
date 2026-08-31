@@ -34,6 +34,12 @@
     Tier-1 screening builder, preflight validation, degree-day adapter over the real
     engine, findings, improvement scenarios, retrofit-bridge (economics), IndexedDB
     persistence — see docs/design-stage-energy-diagnostics.md
+  - `src/lib/mep/` — Canonical MEP graph engine: deterministic building-services
+    networks (plant→riser→main→branch→terminal), rule catalog (rules.ts cites
+    docs/05_Research/MEP Design Practice Research.md), coordination + §28
+    self-repair, clash/gravity/connectivity validation with regression
+    thresholds. Layer generators render FROM it via `src/lib/layers/mep-render.ts`;
+    visual-QA harness at `/dev/mep` — see docs/02_Features/MEP Systems.md
   - `src/lib/energy/` — Physics core: ISO-13789-style heat loss, degree-day annual
     demand, system breakdown, climate data, CO₂/grades
   - `src/app/api/bldrgst/*` — server-side proxy routes to data.go.kr (건축물대장).

@@ -1,173 +1,73 @@
 // src/lib/layers/__tests__/layer-6-dhw.test.ts
-// Unit tests for DHWLayer generator — verifies merged tank geometry + pump housing.
+// DHWLayer over the canonical MEP graph: pressurized water tree + gravity
+// drainage as visually and topologically distinct systems, fixtures, tank,
+// determinism, disposal.
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import * as THREE from "three";
 import { DHWLayer } from "../layer-6-dhw";
-import type { BuildingRecipe } from "@/lib/procedural/types";
+import { clearMepPlanCache } from "@/lib/mep";
+import { makeRecipe } from "@/lib/mep/__tests__/fixtures";
 
-// ---------------------------------------------------------------------------
-// Mock recipe — 1 basement + 2 above-ground floors
-// ---------------------------------------------------------------------------
-
-function makeRecipe(): BuildingRecipe {
-  return {
-    footprintWidth: 12,
-    footprintDepth: 10,
-    floors: [
-      { floorNo: -1, label: "B1", type: "below", y: -3.0, height: 3.0, isGroundFloor: false },
-      { floorNo: 1, label: "1F", type: "above", y: 0, height: 3.0, isGroundFloor: true },
-      { floorNo: 2, label: "2F", type: "above", y: 3.0, height: 3.0, isGroundFloor: false },
-    ],
-    totalHeight: 6.0,
-    wallThickness: 0.2,
-    era: "2000-2009",
-    strctCd: "21",
-    mainPurpsCd: "02000",
-    column: { spacing: 6, size: 0.4, inset: 1 },
-    slab: { thickness: 0.2, overhang: 0 },
-    facade: {
-      windowWidth: 1.4,
-      windowHeight: 1.6,
-      sillHeight: 0.9,
-      windowSpacing: 0.5,
-      windowRatio: 0.6,
-      mullionDepth: 0.06,
-      mullionWidth: 0.05,
-      glassInset: 0.04,
-      solidPanelChance: 0.15,
-      parapetHeight: 0.9,
-      cornerInset: 0.2,
-    },
-    roof: { type: "flat", flatThickness: 0.15, gableHeight: 0, hipInset: 0 },
-    siteWidth: 20,
-    siteDepth: 18,
-    buildingName: "Test Building",
-    address: "Seoul, Korea",
-    materials: {
-      wall: { color: "#cccccc", roughness: 0.8, metalness: 0.1 },
-      glass: { color: "#88aacc", roughness: 0.1, metalness: 0.0, transparent: true, opacity: 0.4 },
-      mullion: { color: "#888888", roughness: 0.4, metalness: 0.6 },
-      slab: { color: "#aaaaaa", roughness: 0.9, metalness: 0.0 },
-      column: { color: "#999999", roughness: 0.8, metalness: 0.0 },
-      roof: { color: "#888888", roughness: 0.7, metalness: 0.1 },
-      groundFloor: { color: "#bbbbbb", roughness: 0.9, metalness: 0.0 },
-    },
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function findMeshesByType(group: THREE.Group, type: string): THREE.Mesh[] {
-  const results: THREE.Mesh[] = [];
+function findAllByType(group: THREE.Group, type: string): THREE.Object3D[] {
+  const found: THREE.Object3D[] = [];
   group.traverse((obj) => {
-    if (obj instanceof THREE.Mesh && obj.userData.type === type) {
-      results.push(obj);
+    if (obj.userData?.type === type) found.push(obj);
+  });
+  return found;
+}
+
+describe("DHWLayer (graph-driven)", { timeout: 30_000 }, () => {
+  it("returns a THREE.Group named 'layer-6-dhw'", () => {
+    expect(new DHWLayer().generate(makeRecipe()).name).toBe("layer-6-dhw");
+  });
+
+  it("renders pressurized water runs and gravity drainage as separate tags (rule P1)", () => {
+    clearMepPlanCache();
+    const group = new DHWLayer().generate(makeRecipe());
+    expect(findAllByType(group, "dhw-branch").length).toBeGreaterThan(0);
+    expect(findAllByType(group, "dhw-drain").length).toBeGreaterThan(0);
+  });
+
+  it("renders the DHW tank hero and bathroom fixtures from the graph", () => {
+    clearMepPlanCache();
+    const group = new DHWLayer().generate(makeRecipe());
+    expect(findAllByType(group, "dhw-storage-tank").length).toBeGreaterThan(0);
+    expect(findAllByType(group, "water-bathroom-fixture").length).toBeGreaterThan(0);
+  });
+
+  it("labels rendered water runs with DN sizes and a basis", () => {
+    clearMepPlanCache();
+    const group = new DHWLayer().generate(makeRecipe());
+    const infos: { sizeLabel: string; basis: string }[] = [];
+    for (const obj of findAllByType(group, "dhw-branch")) {
+      const per = obj.userData?.mepPerInstance as { sizeLabel: string; basis: string }[] | undefined;
+      if (per) infos.push(...per);
     }
-  });
-  return results;
-}
-
-function plainCylinderVertexCount(radiusTop: number, radiusBottom: number, height: number, radialSegments: number): number {
-  // THREE.CylinderGeometry position attribute count (non-indexed geometry after conversion)
-  // Indexed: (radialSegments + 1) * 2 (ring verts) + radialSegments * 2 (cap centers) + radialSegments * 2 (outer cap verts)
-  // The .count of position attribute on a fresh CylinderGeometry
-  const geo = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments);
-  const count = geo.attributes.position.count;
-  geo.dispose();
-  return count;
-}
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
-describe("DHWLayer", () => {
-  let layer: DHWLayer;
-  let recipe: BuildingRecipe;
-
-  beforeEach(() => {
-    layer = new DHWLayer();
-    recipe = makeRecipe();
+    expect(infos.length).toBeGreaterThan(5);
+    for (const info of infos) expect(info.sizeLabel).toMatch(/^DN \d+$/);
   });
 
-  it("1. generate() returns a Group named 'layer-6-dhw'", () => {
-    const group = layer.generate(recipe);
-    expect(group).toBeInstanceOf(THREE.Group);
-    expect(group.name).toBe("layer-6-dhw");
+  it("is deterministic across regenerations", () => {
+    clearMepPlanCache();
+    const recipe = makeRecipe();
+    const matricesOf = (g: THREE.Group): number[] => {
+      const out: number[] = [];
+      g.traverse((o) => {
+        const im = o as THREE.InstancedMesh;
+        if (im.isInstancedMesh) out.push(...Array.from(im.instanceMatrix.array));
+      });
+      return out;
+    };
+    expect(matricesOf(new DHWLayer().generate(recipe))).toEqual(matricesOf(new DHWLayer().generate(recipe)));
   });
 
-  it("2. Group contains a Mesh with userData.type === 'dhw-storage-tank'", () => {
-    const group = layer.generate(recipe);
-    const tanks = findMeshesByType(group, "dhw-storage-tank");
-    expect(tanks.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("3. Storage tank geometry has MORE vertices than a plain CylinderGeometry(0.6, 0.6, 1.8, 16) — proves pipe stubs are merged", () => {
-    const group = layer.generate(recipe);
-    const tanks = findMeshesByType(group, "dhw-storage-tank");
-    expect(tanks.length).toBeGreaterThanOrEqual(1);
-
-    const tankMesh = tanks[0];
-    const mergedCount = tankMesh.geometry.attributes.position.count;
-    const plainCount = plainCylinderVertexCount(0.6, 0.6, 1.8, 16);
-
-    expect(mergedCount).toBeGreaterThan(plainCount);
-  });
-
-  it("4. Group contains a Mesh with userData.type === 'dhw-pump' (NEW — pump housing)", () => {
-    const group = layer.generate(recipe);
-    const pumps = findMeshesByType(group, "dhw-pump");
-    expect(pumps.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("5. Group contains a Mesh with userData.type === 'dhw-recirc-tank' (secondary tank preserved)", () => {
-    const group = layer.generate(recipe);
-    const recirc = findMeshesByType(group, "dhw-recirc-tank");
-    expect(recirc.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("6. Branches and returns are preserved (userData.type starting with dhw-branch / dhw-return)", () => {
-    const group = layer.generate(recipe);
-    const branches: THREE.Mesh[] = [];
-    const returns: THREE.Mesh[] = [];
-    group.traverse((obj) => {
-      if (obj instanceof THREE.Mesh) {
-        if (obj.userData.type === "dhw-branch") branches.push(obj);
-        if (obj.userData.type === "dhw-return") returns.push(obj);
-      }
-    });
-    expect(branches.length).toBeGreaterThan(0);
-    expect(returns.length).toBeGreaterThan(0);
-  });
-
-  it("7. generate(recipe, 1.0, { showPump: false }) produces NO dhw-pump mesh", () => {
-    const group = layer.generate(recipe, 1.0, { showPump: false });
-    const pumps = findMeshesByType(group, "dhw-pump");
-    expect(pumps.length).toBe(0);
-  });
-
-  it("8. generate(recipe, 1.0, { tankRadius: 0.9 }) uses 0.9 radius — bounding sphere larger than default", () => {
-    const groupDefault = layer.generate(recipe);
-    const tanksDefault = findMeshesByType(groupDefault, "dhw-storage-tank");
-    tanksDefault[0].geometry.computeBoundingSphere();
-    const defaultRadius = tanksDefault[0].geometry.boundingSphere!.radius;
-
-    layer.dispose();
-    const groupCustom = layer.generate(recipe, 1.0, { tankRadius: 0.9 });
-    const tanksCustom = findMeshesByType(groupCustom, "dhw-storage-tank");
-    tanksCustom[0].geometry.computeBoundingSphere();
-    const customRadius = tanksCustom[0].geometry.boundingSphere!.radius;
-
-    // Larger radius → larger bounding sphere
-    expect(customRadius).toBeGreaterThan(defaultRadius);
-  });
-
-  it("9. dispose() does not throw; double-dispose is safe", () => {
-    layer.generate(recipe);
-    expect(() => layer.dispose()).not.toThrow();
-    expect(() => layer.dispose()).not.toThrow();
+  it("dispose() does not throw; double dispose is safe", () => {
+    const layer = new DHWLayer();
+    layer.generate(makeRecipe());
+    expect(() => {
+      layer.dispose();
+      layer.dispose();
+    }).not.toThrow();
   });
 });

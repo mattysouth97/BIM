@@ -20,6 +20,15 @@ interface LayerState {
   structuralIsolation: boolean;
   toggleStructuralIsolation: () => void;
 
+  /**
+   * MEP isolation view (Navisworks services-x-ray analog): the whole massing
+   * ghosts to transparent gray so the graph-driven building services read as
+   * the coordinated model they are. Turning it on also ensures the MEP layer
+   * is visible and hides the interior snapshot. Session-only.
+   */
+  mepIsolation: boolean;
+  toggleMepIsolation: () => void;
+
   /** Whether a layer has been generated (lazy generation tracking) */
   generated: Record<LayerId, boolean>;
 
@@ -144,6 +153,27 @@ export const useLayerStore = create<LayerState>()(
       toggleStructuralIsolation: () =>
         set((state) => ({ structuralIsolation: !state.structuralIsolation })),
 
+      mepIsolation: false,
+      toggleMepIsolation: () =>
+        set((state) => {
+          const next = !state.mepIsolation;
+          return {
+            mepIsolation: next,
+            // Entering the x-ray must actually show the services: force the
+            // MEP layer on, drop the interior snapshot, and clear the
+            // analysis overlays (they are read-outs that would glow over the
+            // ghosted massing). Leaving it keeps whatever the user set — no
+            // surprise restores.
+            ...(next
+              ? {
+                  visibility: { ...state.visibility, mep: true },
+                  interiorVisible: false,
+                  analysisOverlays: { ...defaultAnalysisOverlays },
+                }
+              : {}),
+          };
+        }),
+
       toggleLayer: (id) =>
         set((state) => ({
           visibility: { ...state.visibility, [id]: !state.visibility[id] },
@@ -172,6 +202,7 @@ export const useLayerStore = create<LayerState>()(
           mepSubVisibility: { ...defaultMepSubVisibility },
           airflowVisible: true,
           structuralIsolation: false,
+          mepIsolation: false,
           analysisOverlays: { ...defaultAnalysisOverlays },
           interiorVisible: false,
           interiorIncludeExterior: false,

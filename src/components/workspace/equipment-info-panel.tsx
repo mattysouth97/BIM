@@ -130,6 +130,36 @@ export function EquipmentInfoPanel() {
         <span className="text-[10px] text-muted-foreground">{specs.standardRef}</span>
       </div>
 
+      {/* ── MEP network record (canonical graph, §25) ─────────────────── */}
+      {info.mep ? (
+        <div className="mb-3">
+          <SectionHeader label={t("배관·덕트 정보", "MEP network")} />
+          <div className="space-y-0.5">
+            <SpecRow
+              label={t("계통", "System")}
+              value={t(info.mep.systemNameKo, info.mep.systemName)}
+            />
+            {info.mep.role ? (
+              <SpecRow label={t("역할", "Role")} value={mepRoleLabel(info.mep.role, lang)} />
+            ) : null}
+            {info.mep.sizeLabel ? (
+              <SpecRow label={t("규격", "Size")} value={info.mep.sizeLabel} />
+            ) : null}
+            {info.mep.flowLabel ? (
+              <SpecRow label={t("설계 유량", "Design flow")} value={info.mep.flowLabel} />
+            ) : null}
+          </div>
+          {info.mep.basis ? (
+            <div className="mt-1 text-[10px] text-amber-600">
+              {t(
+                `산정 근거: ${mepBasisLabel(info.mep.basis, "ko")} — 실측이 아닌 설계 추정값입니다`,
+                `Basis: ${mepBasisLabel(info.mep.basis, "en")} — engineering estimate, not a measurement`,
+              )}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {/* ── Act 2: how it runs now ────────────────────────────────────── */}
       <SectionHeader label={t("현재 운전 (추정)", "Current operation (est.)")} />
       <div className="space-y-0.5">
@@ -324,6 +354,35 @@ function UpgradeRow({
  * Single spec row with label, value, and mandatory amber "추정" badge.
  * Every value displayed in the equipment panel must carry this badge (EQ-02).
  */
+const MEP_ROLE_LABELS: Record<string, { ko: string; en: string }> = {
+  service: { ko: "인입", en: "service entry" },
+  riser: { ko: "입상관", en: "riser" },
+  main: { ko: "주관", en: "main" },
+  branch: { ko: "분기관", en: "branch" },
+  runout: { ko: "말단 연결", en: "terminal runout" },
+  connector: { ko: "장비 연결", en: "equipment hookup" },
+};
+
+const MEP_BASIS_LABELS: Record<string, { ko: string; en: string }> = {
+  calculated: { ko: "계산값", en: "calculated" },
+  estimated: { ko: "추정값", en: "estimated" },
+  defaulted: { ko: "규격 기본값", en: "catalog default" },
+  imported: { ko: "도면 근거", en: "imported from drawing" },
+  user: { ko: "사용자 입력", en: "user input" },
+};
+
+function mepRoleLabel(role: string, lang: string): string {
+  const entry = MEP_ROLE_LABELS[role];
+  if (!entry) return role;
+  return lang === "ko" ? entry.ko : entry.en;
+}
+
+function mepBasisLabel(basis: string, lang: "ko" | "en"): string {
+  const entry = MEP_BASIS_LABELS[basis];
+  if (!entry) return basis;
+  return entry[lang];
+}
+
 function SpecRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between py-0.5">

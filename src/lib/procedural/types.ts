@@ -124,6 +124,13 @@ export interface BuildingRecipe {
    * the rear-wall default.
    */
   serviceCore?: ServiceCoreSlot;
+  /**
+   * Classified room polygons from an uploaded CAD plan (twin-local [x, z]
+   * metre rings, same frame as footprintPolygon; applied to every above
+   * floor as the typical plate). Consumed by the MEP planner as CAD-driven
+   * terminal zones — drawing evidence, not a procedural grid guess.
+   */
+  cadRooms?: [number, number][][];
 }
 
 /** Factory building zone descriptors */
@@ -184,6 +191,8 @@ export type RecipeOverrides = Partial<{
   roof: Partial<RoofConfig>;
   curtainWall: Partial<CurtainWallConfig>;
   serviceCore: ServiceCoreSlot;
+  /** Classified CAD room polygons — see BuildingRecipe.cadRooms. */
+  cadRooms: [number, number][][];
   /**
    * Per-floor patches keyed by `String(floorNo)`. Applied after
    * `floorCount` / `floorHeight` so a stack editor can refine one level.

@@ -146,18 +146,52 @@ export function EquipmentInteractionHandler() {
       const userData = hit.object.userData ?? {};
       const componentType = String(userData.type ?? "equipment");
       const aboveFloors = recipe.floors.filter((floor) => floor.type === "above");
+      // Canonical MEP graph metadata (plain JSON) rides the mesh userData:
+      // instanced runs/terminals carry a per-instance array; hero equipment
+      // carries mepId/mepLabel directly (§25 inspection).
+      const perInstance = userData.mepPerInstance as
+        | Array<Record<string, unknown>>
+        | undefined;
+      const perEntry =
+        perInstance && hit.instanceId !== undefined
+          ? perInstance[hit.instanceId]
+          : undefined;
+      const mep = perEntry
+        ? {
+            mepId: String(perEntry.mepId ?? ""),
+            systemName: String(perEntry.systemName ?? perEntry.label ?? componentType),
+            systemNameKo: String(perEntry.systemNameKo ?? perEntry.label ?? componentType),
+            role: perEntry.role ? String(perEntry.role) : undefined,
+            sizeLabel: perEntry.sizeLabel ? String(perEntry.sizeLabel) : undefined,
+            flowLabel: perEntry.flowLabel ? String(perEntry.flowLabel) : undefined,
+            basis: perEntry.basis ? String(perEntry.basis) : undefined,
+            label: perEntry.label ? String(perEntry.label) : undefined,
+          }
+        : userData.mepId
+          ? {
+              mepId: String(userData.mepId),
+              systemName: String(userData.mepLabel ?? componentType),
+              systemNameKo: String(userData.mepLabel ?? componentType),
+              label: userData.mepLabel ? String(userData.mepLabel) : undefined,
+            }
+          : undefined;
+      const perFloorNo =
+        perEntry && typeof perEntry.floorNo === "number" ? (perEntry.floorNo as number) : null;
       return {
         key: `${hit.object.uuid}:${hit.instanceId ?? "mesh"}`,
         object: hit.object,
         instanceId: hit.instanceId,
         subLayerId,
         componentType,
-        floorNo: resolveFloorNo(
-          hit.object,
-          hit.instanceId,
-          aboveFloors
-        ),
+        floorNo:
+          perFloorNo ??
+          resolveFloorNo(
+            hit.object,
+            hit.instanceId,
+            aboveFloors
+          ),
         specs: inferEquipmentSpecs(userData, recipe),
+        mep,
       };
     },
     [recipe]
@@ -277,6 +311,7 @@ export function EquipmentInteractionHandler() {
         componentType: description.componentType,
         floorNo: description.floorNo,
         specs: description.specs,
+        mep: description.mep,
       };
       useSelectionStore.getState().selectEquipment(info);
       useWorkspaceStore.getState().setRightDockOpen(true);
@@ -375,6 +410,7 @@ interface HitDescription {
   componentType: string;
   floorNo: number | null;
   specs: ReturnType<typeof inferEquipmentSpecs>;
+  mep?: import("@/store/selection-store").MepSelectionInfo;
 }
 
 interface HoveredEquipment {
