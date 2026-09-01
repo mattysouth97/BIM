@@ -127,9 +127,26 @@ function dominantEnvelopeFinding(
   const affectedObjectIds = dominant.element === "Windows"
     ? model.geometry.openings.filter((opening) => types.has(opening.type)).map((opening) => opening.id)
     : model.geometry.surfaces.filter((surface) => types.has(surface.type)).map((surface) => surface.id);
-  const relevantFacts = model.facts.filter((fact) =>
-    affectedObjectIds.some((id) => fact.key.includes(id)) ||
-    fact.key.startsWith("construction."),
+  // Construction facts live under two key prefixes: tier-one emits
+  // `construction.<id>.*`, the ledger baseline emits
+  // `envelope.construction.<id>.*`. Match the construction ids actually
+  // referenced by the affected surfaces/openings so the evidence chips point
+  // at the dominant element's assembly, not every assembly in the model.
+  const constructionIds = new Set(
+    (dominant.element === "Windows"
+      ? model.geometry.openings
+          .filter((opening) => types.has(opening.type))
+          .map((opening) => opening.constructionId.value)
+      : model.geometry.surfaces
+          .filter((surface) => types.has(surface.type))
+          .map((surface) => surface.constructionId.value)
+    ).filter((id): id is string => typeof id === "string" && id.length > 0),
+  );
+  const relevantFacts = model.facts.filter(
+    (fact) =>
+      affectedObjectIds.some((id) => fact.key.includes(id)) ||
+      ((fact.key.startsWith("construction.") || fact.key.startsWith("envelope.construction.")) &&
+        [...constructionIds].some((id) => fact.key.includes(`.${id}.`))),
   );
   return {
     id: `finding:dominant-envelope:${dominant.element.toLowerCase().replaceAll(" ", "-")}`,

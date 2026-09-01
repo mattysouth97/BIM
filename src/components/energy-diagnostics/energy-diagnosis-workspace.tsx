@@ -91,12 +91,16 @@ import {
   loadRepresentativeCase,
   mergeModelZones,
   resolveVisibleConflict,
+  runAssemblyScenario,
   runBaselineModel,
   runImprovementScenario,
   spatialResultsForRun,
   splitModelZoneBySpace,
   type ImprovementScenarioValues,
 } from "./model-operations";
+import { AssemblyEditor } from "./assembly-editor";
+import { SensitivityPanel } from "./sensitivity-panel";
+import { StandardsPanel } from "./standards-panel";
 import { tierOneGuidance } from "./tier-one-guidance";
 import { ReadinessStrip } from "./readiness-strip";
 import { RefinementPanel } from "./refinement-panel";
@@ -902,9 +906,15 @@ export function EnergyDiagnosisWorkspace({
       scenarioUValue,
     ],
   );
+  // Assembly-editor scenarios are authored by the layer editor, not by the
+  // improvement draft fields, so an empty draft does not make them stale.
+  const scenarioFromAssemblyEditor = Boolean(
+    evaluatedScenario?.id.startsWith("scenario-assembly-"),
+  );
   const scenarioComparisonIsPrior = Boolean(
     scenarioRun?.status === "succeeded" &&
       scenarioRun.result != null &&
+      !scenarioFromAssemblyEditor &&
       (!model ||
         !evaluatedScenario ||
         !scenarioMatchesImprovementDraft(
@@ -1358,6 +1368,49 @@ export function EnergyDiagnosisWorkspace({
     }
   }, [copy.simulationFailed, emitModel, model, onSimulationRun, scenarioAch, scenarioAreaScale, scenarioCop, scenarioShgc, scenarioUValue]);
 
+  const evaluateAssembly = useCallback(
+    async (constructionId: string, uValueWPerM2K: number, label: string) => {
+      if (!model || simulationInFlightRef.current) return;
+      simulationInFlightRef.current = true;
+      setOperation("scenario");
+      setError(null);
+      setNotice(null);
+      await nextPaint();
+      try {
+        const completed = runAssemblyScenario(model, {
+          constructionId,
+          uValueWPerM2K,
+          label,
+        });
+        emitModel(completed.model);
+        onSimulationRun?.(completed.run);
+        if (completed.run.status !== "succeeded") {
+          setError(completed.run.error?.message ?? copy.simulationFailed);
+        } else {
+          setSelectedRunId(completed.run.id);
+          setActiveStage("compare");
+          setActiveView("model");
+          const baselineKwh = baselineRun?.result?.annualEnergyKwh ?? null;
+          const nextKwh = completed.run.result?.annualEnergyKwh ?? null;
+          if (baselineKwh != null && nextKwh != null && baselineKwh > 0) {
+            const deltaPct = ((nextKwh - baselineKwh) / baselineKwh) * 100;
+            setNotice(
+              locale === "ko"
+                ? `구성층 대안(${label})을 실제 엔진으로 평가했습니다. 연간 에너지 ${deltaPct <= 0 ? "−" : "+"}${Math.abs(deltaPct).toFixed(1)}%.`
+                : `Assembly alternative (${label}) evaluated with the real engine. Annual energy ${deltaPct <= 0 ? "−" : "+"}${Math.abs(deltaPct).toFixed(1)}%.`,
+            );
+          }
+        }
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : copy.simulationFailed);
+      } finally {
+        simulationInFlightRef.current = false;
+        setOperation(null);
+      }
+    },
+    [baselineRun, copy.simulationFailed, emitModel, locale, model, onSimulationRun],
+  );
+
   const saveProject = useCallback(async () => {
     if (!model) return;
     setOperation("save");
@@ -1720,6 +1773,7 @@ export function EnergyDiagnosisWorkspace({
         onApplyAssumption: applyAssumption,
         onRunBaseline: runBaseline,
         onRunScenario: runScenario,
+        onEvaluateAssembly: evaluateAssembly,
         onSelectResult: selectSimulationResult,
       })
     : null;
@@ -2302,6 +2356,7 @@ function renderStagePanel({
   onApplyAssumption,
   onRunBaseline,
   onRunScenario,
+  onEvaluateAssembly,
   onSelectResult,
 }: Readonly<{
   stage: WorkflowStage;
@@ -2345,6 +2400,7 @@ function renderStagePanel({
   onApplyAssumption: () => void;
   onRunBaseline: () => void;
   onRunScenario: () => void;
+  onEvaluateAssembly: (constructionId: string, uValueWPerM2K: number, label: string) => void;
   onSelectResult: (runId: string, metric: ResultMetric) => void;
 }>) {
   const copy = diagnosisCopy(locale);
@@ -2459,6 +2515,14 @@ function renderStagePanel({
           </button>
         </div>
         </section>
+        <AssemblyEditor
+          model={model}
+          baselineRunId={baselineRun?.id}
+          locale={locale}
+          busy={operation != null}
+          onEvaluate={onEvaluateAssembly}
+          onSelectFact={onSelectFact}
+        />
         <section>
         <PanelHeading eyebrow={locale === "ko" ? "설비 시스템" : "Systems"} title={locale === "ko" ? "열구역에 연결된 설비" : "Systems linked to thermal zones"} />
         <div className="grid gap-3 lg:grid-cols-2">
@@ -2689,6 +2753,15 @@ function renderStagePanel({
         scenarioRunId={scenarioRun?.id}
         onSelectResult={onSelectResult}
       />
+      <StandardsPanel
+        model={model}
+        run={baselineRun}
+        locale={locale}
+        onSelectFactId={(factId) => {
+          const fact = model.facts.find((candidate) => candidate.id === factId);
+          if (fact) onSelectFact(fact);
+        }}
+      />
       <FindingsPanel
         findings={findings}
         model={model}
@@ -2852,6 +2925,7 @@ function renderStagePanel({
           </div>
         </details>
       )}
+      <SensitivityPanel model={model} locale={locale} />
       <RetrofitEconomicsPanel
         analysis={retrofitAnalysis}
         locale={locale}

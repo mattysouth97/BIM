@@ -113,12 +113,18 @@ export function EnergyDiagnosticProduct({
     (projectId: string) => {
       if (!initialMethod || routedProjectIdRef.current === projectId) return;
       routedProjectIdRef.current = projectId;
+      // `method=ledger` without a building redirects to the landing page, so
+      // dropping the building here would make the first autosave navigate the
+      // user's session away ~1.5s after it opened. Keep the building id.
+      const building = initialBuildingId
+        ? `&building=${encodeURIComponent(initialBuildingId)}`
+        : "";
       router.replace(
-        `/diagnostics/new?method=${initialMethod}&project=${encodeURIComponent(projectId)}`,
+        `/diagnostics/new?method=${initialMethod}${building}&project=${encodeURIComponent(projectId)}`,
         { scroll: false },
       );
     },
-    [initialMethod, router],
+    [initialBuildingId, initialMethod, router],
   );
 
   if (!storeHydrated) {

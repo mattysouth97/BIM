@@ -584,12 +584,32 @@ export type ZoneEnergyResult = Readonly<{
   }>[];
 }>;
 
+/**
+ * 1차에너지 (primary energy) summary derived from the delivered result via
+ * the published MOTIE/KEMCO conversion factors. Optional and additive: runs
+ * stored before this field existed simply lack it. The factor set used is
+ * embedded so a displayed number can always name its basis, and `basis`
+ * carries the honest caveat that end-use fuel assignment inherits the
+ * ratio-estimated lighting/DHW/plug split.
+ */
+export type PrimaryEnergyResult = Readonly<{
+  totalKwh: number;
+  perM2Kwh: number;
+  deliveredByFuelKwh: Readonly<Record<string, number>>;
+  primaryByFuelKwh: Readonly<Record<string, number>>;
+  factorsUsed: Readonly<Record<string, number>>;
+  /** Standards row backing the factors — see ENERGY_STANDARD_TRACEABILITY.md. */
+  basis: string;
+}>;
+
 export type CanonicalSimulationResult = Readonly<{
   annualEnergyKwh: number;
   energyUseIntensityKwhPerM2: number;
   annualByEndUseKwh: Readonly<Record<string, number>>;
   monthly: readonly MonthlyEnergyResult[];
   zones: readonly ZoneEnergyResult[];
+  /** Absent when the run predates primary-energy support. */
+  primary?: PrimaryEnergyResult;
   /** Null is distinct from a real, calculated zero load. */
   peakHeatingKw: number | null;
   /** Null is distinct from a real, calculated zero load. */

@@ -25,11 +25,18 @@ import {
   LIGHTING_DEFAULTS,
   OCCUPANCY_DEFAULTS,
   ROOF_U_VALUES,
+  STRUCTURE_TO_WALL_KEY,
+  WALL_LAYERS,
   WALL_U_VALUES,
   WINDOW_RATIOS,
   WINDOW_SHGC,
   WINDOW_U_VALUES,
 } from "@/lib/korean-building-codes";
+import {
+  thicknessForTargetU,
+  type AssemblyLayerInput,
+  type HeatFlowDirection,
+} from "@/lib/energy-standards/assembly";
 import {
   classifyEraExplicit,
   ledgerFloorHeightCategory,
@@ -50,6 +57,7 @@ import {
   type CanonicalEnergyModel,
   type ConstructionAssembly,
   type EnergyFact,
+  type MaterialLayer,
   type IsoDateTime,
   type MissingValueRecord,
   type Opening,
@@ -281,6 +289,7 @@ export function buildLedgerBaselineModel(
   const aboveCountFact = factForKey<number>(ingestion, "ledger.grndFlrCnt");
   const heightFact = factForKey<number>(ingestion, "ledger.heightM");
   const useFact = factForKey<string>(ingestion, "ledger.mainPurpsCd");
+  const strctFact = factForKey<string>(ingestion, "ledger.strctCd");
   const addressFact = factForKey<string>(ingestion, "ledger.platPlcNm");
   const nameFact = factForKey<string>(ingestion, "ledger.bldNm");
 
@@ -610,6 +619,105 @@ export function buildLedgerBaselineModel(
     return assumptionFact(key, value, now, LEDGER_ENVELOPE_ASSUMPTION_ID, unit);
   }
 
+  // ── Assumed layer compositions ────────────────────────────────────────
+  // The register states the structure family (구조코드); the era table states
+  // the assembly U. Neither states the layer build-up, so the layers below
+  // are a named assumption: the structure family's conventional stack with
+  // its insulation thickness SOLVED so the ISO-6946 layer sum reproduces the
+  // era-table U exactly. When no physical insulation thickness can reach the
+  // era U (very leaky pre-code walls on a resistive stack), no layers are
+  // emitted — an inconsistent stack would be an invented fact.
+  type RawLayer = Readonly<{
+    name: string;
+    thicknessM: number;
+    conductivityWPerMK?: number;
+    fixedResistanceM2KPerW?: number;
+    densityKgPerM3: number;
+    specificHeatJPerKgK: number;
+  }>;
+
+  const wallKey = STRUCTURE_TO_WALL_KEY[String(strctFact?.value ?? "").trim()] ?? "rc";
+  const wallStack: readonly RawLayer[] = (WALL_LAYERS[wallKey] ?? WALL_LAYERS.rc).map(
+    (layer) =>
+      layer.name.includes("공기층")
+        ? // Still-air conduction over-credits a cavity; use the KS-practice
+          // cavity resistance instead of d/λ.
+          {
+            name: layer.name,
+            thicknessM: layer.thickness / 1000,
+            fixedResistanceM2KPerW: 0.17,
+            densityKgPerM3: layer.density,
+            specificHeatJPerKgK: layer.specificHeat,
+          }
+        : {
+            name: layer.name,
+            thicknessM: layer.thickness / 1000,
+            conductivityWPerMK: layer.thermalConductivity,
+            densityKgPerM3: layer.density,
+            specificHeatJPerKgK: layer.specificHeat,
+          },
+  );
+  const roofStack: readonly RawLayer[] = [
+    { name: "방수층", thicknessM: 0.01, conductivityWPerMK: 0.17, densityKgPerM3: 1200, specificHeatJPerKgK: 1000 },
+    { name: "단열재(XPS)", thicknessM: 0.1, conductivityWPerMK: 0.034, densityKgPerM3: 30, specificHeatJPerKgK: 1450 },
+    { name: "콘크리트 슬래브", thicknessM: 0.15, conductivityWPerMK: 1.6, densityKgPerM3: 2300, specificHeatJPerKgK: 880 },
+    { name: "천장 마감", thicknessM: 0.01, conductivityWPerMK: 0.17, densityKgPerM3: 750, specificHeatJPerKgK: 1090 },
+  ];
+  const groundStack: readonly RawLayer[] = [
+    { name: "마감 모르타르", thicknessM: 0.04, conductivityWPerMK: 1.4, densityKgPerM3: 2000, specificHeatJPerKgK: 920 },
+    { name: "단열재(XPS)", thicknessM: 0.1, conductivityWPerMK: 0.034, densityKgPerM3: 30, specificHeatJPerKgK: 1450 },
+    { name: "콘크리트 슬래브", thicknessM: 0.15, conductivityWPerMK: 1.6, densityKgPerM3: 2300, specificHeatJPerKgK: 880 },
+  ];
+
+  function assumedLayers(
+    constructionId: string,
+    stack: readonly RawLayer[],
+    direction: HeatFlowDirection,
+    targetU: number,
+  ): readonly MaterialLayer[] {
+    const inputs: AssemblyLayerInput[] = stack.map((layer, index) => ({
+      id: `${constructionId}-layer-${index}`,
+      thicknessM: layer.thicknessM,
+      ...(layer.fixedResistanceM2KPerW !== undefined
+        ? { fixedResistanceM2KPerW: layer.fixedResistanceM2KPerW }
+        : { conductivityWPerMK: layer.conductivityWPerMK }),
+    }));
+    const insulationIndex = stack.findIndex((layer) => layer.name.includes("단열재"));
+    if (insulationIndex < 0) return Object.freeze([]);
+    const solved = thicknessForTargetU(
+      inputs,
+      direction,
+      `${constructionId}-layer-${insulationIndex}`,
+      targetU,
+    );
+    if (solved === null) return Object.freeze([]);
+    return Object.freeze(
+      stack.map((layer, index) => {
+        const thicknessM = index === insulationIndex ? solved : layer.thicknessM;
+        const base = `envelope.construction.${constructionId}.layers.${index}`;
+        return Object.freeze({
+          id: `${constructionId}-layer-${index}`,
+          name: assumptionFact(`${base}.name`, layer.name, now, LEDGER_ENVELOPE_ASSUMPTION_ID),
+          thicknessM: envelopeFact(`${base}.thicknessM`, thicknessM, "m"),
+          conductivityWPerMK: envelopeFact(
+            `${base}.conductivityWPerMK`,
+            layer.conductivityWPerMK ??
+              // A cavity credited at fixed R is stored with the equivalent
+              // conductance so the layer round-trips through the calculator.
+              thicknessM / (layer.fixedResistanceM2KPerW ?? 0.17),
+            "W/mK",
+          ),
+          densityKgPerM3: envelopeFact(`${base}.densityKgPerM3`, layer.densityKgPerM3, "kg/m3"),
+          specificHeatJPerKgK: envelopeFact(
+            `${base}.specificHeatJPerKgK`,
+            layer.specificHeatJPerKgK,
+            "J/kgK",
+          ),
+        });
+      }),
+    );
+  }
+
   function assembly(
     id: string,
     name: string,
@@ -617,6 +725,7 @@ export function buildLedgerBaselineModel(
     uValue: number,
     shgc: number,
     visibleTransmittance: number,
+    layers: readonly MaterialLayer[] = Object.freeze([]),
   ): ConstructionAssembly {
     const uFact = envelopeFact(
       `envelope.construction.${id}.uValueWPerM2K`,
@@ -632,7 +741,7 @@ export function buildLedgerBaselineModel(
         LEDGER_ENVELOPE_ASSUMPTION_ID,
       ),
       kind,
-      layers: Object.freeze([]),
+      layers,
       uValueWPerM2K: uFact,
       rValueM2KPerW: assumptionFact(
         `envelope.construction.${id}.rValueM2KPerW`,
@@ -657,6 +766,7 @@ export function buildLedgerBaselineModel(
     wallU,
     0,
     0,
+    assumedLayers("ledger-construction-wall", wallStack, "horizontal", wallU),
   );
   const roofConstruction = assembly(
     "ledger-construction-roof",
@@ -665,6 +775,7 @@ export function buildLedgerBaselineModel(
     roofU,
     0,
     0,
+    assumedLayers("ledger-construction-roof", roofStack, "upward", roofU),
   );
   const groundConstruction = assembly(
     "ledger-construction-ground",
@@ -673,6 +784,7 @@ export function buildLedgerBaselineModel(
     groundU,
     0,
     0,
+    assumedLayers("ledger-construction-ground", groundStack, "downward", groundU),
   );
   const windowConstruction = assembly(
     "ledger-construction-window",

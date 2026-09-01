@@ -357,6 +357,72 @@ export function assignDocumentClassification(
   });
 }
 
+/**
+ * Evaluates a layered-assembly change as a delta-only scenario: the assembly
+ * editor computes the new U from the edited layer stack (ISO 6946 sum), and
+ * this operation runs the REAL engine with only that construction's U-value
+ * replaced. The baseline model and its layer facts are never mutated — the
+ * mission's 활성 변수 guarantee is exactly this path.
+ */
+export function runAssemblyScenario(
+  model: CanonicalEnergyModel,
+  options: Readonly<{
+    constructionId: string;
+    uValueWPerM2K: number;
+    /** Human label for the comparison view, e.g. "외벽 EPS→PF 150mm". */
+    label?: string;
+  }>,
+): Readonly<{
+  model: CanonicalEnergyModel;
+  scenario: EnergyScenario;
+  run: DegreeDaySimulationRun;
+}> {
+  const baseline = reconcileCanonicalModelFingerprint(model);
+  const index = baseline.envelope.constructions.findIndex(
+    (construction) => construction.id === options.constructionId,
+  );
+  if (index < 0) {
+    throw new Error(`The model has no construction ${options.constructionId}.`);
+  }
+  const baselineFact = baseline.envelope.constructions[index].uValueWPerM2K;
+  const rounded = Math.round(options.uValueWPerM2K * 10_000) / 10_000;
+  const scenario = createEnergyScenario({
+    id: `scenario-assembly-${options.constructionId}-${String(rounded).replace(".", "-")}`,
+    name:
+      options.label ??
+      `${options.constructionId} U ${rounded.toFixed(3)} W/(m²·K)`,
+    baseline,
+    changes: [
+      {
+        id: `delta-assembly-${options.constructionId}`,
+        path: `envelope.constructions.${index}.uValueWPerM2K`,
+        baselineFact,
+        value: rounded,
+        unit: "W/m2K",
+      },
+    ],
+  });
+  const input = compileCanonicalModelToEngineInput(baseline, scenario);
+  const run = runSimulation(input);
+  return Object.freeze({
+    model: refreshModel({
+      ...baseline,
+      scenarios: Object.freeze([
+        ...baseline.scenarios.filter((candidate) => candidate.id !== scenario.id),
+        scenario,
+      ]),
+      simulationRuns: Object.freeze([
+        ...baseline.simulationRuns.filter(
+          (candidate) => candidate.scenarioId !== scenario.id,
+        ),
+        run,
+      ]),
+    }),
+    scenario,
+    run,
+  });
+}
+
 export type ImprovementScenarioValues = Readonly<{
   windowUValueWPerM2K?: number;
   windowShgc?: number;

@@ -91,6 +91,30 @@ files.
 | `src/app/api/bldrgst/_factory.ts` | Shared-key resolution and per-endpoint row caps |
 | `public/models/` | 173 GLBs (102 authoring, 58 equipment, 13 bim-assets) |
 
+## Recent Architectural Changes (2026-08-31 later: material-aware diagnostics)
+
+- **New `src/lib/energy-standards/`** — verified 별표1 U-value ceilings
+  (제2025-738호), ZEB 등급표 (제2024-893호), ISO-6946 assembly physics
+  (U from layers, Rsi/Rse, target-U thickness solve), generic material
+  library (`confidence:"generic"` hardwired). Every number cites
+  `docs/05_Research/ENERGY_STANDARD_TRACEABILITY.md` — update that ledger
+  with any value change.
+- Ledger baselines now carry **assumed layer stacks** whose ISO-6946 sum
+  reproduces the era U exactly (insulation thickness solved; empty when
+  unreachable). Runs now carry `result.primary` (1차에너지, factors
+  embedded). `standards-assessment.ts` derives 계산 기준/별표1/ZEB-참고;
+  `sensitivity.ts` does thickness sweeps + parameter ranking with one real
+  engine run per point.
+- Workspace: assembly editor (건물 모델), standards + sensitivity panels
+  (결과). `runAssemblyScenario` in model-operations. New e2e
+  `material-diagnostics.spec.ts` (38 e2e total).
+- **Bug fixed:** the first autosave's URL rewrite dropped `building` from
+  `?method=ledger…`, which server-redirects to `/` — the ledger diagnostic
+  killed itself ~1.5 s after opening. `bindSavedProject` now preserves it.
+- Findings bug fixed: dominant-envelope evidence now matches
+  `envelope.construction.` (ledger) keys, not only tier-one `construction.`.
+- Feature doc: [[Material-Aware Energy Diagnostics]].
+
 ## Recent Architectural Changes (2026-08-31: MEP graph engine)
 
 - **The MEP layer is graph-driven.** `src/lib/mep/` plans a canonical,

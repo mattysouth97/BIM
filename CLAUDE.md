@@ -42,6 +42,10 @@
     visual-QA harness at `/dev/mep` — see docs/02_Features/MEP Systems.md
   - `src/lib/energy/` — Physics core: ISO-13789-style heat loss, degree-day annual
     demand, system breakdown, climate data, CO₂/grades
+  - `src/lib/energy-standards/` — Verified Korean standards library: 별표1 U-value
+    ceilings (제2025-738호), ZEB 등급표 (제2024-893호), ISO-6946 layer→U assembly
+    physics, generic material library. Every value cites
+    docs/05_Research/ENERGY_STANDARD_TRACEABILITY.md — change values only with that ledger
   - `src/app/api/bldrgst/*` — server-side proxy routes to data.go.kr (건축물대장).
     The PRIMARY data source. `resolveDataGoKrKey` accepts the caller's own
     `x-api-key`, else falls back to `DATA_GO_KR_API_KEY` for same-origin requests

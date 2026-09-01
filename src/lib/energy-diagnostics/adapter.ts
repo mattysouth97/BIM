@@ -1,4 +1,5 @@
 import { calculateAnnualDemand, type AnnualDemand } from "@/lib/energy/annual-demand";
+import { PRIMARY_ENERGY_FACTORS } from "@/lib/energy/primary-energy";
 import { getClimateData, type ClimateData } from "@/lib/energy/climate-data";
 import { calculateHeatLoss, type HeatLossResult } from "@/lib/energy/heat-loss";
 import {
@@ -1216,6 +1217,56 @@ function assertUntamperedInput(input: EngineInputSnapshot): DegreeDayEnginePaylo
 }
 
 /** Converts only outputs the real engine produced; unsupported outputs stay empty/null. */
+/**
+ * Delivered → 1차에너지 via the published MOTIE/KEMCO conversion factors
+ * (traceability row PHY-PEF). Fuel assignment: heating/cooling follow the
+ * engine's own per-fuel split; lighting and plug loads are electric; DHW is
+ * charged as gas, matching the engine boundary's declared gas-boiler DHW
+ * default. Lighting/DHW/plug are ratio estimates upstream, so the primary
+ * figure inherits that approximation — `basis` says so.
+ */
+function derivePrimaryEnergy(
+  output: DegreeDayEngineOutput,
+  conditionedFloorAreaSqm: number,
+): CanonicalSimulationResult["primary"] {
+  const fuel = output.annualDemand.fuelDemand;
+  const hvacElectric = fuel?.electricKwh ?? 0;
+  const hvacFossil = fuel?.fossilKwh ?? 0;
+  const fossilFuel = fuel?.fossilFuel ?? null;
+  const electricDelivered =
+    hvacElectric + output.systemBreakdown.lighting + output.systemBreakdown.plugLoads;
+  const gasDelivered =
+    (fossilFuel === "gas" || fossilFuel === null ? hvacFossil : 0) + output.systemBreakdown.dhw;
+  const districtDelivered = fossilFuel === "districtHeating" ? hvacFossil : 0;
+
+  const primaryElectric = electricDelivered * PRIMARY_ENERGY_FACTORS.electricity;
+  const primaryGas = gasDelivered * PRIMARY_ENERGY_FACTORS.gas;
+  const primaryDistrict = districtDelivered * PRIMARY_ENERGY_FACTORS.districtHeating;
+  const totalKwh = primaryElectric + primaryGas + primaryDistrict;
+  return Object.freeze({
+    totalKwh,
+    perM2Kwh: conditionedFloorAreaSqm > 0 ? totalKwh / conditionedFloorAreaSqm : 0,
+    deliveredByFuelKwh: Object.freeze({
+      electricity: electricDelivered,
+      gas: gasDelivered,
+      districtHeating: districtDelivered,
+    }),
+    primaryByFuelKwh: Object.freeze({
+      electricity: primaryElectric,
+      gas: primaryGas,
+      districtHeating: primaryDistrict,
+    }),
+    factorsUsed: Object.freeze({
+      electricity: PRIMARY_ENERGY_FACTORS.electricity,
+      gas: PRIMARY_ENERGY_FACTORS.gas,
+      districtHeating: PRIMARY_ENERGY_FACTORS.districtHeating,
+    }),
+    basis:
+      "MOTIE/KEMCO 1차에너지 환산계수 (전력 2.75 · 가스 1.1 · 지역난방 0.728). " +
+      "조명·급탕·기기 소요량은 용도별 비율 추정치이므로 1차에너지도 같은 근사를 상속합니다.",
+  });
+}
+
 export function parseEngineOutput(
   output: DegreeDayEngineOutput,
   input: CompiledDegreeDayInput,
@@ -1248,6 +1299,7 @@ export function parseEngineOutput(
     },
     monthly: [],
     zones,
+    primary: derivePrimaryEnergy(output, area),
     peakHeatingKw: output.heatLoss.totalHeatLoss / 1000,
     peakCoolingKw: null,
   };
