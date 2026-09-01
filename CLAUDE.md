@@ -71,6 +71,13 @@
     - `procedural-building.ts` — ProceduralBuilding class composing all generators (7 draw calls on the rectangular InstancedMesh path: facade 4 + slabs 1 + columns 1 + roof 1; polygon-footprint towers fall back to per-face Groups and emit more)
   - `src/lib/cad/` — CAD footprint ingest (DXF parse, DWG→DXF WASM conversion, PDF tracing) — see `src/lib/cad/README.md`
   - `src/lib/cad/doc/` — CadDocument model: full DXF entity mapping, tessellation, snap, viewport math, footprint conversion (pure modules, meters/DXF-XY/radians)
+  - `src/lib/cad-reconstruction/` — Evidence→CAD reconstruction for buildings with
+    NO drawing: 건축물대장 + VWorld GIS outline + era tables + the user's prompt
+    statement → graded canonical geometry (A-VERIFIED…X-UNRESOLVED) → AC1015 DXF,
+    evidence register, assumption ledger, conflict register, QA (incl. a round trip
+    through the app's own `parseDxfText`). A reconstruction is NEVER recorded as CAD
+    evidence — see docs/01_Architecture/ADR/ADR-003. Prompt module lives in
+    `src/components/upload/cad-request-panel.tsx`
   - `src/components/cad-viewer/` — In-browser DWG/DXF viewer + 2D drafting: ortho R3F scene + SVG markup overlay driven by one ViewState; layer toggles, measure, note/leader/cloud markups (idb-keyval), draw tools (line/polyline/rect/circle, grid/ortho snap, undo/redo via `cad-draft-store`), use-as-footprint
   - `src/lib/retrofit/` — Retrofit measures + DCF economic model (NPV/IRR, knapsack, 그린리모델링 presets)
   - `src/store/scenario-store.ts` — Shared CAPEX/ROI scenario state (budget, program track, building inputs)

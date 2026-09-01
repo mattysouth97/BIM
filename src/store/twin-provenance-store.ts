@@ -7,6 +7,14 @@ export interface TwinProvenance {
   hasCadFootprint: boolean;
   /** Closed interior polylines were classified (core and/or rooms). */
   hasCadPlan: boolean;
+  /**
+   * The outline came from the evidence-to-CAD reconstruction, not from a
+   * drawing anyone produced of this building. Deliberately NOT folded into
+   * `hasCadFootprint`: a synthesised outline is an inference, and calling it
+   * CAD evidence is exactly the laundering this flag exists to prevent.
+   * Optional so existing persisted entries stay valid without a migration.
+   */
+  reconstructedFootprint?: boolean;
   hasEquipmentSchedule: boolean;
   hasIfcModel: boolean;
   /** Bbox centre of the CAD outline, native metres — used to pin later cores. */
@@ -18,6 +26,7 @@ export interface TwinProvenance {
 const EMPTY: TwinProvenance = {
   hasCadFootprint: false,
   hasCadPlan: false,
+  reconstructedFootprint: false,
   hasEquipmentSchedule: false,
   hasIfcModel: false,
 };

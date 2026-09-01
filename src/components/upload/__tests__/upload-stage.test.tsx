@@ -8,6 +8,28 @@ import { useMaterialStore } from "@/store/material-store";
 import { useActiveBuildingStore } from "@/store/active-building-store";
 import type { MaterialProperties } from "@/lib/material-types";
 import * as dwgParser from "@/lib/cad/dwg-parser";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// UploadStage now hosts the evidence-to-CAD prompt module, which reads the
+// register through React Query and the route id through the App Router. Both
+// are supplied by the real app shell; these tests provide the minimum.
+vi.mock("next/navigation", () => ({
+  useParams: () => ({ id: "11110-10300-0-0001-0001" }),
+}));
+
+// The prompt module asks the server which statement reader is configured.
+const originalFetch = globalThis.fetch;
+
+function renderStage() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  });
+  return render(
+    <QueryClientProvider client={client}>
+      <UploadStage />
+    </QueryClientProvider>,
+  );
+}
 
 // PdfTracer imports pdfjs eagerly when its branch mounts. These tests exercise
 // only the upload handoff, so keep the browser-only renderer behind one stable
@@ -105,38 +127,53 @@ function resetStores() {
   useActiveBuildingStore.getState().clearActiveBuilding();
 }
 
+function stubNetwork() {
+  globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    const body = url.includes("/api/cad/reconstruct")
+      ? { reader: "deterministic", model: null }
+      : { items: [], totalCount: 0 };
+    return new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  }) as unknown as typeof fetch;
+}
+
 describe("UploadStage", () => {
   beforeEach(() => {
     resetStores();
     seedBuilding();
+    stubNetwork();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    globalThis.fetch = originalFetch;
     cleanup();
   });
 
   it("renders dropzone with .dxf and .dwg badges", () => {
-    render(<UploadStage />);
+    renderStage();
     expect(screen.getByTestId("upload-dropzone")).toBeTruthy();
     expect(screen.getByText(".dxf")).toBeTruthy();
     expect(screen.getByText(".dwg")).toBeTruthy();
   });
 
   it("Continue button is disabled before any file is processed", () => {
-    render(<UploadStage />);
+    renderStage();
     const button = screen.getByTestId("upload-continue") as HTMLButtonElement;
     expect(button.disabled).toBe(true);
   });
 
   it("offers a sample drawing so the CAD door is not a dead end", () => {
-    render(<UploadStage />);
+    renderStage();
     expect(screen.getByTestId("upload-sample-dxf")).toBeTruthy();
   });
 
   // P2-17 — CAD-less path
   it("Continue without CAD advances to twin and records the skip, writing no footprint", () => {
-    render(<UploadStage />);
+    renderStage();
     fireEvent.click(screen.getByTestId("upload-skip"));
 
     expect(useWorkflowStore.getState().stage).toBe("twin");
@@ -149,7 +186,7 @@ describe("UploadStage", () => {
     // Clear the seeded building so useActiveBuildingPk resolves to ""
     useMaterialStore.setState({ properties: {}, activePk: "", selectedElement: { type: null } });
     useActiveBuildingStore.getState().clearActiveBuilding();
-    render(<UploadStage />);
+    renderStage();
     fireEvent.click(screen.getByTestId("upload-skip"));
 
     expect(screen.getByRole("alert")).toBeTruthy();
@@ -166,7 +203,7 @@ describe("UploadStage", () => {
       });
     }
 
-    render(<UploadStage />);
+    renderStage();
     const input = screen.getByTestId("upload-file-input") as HTMLInputElement;
     // Stub FileList with the one file.
     Object.defineProperty(input, "files", {
@@ -200,7 +237,7 @@ describe("UploadStage", () => {
       type: "text/plain",
     });
 
-    render(<UploadStage />);
+    renderStage();
     const input = screen.getByTestId("upload-file-input") as HTMLInputElement;
     Object.defineProperty(input, "files", { value: [file], configurable: true });
     fireEvent.change(input);
@@ -226,7 +263,7 @@ describe("UploadStage", () => {
       type: "application/acad",
     });
 
-    render(<UploadStage />);
+    renderStage();
     const input = screen.getByTestId("upload-file-input") as HTMLInputElement;
     Object.defineProperty(input, "files", {
       value: [file],
@@ -279,7 +316,7 @@ describe("UploadStage", () => {
       });
     }
 
-    render(<UploadStage />);
+    renderStage();
     const input = screen.getByTestId("upload-file-input") as HTMLInputElement;
     Object.defineProperty(input, "files", {
       value: [oldFile],
@@ -353,7 +390,7 @@ describe("UploadStage", () => {
       type: "application/pdf",
     });
 
-    render(<UploadStage />);
+    renderStage();
     const input = screen.getByTestId("upload-file-input") as HTMLInputElement;
     Object.defineProperty(input, "files", { value: [file], configurable: true });
     fireEvent.change(input);
@@ -373,7 +410,7 @@ describe("UploadStage", () => {
       Object.defineProperty(file, "text", { value: async () => TWO_LAYER_DXF });
     }
 
-    render(<UploadStage />);
+    renderStage();
     const input = screen.getByTestId("upload-file-input") as HTMLInputElement;
     Object.defineProperty(input, "files", { value: [file], configurable: true });
     fireEvent.change(input);
@@ -421,16 +458,18 @@ describe("UploadStage in cad-first mode (P2-24)", () => {
 
   beforeEach(() => {
     resetStores();
+    stubNetwork();
     useActiveBuildingStore.getState().setActiveBuilding(CAD_PK);
   });
 
   afterEach(() => {
     cleanup();
+    globalThis.fetch = originalFetch;
     useActiveBuildingStore.getState().clearActiveBuilding();
   });
 
   it("hides the skip button and the back-to-search button", () => {
-    render(<UploadStage />);
+    renderStage();
     expect(screen.queryByTestId("upload-skip")).toBeNull();
     expect(screen.queryByText("검색으로 돌아가기")).toBeNull();
   });
@@ -443,7 +482,7 @@ describe("UploadStage in cad-first mode (P2-24)", () => {
       });
     }
 
-    render(<UploadStage />);
+    renderStage();
     const input = screen.getByTestId("upload-file-input") as HTMLInputElement;
     Object.defineProperty(input, "files", {
       value: [file],

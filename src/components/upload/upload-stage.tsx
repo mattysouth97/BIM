@@ -11,6 +11,7 @@ import { useTwinProvenanceStore } from "@/store/twin-provenance-store";
 import { classifyPlanPolylines, roomPolygonsFromPlan, serviceCoreFromPlan } from "@/lib/cad/doc/classify-plan";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import {
+  BIM_OUTLINE_PATTERN,
   parseDxfText,
   type FootprintCandidate,
   type Polygon2D,
@@ -26,11 +27,30 @@ import { useCadViewerStore } from "@/store/cad-viewer-store";
 import { useCadDraftStore } from "@/store/cad-draft-store";
 import { CadViewer } from "@/components/cad-viewer/cad-viewer";
 import { getWorkflowMode } from "@/lib/workflow/cad-draft";
+import { CadRequestPanel } from "./cad-request-panel";
 import { FootprintPreview } from "./footprint-preview";
 import { LayerPicker } from "./layer-picker";
 import { PdfTracer } from "./pdf-tracer";
 
 const ACCEPTED_EXTENSIONS = [".dxf", ".dwg", ".pdf"];
+
+/**
+ * The reserved outline layer means "this ring IS the footprint" — the parser
+ * already promotes it to the front of the candidate list, so honour that here
+ * and skip the layer picker instead of asking about a question the drawing has
+ * already answered. Applies to any DXF using the reserved layer, including the
+ * ones this app writes.
+ */
+function preferredCandidate(
+  candidates: FootprintCandidate[],
+): FootprintCandidate | null {
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) return candidates[0];
+  return BIM_OUTLINE_PATTERN.test(candidates[0].layer) ? candidates[0] : null;
+}
+
+/** Where the current footprint came from — drives what the twin is told. */
+type FootprintOrigin = "drawing" | "reconstruction";
 
 type UploadStatus =
   | { kind: "idle" }
@@ -46,6 +66,7 @@ export function UploadStage() {
   const [status, setStatus] = useState<UploadStatus>({ kind: "idle" });
   const [pendingLayer, setPendingLayer] = useState<string | null>(null);
   const [cadDoc, setCadDoc] = useState<CadDocument | null>(null);
+  const [origin, setOrigin] = useState<FootprintOrigin>("drawing");
   const importGenerationRef = useRef(0);
   const activeImportRef = useRef<{
     generation: number;
@@ -123,6 +144,7 @@ export function UploadStage() {
     invalidatePendingImport();
     setPendingLayer(null);
     setCadDoc(null);
+    setOrigin("drawing");
     setStatus({ kind: "idle" });
     if (savedDraft) startDraft(savedDraft, draftKey);
     else newDrawing(`draft-${draftPk}`, draftKey);
@@ -159,14 +181,14 @@ export function UploadStage() {
         });
         return;
       }
-      if (parsed.candidates.length === 1) {
-        const c = parsed.candidates[0];
+      const chosen = preferredCandidate(parsed.candidates);
+      if (chosen) {
         if (!isCurrent()) return;
         setStatus({
           kind: "ready",
-          polygon: c.polygon,
-          layer: c.layer,
-          areaSqm: c.areaSqm,
+          polygon: chosen.polygon,
+          layer: chosen.layer,
+          areaSqm: chosen.areaSqm,
           warnings: parsed.warnings,
         });
       } else {
@@ -186,6 +208,7 @@ export function UploadStage() {
     if (!isCurrent()) return;
     setPendingLayer(null);
     setCadDoc(null);
+    setOrigin("drawing");
     setStatus({ kind: "parsing" });
     try {
       const res = await fetch("/samples/sample-footprint.dxf", {
@@ -252,6 +275,7 @@ export function UploadStage() {
       if (!isCurrent()) return;
       setPendingLayer(null);
       setCadDoc(null);
+      setOrigin("drawing");
       setStatus({ kind: "parsing" });
 
       try {
@@ -289,14 +313,14 @@ export function UploadStage() {
             });
             return;
           }
-          if (parsed.candidates.length === 1) {
-            const c = parsed.candidates[0];
+          const chosen = preferredCandidate(parsed.candidates);
+          if (chosen) {
             if (!isCurrent()) return;
             setStatus({
               kind: "ready",
-              polygon: c.polygon,
-              layer: c.layer,
-              areaSqm: c.areaSqm,
+              polygon: chosen.polygon,
+              layer: chosen.layer,
+              areaSqm: chosen.areaSqm,
               warnings: parsed.warnings,
             });
           } else {
@@ -356,6 +380,22 @@ export function UploadStage() {
     []
   );
 
+  // The reconstruction leaves through the SAME ingestion boundary an uploaded
+  // file uses: the twin's footprint is read back out of the generated DXF, not
+  // handed over from memory. What changes is only what we tell the twin about
+  // where it came from.
+  const handleUseReconstruction = useCallback(
+    (dxfText: string, fileName: string) => {
+      const { isCurrent } = beginImport();
+      setPendingLayer(null);
+      setCadDoc(null);
+      setStatus({ kind: "parsing" });
+      ingestDxf(dxfText, fileName, isCurrent);
+      setOrigin("reconstruction");
+    },
+    [beginImport, ingestDxf],
+  );
+
   const handleLayerConfirm = useCallback(
     (candidate: FootprintCandidate) => {
       setPendingLayer(null);
@@ -386,7 +426,10 @@ export function UploadStage() {
     const rings: [number, number][][] = [status.polygon];
     setOverride(buildingPk, "footprintPolygon", rings);
     let hasCadPlan = false;
-    if (cadDoc) {
+    // A reconstruction's core and rooms are inferences the pipeline itself
+    // generated. Feeding them to the MEP planner as "CAD-driven" zones would
+    // relabel an inference as drawing evidence, so only the outline crosses.
+    if (cadDoc && origin !== "reconstruction") {
       const classified = classifyPlanPolylines(cadDoc);
       const core = serviceCoreFromPlan(classified);
       if (core) {
@@ -402,12 +445,21 @@ export function UploadStage() {
         setOverride(buildingPk, "cadRooms", rooms);
       }
     }
-    patchProvenance(buildingPk, {
-      hasCadFootprint: true,
-      hasCadPlan,
-    });
+    // A reconstructed outline is an inference dressed as a drawing. It gives
+    // the twin better geometry than the era rectangle, but it is NOT CAD
+    // evidence and must never raise the twin's stated precision.
+    patchProvenance(
+      buildingPk,
+      origin === "reconstruction"
+        ? {
+            hasCadFootprint: false,
+            hasCadPlan: false,
+            reconstructedFootprint: true,
+          }
+        : { hasCadFootprint: true, hasCadPlan, reconstructedFootprint: false },
+    );
     advance({ mode, footprintPolygon: rings });
-  }, [status, buildingPk, setOverride, advance, mode, t, cadDoc, patchProvenance]);
+  }, [status, buildingPk, setOverride, advance, mode, t, cadDoc, patchProvenance, origin]);
 
   // P2-17 — proceed without a CAD drawing: the twin falls back to the
   // public-data (ledger/VWorld) footprint the viewer already uses when no
@@ -515,6 +567,9 @@ export function UploadStage() {
           </Button>
         </div>
 
+        {/* Prompt module — reconstruct the missing drawing from evidence */}
+        <CadRequestPanel onUseDrawing={handleUseReconstruction} />
+
         {/* Status — parsing */}
         {status.kind === "parsing" && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -580,13 +635,23 @@ export function UploadStage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-semibold">
-                  {t("외곽선 준비 완료", "Footprint ready")}
+                  {origin === "reconstruction"
+                    ? t("복원 외곽선 준비 완료", "Reconstructed footprint ready")
+                    : t("외곽선 준비 완료", "Footprint ready")}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {t("레이어", "Layer")}: <code>{status.layer}</code>
                   {" · "}
                   {status.areaSqm.toFixed(0)} m²
                 </div>
+                {origin === "reconstruction" && (
+                  <div className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                    {t(
+                      "증거 기반 추정 복원입니다 — 실측 도면이 아니며, 트윈 정밀도는 '추정'으로 기록됩니다.",
+                      "Evidence-based estimated reconstruction — not a measured drawing. The twin records this precision as estimated.",
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex justify-center text-primary">

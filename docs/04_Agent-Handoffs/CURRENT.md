@@ -1,7 +1,7 @@
 ---
 type: handoff
 status: implemented
-last_verified: 2026-08-27
+last_verified: 2026-09-02
 ---
 
 # Current Project State
@@ -20,13 +20,25 @@ inside it; do not add a fifth step or a second front door.
 
 ## Verified Working State
 
-Validated on 2026-08-31 (after the MEP graph-engine rework):
+Validated on 2026-09-02 (after the evidence-to-CAD reconstruction module):
 
-- Unit: **3994 passed**, 4 skipped, 364 files
-- E2E: **35 passed** (Playwright, chromium)
-- `tsc --noEmit`: clean; `eslint src`: 0 errors
-- Production live at `https://bim-self.vercel.app`, verified against a real
-  building (대청아파트306동, `11680-10300-0-0012-0000`)
+- Unit: **4118 passed**, 4 skipped, 375 files
+- E2E: **39 passed, 4 failed** (Playwright, chromium)
+- `tsc --noEmit`: clean; `eslint src`: 0 errors, 9 pre-existing warnings
+- Production live at `https://bim-self.vercel.app`
+
+The four failing E2E tests are **pre-existing on this branch**, not regressions —
+verified by stashing the 2026-09-02 changes and reproducing each failure:
+
+| Spec | Symptom |
+|---|---|
+| `first-door.spec.ts:54` | persistent chrome / language switch |
+| `plan-view.spec.ts:45` | diagnosis canvas never reaches 300×400 |
+| `energy-diagnostics.spec.ts:418` | reopen stays on "Loading saved project…" |
+| `energy-diagnostics.spec.ts:586` | passes in isolation — cross-test state leak from 418 |
+
+The first three belong to the in-flight material-aware diagnostics work; fix them
+before treating the E2E suite as green.
 
 ## Active Systems
 
@@ -34,6 +46,13 @@ Validated on 2026-08-31 (after the MEP graph-engine rework):
 - Twin workspace `/building/[id]` — stepper, layers, CAPEX→ROI, report
 - Traceable energy engine — reachable at `/diagnostics/new?method=ledger&building=…`
 - Sample building `/building/demo` — offline fixture, needs no API key
+- **Evidence-to-CAD reconstruction** — the 도면 업로드 step's prompt module turns
+  the register + VWorld outline + era tables + a user sentence into a graded,
+  source-traceable DXF for buildings that have no drawing. See
+  [[Evidence-to-CAD Reconstruction]] and [[ADR-003 - Reconstruction Is Not Evidence]].
+  The rule that must not be softened: a reconstruction is recorded as
+  `reconstructedFootprint`, never `hasCadFootprint`, and it reaches the twin only
+  by being re-read out of its own DXF through `parseDxfText`.
 
 ## Work in Progress
 
@@ -55,6 +74,9 @@ files.
    `material-store` path, labelled `간이 모델` in the UI. The canonical engine
    lives on a second route. This is the top item.
 2. **VWorld outlines are unusable as-is** — lon/lat degrees, not metres.
+   (`src/lib/cad-reconstruction` does project them, via `createSceneProjection`
+   into a site-centred TM frame — that path is a worked example, not a fix for
+   the twin's own consumption of the same data.)
 3. **Per-storey plans cannot move the number** until `envelopeQuantities` sums
    per storey instead of extruding one ring by total height.
 
