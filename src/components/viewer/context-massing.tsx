@@ -12,8 +12,10 @@ import { toLocalNeighbors } from "@/lib/context-massing";
 
 /** MeshStandardMaterial shared across all neighbor meshes — avoids per-mesh allocations. */
 const NEIGHBOR_MATERIAL = new THREE.MeshStandardMaterial({
-  color: "#cfcfcf",
-  roughness: 0.95,
+  color: "#9a968e",
+  roughness: 0.88,
+  metalness: 0,
+  envMapIntensity: 0.35,
 });
 
 interface ContextMassingProps {

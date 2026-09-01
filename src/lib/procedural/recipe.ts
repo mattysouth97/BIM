@@ -20,6 +20,7 @@ import {
   WINDOW_MATERIAL,
   ROOF_MATERIALS,
 } from "@/lib/pbr-materials";
+import { resolveVisualMaterialId } from "@/lib/rendering/bim-material-mapping";
 import { getFactoryRecipe } from "./factory-recipe";
 
 /** Facade window dimensions by era (meters) — replicated from wall-geometry.ts WIN table */
@@ -159,14 +160,38 @@ function getRoofConfig(mainPurpsCd?: string, era?: BuildingEra): RoofConfig {
 
 function getMaterialRefs(strctCd: string, mainPurpsCd: string, era: BuildingEra, roofType?: string): MaterialRefs {
   const roofMatKey = roofType === "gable" || roofType === "hip" || roofType === "sawtooth" ? "gable" : "flat";
+  const q = { strctCd, mainPurpsCd, era, roofType };
   return {
-    wall: getPBRMaterial(strctCd, mainPurpsCd, era),
-    glass: WINDOW_MATERIAL,
-    mullion: { color: "#808890", roughness: 0.4, metalness: 0.6 },
-    slab: getPBRMaterial(strctCd, undefined, era),
-    column: getPBRMaterial(strctCd, undefined, era),
-    roof: ROOF_MATERIALS[roofMatKey] || ROOF_MATERIALS["flat"],
-    groundFloor: getGroundFloorMaterial(mainPurpsCd),
+    wall: {
+      ...getPBRMaterial(strctCd, mainPurpsCd, era),
+      visualId: resolveVisualMaterialId({ ...q, role: "wall" }),
+    },
+    glass: {
+      ...WINDOW_MATERIAL,
+      visualId: resolveVisualMaterialId({ ...q, role: "glass" }),
+    },
+    mullion: {
+      color: "#808890",
+      roughness: 0.4,
+      metalness: 0.6,
+      visualId: resolveVisualMaterialId({ ...q, role: "mullion" }),
+    },
+    slab: {
+      ...getPBRMaterial(strctCd, undefined, era),
+      visualId: resolveVisualMaterialId({ ...q, role: "slab" }),
+    },
+    column: {
+      ...getPBRMaterial(strctCd, undefined, era),
+      visualId: resolveVisualMaterialId({ ...q, role: "column" }),
+    },
+    roof: {
+      ...(ROOF_MATERIALS[roofMatKey] || ROOF_MATERIALS["flat"]),
+      visualId: resolveVisualMaterialId({ ...q, role: "roof" }),
+    },
+    groundFloor: {
+      ...getGroundFloorMaterial(mainPurpsCd),
+      visualId: resolveVisualMaterialId({ ...q, role: "wall" }),
+    },
   };
 }
 

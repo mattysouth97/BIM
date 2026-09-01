@@ -91,6 +91,18 @@ files.
 | `src/app/api/bldrgst/_factory.ts` | Shared-key resolution and per-endpoint row caps |
 | `public/models/` | 173 GLBs (102 authoring, 58 equipment, 13 bim-assets) |
 
+## Recent Architectural Changes (2026-09-02: architectural renderer)
+
+- **Real-time architectural renderer** layered on the existing R3F viewport
+  (`src/lib/rendering/`). BIM mode keeps the historical CAD look; Realistic /
+  Hyperreal resolve ledger structure/era/use into a PBR catalog, world-space
+  triplanar shaders, Preetham sky + solar sun, GTAO/SMAA, and an interior
+  occlusion volume. Engineering dimensions are unchanged.
+- Viewport chrome: `data-testid="render-mode-overlay"` (mode, time, weather,
+  quality, camera). Docs: `docs/rendering/`.
+- Do not treat this as path tracing. The street close-up is the first view
+  that stops reading as CAD; iso curtain-wall spandrels are still thin boxes.
+
 ## Recent Architectural Changes (2026-08-31 later: material-aware diagnostics)
 
 - **New `src/lib/energy-standards/`** — verified 별표1 U-value ceilings

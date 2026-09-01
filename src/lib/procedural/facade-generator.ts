@@ -5,6 +5,9 @@
 import * as THREE from "three";
 import type { BuildingRecipe, FacadeConfig, FloorSpec } from "./types";
 import type { PBRMaterialConfig } from "@/lib/pbr-materials";
+import { createArchitecturalMaterial } from "@/lib/rendering/architectural-material";
+import { materialContextFromRecipe } from "@/lib/rendering/material-context";
+import type { SurfaceRole } from "@/lib/rendering/types";
 import {
   getEquipmentGeometryClone,
   getEquipmentObjectClone,
@@ -19,22 +22,16 @@ import { finishedRoofTopY } from "./roof-surface";
 /** Extra depth (m) an externally-insulated solid panel adds to the wall. */
 const WALL_INSULATION_DEPTH = 0.08;
 
-function pbrToMaterial(config: PBRMaterialConfig): THREE.MeshStandardMaterial {
-  const mat = new THREE.MeshStandardMaterial({
-    color: config.color,
-    roughness: config.roughness,
-    metalness: config.metalness,
-    side: THREE.FrontSide,
+function pbrToMaterial(
+  config: PBRMaterialConfig,
+  recipe: BuildingRecipe,
+  role: SurfaceRole,
+): THREE.MeshStandardMaterial {
+  return createArchitecturalMaterial({
+    config,
+    role,
+    context: materialContextFromRecipe(recipe),
   });
-  if (config.transparent) {
-    mat.transparent = true;
-    mat.opacity = config.opacity ?? 0.4;
-  }
-  if (config.emissive) {
-    mat.emissive = new THREE.Color(config.emissive);
-    mat.emissiveIntensity = config.emissiveIntensity ?? 0.1;
-  }
-  return mat;
 }
 
 interface FaceDesc {
@@ -396,7 +393,7 @@ export function generateFacade(
 
   // --- Create InstancedMesh objects ---
   const glassGeo = new THREE.PlaneGeometry(1, 1);
-  const glassMat = pbrToMaterial(glassMaterialOverride || recipe.materials.glass);
+  const glassMat = pbrToMaterial(glassMaterialOverride || recipe.materials.glass, recipe, "glass");
   const glassIM = new THREE.InstancedMesh(glassGeo, glassMat, Math.max(1, glassCount));
   glassIM.castShadow = false;
   glassIM.receiveShadow = true;
@@ -421,7 +418,7 @@ export function generateFacade(
     getEquipmentGeometryClone("facade-cladding") ??
     getEquipmentGeometryClone("facade-panel") ??
     new THREE.BoxGeometry(1, 1, 1);
-  const solidMat = pbrToMaterial(recipe.materials.wall);
+  const solidMat = pbrToMaterial(recipe.materials.wall, recipe, "wall");
   const solidIM = new THREE.InstancedMesh(solidGeo, solidMat, Math.max(1, solidCount));
   solidIM.castShadow = true;
   solidIM.receiveShadow = true;
@@ -431,7 +428,7 @@ export function generateFacade(
   const mullionConfig = glassMaterialOverride
     ? { ...recipe.materials.mullion, color: "#505860", metalness: 0.7, roughness: 0.3 }
     : recipe.materials.mullion;
-  const mullionMat = pbrToMaterial(mullionConfig);
+  const mullionMat = pbrToMaterial(mullionConfig, recipe, "mullion");
   // Detailed aluminum mullion profile (unit-normalized, length along Y,
   // exterior cap fin authored toward -Z → rotate 180° about Y so the cap
   // faces local +Z = outward). Horizontal bars reuse the same profile
@@ -459,7 +456,7 @@ export function generateFacade(
   hIM.userData = { type: "hMullion" };
 
   const vGeo = vDetailedGeo ?? new THREE.BoxGeometry(1, 1, 1);
-  const vMat = pbrToMaterial(recipe.materials.mullion);
+  const vMat = pbrToMaterial(recipe.materials.mullion, recipe, "mullion");
   const vIM = new THREE.InstancedMesh(vGeo, vMat, Math.max(1, vMullionCount));
   vIM.castShadow = true;
   vIM.receiveShadow = true;
@@ -602,7 +599,7 @@ export function generateFacade(
       }
       const capIM = new THREE.InstancedMesh(
         capGeo,
-        pbrToMaterial(recipe.materials.roof),
+        pbrToMaterial(recipe.materials.roof, recipe, "parapet"),
         Math.max(1, capSlots),
       );
       capIM.castShadow = true;

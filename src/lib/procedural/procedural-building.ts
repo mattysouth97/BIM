@@ -13,6 +13,7 @@ import {
   generateRoofFurniture,
   generateRoofPergola,
 } from "./structure-generator";
+import { generateInteriorVolume } from "@/lib/rendering/interior-volume";
 import {
   SHOWCASE_EQUIPMENT_SCENARIO,
   type EquipmentScenario,
@@ -98,6 +99,12 @@ export class ProceduralBuilding {
     const roof = generateRoof(this.recipe);
     roof.name = "roof";
     group.add(roof);
+
+    const interior = generateInteriorVolume(this.recipe);
+    if (interior) {
+      interior.name = "interior-volume";
+      group.add(interior);
+    }
 
     // Flat-roof furniture (stair bulkhead, vents, skylight) — only when the
     // detailed Blender asset is preloaded.

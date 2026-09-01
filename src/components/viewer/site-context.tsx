@@ -2,6 +2,8 @@
 
 import { useMemo } from "react";
 import type { BuildingRecipe } from "@/lib/procedural/types";
+import { useRenderStore } from "@/store/render-store";
+import { isRealisticMode } from "@/lib/rendering/runtime";
 
 interface SiteContextProps {
   recipe: BuildingRecipe;
@@ -15,6 +17,8 @@ interface SiteContextProps {
  * demo plate only.
  */
 export function SiteContext({ recipe, showDemoNeighbors = false }: SiteContextProps) {
+  const renderMode = useRenderStore((s) => s.mode);
+  const hidePlate = isRealisticMode(renderMode);
   const siteW = recipe.siteWidth || recipe.footprintWidth + 8;
   const siteD = recipe.siteDepth || recipe.footprintDepth + 8;
 
@@ -31,10 +35,12 @@ export function SiteContext({ recipe, showDemoNeighbors = false }: SiteContextPr
 
   return (
     <group name="site-context">
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.015, 0]} receiveShadow>
-        <planeGeometry args={[siteW, siteD]} />
-        <meshStandardMaterial color="#c5c2bb" roughness={0.92} metalness={0} />
-      </mesh>
+      {!hidePlate && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.015, 0]} receiveShadow>
+          <planeGeometry args={[siteW, siteD]} />
+          <meshStandardMaterial color="#c5c2bb" roughness={0.92} metalness={0} />
+        </mesh>
+      )}
       {/* North tick at −Z */}
       <mesh position={[0, 0.04, -siteD / 2 - 1.2]}>
         <boxGeometry args={[0.35, 0.08, 2.4]} />

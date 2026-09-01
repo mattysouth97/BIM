@@ -10,6 +10,11 @@ export interface PBRMaterialConfig {
   emissiveIntensity?: number;
   transparent?: boolean;
   opacity?: number;
+  /**
+   * Visual material id from the rendering ontology. Engineering values are
+   * unchanged; the renderer uses this only to pick a surface appearance.
+   */
+  visualId?: string;
 }
 
 /** Structure code → PBR material params */
@@ -36,6 +41,7 @@ export const WINDOW_MATERIAL: PBRMaterialConfig = {
   color: "#88BBDD", roughness: 0.1, metalness: 0.3,
   transparent: true, opacity: 0.4,
   emissive: "#334455", emissiveIntensity: 0.15,
+  visualId: "glass-clear",
 };
 
 /** Roof material by type */

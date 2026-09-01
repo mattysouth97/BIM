@@ -5,6 +5,8 @@ import { Grid } from "@react-three/drei";
 import * as THREE from "three";
 import type { BuildingEra } from "@/lib/material-types";
 import { useTexturedMaterial } from "@/hooks/use-textured-material";
+import { useRenderStore } from "@/store/render-store";
+import { isRealisticMode } from "@/lib/rendering/runtime";
 
 /** One building's footprint outline, expressed as XZ-plane vertices in world space */
 export interface FootprintOutline {
@@ -61,6 +63,8 @@ function TexturedGround({ siteWidth, siteDepth, era, campusExtents, footprintOut
   const effectiveDepth = campusExtents?.depth ?? siteDepth;
   const size = Math.max(effectiveWidth, effectiveDepth, 50);
   const texMat = useTexturedMaterial("11", era, "ground");
+  const renderMode = useRenderStore((s) => s.mode);
+  const showGrid = !isRealisticMode(renderMode);
 
   return (
     <group>
@@ -82,17 +86,19 @@ function TexturedGround({ siteWidth, siteDepth, era, campusExtents, footprintOut
         <meshStandardMaterial color="#c8c8c8" roughness={0.8} metalness={0} transparent opacity={0.4} />
       </mesh>
 
-      <Grid
-        args={[size * 2, size * 2]}
-        position={[0, 0.01, 0]}
-        cellSize={5}
-        cellColor="#cccccc"
-        sectionSize={10}
-        sectionColor="#aaaaaa"
-        fadeDistance={size * 3}
-        fadeStrength={1.5}
-        infiniteGrid
-      />
+      {showGrid && (
+        <Grid
+          args={[size * 2, size * 2]}
+          position={[0, 0.01, 0]}
+          cellSize={5}
+          cellColor="#cccccc"
+          sectionSize={10}
+          sectionColor="#aaaaaa"
+          fadeDistance={size * 3}
+          fadeStrength={1.5}
+          infiniteGrid
+        />
+      )}
 
       {/* Building footprint outlines — only rendered in campus mode */}
       {footprintOutlines && footprintOutlines.length > 0 && (

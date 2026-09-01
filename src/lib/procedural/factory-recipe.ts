@@ -19,6 +19,7 @@ import {
   WINDOW_MATERIAL,
   ROOF_MATERIALS,
 } from "@/lib/pbr-materials";
+import { resolveVisualMaterialId } from "@/lib/rendering/bim-material-mapping";
 
 /** Column span by structure type for factory buildings (meters) */
 function getFactoryColumnSpan(strctCd: string): number {
@@ -102,18 +103,40 @@ function getFactoryRoofConfig(mainPurpsCd: string, era: BuildingEra): RoofConfig
 
 /** Factory materials: metal panels, industrial glass */
 function getFactoryMaterialRefs(strctCd: string, mainPurpsCd: string, era: BuildingEra): MaterialRefs {
+  const q = { strctCd, mainPurpsCd, era, roofType: "flat" };
   return {
-    wall: getPBRMaterial(strctCd, mainPurpsCd, era),
+    wall: {
+      ...getPBRMaterial(strctCd, mainPurpsCd, era),
+      visualId: resolveVisualMaterialId({ ...q, role: "wall" }),
+    },
     glass: {
       ...WINDOW_MATERIAL,
-      color: "#99AABB", // Industrial glass — slightly grayer
+      color: "#99AABB",
       opacity: 0.5,
+      visualId: "glass-tinted",
     },
-    mullion: { color: "#606870", roughness: 0.5, metalness: 0.5 },
-    slab: getPBRMaterial(strctCd, undefined, era),
-    column: getPBRMaterial(strctCd, undefined, era),
-    roof: ROOF_MATERIALS["flat"],
-    groundFloor: getGroundFloorMaterial(mainPurpsCd),
+    mullion: {
+      color: "#606870",
+      roughness: 0.5,
+      metalness: 0.5,
+      visualId: resolveVisualMaterialId({ ...q, role: "mullion" }),
+    },
+    slab: {
+      ...getPBRMaterial(strctCd, undefined, era),
+      visualId: resolveVisualMaterialId({ ...q, role: "slab" }),
+    },
+    column: {
+      ...getPBRMaterial(strctCd, undefined, era),
+      visualId: resolveVisualMaterialId({ ...q, role: "column" }),
+    },
+    roof: {
+      ...ROOF_MATERIALS["flat"],
+      visualId: resolveVisualMaterialId({ ...q, role: "roof" }),
+    },
+    groundFloor: {
+      ...getGroundFloorMaterial(mainPurpsCd),
+      visualId: resolveVisualMaterialId({ ...q, role: "wall" }),
+    },
   };
 }
 

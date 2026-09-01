@@ -8,6 +8,10 @@ import { ProceduralBuilding } from "@/lib/procedural/procedural-building";
 import { resolvePickedFloor } from "@/lib/procedural/floor-picking";
 import type { BuildingRecipe, FloorSpec } from "@/lib/procedural/types";
 import { GroundPlane } from "./ground-plane";
+import { ArchitecturalGround } from "./architectural-ground";
+import { useRenderStore } from "@/store/render-store";
+import { isRealisticMode, setRenderRuntime } from "@/lib/rendering/runtime";
+import { subscribeArchitecturalAtlas } from "@/lib/rendering/texture-atlas";
 import { useLayerStore } from "@/store/layer-store";
 import { InfoEdges } from "./info-edges";
 import { useOutlineHover } from "@/hooks/use-outline-hover";
@@ -140,6 +144,11 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
   const groupRef = useRef<THREE.Group | null>(null);
   const selectedRef = useRef<number | null>(null);
   const [group, setGroup] = useState<THREE.Group | null>(null);
+  const renderMode = useRenderStore((s) => s.mode);
+  const renderQuality = useRenderStore((s) => s.quality);
+  const renderWeather = useRenderStore((s) => s.weather);
+  const [atlasRev, setAtlasRev] = useState(0);
+  useEffect(() => subscribeArchitecturalAtlas(() => setAtlasRev((n) => n + 1)), []);
 
   // A generated building arrives as a recipe with no ledger geometry behind it,
   // so only derive one when geometry was actually supplied.
@@ -189,6 +198,11 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       builderRef.current.dispose();
     }
 
+    setRenderRuntime({
+      mode: renderMode,
+      quality: renderQuality,
+      weather: renderWeather,
+    });
     const builder = new ProceduralBuilding(recipe, equipmentScenario);
     const g = builder.generate();
 
@@ -203,7 +217,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       groupRef.current = null;
       setGroup(null);
     };
-  }, [recipe, equipmentAssetsReady, equipmentScenario]);
+  }, [recipe, equipmentAssetsReady, equipmentScenario, renderMode, renderQuality, renderWeather, atlasRev]);
 
   // Sync Digital Twin layer visibility to named mesh groups.
   // Depends on `group` state so it re-runs after building generation completes.
@@ -418,11 +432,15 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
       {/* The recipe carries site extent and era too, so a generated building
           gets its ground plane without any ledger geometry. */}
       {!hideGroundPlane && (
-        <GroundPlane
-          siteWidth={geometry?.siteWidth ?? recipe.siteWidth}
-          siteDepth={geometry?.siteDepth ?? recipe.siteDepth}
-          era={geometry?.era ?? recipe.era}
-        />
+        isRealisticMode(renderMode) ? (
+          <ArchitecturalGround recipe={recipe} />
+        ) : (
+          <GroundPlane
+            siteWidth={geometry?.siteWidth ?? recipe.siteWidth}
+            siteDepth={geometry?.siteDepth ?? recipe.siteDepth}
+            era={geometry?.era ?? recipe.era}
+          />
+        )
       )}
       {group && (
         <primitive
@@ -433,7 +451,7 @@ export function ProceduralBuildingModel({ geometry, recipeOverride, onFloorSelec
           onPointerOut={onPointerOut}
         />
       )}
-      {informationalMeshes.map((mesh, i) => (
+      {!isRealisticMode(renderMode) && informationalMeshes.map((mesh, i) => (
         <InfoEdges key={i} mesh={mesh} />
       ))}
     </>

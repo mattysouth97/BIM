@@ -63,6 +63,11 @@ import { EquipmentInteractionHandler } from "./equipment-interaction-handler";
 import { AuthoringFamilyLayer } from "./authoring-family-layer";
 import { SceneHighlightProcessing } from "./scene-highlight-processing";
 import { ConfigPanel } from "./config-panel";
+import { ArchitecturalEnvironment } from "./architectural-environment";
+import { ArchitecturalTextureBridge } from "./architectural-texture-bridge";
+import { RenderModeOverlay } from "./render-mode-overlay";
+import { useRenderStore } from "@/store/render-store";
+import { isRealisticMode } from "@/lib/rendering/runtime";
 import { TwinStageOverlay } from "@/components/twin/twin-stage-overlay";
 import type { FootprintGeometry } from "@/lib/portfolio/types";
 
@@ -508,6 +513,8 @@ export function BuildingScene({
   const reviewHighlightKind = useReviewHighlightStore((s) => s.highlightKind);
 
   const { t, lang } = useT();
+  const renderMode = useRenderStore((s) => s.mode);
+  const realisticViewport = isRealisticMode(renderMode);
 
   const extentW = recipe?.footprintWidth ?? geometry?.footprintWidth ?? 20;
   const extentD = recipe?.footprintDepth ?? geometry?.footprintDepth ?? 20;
@@ -596,31 +603,43 @@ export function BuildingScene({
         dpr={[1, 2]}
       >
         <Suspense fallback={null}>
-          {/* Scene setup: solid background + HDR env for reflections */}
-          <SceneSetup />
+          {realisticViewport ? (
+            <>
+              <ArchitecturalTextureBridge />
+              <ArchitecturalEnvironment
+                siteExtent={Math.max(extentW, extentD, 24)}
+                buildingHeight={extentH}
+              />
+            </>
+          ) : (
+            <>
+              {/* Scene setup: solid background + HDR env for reflections */}
+              <SceneSetup />
 
-          {/* Hemisphere light — subtle sky/ground ambient fill */}
-          <hemisphereLight
-            args={["#b1e1ff", "#b97a20", 0.6]}
-          />
+              {/* Hemisphere light — subtle sky/ground ambient fill */}
+              <hemisphereLight
+                args={["#b1e1ff", "#b97a20", 0.6]}
+              />
 
-          {/* Single directional light with soft VSM shadows.
-              P2-11: frustum bounds derived from shadowHalfExtent (site extents), not hardcoded ±60. */}
-          <directionalLight
-            position={[40, 60, 30]}
-            intensity={2.0}
-            color="#ffffff"
-            castShadow
-            shadow-mapSize-width={2048}
-            shadow-mapSize-height={2048}
-            shadow-camera-far={shadowHalfExtent * 4}
-            shadow-camera-left={-shadowHalfExtent}
-            shadow-camera-right={shadowHalfExtent}
-            shadow-camera-top={shadowHalfExtent}
-            shadow-camera-bottom={-shadowHalfExtent}
-            shadow-bias={-0.0004}
-            shadow-radius={4}
-          />
+              {/* Single directional light with soft VSM shadows.
+                  P2-11: frustum bounds derived from shadowHalfExtent (site extents), not hardcoded ±60. */}
+              <directionalLight
+                position={[40, 60, 30]}
+                intensity={2.0}
+                color="#ffffff"
+                castShadow
+                shadow-mapSize-width={2048}
+                shadow-mapSize-height={2048}
+                shadow-camera-far={shadowHalfExtent * 4}
+                shadow-camera-left={-shadowHalfExtent}
+                shadow-camera-right={shadowHalfExtent}
+                shadow-camera-top={shadowHalfExtent}
+                shadow-camera-bottom={-shadowHalfExtent}
+                shadow-bias={-0.0004}
+                shadow-radius={4}
+              />
+            </>
+          )}
 
           {/* Model rendering — campus mode or single-building mode */}
           {campusData ? (
@@ -702,6 +721,8 @@ export function BuildingScene({
         </Suspense>
       </Canvas>
       </ViewerErrorBoundary>
+
+      {!diagnosticsMode && <RenderModeOverlay />}
 
       {/* Floor info — mid-left, above the budget strip */}
       {selectedFloor && modelSource === "parametric" && (

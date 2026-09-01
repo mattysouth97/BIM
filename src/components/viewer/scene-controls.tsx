@@ -14,6 +14,9 @@ import { useViewStore } from "@/lib/bim/views/view-store";
 import { applyViewToCamera } from "@/lib/bim/views/view-engine";
 import { toThreePlane, type ViewDefinition } from "@/lib/bim/views/view-definition";
 import type { SceneFocusTarget } from "./diagnostic-selection-types";
+import { useRenderStore } from "@/store/render-store";
+import { getCameraPreset } from "@/lib/rendering/camera-presets";
+
 
 export interface SceneControlsRef {
   setView: (view: "front" | "side" | "top" | "iso") => void;
@@ -111,6 +114,7 @@ export const SceneControls = forwardRef<SceneControlsRef, SceneControlsProps>(
     const activeView = views.find((v) => v.id === activeViewId) ?? null;
     const lockRotate = !!activeView && activeView.kind !== "3d";
     const lockTop = activeView?.kind === "plan";
+    const cameraPreset = useRenderStore((s) => s.cameraPreset);
 
     const applyPreset = useCallback(
       (view: "front" | "side" | "top" | "iso") => {
@@ -141,6 +145,32 @@ export const SceneControls = forwardRef<SceneControlsRef, SceneControlsProps>(
     );
 
     useImperativeHandle(ref, () => ({ setView: applyPreset }), [applyPreset]);
+
+    useEffect(() => {
+      const persp = perspRef.current;
+      if (!persp) return;
+      const preset = getCameraPreset(cameraPreset);
+      persp.fov = preset.fov;
+      persp.near = preset.near;
+      persp.far = Math.max(distance * preset.farScale / 2.3, 200);
+      const targetY = targetHeight * preset.targetHeightFactor;
+      const target = new THREE.Vector3(0, targetY, 0);
+      const extent = distance / 2.3;
+      const d = Math.max(8, extent * preset.distanceFactor);
+      const eyeY = Math.max(1.6, targetHeight * preset.eyeHeightFactor);
+      const azimuth = cameraPreset === "street" || cameraPreset === "human-eye" ? 0.35 : 0.7;
+      persp.position.set(
+        d * azimuth,
+        eyeY + (cameraPreset === "birds-eye" || cameraPreset === "urban-planning" ? d * 0.55 : d * 0.22),
+        d * 0.85,
+      );
+      persp.lookAt(target);
+      persp.updateProjectionMatrix();
+      if (controlsRef.current) {
+        controlsRef.current.target.copy(target);
+        controlsRef.current.update();
+      }
+    }, [cameraPreset, targetHeight, distance]);
 
     useFrame((_state, delta) => {
       const transition = focusTransitionRef.current;

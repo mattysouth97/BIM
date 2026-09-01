@@ -5,6 +5,9 @@
 import * as THREE from "three";
 import type { BuildingRecipe, FloorSpec } from "./types";
 import type { PBRMaterialConfig } from "@/lib/pbr-materials";
+import { createArchitecturalMaterial } from "@/lib/rendering/architectural-material";
+import { materialContextFromRecipe } from "@/lib/rendering/material-context";
+import type { SurfaceRole } from "@/lib/rendering/types";
 import { extrudePolygon } from "@/lib/gis/earcut-extrude";
 import { insetRing, pointInRing } from "@/lib/gis/ring-utils";
 import { finishedRoofTopY } from "./roof-surface";
@@ -20,18 +23,16 @@ import {
   getRecommendedColumnSize,
 } from "@/lib/structural-codes";
 
-function pbrToMaterial(config: PBRMaterialConfig): THREE.MeshStandardMaterial {
-  const mat = new THREE.MeshStandardMaterial({
-    color: config.color,
-    roughness: config.roughness,
-    metalness: config.metalness,
-    side: THREE.FrontSide,
+function pbrToMaterial(
+  config: PBRMaterialConfig,
+  recipe: BuildingRecipe,
+  role: SurfaceRole,
+): THREE.MeshStandardMaterial {
+  return createArchitecturalMaterial({
+    config,
+    role,
+    context: materialContextFromRecipe(recipe),
   });
-  if (config.transparent) {
-    mat.transparent = true;
-    mat.opacity = config.opacity ?? 0.4;
-  }
-  return mat;
 }
 
 /**
@@ -53,7 +54,7 @@ export function generateSlabs(recipe: BuildingRecipe): THREE.InstancedMesh | THR
   if (footprintPolygon && footprintPolygon.length >= 1 && footprintPolygon[0].length >= 3) {
     // Build the canonical slab geometry at baseY=0; Y is applied via instance matrix.
     const geo = extrudePolygon(footprintPolygon, slab.thickness, 0);
-    const mat = pbrToMaterial(recipe.materials.slab);
+    const mat = pbrToMaterial(recipe.materials.slab, recipe, "slab");
     const count = floors.length;
     const im = new THREE.InstancedMesh(geo, mat, Math.max(1, count));
     im.castShadow = true;
@@ -85,7 +86,7 @@ export function generateSlabs(recipe: BuildingRecipe): THREE.InstancedMesh | THR
   const count = floors.length;
 
   const geo = new THREE.BoxGeometry(1, 1, 1);
-  const mat = pbrToMaterial(recipe.materials.slab);
+  const mat = pbrToMaterial(recipe.materials.slab, recipe, "slab");
   const im = new THREE.InstancedMesh(geo, mat, Math.max(1, count));
   im.castShadow = true;
   im.receiveShadow = true;
@@ -183,7 +184,7 @@ export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
 
   const totalCount = floors.length * columnPositions.length;
   const geo = getEquipmentGeometryClone("column") ?? new THREE.BoxGeometry(1, 1, 1);
-  const mat = pbrToMaterial(recipe.materials.column);
+  const mat = pbrToMaterial(recipe.materials.column, recipe, "column");
   const im = new THREE.InstancedMesh(geo, mat, Math.max(1, totalCount));
   im.castShadow = true;
   im.receiveShadow = true;
@@ -252,7 +253,7 @@ export function generateBeams(recipe: BuildingRecipe): THREE.InstancedMesh | nul
   if (totalCount === 0) return null;
 
   const geo = getEquipmentGeometryClone("beam") ?? new THREE.BoxGeometry(1, 1, 1);
-  const mat = pbrToMaterial(recipe.materials.column);
+  const mat = pbrToMaterial(recipe.materials.column, recipe, "beam");
   const im = new THREE.InstancedMesh(geo, mat, totalCount);
   im.castShadow = true;
   im.receiveShadow = true;
@@ -513,7 +514,7 @@ function isAxisAlignedRectangle(rings?: [number, number][][]): boolean {
 
 export function generateRoof(recipe: BuildingRecipe): THREE.Mesh {
   const { roof, footprintWidth, footprintDepth, totalHeight, footprintPolygon, wallThickness } = recipe;
-  const mat = pbrToMaterial(recipe.materials.roof);
+  const mat = pbrToMaterial(recipe.materials.roof, recipe, "roof");
   // Pull the deck back to the inner face of the wall so it does not occupy
   // the same volume as the parapet cladding.
   const deckInset = Math.max(0, wallThickness / 2);
