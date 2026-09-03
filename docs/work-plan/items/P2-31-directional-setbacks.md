@@ -35,10 +35,18 @@ large step across four faces, so each face's wall area, each orientation's solar
 gain and every terrace edge lands in the wrong place. After P2-30 those are
 numbers the diagnosis reports, not just pixels.
 
-**The register does not state 용도지역.** `BrTitleInfo` has no zoning field and no
-VWorld zoning layer is wired (`src/app/api/vworld/` has only `footprint`), so the
-code rule cannot be applied as a rule. It can, however, be *recognised*: the
-geometry we already hold says where the slack in the lot is.
+**The register does not state 용도지역 — but VWorld does.** `BrTitleInfo` has no
+zoning field, and this item was originally written assuming the code rule could
+only be *recognised*, never applied. That assumption was wrong: VWorld's
+`LT_C_UQ111` layer returns the district verbatim in `uname`
+(verified 2026-09-04: "제3종일반주거지역", "제1종일반주거지역", "일반상업지역"),
+keyed by the same bbox/PNU query `/api/vworld/footprint` already makes.
+
+So applicability becomes **evidence**, not a guess: the 일조권 rule applies in
+전용주거지역 and 일반주거지역 and does not in 상업지역, and the model can say which
+one this building sits in and cite the layer for it. The direction still comes
+from geometry — parcel ring, building ring, true north — but the *reason* is now
+sourced rather than assumed.
 
 ## 1. Requirement (RE)
 
@@ -56,12 +64,17 @@ geometry we already hold says where the slack in the lot is.
 
 ## 2. Specification (SDD) — BDD scenarios
 
-**S1 — north slack ⇒ north step.** Given a parcel ring and a building ring where
-the building hugs the southern parcel edge and leaves slack to the north, and a
-level whose registered area is smaller than the one below, when the plate is
-built, then the area is removed from the north face; `plateGrade` is
-`D-INFERRED`; and the assumption ledger records the 정북방향 일조권 사선제한
-pattern as the reason, with the measured north slack as its evidence.
+**S1 — 주거지역 + north slack ⇒ north step.** Given `LT_C_UQ111` reports a
+전용/일반주거지역 for the site, a parcel ring and a building ring where the building
+hugs the southern parcel edge and leaves slack to the north, and a level whose
+registered area is smaller than the one below, when the plate is built, then the
+area is removed from the north face; `plateGrade` is `D-INFERRED`; and the
+assumption ledger cites 건축법 시행령 제86조 **and** the zoning layer as its evidence.
+
+**S1b — 상업지역 ⇒ no 일조권 claim.** Given the same geometry but `uname` reporting
+a 상업지역, when the plate is built, then the 일조권 rationale is absent from the
+ledger; the direction may still be derived from lot slack, recorded as geometry
+alone, and the zoning that ruled the rule out is named.
 
 **S2 — podium.** Given level 1's registered area exceeds level 2's and no
 directional evidence resolves, when plates are built, then level 1 keeps the
@@ -91,10 +104,13 @@ the registered area within the existing `AREA_TOLERANCE_PCT`, and the
 - **May touch**: `src/lib/cad-reconstruction/reconstruct.ts` (`makeLevel`,
   `resolveLevelSpecs`), `src/lib/cad-reconstruction/geometry.ts` (a directed
   inset alongside `scaleAbout`), `src/lib/cad-reconstruction/types.ts`
-  (`ReconLevel.setbackFace`), their tests, and
+  (`ReconLevel.setbackFace`), `src/app/api/vworld/footprint/route.ts` or a
+  sibling zoning route for `LT_C_UQ111`, their tests, and
   `docs/02_Features/Evidence-to-CAD Reconstruction.md`.
-- **Must not**: grade a directed plate above `D-INFERRED`; apply the 일조권 rule
-  as if 용도지역 were known; drop or weaken the existing `X-UNRESOLVED` path when
+- **Must not**: grade a directed plate above `D-INFERRED` (a *sourced reason* for
+  a setback is not a *measurement* of one); apply the 일조권 rule when the zoning
+  layer did not answer — an absent district is unknown, never assumed
+  residential; drop or weaken the existing `X-UNRESOLVED` path when
   an above-grade floor demands `raw > 1.05` (`reconstruct.ts:771`); change
   `AREA_TOLERANCE_*`; emit a self-intersecting ring.
 - **Fitness**: the directed inset is a pure function of (ring, target area,
@@ -128,8 +144,9 @@ the registered area within the existing `AREA_TOLERANCE_PCT`, and the
   or declared undetermined — and never silently spread across four faces.
 
 ## Follow-ups (out of scope here)
-- Wire VWorld 용도지역지구 so 주거지역 applicability becomes evidence rather than a
-  recognised pattern, and record the value in a traceability ledger entry.
+- Record the 건축법 시행령 제86조 setback figures in
+  `docs/05_Research/ENERGY_STANDARD_TRACEABILITY.md` before any of them is coded
+  — the same ledger discipline every U-value in this repo is held to.
 - Street-frontage detection (road-centreline layer) to resolve the podium case.
 - Core sized and placed from 전유공용면적 — `area-detail.tsx:31` already renders
   the 전유/공용 split the register states, while `buildCore` (`reconstruct.ts:891`)

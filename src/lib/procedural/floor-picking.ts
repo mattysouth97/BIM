@@ -32,8 +32,16 @@ export function resolvePickedFloor(
   if (!object) return null;
   if (object.userData?.type !== "slab") return null;
 
-  // Rectangular path: instanceId → instanceToFloor map (unchanged legacy flow).
   if (typeof event.instanceId === "number") {
+    // P2-30: a stepped stack renders one InstancedMesh per distinct plate, and
+    // an instanceId is scoped to the mesh that was hit. Read that mesh's own
+    // map when it carries one; a building-wide lookup would resolve the index
+    // against the wrong batch and return a neighbouring storey.
+    const local = object.userData?.instanceToFloor;
+    if (local instanceof Map) {
+      return (local.get(event.instanceId) as FloorSpec | undefined) ?? null;
+    }
+    // Rectangular path: instanceId → instanceToFloor map (legacy flow).
     return lookup.getFloorFromInstanceId(event.instanceId);
   }
 

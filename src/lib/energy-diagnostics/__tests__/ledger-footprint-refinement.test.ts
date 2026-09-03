@@ -236,3 +236,120 @@ describe("a reconstructed outline from the shared ledger geometry producer", () 
     expect(annualKwh(reconstructed)).not.toBeCloseTo(annualKwh(rectangle), 0);
   });
 });
+
+/**
+ * P2-30 - per-storey plates in the traceable engine.
+ *
+ * The engine looped storeys but reused one boundary for all of them. Level
+ * plates now travel with the reconstructed outline, so a storey the register
+ * says is smaller is priced on a smaller ring, and the terrace that exposes is
+ * a roof surface rather than nothing at all.
+ */
+const BASE_RECT = [
+  [-20, -10],
+  [20, -10],
+  [20, 10],
+  [-20, 10],
+] as unknown as Polygon2D;
+const SMALL_RECT = [
+  [-15.49, -7.746],
+  [15.49, -7.746],
+  [15.49, 7.746],
+  [-15.49, 7.746],
+] as unknown as Polygon2D;
+
+function ringArea2(ring: Polygon2D): number {
+  let t = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const [x1, y1] = ring[i];
+    const [x2, y2] = ring[(i + 1) % ring.length];
+    t += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(t) / 2;
+}
+
+describe("P2-30 - per-storey plates in the traceable engine", () => {
+  const above = Number(demoTitle.grndFlrCnt);
+  const stepAt = above - 2;
+  const levelPlatesM = Array.from({ length: above }, (_, i) => ({
+    floorNo: i + 1,
+    ringM: i + 1 >= stepAt ? SMALL_RECT : BASE_RECT,
+  }));
+
+  it("prices each storey on its own plate, so a step means less wall", async () => {
+    const stepped = await build({
+      kind: "reconstructed",
+      ringM: BASE_RECT,
+      observed: true,
+      levelPlatesM,
+    });
+    const prism = await build({
+      kind: "reconstructed",
+      ringM: BASE_RECT,
+      observed: true,
+    });
+    const wall = (m: CanonicalEnergyModel) =>
+      m.geometry.surfaces
+        .filter((s) => s.type === "exterior_wall")
+        .reduce((sum, s) => sum + (s.areaSqm.value ?? 0), 0);
+    expect(wall(stepped)).toBeLessThan(wall(prism));
+    const h = stepped.geometry.storeys[0].floorToFloorHeightM.value ?? 0;
+    const smallPerimeter = 4 * 15.49 + 4 * 7.746;
+    expect(wall(prism) - wall(stepped)).toBeCloseTo(3 * h * (120 - smallPerimeter), 1);
+  });
+
+  it("each floor plate carries its own level ring", async () => {
+    const model = await build({
+      kind: "reconstructed",
+      ringM: BASE_RECT,
+      observed: true,
+      levelPlatesM,
+    });
+    const plates = model.geometry.floorPlates;
+    expect(plates).toHaveLength(above);
+    expect(ringArea2(plates[0].boundary.value!)).toBeCloseTo(800, 0);
+    expect(ringArea2(plates[above - 1].boundary.value!)).toBeCloseTo(480, 0);
+  });
+
+  it("the terrace at the step is a roof surface on the lower storey", async () => {
+    const model = await build({
+      kind: "reconstructed",
+      ringM: BASE_RECT,
+      observed: true,
+      levelPlatesM,
+    });
+    const roofs = model.geometry.surfaces.filter((s) => s.type === "roof");
+    expect(roofs).toHaveLength(2);
+    const total = roofs.reduce((sum, s) => sum + (s.areaSqm.value ?? 0), 0);
+    expect(total).toBeCloseTo(800, 0);
+    const terrace = roofs.find(
+      (s) => s.storeyId === model.geometry.storeys[stepAt - 2].id,
+    );
+    expect(terrace).toBeDefined();
+    expect(terrace!.areaSqm.value).toBeCloseTo(320, 0);
+  });
+
+  it("a level plate is graded like the outline it came from, never survey geometry", async () => {
+    const model = await build({
+      kind: "reconstructed",
+      ringM: BASE_RECT,
+      observed: true,
+      levelPlatesM,
+    });
+    for (const plate of model.geometry.floorPlates) {
+      expect(plate.boundary.authority).toBe("repeated_graphical_evidence");
+    }
+  });
+
+  it("without level plates every storey stays on the boundary, unchanged", async () => {
+    const model = await build({
+      kind: "reconstructed",
+      ringM: BASE_RECT,
+      observed: true,
+    });
+    for (const plate of model.geometry.floorPlates) {
+      expect(ringArea2(plate.boundary.value!)).toBeCloseTo(800, 0);
+    }
+    expect(model.geometry.surfaces.filter((s) => s.type === "roof")).toHaveLength(1);
+  });
+});

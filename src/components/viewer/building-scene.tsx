@@ -26,7 +26,10 @@ import { workspaceBuildingPk } from "@/lib/generative/design-storage";
 import { floorNoFromPlanLevelId } from "@/lib/interior/visible-floors";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import { useLedgerReconstruction } from "@/hooks/use-ledger-reconstruction";
-import { provenancePatchForModel } from "@/lib/cad-reconstruction/ledger-bridge";
+import {
+  applyLevelPlates,
+  provenancePatchForModel,
+} from "@/lib/cad-reconstruction/ledger-bridge";
 import { useBimModelStore } from "@/store/bim-model-store";
 import { Loader2 } from "lucide-react";
 import { createSceneProjection } from "@/lib/gis/gis-transform";
@@ -369,6 +372,9 @@ export function BuildingScene({
       geo.footprintPolygon = twin.footprintPolygon;
       geo.footprintWidth = twin.footprintWidthM;
       geo.footprintDepth = twin.footprintDepthM;
+      // P2-30: each storey renders on its own plate, so a setback the
+      // register states in 층별개요 is a shape, not just a number.
+      applyLevelPlates(geo, twin.levels);
     }
     // When the model is blocked — no stated dimension and no GIS — `geo` keeps
     // the rectangle `generateBuildingGeometry` derived. That is the only path

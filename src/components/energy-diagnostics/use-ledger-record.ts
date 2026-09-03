@@ -85,10 +85,20 @@ export function useLedgerRecord(
   const footprint = useMemo<LedgerFootprint | undefined>(() => {
     const twin = reconstruction?.twin;
     if (!twin) return undefined;
+    // P2-30: above-grade plates travel with the outline, so the engine walls
+    // each storey on its own ring. A level the reconstruction could not
+    // resolve is omitted, and that storey falls back to the outline.
+    const levelPlatesM = twin.levels
+      .filter((level) => !level.below && level.grade !== "X-UNRESOLVED")
+      .map((level) => ({
+        floorNo: level.floorNo,
+        ringM: level.plate[0] as unknown as Polygon2D,
+      }));
     return {
       kind: "reconstructed",
       ringM: twin.footprintPolygon[0] as unknown as Polygon2D,
       observed: twin.observed,
+      ...(levelPlatesM.length > 0 ? { levelPlatesM } : {}),
     };
   }, [reconstruction]);
 

@@ -50,7 +50,10 @@ import { calculateZoneVolume, orientedEdges, polygonArea } from "./geometry";
 import { stableId } from "./ids";
 import type { DrawingSetIngestionResult } from "./ingestion";
 import { resolveLedgerWeatherSource } from "./ledger-climate";
-import { LEDGER_FOOTPRINT_ASSUMPTION_ID } from "./ledger-source";
+import {
+  LEDGER_FOOTPRINT_ASSUMPTION_ID,
+  LEVEL_PLATE_ENTITY_PREFIX,
+} from "./ledger-source";
 import {
   CANONICAL_ENERGY_MODEL_VERSION,
   type AssumptionRecord,
@@ -262,9 +265,30 @@ export function buildLedgerBaselineModel(
     );
   }
 
-  const extractedBoundary = ingestion.extractedBoundaries.find(
+  const isLevelPlate = (entityRef: string | undefined): boolean =>
+    typeof entityRef === "string" &&
+    entityRef.startsWith(LEVEL_PLATE_ENTITY_PREFIX);
+
+  const registerBoundaries = ingestion.extractedBoundaries.filter(
     (boundary) => boundary.documentId === registerDocument.id,
   );
+  // The building outline is the boundary that is NOT a storey plate. P2-30
+  // carries per-storey plates on the same channel, tagged by entityRef.
+  const extractedBoundary = registerBoundaries.find(
+    (boundary) => !isLevelPlate(boundary.entityRef),
+  );
+
+  /** floorNo (1-based, above grade) → that storey's own plate. */
+  const levelPlates = new Map<number, (typeof registerBoundaries)[number]>();
+  for (const boundary of registerBoundaries) {
+    if (!isLevelPlate(boundary.entityRef)) continue;
+    const floorNo = Number(
+      boundary.entityRef!.slice(LEVEL_PLATE_ENTITY_PREFIX.length),
+    );
+    if (Number.isFinite(floorNo) && floorNo >= 1) {
+      levelPlates.set(floorNo, boundary);
+    }
+  }
   if (!extractedBoundary || extractedBoundary.polygon.value == null) {
     return insufficient(
       "no_boundary",
@@ -441,6 +465,41 @@ export function buildLedgerBaselineModel(
   ]);
 
   /**
+   * The plate storey `index` (0-based, above grade) is priced on.
+   *
+   * Falls back to the building outline when the reconstruction resolved no
+   * plate for that storey — a level it could not resolve must not become an
+   * invented one here.
+   */
+  const plateFor = (
+    index: number,
+  ): Readonly<{
+    polygonFact: EnergyFact<Polygon2D>;
+    areaFact: EnergyFact<number>;
+    polygon: Polygon2D;
+    recordId: string;
+    sources: readonly EnergyFact<unknown>[];
+  }> => {
+    const own = levelPlates.get(index + 1);
+    if (!own || own.polygon.value == null) {
+      return {
+        polygonFact: boundaryPolygonFact,
+        areaFact: boundaryAreaFact,
+        polygon: boundary,
+        recordId: boundaryRecordId,
+        sources: geometrySources,
+      };
+    }
+    return {
+      polygonFact: own.polygon,
+      areaFact: own.areaSqm,
+      polygon: own.polygon.value,
+      recordId: own.id,
+      sources: Object.freeze([own.polygon, own.areaSqm]),
+    };
+  };
+
+  /**
    * A value derived from other facts, which degrades to a named assumption
    * when none of its inputs carry evidence.
    *
@@ -509,14 +568,15 @@ export function buildLedgerBaselineModel(
       }),
     );
 
+    const plate = plateFor(index);
     floorPlates.push(
       Object.freeze({
         id: plateId,
         storeyId,
-        boundary: boundaryPolygonFact,
-        areaSqm: boundaryAreaFact,
+        boundary: plate.polygonFact,
+        areaSqm: plate.areaFact,
         voidBoundaries: Object.freeze([]),
-        sourceEntityIds: Object.freeze([boundaryRecordId]),
+        sourceEntityIds: Object.freeze([plate.recordId]),
       }),
     );
 
@@ -530,7 +590,7 @@ export function buildLedgerBaselineModel(
           now,
         ),
         storeyId,
-        boundary: boundaryPolygonFact,
+        boundary: plate.polygonFact,
         floorAreaSqm: area.fact,
         volumeM3: inferredFact(
           `space.${spaceId}.volumeM3`,
@@ -796,11 +856,15 @@ export function buildLedgerBaselineModel(
   );
 
   // ── Surfaces and openings ─────────────────────────────────────────────
-  const edges = orientedEdges(boundary);
+  // P2-30: each storey is walled on its OWN plate. Before this the widest
+  // perimeter was charged for the full height, so a setback the register
+  // stated could not move a single kWh.
   const surfaces: Surface[] = [];
   const openings: Opening[] = [];
 
   for (let storeyIndex = 0; storeyIndex < aboveCount; storeyIndex += 1) {
+    const storeyPlate = plateFor(storeyIndex);
+    const edges = orientedEdges(storeyPlate.polygon);
     for (const edge of edges) {
       const surfaceId = `surface-ledger-${storeyIndex + 1}-wall-${edge.index + 1}`;
       const openingId = `opening-ledger-${storeyIndex + 1}-window-${edge.index + 1}`;
@@ -827,34 +891,34 @@ export function buildLedgerBaselineModel(
           boundaryCondition: inferredFact(
             `surface.${surfaceId}.boundaryCondition`,
             "outdoors" as const,
-            geometrySources,
+            storeyPlate.sources,
             now,
           ),
           geometry: inferredFact(
             `surface.${surfaceId}.geometry`,
             Object.freeze([edge.start, edge.end]) as unknown as Polygon2D,
-            geometrySources,
+            storeyPlate.sources,
             now,
             "m",
           ),
           areaSqm: inferredFact(
             `surface.${surfaceId}.areaSqm`,
             wallAreaSqm,
-            [...geometrySources, storeyHeightFact],
+            [...storeyPlate.sources, storeyHeightFact],
             now,
             "m2",
           ),
           azimuthDeg: inferredFact(
             `surface.${surfaceId}.azimuthDeg`,
             (edge.outwardAzimuthDeg + (northOrientationDeg.value ?? 0)) % 360,
-            geometrySources,
+            storeyPlate.sources,
             now,
             "deg",
           ),
           tiltDeg: inferredFact(
             `surface.${surfaceId}.tiltDeg`,
             90,
-            geometrySources,
+            storeyPlate.sources,
             now,
             "deg",
           ),
@@ -878,7 +942,7 @@ export function buildLedgerBaselineModel(
           areaSqm: inferredFact(
             `opening.${openingId}.areaSqm`,
             windowAreaSqm,
-            [...geometrySources, storeyHeightFact],
+            [...storeyPlate.sources, storeyHeightFact],
             now,
             "m2",
             LEDGER_ENVELOPE_ASSUMPTION_ID,
@@ -886,7 +950,7 @@ export function buildLedgerBaselineModel(
           widthM: inferredFact(
             `opening.${openingId}.widthM`,
             windowWidthM,
-            geometrySources,
+            storeyPlate.sources,
             now,
             "m",
             LEDGER_ENVELOPE_ASSUMPTION_ID,
@@ -914,7 +978,7 @@ export function buildLedgerBaselineModel(
           geometryRef: inferredFact(
             `opening.${openingId}.geometryRef`,
             surfaceId,
-            geometrySources,
+            storeyPlate.sources,
             now,
           ),
           threeObjectId: `three-${openingId}`,
@@ -923,7 +987,13 @@ export function buildLedgerBaselineModel(
     }
   }
 
-  // Ground floor on the lowest above-grade storey; roof on the topmost.
+  // Ground floor on the lowest above-grade storey; roof on the topmost — plus,
+  // on a stepped stack, one terrace per setback (P2-30).
+  //
+  // A terrace is a horizontal surface with a ROOF U-value, and before this it
+  // was missing entirely: only one plate was ever counted as roof, so a
+  // building that steps lost every square metre the setback exposed.
+  const groundPlate = plateFor(0);
   surfaces.push(
     Object.freeze({
       id: "surface-ledger-ground",
@@ -934,34 +1004,34 @@ export function buildLedgerBaselineModel(
       boundaryCondition: inferredFact(
         "surface.surface-ledger-ground.boundaryCondition",
         "ground" as const,
-        geometrySources,
+        groundPlate.sources,
         now,
       ),
       geometry: inferredFact(
         "surface.surface-ledger-ground.geometry",
-        boundary,
-        geometrySources,
+        groundPlate.polygon,
+        groundPlate.sources,
         now,
         "m",
       ),
       areaSqm: inferredFact(
         "surface.surface-ledger-ground.areaSqm",
-        polygonArea(boundary),
-        geometrySources,
+        polygonArea(groundPlate.polygon),
+        groundPlate.sources,
         now,
         "m2",
       ),
       azimuthDeg: inferredFact(
         "surface.surface-ledger-ground.azimuthDeg",
         0,
-        geometrySources,
+        groundPlate.sources,
         now,
         "deg",
       ),
       tiltDeg: inferredFact(
         "surface.surface-ledger-ground.tiltDeg",
         180,
-        geometrySources,
+        groundPlate.sources,
         now,
         "deg",
       ),
@@ -974,56 +1044,74 @@ export function buildLedgerBaselineModel(
       openingIds: Object.freeze([]),
       threeObjectId: "three-surface-ledger-ground",
     }),
-    Object.freeze({
-      id: "surface-ledger-roof",
-      type: "roof" as const,
-      storeyId: storeyIds[aboveCount - 1],
-      spaceId: spaceIds[aboveCount - 1],
-      adjacentSpaceId: null,
-      boundaryCondition: inferredFact(
-        "surface.surface-ledger-roof.boundaryCondition",
-        "outdoors" as const,
-        geometrySources,
-        now,
-      ),
-      geometry: inferredFact(
-        "surface.surface-ledger-roof.geometry",
-        boundary,
-        geometrySources,
-        now,
-        "m",
-      ),
-      areaSqm: inferredFact(
-        "surface.surface-ledger-roof.areaSqm",
-        polygonArea(boundary),
-        geometrySources,
-        now,
-        "m2",
-      ),
-      azimuthDeg: inferredFact(
-        "surface.surface-ledger-roof.azimuthDeg",
-        0,
-        geometrySources,
-        now,
-        "deg",
-      ),
-      tiltDeg: inferredFact(
-        "surface.surface-ledger-roof.tiltDeg",
-        0,
-        geometrySources,
-        now,
-        "deg",
-      ),
-      constructionId: assumptionFact(
-        "surface.surface-ledger-roof.constructionId",
-        roofConstruction.id,
-        now,
-        LEDGER_ENVELOPE_ASSUMPTION_ID,
-      ),
-      openingIds: Object.freeze([]),
-      threeObjectId: "three-surface-ledger-roof",
-    }),
   );
+
+  /** One roof surface: the top cap, or a terrace exposed by a setback. */
+  const pushRoof = (
+    id: string,
+    storeyIndex: number,
+    geometry: Polygon2D,
+    areaSqm: number,
+    sources: readonly EnergyFact<unknown>[],
+  ) => {
+    surfaces.push(
+      Object.freeze({
+        id,
+        type: "roof" as const,
+        storeyId: storeyIds[storeyIndex],
+        spaceId: spaceIds[storeyIndex],
+        adjacentSpaceId: null,
+        boundaryCondition: inferredFact(
+          `surface.${id}.boundaryCondition`,
+          "outdoors" as const,
+          sources,
+          now,
+        ),
+        geometry: inferredFact(`surface.${id}.geometry`, geometry, sources, now, "m"),
+        areaSqm: inferredFact(`surface.${id}.areaSqm`, areaSqm, sources, now, "m2"),
+        azimuthDeg: inferredFact(`surface.${id}.azimuthDeg`, 0, sources, now, "deg"),
+        tiltDeg: inferredFact(`surface.${id}.tiltDeg`, 0, sources, now, "deg"),
+        constructionId: assumptionFact(
+          `surface.${id}.constructionId`,
+          roofConstruction.id,
+          now,
+          LEDGER_ENVELOPE_ASSUMPTION_ID,
+        ),
+        openingIds: Object.freeze([]),
+        threeObjectId: `three-${id}`,
+      }),
+    );
+  };
+
+  const topPlate = plateFor(aboveCount - 1);
+  pushRoof(
+    "surface-ledger-roof",
+    aboveCount - 1,
+    topPlate.polygon,
+    polygonArea(topPlate.polygon),
+    topPlate.sources,
+  );
+
+  for (let index = 0; index < aboveCount - 1; index += 1) {
+    const here = plateFor(index);
+    const above = plateFor(index + 1);
+    const exposed = polygonArea(here.polygon) - polygonArea(above.polygon);
+    // A storey WIDER than the one below overhangs; that exposes soffit, not
+    // roof, so a negative difference contributes nothing rather than being
+    // subtracted from the cap.
+    if (exposed <= 0.01) continue;
+    // The terrace ring is the difference of two polygons, which this model has
+    // no representation for. Geometry carries the plate the terrace sits on;
+    // the AREA is the exposed difference, and that is what the physics reads.
+    pushRoof(
+      `surface-ledger-terrace-${index + 1}`,
+      index,
+      here.polygon,
+      exposed,
+      here.sources,
+    );
+  }
+
 
   // ── Usage and systems ─────────────────────────────────────────────────
   const lighting = LIGHTING_DEFAULTS[mainPurpsCd] ?? LIGHTING_DEFAULTS.default;

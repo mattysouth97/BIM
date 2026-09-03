@@ -354,9 +354,36 @@ export function generateFacade(
   const curtainSkin =
     recipe.curtainWall?.enabled === true && facade.windowRatio > 0.65;
 
-  const faces = recipe.footprintPolygon && recipe.footprintPolygon[0]?.length >= 3
-    ? getPolygonFaces(recipe.footprintPolygon[0], wallThickness)
-    : getFaces(footprintWidth, footprintDepth, wallThickness);
+  const buildingFaces =
+    recipe.footprintPolygon && recipe.footprintPolygon[0]?.length >= 3
+      ? getPolygonFaces(recipe.footprintPolygon[0], wallThickness)
+      : getFaces(footprintWidth, footprintDepth, wallThickness);
+
+  // P2-30: a level with its own plate gets its own face loop, so a setback
+  // moves the wall instead of leaving it standing on the storey below's line.
+  // A level without one shares the building faces — the pre-P2-30 path, and
+  // the reason a prism is untouched by this.
+  const faceCache = new Map<string, FaceDesc[]>();
+  const facesForFloor = (floor: FloorSpec): FaceDesc[] => {
+    if (!floor.plate || floor.plate.length < 1 || floor.plate[0].length < 3) {
+      return buildingFaces;
+    }
+    const key = floor.plate[0]
+      .map(([x, z]) => `${x.toFixed(3)},${z.toFixed(3)}`)
+      .join(";");
+    const hit = faceCache.get(key);
+    if (hit) return hit;
+    const solved = getPolygonFaces(floor.plate[0], wallThickness);
+    faceCache.set(key, solved);
+    return solved;
+  };
+
+  // The parapet crowns the topmost above-grade level, so it follows that
+  // level's plate rather than the building footprint.
+  const topFaces =
+    aboveFloors.length > 0
+      ? facesForFloor(aboveFloors[aboveFloors.length - 1])
+      : buildingFaces;
 
   // --- Pre-pass: count instances ---
   let glassCount = 0;
@@ -365,6 +392,7 @@ export function generateFacade(
   let vMullionCount = 0;
 
   for (const floor of aboveFloors) {
+    const faces = facesForFloor(floor);
     for (let fi = 0; fi < faces.length; fi++) {
       const face = faces[fi];
       const layout = windowLayoutForFace(face, floor, facade, slab.thickness, fi, faces.length);
@@ -389,7 +417,7 @@ export function generateFacade(
   }
   const includeParapet = options.includeParapet ?? recipe.roof.type === "flat";
   // Parapet is cladding (solid panels sitting on the roof), not a mullion rail.
-  if (includeParapet) solidCount += faces.length;
+  if (includeParapet) solidCount += topFaces.length;
 
   // --- Create InstancedMesh objects ---
   const glassGeo = new THREE.PlaneGeometry(1, 1);
@@ -475,6 +503,7 @@ export function generateFacade(
     const verticalHeight = Math.max(0, clearHeight - 2 * railHeight);
     const verticalCenterY = wallBaseY + railHeight + verticalHeight / 2;
 
+    const faces = facesForFloor(floor);
     for (let fi = 0; fi < faces.length; fi++) {
       const face = faces[fi];
       const layout = windowLayoutForFace(face, floor, facade, slab.thickness, fi, faces.length);
@@ -559,7 +588,7 @@ export function generateFacade(
 
   if (includeParapet) {
     const parapetBaseY = options.parapetBaseY ?? finishedRoofTopY(recipe);
-    for (const face of faces) {
+    for (const face of topFaces) {
       const barWidth = face.length - 2 * facade.cornerInset;
       if (barWidth <= 0) continue;
       // Continue the wall cladding above the roof deck — same centerline as
@@ -593,7 +622,7 @@ export function generateFacade(
       const parapetBaseY = options.parapetBaseY ?? finishedRoofTopY(recipe);
       const capY = parapetBaseY + facade.parapetHeight;
       let capSlots = 0;
-      for (const face of faces) {
+      for (const face of topFaces) {
         const barWidth = face.length - 2 * facade.cornerInset;
         if (barWidth > 0.3) capSlots += Math.max(1, Math.ceil(barWidth));
       }
@@ -606,7 +635,7 @@ export function generateFacade(
       capIM.receiveShadow = true;
       capIM.userData = { type: "parapetCap" };
       let ci = 0;
-      for (const face of faces) {
+      for (const face of topFaces) {
         const barWidth = face.length - 2 * facade.cornerInset;
         if (barWidth <= 0.3) continue;
         const n = Math.max(1, Math.ceil(barWidth));
@@ -635,6 +664,7 @@ export function generateFacade(
     const outward = wallThickness / 2 + 0.02;
     for (const floor of aboveFloors) {
       if (floor.isGroundFloor) continue;
+      const faces = facesForFloor(floor);
       for (let fi = 0; fi < faces.length; fi++) {
         const face = faces[fi];
         if (face.side !== "front" && face.side !== "back") continue;

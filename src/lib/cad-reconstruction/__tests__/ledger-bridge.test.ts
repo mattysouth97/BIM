@@ -6,10 +6,12 @@
 
 import { describe, expect, it } from "vitest";
 
+import { generateBuildingGeometry } from "@/lib/building-geometry";
 import type { BrFloorInfo, BrTitleInfo } from "@/lib/types";
 
 import { areaSqm } from "../geometry";
 import {
+  applyLevelPlates,
   evidenceFromLedger,
   ledgerRingFromModel,
   provenancePatchForModel,
@@ -357,5 +359,72 @@ describe("S4 — what an automatic reconstruction may claim", () => {
     expect(provenancePatchForModel(twin, {})).toEqual({
       reconstructedFootprint: false,
     });
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* P2-30 — level plates onto the twin's floor geometry                 */
+/* ------------------------------------------------------------------ */
+
+function ringAreaM(ring: [number, number][]): number {
+  let t = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const [x1, y1] = ring[i];
+    const [x2, y2] = ring[(i + 1) % ring.length];
+    t += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(t) / 2;
+}
+
+describe("P2-30 - applyLevelPlates", () => {
+  const rows = [floor(1, 200), floor(2, 200), floor(3, 120), floor(1, 180, true)];
+
+  it("attaches each resolved level plate to the matching floor", () => {
+    const twin = twinGeometryFromModel(build({ gis: gisRectangle(), floors: rows }))!;
+    const geo = generateBuildingGeometry(title(), rows);
+    const { geometry, substituted } = applyLevelPlates(geo, twin.levels);
+
+    const third = geometry.floors.find((f) => f.floorNo === 3 && f.type === "above")!;
+    const level3 = twin.levels.find((l) => l.floorNo === 3 && !l.below)!;
+    expect(third.plate).toEqual(level3.plate);
+    expect(substituted).toEqual([]);
+    expect(geometry.floors.find((f) => f.type === "below")!.plate).toBeDefined();
+  });
+
+  it("a smaller registered floor gets a smaller plate than the base", () => {
+    const twin = twinGeometryFromModel(build({ gis: gisRectangle(), floors: rows }))!;
+    const { geometry } = applyLevelPlates(
+      generateBuildingGeometry(title(), rows),
+      twin.levels,
+    );
+    const a1 = ringAreaM(
+      geometry.floors.find((f) => f.floorNo === 1 && f.type === "above")!.plate![0],
+    );
+    const a3 = ringAreaM(
+      geometry.floors.find((f) => f.floorNo === 3 && f.type === "above")!.plate![0],
+    );
+    expect(a3).toBeLessThan(a1);
+    expect(a3).toBeCloseTo(120, 0);
+  });
+
+  it("a level the reconstruction could not resolve gets no plate, and is named", () => {
+    const bad = [floor(1, 200), floor(2, 400)];
+    const twin = twinGeometryFromModel(build({ gis: gisRectangle(), floors: bad }))!;
+    const { geometry, substituted } = applyLevelPlates(
+      generateBuildingGeometry(title(), bad),
+      twin.levels,
+    );
+    expect(substituted).toEqual([2]);
+    expect(geometry.floors.find((f) => f.floorNo === 2)!.plate).toBeUndefined();
+  });
+
+  it("leaves floors the model has no level for untouched", () => {
+    const twin = twinGeometryFromModel(build({ gis: gisRectangle(), floors: rows }))!;
+    const extra = [...rows, floor(9, 50)];
+    const { geometry } = applyLevelPlates(
+      generateBuildingGeometry(title(), extra),
+      twin.levels,
+    );
+    expect(geometry.floors.find((f) => f.floorNo === 9)!.plate).toBeUndefined();
   });
 });

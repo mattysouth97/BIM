@@ -80,6 +80,16 @@ export interface FloorSpec {
   isGroundFloor: boolean;
   /** Optional 주용도코드 override from 층 편집. */
   useCode?: string;
+  /**
+   * This level's own plate — `[outer, ...holes]` in the same local [x, z]
+   * metre frame as `BuildingRecipe.footprintPolygon` (P2-30).
+   *
+   * Absent means "same as the building footprint", which is what every
+   * pre-P2-30 building carries, so a prism renders and prices exactly as
+   * before. Present means the register stated a different area for this
+   * storey and the reconstruction resolved a plate for it.
+   */
+  plate?: [number, number][][];
 }
 
 /** Top-level building generation recipe — all parameters needed to procedurally generate a building */

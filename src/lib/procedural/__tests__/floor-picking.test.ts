@@ -185,3 +185,46 @@ describe("getFloorFromInstanceId regression (existing callers unchanged)", () =>
     expect(builder.getFloorFromInstanceId(99)).toBeNull();
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// P2-30 — a stepped stack renders several InstancedMeshes; instanceId is local
+// to the mesh that was hit, so resolution must read that mesh's own map.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("P2-30 - picking on a stepped stack", () => {
+  const floor: FloorSpec = {
+    floorNo: 4,
+    label: "4F",
+    type: "above",
+    y: 9,
+    height: 3,
+    isGroundFloor: false,
+  };
+  const neverLookup = {
+    getFloorFromInstanceId: () => null,
+    getFloorByFloorNo: () => null,
+  };
+
+  it("resolves from the hit mesh own instanceToFloor, not a global map", () => {
+    const object = {
+      userData: { type: "slab", instanceToFloor: new Map([[0, floor]]) },
+    };
+    expect(resolvePickedFloor({ object, instanceId: 0 }, neverLookup)).toBe(floor);
+  });
+
+  it("returns null for an instanceId the hit mesh does not carry", () => {
+    const object = {
+      userData: { type: "slab", instanceToFloor: new Map([[0, floor]]) },
+    };
+    expect(resolvePickedFloor({ object, instanceId: 7 }, neverLookup)).toBeNull();
+  });
+
+  it("still defers to the lookup when the hit mesh carries no map (legacy path)", () => {
+    const object = { userData: { type: "slab" } };
+    const lookup = {
+      getFloorFromInstanceId: (id: number) => (id === 2 ? floor : null),
+      getFloorByFloorNo: () => null,
+    };
+    expect(resolvePickedFloor({ object, instanceId: 2 }, lookup)).toBe(floor);
+  });
+});

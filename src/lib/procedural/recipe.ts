@@ -272,6 +272,10 @@ export function applyFloorOverrides(
         height: existing?.height ?? fallbackH,
         isGroundFloor: i === 0,
         useCode: existing?.useCode,
+        // A resized stack keeps whatever plate the surviving level had; a
+        // level invented past the end of the original stack has none, and
+        // falls back to the footprint (P2-30).
+        ...(existing?.plate ? { plate: existing.plate } : {}),
       });
     }
     above = next;

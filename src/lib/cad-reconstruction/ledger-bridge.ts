@@ -266,3 +266,67 @@ export function provenancePatchForModel(
   // rectangle — invented, but not by this pipeline, and not this flag's claim.
   return { reconstructedFootprint: twin !== null && !twin.observed };
 }
+
+/* ------------------------------------------------------------------ */
+/* Model → per-storey twin geometry                                    */
+/* ------------------------------------------------------------------ */
+
+/** Minimal shape of the twin geometry this module patches. */
+interface PlatedFloor {
+  floorNo: number;
+  type: "above" | "below";
+  plate?: [number, number][][];
+}
+interface PlatedGeometry {
+  floors: PlatedFloor[];
+}
+
+export interface AppliedLevelPlates<G extends PlatedGeometry> {
+  geometry: G;
+  /**
+   * Floor numbers the model carried a level for but could not resolve a plate
+   * on — an `X-UNRESOLVED` level, where the registered area contradicts the
+   * observed outline. They keep the building footprint, and the caller is
+   * expected to say so rather than present the substitution as the storey.
+   */
+  substituted: number[];
+}
+
+/**
+ * Attach each resolved level's plate to the matching floor (P2-30).
+ *
+ * Mutates and returns the geometry it is given — the callers all build it
+ * fresh from `generateBuildingGeometry` immediately before calling this.
+ *
+ * A level whose plate the reconstruction graded `X-UNRESOLVED` gets no plate
+ * at all. Falling back to the footprint is the honest outcome: the register
+ * and the outline disagree about that storey, and quietly scaling a ring to
+ * paper over the contradiction is exactly what the grading system exists to
+ * prevent.
+ */
+export function applyLevelPlates<G extends PlatedGeometry>(
+  geometry: G,
+  levels: readonly TwinLevel[],
+): AppliedLevelPlates<G> {
+  const substituted: number[] = [];
+  const byKey = new Map<string, TwinLevel>();
+  for (const level of levels) {
+    byKey.set(`${level.below ? "b" : "a"}${Math.abs(level.floorNo)}`, level);
+  }
+
+  for (const floor of geometry.floors) {
+    const level = byKey.get(
+      `${floor.type === "below" ? "b" : "a"}${Math.abs(floor.floorNo)}`,
+    );
+    if (!level) continue;
+    if (level.grade === "X-UNRESOLVED") {
+      substituted.push(floor.floorNo);
+      continue;
+    }
+    if (level.plate.length >= 1 && level.plate[0].length >= 3) {
+      floor.plate = level.plate;
+    }
+  }
+
+  return { geometry, substituted };
+}

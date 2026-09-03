@@ -24,6 +24,12 @@ export interface FloorGeometry {
   structureCode: string;
   color: string;
   isGroundFloor: boolean;
+  /**
+   * This level's own plate — `[outer, ...holes]` in the twin's local [x, z]
+   * metre frame (P2-30). Absent means the level shares the building
+   * footprint, which is what every register without per-storey areas gives.
+   */
+  plate?: [number, number][][];
 }
 
 export interface BuildingGeometry {
@@ -230,6 +236,7 @@ export function toRecipe(geo: BuildingGeometry): BuildingRecipe {
     y: f.y,
     height: f.height,
     isGroundFloor: f.isGroundFloor,
+    ...(f.plate ? { plate: f.plate } : {}),
   }));
 
   // Use API-derived roof type if explicitly set (non-flat), otherwise use smart selection from recipe

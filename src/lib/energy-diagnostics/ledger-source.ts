@@ -26,6 +26,12 @@ import type {
 } from "./ingestion";
 import type { Polygon2D } from "./types";
 
+/**
+ * Entity-ref prefix marking a boundary as one storey's plate rather than the
+ * building outline (P2-30). The builder reads the storey number off the end.
+ */
+export const LEVEL_PLATE_ENTITY_PREFIX = "reconstruction:level-plate:";
+
 /** Assumption id for an outline synthesised from 건축면적. */
 export const LEDGER_FOOTPRINT_ASSUMPTION_ID =
   "assumption.ledger-derived-footprint";
@@ -52,7 +58,19 @@ export type LedgerFootprint =
    * traced outline, false for one solved to satisfy a stated 건축면적. A
    * reconstruction is never survey geometry either way (ADR-003).
    */
-  | Readonly<{ kind: "reconstructed"; ringM: Polygon2D; observed: boolean }>
+  | Readonly<{
+      kind: "reconstructed";
+      ringM: Polygon2D;
+      observed: boolean;
+      /**
+       * Per-storey plates, above grade, 1-based (P2-30). Absent means every
+       * storey shares `ringM` — the pre-P2-30 prism, unchanged.
+       *
+       * A storey the reconstruction could not resolve is simply omitted; the
+       * builder falls back to the boundary for it rather than inventing one.
+       */
+      levelPlatesM?: readonly Readonly<{ floorNo: number; ringM: Polygon2D }>[];
+    }>
   /** No outline is known; synthesise a rectangle from 건축면적. */
   | Readonly<{ kind: "derived_rectangle" }>;
 
@@ -265,19 +283,30 @@ export function diagnosticSourceFromLedger(
       ),
     );
   } else if (input.footprint?.kind === "reconstructed") {
+    const { observed, levelPlatesM } = input.footprint;
+    const carry = (polygon: Polygon2D, entityRef: string) =>
+      observed
+        ? tracedBoundary(polygon, "BIMFIT_RECONSTRUCTED", entityRef)
+        : solvedBoundary(polygon, "BIMFIT_RECONSTRUCTED", entityRef);
+
     vectorBoundaries.push(
-      input.footprint.observed
-        ? tracedBoundary(
-            input.footprint.ringM,
-            "BIMFIT_RECONSTRUCTED",
-            "reconstruction:observed-outline",
-          )
-        : solvedBoundary(
-            input.footprint.ringM,
-            "BIMFIT_RECONSTRUCTED",
-            "reconstruction:solved-outline",
-          ),
+      carry(
+        input.footprint.ringM,
+        observed
+          ? "reconstruction:observed-outline"
+          : "reconstruction:solved-outline",
+      ),
     );
+    // Level plates ride the same boundary channel, each tagged with its
+    // storey. They carry the SAME grade as the outline they were scaled from
+    // — a per-storey plate is never better evidence than the ring it came
+    // from, only a more specific claim about one level.
+    for (const level of levelPlatesM ?? []) {
+      if (!Array.isArray(level.ringM) || level.ringM.length < 3) continue;
+      vectorBoundaries.push(
+        carry(level.ringM, `${LEVEL_PLATE_ENTITY_PREFIX}${level.floorNo}`),
+      );
+    }
   } else if (archArea !== null) {
     vectorBoundaries.push(
       solvedBoundary(

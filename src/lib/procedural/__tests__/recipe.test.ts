@@ -192,3 +192,65 @@ describe("applyOverrides", () => {
     expect(result2.footprintPolygon).toEqual(existingPolygon);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// P2-30 — a floor's plate must survive every override path
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("P2-30 - plates survive floor overrides", () => {
+  const PLATE: [number, number][][] = [
+    [
+      [-5, -3],
+      [5, -3],
+      [5, 3],
+      [-5, 3],
+    ],
+  ];
+  function platedBase(): BuildingRecipe {
+    const defaults = getRecipe("11", "2010-2019", "02000");
+    const floorSpecs: FloorSpec[] = [1, 2, 3, 4, 5].map((n) => ({
+      floorNo: n,
+      label: `${n}F`,
+      type: "above" as const,
+      y: (n - 1) * 3,
+      height: 3,
+      isGroundFloor: n === 1,
+      ...(n >= 4 ? { plate: PLATE } : {}),
+    }));
+    return {
+      ...defaults,
+      footprintWidth: 20,
+      footprintDepth: 10,
+      floors: floorSpecs,
+      totalHeight: 15,
+      wallThickness: 0.2,
+      era: "2010-2019",
+      strctCd: "11",
+      mainPurpsCd: "02000",
+      siteWidth: 30,
+      siteDepth: 20,
+      buildingName: "T",
+      address: "S",
+    } as BuildingRecipe;
+  }
+
+  it("floorCount keeps the plate on every floor that survives", () => {
+    const out = applyOverrides(platedBase(), { floorCount: 4 });
+    expect(out.floors.find((f) => f.floorNo === 4)!.plate).toEqual(PLATE);
+    expect(out.floors.find((f) => f.floorNo === 3)!.plate).toBeUndefined();
+  });
+
+  it("floorHeight keeps plates", () => {
+    const out = applyOverrides(platedBase(), { floorHeight: 3.5 });
+    expect(out.floors.find((f) => f.floorNo === 5)!.plate).toEqual(PLATE);
+  });
+
+  it("floorEdits keeps plates on retagged floors", () => {
+    const out = applyOverrides(platedBase(), {
+      floorEdits: { "5": { useCode: "14000" } },
+    });
+    const f5 = out.floors.find((f) => f.floorNo === 5)!;
+    expect(f5.useCode).toBe("14000");
+    expect(f5.plate).toEqual(PLATE);
+  });
+});

@@ -47,39 +47,85 @@ function pbrToMaterial(
  *
  * The rectangular InstancedMesh path is preserved as the fallback.
  */
+/**
+ * Bucket floors by the plate they render on, preserving stack order.
+ *
+ * Levels without their own plate share the building footprint, so a building
+ * whose register states one area for every storey yields exactly one bucket —
+ * the pre-P2-30 single-InstancedMesh path, unchanged.
+ */
+function groupFloorsByPlate(
+  floors: FloorSpec[],
+  fallback: [number, number][][],
+): Array<{ plate: [number, number][][]; members: FloorSpec[] }> {
+  const buckets = new Map<
+    string,
+    { plate: [number, number][][]; members: FloorSpec[] }
+  >();
+  for (const floor of floors) {
+    const plate =
+      floor.plate && floor.plate.length >= 1 && floor.plate[0].length >= 3
+        ? floor.plate
+        : fallback;
+    // Rounded to the millimetre: two plates that render identically must not
+    // split into two batches over float noise.
+    const key = plate
+      .map((ring) => ring.map(([x, z]) => `${x.toFixed(3)},${z.toFixed(3)}`).join(";"))
+      .join("|");
+    const existing = buckets.get(key);
+    if (existing) existing.members.push(floor);
+    else buckets.set(key, { plate, members: [floor] });
+  }
+  return [...buckets.values()];
+}
+
 export function generateSlabs(recipe: BuildingRecipe): THREE.InstancedMesh | THREE.Group {
   const { floors, footprintWidth, footprintDepth, slab, footprintPolygon } = recipe;
 
-  // POLYGON PATH: unified InstancedMesh — one shared geometry, per-instance Y offset
+  // POLYGON PATH: one InstancedMesh per DISTINCT plate — a prism keeps its
+  // single batch and its draw-call budget; an N-step building costs N batches,
+  // not one mesh per storey (P2-30).
   if (footprintPolygon && footprintPolygon.length >= 1 && footprintPolygon[0].length >= 3) {
-    // Build the canonical slab geometry at baseY=0; Y is applied via instance matrix.
-    const geo = extrudePolygon(footprintPolygon, slab.thickness, 0);
+    const groups = groupFloorsByPlate(floors, footprintPolygon);
     const mat = pbrToMaterial(recipe.materials.slab, recipe, "slab");
-    const count = floors.length;
-    const im = new THREE.InstancedMesh(geo, mat, Math.max(1, count));
-    im.castShadow = true;
-    im.receiveShadow = true;
 
-    const mat4 = new THREE.Matrix4();
-    const pos = new THREE.Vector3();
-    const quat = new THREE.Quaternion();
-    const scl = new THREE.Vector3(1, 1, 1);
-    const instanceToFloor = new Map<number, FloorSpec>();
+    const buildBatch = (plate: [number, number][][], members: FloorSpec[]) => {
+      // Canonical geometry at baseY=0; Y is applied via the instance matrix.
+      const geo = extrudePolygon(plate, slab.thickness, 0);
+      const im = new THREE.InstancedMesh(geo, mat, Math.max(1, members.length));
+      im.castShadow = true;
+      im.receiveShadow = true;
 
-    for (let i = 0; i < floors.length; i++) {
-      const floor = floors[i];
-      // Translate each instance to place the slab's base at floor.y
-      pos.set(0, floor.y, 0);
-      mat4.compose(pos, quat, scl);
-      im.setMatrixAt(i, mat4);
-      instanceToFloor.set(i, floor);
+      const mat4 = new THREE.Matrix4();
+      const pos = new THREE.Vector3();
+      const quat = new THREE.Quaternion();
+      const scl = new THREE.Vector3(1, 1, 1);
+      const instanceToFloor = new Map<number, FloorSpec>();
+
+      for (let i = 0; i < members.length; i++) {
+        pos.set(0, members[i].y, 0);
+        mat4.compose(pos, quat, scl);
+        im.setMatrixAt(i, mat4);
+        instanceToFloor.set(i, members[i]);
+      }
+
+      im.count = members.length;
+      im.instanceMatrix.needsUpdate = true;
+      // `instanceToFloor` is LOCAL to this batch. A pick carries an instanceId
+      // scoped to the mesh it hit, so resolution must read the hit mesh's own
+      // map rather than a building-wide one.
+      im.userData = { type: "slab", floors: members, instanceToFloor };
+      return im;
+    };
+
+    if (groups.length === 1) {
+      return buildBatch(groups[0].plate, groups[0].members);
     }
 
-    im.count = count;
-    im.instanceMatrix.needsUpdate = true;
-    im.userData = { type: "slab", floors, instanceToFloor };
-
-    return im;
+    const group = new THREE.Group();
+    group.userData = { type: "slab-group", floors };
+    for (const g of groups) group.add(buildBatch(g.plate, g.members));
+    return group;
   }
 
   // RECTANGULAR PATH: original InstancedMesh logic with overhang + ground-floor material
@@ -180,9 +226,28 @@ export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
 
   // Canonical grid (structural-codes) already drops columns that do not fit
   // the cadastral polygon — same visual filter as the local point-in-ring path.
+  // P2-30: a level with its own plate is filtered against THAT plate, so a
+  // setback does not leave columns standing outside the storey above.
   const columnPositions = getColumnPositions(recipe);
+  const perPlateCache = new Map<string, { x: number; z: number }[]>();
+  const positionsFor = (floor: FloorSpec): { x: number; z: number }[] => {
+    if (!floor.plate || floor.plate.length < 1 || floor.plate[0].length < 3) {
+      return columnPositions;
+    }
+    const key = floor.plate[0]
+      .map(([x, z]) => `${x.toFixed(3)},${z.toFixed(3)}`)
+      .join(";");
+    const hit = perPlateCache.get(key);
+    if (hit) return hit;
+    const solved = getColumnPositions({ ...recipe, footprintPolygon: floor.plate });
+    perPlateCache.set(key, solved);
+    return solved;
+  };
 
-  const totalCount = floors.length * columnPositions.length;
+  const totalCount = floors.reduce(
+    (sum, floor) => sum + positionsFor(floor).length,
+    0,
+  );
   const geo = getEquipmentGeometryClone("column") ?? new THREE.BoxGeometry(1, 1, 1);
   const mat = pbrToMaterial(recipe.materials.column, recipe, "column");
   const im = new THREE.InstancedMesh(geo, mat, Math.max(1, totalCount));
@@ -206,7 +271,7 @@ export function generateColumns(recipe: BuildingRecipe): THREE.InstancedMesh {
     const floorLoad = loads[floorIndex] ?? 0;
     const utilization = capacity > 0 ? floorLoad / capacity : 0;
 
-    for (const cp of columnPositions) {
+    for (const cp of positionsFor(floor)) {
       pos.set(cp.x, y, cp.z);
       scl.set(column.size, colHeight, column.size);
       mat4.compose(pos, quat, scl);

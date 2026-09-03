@@ -10,11 +10,14 @@
 
 import { describe, expect, it } from "vitest";
 
+import { generateBuildingGeometry, toRecipe } from "@/lib/building-geometry";
 import {
+  applyLevelPlates,
   evidenceFromLedger,
   reconstructModel,
   twinGeometryFromModel,
 } from "@/lib/cad-reconstruction/ledger-bridge";
+import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import {
   DEMO_FOOTPRINT,
   demoFloors,
@@ -135,5 +138,34 @@ describe("P2-29 — twin and diagnosis quote the same building", () => {
       demoTitle.grndFlrCnt + demoTitle.ugrndFlrCnt,
     );
     expect(twin.levels.some((l) => l.below)).toBe(true);
+  });
+});
+
+describe("P2-30 - twin and diagnosis price the same envelope", () => {
+  it("the engine gross wall area matches the twin within 1 percent", async () => {
+    const twin = twinSide()!;
+    const model = await diagnosisSide({
+      kind: "reconstructed",
+      ringM: twin.footprintPolygon[0] as unknown as Polygon2D,
+      observed: twin.observed,
+      levelPlatesM: twin.levels
+        .filter((l) => !l.below)
+        .map((l) => ({
+          floorNo: l.floorNo,
+          ringM: l.plate[0] as unknown as Polygon2D,
+        })),
+    });
+    const engineWall = model.geometry.surfaces
+      .filter((s) => s.type === "exterior_wall")
+      .reduce((sum, s) => sum + (s.areaSqm.value ?? 0), 0);
+
+    const geo = applyLevelPlates(
+      generateBuildingGeometry(demoTitle, [...demoFloors]),
+      twin.levels,
+    ).geometry;
+    geo.footprintPolygon = twin.footprintPolygon;
+    const twinWall = envelopeQuantities(toRecipe(geo)).grossWallAreaSqm;
+
+    expect(Math.abs(engineWall - twinWall) / twinWall).toBeLessThan(0.01);
   });
 });

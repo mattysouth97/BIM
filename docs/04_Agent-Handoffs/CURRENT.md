@@ -20,9 +20,12 @@ inside it; do not add a fifth step or a second front door.
 
 ## Verified Working State
 
-Validated on 2026-09-04 (after P2-29, one ledger geometry producer):
+Validated on 2026-09-04 (after P2-30, per-storey envelope):
 
-- Unit: **4149 passed**, 4 skipped, 377 files
+- Unit: **4174 passed**, 4 skipped, 377 files
+  (one load-dependent flake: `lean-composition.test.ts > resolves the studio
+  component` times out at ~5.01 s under full-suite load, passes in isolation,
+  and reproduces identically with every P2-30 change stashed)
 - E2E: **41 passed, 2 failed** (Playwright, chromium)
 - `tsc --noEmit`: clean; `eslint src`: 0 errors, 9 pre-existing warnings
 - Production live at `https://bim-self.vercel.app`
@@ -80,8 +83,11 @@ files.
    uses a GIS ring **as-is**, never reconciled against the stated 건축면적 — the
    disagreement surfaces honestly as a `REVIEW` row in `buildAreaValidation`
    rather than being silently scaled away.
-3. **Per-storey plans cannot move the number** until `envelopeQuantities` sums
-   per storey instead of extruding one ring by total height.
+3. ~~**Per-storey plans cannot move the number**~~ — closed by P2-30.
+   `envelopeQuantities` sums Σ perimeterᵢ × heightᵢ and counts setback terraces
+   as roof; the traceable engine walls each storey on its own plate. What
+   remains: plates still shrink **concentrically** about the centroid, so the
+   area is right and the face is not (P2-31).
 
 ## Known Risks
 
@@ -115,6 +121,39 @@ files.
 | `docs/work-plan/` | Referenced by name from `CLAUDE.md`; do not relocate |
 | `src/app/api/bldrgst/_factory.ts` | Shared-key resolution and per-endpoint row caps |
 | `public/models/` | 173 GLBs (102 authoring, 58 equipment, 13 bim-assets) |
+
+## Recent Architectural Changes (2026-09-04 later: per-storey envelope)
+
+- **P2-30 — the stack is no longer one extruded prism.** `FloorSpec.plate`
+  (optional, `[outer, ...holes]` in the twin's local metre frame) threads
+  through slabs, facade faces, the column grid and the parapet;
+  `applyLevelPlates` is the shared adapter from `TwinLevel[]` onto floor
+  geometry. **Absent plate = building footprint**, so every pre-P2-30 building
+  is byte-identical — that equality is locked by a test, not a convention.
+- `envelopeQuantities` now returns `grossWallAreaSqm = Σ perimeterᵢ × heightᵢ`,
+  `roofAreaSqm = top plate + Σ max(0, areaᵢ − areaᵢ₊₁)`, `volumeM³` summed per
+  storey, and `planAreaSqm` = the lowest **above-grade** plate. Basements stay
+  recorded, not extruded.
+- The traceable engine walls each storey on its own plate and emits one roof
+  surface per terrace. Plates ride the ingestion boundary channel tagged
+  `LEVEL_PLATE_ENTITY_PREFIX`, carrying the **same grade** as the outline they
+  were scaled from.
+- **Traps:** slabs bucket by *distinct plate*, not per storey, so the draw-call
+  budget holds — and because a pick's `instanceId` is scoped to the batch it
+  hit, `resolvePickedFloor` reads the hit mesh's own `instanceToFloor` before
+  the building-wide lookup. A terrace surface carries the plate it sits on as
+  geometry while its **area** is the exposed difference; the canonical model has
+  no polygon-difference type, and the physics reads the area.
+- **VWorld finding (verified against the live API, 2026-09-04):**
+  - `LT_C_UQ111` returns 용도지역 verbatim in `uname` ("제3종일반주거지역",
+    "일반상업지역"). P2-31 was specced assuming this was unavailable; it is not,
+    so 일조권 사선제한 can be applied as a *sourced* rule. Item corrected.
+  - `LT_C_SPBD` returned **only** `gro_flo_co` among the P2-25 attributes — no
+    `buld_hg`, no `und_flo_co` — on the sample queried. If that holds generally,
+    the VWorld measured-height fallback never fires and `heit=0` falls straight
+    through to the era estimate. Worth confirming before relying on it.
+  - There is **no** open 3D-building endpoint: `req/3ddata` 404s and no
+    `LT_C_SPBD_3D`-style layer resolves. VWorld's 3D map is not an API here.
 
 ## Recent Architectural Changes (2026-09-04: one ledger geometry producer)
 
@@ -245,12 +284,12 @@ author email is not on the Vercel account. `git log -1 --format=%ae` must be
 
 ## Highest-Priority Next Actions
 
-1. **P2-30 — per-storey envelope quantities.** The stack is still one extruded
-   prism: `envelope-quantities.ts:60` charges the base perimeter for the full
-   height and counts one plate as roof, so a setback stated in 층별개요 cannot
-   move kWh. P2-29 delivered the per-level plates it needs.
-2. **P2-31 — directional setbacks.** `makeLevel` still shrinks each plate about
-   its centroid; real steps go on one face.
+1. **P2-31 — directional setbacks.** `makeLevel` still shrinks each plate about
+   its centroid, so a step's area is right and its face is not. Now unblocked
+   further than specced: `LT_C_UQ111` supplies 용도지역, so 일조권 사선제한 is a
+   sourced rule rather than a recognised pattern.
+2. Confirm whether `LT_C_SPBD` carries `buld_hg` at all (see above); if not,
+   P2-25's measured-height tier is dead code.
 3. Integrate the canonical engine into step 3; mount refinement inputs in the twin.
 4. Fix the two E2E defects above (canvas sizing, cross-test state leak).
 

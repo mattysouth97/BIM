@@ -206,3 +206,72 @@ describe("rectangular slab path not regressed", () => {
     expect(scl.z).toBeCloseTo(12 + 2 * 0.5, 3);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// P2-30 — per-floor plates: one instanced batch per DISTINCT plate
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A smaller L, the upper levels of a stepped stack. */
+const SMALL_L: [number, number][][] = [
+  [
+    [0, 0],
+    [6, 0],
+    [6, 3],
+    [3, 3],
+    [3, 6],
+    [0, 6],
+  ],
+];
+
+describe("P2-30 - per-floor plates", () => {
+  it("a stepped stack returns a Group named slabs with one InstancedMesh per distinct plate", () => {
+    const floors = makeFloors(5);
+    floors[3] = { ...floors[3], plate: SMALL_L };
+    floors[4] = { ...floors[4], plate: SMALL_L };
+    const slabs = generateSlabs(makePolygonRecipe(floors));
+
+    expect(slabs).toBeInstanceOf(THREE.Group);
+    const batches = (slabs as THREE.Group).children.filter(
+      (c): c is THREE.InstancedMesh => c instanceof THREE.InstancedMesh,
+    );
+    expect(batches).toHaveLength(2);
+    expect(batches.map((b) => b.count).sort()).toEqual([2, 3]);
+    for (const batch of batches) {
+      expect(batch.userData.type).toBe("slab");
+      expect(batch.userData.instanceToFloor).toBeInstanceOf(Map);
+    }
+  });
+
+  it("every floor of a stepped stack is reachable through its own batch instanceToFloor", () => {
+    const floors = makeFloors(5);
+    floors[3] = { ...floors[3], plate: SMALL_L };
+    floors[4] = { ...floors[4], plate: SMALL_L };
+    const slabs = generateSlabs(makePolygonRecipe(floors)) as THREE.Group;
+    const seen = new Set<number>();
+    for (const child of slabs.children) {
+      const map = child.userData.instanceToFloor as Map<number, FloorSpec>;
+      for (const floor of map.values()) seen.add(floor.floorNo);
+    }
+    expect([...seen].sort()).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it("levels whose plate equals the footprint still collapse to ONE InstancedMesh", () => {
+    const floors = makeFloors(5).map((f) => ({ ...f, plate: L_SHAPE }));
+    const slabs = generateSlabs(makePolygonRecipe(floors));
+    expect(slabs).toBeInstanceOf(THREE.InstancedMesh);
+    expect((slabs as THREE.InstancedMesh).count).toBe(5);
+  });
+
+  it("the upper batch of a stepped stack sits at the upper floors Y", () => {
+    const floors = makeFloors(3);
+    floors[2] = { ...floors[2], plate: SMALL_L };
+    const slabs = generateSlabs(makePolygonRecipe(floors)) as THREE.Group;
+    const upper = slabs.children.find(
+      (c) => (c.userData.instanceToFloor as Map<number, FloorSpec>).size === 1,
+    ) as THREE.InstancedMesh;
+    const m = new THREE.Matrix4();
+    upper.getMatrixAt(0, m);
+    const pos = new THREE.Vector3().setFromMatrixPosition(m);
+    expect(pos.y).toBeCloseTo(6, 6);
+  });
+});
