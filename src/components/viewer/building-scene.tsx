@@ -25,10 +25,11 @@ import type { BimModelSnapshot } from "@/lib/bim/model/types";
 import { workspaceBuildingPk } from "@/lib/generative/design-storage";
 import { floorNoFromPlanLevelId } from "@/lib/interior/visible-floors";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
+import { useLedgerReconstruction } from "@/hooks/use-ledger-reconstruction";
+import { provenancePatchForModel } from "@/lib/cad-reconstruction/ledger-bridge";
 import { useBimModelStore } from "@/store/bim-model-store";
 import { Loader2 } from "lucide-react";
 import { createSceneProjection } from "@/lib/gis/gis-transform";
-import { ringBboxCenter } from "@/lib/gis/ring-utils";
 import { useT } from "@/lib/i18n";
 import { formatArea } from "@/lib/constants";
 import type { CampusData } from "@/lib/campus/campus-types";
@@ -334,6 +335,28 @@ export function BuildingScene({
   // Chain (named in building-geometry.ts): ledger heit → measured → era estimate.
   const measuredHeightM = footprintDataProp?.attributes?.height ?? undefined;
 
+  // P2-29: one producer of ledger geometry. The reconstruction resolves the
+  // outline — GIS trace when VWorld answered, a ring solved from 건축면적 when
+  // it did not — and projects it to local metres itself, so the twin and the
+  // traceable engine can no longer describe different buildings.
+  const reconstruction = useLedgerReconstruction(title, floors, footprintDataProp);
+
+  // S4: record that the outline is a reconstruction when it is one — never
+  // that it is CAD evidence, and never over an uploaded drawing.
+  useEffect(() => {
+    if (!buildingPk || recipeOverride) return;
+    const store = useTwinProvenanceStore.getState();
+    const patch = provenancePatchForModel(
+      reconstruction?.twin ?? null,
+      store.get(buildingPk),
+    );
+    if (!patch) return;
+    if (store.get(buildingPk).reconstructedFootprint === patch.reconstructedFootprint) {
+      return;
+    }
+    store.patch(buildingPk, patch);
+  }, [buildingPk, recipeOverride, reconstruction]);
+
   const geometry = useMemo(() => {
     // A generated design already has a solved recipe. Deriving geometry from
     // the synthetic title invents a 100 m² box (archArea is 0) and must not
@@ -341,46 +364,19 @@ export function BuildingScene({
     if (recipeOverride) return null;
     const geo = generateBuildingGeometry(title, floors, { measuredHeightM });
 
-    if (footprintPolygon && footprintPolygon.length >= 1 && footprintPolygon[0].length >= 3) {
-      try {
-        // footprintPolygon is number[][][] — WGS84 rings [[lng, lat], ...]
-        const outerRing = footprintPolygon[0];
-
-        // Center the scene frame on the ring's bbox midpoint — a vertex
-        // average is biased by the duplicated closing vertex and vertex-dense
-        // edges, which would shift the polygon shell away from the
-        // origin-centered frame the roof box and column grid build in.
-        const [centerLng, centerLat] = ringBboxCenter(outerRing);
-
-        // Create site-specific TM projection centered on the bbox midpoint
-        const proj = createSceneProjection(centerLng, centerLat);
-
-        // Project all rings from WGS84 to local [x, z] meters, then re-center
-        // exactly on the projected bbox so the outline is origin-centered.
-        const projected: [number, number][][] = footprintPolygon.map((ring) =>
-          ring.map(([lng, lat]) => proj.project(lng, lat) as [number, number])
-        );
-        const [cx, cz] = ringBboxCenter(projected[0]);
-        const localRings: [number, number][][] = projected.map((ring) =>
-          ring.map(([x, z]) => [x - cx, z - cz] as [number, number])
-        );
-
-        geo.footprintPolygon = localRings;
-
-        // Compute bounding box from projected outer ring for footprintWidth/footprintDepth
-        const outerLocal = localRings[0];
-        const xs = outerLocal.map((p) => p[0]);
-        const zs = outerLocal.map((p) => p[1]);
-        geo.footprintWidth = Math.max(...xs) - Math.min(...xs);
-        geo.footprintDepth = Math.max(...zs) - Math.min(...zs);
-      } catch (err) {
-        console.warn("[GIS] Footprint projection failed, falling back to rectangular:", err);
-        // geo.footprintPolygon remains undefined — rectangular fallback is automatic
-      }
+    const twin = reconstruction?.twin;
+    if (twin) {
+      geo.footprintPolygon = twin.footprintPolygon;
+      geo.footprintWidth = twin.footprintWidthM;
+      geo.footprintDepth = twin.footprintDepthM;
     }
+    // When the model is blocked — no stated dimension and no GIS — `geo` keeps
+    // the rectangle `generateBuildingGeometry` derived. That is the only path
+    // on which the twin still invents its own shape, and it is a shape nothing
+    // in the register supports; the fidelity badge reports it as such.
 
     return geo;
-  }, [recipeOverride, title, floors, footprintPolygon, measuredHeightM]);
+  }, [recipeOverride, title, floors, reconstruction, measuredHeightM]);
 
   // ── Portfolio-feature-vector geometry shape (area / perimeter / aspect)
   // Used by the TwinStageOverlay to derive the 20-field feature vector.

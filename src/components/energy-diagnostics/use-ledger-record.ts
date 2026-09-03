@@ -4,18 +4,28 @@
  * Resolves a `/diagnostics/new?method=ledger&building=<id>` id into the
  * 건축물대장 record the baseline builder needs.
  *
- * Deliberately does NOT yet attach the VWorld outline: that polygon is in
- * lon/lat degrees and reaching fidelity L1 honestly means projecting it to
- * metres, not handing degrees to a builder that expects metres. Until then the
- * baseline uses the outline derived from 건축면적, which is labelled as an
- * assumption rather than presented as a measured shape.
+ * P2-29: the outline now comes from the shared reconstruction
+ * (`useLedgerReconstruction`) — the same producer the 3D twin renders from, so
+ * the diagnosis and the twin cannot quote different shapes for one building.
+ * The reconstruction projects VWorld's lon/lat degrees into a local metric
+ * frame itself, which is what previously kept that polygon out of this path.
+ *
+ * The grade travels with the ring: `observed` is true only for a traced
+ * outline, false for one solved to satisfy the stated 건축면적. A
+ * reconstruction is never survey geometry (ADR-003), so neither case is
+ * labelled `dimensioned_vector_geometry`.
  */
 
 import { useMemo } from "react";
 
+import { useBuildingFootprint } from "@/hooks/use-building-footprint";
 import { useCompositeBuilding } from "@/hooks/use-composite-building";
+import { useLedgerReconstruction } from "@/hooks/use-ledger-reconstruction";
 import { DEMO_BUILDING_ID, parseBuildingId } from "@/lib/constants";
 import { demoFloors, demoTitle } from "@/lib/demo/demo-building";
+import type { LedgerFootprint } from "@/lib/energy-diagnostics/ledger-source";
+import type { Polygon2D } from "@/lib/energy-diagnostics/types";
+import type { BrFloorInfo, BrTitleInfo } from "@/lib/types";
 
 import type { LedgerRecord } from "./ledger-baseline-loader";
 
@@ -24,6 +34,8 @@ export type LedgerRecordState =
   | Readonly<{ phase: "loading" }>
   | Readonly<{ phase: "ready"; record: LedgerRecord }>
   | Readonly<{ phase: "unavailable"; message: string }>;
+
+const EMPTY_FLOORS: readonly BrFloorInfo[] = Object.freeze([]);
 
 const EMPTY_PARAMS = {
   sigunguCd: "",
@@ -51,14 +63,37 @@ export function useLedgerRecord(
   // Hooks stay unconditional; empty params leave every query disabled.
   const composite = useCompositeBuilding(parsed ?? EMPTY_PARAMS);
 
+  const title: BrTitleInfo | null = sample
+    ? demoTitle
+    : (composite.title?.items?.[0] ?? null);
+  // Memoised: the `?? []` would otherwise be a fresh array on every render,
+  // and the record's identity is what `useLedgerBaseline` keys its rebuild on
+  // — an unstable one re-runs the whole diagnosis continuously.
+  const floors: readonly BrFloorInfo[] = useMemo(
+    () => (sample ? demoFloors : (composite.floors?.items ?? EMPTY_FLOORS)),
+    [sample, composite.floors],
+  );
+
+  const address = title?.platPlcNm || title?.newPlatPlc || undefined;
+  const footprintQuery = useBuildingFootprint(address);
+  const reconstruction = useLedgerReconstruction(
+    title,
+    floors,
+    footprintQuery.data,
+  );
+
+  const footprint = useMemo<LedgerFootprint | undefined>(() => {
+    const twin = reconstruction?.twin;
+    if (!twin) return undefined;
+    return {
+      kind: "reconstructed",
+      ringM: twin.footprintPolygon[0] as unknown as Polygon2D,
+      observed: twin.observed,
+    };
+  }, [reconstruction]);
+
   return useMemo<LedgerRecordState>(() => {
-    if (sample) {
-      return {
-        phase: "ready",
-        record: { title: demoTitle, floors: demoFloors },
-      };
-    }
-    if (!parsed) {
+    if (!sample && !parsed) {
       return {
         phase: "unavailable",
         message:
@@ -71,11 +106,15 @@ export function useLedgerRecord(
     // and the builder already falls back to an even share of 연면적 without
     // it. The register endpoints fail independently and intermittently, so a
     // blip on a sibling call must not discard a title we actually received.
-    const title = composite.title?.items?.[0];
     if (title) {
+      // A better outline changes every exterior wall and window area, so the
+      // baseline must not be built on the solved rectangle and then rebuilt on
+      // the trace a moment later. Wait for the outline query to settle — it is
+      // best-effort and short, and a failure settles it just as a hit does.
+      if (footprintQuery.isLoading) return { phase: "loading" };
       return {
         phase: "ready",
-        record: { title, floors: composite.floors?.items ?? [] },
+        record: { title, floors, ...(footprint ? { footprint } : {}) },
       };
     }
     if (composite.isLoading) return { phase: "loading" };
@@ -99,9 +138,11 @@ export function useLedgerRecord(
     sample,
     parsed,
     locale,
+    title,
+    floors,
+    footprint,
+    footprintQuery.isLoading,
     composite.isLoading,
     composite.isError,
-    composite.title,
-    composite.floors,
   ]);
 }

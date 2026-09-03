@@ -44,6 +44,15 @@ export type LedgerFootprint =
     }>
   /** A real GIS building outline (VWorld LT_C_SPBD), in metres. */
   | Readonly<{ kind: "vworld_building"; ringM: Polygon2D }>
+  /**
+   * The outline the shared reconstruction resolved (P2-29) — the same ring the
+   * twin renders, so the two cannot describe different buildings.
+   *
+   * `observed` is the only thing that decides how it is treated: true for a
+   * traced outline, false for one solved to satisfy a stated 건축면적. A
+   * reconstruction is never survey geometry either way (ADR-003).
+   */
+  | Readonly<{ kind: "reconstructed"; ringM: Polygon2D; observed: boolean }>
   /** No outline is known; synthesise a rectangle from 건축면적. */
   | Readonly<{ kind: "derived_rectangle" }>;
 
@@ -196,6 +205,43 @@ export function diagnosticSourceFromLedger(
   // survey, so neither is ever labelled `dimensioned_vector_geometry`.
   const archArea = positiveNumber(title.archArea);
   const vectorBoundaries: VectorBoundaryInput[] = [];
+
+  /** A traced outline: better than a rectangle, still not a dimensioned survey. */
+  const tracedBoundary = (
+    polygon: Polygon2D,
+    cadLayer: string,
+    entityRef: string,
+  ): VectorBoundaryInput =>
+    Object.freeze({
+      polygon,
+      cadLayer,
+      entityRef,
+      confidence: 0.75,
+      status: "extracted" as const,
+      extractionMethod: "vector_geometry" as const,
+      authority: "repeated_graphical_evidence" as const,
+    });
+
+  /**
+   * A ring the pipeline solved to satisfy a stated area. The shape is invented
+   * even though the area is not, so it keeps the invented-outline assumption.
+   */
+  const solvedBoundary = (
+    polygon: Polygon2D,
+    cadLayer: string,
+    entityRef: string,
+  ): VectorBoundaryInput =>
+    Object.freeze({
+      polygon,
+      cadLayer,
+      entityRef,
+      confidence: 0.4,
+      status: "inferred" as const,
+      extractionMethod: "rule_inference" as const,
+      authority: "deterministic_rule_inference" as const,
+      assumptionId: LEDGER_FOOTPRINT_ASSUMPTION_ID,
+    });
+
   if (input.footprint?.kind === "measured_drawing") {
     // A ring taken off a scaled drawing IS dimensioned survey geometry, and is
     // the one footprint that may be labelled as such.
@@ -212,28 +258,33 @@ export function diagnosticSourceFromLedger(
     );
   } else if (input.footprint?.kind === "vworld_building") {
     vectorBoundaries.push(
-      Object.freeze({
-        polygon: input.footprint.ringM,
-        cadLayer: "VWORLD_LT_C_SPBD",
-        entityRef: "vworld:building-outline",
-        confidence: 0.75,
-        status: "extracted" as const,
-        extractionMethod: "vector_geometry" as const,
-        authority: "repeated_graphical_evidence" as const,
-      }),
+      tracedBoundary(
+        input.footprint.ringM,
+        "VWORLD_LT_C_SPBD",
+        "vworld:building-outline",
+      ),
+    );
+  } else if (input.footprint?.kind === "reconstructed") {
+    vectorBoundaries.push(
+      input.footprint.observed
+        ? tracedBoundary(
+            input.footprint.ringM,
+            "BIMFIT_RECONSTRUCTED",
+            "reconstruction:observed-outline",
+          )
+        : solvedBoundary(
+            input.footprint.ringM,
+            "BIMFIT_RECONSTRUCTED",
+            "reconstruction:solved-outline",
+          ),
     );
   } else if (archArea !== null) {
     vectorBoundaries.push(
-      Object.freeze({
-        polygon: derivedFootprintRing(archArea),
-        cadLayer: "BIMFIT_LEDGER_DERIVED",
-        entityRef: "ledger:archArea-rectangle",
-        confidence: 0.4,
-        status: "inferred" as const,
-        extractionMethod: "rule_inference" as const,
-        authority: "deterministic_rule_inference" as const,
-        assumptionId: LEDGER_FOOTPRINT_ASSUMPTION_ID,
-      }),
+      solvedBoundary(
+        derivedFootprintRing(archArea),
+        "BIMFIT_LEDGER_DERIVED",
+        "ledger:archArea-rectangle",
+      ),
     );
   }
 

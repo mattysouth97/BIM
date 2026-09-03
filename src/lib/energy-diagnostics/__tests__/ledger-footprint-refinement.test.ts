@@ -173,3 +173,66 @@ describe("a measured plan replacing the register's invented outline", () => {
     expect(captured).toEqual([]);
   });
 });
+
+/**
+ * P2-29 — the outline the shared reconstruction resolved.
+ *
+ * The ring travels; the grade does not improve. Whether it is treated as a
+ * trace or as an inference follows `observed`, never the fact that a ring
+ * arrived at all.
+ */
+describe("a reconstructed outline from the shared ledger geometry producer", () => {
+  it("carries an observed ring as graphical evidence, with no invented-outline assumption", async () => {
+    const model = await build({
+      kind: "reconstructed",
+      ringM: MEASURED_L_SHAPE,
+      observed: true,
+    });
+
+    const boundary = model.geometry.floorPlates[0].boundary;
+    expect(boundary.status).toBe("extracted");
+    expect(boundary.authority).toBe("repeated_graphical_evidence");
+    expect(boundary.assumptionId).toBeUndefined();
+    expect(model.assumptions.map((a) => a.id)).not.toContain(
+      LEDGER_FOOTPRINT_ASSUMPTION_ID,
+    );
+  });
+
+  it("never labels a reconstruction as dimensioned survey geometry", async () => {
+    const model = await build({
+      kind: "reconstructed",
+      ringM: MEASURED_L_SHAPE,
+      observed: true,
+    });
+    expect(model.geometry.floorPlates[0].boundary.authority).not.toBe(
+      "dimensioned_vector_geometry",
+    );
+  });
+
+  it("carries a solved ring as an inference, keeping the invented-outline assumption", async () => {
+    const model = await build({
+      kind: "reconstructed",
+      ringM: MEASURED_L_SHAPE,
+      observed: false,
+    });
+
+    const boundary = model.geometry.floorPlates[0].boundary;
+    expect(boundary.status).toBe("inferred");
+    expect(boundary.authority).toBe("deterministic_rule_inference");
+    expect(boundary.assumptionId).toBe(LEDGER_FOOTPRINT_ASSUMPTION_ID);
+    expect(model.assumptions.map((a) => a.id)).toContain(
+      LEDGER_FOOTPRINT_ASSUMPTION_ID,
+    );
+  });
+
+  it("uses the ring it was handed, not a rectangle re-derived from 건축면적", async () => {
+    const reconstructed = await build({
+      kind: "reconstructed",
+      ringM: MEASURED_L_SHAPE,
+      observed: false,
+    });
+    const rectangle = await build();
+    // Same 건축면적, a longer perimeter — so the two disagree about energy.
+    expect(annualKwh(reconstructed)).not.toBeCloseTo(annualKwh(rectangle), 0);
+  });
+});

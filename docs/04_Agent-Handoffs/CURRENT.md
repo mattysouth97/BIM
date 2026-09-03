@@ -1,7 +1,7 @@
 ---
 type: handoff
 status: implemented
-last_verified: 2026-09-02
+last_verified: 2026-09-04
 ---
 
 # Current Project State
@@ -20,25 +20,26 @@ inside it; do not add a fifth step or a second front door.
 
 ## Verified Working State
 
-Validated on 2026-09-02 (after the evidence-to-CAD reconstruction module):
+Validated on 2026-09-04 (after P2-29, one ledger geometry producer):
 
-- Unit: **4118 passed**, 4 skipped, 375 files
-- E2E: **39 passed, 4 failed** (Playwright, chromium)
+- Unit: **4149 passed**, 4 skipped, 377 files
+- E2E: **41 passed, 2 failed** (Playwright, chromium)
 - `tsc --noEmit`: clean; `eslint src`: 0 errors, 9 pre-existing warnings
 - Production live at `https://bim-self.vercel.app`
 
-The four failing E2E tests are **pre-existing on this branch**, not regressions —
-verified by stashing the 2026-09-02 changes and reproducing each failure:
+The E2E failures are **pre-existing and order-dependent**, not regressions. The
+*set* changes run to run; the count does not improve by re-running. A/B on the
+two affected spec files alone — `plan-view.spec.ts` + `energy-diagnostics.spec.ts`,
+with the P2-29 changes stashed and restored — gave **4 failed / 7 passed before**
+and **3 failed / 8 passed after**.
 
 | Spec | Symptom |
 |---|---|
-| `first-door.spec.ts:54` | persistent chrome / language switch |
-| `plan-view.spec.ts:45` | diagnosis canvas never reaches 300×400 |
-| `energy-diagnostics.spec.ts:418` | reopen stays on "Loading saved project…" |
-| `energy-diagnostics.spec.ts:586` | passes in isolation — cross-test state leak from 418 |
+| `plan-view.spec.ts:45` | diagnosis canvas never reaches 300×400 — fails identically with any change stashed; reproducible by hand at `/building/demo`, where the R3F canvas stays at its 300×150 default |
+| `energy-diagnostics.spec.ts:418` / `:586` | cross-test state leak; either can fail depending on order, both pass in isolation |
 
-The first three belong to the in-flight material-aware diagnostics work; fix them
-before treating the E2E suite as green.
+`first-door.spec.ts:54` was failing on 2026-09-02 and passes now. Fix the canvas
+sizing and the state leak before treating the E2E suite as green.
 
 ## Active Systems
 
@@ -73,10 +74,12 @@ files.
 1. **The twin's energy is not the traceable engine.** It uses the older
    `material-store` path, labelled `간이 모델` in the UI. The canonical engine
    lives on a second route. This is the top item.
-2. **VWorld outlines are unusable as-is** — lon/lat degrees, not metres.
-   (`src/lib/cad-reconstruction` does project them, via `createSceneProjection`
-   into a site-centred TM frame — that path is a worked example, not a fix for
-   the twin's own consumption of the same data.)
+2. ~~**VWorld outlines are unusable as-is**~~ — closed by P2-29. The
+   reconstruction projects them into a site-centred TM frame and both the twin
+   and the traceable engine now read that ring. What remains: the reconstruction
+   uses a GIS ring **as-is**, never reconciled against the stated 건축면적 — the
+   disagreement surfaces honestly as a `REVIEW` row in `buildAreaValidation`
+   rather than being silently scaled away.
 3. **Per-storey plans cannot move the number** until `envelopeQuantities` sums
    per storey instead of extruding one ring by total height.
 
@@ -112,6 +115,37 @@ files.
 | `docs/work-plan/` | Referenced by name from `CLAUDE.md`; do not relocate |
 | `src/app/api/bldrgst/_factory.ts` | Shared-key resolution and per-endpoint row caps |
 | `public/models/` | 173 GLBs (102 authoring, 58 equipment, 13 bim-assets) |
+
+## Recent Architectural Changes (2026-09-04: one ledger geometry producer)
+
+- **P2-29 — `reconstruct()` is now the single producer of ledger geometry.**
+  Before this the app derived a building shape three times and they disagreed:
+  `building-geometry.ts` from a GIS **bbox** or a 1.5:1 rectangle,
+  `ledger-baseline-model.ts:1233` from its own 1.5:1 rectangle, and
+  `cad-reconstruction/reconstruct.ts` from the register's per-floor areas —
+  only the third reading 층별개요, and its levels discarded at
+  `upload-stage.tsx:427`.
+- New `src/lib/cad-reconstruction/ledger-bridge.ts` — `evidenceFromLedger`
+  (claims-free evidence), `reconstructModel` (model only, no DXF or documents),
+  `twinGeometryFromModel` (mm → local metres, bbox-centred, per-level plates),
+  `ledgerRingFromModel`, `provenancePatchForModel`. Pure; no store imports.
+- `useLedgerReconstruction` memoises it on content, not identity, and runs on
+  data the page already fetched — no extra register call.
+- **New `LedgerFootprint` kind `reconstructed`.** Its `observed` flag alone
+  decides authority: `repeated_graphical_evidence` for a trace,
+  `deterministic_rule_inference` + `LEDGER_FOOTPRINT_ASSUMPTION_ID` for a ring
+  solved from 건축면적. Neither is ever `dimensioned_vector_geometry` (ADR-003).
+- **Traps to keep:** `provenancePatchForModel` never returns
+  `hasCadFootprint`, and returns `null` outright when an uploaded CAD outline is
+  already recorded — the automatic path runs every render, the upload once.
+  A GIS trace is **not** flagged `reconstructedFootprint`; only a solved ring is.
+- Learned while building it: the model is more resilient than the item assumed —
+  C2 falls back 연면적 ÷ 지상층수 (`evidence.ts:410`), so blocking needs every
+  dimensional route closed, not just `archArea=0`.
+- `/building/demo` carries a canned `recipeOverride` and deliberately bypasses
+  this path; only a real ledger id exercises the twin side.
+- Next: **P2-30** (per-storey envelope — the stack is still one extruded prism),
+  then **P2-31** (directional setbacks). Strictly in that order.
 
 ## Recent Architectural Changes (2026-09-02: architectural renderer)
 
@@ -211,9 +245,14 @@ author email is not on the Vercel account. `git log -1 --format=%ae` must be
 
 ## Highest-Priority Next Actions
 
-1. Integrate the canonical engine into step 3; mount refinement inputs in the twin.
-2. Project VWorld outlines to metres.
-3. Per-storey envelope quantities.
+1. **P2-30 — per-storey envelope quantities.** The stack is still one extruded
+   prism: `envelope-quantities.ts:60` charges the base perimeter for the full
+   height and counts one plate as roof, so a setback stated in 층별개요 cannot
+   move kWh. P2-29 delivered the per-level plates it needs.
+2. **P2-31 — directional setbacks.** `makeLevel` still shrinks each plate about
+   its centroid; real steps go on one face.
+3. Integrate the canonical engine into step 3; mount refinement inputs in the twin.
+4. Fix the two E2E defects above (canvas sizing, cross-test state leak).
 
 ## Relevant Documents
 

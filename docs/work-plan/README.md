@@ -83,6 +83,9 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | [P2-26](./items/P2-26-neighbor-context-massing.md) | Neighbor context massing — surrounding buildings as gray extrusions for solar/shading context | geometry | M | UC-05 | 🟣 |
 | [P2-27](./items/P2-27-input-provenance-wiring.md) | Wire footprint/height provenance into the fidelity badge | viewer | S | UC-05 | 🟣 |
 | [P2-28](./items/P2-28-campus-building-layer.md) | Campus mode building-layer upgrade — real outlines + measured heights for all campus buildings | geometry | M | UC-05, UC-09 | 🟣 |
+| [P2-29](./items/P2-29-one-ledger-geometry-producer.md) | One ledger geometry producer — reconstruct() feeds the twin and the traceable engine | geometry | L | UC-03, 05, 12 | 🟣 |
+| [P2-30](./items/P2-30-per-storey-envelope.md) | Per-storey envelope — the stack stops being one extruded prism | geometry | L | UC-05, UC-12 | ⬜ |
+| [P2-31](./items/P2-31-directional-setbacks.md) | Directional setbacks — a step goes on one face, not concentrically | geometry | M | UC-05, UC-12 | ⬜ |
 | [P2-08](./items/P2-08-dead-code-doc-drift.md) | Delete dead code, fix doc drift, remove stray artifacts | infra | M | UC-05 | ✅ |
 | [P2-09](./items/P2-09-e2e-rewrite.md) | Rewrite e2e suite around the real user journey with mocked APIs | infra | M | UC-01, 03, 05, 08 | ✅ |
 | [P2-10](./items/P2-10-financial-model-refinements.md) | Financial model refinements — loan-term buy-down, rate honesty, solar fixes, sourced costs | retrofit | L | UC-06, 07, 08 | ✅ |
@@ -101,12 +104,16 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 - **P2-11 after P1-06** — both touch `src/app/api/vworld/footprint/route.ts`; the error-contract work lands first.
 - **P2-12 before P2-08** — P2-12 wires previously dead texture/detail code that P2-08 would otherwise delete.
 - **P2-13 after P0-04 (done) and P2-09** — it builds on the floor-selection fallback and the e2e harness.
+- **P2-29 → P2-30 → P2-31** — the ledger-geometry track, strictly in order. P2-29 makes per-level plates reach the twin at all; P2-30 prices them; P2-31 decides where the step goes. Running them out of order produces geometry nothing downstream can see.
+- **P2-29 after P2-27** — both write `twin-provenance-store`; the fidelity badge wiring lands before an automatic reconstruction starts setting `reconstructedFootprint` on every building.
 - **P2-08 last** — dead-code deletion is safest after the items that might touch those files have landed.
 
 ## Changelog
 
 | Date | Item | Change | Agent/session |
 |---|---|---|---|
+| 2026-09-04 | P2-29 | Implemented. New `src/lib/cad-reconstruction/ledger-bridge.ts` (`evidenceFromLedger` → `reconstructModel` → `twinGeometryFromModel` / `ledgerRingFromModel` / `provenancePatchForModel`) and `useLedgerReconstruction`. `building-scene.tsx` renders the model's projected ring instead of the GIS bbox; `use-ledger-record.ts` feeds the same ring to the traceable engine through a new `reconstructed` `LedgerFootprint` kind whose `observed` flag alone decides traced-vs-inferred authority. 4149 unit (from 4118), tsc clean, 0 lint errors, e2e 41/2 vs a 39/4 baseline | claude-opus-5-session |
+| 2026-09-04 | P2-29, P2-30, P2-31 | Added the ledger-geometry track. Audit found **three** independent 건축물대장→shape derivations (`building-geometry.ts` bbox/1.5:1 rect, `ledger-baseline-model.ts:1233` 1.5:1 rect, `cad-reconstruction/reconstruct.ts` per-level plates) of which only the third reads 층별개요 — and its levels are discarded at `upload-stage.tsx:427`, leaving the twin a single extruded prism. Items collapse to one producer, sum the envelope per storey, and direct the setback. Spec only; no code changed | claude-opus-5-session |
 | 2026-08-24 | P0-06 | Source-traceable canonical drawing-set diagnosis shipped for review: visible Tier-1 assumption acceptance, deterministic simulation, evidence/3D/result round trips, alternatives, and all-or-nothing persistence; 3,839 Vitest passed (4 skipped), 28 Playwright passed (1 skipped), build and CI checks green | codex-gpt5 |
 | 2026-07-21 | all | Work plan created from 11-track code review (23 items; process + knowledge base seeded) | orchestrator swarm |
 | 2026-07-21 | P0-01 | Twin-data routes hardened: slug+containment validation, timing-safe POST auth (fail-closed), 64 KB cap, no path leak, honest lastUpdated | claude-fable-5-ultrawork |
