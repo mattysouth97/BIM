@@ -94,12 +94,25 @@ Report real results. Never claim a check you did not run.
 
 ## Deploying
 
-`vercel --prod --yes`. A deploy returns **BLOCKED** — not a build failure — when
-the HEAD commit author email is not on the Vercel account:
+```bash
+vercel --prod --yes --scope matts-projects-d0677dc4
+```
+
+Two distinct traps, easy to confuse:
+
+- **`Not authorized`** — the scope flag is missing. The bare
+  `vercel --prod --yes` fails this way even when `vercel whoami` succeeds: the
+  CLI does not resolve the `orgId` in `.vercel/project.json` to the team on its
+  own. Not an auth problem, and not the BLOCKED trap below.
+- **`BLOCKED`** — not a build failure. The HEAD commit author email is not on
+  the Vercel account:
 
 ```bash
 git log -1 --format=%ae   # must be namseunghun97@gmail.com
 ```
+
+The `bim` project lives under `matts-projects-d0677dc4` and serves
+`https://bim-self.vercel.app`.
 
 ## Documentation
 
