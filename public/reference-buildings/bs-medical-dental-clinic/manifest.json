@@ -92,15 +92,15 @@
       "ko": "전기",
       "en": "Electrical",
       "file": "electrical.glb",
-      "byteLength": 1976100,
-      "triangleCount": 34633,
+      "byteLength": 1916044,
+      "triangleCount": 33865,
       "groups": [
         "terminal",
         "plant",
         "equipment"
       ],
-      "detailedRuns": 37,
-      "proxiedComponents": 2081
+      "detailedRuns": 8,
+      "proxiedComponents": 2110
     },
     {
       "id": "plumbing",

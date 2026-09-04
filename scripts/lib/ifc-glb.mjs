@@ -194,11 +194,10 @@ export const SERVICE_GROUPS = Object.freeze({
   /**
    * The exporter's catch-all. Here it holds 28 panelboards and one
    * `M_Elevator-Hydraulic:2000 lbs` — both real building services, so both are
-   * kept. They are DETAILED rather than proxied, and that is the whole point:
-   * as a bounding box the elevator became a storey-height grey slab standing in
-   * the middle of the ductwork, reading as plant that is not there. A box is an
-   * honest proxy for a valve, which is small and repeated; it is a misleading
-   * one for a single object the size of a shaft.
+   * kept, and both stay boxes: a lift genuinely occupies a shaft-shaped volume,
+   * so the box is the right shape rather than a stand-in for a missing one.
+   * What was wrong was drawing it opaque, which made a storey-height slab that
+   * hid the ducts behind it. It is translucent now — see SERVICE_COLOUR.
    */
   equipment: ["IfcBuildingElementProxy", "IfcDistributionElement"],
 });
@@ -222,9 +221,6 @@ const SERVICE_DETAILED = Object.freeze([
   "IfcEnergyConversionDevice",
   "IfcFlowMovingDevice",
   "IfcFlowStorageDevice",
-  // Few, large and individually recognisable — the cases a box misrepresents.
-  "IfcBuildingElementProxy",
-  "IfcDistributionElement",
 ]);
 
 const SERVICE_COLOUR = Object.freeze({
@@ -233,7 +229,12 @@ const SERVICE_COLOUR = Object.freeze({
   valve: [0.86, 0.52, 0.36, 1],
   terminal: [0.94, 0.80, 0.36, 1],
   plant: [0.44, 0.70, 0.58, 1],
-  equipment: [0.58, 0.60, 0.66, 1],
+  // Translucent on purpose. These are large single objects — an elevator, a
+  // panelboard — and a box IS the right shape for them: a lift occupies a
+  // shaft-shaped volume. Drawn opaque it became a storey-height slab that hid
+  // the ductwork behind it and read as plant. At a third opacity the same box
+  // says "this volume is taken" without competing with the network it stands in.
+  equipment: [0.58, 0.60, 0.66, 0.34],
 });
 
 /**
