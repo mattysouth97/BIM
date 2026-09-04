@@ -29,6 +29,501 @@
         "lengthAssumed": false,
         "areaAssumed": false
       }
+    },
+    {
+      "role": "bernts-steel",
+      "fileName": "BERNTS-Staalconstructie.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "55ec4ff826ad6fe77cb1ff058a05634993925b7967e4b7b289dfe31bcacd8ebf",
+      "byteLength": 3886639,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "geelen-v1",
+      "fileName": "GEELEN-Breedplaat V1.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "612f755f6e7de3bf37d5548c8ca9311d8ee49d36e7f0d6944ff8fe3495220997",
+      "byteLength": 521474,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "geelen-v2",
+      "fileName": "GEELEN-Breedplaat V2.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "bb3c05152e312fc7d3998055bf644c75abdc0a760572dd628bc10c751aef084c",
+      "byteLength": 299842,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "geelen-v3",
+      "fileName": "GEELEN-Breedplaat V3.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "d7f5a27ea3ec5faa733c77baf457dd18c817b25d090a020bcee6c9c010031319",
+      "byteLength": 332660,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "geelen-roof",
+      "fileName": "GEELEN-Dakvloer.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "84fe2eff9d724486ae23df823a228443ff2fb86e80d610161676df73d8873706",
+      "byteLength": 266382,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "waardo-hollowcore",
+      "fileName": "WAARDO-Kanaalplaatvloer.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "7ada57cf0dd1175d276f83c1ff11d1b917ccfc8d6d0a74a2b19524062d3ae37c",
+      "byteLength": 4697244,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "multicom-balconies",
+      "fileName": "MULTICOM-balkons.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "32539ae4e8e7e6083b09cdfc0f75dbd554fea6979b2f5cf72ca1ae32840f3f41",
+      "byteLength": 644143,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "multicom-bands",
+      "fileName": "MULTICOM-banden.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "b93715ac7c813ffec6a2bf18ab7912619e5d4a8d0227e49fe1b6bf523de2fe52",
+      "byteLength": 403044,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "multicom-stairs",
+      "fileName": "MULTICOM-trappen+bordessen.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "0e21403de676a9f876a587883fd94ae49fc45646319c5ea1a276c6c75685934f",
+      "byteLength": 334666,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "willemsen-high",
+      "fileName": "WILLEMSEN-Hoogbouw.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "52d94e09b9d8139706a22099a0574b2cf957e732bcda1f1a19874e6db933c34e",
+      "byteLength": 6017265,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "willemsen-high-tiles",
+      "fileName": "WILLEMSEN-Hoogbouw dakpannen.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "87d1ed450d95b30e8ab59604c0afeabb6ddc943c46d7cd7fab7643c06288a43e",
+      "byteLength": 5219347,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "willemsen-low",
+      "fileName": "WILLEMSEN-Laagbouw.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "553d28f7adaa65d78c3cc2236444475c1446a5a73f5960da6b5c73a1fccd428b",
+      "byteLength": 1958122,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "willemsen-low-tiles",
+      "fileName": "WILLEMSEN-laagbouw dakpannen.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "5b597e38da932dfc002a4b5712529031d9ff92b1cf081939889fba8e32298d8c",
+      "byteLength": 999706,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "fek-balcony-2015-09",
+      "fileName": "BALKONHEKKEN 23-9-2015.IFC",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "1c2ed565f3e6a094834279deae50172f7f563612129241999812f42f68241529",
+      "byteLength": 2215938,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "fek-balcony",
+      "fileName": "FEK - Balkonhekken en borstweringsleuningen.IFC",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "91dfef874cd3757c9a5ae73f74dee0fa5d378bc47717b8842d932e50133b1337",
+      "byteLength": 4023823,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "fek-french",
+      "fileName": "FEK - Franse balkonhekken en doorvalbeveiliging.IFC",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "06f962ffe10e315f6bde6c5314c314bc251ee95fa4561601792ee0cbacccfe32",
+      "byteLength": 11173030,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "fek-stair",
+      "fileName": "FEK - Traphekken.IFC",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "aa5df99601f7d74831bd4a82c38f290010aa7ae0f8434a1f8ef0cb206a43eff1",
+      "byteLength": 12040545,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "xella-ground",
+      "fileName": "XELLA-Begane grond.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "d860cc64e5e1161bf56576baff0534d153108db602787f1e64ec83cca7eb6cf8",
+      "byteLength": 596450,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "xella-1",
+      "fileName": "XELLA-1e verdieping.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "394fa778faff30c5c317d866db3028392ed94903469bbbe2a7cfdd630fa9b2a1",
+      "byteLength": 564479,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "xella-2",
+      "fileName": "XELLA-2e verdieping.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "bc579c3124c18901b043b725e063a7eb7e3d3b4fd4684652ec6acd15a99a748d",
+      "byteLength": 445748,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "xella-3",
+      "fileName": "XELLA-3e verdieping.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "c46c65262e7023ecbc2b75c086a675c672cfa6822a88426cd1ffc88c9131c12f",
+      "byteLength": 201295,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "ytong-general",
+      "fileName": "YTONG-Algemeen.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "81664cc4fb76f5ee2e5ba116f777b034f716c9da28468169f0dce2734667ab76",
+      "byteLength": 11162,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "ytong-01",
+      "fileName": "YTONG-Kavel 01.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "37a718f0742d382d52812f14f37e99554f7fcbdeafadfbc2b398ef0d201e98cb",
+      "byteLength": 77686,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "ytong-02",
+      "fileName": "YTONG-Kavel 02.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "4d553509c2c651b4c1c05d3c0c43d67b5150b9e74f62b57a51fcc5c7b08f779c",
+      "byteLength": 58497,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "ytong-03",
+      "fileName": "YTONG-Kavel 03.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "c1bff328647cca6a9e82e9ced46ac458bd6f5bcfa73ec9a623211abaf699d121",
+      "byteLength": 92184,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "ytong-04",
+      "fileName": "YTONG-Kavel 04.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "7d369b6d26d6fee96f7ed61fbc2ffae6643e11269b70e06145a0a0462e6fd1b0",
+      "byteLength": 70583,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "ytong-05",
+      "fileName": "YTONG-Kavel 05.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "d104efd1bec2da49abc35fc6a725a1bb139451356106f3ce66892a28e1c6d761",
+      "byteLength": 63285,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "ytong-06",
+      "fileName": "YTONG-Kavel 06.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "e0eb9daffcc2b2ea3d395689d00a34961b479b48c176e4e3b947f41fd1cc3539",
+      "byteLength": 60863,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "ytong-07",
+      "fileName": "YTONG-Kavel 07.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "e6ae54f84938e3be03990691c3826dd630178cab92d506ddc8efe00d26f7e35e",
+      "byteLength": 63277,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "ytong-08",
+      "fileName": "YTONG-Kavel 08.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "b3b4ee853e8737189ce27f298b8f622b4772b9629a1a8e1c27b9abd97d231758",
+      "byteLength": 60871,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "ytong-09",
+      "fileName": "YTONG-Kavel 09.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "188195bd08e82f62568e3d5845d544b74fb189c5ef1d1e916ee407417ca3fe19",
+      "byteLength": 62320,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "ytong-10",
+      "fileName": "YTONG-Kavel 10.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "add92d8fa490989ecf180464dfdb272ae0a377a38ad2651d56509ad8e67d6a95",
+      "byteLength": 61406,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": null,
+        "lengthAssumed": false,
+        "areaAssumed": true
+      }
+    },
+    {
+      "role": "hb-utilities",
+      "fileName": "HB_Nutsvoorzieningen.ifc",
+      "dir": "Coordination model and subcontractors models/BIMsight Projectdata1",
+      "sha256": "f85baa7f5c45feffb45783464a7d01a1679f784487b6f866dfcaabdd1a86caf7",
+      "byteLength": 34475935,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
     }
   ],
   "counts": {
@@ -531,7 +1026,204 @@
     }
   ],
   "spacesFile": "spaces.json",
-  "serviceLayers": [],
+  "serviceLayers": [
+    {
+      "id": "structure",
+      "ko": "구조 (철골)",
+      "en": "Steel frame",
+      "file": "structure.glb",
+      "byteLength": 537192,
+      "triangleCount": 7469,
+      "groups": [
+        "structure",
+        "structure-instanced"
+      ],
+      "elements": 965,
+      "distinctGeometries": 148,
+      "instancedShapes": 94,
+      "instancedPlacements": 1589,
+      "drawCalls": 95,
+      "flow": {
+        "file": null,
+        "ports": 0,
+        "connections": 0,
+        "directedEdges": 0,
+        "drawnEdges": 0,
+        "bidirectionalEdges": 0,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 0,
+        "supplySegments": 0,
+        "returnSegments": 0,
+        "reason": "The model declares no distribution ports, so it states no network to trace.",
+        "wavelengthM": null
+      }
+    },
+    {
+      "id": "precast",
+      "ko": "프리캐스트 바닥·계단",
+      "en": "Precast floors & stairs",
+      "file": "precast.glb",
+      "byteLength": 5206788,
+      "triangleCount": 90116,
+      "groups": [
+        "precast",
+        "precast-instanced"
+      ],
+      "elements": 1703,
+      "distinctGeometries": 1690,
+      "instancedShapes": 74,
+      "instancedPlacements": 681,
+      "drawCalls": 75,
+      "flow": {
+        "file": null,
+        "ports": 0,
+        "connections": 0,
+        "directedEdges": 0,
+        "drawnEdges": 0,
+        "bidirectionalEdges": 0,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 0,
+        "supplySegments": 0,
+        "returnSegments": 0,
+        "reason": "The model declares no distribution ports, so it states no network to trace.",
+        "wavelengthM": null
+      }
+    },
+    {
+      "id": "roofing",
+      "ko": "지붕 마감 (기와)",
+      "en": "Roof tiling",
+      "file": "roofing.glb",
+      "byteLength": 6656944,
+      "triangleCount": 125754,
+      "groups": [
+        "roofing"
+      ],
+      "elements": 4293,
+      "distinctGeometries": 4293,
+      "instancedShapes": 0,
+      "instancedPlacements": 0,
+      "drawCalls": 1,
+      "flow": {
+        "file": null,
+        "ports": 0,
+        "connections": 0,
+        "directedEdges": 0,
+        "drawnEdges": 0,
+        "bidirectionalEdges": 0,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 0,
+        "supplySegments": 0,
+        "returnSegments": 0,
+        "reason": "The model declares no distribution ports, so it states no network to trace.",
+        "wavelengthM": null
+      }
+    },
+    {
+      "id": "railings",
+      "ko": "난간·발코니",
+      "en": "Railings & balconies",
+      "file": "railings.glb",
+      "byteLength": 15344108,
+      "triangleCount": 284646,
+      "groups": [
+        "railings",
+        "railings-instanced"
+      ],
+      "elements": 1454,
+      "distinctGeometries": 1447,
+      "instancedShapes": 1,
+      "instancedPlacements": 8,
+      "drawCalls": 2,
+      "flow": {
+        "file": null,
+        "ports": 0,
+        "connections": 0,
+        "directedEdges": 0,
+        "drawnEdges": 0,
+        "bidirectionalEdges": 0,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 0,
+        "supplySegments": 0,
+        "returnSegments": 0,
+        "reason": "The model declares no distribution ports, so it states no network to trace.",
+        "wavelengthM": null
+      }
+    },
+    {
+      "id": "blockwork",
+      "ko": "내벽 블록",
+      "en": "Internal blockwork",
+      "file": "blockwork.glb",
+      "byteLength": 2942092,
+      "triangleCount": 36740,
+      "groups": [
+        "blockwork"
+      ],
+      "elements": 3060,
+      "distinctGeometries": 3060,
+      "instancedShapes": 0,
+      "instancedPlacements": 0,
+      "drawCalls": 1,
+      "flow": {
+        "file": null,
+        "ports": 0,
+        "connections": 0,
+        "directedEdges": 0,
+        "drawnEdges": 0,
+        "bidirectionalEdges": 0,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 0,
+        "supplySegments": 0,
+        "returnSegments": 0,
+        "reason": "The model declares no distribution ports, so it states no network to trace.",
+        "wavelengthM": null
+      }
+    },
+    {
+      "id": "utilities",
+      "ko": "설비 인입",
+      "en": "Utility connections",
+      "file": "utilities.glb",
+      "byteLength": 28292,
+      "triangleCount": 504,
+      "groups": [
+        "utilities"
+      ],
+      "elements": 42,
+      "distinctGeometries": 0,
+      "instancedShapes": 0,
+      "instancedPlacements": 0,
+      "drawCalls": 1,
+      "note": "42 utility connections, drawn as boxes: the SketchUp export's triangles carry no information a box does not.",
+      "flow": {
+        "file": null,
+        "ports": 0,
+        "connections": 0,
+        "directedEdges": 0,
+        "drawnEdges": 0,
+        "bidirectionalEdges": 0,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 0,
+        "supplySegments": 0,
+        "returnSegments": 0,
+        "reason": "The model declares no distribution ports, so it states no network to trace.",
+        "wavelengthM": null
+      }
+    }
+  ],
   "model": {
     "file": "model.glb",
     "byteLength": 8759652,
@@ -544,7 +1236,8 @@
       "door",
       "mullion"
     ],
-    "note": "Building fabric only: walls, slabs, roofs and openings. Furniture, fixtures, railings and the structural frame are not in this file."
+    "note": "Building fabric from the architectural model only: walls, slabs, stairs, glazing, doors and mullions. Nothing from the subcontractor models is in this file — the steel frame, precast floors, roof tiling, railings and blockwork are their own layers.",
+    "serviceNote": "Six layers from the 33 subcontractor models in the archive's coordination set (BIMsight Projectdata1). Five carry each supplier's geometry as modelled — a shape placed twice or more is stored once and instanced, everything else is merged. Every file declares millimetres and no distribution port, so no layer animates flow. The utilities layer is the exception and says so under its row: its 42 SketchUp objects are drawn as boxes."
   },
   "invalidDiagnostics": {
     "note": "Space-boundary strip sums. INVALID as envelope areas: room-height not storey-height, gross of openings, ~16% double-counted, missing 18 walls and 10 storefronts, and including 60.17 m2 of chain-link fence. Diagnostic only.",

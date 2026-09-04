@@ -137,6 +137,13 @@ export type ReferenceBuildingManifest = Readonly<{
     instancedPlacements: number;
     drawCalls: number;
     /**
+     * Present only where the layer is NOT the model's own geometry — the
+     * apartment's utility connections are drawn as boxes, and this sentence
+     * is how the page says so under the row. Absent means the geometry is
+     * the model's; it is never a decoration.
+     */
+    note?: string;
+    /**
      * The routed network read out of the model's own distribution ports.
      *
      * `file` is null when the model states no direction of flow, and the
@@ -170,6 +177,13 @@ export type ReferenceBuildingManifest = Readonly<{
     triangleCount: number;
     groups: readonly string[];
     note: string;
+    /**
+     * How this building's service layers were packed, in the generator's
+     * words and with the building's own figures. Emitted only when the
+     * building has service layers; the page falls back to a generic sentence
+     * that claims no number when it is absent.
+     */
+    serviceNote?: string;
   }>;
 }>;
 

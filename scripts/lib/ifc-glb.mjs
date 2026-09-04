@@ -269,7 +269,19 @@ function pushBox(bucket, min, max) {
   }
 }
 
-export function collectServices(api, webIfc, modelID) {
+/**
+ * `serviceGroups` and `detailedTypes` default to the MEP tables above, so a
+ * caller passing nothing gets exactly the behaviour this function always had.
+ * A layer that is to be shipped as boxes on purpose — Schependomlaan's
+ * utility connections, whose SketchUp triangles say nothing a box does not —
+ * passes its own type table and an empty `detailedTypes`.
+ */
+export function collectServices(
+  api,
+  webIfc,
+  modelID,
+  { serviceGroups = SERVICE_GROUPS, detailedTypes = SERVICE_DETAILED } = {},
+) {
   const groups = new Map();
   const skipped = new Map();
   let proxied = 0;
@@ -279,7 +291,7 @@ export function collectServices(api, webIfc, modelID) {
     const line = api.GetLine(modelID, mesh.expressID, false);
     const typeName = line ? api.GetNameFromTypeCode(line.type) : null;
     let group = null;
-    for (const [name, types] of Object.entries(SERVICE_GROUPS)) {
+    for (const [name, types] of Object.entries(serviceGroups)) {
       if (typeName && types.includes(typeName)) group = name;
     }
     if (!group) {
@@ -292,7 +304,7 @@ export function collectServices(api, webIfc, modelID) {
       groups.set(group, bucket);
     }
 
-    const keepDetail = SERVICE_DETAILED.includes(typeName);
+    const keepDetail = detailedTypes.includes(typeName);
     const placed = mesh.geometries;
     const min = [Infinity, Infinity, Infinity];
     const max = [-Infinity, -Infinity, -Infinity];

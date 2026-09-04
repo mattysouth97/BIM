@@ -314,3 +314,15 @@ export function githubLfsUrl(owner, repo, ref, filePath) {
   const encoded = filePath.split("/").map(encodeURIComponent).join("/");
   return `https://media.githubusercontent.com/media/${owner}/${repo}/${ref}/${encoded}`;
 }
+
+/**
+ * A plain (non-LFS) file on GitHub. The `media.` host above answers 404 for
+ * a repository that never used LFS — measured 2026-09-04 on
+ * openBIMstandards/Archive-DataSetSchependomlaan, for the architectural file
+ * and the subcontractor set alike — so a building declares which host its
+ * repository needs rather than one URL shape standing for both.
+ */
+export function githubRawUrl(owner, repo, ref, filePath) {
+  const encoded = filePath.split("/").map(encodeURIComponent).join("/");
+  return `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${encoded}`;
+}

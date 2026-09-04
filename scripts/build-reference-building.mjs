@@ -18,7 +18,16 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-import { fetchSource, githubLfsUrl, openIfcFiles, compoundAngleDeg, str, num, refId } from "./lib/ifc-reader.mjs";
+import {
+  fetchSource,
+  githubLfsUrl,
+  githubRawUrl,
+  openIfcFiles,
+  compoundAngleDeg,
+  str,
+  num,
+  refId,
+} from "./lib/ifc-reader.mjs";
 import {
   extractStoreys,
   extractSpaces,
@@ -26,7 +35,14 @@ import {
   classifyExternalElements,
 } from "./lib/ifc-envelope.mjs";
 import { netFaceAreasByElement, orientWalls } from "./lib/ifc-face-area.mjs";
-import { collectFabric, mergeFabric, writeGlb, SERVICE_GROUPS, SERVICE_COLOUR } from "./lib/ifc-glb.mjs";
+import {
+  collectFabric,
+  collectServices,
+  mergeFabric,
+  writeGlb,
+  SERVICE_GROUPS,
+  SERVICE_COLOUR,
+} from "./lib/ifc-glb.mjs";
 import { collectServiceInstances } from "./lib/ifc-instances.mjs";
 import { collectFlowNetwork, annotateFlow, serialiseFlow } from "./lib/ifc-flow.mjs";
 import { measureSpaceMeshes } from "./lib/ifc-space-volume.mjs";
@@ -134,17 +150,206 @@ const SCHEPENDOMLAAN = Object.freeze({
     owner: "openBIMstandards",
     repo: "Archive-DataSetSchependomlaan",
     ref: "master",
+    /**
+     * `raw`, not the LFS media host: this repository never used LFS, and
+     * `media.githubusercontent.com` answers 404 for every file in it — the
+     * architectural model included, so before 2026-09-04 this config could
+     * only ever have run from a cache someone had filled by other means.
+     */
+    host: "raw",
     dir: "Design model IFC",
+    /**
+     * A second folder a file may name with `dir`. The coordination set lives
+     * beside the design model, not under it, and its cache is kept apart so
+     * a `desktop.ini`-sized name clash can never overwrite a design file.
+     */
+    dirs: {
+      coordination: {
+        path: "Coordination model and subcontractors models/BIMsight Projectdata1",
+        cache: "schependomlaan-coordination",
+      },
+    },
   },
+  /**
+   * One architectural model plus the subcontractors' coordination set — the
+   * top-level `BIMsight Projectdata1/` files, NOT the `ProjectData/`
+   * duplicates. Every file below declares MILLIMETRE and no distribution
+   * port (measured 2026-09-04, all 33 of them).
+   *
+   * Left out on purpose, and said here so the absence is a decision:
+   *   - `JORDAHL-Gevelderagers.ifc` — façade anchors, invisible at building
+   *     scale.
+   *   - `V_L_Constructief.ifc` — 131 bytes, a pointer or an empty file.
+   *   - The `.ifczip` / `.ifcZIP` archives (ROOT-*, LINDEN - Kozijnen): the
+   *     ROOT set is the design model's own parts, already in the fabric.
+   */
   files: [
     {
       role: "architectural",
       fileName: "IFC Schependomlaan.ifc",
       sha256: null,
     },
+    // ── structure ── Tekla Structures 18.1, BERNTS
+    { role: "bernts-steel", fileName: "BERNTS-Staalconstructie.ifc", dir: "coordination" },
+    // ── precast ── iTConcrete (GEELEN), Tekla 19.1 (WAARDO), Tekla 20.1 (MULTICOM)
+    { role: "geelen-v1", fileName: "GEELEN-Breedplaat V1.ifc", dir: "coordination" },
+    { role: "geelen-v2", fileName: "GEELEN-Breedplaat V2.ifc", dir: "coordination" },
+    { role: "geelen-v3", fileName: "GEELEN-Breedplaat V3.ifc", dir: "coordination" },
+    { role: "geelen-roof", fileName: "GEELEN-Dakvloer.ifc", dir: "coordination" },
+    { role: "waardo-hollowcore", fileName: "WAARDO-Kanaalplaatvloer.ifc", dir: "coordination" },
+    { role: "multicom-balconies", fileName: "MULTICOM-balkons.ifc", dir: "coordination" },
+    { role: "multicom-bands", fileName: "MULTICOM-banden.ifc", dir: "coordination" },
+    { role: "multicom-stairs", fileName: "MULTICOM-trappen+bordessen.ifc", dir: "coordination" },
+    // ── roofing ── EDM export (WILLEMSEN)
+    { role: "willemsen-high", fileName: "WILLEMSEN-Hoogbouw.ifc", dir: "coordination" },
+    { role: "willemsen-high-tiles", fileName: "WILLEMSEN-Hoogbouw dakpannen.ifc", dir: "coordination" },
+    { role: "willemsen-low", fileName: "WILLEMSEN-Laagbouw.ifc", dir: "coordination" },
+    { role: "willemsen-low-tiles", fileName: "WILLEMSEN-laagbouw dakpannen.ifc", dir: "coordination" },
+    // ── railings ── HiCAD 2014 via ST-Developer (FEK)
+    { role: "fek-balcony-2015-09", fileName: "BALKONHEKKEN 23-9-2015.IFC", dir: "coordination" },
+    { role: "fek-balcony", fileName: "FEK - Balkonhekken en borstweringsleuningen.IFC", dir: "coordination" },
+    { role: "fek-french", fileName: "FEK - Franse balkonhekken en doorvalbeveiliging.IFC", dir: "coordination" },
+    { role: "fek-stair", fileName: "FEK - Traphekken.IFC", dir: "coordination" },
+    // ── blockwork ── Xella's own exporter (XELLA storeys, YTONG plots)
+    { role: "xella-ground", fileName: "XELLA-Begane grond.ifc", dir: "coordination" },
+    { role: "xella-1", fileName: "XELLA-1e verdieping.ifc", dir: "coordination" },
+    { role: "xella-2", fileName: "XELLA-2e verdieping.ifc", dir: "coordination" },
+    { role: "xella-3", fileName: "XELLA-3e verdieping.ifc", dir: "coordination" },
+    { role: "ytong-general", fileName: "YTONG-Algemeen.ifc", dir: "coordination" },
+    { role: "ytong-01", fileName: "YTONG-Kavel 01.ifc", dir: "coordination" },
+    { role: "ytong-02", fileName: "YTONG-Kavel 02.ifc", dir: "coordination" },
+    { role: "ytong-03", fileName: "YTONG-Kavel 03.ifc", dir: "coordination" },
+    { role: "ytong-04", fileName: "YTONG-Kavel 04.ifc", dir: "coordination" },
+    { role: "ytong-05", fileName: "YTONG-Kavel 05.ifc", dir: "coordination" },
+    { role: "ytong-06", fileName: "YTONG-Kavel 06.ifc", dir: "coordination" },
+    { role: "ytong-07", fileName: "YTONG-Kavel 07.ifc", dir: "coordination" },
+    { role: "ytong-08", fileName: "YTONG-Kavel 08.ifc", dir: "coordination" },
+    { role: "ytong-09", fileName: "YTONG-Kavel 09.ifc", dir: "coordination" },
+    { role: "ytong-10", fileName: "YTONG-Kavel 10.ifc", dir: "coordination" },
+    // ── utilities ── SketchUp Pro 2015 (HB)
+    { role: "hb-utilities", fileName: "HB_Nutsvoorzieningen.ifc", dir: "coordination" },
   ],
-  /** Envelope only. The Clinic already carries the MEP story. */
-  serviceLayers: [],
+
+  /**
+   * The subcontractors' models as layers. There is no MEP model in the
+   * archive — measured: `HB_Nutsvoorzieningen.ifc` is 42 IfcBuildingElementProxy
+   * and no IfcFlowSegment — so these are the trades that WERE coordinated:
+   * steel, precast, roof, railings, blockwork, and the utility connections.
+   *
+   * `groups` maps the element types that ACTUALLY PRODUCE MESHES in each set
+   * to one group per layer, and the list was taken from web-ifc's stream, not
+   * from the entity table, because the two disagree in ways that matter:
+   *   - XELLA's `IfcWallStandardCase`s carry no geometry; their
+   *     `IfcBuildingElementPart` blocks do (710 parts on the first floor).
+   *   - GEELEN's `IfcSlab`s are containers; the plank parts are
+   *     `IfcBuildingElementProxy`.
+   * A type listed here that never appears costs nothing; a meshed type left
+   * off is silently absent from the layer, so each list is the measured set.
+   *
+   * One colour per layer, and the same hex is in `LAYER_COLOUR` in
+   * `reference-building-workspace.tsx` so the swatch matches the geometry.
+   */
+  serviceLayers: [
+    {
+      id: "structure",
+      roles: ["bernts-steel"],
+      ko: "구조 (철골)",
+      en: "Steel frame",
+      // Bolts included: 121 `Bolt assembly` fasteners from 45 distinct
+      // shapes, so they cost almost nothing and leaving them out would be a
+      // quiet edit of the supplier's model.
+      groups: { structure: ["IfcBeam", "IfcColumn", "IfcPlate", "IfcMechanicalFastener"] },
+      colours: { structure: [0.42, 0.471, 0.537, 1] }, // #6b7889
+    },
+    {
+      id: "precast",
+      roles: [
+        "geelen-v1", "geelen-v2", "geelen-v3", "geelen-roof",
+        "waardo-hollowcore",
+        "multicom-balconies", "multicom-bands", "multicom-stairs",
+      ],
+      ko: "프리캐스트 바닥·계단",
+      en: "Precast floors & stairs",
+      // WAARDO's single `IfcWall` named LIJNLAST-TRAP is a line-load marker
+      // (12 triangles), not a wall; it is the one meshed element in these
+      // eight files deliberately not drawn.
+      groups: {
+        precast: [
+          "IfcBuildingElementProxy", "IfcSlab", "IfcBeam", "IfcPlate",
+          "IfcMember", "IfcColumn", "IfcDiscreteAccessory", "IfcFastener",
+        ],
+      },
+      colours: { precast: [0.722, 0.678, 0.62, 1] }, // #b8ad9e
+    },
+    {
+      id: "roofing",
+      roles: ["willemsen-high", "willemsen-high-tiles", "willemsen-low", "willemsen-low-tiles"],
+      ko: "지붕 마감 (기와)",
+      en: "Roof tiling",
+      groups: { roofing: ["IfcBuildingElementProxy"] },
+      colours: { roofing: [0.722, 0.38, 0.278, 1] }, // #b86147
+    },
+    {
+      id: "railings",
+      roles: ["fek-balcony-2015-09", "fek-balcony", "fek-french", "fek-stair"],
+      ko: "난간·발코니",
+      en: "Railings & balconies",
+      groups: { railings: ["IfcBuildingElementProxy", "IfcBeam", "IfcPlate"] },
+      colours: { railings: [0.8, 0.82, 0.851, 1] }, // #ccd1d9
+    },
+    {
+      id: "blockwork",
+      roles: [
+        "xella-ground", "xella-1", "xella-2", "xella-3", "ytong-general",
+        "ytong-01", "ytong-02", "ytong-03", "ytong-04", "ytong-05",
+        "ytong-06", "ytong-07", "ytong-08", "ytong-09", "ytong-10",
+      ],
+      ko: "내벽 블록",
+      en: "Internal blockwork",
+      // The one `IfcBeam` per XELLA storey file is a `Vebo Latei` lintel.
+      groups: { blockwork: ["IfcBuildingElementPart", "IfcBeam"] },
+      colours: { blockwork: [0.902, 0.875, 0.659, 1] }, // #e6dfa8
+    },
+    {
+      id: "utilities",
+      roles: ["hb-utilities"],
+      ko: "설비 인입",
+      en: "Utility connections",
+      groups: { utilities: ["IfcBuildingElementProxy"] },
+      // Translucent, as the Clinic's equipment boxes are: a box says "this
+      // volume is taken" and should not hide what stands inside it.
+      colours: { utilities: [0.302, 0.749, 0.702, 0.55] }, // #4dbfb3
+      /**
+       * Boxes, and stated as such. The SketchUp export tessellates its 42
+       * objects to 158,616 triangles (measured 2026-09-04) — more than the
+       * steel frame, the blockwork and the roof tiles together — for shapes
+       * that are, at building scale, a meter cabinet and a run of pipe.
+       */
+      boxes: true,
+      note:
+        "42 utility connections, drawn as boxes: the SketchUp export's " +
+        "triangles carry no information a box does not.",
+    },
+  ],
+
+  /**
+   * Both sentences claim only what this build measured. The fabric GLB's
+   * groups are read off `writeGlb`'s output (slab, wall, stair, glazing,
+   * door, mullion); the layer figures are the six-layer build of 2026-09-04.
+   */
+  modelNote:
+    "Building fabric from the architectural model only: walls, slabs, " +
+    "stairs, glazing, doors and mullions. Nothing from the subcontractor " +
+    "models is in this file — the steel frame, precast floors, roof tiling, " +
+    "railings and blockwork are their own layers.",
+  serviceNote:
+    "Six layers from the 33 subcontractor models in the archive's " +
+    "coordination set (BIMsight Projectdata1). Five carry each supplier's " +
+    "geometry as modelled — a shape placed twice or more is stored once and " +
+    "instanced, everything else is merged. Every file declares millimetres " +
+    "and no distribution port, so no layer animates flow. The utilities " +
+    "layer is the exception and says so under its row: its 42 SketchUp " +
+    "objects are drawn as boxes.",
 
   /**
    * Dutch cavity wall (spouwmuur): the leaves are SEPARATE IfcWall instances
@@ -434,18 +639,25 @@ async function main() {
     ref: "main",
     dir: "IFC 2.3.0.1 (IFC 2x3)/Medical-Dental Clinic",
   };
+  // A file comes from the building's folder unless it names one of the
+  // building's other folders with `dir`. Schependomlaan's subcontractor set
+  // sits beside the design model, not under it, and its cache is kept in a
+  // sub-directory of its own so the two folders' names can never collide.
+  const toUrl = src.host === "raw" ? githubRawUrl : githubLfsUrl;
   for (const file of building.files) {
-    const url = githubLfsUrl(
-      src.owner,
-      src.repo,
-      src.ref,
-      `${src.dir}/${file.fileName}`,
-    );
-    const cachePath = path.join(CACHE, file.fileName);
+    const named = file.dir ? src.dirs?.[file.dir] : null;
+    if (file.dir && !named) {
+      throw new Error(
+        `"${file.fileName}" names dir "${file.dir}", which source.dirs does not declare.`,
+      );
+    }
+    const remoteDir = named ? named.path : src.dir;
+    const url = toUrl(src.owner, src.repo, src.ref, `${remoteDir}/${file.fileName}`);
+    const cachePath = path.join(CACHE, named?.cache ?? "", file.fileName);
     const fetched = await fetchSource(url, cachePath, {
       expectedSha256: file.sha256,
     });
-    sources.push({ ...file, ...fetched, cachePath });
+    sources.push({ ...file, ...fetched, cachePath, remoteDir });
     console.log(
       `  ${file.fileName}  ${(fetched.byteLength / 1048576).toFixed(1)} MB  sha256 ${fetched.sha256.slice(0, 12)}…`,
     );
@@ -861,9 +1073,24 @@ async function main() {
     const flowSegments = [];
 
     for (const file of layerFiles) {
-      const part = collectServiceInstances(api, webIfc, file.modelId, {
-        serviceGroups: layer.groups ?? SERVICE_GROUPS,
-      });
+      // `boxes` is a stated simplification, never a quiet decimation: the
+      // layer's `note` says so on the page, and every element still gets a
+      // box at its real position and extent. Used where a model's triangles
+      // carry nothing a box does not — Schependomlaan's SketchUp utilities.
+      const part = layer.boxes
+        ? (({ groups, proxied }) => ({
+            groups,
+            instanced: [],
+            stats: { elements: proxied, distinctGeometries: 0 },
+          }))(
+            collectServices(api, webIfc, file.modelId, {
+              serviceGroups: layer.groups ?? SERVICE_GROUPS,
+              detailedTypes: [],
+            }),
+          )
+        : collectServiceInstances(api, webIfc, file.modelId, {
+            serviceGroups: layer.groups ?? SERVICE_GROUPS,
+          });
       // Self-contained already — one geometry plus its own transforms.
       collected.instanced.push(...part.instanced);
       for (const [name, bucket] of part.groups) {
@@ -910,11 +1137,19 @@ async function main() {
     // The routed network, direction included, from the model's own ports.
     // Written as its own file for the same reason the GLB is: a reader who
     // never switches flow on should never pay for it.
+    // Reassembled in `serialiseFlow`'s exact shape and key order. The
+    // viewer (`flow-network.tsx`) accepts a document only when its `kind` is
+    // "bimfit_flow_network", so a merged object that dropped the header would
+    // be a file the page fetches and silently never draws — and the committed
+    // Clinic flow files, written by the single-file loop, must come out
+    // byte-identical from this one.
     const flow = {
-      segments: flowSegments,
+      kind: "bimfit_flow_network",
+      schemaVersion: 1,
+      wavelengthM: flowWavelengthM,
       counts: flowCounts,
       reason: flowReason,
-      wavelengthM: flowWavelengthM,
+      segments: flowSegments,
     };
     let flowFile = null;
     if (flow.segments.length > 0) {
@@ -946,6 +1181,13 @@ async function main() {
       instancedShapes: written.instancedShapes,
       instancedPlacements: written.instancedPlacements,
       drawCalls: written.drawCalls,
+      /**
+       * Present only where the layer is NOT the model's own geometry, and
+       * rendered under the layer's row. A layer drawn as boxes with no such
+       * sentence would be the Clinic's opaque-elevator mistake again — a
+       * shape that is right and a claim that is not.
+       */
+      ...(layer.note ? { note: layer.note } : {}),
       /**
        * Null when the model states no direction of flow. The counts stay
        * either way — a layer that cannot animate should still be able to say
@@ -985,6 +1227,10 @@ async function main() {
     sourceFiles: sources.map((s, i) => ({
       role: s.role,
       fileName: s.fileName,
+      // Which folder of the repository the file came from, when it is not
+      // the building's own. Two files of the same name in two folders are
+      // two different files, and the record has to be able to say which.
+      ...(s.dir ? { dir: s.remoteDir } : {}),
       sha256: s.sha256,
       byteLength: s.byteLength,
       /**

@@ -20,6 +20,15 @@ export const LAYER_COLOUR: Record<string, string> = {
   hvac: "#9ebcdb",
   electrical: "#f0cc5c",
   plumbing: "#dc855c",
+  // Schependomlaan's subcontractor set. Each hex is the same colour the
+  // layer's GLB material carries (`colours` in build-reference-building.mjs),
+  // so the swatch beside the row is the colour of the thing it switches on.
+  structure: "#6b7889",
+  precast: "#b8ad9e",
+  roofing: "#b86147",
+  railings: "#ccd1d9",
+  blockwork: "#e6dfa8",
+  utilities: "#4dbfb3",
 };
 
 /**
@@ -135,25 +144,50 @@ export function ReferenceBuildingWorkspace({
               onToggle={toggle}
             />
             {services.map((layer) => (
-              <LayerRow
-                key={layer.id}
-                id={layer.id}
-                label={isKo ? layer.ko : layer.en}
-                detail={
-                  isKo
-                    ? `요소 ${layer.elements.toLocaleString()} · 형상 ${layer.instancedShapes.toLocaleString()}종 → ${layer.instancedPlacements.toLocaleString()}회 · ${(layer.byteLength / 1048576).toFixed(1)} MB`
-                    : `${layer.elements.toLocaleString()} elements · ${layer.instancedShapes.toLocaleString()} shapes → ${layer.instancedPlacements.toLocaleString()} placements · ${(layer.byteLength / 1048576).toFixed(1)} MB`
-                }
-                colour={LAYER_COLOUR[layer.id] ?? "#9aa0a6"}
-                on={active.has(layer.id)}
-                onToggle={toggle}
-              />
+              <div key={layer.id}>
+                <LayerRow
+                  id={layer.id}
+                  label={isKo ? layer.ko : layer.en}
+                  // "0 shapes → 0 placements" under a layer of 4,293 roof
+                  // tiles is a true sentence that reads as an empty layer. A
+                  // set with no repeated shape gets the fabric row's form —
+                  // triangles and bytes — instead of an instancing figure
+                  // that has nothing to count.
+                  detail={
+                    layer.instancedShapes > 0
+                      ? isKo
+                        ? `요소 ${layer.elements.toLocaleString()} · 형상 ${layer.instancedShapes.toLocaleString()}종 → ${layer.instancedPlacements.toLocaleString()}회 · ${(layer.byteLength / 1048576).toFixed(1)} MB`
+                        : `${layer.elements.toLocaleString()} elements · ${layer.instancedShapes.toLocaleString()} shapes → ${layer.instancedPlacements.toLocaleString()} placements · ${(layer.byteLength / 1048576).toFixed(1)} MB`
+                      : isKo
+                        ? `요소 ${layer.elements.toLocaleString()} · ${layer.triangleCount.toLocaleString()} 삼각형 · ${(layer.byteLength / 1048576).toFixed(1)} MB`
+                        : `${layer.elements.toLocaleString()} elements · ${layer.triangleCount.toLocaleString()} tris · ${(layer.byteLength / 1048576).toFixed(1)} MB`
+                  }
+                  colour={LAYER_COLOUR[layer.id] ?? "#9aa0a6"}
+                  on={active.has(layer.id)}
+                  onToggle={toggle}
+                />
+                {/* A layer that is NOT the model's own geometry says so here,
+                    in the generator's words, directly under its row. */}
+                {layer.note ? (
+                  <p
+                    className="mb-1 pl-6 pr-1.5 text-[10px] leading-relaxed text-muted-foreground"
+                    data-testid={`reference-model-layer-${layer.id}-note`}
+                  >
+                    {layer.note}
+                  </p>
+                ) : null}
+              </div>
             ))}
           </div>
+          {/* The generator's own sentence about how THIS building's layers
+              were packed, when it wrote one. The generic line below it
+              claimed every component was the model's own geometry, which
+              stopped being true the day a layer shipped as boxes. */}
           <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-            {isKo
-              ? "모든 부재가 모델의 실제 형상입니다. 반복되는 형상은 한 번만 담고 배치 정보로 놓았습니다. 레이어는 켤 때 내려받습니다."
-              : "Every component is the model's own geometry. A repeated shape is stored once and placed many times. Layers download when switched on."}
+            {manifest.model.serviceNote ??
+              (isKo
+                ? "모든 부재가 모델의 실제 형상입니다. 반복되는 형상은 한 번만 담고 배치 정보로 놓았습니다. 레이어는 켤 때 내려받습니다."
+                : "Every component is the model's own geometry. A repeated shape is stored once and placed many times. Layers download when switched on.")}
           </p>
           {/* What the fabric GLB leaves out, in the generator's own words.
               The manifest has carried this sentence since the first build and
@@ -169,18 +203,29 @@ export function ReferenceBuildingWorkspace({
               whether something moves. */}
           {services.some((layer) => layer.flow) ? (
             <div className="mt-4 border-t border-border pt-3">
-              <LayerRow
-                id="flow"
-                label={isKo ? "흐름 방향" : "Flow direction"}
-                detail={
-                  isKo
-                    ? "모델이 명시한 방향만 · 포트 그래프에서 추출"
-                    : "Only where the model states it · read from the port graph"
-                }
-                colour="#67e8f9"
-                on={flowVisible}
-                onToggle={() => setFlowVisible((on) => !on)}
-              />
+              {/* The toggle exists only where some layer can animate. A
+                  building whose every model declares no ports — the
+                  apartment's 33 subcontractor files — keeps the heading and
+                  the per-layer statements below, and offers no switch for
+                  an animation that cannot happen. */}
+              {services.some((layer) => layer.flow?.file) ? (
+                <LayerRow
+                  id="flow"
+                  label={isKo ? "흐름 방향" : "Flow direction"}
+                  detail={
+                    isKo
+                      ? "모델이 명시한 방향만 · 포트 그래프에서 추출"
+                      : "Only where the model states it · read from the port graph"
+                  }
+                  colour="#67e8f9"
+                  on={flowVisible}
+                  onToggle={() => setFlowVisible((on) => !on)}
+                />
+              ) : (
+                <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {isKo ? "흐름 방향" : "Flow direction"}
+                </p>
+              )}
               {activeServices.map((layer) => (
                 <FlowNote
                   key={`${layer.id}-note`}
