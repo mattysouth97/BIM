@@ -85,9 +85,8 @@ flowchart TB
 | `src/lib/*` | pure computation | import React or `"use client"` (fitness function AFF-1) |
 
 The intended direction is `components → hooks → store → lib`, and it largely
-holds. There are exactly **nine** non-test imports of `@/store` from `src/lib`,
-all deliberate: [api-client.ts](../../src/lib/api-client.ts),
-[energy-api-client.ts](../../src/lib/energy-api-client.ts) and `i18n.ts` read
+holds. There are exactly **eight** non-test imports of `@/store` from `src/lib`,
+all deliberate: [api-client.ts](../../src/lib/api-client.ts) and `i18n.ts` read
 `app-store`; `bim/revit-identity.ts` reads selection; and
 `generative/energy/publish-design.ts` + `generative/workspace-handoff.ts` write
 into the twin's stores — those two are the generative→twin handoff seam.
@@ -217,11 +216,15 @@ Real code, real tests, no mount point. Do not describe these as features:
 - `components/generative/generative-studio.tsx` — `/studio` is now pure
   redirects, so the prompt panel and command bar have no host. Only
   `schematic/schematic-editor.tsx` is reused (by the diagnostics product).
-- `components/lean/*`, `components/campus/{portfolio-dashboard,comparison-view}`,
-  `components/workspace/{cad-workspace,authoring-palette}` — zero importers.
-  `AuthoringPalette` having no importer is what strands the whole 3D authoring
-  command set in `lib/bim/model/commands.ts`.
-- `src/lib/annotations/*` — zero importers.
+- `components/lean/*` and `components/workspace/authoring-palette.tsx` — zero
+  importers. `AuthoringPalette` having no importer is what strands the whole 3D
+  authoring command set in `lib/bim/model/commands.ts`.
+- **Deleted 2026-09-04** (43 zero-importer modules, ~6k LOC, in the hygiene
+  sweep): `components/campus/{portfolio-dashboard,comparison-view}`,
+  `components/workspace/cad-workspace`, `src/lib/annotations/*` (the directory is
+  gone), `src/lib/energy-api-client.ts`, `lib/layers/layer-{1-shell,2-envelope}`,
+  and the pre-procedural viewer stack (`building-model` + its slab/column/roof/
+  facade generators). Recoverable from git history at `ad6a068`.
 - `src/lib/plan-symbols/*` — reachable only from `/dev/symbols`.
 - Five LLM routes (`generate`, `modify`, `interpret`, `repair`, `evaluate`) have
   no mounted caller; only `generate-from-blueprint` does, and that route makes

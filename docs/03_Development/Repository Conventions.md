@@ -57,7 +57,7 @@ next to a comment explaining why:
 | `react-hooks/set-state-in-effect` | [use-hydration.ts:13](../../src/hooks/use-hydration.ts), [procedural-building-model.tsx:195](../../src/components/viewer/procedural-building-model.tsx) |
 | `react-hooks/immutability` | Three.js object mutation inside R3F — [building-scene.tsx:87,100](../../src/components/viewer/building-scene.tsx) |
 | `react-hooks/refs` | imperative Three.js group handling — [building-layers.tsx:408](../../src/components/viewer/building-layers.tsx) |
-| `react-hooks/exhaustive-deps` | expensive scene rebuilds keyed on a narrower dep set — loaders, post-processing, `use-energy-delta.ts` |
+| `react-hooks/exhaustive-deps` | expensive scene rebuilds keyed on a narrower dep set — loaders, post-processing |
 
 Suppress with a one-line disable **and** a reason. A blanket `// eslint-disable-next-line` with no
 rule name (as at `equipment-hover-card.tsx:132`) is not the convention.

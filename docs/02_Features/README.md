@@ -58,15 +58,18 @@ Two facts shape almost every page here, so they are stated once:
 | `src/components/generative/generative-studio.tsx` | no importer; `/studio` is now pure redirects |
 | `src/components/workspace/authoring-palette.tsx` | no importer — strands the whole 3D authoring path |
 | `src/components/lean/*` | no importer; the `/lean` route was retired |
-| `src/components/campus/{portfolio-dashboard,comparison-view}.tsx` | no importer; `campusData` is never passed to BuildingScene |
-| `src/components/workspace/cad-workspace.tsx` | no importer, including tests |
-| `src/lib/annotations/*` | no importer; 주석 mode changes no rendering |
-| `src/lib/upload/{energy-bill-parser,floor-plan-metadata}.ts` | no importer |
+| `src/lib/upload/energy-bill-parser.ts` | no importer |
 | cad-first mode + the `params` stage | `parseBuildingId` requires 5 hyphen-parts; no UI mints a `cad-<uuid>` id |
 | `src/lib/plan-symbols/*` | only reachable via `/dev/symbols`; its mount point `PlanOverlay` is inside the unmounted studio |
 
 Whether these are parked for revival or abandoned is not recoverable from code.
 Historical rationale not established. Treat them as retired scaffolding, never as
 capabilities.
+
+The 2026-09-04 hygiene sweep **deleted** 43 of these zero-importer modules
+(~6k LOC), including `campus/{portfolio-dashboard,comparison-view}`,
+`workspace/cad-workspace`, all of `src/lib/annotations/`, and
+`src/lib/upload/floor-plan-metadata.ts`. They remain in git history at `ad6a068`.
+The rows above are what still stands.
 
 See also [[Current State]] and [[Repository Map]].

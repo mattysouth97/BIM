@@ -48,7 +48,7 @@ flowchart TD
   M --> PB["ProceduralBuilding<br/>InstancedMesh: façade 4 + slabs 1 + columns 1 + roof 1"]
   M --> BL[BuildingLayers]
   BL --> LM["LayerManager<br/>envelope · structure · mep · energy-zones · retrofit-targets"]
-  LM --> G15["15 generators<br/>layer-1-shell … layer-15-structural"]
+  LM --> G15["13 generators<br/>layer-3-cooling … layer-15-structural"]
   M --> AO["analysis overlays<br/>외피 열손실 · 구조 분리 · 에너지존"]
   M --> IL["InteriorLayer<br/>(buildInteriorModel snapshot)"]
   M --> CP[ConfigPanel · 6 tabs]

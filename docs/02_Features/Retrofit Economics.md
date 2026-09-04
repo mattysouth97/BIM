@@ -86,7 +86,7 @@ dossier in `docs/superpowers/research/2026-04-30-green-remodeling.md`.
 - [cost-database.ts](../../src/lib/retrofit/cost-database.ts) — KRW costs, energy prices, 그린리모델링 presets
 - [use-retrofit-scenario.ts](../../src/hooks/use-retrofit-scenario.ts) — the twin-side bridge
 - [retrofit-bridge.ts](../../src/lib/energy-diagnostics/retrofit-bridge.ts) — the diagnostics-side bridge
-- [twin-stage-overlay.tsx](../../src/components/twin/twin-stage-overlay.tsx) + `capex-input.tsx`, `program-track-selector.tsx`, `roi-readout.tsx`
+- [twin-stage-overlay.tsx](../../src/components/twin/twin-stage-overlay.tsx) + `capex-input.tsx`, `program-track-selector.tsx`
 - [measure-visuals.ts](../../src/lib/retrofit/measure-visuals.ts) · [equipment-scenario.ts](../../src/lib/layers/equipment-scenario.ts) — money → geometry
 
 ## Relevant Tests

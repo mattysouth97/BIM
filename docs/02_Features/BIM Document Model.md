@@ -43,6 +43,7 @@ those views.
 - **주석 mode.** It changes the left dock tab and hides the energy HUD, but **no
   component branches on `workMode === "annotate"`**, and the four modules in
   `src/lib/annotations/` (area-label, dimension-line, level-marker, section-cut)
+  — **deleted 2026-09-04**; the directory had zero importers. See `ad6a068`
   have zero importers. `useAnnotationStore` is referenced only by its own test.
 
 ## Workflow

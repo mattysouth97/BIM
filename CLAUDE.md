@@ -60,7 +60,7 @@
     CanonicalEnergyModel. A sibling of tier-one-model, never an extension of it
   - `src/lib/energy-diagnostics/ledger-climate.ts` — 시군구코드 → weather region
   - `src/components/viewer/` — Three.js 3D building viewer (React Three Fiber v9)
-  - `src/components/viewer/building-scene.tsx` — Main R3F Canvas with renderer config, OutlinePass post-processing (`<ScenePostProcessing />`), lighting
+  - `src/components/viewer/building-scene.tsx` — Main R3F Canvas with renderer config, OutlinePass post-processing (`<SceneHighlightProcessing />`), lighting
   - `src/components/viewer/procedural-building-model.tsx` — R3F wrapper for ProceduralBuilding class
   - `src/lib/building-geometry.ts` — Pure functions converting API data → 3D geometry
   - `src/lib/procedural/` — Procedural building generation pipeline:
@@ -95,11 +95,14 @@
   - Shadows: VSMShadowMap (soft variance shadows)
   - Background: solid #f5f5f5 (no HDR background)
   - Lighting: HemisphereLight("#b1e1ff", "#b97a20", 0.6) + DirectionalLight(white, 2.0)
-  - Post-processing: OutlinePass via `<ScenePostProcessing />` (outline-post-processing.tsx). (A legacy SAOPass component existed but was never mounted — removed in P2-08.)
+  - Post-processing: OutlinePass via `<SceneHighlightProcessing />` (scene-highlight-processing.tsx) — dual OutlinePass (orange hover, teal selection) plus GTAO/SMAA in realistic modes. (Two never-mounted components, SAOPass and `<ScenePostProcessing />`/outline-post-processing.tsx, were removed in P2-08 and 2026-09-04 respectively.)
   - Materials: MeshStandardMaterial for all components
   - HDR: studio.hdr at `/hdr/studio.hdr` for reflections only
   - Era boundary: drives era-based recipe materials for the building AND the ground texture set (pre-2000 weathered vs 2000+ clean)
-  - PBR textures: 7 sets in `public/textures/` (concrete_rough, concrete_clean, brick, metal_panel, wood, roof_tile, roof_flat). NOTE: these image sets are applied to the ground plane (`TexturedGround` → `useTexturedMaterial`); the procedural building facade/structure use recipe-driven MeshStandardMaterial (color/roughness), not these image maps.
+  - PBR textures: 7 sets in `public/textures/` (concrete_rough, concrete_clean, brick, metal_panel, wood, roof_tile, roof_flat), 18 MB total. TWO independent consumers — an earlier note here claimed only the first, which was drift (corrected 2026-09-04):
+    1. The ground plane, via `TexturedGround` → `useTexturedMaterial` → `pbr-materials.ts`, which builds `/textures/<set>/{color,normal,roughness}.jpg` URLs directly. Its only call site is `ground-plane.tsx:65`, hardcoded to `"ground"`.
+    2. **The building itself, on by default.** `render-store.ts` defaults `mode` to `"realistic"`, so `realisticViewport` is true and `building-scene.tsx:617-619` mounts `<ArchitecturalTextureBridge />`, which `useTexture()`s all 21 URLs via `rendering/texture-atlas.ts`; `rendering/architectural-material.ts:45-53` then binds `texSet.color` → `mat.map` and `texSet.roughness` → `mat.roughnessMap`. This is separate from the recipe-driven MeshStandardMaterial colour/roughness the procedural generators emit — the atlas overrides those maps in realistic mode.
+  - The atlas's `normal` field is populated but never read: `architectural-material.ts` skips `normalMap` under triplanar, and every quality tier sets `triplanar: true`. Only the BIM-mode ground reads normal maps, and it does so outside the atlas.
 
   ## API Gotchas (건축HUB)
 
@@ -118,7 +121,7 @@
   - Three.js `three-stdlib` types conflict with drei v10 OrbitControls — use `any` ref type
   - Duplicate floor keys from API — floors can have same flrNo, use array index in React key
   - InstancedMesh `setMatrixAt` must be followed by `instanceMatrix.needsUpdate = true`
-  - Post-processing uses OutlinePass from three/examples/jsm/postprocessing (not @react-three/postprocessing); see outline-post-processing.tsx
+  - Post-processing uses OutlinePass from three/examples/jsm/postprocessing (not @react-three/postprocessing); see scene-highlight-processing.tsx
   - useTexturedMaterial must always return roughness value — Three.js defaults to 1.0 when roughnessMap present but roughness prop omitted
 
   ## Tracked Work Plan

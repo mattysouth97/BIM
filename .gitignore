@@ -62,3 +62,19 @@ docs/.obsidian/workspace-mobile.json
 # Obsidian: the vault is docs/, not the repo root. Root-anchored so this can
 # never ignore docs/.obsidian/ (the shared vault config).
 /.obsidian/
+
+# Test / QA artifacts — regenerated on every run, never source of truth.
+# These accumulated ~100 MB and ~200 files before the 2026-09-04 cleanup.
+/.playwright-mcp/
+/playwright-report/
+/test-results/
+/qa-evidence/
+__pycache__/
+*.pyc
+
+# Ad-hoc QA screenshots dropped at the repo root by capture scripts.
+/audit-*.png
+/qa-*.png
+/ia-*.png
+/recon-*.png
+/grok-mcp-test.png

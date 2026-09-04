@@ -29,14 +29,18 @@ one of: `CURRENT`, `USEFUL BUT MISPLACED`, `DUPLICATED`, `STALE`, `HISTORICAL`.
 
 | Path | Classification | Notes |
 |---|---|---|
-| [`handoff.md`](../../handoff.md) | HISTORICAL | 2026-08-17 generative-unification handoff. Its "Product direction" section asserted the register was retired as a data source — **that decision was reversed on 2026-08-27**. The file records the reversal inline. Still the best account of the Vercel BLOCKED trap's discovery |
-| [`model_refine_handoff.md`](../../model_refine_handoff.md) | HISTORICAL | Earlier model-refinement session notes |
-| [`Project-CORE-Memory.md`](../../Project-CORE-Memory.md) | HISTORICAL | Long-running project memory predating this vault |
+| `handoff.md` | DELETED 2026-09-04 | 2026-08-17 generative-unification handoff. Its "Product direction" section asserted the register was retired as a data source — **that decision was reversed on 2026-08-27**. Recoverable at `git show ad6a068:handoff.md` |
+| `model_refine_handoff.md` | DELETED 2026-09-04 | Earlier model-refinement session notes. `git show ad6a068:model_refine_handoff.md` |
+| `Project-CORE-Memory.md` | DELETED 2026-09-04 | Long-running project memory predating this vault. `git show ad6a068:Project-CORE-Memory.md` |
 | [`docs/work-plan/handoffs/`](../work-plan/handoffs) | HISTORICAL | Per-wave handoffs inside the tracked plan |
 
-> When these disagree with [[Current State]] or [[CURRENT]], the vault wins. They
-> are kept because they explain *why* decisions were made, which the vault only
-> summarises.
+> The three root handoffs were **removed from the working tree on 2026-09-04** in
+> a repo cleanup: everything they still asserted is either superseded by
+> [[CURRENT]] or preserved in `AGENTS.md` (the Vercel BLOCKED trap). They remain
+> in git history at the commands above if the *why* behind an old decision is
+> ever needed. `docs/work-plan/handoffs/` was kept in place.
+>
+> When any of this disagrees with [[Current State]] or [[CURRENT]], the vault wins.
 
 ## Superseded by this vault — kept for provenance
 
@@ -72,7 +76,7 @@ other documents cite directly. Left in place.
 Some historical documents still assert the **generative-first** product direction
 (buildings enter only via prompt, drawn schematic, or imported CAD; the register
 is retired). That was reversed on 2026-08-27. `CLAUDE.md`, `README.md` and
-`handoff.md` were updated; anything under `docs/superpowers/`, `docs/plans/` or
+`README.md` were updated; anything under `docs/superpowers/`, `docs/plans/` or
 `.planning/` was **not**, and should be read as of its own date.
 
 ## Related
