@@ -95,6 +95,7 @@ Implementation: `src/lib/energy-standards/u-value-limits.ts`.
 | PHY-HTR | Transmission coefficient H_tr | W/K | Σ U·A (existing engine: + additive ΔU_tb thermal-bridge surcharge on walls) | ISO 13789 | universal (simplified in engine) |
 | PHY-HVE | Ventilation coefficient H_ve | W/K | ρ·c·V̇ = 0.34 Wh/m³K × ACH × Volume | ISO 13789 | universal |
 | PHY-ANNUAL | Annual demand | kWh | Degree-day method: heating [Σh_air·HDD·24 + h_ground·ΔT_g·4380]/η; cooling [Σh_air·CDD·24 + A_win·SHGC·I_cool·0.7]/COP. **NOT the ISO 13790 monthly method** — no monthly loop, no utilization factors, no internal gains. Disclosed in-product as a screening approximation (adapter approximation ledger + StandardsPanel) | existing src/lib/energy engine | implemented (screening); 13790 monthly method NOT implemented |
+| PHY-GROUND | Ground-floor U (slab on ground) | W/m²K | B' = A/(0.5P); d_t = w + λ_g(R_si+R_f+R_se); U = (2λ_g/(πB'+d_t))·ln(πB'/d_t+1) for d_t < B', else λ_g/(0.457B'+d_t). R_si 0.17 / R_se 0.04 are ISO 13370's own, NOT the 해설서 values in PHY-RSI-RSE | ISO 13370:2007 §9.1/§9.3 | implemented in `energy-standards/ground-coupling.ts`; **NOT yet wired into the engine** — `heat-loss.ts` still reads the ground-floor U from the assembly and compensates with a reduced ΔT (indoor vs 13.5 °C), which swaps the sink temperature but omits the soil resistance: ~14x too high end to end |
 | PHY-PEF | 1차에너지 환산계수 | — | 전력 2.75, 연료(가스·유류) 1.1, 지역난방 0.728, 지역냉방 0.937 | 에너지절약설계기준/ECO2 관행 계수 | training-knowledge — factor set embedded in every result (`primary.factorsUsed`) |
 
 ## 5. Material property library sources
@@ -210,6 +211,7 @@ UI copy: "표준 조건 기준 설계 평가이며 실제 사용량과 다릅니
 | PHY-HTR/HVE/ANNUAL | existing `src/lib/energy/{heat-loss,annual-demand}.ts`, unchanged; reached via `energy-diagnostics/adapter.ts` | `heat-loss.test.ts` closed-form, `bim-accuracy.test.ts` tiers |
 | PHY-PEF | `energy-diagnostics/adapter.ts` `derivePrimaryEnergy` using `PRIMARY_ENERGY_FACTORS` | `material-standards.test.ts` per-fuel algebra |
 | §5 material library | `src/lib/energy-standards/materials.ts` (all `confidence: "generic"`) | reviewed against §5 bands |
+| PHY-GROUND | `src/lib/energy-standards/ground-coupling.ts` (`slabOnGroundUValue`, `slabOnGroundUValueRange`) | `__tests__/ground-coupling.test.ts` — Clinic derivation, soil bound, B'/insulation monotonicity, branch continuity at d_t = B', and the end-to-end comparison against the current engine path |
 | §5.1 international entries | same file, EN 12524 / ISO 6946 / ASTM C1289 family (still all `confidence: "generic"`) | `__tests__/clinic-materials.test.ts` — each sourced value pinned to its cited row, plus an additive-only guard over all 18 pre-existing entries |
 | Layer↔U consistency | `energy-diagnostics/ledger-baseline-model.ts` `assumedLayers` (insulation thickness solved to the era U; empty when unreachable) | `material-standards.test.ts` exact ISO-6946 round-trip |
 | 별표1/ZEB assessment | `energy-diagnostics/standards-assessment.ts` (presentation-only; ZEB row always 참고용) | `material-standards.test.ts` |
