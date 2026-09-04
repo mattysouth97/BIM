@@ -135,6 +135,19 @@ each case the worry was sound and the conclusion in the same message was
 not; the credibility of the first was spent on the second. Check the
 conclusion as a separate claim from the suspicion that produced it.
 
+A tenth, of a different shape — **the placeholder flatters.** Every
+correction to an unmeasured envelope input on 2026-09-04 moved the building
+the same way: the Clinic's floor area (6,935.8 → 4,314.2, so every intensity
+had read 37 % too good), its space-boundary envelope (a third of the wall
+missing), its ground coupling, its outdoor pad counted as conditioned slab;
+and on the apartment three of six stand-ins say "understates" in their own
+bias notes. A stand-in is not a coin flip in this pipeline; it is a
+systematic optimism, because what a model omits is envelope and what it
+states is floor. So a page carrying placeholders must not say "provisional",
+which reads as "might move either way" — it must say which way. The
+apartment's badge now predicts that its grade will fall when the
+measurements land, and that prediction can be checked.
+
 Two consequences for how work here is checked:
 
 1. **Assert what a string claims, not that it appears.** A test asserting the

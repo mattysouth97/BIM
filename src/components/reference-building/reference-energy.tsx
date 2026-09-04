@@ -50,6 +50,47 @@ import { buildReferenceEnergyZones } from "@/lib/reference-buildings/zones";
 const ORIENTATIONS: readonly Orientation[] = ["N", "E", "S", "W"];
 
 /**
+ * How the stand-ins lean, counted from their own `biasDirection` strings.
+ *
+ * "Provisional" is a hedge; a reader takes it as "might move either way". On
+ * the apartment three of six placeholders say "Understates" outright — a
+ * smaller roof, a smaller slab, the minimum-perimeter square that ISO 13370
+ * rewards — so the honest expectation is that the grade goes DOWN when the
+ * measurements land, and the badge should predict that rather than hedge.
+ * Every correction on these buildings today went the same way; an
+ * unmeasured envelope input here is a systematic optimism, not a coin flip.
+ */
+export function summarisePendingBias(
+  pending: ReferenceBuildingEnergyInputs["pendingMeasurements"] | undefined,
+): { total: number; understates: number; overstates: number } {
+  const rows = pending ?? [];
+  return {
+    total: rows.length,
+    understates: rows.filter((p) => /^understates/i.test(p.biasDirection.trim())).length,
+    overstates: rows.filter((p) => /^overstates/i.test(p.biasDirection.trim())).length,
+  };
+}
+
+export function pendingBadgeText(
+  bias: ReturnType<typeof summarisePendingBias>,
+  isKo: boolean,
+): string {
+  const lean =
+    bias.understates > bias.overstates
+      ? isKo
+        ? ` — ${bias.understates}개가 외피를 과소평가하므로 실측 후 등급이 내려갈 가능성이 큽니다`
+        : ` — ${bias.understates} understate the envelope, so the grade will likely fall once measured`
+      : bias.overstates > bias.understates
+        ? isKo
+          ? ` — ${bias.overstates}개가 외피를 과대평가하므로 실측 후 등급이 올라갈 수 있습니다`
+          : ` — ${bias.overstates} overstate the envelope, so the grade may rise once measured`
+        : "";
+  return isKo
+    ? `측정 대기 · 자리표시자 ${bias.total}개${lean}`
+    : `Awaiting measurement · ${bias.total} stand-ins${lean}`;
+}
+
+/**
  * Seed the stores the demo path reads. Materials are replaced unless the
  * user has edited them (`source: "user-input"`), so a corrected constant in
  * the building's file wins over a stale persisted copy; the base recipe is
@@ -158,7 +199,7 @@ export function ReferenceEnergyFrame({
   const zones = useReferenceZones(manifest, baseUrl, metrics?.demand.totalDemand);
 
   const awaiting = energy.measurementState === "awaiting_measurement";
-  const pendingCount = energy.pendingMeasurements?.length ?? 0;
+  const bias = summarisePendingBias(energy.pendingMeasurements);
 
   return (
     <>
@@ -179,9 +220,7 @@ export function ReferenceEnergyFrame({
           className="pointer-events-none absolute right-3 top-3 z-30 rounded-md border border-amber-500/60 bg-amber-950/80 px-2.5 py-1.5 font-mono text-[10px] leading-tight text-amber-200 shadow-sm backdrop-blur"
           data-testid="reference-energy-awaiting-measurement"
         >
-          {isKo
-            ? `측정 대기 · 외피 수치 ${pendingCount}개는 자리표시자 — 아래 목록 참조`
-            : `Awaiting measurement · ${pendingCount} envelope figures are stand-ins — see the list`}
+          {pendingBadgeText(bias, isKo)}
         </div>
       ) : null}
       {/* The legend positions itself `absolute left-3 top-16`; this wrapper
@@ -251,9 +290,7 @@ export function ReferenceEnergyPanel({
           data-testid="reference-energy-pending-measurements"
         >
           <p className="font-mono text-[10px] uppercase tracking-wide text-amber-300">
-            {isKo
-              ? `측정 대기 — 자리표시자 ${energy.pendingMeasurements.length}개`
-              : `Awaiting measurement — ${energy.pendingMeasurements.length} stand-ins`}
+            {pendingBadgeText(summarisePendingBias(energy.pendingMeasurements), isKo)}
           </p>
           <p className="mt-1 text-[10px] leading-relaxed text-amber-100/80">
             {isKo
