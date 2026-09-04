@@ -114,6 +114,30 @@ git log -1 --format=%ae   # must be namseunghun97@gmail.com
 The `bim` project lives under `matts-projects-d0677dc4` and serves
 `https://bim-self.vercel.app`.
 
+**`vercel --prod` uploads the working tree, not `HEAD`.** Two consequences, both
+of which have bitten this repo:
+
+- Deploying from a dirty checkout ships uncommitted work — including other
+  sessions' — straight to production. Deploy from a clean detached worktree:
+
+```bash
+git worktree add --detach <tmp>/deploy HEAD
+cp -r .vercel <tmp>/deploy/.vercel
+vercel --cwd <tmp>/deploy --prod --yes --scope matts-projects-d0677dc4
+```
+
+- An **untracked** file that live code references still works locally and still
+  reaches production from a dirty deploy — then 404s the moment a clean deploy
+  runs. `public/landing/layer-all-peel-hd.png` (referenced by
+  `src/lib/landing/layers.ts`) did exactly that on 2026-09-04. Commit assets
+  under `public/`; `git ls-files --others --exclude-standard` finds the strays.
+
+Functions are pinned to Seoul in `vercel.json` (`regions: ["icn1"]`). Do not
+remove it: `api.vworld.kr` refuses Vercel's `iad1` egress, so every VWorld read
+silently degrades to the 건축면적-solved rectangle if the functions move back to
+the default region. `X-Vercel-Id`'s second segment is the compute region — it
+must read `icn1`.
+
 ## Documentation
 
 After a substantial **verified** change: update the affected feature document,
