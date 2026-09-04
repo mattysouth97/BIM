@@ -577,8 +577,28 @@ function isAxisAlignedRectangle(rings?: [number, number][][]): boolean {
   return ring.every(([x, z]) => expected.has(`${x}:${z}`));
 }
 
+/**
+ * The plate the roof caps: the topmost ABOVE-GRADE storey's own plate when it
+ * has one, else the building footprint (P2-30 follow-up).
+ *
+ * Plates were threaded through slabs, facade faces, the column grid and the
+ * parapet and the roof was missed, so a building that steps back got a roof
+ * sized to its base — a deck cantilevering into mid-air over the setback.
+ * Basements are ignored: a roof caps the top of the above-grade stack, and a
+ * basement plate says nothing about it.
+ */
+function roofPlateOf(recipe: BuildingRecipe): [number, number][][] | undefined {
+  const above = recipe.floors.filter((f) => f.type !== "below");
+  const top = above[above.length - 1];
+  const plate = top?.plate;
+  return plate && plate.length >= 1 && plate[0].length >= 3
+    ? plate
+    : recipe.footprintPolygon;
+}
+
 export function generateRoof(recipe: BuildingRecipe): THREE.Mesh {
-  const { roof, footprintWidth, footprintDepth, totalHeight, footprintPolygon, wallThickness } = recipe;
+  const { roof, footprintWidth, footprintDepth, totalHeight, wallThickness } = recipe;
+  const footprintPolygon = roofPlateOf(recipe);
   const mat = pbrToMaterial(recipe.materials.roof, recipe, "roof");
   // Pull the deck back to the inner face of the wall so it does not occupy
   // the same volume as the parapet cladding.
@@ -608,17 +628,17 @@ export function generateRoof(recipe: BuildingRecipe): THREE.Mesh {
   let geo: THREE.BufferGeometry;
   let y: number;
   let effectiveRoofType = roof.type;
-  const hasPolygon = !!recipe.footprintPolygon?.[0]?.length;
+  const hasPolygon = !!footprintPolygon?.[0]?.length;
   const needsPolygonCap =
-    hasPolygon && (roof.type === "flat" || !isAxisAlignedRectangle(recipe.footprintPolygon));
+    hasPolygon && (roof.type === "flat" || !isAxisAlignedRectangle(footprintPolygon));
 
   if (needsPolygonCap) {
     // Bounding-box roofs cross concave footprints and courtyard voids. Keep
     // the exact footprint; irregular pitched roofs use a collision-free flat
     // cap until a polygon-aware pitch solver is available.
     const inset = [
-      insetRing(recipe.footprintPolygon![0], deckInset),
-      ...recipe.footprintPolygon!.slice(1),
+      insetRing(footprintPolygon![0], deckInset),
+      ...footprintPolygon!.slice(1),
     ];
     geo = extrudePolygon(inset, roof.flatThickness, 0);
     y = totalHeight;

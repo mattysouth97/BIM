@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import * as THREE from "three";
-import { generateSlabs } from "../structure-generator";
+import { generateRoof, generateSlabs } from "../structure-generator";
 import type { BuildingRecipe, FloorSpec } from "../types";
 import { getRecipe } from "../recipe";
 
@@ -273,5 +273,59 @@ describe("P2-30 - per-floor plates", () => {
     upper.getMatrixAt(0, m);
     const pos = new THREE.Vector3().setFromMatrixPosition(m);
     expect(pos.y).toBeCloseTo(6, 6);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// P2-30 follow-up — the roof caps the TOP STOREY's plate, not the footprint.
+//
+// Plates were threaded through slabs, facade faces, the column grid and the
+// parapet, and the roof was missed. A building that steps back therefore got a
+// roof sized to its base: a slab cantilevering into mid-air over the setback.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ringExtent(geo: THREE.BufferGeometry): { w: number; d: number } {
+  geo.computeBoundingBox();
+  const b = geo.boundingBox!;
+  return { w: b.max.x - b.min.x, d: b.max.z - b.min.z };
+}
+
+describe("P2-30 follow-up - roof follows the top storey plate", () => {
+  it("a stepped stack roofs the SMALLER top plate, not the base footprint", () => {
+    const floors = makeFloors(4);
+    floors[3] = { ...floors[3], plate: SMALL_L };
+    const stepped = generateRoof(makePolygonRecipe(floors));
+    const prism = generateRoof(makePolygonRecipe(makeFloors(4)));
+
+    const s = ringExtent(stepped.geometry);
+    const p = ringExtent(prism.geometry);
+    // SMALL_L is 6x6; L_SHAPE is 10x10. The stepped roof must be the smaller.
+    expect(s.w).toBeLessThan(p.w);
+    expect(s.d).toBeLessThan(p.d);
+    expect(s.w).toBeLessThan(8);
+  });
+
+  it("an unstepped stack is unchanged — the footprint is the top plate", () => {
+    const withPlates = generateRoof(
+      makePolygonRecipe(makeFloors(4).map((f) => ({ ...f, plate: L_SHAPE }))),
+    );
+    const without = generateRoof(makePolygonRecipe(makeFloors(4)));
+    expect(ringExtent(withPlates.geometry).w).toBeCloseTo(
+      ringExtent(without.geometry).w,
+      6,
+    );
+  });
+
+  it("ignores basement plates when choosing the cap", () => {
+    const floors: FloorSpec[] = [
+      { floorNo: -1, label: "B1F", type: "below", y: -3, height: 3, isGroundFloor: false, plate: SMALL_L },
+      ...makeFloors(2),
+    ];
+    const roof = generateRoof(makePolygonRecipe(floors));
+    // Top ABOVE-grade storey has no plate, so the roof keeps the footprint.
+    expect(ringExtent(roof.geometry).w).toBeCloseTo(
+      ringExtent(generateRoof(makePolygonRecipe(makeFloors(2))).geometry).w,
+      6,
+    );
   });
 });
