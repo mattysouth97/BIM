@@ -7,7 +7,7 @@ status: in-review
 owner: claude-fable-5-session
 effort: L
 created: 2026-07-21
-updated: 2026-07-21
+updated: 2026-09-04
 use_cases: [UC-05]
 ---
 
@@ -78,3 +78,26 @@ use_cases: [UC-05]
   - Honesty: zero-height floors flagged `estimated`; floors not covered by a partial calibration flagged `estimated`; uncalibrated buildings use recipe defaults (not flagged estimated — they are the best available data).
   - ADR-0001 filed for factoryZones deferral; factoryZones left in place for future consumer.
 - **Done when**: two buildings of different era/structure render visibly different, data-true materials and detail; calibrated buildings match their measured values; badge provenance is checkable per input; gates green.
+
+### Post-sweep re-scope (2026-09-04, green [fe5dbc])
+
+This is the only one of the four still `in-review`, so the distinction between "wired"
+and "exercised" matters here more than in the closed items.
+
+- **`src/components/building/fidelity-badge.tsx` — wrong path.** The item flagged its
+  own uncertainty ("verify path") and the doubt was justified: the component lives at
+  **`src/components/twin/fidelity-badge.tsx`**, with `twin/fidelity-detail-panel.tsx`
+  and `twin/__tests__/fidelity-badge-provenance.test.tsx` beside it. Not deleted, moved.
+- **Everything this item wired survived the sweep**, which was the stated risk in its own
+  CDD ("must land BEFORE P2-08 so P2-08 does not delete the newly-live code"). Verified
+  present: `getTextureSet`, `applyCalibrationFloorHeights`, `validateCalibrationEntry`,
+  `InputProvenance` (8 files), `factoryZones` (3 files, still unconsumed per ADR-0001),
+  all five seed calibration JSONs plus `_test-fixture.json`, and the overhang /
+  ground-floor `instanceColor` logic at `structure-generator.ts:131-151`.
+- **One substantive gap, stated as fact not diagnosis:** both recipe factories return
+  `overhang: 0.0` — `recipe.ts:112` and `factory-recipe.ts:72`. The slab-overhang path is
+  wired, tested and reachable, but no recipe in the tree ever supplies a non-zero value,
+  so the visible effect is dormant. The acceptance criterion is satisfied as written
+  ("wired"), and the item's goal — "details that make Korean apartment/commercial blocks
+  recognizable" — is not yet visible. Whoever closes the review should decide which of
+  those two readings governs; it is a judgement call about intent, not a defect.

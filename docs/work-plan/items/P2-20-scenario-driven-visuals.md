@@ -7,7 +7,7 @@ status: done
 owner: claude-fable-5-session
 effort: M
 created: 2026-07-23
-updated: 2026-07-23
+updated: 2026-09-04
 use_cases: [UC-04, UC-06, UC-07, UC-08]
 ---
 
@@ -60,3 +60,18 @@ measure to the model's appearance.
   - [x] Measure click → tint/PV response wired for all 7 families
 - **Done when**: the manifest is the primary interaction surface — clicking
   scenarios visibly remodels the twin. 1265 tests, lint 0 errors, build green.
+
+### Post-sweep re-scope (2026-09-04, green [fe5dbc])
+
+**Nothing in this item went stale.** Every module and symbol it names survives
+`397882b`: `src/lib/retrofit/measure-visuals.ts`, `deriveVisualState` (4 files),
+`appliedMeasureIds` (4), `toggleAppliedMeasure` (2), `SolarPanels` (3),
+`building-layers` (8), and the `sub-mep-hvac` / `sub-mep-lighting` group IDs (3 / 2).
+
+One forward-looking caution rather than a correction: `src/lib/retrofit/**` is under
+active refactor by another session as of 2026-09-04. The measure-ID **prefix** contract
+is what couples this item to that code — `deriveVisualState` keys the seven visual
+families off generator-ID prefixes, so a rename of measure generator IDs silently
+degrades the 3D response to "no families matched" without failing a type check. If that
+refactor touches generator IDs, the `deriveVisualState` family tests are the guard that
+has to be re-read, not just re-run.

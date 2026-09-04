@@ -7,7 +7,7 @@ status: done
 owner: claude-fable-5-ultrawork
 effort: S
 created: 2026-07-21
-updated: 2026-07-21
+updated: 2026-09-04
 use_cases: [UC-05]
 ---
 
@@ -111,3 +111,22 @@ use_cases: [UC-05]
   NOT performed in this session** — both pick paths are proven by unit tests only (real
   generated Group/InstancedMesh objects, synthetic pick events). Visual confirmation
   recommended at next dev-server session.
+
+### Post-sweep re-scope (2026-09-04, green [fe5dbc])
+
+Checked every source path this item names against the tree after `397882b` (the
+43-module dead-code sweep) and `1b57079`. **All seven still exist** — nothing this
+item depends on was deleted:
+`procedural-building-model.tsx`, `procedural/{floor-picking,procedural-building,structure-generator,types}.ts`,
+`procedural/__tests__/{floor-picking,recipe}.test.ts`.
+
+What is genuinely still open is the item's own honesty note, and it has changed
+character. The manual dev-server smoke — click a floor on a real VWorld footprint —
+was never performed; both pick paths are proven by unit test only. Until today that
+smoke **could not have been meaningful in production anyway**: `/api/vworld/footprint`
+was 502ing because the functions ran in `iad1`, so every building silently fell back
+to the 건축면적-solved rectangle, which exercises the *InstancedMesh* path — not the
+polygon Group path this item fixed. The region pin (`0475eb9`) makes the polygon path
+reachable in production for the first time, so the outstanding verification is now
+actually performable. Re-scope: this is the one remaining action, and it is a
+five-minute manual check, not a code item.

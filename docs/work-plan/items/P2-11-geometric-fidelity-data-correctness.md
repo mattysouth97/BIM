@@ -7,7 +7,7 @@ status: done
 owner: claude-fable-5-session
 effort: M
 created: 2026-07-21
-updated: 2026-07-21
+updated: 2026-09-04
 use_cases: [UC-04, UC-05]
 ---
 
@@ -70,3 +70,22 @@ use_cases: [UC-04, UC-05]
   - [x] AA restored (composer samples or FXAA/SMAA)
   - [x] NaN-vertex filter hole closed
 - **Done when**: curved/multi-parcel/IFC-input buildings render the correct footprint and slab structure, verified by the new tests, with all gates green.
+
+### Post-sweep re-scope (2026-09-04, green [fe5dbc])
+
+One named path is **gone**, and one acceptance claim needed re-verifying against its
+new home. The outcomes all survived; only the references were stale.
+
+- **`src/components/viewer/outline-post-processing.tsx` — DELETED** (2026-09-04, as a
+  never-mounted component). This item's AA criterion ("composer `samples` or FXAA/SMAA")
+  pointed at it. The behaviour survives, relocated to
+  `src/components/viewer/scene-highlight-processing.tsx`: `samples: budget.smaa ? 0 : 4`
+  (`:35`) and `nextComposer.addPass(new SMAAPass())` (`:60`), with GTAO alongside. Read
+  the criterion against that file now.
+- **Shadow-frustum fix verified intact**: `building-scene.tsx:547` derives
+  `shadowHalfExtent` from `siteLayout.extents`, consumed at `:636-644`. No hardcoded
+  ±60 remains, and the P2-11 comments are still in place at `:547` and `:636`.
+- The other six paths — `api/vworld/footprint/route.ts`, `cad/dxf-parser.ts` + tests,
+  `ifc/ifc-geometry-extractor.ts` + tests, `building-scene.tsx` — all exist.
+
+No work reopens. This is a reference correction on a `done` item.
