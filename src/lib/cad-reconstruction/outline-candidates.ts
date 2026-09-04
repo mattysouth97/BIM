@@ -54,6 +54,19 @@ const IOU_CELLS = 160;
  * match against the register can outrank a more authoritative source.
  */
 const AREA_MATCH_BUCKET = 0.05;
+/**
+ * How far an outline's area may sit from the register's 건축면적 and still be
+ * believable as this building.
+ *
+ * A traced ring legitimately differs from 건축면적 — eaves overhang it, an
+ * L-plan or a courtyard changes what gets counted, and the register states the
+ * largest storey's projection rather than the roof's. So the band is wide. What
+ * it is there to catch is not a tolerance question: VWorld returned a 95 m²
+ * outbuilding as `source: "building"` for a school whose register states
+ * 2,749.71 m², a factor of 29.
+ */
+const PLAUSIBLE_AREA_MIN = 0.5;
+const PLAUSIBLE_AREA_MAX = 2.0;
 
 export interface ReconcileContext {
   /** 건축면적 from the register, when stated. The scalar cross-check. */
@@ -133,6 +146,19 @@ function compare(a: OutlineCandidate, b: OutlineCandidate): CandidateAgreement {
   };
 }
 
+/**
+ * Could this ring be this building at all?
+ *
+ * Unanswerable without a registered 건축면적, and an unanswerable question is
+ * answered "yes" — inventing a check the evidence cannot support would be the
+ * same error in the other direction.
+ */
+function isPlausibleArea(c: OutlineCandidate, registered: number | null): boolean {
+  if (registered === null || registered <= 0 || c.areaSqm <= 0) return true;
+  const ratio = c.areaSqm / registered;
+  return ratio >= PLAUSIBLE_AREA_MIN && ratio <= PLAUSIBLE_AREA_MAX;
+}
+
 /** How far a candidate's area sits from the register's, as a fraction. */
 function areaMiss(c: OutlineCandidate, registered: number): number {
   if (registered <= 0) return Infinity;
@@ -145,10 +171,17 @@ function pickBest(
 ): OutlineCandidate | null {
   if (candidates.length === 0) return null;
 
+  // Rule 4: "observed outranks solved" does NOT mean "observed outranks
+  // impossible". A ring that cannot be this building is set aside first, so an
+  // honest solved rectangle of the right size beats a confidently wrong trace.
+  // If nothing is plausible, the whole set competes and the caller is told.
+  const believable = candidates.filter((c) => isPlausibleArea(c, registered));
+  const pool = believable.length > 0 ? believable : candidates;
+
   // Rule 2: observed geometry outranks solved geometry outright. The register's
   // area only ever separates peers within the same tier.
-  const observed = candidates.filter((c) => c.observed);
-  const tier = observed.length > 0 ? observed : candidates;
+  const observed = pool.filter((c) => c.observed);
+  const tier = observed.length > 0 ? observed : pool;
 
   const sorted = [...tier].sort((a, b) => {
     if (registered !== null && registered > 0) {
@@ -208,9 +241,35 @@ export function reconcileOutlines(
 
   const chosen = pickBest(considered, registered);
 
+  // An observed ring that cannot be this building is recorded as such, with its
+  // geometry, so it reaches X-CONFLICT rather than vanishing. This is the case
+  // the parcel guard does not catch: `source: "building"` was true and the ring
+  // was real — it was just a different building.
+  const conflicts: ConflictEntry[] = [];
+  const implausible = observed.filter(
+    (c) => !isPlausibleArea(c, registered) && c.id !== chosen?.id,
+  );
+  for (const c of implausible) {
+    const ratio = registered ? c.areaSqm / registered : 0;
+    conflicts.push({
+      id: `CONFLICT-OUTLINE-${String(conflicts.length + 1).padStart(3, "0")}`,
+      subject: "관측 외곽선 대 등록 건축면적 (다른 건물일 가능성)",
+      sourceA: "SRC-REG-TITLE (archArea)",
+      valueA: `${(registered ?? 0).toFixed(1)} m²`,
+      sourceB: `${c.sourceId} (${c.labelKo})`,
+      valueB: `${c.areaSqm.toFixed(1)} m², 정점 ${c.ring.length}개`,
+      magnitude: `등록 건축면적의 ${(ratio * 100).toFixed(1)}% (${ratio < 1 ? "1/" : ""}${(ratio < 1 ? 1 / ratio : ratio).toFixed(1)}배 차이)`,
+      possibleExplanation:
+        "한 대지에 여러 동이 있을 때 GIS가 부속동·창고를 본동으로 반환하는 경우가 있습니다. " +
+        "이 외곽은 이 대장이 가리키는 동이 아닐 가능성이 높아 외곽선으로 채택하지 않았습니다.",
+      resolutionStatus: "unresolved",
+      requiredVerification: "해당 대지의 동별 배치 확인 후 본동 외곽 재수집",
+      geometry: c.ring,
+    });
+  }
+
   // Rule 3: a disagreement between two observed sources is recorded with the
   // rejected geometry attached, never resolved by deletion.
-  const conflicts: ConflictEntry[] = [];
   for (const agreement of agreements) {
     if (agreement.agrees) continue;
     const a = observed.find((c) => c.id === agreement.aId)!;
@@ -259,6 +318,14 @@ function buildRationale(
   if (registered !== null) {
     const miss = areaMiss(chosen, registered) * 100;
     parts.push(`등록 건축면적 ${registered.toFixed(1)} m² 대비 ${miss.toFixed(1)}% 차이`);
+  }
+  const implausibleCount = considered.filter(
+    (c) => c.observed && registered !== null && !isPlausibleArea(c, registered),
+  ).length;
+  if (implausibleCount > 0) {
+    parts.push(
+      `등록 건축면적과 양립할 수 없는 관측 외곽 ${implausibleCount}개를 제외 (다른 동일 가능성)`,
+    );
   }
   const disagreeing = agreements.filter((a) => !a.agrees).length;
   if (disagreeing > 0) {

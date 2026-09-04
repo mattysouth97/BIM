@@ -178,3 +178,90 @@ describe("reconcileOutlines — two observed sources", () => {
     expect(a.conflicts).toHaveLength(b.conflicts.length);
   });
 });
+
+describe("an observed ring that cannot be this building", () => {
+  // Measured on production, 서울청운초등학교 (mgmBldrgstPk 1002122071):
+  // the register states 건축면적 2,749.71 m², VWorld returned a 95 m²
+  // five-point rectangle as source "building" — an outbuilding on a campus
+  // full of them — and OSM returned a 29-vertex, 3,116 m² school plan.
+  const REGISTERED = 2749.71;
+
+  const wrongBuilding = candidate({
+    id: "OUT-GIS",
+    ring: rect(0, 0, 9700, 9800),
+    areaSqm: 95,
+  });
+  const rightBuilding = candidate({
+    id: "OUT-OSM",
+    origin: "osm_building",
+    sourceId: "SRC-OSM-BLDG",
+    labelKo: "OpenStreetMap 건물 외곽",
+    ring: rect(0, 0, 62000, 50000),
+    areaSqm: 3116,
+  });
+  const solved = candidate({
+    id: "OUT-AREA",
+    origin: "register_area",
+    sourceId: "SRC-REG-TITLE",
+    labelKo: "건축면적 해석 직사각형",
+    grade: "D-INFERRED",
+    observed: false,
+    ring: rect(0, 0, 55000, 50000),
+    areaSqm: REGISTERED,
+  });
+
+  it("loses to the other observed source that agrees with the register", () => {
+    const result = reconcileOutlines([wrongBuilding, rightBuilding], {
+      registeredFootprintSqm: REGISTERED,
+    });
+    expect(result.chosen?.id).toBe("OUT-OSM");
+  });
+
+  it("loses even to a SOLVED rectangle — observed does not outrank impossible", () => {
+    const result = reconcileOutlines([wrongBuilding, solved], {
+      registeredFootprintSqm: REGISTERED,
+    });
+    expect(result.chosen?.id).toBe("OUT-AREA");
+  });
+
+  it("keeps the rejected ring on a conflict so it still reaches X-CONFLICT", () => {
+    const result = reconcileOutlines([wrongBuilding, solved], {
+      registeredFootprintSqm: REGISTERED,
+    });
+    const conflict = result.conflicts.find((c) => c.subject.includes("건축면적"));
+    expect(conflict).toBeDefined();
+    expect(conflict!.geometry).toEqual(wrongBuilding.ring);
+    expect(conflict!.resolutionStatus).toBe("unresolved");
+  });
+
+  it("says so in the rationale rather than silently swapping the winner", () => {
+    const result = reconcileOutlines([wrongBuilding, solved], {
+      registeredFootprintSqm: REGISTERED,
+    });
+    expect(result.rationale).toContain("건축면적");
+  });
+
+  it("does not demote a plausible difference — an outline is not the 건축면적", () => {
+    // Eaves, an L-plan, a courtyard: a traced ring legitimately differs.
+    const slightlyLarger = candidate({ id: "OUT-GIS", areaSqm: REGISTERED * 1.3 });
+    const result = reconcileOutlines([slightlyLarger, solved], {
+      registeredFootprintSqm: REGISTERED,
+    });
+    expect(result.chosen?.id).toBe("OUT-GIS");
+    expect(result.conflicts).toEqual([]);
+  });
+
+  it("cannot judge plausibility with no 건축면적, and does not pretend to", () => {
+    const result = reconcileOutlines([wrongBuilding, solved], {});
+    expect(result.chosen?.id).toBe("OUT-GIS");
+    expect(result.conflicts).toEqual([]);
+  });
+
+  it("still picks the least-bad ring when every candidate is implausible", () => {
+    const alsoWrong = candidate({ id: "OUT-OSM", origin: "osm_building", areaSqm: 60 });
+    const result = reconcileOutlines([wrongBuilding, alsoWrong], {
+      registeredFootprintSqm: REGISTERED,
+    });
+    expect(result.chosen).not.toBeNull();
+  });
+});
