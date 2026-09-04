@@ -17,7 +17,10 @@ import { KeyRound, Loader2 } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useBuildingSearch } from "@/hooks/use-building-search";
+import {
+  useAllBuildingSearch,
+  useBuildingSearch,
+} from "@/hooks/use-building-search";
 import { useHydration } from "@/hooks/use-hydration";
 import type { SearchBuildingsParams } from "@/lib/api-client";
 import type { BrTitleInfo } from "@/lib/types";
@@ -81,11 +84,45 @@ export function LedgerLookup({ locale }: Readonly<{ locale: DiagnosisLocale }>) 
     [],
   );
 
+  // A 주용도 filter has to be matched client-side (the register ignores the
+  // parameter), so it can only be honest if it sees the whole 법정동. Filtering
+  // a single page used to answer "none" for districts whose matches sit further
+  // in: 청운동 is 358 rows and 서울청운초등학교 is row 344, so filtering
+  // 교육연구시설 over page 1 found none of the 21 that are actually there.
+  const allSearch = useAllBuildingSearch(
+    params ?? ({ sigunguCd: "", bjdongCd: "" } as SearchBuildingsParams),
+    !!useFilter,
+  );
+
+  const filtered = useMemo<BrTitleInfo[]>(() => {
+    if (!useFilter) return [];
+    return (allSearch.data?.items ?? []).filter(
+      (item) => item.mainPurpsCd === useFilter,
+    );
+  }, [allSearch.data, useFilter]);
+
+  const pageSize = params?.numOfRows ?? 20;
+  const pageNo = params?.pageNo ?? 1;
+
+  // Filtered results are paged here rather than upstream, so the count and the
+  // rows describe the same set.
   const rows = useMemo<BrTitleInfo[]>(() => {
-    const items = data?.items ?? [];
-    if (!useFilter) return items;
-    return items.filter((item) => item.mainPurpsCd === useFilter);
-  }, [data, useFilter]);
+    if (!useFilter) return data?.items ?? [];
+    const start = (pageNo - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [data, useFilter, filtered, pageNo, pageSize]);
+
+  const listLoading = useFilter ? allSearch.isLoading : isLoading;
+  const listError = useFilter ? allSearch.error : error;
+  const resultCount = useFilter ? filtered.length : (data?.totalCount ?? 0);
+  // The page cap in searchAllBuildings can stop short of a very large district.
+  // Say so: a truncated sweep presented as a complete one is the same defect
+  // this change exists to remove.
+  const truncated = useFilter ? (allSearch.data?.truncated ?? false) : false;
+  const scanned = useFilter ? (allSearch.data?.items.length ?? 0) : 0;
+  const districtTotal = useFilter
+    ? (allSearch.data?.totalCount ?? 0)
+    : (data?.totalCount ?? 0);
 
   // Step 1 of the fixed workflow hands off to steps 2-4, which live in the
   // twin workspace: 건물 검색 → 도면 업로드 → 디지털 트윈 → 보고서.
@@ -148,7 +185,7 @@ export function LedgerLookup({ locale }: Readonly<{ locale: DiagnosisLocale }>) 
         </p>
       ) : null}
 
-      {error ? (
+      {listError ? (
         <p
           className="rounded-[8px] border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs leading-5 text-destructive"
           data-testid="ledger-lookup-error"
@@ -161,27 +198,53 @@ export function LedgerLookup({ locale }: Readonly<{ locale: DiagnosisLocale }>) 
 
       {params ? (
         <div className="space-y-3">
-          {isLoading ? (
+          {listLoading ? (
             <p className="flex items-center gap-2 text-xs text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-              {locale === "ko" ? "조회 중…" : "Searching…"}
+              {locale === "ko"
+                ? useFilter
+                  ? "용도로 걸러내려면 법정동 전체를 확인해야 합니다. 조회 중…"
+                  : "조회 중…"
+                : useFilter
+                  ? "Checking every building in the district so the filter can be complete…"
+                  : "Searching…"}
             </p>
           ) : null}
+
+          {/* What was actually examined, so an empty result reads as "none in
+              this district" rather than "none on the page you happened to get". */}
+          {useFilter && !listLoading ? (
+            <p
+              className="text-[11px] leading-4 text-muted-foreground"
+              data-testid="ledger-filter-scope"
+            >
+              {locale === "ko"
+                ? `${districtTotal.toLocaleString()}건 중 ${scanned.toLocaleString()}건을 확인해 ${resultCount.toLocaleString()}건이 용도와 일치합니다.`
+                : `${resultCount.toLocaleString()} of ${scanned.toLocaleString()} examined match this use (district holds ${districtTotal.toLocaleString()}).`}
+              {truncated
+                ? locale === "ko"
+                  ? " 법정동이 조회 상한보다 커서 앞부분만 확인했습니다 — 결과가 완전하지 않습니다."
+                  : " The district is larger than the lookup cap, so only the first part was examined — this result is not complete."
+                : null}
+            </p>
+          ) : null}
+
           <Suspense fallback={<FormSkeleton />}>
             <SearchResultsTable
               data={rows}
-              isLoading={isLoading}
+              isLoading={listLoading}
               hrefForBuilding={hrefForBuilding}
             />
           </Suspense>
-          {/* Paging the API while a client-side use filter is active would
-              silently drop matches from other pages, so it is suppressed. */}
-          {!useFilter && data?.totalCount ? (
+
+          {/* Both branches page the set that is actually on screen, so the
+              count and the rows can no longer disagree. */}
+          {resultCount > pageSize ? (
             <Suspense fallback={null}>
               <SearchPagination
-                totalCount={data.totalCount}
-                pageNo={params.pageNo ?? 1}
-                numOfRows={params.numOfRows ?? 20}
+                totalCount={resultCount}
+                pageNo={pageNo}
+                numOfRows={pageSize}
                 onPageChange={(page) =>
                   setParams((current) =>
                     current ? { ...current, pageNo: page } : current,

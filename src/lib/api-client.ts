@@ -110,6 +110,63 @@ export function searchBuildings(params: SearchBuildingsParams) {
   return apiFetch<BrTitleInfo>("/api/bldrgst/title", params);
 }
 
+/**
+ * The register caps a page at 100 rows regardless of what `numOfRows` asks for
+ * — measured 2026-09-04: requesting 500 and 1000 both returned
+ * `numOfRows: 100, items: 100`. So any filter that must see a whole 법정동 has
+ * to page, and 청운동 alone is 358 rows.
+ *
+ * This exists because `mainPurpsCd` is ignored by the upstream API and has to
+ * be applied client-side. Filtering a single page silently answers "no such
+ * building" for a district where matches sit on page 4 — 서울청운초등학교 is
+ * row 344 of 358 in 청운동, and filtering 교육연구시설 over page 1 finds none
+ * of the 21 that exist there.
+ *
+ * `maxPages` is a guard, not a preference: without it a district with a large
+ * `totalCount` would fan out into an unbounded request burst against a
+ * rate-limited shared key. When the cap truncates, `truncated` says so rather
+ * than letting the caller present a partial answer as complete.
+ */
+export const SEARCH_ALL_PAGE_SIZE = 100;
+export const SEARCH_ALL_MAX_PAGES = 10;
+
+export async function searchAllBuildings(
+  params: SearchBuildingsParams,
+  maxPages = SEARCH_ALL_MAX_PAGES,
+): Promise<ApiListResponse<BrTitleInfo> & { truncated: boolean }> {
+  const first = await apiFetch<BrTitleInfo>("/api/bldrgst/title", {
+    ...params,
+    numOfRows: SEARCH_ALL_PAGE_SIZE,
+    pageNo: 1,
+  });
+
+  // Trust the rows we were handed over the page size we asked for: the server
+  // decides both, and `numOfRows` in the response is what it actually used.
+  const pageSize = first.items.length || first.numOfRows || SEARCH_ALL_PAGE_SIZE;
+  const totalCount = first.totalCount ?? first.items.length;
+  const neededPages = pageSize > 0 ? Math.ceil(totalCount / pageSize) : 1;
+  const pagesToFetch = Math.min(neededPages, maxPages);
+
+  const items = [...first.items];
+  for (let page = 2; page <= pagesToFetch; page++) {
+    const next = await apiFetch<BrTitleInfo>("/api/bldrgst/title", {
+      ...params,
+      numOfRows: SEARCH_ALL_PAGE_SIZE,
+      pageNo: page,
+    });
+    if (next.items.length === 0) break; // short page → nothing further to read
+    items.push(...next.items);
+  }
+
+  return {
+    items,
+    totalCount,
+    pageNo: 1,
+    numOfRows: items.length,
+    truncated: neededPages > pagesToFetch,
+  };
+}
+
 export interface BuildingDetailParams {
   sigunguCd: string;
   bjdongCd: string;
