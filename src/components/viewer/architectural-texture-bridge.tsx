@@ -7,6 +7,7 @@ import * as THREE from "three";
 import {
   architecturalTextureUrls,
   buildAtlasFromUrlList,
+  isColorChannelUrl,
   setArchitecturalAtlas,
 } from "@/lib/rendering/texture-atlas";
 
@@ -38,8 +39,11 @@ function TextureBridgeInner() {
       tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
       tex.anisotropy = anisotropy;
       tex.needsUpdate = true;
-      const kind = i % 3;
-      tex.colorSpace = kind === 0 ? THREE.SRGBColorSpace : THREE.LinearSRGBColorSpace;
+      // Derived from the URL, not from position: the list is deduplicated, so
+      // an aliased set can drop a pair and shift every index after it.
+      tex.colorSpace = isColorChannelUrl(TEXTURE_URLS[i])
+        ? THREE.SRGBColorSpace
+        : THREE.LinearSRGBColorSpace;
       clones.push(tex);
     }
     try {
