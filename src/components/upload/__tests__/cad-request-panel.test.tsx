@@ -85,6 +85,29 @@ vi.mock("@/hooks/use-composite-building", () => ({
   }),
 }));
 
+/**
+ * Click Run only once the panel says its evidence has settled.
+ *
+ * `CadRequestPanel` disables the button while any evidence query is in flight
+ * (`disabled={running || evidenceLoading}`), and since `useOsmBuilding` was
+ * added that set includes an OSM lookup that is still loading on the first
+ * render. Clicking immediately is a no-op on a disabled button, so the run
+ * never starts and the assertion times out ~1000 ms later reporting a missing
+ * result element — which reads as a broken component rather than a race.
+ *
+ * The component publishes `data-evidence-ready` for exactly this. Waiting on it
+ * tests the real gate rather than mocking it away: the guard exists so that a
+ * reconstruction cannot run before the register has answered, and a test that
+ * stubbed the hook would stop covering it.
+ */
+async function clickRunWhenReady() {
+  const button = screen.getByTestId("cad-request-run");
+  await waitFor(() =>
+    expect(button.getAttribute("data-evidence-ready")).toBe("true"),
+  );
+  fireEvent.click(button);
+}
+
 const originalFetch = globalThis.fetch;
 
 describe("CadRequestPanel", () => {
@@ -129,7 +152,7 @@ describe("CadRequestPanel", () => {
 
   it("reconstructs from the register alone and reports the QA verdict", async () => {
     renderWithQuery(<CadRequestPanel onUseDrawing={() => {}} />);
-    fireEvent.click(screen.getByTestId("cad-request-run"));
+    await clickRunWhenReady();
 
     await waitFor(() => expect(screen.getByTestId("cad-request-result")).toBeTruthy());
     expect(screen.getByText(/외곽선 D-INFERRED/)).toBeTruthy();
@@ -142,7 +165,7 @@ describe("CadRequestPanel", () => {
     fireEvent.change(screen.getByTestId("cad-request-prompt"), {
       target: { value: "정면 폭 20m 를 줄자로 실측했습니다. 깊이 10m 입니다." },
     });
-    fireEvent.click(screen.getByTestId("cad-request-run"));
+    await clickRunWhenReady();
 
     await waitFor(() => expect(screen.getByTestId("cad-request-result")).toBeTruthy());
     expect(screen.getByText(/overall_width_m/)).toBeTruthy();
@@ -152,7 +175,7 @@ describe("CadRequestPanel", () => {
   it("hands a real DXF to the parent when the reconstruction is accepted", async () => {
     const onUseDrawing = vi.fn();
     renderWithQuery(<CadRequestPanel onUseDrawing={onUseDrawing} />);
-    fireEvent.click(screen.getByTestId("cad-request-run"));
+    await clickRunWhenReady();
 
     await waitFor(() => expect(screen.getByTestId("cad-request-use")).toBeTruthy());
     fireEvent.click(screen.getByTestId("cad-request-use"));
@@ -167,7 +190,7 @@ describe("CadRequestPanel", () => {
   it("never presents the result as a measured drawing", async () => {
     renderWithQuery(<CadRequestPanel onUseDrawing={() => {}} />);
     expect(screen.getByText(/추정 현황 복원/)).toBeTruthy();
-    fireEvent.click(screen.getByTestId("cad-request-run"));
+    await clickRunWhenReady();
     await waitFor(() => expect(screen.getByTestId("cad-request-result")).toBeTruthy());
     expect(screen.getByText(/정밀도가 '추정'으로 기록됩니다/)).toBeTruthy();
   });
