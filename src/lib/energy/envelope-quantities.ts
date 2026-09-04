@@ -87,28 +87,45 @@ function metricsOf(rings: [number, number][][]): PlateMetrics {
  * plate of its own falls back to the building footprint, so a prism produces
  * byte-identical numbers to the pre-P2-30 formula.
  */
+/**
+ * The building-level fallback plate, in the same shape a FloorSpec carries —
+ * what a storey with no plate of its own (P2-30: "absent means shares the
+ * footprint") extrudes.
+ */
+function basePlateOf(recipe: BuildingRecipe): [number, number][][] {
+  if (isUsablePolygon(recipe.footprintPolygon)) return recipe.footprintPolygon;
+  const hw = recipe.footprintWidth / 2;
+  const hd = recipe.footprintDepth / 2;
+  return [
+    [
+      [-hw, -hd],
+      [hw, -hd],
+      [hw, hd],
+      [-hw, hd],
+    ],
+  ];
+}
+
+/**
+ * One storey's own plate area, m² — `floor.plate` when the reconstruction
+ * resolved a per-storey shape for it (P2-30), otherwise the building's base
+ * footprint. Exported so a floor's area has exactly one formula: this was a
+ * closure private to `envelopeQuantities` until `bim/derive/twin-elements.ts`
+ * turned up computing the whole-building footprint ONCE and applying it to
+ * every floor — `floor.plate` ignored entirely, so a 7-storey school with a
+ * genuinely 941.87–2,961.97 m² spread of per-floor areas reported all seven
+ * as the same 2,749.71 m² footprint. Both callers now share this function so
+ * they cannot diverge again the same way.
+ */
+export function floorPlateAreaSqm(recipe: BuildingRecipe, floor: FloorSpec): number {
+  const plate = isUsablePolygon(floor.plate) ? floor.plate : basePlateOf(recipe);
+  return metricsOf(plate).areaSqm;
+}
+
 export function envelopeQuantities(recipe: BuildingRecipe): EnvelopeQuantities {
   const height = recipe.totalHeight;
-
-  // The building-level fallback plate, in the same shape a FloorSpec carries.
-  let source: EnvelopeSource = "bbox";
-  let basePlate: [number, number][][];
-  if (isUsablePolygon(recipe.footprintPolygon)) {
-    basePlate = recipe.footprintPolygon;
-    source = "polygon";
-  } else {
-    const hw = recipe.footprintWidth / 2;
-    const hd = recipe.footprintDepth / 2;
-    basePlate = [
-      [
-        [-hw, -hd],
-        [hw, -hd],
-        [hw, hd],
-        [-hw, hd],
-      ],
-    ];
-  }
-  const baseMetrics = metricsOf(basePlate);
+  const source: EnvelopeSource = isUsablePolygon(recipe.footprintPolygon) ? "polygon" : "bbox";
+  const baseMetrics = metricsOf(basePlateOf(recipe));
 
   const plateOf = (floor: FloorSpec): PlateMetrics =>
     isUsablePolygon(floor.plate) ? metricsOf(floor.plate) : baseMetrics;

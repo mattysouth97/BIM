@@ -5,6 +5,7 @@
 import type { BuildingRecipe, FacadeConfig, FloorSpec } from "@/lib/procedural/types";
 import type { MaterialProperties, WallAssembly } from "@/lib/material-types";
 import type { MepEquipmentParams } from "@/lib/layers/mep-equipment-params";
+import { floorPlateAreaSqm } from "@/lib/energy/envelope-quantities";
 
 export type WallOrientation = "N" | "S" | "E" | "W";
 
@@ -123,10 +124,6 @@ function useLabel(floor: FloorSpec, recipe: BuildingRecipe): string {
 
 function footprintPerimeter(recipe: BuildingRecipe): number {
   return 2 * (recipe.footprintWidth + recipe.footprintDepth);
-}
-
-function footprintArea(recipe: BuildingRecipe): number {
-  return recipe.footprintWidth * recipe.footprintDepth;
 }
 
 export function deriveWallElements(source: TwinElementSource): DerivedWallElement[] {
@@ -282,15 +279,19 @@ export function deriveMepElements(source: TwinElementSource): DerivedMepElement[
 
 export function deriveRoomElements(source: TwinElementSource): DerivedRoomElement[] {
   const { recipe } = source;
-  const area = Math.round(footprintArea(recipe) * 100) / 100;
-  const perimeter = Math.round(footprintPerimeter(recipe) * 100) / 100;
+  // Each storey's own area/perimeter, per its own plate when the
+  // reconstruction resolved one (P2-30) — computed once per floor, not once
+  // for the whole building. `footprintArea`/`footprintPerimeter` are still
+  // the right fallback shape (see floorPlateAreaSqm), just no longer applied
+  // uniformly to every storey regardless of what floor.plate actually says.
+  const perimeterFallback = Math.round(footprintPerimeter(recipe) * 100) / 100;
 
   return recipe.floors.map((floor) => ({
     id: `RM-${floor.floorNo}`,
     name: floor.label,
     floorNo: floor.floorNo,
-    area,
-    perimeter,
+    area: Math.round(floorPlateAreaSqm(recipe, floor) * 100) / 100,
+    perimeter: perimeterFallback,
     use: useLabel(floor, recipe),
     height: floor.height,
   }));
