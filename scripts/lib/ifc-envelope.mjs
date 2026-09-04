@@ -39,13 +39,18 @@ const r3 = (value) => Math.round(value * 1e3) / 1e3;
  * from something less reliable.
  */
 export function extractStoreys(file, webIfc) {
+  // `Elevation` is an ATTRIBUTE length, so it is in the file's declared unit —
+  // not necessarily metres. A millimetre file reported storeys at -1000 m
+  // before this scale existed. Geometry is unaffected: web-ifc tessellates to
+  // metres regardless.
+  const toM = file.units?.lengthToMetres ?? 1;
   const raw = file
     .byType(webIfc.IFCBUILDINGSTOREY)
     .map((line) => ({
       expressID: line.expressID,
       name: str(line.Name) ?? "",
       // Elevations come out as e.g. -3.5e-13; that is zero.
-      elevationM: r6(num(line.Elevation) ?? 0),
+      elevationM: r6((num(line.Elevation) ?? 0) * toM),
     }))
     .sort((left, right) => left.elevationM - right.elevationM);
 
@@ -185,7 +190,11 @@ function quantityIndex(file, webIfc) {
       if (!quantity) continue;
       const kind = file.typeName(quantity);
       if (kind === "IfcQuantityArea" && areaSqm === null) {
-        areaSqm = num(quantity.AreaValue);
+        // Area has its own declared unit; it is NOT the length scale squared.
+        // A file can declare MILLI.METRE lengths with plain SQUARE_METRE areas,
+        // and squaring would divide every area by a million.
+        const rawArea = num(quantity.AreaValue);
+        areaSqm = rawArea === null ? null : rawArea * (file.units?.areaToSquareMetres ?? 1);
         areaName = str(quantity.Name);
       } else if (kind === "IfcQuantityVolume" && volumeM3 === null) {
         volumeM3 = num(quantity.VolumeValue);
@@ -218,8 +227,10 @@ export function extractAssemblies(file, webIfc) {
         const layer = file.deref(slot);
         if (!layer) return null;
         const material = file.deref(layer.Material);
-        const thicknessM = num(layer.LayerThickness);
-        if (thicknessM === null) return null;
+        // Also an attribute length, so also unit-scaled.
+        const rawThickness = num(layer.LayerThickness);
+        if (rawThickness === null) return null;
+        const thicknessM = rawThickness * (file.units?.lengthToMetres ?? 1);
         return Object.freeze({
           name: str(material?.Name) ?? "(unnamed)",
           thicknessM: r6(thicknessM),

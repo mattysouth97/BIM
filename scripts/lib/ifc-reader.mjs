@@ -155,6 +155,92 @@ export class IfcFile {
   }
 }
 
+/** SI prefixes IFC may put on a unit, as a multiplier of the base unit. */
+const SI_PREFIX = Object.freeze({
+  EXA: 1e18, PETA: 1e15, TERA: 1e12, GIGA: 1e9, MEGA: 1e6, KILO: 1e3,
+  HECTO: 1e2, DECA: 1e1, DECI: 1e-1, CENTI: 1e-2, MILLI: 1e-3,
+  MICRO: 1e-6, NANO: 1e-9, PICO: 1e-12, FEMTO: 1e-15, ATTO: 1e-18,
+});
+
+/**
+ * How many metres one file length unit is, and square metres per area unit.
+ *
+ * Nothing under `scripts/lib/` read `IfcUnitAssignment` until 2026-09-04, and
+ * the Clinic is in metres, so every length attribute happened to be right —
+ * by luck, not by handling. bim-bf ran the same code against a millimetre file
+ * and `extractStoreys` reported storeys at **-1000 m** with a 3000 m
+ * floor-to-floor. A file in feet would have been subtler and worse.
+ *
+ * **This applies to ATTRIBUTE lengths only** — `IfcBuildingStorey.Elevation`,
+ * `IfcMaterialLayer.LayerThickness`, quantity values. It must NEVER be applied
+ * to geometry: web-ifc's tessellation and `flatTransformation` already come
+ * back in metres whatever the file declares, so scaling those would break the
+ * models that currently work.
+ *
+ * Length and area are read INDEPENDENTLY rather than one derived from the
+ * other. They genuinely disagree in the wild: Schependomlaan declares
+ * `LENGTHUNIT` as MILLI.METRE and `AREAUNIT` as plain SQUARE_METRE, so
+ * squaring the length scale would divide every area by a million.
+ */
+export function readUnits(api, webIfc, modelID) {
+  const result = {
+    lengthToMetres: 1,
+    areaToSquareMetres: 1,
+    lengthUnitName: null,
+    areaUnitName: null,
+    /** True when the file states no unit and the default was assumed. */
+    lengthAssumed: true,
+    areaAssumed: true,
+  };
+
+  const assignments = api.GetLineIDsWithType(modelID, webIfc.IFCUNITASSIGNMENT);
+  for (let a = 0; a < assignments.size(); a += 1) {
+    const assignment = api.GetLine(modelID, assignments.get(a), false);
+    const units = assignment?.Units ?? [];
+    for (const entry of units) {
+      const id = refId(entry);
+      if (id === null) continue;
+      const unit = api.GetLine(modelID, id, false);
+      if (!unit) continue;
+      const unitType = String(str(unit.UnitType) ?? "");
+      const typeName = api.GetNameFromTypeCode(unit.type);
+
+      if (typeName === "IfcSIUnit") {
+        const prefix = str(unit.Prefix);
+        const factor = prefix ? (SI_PREFIX[String(prefix)] ?? 1) : 1;
+        if (unitType.includes("LENGTHUNIT")) {
+          result.lengthToMetres = factor;
+          result.lengthUnitName = `${prefix ?? ""}${str(unit.Name) ?? ""}`;
+          result.lengthAssumed = false;
+        } else if (unitType.includes("AREAUNIT")) {
+          // An SI area prefix scales the BASE metre, so it squares.
+          result.areaToSquareMetres = factor * factor;
+          result.areaUnitName = `${prefix ?? ""}${str(unit.Name) ?? ""}`;
+          result.areaAssumed = false;
+        }
+      } else if (typeName === "IfcConversionBasedUnit") {
+        // Imperial and other non-SI units: the factor sits on the referenced
+        // IfcMeasureWithUnit. Feet appear in US models and would otherwise
+        // read as metres — a 3.28x error that looks like a plausible building.
+        const factorLine = api.GetLine(modelID, refId(unit.ConversionFactor), false);
+        const value = num(factorLine?.ValueComponent);
+        if (value !== null && Number.isFinite(value)) {
+          if (unitType.includes("LENGTHUNIT")) {
+            result.lengthToMetres = value;
+            result.lengthUnitName = str(unit.Name) ?? "conversion-based";
+            result.lengthAssumed = false;
+          } else if (unitType.includes("AREAUNIT")) {
+            result.areaToSquareMetres = value;
+            result.areaUnitName = str(unit.Name) ?? "conversion-based";
+            result.areaAssumed = false;
+          }
+        }
+      }
+    }
+  }
+  return result;
+}
+
 /**
  * Open one or more IFC files against a single shared WASM instance.
  *
@@ -169,7 +255,12 @@ export async function openIfcFiles(paths, { wasmDir }) {
   for (const filePath of paths) {
     const bytes = await readFile(filePath);
     const modelId = api.OpenModel(new Uint8Array(bytes));
-    files.push(new IfcFile(api, modelId, path.basename(filePath)));
+    const file = new IfcFile(api, modelId, path.basename(filePath));
+    // Resolved once here rather than at each call site, so a caller cannot
+    // forget it. `units.lengthToMetres` applies to ATTRIBUTE lengths only —
+    // geometry is already metres. See `readUnits`.
+    file.units = readUnits(api, webIfc, modelId);
+    files.push(file);
   }
   return { api, files, webIfc };
 }

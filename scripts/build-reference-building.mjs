@@ -270,11 +270,19 @@ async function main() {
     attribution: CLINIC.attribution,
     sourceUrl: CLINIC.sourceUrl,
     generatedAt,
-    sourceFiles: sources.map((s) => ({
+    sourceFiles: sources.map((s, i) => ({
       role: s.role,
       fileName: s.fileName,
       sha256: s.sha256,
       byteLength: s.byteLength,
+      /**
+       * The file's own declared units, recorded so a reader can tell whether
+       * a length was converted or merely happened to be right. Every Clinic
+       * file is METRE / SQUARE_METRE, which is why nothing here needed
+       * converting — but nothing read the unit assignment at all until
+       * 2026-09-04, so that was luck rather than handling.
+       */
+      units: files[i].units,
     })),
     counts: {
       storeys: storeys.filter((s) => s.floorToFloorHeightM > 0).length,
