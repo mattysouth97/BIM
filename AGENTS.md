@@ -115,6 +115,14 @@ Two later instances sharpened the rule rather than repeating it:
   took the implication. When a diagnostic hands you a conclusion, check the
   conclusion separately from the fact.
 
+An eighth, and the author of this section wrote it: a workflow brief stated
+as a known trap that *"roughly 40 of 58 IfcWindow are interior vision
+panels."* All four independent routes refuted it. The 40 were the windows
+with **no** `IfcRelSpaceBoundary` at all — an absence written up as a
+classification. **Absent is not false**, whether the field is a property, a
+boundary, or a row in a table; and a caution passed to others inherits no
+more credibility than any other sentence.
+
 Two consequences for how work here is checked:
 
 1. **Assert what a string claims, not that it appears.** A test asserting the
