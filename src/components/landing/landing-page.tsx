@@ -46,8 +46,8 @@ export function LandingPage() {
         <div className="mt-6 max-w-[44rem]" data-testid="landing-gallery-lede">
           <p className="gallery-lede text-balance break-keep text-foreground">
             {isKo
-              ? "BIMFIT으로 설계된 건물 에너지 모델 갤러리"
-              : "Building energy models designed with BIMFIT"}
+              ? "BIMFIT으로 보는 빌딩의 내부 모습과 에너지 프로필"
+              : "A building's interior and energy profile, seen through BIMFIT"}
           </p>
           <p className="mt-3 text-[13px] leading-6 text-muted-foreground">
             {isKo
