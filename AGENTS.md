@@ -47,14 +47,18 @@ search) lives at `/diagnostics/new?method=ledger`; steps 2-4 live in
 
 `/` is no longer step 1 — it is a gallery of the building models this project
 has actually taken in (user decision, 2026-09-04; see
-[[ADR-004 - The Landing Page Is a Model Gallery]]), and it links into step 1
-rather than being it. This is a deliberate, user-authorized exception to "no
-second front door" below, not a drift back into one: the gallery has no form
-of its own and does not compete with the register search, it precedes it.
+[[ADR-004 - The Landing Page Is a Model Gallery]]), and it precedes step 1
+rather than being it. **It does not link to step 1.** Both the header's
+diagnostic action and the card itself are deliberately absent from the
+gallery by request, so step 1 is reached only by URL or from any non-gallery
+page's header — recorded in ADR-004 as the sharpest edge of the decision,
+not an oversight to close.
 
-Do not add a further front door or a parallel entry screen beyond the
-gallery → step 1 pair — this repository has drifted into competing front doors
-twice, and both times it made the product harder to explain.
+This is a user-authorized exception to "no second front door" below, not a
+drift back into one — the gallery has no form of its own and does not
+compete with the register search. Do not add a further front door or a
+parallel entry screen — this repository has drifted into competing front
+doors twice, and both times it made the product harder to explain.
 
 ## Non-negotiable: stated versus assumed
 
