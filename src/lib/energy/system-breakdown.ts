@@ -52,9 +52,66 @@ export const SYSTEM_RATIOS: Record<
 // 0.42 + 0.28 + 0.12 + 0.18 = 1.00
 const DEFAULT_RATIOS = { hvac: 0.42, lighting: 0.28, dhw: 0.12, plug: 0.18 };
 
+// ── Ratio provenance ────────────────────────────────────────────────────────
+//
+// `SYSTEM_RATIOS[prefix] ?? DEFAULT_RATIOS` was correct arithmetic and a silent
+// claim. The table holds four researched profiles (01/02/07/14); every other
+// 주용도코드 — 교육연구시설, 의료시설, 숙박시설, 문화시설 and the rest — took the
+// mixed-use average with nothing anywhere recording that a default had been
+// applied. On one 법정동 that is about a fifth of the buildings, each reported
+// as though its use type had been accounted for.
+//
+// This repository's governing rule is that what the register states and what we
+// assumed must never read alike, so the fallback has to say so. A discriminated
+// union is what makes that non-optional: there is no shape here that carries
+// generic ratios without also carrying the assumption naming them, so a reader
+// cannot mistake one for a sourced profile.
+//
+// What this deliberately does NOT do is invent ratios for the missing codes.
+// Extending the table needs real MOLIT figures; a plausible-looking row with a
+// citation attached would be worse than the silence it replaced.
+export type SystemRatioProvenance =
+  | { source: "use_code"; useCodePrefix: string }
+  | { source: "generic_default"; useCodePrefix: string; assumption: string };
+
+function resolveSystemRatios(mainPurpsCd: string): {
+  ratios: { hvac: number; lighting: number; dhw: number; plug: number };
+  provenance: SystemRatioProvenance;
+} {
+  const useCodePrefix = (mainPurpsCd ?? "").slice(0, 2);
+  const matched = SYSTEM_RATIOS[useCodePrefix];
+  if (matched) {
+    return { ratios: matched, provenance: { source: "use_code", useCodePrefix } };
+  }
+
+  // Built from DEFAULT_RATIOS rather than typed out, so the sentence cannot
+  // drift away from the numbers it is describing.
+  const shares = `냉난방 ${Math.round(DEFAULT_RATIOS.hvac * 100)} / 조명 ${Math.round(
+    DEFAULT_RATIOS.lighting * 100,
+  )} / 급탕 ${Math.round(DEFAULT_RATIOS.dhw * 100)} / 기타 ${Math.round(
+    DEFAULT_RATIOS.plug * 100,
+  )}%`;
+  // An absent code and an unlisted code are different failures, and saying
+  // 주용도코드 "" would imply a code that was never supplied.
+  const assumption = useCodePrefix
+    ? `주용도코드 "${useCodePrefix}"에 대한 용도별 에너지 비율 자료가 없어 일반 평균값(${shares})을 적용했습니다. 실측값이 아닌 가정입니다.`
+    : `주용도코드가 없어 일반 평균값(${shares})을 적용했습니다. 실측값이 아닌 가정입니다.`;
+
+  return {
+    ratios: DEFAULT_RATIOS,
+    provenance: { source: "generic_default", useCodePrefix, assumption },
+  };
+}
+
 // ── SystemBreakdown interface ────────────────────────────────────────────────
 
 export interface SystemBreakdown {
+  /**
+   * Where the four system ratios came from: a researched 주용도코드 profile, or
+   * the generic average with the assumption named. Never absent, so a caller
+   * cannot render a breakdown without being able to say which it is.
+   */
+  ratioProvenance: SystemRatioProvenance;
   /** kWh/yr — HVAC (heating + cooling), anchored to calculateAnnualDemand().totalDemand (D2) */
   hvac: number;
   /** kWh/yr — lighting, derived by ASHRAE ratio from HVAC-anchored total */
@@ -108,8 +165,7 @@ export function calculateSystemBreakdown(
   const demand = calculateAnnualDemand(heatLoss, materials, recipe, climate);
 
   // Step 2: Look up ASHRAE ratios by 2-char mainPurpsCd prefix (D7).
-  const prefix = recipe.mainPurpsCd.slice(0, 2);
-  const ratios = SYSTEM_RATIOS[prefix] ?? DEFAULT_RATIOS;
+  const { ratios, provenance } = resolveSystemRatios(recipe.mainPurpsCd);
 
   // Step 3: HVAC anchor + scale other systems so total = hvac / hvac_ratio (D2).
   // Guard against degenerate hvac_ratio = 0 (would produce Infinity).
@@ -139,6 +195,7 @@ export function calculateSystemBreakdown(
     total,
     perFloor,
     // All "estimated-ratio": Phase 26 will introduce "actual" when sub-metered data is wired.
+    ratioProvenance: provenance,
     hvacDataSource: "estimated-ratio",
     lightingDataSource: "estimated-ratio",
     dhwDataSource: "estimated-ratio",

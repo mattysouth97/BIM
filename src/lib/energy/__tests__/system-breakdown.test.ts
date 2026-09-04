@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calculateSystemBreakdown } from "../system-breakdown";
+import { SYSTEM_RATIOS, calculateSystemBreakdown } from "../system-breakdown";
 import { calculateAnnualDemand } from "../annual-demand";
 import { calculateHeatLoss } from "../heat-loss";
 import { SEOUL_CLIMATE } from "../climate-data";
@@ -310,5 +310,81 @@ describe("calculateSystemBreakdown", () => {
     // Arithmetic identity must hold
     const expectedTotal = breakdown.hvac + breakdown.lighting + breakdown.dhw + breakdown.plugLoads;
     expect(breakdown.total).toBeCloseTo(expectedTotal, 5);
+  });
+});
+
+describe("system ratio provenance (queue item 6 — the silent fallback)", () => {
+  it("reports the matched 주용도코드 when the table has a row for it", () => {
+    const breakdown = calculateSystemBreakdown(
+      makeMaterials(),
+      makeRecipe(10, "14000"),
+      SEOUL_CLIMATE,
+    );
+
+    expect(breakdown.ratioProvenance).toEqual({
+      source: "use_code",
+      useCodePrefix: "14",
+    });
+  });
+
+  it("says so, in words, when no row exists for the use code", () => {
+    // 교육연구시설 (10000) has no researched ratio profile. Before this, it
+    // silently received the mixed-use average and nothing anywhere recorded
+    // that a default had been applied.
+    const breakdown = calculateSystemBreakdown(
+      makeMaterials(),
+      makeRecipe(10, "10000"),
+      SEOUL_CLIMATE,
+    );
+
+    expect(breakdown.ratioProvenance.source).toBe("generic_default");
+    expect(breakdown.ratioProvenance.useCodePrefix).toBe("10");
+    // The assumption has to identify WHICH code went unmatched, or a reader
+    // cannot tell which of the four systems is unsourced.
+    expect(
+      breakdown.ratioProvenance.source === "generic_default" &&
+        breakdown.ratioProvenance.assumption,
+    ).toContain("10");
+  });
+
+  it("changes no energy number when it falls back", () => {
+    // The whole point is to make an existing default visible, not to alter
+    // what it computes. DEFAULT_RATIOS is 42/28/12/18 and must stay so.
+    const breakdown = calculateSystemBreakdown(
+      makeMaterials(),
+      makeRecipe(10, "10000"),
+      SEOUL_CLIMATE,
+    );
+
+    expect(breakdown.hvac / breakdown.total).toBeCloseTo(0.42, 6);
+    expect(breakdown.lighting / breakdown.total).toBeCloseTo(0.28, 6);
+    expect(breakdown.dhw / breakdown.total).toBeCloseTo(0.12, 6);
+    expect(breakdown.plugLoads / breakdown.total).toBeCloseTo(0.18, 6);
+  });
+
+  it("changes no energy number when it matches", () => {
+    const breakdown = calculateSystemBreakdown(
+      makeMaterials(),
+      makeRecipe(10, "14000"),
+      SEOUL_CLIMATE,
+    );
+
+    expect(breakdown.hvac / breakdown.total).toBeCloseTo(0.55, 6);
+  });
+
+  it("reaches every row the table declares", () => {
+    // A row that no use code can select would be dead weight pretending to be
+    // a sourced profile.
+    for (const prefix of Object.keys(SYSTEM_RATIOS)) {
+      const breakdown = calculateSystemBreakdown(
+        makeMaterials(),
+        makeRecipe(10, `${prefix}000`),
+        SEOUL_CLIMATE,
+      );
+      expect(breakdown.ratioProvenance).toEqual({
+        source: "use_code",
+        useCodePrefix: prefix,
+      });
+    }
   });
 });

@@ -210,6 +210,7 @@ function makeMetrics(): EnergyMetrics {
       plugLoads: 7000,
       total: 90000,
       perFloor: [45000, 45000],
+      ratioProvenance: { source: "use_code", useCodePrefix: "14" } as const,
       hvacDataSource: "estimated-ratio",
       lightingDataSource: "estimated-ratio",
       dhwDataSource: "estimated-ratio",

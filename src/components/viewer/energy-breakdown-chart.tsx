@@ -93,7 +93,16 @@ export function EnergyBreakdownChart({ buildingPk }: EnergyBreakdownChartProps) 
             {t("추정 비율", "Estimated")}
           </Badge>
           <span className="text-[9px] text-muted-foreground">
-            {t("ASHRAE 90.1 기반 비율", "ASHRAE 90.1 ratios")}
+            {/* "ASHRAE 90.1 ratios" overclaims when no profile matched this
+                building's use code: the split is then the mixed-use average,
+                chosen because the use type is unknown to the table rather than
+                because it was looked up. Say which one the reader is seeing. */}
+            {breakdown.ratioProvenance.source === "generic_default"
+              ? t(
+                  `주용도코드 ${breakdown.ratioProvenance.useCodePrefix || "미상"} 자료 없음 — 일반 평균값 적용`,
+                  `No profile for use code ${breakdown.ratioProvenance.useCodePrefix || "unknown"} — generic average applied`,
+                )
+              : t("ASHRAE 90.1 기반 비율", "ASHRAE 90.1 ratios")}
           </span>
         </div>
       )}
