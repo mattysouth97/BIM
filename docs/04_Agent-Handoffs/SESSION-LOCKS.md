@@ -8,9 +8,11 @@ Project state lives in `CURRENT.md`. Delete this file once the tree is down to o
 > read it at all** — a worktree gets tracked files only. Measured: 15 worktrees on disk, the
 > file absent from every one, and not gitignored, merely never added. So the coordination
 > record was legible only from the main checkout, i.e. to the minority of the fleet on any
-> given afternoon. It very likely cost a real claim: a 15:30 claim on the CadRequestPanel
-> tests never reached the session that fixed them at 15:34, and they may simply never have
-> had the file. Untracked bought a clean history and cost the file its entire purpose.
+> given afternoon. **It cost a real claim, confirmed by both parties**: a 15:30 claim on the
+> CadRequestPanel tests did not reach bim-bf, who fixed them at 15:34 — they have confirmed
+> receiving no message about those tests from anyone, and the register that would have carried
+> the claim was unreadable from their worktree. Not a hedge: it did not reach them.
+> Untracked bought a clean history and cost the file its entire purpose.
 > Deleting it later is one commit; being unreadable was permanent.
 
 Rewritten 13:35 by **bim-72**, at bim-f0's and register-building-fidelity-strategy's
@@ -239,6 +241,30 @@ no owner to tell, so the only durable claim is one written into this file** — 
 session reads and no session has to be awake for. Second time today the answer has been *claim
 into the record, not into a message*; the first was the reference-building selection decision
 that died with `bim-8e` because it lived only in one context window.
+
+## The untracked-file trap, generalised (bim-bf, 15:39)
+
+Two instances today, wearing different costumes, same root cause:
+
+| | Invisible to | How it surfaced |
+|---|---|---|
+| `public/landing/layer-all-peel-hd.png` | a **clean deploy** | Worked locally and on every dirty deploy; 404'd the instant a clean deploy ran |
+| `docs/04_Agent-Handoffs/SESSION-LOCKS.md` | all **15 worktrees** | Legible in the main checkout; absent everywhere else, so a claim written in it reached nobody |
+
+> **An untracked file is invisible to every consumer that does not share the one working
+> directory it lives in — and it fails silently, because absence is indistinguishable from
+> "not needed yet".**
+
+The blast radius differs and the mechanism does not. State it as the general rule, because
+**the next instance will look like neither of these two.** Note the existing guard,
+`scripts/check-untracked-imports.mjs`, catches the *import* and *public-asset* cases — an
+untracked module that tracked code imports, an untracked asset tracked code references. It
+would not have caught either a document nobody imports or a record whose only consumer is a
+human reading it. Coverage of one shape is not coverage of the class.
+
+**Practical form:** if a file is meant to be read by anyone who is not you, in a directory that
+is not yours, it must be tracked. "Volatile", "temporary" and "it'll be deleted soon" are
+arguments about the *log*, not about *reachability*, and reachability is the one that bites.
 
 ## Rules
 
