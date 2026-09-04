@@ -50,6 +50,26 @@ export type ReferenceBuildingManifest = Readonly<{
      */
     exteriorWallByOrientationSqm?: Readonly<Record<string, number>>;
   }>;
+  /**
+   * Layer stacks as the model states them, outside-in.
+   *
+   * Names and thicknesses only, because the file states nothing else — no
+   * conductivity, no U-value. Solving these into U-values is the job of
+   * `constructions.ts`, deliberately outside this manifest: every λ is an
+   * assumption, and this document reports only what the model says.
+   */
+  assemblies?: readonly Readonly<{
+    id: string;
+    name: string;
+    totalThicknessM: number;
+    layers: readonly Readonly<{
+      name: string;
+      thicknessM: number;
+      /** `ifc://<file>#<expressID>` — the entity the thickness was read from. */
+      ref: string;
+    }>[];
+    ref: string;
+  }>[];
   /** How the orientation above was arrived at, including what was inferred. */
   orientation?: Readonly<{
     trueNorthDeg: number | null;
