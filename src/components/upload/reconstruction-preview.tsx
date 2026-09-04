@@ -13,6 +13,12 @@ import type {
   EvidenceGrade,
   ReconstructionModel,
 } from "@/lib/cad-reconstruction";
+import {
+  pickOrthoZoom,
+  tileBounds,
+  tilesCovering,
+} from "@/lib/cad-reconstruction/ortho-tiles";
+import { createSceneProjection } from "@/lib/gis/gis-transform";
 
 const GRADE_STROKE: Record<EvidenceGrade, string> = {
   "A-VERIFIED": "#111827",
@@ -50,9 +56,87 @@ interface Props {
   model: ReconstructionModel;
   levelId: string;
   size?: number;
+  /** Draw the aerial ortho under the plan, so the outline can be eyeballed. */
+  showOrtho?: boolean;
 }
 
-export function ReconstructionPreview({ model, levelId, size = 300 }: Props) {
+/** One ortho tile placed in the model's millimetre frame. */
+interface PlacedTile {
+  key: string;
+  href: string;
+  xMm: number;
+  /** North edge — the image's top, since SVG y grows downward. */
+  yNorthMm: number;
+  widthMm: number;
+  heightMm: number;
+}
+
+/**
+ * Ortho tiles covering the plan, in the model's own frame.
+ *
+ * Each tile is placed by its own projected corners rather than by scaling a
+ * mosaic, so a tile lands where its imagery actually is. Tiles are squares in
+ * Web Mercator and very slightly not-squares in the site's Transverse Mercator;
+ * over a building the difference is millimetres, and this overlay exists to be
+ * looked at rather than measured from.
+ *
+ * Returns [] whenever the model is not georeferenced — an ungeoreferenced plan
+ * has no defensible place to put imagery, and guessing would be worse than
+ * showing none.
+ */
+function useOrthoTiles(model: ReconstructionModel, bounds: Bounds): PlacedTile[] {
+  return useMemo(() => {
+    const origin = model.frame.originLngLat;
+    if (!origin) return [];
+
+    try {
+      const projection = createSceneProjection(origin[0], origin[1]);
+
+      // Plan extent (mm) → metres → WGS84, to learn which tiles to ask for.
+      const corners: Array<[number, number]> = [
+        [bounds.minX, bounds.minY],
+        [bounds.minX + bounds.width, bounds.minY + bounds.height],
+      ].map(([x, y]) => projection.unproject(x / 1000, y / 1000));
+
+      const lngs = corners.map((c) => c[0]);
+      const lats = corners.map((c) => c[1]);
+      const bbox = {
+        west: Math.min(...lngs),
+        east: Math.max(...lngs),
+        south: Math.min(...lats),
+        north: Math.max(...lats),
+      };
+
+      const spanM = Math.max(bounds.width, bounds.height) / 1000;
+      const zoom = pickOrthoZoom(spanM, origin[1]);
+
+      return tilesCovering(bbox, zoom).map((tile) => {
+        const b = tileBounds(tile);
+        const [westM, southM] = projection.project(b.west, b.south);
+        const [eastM, northM] = projection.project(b.east, b.north);
+        return {
+          key: `${tile.z}/${tile.x}/${tile.y}`,
+          href: `/api/imagery/ortho?z=${tile.z}&x=${tile.x}&y=${tile.y}`,
+          xMm: westM * 1000,
+          yNorthMm: northM * 1000,
+          widthMm: (eastM - westM) * 1000,
+          heightMm: (northM - southM) * 1000,
+        };
+      });
+    } catch {
+      // Outside the projection's supported bounds — no imagery rather than
+      // imagery in the wrong place.
+      return [];
+    }
+  }, [model.frame.originLngLat, bounds]);
+}
+
+export function ReconstructionPreview({
+  model,
+  levelId,
+  size = 300,
+  showOrtho = false,
+}: Props) {
   const level = model.levels.find((l) => l.id === levelId) ?? model.levels[0];
 
   const view = useMemo(() => {
@@ -66,6 +150,11 @@ export function ReconstructionPreview({ model, levelId, size = 300 }: Props) {
       b,
     };
   }, [level, model.core]);
+
+  const orthoTiles = useOrthoTiles(
+    model,
+    view?.b ?? { minX: 0, minY: 0, width: 1, height: 1 },
+  );
 
   if (!level || !view) return null;
 
@@ -84,6 +173,26 @@ export function ReconstructionPreview({ model, levelId, size = 300 }: Props) {
       role="img"
       aria-label={`${level.name} 복원 평면 미리보기`}
     >
+      {showOrtho && orthoTiles.length > 0 && (
+        <g opacity={0.85}>
+          {orthoTiles.map((tile) => (
+            <image
+              key={tile.key}
+              href={tile.href}
+              x={tile.xMm}
+              // Model +Y is north; SVG y grows downward. The plan group flips
+              // once for everything else, so the imagery is placed in screen
+              // coordinates here instead — an <image> inside that flip would
+              // render mirrored.
+              y={2 * view.b.minY + view.b.height - tile.yNorthMm}
+              width={tile.widthMm}
+              height={tile.heightMm}
+              preserveAspectRatio="none"
+            />
+          ))}
+        </g>
+      )}
+
       <g transform={`translate(0, ${2 * view.b.minY + view.b.height}) scale(1, -1)`}>
         {model.grid.xLines.map((x) => (
           <line

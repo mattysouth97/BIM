@@ -148,6 +148,9 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
   const [useWeb, setUseWeb] = useState(false);
   const [webAvailable, setWebAvailable] = useState<boolean | null>(null);
   const [previewLevelId, setPreviewLevelId] = useState<string | null>(null);
+  // Aerial imagery under the plan. A verification aid only — nothing in the
+  // model is derived from it, so it is off until the user asks to look.
+  const [showOrtho, setShowOrtho] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -506,7 +509,23 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
                       model={model}
                       levelId={previewLevelId}
                       size={260}
+                      showOrtho={showOrtho}
                     />
+                    {model.frame.originLngLat && (
+                      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                        <input
+                          type="checkbox"
+                          className="h-3 w-3"
+                          checked={showOrtho}
+                          onChange={(e) => setShowOrtho(e.target.checked)}
+                          data-testid="cad-request-ortho"
+                        />
+                        {t(
+                          "항공영상 겹쳐 보기 (눈으로 확인용 — 치수 근거 아님)",
+                          "Aerial imagery underlay (for checking by eye — not a dimension source)",
+                        )}
+                      </label>
+                    )}
                     <div className="flex flex-wrap gap-1">
                       {model.levels.map((l) => (
                         <button
