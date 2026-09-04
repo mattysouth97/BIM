@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { GALLERY_ITEMS, type GalleryItem } from "../gallery";
+import {
+  GALLERY_ITEMS,
+  HELD_GALLERY_ITEMS,
+  type GalleryItem,
+} from "../gallery";
 
 /**
  * The gallery card's figures are literals in `gallery.ts`, and the generated
@@ -144,10 +148,13 @@ describe("gallery card agrees with the generated manifest", () => {
  * counts are placeholders rather than answers.
  */
 describe("schependomlaan card is arithmetically consistent with itself", () => {
-  const item = GALLERY_ITEMS.find((i) => i.id === "schependomlaan");
+  // Read from the HELD list: the card is verified but deliberately not
+  // rendered, and holding it must not quietly drop its coverage too.
+  const item = HELD_GALLERY_ITEMS.find((i) => i.id === "schependomlaan");
 
-  it("is in the gallery", () => {
+  it("is held, not rendered, until the licence question is settled", () => {
     expect(item).toBeDefined();
+    expect(GALLERY_ITEMS.some((i) => i.id === "schependomlaan")).toBe(false);
   });
 
   it("sums its storeys to the totals it prints", () => {

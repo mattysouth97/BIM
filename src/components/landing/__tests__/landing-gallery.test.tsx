@@ -19,7 +19,8 @@ describe("landing gallery", () => {
       GALLERY_ITEMS.length,
     );
     expect(screen.getByTestId("gallery-item-clinic")).toBeTruthy();
-    expect(screen.getByTestId("gallery-item-schependomlaan")).toBeTruthy();
+    // Schependomlaan is verified but HELD — see HELD_GALLERY_ITEMS.
+    expect(screen.queryByTestId("gallery-item-schependomlaan")).toBeNull();
 
     // The register sheet used to be this page. None of it is left.
     expect(screen.queryByTestId("landing-ledger-lookup")).toBeNull();
