@@ -113,8 +113,6 @@ export function resolveVisualMaterialId(query: BimMaterialQuery): VisualMaterial
       return "concrete-cast";
     case "interior":
       return "interior-cavity";
-    case "vegetation":
-      return "ground-grass";
     case "neighbor":
       return "concrete-cast";
     default:

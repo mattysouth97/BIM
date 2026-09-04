@@ -160,7 +160,6 @@ export interface QualityBudget {
   weathering: boolean;
   stochastic: boolean;
   triplanar: boolean;
-  vegetation: boolean;
   maxPixelRatio: number;
   envFromSky: boolean;
 }
