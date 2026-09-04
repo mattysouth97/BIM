@@ -239,10 +239,91 @@ const SCHEPENDOMLAAN = Object.freeze({
     "outer leaf (buitenblad), so no envelope area is mis-binned.",
 });
 
+/**
+ * Reference building #3 — the Duplex Apartment.
+ *
+ * The NIBS/buildingSMART Common BIM File, and the first model here that states
+ * its SERVICES rather than its envelope: architectural, MEP, electrical and
+ * plumbing models, plus COBie schedules and per-product data sheets. It states
+ * no U-value at all (zero IfcThermalTransmittanceMeasure), so its fabric is
+ * assumption and its plant is evidence — the mirror image of DigitalHub.
+ *
+ * Same licence and the same verifiable rights holder as the Clinic, which is
+ * why it was chosen over richer models with no grant behind them.
+ */
+const DUPLEX = Object.freeze({
+  id: "duplex-apartment",
+  name: { ko: "듀플렉스 아파트", en: "Duplex Apartment" },
+  summary: {
+    ko: "buildingSMART 공개 표준 모델. 설비·전기·배관 모델을 모두 갖춘 2세대 주택.",
+    en: "A two-dwelling house released as an open standard model, with its mechanical, electrical and plumbing models intact.",
+  },
+  useType: "apartment_building",
+  licence: "CC BY 4.0",
+  attribution:
+    'BSI (2020) "Duplex Apartment Test Files", buildingSMART International — ' +
+    "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+  sourceUrl:
+    "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+  source: {
+    owner: "buildingsmart-community",
+    repo: "Community-Sample-Test-Files",
+    ref: "main",
+    dir: "IFC 2.3.0.1 (IFC 2x3)/Duplex Apartment",
+  },
+  files: [
+    { role: "architectural", fileName: "Duplex_A_20110907.ifc" },
+    { role: "rooms", fileName: "Duplex_M_20111024_ROOMS_AND_SPACES.ifc" },
+    { role: "hvac", fileName: "Duplex_MEP_20110907.ifc" },
+    { role: "electrical", fileName: "Duplex_Electrical_20121207.ifc" },
+    { role: "plumbing", fileName: "Duplex_Plumbing_20121113.ifc" },
+  ],
+  serviceLayers: [
+    { id: "hvac", role: "hvac", ko: "냉난방환기", en: "HVAC" },
+    { id: "electrical", role: "electrical", ko: "전기", en: "Electrical" },
+    { id: "plumbing", role: "plumbing", ko: "급탕/배관", en: "Plumbing" },
+  ],
+
+  /**
+   * Rooms live in their own model. Measured: the architectural file holds
+   * 10 spaces per level (141.79 + 134.53 m²) where ROOMS_AND_SPACES holds
+   * 15 and 20 (264.97 + 264.49). It carries one dwelling's rooms; a duplex
+   * has two.
+   *
+   * A third set is a decoy — `Duplex_MEP` has 42 spaces totalling 797.79 m²,
+   * within 2 m² of the correct model, so a check on the TOTAL cannot separate
+   * them. Only the names can: they read "Kitchen MEP Space", and they are
+   * ventilation zones rather than rooms.
+   */
+  spacesRole: "rooms",
+
+  /**
+   * `IsExternal` is true on 23 of 57 walls and only 13 of those are envelope.
+   * The other ten are two kinds of not-envelope, and both would inflate the
+   * heat-loss area:
+   *   - 4 `Party Wall - CMU Residential Unit Dimising Wall` separate the two
+   *     dwellings. Conditioned on both sides, so no heat crosses them.
+   *   - 6 `Foundation - Concrete` are below grade, a different boundary
+   *     condition and a different U entirely.
+   * Third building, third way `IsExternal` fails as an envelope filter.
+   */
+  exteriorWallMatch: "Exterior - Brick on Block",
+
+  /**
+   * Revit 2011, single-skin walls, and the file states no `NetSideArea` — the
+   * same position as the Clinic, so the tessellated mesh is the only
+   * measurement available and there is nothing to fall back to.
+   */
+  areaSource: "mesh",
+
+  roofDatumM: 5.5,
+});
+
 /** Every building this script can build, selected with `--building <id>`. */
 const BUILDINGS = Object.freeze({
   [CLINIC.id]: CLINIC,
   [SCHEPENDOMLAAN.id]: SCHEPENDOMLAAN,
+  [DUPLEX.id]: DUPLEX,
 });
 
 /**
@@ -379,15 +460,25 @@ async function main() {
   const struct = byRole.get("structural");
 
   // ── What the model states ──────────────────────────────────────────────
-  const storeys = extractStoreys(arch, webIfc);
-  const spaces = extractSpaces(arch, webIfc, storeys);
+  // Spaces may live in a model of their own. The Duplex ships its rooms in a
+  // separate `ROOMS_AND_SPACES` file, and its architectural model carries only
+  // one of the two dwellings' rooms — 276.32 m² of floor against a real
+  // 529.46, so defaulting to `arch` would have made the building read about
+  // twice as efficient as it is.
+  //
+  // Storeys come from the SAME file, not from `arch`: a space is linked to its
+  // storey by expressID within one file, so a storey list from another model
+  // cannot be matched against it.
+  const spaceFile = byRole.get(building.spacesRole ?? "architectural") ?? arch;
+  const storeys = extractStoreys(spaceFile, webIfc);
+  const spaces = extractSpaces(spaceFile, webIfc, storeys);
   const floorSpaces = spaces.filter((s) => s.countsAsFloorArea);
   // Volume and plan extent of every space, from its own solid. The Clinic
   // states no volume quantity anywhere, so until this pass the conditioned
   // volume was a range (Σ floor × floor-to-floor, or slab × roof datum) with
   // the two-storey concourse somewhere between the two. A closed solid has an
   // exact volume, and the ventilation term multiplies it directly.
-  const spaceMeshes = measureSpaceMeshes(api, webIfc, arch.modelId);
+  const spaceMeshes = measureSpaceMeshes(api, webIfc, spaceFile.modelId);
   const r2 = (n) => Math.round(n * 100) / 100;
   const storeyById = new Map(storeys.map((s) => [s.id, s]));
   const spaceRows = spaces.map((s) => {
