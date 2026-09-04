@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
@@ -18,10 +18,10 @@ import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manife
  */
 function Fabric({ url }: { url: string }) {
   const { scene } = useGLTF(url);
-  const camera = useThree((state) => state.camera);
-  const controls = useThree((state) => state.controls) as
-    | { target: THREE.Vector3; update: () => void }
-    | null;
+  // `get()` rather than selecting camera and controls directly: R3F expects
+  // these to be mutated imperatively, and reading them through the store's
+  // accessor keeps that out of React's rules about hook-returned values.
+  const get = useThree((state) => state.get);
 
   // Recentre on the model's own bounding box rather than trusting the file's
   // origin. A coordination model is drawn wherever the project grid put it —
@@ -37,9 +37,13 @@ function Fabric({ url }: { url: string }) {
   }, [scene]);
 
   useEffect(() => {
+    const { camera, controls } = get() as unknown as {
+      camera: THREE.PerspectiveCamera;
+      controls: { target: THREE.Vector3; update: () => void } | null;
+    };
     // Far enough that the whole diagonal fits the vertical field of view, with
     // headroom so the building is not cropped at the frame edge.
-    const fov = (camera as THREE.PerspectiveCamera).fov ?? 40;
+    const fov = camera.fov ?? 40;
     const distance =
       (centred.radius / Math.sin((fov * Math.PI) / 360)) * 1.15;
     camera.position.set(distance * 0.72, distance * 0.42, distance * 0.72);
@@ -51,7 +55,7 @@ function Fabric({ url }: { url: string }) {
       controls.target.set(0, 0, 0);
       controls.update();
     }
-  }, [camera, controls, centred]);
+  }, [get, centred]);
 
   return <primitive object={scene} />;
 }
@@ -74,9 +78,6 @@ export function ReferenceModelViewer({
   modelUrl: string;
   locale: "ko" | "en";
 }) {
-  // three-stdlib's OrbitControls types conflict with drei v10's — see
-  // CLAUDE.md's Known Issues.
-  const controls = useRef<any>(null);
   const isKo = locale === "ko";
 
   return (
@@ -100,7 +101,6 @@ export function ReferenceModelViewer({
           <Ground />
         </Suspense>
         <OrbitControls
-          ref={controls}
           makeDefault
           enableDamping
           maxPolarAngle={Math.PI / 2.05}
