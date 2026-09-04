@@ -92,7 +92,9 @@ test.describe("Landing diagnostic chrome", () => {
   });
 
   test("keeps one persistent diagnostic action in the header", async ({ page }) => {
-    await page.goto("/");
+    // Everywhere except the gallery. `/` is deliberately bare — see the
+    // "Landing gallery" describe in first-door.spec.ts.
+    await page.goto("/diagnostics/new?method=ledger");
     await expect(page.getByTestId("header-new-diagnostic")).toBeVisible({ timeout: 15000 });
   });
 });

@@ -164,9 +164,24 @@ test.describe("Landing gallery", () => {
     expect(backgrounds).toEqual([]);
   });
 
-  test("the header still opens the register lookup", async ({ page }) => {
-    await page.getByTestId("header-new-diagnostic").click();
-    await expect(page).toHaveURL(/method=ledger/);
+  test("strips the diagnostic action and the API key control", async ({ page }) => {
+    // Asked for explicitly: the gallery carries neither. This is the sharpest
+    // edge of the gallery decision, so it is pinned rather than left implicit —
+    // from `/` the register search is reachable only by URL or by first
+    // leaving the page via the wordmark.
+    await expect(page.getByTestId("header-new-diagnostic")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "API 키 설정" })).toHaveCount(0);
+  });
+
+  test("the wordmark is the way off the gallery, and the door is still there", async ({
+    page,
+  }) => {
+    // Not a redundant URL check: it is the only navigation the gallery has, so
+    // if it broke there would be no way out of `/` at all.
+    await expect(page.getByRole("link", { name: "BIMFIT 홈" })).toBeVisible();
+
+    await page.goto("/diagnostics/new?method=ledger");
     await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible();
+    await expect(page.getByTestId("header-new-diagnostic")).toBeVisible();
   });
 });
