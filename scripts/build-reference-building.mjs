@@ -27,6 +27,7 @@ import {
 } from "./lib/ifc-envelope.mjs";
 import { netFaceAreasByElement } from "./lib/ifc-face-area.mjs";
 import { collectFabric, collectServices, mergeFabric, writeGlb } from "./lib/ifc-glb.mjs";
+import { collectFlowNetwork, annotateFlow, serialiseFlow } from "./lib/ifc-flow.mjs";
 
 const REPO = process.cwd();
 const CACHE =
@@ -171,6 +172,20 @@ async function main() {
       collected.groups,
       { generator, colours: collected.colours },
     );
+    // The routed network, direction included, from the model's own ports.
+    // Written as its own file for the same reason the GLB is: a reader who
+    // never switches flow on should never pay for it.
+    const flow = serialiseFlow(annotateFlow(collectFlowNetwork(api, webIfc, file.modelId)));
+    let flowFile = null;
+    if (flow.segments.length > 0) {
+      flowFile = `${layer.id}-flow.json`;
+      await writeFile(
+        path.join(outDir, flowFile),
+        `${JSON.stringify(flow)}\n`,
+        "utf8",
+      );
+    }
+
     serviceLayers.push({
       id: layer.id,
       ko: layer.ko,
@@ -181,11 +196,24 @@ async function main() {
       groups: written.groups,
       detailedRuns: collected.detailed,
       proxiedComponents: collected.proxied,
+      /**
+       * Null when the model states no direction of flow. The counts stay
+       * either way — a layer that cannot animate should still be able to say
+       * why, and "this file declares no ports" is a fact about the model worth
+       * showing rather than an empty space.
+       */
+      flow: {
+        file: flowFile,
+        ...flow.counts,
+        reason: flow.reason,
+        wavelengthM: flow.wavelengthM,
+      },
     });
     console.log(
       `    ${layer.id}.glb`.padEnd(20) +
         `${(written.byteLength / 1048576).toFixed(2)} MB, ` +
-        `${written.detailedLabel ?? ""}${collected.detailed} runs + ${collected.proxied} proxies`,
+        `${collected.detailed} runs + ${collected.proxied} proxies, ` +
+        `flow ${flow.counts.drawnEdges}/${flow.counts.connections} directed`,
     );
   }
 

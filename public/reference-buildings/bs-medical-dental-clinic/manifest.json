@@ -85,7 +85,23 @@
         "plant"
       ],
       "detailedRuns": 1559,
-      "proxiedComponents": 2145
+      "proxiedComponents": 2145,
+      "flow": {
+        "file": "hvac-flow.json",
+        "ports": 7390,
+        "connections": 3695,
+        "directedEdges": 3695,
+        "drawnEdges": 3695,
+        "bidirectionalEdges": 0,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 11,
+        "supplySegments": 2411,
+        "returnSegments": 1284,
+        "reason": null,
+        "wavelengthM": 26
+      }
     },
     {
       "id": "electrical",
@@ -100,7 +116,23 @@
         "equipment"
       ],
       "detailedRuns": 8,
-      "proxiedComponents": 2110
+      "proxiedComponents": 2110,
+      "flow": {
+        "file": null,
+        "ports": 0,
+        "connections": 0,
+        "directedEdges": 0,
+        "drawnEdges": 0,
+        "bidirectionalEdges": 0,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 0,
+        "supplySegments": 0,
+        "returnSegments": 0,
+        "reason": "The model declares no distribution ports, so it states no network to trace.",
+        "wavelengthM": null
+      }
     },
     {
       "id": "plumbing",
@@ -117,7 +149,23 @@
         "fitting"
       ],
       "detailedRuns": 2896,
-      "proxiedComponents": 3691
+      "proxiedComponents": 3691,
+      "flow": {
+        "file": "plumbing-flow.json",
+        "ports": 13058,
+        "connections": 6529,
+        "directedEdges": 954,
+        "drawnEdges": 954,
+        "bidirectionalEdges": 5575,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 2,
+        "supplySegments": 10,
+        "returnSegments": 944,
+        "reason": null,
+        "wavelengthM": 26
+      }
     }
   ],
   "model": {

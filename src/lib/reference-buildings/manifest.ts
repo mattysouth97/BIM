@@ -65,6 +65,33 @@ export type ReferenceBuildingManifest = Readonly<{
     detailedRuns: number;
     /** Fittings, valves, terminals and plant reduced to a bounding box. */
     proxiedComponents: number;
+    /**
+     * The routed network read out of the model's own distribution ports.
+     *
+     * `file` is null when the model states no direction of flow, and the
+     * counts still say why — the Clinic's electrical model declares no ports
+     * at all, which is a fact about what a coordination model carries rather
+     * than a gap to fill in with a plausible circuit.
+     */
+    flow?: Readonly<{
+      file: string | null;
+      ports: number;
+      connections: number;
+      directedEdges: number;
+      drawnEdges: number;
+      /** Connections whose ports are SOURCEANDSINK — direction not stated. */
+      bidirectionalEdges: number;
+      unresolvedConnections: number;
+      ungeometried: number;
+      unreachedEdges: number;
+      plantNodes: number;
+      /** Segments downstream of plant, and the rest. */
+      supplySegments: number;
+      returnSegments: number;
+      reason: string | null;
+      /** Metres per animated pulse, so speed reads the same at any scale. */
+      wavelengthM: number | null;
+    }>;
   }>[];
   model: Readonly<{
     file: string;
