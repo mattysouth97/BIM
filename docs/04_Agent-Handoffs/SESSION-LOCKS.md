@@ -129,29 +129,53 @@ writes out.
 not on `feat/reference-building-clinic`. The two branches must be joined before the wiring
 can resolve.
 
-### Five reported traps — being verified against source, not inherited
+### Five reported traps — VERIFIED 15:50. Three were wrong.
 
-Reported by register-building-fidelity-strategy; each is being read at its cited line and will
-be marked CONFIRMED or REFUTED with quoted code. *(Today has twice shown a confidently-stated
-claim failing on contact with the source — including a "settled, do not re-measure" instruction
-that a live API call disproved — so a trap taken on trust is exactly the wrong shape.)*
+Read at their cited lines. **Every correction makes the situation worse or different, never
+milder** — which is the argument for verifying rather than inheriting, since an inherited trap
+would have had me coding around a hazard that isn't there while the real one stayed live.
 
-1. `sensitivity.ts:155-161` and `ledger-baseline-model.ts:745` reportedly **throw unless an
-   insulation layer's `name` contains the literal string 단열재**. Dies at sensitivity, not at build.
-2. `collectEnergyFacts` reportedly **skips the `facts` key**, so climate facts never survive it
-   and must be spread in by hand (`ledger-baseline-model.ts:1566-1569` is the working example).
-3. `resolveClimate` (`adapter.ts:338-348`) reportedly needs **five** facts, not four — omit
-   `site.climate.coolingSeasonSolarKwhPerM2` and it **silently falls back to Seoul's 350** via
-   `getClimateData(undefined)`. No throw, no trace, and the number looks fine. *If confirmed,
-   this deserves to be made loud rather than worked around — it is the same failure class as
-   the chart claiming "ASHRAE 90.1 기반 비율" for unmatched use codes, closed earlier today.*
-4. The Tier-1 acceptance gate reportedly activates on a `tier1-office-screening-`
-   `MODEL_VERSION` prefix **or** that assumption id — reuse either and a clinic inherits an
-   office screening's acceptance criteria.
-5. **Never map IFC material names through `searchGenericMaterials`** — substring-matches
-   `nameKo`/`nameEn` only, so `"Glass"` returns glass *wool* and `"Insulation"`,
-   `"Plasterboard"`, `"Metal"` return nothing. The mapping must be a hand-written table with
-   one `AssumptionRecord` per row.
+**1. "`sensitivity.ts:155-161` and `ledger-baseline-model.ts:745` throw unless a layer name
+contains 단열재" — REFUTED for `:745`, and the truth is worse.** It does not throw:
+
+    const insulationIndex = stack.findIndex((layer) => layer.name.includes("단열재"));
+    if (insulationIndex < 0) return Object.freeze([]);          // :745-746
+    ...
+    if (solved === null) return Object.freeze([]);              // :753
+
+**It returns an empty layer array, silently.** A construction ends up with zero layers, no
+error, and nothing downstream announces it. A throw would have been a gift. The 단열재
+substring requirement is real; the consequence of missing it is a silent empty construction.
+
+**2. "`collectEnergyFacts` skips the `facts` key; spread climate facts in by hand —
+`ledger-baseline-model.ts:1566-1569` is the working example" — the SKIP is real, the WORKING
+EXAMPLE DOES NOT EXIST.** `:1541` is `facts: Object.freeze([])` and `:1568-1569` is
+`facts: collectEnergyFacts(shell)` with nothing spread in. **No builder anywhere in `src/`
+writes a `site.climate` fact** — `grep -rn "site.climate" src/` returns only the two
+*readers*, `adapter.ts:338-342` and `validation.ts:208-211`. So there is no pattern to copy,
+and the skip is worse than reported: a flat-only fact is **deleted on the next
+`refreshModel`** (`facts.ts:224`, `model-operations.ts:58-76`), so it does not merely fail to
+arrive — it disappears after working once.
+
+**3. "`resolveClimate` needs FIVE facts" — REFUTED. The gate is FOUR.** `solarFact` is read at
+`adapter.ts:340` and then **excluded** from the check at `:343`:
+
+    const explicit = hddFact != null && cddFact != null && winterFact != null && summerFact != null;
+
+So supplying four and omitting the solar fact passes the gate. The *shape* of the warning was
+right — a missing climate input degrades quietly rather than loudly — but the count and the
+mechanism were both wrong, and coding to "five" would have wasted effort on a gate that never
+checks the fifth.
+
+**4. Tier-1 acceptance gate on the `tier1-office-screening-` prefix / assumption id** —
+stands; use a distinct prefix and distinct assumption ids.
+
+**5. Never map IFC material names through `searchGenericMaterials`** — stands. Hand-written
+table, one `AssumptionRecord` per row.
+
+**Bonus correction: the chain in the handoff is slightly wrong.** `runSimulation` and
+`compileCanonicalModelToEngineInput` both live in **`adapter.ts`** (`:1082`, `:1313`).
+`simulation.ts` calls no engine.
 
 ## Clinic IFC topology — measured, and it constrains item 1
 
