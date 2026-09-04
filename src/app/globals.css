@@ -576,6 +576,23 @@
   font-weight: 600;
 }
 
+/* The reserved frame on a card whose model has not been read. Dashed, because
+   a solid frame reads as a drawing that failed to load rather than as space
+   deliberately held open. */
+.gallery-empty-frame {
+  fill: none;
+  stroke: color-mix(in srgb, var(--foreground) 22%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 5 4;
+}
+
+.gallery-empty-stamp {
+  fill: color-mix(in srgb, var(--foreground) 42%, transparent);
+  font-family: var(--font-mono-data), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+}
+
 .gallery-title {
   font-family: var(--font-ko-display), var(--font-display-release), Georgia, serif;
   font-size: 1.05rem;

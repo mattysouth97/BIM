@@ -12,10 +12,14 @@ describe("landing gallery", () => {
     render(<LandingPage />);
 
     const gallery = screen.getByTestId("landing-gallery");
-    expect(within(gallery).getAllByRole("listitem")).toHaveLength(
+    // Direct children only. A selected card carries its own prose lists, so
+    // counting every listitem in the subtree counts those too and would drift
+    // every time a card gains a bullet.
+    expect(gallery.querySelectorAll(":scope > li")).toHaveLength(
       GALLERY_ITEMS.length,
     );
     expect(screen.getByTestId("gallery-item-clinic")).toBeTruthy();
+    expect(screen.getByTestId("gallery-item-schependomlaan")).toBeTruthy();
 
     // The register sheet used to be this page. None of it is left.
     expect(screen.queryByTestId("landing-ledger-lookup")).toBeNull();
@@ -74,7 +78,9 @@ describe("landing gallery", () => {
 });
 
 describe("gallery record", () => {
-  const clinic = GALLERY_ITEMS[0];
+  // By id and narrowed, not GALLERY_ITEMS[0]: the gallery has more than one
+  // card now and not all of them have been measured.
+  const clinic = GALLERY_ITEMS.find((i) => i.id === "clinic")!;
 
   it("keeps every figure attached to the thing that states it", () => {
     for (const item of GALLERY_ITEMS) {
@@ -83,6 +89,7 @@ describe("gallery record", () => {
       }
     }
   });
+
 
   it("reads the clinic's storey stack the way the model records it", () => {
     // Four datums; the footing carries no spaces and is therefore a reference
@@ -142,4 +149,5 @@ describe("gallery record", () => {
       }
     }
   });
+
 });

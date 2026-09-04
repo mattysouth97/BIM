@@ -68,7 +68,7 @@ function excludedCountsFrom(read: string): number[] {
 }
 
 describe("gallery card agrees with the generated manifest", () => {
-  const clinic = GALLERY_ITEMS.find((item) => item.id === "clinic");
+  const clinic = GALLERY_ITEMS.find((i) => i.id === "clinic");
 
   it("has a clinic card to check", () => {
     expect(clinic).toBeDefined();
@@ -134,5 +134,59 @@ describe("gallery card agrees with the generated manifest", () => {
     const manifest = loadManifest();
     const occupied = clinic!.datums.filter((d) => d.rooms > 0);
     expect(occupied).toHaveLength(manifest.counts.storeys);
+  });
+});
+
+/**
+ * Schependomlaan has no generated manifest yet, so there is nothing to agree
+ * WITH. What can still be pinned is the card's internal arithmetic — and that
+ * is where this building's figures actually go wrong, because its raw element
+ * counts are placeholders rather than answers.
+ */
+describe("schependomlaan card is arithmetically consistent with itself", () => {
+  const item = GALLERY_ITEMS.find((i) => i.id === "schependomlaan");
+
+  it("is in the gallery", () => {
+    expect(item).toBeDefined();
+  });
+
+  it("sums its storeys to the totals it prints", () => {
+    const rooms = item!.datums.reduce((t, d) => t + d.rooms, 0);
+    const area = item!.datums.reduce((t, d) => t + d.roomAreaSqm, 0);
+    expect(rooms).toBe(figureNumber(item!, "rooms"));
+    expect(area).toBeCloseTo(figureNumber(item!, "floor-area"), 1);
+  });
+
+  it("subtracts to the window and door counts it prints", () => {
+    // The trap: 259 IfcWindow and 205 IfcDoor are placeholders — 182 windows
+    // and 65 doors are `stelkozijn`, rough frames rather than openings. A
+    // read line here has to arrive at the printed number, and one earlier
+    // draft of the door line read "205 − 65 − 36", which is 104, not 20.
+    for (const id of ["windows", "doors"]) {
+      const figure = item!.figures.find((f) => f.id === id)!;
+      const numbers = [...figure.read.matchAll(/(\d+)/g)].map((m) => Number(m[1]));
+      expect(numbers.length).toBeGreaterThanOrEqual(2);
+      const [base, ...subtracted] = numbers;
+      expect(base - subtracted.reduce((a, b) => a + b, 0)).toBe(
+        figureNumber(item!, id),
+      );
+    }
+  });
+
+  it("gives no credit rather than an unverified one", () => {
+    // LICENSE.MD grants CC BY 4.0 but names the holder only as "original
+    // owners", while the IFC header names ROOT bv as author. Under CC BY the
+    // credit is a condition, so a wrong name is worse than none.
+    expect(item!.licence).toBe("CC BY 4.0");
+    expect(item!.attribution).toBeNull();
+  });
+
+  it("states no U-value, because all 97 in the file are zero", () => {
+    // The reason this building was selected. All 97
+    // IfcThermalTransmittanceMeasure occurrences carry the value 0. and sit
+    // only on windows and doors. A documented zero means unavailable here, so
+    // no figure may claim one.
+    const text = item!.figures.map((f) => `${f.ko} ${f.en} ${f.read}`).join(" ");
+    expect(text).not.toMatch(/u-?value|열관류|transmittance/i);
   });
 });

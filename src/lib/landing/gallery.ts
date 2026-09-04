@@ -83,8 +83,20 @@ export type GalleryItem = Readonly<{
   modelDate: string;
   /** e.g. "CC BY 4.0". Rendered on the card because the licence requires it. */
   licence: string;
-  /** The credit line, rendered verbatim and never abbreviated to fit. */
-  attribution: string;
+  /**
+   * The credit line, rendered verbatim — or `null` when the rights holder is
+   * not established.
+   *
+   * Null is not "we did not get round to it". Schependomlaan's LICENSE.MD
+   * grants CC BY 4.0 but names the holder only as "original owners", while the
+   * IFC header names ROOT bv as author and a README in the same repository
+   * says permission was given for scientific and academic purposes. CC BY
+   * grants only what the licensor actually had authority to license, so a
+   * credit naming the wrong holder would be worse than none — and under CC BY
+   * the credit is a condition, not a courtesy. The card says the credit is
+   * unresolved rather than inventing one.
+   */
+  attribution: string | null;
   datums: readonly GalleryDatum[];
   figures: readonly GalleryFigure[];
   /**
@@ -167,7 +179,110 @@ const CLINIC: GalleryItem = {
   href: "/models/bs-medical-dental-clinic",
 } as const;
 
-export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC];
+/**
+ * Building #2 — Schependomlaan, ten apartments in Nijmegen.
+ *
+ * Every figure below was read from `IFC Schependomlaan.ifc` (49,286,967 bytes,
+ * ArchiCAD IFC2X3) directly, and the per-storey rows reconcile to the totals
+ * exactly: 19+20+29+32 = 100 rooms, 177.015+195.848+290.564+302.240 = 965.667 m².
+ *
+ * Two traps this building sets that the Clinic did not:
+ *
+ * 1. **The raw element counts are placeholders.** 259 `IfcWindow` and 205
+ *    `IfcDoor` sound like the answer and are not: 182 of the windows and 65 of
+ *    the doors are named `stelkozijn` — rough frames, not openings — and 36
+ *    doors are `liftdeur`. The honest counts are 77 and 20, and the `read`
+ *    strings say how. The doors also need `IsExternal`, not a subtraction: the
+ *    lift doors fall out because they are internal, so "205 − 65 − 36" would
+ *    be 104 and wrong.
+ *
+ * 2. **The file states millimetres.** `LENGTHUNIT` is `.MILLI.`, so a storey
+ *    elevation reads 12000, not 12. The values here are metres.
+ *
+ * `excludedSpaces` is 0 on every storey, and that is a finding rather than a
+ * gap: unlike the Clinic there are no ROOF or void spaces to drop.
+ *
+ * What this building was CHOSEN for did not survive verification. The
+ * selection note recorded 97 `IfcThermalTransmittanceMeasure` occurrences
+ * against the Clinic's zero and concluded U-values could be read as stated.
+ * All 97 carry the value `0.` and sit only on 67 windows and 30 doors — no
+ * wall, slab or roof has one. Under this repo's documented-zero rule a
+ * recorded zero means unavailable, so this model states no U-value either. It
+ * is kept for the thing that did survive: it states its town.
+ */
+const SCHEPENDOMLAAN: GalleryItem = {
+  id: "schependomlaan",
+  koTitle: "스헤펜돔라안 아파트",
+  enTitle: "Schependomlaan Apartments",
+  koUse: "공동주택 · 지상 4층 · 10세대 · 네덜란드 네이메헌",
+  enUse: "Residential · four floors · ten dwellings · Nijmegen, NL",
+  status: "modelling",
+  modelFile: "IFC Schependomlaan.ifc",
+  ifcSchema: "IFC2X3",
+  viewDefinition: "CoordinationView_V2.0 + QuantityTakeOff + SpaceBoundary2ndLevel",
+  authoringTool: "Graphisoft ArchiCAD-64 18.0.0 NED FULL",
+  modelDate: "2015-08-27",
+  licence: "CC BY 4.0",
+  // Unresolved on purpose — see the field's own note. LICENSE.MD grants CC BY
+  // 4.0 but names no holder; the IFC header names ROOT bv as author.
+  attribution: null,
+  datums: [
+    { name: "04 dak", elevationM: 12, rooms: 0, roomAreaSqm: 0, excludedSpaces: 0 },
+    { name: "03 derde verdieping", elevationM: 9, rooms: 19, roomAreaSqm: 177.015, excludedSpaces: 0 },
+    { name: "02 tweede verdieping", elevationM: 6, rooms: 20, roomAreaSqm: 195.848, excludedSpaces: 0 },
+    { name: "01 eerste verdieping", elevationM: 3, rooms: 29, roomAreaSqm: 290.564, excludedSpaces: 0 },
+    { name: "00 begane grond", elevationM: 0, rooms: 32, roomAreaSqm: 302.24, excludedSpaces: 0 },
+    { name: "-1 fundering", elevationM: -1, rooms: 0, roomAreaSqm: 0, excludedSpaces: 0 },
+  ],
+  figures: [
+    {
+      id: "floor-area",
+      ko: "실 면적 합계",
+      en: "Room floor area",
+      value: "965.7 m²",
+      read: "100 × IfcSpace NetFloorArea, 제외 없음",
+    },
+    {
+      id: "rooms",
+      ko: "실",
+      en: "Rooms",
+      value: "100",
+      read: "IfcSpace, 비바닥 공간 0",
+    },
+    {
+      id: "walls",
+      ko: "벽",
+      en: "Walls",
+      value: "934",
+      read: "IfcWallStandardCase 282 + IfcWall 652",
+    },
+    {
+      id: "windows",
+      ko: "창",
+      en: "Windows",
+      value: "77",
+      read: "IfcWindow 259 − 182 stelkozijn(임시 틀)",
+    },
+    {
+      id: "doors",
+      ko: "문",
+      en: "Doors",
+      value: "20",
+      read: "IfcDoor 외부 85 − 65 stelkozijn(임시 틀)",
+    },
+    {
+      id: "boundaries",
+      ko: "공간 경계",
+      en: "Space boundaries",
+      value: "1,675",
+      read: "IfcRelSpaceBoundary",
+    },
+  ],
+  // No GLB and no manifest yet, so there is nothing to open.
+  href: null,
+} as const;
+
+export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC, SCHEPENDOMLAAN];
 
 /** Lowest and highest datum, for the section diagram's vertical range. */
 export function datumRange(datums: readonly GalleryDatum[]) {

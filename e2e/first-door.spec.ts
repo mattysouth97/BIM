@@ -139,9 +139,20 @@ test.describe("Landing gallery", () => {
     const gallery = page.getByTestId("landing-gallery");
     await expect(gallery).toBeVisible();
 
-    // One model so far: the clinic being ingested.
+    // Two entries: the clinic, which has been read, and Schependomlaan, which
+    // has been chosen and not read. Asserting both kinds are present is the
+    // point — the gallery has to be able to show a building it has no
+    // measurements for without inventing any.
     await expect(page.getByTestId("gallery-item-clinic")).toBeVisible();
-    await expect(gallery.locator("> li")).toHaveCount(1);
+    await expect(page.getByTestId("gallery-item-schependomlaan")).toBeVisible();
+    await expect(gallery.locator("> li")).toHaveCount(2);
+
+    // The unread one states no figures and opens nothing.
+    const selected = page.getByTestId("gallery-item-schependomlaan");
+    await expect(selected.getByRole("link")).toHaveCount(0);
+    await expect(
+      page.getByTestId("gallery-item-schependomlaan-open"),
+    ).toBeVisible();
 
     // The register sheet's furniture is gone from this page entirely.
     await expect(page.getByTestId("landing-ledger-lookup")).toHaveCount(0);
