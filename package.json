@@ -8,6 +8,7 @@
     "build:sites": "node scripts/build-sites.mjs",
     "start": "next start",
     "lint": "eslint",
+    "check:assets": "node scripts/check-asset-budget.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
