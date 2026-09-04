@@ -23,6 +23,97 @@ export function normalizeServiceKey(apiKey: string): string {
 }
 
 /**
+ * Quote integer literals that `JSON.parse` cannot represent, before parsing.
+ *
+ * A 건축물대장 관리번호 (`mgmBldrgstPk`) is a 25-26 digit integer, and
+ * data.go.kr sends it as a bare JSON number. JavaScript numbers are IEEE-754
+ * doubles, so every digit past the 15th or so is lost the instant it is
+ * parsed — and the loss is silent. Measured on one 법정동: 16 of 358 rows came
+ * back altered, and three of the rounded values were each shared by two
+ * different buildings, at which point the rows are permanently
+ * indistinguishable and no downstream code can recover which was which.
+ *
+ * The fix has to happen on the raw text, because by the time there is an
+ * object the digits are already gone. Only integer literals that fail
+ * `Number.isSafeInteger` are quoted: areas, floor numbers and counts are
+ * arithmetic and must stay numbers, so over-quoting would trade this bug for a
+ * different one.
+ *
+ * Written as a scanner rather than a regular expression for two reasons a
+ * pattern gets wrong. First, a long digit run inside a *string* — a 관리번호
+ * quoted in an error message — is data, and re-quoting it would corrupt the
+ * document. Second, a number token has to be consumed whole: matching only the
+ * integer part of `0.12345678901234567890` would leave the fraction digits
+ * looking like an integer literal of their own.
+ */
+export function quoteUnsafeIntegerLiterals(text: string): string {
+  let out = "";
+  let index = 0;
+  let inString = false;
+
+  const isDigit = (char: string | undefined) =>
+    char !== undefined && char >= "0" && char <= "9";
+
+  while (index < text.length) {
+    const char = text[index]!;
+
+    if (inString) {
+      // A backslash escapes the next character, including a quote — consume
+      // both so an escaped quote does not look like the end of the string.
+      if (char === "\\") {
+        out += char + (text[index + 1] ?? "");
+        index += 2;
+        continue;
+      }
+      if (char === '"') inString = false;
+      out += char;
+      index += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      out += char;
+      index += 1;
+      continue;
+    }
+
+    // In JSON a "-" outside a string can only begin a number.
+    if (char === "-" || isDigit(char)) {
+      let end = index;
+      if (text[end] === "-") end += 1;
+      while (isDigit(text[end])) end += 1;
+
+      let isInteger = true;
+      if (text[end] === ".") {
+        isInteger = false;
+        end += 1;
+        while (isDigit(text[end])) end += 1;
+      }
+      if (text[end] === "e" || text[end] === "E") {
+        isInteger = false;
+        end += 1;
+        if (text[end] === "+" || text[end] === "-") end += 1;
+        while (isDigit(text[end])) end += 1;
+      }
+
+      const literal = text.slice(index, end);
+      out +=
+        isInteger && !Number.isSafeInteger(Number(literal))
+          ? `"${literal}"`
+          : literal;
+      index = end;
+      continue;
+    }
+
+    out += char;
+    index += 1;
+  }
+
+  return out;
+}
+
+/**
  * Server-side fetch to data.go.kr Building Ledger API.
  * Used only in Next.js API route handlers.
  */
@@ -97,7 +188,7 @@ export async function fetchFromDataGoKr(
       };
     };
     try {
-      json = JSON.parse(normalized) as typeof json;
+      json = JSON.parse(quoteUnsafeIntegerLiterals(normalized)) as typeof json;
     } catch {
       return {
         data: null,
