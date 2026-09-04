@@ -238,6 +238,68 @@ export const REFERENCE_BUILDING_RECORD_KIND =
   "bimfit_reference_building_record" as const;
 
 /**
+ * The small, public face of a record: what a gallery card or catalog row needs
+ * without loading the whole model.
+ *
+ * It is a pure PROJECTION of the record — `referenceBuildingManifest` is the
+ * only way one is made — so a card and the model it opens cannot disagree
+ * about how big the building is. The alternative, a hand-maintained card with
+ * its own figures, goes quietly wrong the first time extraction changes and
+ * nothing catches it.
+ *
+ * Editorial copy (display names, one-line summaries) lives in the catalog
+ * index instead, which carries no numbers at all. Words are reviewed by a
+ * person; figures are derived. Neither should be doing the other's job.
+ */
+export type ReferenceBuildingManifest = Readonly<{
+  id: string;
+  schemaVersion: 1;
+  name: Readonly<{ ko: string; en: string }>;
+  summary: Readonly<{ ko: string; en: string }>;
+  useType: string;
+  storeyCount: number;
+  spaceCount: number;
+  totalFloorAreaSqm: number;
+  totalEnvelopeAreaSqm: number;
+  licence: string;
+  /**
+   * Must be rendered wherever the building is shown. The Clinic is CC BY 4.0
+   * and attribution is a licence condition, not a courtesy — a card that omits
+   * it is a breach, so it travels with the figures rather than living in some
+   * separate place a redesign can drop.
+   */
+  attribution: string;
+  sourceUrl: string;
+  sourceFiles: readonly Readonly<{ fileName: string; sha256: string }>[];
+  generatedAt: string;
+}>;
+
+export function referenceBuildingManifest(
+  record: ReferenceBuildingRecord,
+): ReferenceBuildingManifest {
+  return Object.freeze({
+    id: record.id,
+    schemaVersion: record.schemaVersion,
+    name: record.name,
+    summary: record.summary,
+    useType: record.useType,
+    storeyCount: record.counts.storeys,
+    spaceCount: record.counts.spaces,
+    totalFloorAreaSqm: record.counts.totalFloorAreaSqm,
+    totalEnvelopeAreaSqm: record.counts.totalEnvelopeAreaSqm,
+    licence: record.provenance.licence,
+    attribution: record.provenance.attribution,
+    sourceUrl: record.provenance.sourceUrl,
+    sourceFiles: Object.freeze(
+      record.provenance.files.map((file) =>
+        Object.freeze({ fileName: file.fileName, sha256: file.sha256 }),
+      ),
+    ),
+    generatedAt: record.provenance.generatedAt,
+  });
+}
+
+/**
  * Narrow an unknown parsed JSON payload to a record.
  *
  * Deliberately shallow: this guards the fetch boundary against a 404 page or a
