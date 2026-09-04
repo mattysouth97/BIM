@@ -113,7 +113,7 @@ const CLINIC: GalleryItem = {
   // the building without it is in breach, not merely untidy.
   licence: "CC BY 4.0",
   attribution:
-    "BSI (2020) 'Medical-Dental Test Files', buildingSMART International",
+    'BSI (2020) "Medical-Dental Test Files", buildingSMART International — https://github.com/buildingsmart-community/Community-Sample-Test-Files',
   datums: [
     // The roof datum carries one real room (a 64.8 m² penthouse) and five
     // ROOF/void spaces. Drawing it as an occupied storey would put a floor
@@ -136,7 +136,7 @@ const CLINIC: GalleryItem = {
       ko: "실",
       en: "Rooms",
       value: "259",
-      read: "IfcSpace − 6 ROOF − 3 OPEN TO BELOW",
+      read: "IfcSpace − 6 ROOF − 3 OPEN TO BELOW − 1 MECH. YARD",
     },
     {
       id: "walls",
