@@ -40,6 +40,7 @@ import {
   type ReconstructionClaim,
   type ReconstructionDocument,
   type ReconstructionPackage,
+  type WebEvidenceInput,
 } from "@/lib/cad-reconstruction";
 
 import { GradeDot, ReconstructionPreview } from "./reconstruction-preview";
@@ -140,8 +141,28 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
   const [reader, setReader] = useState<"claude" | "deterministic" | null>(null);
   const [claims, setClaims] = useState<ReconstructionClaim[]>([]);
   const [pkg, setPkg] = useState<ReconstructionPackage | null>(null);
+  const [webFacts, setWebFacts] = useState<WebEvidenceInput["facts"]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Web search costs a model call and several seconds, so it is opt-in and
+  // never runs as a side effect of pressing 도면 복원.
+  const [useWeb, setUseWeb] = useState(false);
+  const [webAvailable, setWebAvailable] = useState<boolean | null>(null);
   const [previewLevelId, setPreviewLevelId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/cad/web-evidence")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { available?: boolean } | null) => {
+        if (alive) setWebAvailable(d?.available ?? false);
+      })
+      .catch(() => {
+        if (alive) setWebAvailable(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -231,6 +252,32 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
       }
       setClaims(readClaims);
 
+      let web: WebEvidenceInput | null = null;
+      if (useWeb && webAvailable) {
+        try {
+          const res = await fetch("/api/cad/web-evidence", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: ledgerTitle?.bldNm ?? undefined,
+              address: address ?? undefined,
+            }),
+          });
+          const data = (await res.json()) as { success?: boolean } & WebEvidenceInput;
+          if (data?.success) {
+            web = {
+              facts: data.facts ?? [],
+              query: data.query ?? null,
+              searched: data.searched ?? false,
+              error: data.error ?? null,
+            };
+          }
+        } catch {
+          // A failed search is an absent source, not a failed reconstruction.
+          web = { facts: [], query: null, searched: false, error: "웹 검색 요청 실패" };
+        }
+      }
+
       const input: EvidenceInput = {
         buildingPk: String(ledgerTitle?.mgmBldrgstPk ?? buildingId),
         title: ledgerTitle,
@@ -246,10 +293,12 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
             }
           : null,
         osm,
+        web,
         address: address ?? null,
         claims: readClaims,
       };
 
+      setWebFacts(web?.facts ?? []);
       const result = runReconstruction(input);
       setPkg(result);
       setPreviewLevelId(
@@ -263,7 +312,7 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
     } finally {
       setRunning(false);
     }
-  }, [statement, ledgerTitle, withFootprint, address, buildingId, osm]);
+  }, [statement, ledgerTitle, withFootprint, address, buildingId, osm, useWeb, webAvailable]);
 
   const model = pkg?.model ?? null;
   const blocked = (model?.blockers.length ?? 0) > 0;
@@ -349,6 +398,26 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
           </button>
         ))}
       </div>
+
+      <label className="flex items-center gap-2 text-[11px] text-muted-foreground">
+        <input
+          type="checkbox"
+          className="h-3 w-3"
+          checked={useWeb}
+          disabled={webAvailable === false}
+          onChange={(e) => setUseWeb(e.target.checked)}
+          data-testid="cad-request-web-search"
+        />
+        {webAvailable === false
+          ? t(
+              "웹 검색 보강 — 이 서버에 구성되어 있지 않습니다",
+              "Web search — not configured on this server",
+            )
+          : t(
+              "웹 검색으로 보강 (인용 URL이 있는 사실만 채택, 대장 값은 그대로 유지)",
+              "Add web search (cited facts only; the register keeps every value)",
+            )}
+      </label>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-[11px] text-muted-foreground">
@@ -557,6 +626,46 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
                       </div>
                     )}
                   </Section>
+
+                  {model.sources.some((src) => src.sourceId === "SRC-WEB" && src.available) && (
+                    <Section
+                      title={t("웹 검색 결과", "Web search findings")}
+                      count={webFacts.length}
+                    >
+                      <p className="mb-2 text-muted-foreground">
+                        {t(
+                          "제3자의 진술입니다. 기하를 만들지 않으며 대장 값을 대체하지 않습니다.",
+                          "Third-party statements. They build no geometry and replace no registered value.",
+                        )}
+                      </p>
+                      <ul className="space-y-1.5">
+                        {(webFacts ?? []).map((fact) => (
+                          <li key={`${fact.kind}-${fact.citations[0]?.url}`}>
+                            <span className="font-medium">{fact.kind}</span>:{" "}
+                            <span className="tabular-nums">{String(fact.value)}</span>
+                            {fact.unit ? ` ${fact.unit}` : ""}{" "}
+                            <GradeDot grade={fact.grade} />
+                            <div className="text-muted-foreground">
+                              &ldquo;{fact.quote}&rdquo;
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {fact.citations.map((c) => (
+                                <a
+                                  key={c.url}
+                                  href={c.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="underline underline-offset-2 hover:text-foreground"
+                                >
+                                  {c.title ?? new URL(c.url).hostname}
+                                </a>
+                              ))}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </Section>
+                  )}
 
                   <Section
                     title={t("면적 검증", "Area validation")}

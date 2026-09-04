@@ -17,6 +17,7 @@ import type { BrFloorInfo } from "@/lib/types";
 import { areaSqm, bbox, simplifyRing, toCounterClockwise } from "./geometry";
 import { claimOf } from "./claims";
 import { osmTagFacts } from "./osm-source";
+import { WEB_SOURCE_ID, webFactConflicts } from "./web-evidence";
 import type {
   ConflictEntry,
   EvidenceInput,
@@ -320,6 +321,35 @@ export function buildSourceInventory(input: EvidenceInput): SourceRecord[] {
     ],
     confidence: hasZoning ? "B-OBSERVED" : "X-UNRESOLVED",
     available: hasZoning,
+  });
+
+  // The open web. Weakest source in the inventory and the only one whose
+  // authority comes from a link rather than an institution — so what it is
+  // allowed to do is narrow, and the record says so.
+  const webFacts = input.web?.facts ?? [];
+  const webSearched = input.web?.searched === true;
+  sources.push({
+    sourceId: WEB_SOURCE_ID,
+    sourceType: "web_search",
+    sourceTitle: "웹 검색 (인용 URL 필수)",
+    sourceLocation: "/api/cad/web-evidence",
+    accessDate,
+    authorityLevel: 5,
+    scaleAvailable: false,
+    dimensionsAvailable: false,
+    coordinateSystem: null,
+    floorsCovered: "as published",
+    disciplinesCovered: "descriptive (published statements only)",
+    knownLimitations: [
+      "제3자의 진술이며 실측이 아님 — 항상 D-INFERRED",
+      "기하를 생성하지 않으며 대장 값을 대체하지 않음. 대조 전용",
+      "인용 URL이 없는 항목은 파이프라인 진입 전에 폐기됨",
+      "동명이 건물을 잘못 가리킬 수 있어 주소 일치를 별도로 확인해야 함",
+    ],
+    confidence: webFacts.length > 0 ? "D-INFERRED" : "X-UNRESOLVED",
+    // Searched-and-found-nothing and never-searched are different states, and
+    // only the first one is evidence of anything.
+    available: webSearched && webFacts.length > 0,
   });
 
   const measuredClaims = input.claims.filter((c) => c.measured).length;
@@ -936,6 +966,10 @@ export function detectConflicts(
       requiredVerification: "레이저 거리계로 처마/파라펫 높이 측정",
     });
   }
+
+  // What the open web says, compared against the register. The register keeps
+  // every value; this only records that a cited source says otherwise.
+  conflicts.push(...webFactConflicts(input.web?.facts ?? [], t));
 
   // A stated width × depth that cannot hold the registered footprint area.
   const w = claimOf(input.claims, "overall_width_m");
