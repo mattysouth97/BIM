@@ -408,12 +408,31 @@ export function orientWalls(walls, { trueNorthDeg = null } = {}) {
     });
   }
 
+  // How much area does NOT sit on a cardinal axis.
+  //
+  // Eight sectors will happily absorb a wall at 47.94° into NE and nothing
+  // will notice. On a building that is genuinely axis-aligned that is a fair
+  // rounding; on one with a splayed bay it hides a real geometric fact, and
+  // it compounds with an assumed north — an unknown global rotation applied
+  // to geometry that was never axis-aligned to begin with. So the off-axis
+  // share is reported rather than rounded away. Raised by bim-bf, who found
+  // 88 placements at 47.94/132.06/227.94/312.06° on another building.
+  const offCardinal = oriented.filter((w) => {
+    const d = Math.min(
+      ...[0, 90, 180, 270, 360].map((c) => Math.abs(w.azimuthDeg - c)),
+    );
+    return d > 5;
+  });
+
   return {
     byOrientation: Object.fromEntries(
       Object.entries(byOrientation).map(([k, v]) => [k, Math.round(v * 100) / 100]),
     ),
     walls: oriented,
     weakOutward: oriented.filter((w) => w.outwardConfidence === "weak").length,
+    offCardinalCount: offCardinal.length,
+    offCardinalSqm:
+      Math.round(offCardinal.reduce((s, w) => s + w.netFaceAreaSqm, 0) * 100) / 100,
     northAssumed: trueNorthDeg === null,
     buildingCentre: centre.map((v) => Math.round(v * 1000) / 1000),
   };

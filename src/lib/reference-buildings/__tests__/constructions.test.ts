@@ -95,6 +95,33 @@ describe("Clinic constructions", () => {
     expect(slab.uValueWPerM2K).toBeGreaterThan(2);
   });
 
+  it("agrees with an independently derived envelope, to 1%", () => {
+    // bim-72 solved these separately, from the same ISO 6946 tables but their
+    // own implementation and their own reading of the layer set. Two routes
+    // agreeing is the only reason either number is trustworthy, and pinning
+    // them here means a later change to the mapping table has to explain
+    // itself against a second opinion rather than just against yesterday.
+    const wall = byName("Basic Wall:Exterior - Insul Panel on Mtl. Stud");
+    expect(wall.unresolved).toEqual([]);
+    // theirs: 0.404 W/m²K with the 152 mm stud cavity unfilled
+    expect(wall.uValueWPerM2K).toBeCloseTo(0.4, 2);
+
+    const seam = byName("Basic Roof:Standing Seam Metal Roof");
+    expect(seam.unresolved).toEqual([]);
+    // theirs: 3.45 W/m²K with the joist zone as an UPWARD cavity. Taking the
+    // horizontal row instead gives 3.23 — 6% better than the roof is.
+    expect(seam.uValueWPerM2K).toBeCloseTo(3.45, 2);
+  });
+
+  it("separates the two roofs, which differ by a factor of eleven", () => {
+    const insulated = byName("Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck");
+    const bare = byName("Basic Roof:Standing Seam Metal Roof");
+    // 76 mm of polyiso against nothing at all. Pooling these into one "roof
+    // U" would average away the single worst surface in the building.
+    expect(insulated.uValueWPerM2K).toBeLessThan(0.35);
+    expect(bare.uValueWPerM2K! / insulated.uValueWPerM2K!).toBeGreaterThan(10);
+  });
+
   it("shows the standing-seam roof for what it is: uninsulated", () => {
     const roof = byName("Basic Roof:Standing Seam Metal Roof");
     // Its 330 mm names no insulation at all — metal sheet, deck, joist zone.

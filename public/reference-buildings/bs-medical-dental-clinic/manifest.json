@@ -421,6 +421,8 @@
     "trueNorthDeg": null,
     "northAssumed": true,
     "weakOutwardCount": 8,
+    "offCardinalCount": 0,
+    "offCardinalSqm": 0,
     "wallCount": 80,
     "note": "Azimuths are clockwise from north, where north is the model's -Z after web-ifc's Z-up to Y-up conversion. Outward face inferred by comparing each face's centroid with the building centre, which is correct for a convex plan and can be wrong at a re-entrant corner."
   },

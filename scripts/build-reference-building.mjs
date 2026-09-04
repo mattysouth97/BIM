@@ -184,6 +184,13 @@ async function main() {
     const dx = num(ratios[0]);
     const dy = num(ratios[1]);
     if (dx === null || dy === null) continue;
+    // (0, 1) is IFC's own default — 0° from +Y — so a context carrying it
+    // states nothing. Reading it as a surveyed value is worse than finding
+    // nothing at all, because a populated TrueNorth looks like evidence.
+    // bim-bf found exactly this on Schependomlaan: both of its representation
+    // contexts carry IFCDIRECTION((0.,1.)), and a naive reader would have
+    // reported a known orientation for a building that states none.
+    if (Math.abs(dx) < 1e-9 && Math.abs(dy - 1) < 1e-9) continue;
     trueNorthDeg = (Math.atan2(dx, dy) * 180) / Math.PI;
     break;
   }
@@ -380,6 +387,8 @@ async function main() {
       trueNorthDeg: trueNorthDeg === null ? null : round(trueNorthDeg),
       northAssumed: orientation.northAssumed,
       weakOutwardCount: orientation.weakOutward,
+      offCardinalCount: orientation.offCardinalCount,
+      offCardinalSqm: orientation.offCardinalSqm,
       wallCount: orientation.walls.length,
       note:
         "Azimuths are clockwise from north, where north is the model's -Z " +

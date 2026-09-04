@@ -66,10 +66,11 @@ export const CLINIC_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
   {
     ifcName: "Metal - Firring",
     basis: "generic_material",
-    materialId: "air-20",
+    materialId: "air-iso-h25",
     basisNote:
-      "A furring cavity, treated as an unventilated air layer. Steel bridging " +
-      "through it is IGNORED, which flatters the wall — a stated simplification.",
+      "A furring cavity, treated as an unventilated air layer at ISO 6946 " +
+      "Table 2's horizontal value. Steel bridging through it is IGNORED, " +
+      "which flatters the wall — a stated simplification.",
   },
   {
     ifcName: "Wood - Sheathing - plywood",
@@ -82,13 +83,14 @@ export const CLINIC_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
   {
     ifcName: "Metal - Stud Layer",
     basis: "generic_material",
-    materialId: "air-20",
+    materialId: "air-iso-h25",
     basisNote:
       "THE LARGEST ASSUMPTION IN THIS BUILDING. The model names no insulation " +
       "in the 152 mm stud cavity, so none is assumed and it is treated as an " +
-      "unventilated air layer. If the real wall carries batt, the wall U is " +
-      "roughly twice as good. Steel stud bridging is likewise ignored, which " +
-      "pushes the other way.",
+      "unventilated air layer, horizontal flow. Filling it with an R-13 batt " +
+      "would take the wall from U 0.404 to U 0.218 — 1.85x better — so this " +
+      "is the assumption to argue with first. Steel stud bridging is likewise " +
+      "ignored, which pushes the other way.",
   },
   {
     ifcName: "Plasterboard",
@@ -156,12 +158,14 @@ export const CLINIC_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
   {
     ifcName: "Structure - Steel Bar Joist Layer",
     basis: "generic_material",
-    materialId: "air-20",
+    materialId: "air-iso-u25",
     basisNote:
-      "A 286 mm joist zone that is mostly air with steel webs through it. " +
-      "Treated as one unventilated cavity. This layer is the whole reason the " +
-      "standing-seam roof performs as badly as it does: the assembly names NO " +
-      "insulation anywhere in its 330 mm.",
+      "A 286 mm joist zone that is mostly air with steel webs through it, " +
+      "treated as one unventilated cavity at ISO 6946's UPWARD value (0.16), " +
+      "not the horizontal one — Table 2 is direction-dependent and borrowing " +
+      "the horizontal row here would read 6% better than the roof is. The " +
+      "steel webs break Table 2's premise and are unrepresented, so this is " +
+      "the optimistic bound. The assembly names NO insulation in its 330 mm.",
   },
 ]);
 
