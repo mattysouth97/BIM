@@ -15,8 +15,14 @@ export type ReferenceBuildingManifest = Readonly<{
   summary: Readonly<{ ko: string; en: string }>;
   useType: string;
   licence: string;
-  /** Rendered wherever the building is shown — a CC BY condition. */
-  attribution: string;
+  /**
+   * Rendered wherever the building is shown — a CC BY condition. Null when
+   * the rights holder is not established (Schependomlaan), and every surface
+   * that prints it must render the reason instead of a dangling separator.
+   * The type said `string` while the artifact shipped `null` until
+   * 2026-09-04 22:40; the page already handled null, the type lied.
+   */
+  attribution: string | null;
   sourceUrl: string;
   generatedAt: string;
   sourceFiles: readonly Readonly<{

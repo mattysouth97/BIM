@@ -157,6 +157,9 @@ export function ReferenceEnergyFrame({
 
   const zones = useReferenceZones(manifest, baseUrl, metrics?.demand.totalDemand);
 
+  const awaiting = energy.measurementState === "awaiting_measurement";
+  const pendingCount = energy.pendingMeasurements?.length ?? 0;
+
   return (
     <>
       <EnergyInstrumentHud
@@ -166,6 +169,21 @@ export function ReferenceEnergyFrame({
         roofType="flat"
         sidoPrefix={climate.sigunguCd.slice(0, 2)}
       />
+      {/* A stand-in travels on `measuredEnvelope` exactly like a measurement
+          and reports `source: "measured"` — the quantities function refuses
+          a zero, so a placeholder has to be a real positive number. The
+          registry is the only thing that knows, so the page has to say it
+          where the numbers are, not only in a panel a reader may not open. */}
+      {awaiting ? (
+        <div
+          className="pointer-events-none absolute right-3 top-3 z-30 rounded-md border border-amber-500/60 bg-amber-950/80 px-2.5 py-1.5 font-mono text-[10px] leading-tight text-amber-200 shadow-sm backdrop-blur"
+          data-testid="reference-energy-awaiting-measurement"
+        >
+          {isKo
+            ? `측정 대기 · 외피 수치 ${pendingCount}개는 자리표시자 — 아래 목록 참조`
+            : `Awaiting measurement · ${pendingCount} envelope figures are stand-ins — see the list`}
+        </div>
+      ) : null}
       {/* The legend positions itself `absolute left-3 top-16`; this wrapper
           moves its origin below the frame's top band and stops above the
           bottom strip, and scrolls: the Clinic's zone list is ten programs
@@ -226,6 +244,36 @@ export function ReferenceEnergyPanel({
           ? "캔버스 위의 계기판은 /building/demo와 같은 엔진(도일법)입니다. 외피 면적은 이 파일에서 측정한 값이고, U-값·창·기밀·설비·재실은 아래에 이름 붙인 가정입니다."
           : "The frame over the canvas is the same degree-day engine as /building/demo. Envelope areas are measured from this file; U-values, glazing, airtightness, systems and occupancy are the named assumptions below."}
       </p>
+
+      {energy.measurementState === "awaiting_measurement" && energy.pendingMeasurements ? (
+        <div
+          className="mt-3 rounded-md border border-amber-500/50 bg-amber-950/40 px-3 py-2"
+          data-testid="reference-energy-pending-measurements"
+        >
+          <p className="font-mono text-[10px] uppercase tracking-wide text-amber-300">
+            {isKo
+              ? `측정 대기 — 자리표시자 ${energy.pendingMeasurements.length}개`
+              : `Awaiting measurement — ${energy.pendingMeasurements.length} stand-ins`}
+          </p>
+          <p className="mt-1 text-[10px] leading-relaxed text-amber-100/80">
+            {isKo
+              ? "아래 수치는 아직 이 파일에서 측정되지 않았습니다. 엔진에는 양수만 넘길 수 있어 자리표시자를 넣었고, 각 값이 무엇에서 유도되었고 어느 방향으로 틀릴 수 있는지를 적습니다. 위 계기판의 수치는 그만큼 잠정적입니다."
+              : "These figures have not been measured from this file yet. The engine accepts only positive numbers, so stand-ins were used; each says what it was derived from and which way it errs. The frame's numbers above are provisional to that extent."}
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {energy.pendingMeasurements.map((p) => (
+              <li key={p.manifestField} className="font-mono text-[10px] leading-relaxed">
+                <span className="text-amber-200">{p.manifestField}</span>
+                <span className="text-muted-foreground">
+                  {" "}
+                  = {p.placeholderValue.toLocaleString("en-US")} {p.unit === "m2" ? "m²" : p.unit} ·{" "}
+                  {p.derivedFrom} · {p.biasDirection}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="mt-2">
         {OVERLAYS.map((o) => (
