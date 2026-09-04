@@ -282,6 +282,39 @@ export function reconstruct(
 
   const candidates: OutlineCandidate[] = [];
 
+  // A lot observed ALONGSIDE a building outline. `gis` holds one ring and it
+  // is either the building or the lot; this is the case where both exist.
+  // It enters here as site-only so `reconcileOutlines` owns every ring —
+  // Rule 1 keeps it out of the footprint, and `siteCandidates` carries it to
+  // the setback. Skipped when `gis` already supplied a parcel, so one lot
+  // never appears twice.
+  if (!gisIsParcel && input.parcel?.polygon?.[0] && originLngLat && options.project) {
+    try {
+      const project = options.project(originLngLat[0], originLngLat[1]);
+      const prepared = prepareGisRing(
+        projectRingToMm(input.parcel.polygon[0], project),
+      );
+      const lot = prepared ? toCounterClockwise(roundRing(prepared)) : null;
+      if (lot && lot.length >= 3) {
+        candidates.push({
+          id: "OUT-PARCEL-ALT",
+          origin: "gis_parcel",
+          sourceId: "SRC-GIS-PARCEL",
+          labelKo: "VWorld 연속지적도 필지 경계 (건물 외곽과 병행)",
+          ring: lot,
+          areaSqm: areaSqm(lot),
+          grade: "B-OBSERVED",
+          observed: true,
+          siteOnly: true,
+          method: "연속지적도 필지 경계 — 대지 참조 전용",
+        });
+      }
+    } catch {
+      // A lot we cannot project is a lot we do not have. The setback then
+      // reports its direction undetermined, which is the honest outcome.
+    }
+  }
+
   if (gisRingMm) {
     const ring = toCounterClockwise(roundRing(gisRingMm));
     candidates.push(
@@ -548,30 +581,31 @@ export function reconstruct(
   // P2-31: the parcel ring, when one was supplied alongside a building
   // outline. Projected with the SAME origin as the footprint so the two rings
   // share a frame; a parcel in a different frame would report nonsense slack.
-  let parcelRingMm: RingMm | null = null;
-  {
-    const parcelRaw = input.parcel?.polygon?.[0] ?? null;
-    if (parcelRaw && originLngLat && options.project) {
-      try {
-        const project = options.project(originLngLat[0], originLngLat[1]);
-        parcelRingMm = prepareGisRing(projectRingToMm(parcelRaw, project));
-      } catch {
-        parcelRingMm = null;
-      }
-    }
-  }
+  // The lot ring the setback reads its slack from. `reconcileOutlines` already
+  // separates site-only rings from footprint candidates and projects them into
+  // this frame, so there is one mechanism for "which rings does this building
+  // have" rather than two. Prefer an observed lot over a solved one, then the
+  // largest — a real cadastral parcel outranks a square derived from 대지면적.
+  const siteCandidate =
+    [...outlines.siteCandidates]
+      .filter((c) => c.ring.length >= 3)
+      .sort(
+        (a, b) =>
+          Number(b.observed) - Number(a.observed) || b.areaSqm - a.areaSqm,
+      )[0] ?? null;
 
   // P2-31: one setback decision for the whole stack, taken from evidence —
   // 용도지역 (VWorld LT_C_UQ111) plus the slack the parcel actually shows.
   // The rule picks the FACE; 층별개요 already fixed how much comes off it.
   const setbackChoice = chooseSetbackFace({
     footprint: footprintCcw,
-    // Preference: an explicitly supplied parcel, else a GIS ring that IS the
-    // parcel, else the site square. The last is synthesised from 대지면적 and
-    // centred on the building, so it shows no directional slack by
-    // construction — which is exactly why `chooseSetbackFace` then reports
-    // the direction as undetermined rather than inventing one.
-    parcel: parcelRingMm ?? (gisIsParcel && gisRingMm ? gisRingMm : siteRing),
+    // A reconciled site ring when one was observed, else the site square.
+    // That square is synthesised from 대지면적 and centred on the building, so
+    // it shows no directional slack by construction — which is exactly why
+    // `chooseSetbackFace` then reports the direction as undetermined rather
+    // than inventing one. A site ring is never a footprint candidate
+    // (`reconcileOutlines` Rule 1), so this cannot leak a lot into the plan.
+    parcel: siteCandidate?.ring ?? siteRing,
     district: input.zoning?.district ?? null,
   });
   if (setbackChoice.reason === "undetermined") {
@@ -597,7 +631,7 @@ export function reconstruct(
       sourceContext:
         setbackChoice.reason === "daylight_setback"
           ? `건축법 시행령 제86조 + SRC-GIS-ZONING (${setbackChoice.district})`
-          : "SRC-GIS-PARCEL (필지 여유 형상)",
+          : `${siteCandidate?.sourceId ?? "SRC-GIS-PARCEL"} (필지 여유 형상)`,
       confidence: "D-INFERRED",
       impactIfWrong: "후퇴 면이 다르면 방위별 외벽 면적과 일사 취득이 달라집니다",
       verificationMethod: "후퇴가 일어난 면을 현장 또는 항공사진으로 확인",

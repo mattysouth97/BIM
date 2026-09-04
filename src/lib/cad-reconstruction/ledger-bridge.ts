@@ -55,7 +55,7 @@ export interface LedgerEvidenceInput {
   floors?: readonly BrFloorInfo[];
   areas?: readonly BrAreaInfo[];
   gis?: GisFootprintInput | null;
-  /** Parcel outline held alongside a building outline, for setback slack. */
+  /** A lot outline observed alongside a building outline; site-only. */
   parcel?: GisFootprintInput | null;
   /** 용도지역 from VWorld LT_C_UQ111, when the zoning route answered (P2-31). */
   zoning?: ZoningInput | null;

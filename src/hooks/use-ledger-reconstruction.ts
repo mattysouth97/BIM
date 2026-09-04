@@ -91,11 +91,14 @@ export function useLedgerReconstruction(
         title,
         floors: floors ?? [],
         gis: toGisInput(footprint),
-        // P2-31: the parcel, when the footprint query fell back to one. The
-        // reconstruction reads which side of the lot the building leaves free
-        // to decide the face a setback comes off.
-        parcel:
-          footprint?.source === "parcel" ? toGisInput(footprint) : null,
+        // No lot ring is forwarded from here, and passing the building outline
+        // as one would be a lie. `/api/vworld/footprint` returns EITHER the
+        // building layer OR the parcel layer, never both, so when it answers
+        // with a building this app has no lot at all and the setback direction
+        // is honestly undetermined. Wiring a second parcel query is the
+        // follow-up that makes the 일조권 rule reachable in the product; the
+        // contract below is ready for it.
+        parcel: null,
         zoning: zoning
           ? ({
               district: zoning.district,

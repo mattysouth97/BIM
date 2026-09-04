@@ -64,6 +64,7 @@ export type SourceKind =
   | "gis_measured_attributes"
   | "gis_zoning_district"
   | "osm_building_outline"
+  | "web_search"
   | "user_statement"
   | "code_table";
 
@@ -281,6 +282,49 @@ export interface ReconSection {
   coreProfile: RingMm | null;
   floorLines: Array<{ levelId: string; yMm: number; label: string }>;
   grade: EvidenceGrade;
+}
+
+/* ------------------------------------------------------------------ */
+/* Web evidence                                                        */
+/* ------------------------------------------------------------------ */
+
+/** A fact the open web asserts about the building. Never a dimension source. */
+export type WebFactKind =
+  | "storeys_above"
+  | "storeys_below"
+  | "building_height_m"
+  | "footprint_area_sqm"
+  | "gross_area_sqm"
+  | "completion_year"
+  | "structure"
+  | "roof_form"
+  | "use"
+  | "name";
+
+export interface WebCitation {
+  url: string;
+  title: string | null;
+}
+
+export interface WebFact {
+  kind: WebFactKind;
+  value: number | string;
+  unit: string | null;
+  /** The sentence the value was read from, verbatim — never paraphrased. */
+  quote: string;
+  /** At least one http(s) URL. A fact without one never reaches the model. */
+  citations: WebCitation[];
+  /** Always D-INFERRED. A web page is an assertion, not a measurement. */
+  grade: EvidenceGrade;
+}
+
+export interface WebEvidenceInput {
+  facts: WebFact[];
+  /** What was actually searched for, kept for the record. */
+  query: string | null;
+  /** False when the search was never run — distinct from running and finding nothing. */
+  searched: boolean;
+  error: string | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -521,14 +565,17 @@ export interface EvidenceInput {
   areas: BrAreaInfo[];
   gis: GisFootprintInput | null;
   /**
-   * The PARCEL outline, when one is available alongside a building outline
-   * (P2-31). Used only to read which side of the lot the building leaves free,
-   * which is what decides the face a setback comes off.
+   * A PARCEL outline held alongside a building outline.
    *
-   * Deliberately separate from `gis`: a lot is not a building, and a parcel
-   * ring must never reach the footprint chain. `gis` already carries a parcel
-   * as a *fallback* footprint; this field is the other case — a parcel held
-   * next to a real outline rather than instead of one.
+   * `gis` has one slot, and a ring in it is either the building or the lot —
+   * never both. This is the other case: a lot observed next to a real outline
+   * rather than instead of one. It enters `reconcileOutlines` as a site-only
+   * candidate, so it travels the same path as every other ring and Rule 1
+   * (a lot boundary is never eligible to be a footprint) applies to it.
+   *
+   * Without it, a building with a real GIS outline has no lot ring at all,
+   * and the setback direction is undetermined for exactly the buildings the
+   * 일조권 rule exists for.
    */
   parcel?: GisFootprintInput | null;
   /** 용도지역, when the zoning layer answered (P2-31). */
@@ -540,6 +587,12 @@ export interface EvidenceInput {
    * disagreement is recorded instead of one of them being dropped.
    */
   osm?: OsmBuildingInput | null;
+  /**
+   * What the open web says, when the user asked for a search. Cross-check
+   * material only: these facts never build geometry and never override the
+   * register — see web-evidence.ts.
+   */
+  web?: WebEvidenceInput | null;
   address: string | null;
   claims: ReconstructionClaim[];
   /** Injected so a reconstruction is reproducible in tests and in reports. */

@@ -86,7 +86,7 @@ Legend — status: ⬜ not-started · 🔵 in-progress · 🟣 in-review · ✅ 
 | [P2-29](./items/P2-29-one-ledger-geometry-producer.md) | One ledger geometry producer — reconstruct() feeds the twin and the traceable engine | geometry | L | UC-03, 05, 12 | 🟣 |
 | [P2-30](./items/P2-30-per-storey-envelope.md) | Per-storey envelope — the stack stops being one extruded prism | geometry | L | UC-05, UC-12 | 🟣 |
 | [P2-31](./items/P2-31-directional-setbacks.md) | Directional setbacks — a step goes on one face, not concentrically | geometry | M | UC-05, UC-12 | 🟣 |
-| [P2-32](./items/P2-32-loan-term-buydown-ignores-preset-term.md) | Interest buy-down amortizes over a constant 5 years, ignoring the preset's `loanTermYears` | retrofit | M | UC-06, UC-07 | ⬜ |
+| [P2-32](./items/P2-32-loan-term-buydown-ignores-preset-term.md) | Interest buy-down amortizes over a constant 5 years, ignoring the preset's `loanTermYears` | retrofit | M | UC-06, UC-07 | ⬜✅ |
 | [P2-08](./items/P2-08-dead-code-doc-drift.md) | Delete dead code, fix doc drift, remove stray artifacts | infra | M | UC-05 | ✅ |
 | [P2-09](./items/P2-09-e2e-rewrite.md) | Rewrite e2e suite around the real user journey with mocked APIs | infra | M | UC-01, 03, 05, 08 | ✅ |
 | [P2-10](./items/P2-10-financial-model-refinements.md) | Financial model refinements — loan-term buy-down, rate honesty, solar fixes, sourced costs | retrofit | L | UC-06, 07, 08 | ✅ |
