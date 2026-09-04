@@ -39,6 +39,7 @@ export function ReferenceBuildingWorkspace({
   const [active, setActive] = useState<ReadonlySet<string>>(
     () => new Set([FABRIC_LAYER]),
   );
+  const [flowVisible, setFlowVisible] = useState(true);
 
   const toggle = (id: string) =>
     setActive((current) => {
@@ -49,11 +50,16 @@ export function ReferenceBuildingWorkspace({
     });
 
   const services = manifest.serviceLayers ?? [];
+  const activeServices = services.filter((layer) => active.has(layer.id));
   const fmt = (n: number) =>
     n.toLocaleString("en-US", { maximumFractionDigits: 1 });
 
   return (
-    <main className="mx-auto flex h-dvh max-w-[92rem] flex-col gap-4 px-4 py-4 lg:flex-row">
+    // `h-dvh` minus the app header's own `h-12`, and a div rather than a
+    // second <main>: the root layout already provides one, and nesting them
+    // both broke the landmark and pushed this panel's heading up behind the
+    // header bar where it was clipped.
+    <div className="mx-auto flex h-[calc(100dvh-3rem)] max-w-[92rem] flex-col gap-4 px-4 py-4 lg:flex-row">
       <section className="min-h-[24rem] flex-1 overflow-hidden rounded-[8px] border border-border bg-card shadow-xs">
         <ReferenceModelViewer
           modelUrl={modelUrl}
@@ -61,6 +67,7 @@ export function ReferenceBuildingWorkspace({
           services={services}
           active={active}
           fabricLayerId={FABRIC_LAYER}
+          flowVisible={flowVisible}
         />
       </section>
 
@@ -89,7 +96,13 @@ export function ReferenceBuildingWorkspace({
           <div className="mt-2">
             <LayerRow
               id={FABRIC_LAYER}
-              label={isKo ? "외피·구조" : "Fabric"}
+              // "외피·구조" until 2026-09-04, which claimed something the file
+              // does not contain: `build-reference-building.mjs` calls
+              // `collectFabric` without `includeStructure`, so the frame — 82%
+              // of the model's triangles — is deliberately not in this GLB.
+              // The manifest said so all along in `model.note`; the label
+              // contradicted it and the note was never rendered.
+              label={isKo ? "외피" : "Fabric"}
               detail={`${manifest.model.triangleCount.toLocaleString()} ${isKo ? "삼각형" : "tris"} · ${(manifest.model.byteLength / 1048576).toFixed(1)} MB`}
               colour={LAYER_COLOUR.fabric}
               on={active.has(FABRIC_LAYER)}
@@ -116,6 +129,42 @@ export function ReferenceBuildingWorkspace({
               ? "배관·덕트는 실제 형상, 밸브·기구·장비는 외곽 상자로 단순화했습니다. 레이어는 켤 때 내려받습니다."
               : "Runs are real geometry; valves, terminals and plant are simplified. Layers download when switched on."}
           </p>
+          {/* What the fabric GLB leaves out, in the generator's own words.
+              The manifest has carried this sentence since the first build and
+              nothing displayed it, so the one place a reader could learn that
+              the structural frame is absent was a file they never open. */}
+          <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
+            {manifest.model.note}
+          </p>
+
+          {/* Flow is a property of the SOURCE, not a decoration we add. The
+              toggle sits with the layers, but what each discipline can say
+              about direction is stated underneath rather than implied by
+              whether something moves. */}
+          {services.some((layer) => layer.flow) ? (
+            <div className="mt-4 border-t border-border pt-3">
+              <LayerRow
+                id="flow"
+                label={isKo ? "흐름 방향" : "Flow direction"}
+                detail={
+                  isKo
+                    ? "모델이 명시한 방향만 · 포트 그래프에서 추출"
+                    : "Only where the model states it · read from the port graph"
+                }
+                colour="#67e8f9"
+                on={flowVisible}
+                onToggle={() => setFlowVisible((on) => !on)}
+              />
+              {activeServices.map((layer) => (
+                <FlowNote
+                  key={`${layer.id}-note`}
+                  label={isKo ? layer.ko : layer.en}
+                  flow={layer.flow}
+                  isKo={isKo}
+                />
+              ))}
+            </div>
+          ) : null}
         </section>
 
         <dl className="mt-6">
@@ -157,7 +206,64 @@ export function ReferenceBuildingWorkspace({
           {manifest.licence} · {manifest.attribution}
         </p>
       </aside>
-    </main>
+    </div>
+  );
+}
+
+type ServiceLayer = NonNullable<
+  ReferenceBuildingManifest["serviceLayers"]
+>[number];
+
+/**
+ * What one discipline model can say about the direction of flow — including,
+ * for two of the Clinic's three, that it says nothing.
+ *
+ * Written from the counts rather than from the extractor's prose so there is
+ * one source of truth and nothing to translate. The electrical model declaring
+ * no ports at all is the most informative line on this panel: it is a concrete
+ * statement about what a coordination model does and does not carry, and it
+ * would be invisible if the layer simply animated nothing.
+ */
+function FlowNote({
+  label,
+  flow,
+  isKo,
+}: {
+  label: string;
+  flow: ServiceLayer["flow"];
+  isKo: boolean;
+}) {
+  if (!flow) return null;
+  const n = (value: number) => value.toLocaleString("en-US");
+
+  let body: string;
+  if (flow.ports === 0) {
+    body = isKo
+      ? "배분 포트를 선언하지 않음 — 이 파일에는 계통 위상이 없습니다."
+      : "declares no distribution ports — this file carries no network topology.";
+  } else if (flow.drawnEdges === 0) {
+    body = isKo
+      ? `연결 ${n(flow.connections)}개가 모두 양방향으로 선언됨 — 방향을 읽을 수 없습니다.`
+      : `all ${n(flow.connections)} connections are declared bidirectional — no direction to read.`;
+  } else {
+    const ratio =
+      flow.drawnEdges === flow.connections
+        ? isKo
+          ? `연결 ${n(flow.connections)}개 전부에 방향이 명시됨`
+          : `all ${n(flow.connections)} connections state a direction`
+        : isKo
+          ? `연결 ${n(flow.connections)}개 중 ${n(flow.drawnEdges)}개만 방향이 명시됨 (나머지 ${n(flow.bidirectionalEdges)}개는 양방향 선언)`
+          : `${n(flow.drawnEdges)} of ${n(flow.connections)} connections state a direction (the other ${n(flow.bidirectionalEdges)} are declared bidirectional)`;
+    const split = isKo
+      ? ` · 기기 하류 ${n(flow.supplySegments)} · 상류 ${n(flow.returnSegments)}`
+      : ` · ${n(flow.supplySegments)} downstream of plant, ${n(flow.returnSegments)} upstream`;
+    body = ratio + split;
+  }
+
+  return (
+    <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
+      <span className="text-foreground/70">{label}</span> — {body}
+    </p>
   );
 }
 
