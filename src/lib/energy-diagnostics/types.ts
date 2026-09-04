@@ -121,6 +121,18 @@ export type DrawingDocumentType =
    * geometry to trace and no envelope or systems data at all.
    */
   | "building_register_record"
+  /**
+   * A discipline BIM model (IFC coordination view), pre-extracted to the
+   * canonical source JSON. A sibling of the register rather than a drawing:
+   * it is authored geometry, not a sheet anyone traced.
+   *
+   * It states far more than the register — real surfaces, real assemblies,
+   * real spaces — but it is still not a measurement. What a coordination
+   * model omits, it omits silently: this family of file routinely carries no
+   * ThermalTransmittance, no material conductivity and a default site, so the
+   * builder that reads it must keep naming those as assumptions.
+   */
+  | "bim_model_record"
   | "site_plan"
   | "floor_plan"
   | "elevation"

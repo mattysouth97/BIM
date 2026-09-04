@@ -19,6 +19,16 @@ const RULES: readonly ClassificationRule[] = [
     /bldrgst|bimfit[\s_-]*ledger/i,
     /건축물[\s_-]*대장|표제부|층별[\s_-]*개요/,
   ]),
+  // A discipline BIM model, pre-extracted to canonical source JSON.
+  // "multidiscipline" for the same reason as the register: a coordination
+  // model spans architecture, structure and services rather than being any
+  // one discipline's sheet.
+  rule("bim_model_record", "multidiscipline", [
+    /\bifc\b|industry[\s_-]*foundation[\s_-]*classes/i,
+    /(bim|coordination|reference[\s_-]*building)[\s_-]*model/i,
+    /bimfit[\s_-]*(bim|reference)/i,
+    /BIM[\s_-]*모델|기준[\s_-]*건물/,
+  ]),
   rule("window_schedule", "architectural", [
     /window[\s_-]*(schedule|type)/i,
     /창호[\s_-]*(일람|스케줄|표)/,
@@ -198,6 +208,11 @@ export function documentTier(documentType: DrawingDocumentType): 1 | 2 | 3 {
   }
   if (
     [
+      // A coordination model carries what the Tier-2 detail sheets carry —
+      // real assemblies and real surfaces — in one document, so it reads as
+      // "detailed" rather than "early". Tier is a display label only
+      // (`drawingSet.tier > 1 ? tierDetailed : tierEarly`), not a gate.
+      "bim_model_record",
       "wall_detail",
       "roof_detail",
       "slab_detail",
