@@ -599,13 +599,16 @@ export function reconstruct(
   // The rule picks the FACE; 층별개요 already fixed how much comes off it.
   const setbackChoice = chooseSetbackFace({
     footprint: footprintCcw,
-    // A reconciled site ring when one was observed, else the site square.
-    // That square is synthesised from 대지면적 and centred on the building, so
-    // it shows no directional slack by construction — which is exactly why
-    // `chooseSetbackFace` then reports the direction as undetermined rather
-    // than inventing one. A site ring is never a footprint candidate
-    // (`reconcileOutlines` Rule 1), so this cannot leak a lot into the plan.
-    parcel: siteCandidate?.ring ?? siteRing,
+    // ONLY a lot that was actually observed. The square solved from 대지면적 is
+    // not a lot — its own note says 실제 필지 형상이 아님 — and feeding it here
+    // used to manufacture evidence: an off-centre or L-shaped footprint shows
+    // "slack" against that square, and the ledger then read
+    // "필지에서 south 측으로 1.7 m의 여유가 관측되어" citing SRC-GIS-PARCEL for a
+    // parcel nobody fetched. No observed lot means the direction is
+    // undetermined, which is the honest answer. A site ring is never a
+    // footprint candidate (`reconcileOutlines` Rule 1), so this cannot leak a
+    // lot into the plan either.
+    parcel: siteCandidate?.observed ? siteCandidate.ring : null,
     district: input.zoning?.district ?? null,
   });
   if (setbackChoice.reason === "undetermined") {
@@ -632,6 +635,7 @@ export function reconstruct(
         setbackChoice.reason === "daylight_setback"
           ? `건축법 시행령 제86조 + SRC-GIS-ZONING (${setbackChoice.district})`
           : `${siteCandidate?.sourceId ?? "SRC-GIS-PARCEL"} (필지 여유 형상)`,
+      // Reached only when a lot was observed — see the `parcel` note above.
       confidence: "D-INFERRED",
       impactIfWrong: "후퇴 면이 다르면 방위별 외벽 면적과 일사 취득이 달라집니다",
       verificationMethod: "후퇴가 일어난 면을 현장 또는 항공사진으로 확인",

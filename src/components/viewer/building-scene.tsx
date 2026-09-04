@@ -27,6 +27,7 @@ import { floorNoFromPlanLevelId } from "@/lib/interior/visible-floors";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import { useLedgerReconstruction } from "@/hooks/use-ledger-reconstruction";
 import { useBuildingZoning } from "@/hooks/use-building-zoning";
+import { useBuildingParcel } from "@/hooks/use-building-parcel";
 import {
   applyLevelPlates,
   provenancePatchForModel,
@@ -346,11 +347,19 @@ export function BuildingScene({
   // P2-31: 용도지역 decides whether a step can be attributed to 일조권. Failure
   // is expected and harmless — the setback falls back to lot geometry.
   const zoningQuery = useBuildingZoning(contextCenter);
+  // P2-31: the lot, asked for separately and only when the first call already
+  // spent its one ring on the building. Without it there is no slack to read
+  // and the setback direction stays undetermined.
+  const parcelQuery = useBuildingParcel(
+    title?.platPlcNm || title?.newPlatPlc,
+    footprintDataProp?.source === "building",
+  );
   const reconstruction = useLedgerReconstruction(
     title,
     floors,
     footprintDataProp,
     zoningQuery.data,
+    parcelQuery.data,
   );
 
   // S4: record that the outline is a reconstruction when it is one — never

@@ -20,6 +20,7 @@ import { useMemo } from "react";
 
 import { useBuildingFootprint } from "@/hooks/use-building-footprint";
 import { useBuildingZoning } from "@/hooks/use-building-zoning";
+import { useBuildingParcel } from "@/hooks/use-building-parcel";
 import { useCompositeBuilding } from "@/hooks/use-composite-building";
 import { useLedgerReconstruction } from "@/hooks/use-ledger-reconstruction";
 import { DEMO_BUILDING_ID, parseBuildingId } from "@/lib/constants";
@@ -90,11 +91,19 @@ export function useLedgerRecord(
   }, [footprintQuery.data]);
   const zoningQuery = useBuildingZoning(zoningCenter);
 
+  // P2-31: the lot ring, when the footprint call spent its one ring on the
+  // building outline. Absent, the setback direction stays undetermined.
+  const parcelQuery = useBuildingParcel(
+    title?.platPlcNm || title?.newPlatPlc,
+    footprintQuery.data?.source === "building",
+  );
+
   const reconstruction = useLedgerReconstruction(
     title,
     floors,
     footprintQuery.data,
     zoningQuery.data,
+    parcelQuery.data,
   );
 
   const footprint = useMemo<LedgerFootprint | undefined>(() => {

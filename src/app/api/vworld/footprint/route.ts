@@ -53,6 +53,9 @@ const contextModeSchema = z.object({
  *   lat, lng - coordinates to search within a bounding box
  *   or
  *   sigunguCd + bjdongCd + bun [+ ji + platGbCd]
+ *   layer=parcel - force the cadastral layer (P2-31). Without it the building
+ *     outline wins and the lot is only a fallback, so a building with a real
+ *     outline yields no lot at all — and the setback direction needs both.
  *
  * Query params (campus bbox mode):
  *   bboxMode=true
@@ -192,6 +195,11 @@ export async function GET(request: NextRequest) {
   const ji = searchParams.get("ji");
   const platGbCd = searchParams.get("platGbCd") || "0";
 
+  // P2-31: `layer=parcel` asks for the lot itself rather than the best outline.
+  // The reconstruction needs the building AND its lot to read directional slack,
+  // and one response carries one ring — so the lot is a second, explicit call.
+  const parcelOnly = searchParams.get("layer") === "parcel";
+
   try {
     // P2-25: prefer the actual building outline (GIS건물통합정보, LT_C_SPBD) over
     // the cadastral parcel. Parcel is the NAMED fallback when the building layer
@@ -216,7 +224,9 @@ export async function GET(request: NextRequest) {
 
     if (resolvedPnu) {
       // Several buildings can share one parcel PNU — take the largest outline.
-      const building = pickLargest(await fetchBuildingCandidates({ attrFilter: `pnu:=:${resolvedPnu}` }, apiKey));
+      const building = parcelOnly
+        ? null
+        : pickLargest(await fetchBuildingCandidates({ attrFilter: `pnu:=:${resolvedPnu}` }, apiKey));
       if (building) {
         polygonData = { rings: building.rings, parcelCount: building.parcelCount };
         source = "building";
@@ -230,7 +240,9 @@ export async function GET(request: NextRequest) {
       // outline nearest the query point, not the largest.
       const delta = 0.0005; // ~50m
       const bbox = `BOX(${point.lng - delta},${point.lat - delta},${point.lng + delta},${point.lat + delta})`;
-      const building = pickNearest(await fetchBuildingCandidates({ geomFilter: bbox }, apiKey), point.lng, point.lat);
+      const building = parcelOnly
+        ? null
+        : pickNearest(await fetchBuildingCandidates({ geomFilter: bbox }, apiKey), point.lng, point.lat);
       if (building) {
         polygonData = { rings: building.rings, parcelCount: building.parcelCount };
         source = "building";

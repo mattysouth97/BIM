@@ -68,11 +68,18 @@ export interface ZoningQueryResult {
   error: string | null;
 }
 
+/** What the parcel route resolves to; see `use-building-parcel`. */
+export interface ParcelQueryResult {
+  polygon: number[][][] | null;
+  error: string | null;
+}
+
 export function useLedgerReconstruction(
   title: BrTitleInfo | null | undefined,
   floors: readonly BrFloorInfo[] | undefined,
   footprint: FootprintQueryResult | null | undefined,
   zoning?: ZoningQueryResult | null,
+  parcel?: ParcelQueryResult | null,
 ): LedgerReconstruction | null {
   // `floors` is a fresh array on every render for most callers, so the identity
   // of the rows themselves is the honest dependency.
@@ -82,6 +89,7 @@ export function useLedgerReconstruction(
   );
   const polygonKey = footprint?.polygon ? JSON.stringify(footprint.polygon) : "";
   const districtKey = zoning?.district ?? "";
+  const parcelKey = parcel?.polygon ? JSON.stringify(parcel.polygon) : "";
 
   return useMemo(() => {
     if (!title) return null;
@@ -91,14 +99,21 @@ export function useLedgerReconstruction(
         title,
         floors: floors ?? [],
         gis: toGisInput(footprint),
-        // No lot ring is forwarded from here, and passing the building outline
-        // as one would be a lie. `/api/vworld/footprint` returns EITHER the
-        // building layer OR the parcel layer, never both, so when it answers
-        // with a building this app has no lot at all and the setback direction
-        // is honestly undetermined. Wiring a second parcel query is the
-        // follow-up that makes the 일조권 rule reachable in the product; the
-        // contract below is ready for it.
-        parcel: null,
+        // The lot, from the second explicitly-cadastral call
+        // (`useBuildingParcel`). `/api/vworld/footprint` returns EITHER the
+        // building layer OR the parcel layer per response, so a building with
+        // a real outline has no lot in `gis` — and without a lot the 일조권
+        // setback direction is undetermined. Still null whenever that call was
+        // skipped, failed, or found nothing, which is the honest state and the
+        // one the reconstruction already handles.
+        parcel: parcel?.polygon
+          ? ({
+              polygon: parcel.polygon,
+              source: "parcel",
+              attributes: null,
+              error: parcel.error ?? null,
+            } satisfies GisFootprintInput)
+          : null,
         zoning: zoning
           ? ({
               district: zoning.district,
@@ -111,5 +126,5 @@ export function useLedgerReconstruction(
     );
     return { model, twin: twinGeometryFromModel(model) };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on content, not identity
-  }, [title, floorKey, polygonKey, footprint?.source, districtKey]);
+  }, [title, floorKey, polygonKey, footprint?.source, districtKey, parcelKey]);
 }

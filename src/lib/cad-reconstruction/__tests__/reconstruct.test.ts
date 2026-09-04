@@ -383,3 +383,82 @@ describe("no evidence at all", () => {
     expect(pkg.model.footprint.grade).toBe("X-UNRESOLVED");
   });
 });
+
+/**
+ * P2-31 reachability. `chooseSetbackFace` was unit-tested from the start, but
+ * the product fed it `parcel: null` — `/api/vworld/footprint` spends its one
+ * ring on the building outline, so the buildings with the best outlines had no
+ * lot and the direction was always "undetermined". These pin the wiring that
+ * carries a separately-fetched lot all the way to the setback decision.
+ */
+describe("a lot observed alongside the building outline", () => {
+  const LNG = 126.9695;
+  const LAT = 37.5885;
+  const D_LNG = 0.000114; // ~10 m
+  const D_LAT = 0.000090; // ~10 m
+
+  /** A lot with ~8 m of northern slack and ~1 m to the south. */
+  function parcelRing(): number[][][] {
+    const west = LNG - D_LNG * 0.2;
+    const east = LNG + D_LNG * 2.2;
+    const south = LAT - 0.000009; // ~1 m
+    const north = LAT + D_LAT * 2 + 0.000072; // ~8 m
+    return [
+      [
+        [west, south],
+        [east, south],
+        [east, north],
+        [west, north],
+        [west, south],
+      ],
+    ];
+  }
+
+  const gis = {
+    polygon: gisRing(),
+    source: "building" as const,
+    attributes: { height: 11.2, groundFloors: 3, undergroundFloors: 1 },
+    error: null,
+  };
+  const zoning = { district: "제2종일반주거지역", source: "LT_C_UQ111", error: null };
+
+  const setbackAssumption = (pkg: ReturnType<typeof runReconstruction>) =>
+    pkg.model.assumptions.find((a) => a.element === "후퇴 방향");
+
+  it("leaves the direction undetermined when no lot is supplied", () => {
+    const pkg = runReconstruction(baseInput({ gis, zoning }));
+    const assumption = setbackAssumption(pkg);
+    expect(assumption).toBeDefined();
+    expect(assumption!.assumption).toContain("균등 축소");
+    // The square solved from 대지면적 must not be dressed up as a lot: no
+    // observed parcel, no parcel source, and nothing described as 관측.
+    expect(assumption!.sourceContext).not.toContain("SRC-GIS-PARCEL (필지 여유 형상)");
+    expect(assumption!.reason).not.toContain("관측");
+  });
+
+  it("reads the lot's northern slack and steps back on the north face", () => {
+    const pkg = runReconstruction(
+      baseInput({
+        gis,
+        zoning,
+        parcel: { polygon: parcelRing(), source: "parcel", attributes: null, error: null },
+      }),
+    );
+    const assumption = setbackAssumption(pkg);
+    expect(assumption).toBeDefined();
+    expect(assumption!.assumption).toBe("north 면으로 후퇴");
+    expect(assumption!.sourceContext).toContain("건축법 시행령 제86조");
+  });
+
+  it("never lets the lot become the building's footprint", () => {
+    const pkg = runReconstruction(
+      baseInput({
+        gis,
+        zoning,
+        parcel: { polygon: parcelRing(), source: "parcel", attributes: null, error: null },
+      }),
+    );
+    // The lot is ~24 × 26 m; the building outline is the smaller L.
+    expect(areaSqm(pkg.model.footprint.ring)).toBeLessThan(400);
+  });
+});
