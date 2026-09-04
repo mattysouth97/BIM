@@ -142,8 +142,17 @@ export function netFaceArea(triangles, options = {}) {
     }
   }
   const spans = [maxX - minX, maxY - minY, maxZ - minZ];
-  // Y is height in web-ifc's world frame; a wall's thin axis is X or Z.
+  // Y is height in web-ifc's world frame; a WALL's thin axis is X or Z, so
+  // this deliberately never picks Y.
+  //
+  // That makes the function wall-only, and silently wrong on anything
+  // horizontal: a slab's thin axis IS Y, so its top and bottom faces can never
+  // be selected and it returns a clean, plausible 0.00. bim-bf hit exactly
+  // that on 48 elements of another model. `thinAxisForced` says when the
+  // restriction actually bound, so a caller measuring the wrong thing finds
+  // out instead of receiving a zero.
   const thin = spans[0] <= spans[2] ? 0 : 2;
+  const thinAxisForced = spans[1] < spans[0] && spans[1] < spans[2];
 
   let aligned = 0;
   let alignedBelow = 0;
@@ -163,14 +172,45 @@ export function netFaceArea(triangles, options = {}) {
     }
   }
 
+  const netFaceAreaSqm = aligned / 2;
+
+  /**
+   * The area this element's own bounding box can physically hold.
+   *
+   * Halving the aligned area assumes the element is ONE solid, so its front
+   * and back faces are the same face counted twice. A multi-skin element —
+   * several solids stacked through the thickness, which authoring tools emit
+   * as several `mesh.geometries` parts — gives 2N faces, and halving once
+   * leaves N times the real area.
+   *
+   * A net area cannot exceed its own gross face; openings only ever remove
+   * area. So `exceedsBounds` catches that class without needing to know how
+   * the element was modelled, and without a tolerance argument to tune.
+   * bim-bf found 26 such elements on a Dutch werktekening, one measuring
+   * 5.91 m² against a 2.06 m² face.
+   *
+   * The Clinic has none — 0 of 80 exterior walls exceed their bounds, and its
+   * 33 two-part walls average a LOWER fill ratio (0.821) than its 47 one-part
+   * walls (0.966), which is what co-planar pieces look like rather than
+   * stacked skins. That is why 2,150.3 m² stands. The flag exists so the next
+   * model is checked rather than assumed.
+   */
+  const grossFaceSqm = spans[1] * spans[thin === 0 ? 2 : 0];
+
   return {
-    netFaceAreaSqm: aligned / 2,
+    netFaceAreaSqm,
     netFaceAreaBelowSplitSqm: split === null ? null : alignedBelow / 2,
     netFaceAreaAboveSplitSqm: split === null ? null : alignedAbove / 2,
     totalSurfaceAreaSqm: total,
     thinAxis: thin === 0 ? "x" : "z",
     thicknessM: spans[thin],
     heightM: spans[1],
+    grossFaceSqm,
+    /** Net area as a share of the gross face. Above 1 is impossible. */
+    fillRatio: grossFaceSqm > 0 ? netFaceAreaSqm / grossFaceSqm : null,
+    exceedsBounds: grossFaceSqm > 0 && netFaceAreaSqm > grossFaceSqm * 1.001,
+    /** True when the element is flatter than it is wide — not a wall. */
+    thinAxisForced,
     boundsMin: [minX, minY, minZ],
     boundsMax: [maxX, maxY, maxZ],
   };

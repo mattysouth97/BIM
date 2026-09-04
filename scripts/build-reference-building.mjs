@@ -135,10 +135,36 @@ async function main() {
   let wallNet = 0;
   let wallBelowRoof = 0;
   let wallAboveRoof = 0;
-  for (const wall of exteriorWalls.values()) {
+  const impossible = [];
+  const notWalls = [];
+  for (const [id, wall] of exteriorWalls) {
     wallNet += wall.netFaceAreaSqm;
     wallBelowRoof += wall.netFaceAreaBelowSplitSqm;
     wallAboveRoof += wall.netFaceAreaAboveSplitSqm;
+    if (wall.exceedsBounds) impossible.push({ id, ...wall });
+    if (wall.thinAxisForced) notWalls.push(id);
+  }
+  // Refuse rather than publish. A net face area above the element's own gross
+  // face is not a bad estimate, it is impossible — the signature of a
+  // multi-skin element counted once per skin. Publishing it would put a
+  // confident wrong number on a card, which is the failure this repo keeps
+  // finding. Same for an element flatter than it is wide: this measurement is
+  // wall-only and returns a plausible zero on anything horizontal.
+  if (impossible.length > 0) {
+    const worst = impossible.sort((a, b) => b.fillRatio - a.fillRatio)[0];
+    throw new Error(
+      `${impossible.length} exterior wall(s) measure more face area than their own ` +
+        `bounding box can hold — worst #${worst.id} at ${worst.netFaceAreaSqm.toFixed(2)} m² ` +
+        `against a ${worst.grossFaceSqm.toFixed(2)} m² face (${worst.fillRatio.toFixed(2)}x). ` +
+        `That is the multi-skin double-count; fix the measurement before publishing an area.`,
+    );
+  }
+  if (notWalls.length > 0) {
+    throw new Error(
+      `${notWalls.length} element(s) matched as exterior wall are flatter than they are ` +
+        `wide (ids ${notWalls.slice(0, 5).join(", ")}). netFaceArea is wall-only and ` +
+        `returns 0.00 for horizontal elements rather than an error.`,
+    );
   }
 
   const site = arch.byType(webIfc.IFCSITE)[0];
