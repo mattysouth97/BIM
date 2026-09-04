@@ -13,6 +13,7 @@ import { isCadBlueGlass } from "./pbr-standards";
 import { getArchitecturalAtlas } from "./texture-atlas";
 import {
   ARCH_COLOR_AFTER,
+  ARCH_PROCEDURAL_PARS,
   ARCH_FRAGMENT_PARS,
   ARCH_MAP_FRAGMENT,
   ARCH_NORMAL_AFTER,
@@ -20,6 +21,50 @@ import {
   ARCH_VERTEX_PARS,
   ARCH_VERTEX_TAIL,
 } from "./shader-chunks";
+
+/**
+ * Procedural base surfaces instead of the sampled JPEG atlas.
+ *
+ * Off by default: this changes how every building looks, and the honest test
+ * is what a facade reads like at 2 m, not the byte count. Kept as a switch so
+ * the comparison can be made side by side. Promoting it into `QualityBudget`
+ * needs an edit to quality-tiers.ts, which is outside this module's ownership.
+ */
+let proceduralBase = false;
+
+export function setProceduralBaseSurfaces(enabled: boolean): void {
+  proceduralBase = enabled;
+}
+
+export function proceduralBaseSurfacesEnabled(): boolean {
+  return proceduralBase;
+}
+
+/**
+ * Dev-only handle. The flag is otherwise unreachable at runtime, and a switch
+ * nobody can flip cannot be reviewed — the acceptance test for this path is
+ * what a facade reads like at 2 m, which needs a side-by-side comparison.
+ * Remount the viewer after toggling so materials rebuild.
+ */
+if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+  (window as unknown as Record<string, unknown>).__bimProceduralSurfaces = (
+    enabled = true,
+  ) => {
+    setProceduralBaseSurfaces(enabled);
+    return `procedural base surfaces ${enabled ? "on" : "off"} — remount the viewer`;
+  };
+}
+
+/** Surface family index consumed by `archProceduralSurface` in the shader. */
+const PROCEDURAL_FAMILY: Record<string, number> = {
+  concrete_clean: 0,
+  concrete_rough: 1,
+  brick: 2,
+  metal_panel: 3,
+  wood: 4,
+  roof_tile: 5,
+  roof_flat: 6,
+};
 
 export interface CreateArchitecturalMaterialArgs {
   config: PBRMaterialConfig;
@@ -43,8 +88,9 @@ function applyProgram(mat: THREE.MeshStandardMaterial, spec: VisualMaterialSpec,
   const runtime = getRenderRuntime();
   const atlas = getArchitecturalAtlas();
   const texSet = spec.textureSet && atlas ? atlas[spec.textureSet] : null;
+  const useProcedural = proceduralBase && budget.triplanar;
 
-  if (texSet && budget.triplanar) {
+  if (texSet && budget.triplanar && !useProcedural) {
     texSet.color.wrapS = texSet.color.wrapT = THREE.RepeatWrapping;
     texSet.roughness.wrapS = texSet.roughness.wrapT = THREE.RepeatWrapping;
     texSet.color.colorSpace = THREE.SRGBColorSpace;
@@ -70,6 +116,8 @@ function applyProgram(mat: THREE.MeshStandardMaterial, spec: VisualMaterialSpec,
     uArchStochastic: { value: budget.stochastic && spec.stochastic === "rotate" ? 1 : 0 },
     uArchWeathering: { value: budget.weathering ? 1 : 0 },
     uArchTint: { value: new THREE.Color(spec.albedo) },
+    uArchProcedural: { value: useProcedural ? 1 : 0 },
+    uArchFamily: { value: PROCEDURAL_FAMILY[spec.textureSet ?? "concrete_rough"] ?? 1 },
   };
 
   const cacheKey = [
@@ -78,7 +126,7 @@ function applyProgram(mat: THREE.MeshStandardMaterial, spec: VisualMaterialSpec,
     budget.tier,
     spec.id,
     args.role,
-    texSet ? spec.textureSet : "none",
+    useProcedural ? "proc" : texSet ? spec.textureSet : "none",
     budget.weathering ? "w" : "nw",
     budget.stochastic ? "s" : "ns",
   ].join(":");
@@ -89,7 +137,10 @@ function applyProgram(mat: THREE.MeshStandardMaterial, spec: VisualMaterialSpec,
       .replace("#include <common>", `#include <common>\n${ARCH_VERTEX_PARS}`)
       .replace("#include <project_vertex>", `#include <project_vertex>\n${ARCH_VERTEX_TAIL}`);
     shader.fragmentShader = shader.fragmentShader
-      .replace("#include <common>", `#include <common>\n${ARCH_FRAGMENT_PARS}`)
+      .replace(
+        "#include <common>",
+        `#include <common>\n${ARCH_FRAGMENT_PARS}\n${ARCH_PROCEDURAL_PARS}`,
+      )
       .replace("#include <map_fragment>", ARCH_MAP_FRAGMENT)
       .replace("#include <color_fragment>", `#include <color_fragment>\n${ARCH_COLOR_AFTER}`)
       .replace("#include <roughnessmap_fragment>", `#include <roughnessmap_fragment>\n${ARCH_ROUGHNESS_AFTER}`)

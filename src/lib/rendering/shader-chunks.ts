@@ -103,6 +103,99 @@ vec4 archTriplanar(sampler2D tex, vec3 wpos, vec3 wn) {
 }
 `;
 
+/**
+ * Procedural base surfaces.
+ *
+ * The triplanar path already generates weathering, multi-scale variation and
+ * wetness in-shader; the JPEG atlas only supplied base albedo and roughness
+ * underneath all of that. These functions synthesise that base instead, which
+ * removes the texture fetch entirely and has no tiling period to alias.
+ *
+ * `uArchFamily` selects the surface: 0 concrete-clean, 1 concrete-rough,
+ * 2 brick, 3 metal panel, 4 wood, 5 roof tile, 6 roof membrane.
+ *
+ * Returns rgb = albedo multiplier around 1.0, a = roughness delta.
+ */
+export const ARCH_PROCEDURAL_PARS = /* glsl */ `
+uniform float uArchProcedural;
+uniform float uArchFamily;
+
+// Dominant-axis planar projection, in metres.
+vec2 archPlanarUv(vec3 wp, vec3 wn) {
+  vec3 b = abs(wn);
+  if (b.y >= b.x && b.y >= b.z) return wp.xz;
+  if (b.x >= b.z) return wp.zy;
+  return wp.xy;
+}
+
+// Running-bond courses. x = brick length, y = course height, both metres.
+// Returns x = mortar mask (1 at joint), y = per-brick random.
+vec2 archCourses(vec2 uv, vec2 unit, float joint) {
+  float row = floor(uv.y / unit.y);
+  float offset = mod(row, 2.0) * 0.5 * unit.x;
+  vec2 cell = vec2(floor((uv.x + offset) / unit.x), row);
+  vec2 f = vec2(fract((uv.x + offset) / unit.x), fract(uv.y / unit.y));
+  float jx = min(f.x, 1.0 - f.x);
+  float jy = min(f.y, 1.0 - f.y);
+  float j = 1.0 - smoothstep(0.0, joint, min(jx * unit.x, jy * unit.y));
+  return vec2(j, archHash11(dot(cell, vec2(127.1, 311.7)) + uArchSeed));
+}
+
+vec4 archProceduralSurface(vec3 wp, vec3 wn) {
+  vec2 uv = archPlanarUv(wp, wn);
+  float fam = uArchFamily;
+  vec3 tint = vec3(1.0);
+  float rough = 0.0;
+
+  float grit = archFbm(uv * 34.0) - 0.5;
+  float blotch = archFbm(uv * 2.1 + uArchSeed) - 0.5;
+
+  if (fam < 1.5) {
+    // Concrete. Board-form lines, pour blotching, fine aggregate.
+    float boards = sin(uv.y * 3.14159 / 0.6 + uArchSeed) * 0.5 + 0.5;
+    boards = smoothstep(0.86, 1.0, boards);
+    float coarse = fam > 0.5 ? 1.0 : 0.45;
+    tint *= 1.0 + blotch * 0.10 * coarse + grit * 0.055 * coarse;
+    tint *= 1.0 - boards * 0.045 * coarse;
+    rough += blotch * 0.10 * coarse + boards * 0.06;
+  } else if (fam < 2.5) {
+    // Brick. 190x75 nominal with a 10 mm joint.
+    vec2 c = archCourses(uv, vec2(0.20, 0.085), 0.011);
+    vec3 mortar = vec3(0.78, 0.77, 0.74);
+    tint *= mix(vec3(1.0) * (0.88 + c.y * 0.24), mortar, c.x);
+    tint *= 1.0 + grit * 0.05;
+    rough += c.x * 0.22 + (c.y - 0.5) * 0.08;
+  } else if (fam < 3.5) {
+    // Metal panel. Seams and a slight per-panel value shift.
+    vec2 c = archCourses(uv, vec2(1.2, 0.9), 0.006);
+    tint *= 0.985 + (c.y - 0.5) * 0.05;
+    tint *= 1.0 - c.x * 0.12;
+    rough += c.x * 0.18 + (c.y - 0.5) * 0.03;
+  } else if (fam < 4.5) {
+    // Wood. Grain runs along the dominant horizontal axis.
+    float grain = archFbm(vec2(uv.x * 2.0, uv.y * 46.0) + uArchSeed);
+    float rings = archFbm(vec2(uv.x * 5.5, uv.y * 8.0));
+    tint *= 0.90 + grain * 0.16 + rings * 0.06;
+    rough += (grain - 0.5) * 0.14;
+  } else if (fam < 5.5) {
+    // Roof tile. Overlapping rows with a shadowed leading edge.
+    vec2 c = archCourses(uv, vec2(0.26, 0.17), 0.008);
+    float lap = smoothstep(0.0, 0.35, fract(uv.y / 0.17));
+    tint *= (0.86 + c.y * 0.26) * (0.80 + 0.20 * lap);
+    rough += c.x * 0.14 + (1.0 - lap) * 0.08;
+  } else {
+    // Roof membrane. Broad mottle, welded seams about a metre apart.
+    float seam = abs(fract(uv.x / 1.05) - 0.5);
+    seam = 1.0 - smoothstep(0.0, 0.012, seam * 1.05);
+    tint *= 1.0 + blotch * 0.07 + grit * 0.03;
+    tint *= 1.0 - seam * 0.09;
+    rough += seam * 0.10 + blotch * 0.06;
+  }
+
+  return vec4(tint, rough);
+}
+`;
+
 export const ARCH_MAP_FRAGMENT = /* glsl */ `
 #ifdef USE_MAP
   vec4 sampledDiffuseColor = archTriplanar(map, vArchWorldPos, normalize(vArchWorldNormal));
@@ -124,6 +217,11 @@ export const ARCH_COLOR_AFTER = /* glsl */ `
   float macro = archHash13(floor(wp * 0.12) + uArchSeed);
   float meso = archFbm(wp.xz * 0.35 + wp.y * 0.08 + uArchSeed);
   float micro = archNoise(vec2(wp.x + wp.z, wp.y) * (6.0 + uArchDetail * 8.0));
+
+  // Synthesised base surface, replacing the sampled albedo when no map is bound.
+  if (uArchProcedural > 0.5) {
+    diffuseColor.rgb *= archProceduralSurface(wp, wn).rgb;
+  }
 
   // Subtle per-element hue/value drift — never noisy.
   float valueJitter = (macro - 0.5) * 0.08 + (meso - 0.5) * 0.05;
@@ -165,6 +263,9 @@ export const ARCH_ROUGHNESS_AFTER = /* glsl */ `
   float up = saturate(wn.y);
   float macro = archHash13(floor(wp * 0.12) + uArchSeed);
   roughnessFactor = saturate(roughnessFactor + (macro - 0.5) * 0.10);
+  if (uArchProcedural > 0.5) {
+    roughnessFactor = saturate(roughnessFactor + archProceduralSurface(wp, wn).a);
+  }
   if (uArchWeathering > 0.5) {
     float dirt = (1.0 - smoothstep(0.0, 3.6, wp.y)) * uArchDirt;
     roughnessFactor = saturate(roughnessFactor + dirt * 0.12);
