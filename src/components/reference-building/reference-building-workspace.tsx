@@ -229,7 +229,11 @@ export function ReferenceBuildingWorkspace({
           className="mt-4 pb-6 font-mono text-[10px] leading-relaxed break-words text-muted-foreground"
           data-testid="reference-model-attribution"
         >
-          {manifest.licence} · {manifest.attribution}
+          {manifest.attribution
+            ? `${manifest.licence} · ${manifest.attribution}`
+            : locale === "ko"
+              ? `${manifest.licence} · 저작권자가 확인되지 않아 표기를 비워 둡니다. 틀린 이름을 적는 것보다 낫습니다.`
+              : `${manifest.licence} · the rights holder is not established, so no credit is given. A wrong name would be worse than none.`}
         </p>
       </aside>
     </div>

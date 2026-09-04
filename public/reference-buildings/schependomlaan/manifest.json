@@ -1,0 +1,495 @@
+{
+  "kind": "bimfit_reference_building_manifest",
+  "schemaVersion": 1,
+  "id": "schependomlaan",
+  "name": {
+    "ko": "스헤펜돔라안 아파트",
+    "en": "Schependomlaan Apartments"
+  },
+  "summary": {
+    "ko": "네덜란드 네이메헌의 10세대 공동주택. 실제 시공용 도면 모델(werktekening).",
+    "en": "A ten-dwelling apartment block in Nijmegen, released as a working-drawing model."
+  },
+  "useType": "apartment_building",
+  "licence": "CC BY 4.0",
+  "attribution": null,
+  "sourceUrl": "https://github.com/openBIMstandards/Archive-DataSetSchependomlaan",
+  "generatedAt": "2026-09-04T00:00:00.000Z",
+  "sourceFiles": [
+    {
+      "role": "architectural",
+      "fileName": "IFC Schependomlaan.ifc",
+      "sha256": "2c3565ca1904f2aa61adab92024cf3755b2c5b21a498144d3094d7cb58cebec7",
+      "byteLength": 49286967,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    }
+  ],
+  "counts": {
+    "storeys": 4,
+    "spacesTotal": 100,
+    "spacesFloor": 100,
+    "assemblies": 28,
+    "externalElements": 0,
+    "exteriorWalls": 122,
+    "externalElementsNote": "820 external physical space boundaries exist and none resolved: swept curve is not a readable polyline. The classifier reads IfcSurfaceOfLinearExtrusion (Revit); this file's boundaries are another surface type. Envelope areas here come from the wall walk, not from boundaries, so nothing published depends on this."
+  },
+  "areas": {
+    "totalFloorAreaSqm": 965.67,
+    "areaPlanTotalSqm": 965.67,
+    "exteriorWallNetSqm": 426.63,
+    "exteriorWallBelowRoofSqm": 411.76,
+    "exteriorWallAboveRoofSqm": 14.87,
+    "exteriorWallByOrientationSqm": {
+      "N": 148.9,
+      "NE": 0,
+      "E": 104.67,
+      "SE": 0,
+      "S": 74.12,
+      "SW": 0,
+      "W": 98.94,
+      "NW": 0
+    }
+  },
+  "assemblies": [
+    {
+      "id": "assembly-ifc-kalkzandsteen-100mm",
+      "name": "IFC_kalkzandsteen_100mm",
+      "totalThicknessM": 0.1,
+      "layers": [
+        {
+          "name": "03 Metselwerk - kalkzandsteen C",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#260"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#262"
+    },
+    {
+      "id": "assembly-ifc-kalkzandsteen-300mm",
+      "name": "IFC_kalkzandsteen_300mm",
+      "totalThicknessM": 0.3,
+      "layers": [
+        {
+          "name": "03 Metselwerk - kalkzandsteen C",
+          "thicknessM": 0.3,
+          "ref": "ifc://IFC Schependomlaan.ifc#27842"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#27843"
+    },
+    {
+      "id": "assembly-ifc-kalkzandsteen-214mm",
+      "name": "IFC_kalkzandsteen_214mm",
+      "totalThicknessM": 0.214,
+      "layers": [
+        {
+          "name": "03 Metselwerk - kalkzandsteen C",
+          "thicknessM": 0.214,
+          "ref": "ifc://IFC Schependomlaan.ifc#28267"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#28268"
+    },
+    {
+      "id": "assembly-ifc-kalkzandsteen-175mm",
+      "name": "IFC_kalkzandsteen_175mm",
+      "totalThicknessM": 0.175,
+      "layers": [
+        {
+          "name": "03 Metselwerk - kalkzandsteen C",
+          "thicknessM": 0.175,
+          "ref": "ifc://IFC Schependomlaan.ifc#28639"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#28640"
+    },
+    {
+      "id": "assembly-ifc-kalkzandsteen-120mm",
+      "name": "IFC_kalkzandsteen_120mm",
+      "totalThicknessM": 0.12,
+      "layers": [
+        {
+          "name": "03 Metselwerk - kalkzandsteen C",
+          "thicknessM": 0.12,
+          "ref": "ifc://IFC Schependomlaan.ifc#29199"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#29200"
+    },
+    {
+      "id": "assembly-ifc-vloer-geisoleerde-kanaalplaat-rc-3-00",
+      "name": "IFC_vloer_geisoleerde_kanaalplaat_Rc=3,00",
+      "totalThicknessM": 0.333,
+      "layers": [
+        {
+          "name": "02 Beton gewapend - prefab VLOER",
+          "thicknessM": 0.2,
+          "ref": "ifc://IFC Schependomlaan.ifc#33236"
+        },
+        {
+          "name": "99 Isolatie - EPS",
+          "thicknessM": 0.133,
+          "ref": "ifc://IFC Schependomlaan.ifc#33252"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#33253"
+    },
+    {
+      "id": "assembly-ifc-vloer-eps-stortstrook-rc-3-00",
+      "name": "IFC_vloer_EPS_stortstrook_Rc=3,00",
+      "totalThicknessM": 0.335,
+      "layers": [
+        {
+          "name": "02 Beton ongewapend C",
+          "thicknessM": 0.185,
+          "ref": "ifc://IFC Schependomlaan.ifc#39430"
+        },
+        {
+          "name": "99 Isolatie - EPS",
+          "thicknessM": 0.15,
+          "ref": "ifc://IFC Schependomlaan.ifc#39431"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#39432"
+    },
+    {
+      "id": "assembly-ifc-baksteen-kopergeel-100mm-liggend",
+      "name": "IFC_baksteen_kopergeel_100mm_liggend",
+      "totalThicknessM": 0.1,
+      "layers": [
+        {
+          "name": "03 mw-baksteen - geel (liggend)",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#46161"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#46162"
+    },
+    {
+      "id": "assembly-ifc-kozijn-90x114",
+      "name": "IFC_kozijn_90x114",
+      "totalThicknessM": 0.114,
+      "layers": [
+        {
+          "name": "01 Hout - hardhout",
+          "thicknessM": 0.114,
+          "ref": "ifc://IFC Schependomlaan.ifc#46554"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#46555"
+    },
+    {
+      "id": "assembly-ifc-baksteen-roodbruin-100mm-staand",
+      "name": "IFC_baksteen_roodbruin_100mm_staand",
+      "totalThicknessM": 0.1,
+      "layers": [
+        {
+          "name": "03 mw-baksteen - bruin (staand)",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#51779"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#51780"
+    },
+    {
+      "id": "assembly-ifc-dekvloer",
+      "name": "IFC_dekvloer",
+      "totalThicknessM": 0.09,
+      "layers": [
+        {
+          "name": "24 Cementdekvloer 90mm",
+          "thicknessM": 0.09,
+          "ref": "ifc://IFC Schependomlaan.ifc#90823"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#90824"
+    },
+    {
+      "id": "assembly-ifc-baksteen-roodbruin-100mm-liggend",
+      "name": "IFC_baksteen_roodbruin_100mm_liggend",
+      "totalThicknessM": 0.1,
+      "layers": [
+        {
+          "name": "03 mw-baksteen - bruin (liggend)",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#146917"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#146918"
+    },
+    {
+      "id": "assembly-ifc-baksteen-kopergeel-100mm-staand",
+      "name": "IFC_baksteen_kopergeel_100mm_staand",
+      "totalThicknessM": 0.1,
+      "layers": [
+        {
+          "name": "03 mw-baksteen - geel (staand)",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#178133"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#178134"
+    },
+    {
+      "id": "assembly-ifc-separatiewand-gasbeton-100mm",
+      "name": "IFC_separatiewand_gasbeton_100mm",
+      "totalThicknessM": 0.1,
+      "layers": [
+        {
+          "name": "99 Lichte scheidingswand - normaal",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#210118"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#210119"
+    },
+    {
+      "id": "assembly-ifc-separatiewand-gasbeton-100mm-hydro",
+      "name": "IFC_separatiewand_gasbeton_100mm_hydro",
+      "totalThicknessM": 0.1,
+      "layers": [
+        {
+          "name": "99 Lichte scheidingswand - hydro",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#216534"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#216535"
+    },
+    {
+      "id": "assembly-ifc-gipsblokken-70mm",
+      "name": "IFC_gipsblokken_70mm",
+      "totalThicknessM": 0.07,
+      "layers": [
+        {
+          "name": "99 Lichte scheidingswand - gipsblokken",
+          "thicknessM": 0.07,
+          "ref": "ifc://IFC Schependomlaan.ifc#220566"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#220567"
+    },
+    {
+      "id": "assembly-ifc-separatiewand-gasbeton-70mm",
+      "name": "IFC_separatiewand_gasbeton_70mm",
+      "totalThicknessM": 0.07,
+      "layers": [
+        {
+          "name": "99 Lichte scheidingswand - normaal",
+          "thicknessM": 0.07,
+          "ref": "ifc://IFC Schependomlaan.ifc#228225"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#228226"
+    },
+    {
+      "id": "assembly-ifc-schoonloopmat",
+      "name": "IFC schoonloopmat",
+      "totalThicknessM": 0.008,
+      "layers": [
+        {
+          "name": "12 Schoonloopmat",
+          "thicknessM": 0.008,
+          "ref": "ifc://IFC Schependomlaan.ifc#294524"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#294525"
+    },
+    {
+      "id": "assembly-ifc-breedplaat-schil-60mm",
+      "name": "IFC_breedplaat_schil_60mm",
+      "totalThicknessM": 0.06,
+      "layers": [
+        {
+          "name": "02 Beton gewapend - prefab",
+          "thicknessM": 0.06,
+          "ref": "ifc://IFC Schependomlaan.ifc#318803"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#318804"
+    },
+    {
+      "id": "assembly-ifc-dakkapel-zijwang",
+      "name": "IFC_dakkapel_zijwang",
+      "totalThicknessM": 0.151,
+      "layers": [
+        {
+          "name": "99 Isolatie - Glaswol zacht",
+          "thicknessM": 0.14,
+          "ref": "ifc://IFC Schependomlaan.ifc#456163"
+        },
+        {
+          "name": "01 plaatmateriaal - spaanplaat - wit",
+          "thicknessM": 0.011,
+          "ref": "ifc://IFC Schependomlaan.ifc#456164"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#456165"
+    },
+    {
+      "id": "assembly-ifc-dekvloer-zwevend",
+      "name": "IFC_dekvloer_zwevend",
+      "totalThicknessM": 0.09,
+      "layers": [
+        {
+          "name": "24 Cementdekvloer 70mm",
+          "thicknessM": 0.07,
+          "ref": "ifc://IFC Schependomlaan.ifc#522023"
+        },
+        {
+          "name": "99 Isolatie - zwevende dekvloer",
+          "thicknessM": 0.02,
+          "ref": "ifc://IFC Schependomlaan.ifc#522024"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#522025"
+    },
+    {
+      "id": "assembly-ifc-separatiewand-gasbeton-70mm-hydro",
+      "name": "IFC_separatiewand_gasbeton_70mm_hydro",
+      "totalThicknessM": 0.07,
+      "layers": [
+        {
+          "name": "99 Lichte scheidingswand - hydro",
+          "thicknessM": 0.07,
+          "ref": "ifc://IFC Schependomlaan.ifc#534011"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#534012"
+    },
+    {
+      "id": "assembly-01-plaatmateriaal-multiplex-18",
+      "name": "01 plaatmateriaal - multiplex 18",
+      "totalThicknessM": 0.018,
+      "layers": [
+        {
+          "name": "01 plaatmateriaal - multiplex",
+          "thicknessM": 0.018,
+          "ref": "ifc://IFC Schependomlaan.ifc#705122"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#705123"
+    },
+    {
+      "id": "assembly-ifc-isolatie-110mm-glaswol",
+      "name": "IFC_isolatie_110mm_glaswol",
+      "totalThicknessM": 0.11,
+      "layers": [
+        {
+          "name": "99 Isolatie - Glaswol 70mm",
+          "thicknessM": 0.11,
+          "ref": "ifc://IFC Schependomlaan.ifc#797167"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#797168"
+    },
+    {
+      "id": "assembly-ifc-dakplaat-geisoleerd-rc-4-00",
+      "name": "IFC_dakplaat_geisoleerd_Rc=4,00",
+      "totalThicknessM": 0.206,
+      "layers": [
+        {
+          "name": "99 Lucht frame",
+          "thicknessM": 0.005,
+          "ref": "ifc://IFC Schependomlaan.ifc#809508"
+        },
+        {
+          "name": "99 Isolatie - Glaswol 190mm",
+          "thicknessM": 0.19,
+          "ref": "ifc://IFC Schependomlaan.ifc#809509"
+        },
+        {
+          "name": "01 plaatmateriaal - spaanplaat - wit",
+          "thicknessM": 0.011,
+          "ref": "ifc://IFC Schependomlaan.ifc#809510"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#809511"
+    },
+    {
+      "id": "assembly-ifc-verlaagd-plafond",
+      "name": "IFC_verlaagd_plafond",
+      "totalThicknessM": 0.05,
+      "layers": [
+        {
+          "name": "99 Lucht frame",
+          "thicknessM": 0.05,
+          "ref": "ifc://IFC Schependomlaan.ifc#836069"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#836070"
+    },
+    {
+      "id": "assembly-ifc-hsb-70mm",
+      "name": "IFC_HSB_70mm",
+      "totalThicknessM": 0.07,
+      "layers": [
+        {
+          "name": "99 Lichte scheidingswand - normaal",
+          "thicknessM": 0.07,
+          "ref": "ifc://IFC Schependomlaan.ifc#898876"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#898877"
+    },
+    {
+      "id": "assembly-ifc-betonvloer-prefab-200mm",
+      "name": "IFC_betonvloer_prefab_200mm",
+      "totalThicknessM": 0.2,
+      "layers": [
+        {
+          "name": "02 Beton gewapend - prefab",
+          "thicknessM": 0.2,
+          "ref": "ifc://IFC Schependomlaan.ifc#984473"
+        }
+      ],
+      "ref": "ifc://IFC Schependomlaan.ifc#984474"
+    }
+  ],
+  "orientation": {
+    "trueNorthDeg": null,
+    "northAssumed": true,
+    "weakOutwardCount": 17,
+    "offCardinalCount": 0,
+    "offCardinalSqm": 0,
+    "wallCount": 122,
+    "note": "Azimuths are clockwise from north, where north is the model's -Z after web-ifc's Z-up to Y-up conversion. Outward face inferred by comparing each face's centroid with the building centre, which is correct for a convex plan and can be wrong at a re-entrant corner. All 122 inner-leaf walls are cardinal; the diagonal sectors are 0 by measurement. The model's 88 placements at 47.94° are the excluded outer leaf (buitenblad), so no envelope area is mis-binned."
+  },
+  "site": {
+    "declaredSiteName": "Site",
+    "declaredLatitudeDeg": 52.15,
+    "declaredLongitudeDeg": 5.383333333333334,
+    "locationIsAuthoringDefault": true,
+    "locationNote": "IfcSite states 52°9'N 5°23'E — a whole-minute value with zero seconds, 46.2 km from the real Schependomlaan in Nijmegen and in Amersfoort, the authoring architect's own city. It is a stamped constant, not a survey: no position, orientation or solar geometry may be taken from it. The town 'Nijmegen' IS stated, on both IfcSite and IfcBuilding, and is the only spatial fact this model supports. TrueNorth is the schema default (0.,1.) in both representation contexts, so orientation is an assumption — and note the geometry is not purely cardinal: 88 element placements sit at 47.94°.",
+    "statedTown": "Nijmegen",
+    "trueNorthStated": false
+  },
+  "serviceLayers": [],
+  "model": {
+    "file": "model.glb",
+    "byteLength": 8759652,
+    "triangleCount": 173937,
+    "groups": [
+      "slab",
+      "wall",
+      "stair",
+      "glazing",
+      "door",
+      "mullion"
+    ],
+    "note": "Building fabric only. Furniture, sanitary fixtures, railings and the structural frame are excluded — together they are 82% of the model's triangles and none of them is visible from outside the building.",
+    "serviceNote": "Service layers carry every component at the model's own geometry — no bounding-box stand-ins. The discipline models looked far too large for that (plumbing tessellates to 3,184,148 triangles) but that total counts the same catalogue parts over and over: only 340,774 of them are distinct shapes. Each shape is stored once and placed by instancing, so plumbing ships 402 shapes across 7,872 placements."
+  },
+  "invalidDiagnostics": {
+    "note": "Space-boundary strip sums. INVALID as envelope areas: room-height not storey-height, gross of openings, ~16% double-counted, missing 18 walls and 10 storefronts, and including 60.17 m2 of chain-link fence. Diagnostic only.",
+    "rawSumSqm": 0,
+    "rawSumByElementType": {}
+  }
+}

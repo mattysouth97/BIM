@@ -278,8 +278,7 @@ const SCHEPENDOMLAAN: GalleryItem = {
       read: "IfcRelSpaceBoundary",
     },
   ],
-  // No GLB and no manifest yet, so there is nothing to open.
-  href: null,
+  href: "/models/schependomlaan",
 } as const;
 
 /**

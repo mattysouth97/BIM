@@ -150,8 +150,18 @@ export type ReferenceBuildingManifest = Readonly<{
   }>;
 }>;
 
-/** Catalog ids that have a published manifest. */
-export const REFERENCE_BUILDING_IDS = ["bs-medical-dental-clinic"] as const;
+/**
+ * Catalog ids that have a published manifest.
+ *
+ * An id belongs here ONLY when `public/reference-buildings/<id>/manifest.json`
+ * is committed. Adding one without the artifact turns an unrecognised route
+ * into a recognised-but-404ing one, which is strictly worse: the same failure,
+ * with the constant's documented meaning now false.
+ */
+export const REFERENCE_BUILDING_IDS = [
+  "bs-medical-dental-clinic",
+  "schependomlaan",
+] as const;
 
 export type ReferenceBuildingId = (typeof REFERENCE_BUILDING_IDS)[number];
 
