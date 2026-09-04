@@ -176,3 +176,88 @@ describe("refuses rather than guesses", () => {
     ).not.toThrow();
   });
 });
+
+/**
+ * Which branch of §9.3 applies is decided by `d_t >= B'`, and B' = A/(0.5P)
+ * grows with the floor. So the branch is chosen by how big and compact the
+ * floor is, NOT by how well it is insulated — a distinction easy to get
+ * backwards, and got backwards once while sizing up a candidate reference
+ * building.
+ *
+ * These tests pin the crossover so the consequence is documented rather than
+ * rediscovered: for every building this product actually targets, the
+ * uninsulated branch is the one that runs, always.
+ */
+describe("the well-insulated branch is effectively unreachable at building scale", () => {
+  // d_t = w + λ(Rsi + Rf + Rse) >= B'  ⟺  Rf >= (B' - w)/λ - Rsi - Rse
+  const crossoverRf = (areaSqm: number, perimeterM: number, wallM = 0.3, soil = 2.0) =>
+    (areaSqm / (0.5 * perimeterM) - wallM) / soil - GROUND_RSI - GROUND_RSE;
+
+  const FLOORS = [
+    { name: "single dwelling", areaSqm: 100, exposedPerimeterM: 40, bPrime: 5.0, rf: 2.14 },
+    { name: "small block", areaSqm: 400, exposedPerimeterM: 80, bPrime: 10.0, rf: 4.64 },
+    { name: "apartment block", areaSqm: 1000, exposedPerimeterM: 130, bPrime: 15.4, rf: 7.33 },
+    { name: "Clinic scale", areaSqm: 2605.7, exposedPerimeterM: 217.01, bPrime: 24.0, rf: 11.65 },
+  ] as const;
+
+  it.each(FLOORS)(
+    "$name (B' ≈ $bPrime) needs R_f ≈ $rf to reach the well-insulated branch",
+    ({ areaSqm, exposedPerimeterM, bPrime, rf }) => {
+      expect(areaSqm / (0.5 * exposedPerimeterM)).toBeCloseTo(bPrime, 1);
+      expect(crossoverRf(areaSqm, exposedPerimeterM)).toBeCloseTo(rf, 2);
+    }
+  );
+
+  it("stays on the uninsulated branch at any real floor insulation, once the floor is large", () => {
+    // R_f 6.0 is above the top of Dutch Bouwbesluit practice and far above the
+    // Korean 별표1 floor limits — i.e. better than a real building gets.
+    const generouslyInsulated = 6.0;
+    for (const floor of FLOORS.filter((f) => f.bPrime >= 15)) {
+      const r = slabOnGroundUValue({
+        areaSqm: floor.areaSqm,
+        exposedPerimeterM: floor.exposedPerimeterM,
+        wallThicknessM: 0.3,
+        floorResistanceM2KPerW: generouslyInsulated,
+      });
+      expect(r.regime, `${floor.name} should still take the uninsulated branch`).toBe(
+        "uninsulated"
+      );
+    }
+  });
+
+  it("only a small compact floor crosses over, and it does so at a realistic R_f", () => {
+    const dwelling = FLOORS[0];
+    const below = slabOnGroundUValue({
+      areaSqm: dwelling.areaSqm,
+      exposedPerimeterM: dwelling.exposedPerimeterM,
+      wallThicknessM: 0.3,
+      floorResistanceM2KPerW: dwelling.rf - 0.1,
+    });
+    const above = slabOnGroundUValue({
+      areaSqm: dwelling.areaSqm,
+      exposedPerimeterM: dwelling.exposedPerimeterM,
+      wallThicknessM: 0.3,
+      floorResistanceM2KPerW: dwelling.rf + 0.1,
+    });
+    expect(below.regime).toBe("uninsulated");
+    expect(above.regime).toBe("well-insulated");
+    // R_f 2.14 is an ordinary insulated domestic floor, so this branch is
+    // reachable in principle — it is the scale that rules it out, not the physics.
+    expect(dwelling.rf).toBeLessThan(3.5);
+  });
+
+  it("insulating a large floor lowers U without ever changing the formula used", () => {
+    const at = (rf: number) =>
+      slabOnGroundUValue({
+        areaSqm: 2605.7,
+        exposedPerimeterM: 217.01,
+        wallThicknessM: 0.267,
+        floorResistanceM2KPerW: rf,
+      });
+    const bare = at(0.065);
+    const insulated = at(6.0);
+    expect(insulated.uValueWPerM2K).toBeLessThan(bare.uValueWPerM2K);
+    expect(bare.regime).toBe("uninsulated");
+    expect(insulated.regime).toBe("uninsulated");
+  });
+});
