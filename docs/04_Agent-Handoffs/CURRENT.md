@@ -72,15 +72,28 @@ writing: `src/components/landing/{cad-sheet,resume-diagnostic}.tsx`,
 Run `git status` before assuming anything about the tree, and do not revert those
 files.
 
-**Reference buildings (2026-09-04 evening).** Two authored models are published
-under `/models/<id>` from `public/reference-buildings/<id>/` (manifest,
-spaces.json, GLBs), built by `scripts/build-reference-building.mjs`. The Clinic
-carries the demo's full energy frame on measured envelope figures
-(`BuildingRecipe.measuredEnvelope`, gross volume 20,702 m³ from the IfcSpace
-solids); Schependomlaan shows the model only — no energy inputs written, and
-no MEP because its archive has none. Details, traps and open items:
-`clinic-glazing-and-usage-sources.md`. The ISO 13790 monthly kernel is a
-separate track (`iso-13790-monthly-kernel-brief.md`), not wired to any page.
+**Reference buildings (2026-09-04, 23:10 state — production `7b9e0f8`).** Two
+authored models are published under `/models/<id>` from
+`public/reference-buildings/<id>/` (manifest, spaces.json, openings.json,
+GLBs), built by `scripts/build-reference-building.mjs`. Both pages carry the
+demo's full energy frame (`EnergyInstrumentHud`) on measured envelope figures
+via `BuildingRecipe.measuredEnvelope`, solved constructions, and the
+외피/에너지 존 legend. Every envelope figure is now measured by the extractor
+generically — walls, glazing per opening binned by host-wall orientation,
+exterior doors, roof surface per family, ground slab union + exposed
+perimeter, space volumes — and the Clinic's committed constants were
+corrected by that pass (glazing 267.16 → 262.73, doors 37.06 → 36.08, ground
+2,621.08 → 2,577.42 after excluding a 43.66 m² outdoor pad, roof 2,669.21 →
+2,667.38 as true surface with the seam at 455.00). The apartment has six
+subcontractor layers from its archive's coordination set (no MEP model
+exists), and three of its figures remain stand-ins — glazing aperture, its
+split, exterior doors — marked on the frame with the direction of their bias.
+Delegation record and lane shas: `schependomlaan-parity-brief.md`; Clinic
+detail: `clinic-glazing-and-usage-sources.md`. The ISO 13790 monthly kernel
+(`feat/iso-13790-monthly-kernel`, `iso-13790-monthly-kernel-brief.md`) is
+done, unwired. Open: the apartment's wall-set scope (A-WALL-SET-SCOPE, a
+measurement in progress), an area-weighted WWR mean in heat-loss.ts (moves
+both buildings; not decided), a sourced Nijmegen climate.
 
 ## Known Issues
 

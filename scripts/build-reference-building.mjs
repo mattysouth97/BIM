@@ -1530,7 +1530,20 @@ async function main() {
       roomVolumeNetM3,
       volumeNote:
         `Gross from ${grossRows.length} spaces (floor area × storey height; voids, and rooms taller than their storey with no void above, as their own solids); ` +
-        `net from ${conditionedRows.length} space solids` +
+        // "solids" was the Clinic's truth and a lie on the apartment, whose
+        // nets come from stated IfcQuantityVolume rows (94 of 100 spaces have
+        // no solid at all). Count each source the rows actually carry.
+        `net from ${conditionedRows.length} spaces (` +
+        [
+          ["quantity", "stated volume quantity"],
+          ["mesh", "own solid"],
+          ["area × solid height (solid not closed)", "floor area × solid height, solid not closed"],
+        ]
+          .map(([src, label]) => [conditionedRows.filter((r) => r.netVolumeSource === src).length, label])
+          .filter(([count]) => count > 0)
+          .map(([count, label]) => `${count} from ${label}`)
+          .join(", ") +
+        ")" +
         (excludedNames.length > 0 ? `, ${excludedNames.join(" and ")} excluded` : "") +
         (openSolids > 0
           ? `; ${openSolids} solids failed the closed-mesh test and are counted as floor area × their own height`

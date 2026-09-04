@@ -192,3 +192,20 @@ replace its placeholders; Lane A is independent. I merge, run the full
 suite, look at both pages in a browser (focus the tab first — an unfocused
 tab freezes the animated numbers at ~4 %), and deploy. Report shas to me as
 they land; I will not pull work out of your worktrees.
+
+## Outcome — 23:10, production `7b9e0f8`
+
+| lane | who | landed as | result |
+|---|---|---|---|
+| A layers | bim-f0 → fresh agent | `143b93e`, `ed51554`, `4105108` | six layers, 29.3 MiB, utilities as labelled boxes; Clinic byte-identical |
+| B1 glazing | bim-bf → fresh agent | `2e1c6b6`, `31fffc4` (merged `85863f0`) | Clinic 262.73 m² by per-element outline reproducing route A; doors 36.08; apartment 106.06 / 81.03, 16 of 20 doors confirmed against an exterior wall, 4 `merk F-R` named |
+| B2 roof/ground | fresh agent | `9412833`, `46837ce` (merged `b74ce3b`) | Clinic ground 2,577.42 (43.66 m² pad excluded), seam surface 455.00; apartment roof 542.96 derived, ground 345.81 / 90.08 |
+| C energy inputs | bim-72 → fresh agent | `9fd77dd`, `9a93a84` (merged `c9749e0`), constants `7b9e0f8` | recipe, materials, 28-assembly mappings, Dutch zone rows; three stand-ins remain, badge predicts the grade falls |
+
+Two things settled on the way: **IsExternal has never meant envelope** on
+any building here (both cavity leaves, party and foundation walls, atrium
+screens — it means "not an interior partition"); and P2-35, the blank
+viewport on cold load, was a hidden-tab artefact (rAF paused, so the
+canvas never measured) — recorded in SESSION-LOCKS with the visibilityState
+evidence. Open: A-WALL-SET-SCOPE (in measurement), the unweighted WWR mean
+in `heat-loss.ts`, a sourced Nijmegen climate, dormer/knee-wall glazing.
