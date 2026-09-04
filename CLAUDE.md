@@ -92,17 +92,44 @@
 
   ## 3D Renderer Settings
 
-  - Shadows: VSMShadowMap (soft variance shadows)
-  - Background: solid #f5f5f5 (no HDR background)
-  - Lighting: HemisphereLight("#b1e1ff", "#b97a20", 0.6) + DirectionalLight(white, 2.0)
-  - Post-processing: OutlinePass via `<SceneHighlightProcessing />` (scene-highlight-processing.tsx) — dual OutlinePass (orange hover, teal selection) plus GTAO/SMAA in realistic modes. (Two never-mounted components, SAOPass and `<ScenePostProcessing />`/outline-post-processing.tsx, were removed in P2-08 and 2026-09-04 respectively.)
+  **Read this section as two arms, not one.** `building-scene.tsx:617` branches on
+  `realisticViewport`, and `render-store.ts:29` defaults `mode` to `"realistic"` — so
+  the **realistic arm is what runs by default**, and the BIM arm is the `else`. Until
+  2026-09-04 the lines below described only the BIM arm while reading as if they were
+  the whole renderer; every line was true, of the branch nobody hits by default.
+
+  Applies to BOTH arms:
+
+  - Shadows: VSMShadowMap (soft variance shadows) — set on the Canvas itself
+    (`building-scene.tsx:613`), so it is not branch-specific
   - Materials: MeshStandardMaterial for all components
+  - Post-processing: OutlinePass via `<SceneHighlightProcessing />` (scene-highlight-processing.tsx) — dual OutlinePass (orange hover, teal selection) plus GTAO/SMAA in realistic modes. (Two never-mounted components, SAOPass and `<ScenePostProcessing />`/outline-post-processing.tsx, were removed in P2-08 and 2026-09-04 respectively.)
+
+  Realistic arm (`mode !== "bim"`, the default) — `<ArchitecturalEnvironment />`:
+
+  - Background: **none** — `scene.background = null` plus `THREE.FogExp2(sun.fogColor,
+    sun.fogDensity)` (`architectural-environment.tsx:61-62`)
+  - Lighting: Preetham sky (`three/examples/jsm/objects/Sky.js`) with sun-driven
+    turbidity/rayleigh/mie and a sun direction from `evaluateSun(timeOfDay, weather)`
+  - Tone mapping: `ACESFilmicToneMapping` with sun-driven `toneMappingExposure`
+    (`architectural-environment.tsx:64-65`). The BIM arm sets neither
+  - Environment: built procedurally from that sky, not from an HDR file —
+    `envFromSky` is `true` in all five quality tiers in `quality-tiers.ts`
+
+  BIM arm (`mode === "bim"`, the `else` at `building-scene.tsx:626`):
+
+  - Background: solid #f5f5f5 (`SceneSetup`, `building-scene.tsx:98`)
+  - Lighting: HemisphereLight("#b1e1ff", "#b97a20", 0.6) at :631 + DirectionalLight(white, 2.0) at :637
   - HDR: studio.hdr at `/hdr/studio.hdr` for reflections only
+  - `effectiveBudget(mode, tier)` (`quality-tiers.ts:82-96`) overrides the tier here,
+    forcing `envFromSky: false`, `triplanar: false`, `weathering: false`,
+    `stochastic: false`, `gtao/smaa/contactShadows/vegetation: false`. **The switch is
+    mode, not tier** — every tier is otherwise identical on these flags
   - Era boundary: drives era-based recipe materials for the building AND the ground texture set (pre-2000 weathered vs 2000+ clean)
   - PBR textures: 7 sets in `public/textures/` (concrete_rough, concrete_clean, brick, metal_panel, wood, roof_tile, roof_flat), 18 MB total. TWO independent consumers — an earlier note here claimed only the first, which was drift (corrected 2026-09-04):
     1. The ground plane, via `TexturedGround` → `useTexturedMaterial` → `pbr-materials.ts`, which builds `/textures/<set>/{color,normal,roughness}.jpg` URLs directly. Its only call site is `ground-plane.tsx:65`, hardcoded to `"ground"`.
     2. **The building itself, on by default.** `render-store.ts` defaults `mode` to `"realistic"`, so `realisticViewport` is true and `building-scene.tsx:617-619` mounts `<ArchitecturalTextureBridge />`, which `useTexture()`s all 21 URLs via `rendering/texture-atlas.ts`; `rendering/architectural-material.ts:45-53` then binds `texSet.color` → `mat.map` and `texSet.roughness` → `mat.roughnessMap`. This is separate from the recipe-driven MeshStandardMaterial colour/roughness the procedural generators emit — the atlas overrides those maps in realistic mode.
-  - The atlas's `normal` field is populated but never read: `architectural-material.ts` skips `normalMap` under triplanar, and every quality tier sets `triplanar: true`. Only the BIM-mode ground reads normal maps, and it does so outside the atlas.
+  - The atlas's `normal` field is populated but never read: `architectural-material.ts` skips `normalMap` under triplanar, and `triplanar` is `true` in every quality tier — the only thing that sets it `false` is BIM mode, where the atlas is not mounted at all. So wherever the atlas is live, the normal maps are dead. Only the BIM-mode ground reads normal maps, and it does so outside the atlas.
 
   ## API Gotchas (건축HUB)
 
