@@ -11,6 +11,7 @@ import { useAppStore } from "@/store/app-store";
 import { DEMO_BUILDING_PK } from "@/lib/constants";
 import { getDemoAnnualConsumption } from "@/lib/demo/demo-energy";
 import { isCadDraftPk } from "@/lib/workflow/cad-draft";
+import { isReferenceBuildingPk } from "@/lib/reference-buildings/pk";
 import {
   normalizeConsumption,
   type MonthlyConsumptionRecord,
@@ -70,8 +71,13 @@ export function useActualEnergy(mgmBldrgstPk: string) {
         : fetchConsumptionYears(mgmBldrgstPk, years),
     // P2-24: cad-first drafts have no ledger identity — querying the HUB with
     // a synthetic PK would be a fabricated request; skip and stay empty.
-    // The demo office carries bundled meter years and does not need a key.
-    enabled: !!mgmBldrgstPk && !isCadDraftPk(mgmBldrgstPk),
+    // The same holds for an authored reference model (`ref:` keys): it has
+    // no 관리번호 and no meter. The demo office carries bundled meter years
+    // and does not need a key.
+    enabled:
+      !!mgmBldrgstPk &&
+      !isCadDraftPk(mgmBldrgstPk) &&
+      !isReferenceBuildingPk(mgmBldrgstPk),
     staleTime: 1000 * 60 * 5, // 5 minutes
     placeholderData: [],
   });

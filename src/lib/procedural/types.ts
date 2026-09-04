@@ -141,6 +141,46 @@ export interface BuildingRecipe {
    * terminal zones — drawing evidence, not a procedural grid guess.
    */
   cadRooms?: [number, number][][];
+  /**
+   * Envelope quantities MEASURED from an authored model, which
+   * `envelopeQuantities` returns as-is instead of extruding the footprint.
+   *
+   * Exists for a building whose envelope is not a prism: the Clinic's
+   * 2,150 m² of wall includes a 240 m² concourse clerestory above the roof
+   * line, and its plan is an L that `footprintWidth × footprintDepth` boxes.
+   * Extruding that recipe would price a building that does not exist, and
+   * the recipe's shape fields would have to be bent to make the numbers come
+   * out — which is how a measurement turns into a fit. The shape stays a
+   * shape; the areas come from the file and say so in `basis`.
+   */
+  measuredEnvelope?: MeasuredEnvelope;
+}
+
+/**
+ * Envelope areas read from a model's own solids, in the units and meaning
+ * `EnvelopeQuantities` carries — so a consumer cannot tell a measured
+ * building from an extruded one except by `source`, which is the point.
+ */
+export interface MeasuredEnvelope {
+  /** Ground-contact area, m² — the slab on grade, not the storey plate. */
+  planAreaSqm: number;
+  /** Exposed perimeter of the ground-contact outline, m. */
+  wallLengthM: number;
+  /**
+   * GROSS exterior wall, m²: opaque wall + glazing + exterior doors.
+   * The heat-loss model computes windows as `gross × wwr` and prices the
+   * remainder as opaque wall, so this must be the gross figure and the
+   * building's WWR must be quoted against it.
+   */
+  grossWallAreaSqm: number;
+  /** Every roof plane, horizontal-projected, m². */
+  roofAreaSqm: number;
+  /** Conditioned volume, m³ — the ventilation term multiplies it directly. */
+  volumeM3: number;
+  /** Floor area the model states, m² — the intensity denominator when no official figure exists. */
+  derivedFloorAreaSqm: number;
+  /** Where each figure came from, one sentence, shown beside the numbers. */
+  basis: string;
 }
 
 /** Factory building zone descriptors */

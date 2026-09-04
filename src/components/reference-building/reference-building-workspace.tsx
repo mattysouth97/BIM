@@ -5,7 +5,13 @@ import Link from "next/link";
 
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
 import type { SolvedConstruction } from "@/lib/reference-buildings/constructions";
+import type { ReferenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
 import { ReferenceModelViewer } from "./reference-model-viewer";
+import {
+  ReferenceEnergyFrame,
+  ReferenceEnergyPanel,
+  useSeedReferenceEnergy,
+} from "./reference-energy";
 
 export const FABRIC_LAYER = "fabric";
 
@@ -30,6 +36,7 @@ export function ReferenceBuildingWorkspace({
   modelUrl,
   baseUrl,
   constructions,
+  energy,
   locale,
 }: {
   manifest: ReferenceBuildingManifest;
@@ -37,9 +44,16 @@ export function ReferenceBuildingWorkspace({
   baseUrl: string;
   /** Solved on the server — see the note in `page.tsx`. */
   constructions: readonly SolvedConstruction[];
+  /**
+   * The building's recipe + materials for the demo's energy frame, or null
+   * for a building whose inputs have not been written — in which case the
+   * page shows the model and says nothing about energy.
+   */
+  energy: ReferenceBuildingEnergyInputs | null;
   locale: "ko" | "en";
 }) {
   const isKo = locale === "ko";
+  useSeedReferenceEnergy(energy);
   const [active, setActive] = useState<ReadonlySet<string>>(
     () => new Set([FABRIC_LAYER]),
   );
@@ -64,7 +78,7 @@ export function ReferenceBuildingWorkspace({
     // both broke the landmark and pushed this panel's heading up behind the
     // header bar where it was clipped.
     <div className="mx-auto flex h-[calc(100dvh-3rem)] max-w-[92rem] flex-col gap-4 px-4 py-4 lg:flex-row">
-      <section className="min-h-[24rem] flex-1 overflow-hidden rounded-[8px] border border-border bg-card shadow-xs">
+      <section className="relative min-h-[24rem] flex-1 overflow-hidden rounded-[8px] border border-border bg-card shadow-xs">
         <ReferenceModelViewer
           modelUrl={modelUrl}
           baseUrl={baseUrl}
@@ -73,6 +87,14 @@ export function ReferenceBuildingWorkspace({
           fabricLayerId={FABRIC_LAYER}
           flowVisible={flowVisible}
         />
+        {energy ? (
+          <ReferenceEnergyFrame
+            energy={energy}
+            manifest={manifest}
+            baseUrl={baseUrl}
+            locale={locale}
+          />
+        ) : null}
       </section>
 
       {/* Scrolls on its own so a short window never clips what is written
@@ -191,6 +213,10 @@ export function ReferenceBuildingWorkspace({
               ))}
             </div>
           </section>
+        ) : null}
+
+        {energy ? (
+          <ReferenceEnergyPanel energy={energy} manifest={manifest} locale={locale} />
         ) : null}
 
         <dl className="mt-6">

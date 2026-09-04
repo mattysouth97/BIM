@@ -110,7 +110,10 @@
       "SW": 0,
       "W": 566.57,
       "NW": 0
-    }
+    },
+    "conditionedVolumeGrossM3": 20685.33,
+    "roomVolumeNetM3": 12928.26,
+    "volumeNote": "Gross from 262 spaces (floor area × storey height, voids as their own solids); net from 262 space solids, ROOF and MECH. YARD excluded. A closed tessellation's signed volume is exact; a space that is not closed reads low, not high."
   },
   "assemblies": [
     {
@@ -433,6 +436,45 @@
     "locationIsAuthoringDefault": true,
     "locationNote": "IfcSite matches the authoring tool's factory default (Boston, MA). The building's real location is redacted; no climate may be taken from it."
   },
+  "storeys": [
+    {
+      "id": "storey-tof-footing",
+      "name": "TOF Footing",
+      "elevationM": -1,
+      "floorToFloorHeightM": 1,
+      "spaceCount": 0,
+      "floorAreaSqm": 0,
+      "ref": "ifc://Clinic_Architectural.ifc#4325"
+    },
+    {
+      "id": "storey-first-floor",
+      "name": "First Floor",
+      "elevationM": 0,
+      "floorToFloorHeightM": 4.57,
+      "spaceCount": 154,
+      "floorAreaSqm": 2525.67,
+      "ref": "ifc://Clinic_Architectural.ifc#3954"
+    },
+    {
+      "id": "storey-second-floor",
+      "name": "Second Floor",
+      "elevationM": 4.57,
+      "floorToFloorHeightM": 4.68,
+      "spaceCount": 109,
+      "floorAreaSqm": 1723.69,
+      "ref": "ifc://Clinic_Architectural.ifc#3955"
+    },
+    {
+      "id": "storey-roof-main",
+      "name": "Roof - Main",
+      "elevationM": 9.25,
+      "floorToFloorHeightM": 0,
+      "spaceCount": 6,
+      "floorAreaSqm": 64.83,
+      "ref": "ifc://Clinic_Architectural.ifc#3956"
+    }
+  ],
+  "spacesFile": "spaces.json",
   "serviceLayers": [
     {
       "id": "hvac",

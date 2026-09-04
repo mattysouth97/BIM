@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
+import { calculateHeatLoss, VENTILATION_ELEMENT_NAME } from "@/lib/energy/heat-loss";
+import { getClimateData } from "@/lib/energy/climate-data";
 import {
   CLINIC_ASSUMPTIONS,
   CLINIC_GROUND_FLOOR,
@@ -57,19 +60,83 @@ describe("the ground floor is ISO 13370, not air-to-air", () => {
   });
 });
 
-describe("the WWR reproduces the measured aperture", () => {
-  it("against the NET wall area the engine actually carries", () => {
+describe("the WWR reproduces the measured aperture through the engine's own arithmetic", () => {
+  // heat-loss.ts: windows = gross × wwr; opaque = gross − windows. So the
+  // ratio is checked against the gross the engine is handed, and the opaque
+  // remainder is checked too — a ratio that lands the windows on 267.16 while
+  // dropping 267 m² of wall would pass the first assertion alone.
+  it("gross × wwr lands on the measured 267.16 m², for every orientation", () => {
+    const q = envelopeQuantities(CLINIC_RECIPE);
     const wwr = CLINIC_MATERIALS.envelope.windows.windowToWallRatio;
-    const glazing = CLINIC_MEASURED_ENVELOPE.exteriorWallNetSqm * wwr.S;
-    expect(glazing).toBeCloseTo(CLINIC_MEASURED_ENVELOPE.glazingApertureSqm, 1);
+    for (const o of ["N", "S", "E", "W"] as const) {
+      expect(q.grossWallAreaSqm * wwr[o]).toBeCloseTo(
+        CLINIC_MEASURED_ENVELOPE.glazingApertureSqm,
+        1,
+      );
+    }
   });
 
-  it("is NOT the 10.9 % gross-wall figure, which would understate glazing ~12 %", () => {
+  it("what remains after the windows is the opaque wall plus the doors, nothing lost", () => {
+    const q = envelopeQuantities(CLINIC_RECIPE);
     const wwr = CLINIC_MATERIALS.envelope.windows.windowToWallRatio.S;
-    expect(wwr).toBeGreaterThan(0.12);
-    expect(0.109 * CLINIC_MEASURED_ENVELOPE.exteriorWallNetSqm).toBeLessThan(
-      CLINIC_MEASURED_ENVELOPE.glazingApertureSqm * 0.9,
+    const opaque = q.grossWallAreaSqm - q.grossWallAreaSqm * wwr;
+    expect(opaque).toBeCloseTo(
+      CLINIC_MEASURED_ENVELOPE.exteriorWallNetSqm + CLINIC_MEASURED_ENVELOPE.exteriorDoorSqm,
+      1,
     );
+  });
+
+  it("is the 10.9 % figure — glazing over the whole wall plane, doors included", () => {
+    const wwr = CLINIC_MATERIALS.envelope.windows.windowToWallRatio.S;
+    expect(wwr).toBeCloseTo(0.1088, 3);
+    // The net-wall ratio some readers will reach for. Against the gross the
+    // engine carries it would put the windows 12 % too large.
+    expect(0.1242 * CLINIC_MEASURED_ENVELOPE.grossWallSqm).toBeGreaterThan(
+      CLINIC_MEASURED_ENVELOPE.glazingApertureSqm * 1.1,
+    );
+  });
+});
+
+describe("the recipe's envelope is the measured one, and the heat-loss model receives it intact", () => {
+  it("envelopeQuantities returns the measurement, not an extrusion of the bounding box", () => {
+    const q = envelopeQuantities(CLINIC_RECIPE);
+    expect(q.source).toBe("measured");
+    expect(q.grossWallAreaSqm).toBeCloseTo(CLINIC_MEASURED_ENVELOPE.grossWallSqm, 2);
+    expect(q.roofAreaSqm).toBeCloseTo(2286.93 + 382.28, 2);
+    expect(q.planAreaSqm).toBeCloseTo(CLINIC_MEASURED_ENVELOPE.groundSlabSqm, 2);
+    expect(q.volumeM3).toBeCloseTo(CLINIC_MEASURED_ENVELOPE.conditionedVolumeGrossM3, 2);
+    expect(q.intensityFloorAreaSqm).toBe(CLINIC_TOTAL_FLOOR_AREA_SQM);
+  });
+
+  it("the bounding box, extruded, would have been a different building", () => {
+    const { measuredEnvelope: _measured, ...bare } = CLINIC_RECIPE;
+    const extruded = envelopeQuantities(bare);
+    expect(extruded.source).toBe("bbox");
+    // 2 × (52.66 + 56.90) × 9.25 = 2,027 m² of wall for an L-shaped plan
+    // with a 240 m² clerestory — under by a fifth, and the roof over by 12 %.
+    expect(extruded.grossWallAreaSqm).toBeLessThan(0.85 * CLINIC_MEASURED_ENVELOPE.grossWallSqm);
+    expect(extruded.roofAreaSqm).toBeGreaterThan(1.1 * (2286.93 + 382.28));
+  });
+
+  it("heat-loss elements carry the measured areas: windows 267.16, walls 2,187.36, roof 2,669.21, ground 2,621.08", () => {
+    const result = calculateHeatLoss(CLINIC_MATERIALS, CLINIC_RECIPE, getClimateData(undefined));
+    const area = (name: string) => result.elements.find((e) => e.element === name)?.area;
+    expect(area("Windows")).toBeCloseTo(267.16, 1);
+    expect(area("Walls")).toBeCloseTo(2150.3 + 37.06, 1);
+    expect(area("Roof")).toBeCloseTo(2286.93 + 382.28, 1);
+    expect(area("Ground Floor")).toBeCloseTo(2621.08, 1);
+    expect(area(VENTILATION_ELEMENT_NAME)).toBeCloseTo(20685.33, 1);
+  });
+
+  it("the gross volume is the engine's, and it is larger than the room solids by the plenums", () => {
+    const e = CLINIC_MEASURED_ENVELOPE;
+    expect(e.conditionedVolumeGrossM3).toBeGreaterThan(e.roomVolumeNetM3);
+    expect(e.conditionedVolumeGrossM3).toBeGreaterThan(19610);
+    expect(e.conditionedVolumeGrossM3).toBeLessThan(24240);
+    // What the manifest says: floor × f2f per storey plus the voids' solids.
+    const byStorey = 2525.67 * 4.57 + 1723.69 * 4.68 + 64.83 * 3.4;
+    const voids = 183.26 + 347.85 + 324.62;
+    expect(e.conditionedVolumeGrossM3).toBeCloseTo(byStorey + voids, 0);
   });
 });
 
@@ -102,6 +169,8 @@ describe("every non-measured value is a named assumption", () => {
     "A-SOIL",
     "A-GROUND-DT",
     "A-WWR-DENOMINATOR",
+    "A-DOORS",
+    "A-VOLUME",
     "A-WWR-LOW",
     "A-GLAZING",
     "A-AIRTIGHT",

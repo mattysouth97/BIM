@@ -10,7 +10,12 @@
 
 import type { BuildingRecipe, FloorSpec } from "@/lib/procedural/types";
 
-export type EnvelopeSource = "polygon" | "bbox";
+/**
+ * `polygon` and `bbox` are extruded from the recipe's footprint. `measured`
+ * is copied from `recipe.measuredEnvelope` — areas read off an authored
+ * model's solids, which no extrusion of a footprint reproduces.
+ */
+export type EnvelopeSource = "polygon" | "bbox" | "measured";
 
 export interface EnvelopeQuantities {
   source: EnvelopeSource;
@@ -122,7 +127,49 @@ export function floorPlateAreaSqm(recipe: BuildingRecipe, floor: FloorSpec): num
   return metricsOf(plate).areaSqm;
 }
 
+const MEASURED_FIELDS = [
+  "planAreaSqm",
+  "wallLengthM",
+  "grossWallAreaSqm",
+  "roofAreaSqm",
+  "volumeM3",
+  "derivedFloorAreaSqm",
+] as const;
+
+/**
+ * A measured envelope is copied out, not extruded. It refuses rather than
+ * fills in: a zero or a NaN here is a broken measurement, and the one thing
+ * worse than no number is a plausible one standing in for it.
+ */
+function measuredQuantities(recipe: BuildingRecipe): EnvelopeQuantities | null {
+  const m = recipe.measuredEnvelope;
+  if (!m) return null;
+  for (const field of MEASURED_FIELDS) {
+    const value = m[field];
+    if (!Number.isFinite(value) || value <= 0) {
+      throw new Error(
+        `measuredEnvelope.${field} must be a positive number, got ${String(value)} (${m.basis})`,
+      );
+    }
+  }
+  const official = recipe.officialFloorAreaSqm;
+  return {
+    source: "measured",
+    planAreaSqm: m.planAreaSqm,
+    wallLengthM: m.wallLengthM,
+    grossWallAreaSqm: m.grossWallAreaSqm,
+    roofAreaSqm: m.roofAreaSqm,
+    volumeM3: m.volumeM3,
+    derivedFloorAreaSqm: m.derivedFloorAreaSqm,
+    intensityFloorAreaSqm:
+      official != null && official > 0 ? official : m.derivedFloorAreaSqm,
+  };
+}
+
 export function envelopeQuantities(recipe: BuildingRecipe): EnvelopeQuantities {
+  const measured = measuredQuantities(recipe);
+  if (measured) return measured;
+
   const height = recipe.totalHeight;
   const source: EnvelopeSource = isUsablePolygon(recipe.footprintPolygon) ? "polygon" : "bbox";
   const baseMetrics = metricsOf(basePlateOf(recipe));

@@ -123,6 +123,18 @@ classification. **Absent is not false**, whether the field is a property, a
 boundary, or a row in a table; and a caution passed to others inherits no
 more credibility than any other sentence.
 
+A ninth, seen three times in one afternoon: **a right instinct about *which*
+thing is wrong is not evidence about *how* it is wrong.** A session correctly
+sensed that a disabled-button click was being misread, and concluded the
+wrong component was at fault; another correctly saw the C19 "net summed into
+a variable named gross" finding and concluded the window ratio must therefore
+be quoted against the net wall — when the engine's own arithmetic
+(`windows = gross × wwr`, then `gross − windows` priced as wall) meant the
+opposite, and the net ratio would have quietly unpriced 267 m² of wall. In
+each case the worry was sound and the conclusion in the same message was
+not; the credibility of the first was spent on the second. Check the
+conclusion as a separate claim from the suspicion that produced it.
+
 Two consequences for how work here is checked:
 
 1. **Assert what a string claims, not that it appears.** A test asserting the

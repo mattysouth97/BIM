@@ -15,6 +15,7 @@ import {
   referenceBuildingModelUrl,
 } from "@/lib/reference-buildings/manifest";
 import { envelopeConstructions } from "@/lib/reference-buildings/constructions";
+import { referenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
 import { ReferenceBuildingWorkspace } from "@/components/reference-building/reference-building-workspace";
 
 type Props = { params: Promise<{ id: string }> };
@@ -42,6 +43,11 @@ export default async function ReferenceBuildingPage({ params }: Props) {
   // the server keeps the whole standards library out of the browser bundle for
   // a page that only needs the answers.
   const constructions = envelopeConstructions(manifest);
+  // The recipe + materials the demo's energy frame consumes, or null for a
+  // building whose inputs are not written yet. Resolved here for the same
+  // reason as the constructions: the registry pulls the ground-coupling and
+  // standards modules, which the browser does not need.
+  const energy = referenceBuildingEnergyInputs(id);
 
   return (
     <ReferenceBuildingWorkspace
@@ -49,6 +55,7 @@ export default async function ReferenceBuildingPage({ params }: Props) {
       modelUrl={referenceBuildingModelUrl(id)}
       baseUrl={referenceBuildingBaseUrl(id)}
       constructions={constructions}
+      energy={energy}
       locale="ko"
     />
   );

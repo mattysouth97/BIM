@@ -29,6 +29,12 @@ export interface EnvelopeAnalysis {
   shares: EnvelopeShare[];
   /** null when the recipe has no polygon — a bbox has no per-face truth. */
   orientationWwr: OrientationWwrRow[] | null;
+  /**
+   * Printed under the orientation rows when they are not what they look
+   * like — e.g. a measured wall split under an assumed, uniform ratio, so
+   * four identical percentages are an assumption and not a survey.
+   */
+  orientationWwrNote?: string;
   /** Σ h over every element, W/K. */
   totalHWPerK: number;
   avgWwr: number;

@@ -29,6 +29,7 @@ import { netFaceAreasByElement, orientWalls } from "./lib/ifc-face-area.mjs";
 import { collectFabric, mergeFabric, writeGlb, SERVICE_GROUPS, SERVICE_COLOUR } from "./lib/ifc-glb.mjs";
 import { collectServiceInstances } from "./lib/ifc-instances.mjs";
 import { collectFlowNetwork, annotateFlow, serialiseFlow } from "./lib/ifc-flow.mjs";
+import { measureSpaceMeshes } from "./lib/ifc-space-volume.mjs";
 
 const REPO = process.cwd();
 const CACHE =
@@ -66,6 +67,18 @@ const CLINIC = Object.freeze({
   exteriorWallMatch: "Exterior - Insul Panel",
   /** Main roof datum. Wall above this encloses plant, not conditioned space. */
   roofDatumM: 9.25,
+  /** Measured on this model: what the fabric GLB leaves out, and why the service GLBs are the size they are. */
+  modelNote:
+    "Building fabric only. Furniture, sanitary fixtures, railings and the " +
+    "structural frame are excluded — together they are 82% of the model's " +
+    "triangles and none of them is visible from outside the building.",
+  serviceNote:
+    "Service layers carry every component at the model's own geometry — " +
+    "no bounding-box stand-ins. The discipline models looked far too large " +
+    "for that (plumbing tessellates to 3,184,148 triangles) but that total " +
+    "counts the same catalogue parts over and over: only 340,774 of them " +
+    "are distinct shapes. Each shape is stored once and placed by " +
+    "instancing, so plumbing ships 402 shapes across 7,872 placements.",
 });
 
 /**
@@ -369,6 +382,87 @@ async function main() {
   const storeys = extractStoreys(arch, webIfc);
   const spaces = extractSpaces(arch, webIfc, storeys);
   const floorSpaces = spaces.filter((s) => s.countsAsFloorArea);
+  // Volume and plan extent of every space, from its own solid. The Clinic
+  // states no volume quantity anywhere, so until this pass the conditioned
+  // volume was a range (Σ floor × floor-to-floor, or slab × roof datum) with
+  // the two-storey concourse somewhere between the two. A closed solid has an
+  // exact volume, and the ventilation term multiplies it directly.
+  const spaceMeshes = measureSpaceMeshes(api, webIfc, arch.modelId);
+  const r2 = (n) => Math.round(n * 100) / 100;
+  const storeyById = new Map(storeys.map((s) => [s.id, s]));
+  const spaceRows = spaces.map((s) => {
+    const mesh = spaceMeshes.get(s.expressID) ?? null;
+    const netVolumeM3 =
+      s.volumeM3 != null ? s.volumeM3 : mesh ? r2(mesh.volumeM3) : null;
+    // Gross conditioned volume, the quantity an infiltration rate is quoted
+    // against: everything inside the air barrier, ceiling plenums included.
+    // A floor-counting room is its floor area × its storey's floor-to-floor
+    // (or its own solid's height where the storey has nothing above it); a
+    // void (OPEN TO BELOW) is its own solid, which already runs from the
+    // storey it sits on up to whatever closes it. Summing the two never
+    // counts a slab of air twice: the room below a void stops at its storey
+    // height, and the void starts there.
+    const storey = s.storeyId ? storeyById.get(s.storeyId) : null;
+    const meshHeight = mesh ? mesh.maxY - mesh.minY : null;
+    let grossVolumeM3 = null;
+    let grossVolumeBasis = null;
+    if (s.countsAsFloorArea && s.floorAreaSqm != null) {
+      if (storey && storey.floorToFloorHeightM > 0) {
+        grossVolumeM3 = r2(s.floorAreaSqm * storey.floorToFloorHeightM);
+        grossVolumeBasis = "floor area × storey floor-to-floor";
+      } else if (meshHeight != null && meshHeight > 0) {
+        grossVolumeM3 = r2(s.floorAreaSqm * meshHeight);
+        grossVolumeBasis = "floor area × own solid's height (top storey)";
+      }
+    } else if (s.countsAsConditionedVolume && netVolumeM3 != null) {
+      grossVolumeM3 = netVolumeM3;
+      grossVolumeBasis = "own solid (void above a counted floor)";
+    }
+    return Object.freeze({
+      id: s.id,
+      name: s.name,
+      longName: s.longName,
+      storeyId: s.storeyId,
+      floorAreaSqm: s.floorAreaSqm,
+      areaQuantityName: s.areaQuantityName,
+      countsAsFloorArea: s.countsAsFloorArea,
+      countsAsConditionedVolume: s.countsAsConditionedVolume,
+      excludedFromFloorAreaReason: s.excludedFromFloorAreaReason,
+      // A stated IfcQuantityVolume wins over the mesh when the file carries
+      // one; the Clinic carries none, so every row here is "mesh".
+      /** Air below the ceiling, from the space's own solid. */
+      netVolumeM3,
+      netVolumeSource: s.volumeM3 != null ? "quantity" : mesh ? "mesh" : null,
+      /** Inside the air barrier, plenum included — see the note above. */
+      grossVolumeM3,
+      grossVolumeBasis,
+      // Plan-axis bounding box in the fabric GLB's frame (Y up, metres).
+      extent: mesh
+        ? {
+            x: r2((mesh.minX + mesh.maxX) / 2),
+            z: r2((mesh.minZ + mesh.maxZ) / 2),
+            widthM: r2(mesh.maxX - mesh.minX),
+            depthM: r2(mesh.maxZ - mesh.minZ),
+            bottomM: r2(mesh.minY),
+            topM: r2(mesh.maxY),
+          }
+        : null,
+      ref: s.ref,
+    });
+  });
+  const conditionedRows = spaceRows.filter(
+    (s) => s.countsAsConditionedVolume && s.netVolumeM3 != null,
+  );
+  const roomVolumeNetM3 = r2(
+    conditionedRows.reduce((sum, s) => sum + s.netVolumeM3, 0),
+  );
+  const grossRows = spaceRows.filter((s) => s.grossVolumeM3 != null);
+  const conditionedVolumeGrossM3 = r2(
+    grossRows.reduce((sum, s) => sum + s.grossVolumeM3, 0),
+  );
+  const unmeasuredConditioned = spaceRows.filter(
+    (s) => s.countsAsConditionedVolume && s.netVolumeM3 == null,
+  ).length;
   // A building need not have a structural model. Schependomlaan is one
   // architectural file; the Clinic is five. Absent roles are skipped rather
   // than assumed, so a missing discipline is an empty contribution and not a
@@ -721,6 +815,29 @@ async function main() {
        * ones where the call was close) and where north is (`northAssumed`).
        */
       exteriorWallByOrientationSqm: orientation.byOrientation,
+      /**
+       * Two volumes, because they answer different questions and the file
+       * states neither as a quantity.
+       *
+       * `conditionedVolumeGrossM3` is everything inside the air barrier —
+       * each floor-counting room as floor area × storey floor-to-floor, plus
+       * each OPEN TO BELOW void as its own solid. This is the volume an
+       * infiltration rate (ACH50) is quoted against, and what the
+       * ventilation term multiplies.
+       *
+       * `roomVolumeNetM3` is the sum of the space solids as modelled, which
+       * stop at the ceilings: the air people stand in, plenums excluded. It
+       * is the smaller number and it is NOT the engine's volume.
+       */
+      conditionedVolumeGrossM3,
+      roomVolumeNetM3,
+      volumeNote:
+        `Gross from ${grossRows.length} spaces (floor area × storey height, voids as their own solids); ` +
+        `net from ${conditionedRows.length} space solids, ROOF and MECH. YARD excluded` +
+        (unmeasuredConditioned > 0
+          ? `; ${unmeasuredConditioned} conditioned spaces have no solid and are in neither figure`
+          : "") +
+        ". A closed tessellation's signed volume is exact; a space that is not closed reads low, not high.",
     },
     /**
      * The layer stacks, outside-in, as the model states them.
@@ -785,23 +902,48 @@ async function main() {
           }
         : {}),
     },
+    /** Every level the file declares, lowest first — including datums that hold no rooms. */
+    storeys: storeys.map((s) => ({
+      id: s.id,
+      name: s.name,
+      elevationM: s.elevationM,
+      floorToFloorHeightM: s.floorToFloorHeightM,
+      spaceCount: spaces.filter((sp) => sp.storeyId === s.id).length,
+      floorAreaSqm: round(
+        floorSpaces
+          .filter((sp) => sp.storeyId === s.id)
+          .reduce((sum, sp) => sum + (sp.floorAreaSqm ?? 0), 0),
+      ),
+      ref: s.ref,
+    })),
+    spacesFile: "spaces.json",
     serviceLayers,
     model: {
       file: "model.glb",
       byteLength: glb.byteLength,
       triangleCount: glb.triangleCount,
       groups: glb.groups,
+      /**
+       * Per building, because the sentences carry the building's own figures.
+       * Until 2026-09-04 both were the Clinic's text emitted for every
+       * building, so Schependomlaan's manifest claimed "82% of the model's
+       * triangles" and "plumbing ships 402 shapes" about a model with no
+       * plumbing — the label failure this repository is defined against, in
+       * the file that exists to prevent it. A building without its own
+       * sentence gets the generic one, which claims no number.
+       */
       note:
-        "Building fabric only. Furniture, sanitary fixtures, railings and the " +
-        "structural frame are excluded — together they are 82% of the model's " +
-        "triangles and none of them is visible from outside the building.",
-      serviceNote:
-        "Service layers carry every component at the model's own geometry — " +
-        "no bounding-box stand-ins. The discipline models looked far too large " +
-        "for that (plumbing tessellates to 3,184,148 triangles) but that total " +
-        "counts the same catalogue parts over and over: only 340,774 of them " +
-        "are distinct shapes. Each shape is stored once and placed by " +
-        "instancing, so plumbing ships 402 shapes across 7,872 placements.",
+        building.modelNote ??
+        "Building fabric only: walls, slabs, roofs and openings. Furniture, " +
+          "fixtures, railings and the structural frame are not in this file.",
+      ...(serviceLayers.length > 0
+        ? {
+            serviceNote:
+              building.serviceNote ??
+              "Service layers carry every component at the model's own geometry; " +
+                "a repeated shape is stored once and placed by instancing.",
+          }
+        : {}),
     },
     /**
      * Recorded so a future reader who recomputes a space-boundary sum finds it
@@ -810,6 +952,14 @@ async function main() {
      */
     invalidDiagnostics: classification.invalidAreaDiagnostics,
   };
+
+  // One row per IfcSpace, so the page can show rooms by storey and program
+  // without re-reading the IFC — the manifest stays aggregate.
+  await writeFile(
+    path.join(outDir, "spaces.json"),
+    `${JSON.stringify({ kind: "bimfit_reference_building_spaces", id: building.id, spaces: spaceRows }, null, 2)}\n`,
+    "utf8",
+  );
 
   await writeFile(
     path.join(outDir, "manifest.json"),
@@ -826,6 +976,9 @@ async function main() {
   console.log(
     `    manifest.json  floor ${manifest.areas.totalFloorAreaSqm} m2 over ${manifest.counts.spacesFloor} spaces, ` +
       `wall ${manifest.areas.exteriorWallNetSqm} m2`,
+  );
+  console.log(
+    `    spaces.json    ${spaceRows.length} spaces, volume gross ${conditionedVolumeGrossM3} m3 / net ${roomVolumeNetM3} m3`,
   );
 }
 

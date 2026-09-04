@@ -74,14 +74,67 @@ pk, and `<EnergyCards>` mounted on `/models/bs-medical-dental-clinic`.
 bim-72 was building the recipe/materials pair for `generateECO2Input`; asked
 17:08 whether it exists before writing a second one.
 
-## Why there is no apartment model or card yet
+## Demo-style profiling — landed (2026-09-04 evening)
 
-Three deliberate locks, all verified in production at `4a97e28`: no artifacts
-under `public/reference-buildings/schependomlaan/` (the build has **not been
-executed** — `schep-wt` holds only the Clinic's), the card in
-`HELD_GALLERY_ITEMS`, and the id absent from `REFERENCE_BUILDING_IDS`. All
-three follow the user's own ruling *build now, decide publishing later* on
-the licence-authority question (CC BY 4.0 granted by a student committer;
-ROOT bv named as author; README says "scientific and academic purposes"; the
-DOI resolves to a private OSF node). Flipping them is one config change plus
-running the build; the residual risk is the grantor's authority.
+`/models/bs-medical-dental-clinic` now carries the demo's whole instrument
+frame (`EnergyInstrumentHud`, extracted from `TwinStageOverlay` unchanged):
+CAPEX→ROI rail, program track, grade / kWh·m⁻²·yr / CO₂ / W strip, ECO2
+export, plus the 외피 열손실 · 방위별 창면적비 · 에너지 존 legend. The path is
+the demo's own — `useEnergyMetrics` over `useMaterialStore` +
+`useRecipeStore` — seeded under the key `ref:bs-medical-dental-clinic`.
+
+What made it honest rather than fitted:
+
+- **`BuildingRecipe.measuredEnvelope`** (`src/lib/procedural/types.ts`).
+  `envelopeQuantities(recipe)` returns it verbatim with `source: "measured"`
+  instead of extruding the 52.66 × 56.90 bbox, and throws on a zero or NaN.
+  The bbox stays a bbox.
+- **WWR against GROSS wall.** The engine does `windows = gross × wwr` then
+  prices `gross − windows` as wall, so gross = 2,150.30 opaque + 267.16
+  glazing + 37.06 doors = 2,454.52 and wwr = 0.1088 (the 10.9 % above). The
+  net-wall ratio 0.1242 that was first proposed would have landed the
+  windows on 267.16 while unpricing 267 m² of wall. Doors end up at wall U
+  (A-DOORS). Tests assert the engine's element areas: Windows 267.16,
+  Walls 2,187.36, Roof 2,669.21, Ground 2,621.08, Ventilation 20,685.33.
+- **Volume measured, not bracketed.** `scripts/lib/ifc-space-volume.mjs`
+  takes the signed volume of every IfcSpace solid; `spaces.json` now ships
+  beside the manifest with one row per space (area, storey, net and gross
+  volume with basis, plan extent). Gross conditioned volume **20,685.33 m³**
+  = floor area × storey floor-to-floor per room + the three OPEN TO BELOW
+  voids as their own solids; the room solids themselves sum to
+  **12,928.26 m³** because 150 of 153 first-floor rooms stop at a 2.80 m
+  ceiling under a 4.57 m storey. The engine takes gross (ACH50 is quoted
+  against the air barrier); the 37 % gap is the same suspended-ceiling
+  mechanism as the morning's 37 % wall-area undercount from space boundaries.
+- **Zones from the file.** `src/lib/reference-buildings/zones.ts` groups the
+  259 floor-counting IfcSpace rows into storey × program by a keyword table
+  over the room names (158 distinct; only ROOF and OPEN TO BELOW fall to
+  기타, and neither is a zone). Demand is apportioned by area share, the
+  same rule and the same disclaimer the twin prints.
+- **Verified on screen, not only in tests** — and the first screenshot lied:
+  an unfocused Chrome tab throttles `requestAnimationFrame`, so the strip's
+  animated numbers froze at 3.8 % of their targets (−7.0 kWh/m², 6,565 W)
+  and the R3F canvas stayed blank. One click into the tab and the strip read
+  104.9 kWh/m²·yr, 22.3 kgCO₂/m²·yr, 173,839 W — the engine's own figures
+  to the watt. Screenshot a background tab and you are looking at the
+  animation, not the value.
+
+Open: per-orientation glazing (the four WWR rows are the measured wall split
+under one assumed ratio, and the legend says so); HVAC efficiencies from the
+device data (A-HVAC is a placeholder); the ISO 13790 monthly kernel (bim-72's
+brief, `iso-13790-monthly-kernel-brief.md`) is not yet wired to this page.
+
+## The apartment (Schependomlaan) — published
+
+The three locks were lifted 2026-09-04 ~17:28 on the user's ruling that the
+page is educational use: artifacts committed in `f5091e7`, id in
+`REFERENCE_BUILDING_IDS`, card linked. Its manifest keeps `attribution`
+null and renders the reason. **It has no MEP layers because the archive has
+no MEP model**: the design-model folder holds one architectural IFC, and the
+"Coordination model and subcontractors models" folder's only services file,
+`HB_Nutsvoorzieningen.ifc` (34 MB, SketchUp 2015), is 42
+`IfcBuildingElementProxy` utility connections with no `IfcFlowSegment`, no
+ports and no system — measured 2026-09-04 by entity count. Nothing to
+extract, so nothing is claimed. It also has no energy inputs yet
+(`energy-inputs.ts` returns null for it), so the page shows the model and
+says nothing about energy.

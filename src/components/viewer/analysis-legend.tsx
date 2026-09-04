@@ -150,6 +150,11 @@ export function AnalysisLegend({
                       </li>
                     ))}
                   </ul>
+                  {envelope.orientationWwrNote ? (
+                    <p className="mt-1 text-[9px] leading-tight text-muted-foreground">
+                      {envelope.orientationWwrNote}
+                    </p>
+                  ) : null}
                 </div>
               ) : (
                 <p className="mt-2 border-t pt-1.5 text-[10px] text-muted-foreground">

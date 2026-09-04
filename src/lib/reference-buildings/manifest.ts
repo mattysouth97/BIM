@@ -49,7 +49,30 @@ export type ReferenceBuildingManifest = Readonly<{
      * describes a very different building depending which way it faces.
      */
     exteriorWallByOrientationSqm?: Readonly<Record<string, number>>;
+    /**
+     * Inside the air barrier: floor-counting rooms as floor area × storey
+     * floor-to-floor, plus OPEN TO BELOW voids as their own solids. What an
+     * infiltration rate is quoted against, and what the ventilation term
+     * multiplies. Absent on a manifest built before 2026-09-04 17:35.
+     */
+    conditionedVolumeGrossM3?: number;
+    /** The space solids summed as modelled — they stop at the ceilings. Not the engine's volume. */
+    roomVolumeNetM3?: number;
+    volumeNote?: string;
   }>;
+  /** Every level the file declares, lowest first, including datums with no rooms. */
+  storeys?: readonly Readonly<{
+    id: string;
+    name: string;
+    elevationM: number;
+    /** 0 for the top level — nothing above it to measure to. */
+    floorToFloorHeightM: number;
+    spaceCount: number;
+    floorAreaSqm: number;
+    ref: string;
+  }>[];
+  /** Sibling file with one row per IfcSpace — see `ReferenceBuildingSpace`. */
+  spacesFile?: string;
   /**
    * Layer stacks as the model states them, outside-in.
    *
@@ -148,6 +171,42 @@ export type ReferenceBuildingManifest = Readonly<{
     groups: readonly string[];
     note: string;
   }>;
+}>;
+
+/**
+ * One IfcSpace as `spaces.json` records it. Areas and the floor/volume
+ * verdicts are the extractor's; nothing here is derived in the browser.
+ */
+export type ReferenceBuildingSpace = Readonly<{
+  id: string;
+  name: string;
+  longName: string | null;
+  storeyId: string | null;
+  floorAreaSqm: number | null;
+  areaQuantityName: string | null;
+  countsAsFloorArea: boolean;
+  countsAsConditionedVolume: boolean;
+  excludedFromFloorAreaReason: string | null;
+  netVolumeM3: number | null;
+  netVolumeSource: "quantity" | "mesh" | null;
+  grossVolumeM3: number | null;
+  grossVolumeBasis: string | null;
+  /** Plan bounding box in the fabric GLB's frame (Y up, metres). */
+  extent: Readonly<{
+    x: number;
+    z: number;
+    widthM: number;
+    depthM: number;
+    bottomM: number;
+    topM: number;
+  }> | null;
+  ref: string;
+}>;
+
+export type ReferenceBuildingSpaces = Readonly<{
+  kind: "bimfit_reference_building_spaces";
+  id: string;
+  spaces: readonly ReferenceBuildingSpace[];
 }>;
 
 /**

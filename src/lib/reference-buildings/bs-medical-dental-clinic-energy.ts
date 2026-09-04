@@ -56,21 +56,37 @@ const GROUND_SLAB_SQM = 2621.08;
 const GROUND_PERIMETER_M = 217.01;
 const WALL_THICKNESS_AT_SLAB_M = 0.267;
 
+/** Exterior wall NET of openings — opaque only. */
+const EXTERIOR_WALL_NET_SQM = 2150.3;
+/** Glazing aperture: two routes confirmed at 267.16 (re-derived 266.78). */
+const GLAZING_APERTURE_SQM = 267.16;
 /**
- * The measured envelope, for the route to inject in place of
- * `envelopeQuantities(recipe)`. Walls are NET of openings (the tessellation is
- * the final solid). Orientation split has `northAssumed: true` — the file
- * states no TrueNorth, so north is the model's −Z.
+ * The 12 exterior door leaves' aperture, from the same glazing verification
+ * (docs/04_Agent-Handoffs/clinic-glazing-and-usage-sources.md). Opaque, and
+ * neither wall nor window in the engine's vocabulary — see A-DOORS.
+ */
+const EXTERIOR_DOOR_SQM = 37.06;
+
+/**
+ * The measured envelope. `envelopeQuantities(CLINIC_RECIPE)` returns these
+ * figures (via `CLINIC_RECIPE.measuredEnvelope`) in place of an extrusion of
+ * the footprint. Walls are NET of openings (the tessellation is the final
+ * solid); `grossWallSqm` adds the openings back, because that is the number
+ * the heat-loss model multiplies by WWR. Orientation split has
+ * `northAssumed: true` — the file states no TrueNorth, so north is the
+ * model's −Z.
  */
 export const CLINIC_MEASURED_ENVELOPE = Object.freeze({
-  exteriorWallNetSqm: 2150.3,
+  exteriorWallNetSqm: EXTERIOR_WALL_NET_SQM,
   exteriorWallByOrientationSqm: Object.freeze({ N: 563.53, E: 433.54, S: 586.67, W: 566.57 }),
   exteriorWallBelowRoofSqm: 1909.56,
   exteriorWallAboveRoofSqm: 240.73, // the concourse clerestory
   northAssumed: true,
-  /** Glazing: two routes confirmed at 267.16 aperture (re-derived 266.78). */
-  glazingApertureSqm: 267.16,
+  glazingApertureSqm: GLAZING_APERTURE_SQM,
   glazingPaneSqm: 225,
+  exteriorDoorSqm: EXTERIOR_DOOR_SQM,
+  /** Opaque wall + glazing + doors: the whole exterior wall plane. */
+  grossWallSqm: EXTERIOR_WALL_NET_SQM + GLAZING_APERTURE_SQM + EXTERIOR_DOOR_SQM,
   /** EPDM-on-rigid-insulation, 7 slabs, horizontal-projected. */
   roofEpdmSqm: 2286.93,
   /**
@@ -82,8 +98,24 @@ export const CLINIC_MEASURED_ENVELOPE = Object.freeze({
   roofStandingSeamSqm: 382.28,
   roofStandingSeamRangeSqm: Object.freeze({ low: 296.6, high: 382.28 }),
   groundSlabSqm: GROUND_SLAB_SQM,
-  /** Σ(floor × f2f) = 19,610 (lower); slab × 9.25 = 24,240 (upper). */
-  volumeM3Range: Object.freeze({ low: 19610, high: 24240 }),
+  groundPerimeterM: GROUND_PERIMETER_M,
+  /**
+   * Conditioned volume inside the air barrier, from
+   * `public/reference-buildings/bs-medical-dental-clinic/manifest.json`
+   * (`areas.conditionedVolumeGrossM3`): each floor-counting room as floor
+   * area × its storey's floor-to-floor, plus the three OPEN TO BELOW voids as
+   * their own solids. This replaced a 19,610–24,240 range on 2026-09-04; it
+   * sits inside that range and every term is named in `spaces.json`.
+   */
+  conditionedVolumeGrossM3: 20685.33,
+  /**
+   * The same 262 spaces' own solids summed, which stop at the ceilings — 150
+   * of the 153 first-floor rooms are 2.80 m tall under a 4.57 m storey. The
+   * air people stand in, plenums excluded. Recorded because it is what the
+   * model literally contains; NOT the engine's volume, because ACH50 is
+   * quoted against the air barrier, not the ceiling.
+   */
+  roomVolumeNetM3: 12928.26,
 });
 
 // ── Ground floor: ISO 13370, not air-to-air ───────────────────────────────
@@ -107,20 +139,25 @@ export const CLINIC_GROUND_FLOOR_RANGE = slabOnGroundUValueRange(groundInputs);
 // ── Window-to-wall ratio: the denominator matters ─────────────────────────
 
 /**
- * The engine computes window area as `wallArea × wwr`, and the wall area it
- * carries is NET of openings (2,150.30). To reproduce the measured 267.16 m²
- * aperture from that denominator, wwr must be 267.16 / 2,150.30 = 0.1242.
+ * The engine computes `windows = grossWall × wwr` and then prices
+ * `grossWall − windows` as opaque wall. So the wall area it is handed must be
+ * GROSS — opaque + glazing + doors — and the ratio must be quoted against
+ * that same gross, or one of two things goes wrong: against a net 2,150.30
+ * with wwr 0.1242 the windows land on 267.16 but the opaque wall falls to
+ * 1,883 m², 267 m² of real wall unpriced; against the gross 2,454.52 with the
+ * net ratio the windows come out 12 % too large.
  *
- * The "10.9 %" figure elsewhere is aperture over GROSS wall
- * (267.16 / (2,150.30 + 267.16) = 0.1105) and would understate glazing by
- * ~12 % if fed to this engine. Both are true statements about the building;
- * only one reproduces the measurement here. This is the C19 finding
- * ("net areas in a variable named gross") met at the input boundary.
+ * `measuredEnvelope.grossWallAreaSqm` below carries the gross, so the ratio
+ * is derived from the two measured numbers rather than typed, and a test
+ * asserts that `gross × wwr` lands on the measured aperture. The 37.06 m² of
+ * exterior doors end up priced at the wall U — the one approximation, stated
+ * in A-DOORS.
  *
  * The ratio is applied uniformly across orientations: the per-orientation
  * glazing split is a separate verification and is not in hand.
  */
-const WWR_AGAINST_NET_WALL = 267.16 / 2150.3;
+const WWR_AGAINST_GROSS_WALL =
+  CLINIC_MEASURED_ENVELOPE.glazingApertureSqm / CLINIC_MEASURED_ENVELOPE.grossWallSqm;
 
 // ── The recipe: shape and metadata only ───────────────────────────────────
 
@@ -169,6 +206,27 @@ export const CLINIC_RECIPE: BuildingRecipe = {
   strctCd: "21",
   siteWidth: BBOX_WIDTH_M,
   siteDepth: BBOX_DEPTH_M,
+  /**
+   * What `envelopeQuantities(CLINIC_RECIPE)` returns, in place of extruding
+   * the bounding box above. Every figure is from the file; `basis` says
+   * which extraction. The bbox stays a bbox — it is never bent to make these
+   * numbers come out.
+   */
+  measuredEnvelope: {
+    planAreaSqm: CLINIC_MEASURED_ENVELOPE.groundSlabSqm,
+    wallLengthM: CLINIC_MEASURED_ENVELOPE.groundPerimeterM,
+    grossWallAreaSqm: CLINIC_MEASURED_ENVELOPE.grossWallSqm,
+    roofAreaSqm:
+      CLINIC_MEASURED_ENVELOPE.roofEpdmSqm + CLINIC_MEASURED_ENVELOPE.roofStandingSeamSqm,
+    volumeM3: CLINIC_MEASURED_ENVELOPE.conditionedVolumeGrossM3,
+    derivedFloorAreaSqm: CLINIC_TOTAL_FLOOR_AREA_SQM,
+    basis:
+      "Read from the buildingSMART Clinic IFCs by scripts/build-reference-building.mjs: " +
+      "walls from the tessellated exterior-wall solids, glazing and doors from the " +
+      "opening verification, roofs from the structural model's IfcRoof/IfcSlab " +
+      "projected to plan, ground from the slab-on-grade outline, volume from the " +
+      "IfcSpace rows (floor area × storey height, voids as their own solids).",
+  },
 };
 
 // ── Materials ─────────────────────────────────────────────────────────────
@@ -236,10 +294,10 @@ export const CLINIC_MATERIALS: MaterialProperties = {
       airLeakageRate: 0.3,
       shadingCoefficient: 0.46,
       windowToWallRatio: {
-        N: WWR_AGAINST_NET_WALL,
-        S: WWR_AGAINST_NET_WALL,
-        E: WWR_AGAINST_NET_WALL,
-        W: WWR_AGAINST_NET_WALL,
+        N: WWR_AGAINST_GROSS_WALL,
+        S: WWR_AGAINST_GROSS_WALL,
+        E: WWR_AGAINST_GROSS_WALL,
+        W: WWR_AGAINST_GROSS_WALL,
       },
     },
     foundation: {
@@ -291,13 +349,14 @@ export const CLINIC_ASSUMPTIONS: readonly ClinicAssumption[] = Object.freeze([
   { id: "A-ROOF-WEIGHT", assumes: "One area-weighted roof U of 0.767 W/m²K.", why: "The engine accepts a single roof U. The standing seam is 14 % of the roof area and most of its loss; the weighting is recorded so the constituents can be recovered." },
   { id: "A-SOIL", assumes: "Soil conductivity 2.0 W/m·K under the slab.", why: "ISO 13370's own default when soil is unknown. Soil moves the ground U from 0.185 (clay) to 0.376 (rock); 0.237 is the nominal." },
   { id: "A-GROUND-DT", assumes: "The engine's 13.5 °C ground temperature and 4,380 h ground season.", why: "ISO 13370's U pairs with annual-mean external air (~7.5 K at 20 °C indoor); the engine applies 6.5 K. About 13 % conservative, in the direction that makes the building look worse. Disclosed rather than reconciled, because reconciling moves every other building." },
-  { id: "A-WWR-DENOMINATOR", assumes: "WWR 0.1242 against NET wall area, uniform across orientations.", why: "Reproduces the measured 267.16 m² aperture from the engine's net wall area. The 10.9 % figure is against gross wall and would understate glazing by ~12 % here. The per-orientation glazing split is a separate verification and is not applied." },
+  { id: "A-WWR-DENOMINATOR", assumes: "WWR 0.1088 against GROSS wall area (opaque + glazing + doors), uniform across orientations.", why: "The engine computes windows = gross × WWR and prices the rest as opaque wall, so the ratio must be quoted against the same gross the engine is handed, or the opaque wall silently loses 267 m². Derived from the two measured numbers, not typed. The per-orientation glazing split is a separate verification and is not applied." },
+  { id: "A-DOORS", assumes: "The 37.06 m² of exterior door leaves are priced at the wall U-value.", why: "The engine knows walls and windows and nothing between. Doors are opaque and mostly insulated metal here, so wall U is the nearer of the two; leaving them out would make the envelope smaller than the building." },
   { id: "A-WWR-LOW", assumes: "10.9–12.4 % is the building, not an undercount.", why: "Two independent routes converge at 267.16 / 266.78. The two occupied storeys are ~7 % glazed and the concourse is daylit from above through clerestory monitors. Do not normalise upward." },
   { id: "A-GLAZING", assumes: "Double low-e glazing, U 2.8, SHGC 0.40, thermal-break aluminium.", why: "The IFC carries no IfcThermalTransmittance for its windows. Typical for a 2011 US commercial building; not read from the file." },
   { id: "A-AIRTIGHT", assumes: "ACH50 = 5.", why: "No blower-door result exists. A generic mid value for a 2011 commercial envelope; ACH50/20 is the engine's natural-infiltration divisor." },
   { id: "A-HVAC", assumes: "Central gas heating (η 0.85), central chiller (COP 3.0), mechanical supply ventilation without heat recovery.", why: "The HVAC IFC has 8 IfcFlowMovingDevice and 3 IfcEnergyConversionDevice, so system TYPE is partly stated, but efficiencies are not. These are placeholders to be replaced from the device data; they are not read from the file." },
   { id: "A-LPD", assumes: "Lighting power density 9.4 W/m².", why: "ASHRAE 90.1-2010 clinic allowance, 0.87 W/ft². The file states no lighting load." },
   { id: "A-OCCUPANCY", assumes: "Clinic weekday/weekend schedules, 0.1 persons/m², 15 W/m² internal gain, 5 L/m²·day hot water.", why: "No occupancy data exists in a coordination model. Generic clinic profile; every one of these is an assumption." },
-  { id: "A-VOLUME", assumes: "Volume between 19,610 and 24,240 m³.", why: "The lower bound sums floor × f2f and excludes the concourse void; the upper extrudes the slab to the roof datum. The concourse is full-height, so the truth is between." },
-  { id: "A-ENVELOPE-SOURCE", assumes: "Envelope areas come from the measured manifest, not from the recipe's footprint.", why: "The recipe footprint is a 52.66 × 56.90 bounding box of an L-shaped plan; extruding it cannot reproduce a 240.73 m² clerestory. The measured areas are injected by the route." },
+  { id: "A-VOLUME", assumes: "The ventilation term uses the gross conditioned volume (20,685 m³, inside the air barrier), not the 12,928 m³ the room solids sum to.", why: "The file states no volume; both figures are measured from it. The room solids stop at 2.80 m ceilings under 4.57 m storeys, so their sum leaves out the plenums, and ACH50 is defined against everything inside the air barrier. Choosing the net figure would cut infiltration loss by 37 % for a building whose plenums are inside its envelope. Gross also includes the intermediate slab and structure (~0.3 m per storey, ~6 %), so it is slightly more than the air itself — well inside ACH50's own uncertainty, and stated rather than corrected." },
+  { id: "A-ENVELOPE-SOURCE", assumes: "Envelope areas come from the measured manifest, not from the recipe's footprint.", why: "The recipe footprint is a 52.66 × 56.90 bounding box of an L-shaped plan; extruding it cannot reproduce a 240.73 m² clerestory. The measured areas travel on the recipe as `measuredEnvelope`, and `envelopeQuantities` returns them with source \"measured\" instead of extruding." },
 ]);

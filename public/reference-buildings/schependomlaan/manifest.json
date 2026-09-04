@@ -55,7 +55,10 @@
       "SW": 0,
       "W": 98.94,
       "NW": 0
-    }
+    },
+    "conditionedVolumeGrossM3": 2897.04,
+    "roomVolumeNetM3": 2530.05,
+    "volumeNote": "Gross from 100 spaces (floor area × storey height, voids as their own solids); net from 100 space solids, ROOF and MECH. YARD excluded. A closed tessellation's signed volume is exact; a space that is not closed reads low, not high."
   },
   "assemblies": [
     {
@@ -471,6 +474,63 @@
     "statedTown": "Nijmegen",
     "trueNorthStated": false
   },
+  "storeys": [
+    {
+      "id": "storey-1-fundering",
+      "name": "-1 fundering",
+      "elevationM": -1,
+      "floorToFloorHeightM": 1,
+      "spaceCount": 0,
+      "floorAreaSqm": 0,
+      "ref": "ifc://IFC Schependomlaan.ifc#130"
+    },
+    {
+      "id": "storey-00-begane-grond",
+      "name": "00 begane grond",
+      "elevationM": 0,
+      "floorToFloorHeightM": 3,
+      "spaceCount": 32,
+      "floorAreaSqm": 302.24,
+      "ref": "ifc://IFC Schependomlaan.ifc#23569"
+    },
+    {
+      "id": "storey-01-eerste-verdieping",
+      "name": "01 eerste verdieping",
+      "elevationM": 3,
+      "floorToFloorHeightM": 3,
+      "spaceCount": 29,
+      "floorAreaSqm": 290.56,
+      "ref": "ifc://IFC Schependomlaan.ifc#311035"
+    },
+    {
+      "id": "storey-02-tweede-verdieping",
+      "name": "02 tweede verdieping",
+      "elevationM": 6,
+      "floorToFloorHeightM": 3,
+      "spaceCount": 20,
+      "floorAreaSqm": 195.85,
+      "ref": "ifc://IFC Schependomlaan.ifc#597392"
+    },
+    {
+      "id": "storey-03-derde-verdieping",
+      "name": "03 derde verdieping",
+      "elevationM": 9,
+      "floorToFloorHeightM": 3,
+      "spaceCount": 19,
+      "floorAreaSqm": 177.02,
+      "ref": "ifc://IFC Schependomlaan.ifc#776514"
+    },
+    {
+      "id": "storey-04-dak",
+      "name": "04 dak",
+      "elevationM": 12,
+      "floorToFloorHeightM": 0,
+      "spaceCount": 0,
+      "floorAreaSqm": 0,
+      "ref": "ifc://IFC Schependomlaan.ifc#984411"
+    }
+  ],
+  "spacesFile": "spaces.json",
   "serviceLayers": [],
   "model": {
     "file": "model.glb",
@@ -484,8 +544,7 @@
       "door",
       "mullion"
     ],
-    "note": "Building fabric only. Furniture, sanitary fixtures, railings and the structural frame are excluded — together they are 82% of the model's triangles and none of them is visible from outside the building.",
-    "serviceNote": "Service layers carry every component at the model's own geometry — no bounding-box stand-ins. The discipline models looked far too large for that (plumbing tessellates to 3,184,148 triangles) but that total counts the same catalogue parts over and over: only 340,774 of them are distinct shapes. Each shape is stored once and placed by instancing, so plumbing ships 402 shapes across 7,872 placements."
+    "note": "Building fabric only: walls, slabs, roofs and openings. Furniture, fixtures, railings and the structural frame are not in this file."
   },
   "invalidDiagnostics": {
     "note": "Space-boundary strip sums. INVALID as envelope areas: room-height not storey-height, gross of openings, ~16% double-counted, missing 18 walls and 10 storefronts, and including 60.17 m2 of chain-link fence. Diagnostic only.",

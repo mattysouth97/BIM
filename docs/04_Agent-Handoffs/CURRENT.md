@@ -72,6 +72,16 @@ writing: `src/components/landing/{cad-sheet,resume-diagnostic}.tsx`,
 Run `git status` before assuming anything about the tree, and do not revert those
 files.
 
+**Reference buildings (2026-09-04 evening).** Two authored models are published
+under `/models/<id>` from `public/reference-buildings/<id>/` (manifest,
+spaces.json, GLBs), built by `scripts/build-reference-building.mjs`. The Clinic
+carries the demo's full energy frame on measured envelope figures
+(`BuildingRecipe.measuredEnvelope`, gross volume 20,685 m³ from the IfcSpace
+solids); Schependomlaan shows the model only — no energy inputs written, and
+no MEP because its archive has none. Details, traps and open items:
+`clinic-glazing-and-usage-sources.md`. The ISO 13790 monthly kernel is a
+separate track (`iso-13790-monthly-kernel-brief.md`), not wired to any page.
+
 ## Known Issues
 
 1. **The twin's energy is not the traceable engine.** It uses the older

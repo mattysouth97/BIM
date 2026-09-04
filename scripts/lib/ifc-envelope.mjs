@@ -145,16 +145,24 @@ const NON_FLOOR_SPACE_RULES = Object.freeze([
     pattern: /^\s*ROOF\b/i,
     reason:
       "a roof surface modelled as a space; it has an area but is not enclosed floor",
+    // Outdoor air. Nothing above a roof surface is heated.
+    countsAsConditionedVolume: false,
   }),
   Object.freeze({
     pattern: /^\s*OPEN TO (BELOW|ABOVE)\b/i,
     reason:
       "a double-height void; the floor it opens through is already counted once on its own storey",
+    // The void is the upper part of a conditioned room. Its floor must not be
+    // counted twice; its air must not be dropped, because the ventilation
+    // term multiplies volume directly and a two-storey concourse is mostly
+    // void.
+    countsAsConditionedVolume: true,
   }),
   Object.freeze({
     pattern: /^\s*MECH\.?\s*YARD\b/i,
     reason:
       "an outdoor equipment yard enclosed by a screen, not by envelope; it has outdoor air above it",
+    countsAsConditionedVolume: false,
   }),
 ]);
 
@@ -164,17 +172,18 @@ export function classifySpaceFloorArea(name, longName) {
     if (rule.pattern.test(label)) {
       return Object.freeze({
         countsAsFloorArea: false,
+        countsAsConditionedVolume: rule.countsAsConditionedVolume,
         excludedFromFloorAreaReason: `"${label}" — ${rule.reason}`,
       });
     }
   }
   return Object.freeze({
     countsAsFloorArea: true,
+    countsAsConditionedVolume: true,
     excludedFromFloorAreaReason: null,
   });
 }
 
-/** expressID → the first area/volume quantity attached to it, with its name. */
 function quantityIndex(file, webIfc) {
   const byObject = new Map();
   for (const rel of file.byType(webIfc.IFCRELDEFINESBYPROPERTIES)) {
