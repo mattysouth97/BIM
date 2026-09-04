@@ -154,8 +154,16 @@ function financingWacc(assumptions: EconomicAssumptions): number {
 }
 
 /**
- * Typical 그린리모델링 이자지원 support period, years. The program buys down
- * loan interest for the support period only — not the full analysis horizon.
+ * Fallback 그린리모델링 이자지원 support period, years, used only when a
+ * `FinancingMix` declares no `loanTermYears`. The program buys down loan
+ * interest for the support period only — not the full analysis horizon.
+ *
+ * P2-32: this used to be the ONLY term the schedule below could see, which
+ * silently overrode the term every preset declares. The dossier publishes no
+ * fixed term (§9.2 — Korean retrofit loans run 5–10 years), so this 5 is an
+ * assumption exactly as `GR_PRIVATE_LOAN_TERM_YEARS` is; the difference is
+ * that the preset's assumption is labelled, sourced and caveated, and this one
+ * was not. A declared term now always wins over it.
  */
 export const LOAN_TERM_YEARS = 5;
 
@@ -163,13 +171,19 @@ export const LOAN_TERM_YEARS = 5;
  * Year-by-year interest saved by the 이자지원 buy-down on an equal-principal
  * amortizing loan (audit finding #7).
  *
+ *   term        = financingMix.loanTermYears ?? LOAN_TERM_YEARS
  *   principal   = min(debtFraction × effectiveCapex, loanCapKrw)
- *   balance(t)  = principal × (LOAN_TERM_YEARS − (t − 1)) / LOAN_TERM_YEARS
+ *   balance(t)  = principal × (term − (t − 1)) / term
  *   saved(t)    = balance(t) × min(interestSupportPp, loanRatePreSubsidy)
  *
  * The buy-down is capped at the loan rate — interest support cannot save
  * more interest than the borrower actually pays. Returns a horizon-length
  * vector (zeros after the loan term).
+ *
+ * P2-32: the term comes from the caller. Amortization is divided by the FULL
+ * declared term even when the horizon truncates it, so a loan running past the
+ * horizon shows the opening years of its real schedule rather than a steeper
+ * one renormalized to fit.
  */
 export function computeInterestSavedSchedule(
   effectiveCapex: number,
@@ -186,10 +200,17 @@ export function computeInterestSavedSchedule(
     Math.max(0, financingMix.interestSupportPp),
     Math.max(0, financingMix.loanRatePreSubsidy),
   );
+  const declaredTerm = financingMix.loanTermYears;
+  const term =
+    typeof declaredTerm === "number" &&
+    Number.isFinite(declaredTerm) &&
+    declaredTerm > 0
+      ? declaredTerm
+      : LOAN_TERM_YEARS;
   if (principal <= 0 || supportRate <= 0) return schedule;
-  const years = Math.min(LOAN_TERM_YEARS, horizonYears);
+  const years = Math.min(term, horizonYears);
   for (let t = 1; t <= years; t++) {
-    const outstanding = (principal * (LOAN_TERM_YEARS - (t - 1))) / LOAN_TERM_YEARS;
+    const outstanding = (principal * (term - (t - 1))) / term;
     schedule[t - 1] = outstanding * supportRate;
   }
   return schedule;

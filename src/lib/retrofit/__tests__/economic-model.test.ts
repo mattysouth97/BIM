@@ -510,16 +510,24 @@ describe("computeFinancials — subsidyValue (audit finding #7)", () => {
     expect(fin.subsidyValue).toBe(0);
   });
 
-  it("private-base subsidyValue = PV of interest saved ≈ ₩8,448,594", () => {
-    // Hand calc at 5% base rate (schedule above):
-    //   3,150,000/1.05   = 3,000,000.00
-    //   2,520,000/1.05^2 = 2,285,714.29
-    //   1,890,000/1.05^3 = 1,632,653.06
-    //   1,260,000/1.05^4 = 1,036,605.12
-    //     630,000/1.05^5 =   493,621.48
-    //   Σ = 8,448,593.95
+  it("private-base subsidyValue = PV of interest saved ≈ ₩14,353,070", () => {
+    // P2-32: this was ₩8,448,594, computed over a 5-year schedule, because
+    // computeInterestSavedSchedule ignored the preset's declared term. The
+    // preset declares GR_PRIVATE_LOAN_TERM_YEARS = 10, so the buy-down is now
+    // valued over ten years. Hand calc, principal 70M at 4.5pp, 5% base rate:
+    //   3,150,000/1.05    = 3,000,000.00
+    //   2,835,000/1.05^2  = 2,571,428.57
+    //   2,520,000/1.05^3  = 2,176,870.75
+    //   2,205,000/1.05^4  = 1,814,058.96
+    //   1,890,000/1.05^5  = 1,480,864.45
+    //   1,575,000/1.05^6  = 1,175,289.25
+    //   1,260,000/1.05^7  =   895,458.48
+    //     945,000/1.05^8  =   639,613.20
+    //     630,000/1.05^9  =   406,103.62
+    //     315,000/1.05^10 =   193,382.67
+    //   Σ = 14,353,069.95
     const fin = computeFinancials(ENVELOPE_100M, KOREAN_GR_PRIVATE_BASE);
-    expect(fin.subsidyValue).toBeCloseTo(8_448_593.95, 0);
+    expect(fin.subsidyValue).toBeCloseTo(14_353_069.95, 0);
   });
 
   it("npv = base-rate NPV + subsidyValue", () => {
@@ -529,12 +537,15 @@ describe("computeFinancials — subsidyValue (audit finding #7)", () => {
   });
 
   it("tier subsidyValues scale with the support pp (4.0 < 4.5 < 5.5)", () => {
-    // Linear in pp: base × 8/9 = 7,509,861.29; base × 11/9 = 10,326,059.27
+    // Linear in pp, so the tiers stay in the same ratio to base after P2-32
+    // widened the term to ten years: base × 8/9 = 12,758,284.40;
+    // base × 11/9 = 17,542,641.05. (Were 7,509,861.29 and 10,326,059.27 on
+    // the 5-year schedule.)
     const base = computeFinancials(ENVELOPE_100M, KOREAN_GR_PRIVATE_BASE);
     const tier2 = computeFinancials(ENVELOPE_100M, KOREAN_GR_PRIVATE_TIER2);
     const high = computeFinancials(ENVELOPE_100M, KOREAN_GR_PRIVATE_HIGH_PERF);
-    expect(tier2.subsidyValue).toBeCloseTo(7_509_861.29, 0);
-    expect(high.subsidyValue).toBeCloseTo(10_326_059.27, 0);
+    expect(tier2.subsidyValue).toBeCloseTo(12_758_284.40, 0);
+    expect(high.subsidyValue).toBeCloseTo(17_542_641.05, 0);
     expect(tier2.subsidyValue).toBeLessThan(base.subsidyValue);
     expect(base.subsidyValue).toBeLessThan(high.subsidyValue);
   });

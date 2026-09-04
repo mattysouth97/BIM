@@ -3,8 +3,8 @@ id: P2-32
 title: Interest-support buy-down amortizes over a hardcoded 5 years, ignoring the preset's 10-year loan term
 priority: P2
 area: retrofit
-status: not-started
-owner: unassigned
+status: done
+owner: orange (claude-opus-5)
 effort: S
 created: 2026-09-04
 updated: 2026-09-04
@@ -97,10 +97,11 @@ work was a no-behaviour-change refactor, and this changes numbers.
 - **Gates**: `node node_modules/vitest/vitest.mjs run src/lib/retrofit`,
   `node node_modules/typescript/bin/tsc --noEmit`, `node node_modules/eslint/bin/eslint.js src`.
 - **Acceptance criteria**:
-  - [ ] `computeInterestSavedSchedule` honours `financingMix.loanTermYears`
-  - [ ] The horizon-truncation and omitted-term paths keep their current behaviour
-  - [ ] `GR_PRIVATE_LOAN_TERM_YEARS` verified against the research dossier
-  - [ ] NPV before/after disclosed for the reference private-track scenario
+  - [x] `computeInterestSavedSchedule` honours `financingMix.loanTermYears`
+  - [x] The horizon-truncation and omitted-term paths keep their current behaviour
+  - [x] `GR_PRIVATE_LOAN_TERM_YEARS` checked against the dossier — see notes; it
+        is NOT verifiable, and the item was resolved without needing it to be
+  - [x] NPV before/after disclosed for the reference private-track scenario
 - **Done when**: the buy-down is valued over the term the preset declares, and no
   code path reads `loanTermYears` as a mere flag.
 
@@ -108,3 +109,60 @@ work was a no-behaviour-change refactor, and this changes numbers.
 
 - Not scheduled onto the dashboard by this item's author: `docs/work-plan/README.md`
   is another session's lock, so the P2-32 row is added there separately.
+
+---
+
+## Evaluation notes (2026-09-04, orange)
+
+**The dossier cannot settle the term, and the fix did not need it to.**
+§9.2 says only that "Korean retrofit loans run 5–10 years" and lists the term as
+an open question; §3 publishes the support *rates* (4.0 / 4.5 / 5.5 pp) and the
+₩200B cap, but no term. So `GR_PRIVATE_LOAN_TERM_YEARS = 10` is not verifiable
+against it — and neither was `LOAN_TERM_YEARS = 5`. Both sit inside the same
+researched range.
+
+That reframed the defect, for the better. It was never "5 is wrong and 10 is
+right". It was that the codebase held **two contradictory answers to one
+question, and the governing one was the undocumented one**: `GR_PRIVATE_LOAN_TERM_YEARS`
+is labelled a DOCUMENTED ASSUMPTION, carries its provenance and a caveat to
+revisit when the portal publishes a term — and `LOAN_TERM_YEARS`, an unlabelled
+constant with no source, silently overrode it. That is the repo's stated-versus-assumed
+invariant failing inside the economics engine rather than the ledger.
+
+The fix therefore changes no assumption. It makes the engine use the term the
+caller declares, and demotes 5 to an explicitly documented fallback for a
+`FinancingMix` that declares none. Whether 10 is the right assumption is still
+open and still annotated where it belongs.
+
+**Changes**
+- `computeInterestSavedSchedule` reads `financingMix.loanTermYears`, falling back
+  to `LOAN_TERM_YEARS` only when it is absent or not a positive finite number.
+- Amortization divides by the full declared term even when the horizon truncates
+  it, so a loan outliving the horizon shows the opening years of its real
+  schedule rather than a steeper one renormalized to fit.
+- `LOAN_TERM_YEARS`' doc comment now says it is a fallback and an assumption.
+
+**Disclosure — reference private-track scenario** (`KOREAN_GR_PRIVATE_BASE`,
+₩250M budget, four measures, 20-year horizon):
+
+| | before (5 yr) | after (10 yr) |
+|---|---|---|
+| portfolio NPV | ₩62,117,490 | **₩69,202,861** (+₩7,085,371, +11.4%) |
+| effective CAPEX | ₩120,000,000 | ₩120,000,000 (unchanged) |
+| measures selected | 2 | 2 (unchanged) |
+| discounted payback | 13.50 yr | 13.50 yr (unchanged) |
+| single envelope measure, subsidyValue | ₩8,448,594 | ₩14,353,070 |
+| single envelope measure, NPV | −₩11,727,488 | −₩5,823,012 |
+
+The knapsack's selection and payback are unaffected here — the buy-down enters
+NPV additively, so it moves the headline number without reordering the measures.
+
+**Tests** — `__tests__/economic-model-p2-32.test.ts`, 6 cases written red first
+(5 failed before the fix; the 6th, the no-declared-term fallback, passed
+throughout because that was the only behaviour the engine had). Two existing
+assertions in `economic-model.test.ts` moved with the number, both rewritten to
+carry the full ten-year hand calculation rather than a bare updated constant.
+
+**Verified with** `node node_modules/vitest/vitest.mjs run src/lib/retrofit` —
+169 passed / 12 files; plus `src/lib/energy-diagnostics` (retrofit-bridge consumes
+these presets), `tsc --noEmit` and `eslint`.
