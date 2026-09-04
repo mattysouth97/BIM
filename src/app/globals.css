@@ -240,19 +240,35 @@
   }
 }
 
-/* Custom scrollbar for the retrofit-manifest panel (webkit). */
-.twin-scroll::-webkit-scrollbar {
-  width: 6px;
+/* ─── Scrollbars are hidden everywhere ───────────────────────────────────
+ *
+ * Hide every scrollbar, in both engines: `scrollbar-width: none` for Firefox
+ * and the standards track, `::-webkit-scrollbar { display: none }` for Chrome
+ * and Safari.
+ *
+ * Hiding the bar, never the overflow. `overflow: hidden` would remove the
+ * scrolling itself and strand content below the fold with no way to reach it;
+ * these two properties remove only the drawn indicator, so wheel, trackpad,
+ * touch, keyboard (PageDown, arrows, space) and programmatic scrolling all
+ * continue to work exactly as before.
+ *
+ * The visible cost is real and deliberate: a reader loses the cue that tells
+ * them there is more below and how far through it they are. Long panels should
+ * carry that some other way — a fade at the edge, or a count.
+ *
+ * A `.twin-scroll` rule drawing a 6 px bar was removed with this: it was
+ * referenced by nothing, and a class selector outranks the bare pseudo-element
+ * above, so it would have kept one visible scrollbar in the app while every
+ * other one disappeared.
+ */
+*,
+*::before,
+*::after {
+  scrollbar-width: none;
 }
-.twin-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-.twin-scroll::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-.twin-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+
+::-webkit-scrollbar {
+  display: none;
 }
 
 /* ─── Landing: the diagnostic workspace before a building is selected ───── */
