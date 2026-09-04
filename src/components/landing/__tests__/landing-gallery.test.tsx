@@ -33,9 +33,9 @@ describe("landing gallery", () => {
     render(<LandingPage />);
     const card = screen.getByTestId("gallery-item-clinic");
 
-    expect(within(card).getByText("4,394.3 m²")).toBeTruthy();
+    expect(within(card).getByText("4,314.2 m²")).toBeTruthy();
     expect(
-      within(card).getByText("260 × GSA BIM Area, ROOF·OPEN TO BELOW 제외"),
+      within(card).getByText("259 × GSA BIM Area, ROOF·OPEN TO BELOW·MECH. YARD 제외"),
     ).toBeTruthy();
     expect(within(card).getByText("IfcWindow")).toBeTruthy();
     expect(within(card).getByText("Clinic_Architectural.ifc")).toBeTruthy();
@@ -56,15 +56,20 @@ describe("landing gallery", () => {
     expect(credit.textContent).toContain("CC BY 4.0");
   });
 
-  it("says the model is still being taken in rather than linking nowhere", () => {
+  it("opens its own model, and exactly one link does it", () => {
     render(<LandingPage />);
     const card = screen.getByTestId("gallery-item-clinic");
 
     expect(screen.getByTestId("gallery-item-clinic-status").textContent).toBe(
       "모델링 중",
     );
-    // A card with nothing to open must not navigate to a different building.
-    expect(within(card).queryAllByRole("link")).toHaveLength(0);
+    // A card must never navigate to a DIFFERENT building, and the figures
+    // must not each become a link — one target, and it is this building's.
+    const links = within(card).queryAllByRole("link");
+    expect(links).toHaveLength(1);
+    expect(links[0].getAttribute("href")).toBe(
+      "/models/bs-medical-dental-clinic",
+    );
   });
 });
 
@@ -99,19 +104,22 @@ describe("gallery record", () => {
       (total, d) => total + d.excludedSpaces,
       0,
     );
-    expect(rooms).toBe(260);
-    expect(excluded).toBe(9);
+    expect(rooms).toBe(259);
+    // Ten spaces an area plan counts and a floor schedule does not: six ROOF,
+    // three OPEN TO BELOW, one MECH. YARD.
+    expect(excluded).toBe(10);
     expect(rooms + excluded).toBe(269);
   });
 
   it("keeps the storey areas adding up to the stated floor area", () => {
-    // 64.8 + 1,723.7 + 2,605.7 = 4,394.2, and the card says 4,394.3 — the
-    // difference is one rounding step, not a fourth storey nobody drew.
+    // 64.8 + 1,723.7 + 2,525.7 = 4,314.2, matching the card and the generated
+    // manifest. The first floor lost 80.1 m² when MECH. YARD was recognised as
+    // an outdoor yard rather than floor.
     const summed = clinic.datums.reduce((t, d) => t + d.roomAreaSqm, 0);
-    expect(summed).toBeCloseTo(4394.3, 0);
+    expect(summed).toBeCloseTo(4314.2, 0);
 
     const stated = clinic.figures.find((f) => f.id === "floor-area");
-    expect(stated?.value).toBe("4,394.3 m²");
+    expect(stated?.value).toBe("4,314.2 m²");
   });
 
   it("names what each figure excludes, not only what it counts", () => {

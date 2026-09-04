@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   datumRange,
   widestStoreyAreaSqm,
@@ -145,11 +147,30 @@ export function GalleryCard({ item, isKo }: { item: GalleryItem; isKo: boolean }
 
   return (
     <article
-      className="gallery-card group flex w-full flex-col overflow-hidden rounded-xl border border-border bg-card"
+      className={`gallery-card group relative flex w-full flex-col overflow-hidden rounded-xl border border-border bg-card${
+        item.href ? " transition-colors hover:border-foreground/30" : ""
+      }`}
       data-testid={`gallery-item-${item.id}`}
       aria-labelledby={`gallery-item-${item.id}-title`}
     >
-      <div className="gallery-plate border-b border-border">
+      {/* The whole card is the target when there is something to open, but the
+          link wraps only the title: a card is a block of stated figures, and
+          nesting them inside an anchor would read the lot out as one link name
+          to a screen reader. The overlay gives the pointer the full area
+          without costing that. `z-0` on the plate keeps the SVG below it. */}
+      {item.href ? (
+        <Link
+          href={item.href}
+          className="absolute inset-0 z-10 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          data-testid={`gallery-item-${item.id}-link`}
+        >
+          <span className="sr-only">
+            {isKo ? `${title} 모델 열기` : `Open the ${title} model`}
+          </span>
+        </Link>
+      ) : null}
+
+      <div className="gallery-plate relative z-0 border-b border-border">
         <SectionPlate datums={item.datums} isKo={isKo} />
       </div>
 

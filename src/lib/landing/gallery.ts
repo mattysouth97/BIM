@@ -18,20 +18,26 @@
  * is wrong by 58% as a floor area. Nine of those spaces are not floor: six are
  * named ROOF (2,299.2 m² — the roof plane, sliced into pieces) and three are
  * OPEN TO BELOW (242.4 m² — the void over a double-height room, counted again
- * on the storey above). Excluding those nine gives 4,394.3 m² across 260
- * rooms, which is what the card shows. An area-plan total is not a floor area,
- * and nothing in the file says so — the space names are the only signal.
+ * on the storey above), and one is MECH. YARD — an outdoor equipment yard with
+ * outdoor air above it, which an area plan counts and a floor schedule does
+ * not. Excluding those ten gives 4,314.2 m² across 259 rooms, which is what
+ * the card shows and what
+ * public/reference-buildings/bs-medical-dental-clinic/manifest.json emits.
+ * An area-plan total is not a floor area, and nothing in the file says so —
+ * the space names are the only signal.
  *
  * Everything below was read from `Clinic_Architectural.ifc`: counts by entity
  * class, areas by summing `GSA BIM Area` per space and grouping by the
  * storey's `IfcRelAggregates` set, storey datums from
  * `IfcBuildingStorey.Elevation`.
  *
- * These figures are literals because the extraction that will generate them —
- * `public/reference-buildings/<id>/manifest.json` — does not exist yet. That
- * is a known weakness, not a design: a literal cannot notice that the
- * extraction moved under it. When the manifest lands, every numeric field here
- * should be read from it and only the editorial fields kept by hand.
+ * These figures are still literals, and that is now a known debt rather than a
+ * waiting game: `public/reference-buildings/bs-medical-dental-clinic/manifest.json`
+ * exists and carries the same numbers, generated. A literal cannot notice that
+ * the extraction moved under it — this file said 4,394.3 m² for an hour after
+ * the extraction said 4,314.2, on two pages of the same app. Every numeric
+ * field here should be read from the manifest, keeping only the editorial ones
+ * by hand.
  * `landing-gallery.test.tsx` pins the arithmetic that ties the numbers to each
  * other, so a drift in one of them fails a test rather than passing quietly.
  */
@@ -114,7 +120,7 @@ const CLINIC: GalleryItem = {
     // where the model has a roof.
     { name: "Roof - Main", elevationM: 9.25, rooms: 1, roomAreaSqm: 64.8, excludedSpaces: 5 },
     { name: "Second Floor", elevationM: 4.57, rooms: 105, roomAreaSqm: 1723.7, excludedSpaces: 4 },
-    { name: "First Floor", elevationM: 0, rooms: 154, roomAreaSqm: 2605.7, excludedSpaces: 0 },
+    { name: "First Floor", elevationM: 0, rooms: 153, roomAreaSqm: 2525.7, excludedSpaces: 1 },
     { name: "TOF Footing", elevationM: -1, rooms: 0, roomAreaSqm: 0, excludedSpaces: 0 },
   ],
   figures: [
@@ -122,14 +128,14 @@ const CLINIC: GalleryItem = {
       id: "floor-area",
       ko: "실 면적 합계",
       en: "Room floor area",
-      value: "4,394.3 m²",
-      read: "260 × GSA BIM Area, ROOF·OPEN TO BELOW 제외",
+      value: "4,314.2 m²",
+      read: "259 × GSA BIM Area, ROOF·OPEN TO BELOW·MECH. YARD 제외",
     },
     {
       id: "rooms",
       ko: "실",
       en: "Rooms",
-      value: "260",
+      value: "259",
       read: "IfcSpace − 6 ROOF − 3 OPEN TO BELOW",
     },
     {
@@ -156,7 +162,9 @@ const CLINIC: GalleryItem = {
       read: "IfcRelSpaceBoundary",
     },
   ],
-  href: null,
+  // The model now exists: tessellated from the two IFCs at build time into
+  // public/reference-buildings/bs-medical-dental-clinic/, fabric only.
+  href: "/models/bs-medical-dental-clinic",
 } as const;
 
 export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC];

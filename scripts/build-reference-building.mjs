@@ -1,0 +1,245 @@
+#!/usr/bin/env node
+// scripts/build-reference-building.mjs
+//
+// Turn a reference building's IFC discipline models into the two artifacts the
+// app ships: a manifest of what the model states, and a GLB of its fabric.
+//
+//   node scripts/build-reference-building.mjs --generated-at 2026-09-04T00:00:00.000Z
+//
+// The source IFCs are NOT committed — they are 32 MB, they are not ours, and
+// the committed artifacts are what the app uses. They are fetched once into a
+// cache outside the repository and their SHA-256 recorded, so a re-run against
+// a changed upstream fails loudly instead of regenerating silently.
+//
+// `--generated-at` is required rather than defaulted to a clock: the artifacts
+// are committed, so building them twice from the same inputs must produce
+// identical bytes or every rebuild shows up as a diff.
+
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import process from "node:process";
+import { fetchSource, githubLfsUrl, openIfcFiles, compoundAngleDeg, str } from "./lib/ifc-reader.mjs";
+import {
+  extractStoreys,
+  extractSpaces,
+  extractAssemblies,
+  classifyExternalElements,
+} from "./lib/ifc-envelope.mjs";
+import { netFaceAreasByElement } from "./lib/ifc-face-area.mjs";
+import { collectFabric, mergeFabric, writeGlb } from "./lib/ifc-glb.mjs";
+
+const REPO = process.cwd();
+const CACHE =
+  process.env.REFERENCE_BUILDING_CACHE ??
+  path.join(process.env.TEMP ?? "/tmp", "bimfit-reference-buildings");
+
+const CLINIC = Object.freeze({
+  id: "bs-medical-dental-clinic",
+  name: { ko: "메디컬-덴탈 클리닉", en: "Medical-Dental Clinic" },
+  summary: {
+    ko: "buildingSMART가 공개한 미국 GSA 외래 진료소의 실제 조정 모델.",
+    en: "A real US GSA outpatient clinic, released as an open coordination model.",
+  },
+  useType: "outpatient_clinic",
+  licence: "CC BY 4.0",
+  attribution:
+    'BSI (2020) "Medical-Dental Test Files", buildingSMART International — ' +
+    "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+  sourceUrl:
+    "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+  files: [
+    { role: "architectural", fileName: "Clinic_Architectural.ifc" },
+    { role: "structural", fileName: "Clinic_Structural.ifc" },
+  ],
+  /** The exterior wall type; both IfcWallStandardCase and IfcWall carry it. */
+  exteriorWallMatch: "Exterior - Insul Panel",
+  /** Main roof datum. Wall above this encloses plant, not conditioned space. */
+  roofDatumM: 9.25,
+});
+
+function arg(name) {
+  const i = process.argv.indexOf(`--${name}`);
+  return i >= 0 ? process.argv[i + 1] : undefined;
+}
+
+async function main() {
+  const generatedAt = arg("generated-at");
+  if (!generatedAt || Number.isNaN(Date.parse(generatedAt))) {
+    throw new Error(
+      "--generated-at <ISO-8601> is required. The artifacts are committed, so " +
+        "the same inputs must always produce the same bytes.",
+    );
+  }
+
+  const outDir = path.join(REPO, "public", "reference-buildings", CLINIC.id);
+  await mkdir(outDir, { recursive: true });
+
+  // ── Fetch (or reuse) the discipline models ─────────────────────────────
+  const sources = [];
+  for (const file of CLINIC.files) {
+    const url = githubLfsUrl(
+      "buildingsmart-community",
+      "Community-Sample-Test-Files",
+      "main",
+      `IFC 2.3.0.1 (IFC 2x3)/Medical-Dental Clinic/${file.fileName}`,
+    );
+    const cachePath = path.join(CACHE, file.fileName);
+    const fetched = await fetchSource(url, cachePath, {
+      expectedSha256: file.sha256,
+    });
+    sources.push({ ...file, ...fetched, cachePath });
+    console.log(
+      `  ${file.fileName}  ${(fetched.byteLength / 1048576).toFixed(1)} MB  sha256 ${fetched.sha256.slice(0, 12)}…`,
+    );
+  }
+
+  const { api, files, webIfc } = await openIfcFiles(
+    sources.map((s) => s.cachePath),
+    { wasmDir: path.join(REPO, "node_modules", "web-ifc") + path.sep },
+  );
+  const [arch, struct] = files;
+
+  // ── What the model states ──────────────────────────────────────────────
+  const storeys = extractStoreys(arch, webIfc);
+  const spaces = extractSpaces(arch, webIfc, storeys);
+  const floorSpaces = spaces.filter((s) => s.countsAsFloorArea);
+  const assemblies = [
+    ...extractAssemblies(arch, webIfc),
+    ...extractAssemblies(struct, webIfc),
+  ];
+  const classification = classifyExternalElements(arch, webIfc);
+
+  // Areas come from the built solid, never from space boundaries — see the
+  // retraction in ifc-envelope.mjs.
+  const exteriorWalls = netFaceAreasByElement(
+    api,
+    arch.modelId,
+    (typeName, name) =>
+      (typeName === "IfcWallStandardCase" || typeName === "IfcWall") &&
+      name.includes(CLINIC.exteriorWallMatch),
+    { heightSplitM: CLINIC.roofDatumM },
+  );
+  let wallNet = 0;
+  let wallBelowRoof = 0;
+  let wallAboveRoof = 0;
+  for (const wall of exteriorWalls.values()) {
+    wallNet += wall.netFaceAreaSqm;
+    wallBelowRoof += wall.netFaceAreaBelowSplitSqm;
+    wallAboveRoof += wall.netFaceAreaAboveSplitSqm;
+  }
+
+  const site = arch.byType(webIfc.IFCSITE)[0];
+  const latitudeDeg = site ? compoundAngleDeg(site.RefLatitude) : null;
+  const longitudeDeg = site ? compoundAngleDeg(site.RefLongitude) : null;
+  // Revit stamps its factory default (Boston, MA) on every new project, so a
+  // populated IfcSite is not evidence of where a building is.
+  const isAuthoringDefault =
+    latitudeDeg !== null &&
+    longitudeDeg !== null &&
+    Math.abs(latitudeDeg - 42.35843) < 1e-3 &&
+    Math.abs(longitudeDeg + 71.05978) < 1e-3;
+
+  // ── Fabric geometry for the viewer ─────────────────────────────────────
+  const fabric = new Map();
+  for (const file of files) {
+    mergeFabric(fabric, collectFabric(api, webIfc, file.modelId).groups);
+  }
+  const glb = await writeGlb(path.join(outDir, "model.glb"), fabric, {
+    generator: `bimfit build-reference-building (web-ifc ${webIfcVersion()})`,
+  });
+
+  const round = (n) => Math.round(n * 100) / 100;
+  const manifest = {
+    kind: "bimfit_reference_building_manifest",
+    schemaVersion: 1,
+    id: CLINIC.id,
+    name: CLINIC.name,
+    summary: CLINIC.summary,
+    useType: CLINIC.useType,
+    licence: CLINIC.licence,
+    attribution: CLINIC.attribution,
+    sourceUrl: CLINIC.sourceUrl,
+    generatedAt,
+    sourceFiles: sources.map((s) => ({
+      role: s.role,
+      fileName: s.fileName,
+      sha256: s.sha256,
+      byteLength: s.byteLength,
+    })),
+    counts: {
+      storeys: storeys.filter((s) => s.floorToFloorHeightM > 0).length,
+      spacesTotal: spaces.length,
+      spacesFloor: floorSpaces.length,
+      assemblies: assemblies.length,
+      externalElements: classification.elements.length,
+      exteriorWalls: exteriorWalls.size,
+    },
+    areas: {
+      totalFloorAreaSqm: round(
+        floorSpaces.reduce((sum, s) => sum + (s.floorAreaSqm ?? 0), 0),
+      ),
+      areaPlanTotalSqm: round(
+        spaces.reduce((sum, s) => sum + (s.floorAreaSqm ?? 0), 0),
+      ),
+      exteriorWallNetSqm: round(wallNet),
+      exteriorWallBelowRoofSqm: round(wallBelowRoof),
+      exteriorWallAboveRoofSqm: round(wallAboveRoof),
+    },
+    site: {
+      declaredSiteName: site ? str(site.Name) : null,
+      declaredLatitudeDeg: latitudeDeg,
+      declaredLongitudeDeg: longitudeDeg,
+      locationIsAuthoringDefault: isAuthoringDefault,
+      locationNote: isAuthoringDefault
+        ? "IfcSite matches the authoring tool's factory default (Boston, MA). " +
+          "The building's real location is redacted; no climate may be taken from it."
+        : "IfcSite coordinates recorded; not verified against any other source.",
+    },
+    model: {
+      file: "model.glb",
+      byteLength: glb.byteLength,
+      triangleCount: glb.triangleCount,
+      groups: glb.groups,
+      note:
+        "Building fabric only. Furniture, sanitary fixtures, railings and the " +
+        "structural frame are excluded — together they are 82% of the model's " +
+        "triangles and none of them is visible from outside the building.",
+    },
+    /**
+     * Recorded so a future reader who recomputes a space-boundary sum finds it
+     * already refuted rather than concluding the extraction lost a third of
+     * the building.
+     */
+    invalidDiagnostics: classification.invalidAreaDiagnostics,
+  };
+
+  await writeFile(
+    path.join(outDir, "manifest.json"),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+    "utf8",
+  );
+
+  files.forEach((f) => f.close());
+
+  console.log(`\n  ${path.relative(REPO, outDir)}`);
+  console.log(
+    `    model.glb      ${(glb.byteLength / 1048576).toFixed(2)} MB, ${glb.triangleCount.toLocaleString()} triangles`,
+  );
+  console.log(
+    `    manifest.json  floor ${manifest.areas.totalFloorAreaSqm} m2 over ${manifest.counts.spacesFloor} spaces, ` +
+      `wall ${manifest.areas.exteriorWallNetSqm} m2`,
+  );
+}
+
+function webIfcVersion() {
+  try {
+    return process.env.npm_package_dependencies_web_ifc ?? "0.0.77";
+  } catch {
+    return "unknown";
+  }
+}
+
+main().catch((error) => {
+  console.error(`\n  ${error.message}\n`);
+  process.exitCode = 1;
+});

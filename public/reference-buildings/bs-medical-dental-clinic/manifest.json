@@ -1,0 +1,79 @@
+{
+  "kind": "bimfit_reference_building_manifest",
+  "schemaVersion": 1,
+  "id": "bs-medical-dental-clinic",
+  "name": {
+    "ko": "메디컬-덴탈 클리닉",
+    "en": "Medical-Dental Clinic"
+  },
+  "summary": {
+    "ko": "buildingSMART가 공개한 미국 GSA 외래 진료소의 실제 조정 모델.",
+    "en": "A real US GSA outpatient clinic, released as an open coordination model."
+  },
+  "useType": "outpatient_clinic",
+  "licence": "CC BY 4.0",
+  "attribution": "BSI (2020) \"Medical-Dental Test Files\", buildingSMART International — https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+  "sourceUrl": "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+  "generatedAt": "2026-09-04T00:00:00.000Z",
+  "sourceFiles": [
+    {
+      "role": "architectural",
+      "fileName": "Clinic_Architectural.ifc",
+      "sha256": "2ac970ce065ecac4e0c9e5f453a257169e90d0067f419b7e33533a64ef837880",
+      "byteLength": 13003205
+    },
+    {
+      "role": "structural",
+      "fileName": "Clinic_Structural.ifc",
+      "sha256": "325287b375f154dc79504c4bbf67b40c501f458f23a8c4ba13b27171e00533d8",
+      "byteLength": 19058175
+    }
+  ],
+  "counts": {
+    "storeys": 3,
+    "spacesTotal": 269,
+    "spacesFloor": 259,
+    "assemblies": 16,
+    "externalElements": 105,
+    "exteriorWalls": 80
+  },
+  "areas": {
+    "totalFloorAreaSqm": 4314.2,
+    "areaPlanTotalSqm": 6935.8,
+    "exteriorWallNetSqm": 2150.3,
+    "exteriorWallBelowRoofSqm": 1909.56,
+    "exteriorWallAboveRoofSqm": 240.73
+  },
+  "site": {
+    "declaredSiteName": "Default",
+    "declaredLatitudeDeg": 42.358428955,
+    "declaredLongitudeDeg": -71.0597763061111,
+    "locationIsAuthoringDefault": true,
+    "locationNote": "IfcSite matches the authoring tool's factory default (Boston, MA). The building's real location is redacted; no climate may be taken from it."
+  },
+  "model": {
+    "file": "model.glb",
+    "byteLength": 4527960,
+    "triangleCount": 68368,
+    "groups": [
+      "slab",
+      "wall",
+      "stair",
+      "glazing",
+      "door",
+      "mullion"
+    ],
+    "note": "Building fabric only. Furniture, sanitary fixtures, railings and the structural frame are excluded — together they are 82% of the model's triangles and none of them is visible from outside the building."
+  },
+  "invalidDiagnostics": {
+    "note": "Space-boundary strip sums. INVALID as envelope areas: room-height not storey-height, gross of openings, ~16% double-counted, missing 18 walls and 10 storefronts, and including 60.17 m2 of chain-link fence. Diagnostic only.",
+    "rawSumSqm": 2007.688,
+    "rawSumByElementType": {
+      "IfcWallStandardCase": 1494.791,
+      "IfcCurtainWall": 352.969,
+      "IfcDoor": 65.926,
+      "IfcWall": 75.444,
+      "IfcWindow": 18.558
+    }
+  }
+}
