@@ -160,6 +160,172 @@ export function collectFabric(api, webIfc, modelID, { includeStructure = false }
 }
 
 /**
+ * Building services: runs at their real geometry, components as proxy boxes.
+ *
+ * The discipline models carry manufacturer component libraries baked as faceted
+ * BREP — a valve with its thread profile, a light fixture with its lens. That
+ * detail is invisible at building scale and it is almost all of the payload:
+ * plumbing alone is 3,184,148 triangles, 238 MB as a GLB. `CIRCLE_SEGMENTS`
+ * cannot touch it, because nothing here is a parametric circle to re-tessellate
+ * (web-ifc says so out loud: "No basis found for brep!").
+ *
+ * What an MEP layer is actually for is seeing WHERE the services run and what
+ * serves what. So `IfcFlowSegment` — the duct and pipe runs, and the cheap part
+ * at ~128k triangles per discipline — keeps its real geometry, and every
+ * fitting, valve, terminal and plant item becomes its world-axis bounding box:
+ * twelve triangles that say "a component of this size sits here".
+ *
+ * That is a simplification and the manifest says so. It is not a silent one:
+ * the alternative is either shipping a quarter of a gigabyte or dropping the
+ * services entirely, and a box in the right place is a truer answer than an
+ * absence.
+ */
+export const SERVICE_GROUPS = Object.freeze({
+  duct: ["IfcFlowSegment"],
+  fitting: ["IfcFlowFitting"],
+  valve: ["IfcFlowController"],
+  terminal: ["IfcFlowTerminal"],
+  plant: [
+    "IfcEnergyConversionDevice",
+    "IfcFlowMovingDevice",
+    "IfcFlowStorageDevice",
+    "IfcFlowTreatmentDevice",
+  ],
+  equipment: ["IfcBuildingElementProxy", "IfcDistributionElement"],
+});
+
+/** Only runs keep their real mesh; everything else is proxied. */
+const SERVICE_DETAILED = Object.freeze(["IfcFlowSegment"]);
+
+const SERVICE_COLOUR = Object.freeze({
+  duct: [0.62, 0.74, 0.86, 1],
+  fitting: [0.52, 0.64, 0.78, 1],
+  valve: [0.86, 0.52, 0.36, 1],
+  terminal: [0.94, 0.80, 0.36, 1],
+  plant: [0.44, 0.70, 0.58, 1],
+  equipment: [0.60, 0.60, 0.64, 1],
+});
+
+/** Twelve triangles spanning a world-axis box. */
+function pushBox(bucket, min, max) {
+  const base = bucket.vertexCount;
+  const corners = [
+    [min[0], min[1], min[2]], [max[0], min[1], min[2]],
+    [max[0], max[1], min[2]], [min[0], max[1], min[2]],
+    [min[0], min[1], max[2]], [max[0], min[1], max[2]],
+    [max[0], max[1], max[2]], [min[0], max[1], max[2]],
+  ];
+  for (const c of corners) {
+    bucket.positions.push(c[0], c[1], c[2]);
+    // A box proxy is a marker, not a surface to light convincingly; a radial
+    // normal keeps it readable from every angle without per-face vertices.
+    const nx = c[0] - (min[0] + max[0]) / 2;
+    const ny = c[1] - (min[1] + max[1]) / 2;
+    const nz = c[2] - (min[2] + max[2]) / 2;
+    const len = Math.hypot(nx, ny, nz) || 1;
+    bucket.normals.push(nx / len, ny / len, nz / len);
+  }
+  bucket.vertexCount += 8;
+  const faces = [
+    0, 1, 2, 0, 2, 3, 5, 4, 7, 5, 7, 6, 4, 0, 3, 4, 3, 7,
+    1, 5, 6, 1, 6, 2, 3, 2, 6, 3, 6, 7, 4, 5, 1, 4, 1, 0,
+  ];
+  for (const f of faces) bucket.indices.push(base + f);
+}
+
+export function collectServices(api, webIfc, modelID) {
+  const groups = new Map();
+  const skipped = new Map();
+  let proxied = 0;
+  let detailed = 0;
+
+  api.StreamAllMeshes(modelID, (mesh) => {
+    const line = api.GetLine(modelID, mesh.expressID, false);
+    const typeName = line ? api.GetNameFromTypeCode(line.type) : null;
+    let group = null;
+    for (const [name, types] of Object.entries(SERVICE_GROUPS)) {
+      if (typeName && types.includes(typeName)) group = name;
+    }
+    if (!group) {
+      if (typeName) skipped.set(typeName, (skipped.get(typeName) ?? 0) + 1);
+      return;
+    }
+    let bucket = groups.get(group);
+    if (!bucket) {
+      bucket = { positions: [], normals: [], indices: [], vertexCount: 0 };
+      groups.set(group, bucket);
+    }
+
+    const keepDetail = SERVICE_DETAILED.includes(typeName);
+    const placed = mesh.geometries;
+    const min = [Infinity, Infinity, Infinity];
+    const max = [-Infinity, -Infinity, -Infinity];
+
+    for (let i = 0; i < placed.size(); i += 1) {
+      const part = placed.get(i);
+      const geometry = api.GetGeometry(modelID, part.geometryExpressID);
+      const verts = api.GetVertexArray(
+        geometry.GetVertexData(),
+        geometry.GetVertexDataSize(),
+      );
+      const idx = api.GetIndexArray(
+        geometry.GetIndexData(),
+        geometry.GetIndexDataSize(),
+      );
+      const m = part.flatTransformation;
+      const base = bucket.vertexCount;
+
+      for (let v = 0; v < verts.length; v += 6) {
+        const x = verts[v], y = verts[v + 1], z = verts[v + 2];
+        const wx = m[0] * x + m[4] * y + m[8] * z + m[12];
+        const wy = m[1] * x + m[5] * y + m[9] * z + m[13];
+        const wz = m[2] * x + m[6] * y + m[10] * z + m[14];
+        if (keepDetail) {
+          bucket.positions.push(wx, wy, wz);
+          const nx = verts[v + 3], ny = verts[v + 4], nz = verts[v + 5];
+          const rx = m[0] * nx + m[4] * ny + m[8] * nz;
+          const ry = m[1] * nx + m[5] * ny + m[9] * nz;
+          const rz = m[2] * nx + m[6] * ny + m[10] * nz;
+          const len = Math.hypot(rx, ry, rz) || 1;
+          bucket.normals.push(rx / len, ry / len, rz / len);
+          bucket.vertexCount += 1;
+        } else {
+          if (wx < min[0]) min[0] = wx;
+          if (wx > max[0]) max[0] = wx;
+          if (wy < min[1]) min[1] = wy;
+          if (wy > max[1]) max[1] = wy;
+          if (wz < min[2]) min[2] = wz;
+          if (wz > max[2]) max[2] = wz;
+        }
+      }
+      if (keepDetail) {
+        for (let t = 0; t < idx.length; t += 3) {
+          bucket.indices.push(base + idx[t], base + idx[t + 1], base + idx[t + 2]);
+        }
+      }
+    }
+
+    if (keepDetail) {
+      detailed += 1;
+    } else if (Number.isFinite(min[0])) {
+      // A zero-extent component would render as nothing; give it a token size
+      // so its position is still visible.
+      for (let a = 0; a < 3; a += 1) {
+        if (max[a] - min[a] < 0.02) {
+          const mid = (max[a] + min[a]) / 2;
+          min[a] = mid - 0.01;
+          max[a] = mid + 0.01;
+        }
+      }
+      pushBox(bucket, min, max);
+      proxied += 1;
+    }
+  });
+
+  return { groups, skipped, proxied, detailed, colours: SERVICE_COLOUR };
+}
+
+/**
  * Merge one model's fabric groups into an accumulator, re-basing indices.
  *
  * A building's fabric spans discipline models — the Clinic's roofs, floor slabs
@@ -196,7 +362,7 @@ const pad4 = (n) => (n + 3) & ~3;
  * and a live scene graph; this needs neither, and a deterministic byte-for-byte
  * output matters for a committed artifact whose hash is asserted.
  */
-export async function writeGlb(outPath, groups, { generator }) {
+export async function writeGlb(outPath, groups, { generator, colours = {} }) {
   const bin = [];
   let offset = 0;
   const bufferViews = [];
@@ -256,7 +422,7 @@ export async function writeGlb(outPath, groups, { generator }) {
       count: indices.length, type: "SCALAR",
     }) - 1;
 
-    const colour = GROUP_COLOUR[group] ?? [0.8, 0.8, 0.8, 1];
+    const colour = colours[group] ?? GROUP_COLOUR[group] ?? [0.8, 0.8, 0.8, 1];
     const materialIndex = materials.push({
       name: group,
       pbrMetallicRoughness: {

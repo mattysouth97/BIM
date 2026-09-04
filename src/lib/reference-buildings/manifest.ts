@@ -49,6 +49,23 @@ export type ReferenceBuildingManifest = Readonly<{
     locationIsAuthoringDefault: boolean;
     locationNote: string;
   }>;
+  /**
+   * Discipline models, each its own GLB so a layer nobody switches on is never
+   * downloaded. Optional because a reference building need not have services.
+   */
+  serviceLayers?: readonly Readonly<{
+    id: string;
+    ko: string;
+    en: string;
+    file: string;
+    byteLength: number;
+    triangleCount: number;
+    groups: readonly string[];
+    /** Runs kept at their real geometry. */
+    detailedRuns: number;
+    /** Fittings, valves, terminals and plant reduced to a bounding box. */
+    proxiedComponents: number;
+  }>[];
   model: Readonly<{
     file: string;
     byteLength: number;
@@ -71,6 +88,11 @@ export function isReferenceBuildingId(
 
 export function referenceBuildingModelUrl(id: ReferenceBuildingId): string {
   return `/reference-buildings/${id}/model.glb`;
+}
+
+/** Directory holding a building's generated files. */
+export function referenceBuildingBaseUrl(id: ReferenceBuildingId): string {
+  return `/reference-buildings/${id}`;
 }
 
 /**

@@ -26,7 +26,7 @@ import {
   classifyExternalElements,
 } from "./lib/ifc-envelope.mjs";
 import { netFaceAreasByElement } from "./lib/ifc-face-area.mjs";
-import { collectFabric, mergeFabric, writeGlb } from "./lib/ifc-glb.mjs";
+import { collectFabric, collectServices, mergeFabric, writeGlb } from "./lib/ifc-glb.mjs";
 
 const REPO = process.cwd();
 const CACHE =
@@ -50,6 +50,15 @@ const CLINIC = Object.freeze({
   files: [
     { role: "architectural", fileName: "Clinic_Architectural.ifc" },
     { role: "structural", fileName: "Clinic_Structural.ifc" },
+    { role: "hvac", fileName: "Clinic_HVAC.ifc" },
+    { role: "electrical", fileName: "Clinic_Electrical.ifc" },
+    { role: "plumbing", fileName: "Clinic_Plumbing.ifc" },
+  ],
+  /** Discipline models rendered as their own toggleable layer. */
+  serviceLayers: [
+    { id: "hvac", role: "hvac", ko: "냉난방환기", en: "HVAC" },
+    { id: "electrical", role: "electrical", ko: "전기", en: "Electrical" },
+    { id: "plumbing", role: "plumbing", ko: "급탕/배관", en: "Plumbing" },
   ],
   /** The exterior wall type; both IfcWallStandardCase and IfcWall carry it. */
   exteriorWallMatch: "Exterior - Insul Panel",
@@ -97,7 +106,9 @@ async function main() {
     sources.map((s) => s.cachePath),
     { wasmDir: path.join(REPO, "node_modules", "web-ifc") + path.sep },
   );
-  const [arch, struct] = files;
+  const byRole = new Map(sources.map((s, i) => [s.role, files[i]]));
+  const arch = byRole.get("architectural");
+  const struct = byRole.get("structural");
 
   // ── What the model states ──────────────────────────────────────────────
   const storeys = extractStoreys(arch, webIfc);
@@ -140,13 +151,43 @@ async function main() {
     Math.abs(longitudeDeg + 71.05978) < 1e-3;
 
   // ── Fabric geometry for the viewer ─────────────────────────────────────
+  const generator = `bimfit build-reference-building (web-ifc ${webIfcVersion()})`;
   const fabric = new Map();
-  for (const file of files) {
+  for (const file of [arch, struct]) {
     mergeFabric(fabric, collectFabric(api, webIfc, file.modelId).groups);
   }
-  const glb = await writeGlb(path.join(outDir, "model.glb"), fabric, {
-    generator: `bimfit build-reference-building (web-ifc ${webIfcVersion()})`,
-  });
+  const glb = await writeGlb(path.join(outDir, "model.glb"), fabric, { generator });
+
+  // One GLB per discipline, so a layer that is never switched on is never
+  // downloaded. Together they are 17 MB; as one file they would double the
+  // page's cost for everyone who only wanted to look at the building.
+  const serviceLayers = [];
+  for (const layer of CLINIC.serviceLayers) {
+    const file = byRole.get(layer.role);
+    if (!file) continue;
+    const collected = collectServices(api, webIfc, file.modelId);
+    const written = await writeGlb(
+      path.join(outDir, `${layer.id}.glb`),
+      collected.groups,
+      { generator, colours: collected.colours },
+    );
+    serviceLayers.push({
+      id: layer.id,
+      ko: layer.ko,
+      en: layer.en,
+      file: `${layer.id}.glb`,
+      byteLength: written.byteLength,
+      triangleCount: written.triangleCount,
+      groups: written.groups,
+      detailedRuns: collected.detailed,
+      proxiedComponents: collected.proxied,
+    });
+    console.log(
+      `    ${layer.id}.glb`.padEnd(20) +
+        `${(written.byteLength / 1048576).toFixed(2)} MB, ` +
+        `${written.detailedLabel ?? ""}${collected.detailed} runs + ${collected.proxied} proxies`,
+    );
+  }
 
   const round = (n) => Math.round(n * 100) / 100;
   const manifest = {
@@ -195,6 +236,7 @@ async function main() {
           "The building's real location is redacted; no climate may be taken from it."
         : "IfcSite coordinates recorded; not verified against any other source.",
     },
+    serviceLayers,
     model: {
       file: "model.glb",
       byteLength: glb.byteLength,
@@ -204,6 +246,13 @@ async function main() {
         "Building fabric only. Furniture, sanitary fixtures, railings and the " +
         "structural frame are excluded — together they are 82% of the model's " +
         "triangles and none of them is visible from outside the building.",
+      serviceNote:
+        "Service layers show runs (IfcFlowSegment) at their real geometry and " +
+        "every fitting, valve, terminal and plant item as its bounding box. " +
+        "The discipline models carry manufacturer component meshes — plumbing " +
+        "alone is 3,184,148 triangles, 238 MB — whose detail is invisible at " +
+        "building scale. A box in the right place is a simplification, and a " +
+        "stated one.",
     },
     /**
      * Recorded so a future reader who recomputes a space-boundary sum finds it

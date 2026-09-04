@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 import {
   isReferenceBuildingId,
   loadReferenceBuildingManifest,
+  referenceBuildingBaseUrl,
   referenceBuildingModelUrl,
 } from "@/lib/reference-buildings/manifest";
 import { ReferenceModelViewer } from "@/components/reference-building/reference-model-viewer";
@@ -66,6 +67,7 @@ export default async function ReferenceBuildingPage({ params }: Props) {
         <ReferenceModelViewer
           manifest={manifest}
           modelUrl={referenceBuildingModelUrl(id)}
+          baseUrl={referenceBuildingBaseUrl(id)}
           locale="ko"
         />
       </section>
