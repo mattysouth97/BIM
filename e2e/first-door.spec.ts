@@ -3,15 +3,21 @@ import { test, expect } from "@playwright/test";
 import { seedSeenTours } from "./helpers/app-state";
 
 /**
- * The canonical workflow begins at the 건축물대장. The landing page IS the
- * register lookup: find the real building, and its register becomes a baseline
- * energy model. A drawing and the sample are ways into the same diagnosis and
- * sit underneath it, never beside it as equal choices.
+ * The canonical workflow begins at the 건축물대장: find the real building, and
+ * its register becomes a baseline energy model. A drawing and the sample are
+ * ways into the same diagnosis and sit underneath it, never beside it as equal
+ * choices.
+ *
+ * That sheet used to be the landing page. `/` is a gallery of the models the
+ * project has taken in, so the sheet has its own address now — and these tests
+ * enter through it, because the door itself is what they are about. The gallery
+ * has its own describe at the bottom of this file.
  */
+const REGISTER_URL = "/diagnostics/new?method=ledger";
 test.describe("First door", () => {
   test.beforeEach(async ({ page }) => {
     await seedSeenTours(page);
-    await page.goto("/");
+    await page.goto(REGISTER_URL);
   });
 
   test("opens on the building register", async ({ page }) => {
@@ -58,7 +64,7 @@ test.describe("First door", () => {
     const headerAction = page.getByTestId("header-new-diagnostic");
 
     await expect(headerAction).toBeVisible();
-    await expect(headerAction).toHaveAttribute("href", "/");
+    await expect(headerAction).toHaveAttribute("href", REGISTER_URL);
     await expect(
       page.getByRole("button", { name: /(라이트|다크) 모드/ }),
     ).toBeVisible();
@@ -78,7 +84,7 @@ test.describe("First door", () => {
     await expect(headerAction).toHaveAccessibleName("New Energy Diagnostic");
   });
 
-  test("the sample reaches a diagnosed building from the landing page", async ({
+  test("the sample reaches a diagnosed building from the register sheet", async ({
     page,
   }) => {
     await page.getByTestId("landing-sample-diagnostic").click();
@@ -110,7 +116,7 @@ test.describe("First door on a phone", () => {
     page,
   }) => {
     await seedSeenTours(page);
-    await page.goto("/");
+    await page.goto(REGISTER_URL);
 
     await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible();
     await expect(page.getByTestId("landing-sample-diagnostic")).toBeVisible();
@@ -120,5 +126,47 @@ test.describe("First door on a phone", () => {
       () => document.documentElement.scrollWidth - window.innerWidth,
     );
     expect(overflow).toBeLessThanOrEqual(1);
+  });
+});
+
+test.describe("Landing gallery", () => {
+  test.beforeEach(async ({ page }) => {
+    await seedSeenTours(page);
+    await page.goto("/");
+  });
+
+  test("shows the models and nothing else", async ({ page }) => {
+    const gallery = page.getByTestId("landing-gallery");
+    await expect(gallery).toBeVisible();
+
+    // One model so far: the clinic being ingested.
+    await expect(page.getByTestId("gallery-item-clinic")).toBeVisible();
+    await expect(gallery.locator("> li")).toHaveCount(1);
+
+    // The register sheet's furniture is gone from this page entirely.
+    await expect(page.getByTestId("landing-ledger-lookup")).toHaveCount(0);
+    await expect(page.getByTestId("diagnostic-method-upload")).toHaveCount(0);
+    await expect(page.getByTestId("landing-sample-diagnostic")).toHaveCount(0);
+  });
+
+  test("carries no background image", async ({ page }) => {
+    // The plate was the landing's hero render. It is not merely hidden — the
+    // page must not request an image at all, so a leftover <img> would fail
+    // here even if CSS had made it invisible.
+    await expect(page.locator("img.landing-plate")).toHaveCount(0);
+    await expect(page.locator("main img")).toHaveCount(0);
+
+    const backgrounds = await page.evaluate(() =>
+      Array.from(document.querySelectorAll("main, main *"))
+        .map((el) => getComputedStyle(el).backgroundImage)
+        .filter((value) => value.includes("url(")),
+    );
+    expect(backgrounds).toEqual([]);
+  });
+
+  test("the header still opens the register lookup", async ({ page }) => {
+    await page.getByTestId("header-new-diagnostic").click();
+    await expect(page).toHaveURL(/method=ledger/);
+    await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible();
   });
 });

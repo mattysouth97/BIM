@@ -87,8 +87,8 @@ test.describe("Canonical energy diagnostic", () => {
     }, { storageKey: APP_STORAGE_KEY });
   });
 
-  test("gathers every way in on the one landing page", async ({ page }) => {
-    await page.goto("/");
+  test("gathers every way in on the one register sheet", async ({ page }) => {
+    await page.goto("/diagnostics/new?method=ledger");
 
     // The register lookup is the page, not a choice among choices.
     await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible();
@@ -108,9 +108,10 @@ test.describe("Canonical energy diagnostic", () => {
       "/building/demo",
     );
 
-    // There is no second entry screen any more.
+    // There is still no second entry screen: a method-less arrival lands on
+    // this same sheet rather than on a second set of doors.
     await page.goto("/diagnostics/new");
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/method=ledger/);
     await expect(page.locator('a[href^="/studio"]')).toHaveCount(0);
     await expect(page.locator('a[href^="/building/drawing"]')).toHaveCount(0);
   });

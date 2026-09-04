@@ -343,8 +343,14 @@
   letter-spacing: 0.06em;
 }
 
+/* JetBrains Mono and Geist Mono are both latin-subset, so a Hangul glyph in a
+   stamp fell through to a monospace system face that has none and rendered as
+   a tofu box ("모델링 중" lost its 중). The Korean faces are named explicitly
+   rather than left to the generic, which is what failed. */
 .landing-stamp {
-  font-family: var(--font-mono-data), var(--font-geist-mono), ui-monospace, monospace;
+  font-family:
+    var(--font-mono-data), var(--font-geist-mono), ui-monospace, "Malgun Gothic",
+    "Apple SD Gothic Neo", "Noto Sans KR", monospace, sans-serif;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -480,4 +486,107 @@
 
 .cad-mass {
   cursor: pointer;
+}
+
+/* ─── Landing gallery ───────────────────────────────────────────────────── */
+
+/* One column that fills, capped so a single card does not stretch into a
+   banner. `auto-fill` rather than `auto-fit`: with one model in the gallery,
+   `auto-fit` would collapse the empty tracks and centre-stretch the lone card;
+   `auto-fill` keeps the grid a grid and leaves the card its own width. */
+/* No list-style/margin/padding reset here: Tailwind's preflight already zeroes
+   them on `ul`, and this rule sits OUTSIDE `@layer`, so a `margin: 0` in it
+   outranks every Tailwind margin utility — `mt-14` on the grid silently did
+   nothing until these three lines came out. */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 24rem));
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.gallery-card {
+  box-shadow: 0 1px 2px rgb(28 31 30 / 0.04);
+  transition:
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.gallery-card:hover {
+  border-color: color-mix(in srgb, var(--foreground) 22%, var(--border));
+  box-shadow: 0 10px 30px rgb(28 31 30 / 0.08);
+}
+
+/* The plate's ground is drawn, not photographed — a drafting grid in CSS, so
+   the gallery ships no background image of any kind. */
+.gallery-plate {
+  background-color: #eef1ef;
+  background-image:
+    linear-gradient(to right, rgb(75 93 87 / 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(75 93 87 / 0.07) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.gallery-plate-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.gallery-plate-band {
+  fill: color-mix(in srgb, var(--foreground) 7%, transparent);
+}
+
+.gallery-datum-line {
+  stroke: color-mix(in srgb, var(--foreground) 55%, transparent);
+  stroke-width: 1;
+}
+
+/* A datum with no spaces on it is a reference line, not a floor. Dashed so the
+   difference is visible without reading the space count. */
+.gallery-datum-line-thin {
+  stroke: color-mix(in srgb, var(--foreground) 30%, transparent);
+  stroke-width: 0.75;
+  stroke-dasharray: 4 3;
+}
+
+.gallery-datum-name {
+  fill: color-mix(in srgb, var(--foreground) 78%, transparent);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 8.5px;
+  font-weight: 500;
+}
+
+.gallery-datum-elev,
+.gallery-plate-count {
+  fill: color-mix(in srgb, var(--foreground) 52%, transparent);
+  font-family: var(--font-mono-data), ui-monospace, monospace;
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+/* The page's opening sentence. Serif, because the rest of this product treats
+   a document voice as the honest one. */
+.gallery-lede {
+  font-family: var(--font-ko-display), var(--font-display-release), Georgia, serif;
+  font-size: clamp(1.15rem, 1.9vw, 1.5rem);
+  line-height: 1.4;
+  letter-spacing: -0.012em;
+  font-weight: 600;
+}
+
+.gallery-title {
+  font-family: var(--font-ko-display), var(--font-display-release), Georgia, serif;
+  font-size: 1.05rem;
+  line-height: 1.25;
+  letter-spacing: -0.012em;
+  font-weight: 600;
+}
+
+.gallery-figure {
+  font-family: var(--font-mono-data), var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }

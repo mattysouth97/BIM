@@ -6,10 +6,15 @@ import { TITLE_RESPONSE, EMPTY_LEDGER } from "./fixtures/ledger";
 // If no server is available in CI, tests will be skipped via the beforeEach check.
 
 test.describe("Building Flow", () => {
-  test("homepage exposes the canonical diagnostic action", async ({ page }) => {
+  test("homepage renders the model gallery", async ({ page }) => {
     await page.goto("/");
     // The homepage should render without crashing
     await expect(page.locator("body")).toBeVisible();
+    await expect(page.getByTestId("landing-gallery")).toBeVisible({ timeout: 10000 });
+  });
+
+  test("the register lookup has its own address", async ({ page }) => {
+    await page.goto("/diagnostics/new?method=ledger");
     await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible({ timeout: 10000 });
   });
 
@@ -74,7 +79,7 @@ test.describe("Building Flow", () => {
 
 test.describe("Landing diagnostic chrome", () => {
   test("hero states the Building Energy Diagnostic value proposition", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/diagnostics/new?method=ledger");
     // Retitled in P2-04 — assert the actual product identity, not just "a page".
     await expect(
       page.getByRole("heading", { name: /building energy diagnostic|건물 에너지 진단/i }),
@@ -82,7 +87,7 @@ test.describe("Landing diagnostic chrome", () => {
   });
 
   test("the new-diagnostic action is present", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/diagnostics/new?method=ledger");
     await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible({ timeout: 15000 });
   });
 

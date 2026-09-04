@@ -5,6 +5,7 @@ import {
   EnergyDiagnosticProduct,
   type DiagnosticEntryMethod,
 } from "@/components/energy-diagnostics/energy-diagnostic-product";
+import { RegisterSearchSheet } from "@/components/energy-diagnostics/register-search-sheet";
 
 export const metadata: Metadata = {
   title: "New Energy Diagnostic | BIMFIT",
@@ -36,11 +37,11 @@ function entryMethod(value: string | string[] | undefined) {
 export default async function NewEnergyDiagnosticPage({ searchParams }: Props) {
   const params = await searchParams;
   const method = entryMethod(params.method);
-  // There is ONE landing page. Without a chosen method this route used to
-  // render a second full-screen hero with its own set of entry doors, which
-  // meant the product had two front pages saying similar things. The entry
-  // choices now live on `/` beneath the register lookup.
-  if (!method) redirect("/");
+  // `/` is a gallery of the models the project has taken in, not an entry
+  // screen, so a method-less arrival can no longer be sent there — it would
+  // land on a page with nothing to start. Step 1 of the workflow is the
+  // register lookup, so that is where a bare visit goes.
+  if (!method) redirect("/diagnostics/new?method=ledger");
   const rawProject = Array.isArray(params.project)
     ? params.project[0]
     : params.project;
@@ -51,9 +52,11 @@ export default async function NewEnergyDiagnosticPage({ searchParams }: Props) {
     : params.building;
   const initialBuildingId =
     rawBuilding && rawBuilding.length <= 200 ? rawBuilding : undefined;
-  // The register lookup IS the landing page, so it lives at `/` and nowhere
-  // else. This route only serves a building that has actually been chosen.
-  if (method === "ledger" && !initialBuildingId) redirect("/");
+  // The register lookup used to live on `/` and nowhere else, so this route
+  // bounced a building-less `method=ledger` back to the landing page. With the
+  // landing page now a gallery that bounce is a dead end — the lookup lives
+  // HERE instead, and this is the door the header points at.
+  if (method === "ledger" && !initialBuildingId) return <RegisterSearchSheet />;
   return (
     <EnergyDiagnosticProduct
       key={`${method ?? "start"}:${initialBuildingId ?? ""}`}

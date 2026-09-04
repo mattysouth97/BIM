@@ -5,7 +5,7 @@ import Link from "next/link";
 import { FileText, FileUp, PenTool } from "lucide-react";
 
 import { LedgerLookup } from "@/components/energy-diagnostics/ledger-lookup";
-import type { LandingCopy } from "@/lib/landing/copy";
+import { landingCopy } from "@/lib/landing/copy";
 import { BANNER_LAYER_META } from "@/lib/landing/layers";
 import { useAppStore } from "@/store/app-store";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
  * Korean official forms print their process this way, so the numbering is the
  * subject's own vernacular rather than decoration; the order is also real, and
  * the reader needs it. Each step states what the user gets, not what the system
- * does, so the landing teaches the whole product before anyone commits to it.
+ * does, so this sheet teaches the whole product before anyone commits to it.
  */
 const WORKFLOW_STEPS = [
   {
@@ -80,18 +80,34 @@ const FALLBACKS = [
 ] as const;
 
 /**
- * The landing page is step 1 of the workflow, not a brochure in front of it.
+ * Step 1 of the workflow: choose a real building out of the 건축물대장.
+ *
+ * This sheet used to BE the landing page. `/` is now a gallery of the models
+ * the project has taken in, so the sheet moved to its own address —
+ * `/diagnostics/new?method=ledger`, linked from the header on every page. It
+ * is unchanged otherwise, and it is still the only place the register lookup
+ * lives: moving it kept the product's primary door open, where deleting it
+ * with the landing page would have closed it.
+ *
  * One sheet: what this is, what the four steps produce, and the single field
  * group you have to fill in.
  */
-export function CadSheet({ copy }: { copy: LandingCopy }) {
+export function RegisterSearchSheet() {
   const language = useAppStore((state) => state.language);
   const locale = language === "ko" ? "ko" : "en";
   const isKo = locale === "ko";
+  const copy = landingCopy[locale];
   const meta = BANNER_LAYER_META.all;
 
   return (
-    <section className="relative isolate min-h-[inherit] w-full overflow-hidden">
+    <section className="landing-stage relative isolate w-full overflow-hidden">
+      <a
+        className="fixed left-3 top-0 z-[60] -translate-y-full rounded-md bg-primary px-2.5 py-1.5 text-xs text-primary-foreground focus:translate-y-2"
+        href="#bimfit-title"
+      >
+        {copy.skip}
+      </a>
+
       {/* ── 처리절차 ─────────────────────────────────────────────────────
           The only place the workflow is stated. There used to be two
           competing "you are here" markers; a reader could not tell which

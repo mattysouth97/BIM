@@ -7,10 +7,11 @@ import { expect, test } from "@playwright/test";
  */
 
 const LEDGER_URL = "/diagnostics/new?method=ledger&building=demo";
+const REGISTER_URL = "/diagnostics/new?method=ledger";
 
 test.describe("building register → baseline diagnosis", () => {
-  test("the register lookup is the landing page itself", async ({ page }) => {
-    await page.goto("/");
+  test("the register lookup is step 1 with nothing in front of it", async ({ page }) => {
+    await page.goto(REGISTER_URL);
     await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible();
     await expect(page.getByTestId("ledger-lookup")).toBeVisible();
     // Both ways of finding a building are offered.
@@ -19,14 +20,18 @@ test.describe("building register → baseline diagnosis", () => {
   });
 
   test("the register lookup exists in exactly one place", async ({ page }) => {
-    // It used to live here too, which made two pages say the same thing.
-    await page.goto("/diagnostics/new?method=ledger");
-    await expect(page).toHaveURL(/\/$/);
+    // It lives here and only here. `/` is the model gallery and states no
+    // register lookup of its own; a method-less arrival lands on this sheet.
+    await page.goto("/diagnostics/new");
+    await expect(page).toHaveURL(/method=ledger/);
     await expect(page.getByTestId("landing-ledger-lookup")).toBeVisible();
+
+    await page.goto("/");
+    await expect(page.getByTestId("landing-ledger-lookup")).toHaveCount(0);
   });
 
   test("the sample enters the four-step twin workflow", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(REGISTER_URL);
     await page.getByTestId("landing-sample-diagnostic").click();
     await expect(page).toHaveURL(/\/building\/demo$/);
     // 건물 검색 → 도면 업로드 → 디지털 트윈 → 보고서

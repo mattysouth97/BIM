@@ -180,7 +180,10 @@ export function EnergyDiagnosticProduct({
             </Button>
           ) : (
             <Button asChild variant="ghost" size="sm">
-              <Link href="/">
+              {/* "Start over" means start the workflow again, so it goes to
+                  step 1. `/` is the model gallery now and would strand the
+                  user on a page with nothing to restart. */}
+              <Link href="/diagnostics/new?method=ledger">
                 <ArrowLeft className="size-4" />
                 {locale === "ko" ? "처음으로" : "Start over"}
               </Link>
@@ -220,7 +223,7 @@ export function EnergyDiagnosticProduct({
         >
       <header className="flex min-h-12 flex-wrap items-center gap-3 border-b bg-background px-3 py-2 sm:px-4">
         <Button asChild variant="ghost" size="sm">
-          <Link href="/">
+          <Link href="/diagnostics/new?method=ledger">
             <ArrowLeft className="size-4" />
             {locale === "ko" ? "처음으로" : "Start over"}
           </Link>

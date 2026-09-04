@@ -75,20 +75,26 @@ export function Header() {
           </Link>
 
           <div className="flex shrink-0 items-center gap-1">
-            <Button asChild variant="outline" size="sm" className="h-8 px-2 shadow-xs sm:px-3">
-              <Link
-                href="/"
-                data-testid="header-new-diagnostic"
-                aria-label={newDiagnosticLabel}
-                aria-current={pathname?.startsWith("/diagnostics") ? "page" : undefined}
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">{newDiagnosticLabel}</span>
-                <span aria-hidden className="sm:hidden">
-                  {language === "ko" ? "새 진단" : "New"}
-                </span>
-              </Link>
-            </Button>
+            {/* The gallery is deliberately bare: the diagnostic action and the
+                API-key control are hidden there and kept everywhere else. `/`
+                is the model gallery now, so this button points at step 1's own
+                address rather than at home. */}
+            {isLanding ? null : (
+              <Button asChild variant="outline" size="sm" className="h-8 px-2 shadow-xs sm:px-3">
+                <Link
+                  href="/diagnostics/new?method=ledger"
+                  data-testid="header-new-diagnostic"
+                  aria-label={newDiagnosticLabel}
+                  aria-current={pathname?.startsWith("/diagnostics") ? "page" : undefined}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">{newDiagnosticLabel}</span>
+                  <span aria-hidden className="sm:hidden">
+                    {language === "ko" ? "새 진단" : "New"}
+                  </span>
+                </Link>
+              </Button>
+            )}
 
             <Button
               variant="ghost"
@@ -117,17 +123,19 @@ export function Header() {
               <span className="sr-only">Toggle theme</span>
             </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              onClick={() => setApiKeyDialogOpen(true)}
-              title={apiKeyLabel}
-              aria-label={apiKeyLabel}
-            >
-              <Key className="h-4 w-4" />
-              <span className="sr-only">API Key settings</span>
-            </Button>
+            {isLanding ? null : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={() => setApiKeyDialogOpen(true)}
+                title={apiKeyLabel}
+                aria-label={apiKeyLabel}
+              >
+                <Key className="h-4 w-4" />
+                <span className="sr-only">API Key settings</span>
+              </Button>
+            )}
           </div>
         </div>
       </header>
