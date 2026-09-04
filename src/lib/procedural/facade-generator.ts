@@ -163,9 +163,30 @@ function countWindowColumns(wallLength: number, facade: FacadeConfig): number {
   return Math.max(1, Math.round(maxCount * Math.min(facade.windowRatio / 0.4, 1.0)));
 }
 
+/**
+ * Deterministic scatter in [0,1) for the glass-or-spandrel choice.
+ *
+ * The previous form was `(seed * 16807) % 2147483647 / 2147483647` over a seed
+ * of `floorNo * 397 + ...`. A Lehmer step only looks random once it wraps, and
+ * these seeds are far too small to reach the modulus — so it never wrapped and
+ * the "random" value was just `seed / 127773`, rising monotonically with
+ * floorNo. Every bay below the height where that ramp crossed
+ * `solidPanelChance` came out solid and every bay above it came out glass: a
+ * curtain-wall tower lost its bottom three storeys of glazing, and a punched-
+ * window building (chance 0.15) had no glass at all below floor ~48. Mixing
+ * the inputs through a real avalanche hash keeps the choice stable per bay
+ * without tying it to height.
+ */
 function seededRandom(floorNo: number, colIndex: number, faceIndex: number): number {
-  const seed = floorNo * 397 + colIndex * 71 + faceIndex * 13;
-  return ((seed * 16807) % 2147483647) / 2147483647;
+  let h = Math.imul(floorNo | 0, 0x27d4eb2d);
+  h = Math.imul(h ^ (colIndex | 0), 0x165667b1);
+  h = Math.imul(h ^ (faceIndex | 0), 0x9e3779b1);
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
 }
 
 interface WindowLayout {
