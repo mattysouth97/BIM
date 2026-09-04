@@ -132,6 +132,33 @@ async function main() {
       name.includes(CLINIC.exteriorWallMatch),
     { heightSplitM: CLINIC.roofDatumM },
   );
+  // How many walls SHOULD there be, counted from the file's own entity list
+  // rather than from anything the geometry pass produced?
+  //
+  // This is a separate question from whether a measurement is sound, and the
+  // flags on `netFaceArea` cannot answer it: an element whose mesh the
+  // streamer never emits produces no result at all, so there is nothing for a
+  // flag to hang off. It does not read as zero — it is simply absent, and the
+  // total is quietly smaller. bim-bf found 55 of 934 walls vanishing that way
+  // on another model, including 50 of 51 `kozijn` frames.
+  let namedWalls = 0;
+  for (const type of [webIfc.IFCWALLSTANDARDCASE, webIfc.IFCWALL]) {
+    for (const line of arch.byType(type)) {
+      if (String(str(line.Name) ?? "").includes(CLINIC.exteriorWallMatch)) {
+        namedWalls += 1;
+      }
+    }
+  }
+  if (namedWalls !== exteriorWalls.size) {
+    throw new Error(
+      `${namedWalls} elements match the exterior wall type by name but only ` +
+        `${exteriorWalls.size} produced geometry. The missing ${namedWalls - exteriorWalls.size} ` +
+        `are absent from the total rather than zero in it, and no per-element ` +
+        `flag can report them. Either they carry a stated quantity to fall back ` +
+        `on, or the shortfall has to be explained before an area is published.`,
+    );
+  }
+
   let wallNet = 0;
   let wallBelowRoof = 0;
   let wallAboveRoof = 0;

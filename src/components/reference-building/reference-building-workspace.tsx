@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
+import type { SolvedConstruction } from "@/lib/reference-buildings/constructions";
 import { ReferenceModelViewer } from "./reference-model-viewer";
 
 export const FABRIC_LAYER = "fabric";
@@ -28,11 +29,14 @@ export function ReferenceBuildingWorkspace({
   manifest,
   modelUrl,
   baseUrl,
+  constructions,
   locale,
 }: {
   manifest: ReferenceBuildingManifest;
   modelUrl: string;
   baseUrl: string;
+  /** Solved on the server — see the note in `page.tsx`. */
+  constructions: readonly SolvedConstruction[];
   locale: "ko" | "en";
 }) {
   const isKo = locale === "ko";
@@ -167,6 +171,28 @@ export function ReferenceBuildingWorkspace({
           ) : null}
         </section>
 
+        {/* What the envelope is made of, and what that makes it worth
+            thermally. Worst first: the standing-seam roof at U 3.45 sits
+            beside an EPDM roof at 0.317, and an alphabetical list would bury
+            the worst surface in the building under the best one. */}
+        {constructions.length > 0 ? (
+          <section className="mt-6" data-testid="reference-model-constructions">
+            <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+              {isKo ? "외피 구성 · U-값" : "Envelope constructions · U-value"}
+            </p>
+            <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
+              {isKo
+                ? "층 순서와 두께는 모델이 명시한 사실입니다. 열전도율은 모두 가정이며, 각 층마다 근거를 답니다 — 이 파일에는 U-값도 재료 물성도 없습니다."
+                : "Layer order and thickness are stated by the model. Every conductivity is an assumption with a named basis — this file states no U-value and no material property."}
+            </p>
+            <div className="mt-3">
+              {constructions.map((c) => (
+                <Construction key={c.id} construction={c} isKo={isKo} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         <dl className="mt-6">
           <Stated
             label="연면적"
@@ -264,6 +290,55 @@ function FlowNote({
     <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
       <span className="text-foreground/70">{label}</span> — {body}
     </p>
+  );
+}
+
+/**
+ * One envelope assembly: its U-value, its layers, and what was assumed.
+ *
+ * The layers are shown because the U alone is unfalsifiable. A reader who can
+ * see 152 mm of bare stud cavity can argue with it; a reader given only
+ * "0.400 W/m²K" cannot.
+ */
+function Construction({
+  construction,
+  isKo,
+}: {
+  construction: SolvedConstruction;
+  isKo: boolean;
+}) {
+  const u = construction.uValueWPerM2K;
+  // Short name: the type prefix ("Basic Wall:", "Basic Roof:") is noise here.
+  const name = construction.name.replace(/^[^:]*:/, "");
+  return (
+    <div className="border-t border-border py-2.5">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="min-w-0 truncate text-[11px] text-foreground">{name}</span>
+        <span className="shrink-0 font-mono text-[12px] text-foreground">
+          {u === null ? "—" : `U ${u.toFixed(3)}`}
+        </span>
+      </div>
+      {u === null ? (
+        <p className="mt-1 font-mono text-[9px] leading-relaxed text-muted-foreground">
+          {isKo ? "해결 불가: " : "unresolved: "}
+          {construction.unresolved.join(" · ")}
+        </p>
+      ) : (
+        <div className="mt-1 font-mono text-[9px] leading-relaxed text-muted-foreground">
+          {construction.layers.map((l, i) => (
+            <div key={`${l.ifcName}-${i}`} className="flex gap-2">
+              <span className="w-12 shrink-0 text-right">
+                {(l.thicknessM * 1000).toFixed(0)}mm
+              </span>
+              <span className="w-14 shrink-0">
+                R {(l.resistanceM2KPerW ?? 0).toFixed(3)}
+              </span>
+              <span className="min-w-0 truncate">{l.ifcName}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

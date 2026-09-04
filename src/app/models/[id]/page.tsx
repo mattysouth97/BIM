@@ -14,6 +14,7 @@ import {
   referenceBuildingBaseUrl,
   referenceBuildingModelUrl,
 } from "@/lib/reference-buildings/manifest";
+import { envelopeConstructions } from "@/lib/reference-buildings/constructions";
 import { ReferenceBuildingWorkspace } from "@/components/reference-building/reference-building-workspace";
 
 type Props = { params: Promise<{ id: string }> };
@@ -36,11 +37,18 @@ export default async function ReferenceBuildingPage({ params }: Props) {
   // empty viewer: a page that renders nothing looks like a broken model.
   if (!manifest) notFound();
 
+  // Solved here rather than in the client component: the U-values are pure
+  // functions of the manifest plus the material library, and computing them on
+  // the server keeps the whole standards library out of the browser bundle for
+  // a page that only needs the answers.
+  const constructions = envelopeConstructions(manifest);
+
   return (
     <ReferenceBuildingWorkspace
       manifest={manifest}
       modelUrl={referenceBuildingModelUrl(id)}
       baseUrl={referenceBuildingBaseUrl(id)}
+      constructions={constructions}
       locale="ko"
     />
   );

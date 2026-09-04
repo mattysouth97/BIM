@@ -328,3 +328,20 @@ export function solveConstructions(
 ): readonly SolvedConstruction[] {
   return (manifest.assemblies ?? []).map(solveConstruction);
 }
+
+/**
+ * The assemblies that separate inside from outside, worst first.
+ *
+ * Worst first because that is the order the question gets asked in: the
+ * standing-seam roof at U 3.45 sits beside an EPDM roof at 0.317, and burying
+ * the bad one under an alphabetical list is how a building comes to look
+ * better than it is. Interior partitions are excluded — they move heat between
+ * rooms, not out of the building.
+ */
+export function envelopeConstructions(
+  manifest: ReferenceBuildingManifest,
+): readonly SolvedConstruction[] {
+  return solveConstructions(manifest)
+    .filter((c) => /exterior|roof|slab on grade|foundation/i.test(c.name))
+    .sort((a, b) => (b.uValueWPerM2K ?? -1) - (a.uValueWPerM2K ?? -1));
+}
