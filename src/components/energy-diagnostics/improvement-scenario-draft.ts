@@ -27,6 +27,10 @@ import type {
   EnergyScenario,
 } from "@/lib/energy-diagnostics/types";
 
+// Type-only: erased at runtime, so this module stays free of the engine graph
+// that model-operations pulls in.
+import type { ImprovementScenarioValues } from "./model-operations";
+
 export type ImprovementScenarioDraft = Readonly<{
   windowUValueWPerM2K: number | "";
   infiltrationAch: number | "";
@@ -208,4 +212,31 @@ export function scenarioMatchesImprovementDraft(
         Math.max(1, Math.abs(evaluatedValue)) * 1e-9
     );
   });
+}
+
+/**
+ * The draft as the scenario runner wants it: only the fields the user actually
+ * filled in. A blank field means "keep the baseline value", so it must be
+ * ABSENT from the result rather than present as 0 or "" — an empty string
+ * coerced to a number would silently pin the parameter to zero.
+ */
+export function scenarioValuesFromDraft(
+  draft: ImprovementScenarioDraft,
+): ImprovementScenarioValues {
+  return {
+    ...(draft.windowUValueWPerM2K === ""
+      ? {}
+      : { windowUValueWPerM2K: draft.windowUValueWPerM2K }),
+    ...(draft.infiltrationAch === "" ? {} : { infiltrationAch: draft.infiltrationAch }),
+    ...(draft.heatingCop === "" ? {} : { heatingCop: draft.heatingCop }),
+    ...(draft.windowShgc === "" ? {} : { windowShgc: draft.windowShgc }),
+    ...(draft.openingAreaScale === ""
+      ? {}
+      : { openingAreaScale: draft.openingAreaScale }),
+  };
+}
+
+/** True when the user has filled in at least one field. */
+export function draftHasAnyValue(draft: ImprovementScenarioDraft): boolean {
+  return Object.values(draft).some((value) => value !== "");
 }

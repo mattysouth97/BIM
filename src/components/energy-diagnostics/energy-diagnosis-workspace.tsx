@@ -100,9 +100,11 @@ import {
 } from "./scene-object-ids";
 import {
   EMPTY_IMPROVEMENT_SCENARIO_DRAFT,
+  draftHasAnyValue,
   improvementDraftForScenario,
   initialImprovementScenarioDraft,
   scenarioMatchesImprovementDraft,
+  scenarioValuesFromDraft,
   type ImprovementScenarioDraft,
 } from "./improvement-scenario-draft";
 import { EvidenceInspector } from "./evidence-inspector";
@@ -119,7 +121,6 @@ import {
   runImprovementScenario,
   spatialResultsForRun,
   splitModelZoneBySpace,
-  type ImprovementScenarioValues,
 } from "./model-operations";
 import { AssemblyEditor } from "./assembly-editor";
 import { SensitivityPanel } from "./sensitivity-panel";
@@ -239,21 +240,11 @@ export function EnergyDiagnosisWorkspace({
   const [operation, setOperation] = useState<DiagnosisOperation>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [scenarioUValue, setScenarioUValue] = useState<number | "">(
-    initialScenarioDraft.windowUValueWPerM2K,
-  );
-  const [scenarioAch, setScenarioAch] = useState<number | "">(
-    initialScenarioDraft.infiltrationAch,
-  );
-  const [scenarioCop, setScenarioCop] = useState<number | "">(
-    initialScenarioDraft.heatingCop,
-  );
-  const [scenarioShgc, setScenarioShgc] = useState<number | "">(
-    initialScenarioDraft.windowShgc,
-  );
-  const [scenarioAreaScale, setScenarioAreaScale] = useState<number | "">(
-    initialScenarioDraft.openingAreaScale,
-  );
+  // One state, not five. The five fields are always read together and always
+  // written together (a restored scenario replaces all of them at once), so
+  // splitting them only created five chances to update four.
+  const [scenarioDraft, setScenarioDraft] =
+    useState<ImprovementScenarioDraft>(initialScenarioDraft);
   const [tierOneOutcome, setTierOneOutcome] =
     useState<TierOneModelBuildOutcome | null>(null);
   const [zoneSelection, setZoneSelection] = useState<readonly string[]>([]);
@@ -330,6 +321,14 @@ export function EnergyDiagnosisWorkspace({
   const spatialResults = useMemo(
     () => spatialResultsForRun(selectedSuccessfulRun),
     [selectedSuccessfulRun],
+  );
+
+  const setScenarioField = useCallback(
+    <K extends keyof ImprovementScenarioDraft>(
+      key: K,
+      value: ImprovementScenarioDraft[K],
+    ) => setScenarioDraft((current) => ({ ...current, [key]: value })),
+    [],
   );
 
   const emitModel = useCallback(
@@ -512,22 +511,6 @@ export function EnergyDiagnosisWorkspace({
         : null,
     [model, scenarioRun],
   );
-  const scenarioDraft = useMemo<ImprovementScenarioDraft>(
-    () => ({
-      windowUValueWPerM2K: scenarioUValue,
-      infiltrationAch: scenarioAch,
-      heatingCop: scenarioCop,
-      windowShgc: scenarioShgc,
-      openingAreaScale: scenarioAreaScale,
-    }),
-    [
-      scenarioAch,
-      scenarioAreaScale,
-      scenarioCop,
-      scenarioShgc,
-      scenarioUValue,
-    ],
-  );
   // Assembly-editor scenarios are authored by the layer editor, not by the
   // improvement draft fields, so an empty draft does not make them stale.
   const scenarioFromAssemblyEditor = Boolean(
@@ -550,11 +533,7 @@ export function EnergyDiagnosisWorkspace({
     (finding: DiagnosticFinding) => {
       if (!model || !canEvaluateFinding(finding)) return;
       selectFinding(finding);
-      setScenarioUValue("");
-      setScenarioAch("");
-      setScenarioCop("");
-      setScenarioShgc("");
-      setScenarioAreaScale("");
+      setScenarioDraft(EMPTY_IMPROVEMENT_SCENARIO_DRAFT);
       setActiveStage("compare");
       setImprovementEditorOpen(true);
       setNotice(
@@ -963,16 +942,10 @@ export function EnergyDiagnosisWorkspace({
     setNotice(null);
     await nextPaint();
     try {
-      const values: ImprovementScenarioValues = {
-        ...(scenarioUValue === ""
-          ? {}
-          : { windowUValueWPerM2K: scenarioUValue }),
-        ...(scenarioAch === "" ? {} : { infiltrationAch: scenarioAch }),
-        ...(scenarioCop === "" ? {} : { heatingCop: scenarioCop }),
-        ...(scenarioShgc === "" ? {} : { windowShgc: scenarioShgc }),
-        ...(scenarioAreaScale === "" ? {} : { openingAreaScale: scenarioAreaScale }),
-      };
-      const completed = runImprovementScenario(model, values);
+      const completed = runImprovementScenario(
+        model,
+        scenarioValuesFromDraft(scenarioDraft),
+      );
       emitModel(completed.model);
       onSimulationRun?.(completed.run);
       if (completed.run.status !== "succeeded") {
@@ -988,7 +961,7 @@ export function EnergyDiagnosisWorkspace({
       simulationInFlightRef.current = false;
       setOperation(null);
     }
-  }, [copy.simulationFailed, emitModel, model, onSimulationRun, scenarioAch, scenarioAreaScale, scenarioCop, scenarioShgc, scenarioUValue]);
+  }, [copy.simulationFailed, emitModel, model, onSimulationRun, scenarioDraft]);
 
   const evaluateAssembly = useCallback(
     async (constructionId: string, uValueWPerM2K: number, label: string) => {
@@ -1085,11 +1058,7 @@ export function EnergyDiagnosisWorkspace({
         const restoredDraft = restoredScenarioDefinition
           ? improvementDraftForScenario(loaded, restoredScenarioDefinition)
           : EMPTY_IMPROVEMENT_SCENARIO_DRAFT;
-        setScenarioUValue(restoredDraft.windowUValueWPerM2K);
-        setScenarioAch(restoredDraft.infiltrationAch);
-        setScenarioCop(restoredDraft.heatingCop);
-        setScenarioShgc(restoredDraft.windowShgc);
-        setScenarioAreaScale(restoredDraft.openingAreaScale);
+        setScenarioDraft(restoredDraft);
         setActiveStage(
           restoredBaseline ? "compare" : "review",
         );
@@ -1364,16 +1333,8 @@ export function EnergyDiagnosisWorkspace({
         scenarioRun,
         evaluatedScenario,
         scenarioComparisonIsPrior,
-        scenarioUValue,
-        onScenarioUValue: setScenarioUValue,
-        scenarioAch,
-        onScenarioAch: setScenarioAch,
-        scenarioCop,
-        onScenarioCop: setScenarioCop,
-        scenarioShgc,
-        onScenarioShgc: setScenarioShgc,
-        scenarioAreaScale,
-        onScenarioAreaScale: setScenarioAreaScale,
+        scenarioDraft,
+        onScenarioField: setScenarioField,
         operation,
         improvementEditorOpen,
         onImprovementEditorOpen: setImprovementEditorOpen,
@@ -1947,16 +1908,8 @@ function renderStagePanel({
   scenarioRun,
   evaluatedScenario,
   scenarioComparisonIsPrior,
-  scenarioUValue,
-  onScenarioUValue,
-  scenarioAch,
-  onScenarioAch,
-  scenarioCop,
-  onScenarioCop,
-  scenarioShgc,
-  onScenarioShgc,
-  scenarioAreaScale,
-  onScenarioAreaScale,
+  scenarioDraft,
+  onScenarioField,
   operation,
   improvementEditorOpen,
   onImprovementEditorOpen,
@@ -1991,16 +1944,11 @@ function renderStagePanel({
   scenarioRun: DegreeDaySimulationRun | null;
   evaluatedScenario: EnergyScenario | null;
   scenarioComparisonIsPrior: boolean;
-  scenarioUValue: number | "";
-  onScenarioUValue: (value: number | "") => void;
-  scenarioAch: number | "";
-  onScenarioAch: (value: number | "") => void;
-  scenarioCop: number | "";
-  onScenarioCop: (value: number | "") => void;
-  scenarioShgc: number | "";
-  onScenarioShgc: (value: number | "") => void;
-  scenarioAreaScale: number | "";
-  onScenarioAreaScale: (value: number | "") => void;
+  scenarioDraft: ImprovementScenarioDraft;
+  onScenarioField: <K extends keyof ImprovementScenarioDraft>(
+    key: K,
+    value: ImprovementScenarioDraft[K],
+  ) => void;
   operation: DiagnosisOperation;
   improvementEditorOpen: boolean;
   onImprovementEditorOpen: (open: boolean) => void;
@@ -2417,14 +2365,15 @@ function renderStagePanel({
               min="0.5"
               max="5"
               step="0.1"
-              value={scenarioUValue}
+              value={scenarioDraft.windowUValueWPerM2K}
               placeholder={String(
                 model.envelope.constructions.find(
                   (construction) => construction.kind === "window",
                 )?.uValueWPerM2K.value ?? "",
               )}
               onChange={(event) =>
-                onScenarioUValue(
+                onScenarioField(
+                  "windowUValueWPerM2K",
                   event.target.value === "" ? "" : Number(event.target.value),
                 )
               }
@@ -2440,10 +2389,13 @@ function renderStagePanel({
               min="0"
               max="3"
               step="0.05"
-              value={scenarioAch}
+              value={scenarioDraft.infiltrationAch}
               placeholder={factValue(model.envelope.infiltrationAirChangesPerHour)}
               onChange={(event) =>
-                onScenarioAch(event.target.value === "" ? "" : Number(event.target.value))
+                onScenarioField(
+                  "infiltrationAch",
+                  event.target.value === "" ? "" : Number(event.target.value),
+                )
               }
               className="mt-1.5 h-8 font-mono text-xs"
               aria-label={locale === "ko" ? "대안 침기율" : "Alternative infiltration rate"}
@@ -2457,10 +2409,13 @@ function renderStagePanel({
               min="0.5"
               max="8"
               step="0.1"
-              value={scenarioCop}
+              value={scenarioDraft.heatingCop}
               placeholder={model.systems.hvac[0] ? factValue(model.systems.hvac[0].heatingEfficiency) : ""}
               onChange={(event) =>
-                onScenarioCop(event.target.value === "" ? "" : Number(event.target.value))
+                onScenarioField(
+                  "heatingCop",
+                  event.target.value === "" ? "" : Number(event.target.value),
+                )
               }
               className="mt-1.5 h-8 font-mono text-xs"
               aria-label={locale === "ko" ? "대안 난방 COP" : "Alternative heating COP"}
@@ -2474,15 +2429,10 @@ function renderStagePanel({
             disabled={
               operation != null ||
               !baselineRun?.result ||
-              ![
-                scenarioUValue,
-                scenarioAch,
-                scenarioCop,
-                scenarioShgc,
-                scenarioAreaScale,
-              ].some((value) => value !== "") ||
-              (scenarioUValue !== "" &&
-                (!Number.isFinite(scenarioUValue) || scenarioUValue <= 0))
+              !draftHasAnyValue(scenarioDraft) ||
+              (scenarioDraft.windowUValueWPerM2K !== "" &&
+                (!Number.isFinite(scenarioDraft.windowUValueWPerM2K) ||
+                  scenarioDraft.windowUValueWPerM2K <= 0))
             }
           >
             <Gauge className="size-3.5" /> {copy.runScenario}
@@ -2500,9 +2450,12 @@ function renderStagePanel({
                 min="0"
                 max="1"
                 step="0.05"
-                value={scenarioShgc}
+                value={scenarioDraft.windowShgc}
                 onChange={(event) =>
-                  onScenarioShgc(event.target.value === "" ? "" : Number(event.target.value))
+                  onScenarioField(
+                  "windowShgc",
+                  event.target.value === "" ? "" : Number(event.target.value),
+                )
                 }
                 className="mt-1.5 h-8 font-mono text-xs"
                 aria-label={locale === "ko" ? "대안 창호 SHGC" : "Alternative window SHGC"}
@@ -2515,9 +2468,12 @@ function renderStagePanel({
                 min="0.1"
                 max="3"
                 step="0.05"
-                value={scenarioAreaScale}
+                value={scenarioDraft.openingAreaScale}
                 onChange={(event) =>
-                  onScenarioAreaScale(event.target.value === "" ? "" : Number(event.target.value))
+                  onScenarioField(
+                  "openingAreaScale",
+                  event.target.value === "" ? "" : Number(event.target.value),
+                )
                 }
                 className="mt-1.5 h-8 font-mono text-xs"
                 aria-label={locale === "ko" ? "창 면적 배율" : "Glazing-area scale"}

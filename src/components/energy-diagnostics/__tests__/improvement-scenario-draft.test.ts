@@ -19,9 +19,11 @@ import type {
 
 import {
   EMPTY_IMPROVEMENT_SCENARIO_DRAFT,
+  draftHasAnyValue,
   improvementDraftForScenario,
   initialImprovementScenarioDraft,
   scenarioMatchesImprovementDraft,
+  scenarioValuesFromDraft,
 } from "../improvement-scenario-draft";
 
 const NOW = "2026-04-02T00:00:00.000Z";
@@ -177,5 +179,57 @@ describe("improvement scenario draft", () => {
         heatingCop: 3.5,
       }),
     ).toBe(false);
+  });
+});
+
+describe("draft → scenario values", () => {
+  it("omits a blank field entirely rather than sending zero", () => {
+    const values = scenarioValuesFromDraft({
+      ...EMPTY_IMPROVEMENT_SCENARIO_DRAFT,
+      windowUValueWPerM2K: 1.2,
+    });
+    // The distinction that matters: a blank field means "keep the baseline".
+    // Present-as-0 would pin the parameter to zero and silently invent a
+    // building with no infiltration and a COP of nothing.
+    expect(values).toEqual({ windowUValueWPerM2K: 1.2 });
+    expect("infiltrationAch" in values).toBe(false);
+    expect("heatingCop" in values).toBe(false);
+  });
+
+  it("keeps a legitimate zero that the user actually typed", () => {
+    const values = scenarioValuesFromDraft({
+      ...EMPTY_IMPROVEMENT_SCENARIO_DRAFT,
+      infiltrationAch: 0,
+    });
+    expect(values).toEqual({ infiltrationAch: 0 });
+  });
+
+  it("carries every field when all are filled", () => {
+    expect(
+      scenarioValuesFromDraft({
+        windowUValueWPerM2K: 1.2,
+        infiltrationAch: 0.12,
+        heatingCop: 3.5,
+        windowShgc: 0.4,
+        openingAreaScale: 0.8,
+      }),
+    ).toEqual({
+      windowUValueWPerM2K: 1.2,
+      infiltrationAch: 0.12,
+      heatingCop: 3.5,
+      windowShgc: 0.4,
+      openingAreaScale: 0.8,
+    });
+  });
+
+  it("reports an all-blank draft as having nothing to run", () => {
+    expect(draftHasAnyValue(EMPTY_IMPROVEMENT_SCENARIO_DRAFT)).toBe(false);
+    expect(
+      draftHasAnyValue({ ...EMPTY_IMPROVEMENT_SCENARIO_DRAFT, heatingCop: 3.5 }),
+    ).toBe(true);
+    // A typed zero is a value, not an absence.
+    expect(
+      draftHasAnyValue({ ...EMPTY_IMPROVEMENT_SCENARIO_DRAFT, infiltrationAch: 0 }),
+    ).toBe(true);
   });
 });
