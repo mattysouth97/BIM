@@ -84,7 +84,26 @@ export type ReferenceBuildingSpace = Readonly<{
   name: string;
   longName: string | null;
   storeyId: string;
+  /** As stated by the model's own area quantity. */
   floorAreaSqm: number;
+  /**
+   * Whether this area is FLOOR at all.
+   *
+   * An architectural area plan is not a floor-area schedule. This model counts
+   * six spaces named `ROOF` and three named `OPEN TO BELOW` — a roof surface
+   * modelled as a space, and double-height voids — which together are 2,541.5
+   * of its 6,935.8 m². Summing every `IfcSpace` therefore overstates the
+   * building's floor area by 37 %, and since floor area is the denominator of
+   * every intensity figure, that error would show up as an energy number 37 %
+   * too good with nothing anywhere to contradict it.
+   *
+   * This flag is separate from `conditioned` because they are different
+   * questions: a mechanical penthouse is floor but unconditioned, a void is
+   * neither, and a roof space is not floor even though it has an area.
+   */
+  countsAsFloorArea: boolean;
+  /** Why it does not, quoted into the record so the exclusion is auditable. */
+  excludedFromFloorAreaReason: string | null;
   /** Null when the model carries no volume quantity; the builder derives it. */
   volumeM3: number | null;
   conditioned: boolean;
@@ -206,7 +225,21 @@ export type ReferenceBuildingCounts = Readonly<{
   externalVirtualBoundaries: number;
   /** Boundaries whose geometry could not be resolved. Must be 0. */
   unresolvedBoundaries: number;
+  /**
+   * Floor only — the sum of spaces where `countsAsFloorArea` is true. This is
+   * the denominator of every intensity figure, so it is the one that must be
+   * right.
+   */
   totalFloorAreaSqm: number;
+  /**
+   * The model's own area-plan total, every space summed. Recorded because it
+   * is what the source document says and dropping it would make the record
+   * disagree with the file it cites — but it is NOT floor area, and nothing
+   * should divide energy by it.
+   */
+  areaPlanTotalSqm: number;
+  /** `areaPlanTotalSqm - totalFloorAreaSqm`, itemised by `spaces[]`. */
+  nonFloorAreaSqm: number;
   totalEnvelopeAreaSqm: number;
 }>;
 
