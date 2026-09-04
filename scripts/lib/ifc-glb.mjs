@@ -223,7 +223,7 @@ const SERVICE_DETAILED = Object.freeze([
   "IfcFlowStorageDevice",
 ]);
 
-const SERVICE_COLOUR = Object.freeze({
+export const SERVICE_COLOUR = Object.freeze({
   duct: [0.62, 0.74, 0.86, 1],
   fitting: [0.52, 0.64, 0.78, 1],
   valve: [0.86, 0.52, 0.36, 1],
@@ -398,7 +398,11 @@ const pad4 = (n) => (n + 3) & ~3;
  * and a live scene graph; this needs neither, and a deterministic byte-for-byte
  * output matters for a committed artifact whose hash is asserted.
  */
-export async function writeGlb(outPath, groups, { generator, colours = {} }) {
+export async function writeGlb(
+  outPath,
+  groups,
+  { generator, colours = {}, instanced = [] },
+) {
   const bin = [];
   let offset = 0;
   const bufferViews = [];
@@ -406,6 +410,28 @@ export async function writeGlb(outPath, groups, { generator, colours = {} }) {
   const meshes = [];
   const materials = [];
   const nodes = [];
+
+  // One material per group, shared by the merged bucket and by every
+  // instanced shape in that group — otherwise each of a few hundred instanced
+  // geometries would mint its own identical material.
+  const materialForGroup = new Map();
+  const materialFor = (group) => {
+    const existing = materialForGroup.get(group);
+    if (existing !== undefined) return existing;
+    const colour = colours[group] ?? GROUP_COLOUR[group] ?? [0.8, 0.8, 0.8, 1];
+    const index =
+      materials.push({
+        name: group,
+        pbrMetallicRoughness: {
+          baseColorFactor: colour,
+          metallicFactor: 0,
+          roughnessFactor: group === "glazing" ? 0.15 : 0.85,
+        },
+        ...(colour[3] < 1 ? { alphaMode: "BLEND", doubleSided: true } : {}),
+      }) - 1;
+    materialForGroup.set(group, index);
+    return index;
+  };
 
   const pushView = (typedArray, target) => {
     const bytes = Buffer.from(
@@ -458,16 +484,7 @@ export async function writeGlb(outPath, groups, { generator, colours = {} }) {
       count: indices.length, type: "SCALAR",
     }) - 1;
 
-    const colour = colours[group] ?? GROUP_COLOUR[group] ?? [0.8, 0.8, 0.8, 1];
-    const materialIndex = materials.push({
-      name: group,
-      pbrMetallicRoughness: {
-        baseColorFactor: colour,
-        metallicFactor: 0,
-        roughnessFactor: group === "glazing" ? 0.15 : 0.85,
-      },
-      ...(colour[3] < 1 ? { alphaMode: "BLEND", doubleSided: true } : {}),
-    }) - 1;
+    const materialIndex = materialFor(group);
 
     const meshIndex = meshes.push({
       name: group,
@@ -477,6 +494,87 @@ export async function writeGlb(outPath, groups, { generator, colours = {} }) {
       }],
     }) - 1;
     nodes.push({ name: group, mesh: meshIndex });
+  }
+
+  // Instanced shapes: the geometry once, and a TRS attribute set naming every
+  // place it sits. `EXT_mesh_gpu_instancing` turns each of these into a single
+  // three.js InstancedMesh — one draw call for 958 light fittings rather than
+  // 958 nodes, which is what makes real geometry affordable here at all.
+  let instancedPlacements = 0;
+  for (const shape of instanced) {
+    const use32 = shape.vertexCount > 65535;
+    const indices = use32
+      ? new Uint32Array(shape.indices)
+      : new Uint16Array(shape.indices);
+
+    const min = [Infinity, Infinity, Infinity];
+    const max = [-Infinity, -Infinity, -Infinity];
+    for (let i = 0; i < shape.positions.length; i += 3) {
+      for (let a = 0; a < 3; a += 1) {
+        if (shape.positions[i + a] < min[a]) min[a] = shape.positions[i + a];
+        if (shape.positions[i + a] > max[a]) max[a] = shape.positions[i + a];
+      }
+    }
+
+    const posAcc = accessors.push({
+      bufferView: pushView(shape.positions, 34962), componentType: 5126,
+      count: shape.vertexCount, type: "VEC3", min, max,
+    }) - 1;
+    const nrmAcc = accessors.push({
+      bufferView: pushView(shape.normals, 34962), componentType: 5126,
+      count: shape.vertexCount, type: "VEC3",
+    }) - 1;
+    const idxAcc = accessors.push({
+      bufferView: pushView(indices, 34963), componentType: use32 ? 5125 : 5123,
+      count: indices.length, type: "SCALAR",
+    }) - 1;
+
+    const count = shape.transforms.length;
+    instancedPlacements += count;
+    const translation = new Float32Array(count * 3);
+    const rotation = new Float32Array(count * 4);
+    const scale = new Float32Array(count * 3);
+    const tMin = [Infinity, Infinity, Infinity];
+    const tMax = [-Infinity, -Infinity, -Infinity];
+    for (let i = 0; i < count; i += 1) {
+      const trs = shape.transforms[i];
+      translation.set(trs.translation, i * 3);
+      rotation.set(trs.rotation, i * 4);
+      scale.set(trs.scale, i * 3);
+      for (let a = 0; a < 3; a += 1) {
+        if (trs.translation[a] < tMin[a]) tMin[a] = trs.translation[a];
+        if (trs.translation[a] > tMax[a]) tMax[a] = trs.translation[a];
+      }
+    }
+
+    const tAcc = accessors.push({
+      bufferView: pushView(translation), componentType: 5126,
+      count, type: "VEC3", min: tMin, max: tMax,
+    }) - 1;
+    const rAcc = accessors.push({
+      bufferView: pushView(rotation), componentType: 5126, count, type: "VEC4",
+    }) - 1;
+    const sAcc = accessors.push({
+      bufferView: pushView(scale), componentType: 5126, count, type: "VEC3",
+    }) - 1;
+
+    const meshIndex = meshes.push({
+      name: `${shape.group}-instanced`,
+      primitives: [{
+        attributes: { POSITION: posAcc, NORMAL: nrmAcc },
+        indices: idxAcc, material: materialFor(shape.group),
+      }],
+    }) - 1;
+
+    nodes.push({
+      name: `${shape.group}-instanced`,
+      mesh: meshIndex,
+      extensions: {
+        EXT_mesh_gpu_instancing: {
+          attributes: { TRANSLATION: tAcc, ROTATION: rAcc, SCALE: sAcc },
+        },
+      },
+    });
   }
 
   const json = {
@@ -489,6 +587,15 @@ export async function writeGlb(outPath, groups, { generator, colours = {} }) {
     accessors,
     bufferViews,
     buffers: [{ byteLength: offset }],
+    // Declared as required, not merely used: without the extension a reader
+    // would draw one copy of each shape at its own origin and silently lose
+    // every other placement, which is a wrong building rather than a plain one.
+    ...(instanced.length
+      ? {
+          extensionsUsed: ["EXT_mesh_gpu_instancing"],
+          extensionsRequired: ["EXT_mesh_gpu_instancing"],
+        }
+      : {}),
   };
 
   const jsonBuf = Buffer.from(JSON.stringify(json), "utf8");
@@ -516,7 +623,11 @@ export async function writeGlb(outPath, groups, { generator, colours = {} }) {
 
   return {
     byteLength: glb.length,
-    groups: nodes.map((n) => n.name),
+    groups: [...new Set(nodes.map((n) => n.name))],
+    /** Nodes, i.e. draw calls — an instanced shape is one however often placed. */
+    drawCalls: nodes.length,
+    instancedShapes: instanced.length,
+    instancedPlacements,
     triangleCount: accessors
       .filter((a) => a.type === "SCALAR")
       .reduce((sum, a) => sum + a.count / 3, 0),

@@ -115,8 +115,8 @@ export function ReferenceBuildingWorkspace({
                 label={isKo ? layer.ko : layer.en}
                 detail={
                   isKo
-                    ? `배관 ${layer.detailedRuns.toLocaleString()} · 부속 ${layer.proxiedComponents.toLocaleString()} · ${(layer.byteLength / 1048576).toFixed(1)} MB`
-                    : `${layer.detailedRuns.toLocaleString()} runs · ${layer.proxiedComponents.toLocaleString()} components · ${(layer.byteLength / 1048576).toFixed(1)} MB`
+                    ? `요소 ${layer.elements.toLocaleString()} · 형상 ${layer.instancedShapes.toLocaleString()}종 → ${layer.instancedPlacements.toLocaleString()}회 · ${(layer.byteLength / 1048576).toFixed(1)} MB`
+                    : `${layer.elements.toLocaleString()} elements · ${layer.instancedShapes.toLocaleString()} shapes → ${layer.instancedPlacements.toLocaleString()} placements · ${(layer.byteLength / 1048576).toFixed(1)} MB`
                 }
                 colour={LAYER_COLOUR[layer.id] ?? "#9aa0a6"}
                 on={active.has(layer.id)}
@@ -126,8 +126,8 @@ export function ReferenceBuildingWorkspace({
           </div>
           <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
             {isKo
-              ? "배관·덕트는 실제 형상, 밸브·기구·장비는 외곽 상자로 단순화했습니다. 레이어는 켤 때 내려받습니다."
-              : "Runs are real geometry; valves, terminals and plant are simplified. Layers download when switched on."}
+              ? "모든 부재가 모델의 실제 형상입니다. 반복되는 형상은 한 번만 담고 배치 정보로 놓았습니다. 레이어는 켤 때 내려받습니다."
+              : "Every component is the model's own geometry. A repeated shape is stored once and placed many times. Layers download when switched on."}
           </p>
           {/* What the fabric GLB leaves out, in the generator's own words.
               The manifest has carried this sentence since the first build and

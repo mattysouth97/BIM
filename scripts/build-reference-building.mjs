@@ -26,7 +26,8 @@ import {
   classifyExternalElements,
 } from "./lib/ifc-envelope.mjs";
 import { netFaceAreasByElement } from "./lib/ifc-face-area.mjs";
-import { collectFabric, collectServices, mergeFabric, writeGlb } from "./lib/ifc-glb.mjs";
+import { collectFabric, mergeFabric, writeGlb, SERVICE_GROUPS, SERVICE_COLOUR } from "./lib/ifc-glb.mjs";
+import { collectServiceInstances } from "./lib/ifc-instances.mjs";
 import { collectFlowNetwork, annotateFlow, serialiseFlow } from "./lib/ifc-flow.mjs";
 
 const REPO = process.cwd();
@@ -166,11 +167,13 @@ async function main() {
   for (const layer of CLINIC.serviceLayers) {
     const file = byRole.get(layer.role);
     if (!file) continue;
-    const collected = collectServices(api, webIfc, file.modelId);
+    const collected = collectServiceInstances(api, webIfc, file.modelId, {
+      serviceGroups: SERVICE_GROUPS,
+    });
     const written = await writeGlb(
       path.join(outDir, `${layer.id}.glb`),
       collected.groups,
-      { generator, colours: collected.colours },
+      { generator, colours: SERVICE_COLOUR, instanced: collected.instanced },
     );
     // The routed network, direction included, from the model's own ports.
     // Written as its own file for the same reason the GLB is: a reader who
@@ -194,8 +197,18 @@ async function main() {
       byteLength: written.byteLength,
       triangleCount: written.triangleCount,
       groups: written.groups,
-      detailedRuns: collected.detailed,
-      proxiedComponents: collected.proxied,
+      /**
+       * Every component is at its real geometry now; what varies is whether a
+       * shape is shipped once and placed many times, or merged in because it
+       * only occurs a few times. `drawCalls` is the number that matters for
+       * whether the layer is usable — an instanced shape is one draw call
+       * however often it is placed.
+       */
+      elements: collected.stats.elements,
+      distinctGeometries: collected.stats.distinctGeometries,
+      instancedShapes: written.instancedShapes,
+      instancedPlacements: written.instancedPlacements,
+      drawCalls: written.drawCalls,
       /**
        * Null when the model states no direction of flow. The counts stay
        * either way — a layer that cannot animate should still be able to say
@@ -212,7 +225,9 @@ async function main() {
     console.log(
       `    ${layer.id}.glb`.padEnd(20) +
         `${(written.byteLength / 1048576).toFixed(2)} MB, ` +
-        `${collected.detailed} runs + ${collected.proxied} proxies, ` +
+        `${written.triangleCount.toLocaleString()} tris, ` +
+        `${written.instancedShapes} shapes x ${written.instancedPlacements} placements, ` +
+        `${written.drawCalls} draw calls, ` +
         `flow ${flow.counts.drawnEdges}/${flow.counts.connections} directed`,
     );
   }
@@ -275,12 +290,12 @@ async function main() {
         "structural frame are excluded — together they are 82% of the model's " +
         "triangles and none of them is visible from outside the building.",
       serviceNote:
-        "Service layers show runs (IfcFlowSegment) at their real geometry and " +
-        "every fitting, valve, terminal and plant item as its bounding box. " +
-        "The discipline models carry manufacturer component meshes — plumbing " +
-        "alone is 3,184,148 triangles, 238 MB — whose detail is invisible at " +
-        "building scale. A box in the right place is a simplification, and a " +
-        "stated one.",
+        "Service layers carry every component at the model's own geometry — " +
+        "no bounding-box stand-ins. The discipline models looked far too large " +
+        "for that (plumbing tessellates to 3,184,148 triangles) but that total " +
+        "counts the same catalogue parts over and over: only 340,774 of them " +
+        "are distinct shapes. Each shape is stored once and placed by " +
+        "instancing, so plumbing ships 402 shapes across 7,872 placements.",
     },
     /**
      * Recorded so a future reader who recomputes a space-boundary sum finds it

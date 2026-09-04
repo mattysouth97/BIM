@@ -61,10 +61,20 @@ export type ReferenceBuildingManifest = Readonly<{
     byteLength: number;
     triangleCount: number;
     groups: readonly string[];
-    /** Runs kept at their real geometry. */
-    detailedRuns: number;
-    /** Fittings, valves, terminals and plant reduced to a bounding box. */
-    proxiedComponents: number;
+    /**
+     * Every component is at its real geometry. What these describe is how it
+     * is packed: a shape placed more than once is shipped once and instanced,
+     * and `drawCalls` is what decides whether the layer is usable — an
+     * instanced shape costs one draw call however often it is placed.
+     *
+     * Until 2026-09-04 these read `detailedRuns` / `proxiedComponents`,
+     * because everything but runs and plant was a bounding box.
+     */
+    elements: number;
+    distinctGeometries: number;
+    instancedShapes: number;
+    instancedPlacements: number;
+    drawCalls: number;
     /**
      * The routed network read out of the model's own distribution ports.
      *

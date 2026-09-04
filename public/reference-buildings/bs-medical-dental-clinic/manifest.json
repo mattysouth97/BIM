@@ -75,17 +75,23 @@
       "ko": "냉난방환기",
       "en": "HVAC",
       "file": "hvac.glb",
-      "byteLength": 9663352,
-      "triangleCount": 158410,
+      "byteLength": 12548844,
+      "triangleCount": 188446,
       "groups": [
         "duct",
         "valve",
-        "terminal",
         "fitting",
-        "plant"
+        "plant",
+        "valve-instanced",
+        "terminal-instanced",
+        "fitting-instanced",
+        "plant-instanced"
       ],
-      "detailedRuns": 1559,
-      "proxiedComponents": 2145,
+      "elements": 3704,
+      "distinctGeometries": 2224,
+      "instancedShapes": 272,
+      "instancedPlacements": 3804,
+      "drawCalls": 276,
       "flow": {
         "file": "hvac-flow.json",
         "ports": 7390,
@@ -108,15 +114,21 @@
       "ko": "전기",
       "en": "Electrical",
       "file": "electrical.glb",
-      "byteLength": 1916044,
-      "triangleCount": 33865,
+      "byteLength": 2078124,
+      "triangleCount": 27805,
       "groups": [
         "terminal",
         "plant",
-        "equipment"
+        "equipment",
+        "terminal-instanced",
+        "plant-instanced",
+        "equipment-instanced"
       ],
-      "detailedRuns": 8,
-      "proxiedComponents": 2110,
+      "elements": 2118,
+      "distinctGeometries": 217,
+      "instancedShapes": 145,
+      "instancedPlacements": 6029,
+      "drawCalls": 148,
       "flow": {
         "file": null,
         "ports": 0,
@@ -139,17 +151,23 @@
       "ko": "급탕/배관",
       "en": "Plumbing",
       "file": "plumbing.glb",
-      "byteLength": 10817664,
-      "triangleCount": 172951,
+      "byteLength": 24390376,
+      "triangleCount": 340774,
       "groups": [
         "duct",
         "valve",
         "terminal",
         "plant",
-        "fitting"
+        "fitting",
+        "valve-instanced",
+        "terminal-instanced",
+        "fitting-instanced"
       ],
-      "detailedRuns": 2896,
-      "proxiedComponents": 3691,
+      "elements": 6587,
+      "distinctGeometries": 3681,
+      "instancedShapes": 402,
+      "instancedPlacements": 7872,
+      "drawCalls": 407,
       "flow": {
         "file": "plumbing-flow.json",
         "ports": 13058,
@@ -181,7 +199,7 @@
       "mullion"
     ],
     "note": "Building fabric only. Furniture, sanitary fixtures, railings and the structural frame are excluded — together they are 82% of the model's triangles and none of them is visible from outside the building.",
-    "serviceNote": "Service layers show runs (IfcFlowSegment) at their real geometry and every fitting, valve, terminal and plant item as its bounding box. The discipline models carry manufacturer component meshes — plumbing alone is 3,184,148 triangles, 238 MB — whose detail is invisible at building scale. A box in the right place is a simplification, and a stated one."
+    "serviceNote": "Service layers carry every component at the model's own geometry — no bounding-box stand-ins. The discipline models looked far too large for that (plumbing tessellates to 3,184,148 triangles) but that total counts the same catalogue parts over and over: only 340,774 of them are distinct shapes. Each shape is stored once and placed by instancing, so plumbing ships 402 shapes across 7,872 placements."
   },
   "invalidDiagnostics": {
     "note": "Space-boundary strip sums. INVALID as envelope areas: room-height not storey-height, gross of openings, ~16% double-counted, missing 18 walls and 10 storefronts, and including 60.17 m2 of chain-link fence. Diagnostic only.",
