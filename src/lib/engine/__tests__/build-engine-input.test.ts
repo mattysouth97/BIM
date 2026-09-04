@@ -54,7 +54,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe(),
       footprintSource: "parcel",
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
     expect(result).toBeNull();
   });
@@ -65,7 +64,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe(),
       footprintSource: null,
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
     expect(result).toBeNull();
   });
@@ -77,7 +75,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe(),
       footprintSource: "cad",
       ledgerHeit: 12,
-      measuredHeightM: null,
     });
     expect(result).not.toBeNull();
     expect(result?.cadFootprint?.source).toBe("cad-converted");
@@ -92,7 +89,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe(),
       footprintSource: "ifc",
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
     expect(result?.cadFootprint?.source).toBe("cad-exact");
     expect(result?.ledger).toBeUndefined();
@@ -104,24 +100,22 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe(),
       footprintSource: "building",
       ledgerHeit: 0,
-      measuredHeightM: 13.5,
     });
     expect(result).not.toBeNull();
     expect(result?.cadFootprint).toBeUndefined();
-    expect(result?.vworldFootprint?.measuredHeightM).toBe(13.5);
     expect(result?.vworldFootprint?.groundFloors).toBe(3);
     expect(result?.params).toEqual({ floors: 3 });
   });
 
-  it('"building" with measuredHeightM null omits measuredHeightM (undefined, not null)', () => {
+  it("carries no height off the VWorld layer — it supplies an outline and storeys only", () => {
     const result = buildEngineInput({
       pk: "p1",
       recipe: makeRecipe(),
       footprintSource: "building",
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
-    expect(result?.vworldFootprint?.measuredHeightM).toBeUndefined();
+    expect(result?.vworldFootprint).toBeDefined();
+    expect(Object.keys(result!.vworldFootprint!).sort()).toEqual(["groundFloors", "rings"]);
   });
 
   it("prefers the polygon override over the rectangle when footprintPolygon is set", () => {
@@ -131,7 +125,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe({ footprintPolygon: polygon }),
       footprintSource: "cad",
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
     expect(result?.cadFootprint?.rings).toBe(polygon);
   });
@@ -142,7 +135,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe({ footprintWidth: 10, footprintDepth: 8 }),
       footprintSource: "cad",
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
     const rings = result?.cadFootprint?.rings;
     expect(rings).toEqual([[
@@ -163,7 +155,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe({ floors: makeFloors(4, 2) }),
       footprintSource: "cad",
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
     expect(result?.params).toEqual({ floors: 4 });
   });
@@ -174,7 +165,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe({ floors: makeFloors(0, 2) }),
       footprintSource: "cad",
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
     // no "above" floors -> falls back to recipe.floors.length (2 below-grade floors)
     expect(result?.params).toEqual({ floors: 2 });
@@ -186,7 +176,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe({ floors: [] }),
       footprintSource: "cad",
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
     expect(result?.params).toEqual({ floors: 1 });
   });
@@ -197,7 +186,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe(),
       footprintSource: "cad",
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
     expect(result?.facade).toEqual({ windowWidth: 1.4, windowHeight: 1.6, sillHeight: 0.8, windowSpacing: 2.2 });
   });
@@ -208,7 +196,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe(),
       footprintSource: "ifc",
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
     expect(result?.facade).toEqual({ windowWidth: 1.4, windowHeight: 1.6, sillHeight: 0.8, windowSpacing: 2.2 });
   });
@@ -219,7 +206,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe(),
       footprintSource: "building",
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
     expect(result?.facade).toEqual({ windowWidth: 1.4, windowHeight: 1.6, sillHeight: 0.8, windowSpacing: 2.2 });
   });
@@ -230,7 +216,6 @@ describe("buildEngineInput", () => {
       recipe: makeRecipe(),
       footprintSource: "cad",
       ledgerHeit: 0,
-      measuredHeightM: null,
     });
     expect(result?.ledger).toBeUndefined();
   });

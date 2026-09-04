@@ -20,8 +20,11 @@ describe("fuse", () => {
     expect(model.heightSource).toBe("era-estimate");
     expect(model.totalHeightM).toBeCloseTo(3 * 3.3);
   });
-  it("records a height conflict when ledger and vworld disagree > 10%", () => {
-    const input = { pk: "p", cadFootprint: { rings: RING, source: "cad-exact" as const }, ledger: { heightM: 10, floors: 3 }, vworldFootprint: { rings: RING, measuredHeightM: 13 } };
+  // Was ledger-vs-vworld until the VWorld height tier came out: that layer
+  // supplies an outline and a storey count, never a height (P2-25), so the two
+  // could never disagree. Manual input is the other height source that exists.
+  it("records a height conflict when ledger and manual input disagree > 10%", () => {
+    const input = { pk: "p", cadFootprint: { rings: RING, source: "cad-exact" as const }, ledger: { heightM: 10, floors: 3 }, params: { heightM: 13 } };
     const { conflicts } = fuse(input, ingest(input));
     expect(conflicts.find((c) => c.field === "height")).toMatchObject({ chosen: "ledger" });
   });

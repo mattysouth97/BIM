@@ -35,7 +35,6 @@ export interface UseEngineResultArgs {
   recipe: BuildingRecipe | undefined;
   footprintSource: FootprintSource;
   ledgerHeit: number;
-  measuredHeightM: number | null;
 }
 
 export interface UseEngineResultReturn {
@@ -54,7 +53,7 @@ export interface UseEngineResultReturn {
 const NEEDS_OUTLINE = "needs-outline";
 
 export function useEngineResult(args: UseEngineResultArgs): UseEngineResultReturn {
-  const { buildingPk, recipe, footprintSource, ledgerHeit, measuredHeightM } = args;
+  const { buildingPk, recipe, footprintSource, ledgerHeit } = args;
   const { t } = useT();
 
   // Pure input for the cheap (counting-session) pass — recomputed whenever
@@ -67,9 +66,8 @@ export function useEngineResult(args: UseEngineResultArgs): UseEngineResultRetur
       recipe,
       footprintSource,
       ledgerHeit,
-      measuredHeightM,
     });
-  }, [buildingPk, recipe, footprintSource, ledgerHeit, measuredHeightM]);
+  }, [buildingPk, recipe, footprintSource, ledgerHeit]);
 
   const [result, setResult] = useState<BimEngineResult | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -103,7 +101,6 @@ export function useEngineResult(args: UseEngineResultArgs): UseEngineResultRetur
       recipe,
       footprintSource,
       ledgerHeit,
-      measuredHeightM,
     });
     if (!exportInput) return;
 
@@ -121,7 +118,7 @@ export function useEngineResult(args: UseEngineResultArgs): UseEngineResultRetur
     } finally {
       setExporting(false);
     }
-  }, [recipe, buildingPk, footprintSource, ledgerHeit, measuredHeightM, t]);
+  }, [recipe, buildingPk, footprintSource, ledgerHeit, t]);
 
   return {
     available: input !== null,

@@ -14,7 +14,12 @@ export function ingest(input: BimEngineInput): SpatialFeature[] {
   if (input.cadFootprint) out.push({ kind: "footprint", footprint: input.cadFootprint.rings, source: input.cadFootprint.source });
   if (input.vworldFootprint) {
     out.push({ kind: "footprint", footprint: input.vworldFootprint.rings, source: "vworld-measured" });
-    if (isUsablePositive(input.vworldFootprint.measuredHeightM)) out.push({ kind: "height", heightM: input.vworldFootprint.measuredHeightM, source: "vworld-measured" });
+    // No height feature. VWorld's building layer (LT_C_SPBD) carries no height:
+    // 34 production buildings returned `height: null` in every one, and four
+    // upstream bboxes returned the same ten keys with no `buld_hg` among them
+    // (P2-25). The emission that used to sit here could not fire, and an
+    // evidence kind nothing can justify is the kind of tier that later reads
+    // as a supplier that exists. Outline and storey count DO arrive here.
     if (isUsablePositive(input.vworldFootprint.groundFloors)) out.push({ kind: "floors", floors: input.vworldFootprint.groundFloors, source: "vworld-measured" });
   }
   if (isUsablePositive(input.ledger?.heightM)) out.push({ kind: "height", heightM: input.ledger!.heightM, source: "ledger" });

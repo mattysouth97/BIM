@@ -16,7 +16,8 @@ export interface BimEngineInput {
   pk: string;
   title?: string;
   cadFootprint?: { rings: [number, number][][]; source: "cad-exact" | "cad-converted" | "cad-traced" };
-  vworldFootprint?: { rings: [number, number][][]; measuredHeightM?: number; groundFloors?: number };
+  /** Outline and storey count only — the layer carries no height (P2-25). */
+  vworldFootprint?: { rings: [number, number][][]; groundFloors?: number };
   ledger?: { heightM?: number; floors?: number };
   params?: { floors?: number; heightM?: number; year?: number };
   defaultStoreyHeightM?: number;

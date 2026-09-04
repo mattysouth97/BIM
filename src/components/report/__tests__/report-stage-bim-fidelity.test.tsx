@@ -69,7 +69,7 @@ function renderReportStage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <ReportStage footprintSource="building" ledgerHeit={15} measuredHeightM={null} />
+      <ReportStage footprintSource="building" ledgerHeit={15} />
     </QueryClientProvider>,
   );
 }

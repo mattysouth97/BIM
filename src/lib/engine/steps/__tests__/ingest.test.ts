@@ -24,11 +24,24 @@ describe("ingest", () => {
       pk: "x",
       cadFootprint: { rings: RING, source: "cad-exact" },
       ledger: { floors: 0, heightM: 0 },
-      vworldFootprint: { rings: RING, groundFloors: 0, measuredHeightM: 0 },
+      vworldFootprint: { rings: RING, groundFloors: 0 },
       params: { floors: 0, heightM: 0 },
     });
     expect(f.find((x) => x.kind === "floors")).toBeUndefined();
     expect(f.find((x) => x.kind === "height")).toBeUndefined();
+  });
+
+  // P2-25: LT_C_SPBD carries an outline and a storey count, never a height.
+  // The emission that used to sit in ingest could not fire on any input.
+  it("never sources a height from the VWorld layer, whatever it is handed", () => {
+    const f = ingest({
+      pk: "x",
+      vworldFootprint: { rings: RING, groundFloors: 5 },
+      ledger: { heightM: 12 },
+    });
+    expect(f.filter((x) => x.kind === "height").map((x) => x.source)).toEqual(["ledger"]);
+    expect(f.some((x) => x.kind === "footprint" && x.source === "vworld-measured")).toBe(true);
+    expect(f.some((x) => x.kind === "floors" && x.source === "vworld-measured")).toBe(true);
   });
 
   it("does not emit a floors/height feature for negative values either", () => {

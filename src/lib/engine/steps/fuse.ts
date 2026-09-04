@@ -3,7 +3,9 @@ import { ENGINE_CONSTANTS } from "../types";
 
 const FOOTPRINT_PRIORITY: SourceKind[] = ["cad-exact", "cad-converted", "cad-traced", "vworld-measured"];
 const FLOORS_PRIORITY: SourceKind[] = ["ledger", "vworld-measured", "manual"];
-const HEIGHT_PRIORITY: SourceKind[] = ["ledger", "vworld-measured", "manual"];
+// No "vworld-measured" tier: that layer supplies an outline and a storey count,
+// never a height (P2-25). Floors keeps its tier because floors do arrive.
+const HEIGHT_PRIORITY: SourceKind[] = ["ledger", "manual"];
 
 function rank(priority: SourceKind[], source: SourceKind): number {
   const idx = priority.indexOf(source);

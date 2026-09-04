@@ -143,7 +143,6 @@ export function WorkspaceShell({ children, footprintSource, ledgerHeit, measured
                 <ReportStage
                   footprintSource={footprintSource}
                   ledgerHeit={ledgerHeit}
-                  measuredHeightM={measuredHeightM}
                 />
               ) : stage === "upload" ? (
                 <UploadStage />

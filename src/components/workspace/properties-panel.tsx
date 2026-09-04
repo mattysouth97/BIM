@@ -145,7 +145,6 @@ export function PropertiesPanel({
     recipe: effectiveRecipe,
     footprintSource: footprintSource ?? null,
     ledgerHeit: ledgerHeit ?? 0,
-    measuredHeightM: measuredHeightM ?? null,
   });
 
   // ── Input provenance (P2-27) ──────────────────────────────────────────────

@@ -17,7 +17,6 @@ export interface BuildEngineInputArgs {
   recipe: BuildingRecipe;
   footprintSource: FootprintSource;
   ledgerHeit: number;
-  measuredHeightM: number | null;
 }
 
 /**
@@ -37,7 +36,7 @@ function rectangleRings(w: number, d: number): [number, number][][] {
 }
 
 export function buildEngineInput(args: BuildEngineInputArgs): BimEngineInput | null {
-  const { pk, title, recipe, footprintSource, ledgerHeit, measuredHeightM } = args;
+  const { pk, title, recipe, footprintSource, ledgerHeit } = args;
 
   // AFF-6: a lot boundary is not a building outline, and an era-estimate
   // rectangle is not a real footprint either — the engine is not applicable.
@@ -96,7 +95,6 @@ export function buildEngineInput(args: BuildEngineInputArgs): BimEngineInput | n
     title,
     vworldFootprint: {
       rings,
-      measuredHeightM: measuredHeightM ?? undefined,
       groundFloors: floors,
     },
     ledger,

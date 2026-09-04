@@ -15,9 +15,10 @@ const GEOM_SCORE: Partial<Record<SourceKind, number>> = {
   "vworld-measured": 0.80,
 };
 
+// No "vworld-measured": heights never carry that source (P2-25), so scoring one
+// would be scoring a state the pipeline cannot produce.
 const HEIGHT_SCORE: Partial<Record<SourceKind, number>> = {
   ledger: 1.0,
-  "vworld-measured": 0.80,
   manual: 0.70,
   "era-estimate": 0.50,
 };

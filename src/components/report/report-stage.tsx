@@ -102,13 +102,11 @@ interface ReportStageProps {
   /** Ledger 'heit' field (meters). AFF-6: 0 means unavailable. */
   ledgerHeit?: number;
   /** VWorld measured building height (meters), or null when absent. */
-  measuredHeightM?: number | null;
 }
 
 export function ReportStage({
   footprintSource,
   ledgerHeit,
-  measuredHeightM,
 }: ReportStageProps = {}) {
   const { t, lang } = useT();
   const isKo = lang === "ko";
@@ -180,7 +178,6 @@ export function ReportStage({
     recipe: effectiveRecipe,
     footprintSource: footprintSource ?? null,
     ledgerHeit: ledgerHeit ?? 0,
-    measuredHeightM: measuredHeightM ?? null,
   });
 
   const bimFidelitySummary = useMemo(
