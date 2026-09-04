@@ -127,3 +127,64 @@ describe("a cadastral parcel is never the building footprint", () => {
     expect(unresolved).toEqual([]);
   });
 });
+
+describe("two contradictions in one GIS payload read as one problem", () => {
+  // 서울청운초등학교, measured on production: VWorld returned a 95 m² outbuilding
+  // as source "building" for a register stating 건축면적 2,749.71 m², AND
+  // groundFloors 2 against a register stating 5. The storey mismatch is not a
+  // stale register — it is the same wrong building answering twice.
+  function wrongBuildingInput(): EvidenceInput {
+    const lng = 126.9695;
+    const lat = 37.5885;
+    // ~9.7 m x 9.8 m ≈ 95 m² shed.
+    const d = 0.00011;
+    return {
+      buildingPk: "11110-100-1-1-0",
+      title: title({ archArea: 2749.71, grndFlrCnt: 5, totArea: 12000 }),
+      recap: null,
+      floors: [],
+      areas: [],
+      gis: {
+        polygon: [
+          [
+            [lng, lat],
+            [lng + d, lat],
+            [lng + d, lat + d * 0.8],
+            [lng, lat + d * 0.8],
+            [lng, lat],
+          ],
+        ],
+        source: "building",
+        attributes: { height: null, groundFloors: 2, undergroundFloors: null },
+        error: null,
+      },
+      address: "서울특별시 종로구 청운동 1-1",
+      claims: [],
+      now: NOW,
+    };
+  }
+
+  const pkg = runReconstruction(wrongBuildingInput());
+
+  it("does not build the building from the outbuilding's outline", () => {
+    expect(pkg.model.footprint.areaSqm).toBeGreaterThan(1000);
+    expect(pkg.model.footprint.grade).not.toBe("B-OBSERVED");
+  });
+
+  it("blames the storey mismatch on the wrong building, not on a stale register", () => {
+    const conflict = pkg.model.conflicts.find((c) => c.subject === "지상 층수")!;
+    expect(conflict).toBeDefined();
+    expect(conflict.possibleExplanation).toContain("다른 동");
+    expect(conflict.possibleExplanation).not.toContain("증축");
+    expect(conflict.resolutionStatus).toBe("unresolved");
+  });
+
+  it("still reads a storey mismatch as a stale register when the outline agrees", () => {
+    const input = wrongBuildingInput();
+    const agreeing = { ...input, title: title({ archArea: 95, grndFlrCnt: 5 }) };
+    const ok = runReconstruction(agreeing);
+    const conflict = ok.model.conflicts.find((c) => c.subject === "지상 층수")!;
+    expect(conflict.possibleExplanation).toContain("증축");
+    expect(conflict.resolutionStatus).toBe("documented");
+  });
+});

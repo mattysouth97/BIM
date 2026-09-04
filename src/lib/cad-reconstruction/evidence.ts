@@ -897,7 +897,19 @@ export function detectConflicts(
   }
 
   // GIS attributes vs the register.
+  //
+  // When the GIS ring's own area is irreconcilable with 건축면적, the layer is
+  // very likely describing a DIFFERENT BUILDING — and then its storey count is
+  // not a stale register, it is the same wrong building answering twice. Saying
+  // "증축 또는 갱신 시점 차이" there would send the reader after the wrong thing.
   const attrs = input.gis?.attributes ?? null;
+  const gisBuildingArea =
+    ctx.gisRing && !ctx.gisRingIsParcel ? areaSqm(ctx.gisRing) : null;
+  const outlineIrreconcilable =
+    gisBuildingArea !== null &&
+    archArea !== null &&
+    (gisBuildingArea / archArea < 0.5 || gisBuildingArea / archArea > 2.0);
+
   const gisFloors = statedNumber(attrs?.groundFloors);
   if (gisFloors && grnd && gisFloors !== grnd) {
     add({
@@ -907,10 +919,16 @@ export function detectConflicts(
       sourceB: "SRC-GIS-ATTR (groundFloors)",
       valueB: `${gisFloors}`,
       magnitude: `${gisFloors - grnd} 층`,
-      possibleExplanation:
-        "증축 또는 대장 갱신 시점 차이. 옥탑을 층으로 계수했을 수 있습니다.",
-      resolutionStatus: "documented",
-      requiredVerification: "현장 외관에서 층수 계수",
+      possibleExplanation: outlineIrreconcilable
+        ? "같은 GIS 응답의 외곽 면적도 등록 건축면적과 양립하지 않습니다 " +
+          `(${gisBuildingArea.toFixed(0)} m² 대 ${archArea.toFixed(0)} m²). ` +
+          "한 대지의 다른 동(부속동·창고)을 본동으로 반환했을 가능성이 높으며, " +
+          "이 층수는 그 다른 건물의 값일 수 있습니다."
+        : "증축 또는 대장 갱신 시점 차이. 옥탑을 층으로 계수했을 수 있습니다.",
+      resolutionStatus: outlineIrreconcilable ? "unresolved" : "documented",
+      requiredVerification: outlineIrreconcilable
+        ? "해당 대지의 동별 배치를 확인하고 본동 외곽·층수를 재수집"
+        : "현장 외관에서 층수 계수",
     });
   }
 
