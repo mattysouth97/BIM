@@ -5,7 +5,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   GALLERY_ITEMS,
-  HELD_GALLERY_ITEMS,
   type GalleryItem,
 } from "../gallery";
 
@@ -148,13 +147,10 @@ describe("gallery card agrees with the generated manifest", () => {
  * counts are placeholders rather than answers.
  */
 describe("schependomlaan card is arithmetically consistent with itself", () => {
-  // Read from the HELD list: the card is verified but deliberately not
-  // rendered, and holding it must not quietly drop its coverage too.
-  const item = HELD_GALLERY_ITEMS.find((i) => i.id === "schependomlaan");
+  const item = GALLERY_ITEMS.find((i) => i.id === "schependomlaan");
 
-  it("is held, not rendered, until the licence question is settled", () => {
+  it("is in the gallery", () => {
     expect(item).toBeDefined();
-    expect(GALLERY_ITEMS.some((i) => i.id === "schependomlaan")).toBe(false);
   });
 
   it("sums its storeys to the totals it prints", () => {

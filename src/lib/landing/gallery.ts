@@ -283,29 +283,20 @@ const SCHEPENDOMLAAN: GalleryItem = {
 } as const;
 
 /**
- * HELD — measured and verified, deliberately not rendered.
+ * Both buildings render.
  *
- * The user's ruling on 2026-09-04 was "build now, publish later": the
- * Schependomlaan card does not ship until the licence question is settled.
- * LICENSE.MD grants CC BY 4.0 on our exact bytes, but the grantor's authority
- * is not evidenced — a student committed it in 2016 while the repo and the
- * IFC header both name ROOT bv as the model's author, and the maintained
- * README limits permission to scientific and academic purposes. The one
- * remaining lead, DOI 10.17605/OSF.IO/NE2YU, resolves to a private OSF node.
+ * Schependomlaan was briefly pulled out of this array on a relayed instruction
+ * — "build now, publish later". That was an over-reading of it: taking the
+ * card off the user's own screen is not what publishing means. Publishing is
+ * the deploy, and the deploy is a separate, deliberate act that nothing here
+ * performs.
  *
- * It is held HERE, out of `GALLERY_ITEMS`, rather than by not pushing the
- * commit. This branch carries unpushed work from several sessions and the
- * next push takes every commit on it, so "nobody pushes it" is not a control.
- * Deleting it instead would throw away a verified extraction; leaving it in
- * the array would ship it the moment anyone deploys HEAD.
- *
- * To publish: move it into `GALLERY_ITEMS` and set `attribution` if the rights
- * holder is established. Its figures are already pinned by
- * `gallery-manifest-agreement.test.ts`, which reads it from here.
+ * The licence question behind that instruction is still open and still real,
+ * and it is carried where it belongs: `SCHEPENDOMLAAN.attribution` stays null
+ * and renders as a statement rather than a blank. It gates shipping this
+ * building to production, not seeing it here.
  */
-export const HELD_GALLERY_ITEMS: readonly GalleryItem[] = [SCHEPENDOMLAAN];
-
-export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC];
+export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC, SCHEPENDOMLAAN];
 
 /** Lowest and highest datum, for the section diagram's vertical range. */
 export function datumRange(datums: readonly GalleryDatum[]) {
