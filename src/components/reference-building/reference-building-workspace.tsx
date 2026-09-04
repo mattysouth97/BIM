@@ -80,6 +80,9 @@ export function ReferenceBuildingWorkspace({
   const activeServices = services.filter((layer) => active.has(layer.id));
   const fmt = (n: number) =>
     n.toLocaleString("en-US", { maximumFractionDigits: 1 });
+  // A 28 KB layer printed as "0.0 MB" is a true rounding and a false size.
+  const fmtBytes = (bytes: number) =>
+    bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
   return (
     // `h-dvh` minus the app header's own `h-12`, and a div rather than a
@@ -156,11 +159,11 @@ export function ReferenceBuildingWorkspace({
                   detail={
                     layer.instancedShapes > 0
                       ? isKo
-                        ? `요소 ${layer.elements.toLocaleString()} · 형상 ${layer.instancedShapes.toLocaleString()}종 → ${layer.instancedPlacements.toLocaleString()}회 · ${(layer.byteLength / 1048576).toFixed(1)} MB`
-                        : `${layer.elements.toLocaleString()} elements · ${layer.instancedShapes.toLocaleString()} shapes → ${layer.instancedPlacements.toLocaleString()} placements · ${(layer.byteLength / 1048576).toFixed(1)} MB`
+                        ? `요소 ${layer.elements.toLocaleString()} · 형상 ${layer.instancedShapes.toLocaleString()}종 → ${layer.instancedPlacements.toLocaleString()}회 · ${fmtBytes(layer.byteLength)}`
+                        : `${layer.elements.toLocaleString()} elements · ${layer.instancedShapes.toLocaleString()} shapes → ${layer.instancedPlacements.toLocaleString()} placements · ${fmtBytes(layer.byteLength)}`
                       : isKo
-                        ? `요소 ${layer.elements.toLocaleString()} · ${layer.triangleCount.toLocaleString()} 삼각형 · ${(layer.byteLength / 1048576).toFixed(1)} MB`
-                        : `${layer.elements.toLocaleString()} elements · ${layer.triangleCount.toLocaleString()} tris · ${(layer.byteLength / 1048576).toFixed(1)} MB`
+                        ? `요소 ${layer.elements.toLocaleString()} · ${layer.triangleCount.toLocaleString()} 삼각형 · ${fmtBytes(layer.byteLength)}`
+                        : `${layer.elements.toLocaleString()} elements · ${layer.triangleCount.toLocaleString()} tris · ${fmtBytes(layer.byteLength)}`
                   }
                   colour={LAYER_COLOUR[layer.id] ?? "#9aa0a6"}
                   on={active.has(layer.id)}
@@ -268,9 +271,18 @@ export function ReferenceBuildingWorkspace({
           <Stated
             label="연면적"
             value={`${fmt(manifest.areas.totalFloorAreaSqm)} m²`}
-            read={`${manifest.counts.spacesFloor} spaces · GSA BIM Area, less ${fmt(
-              manifest.areas.areaPlanTotalSqm - manifest.areas.totalFloorAreaSqm,
-            )} m² of ROOF / OPEN TO BELOW / MECH. YARD`}
+            // Written from the counts, not from a sentence: this line read
+            // "GSA BIM Area, less 0 m² of ROOF / OPEN TO BELOW / MECH. YARD"
+            // on the apartment, which has no GSA quantity and none of those
+            // rooms. The Clinic's exclusions are named in its spaces.json
+            // per row; here only the arithmetic the manifest states is shown.
+            read={
+              manifest.counts.spacesTotal > manifest.counts.spacesFloor
+                ? `${manifest.counts.spacesFloor} of ${manifest.counts.spacesTotal} spaces · the model's own area quantity, less ${fmt(
+                    manifest.areas.areaPlanTotalSqm - manifest.areas.totalFloorAreaSqm,
+                  )} m² over ${manifest.counts.spacesTotal - manifest.counts.spacesFloor} non-floor spaces`
+                : `${manifest.counts.spacesFloor} spaces · the model's own area quantity · every space is floor`
+            }
           />
           <Stated
             label="외벽 (순)"

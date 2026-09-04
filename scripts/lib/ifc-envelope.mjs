@@ -382,10 +382,16 @@ export function classifyExternalElements(file, webIfc) {
      * verbose to use, and never a source for any emitted area.
      */
     invalidAreaDiagnostics: Object.freeze({
+      // The numbers are this file's; the sentence must be too. Until
+      // 2026-09-04 it carried the Clinic's "missing 18 walls and 10
+      // storefronts ... 60.17 m2 of chain-link fence" on every building,
+      // including one whose sum was 0 and which has no fence.
       note:
-        "Space-boundary strip sums. INVALID as envelope areas: room-height not storey-height, " +
-        "gross of openings, ~16% double-counted, missing 18 walls and 10 storefronts, and " +
-        "including 60.17 m2 of chain-link fence. Diagnostic only.",
+        [...byElement.values()].length === 0
+          ? "No space-boundary strips resolved in this file; there is no sum to refute."
+          : "Space-boundary strip sums. INVALID as envelope areas: room-height not storey-height, " +
+            "gross of openings, double-counted where boundaries overlap, and blind to any wall " +
+            "without a resolvable boundary surface. Diagnostic only; never an emitted area.",
       rawSumSqm: r3(
         [...byElement.values()].reduce((sum, e) => sum + e.invalidStripAreaSqm, 0),
       ),

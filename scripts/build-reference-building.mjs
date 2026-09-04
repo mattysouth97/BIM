@@ -83,6 +83,11 @@ const CLINIC = Object.freeze({
   exteriorWallMatch: "Exterior - Insul Panel",
   /** Main roof datum. Wall above this encloses plant, not conditioned space. */
   roofDatumM: 9.25,
+  /** What the 2,007.7 m² space-boundary sum on this file is, measured on 2026-09-04, so a reader finds it refuted. */
+  boundaryDiagnosticsNote:
+    "Space-boundary strip sums. INVALID as envelope areas: room-height not storey-height, " +
+    "gross of openings, ~16% double-counted, missing 18 walls and 10 storefronts, and " +
+    "including 60.17 m2 of chain-link fence. Diagnostic only.",
   /** Measured on this model: what the fabric GLB leaves out, and why the service GLBs are the size they are. */
   modelNote:
     "Building fabric only. Furniture, sanitary fixtures, railings and the " +
@@ -1433,7 +1438,14 @@ async function main() {
      * already refuted rather than concluding the extraction lost a third of
      * the building.
      */
-    invalidDiagnostics: classification.invalidAreaDiagnostics,
+    invalidDiagnostics: {
+      ...classification.invalidAreaDiagnostics,
+      // A building whose boundary sum was refuted in detail keeps its own
+      // sentence; the generic one claims only what every file shares.
+      ...(building.boundaryDiagnosticsNote
+        ? { note: building.boundaryDiagnosticsNote }
+        : {}),
+    },
   };
 
   // One row per IfcSpace, so the page can show rooms by storey and program

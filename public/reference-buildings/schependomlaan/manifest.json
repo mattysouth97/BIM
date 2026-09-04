@@ -1240,7 +1240,7 @@
     "serviceNote": "Six layers from the 33 subcontractor models in the archive's coordination set (BIMsight Projectdata1). Five carry each supplier's geometry as modelled — a shape placed twice or more is stored once and instanced, everything else is merged. Every file declares millimetres and no distribution port, so no layer animates flow. The utilities layer is the exception and says so under its row: its 42 SketchUp objects are drawn as boxes."
   },
   "invalidDiagnostics": {
-    "note": "Space-boundary strip sums. INVALID as envelope areas: room-height not storey-height, gross of openings, ~16% double-counted, missing 18 walls and 10 storefronts, and including 60.17 m2 of chain-link fence. Diagnostic only.",
+    "note": "No space-boundary strips resolved in this file; there is no sum to refute.",
     "rawSumSqm": 0,
     "rawSumByElementType": {}
   }
