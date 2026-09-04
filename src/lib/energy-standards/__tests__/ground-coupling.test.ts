@@ -12,12 +12,17 @@ import {
 
 /**
  * The Clinic's ground floor, from the IFC extraction:
- *   A = 2605.7 m², exposed P = 217.01 m, wall thickness at the edge 267 mm,
+ *   A = 2621.08 m² — the slab-on-grade one-face area, which is the
+ *   ground-CONTACT area and is not the same thing as the first floor's
+ *   2,605.7 m² of floor area (an earlier version of this fixture used that
+ *   figure and described it as the extraction's, which it was not).
+ *   Excludes 167.32 m² of exterior paving.
+ *   Exposed P = 217.01 m, wall thickness at the edge 267 mm,
  *   150 mm cast in-situ concrete, uninsulated (the model states no edge or
  *   under-slab insulation, so none is assumed).
  */
 const CLINIC = {
-  areaSqm: 2605.7,
+  areaSqm: 2621.08,
   exposedPerimeterM: 217.01,
   wallThicknessM: 0.267,
   floorResistanceM2KPerW: 0.15 / 2.3,
@@ -41,8 +46,8 @@ describe("ISO 13370 constants", () => {
 describe("slab on ground — the Clinic", () => {
   const result = slabOnGroundUValue(CLINIC);
 
-  it("derives B' = A / (0.5 P) = 24.0 m", () => {
-    expect(result.characteristicDimensionM).toBeCloseTo(24.015, 3);
+  it("derives B' = A / (0.5 P) = 24.2 m", () => {
+    expect(result.characteristicDimensionM).toBeCloseTo(24.156, 3);
   });
 
   it("derives d_t = w + λ(Rsi + Rf + Rse) = 0.817 m at the default soil", () => {
@@ -55,16 +60,16 @@ describe("slab on ground — the Clinic", () => {
     expect(result.equivalentThicknessM).toBeLessThan(result.characteristicDimensionM);
   });
 
-  it("gives U = 0.238 W/m²K and H_g = 620 W/K", () => {
-    expect(result.uValueWPerM2K).toBeCloseTo(0.2379, 4);
-    expect(result.heatTransferCoefficientWPerK).toBeCloseTo(620, 0);
+  it("gives U = 0.237 W/m²K and H_g = 621 W/K", () => {
+    expect(result.uValueWPerM2K).toBeCloseTo(0.2368, 4);
+    expect(result.heatTransferCoefficientWPerK).toBeCloseTo(620.7, 0);
   });
 
-  it("bounds the answer at 0.186–0.377 across ISO 13370's soil categories", () => {
+  it("bounds the answer at 0.185–0.376 across ISO 13370's soil categories", () => {
     const range = slabOnGroundUValueRange(CLINIC);
-    expect(range.low.uValueWPerM2K).toBeCloseTo(0.1859, 4);
-    expect(range.nominal.uValueWPerM2K).toBeCloseTo(0.2379, 4);
-    expect(range.high.uValueWPerM2K).toBeCloseTo(0.3773, 4);
+    expect(range.low.uValueWPerM2K).toBeCloseTo(0.1851, 4);
+    expect(range.nominal.uValueWPerM2K).toBeCloseTo(0.2368, 4);
+    expect(range.high.uValueWPerM2K).toBeCloseTo(0.3756, 4);
     // Soil alone moves it by a factor of two. A single figure would be fiction.
     expect(range.high.uValueWPerM2K / range.low.uValueWPerM2K).toBeGreaterThan(2);
   });
