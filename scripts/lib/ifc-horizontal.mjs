@@ -361,12 +361,68 @@ const r1 = (n) => (n == null ? null : Math.round(n * 10) / 10);
  *                    another (the Clinic's low barrel over its second-floor
  *                    EPDM deck: 74.55 m²).
  */
+/**
+ * The true one-sheet surface of a roof element — what heat crosses. A flat
+ * deck's surface is its shadow; a pitched roof's is larger by 1/cos(tilt).
+ *
+ * Three cases, told apart by two facts of the mesh: whether any face points
+ * down, and how many times the upward faces cover the element's own shadow
+ * (`coverage` = Σ area × n_y over n_y > 0, divided by the shadow):
+ *
+ *   - closed solid, coverage ≈ 1  → Σ area of the faces with n_y > 0.
+ *   - no downward face, coverage ≈ 2 → both sheets of a surface model are
+ *     wound upward (the Clinic's standing seam), so the upward faces are
+ *     two copies of the roof: ÷ 2. The vertical fascia strips (n_y = 0) are
+ *     left out, as they are in the first case.
+ *   - closed solids, coverage > 1 → the element's parts cover its shadow
+ *     more than once: a build-up exported as stacked layer solids
+ *     (Schependomlaan's sporenkap, up to three deep) or two deck pieces
+ *     overlapping at a seam. ÷ coverage. Exact for parallel parts of one
+ *     extent, a mean where their extents or tilts differ.
+ *
+ * All three are one formula — upward true area × shadow ÷ upward projected
+ * area — which is the identity for a single consistently wound solid, ÷ 2
+ * for the doubled sheets, and ÷ k for k stacked layers. The basis label
+ * records which of the three the mesh was.
+ */
+function roofSurface(shadow) {
+  const { upFacingSqm, downFacingSqm, upFacingProjectedSqm, projectedSqm } = shadow;
+  if (!(projectedSqm > 0) || !(upFacingSqm > 0)) {
+    return { surfaceSqm: 0, surfaceBasis: "no upward face" };
+  }
+  const coverage = upFacingProjectedSqm / projectedSqm;
+  // "No downward face" is relative: a closed solid's downward faces are about
+  // as large as its upward ones, while the Clinic's smallest barrel (#2278)
+  // carries one sliver a hair below horizontal that an absolute zero test
+  // mistook for a closed solid.
+  const noDownwardFace = downFacingSqm < upFacingSqm * 0.01;
+  if (noDownwardFace && coverage > 1.5) {
+    return {
+      surfaceSqm: upFacingSqm / 2,
+      surfaceBasis: "upward faces ÷ 2: surface model with no downward face, both sheets wound upward",
+    };
+  }
+  if (noDownwardFace) {
+    return { surfaceSqm: upFacingSqm, surfaceBasis: "upward faces: open surface, one sheet" };
+  }
+  if (coverage > 1.01) {
+    return {
+      surfaceSqm: upFacingSqm / coverage,
+      surfaceBasis: `upward faces ÷ ${coverage.toFixed(2)}: the element's parts cover its shadow ${coverage.toFixed(2)}× over (stacked layer solids or overlapping pieces)`,
+    };
+  }
+  return { surfaceSqm: upFacingSqm, surfaceBasis: "upward faces of a closed solid" };
+}
+
 export function measureRoofs(roofRows) {
   const familyShadows = new Map();
+  const familySurface = new Map();
   const rows = roofRows.map((row) => {
     const family = roofFamily(row.name);
     if (!familyShadows.has(family)) familyShadows.set(family, []);
     familyShadows.get(family).push(row.shadow.multiPolygon);
+    const surface = roofSurface(row.shadow);
+    familySurface.set(family, (familySurface.get(family) ?? 0) + surface.surfaceSqm);
     return Object.freeze({
       id: `roof-${row.expressID}`,
       name: row.name,
@@ -386,6 +442,9 @@ export function measureRoofs(roofRows) {
       upFacingProjectedSqm: r2(row.shadow.upFacingProjectedSqm),
       /** Area-weighted mean tilt of the upward faces, degrees from horizontal. */
       tiltDeg: r1(row.shadow.tiltDeg),
+      /** True one-sheet surface — what heat crosses. ≥ `projectedSqm`; equal for a flat deck. */
+      surfaceSqm: r2(surface.surfaceSqm),
+      surfaceBasis: surface.surfaceBasis,
       partOf: row.partOf ? row.partOf.ref : null,
       ref: row.ref,
     });
@@ -406,6 +465,16 @@ export function measureRoofs(roofRows) {
     ),
     familyCount: familyUnions.length,
     unionSqm: r2(union.areaSqm),
+    /**
+     * Σ surface per family, and over all. A SUM, because surfaces cannot be
+     * unioned: where elements of one family overlap in plan (the telescoping
+     * standing-seam sections) their overlap strips are in here twice, just
+     * as they are in `elementSumSqm`.
+     */
+    surfaceSqm: r2([...familySurface.values()].reduce((s, v) => s + v, 0)),
+    surfaceByFamilySqm: Object.fromEntries(
+      [...familySurface.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, r2(v)]),
+    ),
     /**
      * Rows whose upward-face sum exceeds their own shadow by more than 5 %:
      * the mesh presents its top face more than once. Two causes seen so far

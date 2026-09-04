@@ -72,6 +72,14 @@ export type ReferenceBuildingManifest = Readonly<{
     roofElementSumSqm?: number;
     /** One union over every roof element — what the sky sees. */
     roofUnionSqm?: number;
+    /**
+     * True one-sheet SURFACE, Σ over every roof element — what heat
+     * crosses. Equals the shadow for a flat deck, exceeds it for a pitched
+     * roof. A sum, never a union, so plan overlaps within a type are in it.
+     */
+    roofSurfaceSqm?: number;
+    /** Σ surface per roof type, keyed like `roofProjectedByFamilySqm`. */
+    roofSurfaceByFamilySqm?: Readonly<Record<string, number>>;
     roofNote?: string;
     /** Union of the counted ground slabs' shadows — a screed over a structural floor is one floor. */
     groundSlabSqm?: number;
@@ -101,6 +109,10 @@ export type ReferenceBuildingManifest = Readonly<{
     upFacingProjectedSqm: number;
     /** Area-weighted mean tilt of the upward faces, degrees from horizontal. */
     tiltDeg: number | null;
+    /** True one-sheet surface: ≥ `projectedSqm`, equal for a flat deck. */
+    surfaceSqm: number;
+    /** How the surface was taken from the mesh — closed solid, both-sheets-up surface model, or stacked layers. */
+    surfaceBasis: string;
     /** The IfcRoof this part is aggregated under, when it is one. */
     partOf: string | null;
     ref: string;

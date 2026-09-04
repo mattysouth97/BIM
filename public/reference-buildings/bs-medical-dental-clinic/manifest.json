@@ -121,7 +121,12 @@
     },
     "roofElementSumSqm": 2719.59,
     "roofUnionSqm": 2592.43,
-    "roofNote": "Plan shadow per element (union of its projected triangles, ifc-plan-shadow.mjs): 12 elements — 5 IfcRoof, 7 IfcSlab.PredefinedType=ROOF. roofProjectedSqm sums 2 roof type(s), each as the union of its elements; the elements themselves sum to 2719.59 m² (elements of one type overlapping in plan) and all types together cover 2592.43 m² (one type above another). 7 IfcRoof carry no geometry of their own and are measured through the IfcSlab ROOF parts they aggregate. 5 element(s) present their top face more than once (upward-face sum above shadow) — the reason the shadow is used and Σ area×n_y is not. ",
+    "roofSurfaceSqm": 2741.94,
+    "roofSurfaceByFamilySqm": {
+      "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck": 2286.93,
+      "Basic Roof:Standing Seam Metal Roof": 455
+    },
+    "roofNote": "Plan shadow per element (union of its projected triangles, ifc-plan-shadow.mjs): 12 elements — 5 IfcRoof, 7 IfcSlab.PredefinedType=ROOF. roofProjectedSqm sums 2 roof type(s), each as the union of its elements; the elements themselves sum to 2719.59 m² (elements of one type overlapping in plan) and all types together cover 2592.43 m² (one type above another). surfaceSqm is each element's true one-sheet surface (Σ area of its upward faces; ÷ 2 where a surface model has no downward face and both sheets are wound upward; ÷ the coverage where its parts cover its shadow more than once, as stacked layer solids do — surfaceBasis says which), summing to 2741.94 m²; a flat deck's surface equals its shadow, a pitched roof's exceeds it. 7 IfcRoof carry no geometry of their own and are measured through the IfcSlab ROOF parts they aggregate. 5 element(s) present their top face more than once (upward-face sum above shadow) — the reason the shadow is used and Σ area×n_y is not. The five Standing Seam Metal Roof IfcRoof are IfcFaceBasedSurfaceModels with both sheets wound upward. The 382.28 m² carried earlier as their 'projected' area is 764.56 ÷ 2, where 764.56 is the sum of the faces within 26° of horizontal (|n_y| > 0.9) over both sheets: the near-horizontal part of one sheet's surface, steeper flanks omitted and no cosine applied — neither the shadow nor the full surface. Their shadows sum to 432.66 m² and union to 384.44 m² (consecutive sections telescope ~1.8 m along the spine); their one-sheet surface is larger than both, as a pitched roof's must be.",
     "groundSlabSqm": 2577.42,
     "groundSlabSumSqm": 2577.42,
     "groundPerimeterM": 217.01,
@@ -500,6 +505,8 @@
       "projectedSqm": 25.45,
       "upFacingProjectedSqm": 50.9,
       "tiltDeg": 13.5,
+      "surfaceSqm": 26.4,
+      "surfaceBasis": "upward faces ÷ 2: surface model with no downward face, both sheets wound upward",
       "partOf": null,
       "ref": "ifc://Clinic_Structural.ifc#2278"
     },
@@ -514,6 +521,8 @@
       "projectedSqm": 39.77,
       "upFacingProjectedSqm": 79.55,
       "tiltDeg": 17.6,
+      "surfaceSqm": 41.72,
+      "surfaceBasis": "upward faces ÷ 2: surface model with no downward face, both sheets wound upward",
       "partOf": null,
       "ref": "ifc://Clinic_Structural.ifc#2279"
     },
@@ -528,6 +537,8 @@
       "projectedSqm": 232.98,
       "upFacingProjectedSqm": 465.96,
       "tiltDeg": 18.3,
+      "surfaceSqm": 245.42,
+      "surfaceBasis": "upward faces ÷ 2: surface model with no downward face, both sheets wound upward",
       "partOf": null,
       "ref": "ifc://Clinic_Structural.ifc#2280"
     },
@@ -542,6 +553,8 @@
       "projectedSqm": 56.19,
       "upFacingProjectedSqm": 112.39,
       "tiltDeg": 18,
+      "surfaceSqm": 59.07,
+      "surfaceBasis": "upward faces ÷ 2: surface model with no downward face, both sheets wound upward",
       "partOf": null,
       "ref": "ifc://Clinic_Structural.ifc#2281"
     },
@@ -556,6 +569,8 @@
       "projectedSqm": 78.26,
       "upFacingProjectedSqm": 156.53,
       "tiltDeg": 18.2,
+      "surfaceSqm": 82.38,
+      "surfaceBasis": "upward faces ÷ 2: surface model with no downward face, both sheets wound upward",
       "partOf": null,
       "ref": "ifc://Clinic_Structural.ifc#2282"
     },
@@ -570,6 +585,8 @@
       "projectedSqm": 54.57,
       "upFacingProjectedSqm": 54.57,
       "tiltDeg": 0,
+      "surfaceSqm": 54.57,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": "ifc://Clinic_Structural.ifc#1945",
       "ref": "ifc://Clinic_Structural.ifc#232610"
     },
@@ -584,6 +601,8 @@
       "projectedSqm": 10.77,
       "upFacingProjectedSqm": 10.77,
       "tiltDeg": 0,
+      "surfaceSqm": 10.77,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": "ifc://Clinic_Structural.ifc#1946",
       "ref": "ifc://Clinic_Structural.ifc#232611"
     },
@@ -598,6 +617,8 @@
       "projectedSqm": 1580.23,
       "upFacingProjectedSqm": 1580.23,
       "tiltDeg": 0,
+      "surfaceSqm": 1580.23,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": "ifc://Clinic_Structural.ifc#1944",
       "ref": "ifc://Clinic_Structural.ifc#232612"
     },
@@ -612,6 +633,8 @@
       "projectedSqm": 10.77,
       "upFacingProjectedSqm": 10.77,
       "tiltDeg": 0,
+      "surfaceSqm": 10.77,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": "ifc://Clinic_Structural.ifc#1949",
       "ref": "ifc://Clinic_Structural.ifc#232613"
     },
@@ -626,6 +649,8 @@
       "projectedSqm": 14.93,
       "upFacingProjectedSqm": 14.93,
       "tiltDeg": 0,
+      "surfaceSqm": 14.93,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": "ifc://Clinic_Structural.ifc#1950",
       "ref": "ifc://Clinic_Structural.ifc#232614"
     },
@@ -640,6 +665,8 @@
       "projectedSqm": 14.93,
       "upFacingProjectedSqm": 14.93,
       "tiltDeg": 0,
+      "surfaceSqm": 14.93,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": "ifc://Clinic_Structural.ifc#1947",
       "ref": "ifc://Clinic_Structural.ifc#232615"
     },
@@ -654,6 +681,8 @@
       "projectedSqm": 600.73,
       "upFacingProjectedSqm": 600.73,
       "tiltDeg": 0,
+      "surfaceSqm": 600.73,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": "ifc://Clinic_Structural.ifc#1948",
       "ref": "ifc://Clinic_Structural.ifc#232616"
     }

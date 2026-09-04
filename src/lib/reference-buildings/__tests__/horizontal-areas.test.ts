@@ -97,6 +97,33 @@ describe("Clinic roofs", () => {
     }
   });
 
+  it("surface: EPDM decks equal their shadow; the barrels exceed both their shadow sum and the 382.28", () => {
+    // Heat crosses the surface, not the shadow. A flat deck's surface is its
+    // shadow; a pitched roof's is larger by 1/cos(tilt). The standing seam's
+    // one-sheet surface must therefore exceed its 432.66 m² element-shadow
+    // sum — and the 382.28 the doc called "projected", which was the
+    // near-horizontal faces of one sheet with the flanks left out.
+    const bySurface = areas.roofSurfaceByFamilySqm ?? {};
+    for (const r of roofs.filter((r) => r.family === EPDM)) {
+      expect(within(r.surfaceSqm, r.projectedSqm, 0.01)).toBe(true);
+      expect(r.surfaceBasis).toBe("upward faces of a closed solid");
+    }
+    expect(within(bySurface[EPDM], (areas.roofProjectedByFamilySqm ?? {})[EPDM], 0.01)).toBe(true);
+    const seamRows = roofs.filter((r) => r.family === SEAM);
+    expect(bySurface[SEAM]).toBeGreaterThanOrEqual(sum(seamRows.map((r) => r.projectedSqm)));
+    expect(bySurface[SEAM]).toBeGreaterThan(COMMITTED.roofStandingSeamSqm);
+    expect(bySurface[SEAM]).toBeCloseTo(sum(seamRows.map((r) => r.surfaceSqm)), 1);
+    for (const r of seamRows) {
+      expect(r.surfaceSqm).toBeGreaterThan(r.projectedSqm);
+      expect(r.surfaceBasis).toMatch(/÷ 2: surface model with no downward face/);
+      // Surface / shadow is 1 / cos(mean tilt), to the tolerance a facetted barrel allows.
+      expect(r.surfaceSqm / r.projectedSqm).toBeCloseTo(1 / Math.cos((r.tiltDeg! * Math.PI) / 180), 1);
+    }
+    expect(areas.roofSurfaceSqm).toBeCloseTo(sum(Object.values(bySurface)), 1);
+    expect(areas.roofSurfaceSqm!).toBeGreaterThan(areas.roofElementSumSqm!);
+    expect(areas.roofNote).toMatch(/764\.56 ÷ 2/);
+  });
+
   it("the three totals nest: element sum ≥ Σ family coverage ≥ union", () => {
     expect(areas.roofElementSumSqm).toBeCloseTo(sum(roofs.map((r) => r.projectedSqm)), 1);
     expect(areas.roofProjectedSqm).toBeCloseTo(
@@ -216,6 +243,24 @@ describe("Schependomlaan", () => {
     expect(areas.roofElementSumSqm!).toBeGreaterThanOrEqual(areas.roofProjectedSqm!);
     expect(areas.roofProjectedSqm!).toBeGreaterThanOrEqual(areas.roofUnionSqm!);
     expect(areas.roofProjectedSqm!).toBeGreaterThan(300);
+  });
+
+  it("surface: the 64° sporenkap is normalised for its stacked layers, flat decks equal their shadow", () => {
+    const sporenkap = roofs.filter((r) => r.family === "sporenkap" && r.projectedSqm > 0.5);
+    expect(sporenkap.length).toBeGreaterThan(0);
+    // Some panels are one solid, most are a stacked build-up; both bases are
+    // legitimate, and the stacked ones must exist or the normalisation is idle.
+    expect(sporenkap.some((r) => /stacked layer solids/.test(r.surfaceBasis))).toBe(true);
+    for (const r of sporenkap) {
+      expect(r.surfaceBasis).toMatch(/cover its shadow|closed solid/);
+      expect(r.surfaceSqm).toBeGreaterThan(r.projectedSqm);
+      // A ~64° pitch: surface ≈ 2.3× shadow — not 3 × 2.3× as three stacked layers would give.
+      expect(r.surfaceSqm / r.projectedSqm).toBeLessThan(3);
+    }
+    for (const r of roofs.filter((r) => r.family === "dakvloer" && r.projectedSqm > 1)) {
+      expect(within(r.surfaceSqm, r.projectedSqm, 0.02)).toBe(true);
+    }
+    expect(areas.roofSurfaceSqm).toBeCloseTo(sum(Object.values(areas.roofSurfaceByFamilySqm ?? {})), 1);
   });
 
   it("counts every ground candidate — 29 of the 32 ground-storey rooms were placed by their FootPrint curve — and unions the layered floor once", () => {

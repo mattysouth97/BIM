@@ -76,6 +76,27 @@ const CLINIC = Object.freeze({
   exteriorWallMatch: "Exterior - Insul Panel",
   /** Main roof datum. Wall above this encloses plant, not conditioned space. */
   roofDatumM: 9.25,
+  /**
+   * What the earlier, hand-derived standing-seam figure was. Measured
+   * 2026-09-04: the five IfcRoof are IfcFaceBasedSurfaceModels with both
+   * sheets wound upward; the faces within 26° of horizontal (|n_y| > 0.9)
+   * sum to 764.56 m² across both sheets, and 764.56 ÷ 2 = 382.28 is the
+   * figure bs-medical-dental-clinic-energy.ts carries as "projected". It is
+   * the near-horizontal part of one sheet's SURFACE, with the steeper barrel
+   * flanks left out and no cosine applied — neither the plan shadow (432.66
+   * per element, 384.44 as one type) nor the full surface. Said here so the
+   * next reader does not re-derive 382.28 and take it for a projection.
+   */
+  roofNote:
+    "The five Standing Seam Metal Roof IfcRoof are IfcFaceBasedSurfaceModels " +
+    "with both sheets wound upward. The 382.28 m² carried earlier as their " +
+    "'projected' area is 764.56 ÷ 2, where 764.56 is the sum of the faces " +
+    "within 26° of horizontal (|n_y| > 0.9) over both sheets: the " +
+    "near-horizontal part of one sheet's surface, steeper flanks omitted and " +
+    "no cosine applied — neither the shadow nor the full surface. Their " +
+    "shadows sum to 432.66 m² and union to 384.44 m² (consecutive sections " +
+    "telescope ~1.8 m along the spine); their one-sheet surface is larger " +
+    "than both, as a pitched roof's must be.",
   /** Measured on this model: what the fabric GLB leaves out, and why the service GLBs are the size they are. */
   modelNote:
     "Building fabric only. Furniture, sanitary fixtures, railings and the " +
@@ -1129,12 +1150,24 @@ async function main() {
       roofElementSumSqm: roofs.elementSumSqm,
       /** One union over every roof element — what the sky sees; less than the above where one type sits over another. */
       roofUnionSqm: roofs.unionSqm,
+      /**
+       * True one-sheet SURFACE, Σ per type and over all — what heat crosses.
+       * A flat deck's surface is its shadow; a pitched roof's is larger by
+       * 1/cos(tilt). A sum, not a union: surfaces cannot be unioned, so
+       * where elements of one type overlap in plan the strips are in twice.
+       */
+      roofSurfaceSqm: roofs.surfaceSqm,
+      roofSurfaceByFamilySqm: roofs.surfaceByFamilySqm,
       roofNote:
         `Plan shadow per element (union of its projected triangles, ifc-plan-shadow.mjs): ` +
         `${roofs.rows.length} elements — ${roofBasisSummary}. ` +
         `roofProjectedSqm sums ${roofs.familyCount} roof type(s), each as the union of its elements; ` +
         `the elements themselves sum to ${roofs.elementSumSqm} m² (elements of one type overlapping in plan) ` +
         `and all types together cover ${roofs.unionSqm} m² (one type above another). ` +
+        `surfaceSqm is each element's true one-sheet surface (Σ area of its upward faces; ÷ 2 where a ` +
+        `surface model has no downward face and both sheets are wound upward; ÷ the coverage where its ` +
+        `parts cover its shadow more than once, as stacked layer solids do — surfaceBasis says which), summing to ` +
+        `${roofs.surfaceSqm} m²; a flat deck's surface equals its shadow, a pitched roof's exceeds it. ` +
         (geometrylessRoofs > 0
           ? `${geometrylessRoofs} IfcRoof carry no geometry of their own and are measured through the IfcSlab ROOF parts they aggregate. `
           : "") +

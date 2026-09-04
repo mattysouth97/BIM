@@ -74,7 +74,20 @@
     },
     "roofElementSumSqm": 519.27,
     "roofUnionSqm": 361.86,
-    "roofNote": "Plan shadow per element (union of its projected triangles, ifc-plan-shadow.mjs): 78 elements — 62 IfcSlab.PredefinedType=ROOF, 16 by declared slab name (dakvloer, plat dak, lifttop). roofProjectedSqm sums 10 roof type(s), each as the union of its elements; the elements themselves sum to 519.27 m² (elements of one type overlapping in plan) and all types together cover 361.86 m² (one type above another). 34 element(s) present their top face more than once (upward-face sum above shadow) — the reason the shadow is used and Σ area×n_y is not. 1 shadow(s) needed a vertex grid coarser than 1 µm to union. The file types its flat roof decks as IfcSlab FLOOR — dakvloer (9 slabs at 11.62–11.84 m on storey '04 dak'), plat dak (6 at 5.67–5.84 m, the low-rise wing) and lifttop (1 at 12.60–12.80 m) — so they are declared roof by name; a type-only rule found 136 m² of roof on a four-storey block. gootconstructie (gutters), prefab balkon (balconies) and the FLOOR-typed dakisolatie stacked on the lifttop are not declared. The pitched sporenkap is exported as stacked layer solids, which is why its upward-face sum exceeds its shadow.",
+    "roofSurfaceSqm": 692.04,
+    "roofSurfaceByFamilySqm": {
+      "sporenkap": 306,
+      "dakvloer": 259.73,
+      "plat dak": 95.3,
+      "dak dakkapel": 14.49,
+      "lifttop": 5.75,
+      "plafond": 3.33,
+      "dakisolatie": 3.18,
+      "spouwisolatie": 2.42,
+      "dakaftimmering": 1.84,
+      "dakelement": 0
+    },
+    "roofNote": "Plan shadow per element (union of its projected triangles, ifc-plan-shadow.mjs): 78 elements — 62 IfcSlab.PredefinedType=ROOF, 16 by declared slab name (dakvloer, plat dak, lifttop). roofProjectedSqm sums 10 roof type(s), each as the union of its elements; the elements themselves sum to 519.27 m² (elements of one type overlapping in plan) and all types together cover 361.86 m² (one type above another). surfaceSqm is each element's true one-sheet surface (Σ area of its upward faces; ÷ 2 where a surface model has no downward face and both sheets are wound upward; ÷ the coverage where its parts cover its shadow more than once, as stacked layer solids do — surfaceBasis says which), summing to 692.04 m²; a flat deck's surface equals its shadow, a pitched roof's exceeds it. 34 element(s) present their top face more than once (upward-face sum above shadow) — the reason the shadow is used and Σ area×n_y is not. 1 shadow(s) needed a vertex grid coarser than 1 µm to union. The file types its flat roof decks as IfcSlab FLOOR — dakvloer (9 slabs at 11.62–11.84 m on storey '04 dak'), plat dak (6 at 5.67–5.84 m, the low-rise wing) and lifttop (1 at 12.60–12.80 m) — so they are declared roof by name; a type-only rule found 136 m² of roof on a four-storey block. gootconstructie (gutters), prefab balkon (balconies) and the FLOOR-typed dakisolatie stacked on the lifttop are not declared. The pitched sporenkap is exported as stacked layer solids, which is why its upward-face sum exceeds its shadow.",
     "groundSlabSqm": 345.81,
     "groundSlabSumSqm": 678.28,
     "groundPerimeterM": 90.08,
@@ -564,6 +577,8 @@
       "projectedSqm": 1.65,
       "upFacingProjectedSqm": 4.44,
       "tiltDeg": 64.3,
+      "surfaceSqm": 3.8,
+      "surfaceBasis": "upward faces ÷ 2.69: the element's parts cover its shadow 2.69× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#335985"
     },
@@ -578,6 +593,8 @@
       "projectedSqm": 0.16,
       "upFacingProjectedSqm": 0.16,
       "tiltDeg": 64,
+      "surfaceSqm": 0.38,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#367844"
     },
@@ -592,6 +609,8 @@
       "projectedSqm": 0.2,
       "upFacingProjectedSqm": 0.2,
       "tiltDeg": 63.3,
+      "surfaceSqm": 0.46,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#418310"
     },
@@ -606,6 +625,8 @@
       "projectedSqm": 0.86,
       "upFacingProjectedSqm": 1.63,
       "tiltDeg": 64.1,
+      "surfaceSqm": 2.03,
+      "surfaceBasis": "upward faces ÷ 1.90: the element's parts cover its shadow 1.90× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#419864"
     },
@@ -620,6 +641,8 @@
       "projectedSqm": 0.86,
       "upFacingProjectedSqm": 1.63,
       "tiltDeg": 64.1,
+      "surfaceSqm": 1.97,
+      "surfaceBasis": "upward faces ÷ 1.90: the element's parts cover its shadow 1.90× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#420131"
     },
@@ -634,6 +657,8 @@
       "projectedSqm": 4.99,
       "upFacingProjectedSqm": 12.96,
       "tiltDeg": 64,
+      "surfaceSqm": 11.4,
+      "surfaceBasis": "upward faces ÷ 2.60: the element's parts cover its shadow 2.60× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#420633"
     },
@@ -648,6 +673,8 @@
       "projectedSqm": 0.86,
       "upFacingProjectedSqm": 1.63,
       "tiltDeg": 64.1,
+      "surfaceSqm": 2.02,
+      "surfaceBasis": "upward faces ÷ 1.90: the element's parts cover its shadow 1.90× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#421838"
     },
@@ -662,6 +689,8 @@
       "projectedSqm": 4.22,
       "upFacingProjectedSqm": 10.91,
       "tiltDeg": 64,
+      "surfaceSqm": 9.63,
+      "surfaceBasis": "upward faces ÷ 2.58: the element's parts cover its shadow 2.58× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#422348"
     },
@@ -676,6 +705,8 @@
       "projectedSqm": 0.43,
       "upFacingProjectedSqm": 0.43,
       "tiltDeg": 64.6,
+      "surfaceSqm": 1.01,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#440542"
     },
@@ -690,6 +721,8 @@
       "projectedSqm": 0.24,
       "upFacingProjectedSqm": 0.24,
       "tiltDeg": 64.3,
+      "surfaceSqm": 0.54,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#440746"
     },
@@ -704,6 +737,8 @@
       "projectedSqm": 0.23,
       "upFacingProjectedSqm": 0.4,
       "tiltDeg": 62.9,
+      "surfaceSqm": 0.5,
+      "surfaceBasis": "upward faces ÷ 1.75: the element's parts cover its shadow 1.75× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#453185"
     },
@@ -718,6 +753,8 @@
       "projectedSqm": 1.05,
       "upFacingProjectedSqm": 2.73,
       "tiltDeg": 0,
+      "surfaceSqm": 1.05,
+      "surfaceBasis": "upward faces ÷ 2.61: the element's parts cover its shadow 2.61× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#460524"
     },
@@ -732,6 +769,8 @@
       "projectedSqm": 1.05,
       "upFacingProjectedSqm": 2.73,
       "tiltDeg": 0,
+      "surfaceSqm": 1.05,
+      "surfaceBasis": "upward faces ÷ 2.61: the element's parts cover its shadow 2.61× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#466489"
     },
@@ -746,6 +785,8 @@
       "projectedSqm": 1.05,
       "upFacingProjectedSqm": 2.73,
       "tiltDeg": 0,
+      "surfaceSqm": 1.05,
+      "surfaceBasis": "upward faces ÷ 2.61: the element's parts cover its shadow 2.61× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#466803"
     },
@@ -760,6 +801,8 @@
       "projectedSqm": 0.2,
       "upFacingProjectedSqm": 0.2,
       "tiltDeg": 63.3,
+      "surfaceSqm": 0.46,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#467051"
     },
@@ -774,6 +817,8 @@
       "projectedSqm": 0.43,
       "upFacingProjectedSqm": 0.43,
       "tiltDeg": 64.6,
+      "surfaceSqm": 1.01,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#467255"
     },
@@ -788,6 +833,8 @@
       "projectedSqm": 0,
       "upFacingProjectedSqm": 0,
       "tiltDeg": null,
+      "surfaceSqm": 0,
+      "surfaceBasis": "no upward face",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#467412"
     },
@@ -802,6 +849,8 @@
       "projectedSqm": 1.05,
       "upFacingProjectedSqm": 2.73,
       "tiltDeg": 0,
+      "surfaceSqm": 1.05,
+      "surfaceBasis": "upward faces ÷ 2.61: the element's parts cover its shadow 2.61× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#469449"
     },
@@ -816,6 +865,8 @@
       "projectedSqm": 20.25,
       "upFacingProjectedSqm": 20.44,
       "tiltDeg": 0,
+      "surfaceSqm": 20.44,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#699294"
     },
@@ -830,6 +881,8 @@
       "projectedSqm": 18.85,
       "upFacingProjectedSqm": 19.04,
       "tiltDeg": 0,
+      "surfaceSqm": 18.85,
+      "surfaceBasis": "upward faces ÷ 1.01: the element's parts cover its shadow 1.01× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#699539"
     },
@@ -844,6 +897,8 @@
       "projectedSqm": 16.96,
       "upFacingProjectedSqm": 17.38,
       "tiltDeg": 0,
+      "surfaceSqm": 16.96,
+      "surfaceBasis": "upward faces ÷ 1.02: the element's parts cover its shadow 1.02× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#699776"
     },
@@ -858,6 +913,8 @@
       "projectedSqm": 12.2,
       "upFacingProjectedSqm": 12.3,
       "tiltDeg": 0,
+      "surfaceSqm": 12.3,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#700118"
     },
@@ -872,6 +929,8 @@
       "projectedSqm": 15.78,
       "upFacingProjectedSqm": 16.18,
       "tiltDeg": 0,
+      "surfaceSqm": 15.78,
+      "surfaceBasis": "upward faces ÷ 1.02: the element's parts cover its shadow 1.02× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#700382"
     },
@@ -886,6 +945,8 @@
       "projectedSqm": 10.96,
       "upFacingProjectedSqm": 10.96,
       "tiltDeg": 0,
+      "surfaceSqm": 10.96,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#700628"
     },
@@ -900,6 +961,8 @@
       "projectedSqm": 0.94,
       "upFacingProjectedSqm": 0.94,
       "tiltDeg": 56.9,
+      "surfaceSqm": 2,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#777024"
     },
@@ -914,6 +977,8 @@
       "projectedSqm": 6.9,
       "upFacingProjectedSqm": 6.9,
       "tiltDeg": 0,
+      "surfaceSqm": 6.99,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#778448"
     },
@@ -928,6 +993,8 @@
       "projectedSqm": 5.85,
       "upFacingProjectedSqm": 15.16,
       "tiltDeg": 64,
+      "surfaceSqm": 13.35,
+      "surfaceBasis": "upward faces ÷ 2.59: the element's parts cover its shadow 2.59× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#785682"
     },
@@ -942,6 +1009,8 @@
       "projectedSqm": 11.39,
       "upFacingProjectedSqm": 29.68,
       "tiltDeg": 64.1,
+      "surfaceSqm": 26.32,
+      "surfaceBasis": "upward faces ÷ 2.61: the element's parts cover its shadow 2.61× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#795296"
     },
@@ -956,6 +1025,8 @@
       "projectedSqm": 6.15,
       "upFacingProjectedSqm": 17.2,
       "tiltDeg": 64.5,
+      "surfaceSqm": 14.45,
+      "surfaceBasis": "upward faces ÷ 2.80: the element's parts cover its shadow 2.80× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#795625"
     },
@@ -970,6 +1041,8 @@
       "projectedSqm": 5.64,
       "upFacingProjectedSqm": 15.69,
       "tiltDeg": 64.6,
+      "surfaceSqm": 13.14,
+      "surfaceBasis": "upward faces ÷ 2.78: the element's parts cover its shadow 2.78× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#795902"
     },
@@ -984,6 +1057,8 @@
       "projectedSqm": 3.5,
       "upFacingProjectedSqm": 9.73,
       "tiltDeg": 64.6,
+      "surfaceSqm": 8.16,
+      "surfaceBasis": "upward faces ÷ 2.78: the element's parts cover its shadow 2.78× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#796179"
     },
@@ -998,6 +1073,8 @@
       "projectedSqm": 0.57,
       "upFacingProjectedSqm": 0.57,
       "tiltDeg": 64.1,
+      "surfaceSqm": 1.32,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#797154"
     },
@@ -1012,6 +1089,8 @@
       "projectedSqm": 0.59,
       "upFacingProjectedSqm": 0.59,
       "tiltDeg": 64.2,
+      "surfaceSqm": 1.36,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#797314"
     },
@@ -1026,6 +1105,8 @@
       "projectedSqm": 2.84,
       "upFacingProjectedSqm": 8.23,
       "tiltDeg": 64.8,
+      "surfaceSqm": 6.99,
+      "surfaceBasis": "upward faces ÷ 2.90: the element's parts cover its shadow 2.90× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#797664"
     },
@@ -1040,6 +1121,8 @@
       "projectedSqm": 3.82,
       "upFacingProjectedSqm": 10.69,
       "tiltDeg": 64.3,
+      "surfaceSqm": 8.8,
+      "surfaceBasis": "upward faces ÷ 2.79: the element's parts cover its shadow 2.79× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#797941"
     },
@@ -1054,6 +1137,8 @@
       "projectedSqm": 2.84,
       "upFacingProjectedSqm": 8.23,
       "tiltDeg": 64.8,
+      "surfaceSqm": 6.83,
+      "surfaceBasis": "upward faces ÷ 2.90: the element's parts cover its shadow 2.90× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#798290"
     },
@@ -1068,6 +1153,8 @@
       "projectedSqm": 6.15,
       "upFacingProjectedSqm": 17.2,
       "tiltDeg": 64.5,
+      "surfaceSqm": 14.48,
+      "surfaceBasis": "upward faces ÷ 2.80: the element's parts cover its shadow 2.80× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#800029"
     },
@@ -1082,6 +1169,8 @@
       "projectedSqm": 2.7,
       "upFacingProjectedSqm": 7.55,
       "tiltDeg": 64.1,
+      "surfaceSqm": 6.36,
+      "surfaceBasis": "upward faces ÷ 2.79: the element's parts cover its shadow 2.79× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#800358"
     },
@@ -1096,6 +1185,8 @@
       "projectedSqm": 4.39,
       "upFacingProjectedSqm": 4.39,
       "tiltDeg": 58.6,
+      "surfaceSqm": 8.43,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#804389"
     },
@@ -1110,6 +1201,8 @@
       "projectedSqm": 1.38,
       "upFacingProjectedSqm": 1.38,
       "tiltDeg": 58,
+      "surfaceSqm": 2.6,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#808496"
     },
@@ -1124,6 +1217,8 @@
       "projectedSqm": 1.62,
       "upFacingProjectedSqm": 1.62,
       "tiltDeg": 58.3,
+      "surfaceSqm": 3.07,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#808666"
     },
@@ -1138,6 +1233,8 @@
       "projectedSqm": 2.45,
       "upFacingProjectedSqm": 2.45,
       "tiltDeg": 57.5,
+      "surfaceSqm": 4.56,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#809504"
     },
@@ -1152,6 +1249,8 @@
       "projectedSqm": 0.82,
       "upFacingProjectedSqm": 2.34,
       "tiltDeg": 64.7,
+      "surfaceSqm": 1.91,
+      "surfaceBasis": "upward faces ÷ 2.86: the element's parts cover its shadow 2.86× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#809844"
     },
@@ -1166,6 +1265,8 @@
       "projectedSqm": 0.82,
       "upFacingProjectedSqm": 2.34,
       "tiltDeg": 64.7,
+      "surfaceSqm": 1.91,
+      "surfaceBasis": "upward faces ÷ 2.86: the element's parts cover its shadow 2.86× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#810190"
     },
@@ -1180,6 +1281,8 @@
       "projectedSqm": 1.43,
       "upFacingProjectedSqm": 1.43,
       "tiltDeg": 58.7,
+      "surfaceSqm": 2.75,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#810360"
     },
@@ -1194,6 +1297,8 @@
       "projectedSqm": 2.04,
       "upFacingProjectedSqm": 2.04,
       "tiltDeg": 58.6,
+      "surfaceSqm": 3.99,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#812694"
     },
@@ -1208,6 +1313,8 @@
       "projectedSqm": 9.92,
       "upFacingProjectedSqm": 26.47,
       "tiltDeg": 64.3,
+      "surfaceSqm": 23.25,
+      "surfaceBasis": "upward faces ÷ 2.67: the element's parts cover its shadow 2.67× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#814276"
     },
@@ -1222,6 +1329,8 @@
       "projectedSqm": 4.39,
       "upFacingProjectedSqm": 4.39,
       "tiltDeg": 58.6,
+      "surfaceSqm": 8.43,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#814446"
     },
@@ -1236,6 +1345,8 @@
       "projectedSqm": 2.97,
       "upFacingProjectedSqm": 2.97,
       "tiltDeg": 58.4,
+      "surfaceSqm": 5.84,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#814643"
     },
@@ -1250,6 +1361,8 @@
       "projectedSqm": 1.62,
       "upFacingProjectedSqm": 1.62,
       "tiltDeg": 58.3,
+      "surfaceSqm": 3.16,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#819036"
     },
@@ -1264,6 +1377,8 @@
       "projectedSqm": 2.07,
       "upFacingProjectedSqm": 4.77,
       "tiltDeg": 63.9,
+      "surfaceSqm": 4.71,
+      "surfaceBasis": "upward faces ÷ 2.30: the element's parts cover its shadow 2.30× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#820180"
     },
@@ -1278,6 +1393,8 @@
       "projectedSqm": 9.02,
       "upFacingProjectedSqm": 24.58,
       "tiltDeg": 64.4,
+      "surfaceSqm": 21.22,
+      "surfaceBasis": "upward faces ÷ 2.72: the element's parts cover its shadow 2.72× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#820583"
     },
@@ -1292,6 +1409,8 @@
       "projectedSqm": 2.51,
       "upFacingProjectedSqm": 2.51,
       "tiltDeg": 58.3,
+      "surfaceSqm": 4.77,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#824644"
     },
@@ -1306,6 +1425,8 @@
       "projectedSqm": 1.1,
       "upFacingProjectedSqm": 3.12,
       "tiltDeg": 0,
+      "surfaceSqm": 1.1,
+      "surfaceBasis": "upward faces ÷ 2.84: the element's parts cover its shadow 2.84× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#824921"
     },
@@ -1320,6 +1441,8 @@
       "projectedSqm": 3.16,
       "upFacingProjectedSqm": 3.16,
       "tiltDeg": 58.5,
+      "surfaceSqm": 6.04,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#828068"
     },
@@ -1334,6 +1457,8 @@
       "projectedSqm": 1.1,
       "upFacingProjectedSqm": 2.87,
       "tiltDeg": 0,
+      "surfaceSqm": 1.1,
+      "surfaceBasis": "upward faces ÷ 2.62: the element's parts cover its shadow 2.62× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#828385"
     },
@@ -1348,6 +1473,8 @@
       "projectedSqm": 1.1,
       "upFacingProjectedSqm": 3.12,
       "tiltDeg": 0,
+      "surfaceSqm": 1.1,
+      "surfaceBasis": "upward faces ÷ 2.84: the element's parts cover its shadow 2.84× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#831372"
     },
@@ -1362,6 +1489,8 @@
       "projectedSqm": 1.67,
       "upFacingProjectedSqm": 1.67,
       "tiltDeg": 0,
+      "surfaceSqm": 1.67,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#836065"
     },
@@ -1376,6 +1505,8 @@
       "projectedSqm": 0.81,
       "upFacingProjectedSqm": 0.81,
       "tiltDeg": 28,
+      "surfaceSqm": 0.92,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#836769"
     },
@@ -1390,6 +1521,8 @@
       "projectedSqm": 11.39,
       "upFacingProjectedSqm": 29.68,
       "tiltDeg": 64.1,
+      "surfaceSqm": 26.52,
+      "surfaceBasis": "upward faces ÷ 2.61: the element's parts cover its shadow 2.61× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#841075"
     },
@@ -1404,6 +1537,8 @@
       "projectedSqm": 0.81,
       "upFacingProjectedSqm": 0.81,
       "tiltDeg": 28,
+      "surfaceSqm": 0.92,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#841217"
     },
@@ -1418,6 +1553,8 @@
       "projectedSqm": 0.9,
       "upFacingProjectedSqm": 0.9,
       "tiltDeg": 42.2,
+      "surfaceSqm": 1.21,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#843005"
     },
@@ -1432,6 +1569,8 @@
       "projectedSqm": 0.9,
       "upFacingProjectedSqm": 0.9,
       "tiltDeg": 42.2,
+      "surfaceSqm": 1.21,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#843182"
     },
@@ -1446,6 +1585,8 @@
       "projectedSqm": 1.67,
       "upFacingProjectedSqm": 1.67,
       "tiltDeg": 0,
+      "surfaceSqm": 1.67,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#851831"
     },
@@ -1460,6 +1601,8 @@
       "projectedSqm": 0.76,
       "upFacingProjectedSqm": 2.15,
       "tiltDeg": 64.7,
+      "surfaceSqm": 1.77,
+      "surfaceBasis": "upward faces ÷ 2.85: the element's parts cover its shadow 2.85× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#860402"
     },
@@ -1474,6 +1617,8 @@
       "projectedSqm": 2.91,
       "upFacingProjectedSqm": 8.41,
       "tiltDeg": 64.8,
+      "surfaceSqm": 6.84,
+      "surfaceBasis": "upward faces ÷ 2.89: the element's parts cover its shadow 2.89× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#860751"
     },
@@ -1488,6 +1633,8 @@
       "projectedSqm": 2.91,
       "upFacingProjectedSqm": 8.41,
       "tiltDeg": 64.8,
+      "surfaceSqm": 6.83,
+      "surfaceBasis": "upward faces ÷ 2.89: the element's parts cover its shadow 2.89× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#861311"
     },
@@ -1502,6 +1649,8 @@
       "projectedSqm": 0.76,
       "upFacingProjectedSqm": 2.15,
       "tiltDeg": 64.7,
+      "surfaceSqm": 1.77,
+      "surfaceBasis": "upward faces ÷ 2.85: the element's parts cover its shadow 2.85× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#861642"
     },
@@ -1516,6 +1665,8 @@
       "projectedSqm": 5.75,
       "upFacingProjectedSqm": 5.75,
       "tiltDeg": 0,
+      "surfaceSqm": 5.75,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#984466"
     },
@@ -1530,6 +1681,8 @@
       "projectedSqm": 135.37,
       "upFacingProjectedSqm": 137.16,
       "tiltDeg": 0.6,
+      "surfaceSqm": 135.38,
+      "surfaceBasis": "upward faces ÷ 1.01: the element's parts cover its shadow 1.01× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#986563"
     },
@@ -1544,6 +1697,8 @@
       "projectedSqm": 18.32,
       "upFacingProjectedSqm": 18.32,
       "tiltDeg": 0,
+      "surfaceSqm": 18.32,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#986733"
     },
@@ -1558,6 +1713,8 @@
       "projectedSqm": 12.68,
       "upFacingProjectedSqm": 12.68,
       "tiltDeg": 0,
+      "surfaceSqm": 12.68,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#986959"
     },
@@ -1572,6 +1729,8 @@
       "projectedSqm": 18.02,
       "upFacingProjectedSqm": 18.02,
       "tiltDeg": 0,
+      "surfaceSqm": 18.02,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#987179"
     },
@@ -1586,6 +1745,8 @@
       "projectedSqm": 17.93,
       "upFacingProjectedSqm": 17.93,
       "tiltDeg": 0,
+      "surfaceSqm": 17.93,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#987435"
     },
@@ -1600,6 +1761,8 @@
       "projectedSqm": 16.6,
       "upFacingProjectedSqm": 16.6,
       "tiltDeg": 0,
+      "surfaceSqm": 16.6,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#987924"
     },
@@ -1614,6 +1777,8 @@
       "projectedSqm": 16.52,
       "upFacingProjectedSqm": 16.52,
       "tiltDeg": 0,
+      "surfaceSqm": 16.52,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#988126"
     },
@@ -1628,6 +1793,8 @@
       "projectedSqm": 16.54,
       "upFacingProjectedSqm": 16.54,
       "tiltDeg": 0,
+      "surfaceSqm": 16.54,
+      "surfaceBasis": "upward faces of a closed solid",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#988370"
     },
@@ -1642,6 +1809,8 @@
       "projectedSqm": 7.73,
       "upFacingProjectedSqm": 8.04,
       "tiltDeg": 0,
+      "surfaceSqm": 7.73,
+      "surfaceBasis": "upward faces ÷ 1.04: the element's parts cover its shadow 1.04× over (stacked layer solids or overlapping pieces)",
       "partOf": null,
       "ref": "ifc://IFC Schependomlaan.ifc#991286"
     }

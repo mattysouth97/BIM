@@ -153,14 +153,16 @@ export function planShadow(triangles) {
   let upFacingProjected = 0;
   let upFacingArea = 0;
   let downFacingProjected = 0;
+  let downFacingArea = 0;
   for (const [a, b, c] of triangles) {
     const t = triangleNormal(a, b, c);
     if (!t) continue;
     if (t.n[1] > 0) {
       upFacingProjected += t.area * t.n[1];
       upFacingArea += t.area;
-    } else {
+    } else if (t.n[1] < 0) {
       downFacingProjected += t.area * -t.n[1];
+      downFacingArea += t.area;
     }
   }
   // Mean tilt of the upward faces, weighted by their true area. A flat slab
@@ -184,6 +186,8 @@ export function planShadow(triangles) {
     upFacingProjectedSqm: upFacingProjected,
     upFacingSqm: upFacingArea,
     downFacingProjectedSqm: downFacingProjected,
+    /** True area of the faces with n_y < 0. Zero on a surface model whose sheets are all wound upward. */
+    downFacingSqm: downFacingArea,
     tiltDeg,
     /** The vertex grid the union succeeded at; 1e-6 unless the mesh forced a coarser one. */
     snapM,
