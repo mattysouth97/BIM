@@ -85,12 +85,27 @@ test.describe("Canonical diagnostic viewer modes", () => {
     await expect(diagnosisScene).toBeVisible({ timeout: 20_000 });
     const canvas = diagnosisScene.locator("canvas");
     await expect(canvas).toBeVisible();
-    await expect
-      .poll(async () => {
-        const bounds = await canvas.boundingBox();
-        return Boolean(bounds && bounds.width >= 300 && bounds.height >= 400);
-      })
-      .toBe(true);
+    // Read the laid-out size from inside the page rather than via
+    // boundingBox(). React Three Fiber sizes its canvas from react-use-measure,
+    // which delivers the measured size on an animation frame, and headless
+    // Chromium schedules no frames while nothing asks for one — so the canvas
+    // sits at the 300x150 HTML default until something requests a frame. A
+    // boundingBox() poll never does: measured here at ~12.0s and ~11.9s against
+    // this assertion's 5s budget, which is the whole of this failure. Polling
+    // through waitForFunction requests animation frames and resolves in ~65ms.
+    // The viewer was never slow; the old assertion could not observe it.
+    await page.waitForFunction(
+      () => {
+        const element = document.querySelector<HTMLCanvasElement>(
+          '[data-testid="energy-diagnosis-scene"] canvas',
+        );
+        return Boolean(
+          element && element.clientWidth >= 300 && element.clientHeight >= 400,
+        );
+      },
+      null,
+      { timeout: 20_000 },
+    );
 
     await sourceTab.click();
     await expect(sourceTab).toHaveAttribute("aria-selected", "true");
