@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { calculateAnnualDemand, normalizeEfficiency } from "@/lib/energy/annual-demand";
 import { SEOUL_CLIMATE } from "@/lib/energy/climate-data";
+import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { VENTILATION_ELEMENT_NAME, type HeatLossResult } from "@/lib/energy/heat-loss";
 import {
   CLINIC_ASSUMPTIONS,
@@ -328,18 +329,18 @@ describe("no silent defaults", () => {
 // ── 5 & 6. The Clinic ─────────────────────────────────────────────────────
 
 /**
- * The Clinic on SEOUL_DERIVED. Areas are the MEASURED envelope, never
- * recipe-derived. Glazing is the measured 267.16 m² aperture used directly —
- * not wall × WWR (bim-72's correction of 2026-09-04: the brief's WWR line was
- * backwards; deriving from wwr against net wall un-prices 267 m² of real wall).
+ * The Clinic on SEOUL_DERIVED. Quantities come from the normal path —
+ * `envelopeQuantities(CLINIC_RECIPE)`, which returns the measured envelope
+ * with `source: "measured"` — and the wall/glazing/door breakdown from
+ * `CLINIC_MEASURED_ENVELOPE`. Nothing here is a literal any more (`91d57ad`
+ * landed the fields these previously hardcoded).
  *
- * Three numbers below are hardcoded from the reference-building manifest
- * (`public/reference-buildings/bs-medical-dental-clinic/manifest.json`)
- * because `bs-medical-dental-clinic-energy.ts` was being edited by
- * main-coordinator at the time and is not this branch's to touch:
- *   exterior doors 37.06 m², opaque wall 2,150.30 m² net, glazing 267.16 m².
+ * Glazing is the measured aperture used DIRECTLY in the solar term, never
+ * re-derived from wall × WWR: the engine's `windows = gross × wwr` shape is
+ * its own, and reproducing it here would only add a rounding path between two
+ * numbers the file already states.
  */
-const CLINIC_EXTERIOR_DOOR_SQM = 37.06;
+const CLINIC_QUANTITIES = envelopeQuantities(CLINIC_RECIPE);
 
 /** Weekday/weekend schedules from CLINIC_MATERIALS, time-averaged over a week. */
 function scheduleUtilisation(): number {
@@ -349,41 +350,28 @@ function scheduleUtilisation(): number {
 }
 
 /**
- * Conditioned GROSS volume, measured 2026-09-04 by main-coordinator (relayed by
- * bim-72): floor area × storey floor-to-floor per storey plus the three OPEN TO
- * BELOW voids as their own solids — 2,525.67 × 4.57 + 1,723.69 × 4.68 + 220 +
- * 856 = 20,685.18, matching the extraction's 20,685.33 to 0.15 m³. This is
- * the volume ACH50 is quoted against (everything inside the air barrier,
- * plenums included). It supersedes `volumeM3Range` on the file, which had not
- * yet been updated on this branch; hardcoded here rather than editing a file
- * another session owns.
+ * The volume `envelopeQuantities` returns — `conditionedVolumeGrossM3`, the
+ * air-barrier volume ACH50 is quoted against. NOT `roomVolumeNetM3`, whose
+ * room solids stop at the 2.80 m ceilings and omit every plenum (37 % low);
+ * the sanity check below asserts the two are not confused.
  *
- * NOT `roomVolumeNetM3` (12,928.26): the IfcSpace solids stop at 2.80 m
- * suspended ceilings under 4.57 m storeys and omit every plenum — 37 % low.
+ * The gross-vs-air-volume caveat (~6 %, slab and structure included in gross)
+ * is A-VOLUME's, on the Clinic file. This run does not restate it — two
+ * assumptions saying one thing is how they drift apart.
  */
-const CLINIC_VOLUME_GROSS_M3 = 20685.33;
-/** Gross minus ~0.3 m of slab and structure per storey: the true air volume is ~6 % lower. */
-const CLINIC_VOLUME_AIR_APPROX_M3 = 19410;
+const CLINIC_VOLUME_GROSS_M3 = CLINIC_QUANTITIES.volumeM3;
+/** A-VOLUME's ~6 % clause, as a second point for the sanity band only. */
+const CLINIC_VOLUME_AIR_APPROX_M3 = CLINIC_VOLUME_GROSS_M3 * 0.94;
 
 const CLINIC_RUN_ASSUMPTIONS: readonly NamedAssumption[] = [
   {
-    id: "R-VOLUME-GROSS",
-    assumes: `Conditioned volume ${CLINIC_VOLUME_GROSS_M3.toLocaleString("en-US")} m³ is the GROSS storey volume (floor area × floor-to-floor, voids included), used as the air volume for H_ve.`,
-    why: "Gross includes the intermediate slab and structure, so the true air volume is roughly 6 % lower (~19,410 m³). That is inside the uncertainty of the ACH50 = 5 it multiplies, and is stated so a reader does not take V for a measured air volume. Supersedes A-VOLUME's 19,610–24,240 range (measured 2026-09-04).",
-  },
-  {
-    id: "R-DOORS",
-    assumes: `${CLINIC_EXTERIOR_DOOR_SQM} m² of exterior doors priced at the wall U (0.4 W/m²K).`,
-    why: "The manifest measures the doors separately; no door U exists in the model. Wall U is the nearest stated value and is disclosed here.",
-  },
-  {
     id: "R-GLAZING-SPLIT",
-    assumes: "The measured 267.16 m² glazing aperture split across N/E/S/W in proportion to each façade's net wall area.",
+    assumes: `The measured ${CLINIC_MEASURED_ENVELOPE.glazingApertureSqm} m² glazing aperture split across N/E/S/W in proportion to each façade's net wall area.`,
     why: "The per-orientation glazing split is a separate verification not yet landed. Proportional-to-wall is the uniform-WWR reading of A-WWR-DENOMINATOR; no façade is favoured.",
   },
   {
     id: "R-FRAME-MEASURED",
-    assumes: "Frame fraction 1 − 225 / 267.16 = 0.158 from the measured pane and aperture areas.",
+    assumes: `Frame fraction 1 − ${CLINIC_MEASURED_ENVELOPE.glazingPaneSqm} / ${CLINIC_MEASURED_ENVELOPE.glazingApertureSqm} = ${(1 - CLINIC_MEASURED_ENVELOPE.glazingPaneSqm / CLINIC_MEASURED_ENVELOPE.glazingApertureSqm).toFixed(3)} from the measured pane and aperture areas.`,
     why: "Both areas are in the manifest, so the ISO default of 0.3 is not needed; the measured fraction is used and the kernel's K-FRAME default therefore does not appear.",
   },
   {
@@ -400,16 +388,15 @@ function clinicInput(volumeM3: number): MonthlyBalanceInput {
   const glazingArea = CLINIC_MEASURED_ENVELOPE.glazingApertureSqm;
   const frameFraction = 1 - CLINIC_MEASURED_ENVELOPE.glazingPaneSqm / glazingArea;
   const win = CLINIC_MATERIALS.envelope.windows;
-  const roofArea = CLINIC_MEASURED_ENVELOPE.roofEpdmSqm + CLINIC_MEASURED_ENVELOPE.roofStandingSeamSqm;
 
   return {
     climate: SEOUL_DERIVED,
-    conditionedFloorAreaSqm: CLINIC_TOTAL_FLOOR_AREA_SQM,
+    conditionedFloorAreaSqm: CLINIC_QUANTITIES.intensityFloorAreaSqm,
     volumeM3,
     opaqueElements: [
       { id: "wall-net", areaSqm: CLINIC_MEASURED_ENVELOPE.exteriorWallNetSqm, uValueWPerM2K: wallU },
-      { id: "exterior-doors", areaSqm: CLINIC_EXTERIOR_DOOR_SQM, uValueWPerM2K: wallU },
-      { id: "roof-weighted", areaSqm: roofArea, uValueWPerM2K: CLINIC_MATERIALS.envelope.roof.uValue },
+      { id: "exterior-doors", areaSqm: CLINIC_MEASURED_ENVELOPE.exteriorDoorSqm, uValueWPerM2K: wallU },
+      { id: "roof-weighted", areaSqm: CLINIC_QUANTITIES.roofAreaSqm, uValueWPerM2K: CLINIC_MATERIALS.envelope.roof.uValue },
     ],
     glazing: (["N", "E", "S", "W"] as const).map((o) => ({
       id: `glazing-${o}`,
@@ -420,7 +407,7 @@ function clinicInput(volumeM3: number): MonthlyBalanceInput {
       frameFraction,
     })),
     groundFloor: {
-      areaSqm: CLINIC_MEASURED_ENVELOPE.groundSlabSqm,
+      areaSqm: CLINIC_QUANTITIES.planAreaSqm,
       uValueWPerM2K: CLINIC_GROUND_FLOOR.uValueWPerM2K,
     },
     thermalBridgesWPerK: CLINIC_MATERIALS.envelope.walls[0].thermalBridge ?? 0,
@@ -449,17 +436,16 @@ function degreeDayHeatingRawKwh(volumeM3: number): number {
   const wallU = CLINIC_MATERIALS.envelope.walls[0].uValue;
   const dT = SEOUL_CLIMATE.indoorTemp - SEOUL_CLIMATE.winterDesignTemp;
   const groundDt = SEOUL_CLIMATE.indoorTemp - (CLINIC_MATERIALS.envelope.foundation?.groundTemperature ?? 13.5);
-  const roofArea = CLINIC_MEASURED_ENVELOPE.roofEpdmSqm + CLINIC_MEASURED_ENVELOPE.roofStandingSeamSqm;
   const ach = CLINIC_MATERIALS.envelope.airtightness.ach50 / 20;
   const el = (element: string, area: number, uValue: number, deltaT: number, h = area * uValue) => ({
     element, area, uValue, hCoefficient: h, deltaT, heatLoss: h * deltaT, heatLossPerSqm: 0,
   });
   const heatLoss: HeatLossResult = {
     elements: [
-      el("Walls", CLINIC_MEASURED_ENVELOPE.exteriorWallNetSqm + CLINIC_EXTERIOR_DOOR_SQM, wallU, dT),
+      el("Walls", CLINIC_MEASURED_ENVELOPE.exteriorWallNetSqm + CLINIC_MEASURED_ENVELOPE.exteriorDoorSqm, wallU, dT),
       el("Windows", CLINIC_MEASURED_ENVELOPE.glazingApertureSqm, CLINIC_MATERIALS.envelope.windows.uValue, dT),
-      el("Roof", roofArea, CLINIC_MATERIALS.envelope.roof.uValue, dT),
-      el("Ground Floor", CLINIC_MEASURED_ENVELOPE.groundSlabSqm, CLINIC_GROUND_FLOOR.uValueWPerM2K, groundDt),
+      el("Roof", CLINIC_QUANTITIES.roofAreaSqm, CLINIC_MATERIALS.envelope.roof.uValue, dT),
+      el("Ground Floor", CLINIC_QUANTITIES.planAreaSqm, CLINIC_GROUND_FLOOR.uValueWPerM2K, groundDt),
       // The engine's ventilation element: area = volume, uValue = ACH, h = 0.34·ACH·V.
       // Left as area × uValue this is 2.9× too large and swings the ratio to 0.49.
       el(VENTILATION_ELEMENT_NAME, volumeM3, ach, dT, AIR_HEAT_CAPACITY_WH_PER_M3K * ach * volumeM3),
@@ -483,9 +469,48 @@ describe("the Clinic on SEOUL_DERIVED", () => {
     expect(monthlyClimateById(SEOUL_DERIVED_ID)).toBe(SEOUL_DERIVED);
   });
 
+  it("takes its quantities from the measured path, and they reconcile", () => {
+    const e = CLINIC_MEASURED_ENVELOPE;
+    expect(CLINIC_QUANTITIES.source).toBe("measured");
+    // Gross wall is opaque + glazing + doors exactly: nothing is un-priced and
+    // nothing is counted twice. 2,150.30 + 267.16 + 37.06 = 2,454.52.
+    expect(e.grossWallSqm).toBeCloseTo(e.exteriorWallNetSqm + e.glazingApertureSqm + e.exteriorDoorSqm, 9);
+    expect(CLINIC_QUANTITIES.grossWallAreaSqm).toBe(e.grossWallSqm);
+    // What this kernel prices as opaque + glazing must equal that same gross.
+    const opaqueWallPriced = e.exteriorWallNetSqm + e.exteriorDoorSqm;
+    expect(opaqueWallPriced + e.glazingApertureSqm).toBeCloseTo(CLINIC_QUANTITIES.grossWallAreaSqm, 9);
+    expect(CLINIC_QUANTITIES.roofAreaSqm).toBeCloseTo(e.roofEpdmSqm + e.roofStandingSeamSqm, 9);
+    expect(CLINIC_QUANTITIES.planAreaSqm).toBe(e.groundSlabSqm);
+    expect(CLINIC_QUANTITIES.intensityFloorAreaSqm).toBe(CLINIC_TOTAL_FLOOR_AREA_SQM);
+  });
+
+  it("uses the gross conditioned volume for H_ve, never the room-solid sum", () => {
+    const e = CLINIC_MEASURED_ENVELOPE;
+    expect(CLINIC_VOLUME_GROSS_M3).toBe(e.conditionedVolumeGrossM3);
+    expect(CLINIC_VOLUME_GROSS_M3).not.toBe(e.roomVolumeNetM3);
+    // The room solids stop at the ceilings; using them would cut H_ve by 37 %.
+    expect(e.roomVolumeNetM3 / e.conditionedVolumeGrossM3).toBeCloseTo(0.625, 2);
+  });
+
+  it("prices the glazing from the measured aperture, and the WWR field agrees with it", () => {
+    const e = CLINIC_MEASURED_ENVELOPE;
+    const r = calculateMonthlyBalance(clinicInput(CLINIC_VOLUME_GROSS_M3));
+    // The solar term's glazing sums to the measured aperture — no ratio round trip.
+    const glazedTotal = clinicInput(CLINIC_VOLUME_GROSS_M3).glazing.reduce((s, g) => s + g.areaSqm, 0);
+    expect(glazedTotal).toBeCloseTo(e.glazingApertureSqm, 9);
+    // And the engine's own WWR, derived on the file, reproduces that aperture
+    // from the gross wall — asserted against the field, never a literal.
+    const wwr = CLINIC_MATERIALS.envelope.windows.windowToWallRatio;
+    expect(wwr.N).toBeCloseTo(e.glazingApertureSqm / e.grossWallSqm, 12);
+    expect(e.grossWallSqm * wwr.N).toBeCloseTo(e.glazingApertureSqm, 9);
+    expect(wwr.N).toBeCloseTo(0.10884, 5);
+    // H_g agrees with ground-coupling's own fixture (944ac44) by construction.
+    expect(r.coefficients.groundWPerK).toBeCloseTo(620.7, 1);
+  });
+
   it("carries the 17 Clinic assumptions, the run's own, and the kernel's, plus the provenance notice", () => {
     const r = calculateMonthlyBalance({ ...clinicInput(CLINIC_VOLUME_GROSS_M3), climate: monthlyClimateById(SEOUL_DERIVED_ID)! });
-    expect(CLINIC_ASSUMPTIONS).toHaveLength(17);
+    expect(CLINIC_ASSUMPTIONS).toHaveLength(18);
     for (const a of CLINIC_ASSUMPTIONS) expect(r.assumptions).toContainEqual(a);
     for (const a of CLINIC_RUN_ASSUMPTIONS) expect(r.assumptions).toContainEqual(a);
     // Everything the run stated explicitly must NOT reappear as a kernel default.
