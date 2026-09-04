@@ -210,6 +210,20 @@ const SCHEPENDOMLAAN = Object.freeze({
    * that `platArea=0` and `heit=0` already taught this repo. Emit no fact.
    */
   statedZeroThermalTransmittance: true,
+
+  /**
+   * Every diagonal sector is exactly 0, and that is measured, not a snap: all
+   * 122 inner-leaf walls sit at 0/90/180/270 (23/24/38/37 in 15-degree bins).
+   * The 88 placements at 47.94 degrees that exist in this model are the outer
+   * leaf, `buitenblad`, plus its frames — excluded from the envelope by
+   * design — so the splayed bay never enters the sector split. Recorded here
+   * because four exact zeros are also the signature of a binner rounding to
+   * cardinals, and the next reader should not have to re-prove which it is.
+   */
+  orientationNote:
+    "All 122 inner-leaf walls are cardinal; the diagonal sectors are 0 by " +
+    "measurement. The model's 88 placements at 47.94° are the excluded " +
+    "outer leaf (buitenblad), so no envelope area is mis-binned.",
 });
 
 /** Every building this script can build, selected with `--building <id>`. */
@@ -656,12 +670,35 @@ async function main() {
       units: files[i].units,
     })),
     counts: {
-      storeys: storeys.filter((s) => s.floorToFloorHeightM > 0).length,
+      // A storey is one that holds rooms. Counting by height instead counted
+      // Schependomlaan's `-1 fundering` — a footing datum one metre below the
+      // ground floor, with no spaces — and reported 5 storeys for a 4-storey
+      // building. A wrong count under a real number is the defect this repo is
+      // defined against, and it would have sat on the card. The Clinic is
+      // unchanged by this: its `TOF Footing` holds no rooms either.
+      storeys: storeys.filter((s) => spaces.some((sp) => sp.storeyId === s.id)).length,
       spacesTotal: spaces.length,
       spacesFloor: floorSpaces.length,
       assemblies: assemblies.length,
       externalElements: classification.elements.length,
       exteriorWalls: exteriorWalls.size,
+      // A bare zero cannot be told from "does not apply". When boundaries
+      // exist and none resolved, say why — Schependomlaan carries 820
+      // (.PHYSICAL., .EXTERNAL.) boundaries, every one an IfcCurveBoundedPlane,
+      // and the classifier reads only IfcSurfaceOfLinearExtrusion, so it found
+      // nothing while looking straight at them. Emitted only in that case, so
+      // the Clinic's manifest (80 resolved) is byte-for-byte unchanged.
+      ...(classification.elements.length === 0 && classification.unresolved.length > 0
+        ? {
+            externalElementsNote:
+              `${classification.unresolved.length} external physical space boundaries ` +
+              `exist and none resolved: ` +
+              `${[...new Set(classification.unresolved.map((u) => u.reason))].join("; ")}. ` +
+              `The classifier reads IfcSurfaceOfLinearExtrusion (Revit); this file's ` +
+              `boundaries are another surface type. Envelope areas here come from ` +
+              `the wall walk, not from boundaries, so nothing published depends on this.`,
+          }
+        : {}),
     },
     areas: {
       totalFloorAreaSqm: round(
@@ -720,7 +757,8 @@ async function main() {
         "Azimuths are clockwise from north, where north is the model's -Z " +
         "after web-ifc's Z-up to Y-up conversion. Outward face inferred by " +
         "comparing each face's centroid with the building centre, which is " +
-        "correct for a convex plan and can be wrong at a re-entrant corner.",
+        "correct for a convex plan and can be wrong at a re-entrant corner." +
+        (building.orientationNote ? ` ${building.orientationNote}` : ""),
     },
     site: {
       declaredSiteName: site ? str(site.Name) : null,
