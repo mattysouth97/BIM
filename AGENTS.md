@@ -41,11 +41,20 @@ change the code to match the document.
 건물 검색  →  도면 업로드  →  디지털 트윈  →  보고서
 ```
 
-Four steps, settled as a product decision. Step 1 is the landing page (`/`);
-steps 2-4 live in `/building/[id]`. Build **inside** these steps. Do not add a
-fifth step, a second front door, or a parallel entry screen — this repository has
-drifted into competing front doors twice, and both times it made the product
-harder to explain.
+Four steps, settled as a product decision. Step 1 (건물 검색, the 건축물대장
+search) lives at `/diagnostics/new?method=ledger`; steps 2-4 live in
+`/building/[id]`. Build **inside** these steps.
+
+`/` is no longer step 1 — it is a gallery of the building models this project
+has actually taken in (user decision, 2026-09-04; see
+[[ADR-004 - The Landing Page Is a Model Gallery]]), and it links into step 1
+rather than being it. This is a deliberate, user-authorized exception to "no
+second front door" below, not a drift back into one: the gallery has no form
+of its own and does not compete with the register search, it precedes it.
+
+Do not add a further front door or a parallel entry screen beyond the
+gallery → step 1 pair — this repository has drifted into competing front doors
+twice, and both times it made the product harder to explain.
 
 ## Non-negotiable: stated versus assumed
 
