@@ -68,6 +68,225 @@ const CLINIC = Object.freeze({
   roofDatumM: 9.25,
 });
 
+/**
+ * Reference building #2 — Schependomlaan, Nijmegen.
+ *
+ * Chosen to close the Clinic's location gap, and it does so far more narrowly
+ * than intended: the model states a real TOWN and nothing else spatial. Its
+ * IfcSite coordinate is a whole-minute value in Amersfoort, 46.2 km from the
+ * real street and in the authoring architect's own city, and its TrueNorth is
+ * the bare IFC default `(0.,1.)` in both representation contexts. So climate
+ * cites the town name, orientation is an assumption, and neither is taken from
+ * a coordinate that looks authoritative and is not.
+ *
+ * What it does carry, which the Clinic does not, is dimensioned construction:
+ * typed thicknesses on 645/647 external walls and a real modelled cavity. That
+ * is what feeds the ISO-6946 layer solve. It carries no usable U-value — see
+ * `statedZeroThermalTransmittance` below.
+ */
+const SCHEPENDOMLAAN = Object.freeze({
+  id: "schependomlaan",
+  name: { ko: "스헤펜돔라안 아파트", en: "Schependomlaan Apartments" },
+  summary: {
+    ko: "네덜란드 네이메헌의 10세대 공동주택. 실제 시공용 도면 모델(werktekening).",
+    en: "A ten-dwelling apartment block in Nijmegen, released as a working-drawing model.",
+  },
+  useType: "apartment_building",
+  licence: "CC BY 4.0",
+  /**
+   * NULL ON PURPOSE, and it must stay null until a person decides.
+   *
+   * `LICENSE.MD` in the archive repository grants CC BY 4.0 and our bytes are
+   * byte-identical to the licensed blob. But it was committed by a master's
+   * student in a single 2016 commit, while the repository and this IFC's own
+   * header both name ROOT bv as the model's author — `('architect'),('ROOT bv')`.
+   * No assignment is evidenced, the maintained README says permission was for
+   * "scientific and academic purposes", and the DOI that might settle it
+   * (10.17605/OSF.IO/NE2YU) resolves to a private OSF node.
+   *
+   * CC BY makes credit a licence condition, so a line naming the wrong holder
+   * is a breach rather than a typo. Null renders as "저작권자가 확인되지 않아
+   * 표기를 비워 둡니다", which is a statement, not a gap.
+   */
+  attribution: null,
+  sourceUrl:
+    "https://github.com/openBIMstandards/Archive-DataSetSchependomlaan",
+  /**
+   * The two locations the dataset advertises are both dead: the canonical repo
+   * is now a 174-byte README pointing at buildingSMART/Sample-Test-Files, which
+   * has been renamed to buildingSMART/Certification-datasets and no longer
+   * contains this building. This is where the file actually is.
+   */
+  source: {
+    owner: "openBIMstandards",
+    repo: "Archive-DataSetSchependomlaan",
+    ref: "master",
+    dir: "Design model IFC",
+  },
+  files: [
+    {
+      role: "architectural",
+      fileName: "IFC Schependomlaan.ifc",
+      sha256: null,
+    },
+  ],
+  /** Envelope only. The Clinic already carries the MEP story. */
+  serviceLayers: [],
+
+  /**
+   * Dutch cavity wall (spouwmuur): the leaves are SEPARATE IfcWall instances
+   * and BOTH carry `IsExternal = .T.`, so `IsExternal` cannot be the envelope
+   * filter here — it selects 647 of 934 walls and yields 1,064.52 m², 2.50x the
+   * real envelope, by counting every wall twice.
+   *
+   * The INNER leaf is the measurement. A x U must be counted once, and the
+   * inner leaf is the one the openings are cut from and the only one any space
+   * boundary references. `buitenblad` (the outer leaf, 363 elements) is
+   * excluded deliberately rather than by silence.
+   */
+  exteriorWallMatch: ["binnenblad", "HSB-element"],
+  exteriorWallExclude: ["buitenblad", "opgaand werk", "kozijn", "spouwisolatie"],
+
+  /**
+   * Where a wall's area comes from, declared per building because the right
+   * answer is a property of the FILE, not a better rule.
+   *
+   * The Clinic is "mesh": its only IfcElementQuantity is `GSA BIM Area` and it
+   * exists for spaces alone, so walls state nothing and a refused mesh is the
+   * end of the line.
+   *
+   * This model is "stated_first": it is a werktekening exported with
+   * `Multi-skin complex geometries: Building element parts`, so ONE WALL IS
+   * MANY MESHES by construction and the tessellated area over-counts. Measured:
+   * 26 of 58 `HSB-element` exceed their own bounding box, mesh 101.5 m2 against
+   * a stated 43.92 — 2.31x, the double-count signature. `binnenblad` is the
+   * control: 382.7 mesh against 382.71 stated, agreeing to the cent where the
+   * geometry is single-skin.
+   *
+   * And the mesh cannot be merely distrusted, it is INCOMPLETE: 50 of 51
+   * `kozijn` walls produce no triangles at all, and 55 of 934 walls never reach
+   * the streamer, so they cannot even be flagged — a flag needs a result to
+   * hang off. Stated NetSideArea covers all of them.
+   */
+  areaSource: "stated_first",
+
+  /**
+   * How this building's coordinate is to be judged, and what may be used
+   * instead. Declared rather than detected: the Clinic's tell is a specific
+   * Boston lat/lon, this one's is a whole-minute value in the architect's own
+   * city, and a single hard-coded test cannot stand for both.
+   */
+  location: {
+    rejectCoordinate: true,
+    statedTown: "Nijmegen",
+    /** `(0.,1.)` in BOTH representation contexts — the bare IFC default. */
+    trueNorthStated: false,
+    note:
+      "IfcSite states 52°9'N 5°23'E — a whole-minute value with zero " +
+      "seconds, 46.2 km from the real Schependomlaan in Nijmegen and in " +
+      "Amersfoort, the authoring architect's own city. It is a stamped " +
+      "constant, not a survey: no position, orientation or solar geometry may " +
+      "be taken from it. The town 'Nijmegen' IS stated, on both IfcSite and " +
+      "IfcBuilding, and is the only spatial fact this model supports. " +
+      "TrueNorth is the schema default (0.,1.) in both representation " +
+      "contexts, so orientation is an assumption — and note the geometry is " +
+      "not purely cardinal: 88 element placements sit at 47.94°.",
+  },
+
+  /**
+   * ASSUMPTION, not a reading. This model contains ZERO IfcRoof entities; the
+   * datum is inferred from storey '03' at 9 m. Named here so it appears in the
+   * assumption ledger rather than passing as a measurement.
+   */
+  roofDatumM: 9.0,
+
+  /**
+   * All 97 IfcThermalTransmittanceMeasure in this file are literally `0.`, on
+   * 67 windows and 30 doors only — never on a wall, floor or roof. Envelope
+   * coverage is 0%.
+   *
+   * A 0 W/m2K is a perfect insulator, so reading these produces a spectacular
+   * building rather than an obviously broken one — the documented-zero trap
+   * that `platArea=0` and `heit=0` already taught this repo. Emit no fact.
+   */
+  statedZeroThermalTransmittance: true,
+});
+
+/** Every building this script can build, selected with `--building <id>`. */
+const BUILDINGS = Object.freeze({
+  [CLINIC.id]: CLINIC,
+  [SCHEPENDOMLAAN.id]: SCHEPENDOMLAAN,
+});
+
+/**
+ * One predicate, two consumers.
+ *
+ * The completeness guard counts name-matching entities and the mesh walk
+ * measures them, and the guard is only meaningful if both ask the same
+ * question. When they were written separately the guard counted a string
+ * `includes` while the walk matched a list, so a cavity-wall config reported
+ * "0 match by name but 122 produced geometry" — the check failing on its own
+ * definition rather than on the model.
+ */
+/**
+ * Wall areas as the MODEL states them, keyed by expressID.
+ *
+ * Read for buildings whose `areaSource` is "stated_first". This is not a
+ * distrust of tessellation in general — it is a property of the file. A model
+ * exported with `Multi-skin complex geometries: Building element parts` splits
+ * one wall into many meshes, so the tessellated sum over-counts, and elements
+ * producing no triangles at all contribute nothing while looking like nothing
+ * is wrong.
+ *
+ * `NetSideArea` by name rather than first-area-wins: an IfcElementQuantity
+ * carries several areas, and taking whichever comes first makes the answer
+ * depend on export order.
+ */
+function statedWallAreas(file, webIfc) {
+  const byElement = new Map();
+  for (const rel of file.byType(webIfc.IFCRELDEFINESBYPROPERTIES)) {
+    const definition = file.deref(rel.RelatingPropertyDefinition);
+    if (!definition || file.typeName(definition) !== "IfcElementQuantity") continue;
+    let area = null;
+    for (const q of definition.Quantities ?? []) {
+      const quantity = file.deref(q);
+      if (!quantity) continue;
+      if (
+        file.typeName(quantity) === "IfcQuantityArea" &&
+        str(quantity.Name) === "NetSideArea"
+      ) {
+        area = num(quantity.AreaValue);
+        break;
+      }
+    }
+    if (area === null) continue;
+    for (const object of rel.RelatedObjects ?? []) {
+      const id = refId(object);
+      if (id !== null && !byElement.has(id)) byElement.set(id, area);
+    }
+  }
+  return byElement;
+}
+
+function isWallType(typeName) {
+  return typeName === "IfcWallStandardCase" || typeName === "IfcWall";
+}
+
+function exteriorWallPredicate(building) {
+  const match = building.exteriorWallMatch;
+  const exclude = building.exteriorWallExclude ?? [];
+  return (name) => {
+    const lower = String(name ?? "").toLowerCase();
+    // An exclude list rather than reliance on the match alone: on a cavity
+    // wall BOTH leaves carry `IsExternal`, and the outer leaf's name is a
+    // near-miss for the inner's, so what is left OUT has to be stated.
+    if (exclude.some((x) => lower.includes(x.toLowerCase()))) return false;
+    return Array.isArray(match)
+      ? match.some((m) => lower.includes(m.toLowerCase()))
+      : String(name ?? "").includes(match);
+  };
+}
+
 function arg(name) {
   const i = process.argv.indexOf(`--${name}`);
   return i >= 0 ? process.argv[i + 1] : undefined;
@@ -82,17 +301,37 @@ async function main() {
     );
   }
 
-  const outDir = path.join(REPO, "public", "reference-buildings", CLINIC.id);
+  const buildingId = arg("building") ?? CLINIC.id;
+  const building = BUILDINGS[buildingId];
+  if (!building) {
+    throw new Error(
+      `Unknown --building "${buildingId}". Known: ${Object.keys(BUILDINGS).join(", ")}.`,
+    );
+  }
+
+  // `--out-dir` exists so a building whose licence authority is unresolved can
+  // be built and inspected without its artifacts landing under `public/`,
+  // where they would ship on the next deploy. Publication is a decision, not a
+  // side effect of running the extractor.
+  const outDir = arg("out-dir")
+    ? path.resolve(arg("out-dir"))
+    : path.join(REPO, "public", "reference-buildings", building.id);
   await mkdir(outDir, { recursive: true });
 
   // ── Fetch (or reuse) the discipline models ─────────────────────────────
   const sources = [];
-  for (const file of CLINIC.files) {
+  const src = building.source ?? {
+    owner: "buildingsmart-community",
+    repo: "Community-Sample-Test-Files",
+    ref: "main",
+    dir: "IFC 2.3.0.1 (IFC 2x3)/Medical-Dental Clinic",
+  };
+  for (const file of building.files) {
     const url = githubLfsUrl(
-      "buildingsmart-community",
-      "Community-Sample-Test-Files",
-      "main",
-      `IFC 2.3.0.1 (IFC 2x3)/Medical-Dental Clinic/${file.fileName}`,
+      src.owner,
+      src.repo,
+      src.ref,
+      `${src.dir}/${file.fileName}`,
     );
     const cachePath = path.join(CACHE, file.fileName);
     const fetched = await fetchSource(url, cachePath, {
@@ -116,21 +355,23 @@ async function main() {
   const storeys = extractStoreys(arch, webIfc);
   const spaces = extractSpaces(arch, webIfc, storeys);
   const floorSpaces = spaces.filter((s) => s.countsAsFloorArea);
-  const assemblies = [
-    ...extractAssemblies(arch, webIfc),
-    ...extractAssemblies(struct, webIfc),
-  ];
+  // A building need not have a structural model. Schependomlaan is one
+  // architectural file; the Clinic is five. Absent roles are skipped rather
+  // than assumed, so a missing discipline is an empty contribution and not a
+  // crash halfway through an extraction.
+  const assemblies = [arch, struct]
+    .filter(Boolean)
+    .flatMap((file) => extractAssemblies(file, webIfc));
   const classification = classifyExternalElements(arch, webIfc);
 
   // Areas come from the built solid, never from space boundaries — see the
   // retraction in ifc-envelope.mjs.
+  const isExteriorWallName = exteriorWallPredicate(building);
   const exteriorWalls = netFaceAreasByElement(
     api,
     arch.modelId,
-    (typeName, name) =>
-      (typeName === "IfcWallStandardCase" || typeName === "IfcWall") &&
-      name.includes(CLINIC.exteriorWallMatch),
-    { heightSplitM: CLINIC.roofDatumM },
+    (typeName, name) => isWallType(typeName) && isExteriorWallName(name),
+    { heightSplitM: building.roofDatumM },
   );
   // How many walls SHOULD there be, counted from the file's own entity list
   // rather than from anything the geometry pass produced?
@@ -144,7 +385,7 @@ async function main() {
   let namedWalls = 0;
   for (const type of [webIfc.IFCWALLSTANDARDCASE, webIfc.IFCWALL]) {
     for (const line of arch.byType(type)) {
-      if (String(str(line.Name) ?? "").includes(CLINIC.exteriorWallMatch)) {
+      if (isExteriorWallName(str(line.Name) ?? "")) {
         namedWalls += 1;
       }
     }
@@ -159,6 +400,48 @@ async function main() {
     );
   }
 
+  // Where a wall's area comes from is declared per building, because the right
+  // answer is a property of the file rather than a better rule. "mesh" suits a
+  // coordination model whose walls state no quantity at all — there a refused
+  // measurement is the end of the line. "stated_first" suits a working-drawing
+  // export that splits one wall into many meshes, where the tessellated sum
+  // over-counts and some elements produce no triangles at all.
+  //
+  // The substitution is applied INTO the map, before anything reads it, so the
+  // headline total and the orientation split cannot end up describing
+  // different areas. Substituting only at the accumulator left the sector pass
+  // still summing meshes, and the two disagreed by 40 m².
+  const substituted = [];
+  if (building.areaSource === "stated_first") {
+    const stated = statedWallAreas(arch, webIfc);
+    for (const [id, wall] of exteriorWalls) {
+      const value = stated.get(id);
+      if (value === undefined || value === null) continue;
+      const mesh = wall.netFaceAreaSqm;
+      // Split the stated area the way the mesh was split, so a roof datum keeps
+      // meaning something. Where the mesh is unusable there is nothing to take
+      // a ratio from, and the whole area sits below the split rather than being
+      // invented on both sides of it.
+      const belowShare =
+        mesh > 0 && Number.isFinite(wall.netFaceAreaBelowSplitSqm / mesh)
+          ? wall.netFaceAreaBelowSplitSqm / mesh
+          : 1;
+      exteriorWalls.set(id, {
+        ...wall,
+        netFaceAreaSqm: value,
+        netFaceAreaBelowSplitSqm: value * belowShare,
+        netFaceAreaAboveSplitSqm: value * (1 - belowShare),
+        // The measurement is no longer the mesh, so the mesh's complaints no
+        // longer describe it. Keeping them would block a publishable
+        // extraction over an element measured correctly by another route.
+        exceedsBounds: false,
+        thinAxisForced: false,
+        areaSource: "stated",
+      });
+      substituted.push({ id, name: wall.name, mesh, stated: value });
+    }
+  }
+
   let wallNet = 0;
   let wallBelowRoof = 0;
   let wallAboveRoof = 0;
@@ -170,6 +453,18 @@ async function main() {
     wallAboveRoof += wall.netFaceAreaAboveSplitSqm;
     if (wall.exceedsBounds) impossible.push({ id, ...wall });
     if (wall.thinAxisForced) notWalls.push(id);
+  }
+  if (substituted.length > 0) {
+    const disagreeing = substituted.filter((x) => x.mesh > 0);
+    const worst = disagreeing.sort((a, b) => b.mesh / b.stated - a.mesh / a.stated)[0];
+    console.log(
+      `  ${substituted.length} wall(s) measured from the model's stated NetSideArea` +
+        (worst
+          ? `, worst #${worst.id} "${worst.name}" mesh ${worst.mesh.toFixed(2)} vs stated ` +
+            `${worst.stated.toFixed(2)} m² (${(worst.mesh / worst.stated).toFixed(2)}x)`
+          : "") +
+        `; ${substituted.length - disagreeing.length} produced no geometry at all`,
+    );
   }
   // Refuse rather than publish. A net face area above the element's own gross
   // face is not a bad estimate, it is impossible — the signature of a
@@ -242,18 +537,22 @@ async function main() {
   const site = arch.byType(webIfc.IFCSITE)[0];
   const latitudeDeg = site ? compoundAngleDeg(site.RefLatitude) : null;
   const longitudeDeg = site ? compoundAngleDeg(site.RefLongitude) : null;
-  // Revit stamps its factory default (Boston, MA) on every new project, so a
-  // populated IfcSite is not evidence of where a building is.
-  const isAuthoringDefault =
-    latitudeDeg !== null &&
-    longitudeDeg !== null &&
-    Math.abs(latitudeDeg - 42.35843) < 1e-3 &&
-    Math.abs(longitudeDeg + 71.05978) < 1e-3;
+  // A populated IfcSite is not evidence of where a building is. Revit stamps
+  // its factory default (Boston, MA) on every new project; ArchiCAD's Dutch
+  // template stamps a whole-minute value in Amersfoort. Both read as a
+  // location and neither is one, so each building declares how its coordinate
+  // is to be judged rather than one hard-coded test standing for all of them.
+  const isAuthoringDefault = building.location
+    ? building.location.rejectCoordinate
+    : latitudeDeg !== null &&
+      longitudeDeg !== null &&
+      Math.abs(latitudeDeg - 42.35843) < 1e-3 &&
+      Math.abs(longitudeDeg + 71.05978) < 1e-3;
 
   // ── Fabric geometry for the viewer ─────────────────────────────────────
   const generator = `bimfit build-reference-building (web-ifc ${webIfcVersion()})`;
   const fabric = new Map();
-  for (const file of [arch, struct]) {
+  for (const file of [arch, struct].filter(Boolean)) {
     mergeFabric(fabric, collectFabric(api, webIfc, file.modelId).groups);
   }
   const glb = await writeGlb(path.join(outDir, "model.glb"), fabric, { generator });
@@ -262,7 +561,7 @@ async function main() {
   // downloaded. Together they are 17 MB; as one file they would double the
   // page's cost for everyone who only wanted to look at the building.
   const serviceLayers = [];
-  for (const layer of CLINIC.serviceLayers) {
+  for (const layer of building.serviceLayers) {
     const file = byRole.get(layer.role);
     if (!file) continue;
     const collected = collectServiceInstances(api, webIfc, file.modelId, {
@@ -334,13 +633,13 @@ async function main() {
   const manifest = {
     kind: "bimfit_reference_building_manifest",
     schemaVersion: 1,
-    id: CLINIC.id,
-    name: CLINIC.name,
-    summary: CLINIC.summary,
-    useType: CLINIC.useType,
-    licence: CLINIC.licence,
-    attribution: CLINIC.attribution,
-    sourceUrl: CLINIC.sourceUrl,
+    id: building.id,
+    name: building.name,
+    summary: building.summary,
+    useType: building.useType,
+    licence: building.licence,
+    attribution: building.attribution,
+    sourceUrl: building.sourceUrl,
     generatedAt,
     sourceFiles: sources.map((s, i) => ({
       role: s.role,
@@ -428,10 +727,25 @@ async function main() {
       declaredLatitudeDeg: latitudeDeg,
       declaredLongitudeDeg: longitudeDeg,
       locationIsAuthoringDefault: isAuthoringDefault,
-      locationNote: isAuthoringDefault
-        ? "IfcSite matches the authoring tool's factory default (Boston, MA). " +
-          "The building's real location is redacted; no climate may be taken from it."
-        : "IfcSite coordinates recorded; not verified against any other source.",
+      locationNote: building.location
+        ? building.location.note
+        : isAuthoringDefault
+          ? "IfcSite matches the authoring tool's factory default (Boston, MA). " +
+            "The building's real location is redacted; no climate may be taken from it."
+          : "IfcSite coordinates recorded; not verified against any other source.",
+      /**
+       * Emitted only for a building that declares a location verdict, so
+       * adding a second building does not rewrite the first one's committed
+       * manifest with two null fields. `statedTown` is the town the model
+       * states, and it is what a climate dataset may be keyed to — never the
+       * coordinate above.
+       */
+      ...(building.location
+        ? {
+            statedTown: building.location.statedTown ?? null,
+            trueNorthStated: building.location.trueNorthStated ?? null,
+          }
+        : {}),
     },
     serviceLayers,
     model: {
