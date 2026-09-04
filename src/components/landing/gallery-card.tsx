@@ -197,11 +197,6 @@ function StatedFigures({ item, isKo }: { item: GalleryItem; isKo: boolean }) {
               ? `${item.licence} — 저작권자가 확인되지 않아 표기를 비워 둡니다. 틀린 이름을 적는 것보다 낫습니다.`
               : `${item.licence} — the rights holder is not established, so no credit is given. A wrong name would be worse than none.`}
         </p>
-        <p className="mt-1.5 text-[10px] leading-4 text-muted-foreground">
-          {isKo
-            ? "모델이 말하는 값만 적었습니다."
-            : "Only what the model states."}
-        </p>
       </footer>
     </>
   );
