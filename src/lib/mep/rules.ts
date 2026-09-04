@@ -206,19 +206,44 @@ export function chooseArchetype(mainPurpsCd: string, eraStartYear: number): Arch
       reason: "근린생활/판매시설: 패키지 공조 관행",
     };
   }
+  if (family === "office") {
+    if (eraStartYear >= 2000) {
+      return {
+        archetype: "vrf",
+        ruleId: "KR-10",
+        basis: "estimated",
+        reason: "2000년 이후 업무시설: 시스템에어컨(VRF) + 환기유닛 관행",
+      };
+    }
+    return {
+      archetype: "central-ahu",
+      ruleId: "KR-10",
+      basis: "estimated",
+      reason: "2000년 이전 업무시설: 중앙 AHU + 보일러/냉동기 관행",
+    };
+  }
+  // family === "default": mainPurpsCd matched none of the researched
+  // profiles above (residential/retail/office). No profile exists for this
+  // use — extending SYSTEM_RATIOS-style coverage needs real MOLIT data, not
+  // a guess (SESSION-LOCKS.md queue item 6) — so this applies the
+  // office-era heuristic as a LABELLED FALLBACK rather than a determination:
+  // basis "defaulted" (not "estimated"), a distinct ruleId, and a reason
+  // that does not claim 업무시설 for a building whose use this function does
+  // not actually know. The archetype choice itself is unchanged — no new
+  // ratios invented, only the honesty of the label.
   if (eraStartYear >= 2000) {
     return {
       archetype: "vrf",
-      ruleId: "KR-10",
-      basis: "estimated",
-      reason: "2000년 이후 업무시설: 시스템에어컨(VRF) + 환기유닛 관행",
+      ruleId: "KR-10-DEFAULT",
+      basis: "defaulted",
+      reason: "미분류 용도(연구된 프로파일 없음): 사무시설 계통 설비 관행을 잠정 적용 — 시스템에어컨(VRF) + 환기유닛",
     };
   }
   return {
     archetype: "central-ahu",
-    ruleId: "KR-10",
-    basis: "estimated",
-    reason: "2000년 이전 업무시설: 중앙 AHU + 보일러/냉동기 관행",
+    ruleId: "KR-10-DEFAULT",
+    basis: "defaulted",
+    reason: "미분류 용도(연구된 프로파일 없음): 사무시설 계통 설비 관행을 잠정 적용 — 중앙 AHU + 보일러/냉동기",
   };
 }
 
