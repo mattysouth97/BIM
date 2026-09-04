@@ -80,6 +80,37 @@ Traps already covered by regression tests — do not "simplify" them away:
 - The register's four endpoints fail independently and intermittently; never
   require all four to succeed.
 
+### The label lies while the number is right
+
+The invariant above fails at the **label** far more often than at the value,
+and a test suite aimed at numbers cannot see it. Seven instances were found on
+2026-09-04 alone, every one with correct arithmetic:
+
+- A chart badged a generic fallback ratio "ASHRAE 90.1 기반 비율" for buildings
+  whose use code the lookup never matched.
+- `mep/rules.ts` returned reason `"2000년 이후 업무시설"` for a 교육연구시설 —
+  a use type the code had not established, in user-visible text.
+- A card read `IfcSpace − 6 ROOF − 3 OPEN TO BELOW` under the value 259. The
+  subtraction gives 260. Right number, wrong explanation.
+- A layer was labelled 외피·**구조** by a builder that is called without
+  `includeStructure`, so the frame was never in the file. The manifest said so
+  in `model.note`, and nothing rendered that sentence.
+- A flow animation coloured 1,284 of 3,695 duct segments as return air because
+  supply/return was propagated from the nearest graph root, and an air system
+  is a loop. Every segment was in the right place. The colour was false, and
+  it rendered beautifully.
+
+Two consequences for how work here is checked:
+
+1. **Assert what a string claims, not that it appears.** A test asserting the
+   words "ROOF" and "OPEN TO BELOW" were present passed happily while the
+   sentence containing them contradicted itself. Where a rendered string
+   explains a number, parse the explanation back out and check it reproduces
+   the number.
+2. **Look at the thing.** Four of the seven were invisible to `tsc`, ESLint and
+   4,395 passing tests, and obvious within seconds of opening the page or
+   reading the label beside the value it describes.
+
 ## During implementation
 
 - Preserve established architecture unless intentionally changing it — and if you
