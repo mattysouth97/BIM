@@ -112,6 +112,311 @@
       "NW": 0
     }
   },
+  "assemblies": [
+    {
+      "id": "assembly-basic-wall-interior-toilet-partition-25mm",
+      "name": "Basic Wall:Interior - Toilet Partition (25mm)",
+      "totalThicknessM": 0.025,
+      "layers": [
+        {
+          "name": "Laminate - Ivory, Matte",
+          "thicknessM": 0.025,
+          "ref": "ifc://Clinic_Architectural.ifc#118172"
+        }
+      ],
+      "ref": "ifc://Clinic_Architectural.ifc#31919"
+    },
+    {
+      "id": "assembly-basic-wall-interior-furring-38-mm-stud",
+      "name": "Basic Wall:Interior - Furring (38 mm Stud)",
+      "totalThicknessM": 0.054,
+      "layers": [
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.038,
+          "ref": "ifc://Clinic_Architectural.ifc#118167"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Clinic_Architectural.ifc#5698"
+        }
+      ],
+      "ref": "ifc://Clinic_Architectural.ifc#32521"
+    },
+    {
+      "id": "assembly-basic-wall-interior-partition-92mm-stud",
+      "name": "Basic Wall:Interior - Partition (92mm Stud)",
+      "totalThicknessM": 0.124,
+      "layers": [
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Clinic_Architectural.ifc#5698"
+        },
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.092,
+          "ref": "ifc://Clinic_Architectural.ifc#31917"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Clinic_Architectural.ifc#5698"
+        }
+      ],
+      "ref": "ifc://Clinic_Architectural.ifc#40002"
+    },
+    {
+      "id": "assembly-basic-wall-exterior-insul-panel-on-mtl-stud",
+      "name": "Basic Wall:Exterior - Insul Panel on Mtl. Stud",
+      "totalThicknessM": 0.267,
+      "layers": [
+        {
+          "name": "Insulation - Insulated Panel",
+          "thicknessM": 0.042,
+          "ref": "ifc://Clinic_Architectural.ifc#118164"
+        },
+        {
+          "name": "Metal - Firring",
+          "thicknessM": 0.038,
+          "ref": "ifc://Clinic_Architectural.ifc#118165"
+        },
+        {
+          "name": "Wood - Sheathing - plywood",
+          "thicknessM": 0.019,
+          "ref": "ifc://Clinic_Architectural.ifc#118166"
+        },
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.152,
+          "ref": "ifc://Clinic_Architectural.ifc#28093"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Clinic_Architectural.ifc#5698"
+        }
+      ],
+      "ref": "ifc://Clinic_Architectural.ifc#40341"
+    },
+    {
+      "id": "assembly-basic-wall-interior-furring-152-mm-stud",
+      "name": "Basic Wall:Interior - Furring (152 mm Stud)",
+      "totalThicknessM": 0.168,
+      "layers": [
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.152,
+          "ref": "ifc://Clinic_Architectural.ifc#28093"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Clinic_Architectural.ifc#5698"
+        }
+      ],
+      "ref": "ifc://Clinic_Architectural.ifc#127603"
+    },
+    {
+      "id": "assembly-compound-ceiling-act-600-x-600mm-grid",
+      "name": "Compound Ceiling:ACT 600 x 600mm Grid",
+      "totalThicknessM": 0.052,
+      "layers": [
+        {
+          "name": "Default",
+          "thicknessM": 0.036,
+          "ref": "ifc://Clinic_Architectural.ifc#118168"
+        },
+        {
+          "name": "Ceiling Tile 600 x 600",
+          "thicknessM": 0.016,
+          "ref": "ifc://Clinic_Architectural.ifc#118169"
+        }
+      ],
+      "ref": "ifc://Clinic_Architectural.ifc#127604"
+    },
+    {
+      "id": "assembly-compound-ceiling-gypsum-board",
+      "name": "Compound Ceiling:Gypsum Board",
+      "totalThicknessM": 0.057,
+      "layers": [
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.045,
+          "ref": "ifc://Clinic_Architectural.ifc#118170"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.012,
+          "ref": "ifc://Clinic_Architectural.ifc#118171"
+        }
+      ],
+      "ref": "ifc://Clinic_Architectural.ifc#127605"
+    },
+    {
+      "id": "assembly-basic-wall-interior-rated-1-hr-92mm-stud",
+      "name": "Basic Wall:Interior - Rated 1-HR (92mm Stud)",
+      "totalThicknessM": 0.124,
+      "layers": [
+        {
+          "name": "Type-X Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Clinic_Architectural.ifc#31918"
+        },
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.092,
+          "ref": "ifc://Clinic_Architectural.ifc#31917"
+        },
+        {
+          "name": "Type-X Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Clinic_Architectural.ifc#31918"
+        }
+      ],
+      "ref": "ifc://Clinic_Architectural.ifc#142812"
+    },
+    {
+      "id": "assembly-basic-wall-interior-plumbing-152mm-stud",
+      "name": "Basic Wall:Interior - Plumbing (152mm Stud)",
+      "totalThicknessM": 0.184,
+      "layers": [
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Clinic_Architectural.ifc#5698"
+        },
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.152,
+          "ref": "ifc://Clinic_Architectural.ifc#28093"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Clinic_Architectural.ifc#5698"
+        }
+      ],
+      "ref": "ifc://Clinic_Architectural.ifc#142813"
+    },
+    {
+      "id": "assembly-floor-150mm-slab-on-grade",
+      "name": "Floor:150mm Slab on Grade",
+      "totalThicknessM": 0.15,
+      "layers": [
+        {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.15,
+          "ref": "ifc://Clinic_Structural.ifc#88226"
+        }
+      ],
+      "ref": "ifc://Clinic_Structural.ifc#218235"
+    },
+    {
+      "id": "assembly-basic-wall-foundation-concrete-264mm",
+      "name": "Basic Wall:Foundation - Concrete (264mm)",
+      "totalThicknessM": 0.264,
+      "layers": [
+        {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.264,
+          "ref": "ifc://Clinic_Structural.ifc#218229"
+        }
+      ],
+      "ref": "ifc://Clinic_Structural.ifc#218236"
+    },
+    {
+      "id": "assembly-floor-150mm-exterior-slab-on-grade",
+      "name": "Floor:150mm Exterior Slab on Grade",
+      "totalThicknessM": 0.15,
+      "layers": [
+        {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.15,
+          "ref": "ifc://Clinic_Structural.ifc#88226"
+        }
+      ],
+      "ref": "ifc://Clinic_Structural.ifc#218237"
+    },
+    {
+      "id": "assembly-basic-wall-foundation-concrete-300mm",
+      "name": "Basic Wall:Foundation - Concrete (300mm)",
+      "totalThicknessM": 0.3,
+      "layers": [
+        {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.3,
+          "ref": "ifc://Clinic_Structural.ifc#218230"
+        }
+      ],
+      "ref": "ifc://Clinic_Structural.ifc#218238"
+    },
+    {
+      "id": "assembly-floor-64mm-concrete-with-38mm-metal-deck",
+      "name": "Floor:64mm Concrete With 38mm Metal Deck",
+      "totalThicknessM": 0.102,
+      "layers": [
+        {
+          "name": "Concrete - Cast in Situ Lightweight",
+          "thicknessM": 0.064,
+          "ref": "ifc://Clinic_Structural.ifc#218228"
+        },
+        {
+          "name": "Metal - Decking",
+          "thicknessM": 0.038,
+          "ref": "ifc://Clinic_Structural.ifc#80428"
+        }
+      ],
+      "ref": "ifc://Clinic_Structural.ifc#221003"
+    },
+    {
+      "id": "assembly-basic-roof-epdm-membrane-on-rigid-insul-on-metal-deck",
+      "name": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck",
+      "totalThicknessM": 0.12,
+      "layers": [
+        {
+          "name": "Roofing - EPDM Membrane",
+          "thicknessM": 0.006,
+          "ref": "ifc://Clinic_Structural.ifc#218234"
+        },
+        {
+          "name": "Insulation / Thermal Barriers - Rigid insulation",
+          "thicknessM": 0.076,
+          "ref": "ifc://Clinic_Structural.ifc#218232"
+        },
+        {
+          "name": "Metal - Decking",
+          "thicknessM": 0.038,
+          "ref": "ifc://Clinic_Structural.ifc#80428"
+        }
+      ],
+      "ref": "ifc://Clinic_Structural.ifc#229561"
+    },
+    {
+      "id": "assembly-basic-roof-standing-seam-metal-roof",
+      "name": "Basic Roof:Standing Seam Metal Roof",
+      "totalThicknessM": 0.33,
+      "layers": [
+        {
+          "name": "Roofing - Metal",
+          "thicknessM": 0.006,
+          "ref": "ifc://Clinic_Structural.ifc#218231"
+        },
+        {
+          "name": "Metal - Decking",
+          "thicknessM": 0.038,
+          "ref": "ifc://Clinic_Structural.ifc#80428"
+        },
+        {
+          "name": "Structure - Steel Bar Joist Layer",
+          "thicknessM": 0.286,
+          "ref": "ifc://Clinic_Structural.ifc#218233"
+        }
+      ],
+      "ref": "ifc://Clinic_Structural.ifc#229562"
+    }
+  ],
   "orientation": {
     "trueNorthDeg": null,
     "northAssumed": true,

@@ -352,6 +352,30 @@ async function main() {
        */
       exteriorWallByOrientationSqm: orientation.byOrientation,
     },
+    /**
+     * The layer stacks, outside-in, as the model states them.
+     *
+     * Names and thicknesses only — this file carries no
+     * `IfcMaterialProperties`, so there is no conductivity to read and none is
+     * invented here. That absence is the whole reason this building was
+     * chosen: layer order and thickness are EVIDENCE, citable to an entity,
+     * while every λ is an ASSUMPTION the model builder names. A stated U-value
+     * would have been weaker, because it could be mistaken for a measurement.
+     *
+     * Emitted because the manifest previously carried only a count, and a
+     * count cannot be solved into a U-value.
+     */
+    assemblies: assemblies.map((a) => ({
+      id: a.id,
+      name: a.name,
+      totalThicknessM: a.totalThicknessM,
+      layers: a.layers.map((l) => ({
+        name: l.name,
+        thicknessM: l.thicknessM,
+        ref: l.ref,
+      })),
+      ref: a.ref,
+    })),
     orientation: {
       trueNorthDeg: trueNorthDeg === null ? null : round(trueNorthDeg),
       northAssumed: orientation.northAssumed,
