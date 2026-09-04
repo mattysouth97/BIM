@@ -146,6 +146,11 @@ const NON_FLOOR_SPACE_RULES = Object.freeze([
     reason:
       "a double-height void; the floor it opens through is already counted once on its own storey",
   }),
+  Object.freeze({
+    pattern: /^\s*MECH\.?\s*YARD\b/i,
+    reason:
+      "an outdoor equipment yard enclosed by a screen, not by envelope; it has outdoor air above it",
+  }),
 ]);
 
 export function classifySpaceFloorArea(name, longName) {
@@ -235,25 +240,43 @@ export function extractAssemblies(file, webIfc) {
 }
 
 /**
- * External physical space boundaries, with area and plan trace.
+ * External physical space boundaries — CLASSIFICATION ONLY. Never areas.
  *
- * Geometry chain, verified against this model with 277 of 277 resolving:
- *   IfcRelSpaceBoundary
- *     -> ConnectionGeometry (IfcConnectionSurfaceGeometry)
- *       -> SurfaceOnRelatingElement (IfcSurfaceOfLinearExtrusion)
- *          { SweptCurve -> IfcArbitraryOpenProfileDef -> Curve -> IfcPolyline,
- *            Position, ExtrudedDirection, Depth }
- * Area = polyline length x |Depth|. The swept curve is the element's plan
- * trace, which is exactly the shape the canonical model's `Surface.geometry`
- * wants, so it is carried through rather than reduced to a number.
+ * This function used to return `areaSqm` per boundary and a 2,007.7 m² total,
+ * and every one of those numbers was wrong. Eight parallel investigations found
+ * `IfcRelSpaceBoundary` unusable for measuring this model's envelope, five of
+ * them independently. The defects compound:
  *
- * `unresolved` is returned rather than thrown on: a boundary whose geometry
- * cannot be read is a fact about the model that belongs in the record, and the
- * count is asserted to be zero by a test. Silently skipping them would shrink
- * the building with nothing to notice.
+ *   1. The strips are (plan run length x ROOM height), not element faces —
+ *      3,104 of 3,124 have z0 = 0 and Depth equal to the RelatingSpace's own
+ *      extrusion depth.
+ *   2. That room height is Revit's default 2.80 m, not the 4.57 m storey, so
+ *      the ~1.8 m plenum above every suspended ceiling is bounded by nothing.
+ *   3. Openings are never subtracted; the door and window strips lie inside
+ *      the wall strips and contribute 84.5 m² of pure redundancy.
+ *   4. 16 % is double-counted — raw 2,007.69 against a geometric union of
+ *      1,686.46 — wherever a wall separates a room from an outdoor pseudo-space.
+ *   5. Real envelope is missing: 18 exterior walls carry no boundary at all
+ *      (125.6 m²), and 10 external storefronts another 133.1 m².
+ *   6. A feet/metres unit bug corrupts the 20 non-full-height strips: the sill
+ *      0.905 m is written as 0.905 x 3.28084 = 2.969 m. That is also why only
+ *      18 of 58 windows appear — for the other 253 spaces the resulting depth
+ *      is negative and the exporter emits nothing.
+ *
+ * And the claim these boundaries were originally chosen for — that they exclude
+ * a fence "by construction" — is false. `Curtain Wall:Chain Link Fence` bounds
+ * MECH. YARD, which is a modelled IfcSpace, and contributed 60.17 m² to that
+ * dead total. Interior storefronts *are* correctly excluded, which is why the
+ * claim survived casual checking.
+ *
+ * What the boundaries remain genuinely good for is the question element
+ * geometry answers badly: WHICH elements face outdoors, and which space and
+ * storey each one serves. So that is all this returns. Areas come from element
+ * geometry, and the raw sums are reported only under
+ * `invalidAreaDiagnostics`, named so that using one has to be deliberate.
  */
-export function extractExternalBoundaries(file, webIfc) {
-  const boundaries = [];
+export function classifyExternalElements(file, webIfc) {
+  const byElement = new Map();
   const unresolved = [];
   let externalVirtual = 0;
 
@@ -286,25 +309,69 @@ export function extractExternalBoundaries(file, webIfc) {
       continue;
     }
 
-    const lengthM = polylineLength(points);
-    boundaries.push(
-      Object.freeze({
-        expressID: rel.expressID,
-        ref: file.ref(rel.expressID),
-        spaceExpressID: refId(rel.RelatingSpace),
-        elementExpressID: element?.expressID ?? null,
-        elementType: element ? file.typeName(element) : null,
-        elementName: element ? (str(element.Name) ?? "") : "",
-        heightM: r3(Math.abs(depthM)),
-        lengthM: r3(lengthM),
-        areaSqm: r3(lengthM * Math.abs(depthM)),
-        planTraceLocal: Object.freeze(points.map((p) => Object.freeze([r3(p[0]), r3(p[1])]))),
-        surfaceExpressID: surface.expressID,
-      }),
+    const elementExpressID = element?.expressID ?? null;
+    if (elementExpressID === null) continue;
+    const spaceExpressID = refId(rel.RelatingSpace);
+    const existing = byElement.get(elementExpressID);
+    if (existing) {
+      existing.spaceExpressIDs.add(spaceExpressID);
+      existing.boundaryCount += 1;
+      existing.invalidStripAreaSqm += r3(polylineLength(points) * Math.abs(depthM));
+    } else {
+      byElement.set(elementExpressID, {
+        elementExpressID,
+        ref: file.ref(elementExpressID),
+        elementType: file.typeName(element),
+        elementName: str(element.Name) ?? "",
+        spaceExpressIDs: new Set([spaceExpressID]),
+        boundaryCount: 1,
+        invalidStripAreaSqm: r3(polylineLength(points) * Math.abs(depthM)),
+      });
+    }
+  }
+
+  const elements = [...byElement.values()].map((entry) =>
+    Object.freeze({
+      elementExpressID: entry.elementExpressID,
+      ref: entry.ref,
+      elementType: entry.elementType,
+      elementName: entry.elementName,
+      /** Every space this element bounds — the reason to consult boundaries at all. */
+      spaceExpressIDs: Object.freeze([...entry.spaceExpressIDs].sort((a, b) => a - b)),
+      boundaryCount: entry.boundaryCount,
+    }),
+  );
+
+  const byType = {};
+  for (const entry of byElement.values()) {
+    byType[entry.elementType] = r3(
+      (byType[entry.elementType] ?? 0) + entry.invalidStripAreaSqm,
     );
   }
 
-  return { boundaries, unresolved, externalVirtual };
+  return Object.freeze({
+    /** Facing outdoors, one entry per distinct element. Areas are NOT here. */
+    elements: Object.freeze(elements),
+    unresolved: Object.freeze(unresolved),
+    externalVirtualCount: externalVirtual,
+    /**
+     * The old, wrong totals. Kept so the record can state what a boundary sum
+     * WOULD have said and mark it invalid — a future reader who recomputes
+     * 2,007.7 from this file needs to find it already refuted rather than
+     * conclude the extraction lost a third of the building. Deliberately
+     * verbose to use, and never a source for any emitted area.
+     */
+    invalidAreaDiagnostics: Object.freeze({
+      note:
+        "Space-boundary strip sums. INVALID as envelope areas: room-height not storey-height, " +
+        "gross of openings, ~16% double-counted, missing 18 walls and 10 storefronts, and " +
+        "including 60.17 m2 of chain-link fence. Diagnostic only.",
+      rawSumSqm: r3(
+        [...byElement.values()].reduce((sum, e) => sum + e.invalidStripAreaSqm, 0),
+      ),
+      rawSumByElementType: Object.freeze(byType),
+    }),
+  });
 }
 
 function polylinePoints(file, curve) {
