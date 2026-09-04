@@ -16,6 +16,7 @@ import type { BrFloorInfo } from "@/lib/types";
 
 import { areaSqm, bbox, simplifyRing, toCounterClockwise } from "./geometry";
 import { claimOf } from "./claims";
+import { osmTagFacts } from "./osm-source";
 import type {
   ConflictEntry,
   EvidenceInput,
@@ -269,6 +270,58 @@ export function buildSourceInventory(input: EvidenceInput): SourceRecord[] {
     available: hasAttrs,
   });
 
+  // OpenStreetMap — a second observed outline, ranked BELOW the government
+  // layer. Its geometry is a real trace, so it enters as observed; its tags are
+  // contributor assertions and are never treated as measured evidence. Note
+  // what this record does NOT say: no survey, no dimensioned vector geometry.
+  const osmRing = input.osm?.polygon?.[0] ?? null;
+  const hasOsmRing = !!osmRing && osmRing.length >= 4 && !input.osm?.error;
+  sources.push({
+    sourceId: "SRC-OSM-BLDG",
+    sourceType: "osm_building_outline",
+    sourceTitle: "OpenStreetMap 건물 외곽 (ODbL)",
+    sourceLocation: "/api/osm/building",
+    accessDate,
+    authorityLevel: 4,
+    scaleAvailable: true,
+    dimensionsAvailable: true,
+    coordinateSystem: "EPSG:4326 (WGS84)",
+    floorsCovered: "grade level outline",
+    disciplinesCovered: "architectural (outline only)",
+    knownLimitations: [
+      "기여자가 항공영상에서 추적한 선으로 측량 성과가 아님 — 정부 GIS보다 낮은 권위로 취급",
+      "building:levels·height 등 태그는 기여자의 진술이며 실측값이 아님 (D-INFERRED)",
+      "갱신 시점과 정확도가 지역·기여자별로 크게 다름",
+      "ODbL 라이선스 — 출처 표시 필요",
+    ],
+    confidence: hasOsmRing ? "B-OBSERVED" : "X-UNRESOLVED",
+    available: hasOsmRing,
+  });
+
+  // 용도지역. A legal designation, not geometry — it explains why a setback
+  // rule applies; it never supplies a dimension.
+  const zoningDistrict = input.zoning?.district?.trim() || null;
+  const hasZoning = !!zoningDistrict && !input.zoning?.error;
+  sources.push({
+    sourceId: "SRC-GIS-ZONING",
+    sourceType: "gis_zoning_district",
+    sourceTitle: "VWorld 용도지역지구 (LT_C_UQ111)",
+    sourceLocation: input.zoning?.source || "/api/vworld/zoning",
+    accessDate,
+    authorityLevel: 3,
+    scaleAvailable: false,
+    dimensionsAvailable: false,
+    coordinateSystem: null,
+    floorsCovered: "site",
+    disciplinesCovered: "planning (legal designation)",
+    knownLimitations: [
+      "법적 지정일 뿐 기하 정보가 아님 — 치수의 출처가 될 수 없음",
+      "필지가 둘 이상의 지역에 걸치면 대표값 하나만 반환됨",
+    ],
+    confidence: hasZoning ? "B-OBSERVED" : "X-UNRESOLVED",
+    available: hasZoning,
+  });
+
   const measuredClaims = input.claims.filter((c) => c.measured).length;
   sources.push({
     sourceId: "SRC-USER",
@@ -380,25 +433,50 @@ export function buildControls(
   const roofClaim = claimOf(input.claims, "roof_form");
 
   const gisArea = ctx.gisRing && !ctx.gisRingIsParcel ? areaSqm(ctx.gisRing) : null;
-  const gisBox = ctx.gisRing ? bbox(ctx.gisRing) : null;
+  // The parcel guard belongs on BOTH readings of the ring. A lot's bounding box
+  // is not the building's width and depth, and without this guard it became
+  // C5/C6 at B-OBSERVED — after which reconstruct() built the footprint from
+  // them and labelled a 7,000 m² lot as a user-stated building outline.
+  const gisBox =
+    ctx.gisRing && !ctx.gisRingIsParcel ? bbox(ctx.gisRing) : null;
+  /** The lot ring, when that is what VWorld returned. Site evidence only. */
+  const parcelRing = ctx.gisRing && ctx.gisRingIsParcel ? ctx.gisRing : null;
 
   const push = (c: GeometricControl) => controls.push(c);
 
-  // C1 — site area
+  // C1 — site area. The parcel ring is the one thing a cadastral-only GIS
+  // answer DOES describe, so it is read here rather than discarded.
+  const parcelArea = parcelRing ? areaSqm(parcelRing) : null;
+  const c1Value =
+    platArea ?? (siteClaim ? Number(siteClaim.value) : null) ?? parcelArea;
   push({
     id: "C1",
     key: "site.area",
     labelKo: "대지면적",
     labelEn: "Site area",
-    value: platArea ?? (siteClaim ? Number(siteClaim.value) : null),
+    value: c1Value !== null ? Number(c1Value.toFixed(2)) : null,
     unit: "m2",
     grade: platArea
       ? "A-VERIFIED"
       : siteClaim
         ? siteClaim.grade
-        : "X-UNRESOLVED",
-    sourceIds: platArea ? ["SRC-REG-TITLE"] : siteClaim ? ["SRC-USER"] : [],
-    method: platArea ? "register field platArea" : "user statement",
+        : parcelArea !== null
+          ? "B-OBSERVED"
+          : "X-UNRESOLVED",
+    sourceIds: platArea
+      ? ["SRC-REG-TITLE"]
+      : siteClaim
+        ? ["SRC-USER"]
+        : parcelArea !== null
+          ? ["SRC-GIS-PARCEL"]
+          : [],
+    method: platArea
+      ? "register field platArea"
+      : siteClaim
+        ? "user statement"
+        : parcelArea !== null
+          ? "연속지적도 필지 경계를 투영하여 산출한 면적"
+          : "증거 없음",
     note: platArea ? undefined : "대장에 대지면적이 기재되지 않았습니다",
   });
 
@@ -817,6 +895,43 @@ export function detectConflicts(
       magnitude: `${(gisHeight - heit).toFixed(1)} m`,
       possibleExplanation:
         "대장 높이는 건축물 높이 산정 기준(옥탑 제외 등)이 달라 실측 높이와 다를 수 있습니다.",
+      resolutionStatus: "documented",
+      requiredVerification: "레이저 거리계로 처마/파라펫 높이 측정",
+    });
+  }
+
+  // OpenStreetMap's own reading of the building, against the register.
+  //
+  // These tags never overwrite a register value — an independent source that
+  // disagrees about how many storeys the building has is exactly the sort of
+  // thing the user should be shown, and exactly the sort of thing that must not
+  // silently win. The register keeps the value; the disagreement is recorded.
+  const osmFacts = input.osm ? osmTagFacts(input.osm.tags ?? {}) : null;
+  if (osmFacts?.storeysAbove && grnd && osmFacts.storeysAbove !== grnd) {
+    add({
+      subject: "지상 층수 (대장 대 OpenStreetMap)",
+      sourceA: "SRC-REG-TITLE (grndFlrCnt)",
+      valueA: `${grnd}`,
+      sourceB: "SRC-OSM-BLDG (building:levels)",
+      valueB: `${osmFacts.storeysAbove}`,
+      magnitude: `${osmFacts.storeysAbove - grnd} 층`,
+      possibleExplanation:
+        "증축 후 대장 갱신 시점 차이이거나, OSM 기여자가 옥탑·필로티를 층으로 계수했을 수 있습니다. " +
+        "OSM 태그는 기여자의 진술이며 실측이 아닙니다.",
+      resolutionStatus: "documented",
+      requiredVerification: "현장 외관에서 층수 계수",
+    });
+  }
+  if (osmFacts?.heightM && heit && Math.abs(pct(osmFacts.heightM, heit)) > 15) {
+    add({
+      subject: "건물 높이 (대장 대 OpenStreetMap)",
+      sourceA: "SRC-REG-TITLE (heit)",
+      valueA: `${heit.toFixed(1)} m`,
+      sourceB: "SRC-OSM-BLDG (height)",
+      valueB: `${osmFacts.heightM.toFixed(1)} m`,
+      magnitude: `${(osmFacts.heightM - heit).toFixed(1)} m`,
+      possibleExplanation:
+        "대장 높이의 산정 기준(옥탑 제외 등)이 다르거나, OSM 높이가 층수 × 3 m 로 추정 입력되었을 수 있습니다.",
       resolutionStatus: "documented",
       requiredVerification: "레이저 거리계로 처마/파라펫 높이 측정",
     });

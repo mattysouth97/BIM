@@ -35,6 +35,7 @@ import {
   type ControlContext,
   type FloorAggregate,
 } from "./evidence";
+import { claimOf } from "./claims";
 import {
   areaSqm,
   bbox,
@@ -53,6 +54,16 @@ import {
   insetEdgeToArea,
   type SetbackChoice,
 } from "./setback";
+import {
+  OSM_SOURCE_ID,
+  osmOutlineRing,
+  osmReference,
+} from "./osm-source";
+import {
+  reconcileOutlines,
+  type OutlineCandidate,
+} from "./outline-candidates";
+import { regularizeRing } from "./outline-regularize";
 import type {
   AreaValidationRow,
   AssumptionEntry,
@@ -195,22 +206,34 @@ export function reconstruct(
     });
   };
 
-  /* --- frame + GIS ring ------------------------------------------- */
+  /* --- frame + observed rings -------------------------------------- */
 
   const gisRingRaw = input.gis?.polygon?.[0] ?? null;
-  const originLngLat = gisRingRaw ? ringCentroidLngLat(gisRingRaw) : null;
+  const osmRingRaw = osmOutlineRing(input.osm ?? null);
+  // The frame is anchored on the government outline when there is one, so a
+  // building's local coordinates do not shift as OSM coverage changes. OSM
+  // only supplies the origin when it is the sole ring available.
+  const originLngLat = ringCentroidLngLat(gisRingRaw ?? osmRingRaw ?? []);
+
   let gisRingMm: RingMm | null = null;
-  if (gisRingRaw && originLngLat && options.project) {
+  let osmRingMm: RingMm | null = null;
+  if (originLngLat && options.project) {
     try {
       const project = options.project(originLngLat[0], originLngLat[1]);
-      gisRingMm = prepareGisRing(projectRingToMm(gisRingRaw, project));
+      // Both rings are projected through the SAME origin, which is what makes
+      // them comparable at all — reconciling them in different frames would
+      // measure the projection difference rather than the buildings.
+      if (gisRingRaw) gisRingMm = prepareGisRing(projectRingToMm(gisRingRaw, project));
+      if (osmRingRaw) osmRingMm = prepareGisRing(projectRingToMm(osmRingRaw, project));
     } catch {
       // A coordinate outside the supported bounds is evidence we cannot use,
       // not a reason to fail the whole reconstruction.
       gisRingMm = null;
+      osmRingMm = null;
     }
   }
   const gisIsParcel = input.gis?.source === "parcel";
+  const osmRef = osmReference(input.osm ?? null);
 
   const ctx: ControlContext = {
     gisRing: gisRingMm,
@@ -241,64 +264,183 @@ export function reconstruct(
   }
 
   /* --- footprint --------------------------------------------------- */
+  //
+  // Every outline the evidence scan found is offered as a candidate and the
+  // winner is reconciled against the others, rather than taken from whichever
+  // if/else branch happened to match first. outline-candidates.ts holds the
+  // three rules: a site ring is never a footprint, observed always outranks
+  // solved, and a losing observed ring keeps its geometry on a conflict entry.
 
   const c2 = controlValue(controls, "C2");
   const archArea = statedNumber(title?.archArea);
-  const widthClaimM = numericControl(controls, "C5");
-  const depthClaimM = numericControl(controls, "C6");
+  // Read from the CLAIMS, not from C5/C6: those controls also carry GIS-derived
+  // values, and sourcing a "user stated" rectangle from them once attributed a
+  // cadastral lot to a user who had said nothing.
+  const widthClaim = claimOf(input.claims, "overall_width_m");
+  const depthClaim = claimOf(input.claims, "overall_depth_m");
 
-  let footprintRing: RingMm | null = null;
-  let footprintGrade: EvidenceGrade = "X-UNRESOLVED";
-  let footprintMethod = "";
+  const candidates: OutlineCandidate[] = [];
 
-  if (gisRingMm && !gisIsParcel) {
-    footprintRing = gisRingMm;
-    footprintGrade = "B-OBSERVED";
-    footprintMethod =
-      "VWorld GIS건물통합정보 외곽을 부지 중심 횡메르카토르로 투영 후 측량 잡음 정리";
+  if (gisRingMm) {
+    const ring = toCounterClockwise(roundRing(gisRingMm));
+    candidates.push(
+      gisIsParcel
+        ? {
+            id: "OUT-PARCEL",
+            origin: "gis_parcel",
+            sourceId: "SRC-GIS-PARCEL",
+            labelKo: "VWorld 연속지적도 필지 경계",
+            ring,
+            areaSqm: areaSqm(ring),
+            grade: "B-OBSERVED",
+            observed: true,
+            siteOnly: true,
+            method: "연속지적도 필지 경계 — 대지 참조 전용",
+          }
+        : {
+            id: "OUT-GIS",
+            origin: "gis_building",
+            sourceId: "SRC-GIS-BLDG",
+            labelKo: "VWorld GIS 건물 외곽",
+            ring,
+            areaSqm: areaSqm(ring),
+            grade: "B-OBSERVED",
+            observed: true,
+            siteOnly: false,
+            method:
+              "GIS건물통합정보 외곽을 부지 중심 횡메르카토르로 투영 후 측량 잡음 정리",
+          },
+    );
+  }
+
+  if (osmRingMm) {
+    const ring = toCounterClockwise(roundRing(osmRingMm));
+    candidates.push({
+      id: "OUT-OSM",
+      origin: "osm_building",
+      sourceId: OSM_SOURCE_ID,
+      labelKo: osmRef ? `OpenStreetMap 건물 외곽 (${osmRef})` : "OpenStreetMap 건물 외곽",
+      ring,
+      areaSqm: areaSqm(ring),
+      grade: "B-OBSERVED",
+      observed: true,
+      siteOnly: false,
+      method: "OpenStreetMap 기여자가 항공영상에서 추적한 외곽을 동일 원점으로 투영",
+    });
+  }
+
+  if (widthClaim && depthClaim) {
+    const w = Math.round(Number(widthClaim.value) * 1000);
+    const d = Math.round(Number(depthClaim.value) * 1000);
+    if (Number.isFinite(w) && Number.isFinite(d) && w > 0 && d > 0) {
+      const ring = rectRing([0, 0], w, d);
+      candidates.push({
+        id: "OUT-USER",
+        origin: "user_dimensions",
+        sourceId: "SRC-USER",
+        labelKo: "사용자 진술 치수",
+        ring,
+        areaSqm: areaSqm(ring),
+        grade: weakerGrade(widthClaim.grade, depthClaim.grade),
+        // Only a stated MEASUREMENT is an observation; a recollection is not.
+        observed: widthClaim.measured && depthClaim.measured,
+        siteOnly: false,
+        method: "사용자가 진술한 전체 폭 × 깊이의 직사각형",
+      });
+    }
+  }
+
+  if (typeof c2?.value === "number" && c2.value > 0) {
+    const solved = solvePlateForArea(c2.value);
+    const ring = rectRing([0, 0], solved.widthMm, solved.depthMm);
+    candidates.push({
+      id: "OUT-AREA",
+      origin: "register_area",
+      sourceId: "SRC-REG-TITLE",
+      labelKo: "건축면적 해석 직사각형",
+      ring,
+      areaSqm: areaSqm(ring),
+      grade: "D-INFERRED",
+      observed: false,
+      siteOnly: false,
+      method: `건축면적 ${c2.value.toFixed(1)} m²를 만족하도록 해석한 직사각형 (깊이 <= ${MAX_PLATE_DEPTH_M} m, 종횡비 <= ${MAX_PLATE_ASPECT}:1)`,
+    });
+  }
+
+  const outlines = reconcileOutlines(candidates, { registeredFootprintSqm: archArea });
+  conflicts.push(...outlines.conflicts);
+
+  const chosenOutline = outlines.chosen;
+  let footprintRing: RingMm | null = chosenOutline ? chosenOutline.ring : null;
+  const footprintGrade: EvidenceGrade = chosenOutline?.grade ?? "X-UNRESOLVED";
+  let footprintMethod = outlines.rationale;
+
+  // Squaring up only makes sense on a TRACED outline. A solved rectangle is
+  // already orthogonal, and a user's stated box carries no digitising noise.
+  if (footprintRing && chosenOutline?.observed && !chosenOutline.siteOnly) {
+    const squared = regularizeRing(footprintRing);
+    if (squared.applied) {
+      footprintRing = squared.ring;
+      footprintMethod = `${footprintMethod} ${squared.reason}.`;
+      assume({
+        element: "외곽선 정형화",
+        floor: "1F",
+        assumption: `건물 축 ${squared.rotationDeg.toFixed(1)}°에 맞춰 벽면을 직각으로 정리 (최대 ${Math.round(squared.maxShiftMm)} mm 이동)`,
+        reason:
+          "관측 외곽은 항공영상에서 디지타이징된 선이라 모서리마다 수백 mm의 오차가 있습니다. " +
+          "정리하지 않으면 실재하지 않는 사선 벽이 도면에 그대로 남습니다",
+        sourceContext: `${chosenOutline.sourceId} + outline-regularize`,
+        confidence: "C-CALCULATED",
+        impactIfWrong: "벽 길이와 방위가 최대 이동량만큼 달라집니다",
+        verificationMethod: "외벽 모서리 좌표 실측",
+      });
+    }
+  }
+
+  if (chosenOutline?.origin === "gis_building") {
     assume({
       element: "외곽선",
       floor: "1F",
       assumption: "GIS 건물 외곽을 지상 1층 외벽 외면으로 사용",
       reason:
-        "GIS 외곽은 지붕 투영선일 수 있으나 이 건물에 대해 유일하게 관측된 형상입니다",
+        "GIS 외곽은 지붕 투영선일 수 있으나 이 건물에 대해 관측된 유일한 형상입니다",
       sourceContext: "SRC-GIS-BLDG",
       confidence: "B-OBSERVED",
       impactIfWrong: "모든 층의 평면 형상과 외피 면적이 이동합니다",
       verificationMethod: "1층 외벽 모서리 좌표 실측",
     });
-  } else if (widthClaimM !== null && depthClaimM !== null) {
-    footprintRing = rectRing(
-      [0, 0],
-      Math.round(widthClaimM * 1000),
-      Math.round(depthClaimM * 1000),
-    );
-    const wGrade = controlValue(controls, "C5")?.grade ?? "D-INFERRED";
-    const dGrade = controlValue(controls, "C6")?.grade ?? "D-INFERRED";
-    footprintGrade = weakerGrade(wGrade, dGrade);
-    footprintMethod = "사용자가 진술한 전체 폭 × 깊이의 직사각형";
+  } else if (chosenOutline?.origin === "osm_building") {
+    assume({
+      element: "외곽선",
+      floor: "1F",
+      assumption: `OpenStreetMap 외곽(${osmRef ?? "출처 미상"})을 지상 1층 외벽 외면으로 사용`,
+      reason:
+        "정부 GIS 외곽을 얻지 못했습니다. OSM 외곽은 기여자가 항공영상에서 추적한 관측 형상이며, " +
+        "측량 성과가 아니고 갱신 시점이 대장과 다를 수 있습니다",
+      sourceContext: OSM_SOURCE_ID,
+      confidence: "B-OBSERVED",
+      impactIfWrong: "모든 층의 평면 형상과 외피 면적이 이동합니다",
+      verificationMethod: "1층 외벽 모서리 좌표 실측 또는 GIS 외곽 재수집",
+    });
+  } else if (chosenOutline?.origin === "user_dimensions") {
     assume({
       element: "외곽선",
       floor: "1F",
       assumption: "진술된 폭·깊이로 직사각형 외곽을 구성",
-      reason: "형상 자체에 대한 증거가 없어 직사각형 외에는 선택할 수 없습니다",
+      reason: "형상 자체에 대한 관측 증거가 없어 직사각형 외에는 선택할 수 없습니다",
       sourceContext: "SRC-USER",
       confidence: "D-INFERRED",
       impactIfWrong: "돌출부·요철이 누락되어 외피 면적이 과소평가됩니다",
       verificationMethod: "외곽 둘레 실측 또는 항공사진 트레이싱",
     });
-  } else if (typeof c2?.value === "number" && c2.value > 0) {
-    const solved = solvePlateForArea(c2.value);
-    footprintRing = rectRing([0, 0], solved.widthMm, solved.depthMm);
-    footprintGrade = "D-INFERRED";
-    footprintMethod = `건축면적 ${c2.value.toFixed(1)} m²를 만족하도록 해석한 직사각형 (깊이 ≤ ${MAX_PLATE_DEPTH_M} m, 종횡비 ≤ ${MAX_PLATE_ASPECT}:1)`;
+  } else if (chosenOutline?.origin === "register_area") {
     assume({
       element: "외곽선",
       floor: "1F",
-      assumption: `면적 ${c2.value.toFixed(1)} m²에 맞춘 ${(solved.widthMm / 1000).toFixed(1)} × ${(solved.depthMm / 1000).toFixed(1)} m 직사각형`,
+      assumption: chosenOutline.method,
       reason:
-        "면적만 검증되어 있고 형상 증거가 없습니다. 면적은 계산값(C-CALCULATED)이지만 형상은 추정입니다",
-      sourceContext: `SRC-REG-TITLE / C2 (${c2.grade})`,
+        "면적만 검증되어 있고 형상 증거가 없습니다. 면적은 계산값이지만 형상은 추정입니다",
+      sourceContext: `SRC-REG-TITLE / C2 (${c2?.grade ?? "X-UNRESOLVED"})`,
       confidence: "D-INFERRED",
       impactIfWrong: "평면 비례와 외피 면적이 달라집니다 (면적은 유지)",
       verificationMethod: "정면 폭과 측면 깊이 실측",
@@ -307,11 +449,12 @@ export function reconstruct(
 
   if (!footprintRing) {
     blockers.push(
-      "건축면적·GIS 외곽·사용자 치수 중 어느 것도 없어 외곽선을 만들 수 없습니다.",
+      outlines.siteCandidates.length > 0
+        ? "필지 경계만 확보되었습니다. 필지는 건물 외곽이 아니므로 외곽선을 만들 수 없습니다."
+        : "건축면적·GIS 외곽·사용자 치수 중 어느 것도 없어 외곽선을 만들 수 없습니다.",
     );
     // A placeholder square keeps the downstream code total, but it is graded
     // as unresolved and the blocker above stops it being offered as a drawing.
-    footprintGrade = "X-UNRESOLVED";
     footprintMethod =
       "증거 없음 — 파이프라인을 완주시키기 위한 자리표시 사각형입니다. 도면으로 사용할 수 없습니다.";
   }
@@ -1303,12 +1446,4 @@ function buildAreaValidation(args: {
   rows.push(row("연면적 / Gross floor area", totArea, levels.length > 0 ? modelTotal : null));
 
   return rows;
-}
-
-function numericControl(
-  controls: ReturnType<typeof buildControls>,
-  id: string,
-): number | null {
-  const c = controlValue(controls, id);
-  return typeof c?.value === "number" && Number.isFinite(c.value) ? c.value : null;
 }

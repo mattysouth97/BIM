@@ -63,6 +63,7 @@ export type SourceKind =
   | "gis_parcel_outline"
   | "gis_measured_attributes"
   | "gis_zoning_district"
+  | "osm_building_outline"
   | "user_statement"
   | "code_table";
 
@@ -429,6 +430,23 @@ export interface ZoningInput {
   error: string | null;
 }
 
+/**
+ * The building outline OpenStreetMap holds, as `/api/osm/building` returns it.
+ *
+ * A second, independent observation of the same roof: digitised by a different
+ * person from different imagery than the government layer, and available where
+ * that layer is not. Its geometry is an observation; its `tags` are assertions
+ * a contributor typed, and the two are graded separately — see osm-source.ts.
+ */
+export interface OsmBuildingInput {
+  /** Outer ring first, [lng, lat] pairs in GeoJSON order. */
+  polygon: number[][][] | null;
+  osmType: "way" | "relation" | null;
+  osmId: number | null;
+  tags: Record<string, string>;
+  error: string | null;
+}
+
 export interface EvidenceInput {
   buildingPk: string;
   title: BrTitleInfo | null;
@@ -449,6 +467,13 @@ export interface EvidenceInput {
   parcel?: GisFootprintInput | null;
   /** 용도지역, when the zoning layer answered (P2-31). */
   zoning?: ZoningInput | null;
+  /**
+   * The OpenStreetMap outline, when the scan found one. A second observed
+   * shape source, reconciled against `gis` rather than replacing it — where
+   * the two agree the outline is corroborated, and where they disagree the
+   * disagreement is recorded instead of one of them being dropped.
+   */
+  osm?: OsmBuildingInput | null;
   address: string | null;
   claims: ReconstructionClaim[];
   /** Injected so a reconstruction is reproducible in tests and in reports. */

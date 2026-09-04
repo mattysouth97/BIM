@@ -26,6 +26,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCompositeBuilding } from "@/hooks/use-composite-building";
+import {
+  ringCentroidLngLat,
+  useOsmBuilding,
+} from "@/hooks/use-osm-building";
 import { parseBuildingId } from "@/lib/constants";
 import { useT } from "@/lib/i18n";
 import {
@@ -167,6 +171,23 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
     !!withFootprint.footprintData?.polygon &&
     withFootprint.footprintData.source === "building";
 
+  // A second, independently digitised outline. Queried by the GIS ring's own
+  // centroid when there is one — far tighter than geocoding an address — and
+  // by the address only when the government layer gave us nothing to aim at.
+  const gisCentroid = useMemo(
+    () => ringCentroidLngLat(withFootprint.footprintData?.polygon),
+    [withFootprint.footprintData?.polygon],
+  );
+  const osmQuery = useMemo(
+    () =>
+      gisCentroid
+        ? { lat: gisCentroid.lat, lng: gisCentroid.lng }
+        : { address: address ?? null },
+    [gisCentroid, address],
+  );
+  const { osm, isLoading: osmLoading, hasOutline: hasOsmOutline } =
+    useOsmBuilding(osmQuery, !!gisCentroid || !!address);
+
   // Running before the register has answered produces a "cannot reconstruct"
   // verdict about the network, not about the building. Both lookups must have
   // settled first — the address that drives the GIS query only exists once the
@@ -174,7 +195,8 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
   const evidenceLoading =
     titleQuery.isLoading ||
     withFootprint.isLoading ||
-    withFootprint.isFootprintLoading;
+    withFootprint.isFootprintLoading ||
+    osmLoading;
 
   const run = useCallback(async () => {
     setRunning(true);
@@ -223,6 +245,7 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
               error: withFootprint.footprintData.error,
             }
           : null,
+        osm,
         address: address ?? null,
         claims: readClaims,
       };
@@ -240,7 +263,7 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
     } finally {
       setRunning(false);
     }
-  }, [statement, ledgerTitle, withFootprint, address, buildingId]);
+  }, [statement, ledgerTitle, withFootprint, address, buildingId, osm]);
 
   const model = pkg?.model ?? null;
   const blocked = (model?.blockers.length ?? 0) > 0;
@@ -259,11 +282,14 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
 
       <p className="text-xs text-muted-foreground">
         {t(
-          "건축물대장·GIS 외곽·연대별 코드표를 자동으로 수집하고, 아는 정보를 문장으로 더하면 " +
+          "건축물대장·정부 GIS 외곽·OpenStreetMap 외곽·연대별 코드표를 자동으로 수집하고, " +
+            "관측된 외곽선끼리 서로 대조한 뒤 형상을 복원합니다. 아는 정보를 문장으로 더하면 " +
             "출처가 추적되는 CAD를 만듭니다. 실측 도서가 아니며, 모든 선은 증거 등급을 갖습니다.",
-          "The register, the GIS outline and the era code tables are gathered for you. Add what " +
-            "you know in a sentence and the pipeline produces source-traceable CAD. This is not " +
-            "an as-built survey — every line carries a confidence grade.",
+          "The register, the government GIS outline, the OpenStreetMap outline and the era code " +
+            "tables are gathered for you, and the observed outlines are cross-checked against " +
+            "each other before the shape is rebuilt. Add what you know in a sentence and the " +
+            "pipeline produces source-traceable CAD. This is not an as-built survey — every " +
+            "line carries a confidence grade.",
         )}
       </p>
 
@@ -281,6 +307,11 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
             : withFootprint.footprintData?.source === "parcel"
               ? t("GIS 필지 경계만", "Parcel boundary only")
               : t("GIS 외곽 없음", "No GIS outline")}
+        </Badge>
+        <Badge variant="outline" className="text-[10px]">
+          {hasOsmOutline
+            ? t("OSM 건물 외곽 ✓", "OSM outline ✓")
+            : t("OSM 외곽 없음", "No OSM outline")}
         </Badge>
         <Badge variant="outline" className="text-[10px]">
           {t("연대 코드표", "Era tables")} ✓
