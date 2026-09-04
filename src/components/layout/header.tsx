@@ -28,6 +28,19 @@ export function Header() {
   }
 
   const isLanding = pathname === "/";
+  /**
+   * Pages that SHOW a building rather than offer a way into the product.
+   *
+   * The gallery and a model detail page are both leaves: they present one
+   * thing, take no input, and are not a door. ADR-004 removed the header's
+   * diagnostic action from the gallery for that reason, and a model page is
+   * the same kind of page — so the same two controls come off it. The API key
+   * belongs with the register lookup that needs one, not over a static model.
+   *
+   * `isLanding` stays separate below because it also drives landing-only
+   * styling, which a model page must not inherit.
+   */
+  const isLeafPage = isLanding || (pathname?.startsWith("/models/") ?? false);
   const isDark = hydrated && theme === "dark";
 
   const newDiagnosticLabel =
@@ -79,7 +92,7 @@ export function Header() {
                 API-key control are hidden there and kept everywhere else. `/`
                 is the model gallery now, so this button points at step 1's own
                 address rather than at home. */}
-            {isLanding ? null : (
+            {isLeafPage ? null : (
               <Button asChild variant="outline" size="sm" className="h-8 px-2 shadow-xs sm:px-3">
                 <Link
                   href="/diagnostics/new?method=ledger"
@@ -123,7 +136,7 @@ export function Header() {
               <span className="sr-only">Toggle theme</span>
             </Button>
 
-            {isLanding ? null : (
+            {isLeafPage ? null : (
               <Button
                 variant="ghost"
                 size="icon"

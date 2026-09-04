@@ -66,4 +66,32 @@ describe("Header diagnostic control", () => {
     expect(link.getAttribute("href")).toBe(REGISTER_URL);
     expect(screen.getAllByText("새 에너지 진단").length).toBeGreaterThan(0);
   });
+
+  it("hides both controls on a model page, as it does on the gallery", () => {
+    // A model detail page shows one building and takes no input. It is a leaf,
+    // like the gallery, so it carries the same bare header — ADR-004 removed
+    // the diagnostic action from the gallery for exactly this reason, and the
+    // API key belongs with the register lookup that needs one, not over a
+    // static model.
+    navigation.pathname = "/models/bs-medical-dental-clinic";
+    render(<Header />);
+
+    expect(screen.queryByRole("link", { name: "New Energy Diagnostic" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /API key/i })).toBeNull();
+
+    // The wordmark still goes home, and the leaf is not stripped of everything.
+    expect(
+      screen.getByRole("link", { name: "BIMFIT home" }).getAttribute("href"),
+    ).toBe("/");
+  });
+
+  it("keeps both controls on a page that IS a door into the product", () => {
+    // The guard is `startsWith("/models/")`, so this is the assertion that
+    // stops it widening into every page by accident.
+    navigation.pathname = "/diagnostics/new";
+    render(<Header />);
+
+    expect(screen.getByRole("link", { name: "New Energy Diagnostic" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /API key/i })).toBeTruthy();
+  });
 });
