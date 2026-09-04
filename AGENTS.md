@@ -191,6 +191,35 @@ vercel --cwd <tmp>/deploy --prod --yes --scope matts-projects-d0677dc4
   `src/lib/landing/layers.ts`) did exactly that on 2026-09-04. Commit assets
   under `public/`; `git ls-files --others --exclude-standard` finds the strays.
 
+## Three kinds of visibility, and each fails silently
+
+A worktree is the standard way to work here, and what it can *see* is narrower
+than it looks:
+
+- A worktree cut from `origin/<branch>` sees only what has been **pushed**.
+- A worktree cut from the local branch ref sees only what has been **committed**.
+- Neither sees what is merely **on disk** in another checkout — a worktree gets
+  tracked files, so an untracked file is invisible to every consumer that does
+  not share the one working directory it lives in.
+
+All three have cost this repo real time on 2026-09-04, and in each case the
+failure mode was silence rather than an error:
+
+- `707f20a` (a units fix) was committed but not pushed, with 12 unpushed commits
+  on the branch. A worktree reset to `origin/` came up without it, `file.units`
+  read `null`, and it was nearly filed as a bug against working code.
+- `docs/04_Agent-Handoffs/SESSION-LOCKS.md`, the fleet's live claim register,
+  was never `git add`ed — so it was absent from all 15 worktrees on disk and
+  legible only from the main checkout. A claim made at 15:30 never reached the
+  session that acted on the same file at 15:34.
+- `public/landing/layer-all-peel-hd.png`, above: untracked, worked locally and
+  on every dirty deploy, 404'd on the first clean one.
+
+`scripts/check-untracked-imports.mjs` catches the import/asset case. It cannot
+catch a *document* nobody imports, and it cannot catch committed-not-pushed at
+all. Before concluding another session's code is broken, check that you can see
+their commit: `git merge-base --is-ancestor <sha> HEAD`.
+
 Functions are pinned to Seoul in `vercel.json` (`regions: ["icn1"]`). Do not
 remove it: `api.vworld.kr` refuses Vercel's `iad1` egress, so every VWorld read
 silently degrades to the 건축면적-solved rectangle if the functions move back to
