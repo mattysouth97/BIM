@@ -18,14 +18,14 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-import { fetchSource, githubLfsUrl, openIfcFiles, compoundAngleDeg, str } from "./lib/ifc-reader.mjs";
+import { fetchSource, githubLfsUrl, openIfcFiles, compoundAngleDeg, str, num, refId } from "./lib/ifc-reader.mjs";
 import {
   extractStoreys,
   extractSpaces,
   extractAssemblies,
   classifyExternalElements,
 } from "./lib/ifc-envelope.mjs";
-import { netFaceAreasByElement } from "./lib/ifc-face-area.mjs";
+import { netFaceAreasByElement, orientWalls } from "./lib/ifc-face-area.mjs";
 import { collectFabric, mergeFabric, writeGlb, SERVICE_GROUPS, SERVICE_COLOUR } from "./lib/ifc-glb.mjs";
 import { collectServiceInstances } from "./lib/ifc-instances.mjs";
 import { collectFlowNetwork, annotateFlow, serialiseFlow } from "./lib/ifc-flow.mjs";
@@ -167,6 +167,44 @@ async function main() {
     );
   }
 
+  // True north, if the model states one.
+  //
+  // `IfcGeometricRepresentationContext.TrueNorth` is an IfcDirection in the
+  // plan, giving north relative to the project's own +Y. Absent, project north
+  // IS true north — which is an assumption, not a reading, and `northAssumed`
+  // carries that distinction into the orientation result. It matters more
+  // under a monthly method than it ever did under degree days: solar gain is
+  // computed per orientation, so a building rotated 30° off the grid puts its
+  // gains on the wrong faces all year.
+  let trueNorthDeg = null;
+  for (const context of arch.byType(webIfc.IFCGEOMETRICREPRESENTATIONCONTEXT)) {
+    const direction = arch.line(refId(context.TrueNorth));
+    const ratios = direction?.DirectionRatios;
+    if (!Array.isArray(ratios) || ratios.length < 2) continue;
+    const dx = num(ratios[0]);
+    const dy = num(ratios[1]);
+    if (dx === null || dy === null) continue;
+    trueNorthDeg = (Math.atan2(dx, dy) * 180) / Math.PI;
+    break;
+  }
+
+  const orientation = orientWalls(exteriorWalls, { trueNorthDeg });
+  // The oriented split must account for the same area as the headline total.
+  // It did not on the first run — 7 walls with a single aligned face were
+  // skipped, so the manifest would have carried 2,150.3 m² of wall and
+  // 2,119.33 m² of oriented wall, both true-looking and disagreeing by 1.4%.
+  const orientedTotal = Object.values(orientation.byOrientation).reduce(
+    (sum, value) => sum + value,
+    0,
+  );
+  if (Math.abs(orientedTotal - wallNet) > 0.05) {
+    throw new Error(
+      `Oriented wall area ${orientedTotal.toFixed(2)} m² does not reconcile with ` +
+        `the total ${wallNet.toFixed(2)} m² (${orientation.walls.length} of ` +
+        `${exteriorWalls.size} walls oriented). Every wall must land in a sector.`,
+    );
+  }
+
   const site = arch.byType(webIfc.IFCSITE)[0];
   const latitudeDeg = site ? compoundAngleDeg(site.RefLatitude) : null;
   const longitudeDeg = site ? compoundAngleDeg(site.RefLongitude) : null;
@@ -302,6 +340,28 @@ async function main() {
       exteriorWallNetSqm: round(wallNet),
       exteriorWallBelowRoofSqm: round(wallBelowRoof),
       exteriorWallAboveRoofSqm: round(wallAboveRoof),
+      /**
+       * Wall area by compass sector, which a monthly method needs and a
+       * degree-day one does not: ISO 13790 computes solar gain per
+       * orientation, and 2,150.3 m² is the same total whether it all faces
+       * north or all faces south. Those are very different buildings.
+       *
+       * Two inferences are folded in and both are reported rather than
+       * hidden — which face of a wall is outward (`weakOutward` counts the
+       * ones where the call was close) and where north is (`northAssumed`).
+       */
+      exteriorWallByOrientationSqm: orientation.byOrientation,
+    },
+    orientation: {
+      trueNorthDeg: trueNorthDeg === null ? null : round(trueNorthDeg),
+      northAssumed: orientation.northAssumed,
+      weakOutwardCount: orientation.weakOutward,
+      wallCount: orientation.walls.length,
+      note:
+        "Azimuths are clockwise from north, where north is the model's -Z " +
+        "after web-ifc's Z-up to Y-up conversion. Outward face inferred by " +
+        "comparing each face's centroid with the building centre, which is " +
+        "correct for a convex plan and can be wrong at a re-entrant corner.",
     },
     site: {
       declaredSiteName: site ? str(site.Name) : null,

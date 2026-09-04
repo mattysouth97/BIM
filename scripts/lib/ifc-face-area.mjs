@@ -158,6 +158,17 @@ export function netFaceArea(triangles, options = {}) {
   let alignedBelow = 0;
   let alignedAbove = 0;
   let total = 0;
+  // The two faces of the element, kept apart rather than summed.
+  //
+  // A wall has a front and a back with opposite normals, and summing them
+  // cancels to zero — so an orientation taken from the sum would be noise.
+  // Splitting by the sign of the thin-axis normal gives the two candidate
+  // outward directions, and only the caller, which knows where the rest of
+  // the building is, can say which of the two faces the weather is on.
+  let areaPos = 0;
+  let areaNeg = 0;
+  const centroidPos = [0, 0, 0];
+  const centroidNeg = [0, 0, 0];
   const split = heightSplitM;
   const floorY = options.heightFloorM ?? null;
   for (const tri of triangles) {
@@ -166,6 +177,18 @@ export function netFaceArea(triangles, options = {}) {
     total += t.area;
     if (Math.abs(t.n[thin]) <= FACE_ALIGNMENT) continue;
     aligned += t.area;
+    const mid = [
+      (tri[0][0] + tri[1][0] + tri[2][0]) / 3,
+      (tri[0][1] + tri[1][1] + tri[2][1]) / 3,
+      (tri[0][2] + tri[1][2] + tri[2][2]) / 3,
+    ];
+    if (t.n[thin] > 0) {
+      areaPos += t.area;
+      for (let a = 0; a < 3; a += 1) centroidPos[a] += mid[a] * t.area;
+    } else {
+      areaNeg += t.area;
+      for (let a = 0; a < 3; a += 1) centroidNeg[a] += mid[a] * t.area;
+    }
     if (split !== null) {
       alignedBelow += clippedArea(tri, floorY, split);
       alignedAbove += clippedArea(tri, split, null);
@@ -208,6 +231,24 @@ export function netFaceArea(triangles, options = {}) {
     grossFaceSqm,
     /** Net area as a share of the gross face. Above 1 is impossible. */
     fillRatio: grossFaceSqm > 0 ? netFaceAreaSqm / grossFaceSqm : null,
+    /**
+     * The element's two faces, for the caller to orient.
+     *
+     * `axisIndex` is 0 for X and 2 for Z — Y is never the thin axis here.
+     * `centroid` is area-weighted, so a caller can decide which face looks
+     * outward by comparing it with the building's own centre.
+     */
+    faces: {
+      axisIndex: thin,
+      positive: {
+        areaSqm: areaPos,
+        centroid: areaPos > 0 ? centroidPos.map((v) => v / areaPos) : null,
+      },
+      negative: {
+        areaSqm: areaNeg,
+        centroid: areaNeg > 0 ? centroidNeg.map((v) => v / areaNeg) : null,
+      },
+    },
     exceedsBounds: grossFaceSqm > 0 && netFaceAreaSqm > grossFaceSqm * 1.001,
     /** True when the element is flatter than it is wide — not a wall. */
     thinAxisForced,
@@ -242,4 +283,138 @@ export function netFaceAreasByElement(api, modelID, accept, options = {}) {
     }
   });
   return results;
+}
+
+/** Compass sectors, 45° wide, centred on the named bearing. */
+const SECTORS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+
+/**
+ * Which way each wall faces, and how much area faces that way.
+ *
+ * This exists because a monthly method needs it and a degree-day one does
+ * not. ISO 13790 computes solar gain per orientation per month, so a single
+ * envelope total — which is all this pipeline produced until now — cannot
+ * feed it. 2,150.3 m² of wall is the same number whether it all faces north
+ * or all faces south, and those are very different buildings.
+ *
+ * Two things here are inferences and are labelled as such rather than
+ * presented as read from the file:
+ *
+ * 1. **Which face is outward.** A wall has two, and the model does not say
+ *    which one the weather is on. The outward face is taken to be the one
+ *    whose centroid sits further from the building's own centre along the
+ *    wall's thin axis. That is right for a convex plan and can be wrong on a
+ *    re-entrant corner, so `outwardConfidence` reports how decisive the
+ *    comparison was and the caller can see the weak ones.
+ * 2. **Where north is.** web-ifc converts IFC's Z-up frame to a Y-up one, so
+ *    IFC's plan north (+Y) becomes world −Z. `trueNorthDeg`, when the file
+ *    states one, rotates that; when it does not, project north is assumed and
+ *    `northAssumed` says so.
+ */
+export function orientWalls(walls, { trueNorthDeg = null } = {}) {
+  const entries = [...walls.entries()];
+  if (entries.length === 0) return { byOrientation: {}, walls: [], northAssumed: true };
+
+  // Building centre from every wall's bounds, so one outlier cannot drag it.
+  const centre = [0, 0, 0];
+  for (const [, w] of entries) {
+    for (let a = 0; a < 3; a += 1) {
+      centre[a] += (w.boundsMin[a] + w.boundsMax[a]) / 2;
+    }
+  }
+  for (let a = 0; a < 3; a += 1) centre[a] /= entries.length;
+
+  // The building's own plan extent, so "close to the centre line" scales with
+  // the building rather than being a fixed number of metres.
+  const lo = [Infinity, Infinity, Infinity];
+  const hi = [-Infinity, -Infinity, -Infinity];
+  for (const [, w] of entries) {
+    for (let a = 0; a < 3; a += 1) {
+      if (w.boundsMin[a] < lo[a]) lo[a] = w.boundsMin[a];
+      if (w.boundsMax[a] > hi[a]) hi[a] = w.boundsMax[a];
+    }
+  }
+  const extent = [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]];
+
+  const rotation = ((trueNorthDeg ?? 0) * Math.PI) / 180;
+  const byOrientation = Object.fromEntries(SECTORS.map((s) => [s, 0]));
+  const oriented = [];
+
+  for (const [id, wall] of entries) {
+    const axis = wall.faces.axisIndex;
+    const pos = wall.faces.positive;
+    const neg = wall.faces.negative;
+
+    // A wall whose mesh presents only ONE aligned face needs no comparison:
+    // that face's own normal is the outward direction. Skipping these dropped
+    // 7 of the Clinic's 80 walls and 30.97 m² out of the oriented total while
+    // the headline figure stayed 2,150.3 — a silent 1.4% disagreement between
+    // two numbers on the same page.
+    if (!pos.centroid || !neg.centroid) {
+      const sign = pos.centroid ? 1 : -1;
+      const nx1 = axis === 0 ? sign : 0;
+      const nz1 = axis === 2 ? sign : 0;
+      let az = (Math.atan2(nx1, -nz1) - rotation) * (180 / Math.PI);
+      az = ((az % 360) + 360) % 360;
+      const sec = SECTORS[Math.round(az / 45) % 8];
+      byOrientation[sec] += wall.netFaceAreaSqm;
+      oriented.push({
+        id,
+        azimuthDeg: Math.round(az * 10) / 10,
+        sector: sec,
+        netFaceAreaSqm: wall.netFaceAreaSqm,
+        outwardConfidence: "single-faced",
+      });
+      continue;
+    }
+
+    // Which SIDE of the building the wall sits on, not which of its own two
+    // faces sits further out.
+    //
+    // The first version compared the two face centroids against the centre and
+    // took the larger. That is always the positive face — they are the two
+    // faces of one wall, so pos.centroid[axis] exceeds neg.centroid[axis] by
+    // the wall thickness every time, whatever side of the building it is on.
+    // Every wall came out facing +X or +Z, and the Clinic reported 969 m²
+    // east, 1,150 m² south and zero north and west. A closed building cannot
+    // do that, which is the only reason it was caught — no test failed.
+    const wallCentre = (pos.centroid[axis] + neg.centroid[axis]) / 2;
+    const offset = wallCentre - centre[axis];
+    const outwardIsPositive = offset > 0;
+    const separation = Math.abs(offset);
+
+    const sign = outwardIsPositive ? 1 : -1;
+    const nx = axis === 0 ? sign : 0;
+    const nz = axis === 2 ? sign : 0;
+
+    // Clockwise from north, where north is world -Z. Checked at the four
+    // cardinals: (0,0,-1)->0, (1,0,0)->90, (0,0,1)->180, (-1,0,0)->270.
+    let azimuth =
+      (Math.atan2(nx, -nz) - rotation) * (180 / Math.PI);
+    azimuth = ((azimuth % 360) + 360) % 360;
+    const sector = SECTORS[Math.round(azimuth / 45) % 8];
+
+    byOrientation[sector] += wall.netFaceAreaSqm;
+    oriented.push({
+      id,
+      azimuthDeg: Math.round(azimuth * 10) / 10,
+      sector,
+      netFaceAreaSqm: wall.netFaceAreaSqm,
+      // A wall sitting almost on the building's centre line gives no signal
+      // about which way it faces, so the choice there is close to a coin toss.
+      // Scaled off the building's own extent rather than a fixed metre value,
+      // so it means the same thing on a small building and a large one.
+      outwardConfidence: separation > extent[axis] * 0.05 ? "clear" : "weak",
+    });
+  }
+
+  return {
+    byOrientation: Object.fromEntries(
+      Object.entries(byOrientation).map(([k, v]) => [k, Math.round(v * 100) / 100]),
+    ),
+    walls: oriented,
+    weakOutward: oriented.filter((w) => w.outwardConfidence === "weak").length,
+    northAssumed: trueNorthDeg === null,
+    buildingCentre: centre.map((v) => Math.round(v * 1000) / 1000),
+  };
 }

@@ -41,6 +41,24 @@ export type ReferenceBuildingManifest = Readonly<{
     exteriorWallNetSqm: number;
     exteriorWallBelowRoofSqm: number;
     exteriorWallAboveRoofSqm: number;
+    /**
+     * Wall area per compass sector, summing to `exteriorWallNetSqm`.
+     *
+     * A monthly method needs this and a degree-day one does not: ISO 13790
+     * computes solar gain per orientation, and the same 2,150.3 m² total
+     * describes a very different building depending which way it faces.
+     */
+    exteriorWallByOrientationSqm?: Readonly<Record<string, number>>;
+  }>;
+  /** How the orientation above was arrived at, including what was inferred. */
+  orientation?: Readonly<{
+    trueNorthDeg: number | null;
+    /** True when the model states no true north and project north was used. */
+    northAssumed: boolean;
+    /** Walls sitting near the building's centre line, where outward is a weak call. */
+    weakOutwardCount: number;
+    wallCount: number;
+    note: string;
   }>;
   site: Readonly<{
     declaredSiteName: string | null;

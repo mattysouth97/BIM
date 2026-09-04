@@ -100,7 +100,24 @@
     "areaPlanTotalSqm": 6935.8,
     "exteriorWallNetSqm": 2150.3,
     "exteriorWallBelowRoofSqm": 1909.56,
-    "exteriorWallAboveRoofSqm": 240.73
+    "exteriorWallAboveRoofSqm": 240.73,
+    "exteriorWallByOrientationSqm": {
+      "N": 563.53,
+      "NE": 0,
+      "E": 433.54,
+      "SE": 0,
+      "S": 586.67,
+      "SW": 0,
+      "W": 566.57,
+      "NW": 0
+    }
+  },
+  "orientation": {
+    "trueNorthDeg": null,
+    "northAssumed": true,
+    "weakOutwardCount": 8,
+    "wallCount": 80,
+    "note": "Azimuths are clockwise from north, where north is the model's -Z after web-ifc's Z-up to Y-up conversion. Outward face inferred by comparing each face's centroid with the building centre, which is correct for a convex plan and can be wrong at a re-entrant corner."
   },
   "site": {
     "declaredSiteName": "Default",
