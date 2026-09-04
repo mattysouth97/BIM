@@ -153,6 +153,23 @@ and the building still renders. No path requires all four endpoints.
   `estimateFootprint` nor `derivedFootprintRing`, and the twin and the
   diagnosis quote the same outline for it.
 
+## Sign-off withheld (2026-09-04)
+
+Not done. The item's claim is ONE producer of ledger geometry; a fourth
+derivation was found downstream and still stands.
+
+`deriveRoomElements` (`src/lib/bim/derive/twin-elements.ts:285`) computes
+`footprintArea(recipe)` ONCE, outside the per-floor map, and gives every storey
+that same area. Measured by green on 서울청운초등학교 (pk `1002122071`):
+7 rooms x 2,749.71 m² = 19,247.6 m² against a **stated** 연면적 of 12,957.58 —
++48.5%, and the energy page then divides by it (51.2 vs 76.1 kWh/m²·yr).
+
+The reconstruction is NOT the source of that error and needs no change: with no
+층별개요 it divides the stated 연면적 across the storeys and returns 12,957.1 m²
+against the stated 12,957.58. Only the room derivation extrudes the footprint.
+
+Signing this done would assert a single producer that measurably is not one.
+
 ## Follow-ups (out of scope here)
 - P2-30 — per-storey envelope quantities (this item leaves the prism intact).
 - P2-31 — directional setbacks (this item leaves `scaleAbout` concentric).

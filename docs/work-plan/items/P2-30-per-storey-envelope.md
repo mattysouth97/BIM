@@ -141,6 +141,17 @@ zero-area storey ever reaches `envelopeQuantities`.
 - **Done when**: the stepped-stack scenario in S2 is the *default* rendering of
   a Korean building whose 층별개요 states different areas per floor.
 
+## Sign-off withheld (2026-09-04)
+
+Not done. `FloorSpec.plate` reaches slabs, facade faces, the column grid, the
+parapet and `envelopeQuantities` — but not `deriveRoomElements`
+(`src/lib/bim/derive/twin-elements.ts:285`), which still assigns every storey
+the building footprint area and ignores `floor.plate` entirely. A setback
+storey therefore reports its full footprint as floor area.
+
+That is the mechanism this item exists to install, missing from one consumer.
+See P2-29's note for the measurement.
+
 ## Follow-ups (out of scope here)
 - P2-31 — where the setback goes (this item only prices whatever shape it gets).
 - Basement envelope: ground-contact U-values and earth-coupling per level.

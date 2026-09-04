@@ -3,7 +3,7 @@ id: P2-31
 title: Directional setbacks — a step goes on one face, not concentrically around the plate
 priority: P2
 area: geometry
-status: in-review
+status: done
 owner: claude-opus-5-session
 effort: M
 created: 2026-09-04
@@ -173,6 +173,25 @@ the registered area within the existing `AREA_TOLERANCE_PCT`, and the
   `footprint.areaSqm = 7060.4`, grade B-OBSERVED. Routed to Olive.
 - **Done when**: the setback direction is either derived from evidence and named,
   or declared undetermined — and never silently spread across four faces.
+
+## Completion (2026-09-04)
+
+Done. `chooseSetbackFace` reaches the product: `useBuildingParcel` fetches the
+lot with `layer=parcel`, and the reconstruction reads real directional slack
+instead of `parcel: null` (`08da81d`). Until then the rule was reachable in
+tests only.
+
+The wiring also exposed a stated-versus-assumed violation that this item had
+created and not noticed. With no lot, `chooseSetbackFace` was handed the site
+square solved from 대지면적 — whose own note reads 실제 필지 형상이 아님 — and an
+off-centre or L-shaped footprint shows slack against that square, so the
+assumption ledger published
+
+    "필지에서 south 측으로 1.7 m의 여유가 관측되어…"  ·  SRC-GIS-PARCEL
+
+for a parcel nobody had fetched. Only an observed lot reaches the setback now;
+without one the direction is undetermined. The comment claiming that square
+"shows no directional slack by construction" was drift.
 
 ## Follow-ups (out of scope here)
 - Record the 건축법 시행령 제86조 setback figures in
