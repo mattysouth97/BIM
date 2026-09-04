@@ -39,25 +39,37 @@ export type SpaceProgram = Readonly<{
  * Order matters: a "TECH. WORK ROOM" is office before it is anything else,
  * and "STAFF TOILET" is a toilet before it is staff. The list runs from the
  * most specific word to the most generic.
+ *
+ * Two languages share this table, which is a choice worth stating. Dutch
+ * keywords join the EXISTING rows wherever the program is the same thing in
+ * both buildings — a BADKAMER and a STAFF TOILET are both 위생, and giving
+ * them separate rows would put two sanitary bands on one legend. Only the
+ * genuinely residential programs (거실·침실, 주방) get rows of their own, and
+ * those are appended LAST so that no reordering can move a Clinic room: the
+ * first match wins, and every English row is still tried first.
  */
 export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
   {
     key: "circulation",
     labelKo: "동선 (복도·계단·승강기)",
     labelEn: "Circulation (corridor, stair, lift)",
-    patterns: [/\bCORRIDOR\b/, /\bSTAIR\b/, /\bELEVATOR\b/, /\bELEV\.?\b/, /\bVEST\.?\b/],
+    // ENTREE (entrance hall), GANG (hall), OVERLOOP (landing) — Schependomlaan.
+    patterns: [/\bCORRIDOR\b/, /\bSTAIR\b/, /\bELEVATOR\b/, /\bELEV\.?\b/, /\bVEST\.?\b/, /\bENTREE\b/, /\bGANG\b/, /\bOVERLOOP\b/],
   },
   {
     key: "sanitary",
     labelKo: "위생·청소 (화장실·잡용실)",
     labelEn: "Sanitary & housekeeping",
-    patterns: [/\bTOILET\b/, /\bJAN\.?\b/, /\bHK\b/, /\bSOIL\.?/, /\bTRASH\b/, /\bCLEAN U\.?/, /\bDIPC\b/, /\bSCOPE WASH\b/, /\bDECON/],
+    // BADKAMER (bathroom) — Schependomlaan. TOILET is already Dutch as it stands.
+    patterns: [/\bTOILET\b/, /\bJAN\.?\b/, /\bHK\b/, /\bSOIL\.?/, /\bTRASH\b/, /\bCLEAN U\.?/, /\bDIPC\b/, /\bSCOPE WASH\b/, /\bDECON/, /\bBADKAMER\b/],
   },
   {
     key: "plant",
     labelKo: "기계·전기·통신실",
     labelEn: "Mechanical, electrical & comms",
-    patterns: [/\bMECH/, /\bELEC/, /\bCOMM\. ROOM\b/, /\bCOMPUTER ROOM\b/, /\bADP EQUIP/, /\bDATA \//],
+    // MK is the meterkast, the dwelling's utility-meter cupboard; INSTAL.
+    // RUIMTE is the plant room. Both Schependomlaan, both services.
+    patterns: [/\bMECH/, /\bELEC/, /\bCOMM\. ROOM\b/, /\bCOMPUTER ROOM\b/, /\bADP EQUIP/, /\bDATA \//, /\bMK\b/, /\bINSTAL\.?/],
   },
   {
     key: "dental",
@@ -87,7 +99,8 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     key: "storage",
     labelKo: "창고·수납",
     labelEn: "Storage",
-    patterns: [/\bSTOR/, /\bSTO\.?\b/, /\bRECEIVING\b/, /\bBENCHSTOCK\b/, /\bPARTS\b/, /\bRECORDS\b/, /\bRECS\b/, /\bFILE\b/, /\bSUPPLY\b/, /\bSUP\.? &/],
+    // BERGING (store), KAST (cupboard) — Schependomlaan.
+    patterns: [/\bSTOR/, /\bSTO\.?\b/, /\bRECEIVING\b/, /\bBENCHSTOCK\b/, /\bPARTS\b/, /\bRECORDS\b/, /\bRECS\b/, /\bFILE\b/, /\bSUPPLY\b/, /\bSUP\.? &/, /\bBERGING\b/, /\bKAST\b/],
   },
   {
     key: "office",
@@ -95,7 +108,35 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     labelEn: "Office, meeting & staff",
     patterns: [/\bOFFICE\b/, /\bOFF\.?\b/, /\bADMIN/, /\bANALYST\b/, /\bDIR\.?\b/, /\bDIRECTOR\b/, /\bCHIEF\b/, /\bMGR\b/, /\bSUPER\b/, /\bNCOIC\b/, /\bCMDR\b/, /\bSGT\b/, /\bTECH\.?\b/, /\bWORK STAT/, /\bWORK ROOM\b/, /\bCOPY\b/, /\bCREDENTIALS\b/, /\bCONF\.?/, /\bLIBRARY\b/, /\bCLASSROOM\b/, /\bTEAM\b/, /\bLOUNGE\b/, /\bBREAK ROOM\b/, /\bDRESS\b/, /\bFITTING\b/, /\bGROUP IS\b/, /\bBMET\b/, /\bDISP\.?\b/, /\bKITCHENET/, /\bCL\. UTL/],
   },
+  // ── Residential programs. Appended last on purpose: every row above is
+  // tried first, so adding these cannot move a room in a building that has
+  // none of these names.
+  {
+    key: "dwelling",
+    labelKo: "거실·침실",
+    labelEn: "Living & sleeping",
+    // WOONKAMER (living room), SLAAPKAMER (bedroom, numbered or bare).
+    // One program, not two, because the parity brief groups them and because
+    // a dwelling heats and occupies both on the same schedule.
+    patterns: [/\bWOONKAMER\b/, /\bSLAAPKAMER\b/],
+  },
+  {
+    key: "kitchen",
+    labelKo: "주방",
+    labelEn: "Kitchen",
+    // KEUKEN. Its own row rather than folded into 거실·침실: a kitchen's
+    // internal gains and hot-water draw are the part of a dwelling that is
+    // least like the rest of it.
+    patterns: [/\bKEUKEN\b/],
+  },
 ]);
+
+/**
+ * Schependomlaan's ONBEN. RUIMTE — "onbenoemde ruimte", an unallocated space
+ * — deliberately has no row. The model declines to say what it is for, so the
+ * table declines to guess, and its one instance lands in 기타 where the
+ * legend prints it as a name the table does not cover.
+ */
 
 export const OTHER_PROGRAM: SpaceProgram = Object.freeze({
   key: "other",

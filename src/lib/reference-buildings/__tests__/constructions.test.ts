@@ -19,10 +19,14 @@ const manifest = JSON.parse(
   ),
 ) as ReferenceBuildingManifest;
 
+// The mapping table is now per building, selected by `manifest.id`, so a
+// direct `solveConstruction` call has to say which table it means. There is
+// deliberately no default: a Schependomlaan assembly solved against the
+// Clinic's Anglophone names would resolve nothing and look healthy doing it.
 const byName = (name: string) => {
   const assembly = (manifest.assemblies ?? []).find((a) => a.name === name);
   if (!assembly) throw new Error(`no assembly named ${name}`);
-  return solveConstruction(assembly);
+  return solveConstruction(assembly, CLINIC_LAYER_MAPPINGS);
 };
 
 describe("Clinic constructions", () => {

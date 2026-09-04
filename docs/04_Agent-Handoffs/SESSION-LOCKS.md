@@ -92,7 +92,41 @@ which is why the morning's shared-index hazards are mostly not in play today.
 | **bim-bf** | own worktree, `feat/reference-building-catalog` | Reference-building catalog wiring: `src/data/reference-buildings/index.ts`, `energy-diagnostics/{model-operations,energy-diagnostic-product,energy-diagnosis-workspace}`. Also landed `6381e4c` (the float64 관리번호 fix) in the shared tree, user-authorized |
 | **bim-09** | `origin/xcheck/clinic-envelope` | Envelope-area cross-check — **LANDED and closed**, `d174e1b` off `feat/reference-building-clinic`, one file: `scripts/clinic-exterior-envelope-crosscheck.mjs`. **Produced the finding of the day** (see below). Also landed queue item 6 half A, `b21b577` (`mep/rules.ts` + first-ever test for `chooseArchetype`, 7 cases red-first, 74/74 mep suite, tsc clean). Also landed the `insetRing` miter fix (`1b5238a`) and per-storey room areas (`ff9ebc0`). **Five commits today; holding at a clean stopping point** |
 | **register-building-fidelity-strategy** | own worktree, `scratchpad/clinic-wt`, `feat/reference-building-clinic` | Reference building #1, the buildingSMART Medical-Dental Clinic: `energy-diagnostics/reference-building-*.ts`, `energy-diagnostics/{types,classification}.ts`, `scripts/**`, `public/reference-buildings/**`. An 8-agent adversarial investigation owns the IFC window-area / curtain-wall / roof / ground-floor / spaces / azimuth / double-count questions |
-| **bim-72** | own worktree, `feat/clinic-material-entries` (`1f4b55d`, `983e2cb`, `0467de7` — pushed, **not deployed**: nothing user-visible to confirm) | `src/lib/energy-standards/{materials,ground-coupling}.ts` + their tests, the §5.1 / PHY-GROUND / §7 rows in `docs/05_Research/ENERGY_STANDARD_TRACEABILITY.md`, and this file. **Handoff item 1 resolved to: the Clinic's `BuildingRecipe` + `MaterialProperties` (`19472a2`, `src/lib/reference-buildings/bs-medical-dental-clinic-energy.ts`) for the demo cards, plus the monthly-climate contract and a derived Seoul climate for the ISO 13790 kernel.** main-coordinator injects the measured envelope and wires the cards |
+| **bim-72** | own worktree, `feat/clinic-material-entries` (`1f4b55d`, `983e2cb`, `0467de7` — pushed, **not deployed**: nothing user-visible to confirm) | `src/lib/energy-standards/{materials,ground-coupling}.ts` + their tests, the §5.1 / PHY-GROUND / §7 rows in `docs/05_Research/ENERGY_STANDARD_TRACEABILITY.md`, and this file. **Handoff item 1 resolved to: the Clinic's `BuildingRecipe` + `MaterialProperties` (`19472a2`, `src/lib/reference-buildings/bs-medical-dental-clinic-energy.ts`) for the demo cards, plus the monthly-climate contract and a derived Seoul climate for the ISO 13790 kernel.** main-coordinator injects the measured envelope and wires the cards. **NOW ALSO: parity brief Lane C** — see the claim below |
+
+## Lane C claim, 22:30 — Schependomlaan energy inputs · **bim-72**
+
+Branch `feat/schependomlaan-energy-inputs`, off `origin/feat/design-stage-energy-diagnostics`
+at `49e6900` (the parity brief's own commit), own worktree. **Landed as `9fd77dd`** — tsc
+clean, eslint clean, full vitest 4,713 passed / 4 skipped across 406 files. Not deployed.
+**These six paths are mine; do not edit them:**
+
+- `src/lib/reference-buildings/schependomlaan-energy.ts` (new)
+- `src/lib/reference-buildings/energy-inputs.ts`
+- `src/lib/reference-buildings/constructions.ts`
+- `src/lib/reference-buildings/zones.ts`
+- `src/lib/reference-buildings/__tests__/schependomlaan-{energy,constructions,zones}.test.ts` (new)
+- `src/lib/reference-buildings/__tests__/constructions.test.ts` — **one line only**: `solveConstruction` now takes the mapping table explicitly, so the Clinic test's helper passes `CLINIC_LAYER_MAPPINGS`. Nothing else in that file is touched.
+
+**The file ships in a placeholder state and says so in three places** —
+`SCHEPENDOMLAAN_INPUT_STATE`, `SCHEPENDOMLAAN_PENDING_MEASUREMENTS` (six rows, each naming
+the `manifest.areas.*` field it awaits) and `measurementState: "awaiting_measurement"` on
+the registry entry. Six envelope areas are stand-ins: roof plan area, ground-slab area,
+ground exposed perimeter, glazing aperture, per-orientation glazing, exterior-door aperture.
+`envelopeQuantities` reports `source: "measured"` for all of them because it *cannot tell* —
+it refuses zeros and NaNs, so a placeholder has to be a positive number. Nothing downstream
+can distinguish them unless it reads the state.
+
+**bim-bf:** when your extractor lands, replacing those six constants is the whole swap; the
+WWR is derived in code, not typed, so it moves on its own. Two things I need from you that
+the brief already asks for: `glazingByOrientationSqm` on the **same eight sector keys** as
+`exteriorWallByOrientationSqm`, and `roofProjectedSqm` kept distinct from any developed area.
+
+**main-coordinator:** one thing to decide that is above my lane —
+`heat-loss.ts:109` takes the **unweighted** mean of the four cardinal WWRs. Per-sector
+ratios cannot be handed to it without an area-weighted mean, so `SCHEPENDOMLAAN_WWR_BY_SECTOR`
+is computed for the legend and the engine still gets one uniform ratio. See
+`A-WWR-ENGINE-MEAN`.
 
 **⚠ Two reference-building registries, and each is invisible to the other.**
 `src/lib/reference-buildings/manifest.ts` **exists in the shared tree**; bim-bf is creating
