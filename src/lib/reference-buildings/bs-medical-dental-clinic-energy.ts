@@ -58,14 +58,32 @@ const WALL_THICKNESS_AT_SLAB_M = 0.267;
 
 /** Exterior wall NET of openings — opaque only. */
 const EXTERIOR_WALL_NET_SQM = 2150.3;
-/** Glazing aperture: two routes confirmed at 267.16 (re-derived 266.78). */
-const GLAZING_APERTURE_SQM = 267.16;
 /**
- * The 12 exterior door leaves' aperture, from the same glazing verification
- * (docs/04_Agent-Handoffs/clinic-glazing-and-usage-sources.md). Opaque, and
- * neither wall nor window in the engine's vocabulary — see A-DOORS.
+ * Glazing aperture, as `scripts/lib/ifc-openings.mjs` measures it and the
+ * manifest carries it (`areas.glazingApertureSqm`): 58 IfcWindow at
+ * OverallWidth × OverallHeight (100.63 m²) + 15 exterior IfcCurtainWall at the
+ * projected outline of their plates and mullions (162.10 m²). Every element
+ * is a row in `openings.json` with its host wall and sector.
+ *
+ * Replaced 267.16 on 2026-09-05. That figure came from a verification
+ * transcript whose method was recovered afterwards: the same 58 windows and
+ * the same 15 storefronts, but with the 4.19 m² "Dbl Glass" entrance leaf in
+ * storefront #742 counted as glazing. Here it is a door, because the file
+ * types it IfcDoor — see A-DOORS and A-WWR-LOW. 262.73 + 4.19 = 266.92, within
+ * 0.1 % of the transcript's 266.78.
  */
-const EXTERIOR_DOOR_SQM = 37.06;
+const GLAZING_APERTURE_SQM = 262.73;
+/**
+ * Exterior door leaves (`areas.exteriorDoorSqm`): 12 IfcDoor hosted in the
+ * 80-wall exterior set (31.89 m²) plus the "Dbl Glass" leaf inside storefront
+ * #742 (4.19 m²), each at OverallWidth × OverallHeight — which on this file
+ * equals the IfcOpeningElement's own profile to the millimetre. Replaced
+ * 37.06, a figure no route reproduces: the 12 hosted leaves measure 31.89 by
+ * both OverallWidth × OverallHeight and their cut openings. Opaque bar the
+ * one glazed leaf, and neither wall nor window in the engine's vocabulary —
+ * see A-DOORS.
+ */
+const EXTERIOR_DOOR_SQM = 36.08;
 
 /**
  * The measured envelope. `envelopeQuantities(CLINIC_RECIPE)` returns these
@@ -83,8 +101,24 @@ export const CLINIC_MEASURED_ENVELOPE = Object.freeze({
   exteriorWallAboveRoofSqm: 240.73, // the concourse clerestory
   northAssumed: true,
   glazingApertureSqm: GLAZING_APERTURE_SQM,
+  /**
+   * Aperture per sector, from `areas.glazingByOrientationSqm` — each window
+   * binned by its own host wall, each storefront by its outward face. Sums to
+   * `glazingApertureSqm`. Measured, and NOT what the engine consumes: it
+   * averages the four ratios against one gross wall (heat-loss.ts), so the
+   * engine input stays the single derived ratio below and this split is for
+   * the per-sector rows on the page.
+   */
+  glazingByOrientationSqm: Object.freeze({ N: 54.79, E: 95.11, S: 49.58, W: 63.24 }),
+  /**
+   * The doc's render-colour estimate of the glass alone (224.85), which the
+   * extractor does not reproduce: aperture includes frames and mullions, so
+   * the extractor's nearest figure is 100.63 (window frames) + 143.38 (glass
+   * plates only) = 244.01. Recorded, not used.
+   */
   glazingPaneSqm: 225,
   exteriorDoorSqm: EXTERIOR_DOOR_SQM,
+  exteriorDoorByOrientationSqm: Object.freeze({ N: 5.86, E: 4.19, S: 6.51, W: 19.53 }),
   /** Opaque wall + glazing + doors: the whole exterior wall plane. */
   grossWallSqm: EXTERIOR_WALL_NET_SQM + GLAZING_APERTURE_SQM + EXTERIOR_DOOR_SQM,
   /** EPDM-on-rigid-insulation, 7 slabs, horizontal-projected. */
@@ -145,18 +179,21 @@ export const CLINIC_GROUND_FLOOR_RANGE = slabOnGroundUValueRange(groundInputs);
  * `grossWall − windows` as opaque wall. So the wall area it is handed must be
  * GROSS — opaque + glazing + doors — and the ratio must be quoted against
  * that same gross, or one of two things goes wrong: against a net 2,150.30
- * with wwr 0.1242 the windows land on 267.16 but the opaque wall falls to
- * 1,883 m², 267 m² of real wall unpriced; against the gross 2,454.52 with the
- * net ratio the windows come out 12 % too large.
+ * with wwr 0.1222 the windows land on 262.73 but the opaque wall falls to
+ * 1,888 m², 263 m² of real wall unpriced; against the gross 2,449.11 with the
+ * net ratio the windows come out 14 % too large.
  *
  * `measuredEnvelope.grossWallAreaSqm` below carries the gross, so the ratio
  * is derived from the two measured numbers rather than typed, and a test
- * asserts that `gross × wwr` lands on the measured aperture. The 37.06 m² of
+ * asserts that `gross × wwr` lands on the measured aperture. The 36.08 m² of
  * exterior doors end up priced at the wall U — the one approximation, stated
  * in A-DOORS.
  *
- * The ratio is applied uniformly across orientations: the per-orientation
- * glazing split is a separate verification and is not in hand.
+ * The ratio is applied uniformly across orientations. The per-orientation
+ * split IS measured now (`glazingByOrientationSqm`), but heat-loss.ts
+ * averages the four ratios against one gross wall, so per-sector ratios in
+ * this table would put the windows 2.7 % over the measured aperture. One
+ * ratio here; the split on the page.
  */
 const WWR_AGAINST_GROSS_WALL =
   CLINIC_MEASURED_ENVELOPE.glazingApertureSqm / CLINIC_MEASURED_ENVELOPE.grossWallSqm;
@@ -224,8 +261,10 @@ export const CLINIC_RECIPE: BuildingRecipe = {
     derivedFloorAreaSqm: CLINIC_TOTAL_FLOOR_AREA_SQM,
     basis:
       "Read from the buildingSMART Clinic IFCs by scripts/build-reference-building.mjs: " +
-      "walls from the tessellated exterior-wall solids, glazing and doors from the " +
-      "opening verification, roofs from the structural model's IfcRoof/IfcSlab " +
+      "walls from the tessellated exterior-wall solids, glazing and doors per opening " +
+      "(windows and doors at OverallWidth × OverallHeight attributed to their host wall, " +
+      "exterior curtain walls at the projected outline of plates and mullions), " +
+      "roofs from the structural model's IfcRoof/IfcSlab " +
       "projected to plan, ground from the slab-on-grade outline, volume from the " +
       "IfcSpace rows (floor area × storey height, voids as their own solids).",
   },
@@ -351,9 +390,9 @@ export const CLINIC_ASSUMPTIONS: readonly ClinicAssumption[] = Object.freeze([
   { id: "A-ROOF-WEIGHT", assumes: "One area-weighted roof U of 0.767 W/m²K.", why: "The engine accepts a single roof U. The standing seam is 14 % of the roof area and most of its loss; the weighting is recorded so the constituents can be recovered." },
   { id: "A-SOIL", assumes: "Soil conductivity 2.0 W/m·K under the slab.", why: "ISO 13370's own default when soil is unknown. Soil moves the ground U from 0.185 (clay) to 0.376 (rock); 0.237 is the nominal." },
   { id: "A-GROUND-DT", assumes: "The engine's 13.5 °C ground temperature and 4,380 h ground season.", why: "ISO 13370's U pairs with annual-mean external air (~7.5 K at 20 °C indoor); the engine applies 6.5 K. About 13 % conservative, in the direction that makes the building look worse. Disclosed rather than reconciled, because reconciling moves every other building." },
-  { id: "A-WWR-DENOMINATOR", assumes: "WWR 0.1088 against GROSS wall area (opaque + glazing + doors), uniform across orientations.", why: "The engine computes windows = gross × WWR and prices the rest as opaque wall, so the ratio must be quoted against the same gross the engine is handed, or the opaque wall silently loses 267 m². Derived from the two measured numbers, not typed. The per-orientation glazing split is a separate verification and is not applied." },
-  { id: "A-DOORS", assumes: "The 37.06 m² of exterior door leaves are priced at the wall U-value.", why: "The engine knows walls and windows and nothing between. Doors are opaque and mostly insulated metal here, so wall U is the nearer of the two; leaving them out would make the envelope smaller than the building." },
-  { id: "A-WWR-LOW", assumes: "10.9–12.4 % is the building, not an undercount.", why: "Two independent routes converge at 267.16 / 266.78. The two occupied storeys are ~7 % glazed and the concourse is daylit from above through clerestory monitors. Do not normalise upward." },
+  { id: "A-WWR-DENOMINATOR", assumes: "WWR 0.1073 against GROSS wall area (opaque + glazing + doors), uniform across orientations.", why: "The engine computes windows = gross × WWR and prices the rest as opaque wall, so the ratio must be quoted against the same gross the engine is handed, or the opaque wall silently loses 263 m². Derived from the two measured numbers, not typed. The per-orientation split is measured (manifest areas.glazingByOrientationSqm: N 54.79 / E 95.11 / S 49.58 / W 63.24) but the engine averages the four ratios against one gross wall, so per-sector ratios here would overstate the windows by 2.7 %; one ratio is applied and the split is shown, not consumed." },
+  { id: "A-DOORS", assumes: "The 36.08 m² of exterior door leaves are priced at the wall U-value.", why: "The engine knows walls and windows and nothing between. Twelve leaves are flush insulated metal, so wall U is the nearer of the two; the thirteenth is the 4.19 m² 'Dbl Glass' entrance leaf in storefront #742, a glazed door counted as a door because the file types it IfcDoor — the one place this file departs from the verification transcript's 266.78, which counted that leaf as glazing. Leaving doors out would make the envelope smaller than the building." },
+  { id: "A-WWR-LOW", assumes: "10.7–12.2 % is the building, not an undercount.", why: "262.73 m² is reproduced element by element by scripts/lib/ifc-openings.mjs from the file — 58 windows at their frame opening, 15 exterior storefronts at the projected outline of plates and mullions — and reconciles with the earlier 267.16 / 266.78 to within the 4.19 m² entrance leaf now carried as a door. The 13 storefronts the file also marks IsExternal that were left out face a room on both sides (atrium screens and interior storefronts, 120.76 m²): IsExternal means 'not a partition' to the authoring tool, never 'faces outdoor air'. The two occupied storeys are ~7 % glazed and the concourse is daylit from above through clerestory monitors. Do not normalise upward." },
   { id: "A-GLAZING", assumes: "Double low-e glazing, U 2.8, SHGC 0.40, thermal-break aluminium.", why: "The IFC carries no IfcThermalTransmittance for its windows. Typical for a 2011 US commercial building; not read from the file." },
   { id: "A-AIRTIGHT", assumes: "ACH50 = 5.", why: "No blower-door result exists. A generic mid value for a 2011 commercial envelope; ACH50/20 is the engine's natural-infiltration divisor." },
   { id: "A-HVAC", assumes: "Central gas heating (η 0.85), central chiller (COP 3.0), mechanical supply ventilation without heat recovery.", why: "The HVAC IFC has 8 IfcFlowMovingDevice and 3 IfcEnergyConversionDevice, so system TYPE is partly stated, but efficiencies are not. These are placeholders to be replaced from the device data; they are not read from the file." },

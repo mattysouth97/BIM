@@ -34,6 +34,53 @@ Open items the verifiers surfaced:
 - The single "Dbl Glass" exterior door (4.21 m²) has no transparent geometry;
   excluded from pane, included in aperture.
 
+## 267.16 replaced by 262.73 — reproduced by the extractor (2026-09-05)
+
+The table above is superseded. `scripts/lib/ifc-openings.mjs` now measures
+every opening from the file and the manifest carries the result
+(`areas.glazingApertureSqm`, `glazingByOrientationSqm`, `exteriorDoorSqm`,
+`openingsNote`; one row per element in `openings.json`). The Clinic's
+constants in `bs-medical-dental-clinic-energy.ts` moved to the reproducible
+figures, and the reason is recorded in A-WWR-LOW / A-DOORS.
+
+| quantity | was | now | why |
+|---|---|---|---|
+| Glazing aperture | 267.16 (route A, re-derived 266.78) | **262.73** | 58 IfcWindow at OverallWidth × OverallHeight (100.63) + 15 exterior IfcCurtainWall at the projected outline of plates and mullions (162.10). Route A's method was recovered from its transcript afterwards: the same 73 elements, reproduced here to 0.01 m² per storefront, with one difference — the 4.19 m² "Dbl Glass" entrance leaf in storefront #742 was inside its union there and is an IfcDoor here. 262.73 + 4.19 = 266.92 vs 266.78. |
+| Exterior doors | 37.06 | **36.08** | 12 hosted leaves 31.89 (OverallWidth × OverallHeight = their cut openings to the millimetre) + the Dbl Glass leaf 4.19. 37.06 is not reproduced by any route tried — not leaf, not opening, not IsExternal. |
+| WWR against gross | 10.9 % | **10.7 %** | 262.73 / (2,150.30 + 262.73 + 36.08 = 2,449.11). |
+| Per sector | one assumed ratio | N 54.79 · E 95.11 · S 49.58 · W 63.24 | each window by its host wall's sector, each storefront by its outward face. |
+
+The three definitions the storefronts admit, for the record: per-plate glass
+sum 143.38 (bim-bf's 238.00 less the interior screens and the fence), the
+adopted projected outline 162.10, bounding rectangles 187.49 (the gable in
+#549 alone is 20.11 as a rectangle, 12.55 as an outline). The outline is
+adopted because it is the analogue of a window's frame opening — what the
+wall plane gives up to the glazing system, mullions included, voids
+excluded — and it is what route A had measured.
+
+What removed the other 16 of the 31 curtain walls, by geometry rather than by
+list: a probe on each side of every curtain wall against the 262 conditioned
+IfcSpace solids found a room on **both** sides of 13 — the five second-floor
+atrium screens (#455, #745, #752, #753, #873; 91.24 m² of outline, 83.63 of
+plate — the "81.00" above) and the eight "Storefront - Interior" walls — every
+one of them `IsExternal = TRUE`; the two chain-link fences are excluded by
+name in the building config with the reason stated; #881 is coincident with
+#879 to the centimetre and is counted once. Route A's 15 and this set are the
+same 15 elements.
+
+The apartment (Schependomlaan) runs through the same code with a different
+result, stated in its own `openingsNote`: ArchiCAD's fills chain never reaches
+the inner leaf (it carries zero IfcOpeningElements; each frame is its own
+`kozijn` element in the wall line), so attribution is by an exterior wall
+adjacent in the opening's plane. 51 of 77 real windows resolve (106.06 m²);
+16 of the 20 IsExternal doors confirm (81.03 m²), the four `merk F-R` do not
+because the only inner wall beside them is `opgaand werk`, which the wall
+config excludes; 12 windows sit in `knieschot` / `zijwang dakk` walls the
+exterior set does not carry, 4 `merk N` have a 0.65 × 0.61 m plan footprint
+(a corner or splay, not a flat opening), and 10 rooflights state no size.
+Only 6 of its 100 spaces have solids, so the both-sides probe is reported
+inconclusive there, not as "exterior".
+
 ## A false trap in my own brief
 
 I told the workflow *"roughly 40 of 58 IfcWindow are interior vision panels."*

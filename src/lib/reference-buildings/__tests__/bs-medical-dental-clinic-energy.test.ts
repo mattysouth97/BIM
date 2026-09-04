@@ -63,9 +63,9 @@ describe("the ground floor is ISO 13370, not air-to-air", () => {
 describe("the WWR reproduces the measured aperture through the engine's own arithmetic", () => {
   // heat-loss.ts: windows = gross × wwr; opaque = gross − windows. So the
   // ratio is checked against the gross the engine is handed, and the opaque
-  // remainder is checked too — a ratio that lands the windows on 267.16 while
-  // dropping 267 m² of wall would pass the first assertion alone.
-  it("gross × wwr lands on the measured 267.16 m², for every orientation", () => {
+  // remainder is checked too — a ratio that lands the windows on the aperture
+  // while dropping 263 m² of wall would pass the first assertion alone.
+  it("gross × wwr lands on the measured aperture, for every orientation", () => {
     const q = envelopeQuantities(CLINIC_RECIPE);
     const wwr = CLINIC_MATERIALS.envelope.windows.windowToWallRatio;
     for (const o of ["N", "S", "E", "W"] as const) {
@@ -86,14 +86,24 @@ describe("the WWR reproduces the measured aperture through the engine's own arit
     );
   });
 
-  it("is the 10.9 % figure — glazing over the whole wall plane, doors included", () => {
+  it("is the ~10.7 % figure — glazing over the whole wall plane, doors included", () => {
+    const e = CLINIC_MEASURED_ENVELOPE;
     const wwr = CLINIC_MATERIALS.envelope.windows.windowToWallRatio.S;
-    expect(wwr).toBeCloseTo(0.1088, 3);
+    expect(wwr).toBeCloseTo(e.glazingApertureSqm / e.grossWallSqm, 6);
+    expect(wwr).toBeGreaterThan(0.1);
+    expect(wwr).toBeLessThan(0.12);
     // The net-wall ratio some readers will reach for. Against the gross the
-    // engine carries it would put the windows 12 % too large.
-    expect(0.1242 * CLINIC_MEASURED_ENVELOPE.grossWallSqm).toBeGreaterThan(
-      CLINIC_MEASURED_ENVELOPE.glazingApertureSqm * 1.1,
-    );
+    // engine carries it would put the windows more than 10 % too large.
+    const netRatio = e.glazingApertureSqm / e.exteriorWallNetSqm;
+    expect(netRatio * e.grossWallSqm).toBeGreaterThan(e.glazingApertureSqm * 1.1);
+  });
+
+  it("the per-sector glazing split sums to the aperture, and the door split to the doors", () => {
+    const e = CLINIC_MEASURED_ENVELOPE;
+    const g = e.glazingByOrientationSqm;
+    expect(g.N + g.E + g.S + g.W).toBeCloseTo(e.glazingApertureSqm, 1);
+    const d = e.exteriorDoorByOrientationSqm;
+    expect(d.N + d.E + d.S + d.W).toBeCloseTo(e.exteriorDoorSqm, 1);
   });
 });
 
@@ -118,11 +128,12 @@ describe("the recipe's envelope is the measured one, and the heat-loss model rec
     expect(extruded.roofAreaSqm).toBeGreaterThan(1.1 * (2286.93 + 382.28));
   });
 
-  it("heat-loss elements carry the measured areas: windows 267.16, walls 2,187.36, roof 2,669.21, ground 2,621.08", () => {
+  it("heat-loss elements carry the measured areas: windows = aperture, walls = net + doors, roof 2,669.21, ground 2,621.08", () => {
     const result = calculateHeatLoss(CLINIC_MATERIALS, CLINIC_RECIPE, getClimateData(undefined));
     const area = (name: string) => result.elements.find((e) => e.element === name)?.area;
-    expect(area("Windows")).toBeCloseTo(267.16, 1);
-    expect(area("Walls")).toBeCloseTo(2150.3 + 37.06, 1);
+    const e = CLINIC_MEASURED_ENVELOPE;
+    expect(area("Windows")).toBeCloseTo(e.glazingApertureSqm, 1);
+    expect(area("Walls")).toBeCloseTo(e.exteriorWallNetSqm + e.exteriorDoorSqm, 1);
     expect(area("Roof")).toBeCloseTo(2286.93 + 382.28, 1);
     expect(area("Ground Floor")).toBeCloseTo(2621.08, 1);
     expect(area(VENTILATION_ELEMENT_NAME)).toBeCloseTo(20701.55, 1);
