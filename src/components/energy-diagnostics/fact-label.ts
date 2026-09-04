@@ -1,3 +1,5 @@
+import type { EnergyFact } from "@/lib/energy-diagnostics/types";
+
 import type { DiagnosisLocale } from "./types";
 
 type LabelRule = Readonly<{
@@ -237,4 +239,14 @@ const STATUS_LABEL: Record<DiagnosisLocale, Record<string, string>> = {
 
 export function factStatusLabel(status: string, locale: DiagnosisLocale): string {
   return STATUS_LABEL[locale][status] ?? status;
+}
+
+/** The displayed form of a fact's value, with its unit when it has one. */
+export function factValue(fact: EnergyFact<unknown>): string {
+  if (fact.value == null) return "—";
+  if (typeof fact.value === "number") {
+    return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 }).format(fact.value)}${fact.unit ? ` ${fact.unit}` : ""}`;
+  }
+  if (Array.isArray(fact.value)) return `${fact.value.length} items`;
+  return String(fact.value);
 }

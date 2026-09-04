@@ -45,7 +45,7 @@ function makeMeasure(overrides: Partial<RetrofitMeasure>): RetrofitMeasure {
 describe("P2-10 (a) — loan-term buy-down does not subsidize the whole horizon", () => {
   it("discount schedule uses WACC during the loan term, equity rate after", () => {
     const factors = buildDiscountFactors(KOREAN_GR_PRIVATE_BASE);
-    const wacc = effectiveDiscountRate(KOREAN_GR_PRIVATE_BASE); // 0.022
+    const wacc = effectiveDiscountRate(KOREAN_GR_PRIVATE_BASE); // 0.05 — base rate; the blended-WACC era value was 0.022
     const equity = KOREAN_GR_PRIVATE_BASE.discountRate; // 0.05
     const L = GR_PRIVATE_LOAN_TERM_YEARS; // 10
     // year L (≤ term) grows by 1+wacc; year L+1 (> term) grows by 1+equity.

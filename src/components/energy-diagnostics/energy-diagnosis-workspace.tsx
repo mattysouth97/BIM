@@ -83,6 +83,22 @@ import {
 
 import { diagnosisCopy } from "./copy";
 import {
+  documentTypeLabel,
+  navigationStage,
+  operationLabel,
+  stageComplete,
+  NAVIGATION_LABEL,
+  NAVIGATION_STAGES,
+  STAGE_LABEL,
+  type DiagnosisOperation,
+  type DiagnosisStage,
+} from "./diagnosis-stage";
+import {
+  diagnosticOverlayObjectIds,
+  mappingsForSourceIds,
+  sceneObjectIds,
+} from "./scene-object-ids";
+import {
   EMPTY_IMPROVEMENT_SCENARIO_DRAFT,
   improvementDraftForScenario,
   initialImprovementScenarioDraft,
@@ -90,7 +106,7 @@ import {
   type ImprovementScenarioDraft,
 } from "./improvement-scenario-draft";
 import { EvidenceInspector } from "./evidence-inspector";
-import { factKeyLabel, factStatusLabel } from "./fact-label";
+import { factKeyLabel, factStatusLabel, factValue } from "./fact-label";
 import { FindingsPanel } from "./findings-panel";
 import {
   applyInfiltrationAssumption,
@@ -127,224 +143,6 @@ import type {
   DiagnosisSelection,
   EnergyDiagnosisWorkspaceProps,
 } from "./types";
-
-type WorkflowStage =
-  | "drawings"
-  | "review"
-  | "model"
-  | "assumptions"
-  | "preflight"
-  | "simulation"
-  | "compare";
-
-type Operation =
-  | "reference"
-  | "upload"
-  | "baseline"
-  | "scenario"
-  | "save"
-  | "reload"
-  | null;
-
-const NAVIGATION_STAGES = [
-  "drawings",
-  "model",
-  "preflight",
-  "simulation",
-  "compare",
-] as const satisfies readonly WorkflowStage[];
-
-const NAVIGATION_LABEL: Record<
-  DiagnosisLocale,
-  Record<(typeof NAVIGATION_STAGES)[number], string>
-> = {
-  ko: {
-    drawings: "건물 입력",
-    model: "건물 모델",
-    preflight: "검증",
-    simulation: "진단 실행",
-    compare: "결과",
-  },
-  en: {
-    drawings: "Building input",
-    model: "Building model",
-    preflight: "Validate",
-    simulation: "Run diagnostic",
-    compare: "Results",
-  },
-};
-
-function navigationStage(stage: WorkflowStage): (typeof NAVIGATION_STAGES)[number] {
-  if (stage === "review") return "drawings";
-  if (stage === "assumptions") return "preflight";
-  return stage;
-}
-
-const STAGE_LABEL: Record<DiagnosisLocale, Record<WorkflowStage, string>> = {
-  ko: {
-    drawings: "도면 세트",
-    review: "추출 검토",
-    model: "건물 모델",
-    assumptions: "가정 및 누락값",
-    preflight: "모델 검사",
-    simulation: "시뮬레이션",
-    compare: "진단 결과",
-  },
-  en: {
-    drawings: "Drawing set",
-    review: "Extraction review",
-    model: "Building model",
-    assumptions: "Assumptions",
-    preflight: "Preflight",
-    simulation: "Run diagnostic",
-    compare: "Diagnostic results",
-  },
-};
-
-const DOCUMENT_LABEL: Record<DiagnosisLocale, Partial<Record<DrawingDocumentType, string>>> = {
-  ko: {
-    site_plan: "배치도",
-    floor_plan: "평면도",
-    elevation: "입면도",
-    section: "단면도",
-    window_schedule: "창호 일람표",
-    wall_detail: "외벽 상세",
-    hvac_equipment_schedule: "공조 장비 일람표",
-    lighting_plan: "조명 평면도",
-    material_schedule: "재료 일람표",
-    unknown: "미분류",
-  },
-  en: {
-    site_plan: "Site plan",
-    floor_plan: "Floor plan",
-    elevation: "Elevation",
-    section: "Section",
-    window_schedule: "Window schedule",
-    wall_detail: "Wall detail",
-    hvac_equipment_schedule: "HVAC schedule",
-    lighting_plan: "Lighting plan",
-    material_schedule: "Material schedule",
-    unknown: "Unclassified",
-  },
-};
-
-function documentTypeLabel(type: DrawingDocumentType, locale: DiagnosisLocale): string {
-  return DOCUMENT_LABEL[locale][type] ?? type.replaceAll("_", " ");
-}
-
-function factValue(fact: EnergyFact<unknown>): string {
-  if (fact.value == null) return "—";
-  if (typeof fact.value === "number") {
-    return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 }).format(fact.value)}${fact.unit ? ` ${fact.unit}` : ""}`;
-  }
-  if (Array.isArray(fact.value)) return `${fact.value.length} items`;
-  return String(fact.value);
-}
-
-function operationLabel(operation: Exclude<Operation, null>, locale: DiagnosisLocale): string {
-  const copy = diagnosisCopy(locale);
-  if (operation === "reference") return copy.loadingReference;
-  if (operation === "upload") return copy.readingFiles;
-  if (operation === "baseline" || operation === "scenario") return copy.running;
-  if (operation === "save") return locale === "ko" ? "프로젝트를 저장하는 중…" : "Saving project…";
-  return locale === "ko" ? "저장본을 여는 중…" : "Loading saved project…";
-}
-
-function sceneObjectIds(model: CanonicalEnergyModel, canonicalId: string): readonly string[] {
-  const mapped = model.mappings.find(
-    (mapping) => mapping.canonicalObjectId === canonicalId,
-  )?.threeObjectIds ?? [];
-  if (mapped.length > 0) return mapped;
-  const surface = model.geometry.surfaces.find(
-    (candidate) => candidate.id === canonicalId,
-  );
-  if (surface?.threeObjectId) return [surface.threeObjectId];
-  const opening = model.geometry.openings.find(
-    (candidate) => candidate.id === canonicalId,
-  );
-  return opening?.threeObjectId ? [opening.threeObjectId] : [];
-}
-
-function diagnosticOverlayObjectIds(
-  model: CanonicalEnergyModel,
-  canonicalIds: readonly string[],
-): readonly string[] {
-  const ids = new Set<string>();
-  for (const canonicalId of canonicalIds) {
-    if (canonicalId === model.building.id) {
-      ids.add("envelope-shell:Walls");
-      ids.add("envelope-shell:Windows");
-      ids.add("envelope-shell:Roof");
-      ids.add("envelope-shell:Ground Floor");
-      continue;
-    }
-    const surface = model.geometry.surfaces.find(
-      (candidate) => candidate.id === canonicalId,
-    );
-    if (surface) {
-      if (sceneObjectIds(model, surface.id).length > 0) continue;
-      if (surface.type === "exterior_wall") ids.add("envelope-shell:Walls");
-      if (surface.type === "roof") ids.add("envelope-shell:Roof");
-      if (surface.type === "ground_floor") {
-        ids.add("envelope-shell:Ground Floor");
-      }
-      continue;
-    }
-    const opening = model.geometry.openings.find(
-      (candidate) => candidate.id === canonicalId,
-    );
-    if (opening) {
-      const hostIds = sceneObjectIds(model, opening.hostSurfaceId);
-      if (hostIds.length > 0) {
-        for (const hostId of hostIds) ids.add(hostId);
-      } else {
-        ids.add("envelope-shell:Windows");
-      }
-    }
-  }
-  return [...ids];
-}
-
-function mappingsForSourceIds(
-  model: CanonicalEnergyModel,
-  sourceIds: readonly string[],
-) {
-  const ids = new Set(sourceIds);
-  return model.mappings.filter((mapping) =>
-    mapping.sourceEntityRefs.some((source) => ids.has(source.id)),
-  );
-}
-
-function stageComplete(
-  stage: WorkflowStage,
-  model: CanonicalEnergyModel | null,
-  ingestion: DrawingSetIngestionResult | null,
-  validation: CanonicalModelValidation | null,
-  baselineRun: DegreeDaySimulationRun | null,
-): boolean {
-  if (stage === "drawings") {
-    return Boolean(
-      (ingestion || model?.drawingSet.documents.length) &&
-        model?.drawingSet.documents.every(
-          (document) => document.classification.documentType !== "unknown",
-        ),
-    );
-  }
-  if (stage === "review") return Boolean(model && model.conflicts.every((conflict) => conflict.resolutionStatus !== "unresolved"));
-  if (stage === "model") {
-    return Boolean(
-      model &&
-        model.geometry.thermalZones.length > 0 &&
-        model.envelope.constructions.length > 0 &&
-        model.envelope.infiltrationAirChangesPerHour.value != null &&
-        model.systems.hvac.length > 0,
-    );
-  }
-  if (stage === "assumptions") return Boolean(model && model.missingValues.every((missing) => !missing.blocking));
-  if (stage === "preflight") return validation?.validForSimulation ?? false;
-  if (stage === "simulation") return baselineRun?.status === "succeeded";
-  return baselineRun?.status === "succeeded";
-}
 
 async function nextPaint(): Promise<void> {
   await new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -429,7 +227,7 @@ export function EnergyDiagnosisWorkspace({
   const [sources, setSources] = useState<readonly DrawingSourceInput[]>(
     initialModelSources ?? [],
   );
-  const [activeStage, setActiveStage] = useState<WorkflowStage>(
+  const [activeStage, setActiveStage] = useState<DiagnosisStage>(
     initialStage ?? (initialModel ? "review" : "drawings"),
   );
   const [activeView, setActiveView] = useState<"source" | "model">("source");
@@ -438,7 +236,7 @@ export function EnergyDiagnosisWorkspace({
   );
   const [selectedFact, setSelectedFact] = useState<EnergyFact<unknown> | null>(null);
   const [selection, setSelection] = useState<DiagnosisSelection | null>(null);
-  const [operation, setOperation] = useState<Operation>(null);
+  const [operation, setOperation] = useState<DiagnosisOperation>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scenarioUValue, setScenarioUValue] = useState<number | "">(
@@ -1491,7 +1289,7 @@ export function EnergyDiagnosisWorkspace({
       }
     : null;
 
-  const categoryToStage: Record<ReadinessCategory["category"], WorkflowStage> = {
+  const categoryToStage: Record<ReadinessCategory["category"], DiagnosisStage> = {
     geometry: "model",
     envelope: "model",
     usage: "assumptions",
@@ -1508,16 +1306,16 @@ export function EnergyDiagnosisWorkspace({
               ? "이 도면으로 새 진단 시작"
               : "Start a new diagnosis from this drawing",
           run: adoptStagedTierOneModel,
-          stage: "drawings" as WorkflowStage,
+          stage: "drawings" as DiagnosisStage,
         };
       }
       return {
         label: locale === "ko" ? "새 도면 추출 검토" : "Review new extraction",
         run: () => setActiveStage("drawings"),
-        stage: "drawings" as WorkflowStage,
+        stage: "drawings" as DiagnosisStage,
       };
     }
-    if (!model) return { label: copy.referenceCase, run: loadReference, stage: "drawings" as WorkflowStage };
+    if (!model) return { label: copy.referenceCase, run: loadReference, stage: "drawings" as DiagnosisStage };
     if (isTierOneAssumptionPending(model)) {
       return {
         label:
@@ -1525,22 +1323,22 @@ export function EnergyDiagnosisWorkspace({
             ? "건물 외곽선 및 Tier-1 가정 확인"
             : "Confirm footprint & Tier-1 assumptions",
         run: applyAssumption,
-        stage: "assumptions" as WorkflowStage,
+        stage: "assumptions" as DiagnosisStage,
       };
     }
     const blockingMissing = model.missingValues.find((missing) => missing.blocking);
-    if (blockingMissing) return { label: copy.applyAssumption, run: applyAssumption, stage: "assumptions" as WorkflowStage };
+    if (blockingMissing) return { label: copy.applyAssumption, run: applyAssumption, stage: "assumptions" as DiagnosisStage };
     const unresolved = model.conflicts.find((conflict) => conflict.resolutionStatus !== "user_resolved");
     if (unresolved?.selectedFactId) {
       return {
         label: copy.confirmValue,
         run: () => resolveConflict(unresolved.id, unresolved.selectedFactId!),
-        stage: "review" as WorkflowStage,
+        stage: "review" as DiagnosisStage,
       };
     }
-    if (!validation?.validForSimulation) return { label: copy.preflight, run: () => setActiveStage("preflight"), stage: "preflight" as WorkflowStage };
-    if (baselineRun?.status !== "succeeded") return { label: copy.runBaseline, run: runBaseline, stage: "simulation" as WorkflowStage };
-    return { label: copy.save, run: saveProject, stage: "compare" as WorkflowStage };
+    if (!validation?.validForSimulation) return { label: copy.preflight, run: () => setActiveStage("preflight"), stage: "preflight" as DiagnosisStage };
+    if (baselineRun?.status !== "succeeded") return { label: copy.runBaseline, run: runBaseline, stage: "simulation" as DiagnosisStage };
+    return { label: copy.save, run: saveProject, stage: "compare" as DiagnosisStage };
   }, [adoptStagedTierOneModel, applyAssumption, baselineRun?.status, copy, detachedIngestion, loadReference, locale, model, resolveConflict, runBaseline, saveProject, tierOneOutcome?.status, validation?.validForSimulation]);
 
   const stagePanel = detachedIngestion && ingestion
@@ -2183,7 +1981,7 @@ function renderStagePanel({
   onEvaluateAssembly,
   onSelectResult,
 }: Readonly<{
-  stage: WorkflowStage;
+  stage: DiagnosisStage;
   model: CanonicalEnergyModel;
   ingestion: DrawingSetIngestionResult | null;
   validation: CanonicalModelValidation;
@@ -2203,7 +2001,7 @@ function renderStagePanel({
   onScenarioShgc: (value: number | "") => void;
   scenarioAreaScale: number | "";
   onScenarioAreaScale: (value: number | "") => void;
-  operation: Operation;
+  operation: DiagnosisOperation;
   improvementEditorOpen: boolean;
   onImprovementEditorOpen: (open: boolean) => void;
   findings: readonly import("@/lib/energy-diagnostics/findings").DiagnosticFinding[];

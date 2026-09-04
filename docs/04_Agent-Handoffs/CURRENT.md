@@ -154,6 +154,21 @@ files.
   string "사용자가 진술한 …" though no user stated anything. Reproduced: a 200 m²
   building on a 7,060 m² lot yields `footprint.areaSqm = 7060.4`, B-OBSERVED.
   The lot is reported as the building, graded as observed evidence.
+- **VWorld carries no building height — P2-25's measured-height tier is void.**
+  `LT_C_SPBD` returns exactly ten keys and `buld_hg` is not one of them:
+  verified across 34 production buildings (`height: null` in every case;
+  `groundFloors` real, 28/30) and four upstream bboxes in four cities. The
+  documented chain `ledger heit → VWorld measured → era estimate` has **no
+  supplier for the middle tier**; in practice it is `ledger heit → era
+  estimate`. `parseBuildingAttributes` is correct — the field is absent, not
+  mis-parsed. Six candidate layers were eliminated, which is a result about
+  **those six**, not about the platform: do not assume a height layer exists.
+  Genuinely unreachable code: `engine/steps/ingest.ts:17` can emit
+  `source: "vworld-measured"` for a height that nothing can supply. **NOT
+  unreachable, do not delete:** the `'measured'` heights grade in
+  `input-provenance.ts:74` — `ledgerHeit > 0` reaches it constantly, and only
+  the `measuredHeightM` disjunct is dead. No test caught any of this because
+  every test on the path injects the height itself.
 - **VWorld production was broken and is now fixed** (another session): the
   functions ran in `iad1` (Washington) and api.vworld.kr refuses that egress —
   `vercel.json` now pins `regions: ["icn1"]`. Verified `X-Vercel-Id`

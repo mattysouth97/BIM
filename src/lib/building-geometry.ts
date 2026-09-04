@@ -95,8 +95,14 @@ function getFloorHeightCategory(mainPurpsCd: string): "residential" | "commercia
 export interface GenerateGeometryOptions {
   /**
    * Measured building height in meters from an external GIS source
-   * (VWorld GIS건물통합정보 `buld_hg`, P2-25). Height fallback chain:
-   * ledger `heit` → measuredHeightM → era-based floor-count estimate.
+   * A height measured from some source, in metres.
+   *
+   * Intended supplier was VWorld GIS건물통합정보 `buld_hg` (P2-25) — but that
+   * field DOES NOT EXIST in `LT_C_SPBD`. Verified 2026-09-04 across 34
+   * production buildings and four upstream bboxes: the layer returns ten keys
+   * and `buld_hg` is not among them, so this parameter is `null` on every
+   * live path today. Kept as a generic input for a height measured from a
+   * drawing or stated by a user; do not describe it as a VWorld value.
    */
   measuredHeightM?: number;
 }
@@ -114,7 +120,11 @@ export function generateBuildingGeometry(
 
   const eraFloorHeight = FLOOR_HEIGHTS[era]?.[floorHeightCat] || 3.2;
   const aboveCount = Number(title.grndFlrCnt) || 1;
-  // Height fallback chain (named, per AFF-6): ledger heit → VWorld measured → era estimate.
+  // Height fallback chain (named, per AFF-6): ledger heit → measured → era
+  // estimate. The middle tier has NO SUPPLIER today — VWorld's LT_C_SPBD
+  // carries no height (P2-25 Correction, 2026-09-04) — so in practice this is
+  // ledger heit → era estimate. The tier is retained because the plumbing is
+  // correct and a drawing or a user could yet supply a measured height.
   const measuredHeight = Number(opts?.measuredHeightM);
   const totalHeight =
     Number(title.heit) ||
