@@ -546,18 +546,40 @@ to serve. `src/lib/mep` is **not** implicated — nothing there was touched. Not
 `src/lib/generative/generate/{partitions,space-plan,openings}.ts` exist, but they are the
 generative engine, not the ledger-reconstruction path.
 
-**5. Blank viewport (P2-35) — OPEN and still UNREPRODUCED. Do not write a fix.**
-Item file reads `status: todo`, `owner: unassigned`. Seen twice in extension-driven headed
-Chrome (canvas stuck at 300×150, middle pixel transparent, context alive, no errors; one
-synthetic `resize` and it rendered), but **24 controlled cold loads produced zero blanks**.
-Ranked leads, all mechanisms to test and none proven: (a) persisted `sidePanelOpen`
-colliding with hydration — it *is* in the persist partialize list (`app-store.ts:66`), so a
-probe seeding it differs from a real browser carrying whatever was last left; test by
-loading under each persisted value and toggling between loads, not by reasoning;
-(b) page visibility / occlusion — cheapest single test; (c) the general
-ResizeObserver-attaches-after-final-size case. **Trap:** a regression test must observe
-*without* driving animation frames — `waitForFunction` polls on rAF and would supply the
-very frame the app is missing, so it would pass on a broken viewer.
+**5. Blank viewport (P2-35) — RESOLVED 2026-09-04 22:50. Not a bug. Do not write a fix.**
+It is a **measurement artefact of a hidden tab**, and lead (b) — page visibility — was the
+right one. Measured on `/models/schependomlaan` and `/models/bs-medical-dental-clinic`,
+both identical:
+
+```text
+document.visibilityState === "hidden", document.hidden === true
+requestAnimationFrame callback: NEVER FIRES (still not run after 1,200 ms)
+canvas 0×0, drawingBuffer 300×150, GLB network requests: []
+```
+
+A hidden tab pauses rAF. R3F's `<Canvas>` sizes through `react-use-measure`, whose
+ResizeObserver callback is debounced onto rAF, so the size never arrives, the scene never
+mounts, and `useGLTF` never fetches — the model is not slow to appear, it is **never
+requested**. A synthetic `resize` measures synchronously, which is why dispatching one
+"fixes" it and why that looked like evidence of a layout bug. It is not: the fix is the
+tell.
+
+**Before filing anything that looks like this, read `document.visibilityState`.** A blank
+viewport with `drawingBuffer 300×150` and zero `.glb` requests in a hidden tab is expected
+behaviour. A real user in a foreground tab never sees it.
+
+**Any regression test must run in a VISIBLE page**, and note the two-sided trap that cost
+this repo a day: in a visible page `waitForFunction` polls on rAF and supplies the very
+frame the app was missing, so it passes on a broken viewer; in a hidden page it never runs
+at all. That is why 24 controlled cold loads found zero blanks while two sessions saw it
+repeatedly — the two groups were measuring different things, and neither knew it.
+
+History, kept because the wrong hypotheses are instructive: seen twice in extension-driven
+headed Chrome, then 24 controlled cold loads produced zero blanks. Lead (a), persisted
+`sidePanelOpen` colliding with hydration, was ranked first and is unrelated. On 2026-09-04
+it was re-raised as a layout regression from the energy-frame integration, with "the Clinic
+fails identically" offered as evidence for a shared-layout cause — that was the same
+artefact found twice, and it is evidence against a layout cause rather than for one.
 
 **6. Silent use-code fallbacks — OPEN, unchanged, and still asserts something false.**
 Verified: `mep/rules.ts:214` returns `reason: "2000년 이후 업무시설: …"` for **any**
