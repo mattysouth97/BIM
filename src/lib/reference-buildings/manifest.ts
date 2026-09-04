@@ -59,7 +59,66 @@ export type ReferenceBuildingManifest = Readonly<{
     /** The space solids summed as modelled — they stop at the ceilings. Not the engine's volume. */
     roomVolumeNetM3?: number;
     volumeNote?: string;
+    /**
+     * Roof, horizontal-projected: Σ over roof TYPES of each type's plan
+     * coverage (the union of that type's element shadows). The area a
+     * per-type U-value multiplies. Absent on a manifest built before
+     * 2026-09-04 23:30.
+     */
+    roofProjectedSqm?: number;
+    /** Plan coverage per roof type, keyed by family name — the Clinic's EPDM and standing seam stay apart. */
+    roofProjectedByFamilySqm?: Readonly<Record<string, number>>;
+    /** Σ of every roof element's own shadow; above `roofProjectedSqm` where elements of one type overlap. */
+    roofElementSumSqm?: number;
+    /** One union over every roof element — what the sky sees. */
+    roofUnionSqm?: number;
+    roofNote?: string;
+    /** Union of the counted ground slabs' shadows — a screed over a structural floor is one floor. */
+    groundSlabSqm?: number;
+    /** Σ of the counted slabs' own shadows, so layering is visible. */
+    groundSlabSumSqm?: number;
+    /** Outer ring(s) of the ground outline — the ISO 13370 exposed perimeter. */
+    groundPerimeterM?: number;
+    /** Hole rings (a lift pit, a shaft) — reported, never added to the above. */
+    groundHolePerimeterM?: number;
+    /** The rule that counted or excluded each slab, in words, with the excluded ones named. */
+    groundNote?: string;
   }>;
+  /** One row per roof element with geometry. */
+  roofs?: readonly Readonly<{
+    id: string;
+    name: string;
+    /** Name without its trailing Revit instance id — the roof TYPE. */
+    family: string;
+    elementType: string;
+    predefinedType: string | null;
+    /** What put it in the list: the IFC type, or the building's declared slab-name list. */
+    basis: string;
+    storeyId: string | null;
+    /** Plan shadow of the element. */
+    projectedSqm: number;
+    /** Σ area × n_y over upward faces; a multiple of `projectedSqm` when the mesh presents its top face more than once. */
+    upFacingProjectedSqm: number;
+    /** Area-weighted mean tilt of the upward faces, degrees from horizontal. */
+    tiltDeg: number | null;
+    /** The IfcRoof this part is aggregated under, when it is one. */
+    partOf: string | null;
+    ref: string;
+  }>[];
+  /** Every candidate ground slab — counted, or excluded with the reason. */
+  groundSlabs?: readonly Readonly<{
+    id: string;
+    name: string;
+    elementType: string;
+    predefinedType: string | null;
+    storeyId: string | null;
+    projectedSqm: number;
+    countsAsGround: boolean;
+    /** Why it counts: footprint overlap, a space boundary, or both. */
+    evidence: string | null;
+    excludedReason: string | null;
+    ref: string;
+  }>[];
   /** Every level the file declares, lowest first, including datums with no rooms. */
   storeys?: readonly Readonly<{
     id: string;

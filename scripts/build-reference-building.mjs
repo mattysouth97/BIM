@@ -30,6 +30,15 @@ import { collectFabric, mergeFabric, writeGlb, SERVICE_GROUPS, SERVICE_COLOUR } 
 import { collectServiceInstances } from "./lib/ifc-instances.mjs";
 import { collectFlowNetwork, annotateFlow, serialiseFlow } from "./lib/ifc-flow.mjs";
 import { measureSpaceMeshes } from "./lib/ifc-space-volume.mjs";
+import {
+  spaceFootprints,
+  spaceBoundaryIndex,
+  collectHorizontalElements,
+  dedupeByGlobalId,
+  classifyRoofs,
+  measureRoofs,
+  measureGroundSlabs,
+} from "./lib/ifc-horizontal.mjs";
 
 const REPO = process.cwd();
 const CACHE =
@@ -212,6 +221,33 @@ const SCHEPENDOMLAAN = Object.freeze({
    * assumption ledger rather than passing as a measurement.
    */
   roofDatumM: 9.0,
+
+  /**
+   * Roof slabs the file types as FLOOR. Measured 2026-09-04: a type-only
+   * rule (IfcRoof, IfcSlab ROOF, IfcCovering ROOFING) finds 62 elements and
+   * 136 m² of pitched `sporenkap` on a four-storey block whose ground floor
+   * covers 346 m². The flat decks are `IfcSlab` with `PredefinedType FLOOR`:
+   * `dakvloer` (9 slabs at 11.62–11.84 m, on storey '04 dak' — the deck over
+   * the top storey), `plat dak` (6 slabs at 5.67–5.84 m on '02 tweede
+   * verdieping' — the low-rise wing's flat roof) and `lifttop` (1 slab at
+   * 12.60–12.80 m). Declared here by name, and every row in `roofs` says
+   * whether its basis was the type or this list.
+   *
+   * NOT declared, deliberately: `gootconstructie` (gutters, 12 slabs),
+   * `prefab balkon` (balconies, 3), `dakelement` FLOOR (0.01 m²), and the
+   * 5.22 m² FLOOR-typed `dakisolatie` at 12.80–12.91 m, which by elevation
+   * and plan sits directly on the 5.75 m² lifttop already counted.
+   */
+  roofSlabMatch: ["dakvloer", "plat dak", "lifttop"],
+  roofNote:
+    "The file types its flat roof decks as IfcSlab FLOOR — dakvloer (9 slabs " +
+    "at 11.62–11.84 m on storey '04 dak'), plat dak (6 at 5.67–5.84 m, the " +
+    "low-rise wing) and lifttop (1 at 12.60–12.80 m) — so they are declared " +
+    "roof by name; a type-only rule found 136 m² of roof on a four-storey " +
+    "block. gootconstructie (gutters), prefab balkon (balconies) and the " +
+    "FLOOR-typed dakisolatie stacked on the lifttop are not declared. The " +
+    "pitched sporenkap is exported as stacked layer solids, which is why its " +
+    "upward-face sum exceeds its shadow.",
 
   /**
    * All 97 IfcThermalTransmittanceMeasure in this file are literally `0.`, on
@@ -814,6 +850,72 @@ async function main() {
     );
   }
 
+  // ── Roofs and ground slabs ─────────────────────────────────────────────
+  // The two horizontal envelope areas, from the same tessellated geometry as
+  // the walls. The rules — plan SHADOW rather than an upward-face sum, and
+  // "a conditioned space stands on it" rather than IsExternal for the ground
+  // — are argued in ifc-horizontal.mjs; what is decided here is only which
+  // files and which storey.
+  //
+  // The ground storey is the lowest one that holds rooms (the same test the
+  // storey count uses), taken from the SPACE file; slabs on any storey at or
+  // below its elevation are candidates, so a lift-pit slab filed under a
+  // footing datum is still seen. Roofs and slabs are read from the
+  // architectural and structural models both — the Clinic keeps every roof
+  // and floor slab in Structural, Schependomlaan keeps everything in one
+  // file — and an element present in both files is counted once, by
+  // GlobalId.
+  const groundStorey =
+    storeys.find((s) => spaces.some((sp) => sp.storeyId === s.id)) ?? storeys[0];
+  const groundConditionedSpaces = spaces.filter(
+    (sp) => sp.storeyId === groundStorey?.id && sp.countsAsConditionedVolume,
+  );
+  const groundFootprints = spaceFootprints(api, webIfc, spaceFile, groundConditionedSpaces);
+  const horizontalSets = [];
+  let geometrylessRoofs = 0;
+  for (const file of [arch, struct].filter(Boolean)) {
+    const fileStoreys = file === spaceFile ? storeys : extractStoreys(file, webIfc);
+    const collected = collectHorizontalElements(api, webIfc, file, fileStoreys);
+    horizontalSets.push(collected.rows);
+    geometrylessRoofs += collected.geometrylessRoofs;
+  }
+  const horizontal = dedupeByGlobalId(horizontalSets);
+  const roofs = measureRoofs(
+    classifyRoofs(horizontal.rows, { nameMatch: building.roofSlabMatch ?? [] }),
+  );
+  const ground = measureGroundSlabs(horizontal.rows, {
+    groundStorey,
+    conditionedSpaces: groundConditionedSpaces,
+    footprints: groundFootprints,
+    // Boundaries can only name elements of their own file, so only the space
+    // file's index is consulted; a slab in another file is judged by overlap.
+    boundaries: new Map([[spaceFile, spaceBoundaryIndex(spaceFile, webIfc)]]),
+  });
+  const roofBasisSummary = Object.entries(
+    roofs.rows.reduce((acc, r) => {
+      acc[r.basis] = (acc[r.basis] ?? 0) + 1;
+      return acc;
+    }, {}),
+  )
+    .map(([basis, n]) =>
+      basis === "declared roof slab name"
+        ? `${n} by declared slab name (${(building.roofSlabMatch ?? []).join(", ")})`
+        : `${n} ${basis}`,
+    )
+    .join(", ");
+  const excludedGround = ground.rows.filter((r) => !r.countsAsGround);
+  console.log(
+    `  roofs: ${roofs.rows.length} elements, ${roofs.familyCount} types, ` +
+      `${roofs.projectedSqm} m² projected (elements sum ${roofs.elementSumSqm}, union ${roofs.unionSqm})`,
+  );
+  console.log(
+    `  ground: ${ground.includedCount}/${ground.candidateCount} slabs, ` +
+      `${ground.groundSlabSqm} m² (sum ${ground.groundSlabSumSqm}), perimeter ${ground.groundPerimeterM} m` +
+      (excludedGround.length > 0
+        ? `; excluded ${excludedGround.map((r) => `"${r.name}" ${r.projectedSqm} m²`).join(", ")}`
+        : ""),
+  );
+
   const site = arch.byType(webIfc.IFCSITE)[0];
   const latitudeDeg = site ? compoundAngleDeg(site.RefLatitude) : null;
   const longitudeDeg = site ? compoundAngleDeg(site.RefLongitude) : null;
@@ -1014,6 +1116,66 @@ async function main() {
           ? `; ${unmeasuredConditioned} conditioned spaces have no solid and are in neither figure`
           : "") +
         ". A closed tessellation's signed volume is exact.",
+      /**
+       * Roof, horizontal-projected: the sum over roof TYPES of each type's
+       * plan coverage — the union of that type's element shadows. This is
+       * the area a per-type U-value multiplies; the per-element rows are in
+       * `roofs`, and the two other totals are beside it so a reader can see
+       * how much of the difference is overlap.
+       */
+      roofProjectedSqm: roofs.projectedSqm,
+      roofProjectedByFamilySqm: roofs.byFamilySqm,
+      /** Σ of every element's own shadow; exceeds the above where elements of one type overlap in plan. */
+      roofElementSumSqm: roofs.elementSumSqm,
+      /** One union over every roof element — what the sky sees; less than the above where one type sits over another. */
+      roofUnionSqm: roofs.unionSqm,
+      roofNote:
+        `Plan shadow per element (union of its projected triangles, ifc-plan-shadow.mjs): ` +
+        `${roofs.rows.length} elements — ${roofBasisSummary}. ` +
+        `roofProjectedSqm sums ${roofs.familyCount} roof type(s), each as the union of its elements; ` +
+        `the elements themselves sum to ${roofs.elementSumSqm} m² (elements of one type overlapping in plan) ` +
+        `and all types together cover ${roofs.unionSqm} m² (one type above another). ` +
+        (geometrylessRoofs > 0
+          ? `${geometrylessRoofs} IfcRoof carry no geometry of their own and are measured through the IfcSlab ROOF parts they aggregate. `
+          : "") +
+        (horizontal.duplicates > 0
+          ? `${horizontal.duplicates} element(s) present in two files counted once by GlobalId. `
+          : "") +
+        (roofs.upFacingExceedsShadowCount > 0
+          ? `${roofs.upFacingExceedsShadowCount} element(s) present their top face more than once (upward-face sum above shadow) — the reason the shadow is used and Σ area×n_y is not. `
+          : "") +
+        (roofs.snappedCount > 0
+          ? `${roofs.snappedCount} shadow(s) needed a vertex grid coarser than 1 µm to union. `
+          : "") +
+        (building.roofNote ?? ""),
+      /**
+       * Ground slab and exposed perimeter. The area is the UNION of the
+       * counted slabs' shadows (a screed over a structural floor is one
+       * floor); the perimeter is that outline's outer ring. Rows in
+       * `groundSlabs`, including the ones excluded and why.
+       */
+      groundSlabSqm: ground.groundSlabSqm,
+      groundSlabSumSqm: ground.groundSlabSumSqm,
+      groundPerimeterM: ground.groundPerimeterM,
+      groundHolePerimeterM: ground.groundHolePerimeterM,
+      groundNote:
+        `IfcSlab (not ROOF or LANDING) on storeys at or below ${groundStorey?.name ?? "?"} ` +
+        `(${groundStorey?.elevationM ?? "?"} m): ${ground.candidateCount} candidate(s). A slab counts as ground ` +
+        `envelope when a conditioned space stands on it — its shadow overlaps a conditioned ` +
+        `ground-storey space footprint (${ground.footprintedSpaceCount} of ${ground.conditionedSpaceCount} ` +
+        `such spaces have one: ${Object.entries(ground.footprintSources).map(([k, v]) => `${v} ${k}`).join(", ") || "none"}) ` +
+        `or an IfcRelSpaceBoundary names it as bounding one. IsExternal is not consulted. ` +
+        `${ground.includedCount} counted, ${excludedGround.length} excluded` +
+        (excludedGround.length > 0
+          ? `: ${excludedGround.map((r) => `"${r.name}" ${r.projectedSqm} m²`).join(", ")}`
+          : "") +
+        `. groundSlabSqm is the union of the counted shadows (they sum to ${ground.groundSlabSumSqm} m²; ` +
+        `stacked build-up layers count once); groundPerimeterM is the outline's outer ring` +
+        (ground.outlinePolygons > 1 ? `s (${ground.outlinePolygons} polygons)` : "") +
+        (ground.outlineHoles > 0
+          ? `; ${ground.outlineHoles} hole ring(s) totalling ${ground.groundHolePerimeterM} m are reported and not added`
+          : "") +
+        ".",
     },
     /**
      * The layer stacks, outside-in, as the model states them.
@@ -1093,6 +1255,10 @@ async function main() {
       ref: s.ref,
     })),
     spacesFile: "spaces.json",
+    /** One row per roof element with geometry; `family` keeps the roof types apart. */
+    roofs: roofs.rows,
+    /** One row per candidate ground slab, counted or excluded with the reason. */
+    groundSlabs: ground.rows,
     serviceLayers,
     model: {
       file: "model.glb",
