@@ -842,20 +842,80 @@ async function main() {
   // page's cost for everyone who only wanted to look at the building.
   const serviceLayers = [];
   for (const layer of building.serviceLayers) {
-    const file = byRole.get(layer.role);
-    if (!file) continue;
-    const collected = collectServiceInstances(api, webIfc, file.modelId, {
-      serviceGroups: SERVICE_GROUPS,
-    });
+    // A layer may be ONE file (the Clinic's three disciplines) or MANY: the
+    // apartment's subcontractor set has eleven blockwork files and four
+    // roofing ones, because each supplier delivered its own model. `role`
+    // stays for the single-file case; `roles` is the list form. Merging
+    // happens on collectServiceInstances' OUTPUT rather than inside it,
+    // because its internal keys are `group:geometryExpressID` and express IDs
+    // are per-model — merging any earlier would silently treat two different
+    // suppliers' geometry #123 as one shape.
+    const roles = layer.roles ?? [layer.role];
+    const layerFiles = roles.map((r) => byRole.get(r)).filter(Boolean);
+    if (layerFiles.length === 0) continue;
+
+    const collected = { groups: new Map(), instanced: [], stats: { elements: 0, distinctGeometries: 0 } };
+    const flowCounts = {};
+    let flowReason = null;
+    let flowWavelengthM = null;
+    const flowSegments = [];
+
+    for (const file of layerFiles) {
+      const part = collectServiceInstances(api, webIfc, file.modelId, {
+        serviceGroups: layer.groups ?? SERVICE_GROUPS,
+      });
+      // Self-contained already — one geometry plus its own transforms.
+      collected.instanced.push(...part.instanced);
+      for (const [name, bucket] of part.groups) {
+        let into = collected.groups.get(name);
+        if (!into) {
+          into = { positions: [], normals: [], indices: [], vertexCount: 0 };
+          collected.groups.set(name, into);
+        }
+        // Indices are local to their bucket, so they shift by however many
+        // vertices are already in the merged one.
+        // Appended with loops, NOT `push(...bucket.positions)`. A merged
+        // bucket holds hundreds of thousands of floats and spreading one into
+        // push() passes them as arguments — "Maximum call stack size
+        // exceeded", on the first real building this ran against.
+        const base = into.vertexCount;
+        for (const v of bucket.positions) into.positions.push(v);
+        for (const v of bucket.normals) into.normals.push(v);
+        for (const i of bucket.indices) into.indices.push(i + base);
+        into.vertexCount += bucket.vertexCount;
+      }
+      collected.stats.elements += part.stats.elements;
+      collected.stats.distinctGeometries += part.stats.distinctGeometries;
+
+      const f = serialiseFlow(annotateFlow(collectFlowNetwork(api, webIfc, file.modelId)));
+      flowSegments.push(...f.segments);
+      for (const [k, v] of Object.entries(f.counts)) {
+        flowCounts[k] = (flowCounts[k] ?? 0) + v;
+      }
+      // A layer that cannot animate must still say why, so the first stated
+      // reason is kept rather than the last empty one.
+      if (!flowReason && f.reason) flowReason = f.reason;
+      if (flowWavelengthM === null) flowWavelengthM = f.wavelengthM;
+    }
+
     const written = await writeGlb(
       path.join(outDir, `${layer.id}.glb`),
       collected.groups,
-      { generator, colours: SERVICE_COLOUR, instanced: collected.instanced },
+      {
+        generator,
+        colours: layer.colours ?? SERVICE_COLOUR,
+        instanced: collected.instanced,
+      },
     );
     // The routed network, direction included, from the model's own ports.
     // Written as its own file for the same reason the GLB is: a reader who
     // never switches flow on should never pay for it.
-    const flow = serialiseFlow(annotateFlow(collectFlowNetwork(api, webIfc, file.modelId)));
+    const flow = {
+      segments: flowSegments,
+      counts: flowCounts,
+      reason: flowReason,
+      wavelengthM: flowWavelengthM,
+    };
     let flowFile = null;
     if (flow.segments.length > 0) {
       flowFile = `${layer.id}-flow.json`;
@@ -905,7 +965,8 @@ async function main() {
         `${written.triangleCount.toLocaleString()} tris, ` +
         `${written.instancedShapes} shapes x ${written.instancedPlacements} placements, ` +
         `${written.drawCalls} draw calls, ` +
-        `flow ${flow.counts.drawnEdges}/${flow.counts.connections} directed`,
+        `flow ${flow.counts.drawnEdges ?? 0}/${flow.counts.connections ?? 0} directed` +
+        (layerFiles.length > 1 ? ` (${layerFiles.length} files)` : ""),
     );
   }
 
