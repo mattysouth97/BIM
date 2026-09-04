@@ -158,7 +158,18 @@ describe("MEP engine — behaviour", { timeout: 60_000 }, () => {
     expect(a).toBe(b);
   });
 
-  it("selects archetypes from use × era (rule KR-10)", { timeout: 30_000 }, () => {
+  // This case carries no timeout of its own, deliberately. It used to override the
+  // enclosing describe's 60 s bound DOWN to 30 s while doing more work than any of its
+  // siblings — four full `planMepSystems` runs against a cleared cache, where the others
+  // do one or two — so it was the heaviest test in the file on the tightest bound in the
+  // file. Measured in isolation on a quiet tree the whole file costs 33.05 s (import
+  // 19.86 s, tests 12.60 s) and all 67 pass; under multi-session load this one case alone
+  // exceeded 30 s and went red. Inheriting 60 s removes an override that was never
+  // intentional.
+  //
+  // Raising the bound only masks the real problem, which is that a 33 s file spends
+  // 19.86 s of it importing. That is worth fixing at the source; the timeout is not.
+  it("selects archetypes from use × era (rule KR-10)", () => {
     clearMepPlanCache();
     expect(planMepSystems(caseTowerOffice()).archetype).toBe("vrf");
     expect(planMepSystems(casePlantHeavy()).archetype).toBe("central-ahu");

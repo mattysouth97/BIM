@@ -15,7 +15,24 @@ import { describe, it, expect, vi } from "vitest";
 vi.mock("@react-three/fiber", () => ({ Canvas: () => null, useThree: () => null }));
 vi.mock("@react-three/drei", () => ({ OrbitControls: () => null, Environment: () => null }));
 
-describe("lean studio composition", () => {
+// Why an explicit timeout, and why it is not the default 5000 ms.
+//
+// These tests await `import()` of the studio's whole module graph, so Vite's
+// COLD transform cost is billed inside the test's own timer. Measured on this
+// tree: cold, transform 3.20 s and the first test 5015 ms — over the 5000 ms
+// default by fifteen milliseconds; warm, transform 1.47 s and the same test
+// 2.35 s. Sitting that close to the line made it flip red or green on nothing
+// but disk-cache warmth, and it was reported as a blocking regression three
+// times in one day by three different sessions. It never was one: raising the
+// timeout to 30 s passes all three tests, which proves unbounded cost rather
+// than a hang.
+//
+// The number is deliberately generous because what it bounds is compilation of
+// an arbitrarily growing module graph, not any assertion below. If these tests
+// ever exceed 30 s, that is a real signal — the graph got big enough to matter.
+const COMPOSITION_TIMEOUT_MS = 30_000;
+
+describe("lean studio composition", { timeout: COMPOSITION_TIMEOUT_MS }, () => {
   it("resolves the studio component", async () => {
     const studio = await import("../lean-studio");
     expect(typeof studio.LeanStudio).toBe("function");
