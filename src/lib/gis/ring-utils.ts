@@ -35,10 +35,31 @@ export function ringBboxCenter(ring: number[][]): [number, number] {
  * geometry should keep a margin rather than rely on boundary behavior.
  */
 /**
+ * Above this, a miter join is clamped rather than followed exactly — the
+ * standard fix for the fact that 1/sin(interior-angle/2) diverges as a
+ * corner sharpens toward a spike (5° interior angle -> 22.9x the requested
+ * distance). 4 matches the conventional SVG/Canvas/Cairo default, i.e. joins
+ * sharper than ~29° (2*asin(1/4)) bevel instead of mitering to a point.
+ * Building footprints from GIS outlines and CAD traces do contain
+ * near-degenerate spikes, so this is not optional polish on the fix below —
+ * without it, correcting the 1/√2 under-inset turns a 0.037 m cosmetic
+ * error into unbounded geometry on any acute corner.
+ */
+export const RING_INSET_MITER_LIMIT = 4;
+
+/**
  * Inset an open or closed ring by `distance` metres toward its interior.
  * Used so a roof deck sits on the inner face of the wall/parapet instead of
- * overlapping the cladding. Tight corners use a simple averaged inward
- * normal — good enough for the 0.1–0.3 m wall half-thickness we pass.
+ * overlapping the cladding.
+ *
+ * Each vertex moves along its (unit) angle bisector by
+ * `distance / cos(half the angle between the two edge normals)` — the
+ * standard miter-join correction, clamped at RING_INSET_MITER_LIMIT. Before
+ * this, the vertex moved by exactly `distance` along the bisector with no
+ * correction, which is only right for a straight (180°) run: at a 90°
+ * corner it landed 1/√2 (~70.7%) of the requested distance in, and the
+ * existing test's bounds were loose enough (0 to 0.15 accepted for a
+ * requested 0.1) to tolerate that 29.3% error without failing.
  */
 export function insetRing(
   ring: [number, number][],
@@ -80,17 +101,31 @@ export function insetRing(
     const n0z = l0 > 1e-8 ? (d0x / l0) * sign : 0;
     const n1x = l1 > 1e-8 ? (-d1z / l1) * sign : 0;
     const n1z = l1 > 1e-8 ? (d1x / l1) * sign : 0;
-    let nx = n0x + n1x;
-    let nz = n0z + n1z;
+    const nx = n0x + n1x;
+    const nz = n0z + n1z;
     const nl = Math.hypot(nx, nz);
+    let ox: number;
+    let oz: number;
     if (nl < 1e-8) {
-      nx = n0x;
-      nz = n0z;
+      // Near-180° reflex corner: the two edge normals nearly cancel, so the
+      // bisector direction and cos(half-angle) are both ill-conditioned.
+      // Fall back to the incoming edge's own normal, as before.
+      ox = n0x * distance;
+      oz = n0z * distance;
     } else {
-      nx /= nl;
-      nz /= nl;
+      // cos(half the angle between n0 and n1) = |n0 + n1| / 2, by the
+      // half-angle identity for two unit vectors — so nl/2 here, no extra
+      // trig call needed. Applying 1/cosHalfAngle to the RAW (unnormalized)
+      // sum in one step (distance * 2 / nl^2) is algebraically the same as
+      // normalizing to a unit bisector first and then scaling by
+      // distance/cosHalfAngle; this just avoids a second division per axis.
+      const cosHalfAngle = nl / 2;
+      const miterScale = Math.min(1 / cosHalfAngle, RING_INSET_MITER_LIMIT);
+      const scale = (distance * miterScale) / nl;
+      ox = nx * scale;
+      oz = nz * scale;
     }
-    out.push([cur[0] + nx * distance, cur[1] + nz * distance]);
+    out.push([cur[0] + ox, cur[1] + oz]);
   }
   return out;
 }
