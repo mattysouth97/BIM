@@ -191,6 +191,15 @@ export const SERVICE_GROUPS = Object.freeze({
     "IfcFlowStorageDevice",
     "IfcFlowTreatmentDevice",
   ],
+  /**
+   * The exporter's catch-all. Here it holds 28 panelboards and one
+   * `M_Elevator-Hydraulic:2000 lbs` — both real building services, so both are
+   * kept. They are DETAILED rather than proxied, and that is the whole point:
+   * as a bounding box the elevator became a storey-height grey slab standing in
+   * the middle of the ductwork, reading as plant that is not there. A box is an
+   * honest proxy for a valve, which is small and repeated; it is a misleading
+   * one for a single object the size of a shaft.
+   */
   equipment: ["IfcBuildingElementProxy", "IfcDistributionElement"],
 });
 
@@ -213,6 +222,9 @@ const SERVICE_DETAILED = Object.freeze([
   "IfcEnergyConversionDevice",
   "IfcFlowMovingDevice",
   "IfcFlowStorageDevice",
+  // Few, large and individually recognisable — the cases a box misrepresents.
+  "IfcBuildingElementProxy",
+  "IfcDistributionElement",
 ]);
 
 const SERVICE_COLOUR = Object.freeze({
@@ -221,7 +233,7 @@ const SERVICE_COLOUR = Object.freeze({
   valve: [0.86, 0.52, 0.36, 1],
   terminal: [0.94, 0.80, 0.36, 1],
   plant: [0.44, 0.70, 0.58, 1],
-  equipment: [0.60, 0.60, 0.64, 1],
+  equipment: [0.58, 0.60, 0.66, 1],
 });
 
 /**
