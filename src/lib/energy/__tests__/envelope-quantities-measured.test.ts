@@ -53,7 +53,7 @@ const measured: MeasuredEnvelope = {
   wallLengthM: 217.01,
   grossWallAreaSqm: 2454.52,
   roofAreaSqm: 2669.21,
-  volumeM3: 20685.33,
+  volumeM3: 20701.55,
   derivedFloorAreaSqm: 4314.2,
   basis: "test fixture — the Clinic's figures",
 };
@@ -66,7 +66,7 @@ describe("envelopeQuantities — measured envelope", () => {
     expect(q.wallLengthM).toBe(217.01);
     expect(q.grossWallAreaSqm).toBe(2454.52);
     expect(q.roofAreaSqm).toBe(2669.21);
-    expect(q.volumeM3).toBe(20685.33);
+    expect(q.volumeM3).toBe(20701.55);
     expect(q.derivedFloorAreaSqm).toBe(4314.2);
     // The 20 × 10 × 6 box this recipe would otherwise extrude is nowhere in it.
     expect(q.grossWallAreaSqm).not.toBe(2 * (20 + 10) * 6);

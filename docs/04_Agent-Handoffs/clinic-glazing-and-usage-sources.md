@@ -95,13 +95,13 @@ What made it honest rather than fitted:
   net-wall ratio 0.1242 that was first proposed would have landed the
   windows on 267.16 while unpricing 267 m² of wall. Doors end up at wall U
   (A-DOORS). Tests assert the engine's element areas: Windows 267.16,
-  Walls 2,187.36, Roof 2,669.21, Ground 2,621.08, Ventilation 20,685.33.
+  Walls 2,187.36, Roof 2,669.21, Ground 2,621.08, Ventilation 20,701.55.
 - **Volume measured, not bracketed.** `scripts/lib/ifc-space-volume.mjs`
   takes the signed volume of every IfcSpace solid; `spaces.json` now ships
   beside the manifest with one row per space (area, storey, net and gross
-  volume with basis, plan extent). Gross conditioned volume **20,685.33 m³**
+  volume with basis, plan extent). Gross conditioned volume **20,701.55 m³**
   = floor area × storey floor-to-floor per room + the three OPEN TO BELOW
-  voids as their own solids; the room solids themselves sum to
+  voids as their own solids + the 9.25 m lift shaft as its own solid; the room solids themselves sum to
   **12,928.26 m³** because 150 of 153 first-floor rooms stop at a 2.80 m
   ceiling under a 4.57 m storey. The engine takes gross (ACH50 is quoted
   against the air barrier); the 37 % gap is the same suspended-ceiling

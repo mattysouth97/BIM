@@ -125,7 +125,7 @@ describe("the recipe's envelope is the measured one, and the heat-loss model rec
     expect(area("Walls")).toBeCloseTo(2150.3 + 37.06, 1);
     expect(area("Roof")).toBeCloseTo(2286.93 + 382.28, 1);
     expect(area("Ground Floor")).toBeCloseTo(2621.08, 1);
-    expect(area(VENTILATION_ELEMENT_NAME)).toBeCloseTo(20685.33, 1);
+    expect(area(VENTILATION_ELEMENT_NAME)).toBeCloseTo(20701.55, 1);
   });
 
   it("the gross volume is the engine's, and it is larger than the room solids by the plenums", () => {
@@ -133,10 +133,13 @@ describe("the recipe's envelope is the measured one, and the heat-loss model rec
     expect(e.conditionedVolumeGrossM3).toBeGreaterThan(e.roomVolumeNetM3);
     expect(e.conditionedVolumeGrossM3).toBeGreaterThan(19610);
     expect(e.conditionedVolumeGrossM3).toBeLessThan(24240);
-    // What the manifest says: floor × f2f per storey plus the voids' solids.
+    // What the manifest says: floor × f2f per storey, the three voids'
+    // solids, and the lift shaft's solid above its storey (9.25 m tall,
+    // 4.356 m², nothing modelled above it).
     const byStorey = 2525.67 * 4.57 + 1723.69 * 4.68 + 64.83 * 3.4;
     const voids = 183.26 + 347.85 + 324.62;
-    expect(e.conditionedVolumeGrossM3).toBeCloseTo(byStorey + voids, 0);
+    const liftAboveStorey = 36.13 - 4.356 * 4.57;
+    expect(e.conditionedVolumeGrossM3).toBeCloseTo(byStorey + voids + liftAboveStorey, 0);
   });
 });
 

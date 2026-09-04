@@ -104,10 +104,12 @@ export const CLINIC_MEASURED_ENVELOPE = Object.freeze({
    * `public/reference-buildings/bs-medical-dental-clinic/manifest.json`
    * (`areas.conditionedVolumeGrossM3`): each floor-counting room as floor
    * area × its storey's floor-to-floor, plus the three OPEN TO BELOW voids as
-   * their own solids. This replaced a 19,610–24,240 range on 2026-09-04; it
-   * sits inside that range and every term is named in `spaces.json`.
+   * their own solids, and the 9.25 m lift shaft — a room taller than its
+   * storey with no void modelled above it — as its own solid. This replaced
+   * a 19,610–24,240 range on 2026-09-04; it sits inside that range and every
+   * term is named in `spaces.json`.
    */
-  conditionedVolumeGrossM3: 20685.33,
+  conditionedVolumeGrossM3: 20701.55,
   /**
    * The same 262 spaces' own solids summed, which stop at the ceilings — 150
    * of the 153 first-floor rooms are 2.80 m tall under a 4.57 m storey. The
@@ -357,6 +359,6 @@ export const CLINIC_ASSUMPTIONS: readonly ClinicAssumption[] = Object.freeze([
   { id: "A-HVAC", assumes: "Central gas heating (η 0.85), central chiller (COP 3.0), mechanical supply ventilation without heat recovery.", why: "The HVAC IFC has 8 IfcFlowMovingDevice and 3 IfcEnergyConversionDevice, so system TYPE is partly stated, but efficiencies are not. These are placeholders to be replaced from the device data; they are not read from the file." },
   { id: "A-LPD", assumes: "Lighting power density 9.4 W/m².", why: "ASHRAE 90.1-2010 clinic allowance, 0.87 W/ft². The file states no lighting load." },
   { id: "A-OCCUPANCY", assumes: "Clinic weekday/weekend schedules, 0.1 persons/m², 15 W/m² internal gain, 5 L/m²·day hot water.", why: "No occupancy data exists in a coordination model. Generic clinic profile; every one of these is an assumption." },
-  { id: "A-VOLUME", assumes: "The ventilation term uses the gross conditioned volume (20,685 m³, inside the air barrier), not the 12,928 m³ the room solids sum to.", why: "The file states no volume; both figures are measured from it. The room solids stop at 2.80 m ceilings under 4.57 m storeys, so their sum leaves out the plenums, and ACH50 is defined against everything inside the air barrier. Choosing the net figure would cut infiltration loss by 37 % for a building whose plenums are inside its envelope. Gross also includes the intermediate slab and structure (~0.3 m per storey, ~6 %), so it is slightly more than the air itself — well inside ACH50's own uncertainty, and stated rather than corrected." },
+  { id: "A-VOLUME", assumes: "The ventilation term uses the gross conditioned volume (20,702 m³, inside the air barrier), not the 12,928 m³ the room solids sum to.", why: "The file states no volume; both figures are measured from it. The room solids stop at 2.80 m ceilings under 4.57 m storeys, so their sum leaves out the plenums, and ACH50 is defined against everything inside the air barrier. Choosing the net figure would cut infiltration loss by 37 % for a building whose plenums are inside its envelope. Gross also includes the intermediate slab and structure (~0.3 m per storey, ~6 %), so it is slightly more than the air itself — well inside ACH50's own uncertainty, and stated rather than corrected." },
   { id: "A-ENVELOPE-SOURCE", assumes: "Envelope areas come from the measured manifest, not from the recipe's footprint.", why: "The recipe footprint is a 52.66 × 56.90 bounding box of an L-shaped plan; extruding it cannot reproduce a 240.73 m² clerestory. The measured areas travel on the recipe as `measuredEnvelope`, and `envelopeQuantities` returns them with source \"measured\" instead of extruding." },
 ]);

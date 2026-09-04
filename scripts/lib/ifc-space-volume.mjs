@@ -11,13 +11,25 @@
 // theorem over each tessellated triangle gives the signed volume of a closed
 // mesh exactly, and the storey-height guess drops out.
 //
-// Each placed part is taken by absolute value on its own, because a
-// `flatTransformation` with a negative determinant (a mirrored placement)
-// flips the sign of the whole part, and summing a mirrored part against an
-// unmirrored one would cancel real volume.
+// "Closed" is the premise, and web-ifc does not always deliver it. On the
+// Duplex, five of 37 room solids came back with a NEGATIVE signed volume
+// larger than their own bounding box — a 10 m² hallway at 128 m³ — which no
+// consistently wound closed mesh can produce; the concave outlines had been
+// triangulated with flipped faces. Every simple box was exact. So each
+// space carries a `closed` verdict, from two facts a correct measurement
+// cannot violate: the signed volume has the sign the placement's handedness
+// predicts, and it does not exceed the bounding box. A space that fails is
+// reported with its bounding box and height so the caller can fall back to
+// area × height and SAY so, rather than ship 128 m³ for a corridor.
 
 /**
- * @returns Map<expressID, { volumeM3, minX, maxX, minY, maxY, minZ, maxZ, parts }>
+ * @returns Map<expressID, {
+ *   volumeM3,        // Σ signed part volumes, sign-corrected for mirrored placements
+ *   absVolumeM3,     // Σ |part volume| — equals volumeM3 when every part is wound the same way
+ *   bboxVolumeM3,
+ *   closed,          // true when volumeM3 > 0, ≤ bbox, and no part was wound against the rest
+ *   minX, maxX, minY, maxY, minZ, maxZ, parts
+ * }>
  *   Coordinates are web-ifc's Y-up frame, metres — the same frame the fabric
  *   GLB is written in, so `x`/`z` are plan axes and `y` is height.
  */
@@ -29,6 +41,9 @@ export function measureSpaceMeshes(api, webIfc, modelId) {
     if (!record) {
       record = {
         volumeM3: 0,
+        absVolumeM3: 0,
+        bboxVolumeM3: 0,
+        closed: false,
         minX: Infinity, maxX: -Infinity,
         minY: Infinity, maxY: -Infinity,
         minZ: Infinity, maxZ: -Infinity,
@@ -81,10 +96,26 @@ export function measureSpaceMeshes(api, webIfc, modelId) {
           ay * (bx * cz - bz * cx) +
           az * (bx * cy - by * cx);
       }
-      record.volumeM3 += Math.abs(six) / 6;
+      // A mirrored placement (negative determinant) reverses every face's
+      // winding, so its signed volume comes out negative for a correct mesh.
+      // Correct for that here; what is left is the mesh's own orientation.
+      const det =
+        m[0] * (m[5] * m[10] - m[6] * m[9]) -
+        m[4] * (m[1] * m[10] - m[2] * m[9]) +
+        m[8] * (m[1] * m[6] - m[2] * m[5]);
+      const signed = (six / 6) * (det < 0 ? -1 : 1);
+      record.volumeM3 += signed;
+      record.absVolumeM3 += Math.abs(signed);
       record.parts += 1;
       geometry.delete();
     }
+
+    record.bboxVolumeM3 =
+      (record.maxX - record.minX) * (record.maxY - record.minY) * (record.maxZ - record.minZ);
+    record.closed =
+      record.volumeM3 > 0 &&
+      record.volumeM3 <= record.bboxVolumeM3 * 1.001 &&
+      Math.abs(record.absVolumeM3 - record.volumeM3) <= record.absVolumeM3 * 1e-6;
   });
 
   return out;

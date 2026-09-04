@@ -481,10 +481,47 @@ async function main() {
   const spaceMeshes = measureSpaceMeshes(api, webIfc, spaceFile.modelId);
   const r2 = (n) => Math.round(n * 100) / 100;
   const storeyById = new Map(storeys.map((s) => [s.id, s]));
+  // Double-height air is sometimes its own space (OPEN TO BELOW) and
+  // sometimes only the upper part of a tall room's solid. A tall room whose
+  // upper part is ALSO a void row must stop at its storey, or that column of
+  // air is counted twice; a tall room with nothing modelled above it — the
+  // Duplex's 3.98 m foyer under a 3.10 m storey, the Clinic's 9.25 m lift
+  // shaft — is the only record of its air, and its solid is the truth. So
+  // the test is per room: is there a void solid overlapping it in plan that
+  // begins where its storey ends?
+  const voidSolids = spaces
+    .filter((sp) => !sp.countsAsFloorArea && sp.countsAsConditionedVolume)
+    .map((sp) => spaceMeshes.get(sp.expressID))
+    .filter(Boolean);
+  const hasVoidAbove = (mesh, storeyTopM) =>
+    voidSolids.some(
+      (v) =>
+        v.minY < mesh.maxY - 0.01 &&
+        v.maxY > storeyTopM + 0.01 &&
+        v.minX < mesh.maxX && v.maxX > mesh.minX &&
+        v.minZ < mesh.maxZ && v.maxZ > mesh.minZ,
+    );
   const spaceRows = spaces.map((s) => {
     const mesh = spaceMeshes.get(s.expressID) ?? null;
-    const netVolumeM3 =
-      s.volumeM3 != null ? s.volumeM3 : mesh ? r2(mesh.volumeM3) : null;
+    const meshHeight = mesh ? mesh.maxY - mesh.minY : null;
+    // A stated IfcQuantityVolume wins. Otherwise the solid, when it is a
+    // closed one; otherwise floor area × the solid's height, which is exact
+    // for a prismatic room and an upper bound for a sloped one — and the
+    // source says which of the three it was. Five of the Duplex's 37 room
+    // solids failed the closed test (a 10 m² hallway read 128 m³), so this
+    // branch is not theoretical.
+    let netVolumeM3 = null;
+    let netVolumeSource = null;
+    if (s.volumeM3 != null) {
+      netVolumeM3 = s.volumeM3;
+      netVolumeSource = "quantity";
+    } else if (mesh && mesh.closed) {
+      netVolumeM3 = r2(mesh.volumeM3);
+      netVolumeSource = "mesh";
+    } else if (mesh && s.floorAreaSqm != null && meshHeight > 0) {
+      netVolumeM3 = r2(s.floorAreaSqm * meshHeight);
+      netVolumeSource = "area × solid height (solid not closed)";
+    }
     // Gross conditioned volume, the quantity an infiltration rate is quoted
     // against: everything inside the air barrier, ceiling plenums included.
     // A floor-counting room is its floor area × its storey's floor-to-floor
@@ -494,13 +531,27 @@ async function main() {
     // counts a slab of air twice: the room below a void stops at its storey
     // height, and the void starts there.
     const storey = s.storeyId ? storeyById.get(s.storeyId) : null;
-    const meshHeight = mesh ? mesh.maxY - mesh.minY : null;
     let grossVolumeM3 = null;
     let grossVolumeBasis = null;
     if (s.countsAsFloorArea && s.floorAreaSqm != null) {
       if (storey && storey.floorToFloorHeightM > 0) {
-        grossVolumeM3 = r2(s.floorAreaSqm * storey.floorToFloorHeightM);
-        grossVolumeBasis = "floor area × storey floor-to-floor";
+        const byStorey = r2(s.floorAreaSqm * storey.floorToFloorHeightM);
+        // A room taller than its storey — the Duplex's 3.98 m foyer under a
+        // 3.10 m storey — runs up through the level above, whose floor area
+        // does not include it. Its own solid is the larger and the truer.
+        const storeyTopM = storey.elevationM + storey.floorToFloorHeightM;
+        if (
+          netVolumeM3 != null &&
+          netVolumeM3 > byStorey &&
+          mesh &&
+          !hasVoidAbove(mesh, storeyTopM)
+        ) {
+          grossVolumeM3 = netVolumeM3;
+          grossVolumeBasis = "own solid (taller than its storey, no void modelled above it)";
+        } else {
+          grossVolumeM3 = byStorey;
+          grossVolumeBasis = "floor area × storey floor-to-floor";
+        }
       } else if (meshHeight != null && meshHeight > 0) {
         grossVolumeM3 = r2(s.floorAreaSqm * meshHeight);
         grossVolumeBasis = "floor area × own solid's height (top storey)";
@@ -521,9 +572,11 @@ async function main() {
       excludedFromFloorAreaReason: s.excludedFromFloorAreaReason,
       // A stated IfcQuantityVolume wins over the mesh when the file carries
       // one; the Clinic carries none, so every row here is "mesh".
-      /** Air below the ceiling, from the space's own solid. */
+      /** Air below the ceiling, from the space's own solid where it is closed. */
       netVolumeM3,
-      netVolumeSource: s.volumeM3 != null ? "quantity" : mesh ? "mesh" : null,
+      netVolumeSource,
+      /** False when the tessellated solid failed the closed-mesh test; see ifc-space-volume.mjs. */
+      solidClosed: mesh ? mesh.closed : null,
       /** Inside the air barrier, plenum included — see the note above. */
       grossVolumeM3,
       grossVolumeBasis,
@@ -554,6 +607,34 @@ async function main() {
   const unmeasuredConditioned = spaceRows.filter(
     (s) => s.countsAsConditionedVolume && s.netVolumeM3 == null,
   ).length;
+  const openSolids = spaceRows.filter((s) => s.solidClosed === false).length;
+  // Net is air below the ceiling; gross is everything inside the air barrier.
+  // The first is a subset of the second by construction, so a row where it
+  // is not is a measurement that went wrong, and it stops the build here
+  // rather than reaching a manifest — which is exactly how the Duplex's
+  // flipped-winding solids were caught (net 1,749 m³ against gross 1,588).
+  for (const s of spaceRows) {
+    if (s.netVolumeM3 != null && s.grossVolumeM3 != null && s.netVolumeM3 > s.grossVolumeM3 + 0.01) {
+      throw new Error(
+        `Space ${s.id} (${s.longName ?? s.name}): net volume ${s.netVolumeM3} m3 exceeds gross ${s.grossVolumeM3} m3 ` +
+          `(net from ${s.netVolumeSource}, gross from ${s.grossVolumeBasis}). Net is a subset of gross by definition.`,
+      );
+    }
+  }
+  if (roomVolumeNetM3 > conditionedVolumeGrossM3 + 0.01) {
+    throw new Error(
+      `Net room volume ${roomVolumeNetM3} m3 exceeds gross conditioned volume ${conditionedVolumeGrossM3} m3.`,
+    );
+  }
+  // The names actually excluded from the conditioned volume on THIS
+  // building, so the note never mentions a room the building does not have.
+  const excludedNames = [
+    ...new Set(
+      spaceRows
+        .filter((s) => !s.countsAsConditionedVolume)
+        .map((s) => (s.longName ?? s.name).trim().toUpperCase()),
+    ),
+  ].sort();
   // A building need not have a structural model. Schependomlaan is one
   // architectural file; the Clinic is five. Absent roles are skipped rather
   // than assumed, so a missing discipline is an empty contribution and not a
@@ -923,12 +1004,16 @@ async function main() {
       conditionedVolumeGrossM3,
       roomVolumeNetM3,
       volumeNote:
-        `Gross from ${grossRows.length} spaces (floor area × storey height, voids as their own solids); ` +
-        `net from ${conditionedRows.length} space solids, ROOF and MECH. YARD excluded` +
+        `Gross from ${grossRows.length} spaces (floor area × storey height; voids, and rooms taller than their storey with no void above, as their own solids); ` +
+        `net from ${conditionedRows.length} space solids` +
+        (excludedNames.length > 0 ? `, ${excludedNames.join(" and ")} excluded` : "") +
+        (openSolids > 0
+          ? `; ${openSolids} solids failed the closed-mesh test and are counted as floor area × their own height`
+          : "") +
         (unmeasuredConditioned > 0
           ? `; ${unmeasuredConditioned} conditioned spaces have no solid and are in neither figure`
           : "") +
-        ". A closed tessellation's signed volume is exact; a space that is not closed reads low, not high.",
+        ". A closed tessellation's signed volume is exact.",
     },
     /**
      * The layer stacks, outside-in, as the model states them.

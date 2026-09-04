@@ -14,6 +14,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 625.16,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 638.68,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -38,6 +39,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 814.45,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 833.02,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -62,6 +64,7 @@
       "excludedFromFloorAreaReason": "\"ROOF\" — a roof surface modelled as a space; it has an area but is not enclosed floor",
       "netVolumeM3": 2314.97,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": null,
       "grossVolumeBasis": null,
       "extent": {
@@ -86,6 +89,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 142.66,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 249.91,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -110,6 +114,7 @@
       "excludedFromFloorAreaReason": "\"ROOF\" — a roof surface modelled as a space; it has an area but is not enclosed floor",
       "netVolumeM3": 6257.34,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": null,
       "grossVolumeBasis": null,
       "extent": {
@@ -134,6 +139,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 632.92,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 1081.61,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -158,6 +164,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 71.98,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 126.8,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -182,6 +189,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 76.49,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 134.53,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -206,6 +214,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 229.85,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 396.88,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -230,6 +239,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 112.66,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 194.93,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -254,6 +264,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 182.63,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 308.7,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -278,6 +289,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 83.03,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 145.38,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -302,6 +314,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 155.06,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 265.2,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -326,6 +339,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 143.35,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 244.9,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -350,6 +364,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 116.82,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 202.75,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -374,6 +389,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 69.78,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 125.42,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -398,6 +414,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 58.64,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 106.41,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -422,6 +439,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 322.34,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 540.61,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -446,6 +464,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 182.18,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 185.13,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -470,6 +489,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 29.7,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 52.54,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -494,6 +514,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 182.73,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 310,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -518,6 +539,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 83.51,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 145.81,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -542,6 +564,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 77.26,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 138.12,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -566,6 +589,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 130.85,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 226.66,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -590,6 +614,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 88.92,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 156.7,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -614,6 +639,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 45.04,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 80.73,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -638,6 +664,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 53.81,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 93.11,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -662,6 +689,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 79.45,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 140.93,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -686,6 +714,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 42.02,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 74.46,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -710,6 +739,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 182.56,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 309.93,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -734,6 +764,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 38.88,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 68.58,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -758,6 +789,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 34.78,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 62.59,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -782,6 +814,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 80.04,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 143.02,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -806,6 +839,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 37.55,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 67.04,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -830,6 +864,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 63.23,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 114.88,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -854,6 +889,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 46.1,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 85.38,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -878,6 +914,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 39.48,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 68.83,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -902,6 +939,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 48.77,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 88.04,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -926,6 +964,7 @@
       "excludedFromFloorAreaReason": "\"OPEN TO BELOW\" — a double-height void; the floor it opens through is already counted once on its own storey",
       "netVolumeM3": 183.26,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 183.26,
       "grossVolumeBasis": "own solid (void above a counted floor)",
       "extent": {
@@ -950,6 +989,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 100.46,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 170.82,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -974,6 +1014,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 28.14,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 50.76,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -998,6 +1039,7 @@
       "excludedFromFloorAreaReason": "\"OPEN TO BELOW\" — a double-height void; the floor it opens through is already counted once on its own storey",
       "netVolumeM3": 347.85,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 347.85,
       "grossVolumeBasis": "own solid (void above a counted floor)",
       "extent": {
@@ -1022,6 +1064,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 39.96,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 73.63,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1046,6 +1089,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 74.64,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 126.56,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1070,6 +1114,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 45.65,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 80.3,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1094,6 +1139,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.66,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 43.31,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1118,6 +1164,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 60.09,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 103.24,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1142,6 +1189,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 89.42,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 156.75,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1166,6 +1214,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 54.44,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 96.88,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1190,6 +1239,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 32.33,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 58.42,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1214,6 +1264,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 63.14,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 110.76,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1238,6 +1289,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 53.48,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 89.59,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1262,6 +1314,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 35.71,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 63.56,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1286,6 +1339,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 38.99,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 70.28,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1310,6 +1364,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 69.79,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 123.23,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1334,6 +1389,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 203.71,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 220.43,
       "grossVolumeBasis": "floor area × own solid's height (top storey)",
       "extent": {
@@ -1358,6 +1414,7 @@
       "excludedFromFloorAreaReason": "\"OPEN TO BELOW\" — a double-height void; the floor it opens through is already counted once on its own storey",
       "netVolumeM3": 324.62,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 324.62,
       "grossVolumeBasis": "own solid (void above a counted floor)",
       "extent": {
@@ -1382,6 +1439,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 29.67,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 38.04,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1406,6 +1464,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 56.4,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 100.86,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1430,6 +1489,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 88.2,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 153.68,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1454,6 +1514,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 43.12,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 75.64,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1478,6 +1539,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 26.65,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 46.94,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1502,6 +1564,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 37.12,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 67.24,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1526,6 +1589,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 38.56,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 68.22,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1550,6 +1614,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 76.04,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 132.14,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1574,6 +1639,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.89,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 43.99,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1598,6 +1664,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 22.55,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 40.12,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1622,6 +1689,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.7,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 42.53,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1646,6 +1714,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 40.56,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 74.2,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1670,6 +1739,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 18.83,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 34.93,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1694,6 +1764,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 26.34,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 46.99,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1718,6 +1789,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 19.28,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 35.39,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1742,6 +1814,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 28.96,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 52.5,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1766,6 +1839,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.64,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 43.65,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1790,6 +1864,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 28.91,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 52.25,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1814,6 +1889,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 33.25,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 58.03,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1838,6 +1914,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 29.41,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 53.04,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1862,6 +1939,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 22.31,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 39.9,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1886,6 +1964,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 16.61,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 29.01,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1910,6 +1989,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 16.46,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 28.75,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1934,6 +2014,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 14.27,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 26.02,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1958,6 +2039,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 79.05,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 136.7,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -1982,6 +2064,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 43.86,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 77.84,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2006,6 +2089,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.11,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 45.63,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2030,6 +2114,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.07,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 43.82,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2054,6 +2139,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 26.67,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 47.3,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2078,6 +2164,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.25,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 44.57,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2102,6 +2189,7 @@
       "excludedFromFloorAreaReason": "\"ROOF\" — a roof surface modelled as a space; it has an area but is not enclosed floor",
       "netVolumeM3": 203.63,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": null,
       "grossVolumeBasis": null,
       "extent": {
@@ -2126,6 +2214,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 38.25,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 66.69,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2150,6 +2239,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 32.88,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 57.43,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2174,6 +2264,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 33.25,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 58.26,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2198,6 +2289,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 20.68,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 37.75,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2222,6 +2314,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 13.73,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 25.36,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2246,6 +2339,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 16.43,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 29.24,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2270,6 +2364,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 21.19,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 37.62,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2294,6 +2389,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.69,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 42.59,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2318,6 +2414,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 47.55,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 83.42,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2342,6 +2439,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 50.18,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 87.71,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2366,6 +2464,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 50.17,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 87.68,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2390,6 +2489,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.48,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 45.08,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2414,6 +2514,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 40.22,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 71.08,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2438,6 +2539,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 51.37,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 90.09,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2462,6 +2564,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 34.88,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 61.03,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2486,6 +2589,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 34.79,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 61.42,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2510,6 +2614,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.94,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 44.24,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2534,6 +2639,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.71,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 44.83,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2558,6 +2664,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 82.19,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 143.73,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2582,6 +2689,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 105.77,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 127.78,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2606,6 +2714,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 30.02,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 52.69,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2630,6 +2739,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 37.61,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 64.59,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2654,6 +2764,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 62.16,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 106.3,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2678,6 +2789,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 28.61,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 50.37,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2702,6 +2814,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 28.39,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 52.21,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2726,6 +2839,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 30.92,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 56.21,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2750,6 +2864,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.61,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 45.29,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2774,6 +2889,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 27.49,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 49.6,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2798,6 +2914,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 11.71,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 22.2,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2822,6 +2939,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 28.29,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 51.85,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2846,6 +2964,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.48,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 44.87,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2870,6 +2989,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 4.65,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 9.15,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2894,6 +3014,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 26.4,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 46.66,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2918,6 +3039,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 14.32,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 25.76,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2942,6 +3064,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 27.88,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 49.13,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2966,6 +3089,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 33.27,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 58.23,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -2990,6 +3114,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 4.65,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 9.14,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3014,6 +3139,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.3,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 45.74,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3038,6 +3164,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 22.06,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 40.92,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3062,6 +3189,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 29.57,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 51.97,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3086,6 +3214,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 27.86,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 50.41,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3110,6 +3239,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 64.5,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 109.88,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3134,6 +3264,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 28.07,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 50.88,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3158,6 +3289,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.43,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 44.05,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3182,6 +3314,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 89.83,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 157,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3206,6 +3339,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 34.02,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 60.02,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3230,6 +3364,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 22.31,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 40.13,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3254,6 +3389,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 39.71,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 71.01,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3278,6 +3414,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.93,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 45.33,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3302,6 +3439,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 27.32,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 49.36,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3326,6 +3464,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 39.77,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 71.44,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3350,6 +3489,7 @@
       "excludedFromFloorAreaReason": "\"ROOF\" — a roof surface modelled as a space; it has an area but is not enclosed floor",
       "netVolumeM3": 77.07,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": null,
       "grossVolumeBasis": null,
       "extent": {
@@ -3374,6 +3514,7 @@
       "excludedFromFloorAreaReason": "\"ROOF\" — a roof surface modelled as a space; it has an area but is not enclosed floor",
       "netVolumeM3": 77.03,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": null,
       "grossVolumeBasis": null,
       "extent": {
@@ -3398,6 +3539,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.28,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 41.12,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3422,6 +3564,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 33.45,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 58.61,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3446,6 +3589,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 33.19,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 58.06,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3470,6 +3614,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 28.9,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 52.32,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3494,6 +3639,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 30.75,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 56.17,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3518,6 +3664,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 29.27,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 52.91,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3542,6 +3689,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 30.25,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 54.97,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3566,6 +3714,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 30.97,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 56.57,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3590,6 +3739,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 21.46,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 40.52,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3614,6 +3764,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 53.25,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 90.34,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3638,6 +3789,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 22.84,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 40.55,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3662,6 +3814,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.23,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 41.13,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3686,6 +3839,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 26.12,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 47.95,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3710,6 +3864,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 32.58,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 54.2,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3734,6 +3889,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.73,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 46.24,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3758,6 +3914,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 12.82,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 23.16,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3782,6 +3939,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 30.67,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 53.88,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3806,6 +3964,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.79,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 42.34,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3830,6 +3989,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 30.98,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 54.37,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3854,6 +4014,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 22.55,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 40,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3878,6 +4039,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 11.55,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 21.23,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3902,6 +4064,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 41.52,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 73.27,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3926,6 +4089,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 41.38,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 74.92,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3950,6 +4114,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 9.06,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 17.28,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3974,6 +4139,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 13.97,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 25.93,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -3998,6 +4164,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 31.23,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 56.06,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4022,6 +4189,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 37.28,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 67.36,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4046,6 +4214,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 35.6,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 63.65,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4070,6 +4239,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 27.79,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 50.68,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4094,6 +4264,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 22.79,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 41.54,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4118,6 +4289,7 @@
       "excludedFromFloorAreaReason": "\"ROOF\" — a roof surface modelled as a space; it has an area but is not enclosed floor",
       "netVolumeM3": 376.33,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": null,
       "grossVolumeBasis": null,
       "extent": {
@@ -4142,6 +4314,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 17.38,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 31.43,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4166,6 +4339,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 28.7,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 51.63,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4190,6 +4364,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 33.27,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 58.24,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4214,6 +4389,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 29.29,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 53.18,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4238,6 +4414,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 30.76,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 56.17,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4262,6 +4439,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 15.28,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 28.09,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4286,6 +4464,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 11.02,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 20.42,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4310,6 +4489,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 12.35,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 22.82,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4334,6 +4514,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.79,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 43.15,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4358,6 +4539,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 12.43,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 24.18,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4382,6 +4564,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 17.01,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 30.22,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4406,6 +4589,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.2,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 45.43,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4430,6 +4614,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 29.12,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 53.14,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4454,6 +4639,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 1.51,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 3.56,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4478,6 +4664,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.11,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 44.44,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4502,6 +4689,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 9.71,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 18.14,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4526,6 +4714,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.68,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 45.42,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4550,6 +4739,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 30.24,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 53.15,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4574,6 +4764,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 59.2,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 102.16,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4598,6 +4789,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.24,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 44.73,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4622,6 +4814,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.16,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 44.5,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4646,6 +4839,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 10.91,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 20.2,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4670,6 +4864,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 9.6,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 18.44,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4694,6 +4889,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.23,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 44.8,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4718,6 +4914,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.44,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 45.17,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4742,6 +4939,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 38.01,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 64.25,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4766,6 +4964,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 20.45,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 36.77,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4790,6 +4989,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 5.59,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 10.7,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4814,6 +5014,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 12.8,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 23.83,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4838,6 +5039,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.19,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 42.05,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4862,6 +5064,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 6.52,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 13.09,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4886,6 +5089,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.35,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 45.14,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4910,6 +5114,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 27.91,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 51.05,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4934,6 +5139,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 32.86,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 59.16,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4958,6 +5164,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.57,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 46.45,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -4982,6 +5189,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.63,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 43.29,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5006,6 +5214,7 @@
       "excludedFromFloorAreaReason": "\"MECH. YARD\" — an outdoor equipment yard enclosed by a screen, not by envelope; it has outdoor air above it",
       "netVolumeM3": 439.57,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": null,
       "grossVolumeBasis": null,
       "extent": {
@@ -5030,8 +5239,9 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 36.13,
       "netVolumeSource": "mesh",
-      "grossVolumeM3": 19.91,
-      "grossVolumeBasis": "floor area × storey floor-to-floor",
+      "solidClosed": true,
+      "grossVolumeM3": 36.13,
+      "grossVolumeBasis": "own solid (taller than its storey, no void modelled above it)",
       "extent": {
         "x": -16.58,
         "z": -26.7,
@@ -5054,6 +5264,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.12,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 42.11,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5078,6 +5289,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 33.45,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 58.62,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5102,6 +5314,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 33.45,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 58.4,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5126,6 +5339,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 33.08,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 57.98,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5150,6 +5364,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 33.45,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 58.61,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5174,6 +5389,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 33.45,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 58.61,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5198,6 +5414,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 12.45,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 23.13,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5222,6 +5439,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 13.02,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 24,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5246,6 +5464,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 11.57,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 22.14,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5270,6 +5489,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.05,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 43.62,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5294,6 +5514,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 26.63,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 47.76,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5318,6 +5539,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 13.03,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 24.68,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5342,6 +5564,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 4.68,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 9.4,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5366,6 +5589,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 30.67,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 53.83,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5390,6 +5614,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 20.47,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 37.4,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5414,6 +5639,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.94,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 43.47,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5438,6 +5664,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 20.36,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 36.17,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5462,6 +5689,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 9.25,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 17.83,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5486,6 +5714,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 14.71,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 26.68,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5510,6 +5739,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 9.6,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 18.44,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5534,6 +5764,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.47,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 42.6,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5558,6 +5789,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 41.81,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 74.95,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5582,6 +5814,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.41,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 46.05,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5606,6 +5839,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 55.45,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 98.46,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5630,6 +5864,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.79,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 43.13,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5654,6 +5889,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.86,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 46.48,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5678,6 +5914,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.45,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 42.67,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5702,6 +5939,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.92,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 44.53,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5726,6 +5964,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 27.76,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 50.53,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5750,6 +5989,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 24.71,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 45.75,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5774,6 +6014,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 40.3,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 72.32,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5798,6 +6039,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.13,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 44.49,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5822,6 +6064,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 30.59,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 56.17,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5846,6 +6089,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 11.72,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 21.72,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5870,6 +6114,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 11.81,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 21.89,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5894,6 +6139,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 12.45,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 23.13,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5918,6 +6164,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 12.35,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 23.05,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5942,6 +6189,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 14.04,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 26.46,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5966,6 +6214,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 4.7,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 9.31,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -5990,6 +6239,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 18.89,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 33.04,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6014,6 +6264,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 9.93,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 18.79,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6038,6 +6289,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 40.82,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 70.35,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6062,6 +6314,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 14.24,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 25.94,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6086,6 +6339,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 13.52,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 25.89,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6110,6 +6364,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 15.8,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 28.67,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6134,6 +6389,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 26.18,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 47.87,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6158,6 +6414,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.02,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 44.64,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6182,6 +6439,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 4.64,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 10.46,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6206,6 +6464,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 22.72,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 40.83,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6230,6 +6489,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 23.1,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 41.76,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6254,6 +6514,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.83,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 46.44,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6278,6 +6539,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 5.3,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 10.3,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6302,6 +6564,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.67,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 46.06,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6326,6 +6589,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 25.67,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 46.52,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6350,6 +6614,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 7.91,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 15.14,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6374,6 +6639,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 12.83,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 23.33,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6398,6 +6664,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 5.85,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 10.74,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6422,6 +6689,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 5.85,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 10.74,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {
@@ -6446,6 +6714,7 @@
       "excludedFromFloorAreaReason": null,
       "netVolumeM3": 38.2,
       "netVolumeSource": "mesh",
+      "solidClosed": true,
       "grossVolumeM3": 67.62,
       "grossVolumeBasis": "floor area × storey floor-to-floor",
       "extent": {

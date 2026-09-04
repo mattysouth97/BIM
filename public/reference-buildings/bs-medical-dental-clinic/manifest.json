@@ -111,9 +111,9 @@
       "W": 566.57,
       "NW": 0
     },
-    "conditionedVolumeGrossM3": 20685.33,
+    "conditionedVolumeGrossM3": 20701.55,
     "roomVolumeNetM3": 12928.26,
-    "volumeNote": "Gross from 262 spaces (floor area × storey height, voids as their own solids); net from 262 space solids, ROOF and MECH. YARD excluded. A closed tessellation's signed volume is exact; a space that is not closed reads low, not high."
+    "volumeNote": "Gross from 262 spaces (floor area × storey height; voids, and rooms taller than their storey with no void above, as their own solids); net from 262 space solids, MECH. YARD and ROOF excluded. A closed tessellation's signed volume is exact."
   },
   "assemblies": [
     {
