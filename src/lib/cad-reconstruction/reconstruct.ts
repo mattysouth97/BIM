@@ -48,6 +48,11 @@ import {
   scaleAbout,
   toCounterClockwise,
 } from "./geometry";
+import {
+  chooseSetbackFace,
+  insetEdgeToArea,
+  type SetbackChoice,
+} from "./setback";
 import type {
   AreaValidationRow,
   AssumptionEntry,
@@ -387,6 +392,65 @@ export function reconstruct(
     });
   }
 
+  // P2-31: the parcel ring, when one was supplied alongside a building
+  // outline. Projected with the SAME origin as the footprint so the two rings
+  // share a frame; a parcel in a different frame would report nonsense slack.
+  let parcelRingMm: RingMm | null = null;
+  {
+    const parcelRaw = input.parcel?.polygon?.[0] ?? null;
+    if (parcelRaw && originLngLat && options.project) {
+      try {
+        const project = options.project(originLngLat[0], originLngLat[1]);
+        parcelRingMm = prepareGisRing(projectRingToMm(parcelRaw, project));
+      } catch {
+        parcelRingMm = null;
+      }
+    }
+  }
+
+  // P2-31: one setback decision for the whole stack, taken from evidence —
+  // 용도지역 (VWorld LT_C_UQ111) plus the slack the parcel actually shows.
+  // The rule picks the FACE; 층별개요 already fixed how much comes off it.
+  const setbackChoice = chooseSetbackFace({
+    footprint: footprintCcw,
+    // Preference: an explicitly supplied parcel, else a GIS ring that IS the
+    // parcel, else the site square. The last is synthesised from 대지면적 and
+    // centred on the building, so it shows no directional slack by
+    // construction — which is exactly why `chooseSetbackFace` then reports
+    // the direction as undetermined rather than inventing one.
+    parcel: parcelRingMm ?? (gisIsParcel && gisRingMm ? gisRingMm : siteRing),
+    district: input.zoning?.district ?? null,
+  });
+  if (setbackChoice.reason === "undetermined") {
+    assume({
+      element: "후퇴 방향",
+      floor: "all",
+      assumption: "층별 면적 축소를 중심 기준 균등 축소로 처리",
+      reason: setbackChoice.note,
+      sourceContext: setbackChoice.district
+        ? `SRC-GIS-ZONING (${setbackChoice.district})`
+        : "SRC-GIS-PARCEL / SRC-GIS-ZONING 모두 없음",
+      confidence: "D-INFERRED",
+      impactIfWrong:
+        "층별 면적은 맞지만 방위별 외벽 면적과 일사 취득이 실제와 달라집니다",
+      verificationMethod: "후퇴가 일어난 면을 현장 또는 항공사진으로 확인",
+    });
+  } else {
+    assume({
+      element: "후퇴 방향",
+      floor: "all",
+      assumption: `${setbackChoice.facing} 면으로 후퇴`,
+      reason: setbackChoice.note,
+      sourceContext:
+        setbackChoice.reason === "daylight_setback"
+          ? `건축법 시행령 제86조 + SRC-GIS-ZONING (${setbackChoice.district})`
+          : "SRC-GIS-PARCEL (필지 여유 형상)",
+      confidence: "D-INFERRED",
+      impactIfWrong: "후퇴 면이 다르면 방위별 외벽 면적과 일사 취득이 달라집니다",
+      verificationMethod: "후퇴가 일어난 면을 현장 또는 항공사진으로 확인",
+    });
+  }
+
   const levels: ReconLevel[] = [];
   let elevationMm = 0;
   const below = levelSpecs.specs.filter((s) => s.below);
@@ -397,14 +461,14 @@ export function reconstruct(
   for (const spec of below) {
     belowElevation -= f2fMm;
     levels.push(
-      makeLevel(spec, belowElevation, f2fMm, f2fGrade, footprintCcw, footprintArea, platArea, conflicts),
+      makeLevel(spec, belowElevation, f2fMm, f2fGrade, footprintCcw, footprintArea, platArea, conflicts, setbackChoice),
     );
   }
   levels.reverse();
 
   for (const spec of above) {
     levels.push(
-      makeLevel(spec, elevationMm, f2fMm, f2fGrade, footprintCcw, footprintArea, platArea, conflicts),
+      makeLevel(spec, elevationMm, f2fMm, f2fGrade, footprintCcw, footprintArea, platArea, conflicts, setbackChoice),
     );
     elevationMm += f2fMm;
   }
@@ -756,11 +820,14 @@ function makeLevel(
   footprintArea: number,
   platArea: number | null,
   conflicts: ConflictEntry[],
+  setback?: SetbackChoice,
 ): ReconLevel {
   const id = `L${spec.below ? "B" : ""}${Math.abs(spec.floorNo)}`;
   let plate = footprint;
   let scale = 1;
   let grade: EvidenceGrade = "D-INFERRED";
+  let setbackFacing: Orientation | null = null;
+  let setbackReason: SetbackChoice["reason"] = "undetermined";
 
   const target = spec.registeredAreaSqm;
   if (target && footprintArea > 0) {
@@ -786,8 +853,48 @@ function makeLevel(
       grade = "X-UNRESOLVED";
     } else {
       scale = raw;
-      plate = roundRing(scaleAbout(footprint, raw));
       grade = "D-INFERRED";
+
+      // P2-31: take the area off ONE face when evidence says which. A
+      // concentric shrink gets the area right and the shape wrong — it splits
+      // one real step across four faces, so every face's wall area and every
+      // orientation's solar gain lands where the building has no step.
+      //
+      // Only above-grade levels are directed. A basement that differs from the
+      // footprint is not a daylight setback, and nothing observed says which
+      // way it extends.
+      let directed: RingMm | null = null;
+      if (
+        !spec.below &&
+        setback &&
+        setback.edgeIndex !== null &&
+        raw < 1
+      ) {
+        directed = insetEdgeToArea(footprint, setback.edgeIndex, target);
+        if (directed) {
+          setbackFacing = setback.facing;
+          setbackReason = setback.reason;
+        } else {
+          // The step is geometrically impossible off that face — a
+          // contradiction between the stated area and the observed outline,
+          // not a value to clamp. Fall back and say so.
+          conflicts.push({
+            id: `CONFLICT-SETBACK-${id}`,
+            subject: `${spec.name} 후퇴 방향 대 면적`,
+            sourceA: "SRC-REG-FLOORS",
+            valueA: `${target.toFixed(1)} m²`,
+            sourceB: `복원 외곽 ${setback.facing ?? "지정면"} 후퇴`,
+            valueB: `${footprintArea.toFixed(1)} m²`,
+            magnitude: "한 면 후퇴로는 이 면적을 만들 수 없습니다",
+            possibleExplanation:
+              "후퇴가 두 면 이상에 걸쳐 있거나, 이 층이 별동이거나, 외곽 증거가 이 층을 포함하지 않을 수 있습니다.",
+            resolutionStatus: "documented",
+            requiredVerification: "해당 층 외곽 실측",
+          });
+        }
+      }
+
+      plate = directed ?? roundRing(scaleAbout(footprint, raw));
     }
   }
 
@@ -805,6 +912,8 @@ function makeLevel(
     plateGrade: grade,
     modelAreaSqm: areaSqm(plate),
     plateScale: scale,
+    setbackFacing,
+    setbackReason,
   };
 }
 

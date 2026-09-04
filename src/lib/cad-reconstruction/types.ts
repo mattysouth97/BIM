@@ -62,6 +62,7 @@ export type SourceKind =
   | "gis_building_outline"
   | "gis_parcel_outline"
   | "gis_measured_attributes"
+  | "gis_zoning_district"
   | "user_statement"
   | "code_table";
 
@@ -201,6 +202,15 @@ export interface ReconLevel {
   modelAreaSqm: number;
   /** Uniform scale applied to the footprint to reach the registered area. */
   plateScale: number;
+  /**
+   * The face area was removed from, when evidence determined one (P2-31).
+   * Null means the plate was shrunk concentrically because nothing said which
+   * way it steps — the area is right and the face is unknown, and that must
+   * stay visible rather than reading as a decision.
+   */
+  setbackFacing?: Orientation | null;
+  /** Why that face — see `SetbackReason` in `setback.ts`. */
+  setbackReason?: "daylight_setback" | "lot_slack" | "undetermined";
 }
 
 export interface ReconWall {
@@ -410,6 +420,15 @@ export interface GisFootprintInput {
   error: string | null;
 }
 
+/** 용도지역 as VWorld's `LT_C_UQ111` reports it. */
+export interface ZoningInput {
+  /** `uname`, verbatim — e.g. "제3종일반주거지역". Null when it did not answer. */
+  district: string | null;
+  /** Dataset the value came from, for the evidence register. */
+  source: string;
+  error: string | null;
+}
+
 export interface EvidenceInput {
   buildingPk: string;
   title: BrTitleInfo | null;
@@ -417,6 +436,19 @@ export interface EvidenceInput {
   floors: BrFloorInfo[];
   areas: BrAreaInfo[];
   gis: GisFootprintInput | null;
+  /**
+   * The PARCEL outline, when one is available alongside a building outline
+   * (P2-31). Used only to read which side of the lot the building leaves free,
+   * which is what decides the face a setback comes off.
+   *
+   * Deliberately separate from `gis`: a lot is not a building, and a parcel
+   * ring must never reach the footprint chain. `gis` already carries a parcel
+   * as a *fallback* footprint; this field is the other case — a parcel held
+   * next to a real outline rather than instead of one.
+   */
+  parcel?: GisFootprintInput | null;
+  /** 용도지역, when the zoning layer answered (P2-31). */
+  zoning?: ZoningInput | null;
   address: string | null;
   claims: ReconstructionClaim[];
   /** Injected so a reconstruction is reproducible in tests and in reports. */

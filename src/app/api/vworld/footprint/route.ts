@@ -59,6 +59,23 @@ const contextModeSchema = z.object({
  *   minLng, minLat, maxLng, maxLat - bounding box in WGS84
  *   Returns: { footprints: Array<{ pnu: string; polygon: number[][][] }>, error: string | null }
  */
+/**
+ * A transport failure's underlying cause code, appended to the message.
+ *
+ * `fetch` collapses every network failure into the message "fetch failed" and
+ * hides the real reason on `error.cause.code`. Two sessions spent an hour on a
+ * VWorld outage today because of exactly that. The code is a fixed enum from
+ * undici (ENOTFOUND, ECONNREFUSED, UND_ERR_CONNECT_TIMEOUT, …) plus our own
+ * TIMEOUT — never a key, a URL or user input (AFF-2).
+ */
+function describeFetchError(err: unknown): string {
+  const base = err instanceof Error ? err.message : "VWorld API error";
+  if (!(err instanceof Error)) return base;
+  if (err.name === "TimeoutError") return `${base} (TIMEOUT)`;
+  const code = (err.cause as { code?: unknown } | undefined)?.code;
+  return typeof code === "string" ? `${base} (${code})` : base;
+}
+
 export async function GET(request: NextRequest) {
   const apiKey = process.env.VWORLD_API_KEY;
   if (!apiKey) {
@@ -158,7 +175,7 @@ export async function GET(request: NextRequest) {
     } catch (err) {
       // P1-06 (b): upstream failure → 502, never HTTP 200 with error set.
       return NextResponse.json(
-        { footprints: [], error: err instanceof Error ? err.message : "VWorld API error" },
+        { footprints: [], error: describeFetchError(err) },
         { status: 502 }
       );
     }
@@ -235,7 +252,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     // P1-06 (b): upstream failure → 502, never HTTP 200 with error set.
     return NextResponse.json(
-      { polygon: null, error: err instanceof Error ? err.message : "VWorld API error" },
+      { polygon: null, error: describeFetchError(err) },
       { status: 502 }
     );
   }

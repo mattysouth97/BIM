@@ -83,11 +83,9 @@ files.
    uses a GIS ring **as-is**, never reconciled against the stated 건축면적 — the
    disagreement surfaces honestly as a `REVIEW` row in `buildAreaValidation`
    rather than being silently scaled away.
-3. ~~**Per-storey plans cannot move the number**~~ — closed by P2-30.
-   `envelopeQuantities` sums Σ perimeterᵢ × heightᵢ and counts setback terraces
-   as roof; the traceable engine walls each storey on its own plate. What
-   remains: plates still shrink **concentrically** about the centroid, so the
-   area is right and the face is not (P2-31).
+3. ~~**Per-storey plans cannot move the number**~~ — closed by P2-30, and the
+   concentric-plate follow-up closed by P2-31. The ledger→geometry track
+   (P2-29 → P2-30 → P2-31) is complete.
 
 ## Known Risks
 
@@ -121,6 +119,47 @@ files.
 | `docs/work-plan/` | Referenced by name from `CLAUDE.md`; do not relocate |
 | `src/app/api/bldrgst/_factory.ts` | Shared-key resolution and per-endpoint row caps |
 | `public/models/` | 173 GLBs (102 authoring, 58 equipment, 13 bim-assets) |
+
+## Recent Architectural Changes (2026-09-04 latest: directional setbacks)
+
+- **P2-31 — a step goes on one face.** `makeLevel` used to shrink each plate
+  about its centroid, splitting one real step across four faces. New
+  `src/lib/cad-reconstruction/setback.ts`: `chooseSetbackFace` picks the face
+  from 용도지역 + the slack the parcel actually shows; `insetEdgeToArea` takes
+  the area off it (half-plane clip, bisected on offset — area is monotonic in
+  the offset, so it converges and is deterministic).
+- **The invariant that keeps this honest: the rule picks the FACE, 층별개요 picks
+  the AMOUNT.** No figure from 건축법 시행령 제86조 is encoded anywhere — not
+  1.5 m, not H/2. A rule that contributes no numbers cannot contribute a wrong
+  one, and the amount stays sourced to the register.
+- **New `/api/vworld/zoning`** reads `LT_C_UQ111.uname` (verified: returns
+  "제3종일반주거지역", "일반상업지역" verbatim). `DAYLIGHT_SETBACK_DISTRICTS`
+  lists 전용/일반주거지역 only — **준주거지역 is deliberately absent**, it reads
+  like a 주거지역 and 제86조 does not list it. An absent district is *unknown*,
+  never residential.
+- **Degrade path, all tested:** 주거지역 + north slack → `daylight_setback`;
+  parcel only → `lot_slack` (geometry, explicitly not a code rule); neither →
+  `undetermined` + a stated assumption that per-orientation envelope is
+  unreliable. A single-face step that would collapse the plate emits a
+  `ConflictEntry` and falls back to concentric.
+- **`EvidenceInput.parcel` (additive)** closes a real gap: the model could hold
+  a building outline OR a parcel, never both, so the slack that decides the face
+  was unreachable whenever a real outline existed. Used only for the setback —
+  a parcel ring must never reach the footprint chain.
+- **Known bug in `evidence.ts`, owned elsewhere, not fixed here:**
+  `evidence.ts:383` builds `gisBox` from any GIS ring, missing the
+  `!gisRingIsParcel` guard that line 382 applies to `gisArea`. A parcel's bbox
+  becomes controls C5/C6 graded **B-OBSERVED**/`SRC-GIS-BLDG`, and
+  `reconstruct.ts:265` then builds the footprint from them with the method
+  string "사용자가 진술한 …" though no user stated anything. Reproduced: a 200 m²
+  building on a 7,060 m² lot yields `footprint.areaSqm = 7060.4`, B-OBSERVED.
+  The lot is reported as the building, graded as observed evidence.
+- **VWorld production was broken and is now fixed** (another session): the
+  functions ran in `iad1` (Washington) and api.vworld.kr refuses that egress —
+  `vercel.json` now pins `regions: ["icn1"]`. Verified `X-Vercel-Id`
+  `icn1::iad1` → `icn1::icn1`, 502 → 200 with a real 34-point ring. Until that
+  landed, every production user silently got the 건축면적-solved rectangle
+  instead of the observed outline. It was NOT a geo-block or a bad key.
 
 ## Recent Architectural Changes (2026-09-04 later: per-storey envelope)
 

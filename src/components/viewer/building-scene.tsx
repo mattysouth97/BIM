@@ -26,6 +26,7 @@ import { workspaceBuildingPk } from "@/lib/generative/design-storage";
 import { floorNoFromPlanLevelId } from "@/lib/interior/visible-floors";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
 import { useLedgerReconstruction } from "@/hooks/use-ledger-reconstruction";
+import { useBuildingZoning } from "@/hooks/use-building-zoning";
 import {
   applyLevelPlates,
   provenancePatchForModel,
@@ -116,8 +117,8 @@ function SceneSetup() {
 }
 
 // P2-08: the legacy SAOPass post-processing component was defined here but never
-// mounted — the live pipeline is OutlinePass-based via <ScenePostProcessing />
-// (outline-post-processing.tsx). Removed along with its dead SAOPass/EffectComposer
+// mounted — the live pipeline is OutlinePass-based via <SceneHighlightProcessing />
+// (scene-highlight-processing.tsx). Removed along with its dead SAOPass/EffectComposer
 // imports.
 
 // ─── Campus rendering ────────────────────────────────────────────────────────
@@ -342,7 +343,15 @@ export function BuildingScene({
   // outline — GIS trace when VWorld answered, a ring solved from 건축면적 when
   // it did not — and projects it to local metres itself, so the twin and the
   // traceable engine can no longer describe different buildings.
-  const reconstruction = useLedgerReconstruction(title, floors, footprintDataProp);
+  // P2-31: 용도지역 decides whether a step can be attributed to 일조권. Failure
+  // is expected and harmless — the setback falls back to lot geometry.
+  const zoningQuery = useBuildingZoning(contextCenter);
+  const reconstruction = useLedgerReconstruction(
+    title,
+    floors,
+    footprintDataProp,
+    zoningQuery.data,
+  );
 
   // S4: record that the outline is a reconstruction when it is one — never
   // that it is CAD evidence, and never over an uploaded drawing.

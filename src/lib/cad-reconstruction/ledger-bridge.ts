@@ -41,6 +41,7 @@ import type {
   GisFootprintInput,
   ReconstructionModel,
   RingMm,
+  ZoningInput,
 } from "./types";
 
 /* ------------------------------------------------------------------ */
@@ -54,6 +55,10 @@ export interface LedgerEvidenceInput {
   floors?: readonly BrFloorInfo[];
   areas?: readonly BrAreaInfo[];
   gis?: GisFootprintInput | null;
+  /** Parcel outline held alongside a building outline, for setback slack. */
+  parcel?: GisFootprintInput | null;
+  /** 용도지역 from VWorld LT_C_UQ111, when the zoning route answered (P2-31). */
+  zoning?: ZoningInput | null;
   address?: string | null;
   /** Injected so a reconstruction is reproducible in tests and reports. */
   now?: string;
@@ -74,6 +79,8 @@ export function evidenceFromLedger(input: LedgerEvidenceInput): EvidenceInput {
     floors: [...(input.floors ?? [])],
     areas: [...(input.areas ?? [])],
     gis: input.gis ?? null,
+    parcel: input.parcel ?? null,
+    zoning: input.zoning ?? null,
     address: input.address ?? null,
     claims: [],
     ...(input.now ? { now: input.now } : {}),

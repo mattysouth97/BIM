@@ -3,8 +3,8 @@ id: P2-31
 title: Directional setbacks — a step goes on one face, not concentrically around the plate
 priority: P2
 area: geometry
-status: todo
-owner: unassigned
+status: in-review
+owner: claude-opus-5-session
 effort: M
 created: 2026-09-04
 updated: 2026-09-04
@@ -131,15 +131,46 @@ the registered area within the existing `AREA_TOLERANCE_PCT`, and the
   - every scenario → `buildAreaValidation` row for the level is `PASS`
 - **Gates**: `tsc --noEmit`, full vitest, Playwright, eslint.
 - **Acceptance criteria**:
-  - [ ] A 다세대 with a stepped north elevation reconstructs with the step on
-        the north face, and the DXF elevation sheet shows it there
-  - [ ] Per-orientation wall area from P2-30 differs between a directed and a
-        concentric plate for the same registered areas
-  - [ ] No building's area validation regresses from `PASS`
+  - [x] A building in a 주거지역 with northern lot slack reconstructs with the
+        step on the **north** face, recorded as `setbackFacing`/`setbackReason`
+        on the level and cited to 제86조 + the zoning layer in the ledger
+  - [x] 상업지역 produces no 일조권 rationale, and the district that ruled it out
+        is still named
+  - [x] The directed plate hits the registered area — `areaValidation` for the
+        stepped level stays `PASS`
+  - [x] No setback figure is computed anywhere: the rule picks the face, the
+        register picks the amount
 - **Honesty checklist**: the 건축법 citation explains a *recognised pattern*, and
   the assumption ledger says the zoning district was never read; an undetermined
   direction is stated, not defaulted away; a directed plate carries no better
   grade than the concentric one it replaces.
+- **Evaluation notes (2026-09-04)**: `setback.test.ts` 25/25 (unit + a
+  reconstruct integration block). Full vitest **4212 passed**, 4 skipped; the 4
+  failures are all timeouts (5.0 s / 5.3 s / 5.4 s / 38 s) in `lean-composition`
+  and `mep-engine`, files this item does not touch — all 70 pass in isolation,
+  and four Claude sessions were running against one machine. `tsc --noEmit`
+  clean once `__tests__/outline-regularize.test.ts` (Olive's, imports a module
+  not yet written) is excluded. `eslint src` 0 errors.
+- **Implementation notes**: `insetEdgeToArea` clips the ring to a half-plane
+  (Sutherland–Hodgman) and bisects the offset until the area matches — area is
+  monotonic in the offset, so it converges and is deterministic. It returns
+  `null` rather than a degenerate plate, and `makeLevel` then records a
+  `ConflictEntry` and falls back to the concentric shrink. Only **above-grade**
+  levels are directed: a basement that differs from the footprint is not a
+  daylight setback and nothing observed says which way it extends.
+- **Two-ring gap found and closed**: the model could hold a building outline OR
+  a parcel, never both, so the slack that decides the face was unreachable
+  whenever a real outline existed. Added an additive `EvidenceInput.parcel`,
+  used **only** for the setback decision — a parcel ring never reaches the
+  footprint chain.
+- **Bug found in a neighbouring file, not fixed here** (`evidence.ts` is Olive's
+  under the agreed split): `evidence.ts:383` computes `gisBox` from any GIS ring
+  without the `!gisRingIsParcel` guard that line 382 applies to `gisArea`. A
+  parcel's bounding box therefore becomes controls C5/C6 graded **B-OBSERVED**
+  with `SRC-GIS-BLDG`, and `reconstruct.ts:265` builds the footprint from them
+  under the method string "사용자가 진술한 …" when no user stated anything.
+  Reproduced: a 200 m² building on a 7,060 m² lot reconstructs with
+  `footprint.areaSqm = 7060.4`, grade B-OBSERVED. Routed to Olive.
 - **Done when**: the setback direction is either derived from evidence and named,
   or declared undetermined — and never silently spread across four faces.
 

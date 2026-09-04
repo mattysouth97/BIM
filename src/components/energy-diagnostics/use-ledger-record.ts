@@ -19,6 +19,7 @@
 import { useMemo } from "react";
 
 import { useBuildingFootprint } from "@/hooks/use-building-footprint";
+import { useBuildingZoning } from "@/hooks/use-building-zoning";
 import { useCompositeBuilding } from "@/hooks/use-composite-building";
 import { useLedgerReconstruction } from "@/hooks/use-ledger-reconstruction";
 import { DEMO_BUILDING_ID, parseBuildingId } from "@/lib/constants";
@@ -76,10 +77,24 @@ export function useLedgerRecord(
 
   const address = title?.platPlcNm || title?.newPlatPlc || undefined;
   const footprintQuery = useBuildingFootprint(address);
+
+  // P2-31: 용도지역 at the outline's centroid. Best-effort — an absent district
+  // degrades the setback to lot geometry, then to "undetermined", and is never
+  // read as 주거지역.
+  const zoningCenter = useMemo<[number, number] | null>(() => {
+    const outer = footprintQuery.data?.polygon?.[0];
+    if (!Array.isArray(outer) || outer.length < 3) return null;
+    const lng = outer.reduce((sum, p) => sum + p[0], 0) / outer.length;
+    const lat = outer.reduce((sum, p) => sum + p[1], 0) / outer.length;
+    return Number.isFinite(lng) && Number.isFinite(lat) ? [lng, lat] : null;
+  }, [footprintQuery.data]);
+  const zoningQuery = useBuildingZoning(zoningCenter);
+
   const reconstruction = useLedgerReconstruction(
     title,
     floors,
     footprintQuery.data,
+    zoningQuery.data,
   );
 
   const footprint = useMemo<LedgerFootprint | undefined>(() => {

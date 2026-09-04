@@ -23,6 +23,7 @@ import {
 import type {
   GisFootprintInput,
   ReconstructionModel,
+  ZoningInput,
 } from "@/lib/cad-reconstruction/types";
 import type { BrFloorInfo, BrTitleInfo } from "@/lib/types";
 
@@ -60,10 +61,18 @@ function toGisInput(
   };
 }
 
+/** What the zoning route resolves to; see `use-building-zoning`. */
+export interface ZoningQueryResult {
+  district: string | null;
+  source?: string;
+  error: string | null;
+}
+
 export function useLedgerReconstruction(
   title: BrTitleInfo | null | undefined,
   floors: readonly BrFloorInfo[] | undefined,
   footprint: FootprintQueryResult | null | undefined,
+  zoning?: ZoningQueryResult | null,
 ): LedgerReconstruction | null {
   // `floors` is a fresh array on every render for most callers, so the identity
   // of the rows themselves is the honest dependency.
@@ -72,6 +81,7 @@ export function useLedgerReconstruction(
     [floors],
   );
   const polygonKey = footprint?.polygon ? JSON.stringify(footprint.polygon) : "";
+  const districtKey = zoning?.district ?? "";
 
   return useMemo(() => {
     if (!title) return null;
@@ -81,10 +91,22 @@ export function useLedgerReconstruction(
         title,
         floors: floors ?? [],
         gis: toGisInput(footprint),
+        // P2-31: the parcel, when the footprint query fell back to one. The
+        // reconstruction reads which side of the lot the building leaves free
+        // to decide the face a setback comes off.
+        parcel:
+          footprint?.source === "parcel" ? toGisInput(footprint) : null,
+        zoning: zoning
+          ? ({
+              district: zoning.district,
+              source: zoning.source ?? "LT_C_UQ111",
+              error: zoning.error,
+            } satisfies ZoningInput)
+          : null,
         address: title.platPlcNm || title.newPlatPlc || null,
       }),
     );
     return { model, twin: twinGeometryFromModel(model) };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on content, not identity
-  }, [title, floorKey, polygonKey, footprint?.source]);
+  }, [title, floorKey, polygonKey, footprint?.source, districtKey]);
 }
