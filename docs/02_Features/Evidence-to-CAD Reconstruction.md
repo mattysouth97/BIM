@@ -80,7 +80,17 @@ compared to it — defensible only while exactly one source can ever answer.
 | VWorld 연속지적도 필지 | `B-OBSERVED`, site only | **Never eligible as a footprint** — a lot is not a building |
 | none of the above | `X-UNRESOLVED` | A blocker is recorded and the drawing is not offered |
 
-Three rules govern the choice:
+**Every outline source this app has tried has, at least once, handed back
+something that is not the building.** VWorld has returned the cadastral lot
+(7,060 m² reported as a 400 m² building), and separately an outbuilding on a
+school campus (95 m² reported as a building whose register states 2,749.71 m²,
+with `source: "building"` true both times). The web search read `1만2709m² 부지`
+— the land — as the footprint. Three sources, three ways of mistaking the site
+or a neighbour for the structure. That is the argument for reconciling sources
+rather than trusting whichever one answered, and it is worth stating as an
+observed pattern rather than as a principle.
+
+Four rules govern the choice:
 
 1. **A site ring is never a building footprint.** Until 2026-09-04 a missing
    `!gisRingIsParcel` guard let a cadastral lot reach controls C5/C6 at
@@ -92,6 +102,13 @@ Three rules govern the choice:
    never promotes a solved rectangle over a traced ring.
 3. **A losing observed ring is never deleted.** It keeps its geometry on a
    conflict entry and is drawn on `X-CONFLICT`.
+4. **Observed does not outrank impossible.** A candidate whose area cannot be
+   reconciled with a stated 건축면적 (outside 0.5×-2.0×) is set aside before the
+   tiers are compared, so an honest `D-INFERRED` rectangle of the right size
+   beats a confidently wrong `B-OBSERVED` trace. The band is wide on purpose —
+   eaves, an L-plan and a courtyard all make a traced ring differ legitimately —
+   because this is not a tolerance check. With no 건축면적 stated the question is
+   unanswerable and the answer is "plausible".
 
 Overlap between two observed outlines is reported as IoU, area delta and centre
 offset. IoU is estimated by sampling a 160² grid rather than by exact polygon
@@ -115,6 +132,19 @@ splayed plan is left exactly as traced. The result is discarded — and the inpu
 returned untouched, with a reason — if it self-intersects, drifts the area past
 3 %, or drags a corner past 1.2 m. The module can square a building up; it
 cannot turn one building into another.
+
+## Aerial imagery (opt-in)
+
+`/api/imagery/ortho` proxies VWorld's WMTS so the ortho tile can be drawn under
+the plan. It is a **verification aid and nothing else**: no value in the model
+derives from it, it produces no outline candidate, and the toggle says
+"치수 근거 아님". The boundary is what makes it safe — a traced roof would be a
+fourth candidate needing a grade; an image a person looks at cannot quietly
+become a source something else cites.
+
+Tiles are placed by their own projected corners rather than by scaling a mosaic.
+No imagery is drawn at all when the model has no georeference: imagery in the
+wrong place is worse than none.
 
 ## What the user can see
 
