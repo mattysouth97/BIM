@@ -55,6 +55,7 @@ import {
   measureRoofs,
   measureGroundSlabs,
 } from "./lib/ifc-horizontal.mjs";
+import { collectSpaceSolids, openingApertures, summariseApertures } from "./lib/ifc-openings.mjs";
 
 const REPO = process.cwd();
 const CACHE =
@@ -118,6 +119,23 @@ const CLINIC = Object.freeze({
     "shadows sum to 432.66 m² and union to 384.44 m² (consecutive sections " +
     "telescope ~1.8 m along the spine); their one-sheet surface is larger " +
     "than both, as a pitched roof's must be.",
+  /**
+   * Curtain walls excluded from the glazing aperture BY NAME, each with its
+   * reason stated. Everything else a curtain wall loses is decided by
+   * geometry in `ifc-openings.mjs` — the interior atrium screens by a room on
+   * both sides, the mirrored pair #879/#881 by coincident bounds.
+   */
+  openings: {
+    curtainWallExclude: [
+      {
+        match: "Chain Link Fence",
+        reason:
+          "a chain-link fence around the mechanical yard: a storefront panel by name and by " +
+          "structure (IfcCurtainWall → IfcPlate), and not envelope. The same fence already " +
+          "pollutes this model's space-boundary sum — see invalidDiagnostics.",
+      },
+    ],
+  },
   /** Measured on this model: what the fabric GLB leaves out, and why the service GLBs are the size they are. */
   modelNote:
     "Building fabric only. Furniture, sanitary fixtures, railings and the " +
@@ -504,6 +522,17 @@ const SCHEPENDOMLAAN = Object.freeze({
     "All 122 inner-leaf walls are cardinal; the diagonal sectors are 0 by " +
     "measurement. The model's 88 placements at 47.94° are the excluded " +
     "outer leaf (buitenblad), so no envelope area is mis-binned.",
+
+  /**
+   * ArchiCAD exports every window and door frame twice over: the opening
+   * itself (`merk B2sp`, `merk A`…) and one `stelkozijn` sub-frame per leaf
+   * that states no OverallWidth/OverallHeight at all. 182 of 259 IfcWindow
+   * and 65 of 205 IfcDoor are such sub-frames; named here so they are
+   * excluded as a stated fact rather than falling out as "no dimensions".
+   */
+  openings: {
+    subFrameNames: ["stelkozijn"],
+  },
 });
 
 /**
@@ -1154,6 +1183,50 @@ async function main() {
         : ""),
   );
 
+  // ── Openings: glazing and exterior doors, per opening ──────────────────
+  // Measured after the walls because attribution needs the exterior-wall set
+  // (post-substitution, so the apartment's stated-area walls still carry
+  // their mesh bounds) and the orientation pass's sectors. The both-sides
+  // probe uses the space file's conditioned solids — on the Duplex that is a
+  // different file from the walls, in the same site frame.
+  const conditionedIds = new Set(
+    spaces.filter((s) => s.countsAsConditionedVolume).map((s) => s.expressID),
+  );
+  const spaceSolids = collectSpaceSolids(api, webIfc, spaceFile.modelId, (id) => conditionedIds.has(id));
+  const isExcludedWallName = (name) =>
+    (building.exteriorWallExclude ?? []).some((x) => String(name ?? "").toLowerCase().includes(x.toLowerCase()));
+  const openings = openingApertures(api, arch, webIfc, {
+    exteriorWalls,
+    sectorByHost: new Map(orientation.walls.map((w) => [w.id, w.sector])),
+    buildingCentre: orientation.buildingCentre,
+    trueNorthDeg,
+    spaceSolids,
+    conditionedSpaceCount: conditionedIds.size,
+    spaceName: new Map(spaces.map((s) => [s.expressID, s.longName ?? s.name])),
+    isExteriorWallName,
+    isExcludedWallName,
+    curtainWallExclude: building.openings?.curtainWallExclude ?? [],
+    subFrameNames: building.openings?.subFrameNames ?? [],
+  });
+  const apertures = summariseApertures(openings);
+  const openingsNote = describeOpenings(apertures, building.openings?.curtainWallExclude ?? []);
+  // The split must account for the same area as the headline, exactly as
+  // the wall split must — an aperture whose host has no sector would
+  // otherwise vanish from the per-sector WWR while staying in the total.
+  const glazingSplitTotal = Object.values(apertures.glazingByOrientationSqm).reduce((s, v) => s + v, 0);
+  if (Math.abs(glazingSplitTotal + apertures.unsectoredSqm - apertures.glazingApertureSqm) > 0.05) {
+    throw new Error(
+      `Glazing by orientation ${glazingSplitTotal.toFixed(2)} + unsectored ${apertures.unsectoredSqm} ` +
+        `does not reconcile with the total ${apertures.glazingApertureSqm} m².`,
+    );
+  }
+  console.log(
+    `  openings: glazing ${apertures.glazingApertureSqm} m² (${apertures.windowCount} windows` +
+      (apertures.curtainWallCount > 0 ? ` + ${apertures.curtainWallCount} curtain walls` : "") +
+      `), doors ${apertures.exteriorDoorSqm} m² (${apertures.doorCount}), ` +
+      `unresolved ${apertures.unresolved.length} (${apertures.unresolvedSqm} m²)`,
+  );
+
   const site = arch.byType(webIfc.IFCSITE)[0];
   const latitudeDeg = site ? compoundAngleDeg(site.RefLatitude) : null;
   const longitudeDeg = site ? compoundAngleDeg(site.RefLongitude) : null;
@@ -1383,6 +1456,10 @@ async function main() {
       assemblies: assemblies.length,
       externalElements: classification.elements.length,
       exteriorWalls: exteriorWalls.size,
+      /** Openings counted in the aperture. The excluded and unresolved ones are in `openings.json`. */
+      windows: apertures.windowCount,
+      exteriorCurtainWalls: apertures.curtainWallCount,
+      exteriorDoors: apertures.doorCount,
       // A bare zero cannot be told from "does not apply". When boundaries
       // exist and none resolved, say why — Schependomlaan carries 820
       // (.PHYSICAL., .EXTERNAL.) boundaries, every one an IfcCurveBoundedPlane,
@@ -1422,6 +1499,19 @@ async function main() {
        * ones where the call was close) and where north is (`northAssumed`).
        */
       exteriorWallByOrientationSqm: orientation.byOrientation,
+      /**
+       * Glazing and exterior-door aperture, measured per opening and binned
+       * by the host wall's sector — the same eight keys as the wall split, so
+       * aperture ÷ wall is a per-sector window-to-wall ratio that is
+       * measured on both sides of the division. What each figure is, and
+       * what was excluded and why, is in `openingsNote`; every opening is a
+       * row in `openings.json`.
+       */
+      glazingApertureSqm: apertures.glazingApertureSqm,
+      glazingByOrientationSqm: apertures.glazingByOrientationSqm,
+      exteriorDoorSqm: apertures.exteriorDoorSqm,
+      exteriorDoorByOrientationSqm: apertures.exteriorDoorByOrientationSqm,
+      openingsNote,
       /**
        * Two volumes, because they answer different questions and the file
        * states neither as a quantity.
@@ -1604,6 +1694,8 @@ async function main() {
     roofs: roofs.rows,
     /** One row per candidate ground slab, counted or excluded with the reason. */
     groundSlabs: ground.rows,
+    /** One row per IfcWindow, IfcDoor and IfcCurtainWall — counted, excluded with a reason, or unresolved. */
+    openingsFile: "openings.json",
     serviceLayers,
     model: {
       file: "model.glb",
@@ -1655,6 +1747,27 @@ async function main() {
     "utf8",
   );
 
+  // One row per opening, so every figure in `areas` above can be traced to
+  // the elements it came from — and every element it did NOT come from can
+  // be seen with the reason it was left out.
+  const { excluded: _excluded, unresolved: openingsUnresolved, ...openingsSummary } = apertures;
+  await writeFile(
+    path.join(outDir, "openings.json"),
+    `${JSON.stringify(
+      {
+        kind: "bimfit_reference_building_openings",
+        id: building.id,
+        note: openingsNote,
+        summary: openingsSummary,
+        openings: openings.rows,
+        unresolved: openingsUnresolved,
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+
   await writeFile(
     path.join(outDir, "manifest.json"),
     `${JSON.stringify(manifest, null, 2)}\n`,
@@ -1675,6 +1788,75 @@ async function main() {
     `    spaces.json    ${spaceRows.length} spaces, volume gross ${conditionedVolumeGrossM3} m3 / net ${roomVolumeNetM3} m3`,
   );
 }
+
+/**
+ * The sentence beside the aperture figures: what each one is, what was left
+ * out and why, in the building's own numbers. Assembled from the summary so
+ * it cannot describe a building other than the one it sits on — the way the
+ * Clinic's model note once did for the apartment.
+ */
+function describeOpenings(a, curtainWallExclude) {
+  const parts = [];
+  parts.push(
+    `Glazing aperture ${a.glazingApertureSqm} m² = ${a.windowCount} IfcWindow at OverallWidth × OverallHeight (${a.windowSqm} m²)` +
+      (a.curtainWallCount > 0
+        ? ` + ${a.curtainWallCount} exterior IfcCurtainWall at the projected outline of their plates and mullions (${a.curtainWallSqm} m²; the glass plates alone give ${a.curtainWallPlateSqm} m², the bounding rectangles ${a.curtainWallBboxSqm} m²)`
+        : "") +
+      `. Exterior doors are separate — a door is aperture, not glazing: ${a.doorCount} IfcDoor, ${a.exteriorDoorSqm} m², OverallWidth × OverallHeight.`,
+  );
+  const hb = a.hostBasis;
+  parts.push(
+    `Host wall by IfcRelFillsElement → IfcOpeningElement → IfcRelVoidsElement (${hb.fills} openings)` +
+      (hb.adjacent > 0
+        ? `, or where that chain does not reach the exterior-wall set, by an exterior wall adjacent in the opening's plane within 0.3 m (${hb.adjacent})`
+        : "") +
+      (hb.self > 0 ? `; a curtain wall is its own wall segment (${hb.self})` : "") +
+      (hb["curtain-wall part"] > 0 ? `; ${hb["curtain-wall part"]} door(s) inside a curtain wall` : "") +
+      `. Sector is the host wall's, from the same orientation pass as the wall split.`,
+  );
+  const anyCurtainWalls = a.curtainWallCount + a.interiorCurtainWalls.count > 0 || a.excluded.some((e) => e.type === "IfcCurtainWall");
+  const probe = a.probe.usable
+    ? `Envelope by a both-sides probe against the conditioned IfcSpace solids (${a.probe.spaceSolids} of ${a.probe.conditionedSpaces} have geometry${a.probe.complete ? "" : ", so an empty probe is inconclusive and the host wall decides"})` +
+      (anyCurtainWalls
+        ? `: ${a.interiorCurtainWalls.count} curtain wall(s) with a room on both sides excluded as interior screens (${a.interiorCurtainWalls.sqm} m²)`
+        : "; this file has no IfcCurtainWall")
+    : "No conditioned space solids to probe, so envelope rests on the host wall alone";
+  const named = curtainWallExclude.map((x) => {
+    const hits = a.excluded.filter((e) => e.reason === x.reason);
+    return `${hits.length} "${x.match}" excluded by name (${r2s(hits.reduce((s, e) => s + (e.areaSqm ?? 0), 0))} m²): ${x.reason.replace(/\.\s*$/, "")}`;
+  });
+  // Revit repeats a family name three times over in `Name`
+  // ("M_Single-Flush:0915 x 2134mm Exterior:0915 x 2134mm Exterior:222415");
+  // once is enough in a sentence. The row keeps the full string.
+  const shortName = (name) => {
+    const seen = new Set();
+    return String(name).split(":").filter((s) => !seen.has(s) && seen.add(s)).join(":");
+  };
+  const coincident = a.excluded.filter((e) => /^coincident/.test(e.reason ?? ""));
+  parts.push(
+    `${probe}` +
+      (named.length ? `; ${named.join("; ")}` : "") +
+      (coincident.length ? `; ${coincident.length} coincident twin(s) counted once` : "") +
+      (a.hostedInInteriorWalls.count ? `; ${a.hostedInInteriorWalls.count} openings hosted in walls outside the exterior set` : "") +
+      (a.outsideWallSetWindows.count || a.outsideWallSetDoors.count
+        ? `; ${a.outsideWallSetWindows.count} window(s) (${a.outsideWallSetWindows.sqm} m²) and ${a.outsideWallSetDoors.count} door(s) (${a.outsideWallSetDoors.sqm} m²) sit in the plane of walls outside the exterior-wall set and are not counted — the wall names are on each row`
+        : "") +
+      (a.subFrames ? `; ${a.subFrames} sub-frames` : "") +
+      (a.unresolved.length ? `; ${a.unresolved.length} unresolved (${a.unresolvedSqm} m² where a size is stated)` : "; nothing unresolved") +
+      ".",
+  );
+  parts.push(
+    `IsExternal is reported per row and never used as a filter — it means "not an interior partition" to an authoring tool, never "bounds conditioned space against outdoor air". ` +
+      `It marks ${a.isExternalDoors.total} door(s) here; ${a.isExternalDoors.counted} confirm against an exterior wall` +
+      (a.isExternalDoors.notCounted.length
+        ? `, ${a.isExternalDoors.notCounted.length} do not: ${a.isExternalDoors.notCounted.map((d) => `#${d.id} ${shortName(d.name)}${d.areaSqm != null ? ` ${r2s(d.areaSqm)} m²` : ""}`).join(", ")}`
+        : "") +
+      ". Rows in openings.json.",
+  );
+  return parts.join(" ");
+}
+
+const r2s = (n) => Math.round(n * 100) / 100;
 
 function webIfcVersion() {
   try {

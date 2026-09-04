@@ -38,6 +38,10 @@ export type ReferenceBuildingManifest = Readonly<{
     assemblies: number;
     externalElements: number;
     exteriorWalls: number;
+    /** Openings counted in the aperture; the excluded and unresolved ones are rows in `openings.json`. */
+    windows?: number;
+    exteriorCurtainWalls?: number;
+    exteriorDoors?: number;
   }>;
   areas: Readonly<{
     /** Floor only. The denominator of every intensity figure. */
@@ -55,6 +59,24 @@ export type ReferenceBuildingManifest = Readonly<{
      * describes a very different building depending which way it faces.
      */
     exteriorWallByOrientationSqm?: Readonly<Record<string, number>>;
+    /**
+     * Glazing aperture, measured per opening: IfcWindow at OverallWidth ×
+     * OverallHeight plus exterior IfcCurtainWall at the projected outline of
+     * plates and mullions. Absent on a manifest built before 2026-09-05.
+     */
+    glazingApertureSqm?: number;
+    /**
+     * The same eight sector keys as `exteriorWallByOrientationSqm`, so
+     * aperture ÷ wall is a per-sector window-to-wall ratio measured on both
+     * sides of the division rather than one assumed ratio under a measured
+     * wall split.
+     */
+    glazingByOrientationSqm?: Readonly<Record<string, number>>;
+    /** Exterior IfcDoor leaves, separate from glazing: a door is aperture, not glass. */
+    exteriorDoorSqm?: number;
+    exteriorDoorByOrientationSqm?: Readonly<Record<string, number>>;
+    /** Method, exclusions with their reasons, and what could not be resolved — in this building's own numbers. */
+    openingsNote?: string;
     /**
      * Inside the air barrier: floor-counting rooms as floor area × storey
      * floor-to-floor, plus OPEN TO BELOW voids as their own solids. What an
@@ -150,6 +172,8 @@ export type ReferenceBuildingManifest = Readonly<{
   }>[];
   /** Sibling file with one row per IfcSpace — see `ReferenceBuildingSpace`. */
   spacesFile?: string;
+  /** Sibling file with one row per IfcWindow, IfcDoor and IfcCurtainWall — see `ReferenceBuildingOpening`. */
+  openingsFile?: string;
   /**
    * Layer stacks as the model states them, outside-in.
    *
@@ -298,6 +322,55 @@ export type ReferenceBuildingSpaces = Readonly<{
   kind: "bimfit_reference_building_spaces";
   id: string;
   spaces: readonly ReferenceBuildingSpace[];
+}>;
+
+/**
+ * One opening as `openings.json` records it — counted, excluded with a
+ * stated reason, or (in the sibling `unresolved` list) not attributable.
+ *
+ * `areaBasis` says what the number is: OverallWidth × OverallHeight for a
+ * window or door, the projected outline of plates and mullions for a
+ * curtain wall. `isExternal` is the file's property, reported and never
+ * filtered on; `envelope` is the geometric verdict that was used instead.
+ */
+export type ReferenceBuildingOpening = Readonly<{
+  id: number;
+  type: "IfcWindow" | "IfcDoor" | "IfcCurtainWall";
+  name: string;
+  kind: "glazing" | "door";
+  isExternal: boolean | null;
+  ref: string;
+  widthM?: number;
+  heightM?: number;
+  areaSqm?: number | null;
+  areaBasis?: string;
+  /** Curtain walls only: the two other definitions, for the record. */
+  plateSqm?: number;
+  bboxSqm?: number;
+  hostExpressID?: number;
+  hostName?: string;
+  /** How the host was found: the fills chain, adjacency in the plane, itself, or a curtain-wall part. */
+  hostBasis?: "fills" | "adjacent" | "self" | "curtain-wall part" | null;
+  hostDetail?: string;
+  sector?: string | null;
+  envelope?: Readonly<{ verdict: "exterior" | "interior" | "excluded"; basis: string }>;
+  included: boolean;
+  reason: string | null;
+}>;
+
+export type ReferenceBuildingOpenings = Readonly<{
+  kind: "bimfit_reference_building_openings";
+  id: string;
+  note: string;
+  summary: Readonly<Record<string, unknown>>;
+  openings: readonly ReferenceBuildingOpening[];
+  unresolved: readonly Readonly<{
+    id: number;
+    type: string;
+    name: string;
+    reason: string;
+    areaSqm?: number | null;
+  }>[];
 }>;
 
 /**
