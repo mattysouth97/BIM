@@ -9,6 +9,8 @@ import {
   CLINIC_MATERIALS,
   CLINIC_MEASURED_ENVELOPE,
   CLINIC_RECIPE,
+  CLINIC_ROOF_AREA_SQM,
+  CLINIC_ROOF_EPDM_EXPOSED_SQM,
   CLINIC_TOTAL_FLOOR_AREA_SQM,
 } from "../bs-medical-dental-clinic-energy";
 
@@ -44,15 +46,24 @@ describe("measured geometry survives intact", () => {
 });
 
 describe("the ground floor is ISO 13370, not air-to-air", () => {
-  it("uses the slab-on-ground U of ~0.237, not calculateAssembly's 3.87", () => {
-    expect(CLINIC_MATERIALS.envelope.groundFloor.uValue).toBeCloseTo(0.2368, 3);
+  it("uses the slab-on-ground U of ~0.240, not calculateAssembly's 3.87", () => {
+    // 2,577.42 m² over 217.01 m: B' = 23.75, d_t = 0.817. Read 0.2368 while
+    // the 43.66 m² outdoor pad was inside the area (A-GROUND-PAD).
+    expect(CLINIC_MATERIALS.envelope.groundFloor.uValue).toBeCloseTo(0.2399, 3);
     expect(CLINIC_MATERIALS.envelope.groundFloor.uValue).toBeLessThan(0.5);
     expect(CLINIC_GROUND_FLOOR.regime).toBe("uninsulated");
   });
 
   it("bounds it by soil, and the bound spans a factor of two", () => {
-    expect(CLINIC_GROUND_FLOOR_RANGE.low.uValueWPerM2K).toBeCloseTo(0.185, 2);
-    expect(CLINIC_GROUND_FLOOR_RANGE.high.uValueWPerM2K).toBeCloseTo(0.376, 2);
+    expect(CLINIC_GROUND_FLOOR_RANGE.low.uValueWPerM2K).toBeCloseTo(0.1875, 3);
+    expect(CLINIC_GROUND_FLOOR_RANGE.high.uValueWPerM2K).toBeCloseTo(0.3803, 3);
+  });
+
+  it("the excluded pad is named, and the slab is smaller by exactly it", () => {
+    expect(CLINIC_MEASURED_ENVELOPE.groundSlabSqm).toBeCloseTo(2621.08 - 43.66, 2);
+    const pad = CLINIC_ASSUMPTIONS.find((a) => a.id === "A-GROUND-PAD");
+    expect(pad?.assumes).toContain("43.66");
+    expect(pad?.assumes).toContain("221475");
   });
 
   it("adds no ground-contact resistance on top — the soil is already in the U", () => {
@@ -112,7 +123,7 @@ describe("the recipe's envelope is the measured one, and the heat-loss model rec
     const q = envelopeQuantities(CLINIC_RECIPE);
     expect(q.source).toBe("measured");
     expect(q.grossWallAreaSqm).toBeCloseTo(CLINIC_MEASURED_ENVELOPE.grossWallSqm, 2);
-    expect(q.roofAreaSqm).toBeCloseTo(2286.93 + 382.28, 2);
+    expect(q.roofAreaSqm).toBeCloseTo(CLINIC_ROOF_AREA_SQM, 2);
     expect(q.planAreaSqm).toBeCloseTo(CLINIC_MEASURED_ENVELOPE.groundSlabSqm, 2);
     expect(q.volumeM3).toBeCloseTo(CLINIC_MEASURED_ENVELOPE.conditionedVolumeGrossM3, 2);
     expect(q.intensityFloorAreaSqm).toBe(CLINIC_TOTAL_FLOOR_AREA_SQM);
@@ -125,17 +136,22 @@ describe("the recipe's envelope is the measured one, and the heat-loss model rec
     // 2 × (52.66 + 56.90) × 9.25 = 2,027 m² of wall for an L-shaped plan
     // with a 240 m² clerestory — under by a fifth, and the roof over by 12 %.
     expect(extruded.grossWallAreaSqm).toBeLessThan(0.85 * CLINIC_MEASURED_ENVELOPE.grossWallSqm);
-    expect(extruded.roofAreaSqm).toBeGreaterThan(1.1 * (2286.93 + 382.28));
+    expect(extruded.roofAreaSqm).toBeGreaterThan(1.1 * CLINIC_ROOF_AREA_SQM);
   });
 
-  it("heat-loss elements carry the measured areas: windows = aperture, walls = net + doors, roof 2,669.21, ground 2,621.08", () => {
+  it("heat-loss elements carry the measured areas: windows = aperture, walls = net + doors, roof = outer surface, ground = counted slab union", () => {
     const result = calculateHeatLoss(CLINIC_MATERIALS, CLINIC_RECIPE, getClimateData(undefined));
     const area = (name: string) => result.elements.find((e) => e.element === name)?.area;
     const e = CLINIC_MEASURED_ENVELOPE;
     expect(area("Windows")).toBeCloseTo(e.glazingApertureSqm, 1);
     expect(area("Walls")).toBeCloseTo(e.exteriorWallNetSqm + e.exteriorDoorSqm, 1);
-    expect(area("Roof")).toBeCloseTo(2286.93 + 382.28, 1);
-    expect(area("Ground Floor")).toBeCloseTo(2621.08, 1);
+    // EPDM surface less the deck under the barrel, plus the barrels' surface.
+    expect(area("Roof")).toBeCloseTo(
+      e.roofEpdmSurfaceSqm - e.roofEpdmUnderBarrelSqm + e.roofSeamSurfaceSqm,
+      1,
+    );
+    expect(area("Roof")).toBeCloseTo(CLINIC_ROOF_AREA_SQM, 1);
+    expect(area("Ground Floor")).toBeCloseTo(e.groundSlabSqm, 1);
     expect(area(VENTILATION_ELEMENT_NAME)).toBeCloseTo(20701.55, 1);
   });
 
@@ -159,16 +175,32 @@ describe("the roof is area-weighted across two very different roofs", () => {
     const u = CLINIC_MATERIALS.envelope.roof.uValue;
     expect(u).toBeGreaterThan(0.317);
     expect(u).toBeLessThan(3.45);
-    expect(u).toBeCloseTo(0.767, 2);
+    // (0.317 × 2,212.38 + 3.45 × 455.00) / 2,667.38
+    expect(u).toBeCloseTo((701.32446 + 1569.75) / 2667.38, 4);
+    expect(u).toBeCloseTo(0.8514, 3);
   });
 
-  it("standing seam is 14 % of the area and most of the loss", () => {
+  it("standing seam is 17 % of the area and most of the loss", () => {
     const e = CLINIC_MEASURED_ENVELOPE;
-    const share = e.roofStandingSeamSqm / (e.roofEpdmSqm + e.roofStandingSeamSqm);
-    expect(share).toBeCloseTo(0.143, 2);
-    const seamLoss = 3.45 * e.roofStandingSeamSqm;
-    const epdmLoss = 0.317 * e.roofEpdmSqm;
+    const share = e.roofSeamSurfaceSqm / CLINIC_ROOF_AREA_SQM;
+    expect(share).toBeCloseTo(0.1706, 3);
+    const seamLoss = 3.45 * e.roofSeamSurfaceSqm;
+    const epdmLoss = 0.317 * CLINIC_ROOF_EPDM_EXPOSED_SQM;
     expect(seamLoss).toBeGreaterThan(epdmLoss);
+    expect(seamLoss / (seamLoss + epdmLoss)).toBeCloseTo(0.691, 2);
+  });
+
+  it("the roof is the outer surface: seam surface exceeds its shadow, and the deck under the barrel is out", () => {
+    const e = CLINIC_MEASURED_ENVELOPE;
+    // Five barrels at 13.5–18.3°: surface / shadow-union = 455.00 / 384.44.
+    expect(e.roofSeamSurfaceSqm).toBeGreaterThan(384.44);
+    expect(e.roofSeamSurfaceSqm).toBeCloseTo(455.0, 2);
+    expect(CLINIC_ROOF_EPDM_EXPOSED_SQM).toBeCloseTo(2286.93 - 74.55, 2);
+    expect(CLINIC_ROOF_AREA_SQM).toBeCloseTo(2667.38, 2);
+    // The retired 382.28 was 764.56 ÷ 2, and A-SEAM-AREA must say so.
+    const seam = CLINIC_ASSUMPTIONS.find((a) => a.id === "A-SEAM-AREA");
+    expect(seam?.why).toContain("764.56 ÷ 2");
+    expect(seam?.assumes).toContain("455.00");
   });
 });
 
@@ -180,6 +212,9 @@ describe("every non-measured value is a named assumption", () => {
     "A-STUD-CAVITY",
     "A-STEEL-BRIDGE",
     "A-SEAM-ROOF",
+    "A-SEAM-AREA",
+    "A-ROOF-WEIGHT",
+    "A-GROUND-PAD",
     "A-SOIL",
     "A-GROUND-DT",
     "A-WWR-DENOMINATOR",

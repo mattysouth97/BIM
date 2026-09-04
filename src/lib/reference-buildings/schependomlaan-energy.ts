@@ -9,23 +9,27 @@
  *  field, exactly which inputs are stand-ins, what they are stand-ins FOR,
  *  and which way each one biases the answer.
  *
- *  Six of this building's envelope inputs have never been measured. The
- *  roof's plan area, the ground slab's area and exposed perimeter, the
+ *  Three of this building's envelope inputs have never been measured: the
  *  glazing aperture (total and per orientation) and the exterior-door
- *  aperture are all placeholders, because `manifest.json` does not carry
- *  them yet. bim-bf's extractor pass (Lane B of the parity brief) will emit
- *  them under the manifest field names named in that table; swapping them in
- *  is a value change, not a rename, and flipping
- *  `SCHEPENDOMLAAN_INPUT_STATE` to "measured" is the last step.
+ *  aperture, because `manifest.json` does not carry them yet. bim-bf's
+ *  extractor pass (Lane B of the parity brief) will emit them under the
+ *  manifest field names named in that table; swapping them in is a value
+ *  change, not a rename, and flipping `SCHEPENDOMLAAN_INPUT_STATE` to
+ *  "measured" is the last step.
  *
- *  Until then: the wall areas, the volumes, the floor areas, the storey
- *  datums and every layer thickness ARE measured and come from the committed
+ *  Three more WERE placeholders until 2026-09-04 and are now measured: the
+ *  roof (`areas.roofSurfaceByFamilySqm`, `roofUnionSqm`, `roofs[]`), the
+ *  ground slab (`areas.groundSlabSqm`) and its exposed perimeter
+ *  (`areas.groundPerimeterM`). Each moved the building the way its bias
+ *  note predicted — the roof from 302.24 to 542.96 m², the slab from 302.24
+ *  to 345.81 m², the perimeter from 69.54 to 90.08 m.
+ *
+ *  So: the wall areas, roof, ground, volumes, floor areas, storey datums
+ *  and every layer thickness ARE measured and come from the committed
  *  manifest. The roof U, the wall U and the ground R_f are solved from the
- *  model's own stated layer sets. What is NOT measured is the AREA each of
- *  those U-values is multiplied by, on three of the five envelope elements.
- *  A U-value is not a heat loss until it is multiplied by an area, so a
- *  kWh/yr out of this file today is provisional in a way its U-values
- *  are not.
+ *  model's own stated layer sets. What is NOT measured is the glazed and
+ *  door area, which sets the window term and the WWR denominator. A kWh/yr
+ *  out of this file today is still provisional on that account.
  * ══════════════════════════════════════════════════════════════════════════
  *
  * Same discipline as `bs-medical-dental-clinic-energy.ts`, same four exports.
@@ -150,43 +154,60 @@ const EXTERIOR_DOOR_COUNT = 20;
 const PLACEHOLDER_MEAN_DOOR_SQM = 2.0;
 const PLACEHOLDER_EXTERIOR_DOOR_SQM = EXTERIOR_DOOR_COUNT * PLACEHOLDER_MEAN_DOOR_SQM;
 
-/**
- * PLACEHOLDER for `areas.groundSlabSqm`. The ground storey's stated floor
- * area. Floor area is measured to the INSIDE of the walls, so the real
- * ground-contact area is larger than this — a lower bound, not a guess in a
- * random direction.
- */
-const PLACEHOLDER_GROUND_SLAB_SQM = SCHEPENDOMLAAN_STOREYS.groundFloor.floorAreaSqm;
+// ── Ground and roof: measured 2026-09-04 ──────────────────────────────────
 
 /**
- * PLACEHOLDER for `areas.groundPerimeterM`. The manifest states no plan
- * outline: only 6 of the 100 IfcSpace rows carry an `extent`, so not even a
- * bounding box can be recovered from `spaces.json`. This is the perimeter of
- * a SQUARE of the same area — the minimum-perimeter shape — so it is a lower
- * bound on P, and a low P makes the ground U look better than it is.
- *
- * The obvious alternative is arithmetically impossible and is recorded here
- * so nobody tries it: 411.76 m² of below-roof wall over 12.00 m of height is
- * 34.3 m of wall run, but a 302.24 m² plan cannot have a perimeter under
- * 69.5 m. The exterior-wall set does not enclose the plan — see
- * `A-WALL-SET-SCOPE`.
+ * `areas.groundSlabSqm`: the union of the 81 ground-storey slab shadows a
+ * conditioned space stands on (`groundSlabs[]`, none excluded; stacked
+ * build-up layers — vloer_V0, dekvloer, vloertegels — count once). It was a
+ * 302.24 placeholder, the ground storey's floor area to the inside of the
+ * walls, and the bias note said the real slab would be larger by roughly the
+ * wall footprint. It is: 43.57 m² larger.
  */
-const PLACEHOLDER_GROUND_PERIMETER_M =
-  Math.round(4 * Math.sqrt(PLACEHOLDER_GROUND_SLAB_SQM) * 100) / 100;
+const GROUND_SLAB_SQM = 345.81;
 
 /**
- * PLACEHOLDER for `areas.roofProjectedSqm`. Every part of the footprint has
- * some roof above it, so the roof's plan projection is at least the largest
- * storey's plan area. Eaves, the dormers the model carries
- * (`IFC_dakkapel_zijwang`) and the tiled pitches in the archive's WILLEMSEN
- * files all add to it. Understating roof area understates roof loss.
- *
- * PROJECTED, not developed: the archive's roof is tiled and pitched, so the
- * two differ. Lane B emits `areas.roofProjectedSqm` plus per-element `roofs[]`
- * rows; when they land, the roof types must stay distinguishable here the way
- * the Clinic's EPDM and standing-seam roofs are.
+ * `areas.groundPerimeterM`: the outline's outer ring. Two hole rings
+ * totalling 4.06 m are not added — ISO 13370 wants the exposed perimeter,
+ * and a hole in the slab outline is not exposed to outdoors. It was a 69.54
+ * placeholder, the perimeter of a square of the placeholder area, and the
+ * bias note said a square understates P. It did, by 30 %.
  */
-const PLACEHOLDER_ROOF_PROJECTED_SQM = SCHEPENDOMLAAN_STOREYS.groundFloor.floorAreaSqm;
+const GROUND_PERIMETER_M = 90.08;
+
+/**
+ * The roof, from `areas.roofSurfaceByFamilySqm`, `roofProjectedByFamilySqm`,
+ * `roofUnionSqm` and the 78 `roofs[]` rows. The families that are roofs:
+ *
+ *   sporenkap     surface 306.00   plan 124.90   the 57–65° pitched tiled roof
+ *   dakvloer      surface 259.73   plan 135.37   9 flat decks on storey '04 dak'
+ *   plat dak      surface  95.30   plan  95.01   6 flat decks, the low wing
+ *   lifttop       surface   5.75   plan   5.75
+ *   dak dakkapel  surface  14.49   plan  14.38   8 dormer roofs, flat
+ *
+ * and five thin families (plafond 3.33, dakisolatie 3.18, spouwisolatie
+ * 2.42, dakaftimmering 1.84, dakelement 0) that are layers OF those roofs.
+ * The engine's roof area is the OUTER SURFACE, and it is not the 692.04 the
+ * family surfaces sum to — see A-ROOF-STACK for why a sum prices the same
+ * roof twice — but:
+ *
+ *   sporenkap surface + (roofUnionSqm − sporenkap plan)
+ *   = 306.00 + (361.86 − 124.90) = 306.00 + 236.96 = 542.96 m²
+ *
+ * The second term is the plan the flat roofs cover once — dakvloer 135.37 +
+ * plat dak 95.01 + lifttop 5.75 = 236.13, plus 0.83 m² of dormer and trim
+ * pieces reaching past those outlines — and a flat roof's surface is its
+ * plan. Summing the four flat unions directly gives 542.42; the two differ
+ * by that 0.83, well inside the rows' rounding.
+ */
+const ROOF_SPORENKAP_SURFACE_SQM = 306.0;
+const ROOF_SPORENKAP_PLAN_SQM = 124.9;
+/** `areas.roofUnionSqm`: the plan every roof family together covers, once. */
+const ROOF_UNION_SQM = 361.86;
+/** `areas.roofProjectedSqm`: the per-family unions summed (families overlap by 21.69). */
+const ROOF_PROJECTED_SQM = 383.55;
+const ROOF_FLAT_PLAN_SQM = ROOF_UNION_SQM - ROOF_SPORENKAP_PLAN_SQM;
+export const SCHEPENDOMLAAN_ROOF_AREA_SQM = ROOF_SPORENKAP_SURFACE_SQM + ROOF_FLAT_PLAN_SQM;
 
 /**
  * PLACEHOLDER for `areas.glazingByOrientationSqm`, on the same eight keys as
@@ -244,36 +265,9 @@ export const SCHEPENDOMLAAN_PENDING_MEASUREMENTS: readonly PendingMeasurement[] 
       biasDirection:
         "Roughly neutral on total loss — doors are priced at the wall U (A-DOORS) — but it moves the WWR denominator, so it is not free.",
     },
-    {
-      manifestField: "areas.roofProjectedSqm",
-      constant: "PLACEHOLDER_ROOF_PROJECTED_SQM",
-      placeholderValue: PLACEHOLDER_ROOF_PROJECTED_SQM,
-      unit: "m2",
-      derivedFrom:
-        "The largest storey's stated floor area, 302.24 m², as a lower bound on the plan projection of a roof that covers the whole footprint.",
-      biasDirection:
-        "Understates. Eaves, the modelled dormers and the tiled pitches all add plan area, so the real roof loss is higher than this file reports.",
-    },
-    {
-      manifestField: "areas.groundSlabSqm",
-      constant: "PLACEHOLDER_GROUND_SLAB_SQM",
-      placeholderValue: PLACEHOLDER_GROUND_SLAB_SQM,
-      unit: "m2",
-      derivedFrom:
-        "The ground storey's stated floor area, 302.24 m², measured to the inside face of the walls.",
-      biasDirection:
-        "Understates. Ground contact runs to the outside face, so the real slab is larger by roughly the wall footprint.",
-    },
-    {
-      manifestField: "areas.groundPerimeterM",
-      constant: "PLACEHOLDER_GROUND_PERIMETER_M",
-      placeholderValue: PLACEHOLDER_GROUND_PERIMETER_M,
-      unit: "m",
-      derivedFrom:
-        "The perimeter of a square of the placeholder slab area. No plan outline exists in the manifest and only 6 of 100 spaces carry an extent.",
-      biasDirection:
-        "Understates. A square is the minimum-perimeter shape, and ISO 13370 rewards a low exposed perimeter, so the ground U here is optimistic.",
-    },
+    // areas.roofProjectedSqm, areas.groundSlabSqm and areas.groundPerimeterM
+    // left this table on 2026-09-04 when the extractor emitted them. All
+    // three had said "Understates" here, and all three did.
   ]);
 
 // ── The envelope this file hands the engine ───────────────────────────────
@@ -297,9 +291,17 @@ export const SCHEPENDOMLAAN_MEASURED_ENVELOPE = Object.freeze({
     EXTERIOR_WALL_NET_SQM +
     PLACEHOLDER_GLAZING_APERTURE_SQM +
     PLACEHOLDER_EXTERIOR_DOOR_SQM,
-  roofProjectedSqm: PLACEHOLDER_ROOF_PROJECTED_SQM,
-  groundSlabSqm: PLACEHOLDER_GROUND_SLAB_SQM,
-  groundPerimeterM: PLACEHOLDER_GROUND_PERIMETER_M,
+  /** `areas.roofProjectedSqm` — per-family plan unions summed. Recorded, not the engine's. */
+  roofProjectedSqm: ROOF_PROJECTED_SQM,
+  /** `areas.roofUnionSqm` — the plan all roof families cover, once. */
+  roofUnionSqm: ROOF_UNION_SQM,
+  /** The pitched roof's one-sheet surface and its plan, `roofSurfaceByFamilySqm.sporenkap` / `roofProjectedByFamilySqm.sporenkap`. */
+  roofSporenkapSurfaceSqm: ROOF_SPORENKAP_SURFACE_SQM,
+  roofSporenkapPlanSqm: ROOF_SPORENKAP_PLAN_SQM,
+  /** The outer surface the engine prices: 306.00 + (361.86 − 124.90). See A-ROOF-STACK. */
+  roofAreaSqm: SCHEPENDOMLAAN_ROOF_AREA_SQM,
+  groundSlabSqm: GROUND_SLAB_SQM,
+  groundPerimeterM: GROUND_PERIMETER_M,
   /** `areas.conditionedVolumeGrossM3` — inside the air barrier. Measured. */
   conditionedVolumeGrossM3: 2897.04,
   /** `areas.roomVolumeNetM3` — the 100 space solids summed. Recorded, not used. */
@@ -313,9 +315,13 @@ export const SCHEPENDOMLAAN_MEASURED_ENVELOPE = Object.freeze({
     glazingByOrientationSqm: "placeholder",
     exteriorDoorSqm: "placeholder",
     grossWallSqm: "derived_from_placeholder",
-    roofProjectedSqm: "placeholder",
-    groundSlabSqm: "placeholder",
-    groundPerimeterM: "placeholder",
+    roofProjectedSqm: "manifest",
+    roofUnionSqm: "manifest",
+    roofSporenkapSurfaceSqm: "manifest",
+    roofSporenkapPlanSqm: "manifest",
+    roofAreaSqm: "derived_from_manifest",
+    groundSlabSqm: "manifest",
+    groundPerimeterM: "manifest",
     conditionedVolumeGrossM3: "manifest",
     roomVolumeNetM3: "manifest",
   }),
@@ -418,17 +424,18 @@ export const SCHEPENDOMLAAN_GROUND_STATED_RC = 3.0;
 const WALL_THICKNESS_AT_SLAB_M = 0.31;
 
 const groundInputs = {
-  areaSqm: PLACEHOLDER_GROUND_SLAB_SQM,
-  exposedPerimeterM: PLACEHOLDER_GROUND_PERIMETER_M,
+  areaSqm: GROUND_SLAB_SQM,
+  exposedPerimeterM: GROUND_PERIMETER_M,
   wallThicknessM: WALL_THICKNESS_AT_SLAB_M,
   floorResistanceM2KPerW: GROUND_FLOOR_RESISTANCE_M2KW,
 } as const;
 
 /**
- * PROVISIONAL: both A and P here are placeholders, so this U moves when Lane
- * B lands. The regime is `uninsulated` only by a hair (d_t 8.29 against B'
- * 8.69) and may flip to `well-insulated` on the real geometry — no test pins
- * it.
+ * 345.81 m² over 90.08 m: B' = 7.68 m, d_t = 8.29 m, U = 0.1695 W/m²K. On
+ * the placeholder square (302.24 / 69.54) it read 0.1637 with B' 8.69 — and
+ * the regime flipped exactly as that file predicted: d_t now exceeds B', so
+ * this is ISO 13370's `well-insulated` branch. The measured perimeter made
+ * the floor 3.5 % lossier, which is the direction the bias note gave.
  */
 export const SCHEPENDOMLAAN_GROUND_FLOOR = slabOnGroundUValue(groundInputs);
 export const SCHEPENDOMLAAN_GROUND_FLOOR_RANGE = slabOnGroundUValueRange(groundInputs);
@@ -528,17 +535,20 @@ export const SCHEPENDOMLAAN_RECIPE: BuildingRecipe = {
     planAreaSqm: SCHEPENDOMLAAN_MEASURED_ENVELOPE.groundSlabSqm,
     wallLengthM: SCHEPENDOMLAAN_MEASURED_ENVELOPE.groundPerimeterM,
     grossWallAreaSqm: SCHEPENDOMLAAN_MEASURED_ENVELOPE.grossWallSqm,
-    roofAreaSqm: SCHEPENDOMLAAN_MEASURED_ENVELOPE.roofProjectedSqm,
+    roofAreaSqm: SCHEPENDOMLAAN_MEASURED_ENVELOPE.roofAreaSqm,
     volumeM3: SCHEPENDOMLAAN_MEASURED_ENVELOPE.conditionedVolumeGrossM3,
     derivedFloorAreaSqm: SCHEPENDOMLAAN_TOTAL_FLOOR_AREA_SQM,
     basis:
       "PARTLY PLACEHOLDER — see SCHEPENDOMLAAN_PENDING_MEASUREMENTS. Wall areas, " +
-      "floor areas and volumes are read from the Schependomlaan IFC by " +
-      "scripts/build-reference-building.mjs (inner-leaf exterior-wall walk, " +
-      "IfcSpace rows, storey datums). Roof plan area, ground-slab area, ground " +
-      "perimeter, glazing aperture and exterior-door aperture are NOT measured: " +
-      "they are stand-ins awaiting bim-bf's extractor pass and each biases the " +
-      "answer in the direction that table records.",
+      "floor areas, volumes, roof and ground are read from the Schependomlaan IFC " +
+      "by scripts/build-reference-building.mjs (inner-leaf exterior-wall walk, " +
+      "IfcSpace rows, storey datums, per-element roof shadows and one-sheet " +
+      "surfaces, the union of the ground-storey slab shadows and its outer ring). " +
+      "The roof area is the outer surface, derived as sporenkap surface 306.00 + " +
+      "(roofUnionSqm 361.86 − sporenkap plan 124.90) = 542.96 m² (A-ROOF-STACK). " +
+      "Glazing aperture and exterior-door aperture are NOT measured: they are " +
+      "stand-ins awaiting bim-bf's extractor pass and each biases the answer in " +
+      "the direction that table records.",
   },
 };
 
@@ -571,11 +581,13 @@ export const SCHEPENDOMLAAN_MATERIALS: MaterialProperties = {
       wall("W", SCHEPENDOMLAAN_WALL_BY_SECTOR_SQM.W),
     ],
     /**
-     * One roof assembly, unlike the Clinic's two, so no area weighting is
-     * needed and none is invented. When Lane B's `roofs[]` rows land and
-     * distinguish the tiled pitches from the flat sections, this becomes a
-     * weighted value and the constituents must be recorded the way the
-     * Clinic's are.
+     * One roof U for a roof the rows now show is two kinds — 306.00 m² of
+     * 64° tiled sporenkap and 236.96 m² of flat deck (dakvloer, plat dak,
+     * lifttop). The model states one insulated roof assembly,
+     * IFC_dakplaat_geisoleerd, and no separate flat-deck build-up that
+     * constructions.ts resolves, so there is nothing measured to weight
+     * against and the single solved U is applied to the whole outer surface.
+     * See A-ROOF-STACK.
      */
     roof: {
       uValue: SCHEPENDOMLAAN_ROOF.uValueWPerM2K,
@@ -665,11 +677,10 @@ export type SchependomlaanAssumption = Readonly<{ id: string; assumes: string; w
 export const SCHEPENDOMLAAN_ASSUMPTIONS: readonly SchependomlaanAssumption[] =
   Object.freeze([
     // ── The placeholder state itself ──────────────────────────────────────
-    { id: "A-PLACEHOLDER-STATE", assumes: "Six envelope inputs are stand-ins, not measurements: roof plan area, ground-slab area, ground exposed perimeter, glazing aperture, per-orientation glazing and exterior-door aperture.", why: "The committed manifest carries none of them — it states window and door COUNTS (77 / 20) and no apertures, no roof area and no ground outline. bim-bf's extractor pass emits them as areas.roofProjectedSqm, areas.groundSlabSqm, areas.groundPerimeterM, areas.glazingApertureSqm, areas.glazingByOrientationSqm and areas.exteriorDoorSqm; SCHEPENDOMLAAN_PENDING_MEASUREMENTS names each stand-in, how it was derived and which way it is wrong. SCHEPENDOMLAAN_INPUT_STATE reads 'awaiting_lane_b_measurements' until every one of them is replaced. A kWh figure from this file today is provisional in a way its U-values are not." },
+    { id: "A-PLACEHOLDER-STATE", assumes: "Three envelope inputs are stand-ins, not measurements: glazing aperture, per-orientation glazing and exterior-door aperture.", why: "The committed manifest carries none of them — it states window and door COUNTS (77 / 20) and no apertures. bim-bf's extractor pass emits them as areas.glazingApertureSqm, areas.glazingByOrientationSqm and areas.exteriorDoorSqm; SCHEPENDOMLAAN_PENDING_MEASUREMENTS names each stand-in, how it was derived and which way it is wrong. SCHEPENDOMLAAN_INPUT_STATE reads 'awaiting_lane_b_measurements' until every one of them is replaced. Three more — roof, ground-slab area and ground perimeter — were stand-ins until 2026-09-04 and are measured now; each had said 'Understates' and each did (roof 302.24 → 542.96 m², slab 302.24 → 345.81 m², perimeter 69.54 → 90.08 m). A kWh figure from this file today is provisional on its window term in a way its U-values are not." },
     { id: "A-GLAZING-AREA-PLACEHOLDER", assumes: "77 windows at a mean 1.5 m² give a 115.50 m² aperture.", why: "The count is bim-bf's measurement; the mean pane is invented. A Dutch apartment mixes 3-4 m² living-room windows with 0.3-0.5 m² toilet lights and the mean of that mixture is not knowable from a count. The resulting 19.8 % WWR against gross wall is plausible for Dutch housing, which is exactly why it must be labelled — a plausible number is indistinguishable from a measured one once it has been multiplied by a U-value." },
     { id: "A-DOORS-AREA-PLACEHOLDER", assumes: "20 exterior door leaves at a mean 2.0 m² give 40.00 m².", why: "Same shape as the glazing placeholder: the count is measured, the leaf area is not. Doors are kept a separate field from glazing rather than folded in, because on the Clinic that separation is what stopped 267 m² of real wall being priced as nothing, and the gross-wall denominator is wrong the moment they merge." },
-    { id: "A-ROOF-AREA-PLACEHOLDER", assumes: "The roof projects to 302.24 m² in plan — the largest storey's floor area.", why: "Every part of the footprint has some roof above it, so this is a lower bound rather than a guess. Eaves, the modelled dormers (IFC_dakkapel_zijwang) and the tiled pitches in the archive's WILLEMSEN files all add plan area, so the real roof loss is higher than this file reports. PROJECTED, not developed: the roof is pitched and the two figures differ — on the Clinic the same distinction spanned 296-382 m² for a single roof." },
-    { id: "A-GROUND-AREA-PLACEHOLDER", assumes: "Ground-contact area 302.24 m² and exposed perimeter 69.54 m.", why: "The area is the ground storey's floor area, measured to the inside of the walls, so the real slab is larger. The perimeter is that of a SQUARE of the same area, because the manifest states no plan outline and only 6 of the 100 IfcSpace rows carry an extent. A square is the minimum-perimeter shape and ISO 13370 rewards a low exposed perimeter, so this ground U is the optimistic end. Both A and P feed the same equation, so the ground U moves when either lands." },
+    { id: "A-ROOF-STACK", assumes: "The roof the engine prices is the outer surface, 542.96 m² = sporenkap surface 306.00 + (roofUnionSqm 361.86 − sporenkap plan 124.90), not the 692.04 m² the ten family surfaces sum to and not the 383.55 m² roofProjectedSqm.", why: "The family surfaces cannot simply be summed, because they overlap in plan and are layers of the same roofs: dakvloer's nine slabs on storey '04 dak' (11.62–11.84 m) surface 259.73 but union to 135.37 — eight build-up slabs stacked on one deck, which a sum prices twice; the eight dormer roofs (14.49) and the thin plafond / dakisolatie / spouwisolatie / dakaftimmering pieces (10.77) sit inside the sporenkap's plan on top of it. What the rows do NOT show is the dakvloer under the sporenkap — the 64° sporenkap (44 ROOF slabs, 32 of them on storey 03 at 9.00 m, under the dakvloer's 11.62–11.84 m) is a steep band about 1.3 m wide around the top storey, and the flat dakvloer, plat dak and lifttop lie beside it: their unions 135.37 + 95.01 + 5.75 = 236.13 against the all-family union's 361.86 − 124.90 = 236.96, disjoint from the pitched roof to within 0.83 m². So the outer surface is the pitched roof at its surface plus the flat roofs at their plan, which is their surface. The dormer roofs are left inside the sporenkap's figure rather than added — if the sporenkap is cut at the dormers this understates by up to 14.49 m² plus the dormer cheeks. One solved roof U (the dakplaat panel) is applied to all of it, because the model resolves no separate flat-deck build-up; the flat decks may be built differently and the file does not say." },
     { id: "A-WWR-UNIFORM-PLACEHOLDER", assumes: "The placeholder glazing is spread pro rata to the measured wall split, so every sector reads the same WWR.", why: "Lane B emits glazingByOrientationSqm on the same eight sector keys as the wall split, so a genuine per-sector WWR is coming and this file is structured to take one — SCHEPENDOMLAAN_WWR_BY_SECTOR already computes eight ratios. Until then a uniform spread is the only distribution that adds no information the file does not have. It is not what the building looks like: a Dutch block glazes its living-room facade far harder than its stair-and-service facade." },
 
     // ── The engine's own limits, disclosed ────────────────────────────────
@@ -685,10 +696,10 @@ export const SCHEPENDOMLAAN_ASSUMPTIONS: readonly SchependomlaanAssumption[] =
     { id: "A-ROOF-RC-CONFLICT", assumes: "The roof U is the SOLVED 0.1776 W/m²K (Rc 5.502), not the 0.2422 its name's stated Rc 4.00 implies.", why: "A 37.6 % disagreement, well past the brief's 10 % threshold. The solved value is used because this module's whole claim is layers → U, the honest direction, and because 'Rc=4,00' is a token in an assembly NAME, not an IfcThermalTransmittance the file declares: 190 mm of glass wool genuinely is about Rc 5.3-5.5, and the name almost certainly records the specification the assembly was created to satisfy rather than what it achieves. The reader is owed the direction: the solved figure is the OPTIMISTIC of the two, and A-ROOF-FRAME-BRIDGE names the effect that closes part of the gap." },
     { id: "A-ROOF-FRAME-BRIDGE", assumes: "No thermal bridging through the roof panel's frame.", why: "The assembly's own first layer is named '99 Lucht frame' — the model says there is a frame in it. A framed cavity breaks ISO 6946 5.3.1's unsubdivided-layer premise outright, and the timber ribs of a dakplaat typically cost 10-20 % of the assembly's resistance. That bridge is unrepresented and is disclosed rather than tuned away, and it pushes the roof from the solved Rc 5.50 back toward the stated 4.00." },
     { id: "A-ROOF-AIR-LAYER", assumes: "The 5 mm '99 Lucht frame' layer contributes R 0.14, the library's 10 mm cavity entry.", why: "Three things are wrong with that and all three are disclosed rather than tuned. (1) The void is SUBDIVIDED — the name says 'frame' — so ISO 6946 Table 2's unsubdivided-layer premise (5.3.1) does not hold and the bridge through the ribs is unrepresented. (2) 5 mm is below every row available: Table 2's flat 0.16/0.18 values start at 25 mm and the library's smallest cavity is 10 mm, so the nearest entry over-states this layer by roughly 0.03 m²K/W, 0.5 % of the roof's resistance. (3) The layer is upward-facing in the roof and downward-facing in IFC_verlaagd_plafond, and a name-keyed mapping table cannot carry two heat-flow directions for one name." },
-    { id: "A-GROUND-RC-CONFLICT", assumes: "The floor construction resistance R_f is the SOLVED 3.781 m²K/W, not the stated Rc 3.00.", why: "A 26 % disagreement, again past the 10 % threshold, and again the solved figure is the optimistic one: at the stated Rc the ground U would be 0.1905 instead of 0.1637, 16 % worse. The solved value is used for consistency with the roof and with the Clinic. Both are exported — SCHEPENDOMLAAN_GROUND_FLOOR_AT_STATED_RC carries the other reading — because the difference is larger than the soil uncertainty this building's ground U already carries." },
+    { id: "A-GROUND-RC-CONFLICT", assumes: "The floor construction resistance R_f is the SOLVED 3.781 m²K/W, not the stated Rc 3.00.", why: "A 26 % disagreement, again past the 10 % threshold, and again the solved figure is the optimistic one: at the stated Rc the ground U would be 0.1974 instead of 0.1695, 16 % worse. The solved value is used for consistency with the roof and with the Clinic. Both are exported — SCHEPENDOMLAAN_GROUND_FLOOR_AT_STATED_RC carries the other reading — because the difference is larger than the soil uncertainty this building's ground U already carries." },
     { id: "A-HOLLOW-CORE", assumes: "The 200 mm kanaalplaat is solid reinforced concrete at λ 2.3.", why: "A kanaalplaat is a hollow-core slab: its voids give it more resistance than the solid concrete modelled here, so this understates the floor. The library has no hollow-core entry and inventing an effective λ for one would be a manufacturer's figure dressed as a generic table value. The error is small against 133 mm of EPS — the concrete is 2.3 % of the stack's resistance either way." },
     { id: "A-SUSPENDED-FLOOR", assumes: "The ground floor is a slab on ground, and ISO 13370 §9.3 applies.", why: "This is the parity brief's decision and is not reopened here, but the reader is owed the doubt: a Dutch kanaalplaat ground floor usually spans a ventilated kruipruimte, which is ISO 13370 §9.2, a different equation; and the model carries a '-1 fundering' datum at −1.00 m and an IFC_vloer_EPS_stortstrook edge detail, both consistent with either. ground-coupling.ts implements the slab case only and throws rather than approximating the others, so the choice is also the only one this repo can currently compute." },
-    { id: "A-SOIL", assumes: "Soil conductivity 2.0 W/m·K under the slab.", why: "ISO 13370's own default when soil is unknown, and soil is never in a drawing set. It moves this ground U from 0.1495 (clay) to 0.1918 (rock); 0.1637 is the nominal. On top of that both the slab area and its exposed perimeter are placeholders here, so the soil bound is the smaller of the two uncertainties on this element." },
+    { id: "A-SOIL", assumes: "Soil conductivity 2.0 W/m·K under the slab.", why: "ISO 13370's own default when soil is unknown, and soil is never in a drawing set. It moves this ground U from 0.1553 (clay) to 0.1968 (rock); 0.1695 is the nominal. The slab area and exposed perimeter are measured now (345.81 m² / 90.08 m), so soil is the largest remaining uncertainty on this element after the slab-versus-crawlspace question in A-SUSPENDED-FLOOR." },
     { id: "A-LAYER-LAMBDAS", assumes: "Every λ behind these U-values is a mapping this repo chose, not a property the file states.", why: "The Schependomlaan IFC carries layer names and thicknesses and no IfcMaterialProperties at all — no conductivity, no U-value, no R. SCHEPENDOMLAAN_LAYER_MAPPINGS in constructions.ts names one generic-library material per Dutch layer name with the reason for each; that table, not the model, is where these numbers come from." },
 
     // ── Openings, systems, people ────────────────────────────────────────
@@ -701,12 +712,12 @@ export const SCHEPENDOMLAAN_ASSUMPTIONS: readonly SchependomlaanAssumption[] =
     { id: "A-CLIMATE", assumes: "A Korean climate (Seoul) for a Dutch building.", why: "The town Nijmegen IS stated, on both IfcSite and IfcBuilding, so unlike the Clinic this building's location is not unknown — it is unusable. The engine's regional table is Korean-only and has no Netherlands entry, so any climate here is a substitution. A sourced Nijmegen HDD/CDD row from KNMI is the fix and is a follow-up, not this lane. Nijmegen is milder and duller than Seoul: Seoul's larger heating degree-days and far larger cooling degree-days both push this building's demand up." },
 
     // ── Scope and shape ──────────────────────────────────────────────────
-    { id: "A-WALL-SET-SCOPE", assumes: "426.63 m² of inner-leaf exterior wall is the building's whole opaque wall.", why: "It may not be. 582.13 m² of gross wall over 12.00 m of height implies about 48.5 m of enclosing perimeter, but a 302.24 m² plan cannot have a perimeter under 69.5 m — so either this is a terrace whose party walls are correctly excluded (the archive's YTONG-Kavel 01..10 files and the ten dwellings in spaces.json both point that way) or the extractor's exterior-wall walk missed part of the enclosure. The manifest itself records that 820 external space boundaries failed to resolve and that envelope areas come from the wall walk instead. The figure is used as measured and the tension is recorded rather than corrected." },
+    { id: "A-WALL-SET-SCOPE", assumes: "426.63 m² of inner-leaf exterior wall is the building's whole opaque wall.", why: "It may not be. 582.13 m² of gross wall over 12.00 m of height implies about 48.5 m of enclosing perimeter, and the measured slab outline is 90.08 m around — so either this is a terrace whose party walls are correctly excluded (the archive's YTONG-Kavel 01..10 files and the ten dwellings in spaces.json both point that way) or the extractor's exterior-wall walk missed part of the enclosure. The manifest itself records that 820 external space boundaries failed to resolve and that envelope areas come from the wall walk instead. The figure is used as measured and the tension is recorded rather than corrected." },
     { id: "A-ENVELOPE-ASSEMBLY-SET", assumes: "Twelve of the model's 28 assemblies are envelope: the roof panel, the dormer cheek, the ground floor and its edge strip, the three cavity-wall leaves and the window frame.", why: "The model does not label an assembly external, so the list in constructions.ts is hand-written and rests on bim-bf's identification of the cavity wall's leaves. IFC_kalkzandsteen appears in five thicknesses and only 100 and 120 mm are named as the exterior inner leaf; 175, 214 and 300 mm are excluded as internal and party walls, which the file does not state either. If that identification is wrong the envelope list is wrong with it. A keyword rule was rejected for the same reason: 'kalkzandsteen' would drag three interior walls onto the envelope, and the Clinic's own rule (exterior|roof|slab on grade|foundation) matches none of these Dutch names at all — applied here it returns an empty section, not a wrong one." },
     { id: "A-WALL-LEAVES-SHOWN-SEPARATELY", assumes: "The 외피 구성 section shows the cavity wall's three leaves at three separate U-values, not one wall at 0.2889.", why: "That is how the model states them, and constructions.ts solves only assemblies the model states. The insulation leaf alone reads about U 0.31, which is close to the whole wall's 0.29 by coincidence — 110 mm of glass wool is 92 % of the assembly's resistance — and a reader must not take either leaf's row for the wall. The composite is SCHEPENDOMLAAN_CAVITY_WALL in this file, where it is labelled an inference." },
-    { id: "A-GROUND-ROW-IS-AIR-TO-AIR", assumes: "The ground floor's row in the 외피 구성 section reads U 0.2516, not the 0.1637 the energy path uses.", why: "That section reports what a layer stack resists between inside air and outside air, which is not what a floor on the ground does — the same split the Clinic shows, where its slab's row reads 3.873 against ISO 13370's 0.237. Here the gap is 1.5x rather than 16x because this floor is genuinely insulated, which makes it easier to miss, not less wrong. SCHEPENDOMLAAN_GROUND_FLOOR is the figure in the energy numbers; the section's row is the layer stack's own." },
+    { id: "A-GROUND-ROW-IS-AIR-TO-AIR", assumes: "The ground floor's row in the 외피 구성 section reads U 0.2516, not the 0.1695 the energy path uses.", why: "That section reports what a layer stack resists between inside air and outside air, which is not what a floor on the ground does — the same split the Clinic shows, where its slab's row reads 3.873 against ISO 13370's 0.237. Here the gap is 1.5x rather than 16x because this floor is genuinely insulated, which makes it easier to miss, not less wrong. SCHEPENDOMLAAN_GROUND_FLOOR is the figure in the energy numbers; the section's row is the layer stack's own." },
     { id: "A-NORTH", assumes: "North is the model's −Z, and the wall split's four zero diagonals are real.", why: "TrueNorth is the schema default (0.,1.) in both representation contexts, so the model states no orientation. The manifest's own note claims all 122 inner-leaf walls are cardinal and that the 88 placements at 47.94° belong to the excluded outer leaf. That claim is the extractor's, not this file's, and every per-orientation figure here rests on it." },
     { id: "A-NO-FOOTPRINT", assumes: "The recipe's footprint is a 17.39 m square.", why: "The manifest states no plan outline and only 6 of the 100 IfcSpace rows carry an extent, so no bounding box can be recovered. The square has the ground storey's floor area and no relation to the building's shape. Nothing in the energy path reads it: measuredEnvelope short-circuits envelopeQuantities, which is the only reason a shape-free stand-in is admissible at all." },
-    { id: "A-ENVELOPE-SOURCE", assumes: "Envelope areas come from the measured manifest and the placeholder table, not from the recipe's footprint.", why: "Extruding a square would produce 4 × 17.39 × 12.00 = 834 m² of wall against the 582.13 m² this building's own solids give, and a roof of 302.24 m² by coincidence rather than by measurement. The areas travel on the recipe as measuredEnvelope and envelopeQuantities returns them with source 'measured'. Note what that source string does NOT mean today: six of those numbers are placeholders, and only SCHEPENDOMLAAN_INPUT_STATE says so." },
+    { id: "A-ENVELOPE-SOURCE", assumes: "Envelope areas come from the measured manifest and the placeholder table, not from the recipe's footprint.", why: "Extruding a square would produce 4 × 17.39 × 12.00 = 834 m² of wall against the 582.13 m² this building's own solids give, and a roof of 302.24 m² against the 542.96 m² of outer surface the rows measure. The areas travel on the recipe as measuredEnvelope and envelopeQuantities returns them with source 'measured'. Note what that source string does NOT mean today: three of those numbers — the glazing and door apertures inside grossWallSqm — are placeholders, and only SCHEPENDOMLAAN_INPUT_STATE says so." },
     { id: "A-ERA", assumes: "Era 2010-2019, use code 02000 (공동주택), structure code 22 (조적조).", why: "The archive's coordination models are dated 2015 and the project was built 2015-16, so the era is evidence. What it does NOT do is decide any number here: the era selects Korean code-table defaults for values not overridden, and every U-value, WWR and airtightness figure in this file is overridden explicitly, leaving the era's effect on cosmetic recipe fields only. The structure code is the nearest available: the register's vocabulary has no row for load-bearing calcium-silicate blockwork with precast hollow-core floors and a partial steel frame." },
   ]);

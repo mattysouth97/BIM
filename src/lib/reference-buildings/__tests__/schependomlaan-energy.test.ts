@@ -54,14 +54,27 @@ describe("the file says, unmissably, which state it is in", () => {
   it("names the exact manifest field each placeholder awaits", () => {
     // Lane B emits these names. Naming them here makes the swap a value
     // change and not a rename, and lets a reader find what is missing.
+    // Six until 2026-09-04; roof, slab area and perimeter have landed.
     expect(SCHEPENDOMLAAN_PENDING_MEASUREMENTS.map((p) => p.manifestField).sort()).toEqual([
       "areas.exteriorDoorSqm",
       "areas.glazingApertureSqm",
       "areas.glazingByOrientationSqm",
-      "areas.groundPerimeterM",
-      "areas.groundSlabSqm",
-      "areas.roofProjectedSqm",
     ]);
+    expect(SCHEPENDOMLAAN_PENDING_MEASUREMENTS).toHaveLength(3);
+  });
+
+  it("the three that landed match the shipped manifest, and each moved the way its bias note said", () => {
+    const e = SCHEPENDOMLAAN_MEASURED_ENVELOPE;
+    expect(e.groundSlabSqm).toBe(manifest.areas.groundSlabSqm);
+    expect(e.groundPerimeterM).toBe(manifest.areas.groundPerimeterM);
+    expect(e.roofProjectedSqm).toBe(manifest.areas.roofProjectedSqm);
+    expect(e.roofUnionSqm).toBe(manifest.areas.roofUnionSqm);
+    expect(e.roofSporenkapSurfaceSqm).toBe(manifest.areas.roofSurfaceByFamilySqm?.sporenkap);
+    expect(e.roofSporenkapPlanSqm).toBe(manifest.areas.roofProjectedByFamilySqm?.sporenkap);
+    // The retired placeholders all said "Understates", and all three did.
+    expect(e.groundSlabSqm).toBeGreaterThan(302.24);
+    expect(e.groundPerimeterM).toBeGreaterThan(69.54);
+    expect(e.roofAreaSqm).toBeGreaterThan(302.24);
   });
 
   it("every placeholder says how it was derived and which way it is wrong", () => {
@@ -77,11 +90,43 @@ describe("the file says, unmissably, which state it is in", () => {
     expect(p.exteriorWallNetSqm).toBe("manifest");
     expect(p.conditionedVolumeGrossM3).toBe("manifest");
     expect(p.glazingApertureSqm).toBe("placeholder");
-    expect(p.roofProjectedSqm).toBe("placeholder");
-    expect(p.groundSlabSqm).toBe("placeholder");
-    expect(p.groundPerimeterM).toBe("placeholder");
+    expect(p.exteriorDoorSqm).toBe("placeholder");
+    expect(p.roofProjectedSqm).toBe("manifest");
+    expect(p.roofUnionSqm).toBe("manifest");
+    expect(p.groundSlabSqm).toBe("manifest");
+    expect(p.groundPerimeterM).toBe("manifest");
+    // The engine's roof is a derivation over manifest figures, not a field.
+    expect(p.roofAreaSqm).toBe("derived_from_manifest");
     // Gross wall is measured wall + two placeholders, which is neither.
     expect(p.grossWallSqm).toBe("derived_from_placeholder");
+  });
+
+  it("the roof area is the outer surface, and A-ROOF-STACK's own formula reproduces it", () => {
+    const e = SCHEPENDOMLAAN_MEASURED_ENVELOPE;
+    // sporenkap surface + (all-family union − sporenkap plan): the pitched
+    // roof at its surface, the flat roofs at their plan, nothing twice.
+    expect(e.roofAreaSqm).toBeCloseTo(306.0 + (361.86 - 124.9), 2);
+    expect(e.roofAreaSqm).toBeCloseTo(542.96, 2);
+    // Not the sum of the family surfaces, which stacks dakvloer's nine slabs.
+    const familySurfaceSum = Object.values(manifest.areas.roofSurfaceByFamilySqm ?? {}).reduce(
+      (a, b) => a + b,
+      0,
+    );
+    expect(familySurfaceSum).toBeCloseTo(692.04, 1);
+    expect(e.roofAreaSqm).toBeLessThan(familySurfaceSum);
+    // The flat roofs are beside the pitched one, not under it: their own
+    // unions account for the second term to within a square metre.
+    const fam = manifest.areas.roofProjectedByFamilySqm ?? {};
+    const flat = (fam.dakvloer ?? 0) + (fam["plat dak"] ?? 0) + (fam.lifttop ?? 0);
+    expect(361.86 - 124.9 - flat).toBeGreaterThan(0);
+    expect(361.86 - 124.9 - flat).toBeLessThan(1);
+    // The assumption's text carries the same three numbers as the code.
+    const stack = SCHEPENDOMLAAN_ASSUMPTIONS.find((a) => a.id === "A-ROOF-STACK");
+    const m = stack?.assumes.match(/(\d+\.\d+) m² = sporenkap surface (\d+\.\d+) \+ \(roofUnionSqm (\d+\.\d+) − sporenkap plan (\d+\.\d+)\)/);
+    expect(m).not.toBeNull();
+    const [, total, surface, union, plan] = m!.map(Number);
+    expect(surface + (union - plan)).toBeCloseTo(total, 2);
+    expect(total).toBeCloseTo(e.roofAreaSqm, 2);
   });
 
   it("the recipe's own basis string leads with the word, not with a caveat at the end", () => {
@@ -245,13 +290,15 @@ describe("the roof: solved against the Rc its own name states", () => {
 
 describe("the ground floor is ISO 13370, not air-to-air", () => {
   it("uses the slab-on-ground U, an order of magnitude below any air-to-air read", () => {
-    expect(SCHEPENDOMLAAN_MATERIALS.envelope.groundFloor.uValue).toBeCloseTo(0.1637, 3);
+    // 345.81 m² / 90.08 m, R_f 3.78: B' 7.68, d_t 8.29. Read 0.1637 on the
+    // 302.24 / 69.54 placeholder square.
+    expect(SCHEPENDOMLAAN_MATERIALS.envelope.groundFloor.uValue).toBeCloseTo(0.1695, 3);
     expect(SCHEPENDOMLAAN_MATERIALS.envelope.groundFloor.uValue).toBeLessThan(0.5);
   });
 
   it("bounds it by soil", () => {
-    expect(SCHEPENDOMLAAN_GROUND_FLOOR_RANGE.low.uValueWPerM2K).toBeCloseTo(0.1495, 3);
-    expect(SCHEPENDOMLAAN_GROUND_FLOOR_RANGE.high.uValueWPerM2K).toBeCloseTo(0.1918, 3);
+    expect(SCHEPENDOMLAAN_GROUND_FLOOR_RANGE.low.uValueWPerM2K).toBeCloseTo(0.1553, 3);
+    expect(SCHEPENDOMLAAN_GROUND_FLOOR_RANGE.high.uValueWPerM2K).toBeCloseTo(0.1968, 3);
     expect(SCHEPENDOMLAAN_GROUND_FLOOR.uValueWPerM2K).toBe(
       SCHEPENDOMLAAN_GROUND_FLOOR_RANGE.nominal.uValueWPerM2K,
     );
@@ -259,7 +306,7 @@ describe("the ground floor is ISO 13370, not air-to-air", () => {
 
   it("records the stated-Rc reading too, which is 16 % worse", () => {
     expect(SCHEPENDOMLAAN_GROUND_STATED_RC).toBe(3);
-    expect(SCHEPENDOMLAAN_GROUND_FLOOR_AT_STATED_RC.uValueWPerM2K).toBeCloseTo(0.1905, 3);
+    expect(SCHEPENDOMLAAN_GROUND_FLOOR_AT_STATED_RC.uValueWPerM2K).toBeCloseTo(0.1974, 3);
     expect(SCHEPENDOMLAAN_GROUND_FLOOR_AT_STATED_RC.uValueWPerM2K).toBeGreaterThan(
       SCHEPENDOMLAAN_GROUND_FLOOR.uValueWPerM2K,
     );
@@ -269,9 +316,14 @@ describe("the ground floor is ISO 13370, not air-to-air", () => {
     expect(SCHEPENDOMLAAN_MATERIALS.envelope.groundFloor.groundContactResistance).toBe(0);
   });
 
-  // Deliberately no assertion on `regime`. d_t 8.29 sits just under B' 8.69,
-  // and both terms are placeholders: the branch may legitimately flip when
-  // Lane B lands the real slab area and perimeter.
+  it("is on the well-insulated branch now that A and P are measured", () => {
+    // On the placeholder square d_t 8.29 sat just under B' 8.69 and the file
+    // said the branch might flip when the real geometry landed. It did: the
+    // measured 90.08 m perimeter takes B' to 7.68, below d_t.
+    expect(SCHEPENDOMLAAN_GROUND_FLOOR.regime).toBe("well-insulated");
+    expect(SCHEPENDOMLAAN_GROUND_FLOOR.characteristicDimensionM).toBeCloseTo(7.68, 2);
+    expect(SCHEPENDOMLAAN_GROUND_FLOOR.equivalentThicknessM).toBeCloseTo(8.29, 2);
+  });
 });
 
 describe("the WWR is derived from its parts, against GROSS wall", () => {
@@ -353,7 +405,7 @@ describe("the recipe's envelope is the measured/placeholder one, and heat-loss r
     const q = envelopeQuantities(SCHEPENDOMLAAN_RECIPE);
     expect(q.source).toBe("measured");
     expect(q.grossWallAreaSqm).toBeCloseTo(SCHEPENDOMLAAN_MEASURED_ENVELOPE.grossWallSqm, 2);
-    expect(q.roofAreaSqm).toBeCloseTo(SCHEPENDOMLAAN_MEASURED_ENVELOPE.roofProjectedSqm, 2);
+    expect(q.roofAreaSqm).toBeCloseTo(SCHEPENDOMLAAN_MEASURED_ENVELOPE.roofAreaSqm, 2);
     expect(q.planAreaSqm).toBeCloseTo(SCHEPENDOMLAAN_MEASURED_ENVELOPE.groundSlabSqm, 2);
     expect(q.volumeM3).toBeCloseTo(SCHEPENDOMLAAN_MEASURED_ENVELOPE.conditionedVolumeGrossM3, 2);
     expect(q.intensityFloorAreaSqm).toBe(SCHEPENDOMLAAN_TOTAL_FLOOR_AREA_SQM);
@@ -378,8 +430,8 @@ describe("the recipe's envelope is the measured/placeholder one, and heat-loss r
     const area = (name: string) => result.elements.find((e) => e.element === name)?.area;
     expect(area("Windows")).toBeCloseTo(115.5, 1);
     expect(area("Walls")).toBeCloseTo(426.63 + 40, 1);
-    expect(area("Roof")).toBeCloseTo(302.24, 1);
-    expect(area("Ground Floor")).toBeCloseTo(302.24, 1);
+    expect(area("Roof")).toBeCloseTo(542.96, 1);
+    expect(area("Ground Floor")).toBeCloseTo(345.81, 1);
     expect(area(VENTILATION_ELEMENT_NAME)).toBeCloseTo(2897.04, 1);
   });
 });
@@ -404,8 +456,7 @@ describe("every non-measured value is a named assumption", () => {
     "A-PLACEHOLDER-STATE",
     "A-GLAZING-AREA-PLACEHOLDER",
     "A-DOORS-AREA-PLACEHOLDER",
-    "A-ROOF-AREA-PLACEHOLDER",
-    "A-GROUND-AREA-PLACEHOLDER",
+    "A-ROOF-STACK",
     "A-WWR-UNIFORM-PLACEHOLDER",
     "A-WWR-DENOMINATOR",
     "A-WWR-ENGINE-MEAN",

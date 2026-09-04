@@ -50,8 +50,16 @@ export const CLINIC_STOREYS = Object.freeze({
 });
 export const CLINIC_TOTAL_FLOOR_AREA_SQM = 4314.2;
 
-/** Slab-on-grade one-face area = ground-contact area. Excludes 167.32 m² of paving. */
-const GROUND_SLAB_SQM = 2621.08;
+/**
+ * Ground-contact area: the union of the slab-on-grade shadows that a
+ * conditioned ground-storey space stands on (`manifest.areas.groundSlabSqm`,
+ * `groundSlabs[]`). Two slabs are excluded and named: 167.32 m² of
+ * "Floor:150mm Exterior Slab on Grade:240432" paving, and the 43.66 m²
+ * "Floor:150mm Slab on Grade:221475" — an outdoor equipment pad beyond the
+ * wall line with no space over it, which the 2,621.08 carried until
+ * 2026-09-04 had counted as conditioned ground. See A-GROUND-PAD.
+ */
+const GROUND_SLAB_SQM = 2577.42;
 /** Exposed perimeter of the slab-on-grade outline, independently derived. */
 const GROUND_PERIMETER_M = 217.01;
 const WALL_THICKNESS_AT_SLAB_M = 0.267;
@@ -121,16 +129,26 @@ export const CLINIC_MEASURED_ENVELOPE = Object.freeze({
   exteriorDoorByOrientationSqm: Object.freeze({ N: 5.86, E: 4.19, S: 6.51, W: 19.53 }),
   /** Opaque wall + glazing + doors: the whole exterior wall plane. */
   grossWallSqm: EXTERIOR_WALL_NET_SQM + GLAZING_APERTURE_SQM + EXTERIOR_DOOR_SQM,
-  /** EPDM-on-rigid-insulation, 7 slabs, horizontal-projected. */
-  roofEpdmSqm: 2286.93,
   /**
-   * Standing seam over the atrium spine, 5 IfcRoof, horizontal-PROJECTED.
-   * The top-face sum is 764.56 because it is pitched (two faces within 26° of
-   * horizontal); an earlier geometry pass put it at ~296.6. Range 296–382.
-   * This file uses the projected 382.28 and says so.
+   * EPDM-on-rigid-insulation, 7 IfcSlab ROOF, one-sheet SURFACE
+   * (`manifest.areas.roofSurfaceByFamilySqm`). Flat, so the surface equals
+   * the shadow.
    */
-  roofStandingSeamSqm: 382.28,
-  roofStandingSeamRangeSqm: Object.freeze({ low: 296.6, high: 382.28 }),
+  roofEpdmSurfaceSqm: 2286.93,
+  /**
+   * Standing seam over the atrium spine, 5 barrel IfcRoof, one-sheet SURFACE.
+   * Each barrel's surface is its shadow ÷ cos(tilt), 13.5–18.3°. Until
+   * 2026-09-04 this file carried 382.28 as a "projection"; it was not one —
+   * see A-SEAM-AREA.
+   */
+  roofSeamSurfaceSqm: 455.0,
+  /**
+   * The low barrel sits over the second-floor EPDM deck: all roof types
+   * together cover 2,592.43 m² of plan (`roofUnionSqm`) against 2,666.98 for
+   * the two families summed, so 74.55 m² of EPDM is under a roof, not under
+   * the sky, and is not envelope.
+   */
+  roofEpdmUnderBarrelSqm: 74.55,
   groundSlabSqm: GROUND_SLAB_SQM,
   groundPerimeterM: GROUND_PERIMETER_M,
   /**
@@ -154,14 +172,32 @@ export const CLINIC_MEASURED_ENVELOPE = Object.freeze({
   roomVolumeNetM3: 12928.26,
 });
 
+/**
+ * EPDM that faces the sky: the deck's surface less the 74.55 m² the low
+ * barrel roofs over. 2,212.38 m².
+ */
+export const CLINIC_ROOF_EPDM_EXPOSED_SQM =
+  CLINIC_MEASURED_ENVELOPE.roofEpdmSurfaceSqm - CLINIC_MEASURED_ENVELOPE.roofEpdmUnderBarrelSqm;
+
+/**
+ * The roof the engine multiplies by the roof U: exposed EPDM surface plus the
+ * barrels' surface, 2,212.38 + 455.00 = 2,667.38 m². Heat crosses the outer
+ * surface, so a pitched roof counts at its surface, not its shadow, and the
+ * deck under the barrel is inside the envelope and counts for nothing.
+ */
+export const CLINIC_ROOF_AREA_SQM =
+  CLINIC_ROOF_EPDM_EXPOSED_SQM + CLINIC_MEASURED_ENVELOPE.roofSeamSurfaceSqm;
+
 // ── Ground floor: ISO 13370, not air-to-air ───────────────────────────────
 
 /**
  * 150 mm cast-in-situ slab on grade, uninsulated (the model states no edge or
  * under-slab insulation, so none is assumed). `calculateAssembly` gives 3.873
- * W/m²K for this — wrong physics, 16× too lossy. ISO 13370 gives 0.237,
- * bounded 0.185–0.376 by soil type. Soil is never in a drawing set; 2.0 is the
- * standard's own default and is assumption A-SOIL below.
+ * W/m²K for this — wrong physics, 16× too lossy. ISO 13370 gives 0.240,
+ * bounded 0.188–0.380 by soil type (it read 0.237 while the 43.66 m² pad was
+ * in the area: a smaller slab on the same perimeter is a shade lossier).
+ * Soil is never in a drawing set; 2.0 is the standard's own default and is
+ * assumption A-SOIL below.
  */
 const groundInputs = {
   areaSqm: GROUND_SLAB_SQM,
@@ -255,8 +291,7 @@ export const CLINIC_RECIPE: BuildingRecipe = {
     planAreaSqm: CLINIC_MEASURED_ENVELOPE.groundSlabSqm,
     wallLengthM: CLINIC_MEASURED_ENVELOPE.groundPerimeterM,
     grossWallAreaSqm: CLINIC_MEASURED_ENVELOPE.grossWallSqm,
-    roofAreaSqm:
-      CLINIC_MEASURED_ENVELOPE.roofEpdmSqm + CLINIC_MEASURED_ENVELOPE.roofStandingSeamSqm,
+    roofAreaSqm: CLINIC_ROOF_AREA_SQM,
     volumeM3: CLINIC_MEASURED_ENVELOPE.conditionedVolumeGrossM3,
     derivedFloorAreaSqm: CLINIC_TOTAL_FLOOR_AREA_SQM,
     basis:
@@ -264,9 +299,11 @@ export const CLINIC_RECIPE: BuildingRecipe = {
       "walls from the tessellated exterior-wall solids, glazing and doors per opening " +
       "(windows and doors at OverallWidth × OverallHeight attributed to their host wall, " +
       "exterior curtain walls at the projected outline of plates and mullions), " +
-      "roofs from the structural model's IfcRoof/IfcSlab " +
-      "projected to plan, ground from the slab-on-grade outline, volume from the " +
-      "IfcSpace rows (floor area × storey height, voids as their own solids).",
+      "roofs as each IfcRoof/IfcSlab ROOF element's one-sheet outer surface (EPDM " +
+      "2,286.93 less the 74.55 under the standing-seam barrel, plus the barrels' " +
+      "455.00), ground from the union of the slab-on-grade shadows a conditioned " +
+      "space stands on, volume from the IfcSpace rows (floor area × storey height, " +
+      "voids as their own solids).",
   },
 };
 
@@ -301,14 +338,20 @@ export const CLINIC_MATERIALS: MaterialProperties = {
       wall("W", CLINIC_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.W),
     ],
     /**
-     * Area-weighted across the two roofs: EPDM 0.317 over 2,286.93 m² and
-     * standing seam 3.450 over 382.28 m² → 0.767 W/m²K. The standing-seam
-     * roof has NO insulation layer and dominates roof loss despite being 14 %
-     * of the area. The engine takes one roof U, so it is weighted here and the
-     * two constituents are recorded in the assumptions.
+     * Area-weighted across the two roofs by their outer SURFACE: EPDM 0.317
+     * over the 2,212.38 m² that faces the sky and standing seam 3.450 over
+     * its 455.00 m² one-sheet surface → (701.32 + 1,569.75) / 2,667.38 =
+     * 0.851 W/m²K. The standing-seam roof has NO insulation layer and
+     * dominates roof loss despite being 17 % of the area. The engine takes
+     * one roof U, so it is weighted here and the two constituents are
+     * recorded in the assumptions. (0.767 until 2026-09-04, when the seam
+     * was weighted at 382.28 — see A-SEAM-AREA.)
      */
     roof: {
-      uValue: (0.317 * 2286.93 + 3.45 * 382.28) / (2286.93 + 382.28),
+      uValue:
+        (0.317 * CLINIC_ROOF_EPDM_EXPOSED_SQM +
+          3.45 * CLINIC_MEASURED_ENVELOPE.roofSeamSurfaceSqm) /
+        CLINIC_ROOF_AREA_SQM,
       layers: [
         { name: "Roofing - EPDM Membrane", thickness: 0.006, thermalConductivity: 0.25, density: 1150, specificHeat: 1000 },
         { name: "Insulation - Rigid polyiso (ASTM C1289 LTTR)", thickness: 0.076, thermalConductivity: 0.0253, density: 32, specificHeat: 1400 },
@@ -386,9 +429,10 @@ export const CLINIC_ASSUMPTIONS: readonly ClinicAssumption[] = Object.freeze([
   { id: "A-STUD-CAVITY", assumes: "The 152 mm metal-stud cavity is UNFILLED.", why: "The layer set names no insulation in it. Naming an R-13 batt would halve the wall U (0.404 → 0.218). A real clinic probably has one; the model does not say so, and the model is the source." },
   { id: "A-STEEL-BRIDGE", assumes: "No thermal bridging through the steel studs or bar joists.", why: "ISO 6946 Table 2 assumes an unsubdivided air layer; steel framing breaks that premise and the bridge is not represented. For steel it is tens of percent, not a rounding error, and is disclosed rather than tuned away." },
   { id: "A-SEAM-ROOF", assumes: "The standing-seam roof's 286 mm bar-joist zone is an unventilated upward cavity (R 0.16), U 3.45.", why: "No insulation layer exists in that assembly. As solid steel it would be 7.37. Both are stated; the cavity reading is used because a joist zone is mostly air." },
-  { id: "A-SEAM-AREA", assumes: "Standing-seam roof plan area 382.28 m² (projected).", why: "The roof is pitched; its face sum is 764.56 and an earlier geometry pass gave 296.6. The range 296–382 is recorded; the projected figure is used." },
-  { id: "A-ROOF-WEIGHT", assumes: "One area-weighted roof U of 0.767 W/m²K.", why: "The engine accepts a single roof U. The standing seam is 14 % of the roof area and most of its loss; the weighting is recorded so the constituents can be recovered." },
-  { id: "A-SOIL", assumes: "Soil conductivity 2.0 W/m·K under the slab.", why: "ISO 13370's own default when soil is unknown. Soil moves the ground U from 0.185 (clay) to 0.376 (rock); 0.237 is the nominal." },
+  { id: "A-SEAM-AREA", assumes: "The standing-seam roof enters the engine at its one-sheet SURFACE, 455.00 m², and the 74.55 m² of EPDM deck under its low barrel enters at nothing.", why: "Heat crosses the outer surface, and a pitched roof's surface exceeds its shadow by 1/cos(tilt) — the five barrels shadow 432.66 m² (384.44 as a union) and surface 455.00. The 382.28 this file carried as 'projected' until 2026-09-04 was neither the shadow nor the surface: it is 764.56 ÷ 2, where 764.56 is the sum of the faces within 26° of horizontal over BOTH sheets of a surface model wound upward twice — the near-horizontal part of one sheet with the steep flanks left out (manifest.areas.roofNote). The deck under the barrel is inside the envelope, so it is subtracted from the EPDM rather than priced twice." },
+  { id: "A-ROOF-WEIGHT", assumes: "One area-weighted roof U of 0.851 W/m²K.", why: "The engine accepts a single roof U. Weighted by outer surface: EPDM 0.317 × 2,212.38 + standing seam 3.45 × 455.00, over 2,667.38. The standing seam is 17 % of the roof area and 69 % of its loss; the weighting is recorded so the constituents can be recovered." },
+  { id: "A-GROUND-PAD", assumes: "The 43.66 m² 'Floor:150mm Slab on Grade:221475' is not conditioned ground, and the slab area is 2,577.42 m² rather than 2,621.08.", why: "It is an outdoor equipment pad beyond the wall line: no conditioned ground-storey space footprint overlaps its shadow and no IfcRelSpaceBoundary names it (manifest.groundSlabs[].excludedReason). It shares a family name with the two counted slabs, which is how it was counted until 2026-09-04. IsExternal was not consulted for any slab; the rule is whether a space stands on it." },
+  { id: "A-SOIL", assumes: "Soil conductivity 2.0 W/m·K under the slab.", why: "ISO 13370's own default when soil is unknown. Soil moves the ground U from 0.188 (clay) to 0.380 (rock); 0.240 is the nominal." },
   { id: "A-GROUND-DT", assumes: "The engine's 13.5 °C ground temperature and 4,380 h ground season.", why: "ISO 13370's U pairs with annual-mean external air (~7.5 K at 20 °C indoor); the engine applies 6.5 K. About 13 % conservative, in the direction that makes the building look worse. Disclosed rather than reconciled, because reconciling moves every other building." },
   { id: "A-WWR-DENOMINATOR", assumes: "WWR 0.1073 against GROSS wall area (opaque + glazing + doors), uniform across orientations.", why: "The engine computes windows = gross × WWR and prices the rest as opaque wall, so the ratio must be quoted against the same gross the engine is handed, or the opaque wall silently loses 263 m². Derived from the two measured numbers, not typed. The per-orientation split is measured (manifest areas.glazingByOrientationSqm: N 54.79 / E 95.11 / S 49.58 / W 63.24) but the engine averages the four ratios against one gross wall, so per-sector ratios here would overstate the windows by 2.7 %; one ratio is applied and the split is shown, not consumed." },
   { id: "A-DOORS", assumes: "The 36.08 m² of exterior door leaves are priced at the wall U-value.", why: "The engine knows walls and windows and nothing between. Twelve leaves are flush insulated metal, so wall U is the nearer of the two; the thirteenth is the 4.19 m² 'Dbl Glass' entrance leaf in storefront #742, a glazed door counted as a door because the file types it IfcDoor — the one place this file departs from the verification transcript's 266.78, which counted that leaf as glazing. Leaving doors out would make the envelope smaller than the building." },

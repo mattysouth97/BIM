@@ -129,9 +129,10 @@ const SCHEPENDOMLAAN: ReferenceBuildingEnergyInputs = Object.freeze({
     W: SCHEPENDOMLAAN_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.W,
   }),
   northAssumed: SCHEPENDOMLAAN_MEASURED_ENVELOPE.northAssumed,
-  // NOT complete. Six envelope areas are stand-ins awaiting bim-bf's
-  // extractor pass, and the frame this registry feeds will happily render
-  // them as though they were measured unless something says otherwise.
+  // NOT complete. Three envelope areas — glazing, per-sector glazing and
+  // doors — are stand-ins awaiting bim-bf's extractor pass (roof and ground
+  // landed 2026-09-04), and the frame this registry feeds will happily
+  // render them as though they were measured unless something says otherwise.
   measurementState: "awaiting_measurement",
   pendingMeasurements: SCHEPENDOMLAAN_PENDING_MEASUREMENTS,
 });

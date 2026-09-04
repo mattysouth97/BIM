@@ -137,12 +137,20 @@ What made it honest rather than fitted:
   instead of extruding the 52.66 × 56.90 bbox, and throws on a zero or NaN.
   The bbox stays a bbox.
 - **WWR against GROSS wall.** The engine does `windows = gross × wwr` then
-  prices `gross − windows` as wall, so gross = 2,150.30 opaque + 267.16
-  glazing + 37.06 doors = 2,454.52 and wwr = 0.1088 (the 10.9 % above). The
-  net-wall ratio 0.1242 that was first proposed would have landed the
-  windows on 267.16 while unpricing 267 m² of wall. Doors end up at wall U
-  (A-DOORS). Tests assert the engine's element areas: Windows 267.16,
-  Walls 2,187.36, Roof 2,669.21, Ground 2,621.08, Ventilation 20,701.55.
+  prices `gross − windows` as wall, so gross = 2,150.30 opaque + 262.73
+  glazing + 36.08 doors = 2,449.11 and wwr = 0.1073 (the 10.7 % in the
+  2026-09-05 section; it was 267.16 / 37.06 / 2,454.52 / 0.1088 before the
+  extractor reproduced the openings). The net-wall ratio 0.1222 that was
+  first proposed would have landed the windows on 262.73 while unpricing
+  263 m² of wall. Doors end up at wall U (A-DOORS). Tests assert the
+  engine's element areas against the file's constants: Windows 262.73,
+  Walls 2,186.38, Roof 2,667.38, Ground 2,577.42, Ventilation 20,701.55.
+  (Roof and ground re-measured 2026-09-04: the roof is the outer SURFACE —
+  EPDM 2,286.93 less 74.55 under the standing-seam barrel, plus the barrels'
+  one-sheet 455.00, where the earlier 382.28 was 764.56 ÷ 2 of near-horizontal
+  faces over both sheets, not a projection; the ground drops the 43.66 m²
+  outdoor equipment pad "Floor:150mm Slab on Grade:221475" that no space
+  stands on.)
 - **Volume measured, not bracketed.** `scripts/lib/ifc-space-volume.mjs`
   takes the signed volume of every IfcSpace solid; `spaces.json` now ships
   beside the manifest with one row per space (area, storey, net and gross
