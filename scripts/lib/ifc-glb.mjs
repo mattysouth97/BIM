@@ -194,8 +194,26 @@ export const SERVICE_GROUPS = Object.freeze({
   equipment: ["IfcBuildingElementProxy", "IfcDistributionElement"],
 });
 
-/** Only runs keep their real mesh; everything else is proxied. */
-const SERVICE_DETAILED = Object.freeze(["IfcFlowSegment"]);
+/**
+ * What keeps its real mesh.
+ *
+ * Runs, because they are the shape of the network and cheap (~128k triangles
+ * per discipline). And PLANT — air handling units, the chiller, pumps, fans,
+ * tanks — because those are the pieces a reader recognises, there are only a
+ * few dozen of them, and together they cost under 9k triangles per discipline.
+ * Proxying them was the wrong trade: it saved nothing and turned the one
+ * equipment anybody could name into a box.
+ *
+ * Valves, fittings and terminals stay proxied. They are the 2.9M-triangle
+ * majority, they are small enough that their modelled detail never resolves at
+ * building scale, and there are thousands of them.
+ */
+const SERVICE_DETAILED = Object.freeze([
+  "IfcFlowSegment",
+  "IfcEnergyConversionDevice",
+  "IfcFlowMovingDevice",
+  "IfcFlowStorageDevice",
+]);
 
 const SERVICE_COLOUR = Object.freeze({
   duct: [0.62, 0.74, 0.86, 1],
@@ -206,31 +224,36 @@ const SERVICE_COLOUR = Object.freeze({
   equipment: [0.60, 0.60, 0.64, 1],
 });
 
-/** Twelve triangles spanning a world-axis box. */
+/**
+ * A box proxy with FLAT face normals — 24 vertices, six crisp faces.
+ *
+ * The cheaper eight-vertex version shares a corner between three faces, so its
+ * normals have to be radial and every face shades as a smooth gradient. A field
+ * of those reads as a heap of soft blobs rather than as equipment: the shape is
+ * right and the shading denies it. Tripling the vertices of a twelve-triangle
+ * box costs nothing and gives each face a single value, so edges land where
+ * the geometry says they are.
+ */
 function pushBox(bucket, min, max) {
-  const base = bucket.vertexCount;
-  const corners = [
-    [min[0], min[1], min[2]], [max[0], min[1], min[2]],
-    [max[0], max[1], min[2]], [min[0], max[1], min[2]],
-    [min[0], min[1], max[2]], [max[0], min[1], max[2]],
-    [max[0], max[1], max[2]], [min[0], max[1], max[2]],
-  ];
-  for (const c of corners) {
-    bucket.positions.push(c[0], c[1], c[2]);
-    // A box proxy is a marker, not a surface to light convincingly; a radial
-    // normal keeps it readable from every angle without per-face vertices.
-    const nx = c[0] - (min[0] + max[0]) / 2;
-    const ny = c[1] - (min[1] + max[1]) / 2;
-    const nz = c[2] - (min[2] + max[2]) / 2;
-    const len = Math.hypot(nx, ny, nz) || 1;
-    bucket.normals.push(nx / len, ny / len, nz / len);
-  }
-  bucket.vertexCount += 8;
+  const [x0, y0, z0] = min;
+  const [x1, y1, z1] = max;
   const faces = [
-    0, 1, 2, 0, 2, 3, 5, 4, 7, 5, 7, 6, 4, 0, 3, 4, 3, 7,
-    1, 5, 6, 1, 6, 2, 3, 2, 6, 3, 6, 7, 4, 5, 1, 4, 1, 0,
+    { n: [0, 0, 1], v: [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]] },
+    { n: [0, 0, -1], v: [[x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0]] },
+    { n: [1, 0, 0], v: [[x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1]] },
+    { n: [-1, 0, 0], v: [[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]] },
+    { n: [0, 1, 0], v: [[x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0]] },
+    { n: [0, -1, 0], v: [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]] },
   ];
-  for (const f of faces) bucket.indices.push(base + f);
+  for (const face of faces) {
+    const base = bucket.vertexCount;
+    for (const corner of face.v) {
+      bucket.positions.push(corner[0], corner[1], corner[2]);
+      bucket.normals.push(face.n[0], face.n[1], face.n[2]);
+    }
+    bucket.vertexCount += 4;
+    bucket.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
 }
 
 export function collectServices(api, webIfc, modelID) {

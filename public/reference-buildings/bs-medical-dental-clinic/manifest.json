@@ -75,8 +75,8 @@
       "ko": "냉난방환기",
       "en": "HVAC",
       "file": "hvac.glb",
-      "byteLength": 8528540,
-      "triangleCount": 153550,
+      "byteLength": 9663352,
+      "triangleCount": 158410,
       "groups": [
         "duct",
         "valve",
@@ -84,31 +84,31 @@
         "fitting",
         "plant"
       ],
-      "detailedRuns": 1548,
-      "proxiedComponents": 2156
+      "detailedRuns": 1559,
+      "proxiedComponents": 2145
     },
     {
       "id": "electrical",
       "ko": "전기",
       "en": "Electrical",
       "file": "electrical.glb",
-      "byteLength": 561720,
-      "triangleCount": 25416,
+      "byteLength": 1916000,
+      "triangleCount": 33865,
       "groups": [
         "terminal",
         "plant",
         "equipment"
       ],
-      "detailedRuns": 0,
-      "proxiedComponents": 2118
+      "detailedRuns": 8,
+      "proxiedComponents": 2110
     },
     {
       "id": "plumbing",
       "ko": "급탕/배관",
       "en": "Plumbing",
       "file": "plumbing.glb",
-      "byteLength": 8846324,
-      "triangleCount": 168178,
+      "byteLength": 10817664,
+      "triangleCount": 172951,
       "groups": [
         "duct",
         "valve",
@@ -116,8 +116,8 @@
         "plant",
         "fitting"
       ],
-      "detailedRuns": 2893,
-      "proxiedComponents": 3694
+      "detailedRuns": 2896,
+      "proxiedComponents": 3691
     }
   ],
   "model": {
