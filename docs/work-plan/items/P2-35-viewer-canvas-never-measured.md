@@ -99,18 +99,45 @@ is consistent with every symptom above, including the one-event cure.
 
 ### Ranked hypotheses, most likely first
 
-1. **Page visibility / occlusion.** A backgrounded, occluded or not-yet-painted
+1. **Persisted panel layout hydrating after mount, resizing the container under
+   the observer.** This is the strongest lead, and it comes from the one hard
+   difference between the two setups: at the *same* 1005x1919 viewport the
+   observation had a **1005x1919** viewer parent and the reproduction attempts
+   had a **397x1715** one. The viewer was in a full-width layout there and in a
+   ~397 px column here, so the two differed in panel state before any rendering
+   question arises.
+
+   Verified while filing this: `sidePanelOpen` is persisted through zustand
+   `persist` and is included in the partialize list
+   (`src/store/app-store.ts:66`), and the reproduction attempts seeded it
+   `true` in `localStorage` while real Chrome carried whatever the user last
+   left. That alone accounts for the width difference.
+
+   The race follows from the repo's own known issue: **zustand persist plus SSR
+   hydration**, which is why `useHydration()` exists. The server renders the
+   default layout, hydration then applies the persisted layout, and the viewer's
+   container changes width shortly after mount. Whether that lands before or
+   after the `ResizeObserver` attaches is exactly the kind of thing that varies
+   run to run — which fits an intermittent bug far better than a constant one.
+   A first visit and a returning visit are genuinely different mount conditions.
+
+   **This is a mechanism worth testing, not a proven cause.** Test it by loading
+   with each persisted `sidePanelOpen` value, and by toggling the panel state
+   between loads, rather than by reasoning about it.
+
+2. **Page visibility / occlusion.** A backgrounded, occluded or not-yet-painted
    tab throttles animation frames and can defer observer delivery. The
    observation came from a browser-extension-driven real Chrome, where the tab
    is not necessarily foreground; every failed reproduction was a Playwright tab
-   that was the only tab in its browser. **Test this first** — it is the single
-   largest difference between the two setups.
-2. **ResizeObserver attaching to a container already at its final size.** The
-   classic form of this bug. It is not obviously the mechanism here, since a
-   `ResizeObserver` does fire an initial callback on `observe()`, but combined
-   with the zero-equals-zero suppression above it is plausible.
-3. **A layout that is momentarily 0-height at mount** — a flex or grid parent
-   that resolves after a font or data load — producing exactly that suppression.
+   that was the only tab in its browser. Ranked second only because hypothesis 1
+   explains the *layout* evidence as well as the race, but this remains **the
+   cheapest single thing to test** — do it first if time is short.
+
+3. **ResizeObserver attaching to a container already at its final size.** The
+   classic form of this bug, and the general case of hypothesis 1. It is not
+   obviously the mechanism on its own, since a `ResizeObserver` does fire an
+   initial callback on `observe()`, but combined with the zero-equals-zero
+   suppression above it is plausible.
 
 ### What a fix would look like (do NOT write it before reproducing)
 
