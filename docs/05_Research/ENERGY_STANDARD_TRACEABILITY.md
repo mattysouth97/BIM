@@ -95,6 +95,7 @@ Implementation: `src/lib/energy-standards/u-value-limits.ts`.
 | PHY-HTR | Transmission coefficient H_tr | W/K | Σ U·A (existing engine: + additive ΔU_tb thermal-bridge surcharge on walls) | ISO 13789 | universal (simplified in engine) |
 | PHY-HVE | Ventilation coefficient H_ve | W/K | ρ·c·V̇ = 0.34 Wh/m³K × ACH × Volume | ISO 13789 | universal |
 | PHY-ANNUAL | Annual demand | kWh | Degree-day method: heating [Σh_air·HDD·24 + h_ground·ΔT_g·4380]/η; cooling [Σh_air·CDD·24 + A_win·SHGC·I_cool·0.7]/COP. **NOT the ISO 13790 monthly method** — no monthly loop, no utilization factors, no internal gains. Disclosed in-product as a screening approximation (adapter approximation ledger + StandardsPanel) | existing src/lib/energy engine | implemented (screening); 13790 monthly method NOT implemented |
+| PHY-GROUND | Ground-floor U (slab on ground) | W/m²K | B' = A/(0.5P); d_t = w + λ_g(R_si+R_f+R_se); U = (2λ_g/(πB'+d_t))·ln(πB'/d_t+1) for d_t < B', else λ_g/(0.457B'+d_t). R_si 0.17 / R_se 0.04 are ISO 13370's own, NOT the 해설서 values in PHY-RSI-RSE | ISO 13370:2007 §9.1/§9.3 | implemented in `energy-standards/ground-coupling.ts`; **NOT yet wired into the engine** — `heat-loss.ts` still reads the ground-floor U from the assembly and compensates with a reduced ΔT (indoor vs 13.5 °C), which swaps the sink temperature but omits the soil resistance: ~14x too high end to end |
 | PHY-PEF | 1차에너지 환산계수 | — | 전력 2.75, 연료(가스·유류) 1.1, 지역난방 0.728, 지역냉방 0.937 | 에너지절약설계기준/ECO2 관행 계수 | training-knowledge — factor set embedded in every result (`primary.factorsUsed`) |
 
 ## 5. Material property library sources
@@ -115,6 +116,84 @@ None are presented as manufacturer performance. Representative anchors
   석고보드 0.18, 콘크리트벽돌 0.6–0.96, 목재 0.12–0.17, 화강석 2.9–3.3
 - 공기층 R: 20mm+ 비환기 중공층 ≈ 0.17–0.18 m²K/W
 
+## 5.1 International tabulated design values (non-Korean reference buildings)
+
+Added 2026-09-04 for reference building #1, the buildingSMART Medical-Dental
+Clinic (a US building). **Korean 별표 values are a substitution there, not a
+source.** Citing them as though they described that building would be the same
+category of error the stated-versus-assumed invariant exists to prevent, so
+these entries cite international tables directly and say which.
+
+Source hierarchy applied, in order:
+EN ISO 10456:2007 / EN 12524:2000 → KS / 별표 → a named manufacturer figure,
+labelled as a manufacturer figure and never promoted to a standard.
+
+**On citing EN 12524 rather than ISO 10456.** EN ISO 10456:2007 is not freely
+readable. Its tabulated design values were carried forward from EN 12524:2000,
+which is. Every row below quotes **EN 12524:2000 Table 1** by that table's own
+row name. This is written down rather than glossed: the values are cited as
+what was actually read, not as an ISO table nobody opened.
+
+| id | value | Source, by row | Note |
+|---|---|---|---|
+| `mb-epdm` | λ 0.25, ρ 1150, c 1000 | EN 12524:2000 Table 1, "Ethylene propylene diene monomer (EPDM)" | |
+| `ins-polyiso` | λ 0.0253, c 1400 | ASTM C1289 LTTR design value R-5.7/in → λ = 0.0254 / (5.7 × 0.1761102); c from EN 12524:2000 Table 2, rigid PU foam | **ρ deliberately unset** — EN 12524 gives only a 28–55 kg/m³ range, and a range is not a design value |
+| `mt-steel-deck` | λ 50, ρ 7800, c 450 | EN 12524:2000 Table 1, "Steel" | R ≈ 0.0008 m²K/W at 38 mm. Listed so the layer stack matches the drawing, not because it resists anything |
+| `wd-plywood` | λ 0.13, ρ 500, c 1600 | EN 12524:2000 Table 1, "Plywood", ρ = 500 row | The table also lists 300→0.09, 700→0.17, 1000→0.24 |
+| `pnl-imp-pir42` | fixed R 1.75 m²K/W at 42 mm | Manufacturer aged R-6.0/in, **a manufacturer figure, not a table value** | Published aged band R-6.0…6.5/in ⇒ 1.66–1.89. A composite product, so it carries an R for one thickness, not a λ |
+| `air-iso-h25` | fixed R 0.18 | ISO 6946:2007 Table 2, unventilated air layer, horizontal heat flow | Table 2 is flat at 0.18 for 25/50/100/300 mm horizontal |
+| `fin-plasterboard-iso` | λ 0.25, ρ 900, c 1000 | EN 12524:2000 Table 1, "Gypsum plasterboard"; table note (b): λ includes the paper liners | Coexists with `fin-gypsum` (KS 0.18). Different sources, not a typo — see below |
+
+### Two existing values, checked rather than assumed
+
+- **`fin-gypsum` λ 0.18 is a KS-practice value and stays.** EN 12524 lists
+  gypsum plasterboard at **0.25** (ρ 900); 0.18 is that table's *gypsum
+  insulating plaster* at ρ 600. For a US building 0.18 overstates the board's
+  resistance by 39% (0.089 vs 0.064 m²K/W on 16 mm) — about 1% of the wall's
+  total R, so small in effect but wrong in provenance. Resolved additively:
+  `fin-plasterboard-iso` added, `fin-gypsum` untouched.
+- **`st-rc` λ 2.3 is confirmed usable.** EN 12524 gives reinforced concrete
+  with 1% steel as ρ 2300 / λ 2.3 and with 2% steel as ρ 2400 / λ 2.5; the repo
+  pairs λ 2.3 with ρ 2400. λ is what the U path reads, so the density mismatch
+  changes nothing computed today. Left alone.
+
+### What these produce, and the two findings that came out of it
+
+Computed through `calculateAssembly` on the IFC's own thicknesses. Note these
+carry the repo's **Korean 별표 surface resistances** (walls 0.11/0.043, roofs
+0.086/0.043) rather than ISO 6946 Table 1 (0.13/0.04, 0.10/0.04) — a documented
+substitution in `assembly.ts` worth ~1% here.
+
+| Assembly | Layers (mm) | U (W/m²K) |
+|---|---|---|
+| Roof | EPDM 6 / polyiso 76 / steel deck 38 | **0.317** |
+| Exterior wall | IMP 42 / cavity 38 / plywood 19 / cavity 152 / plasterboard 16 | **0.404** |
+| Ground slab | concrete 150 | 3.87 — see finding 2 |
+
+1. **The roof is R-17.1ci, not R-20ci.** 76 mm at the ASTM C1289 LTTR design
+   value is R-17.1; ASHRAE 90.1-2007's "insulation entirely above deck" R-20ci
+   needs ≈ 89 mm. No real rigid insulation reaches R-20 in 76 mm — polyiso is
+   already the best of the candidates. So the modelled roof falls one board
+   increment short of the standard it was expected to match; either the 76 mm
+   is not the as-designed thickness, or the building does not meet 90.1-2007
+   above deck. This is a finding about the model, not a value to tune.
+2. **The ground slab must not be given an air-to-air U at all.** 150 mm of
+   concrete alone computes to 3.87 W/m²K, which is arithmetically correct and
+   physically meaningless: a slab on grade loses heat to the ground, which is
+   ISO 13370 ground-coupling, not `calculateAssembly`. Any number this path
+   produces for a ground floor is wrong by construction.
+3. **The steel-stud cavity is the largest unquantified error in the wall.**
+   ISO 6946 §5.3.1 assumes an air layer that is *not* subdivided; the 152 mm
+   layer is subdivided by steel studs. Treating it as 0.18 m²K/W ignores the
+   framing bridge entirely, which for steel framing is tens of percent, not a
+   rounding error. The entry says so in its own `sourceNoteKo`. Correcting it
+   needs ISO 10211 numerical or the ASHRAE zone method — neither is in scope
+   here, and the honest output is a stated assumption, not a nudged λ.
+
+Regression: `src/lib/energy-standards/__tests__/clinic-materials.test.ts`,
+which also pins every pre-existing entry's value so this section stays
+additive-only.
+
 ## 6. Asset vs operational separation
 
 Standardized(자산/설계) 평가 uses 표준 운전조건 (schedules, setpoints,
@@ -132,6 +211,8 @@ UI copy: "표준 조건 기준 설계 평가이며 실제 사용량과 다릅니
 | PHY-HTR/HVE/ANNUAL | existing `src/lib/energy/{heat-loss,annual-demand}.ts`, unchanged; reached via `energy-diagnostics/adapter.ts` | `heat-loss.test.ts` closed-form, `bim-accuracy.test.ts` tiers |
 | PHY-PEF | `energy-diagnostics/adapter.ts` `derivePrimaryEnergy` using `PRIMARY_ENERGY_FACTORS` | `material-standards.test.ts` per-fuel algebra |
 | §5 material library | `src/lib/energy-standards/materials.ts` (all `confidence: "generic"`) | reviewed against §5 bands |
+| PHY-GROUND | `src/lib/energy-standards/ground-coupling.ts` (`slabOnGroundUValue`, `slabOnGroundUValueRange`) | `__tests__/ground-coupling.test.ts` — Clinic derivation, soil bound, B'/insulation monotonicity, branch continuity at d_t = B', and the end-to-end comparison against the current engine path |
+| §5.1 international entries | same file, EN 12524 / ISO 6946 / ASTM C1289 family (still all `confidence: "generic"`) | `__tests__/clinic-materials.test.ts` — each sourced value pinned to its cited row, plus an additive-only guard over all 18 pre-existing entries |
 | Layer↔U consistency | `energy-diagnostics/ledger-baseline-model.ts` `assumedLayers` (insulation thickness solved to the era U; empty when unreachable) | `material-standards.test.ts` exact ISO-6946 round-trip |
 | 별표1/ZEB assessment | `energy-diagnostics/standards-assessment.ts` (presentation-only; ZEB row always 참고용) | `material-standards.test.ts` |
 | 민감도 (real runs) | `energy-diagnostics/sensitivity.ts` (thickness sweep + parameter ranking; every point = one engine run) | `material-standards.test.ts` determinism + monotonicity |
