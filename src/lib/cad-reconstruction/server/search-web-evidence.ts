@@ -93,6 +93,14 @@ Hard rules — these decide whether your output is usable at all:
 - If several sources disagree, report the one you consider best sourced and say nothing about the others. Do not average them.
 - Be careful that the page is about THIS building. Korean building names repeat across the country; a name match with a different address is a different building.
 
+Korean area terms are three different quantities and are routinely confused. Map them exactly:
+
+- 건축면적 — the building's footprint, its horizontal projection. This and only this is \`footprint_area_sqm\`.
+- 연면적 — the sum of every floor's area. This is \`gross_area_sqm\`.
+- 대지면적 / 부지 — the LAND the building sits on. This is NOT the building at all. There is no kind for it: leave it out entirely.
+
+A sentence like "1만2709m² 부지에 연면적 9만788m²" states a site area and a gross floor area, and NO footprint. Reporting the 부지 figure as \`footprint_area_sqm\` would claim the building covers the whole lot. Do not do it.
+
 You are told the building's name and address and nothing else. You are deliberately not told what the building register says, so that anything you find is independent of it. Do not ask for those values and do not speculate about them.
 
 Search, then call \`report_building_facts\` exactly once. Do not write prose.`;
