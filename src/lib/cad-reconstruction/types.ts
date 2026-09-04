@@ -284,6 +284,70 @@ export interface ReconSection {
 }
 
 /* ------------------------------------------------------------------ */
+/* Outline scan                                                        */
+/* ------------------------------------------------------------------ */
+
+/** Where an outline came from. Ordered by geometric authority. */
+export type OutlineOrigin =
+  | "gis_building"
+  | "osm_building"
+  | "gis_parcel"
+  | "user_dimensions"
+  | "register_area";
+
+/** One outline the evidence scan found, before any of them has won. */
+export interface OutlineCandidate {
+  id: string;
+  origin: OutlineOrigin;
+  /** The SourceRecord this ring is evidence from. */
+  sourceId: string;
+  labelKo: string;
+  ring: RingMm;
+  areaSqm: number;
+  grade: EvidenceGrade;
+  /** True when the ring traces something real; false when it was solved. */
+  observed: boolean;
+  /** True for a lot boundary — carried for context, never used as a footprint. */
+  siteOnly: boolean;
+  method: string;
+}
+
+/** How two observed outlines compare. */
+export interface CandidateAgreement {
+  aId: string;
+  bId: string;
+  /** Estimated intersection-over-union, 0…1. Sampled, not exact. */
+  iou: number;
+  areaDeltaPct: number;
+  centroidOffsetMm: number;
+  agrees: boolean;
+}
+
+/** What squaring the chosen outline to the building axis did, or refused to do. */
+export interface OutlineRegularization {
+  applied: boolean;
+  rotationDeg: number;
+  maxShiftMm: number;
+  areaDeltaPct: number;
+  orthogonality: number;
+  reason: string;
+}
+
+/**
+ * The whole shape decision, kept on the model so it can be shown rather than
+ * only acted on. A reconciliation the user cannot inspect is one they cannot
+ * check, which is the same argument that motivates the grading system.
+ */
+export interface OutlineScan {
+  candidates: OutlineCandidate[];
+  /** Id of the candidate that became the footprint, or null when none could. */
+  chosenId: string | null;
+  agreements: CandidateAgreement[];
+  regularization: OutlineRegularization | null;
+  rationale: string;
+}
+
+/* ------------------------------------------------------------------ */
 /* Ledgers                                                             */
 /* ------------------------------------------------------------------ */
 
@@ -389,6 +453,8 @@ export interface ReconstructionModel {
     grade: EvidenceGrade;
     method: string;
   };
+  /** Every outline considered, how they compared, and why one won. */
+  outlineScan: OutlineScan;
   levels: ReconLevel[];
   walls: ReconWall[];
   openings: ReconOpening[];

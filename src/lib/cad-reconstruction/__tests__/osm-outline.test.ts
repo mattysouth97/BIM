@@ -163,6 +163,56 @@ describe("OSM against the government outline", () => {
   });
 });
 
+describe("the shape decision is recorded, not just acted on", () => {
+  const gis = {
+    polygon: box(20, 10),
+    source: "building" as const,
+    attributes: null,
+    error: null,
+  };
+
+  it("lists every candidate the scan found, and marks the one that won", () => {
+    const pkg = runReconstruction(input({ gis, osm: osm({ polygon: box(45, 30) }) }));
+    const scan = pkg.model.outlineScan;
+
+    const ids = scan.candidates.map((c) => c.id).sort();
+    expect(ids).toContain("OUT-GIS");
+    expect(ids).toContain("OUT-OSM");
+    expect(ids).toContain("OUT-AREA");
+    expect(scan.chosenId).toBe("OUT-GIS");
+    expect(scan.rationale.length).toBeGreaterThan(20);
+  });
+
+  it("records how the two observed outlines compared", () => {
+    const pkg = runReconstruction(input({ gis, osm: osm({ polygon: box(45, 30) }) }));
+    const agreement = pkg.model.outlineScan.agreements[0];
+    expect(agreement).toBeDefined();
+    expect(agreement.agrees).toBe(false);
+    expect(agreement.iou).toBeGreaterThanOrEqual(0);
+    expect(agreement.iou).toBeLessThan(0.75);
+  });
+
+  it("says whether squaring-up fired, and why when it did not", () => {
+    const pkg = runReconstruction(input({ gis }));
+    const reg = pkg.model.outlineScan.regularization;
+    expect(reg).not.toBeNull();
+    expect(typeof reg!.applied).toBe("boolean");
+    expect(reg!.reason.length).toBeGreaterThan(10);
+  });
+
+  it("shows a parcel as a candidate but never as the chosen footprint", () => {
+    const pkg = runReconstruction(
+      input({
+        gis: { polygon: box(84, 84), source: "parcel", attributes: null, error: null },
+      }),
+    );
+    const scan = pkg.model.outlineScan;
+    const parcel = scan.candidates.find((c) => c.siteOnly);
+    expect(parcel).toBeDefined();
+    expect(scan.chosenId).not.toBe(parcel!.id);
+  });
+});
+
 describe("OSM tags are cross-checks, never overrides", () => {
   it("records a storey-count disagreement without changing the register's value", () => {
     const pkg = runReconstruction(

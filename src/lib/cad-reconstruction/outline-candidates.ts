@@ -25,15 +25,15 @@
 // Units: millimetres, one local metric frame. Pure — no fetching, no I/O.
 
 import { bbox, centroid, pointInRing } from "./geometry";
-import type { ConflictEntry, EvidenceGrade, RingMm } from "./types";
+import type {
+  CandidateAgreement,
+  ConflictEntry,
+  OutlineCandidate,
+  OutlineOrigin,
+  RingMm,
+} from "./types";
 
-/** Where an outline came from. Ordered by geometric authority. */
-export type OutlineOrigin =
-  | "gis_building"
-  | "osm_building"
-  | "gis_parcel"
-  | "user_dimensions"
-  | "register_area";
+export type { CandidateAgreement, OutlineCandidate, OutlineOrigin };
 
 const ORIGIN_PRIORITY: Record<OutlineOrigin, number> = {
   gis_building: 0,
@@ -54,32 +54,6 @@ const IOU_CELLS = 160;
  * match against the register can outrank a more authoritative source.
  */
 const AREA_MATCH_BUCKET = 0.05;
-
-export interface OutlineCandidate {
-  id: string;
-  origin: OutlineOrigin;
-  /** The SourceRecord this ring is evidence from. */
-  sourceId: string;
-  labelKo: string;
-  ring: RingMm;
-  areaSqm: number;
-  grade: EvidenceGrade;
-  /** True when the ring traces something real; false when it was solved. */
-  observed: boolean;
-  /** True for a lot boundary — carried for context, never used as a footprint. */
-  siteOnly: boolean;
-  method: string;
-}
-
-export interface CandidateAgreement {
-  aId: string;
-  bId: string;
-  /** Estimated intersection-over-union, 0…1. Sampled, not exact. */
-  iou: number;
-  areaDeltaPct: number;
-  centroidOffsetMm: number;
-  agrees: boolean;
-}
 
 export interface ReconcileContext {
   /** 건축면적 from the register, when stated. The scalar cross-check. */

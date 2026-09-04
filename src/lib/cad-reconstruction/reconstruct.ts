@@ -66,6 +66,7 @@ import {
 import { regularizeRing } from "./outline-regularize";
 import type {
   AreaValidationRow,
+  OutlineRegularization,
   AssumptionEntry,
   ConflictEntry,
   EvidenceGrade,
@@ -377,8 +378,17 @@ export function reconstruct(
 
   // Squaring up only makes sense on a TRACED outline. A solved rectangle is
   // already orthogonal, and a user's stated box carries no digitising noise.
+  let regularization: OutlineRegularization | null = null;
   if (footprintRing && chosenOutline?.observed && !chosenOutline.siteOnly) {
     const squared = regularizeRing(footprintRing);
+    regularization = {
+      applied: squared.applied,
+      rotationDeg: squared.rotationDeg,
+      maxShiftMm: squared.maxShiftMm,
+      areaDeltaPct: squared.areaDeltaPct,
+      orthogonality: squared.orthogonality,
+      reason: squared.reason,
+    };
     if (squared.applied) {
       footprintRing = squared.ring;
       footprintMethod = `${footprintMethod} ${squared.reason}.`;
@@ -873,6 +883,16 @@ export function reconstruct(
       areaSqm: footprintArea,
       grade: footprintGrade,
       method: footprintMethod,
+    },
+    outlineScan: {
+      // Site rings are included so the register shows what WAS found, not only
+      // what was eligible — "a parcel answered and a building did not" is the
+      // most important thing to say when the shape is weak.
+      candidates: [...outlines.considered, ...outlines.siteCandidates],
+      chosenId: chosenOutline?.id ?? null,
+      agreements: outlines.agreements,
+      regularization,
+      rationale: outlines.rationale,
     },
     levels,
     walls,

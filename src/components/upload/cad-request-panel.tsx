@@ -459,6 +459,106 @@ export function CadRequestPanel({ onUseDrawing }: Props) {
 
                 <div className="min-w-[260px] flex-1 space-y-2">
                   <Section
+                    title={t("외곽선 대조", "Outline reconciliation")}
+                    count={model.outlineScan.candidates.length}
+                    defaultOpen
+                  >
+                    <p className="mb-2 text-muted-foreground">
+                      {model.outlineScan.rationale}
+                    </p>
+
+                    <table className="w-full">
+                      <thead className="text-muted-foreground">
+                        <tr>
+                          <th className="text-left font-normal">{t("출처", "Source")}</th>
+                          <th className="text-right font-normal">{t("면적", "Area")}</th>
+                          <th className="text-right font-normal">{t("등급", "Grade")}</th>
+                          <th className="text-right font-normal">{t("채택", "Used")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {model.outlineScan.candidates.map((candidate) => {
+                          const chosen = candidate.id === model.outlineScan.chosenId;
+                          return (
+                            <tr
+                              key={candidate.id}
+                              className={chosen ? "font-medium" : "text-muted-foreground"}
+                            >
+                              <td className="py-0.5">
+                                {candidate.labelKo}
+                                {candidate.siteOnly && (
+                                  <span className="ml-1 text-[10px] text-muted-foreground">
+                                    ({t("대지 — 외곽선 아님", "site, not a footprint")})
+                                  </span>
+                                )}
+                              </td>
+                              <td className="text-right tabular-nums">
+                                {candidate.areaSqm.toFixed(1)}
+                              </td>
+                              <td className="text-right">
+                                <GradeDot grade={candidate.grade} />
+                              </td>
+                              <td className="text-right">{chosen ? "✓" : "—"}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+
+                    {model.outlineScan.agreements.length > 0 && (
+                      <div className="mt-2 border-t pt-2">
+                        <div className="mb-1 text-muted-foreground">
+                          {t("관측 출처 간 일치도", "Agreement between observed sources")}
+                        </div>
+                        <ul className="space-y-0.5">
+                          {model.outlineScan.agreements.map((a) => (
+                            <li
+                              key={`${a.aId}-${a.bId}`}
+                              className={a.agrees ? "" : "text-destructive"}
+                            >
+                              {a.aId} ↔ {a.bId}: {t("겹침", "overlap")} IoU{" "}
+                              <span className="tabular-nums">{a.iou.toFixed(2)}</span>,{" "}
+                              {t("면적 차", "area Δ")}{" "}
+                              <span className="tabular-nums">
+                                {a.areaDeltaPct >= 0 ? "+" : ""}
+                                {a.areaDeltaPct.toFixed(1)}%
+                              </span>
+                              , {t("중심 이격", "centre offset")}{" "}
+                              <span className="tabular-nums">
+                                {Math.round(a.centroidOffsetMm)}
+                              </span>{" "}
+                              mm{" "}
+                              {a.agrees
+                                ? t("— 일치", "— agree")
+                                : t("— 불일치 (불일치 대장 기록)", "— disagree (recorded)")}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {model.outlineScan.regularization && (
+                      <div className="mt-2 border-t pt-2">
+                        <div className="mb-1 text-muted-foreground">
+                          {t("직각 정형화", "Squaring to the building axis")}
+                        </div>
+                        <p
+                          className={
+                            model.outlineScan.regularization.applied
+                              ? ""
+                              : "text-muted-foreground"
+                          }
+                        >
+                          {model.outlineScan.regularization.applied
+                            ? "✓ "
+                            : `${t("적용 안 함", "not applied")} — `}
+                          {model.outlineScan.regularization.reason}
+                        </p>
+                      </div>
+                    )}
+                  </Section>
+
+                  <Section
                     title={t("면적 검증", "Area validation")}
                     count={model.areaValidation.length}
                     defaultOpen
