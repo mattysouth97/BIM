@@ -100,6 +100,21 @@ and a test suite aimed at numbers cannot see it. Seven instances were found on
   is a loop. Every segment was in the right place. The colour was false, and
   it rendered beautifully.
 
+Two later instances sharpened the rule rather than repeating it:
+
+- **A verification pass that checks values does not check the claims made
+  about them.** An adversarial workflow re-derived a set of counts, and the
+  prose built from those counts then went out unchecked — a door figure of 20
+  explained as `205 − 65 − 36`, which is 104. The numbers were verified and
+  inherited the credibility of that verification; the sentence was not.
+- **An error message can be accurate and still mislead**, because what it
+  states and what it implies are different claims.
+  `Unable to find [data-testid="cad-request-result"]` was true in every word
+  and implied a component that failed to render, when the component was fine
+  and the click had landed on a disabled button. Three sessions read it and
+  took the implication. When a diagnostic hands you a conclusion, check the
+  conclusion separately from the fact.
+
 Two consequences for how work here is checked:
 
 1. **Assert what a string claims, not that it appears.** A test asserting the
