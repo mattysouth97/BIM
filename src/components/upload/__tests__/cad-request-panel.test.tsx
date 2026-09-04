@@ -1,6 +1,7 @@
 /* @vitest-environment happy-dom */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { renderWithQuery } from "@/test-utils/render-with-query";
 
 import type { BrFloorInfo, BrTitleInfo } from "@/lib/types";
 
@@ -118,7 +119,7 @@ describe("CadRequestPanel", () => {
   });
 
   it("shows what evidence it has before anything is requested", () => {
-    render(<CadRequestPanel onUseDrawing={() => {}} />);
+    renderWithQuery(<CadRequestPanel onUseDrawing={() => {}} />);
     expect(screen.getByText(/도면이 없나요/)).toBeTruthy();
     expect(screen.getByTestId("cad-request-prompt")).toBeTruthy();
     // The register answered two of its four endpoints in this fixture.
@@ -127,7 +128,7 @@ describe("CadRequestPanel", () => {
   });
 
   it("reconstructs from the register alone and reports the QA verdict", async () => {
-    render(<CadRequestPanel onUseDrawing={() => {}} />);
+    renderWithQuery(<CadRequestPanel onUseDrawing={() => {}} />);
     fireEvent.click(screen.getByTestId("cad-request-run"));
 
     await waitFor(() => expect(screen.getByTestId("cad-request-result")).toBeTruthy());
@@ -137,7 +138,7 @@ describe("CadRequestPanel", () => {
   });
 
   it("reads the statement and surfaces each claim with its grade", async () => {
-    render(<CadRequestPanel onUseDrawing={() => {}} />);
+    renderWithQuery(<CadRequestPanel onUseDrawing={() => {}} />);
     fireEvent.change(screen.getByTestId("cad-request-prompt"), {
       target: { value: "정면 폭 20m 를 줄자로 실측했습니다. 깊이 10m 입니다." },
     });
@@ -150,7 +151,7 @@ describe("CadRequestPanel", () => {
 
   it("hands a real DXF to the parent when the reconstruction is accepted", async () => {
     const onUseDrawing = vi.fn();
-    render(<CadRequestPanel onUseDrawing={onUseDrawing} />);
+    renderWithQuery(<CadRequestPanel onUseDrawing={onUseDrawing} />);
     fireEvent.click(screen.getByTestId("cad-request-run"));
 
     await waitFor(() => expect(screen.getByTestId("cad-request-use")).toBeTruthy());
@@ -164,7 +165,7 @@ describe("CadRequestPanel", () => {
   });
 
   it("never presents the result as a measured drawing", async () => {
-    render(<CadRequestPanel onUseDrawing={() => {}} />);
+    renderWithQuery(<CadRequestPanel onUseDrawing={() => {}} />);
     expect(screen.getByText(/추정 현황 복원/)).toBeTruthy();
     fireEvent.click(screen.getByTestId("cad-request-run"));
     await waitFor(() => expect(screen.getByTestId("cad-request-result")).toBeTruthy());
