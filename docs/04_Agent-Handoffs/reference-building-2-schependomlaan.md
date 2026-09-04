@@ -16,18 +16,62 @@ its orientation are both assumptions. Every energy figure it produces means
 
 Schependomlaan closes exactly that gap:
 
-- **A real site** — 52°9′N 5°23′E, Nijmegen, Netherlands. Real climate, real
-  solar orientation, and a true-north that means something.
-- **Stated thermal performance** — the model carries ~97 occurrences of
-  `IfcThermalTransmittance`. The Clinic carries **zero**. That inverts the
-  hardest part of building #1: instead of mapping bare material names onto a
-  generic library and calling the conductivity an assumption, U-values can be
+- **A stated town** — the model carries
+  `IfcPostalAddress(... 'Nijmegen' ...)`. A town is a stated fact, and it is
+  strictly more than the Clinic has, whose site is redacted behind an authoring
+  default with no town at all. A Dutch climate file for Nijmegen is defensible
+  on that evidence.
+- **Stated thermal performance** — the model carries 97 occurrences of
+  `IfcThermalTransmittanceMeasure`. The Clinic carries **zero**. That inverts
+  the hardest part of building #1: instead of mapping bare material names onto
+  a generic library and calling the conductivity an assumption, U-values can be
   read as *stated* and the era tables become a cross-check rather than the
   source.
 
-Both numbers above came from bim-8e's verification pass and are the one thing
-worth trusting from it — but **re-verify both against the file before building
-on them**, because the evidence for them is gone with the session.
+**Corrected 2026-09-04, after verification by bim-bf. The original version of
+this file claimed a real surveyed site at 52°9′N 5°23′E, Nijmegen. That is
+wrong and the correction matters more than the claim did.**
+
+`IfcSite` really does carry `(52,9,0,0)` / `(5,23,0,0)`, but those decode to
+52.1500 N, 5.3833 E — about **45 km from Nijmegen**. They are 52°09′/5°23′ to
+the whole minute with zero seconds, which no surveyed site is, and that point
+is simultaneously the origin of the Dutch RD (Rijksdriehoeksmeting) datum and
+the architect's own city: the same file carries a second postal address on
+`Amsterdamsestraatweg 43, 3812 RP Amersfoort`. So the coordinates are a stamped
+constant, exactly the Clinic's Boston-default trap in a different costume, and
+**no orientation or solar geometry may be taken from them**.
+
+What survives is the town, and it is enough — but the honest claim is "a stated
+town, hence a real climate", never "a real site at 52°9′N 5°23′E". `RefElevation
+20000` (20 m) fits Nijmegen rather than Amersfoort, so the provenance in this
+file is genuinely mixed; record that rather than resolving it silently either
+way.
+
+Whether the 97 U-values actually cover the **exterior envelope** is a separate
+question — 97 values sitting on interior partitions would be worthless, and
+"97 exist" is not "the envelope is covered". Verify coverage, not just count.
+
+## Where the file actually is
+
+Two published pointers to this dataset are dead, so this is worth stating
+precisely. `openBIMstandards/DataSetSchependomlaan` is now a stub README
+redirecting to `buildingSMART/Sample-Test-Files`, and that repository has since
+been renamed to `buildingSMART/Certification-datasets` and no longer carries
+Schependomlaan at all.
+
+The file lives at **`openBIMstandards/Archive-DataSetSchependomlaan`**, branch
+`master`, `Design model IFC/IFC Schependomlaan.ifc` — 49,286,967 bytes,
+ArchiCAD IFC2X3, `CoordinationView_V2.0` + `QuantityTakeOff` +
+`SpaceBoundary2ndLevel`. Verified by download, not by reading a link.
+
+## Licence — unresolved, and a blocker
+
+**Do not publish derived artifacts until this resolves.** The archive
+repository has no `LICENSE` file and GitHub reports NOASSERTION. Building #1
+ships CC BY 4.0 with a verbatim attribution string, and the manifest type
+requires both a licence and an attribution — neither of which can be invented.
+If no explicit grant exists, whether to publish is the user's decision, not
+ours.
 
 ## Scope
 
