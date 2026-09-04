@@ -63,14 +63,38 @@ interface ScenarioState {
   resetScenario: () => void;
 }
 
+/** The data half of the store, without the actions. */
+type ScenarioData = Omit<
+  ScenarioState,
+  | "setCapexBudget"
+  | "setProgramTrack"
+  | "setBuildingInputs"
+  | "setSelectedMeasureIds"
+  | "toggleAppliedMeasure"
+  | "clearAppliedMeasures"
+  | "resetScenario"
+>;
+
+/**
+ * Starting values, as a factory so the store's initial state and
+ * `resetScenario` cannot drift apart — a field added here reaches both.
+ * A factory rather than a shared constant so each reset gets its own
+ * `appliedMeasureIds` array instead of aliasing one across resets.
+ */
+function initialScenarioData(): ScenarioData {
+  return {
+    capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
+    programTrack: "none",
+    buildingInputs: null,
+    selectedMeasureIds: null,
+    appliedMeasureIds: [],
+  };
+}
+
 export const useScenarioStore = create<ScenarioState>()(
   persist(
     (set) => ({
-      capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
-      programTrack: "none",
-      buildingInputs: null,
-      selectedMeasureIds: null,
-      appliedMeasureIds: [],
+      ...initialScenarioData(),
 
       setCapexBudget: (krw) => set({ capexBudgetKrw: krw }),
       setProgramTrack: (track) => set({ programTrack: track }),
@@ -107,14 +131,7 @@ export const useScenarioStore = create<ScenarioState>()(
             : [...state.appliedMeasureIds, measureId],
         })),
       clearAppliedMeasures: () => set({ appliedMeasureIds: [] }),
-      resetScenario: () =>
-        set({
-          capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
-          programTrack: "none",
-          buildingInputs: null,
-          selectedMeasureIds: null,
-          appliedMeasureIds: [],
-        }),
+      resetScenario: () => set(initialScenarioData()),
     }),
     {
       name: "bim-scenario-state",

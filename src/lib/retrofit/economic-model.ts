@@ -355,25 +355,90 @@ export function projectCashFlow(
 /**
  * P2-10 (a) — per-year cumulative discount factors for a set of assumptions.
  *
- * `factors[t-1]` = Π_{i=1..t} (1 + rate_i), where rate_i is the effective
- * discount rate in year i. With a `financingMix.loanTermYears`, the rate
- * during the term is `effectiveDiscountRate` and the pure-equity
- * `discountRate` applies afterward. Without a loanTermYears the rate is
- * constant (legacy behavior).
+ * `factors[t-1]` = (1 + discountRate)^t, accumulated year by year.
+ *
+ * This function used to select per year between a blended WACC during the
+ * loan term and the pure-equity rate afterward. That branch has been dead
+ * since the audit correction that made `effectiveDiscountRate` return the
+ * base `discountRate` unchanged: both sides of the ternary read the same
+ * number, so every year discounted at the base rate regardless of
+ * `financingMix.loanTermYears`. The schedule is therefore flat, and saying
+ * so plainly is the whole point — the 이자지원 buy-down is valued as an
+ * additive PV term (`computeInterestSavedSchedule` → `subsidyValue`), never
+ * as a lowered discount rate.
+ *
+ * The vector is still built by accumulation rather than `Math.pow` so the
+ * factors stay bit-identical to what callers saw before.
  */
 export function buildDiscountFactors(assumptions: EconomicAssumptions): number[] {
   const horizon = assumptions.analysisHorizonYears;
-  const wacc = effectiveDiscountRate(assumptions);
-  const equity = assumptions.discountRate;
-  const loanTerm = assumptions.financingMix?.loanTermYears;
+  const rate = effectiveDiscountRate(assumptions);
   const factors: number[] = new Array(horizon);
   let acc = 1;
   for (let t = 1; t <= horizon; t++) {
-    const rate = loanTerm !== undefined && t > loanTerm ? equity : wacc;
     acc *= 1 + rate;
     factors[t - 1] = acc;
   }
   return factors;
+}
+
+/**
+ * Cumulative discount divisor for year `t` (1-indexed): the number a year-t
+ * nominal amount is divided by to reach present value.
+ *
+ * The two forms below are the only ones this module uses, and isolating them
+ * here is what lets the constant-rate and scheduled variants of NPV and
+ * discounted payback share one loop instead of carrying four copies of it.
+ * Both reproduce their previous arithmetic exactly — same operations, same
+ * order — so results are bit-identical to the pre-refactor implementations.
+ */
+type DiscountDivisor = (year: number) => number;
+
+/** Constant-rate divisor: (1 + rate)^t. */
+function constantRateDivisor(rate: number): DiscountDivisor {
+  return (year) => Math.pow(1 + rate, year);
+}
+
+/** Schedule-driven divisor: the caller's precomputed cumulative factors. */
+function scheduledDivisor(factors: readonly number[]): DiscountDivisor {
+  return (year) => factors[year - 1];
+}
+
+/** NPV = -outflow + Σ_t cashFlow[t-1] / divisor(t). */
+function npvWith(
+  outflow: number,
+  cashFlow: readonly number[],
+  divisor: DiscountDivisor,
+): number {
+  let pv = -outflow;
+  for (let t = 1; t <= cashFlow.length; t++) {
+    pv += cashFlow[t - 1] / divisor(t);
+  }
+  return pv;
+}
+
+/**
+ * First year where cumulative discounted savings reach `outflow`, linearly
+ * interpolated within that year. Infinity when they never do.
+ */
+function discountedPaybackWith(
+  outflow: number,
+  cashFlow: readonly number[],
+  divisor: DiscountDivisor,
+): number {
+  if (outflow <= 0) return 0;
+  let cumulative = 0;
+  for (let t = 1; t <= cashFlow.length; t++) {
+    const pv = cashFlow[t - 1] / divisor(t);
+    if (cumulative + pv >= outflow) {
+      // Linear interpolation within year t.
+      const remaining = outflow - cumulative;
+      const fraction = pv > 0 ? remaining / pv : 0;
+      return t - 1 + fraction;
+    }
+    cumulative += pv;
+  }
+  return Infinity;
 }
 
 /**
@@ -385,11 +450,7 @@ export function computeNpvScheduled(
   cashFlow: number[],
   discountFactors: number[],
 ): number {
-  let pv = -outflow;
-  for (let t = 1; t <= cashFlow.length; t++) {
-    pv += cashFlow[t - 1] / discountFactors[t - 1];
-  }
-  return pv;
+  return npvWith(outflow, cashFlow, scheduledDivisor(discountFactors));
 }
 
 /**
@@ -401,18 +462,7 @@ export function computeDiscountedPaybackScheduled(
   cashFlow: number[],
   discountFactors: number[],
 ): number {
-  if (outflow <= 0) return 0;
-  let cumulative = 0;
-  for (let t = 1; t <= cashFlow.length; t++) {
-    const pv = cashFlow[t - 1] / discountFactors[t - 1];
-    if (cumulative + pv >= outflow) {
-      const remaining = outflow - cumulative;
-      const fraction = pv > 0 ? remaining / pv : 0;
-      return t - 1 + fraction;
-    }
-    cumulative += pv;
-  }
-  return Infinity;
+  return discountedPaybackWith(outflow, cashFlow, scheduledDivisor(discountFactors));
 }
 
 function discount(amount: number, rate: number, year: number): number {
@@ -429,11 +479,7 @@ export function computeNpv(
   cashFlow: number[],
   discountRate: number,
 ): number {
-  let pv = -outflow;
-  for (let t = 1; t <= cashFlow.length; t++) {
-    pv += discount(cashFlow[t - 1], discountRate, t);
-  }
-  return pv;
+  return npvWith(outflow, cashFlow, constantRateDivisor(discountRate));
 }
 
 /**
@@ -510,19 +556,7 @@ export function computeDiscountedPayback(
   cashFlow: number[],
   discountRate: number,
 ): number {
-  if (outflow <= 0) return 0;
-  let cumulative = 0;
-  for (let t = 1; t <= cashFlow.length; t++) {
-    const pv = discount(cashFlow[t - 1], discountRate, t);
-    if (cumulative + pv >= outflow) {
-      // Linear interpolation within year t.
-      const remaining = outflow - cumulative;
-      const fraction = pv > 0 ? remaining / pv : 0;
-      return t - 1 + fraction;
-    }
-    cumulative += pv;
-  }
-  return Infinity;
+  return discountedPaybackWith(outflow, cashFlow, constantRateDivisor(discountRate));
 }
 
 /**
