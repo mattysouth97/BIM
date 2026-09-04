@@ -89,7 +89,7 @@ Twelve months × several terms is a lot of places for a plausible wrong number t
 - Tier-1 acceptance gate keys on the `tier1-office-screening-` MODEL_VERSION prefix. Use a
   distinct version string.
 - **Never** map material names via `searchGenericMaterials` (substring only).
-- WWR: the engine's wall area is **net** of openings; 267.16 / 2,150.30 = 0.1242, not 0.109.
+- WWR — **corrected 17:27, the first version of this line was wrong.** `heat-loss.ts` does `windows = gross × wwr; netWall = gross − windows`, so the ratio must be against GROSS wall: 2,454.52 m² (2,150.30 opaque + 267.16 glazing + 37.06 doors) × 0.10884 = 267.16. Feeding net wall as gross with 0.1242 gets the glazing right and silently un-prices 267 m² of real wall. **For the kernel: use 267.16 m² glazing directly; never derive it from wall × wwr.**
 - PVGIS `MRcalc` silently ignores `aspect`/`azimuth`. Already worked around; noted so nobody
   re-fetches and trusts it.
 
