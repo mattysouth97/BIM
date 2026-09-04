@@ -1,4 +1,8 @@
 import {
+  findReferenceBuilding,
+  referenceBuildingRecordUrl,
+} from "@/data/reference-buildings";
+import {
   compileCanonicalModelToEngineInput,
   mapResultsToCanonicalObjects,
   runSimulation,
@@ -16,6 +20,10 @@ import {
   type DrawingSetIngestionResult,
   type DrawingSourceInput,
 } from "@/lib/energy-diagnostics/ingestion";
+import {
+  isReferenceBuildingRecord,
+  type ReferenceBuildingRecord,
+} from "@/lib/energy-diagnostics/reference-building-record";
 import {
   buildRepresentativeOfficeModel,
   REFERENCE_OFFICE_INFILTRATION_ASSUMPTION_ID,
@@ -86,6 +94,60 @@ export async function loadRepresentativeCase(): Promise<RepresentativeCase> {
     ingestion,
     sources,
   });
+}
+
+/**
+ * Fetch and narrow one registered building's extracted record.
+ *
+ * The fetch lives here, in the component layer, and not in `src/lib`: the pure
+ * modules take a record and are unit-tested in node, where a relative URL has
+ * no origin to resolve against. `fetchImpl` is injectable for the same reason —
+ * it keeps this function testable without teaching the library layer to fetch.
+ *
+ * An unknown id is refused before any request goes out. The id reaches us from
+ * a query parameter, so resolving it against the bundled catalog first is what
+ * stops `?building=../something` from becoming a request path at all.
+ */
+export async function fetchReferenceBuildingRecord(
+  id: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<ReferenceBuildingRecord> {
+  const entry = findReferenceBuilding(id);
+  if (!entry) {
+    throw new Error(`No registered building is catalogued as "${id}".`);
+  }
+  const url = referenceBuildingRecordUrl(entry.id);
+  const response = await fetchImpl(url);
+  if (!response.ok) {
+    throw new Error(
+      `Registered building "${entry.id}" could not be loaded (${response.status}).`,
+    );
+  }
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    // A dev server answers an absent file with an HTML 404 page and a 200 in
+    // some configurations, so a parse failure here is the expected shape of
+    // "the record is not deployed", not an exotic case.
+    throw new Error(
+      `Registered building "${entry.id}" did not return a readable record.`,
+    );
+  }
+  if (!isReferenceBuildingRecord(payload)) {
+    throw new Error(
+      `Registered building "${entry.id}" returned a record this build does not understand.`,
+    );
+  }
+  if (payload.id !== entry.id) {
+    // The catalog is hand-authored and the record is generated; if they
+    // disagree the user is looking at a different building from the one they
+    // picked. Refusing is the only honest answer.
+    throw new Error(
+      `Registered building "${entry.id}" served a record identifying itself as "${payload.id}".`,
+    );
+  }
+  return payload;
 }
 
 export function applyInfiltrationAssumption(
