@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useGLTF } from "@react-three/drei";
 import type { ThreeEvent } from "@react-three/fiber";
 import type { BuildingRecipe } from "@/lib/procedural/types";
@@ -11,10 +11,6 @@ import { authoringFamilyUrl, getAuthoringFamily } from "@/lib/bim/family-catalog
 import { snapPoint } from "@/lib/bim/model";
 import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
 import { useBimModelStore } from "@/store/bim-model-store";
-
-for (const entry of Object.values(AUTHORING_ASSET_MANIFEST)) {
-  if (entry?.uri) useGLTF.preload(entry.uri);
-}
 
 // `FamilyInstance` now lives in ./family-instance so the solved-interior layer
 // places families through the same loader and the same GLTF cache.
@@ -57,6 +53,26 @@ export function AuthoringFamilyLayer({ recipe }: AuthoringFamilyLayerProps) {
         rotation: [0, el.placement.rotationY, 0] as [number, number, number],
       }));
   }, [snapshot]);
+
+  // Warm the GLTF cache for the authoring palette, but only once authoring mode is
+  // actually entered.
+  //
+  // This loop used to sit at module scope. `building-scene.tsx` imports this module
+  // statically, so it ran on import for every visitor to a building page — fetching
+  // all 13 `public/bim-assets/*.glb` (1.08 MB) for people who never open authoring
+  // mode and who, per the early return just below, never see a single one of them.
+  // Nothing failed, which is why it survived: the bytes were simply spent.
+  //
+  // Keyed on `workMode` rather than run unconditionally, so entering authoring mode
+  // still preloads exactly as before. `useGLTF.preload` is a static method, not a
+  // hook, so calling it in an effect is fine; and it is idempotent, so the repeat on
+  // re-entry is a cache hit rather than a second fetch.
+  useEffect(() => {
+    if (workMode !== "authoring") return;
+    for (const entry of Object.values(AUTHORING_ASSET_MANIFEST)) {
+      if (entry?.uri) useGLTF.preload(entry.uri);
+    }
+  }, [workMode]);
 
   if (workMode !== "authoring") return null;
 
