@@ -91,6 +91,7 @@ const NEW_IDS = [
   "wd-plywood",
   "pnl-imp-pir42",
   "air-iso-h25",
+  "air-iso-u25",
   "fin-plasterboard-iso",
 ] as const;
 
@@ -161,6 +162,21 @@ describe("Clinic entries — sourced values", () => {
   it("uses the ISO 6946 Table 2 horizontal plateau of 0.18, leaving the KS 0.17 alone", () => {
     expect(fixedROf("air-iso-h25")).toBe(0.18);
     expect(fixedROf("air-20")).toBe(0.17);
+  });
+
+  it("carries a separate UPWARD cavity at 0.16 — a roof must not use the horizontal row", () => {
+    // ISO 6946 Table 2 is direction-dependent: upward plateaus at 0.16,
+    // horizontal at 0.18. Using 0.18 on a roof overstates resistance and lowers
+    // U — it flatters the building. On the Clinic's 286 mm bar-joist roof that
+    // is U 3.23 where the correct row gives 3.45.
+    expect(fixedROf("air-iso-u25")).toBe(0.16);
+    expect(fixedROf("air-iso-u25")!).toBeLessThan(fixedROf("air-iso-h25")!);
+  });
+
+  it("does not offer a downward cavity, because that row is not flat", () => {
+    // Table 2 downward runs 0.19 → 0.23 across 25…300 mm, so a single fixed-R
+    // entry would be wrong at most thicknesses. Absent on purpose.
+    expect(genericMaterialById("air-iso-d25")).toBeUndefined();
   });
 
   it("adds the ISO plasterboard value without disturbing the KS one", () => {

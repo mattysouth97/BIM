@@ -339,6 +339,19 @@ export const GENERIC_MATERIALS: readonly GenericMaterial[] = Object.freeze([
     typicalThicknessesMm: [25, 38, 50, 100, 152],
   }),
   M({
+    id: "air-iso-u25",
+    nameKo: "비환기 공기층 ≥25mm (상향 열류, ISO)",
+    nameEn: "Unventilated air layer >= 25 mm, upward heat flow",
+    category: "air_cavity",
+    fixedResistanceM2KPerW: 0.16,
+    // ISO 6946:2007 표 2는 열류 방향마다 값이 다르다. 상향은 25~300 mm 구간에서
+    // 0,16으로 평평하지만 수평은 0,18이다. 지붕(상향)에 수평값을 쓰면 저항을
+    // 과대평가해 U를 낮게 만든다 — 건물이 실제보다 좋아 보이는 방향이다.
+    // 하향(바닥)은 두께에 따라 0,19~0,23으로 변하므로 단일 항목으로 만들지 않는다.
+    sourceNoteKo: `${ISO6946} · 상향 열류 25~300 mm 구간 0,16 m²K/W. 수평(0,18)과 혼동 금지 — 지붕에 수평값을 쓰면 U가 낮게 나온다. 주의: 스터드·조이스트로 분할된 층에는 그대로 적용할 수 없음 (열교 미반영, 5.3.1 전제 위반)`,
+    typicalThicknessesMm: [25, 38, 50, 100, 286],
+  }),
+  M({
     id: "fin-plasterboard-iso",
     nameKo: "석고보드 (ISO 표값)",
     nameEn: "Gypsum plasterboard (ISO tabulated)",
