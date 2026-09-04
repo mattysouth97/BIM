@@ -7,7 +7,7 @@ import {
   buildingMetadataTitle,
   isRoutableBuildingId,
 } from "@/app/building/[id]/page";
-import { parseBuildingId } from "@/lib/constants";
+import { isRawLedgerPk, parseBuildingId } from "@/lib/constants";
 
 describe("buildingMetadataTitle (P2-14)", () => {
   it("produces a title containing sigunguCd and bjdongCd for a valid id", () => {
@@ -100,5 +100,24 @@ describe("parseBuildingId stays a ledger parser", () => {
     // hand the ledger hooks a location nobody surveyed — the workspace branches
     // on isGeneratedPk before any of this runs.
     expect(parseBuildingId("GEN-0042")).toBeNull();
+  });
+});
+
+describe("isRawLedgerPk", () => {
+  it("recognizes a bare mgmBldrgstPk (10-22 digits observed in production)", () => {
+    expect(isRawLedgerPk("1002122071")).toBe(true);
+    expect(isRawLedgerPk("1234567890123456789012")).toBe(true);
+  });
+
+  it("does not classify a routable 5-part id as a raw pk", () => {
+    expect(isRawLedgerPk("11110-10100-0-0001-0000")).toBe(false);
+  });
+
+  it("rejects non-digit and out-of-range strings", () => {
+    expect(isRawLedgerPk("")).toBe(false);
+    expect(isRawLedgerPk("bad-id")).toBe(false);
+    expect(isRawLedgerPk("12345")).toBe(false); // below the observed floor
+    expect(isRawLedgerPk("GEN-0042")).toBe(false);
+    expect(isRawLedgerPk("demo")).toBe(false);
   });
 });

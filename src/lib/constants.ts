@@ -204,6 +204,20 @@ export function parseBuildingId(id: string): {
   return { sigunguCd, bjdongCd, platGbCd, bun, ji };
 }
 
+/**
+ * True when `id` is shaped like a raw 건축물대장 `mgmBldrgstPk` — an all-digit
+ * management number (observed 10–22 digits in production) rather than the
+ * routable `sigunguCd-bjdongCd-platGbCd-bun-ji` id. `/building/[id]` never
+ * receives a pk from its own search flow (`search-results-table.tsx` composes
+ * the 5-part id), so this only fires for a bookmark, the register itself, or
+ * an agent that pasted the pk directly. There is no local mapping from pk back
+ * to 번/지, so this cannot resolve into a redirect — only a clearer 404. See
+ * docs/04_Agent-Handoffs/2026-09-04-register-search-and-school-findings.md.
+ */
+export function isRawLedgerPk(id: string): boolean {
+  return /^\d{6,25}$/.test(id);
+}
+
 // ─────────────────────────────────────────────
 // Formatting helpers
 // ─────────────────────────────────────────────

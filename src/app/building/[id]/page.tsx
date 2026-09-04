@@ -8,10 +8,12 @@ import { notFound, redirect } from "next/navigation";
 import {
   DEMO_BUILDING_ID,
   DRAWING_BUILDING_ID,
+  isRawLedgerPk,
   parseBuildingId,
 } from "@/lib/constants";
 import { isGeneratedPk } from "@/lib/generative/design-storage";
 import BuildingWorkspace from "./building-workspace";
+import RawPkNotRoutable from "./raw-pk-not-routable";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -71,7 +73,13 @@ export default async function BuildingDetailPage({ params }: Props) {
   // Validate the id at the server layer so a bad URL 404s before the client
   // component even mounts (complements the client-side parseBuildingId guard).
   // P2-24: cad-first draft ids (cad-<uuid>) are routable too.
-  if (!isRoutableBuildingId(id)) notFound();
+  if (!isRoutableBuildingId(id)) {
+    // A raw register pk can't resolve into a redirect (no local pk→번/지
+    // mapping — see isRawLedgerPk), so it gets an explanation instead of the
+    // generic not-found boundary, which can't be told which id was requested.
+    if (isRawLedgerPk(id)) return <RawPkNotRoutable id={id} />;
+    notFound();
+  }
 
   return <BuildingWorkspace params={params} />;
 }
