@@ -56,6 +56,8 @@ type Expected = Readonly<{
   deltaMovesWithTrack: boolean;
 }>;
 
+// Grades are on the table the use code selects (3b9ff6a): the three
+// dwellings are scored 주거, the Clinic by density. kWh/m² did not move.
 const BUILDINGS: readonly Expected[] = [
   { id: "bs-medical-dental-clinic", titleKo: "메디컬-덴탈 클리닉", grade: "1+", demandPerSqm: "108.8", deltaMovesWithTrack: true },
   // Measured 2026-09-06: 공공 지자체 takes this building from 1/5 selected
@@ -63,8 +65,8 @@ const BUILDINGS: readonly Expected[] = [
   // goes on saying "선택된 측정치는 이 실행의 kWh/m²를 움직이지 않습니다" —
   // that the selected measures move no kWh/m² — through both. See the delta
   // test for why that sentence is a stronger claim than the module can make.
-  { id: "schependomlaan", titleKo: "스헤펜돔라안 아파트", grade: "1+++", demandPerSqm: "40.5", deltaMovesWithTrack: false },
-  { id: "duplex-apartment", titleKo: "듀플렉스 아파트", grade: "1", demandPerSqm: "142.6", deltaMovesWithTrack: true },
+  { id: "schependomlaan", titleKo: "스헤펜돔라안 아파트", grade: "1++", demandPerSqm: "40.5", deltaMovesWithTrack: false },
+  { id: "duplex-apartment", titleKo: "듀플렉스 아파트", grade: "4", demandPerSqm: "142.6", deltaMovesWithTrack: true },
   // The fourth building states NO services models at all — its manifest
   // carries an empty `serviceLayers`, so the layers panel is the fabric row
   // and nothing else, and its licence is KIT/IAI's own grant rather than a
@@ -75,7 +77,7 @@ const BUILDINGS: readonly Expected[] = [
   // defect: 공공 지자체 takes it 1/6 → 2/6 measures and NPV ₩1954만 →
   // ₩2036만, with the strip saying through both that the selected measures
   // move no kWh/m².
-  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "1+", demandPerSqm: "92.6", deltaMovesWithTrack: false },
+  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "2", demandPerSqm: "92.6", deltaMovesWithTrack: false },
 ];
 
 type Manifest = {
