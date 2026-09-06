@@ -38,6 +38,12 @@ import { SEOUL_CLIMATE, REGIONAL_CLIMATE } from "@/lib/energy/climate-data";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
 
 export interface RetrofitScenarioInputs {
+  /**
+   * kWp from the measured-roof layout (`usePvLayout`): modules that actually
+   * fit the planes × 0.40. When present it is the system size the PV measure
+   * is priced at; absent, the ratio estimate stands and the measure says so.
+   */
+  pvGeometricKWp?: number;
   /** Active building primary key (mgmBldrgstPk). Used to look up materials. */
   buildingPk: string;
   /** CAPEX budget in KRW. The knapsack picks the optimal subset within this. */
@@ -249,6 +255,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     annualCoolingDemand,
     engineDemand,
     engineEnvelopeAreas,
+    pvGeometricKWp,
     feedInTariffKrw = 130,
     programTrack = "none",
     assumptions: assumptionsOverride,
@@ -372,6 +379,9 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
       roofType,
       region,
       feedInTariffKrw,
+      undefined,
+      // SIXTH argument, deliberately: the fifth is the electricity price.
+      pvGeometricKWp,
     );
     const solarMeasures: RetrofitMeasure[] = solar.annualGenerationKWh > 0 ? [solar] : [];
 
@@ -383,6 +393,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     roofType,
     region,
     sidoPrefix,
+    pvGeometricKWp,
     annualOperatingHours,
     annualHeatingDemand,
     annualCoolingDemand,

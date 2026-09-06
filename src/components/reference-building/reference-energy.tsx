@@ -25,6 +25,8 @@ import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useActiveBuildingStore } from "@/store/active-building-store";
 import { useLayerStore } from "@/store/layer-store";
+import { useScenarioStore } from "@/store/scenario-store";
+import type { RoofPlaneSet } from "@/lib/retrofit/pv-layout";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { getClimateData } from "@/lib/energy/climate-data";
@@ -311,6 +313,31 @@ function useReferenceZones(
   }, [spaces, manifest.storeys, hvacDemandKwhYr]);
 }
 
+/**
+ * Publish the building's measured roof planes (stage 1 of the PV methodology)
+ * to the scenario store, fetched like `spaces.json`. A building without the
+ * file publishes null, and the viewer then draws no PV rather than a grid.
+ */
+function usePublishRoofPlanes(baseUrl: string, buildingPk: string) {
+  const setRoofPlanes = useScenarioStore((s) => s.setRoofPlanes);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`${baseUrl}/roof-planes.json`, { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json: (RoofPlaneSet & { id?: string }) | null) => {
+        if (json && json.kind === "bimfit_reference_building_roof_planes") {
+          setRoofPlanes({ ...json, buildingId: json.buildingId ?? json.id ?? buildingPk });
+        } else {
+          setRoofPlanes(null);
+        }
+      })
+      .catch(() => {
+        /* aborted or unavailable: no planes, no PV drawn, legend says so */
+      });
+    return () => controller.abort();
+  }, [baseUrl, buildingPk, setRoofPlanes]);
+}
+
 export function ReferenceEnergyFrame({
   energy,
   manifest,
@@ -324,6 +351,7 @@ export function ReferenceEnergyFrame({
 }) {
   const isKo = locale === "ko";
   const { buildingPk, recipe, climate } = energy;
+  usePublishRoofPlanes(baseUrl, buildingPk);
   const quantities = envelopeQuantities(recipe);
   const metrics = useEnergyMetrics(buildingPk, climate.sigunguCd);
   const materials = useMaterialStore((s) => s.properties[buildingPk]);

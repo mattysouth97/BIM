@@ -35,6 +35,7 @@ import {
 import { useMaterialStore } from "@/store/material-store";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
+import { usePvLayout } from "@/hooks/use-pv-layout";
 import { getClimateData } from "@/lib/energy/climate-data";
 import { getGradeColor } from "@/lib/energy/energy-grade";
 import type { EnergyGrade } from "@/lib/energy/energy-grade";
@@ -109,6 +110,7 @@ export function RetrofitDeltaStrip() {
   const recipe = useEffectiveRecipe(buildingPk);
   // Same climate the energy strip above used — not a second lookup.
   const sigunguCd = useActiveSigunguCd();
+  const pvLayout = usePvLayout();
 
   const delta = useMemo(() => {
     if (!materials || !recipe) return null;
@@ -117,8 +119,9 @@ export function RetrofitDeltaStrip() {
       recipe,
       climate: getClimateData(sigunguCd),
       measureIds: chosenMeasureIds,
+      pvGeometricKWp: pvLayout?.totalKWp,
     });
-  }, [materials, recipe, sigunguCd, chosenMeasureIds]);
+  }, [materials, recipe, sigunguCd, chosenMeasureIds, pvLayout]);
 
   const priced = delta?.changes.filter((c) => c.pricedByEngine) ?? [];
   const unpriced = delta?.changes.filter((c) => !c.pricedByEngine) ?? [];

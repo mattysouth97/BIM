@@ -134,6 +134,34 @@ for (const building of BUILDINGS) {
       });
       await page.goto(`/models/${building.id}`);
       await page.bringToFront();
+      // The measured roof planes arrive by fetch after first paint and move
+      // the PV kWp on the delta strip and the legend's PV line when they do.
+      // Every "before" snapshot below must be taken after that, or a change
+      // the fetch made is read as a change the click made.
+      await expect(page.getByTestId("reference-model-viewer")).toHaveAttribute(
+        "data-roof-planes",
+        "ready",
+        { timeout: FIRST_PAINT },
+      );
+    });
+
+    test("the PV modules drawn are the modules the legend counts", async ({ page }) => {
+      await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
+      const row = page.locator("[data-measure-chip-row]");
+      await expect(row).toBeVisible({ timeout: FIRST_PAINT });
+      const solar = row.locator('[data-measure-chip^="solar-pv"]').first();
+      if ((await solar.count()) === 0) return;
+      if ((await solar.getAttribute("data-measure-chosen")) !== "true") await solar.click();
+      const legend = page.getByTestId("reference-retrofit-legend");
+      await expect(legend).toHaveAttribute("data-pv-modules", /^\d+$/, { timeout: FIRST_PAINT });
+      const counted = await legend.getAttribute("data-pv-modules");
+      await expect(page.getByTestId("reference-model-viewer")).toHaveAttribute(
+        "data-pv-drawn",
+        counted ?? "",
+        { timeout: FIRST_PAINT },
+      );
+      // The legend says where the modules are and where they are not.
+      await expect(legend).toContainText("kWp");
     });
 
     test("renders its energy strip on a FIRST visit, with no reload", async ({ page }) => {

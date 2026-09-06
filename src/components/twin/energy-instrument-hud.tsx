@@ -34,6 +34,7 @@
 // agree — and hands the result to the scenario hook.
 
 import { useEffect, useMemo } from "react";
+import { usePvLayout } from "@/hooks/use-pv-layout";
 import {
   useRetrofitScenario,
   engineEnvelopeAreasFrom,
@@ -148,6 +149,7 @@ export function EnergyInstrumentHud({
     [metrics, exteriorDoorSqm],
   );
 
+  const pvLayout = usePvLayout();
   const scenario = useRetrofitScenario({
     buildingPk,
     capexBudgetKrw,
@@ -161,6 +163,9 @@ export function EnergyInstrumentHud({
     // answer yet rather than a number pretending to be one.
     engineDemand: metrics?.demand,
     engineEnvelopeAreas,
+    // The kWp the measured-roof layout actually fits; the same object the 3D
+    // draws and the legend counts.
+    pvGeometricKWp: pvLayout?.totalKWp,
     // The work the user picked. Everything on this frame is priced against
     // it, not against the knapsack's optimum.
     chosenMeasureIds: appliedMeasureIds,

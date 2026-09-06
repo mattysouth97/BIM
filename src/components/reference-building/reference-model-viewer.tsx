@@ -8,6 +8,8 @@ import { ContactShadows, Environment, OrbitControls, useGLTF } from "@react-thre
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
 import type { ReferenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
 import { FlowNetwork } from "./flow-network";
+import { PvModulesVisual } from "@/components/viewer/pv-modules";
+import { usePvLayout } from "@/hooks/use-pv-layout";
 import { useScenarioStore, useProposalVisualIds, useEffectiveMeasureIds } from "@/store/scenario-store";
 import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
 import {
@@ -15,6 +17,7 @@ import {
   EquipmentRetrofitTint,
   RoofRetrofitVisualBoundary,
   RetrofitLegend,
+  pvLegendSummaryOf,
   equipmentLayerReach,
   roofElevationThresholdM,
 } from "./reference-retrofit-visuals";
@@ -275,6 +278,11 @@ export function ReferenceModelViewer({
   const previewProposal = useScenarioStore((s) => s.previewProposal);
   const proposalIds = useProposalVisualIds();
   const visual = useMemo(() => deriveVisualState(proposalIds), [proposalIds]);
+  // The measured-roof layout: what the PV modules are drawn from, what the
+  // legend counts, and what the economics prices. One object.
+  const pvLayout = usePvLayout();
+  const pvSummary = useMemo(() => pvLegendSummaryOf(pvLayout), [pvLayout]);
+  const [pvDrawn, setPvDrawn] = useState(0);
   const hvacReach = equipmentLayerReach(services, active, "hvac");
   const lightingReach = equipmentLayerReach(services, active, "electrical");
   const roofingLayer = services.find((l) => l.id === "roofing");
@@ -287,7 +295,12 @@ export function ReferenceModelViewer({
     roofElevationThresholdM(manifest.roofs, manifest.storeys) !== null;
 
   return (
-    <div className="h-full w-full" data-testid="reference-model-viewer">
+    <div
+      className="h-full w-full"
+      data-testid="reference-model-viewer"
+      data-pv-drawn={visual.solarInstalled ? pvDrawn : undefined}
+      data-roof-planes={pvLayout ? "ready" : "pending"}
+    >
       <Canvas
         shadows
         dpr={[1, 2]}
@@ -365,6 +378,9 @@ export function ReferenceModelViewer({
                   />
                 ))
             : null}
+          {offset && visual.solarInstalled ? (
+            <PvModulesVisual layout={pvLayout} centre={offset.centre} onDrawn={setPvDrawn} />
+          ) : null}
           {offset ? (
             <RoofRetrofitVisualBoundary
               fabricUrl={modelUrl}
@@ -403,6 +419,7 @@ export function ReferenceModelViewer({
         hvacReach={hvacReach}
         lightingReach={lightingReach}
         roofGeometryAvailable={roofGeometryAvailable}
+        pv={pvSummary}
         isKo={locale === "ko"}
       />
     </div>

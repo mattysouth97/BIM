@@ -196,6 +196,8 @@ export interface RetrofitDeltaInput {
   measureIds: Iterable<string>;
   /** Solar irradiance region key for PV sizing. Default "seoul". */
   region?: string;
+  /** kWp the measured-roof layout fits; sizes the PV measure when present. */
+  pvGeometricKWp?: number;
 }
 
 /** ko/en label for each heat-loss element name. */
@@ -536,7 +538,7 @@ function isKnownMeasureId(id: string): boolean {
  * `useEnergyMetrics`).
  */
 export function computeRetrofitDelta(input: RetrofitDeltaInput): RetrofitDelta | null {
-  const { materials, recipe, climate, region } = input;
+  const { materials, recipe, climate, region, pvGeometricKWp } = input;
   const ids = [...input.measureIds];
 
   const quantities = envelopeQuantities(recipe);
@@ -545,7 +547,7 @@ export function computeRetrofitDelta(input: RetrofitDeltaInput): RetrofitDelta |
 
   // PV sizing rides the MEASURED roof surface, the same quantity heat-loss.ts
   // charges the roof U against — not the footprint.
-  const context = { roofAreaSqm: quantities.roofAreaSqm, region };
+  const context = { roofAreaSqm: quantities.roofAreaSqm, region, geometricKWp: pvGeometricKWp };
 
   const before = runEnergyEngine(materials, recipe, climate);
   const afterMaterials = applyPhaseToMaterials(materials, "retrofit", ids, context);

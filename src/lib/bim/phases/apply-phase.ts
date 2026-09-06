@@ -68,6 +68,8 @@ type PvRoofType = (typeof PV_ROOF_TYPES)[number];
 
 /** Extra facts a measure needs that MaterialProperties does not carry. */
 export interface RetrofitPhaseContext {
+  /** kWp from the measured-roof layout; the PV measure is sized to it when present. */
+  geometricKWp?: number;
   /**
    * Roof surface a PV array may occupy (m2) — the MEASURED roof surface, not
    * the footprint. Without it a `solar-pv-*` id cannot be sized, and the
@@ -205,6 +207,9 @@ export function applyPhaseToMaterials(
       // Feed-in tariff drives revenue only; the two fields read below (kWp,
       // roof utilization) are independent of it.
       130,
+      undefined,
+      // The measured-roof layout's kWp, when a layout exists (sixth argument).
+      context?.geometricKWp,
     );
     next.renewable.solarPV = {
       ...next.renewable.solarPV,

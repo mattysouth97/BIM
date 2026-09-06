@@ -1,16 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
   splitTrianglesByElevation,
-  analyzeUpwardFaces,
   roofElevationThresholdM,
-  classifyRoofTypeForSizing,
-  panelLayoutForRoof,
   equipmentLayerReach,
   buildRetrofitLegendLines,
   deriveVisualState,
-  PV_PANEL_RATED_KWP,
-  PV_FIXED_RACK_TILT_DEG,
-  type FaceSetAnalysis,
 } from "../reference-retrofit-visuals";
 import { NO_RETROFIT_VISUALS, effectiveMeasureIds, proposalVisualIds } from "@/lib/retrofit/measure-visuals";
 
@@ -46,37 +40,6 @@ describe("splitTrianglesByElevation", () => {
   });
 });
 
-describe("analyzeUpwardFaces", () => {
-  it("measures a flat 10x10 quad's area and zero tilt", () => {
-    const { positions, index } = twoStoreyQuads();
-    const roofOnly = index.slice(6);
-    const result = analyzeUpwardFaces(positions, roofOnly);
-    expect(result).not.toBeNull();
-    expect(result!.areaSqm).toBeCloseTo(100, 5);
-    expect(result!.tiltDeg).toBeCloseTo(0, 5);
-    expect(result!.minX).toBe(-5);
-    expect(result!.maxX).toBe(5);
-    expect(result!.apexY).toBe(10);
-  });
-
-  it("measures a 45-degree pitched triangle", () => {
-    // A=(0,0,0), B=(0,1,1), C=(1,0,0): cross(B-A, C-A) = (0,1,-1), an
-    // upward-facing normal 45 degrees from vertical.
-    const positions = new Float32Array([0, 0, 0, 0, 1, 1, 1, 0, 0]);
-    const result = analyzeUpwardFaces(positions, [0, 1, 2]);
-    expect(result).not.toBeNull();
-    expect(result!.tiltDeg).toBeCloseTo(45, 3);
-  });
-
-  it("excludes downward and near-vertical faces from area and tilt", () => {
-    // A vertical wall quad (normal horizontal) contributes nothing.
-    const positions = new Float32Array([
-      0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0,
-    ]);
-    const result = analyzeUpwardFaces(positions, [0, 1, 2, 0, 2, 3]);
-    expect(result).toBeNull();
-  });
-});
 
 describe("roofElevationThresholdM", () => {
   const storeys = [
@@ -114,68 +77,7 @@ describe("roofElevationThresholdM", () => {
   });
 });
 
-describe("classifyRoofTypeForSizing", () => {
-  it("treats under-5-degree tilt as flat, everything else as gable", () => {
-    expect(classifyRoofTypeForSizing(0)).toBe("flat");
-    expect(classifyRoofTypeForSizing(4.9)).toBe("flat");
-    expect(classifyRoofTypeForSizing(5)).toBe("gable");
-    expect(classifyRoofTypeForSizing(35)).toBe("gable");
-  });
-});
 
-describe("panelLayoutForRoof", () => {
-  const flatFace: FaceSetAnalysis = {
-    areaSqm: 500,
-    tiltDeg: 0,
-    minX: -15,
-    maxX: 15,
-    minZ: -10,
-    maxZ: 10,
-    apexY: 9.25,
-  };
-  const pitchedFace: FaceSetAnalysis = {
-    areaSqm: 80,
-    tiltDeg: 35,
-    minX: -8,
-    maxX: 8,
-    minZ: -3,
-    maxZ: 3,
-    apexY: 7,
-  };
-
-  it("uses the fixed rack tilt on a flat roof, not the roof's own (zero) tilt", () => {
-    const layout = panelLayoutForRoof(flatFace);
-    expect(layout).not.toBeNull();
-    expect(layout!.tiltDeg).toBe(PV_FIXED_RACK_TILT_DEG);
-  });
-
-  it("flush-mounts at the roof's own tilt on a pitched roof — never flat panels on a tiled roof", () => {
-    const layout = panelLayoutForRoof(pitchedFace);
-    expect(layout).not.toBeNull();
-    expect(layout!.tiltDeg).toBe(35);
-    expect(layout!.tiltDeg).not.toBe(PV_FIXED_RACK_TILT_DEG);
-  });
-
-  it("more kWp yields at least as many panel instances, bounded by what the roof can hold", () => {
-    const small = panelLayoutForRoof(flatFace, 2);
-    const big = panelLayoutForRoof(flatFace, 40);
-    expect(small).not.toBeNull();
-    expect(big).not.toBeNull();
-    expect(big!.instances.length).toBeGreaterThanOrEqual(small!.instances.length);
-    expect(Math.round(2 / PV_PANEL_RATED_KWP)).toBe(small!.instances.length);
-  });
-
-  it("returns null when the roof is too small to place even one panel's worth of kWp", () => {
-    expect(panelLayoutForRoof(flatFace, 0)).toBeNull();
-  });
-
-  it("every instance sits at the same height, at the analysed apex plus clearance", () => {
-    const layout = panelLayoutForRoof(flatFace, 10)!;
-    for (const inst of layout.instances) {
-      expect(inst.y).toBeCloseTo(flatFace.apexY + 0.15, 5);
-    }
-  });
-});
 
 describe("equipmentLayerReach", () => {
   const services = [{ id: "hvac" }, { id: "electrical" }];

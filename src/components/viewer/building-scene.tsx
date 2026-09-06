@@ -17,6 +17,9 @@ import { useReviewHighlightStore } from "@/store/review-highlight-store";
 import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
 import { classifyElement, ifcDisplayLine } from "@/lib/bim/ifc-classification";
 import { SolarPanels } from "./solar-panels";
+import { twinRoofPlanes } from "@/lib/retrofit/twin-roof-planes";
+import { useScenarioStore } from "@/store/scenario-store";
+import type { RoofPlaneSet } from "@/lib/retrofit/pv-layout";
 import { RetrofitHvacUnits } from "./retrofit-hvac-units";
 import { ContextMassing } from "./context-massing";
 import { applyOverrides } from "@/lib/procedural/recipe";
@@ -526,6 +529,24 @@ export function BuildingScene({
     () => deriveVisualState(proposalIds),
     [proposalIds]
   );
+  // The twin's roof planes — one flat plane per top plate and per exposed
+  // terrace, the same walk the frame's roof m² comes from — published so the
+  // PV modules, their count and the kWp priced are one layout (stage 4 of the
+  // PV placement methodology).
+  const setRoofPlanes = useScenarioStore((s) => s.setRoofPlanes);
+  useEffect(() => {
+    if (!recipe) {
+      setRoofPlanes(null);
+      return;
+    }
+    const planeSet: RoofPlaneSet = {
+      kind: "bimfit_reference_building_roof_planes",
+      buildingId: "twin",
+      northAssumed: true,
+      planes: twinRoofPlanes(recipe) as unknown as RoofPlaneSet["planes"],
+    };
+    setRoofPlanes(planeSet);
+  }, [recipe, setRoofPlanes]);
 
   // P2-22 — structural isolation view (load-bearing solid, rest ghosted).
   const structuralIsolation = useLayerStore((s) => s.structuralIsolation);

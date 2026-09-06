@@ -21,13 +21,6 @@ import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
 
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
-import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
-import { computeRetrofitDelta } from "@/lib/retrofit/retrofit-delta";
-import { useScenarioStore, useProposalVisualIds } from "@/store/scenario-store";
-import { useMaterialStore } from "@/store/material-store";
-import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
-import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
-import { getClimateData } from "@/lib/energy/climate-data";
 import {
   deriveVisualState,
   hasAnyVisual,
@@ -124,253 +117,6 @@ export interface FaceSetAnalysis {
   apexY: number;
 }
 
-const UP_FACE_MIN_COS = 0.05; // matches the sub-5.7° cutoff the extractor uses for "upward"
-
-/**
- * Area, tilt and footprint of a triangle set's upward-facing skin.
- *
- * Downward and near-vertical faces (a soffit, a fascia, a wall clipped into
- * the same subset) are excluded so they cannot cancel the tilt or inflate the
- * footprint — the same reason the extractor's own `tiltDeg`/`upFacingProjectedSqm`
- * only ever sum upward faces.
- *
- * `areaSqm` CAN read well over the true one-sheet surface, for two DIFFERENT
- * reasons this project has hit on the published files, neither of which
- * survives merging into one mesh for this function to detect or correct:
- * a roof authored as a "both-sheets-wound-upward" surface model rather than
- * a closed solid (the Clinic's standing-seam sections, ~1.15-1.6x their
- * stated `surfaceSqm`), or one built from several stacked/overlapping layer
- * solids whose own shadows the extractor reports covering "1.01x-2.90x
- * over" per element (Schependomlaan's tiled sporenkap, blended ~1.5-2x over
- * the whole roofing model). The extractor knows the per-element correction
- * factor for each of these from the source IFC and applies it before this
- * GLB is ever built; once merged into one mesh that knowledge is gone, so
- * this function does not attempt to guess which triangles need which
- * correction. Both are confirmed and pinned on the published files
- * (`reference-retrofit-visuals.glb.test.ts`), not treated as noise.
- * `tiltDeg` cancels this artefact ONLY where the over-count factor is the
- * SAME across every face — true enough on the Clinic (one mild mechanism,
- * one dominant nearly-flat surface) that its tilt lands close to stated.
- * It is NOT true on Schependomlaan: the per-element factors span 1.01x-2.90x,
- * and the steep tiled faces there carry higher factors than the flat deck,
- * so the over-counted mean shifts toward the steep component — measured at
- * ~45° here against a stated 35.62°. Read `tiltDeg` as "closer to whichever
- * component is more heavily stacked", not as exact, whenever a roof mixes
- * genuinely different pitches. This is exactly why `panelLayoutForRoof`'s
- * own `overrideSystemSizeKWp`
- * must always be preferred over this module's area-based estimate wherever
- * one is available — see its doc comment.
- */
-export function analyzeUpwardFaces(
-  positions: ArrayLike<number>,
-  index: ArrayLike<number>,
-  /**
-   * Excludes faces tilted less than this from the analysis entirely — not
-   * just from the tilt mean, from the footprint and apex too. Lets a caller
-   * isolate a roof's steeply-pitched sub-population from a flatter deck it
-   * is merged with (see `resolveRoofFace` below), rather than reporting one
-   * physically-nonexistent blended angle for two real, differently-pitched
-   * surfaces.
-   */
-  minTiltDeg = 0,
-): FaceSetAnalysis | null {
-  let areaSqm = 0;
-  let tiltWeighted = 0;
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minZ = Infinity;
-  let maxZ = -Infinity;
-  let apexY = -Infinity;
-
-  for (let i = 0; i + 2 < index.length; i += 3) {
-    const ia = index[i] * 3;
-    const ib = index[i + 1] * 3;
-    const ic = index[i + 2] * 3;
-    const ax = positions[ia], ay = positions[ia + 1], az = positions[ia + 2];
-    const bx = positions[ib], by = positions[ib + 1], bz = positions[ib + 2];
-    const cx = positions[ic], cy = positions[ic + 1], cz = positions[ic + 2];
-
-    const ux = bx - ax, uy = by - ay, uz = bz - az;
-    const vx = cx - ax, vy = cy - ay, vz = cz - az;
-    const nx = uy * vz - uz * vy;
-    const ny = uz * vx - ux * vz;
-    const nz = ux * vy - uy * vx;
-    const len = Math.hypot(nx, ny, nz);
-    if (len < 1e-9) continue;
-
-    const normalY = ny / len;
-    if (normalY <= UP_FACE_MIN_COS) continue;
-
-    const area = len / 2;
-    const tiltDeg = (Math.acos(Math.min(1, Math.max(-1, normalY))) * 180) / Math.PI;
-    if (tiltDeg < minTiltDeg) continue;
-    areaSqm += area;
-    tiltWeighted += tiltDeg * area;
-    minX = Math.min(minX, ax, bx, cx);
-    maxX = Math.max(maxX, ax, bx, cx);
-    minZ = Math.min(minZ, az, bz, cz);
-    maxZ = Math.max(maxZ, az, bz, cz);
-    apexY = Math.max(apexY, ay, by, cy);
-  }
-
-  if (areaSqm <= 0) return null;
-  return { areaSqm, tiltDeg: tiltWeighted / areaSqm, minX, maxX, minZ, maxZ, apexY };
-}
-
-/* ------------------------------------------------------------------ *
- * Pure layout: an instanced panel array sized by kWp, tilted by the roof
- * ------------------------------------------------------------------ */
-
-// Same module dimensions as src/components/viewer/solar-panels.tsx (owned by
-// Lane 3A), duplicated rather than imported so this file has no dependency on
-// a sibling lane's in-flight viewer component; keep the two in step by eye.
-const PANEL_W = 1.7;
-const COL_PITCH = PANEL_W + 0.15;
-const ROW_PITCH = 2.4;
-const EDGE_MARGIN = 1.0;
-/** Typical commercial/residential module, used only to turn a kWp figure into a panel COUNT for this preview. */
-export const PV_PANEL_RATED_KWP = 0.4;
-/** Korean fixed-tilt rack convention — matches solar-panels.tsx's TILT_RAD, applied only when the roof itself is flat. */
-export const PV_FIXED_RACK_TILT_DEG = 30;
-export const PV_FLAT_TILT_THRESHOLD_DEG = 5;
-const MAX_PV_INSTANCES = 400;
-
-export function classifyRoofTypeForSizing(tiltDeg: number): "flat" | "gable" {
-  return tiltDeg < PV_FLAT_TILT_THRESHOLD_DEG ? "flat" : "gable";
-}
-
-export type StatedRoofType = "flat" | "gable" | "hip" | "sawtooth";
-
-/** Separates a genuinely pitched roof surface from a flat/low-slope deck merged with it in the same mesh — see `resolveRoofFace`. */
-const STEEP_ROOF_MIN_TILT_DEG = 15;
-
-/**
- * The face set a PV array should actually be laid on.
- *
- * A blended `analyzeUpwardFaces(pos, idx)` over a mixed roof (a pitched tile
- * surface AND a flat deck merged in one mesh, e.g. Schependomlaan) reports
- * an area-weighted mean tilt that is a PHYSICALLY NONEXISTENT angle — no
- * panel can sit at "45°" on a roof that is only ever 63° or 0° — and the
- * flat deck's near-zero faces drag that blend well off the tile's own
- * pitch. When `statedRoofType` (from `ReferenceBuildingEnergyInputs.roof`,
- * the same fact the PV measure's own name and utilisation factor are built
- * from) says this roof is pitched, restrict the analysis to faces steeper
- * than `STEEP_ROOF_MIN_TILT_DEG`, isolating the tile from the deck. Falls
- * back to the blended figure if that steep-only subset is empty (a pitched
- * roof this shallow could exist) or the stated type is absent (in which
- * case this module's own blended tilt decides, matching prior behaviour).
- * A stated "flat" is trusted outright and never goes looking for a steep
- * sub-population that the fact says should not be there.
- */
-export function resolveRoofFace(
-  positions: ArrayLike<number>,
-  index: ArrayLike<number>,
-  statedRoofType: StatedRoofType | undefined,
-): FaceSetAnalysis | null {
-  const blended = analyzeUpwardFaces(positions, index);
-  if (!blended) return null;
-  const isPitched = statedRoofType ? statedRoofType !== "flat" : blended.tiltDeg >= PV_FLAT_TILT_THRESHOLD_DEG;
-  if (!isPitched) return blended;
-  const steep = analyzeUpwardFaces(positions, index, STEEP_ROOF_MIN_TILT_DEG);
-  return steep ?? blended;
-}
-
-export interface PanelInstance {
-  x: number;
-  y: number;
-  z: number;
-  quaternion: readonly [number, number, number, number];
-}
-
-export interface PanelLayout {
-  instances: readonly PanelInstance[];
-  systemSizeKWp: number;
-  tiltDeg: number;
-}
-
-/**
- * Lay out an instanced PV array over a roof's measured footprint.
- *
- * `overrideSystemSizeKWp` is filled by `usePvSystemSizeOverride` from
- * `computeRetrofitDelta(...).after.materials.renewable.solarPV.capacity` —
- * the same kWp the economics card prices the measure at. The area-based
- * fallback below only fires when that run isn't available yet (no
- * materials/recipe seeded), which per bim-24 (2026-09-06) is close to
- * unreachable in practice: `visual.solarInstalled` cannot go true before
- * `reference-energy.tsx`'s seeding effect has already published both, at
- * which point `computeRetrofitDelta` also stops returning null. Kept as a
- * safety net, not a live path.
- *
- * If it ever DOES fire, note the fallback prices a DIFFERENT roof area than
- * the delta does: `face.areaSqm` is this component's own measurement — the
- * mesh's upward-facing triangle area above the resolved elevation/roofing
- * source — while the delta's sizing comes from
- * `envelopeQuantities(recipe).roofAreaSqm`, the manifest's STATED measured
- * roof surface for the whole building. They can legitimately disagree; a
- * visible resize on the fallback→override swap would be that disagreement
- * surfacing, not a rendering glitch.
- */
-export function panelLayoutForRoof(
-  face: FaceSetAnalysis,
-  overrideSystemSizeKWp?: number,
-): PanelLayout | null {
-  const roofTypeForSizing = classifyRoofTypeForSizing(face.tiltDeg);
-  const systemSizeKWp =
-    overrideSystemSizeKWp ??
-    calculateSolarPotential(face.areaSqm, roofTypeForSizing, "seoul", 0).systemSizeKWp;
-  const targetCount = Math.min(MAX_PV_INSTANCES, Math.floor(systemSizeKWp / PV_PANEL_RATED_KWP));
-  if (targetCount <= 0) return null;
-
-  const spanX = face.maxX - face.minX;
-  const spanZ = face.maxZ - face.minZ;
-  // Assumption, named: the ridge runs along the roof footprint's longer
-  // horizontal axis, and the slope runs across the shorter one. Correct for
-  // a simple gable/mono-pitch box; a hip or multi-wing roof gets one
-  // representative plane rather than a per-facet layout.
-  const ridgeAlongX = spanX >= spanZ;
-  const isFlat = roofTypeForSizing === "flat";
-  const tiltDeg = isFlat ? PV_FIXED_RACK_TILT_DEG : face.tiltDeg;
-  const tiltRad = THREE.MathUtils.degToRad(tiltDeg);
-
-  const alongSpan = (ridgeAlongX ? spanX : spanZ) - 2 * EDGE_MARGIN;
-  const acrossSpan = (ridgeAlongX ? spanZ : spanX) - 2 * EDGE_MARGIN;
-  const cols = Math.max(1, Math.floor(alongSpan / COL_PITCH));
-  const rows = Math.max(1, Math.floor(acrossSpan / ROW_PITCH));
-  const count = Math.min(targetCount, cols * rows);
-  if (count <= 0) return null;
-
-  const cx = (face.minX + face.maxX) / 2;
-  const cz = (face.minZ + face.maxZ) / 2;
-  // 0.15 m clearance above the highest measured roof vertex — a flat rack's
-  // trailing edge or a flush-mounted panel's own thickness.
-  const y = face.apexY + 0.15;
-
-  const quaternion = (
-    ridgeAlongX
-      ? new THREE.Quaternion().setFromEuler(new THREE.Euler(-tiltRad, 0, 0))
-      : new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, tiltRad))
-  ).toArray() as [number, number, number, number];
-
-  const instances: PanelInstance[] = [];
-  let placed = 0;
-  for (let r = 0; r < rows && placed < count; r += 1) {
-    for (let c = 0; c < cols && placed < count; c += 1) {
-      const u = (c - (cols - 1) / 2) * COL_PITCH;
-      const v = (r - (rows - 1) / 2) * ROW_PITCH;
-      const [x, z] = ridgeAlongX ? [cx + u, cz + v] : [cx + v, cz + u];
-      instances.push({ x, y, z, quaternion });
-      placed += 1;
-    }
-  }
-  return { instances, systemSizeKWp, tiltDeg };
-}
-
-/* ------------------------------------------------------------------ *
- * Pure status: what an equipment measure can reach on THIS building
- * ------------------------------------------------------------------ */
-
-export type EquipmentReach = "tinted" | "layer-off" | "not-modeled";
-
 /**
  * Whether an hvac/electrical discipline model exists for this building and,
  * if so, whether the reader currently has it switched on — three states, not
@@ -397,6 +143,71 @@ export interface RetrofitLegendLine {
   en: string;
 }
 
+/** The roof typology a building's energy inputs state (`ReferenceBuildingEnergyInputs.roof.type`). */
+export type StatedRoofType = "flat" | "gable" | "hip" | "sawtooth";
+/** Whether an hvac/electrical discipline model exists and is switched on. */
+export type EquipmentReach = "tinted" | "layer-off" | "not-modeled";
+
+export interface PvLegendSummary {
+  planes: number;
+  excludedPlanes: number;
+  usableSqm: number;
+  grossSqm: number;
+  modules: number;
+  kWp: number;
+  /** Excluded planes by reason, e.g. { "north-facing-pitch": 1 }. */
+  reasons: Readonly<Record<string, number>>;
+}
+
+const PV_REASON_KO: Record<string, string> = {
+  "tilt-above-60": "60° 초과",
+  "smaller-than-one-module": "모듈 1장 미만",
+  "north-facing-pitch": "북향 경사",
+  "no-usable-area-after-setback": "이격 후 면적 없음",
+  "outline-shape-not-trustworthy": "외곽선 미확정",
+  "outline-area-disagrees-with-stated": "외곽선·면적 불일치",
+};
+
+/** The one line the legend states about PV from the layout. */
+/** The legend's summary of a layout — one object, so the count on the legend is the layout's. */
+export function pvLegendSummaryOf(layout: {
+  planes: readonly { excludedReason: string | null }[];
+  excludedPlanes: number;
+  totalUsableSqm: number;
+  totalGrossProjectedSqm: number;
+  totalModules: number;
+  totalKWp: number;
+} | null): PvLegendSummary | null {
+  if (!layout) return null;
+  const reasons: Record<string, number> = {};
+  for (const plane of layout.planes) {
+    if (plane.excludedReason) reasons[plane.excludedReason] = (reasons[plane.excludedReason] ?? 0) + 1;
+  }
+  return {
+    planes: layout.planes.length,
+    excludedPlanes: layout.excludedPlanes,
+    usableSqm: layout.totalUsableSqm,
+    grossSqm: layout.totalGrossProjectedSqm,
+    modules: layout.totalModules,
+    kWp: layout.totalKWp,
+    reasons,
+  };
+}
+
+export function pvLegendLine(pv: PvLegendSummary): RetrofitLegendLine {
+  const reasonsKo = Object.entries(pv.reasons)
+    .map(([k, n]) => `${PV_REASON_KO[k] ?? k} ${n}면`)
+    .join(", ");
+  const reasonsEn = Object.entries(pv.reasons)
+    .map(([k, n]) => `${n} ${k}`)
+    .join(", ");
+  return {
+    key: "pv-layout",
+    ko: `태양광: 지붕 ${pv.planes}면 · 사용 가능 ${pv.usableSqm.toFixed(0)} / ${pv.grossSqm.toFixed(0)} m² · 모듈 ${pv.modules}장 · ${pv.kWp.toFixed(1)} kWp${pv.excludedPlanes > 0 ? ` · 제외 ${pv.excludedPlanes}면 (${reasonsKo})` : ""}`,
+    en: `PV: ${pv.planes} roof planes · usable ${pv.usableSqm.toFixed(0)} / ${pv.grossSqm.toFixed(0)} m² · ${pv.modules} modules · ${pv.kWp.toFixed(1)} kWp${pv.excludedPlanes > 0 ? ` · ${pv.excludedPlanes} excluded (${reasonsEn})` : ""}`,
+  };
+}
+
 export function buildRetrofitLegendLines(args: {
   selectedMeasureIds: readonly string[] | null;
   /**
@@ -412,8 +223,14 @@ export function buildRetrofitLegendLines(args: {
   hvacReach: EquipmentReach;
   lightingReach: EquipmentReach;
   roofGeometryAvailable: boolean;
+  /**
+   * The measured-roof layout's totals, when the building has published
+   * planes. The legend states them because the picture alone cannot say
+   * which planes were refused and why.
+   */
+  pv?: PvLegendSummary | null;
 }): RetrofitLegendLine[] {
-  const { selectedMeasureIds, previewProposal, visual, hvacReach, lightingReach, roofGeometryAvailable } = args;
+  const { selectedMeasureIds, previewProposal, visual, hvacReach, lightingReach, roofGeometryAvailable, pv } = args;
 
   if (!previewProposal) {
     return [
@@ -488,7 +305,11 @@ export function buildRetrofitLegendLines(args: {
     });
   }
 
-  if (visual.solarInstalled) {
+  if (visual.solarInstalled && pv) {
+    // The layout is the fact; the two generic lines below are for a building
+    // that has published no planes at all.
+    lines.push(pvLegendLine(pv));
+  } else if (visual.solarInstalled) {
     lines.push(
       roofGeometryAvailable
         ? {
@@ -662,79 +483,6 @@ export function EquipmentRetrofitTint({ url }: { url: string }) {
   return null;
 }
 
-/**
- * The real kWp `retrofit-delta.ts` sized the PV measure at, read from the
- * same global stores `RetrofitDeltaStrip` uses (no new props): `buildingPk`
- * off `scenario-store.buildingInputs`, materials/recipe/climate off the
- * stores `reference-energy.tsx`'s seeding effect already publishes for this
- * building. `undefined` — never 0 — when no run is available yet, so
- * `panelLayoutForRoof` falls back to its own area-based estimate rather than
- * being told the array is empty.
- */
-function usePvSystemSizeOverride(solarInstalled: boolean): number | undefined {
-  const buildingPk = useScenarioStore((s) => s.buildingInputs?.buildingPk ?? "");
-  const materials = useMaterialStore((s) => s.properties[buildingPk]);
-  const recipe = useEffectiveRecipe(buildingPk);
-  const sigunguCd = useActiveSigunguCd();
-  const proposalIds = useProposalVisualIds();
-
-  const delta = useMemo(() => {
-    if (!solarInstalled || !materials || !recipe) return null;
-    return computeRetrofitDelta({
-      materials,
-      recipe,
-      climate: getClimateData(sigunguCd),
-      measureIds: proposalIds,
-    });
-  }, [solarInstalled, materials, recipe, sigunguCd, proposalIds]);
-
-  const solarPV = delta?.after.materials.renewable.solarPV;
-  return solarPV?.installed ? solarPV.capacity : undefined;
-}
-
-/** An instanced array of tilted PV panels, shared by both roof sources below. */
-function usePvPanelMesh(
-  face: FaceSetAnalysis | null,
-  solarInstalled: boolean,
-  overrideSystemSizeKWp?: number,
-) {
-  const panels = useMemo(
-    () => (solarInstalled && face ? panelLayoutForRoof(face, overrideSystemSizeKWp) : null),
-    [solarInstalled, face, overrideSystemSizeKWp],
-  );
-  const panelMesh = useMemo(() => {
-    if (!panels || panels.instances.length === 0) return null;
-    const geo = new THREE.BoxGeometry(PANEL_W, 0.06, 1.1);
-    const mat = new THREE.MeshStandardMaterial({
-      color: "#1e3a5f",
-      metalness: 0.6,
-      roughness: 0.25,
-      emissive: new THREE.Color(PROPOSAL_EMISSIVE),
-      emissiveIntensity: 0.12,
-    });
-    const im = new THREE.InstancedMesh(geo, mat, panels.instances.length);
-    im.name = "reference-retrofit-pv-array";
-    const m4 = new THREE.Matrix4();
-    const quat = new THREE.Quaternion();
-    const scale = new THREE.Vector3(1, 1, 1);
-    panels.instances.forEach((inst, i) => {
-      quat.set(...inst.quaternion);
-      m4.compose(new THREE.Vector3(inst.x, inst.y, inst.z), quat, scale);
-      im.setMatrixAt(i, m4);
-    });
-    im.instanceMatrix.needsUpdate = true;
-    return im;
-  }, [panels]);
-  useEffect(() => {
-    return () => {
-      if (!panelMesh) return;
-      panelMesh.geometry.dispose();
-      (panelMesh.material as THREE.Material).dispose();
-    };
-  }, [panelMesh]);
-  return panelMesh;
-}
-
 function findMeshByMaterialName(scene: THREE.Object3D, materialName: string): THREE.Mesh | null {
   let found: THREE.Mesh | null = null;
   scene.traverse((obj) => {
@@ -756,16 +504,11 @@ function findMeshByMaterialName(scene: THREE.Object3D, materialName: string): TH
 function RoofingLayerRetrofitVisual({
   roofingUrl,
   visual,
-  centre,
-  statedRoofType,
 }: {
   roofingUrl: string;
   visual: RetrofitVisualState;
-  centre: THREE.Vector3;
-  statedRoofType: StatedRoofType | undefined;
 }) {
   const { scene } = useGLTF(roofingUrl);
-  const overrideSystemSizeKWp = usePvSystemSizeOverride(visual.solarInstalled);
 
   useEffect(() => {
     if (!visual.roofUpgraded) return;
@@ -777,28 +520,8 @@ function RoofingLayerRetrofitVisual({
     });
   }, [scene, visual.roofUpgraded]);
 
-  const face = useMemo<FaceSetAnalysis | null>(() => {
-    if (!visual.solarInstalled) return null;
-    let found: FaceSetAnalysis | null = null;
-    scene.traverse((obj) => {
-      if (found) return;
-      const mesh = obj as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      const pos = mesh.geometry.attributes.position?.array;
-      const idx = mesh.geometry.index?.array;
-      if (!pos || !idx) return;
-      found = resolveRoofFace(pos, idx, statedRoofType);
-    });
-    return found;
-  }, [scene, visual.solarInstalled, statedRoofType]);
-
-  const panelMesh = usePvPanelMesh(face, visual.solarInstalled, overrideSystemSizeKWp);
-
-  return (
-    <group position={[-centre.x, -centre.y, -centre.z]}>
-      {panelMesh ? <primitive object={panelMesh} /> : null}
-    </group>
-  );
+  // PV is drawn by `PvModulesVisual` from the measured-roof layout, not here.
+  return null;
 }
 
 /**
@@ -819,17 +542,14 @@ function FabricSlabRetrofitVisual({
   storeys,
   visual,
   centre,
-  statedRoofType,
 }: {
   fabricUrl: string;
   roofs: ReferenceBuildingManifest["roofs"];
   storeys: ReferenceBuildingManifest["storeys"];
   visual: RetrofitVisualState;
   centre: THREE.Vector3;
-  statedRoofType: StatedRoofType | undefined;
 }) {
   const { scene } = useGLTF(fabricUrl);
-  const overrideSystemSizeKWp = usePvSystemSizeOverride(visual.solarInstalled);
 
   const roofTriangles = useMemo(() => {
     const threshold = roofElevationThresholdM(roofs, storeys);
@@ -844,11 +564,6 @@ function FabricSlabRetrofitVisual({
     if (above.length === 0) return null;
     return { pos, nrm, above };
   }, [scene, roofs, storeys]);
-
-  const face = useMemo<FaceSetAnalysis | null>(() => {
-    if (!roofTriangles) return null;
-    return resolveRoofFace(roofTriangles.pos, roofTriangles.above, statedRoofType);
-  }, [roofTriangles, statedRoofType]);
 
   const overlay = useMemo(() => {
     if (!visual.roofUpgraded || !roofTriangles) return null;
@@ -881,12 +596,9 @@ function FabricSlabRetrofitVisual({
     };
   }, [overlay]);
 
-  const panelMesh = usePvPanelMesh(face, visual.solarInstalled, overrideSystemSizeKWp);
-
   return (
     <group position={[-centre.x, -centre.y, -centre.z]}>
       {overlay ? <primitive object={overlay} /> : null}
-      {panelMesh ? <primitive object={panelMesh} /> : null}
     </group>
   );
 }
@@ -906,7 +618,9 @@ export function RoofRetrofitVisualBoundary({
   storeys,
   visual,
   centre,
-  statedRoofType,
+  // Kept on the signature so the viewer's call site is unchanged; PV placement
+  // now reads the measured planes, not a stated typology.
+  statedRoofType: _statedRoofType,
 }: {
   fabricUrl: string;
   /** URL of a dedicated "roofing" service layer GLB, or null when this building has none. */
@@ -922,9 +636,9 @@ export function RoofRetrofitVisualBoundary({
   return (
     <Suspense fallback={null}>
       {roofingUrl ? (
-        <RoofingLayerRetrofitVisual roofingUrl={roofingUrl} visual={visual} centre={centre} statedRoofType={statedRoofType} />
+        <RoofingLayerRetrofitVisual roofingUrl={roofingUrl} visual={visual} />
       ) : (
-        <FabricSlabRetrofitVisual fabricUrl={fabricUrl} roofs={roofs} storeys={storeys} visual={visual} centre={centre} statedRoofType={statedRoofType} />
+        <FabricSlabRetrofitVisual fabricUrl={fabricUrl} roofs={roofs} storeys={storeys} visual={visual} centre={centre} />
       )}
     </Suspense>
   );
@@ -949,6 +663,7 @@ export function RetrofitLegend({
   hvacReach,
   lightingReach,
   roofGeometryAvailable,
+  pv,
   isKo,
 }: {
   selectedMeasureIds: readonly string[] | null;
@@ -957,6 +672,7 @@ export function RetrofitLegend({
   hvacReach: EquipmentReach;
   lightingReach: EquipmentReach;
   roofGeometryAvailable: boolean;
+  pv?: PvLegendSummary | null;
   isKo: boolean;
 }) {
   const lines = buildRetrofitLegendLines({
@@ -966,11 +682,13 @@ export function RetrofitLegend({
     hvacReach,
     lightingReach,
     roofGeometryAvailable,
+    pv,
   });
   if (lines.length === 0) return null;
   return (
     <div
       data-testid="reference-retrofit-legend"
+      data-pv-modules={visual.solarInstalled && pv ? pv.modules : undefined}
       className="pointer-events-none absolute bottom-3 right-3 z-20 max-w-[19rem] rounded-md border border-emerald-500/40 bg-emerald-950/80 px-2.5 py-1.5 font-mono text-[10px] leading-relaxed text-emerald-200 shadow-sm backdrop-blur"
     >
       {lines.map((line) => (

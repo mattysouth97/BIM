@@ -13,6 +13,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { RoofPlaneSet } from "@/lib/retrofit/pv-layout";
 import type { ProgramTrack } from "@/lib/retrofit/cost-database";
 import {
   proposalVisualIds,
@@ -80,6 +81,16 @@ interface ScenarioState {
    * a fresh page.
    */
   previewProposal: boolean;
+  /**
+   * The active building's measured roof planes (stage 1 of the PV placement
+   * methodology) — published by the surface that has them: the model page
+   * fetches `roof-planes.json`, the twin derives them from its plates. ONE
+   * copy, so the PV drawn, the legend's count and the kWp the economics
+   * prices all come from one layout of one roof. Session-only; cleared when
+   * the building changes exactly like the chosen work.
+   */
+  roofPlanes: RoofPlaneSet | null;
+  setRoofPlanes: (planes: RoofPlaneSet | null) => void;
   setCapexBudget: (krw: number) => void;
   setProgramTrack: (track: ProgramTrack) => void;
   setBuildingInputs: (inputs: ScenarioBuildingInputs | null) => void;
@@ -99,6 +110,7 @@ type ScenarioData = Omit<
   | "setSelectedMeasureIds"
   | "setAppliedMeasureIds"
   | "setPreviewProposal"
+  | "setRoofPlanes"
   | "resetScenario"
 >;
 
@@ -114,6 +126,7 @@ function initialScenarioData(): ScenarioData {
     selectedMeasureIds: null,
     appliedMeasureIds: null,
     previewProposal: true,
+    roofPlanes: null,
   };
 }
 
@@ -138,6 +151,7 @@ export const useScenarioStore = create<ScenarioState>()(
             buildingInputs: inputs,
             selectedMeasureIds: sameBuilding ? state.selectedMeasureIds : null,
             appliedMeasureIds: sameBuilding ? state.appliedMeasureIds : null,
+            roofPlanes: sameBuilding ? state.roofPlanes : null,
           };
         }),
       setSelectedMeasureIds: (ids) =>
@@ -158,6 +172,7 @@ export const useScenarioStore = create<ScenarioState>()(
         }),
       setAppliedMeasureIds: (ids) => set({ appliedMeasureIds: ids }),
       setPreviewProposal: (on) => set({ previewProposal: on }),
+      setRoofPlanes: (planes) => set({ roofPlanes: planes }),
       resetScenario: () => set(initialScenarioData()),
     }),
     {

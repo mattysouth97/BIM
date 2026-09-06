@@ -542,3 +542,32 @@ the QA drawing before accepting 33 m²**; the other 50 refusals (19 too steep,
 22 too small, 8 no area after setback, 1 outline disagreement) stand.
 Regression lesson, third time this round: **build against the file, not the
 field list, and construct the case a guard claims to catch.**
+
+## P3b landed — main-coordinator, 23:15
+
+Stage 4 on both viewers, from one layout. `scenario-store` carries the active
+building's `roofPlanes` (session-only, cleared with the building);
+`use-pv-layout.ts` runs `layoutRoofPlanes` over them once; the model page
+publishes `roof-planes.json` (fetched like spaces) and the twin publishes
+`twinRoofPlanes(recipe)`. `viewer/pv-modules.tsx` draws the layout's module
+instances at their own centres and quaternions on both surfaces
+(`solar-panels.tsx` is now that component; the footprint grid is gone).
+`analyzeUpwardFaces`, `resolveRoofFace`, `panelLayoutForRoof`,
+`classifyRoofTypeForSizing`, `usePvSystemSizeOverride` and `usePvPanelMesh`
+are deleted; the roof-TINT halves of the two roof visuals stay. The PV
+measure, the delta and the strip are all priced at the layout's kWp
+(`pvGeometricKWp` → the sixth argument), so the picture, the legend and the
+NPV describe one array.
+
+Legend: one PV line from the layout — "태양광: 지붕 51면 · 사용 가능 49 / 358 m²
+· 모듈 10장 · 4.0 kWp · 제외 50면 (60° 초과 19면, …)" — and `data-pv-modules`
+on the legend, `data-pv-drawn` and `data-roof-planes` on the viewer.
+`e2e/reference-buildings.spec.ts` waits for the planes before every "before"
+snapshot (the fetch had been moving the delta under the test) and asserts
+legend = drawn per building. Verified: tsc 0, full vitest 5,137, full
+Playwright 88, eslint 0 errors. Not yet looked at in a browser by a person —
+the numbers on the apartment (10 modules on the deck) and the Duplex (14
+racked rows) are the layout's, and the QA drawings are the check.
+
+Still open from this lane: the per-plane utilisation table in the side
+panel (the legend carries the summary); obstructions for plant and parapets.
