@@ -76,16 +76,35 @@ export const PROPOSAL_EMISSIVE_INTENSITY = 0.06;
 const NO_MEASURE_IDS: string[] = [];
 
 /**
+ * The work in force. The user's chosen set wins; the knapsack's
+ * recommendation stands in only until the HUD has seeded that set for this
+ * building, so a page arrives useful rather than blank.
+ *
+ * After seeding, `applied` stays non-null — INCLUDING when the user empties
+ * it. An empty array therefore means "the user chose nothing", which is not
+ * the same as "not seeded yet" and must not fall back to the recommendation:
+ * that would make deselecting the last chip silently restore the optimiser's
+ * picks, which is the behaviour this whole lane exists to remove.
+ */
+export function effectiveMeasureIds(
+  applied: string[] | null,
+  recommended: string[] | null,
+): string[] {
+  if (applied !== null) return applied;
+  return recommended ?? NO_MEASURE_IDS;
+}
+
+/**
  * The ids the model should draw as proposed. Pure half of
  * `useProposalVisualIds()` — the gate is here so it can be tested without a
  * store and read from a non-hook context.
  */
 export function proposalVisualIds(
   previewProposal: boolean,
-  selectedMeasureIds: string[] | null,
+  measureIds: string[] | null,
 ): string[] {
   if (!previewProposal) return NO_MEASURE_IDS;
-  return selectedMeasureIds ?? NO_MEASURE_IDS;
+  return measureIds ?? NO_MEASURE_IDS;
 }
 
 /** Derive the visual flags from a set of measure IDs. */

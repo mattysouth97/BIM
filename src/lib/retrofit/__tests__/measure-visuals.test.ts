@@ -3,6 +3,7 @@ import {
   deriveVisualState,
   hasAnyVisual,
   proposalVisualIds,
+  effectiveMeasureIds,
   NO_RETROFIT_VISUALS,
 } from "../measure-visuals";
 import { useScenarioStore, DEFAULT_CAPEX_BUDGET_KRW } from "@/store/scenario-store";
@@ -126,5 +127,70 @@ describe("scenario-store — the proposal is what the model draws", () => {
     const first = useScenarioStore.getState().selectedMeasureIds;
     useScenarioStore.getState().setSelectedMeasureIds(["envelope-wall-insulation"]);
     expect(useScenarioStore.getState().selectedMeasureIds).toBe(first);
+  });
+});
+
+describe("effectiveMeasureIds — the user's set outranks the recommendation", () => {
+  it("follows the recommendation only until the user's set is seeded", () => {
+    expect(effectiveMeasureIds(null, ["envelope-wall-insulation"])).toEqual([
+      "envelope-wall-insulation",
+    ]);
+  });
+
+  it("uses the user's set once seeded, even where it differs", () => {
+    expect(
+      effectiveMeasureIds(["solar-pv-flat"], ["envelope-wall-insulation"]),
+    ).toEqual(["solar-pv-flat"]);
+  });
+
+  it("an EMPTY user set means the user chose nothing, not 'unseeded'", () => {
+    // The trap: falling back on `applied.length === 0` would make deselecting
+    // the last chip silently restore the optimiser's picks, which is the
+    // behaviour the measure-first row exists to remove.
+    expect(effectiveMeasureIds([], ["envelope-wall-insulation"])).toEqual([]);
+  });
+
+  it("is empty when neither exists", () => {
+    expect(effectiveMeasureIds(null, null)).toEqual([]);
+  });
+
+  it("returns a stable reference for both empty cases", () => {
+    expect(effectiveMeasureIds(null, null)).toBe(effectiveMeasureIds(null, null));
+  });
+});
+
+describe("useProposalVisualIds semantics — the ONE gate the 3D reads", () => {
+  // Both viewers (twin and model page) resolve what to draw through this one
+  // selector. A second selector is what let the two surfaces disagree before,
+  // so these three cases are pinned rather than left to the components.
+  const RECOMMENDED = ["envelope-roof-insulation"];
+
+  it("chip on → drawn", () => {
+    const applied = ["envelope-wall-insulation"];
+    expect(
+      proposalVisualIds(true, effectiveMeasureIds(applied, RECOMMENDED)),
+    ).toEqual(["envelope-wall-insulation"]);
+  });
+
+  it("chip off but recommended → NOT drawn (the mark is advice, not a selection)", () => {
+    // The recommendation marks a chip 추천; it must never put geometry on the
+    // building the user did not choose.
+    const applied: string[] = [];
+    expect(
+      proposalVisualIds(true, effectiveMeasureIds(applied, RECOMMENDED)),
+    ).toEqual([]);
+  });
+
+  it("toggle off → nothing drawn, whatever is chosen", () => {
+    const applied = ["envelope-wall-insulation", "solar-pv-flat"];
+    expect(
+      proposalVisualIds(false, effectiveMeasureIds(applied, RECOMMENDED)),
+    ).toEqual([]);
+  });
+
+  it("before the user's set is seeded, the recommendation is what is drawn", () => {
+    expect(proposalVisualIds(true, effectiveMeasureIds(null, RECOMMENDED))).toEqual(
+      RECOMMENDED,
+    );
   });
 });
