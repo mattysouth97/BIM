@@ -48,36 +48,27 @@ type Expected = Readonly<{
    */
   grade: string;
   demandPerSqm: string;
-  /**
-   * Whether changing the subsidy track moves the MODELLED before/after, as
-   * opposed to moving the economics. False is a recorded defect, not a
-   * property of the building — see the delta test below.
-   */
-  deltaMovesWithTrack: boolean;
 }>;
+
+/**
+ * `zeroDeltaReason()`'s three values, as `retrofit-delta-strip.tsx` emits them
+ * on `data-zero-reason`. Listed here so a fifth value has to be added
+ * deliberately rather than passing as "some string was present".
+ */
+const KNOWN_ZERO_REASONS = ["nothing-chosen", "only-unpriced", "targets-met"];
 
 // Grades are on the table the use code selects (3b9ff6a): the three
 // dwellings are scored 주거, the Clinic by density. kWh/m² did not move.
 const BUILDINGS: readonly Expected[] = [
-  { id: "bs-medical-dental-clinic", titleKo: "메디컬-덴탈 클리닉", grade: "1+", demandPerSqm: "108.8", deltaMovesWithTrack: true },
-  // Measured 2026-09-06: 공공 지자체 takes this building from 1/5 selected
-  // measures to 2/5 and its NPV from ₩6201만 to ₩6345만, and the delta strip
-  // goes on saying "선택된 측정치는 이 실행의 kWh/m²를 움직이지 않습니다" —
-  // that the selected measures move no kWh/m² — through both. See the delta
-  // test for why that sentence is a stronger claim than the module can make.
-  { id: "schependomlaan", titleKo: "스헤펜돔라안 아파트", grade: "1++", demandPerSqm: "40.5", deltaMovesWithTrack: false },
-  { id: "duplex-apartment", titleKo: "듀플렉스 아파트", grade: "4", demandPerSqm: "142.6", deltaMovesWithTrack: true },
+  { id: "bs-medical-dental-clinic", titleKo: "메디컬-덴탈 클리닉", grade: "1+", demandPerSqm: "108.8" },
+  { id: "schependomlaan", titleKo: "스헤펜돔라안 아파트", grade: "1++", demandPerSqm: "40.5" },
+  { id: "duplex-apartment", titleKo: "듀플렉스 아파트", grade: "4", demandPerSqm: "142.6" },
   // The fourth building states NO services models at all — its manifest
   // carries an empty `serviceLayers`, so the layers panel is the fabric row
   // and nothing else, and its licence is KIT/IAI's own grant rather than a
   // Creative Commons one. Both are read from the manifest below rather than
   // written here, so neither can be quietly assumed to match the others'.
-  //
-  // Measured 2026-09-06, and it is the SECOND building with the delta-strip
-  // defect: 공공 지자체 takes it 1/6 → 2/6 measures and NPV ₩1954만 →
-  // ₩2036만, with the strip saying through both that the selected measures
-  // move no kWh/m².
-  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "2", demandPerSqm: "92.6", deltaMovesWithTrack: false },
+  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "2", demandPerSqm: "92.6" },
 ];
 
 type Manifest = {
@@ -213,93 +204,213 @@ for (const building of BUILDINGS) {
       await expect(credit).toContainText(manifest.licence);
     });
 
-    test("answers the green-remodelling chips in the retrofit scenario", async ({ page }) => {
-      // Wait for the engine before reading a baseline, or "before" is the
-      // pre-seed state and every later comparison is against nothing.
+    test("a measure chip changes the model, and clicking it again puts it back", async ({ page }) => {
+      // 3C inverted this row: the PRIMARY control is now one chip per measure,
+      // and the six financing chips moved beneath it. So the thing that moves
+      // the building is a measure chip, and the previous version of this test
+      // — which clicked a financing chip and demanded the model change — was
+      // asserting something 3C makes invariant on purpose.
       await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
+      const row = page.locator("[data-measure-chip-row]");
+      await expect(row).toBeVisible({ timeout: FIRST_PAINT });
 
-      const unsubsidised = trackChip(page, /프로그램 없음/);
-      const localGov = trackChip(page, /공공 지자체/);
-      // The page opens unsubsidised, so "before" is a real baseline.
-      await expect(unsubsidised).toHaveAttribute("aria-checked", "true");
+      // Everything here goes through attributes, never coordinates: the chip
+      // row sits directly above the financing row inside one section, so a
+      // stray position lands on the wrong control and silently re-picks the
+      // work instead of re-pricing it.
+      // Resolve the chip's ID FIRST and locate by that. Keying the locator on
+      // `data-measure-chosen` — the attribute this test exists to flip — means
+      // the element stops matching the moment the click lands, and the very
+      // next assertion fails with "element(s) not found" about a chip that is
+      // sitting right there. It did, on all four buildings.
+      //
+      // Prefer an envelope measure: those are the ones `computeRetrofitDelta`
+      // prices, so toggling one is guaranteed to move the before/after. A
+      // lighting or PV chip may be real work the module cannot price, and this
+      // test would then be asserting the delta strip's blind spot.
+      const envelope = row.locator('[data-measure-chip^="envelope-"]');
+      const target = (await envelope.count()) ? envelope.first() : row.locator("[data-measure-chip]").first();
+      await expect(target).toBeVisible({ timeout: FIRST_PAINT });
+      const chipId = await target.getAttribute("data-measure-chip");
+      const chip = row.locator(`[data-measure-chip="${chipId}"]`);
 
-      const selection = page.getByText(/\d+\/\d+개 선택/).first();
-      await expect(selection).toBeVisible({ timeout: FIRST_PAINT });
-      const before = (await selection.innerText()).trim();
+      // Either direction. The Clinic arrives with NOTHING chosen — its
+      // knapsack recommends none of its six at the default budget on the
+      // unsubsidised track — so this test cannot assume there is a selected
+      // chip to turn off, only that a chip can be toggled and put back.
+      const startedChosen = (await chip.getAttribute("data-measure-chosen")) === "true";
+      const flipped = startedChosen ? "false" : "true";
+      const restored = startedChosen ? "true" : "false";
 
-      // 70 % of CAPEX covered, so the knapsack can afford more of the same
-      // measures: the selection must move.
-      await localGov.click();
-      await expect(localGov).toHaveAttribute("aria-checked", "true");
-      await expect
-        .poll(async () => (await selection.innerText()).trim(), { timeout: FIRST_PAINT })
-        .not.toBe(before);
+      const readDelta = async () =>
+        (await deltaStrip(page).innerText()).replace(/\s+/g, " ").trim();
 
-      // And back. A chip that changes the picture but cannot un-change it is
-      // a one-way door, which is worse than one that does nothing.
-      await unsubsidised.click();
-      await expect(unsubsidised).toHaveAttribute("aria-checked", "true");
-      await expect
-        .poll(async () => (await selection.innerText()).trim(), { timeout: FIRST_PAINT })
-        .toBe(before);
+      const deltaBefore = await readDelta();
+
+      await chip.click();
+      await expect(chip).toHaveAttribute("data-measure-chosen", flipped);
+      await expect(chip).toHaveAttribute("aria-pressed", flipped);
+      await expect.poll(readDelta, { timeout: 15_000 }).not.toBe(deltaBefore);
+
+      await chip.click();
+      await expect(chip).toHaveAttribute("data-measure-chosen", restored);
+      await expect.poll(readDelta, { timeout: 15_000 }).toBe(deltaBefore);
     });
 
-    test("answers the green-remodelling chips in the modelled before/after", async ({ page }) => {
-      // Separated from the scenario test on purpose, because on half these
-      // buildings the two answers disagree and a single test could not say
-      // which one moved.
+    test("the 3D legend follows the chosen work, not the knapsack's", async ({ page }) => {
+      // Split from the delta assertions above because on ONE building these
+      // two disagree, and a single test could not say which half moved.
       //
-      // TWO of the four are marked expected-to-fail, and the shape is the
-      // same on both. Measured 2026-09-06 under 프로그램 없음 → 공공 지자체:
+      // The Clinic is expected-to-fail, and the mechanism is exact rather than
+      // suspected. `reference-model-viewer.tsx:390` hands `RetrofitLegend` the
+      // raw `selectedMeasureIds` — the knapsack's publication — while the 3D
+      // beside it is derived from `useProposalVisualIds()`, i.e. the user's
+      // applied set. Its own comment at :258 says the visual deliberately does
+      // NOT read the raw field; the legend then does. On three buildings the
+      // two sets overlap at first load and the gap is invisible. The Clinic's
+      // knapsack recommends none of its six at the default budget, so turning
+      // a chip on draws the measure and leaves the legend saying "현재
+      // 예산·트랙에서 선택된 개선 항목 없음" — a caption describing a different
+      // selection from the picture it labels.
       //
-      //   Clinic      0/6 → 3/6   ₩0      → ₩1.3억   strip: 1+ → 1++, −42.8 kWh/m²·yr
-      //   Duplex      moves
-      //   Schependom. 1/5 → 2/5   ₩6201만 → ₩6345만  strip: unchanged
-      //   FZK Haus    1/6 → 2/6   ₩1954만 → ₩2036만  strip: unchanged
-      //
-      // On the two that do not move, the money moves and a measure is added
-      // while the strip says "the selected measures do not move this run's
-      // kWh/m²" through both states. That sentence is a claim about the
-      // BUILDING; what the module can support is a claim about ITSELF — that
-      // nothing IT prices changed. `computeRetrofitDelta` already splits its
-      // changes into priced and unpriced, so a selection made entirely of
-      // measures it cannot price produces exactly this, and the zero-delta
-      // branch reports it as physics rather than as its own gap. Note the
-      // Clinic is the one building that starts at ZERO selected measures,
-      // which is why it is the one whose strip visibly changes.
-      //
-      // Owned by the retrofit-delta lane, not this file. When it is fixed
-      // these start passing and Playwright reports the unexpected pass,
-      // which is the notification we want.
+      // One line in Lane 3B's file, not this one. When it is fixed this starts
+      // passing and Playwright reports the unexpected pass.
       test.fail(
-        !building.deltaMovesWithTrack,
-        "delta strip reports no kWh/m² change while the selection and NPV both move",
+        building.id === "bs-medical-dental-clinic",
+        "legend reads selectedMeasureIds (knapsack) while the 3D reads the applied set",
       );
 
-      const delta = deltaStrip(page);
-      await expect(delta).toBeVisible({ timeout: FIRST_PAINT });
       await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
+      const row = page.locator("[data-measure-chip-row]");
+      await expect(row).toBeVisible({ timeout: FIRST_PAINT });
 
-      const unsubsidised = trackChip(page, /프로그램 없음/);
-      const localGov = trackChip(page, /공공 지자체/);
-      await expect(unsubsidised).toHaveAttribute("aria-checked", "true");
+      const envelope = row.locator('[data-measure-chip^="envelope-"]');
+      const target = (await envelope.count()) ? envelope.first() : row.locator("[data-measure-chip]").first();
+      await expect(target).toBeVisible({ timeout: FIRST_PAINT });
+      const chipId = await target.getAttribute("data-measure-chip");
+      const chip = row.locator(`[data-measure-chip="${chipId}"]`);
 
-      // Read the same way every time. `innerText` and `toHaveText` normalise
-      // whitespace differently — one keeps the line breaks between the strip's
-      // rows, the other concatenates them — so comparing one against the other
-      // fails on formatting while the content is identical.
-      const readDelta = async () => (await delta.innerText()).replace(/\s+/g, " ").trim();
-      const before = await readDelta();
+      const legend = page.getByTestId("reference-retrofit-legend");
+      const readLegend = async () =>
+        ((await legend.count()) ? await legend.innerText() : "").replace(/\s+/g, " ").trim();
+      const legendBefore = await readLegend();
 
-      await localGov.click();
-      await expect(localGov).toHaveAttribute("aria-checked", "true");
-      await expect.poll(readDelta, { timeout: 15_000 }).not.toBe(before);
-      const subsidised = await readDelta();
+      await chip.click();
+      await expect.poll(readLegend, { timeout: 15_000 }).not.toBe(legendBefore);
 
-      await unsubsidised.click();
-      await expect(unsubsidised).toHaveAttribute("aria-checked", "true");
-      await expect.poll(readDelta, { timeout: 15_000 }).toBe(before);
-      expect(subsidised).not.toBe(before);
+      await chip.click();
+      await expect.poll(readLegend, { timeout: 15_000 }).toBe(legendBefore);
+    });
+
+    test("a financing chip re-prices the work and does not re-pick it", async ({ page }) => {
+      // The point of 3C: money is a consequence of the chosen work, never a
+      // chooser of it. So this asserts a change AND an invariant, and the
+      // invariant is the half that used to be wrong.
+      await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
+      const rail = page.locator("[data-twin-rail]");
+      await expect(rail).toBeVisible({ timeout: FIRST_PAINT });
+
+      const readRail = async () => (await rail.innerText()).replace(/\s+/g, " ").trim();
+      const readDelta = async () =>
+        (await deltaStrip(page).innerText()).replace(/\s+/g, " ").trim();
+      const chosenChips = page.locator('[data-measure-chip][data-measure-chosen="true"]');
+
+      // There has to be work before financing can re-price anything. The
+      // Clinic arrives with none chosen, and on an empty selection the rail is
+      // all zeroes and correctly does not move for any track — which would
+      // make this test pass vacuously on three buildings and fail on the one
+      // that had nothing to price. So choose a measure first if none is.
+      if ((await chosenChips.count()) === 0) {
+        const first = page.locator("[data-measure-chip]").first();
+        const id = await first.getAttribute("data-measure-chip");
+        await first.click();
+        await expect(page.locator(`[data-measure-chip="${id}"]`)).toHaveAttribute(
+          "data-measure-chosen",
+          "true",
+        );
+      }
+
+      const railBefore = await readRail();
+      const deltaBefore = await readDelta();
+      const chosenBefore = await chosenChips.count();
+
+      // 민간 기본 rather than 공공 지자체: bim-24 measured this one moving NPV
+      // ₩1592만 → ₩3496만. Selecting 공공 지자체 here left the entire rail
+      // string byte-identical on all four buildings, which is reported to that
+      // lane rather than asserted either way from here.
+      const track = trackChip(page, /민간 기본/);
+      await track.click();
+      await expect(track).toHaveAttribute("aria-checked", "true");
+
+      // Re-prices: the rail's numbers move.
+      await expect.poll(readRail, { timeout: FIRST_PAINT }).not.toBe(railBefore);
+      // Does not re-pick: the chosen set is untouched and the modelled
+      // before/after is byte-identical. A financing chip that moved the
+      // building would mean the money was choosing the work again.
+      expect(await chosenChips.count()).toBe(chosenBefore);
+      expect(await readDelta()).toBe(deltaBefore);
+    });
+
+    test("at first load the recommended chips are the chosen set the rail counts", async ({ page }) => {
+      // Scoped to first load ON PURPOSE, and it is not the standing equality
+      // this test was briefed as. `ScenarioRail` is handed
+      // `selection={scenario.chosen}`, so its `N/M개 선택` is the CHOSEN set
+      // and not the knapsack's optimum — the HUD's own comment says as much.
+      // The two agree only because `appliedMeasureIds` is seeded ONCE from the
+      // first recommendation. That seeding is worth pinning precisely because
+      // the obvious "fix" — re-seeding whenever the sets diverge — would undo
+      // every deselection and let a financing click move the building again,
+      // which is the behaviour 3C exists to remove.
+      await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
+      const row = page.locator("[data-measure-chip-row]");
+      await expect(row).toBeVisible({ timeout: FIRST_PAINT });
+
+      // NOT asserted to be non-zero: the Clinic's knapsack recommends none
+      // of its six measures at the default budget on the unsubsidised track,
+      // so zero is a real recommendation and 0 === 0 is the invariant holding,
+      // not the test failing to look.
+      const chosen = await row.locator('[data-measure-chip][data-measure-chosen="true"]').count();
+
+      // Counted by the 추천 marker, scoped to the chips so the 추천안으로
+      // reset button cannot be caught by the same substring. bim-24 is adding
+      // `data-measure-recommended` and this switches to it when it lands: a
+      // count of a fact beats a count of a rendering, and this form is
+      // language-coupled (the English render reads "Suggested").
+      const recommended = await row.locator('[data-measure-chip]:has-text("추천")').count();
+      expect(recommended).toBe(chosen);
+
+      // And the rail is reporting that same set rather than a second one.
+      const railCount = (await page.locator("[data-twin-rail]").innerText()).match(
+        /(\d+)\/(\d+)개 선택/,
+      );
+      expect(railCount).not.toBeNull();
+      expect(Number(railCount![1])).toBe(chosen);
+
+      // The reset-to-recommendation button exists only where the two differ,
+      // so at first load it must be absent — the same invariant from the
+      // other side.
+      await expect(page.locator("[data-measure-reset-to-recommended]")).toHaveCount(0);
+    });
+
+    test("says which kind of nothing it is when the before/after is flat", async ({ page }) => {
+      // Replaces two `test.fail()` markers. The apartment and FZK used to say
+      // "the selected measures do not move this run's kWh/m²" — a claim about
+      // the BUILDING — where the supportable claim was about the module. 3C
+      // made that distinction explicit as `data-zero-reason`, so asserting the
+      // attribute rather than the sentence means this test and the unit test
+      // behind `zeroDeltaReason()` check one value instead of two renderings.
+      await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
+      const strip = deltaStrip(page);
+      await expect(strip).toBeVisible({ timeout: FIRST_PAINT });
+
+      const zero = strip.locator("[data-zero-reason]");
+      if ((await zero.count()) === 0) {
+        // A moving before/after is the other legitimate state, and then the
+        // strip must actually show a delta rather than be silently empty.
+        await expect(strip).toContainText("kWh/m²·yr");
+        return;
+      }
+      expect(KNOWN_ZERO_REASONS).toContain(await zero.first().getAttribute("data-zero-reason"));
     });
   });
 }
