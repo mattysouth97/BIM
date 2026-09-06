@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
 import { NO_RETROFIT_VISUALS, RENEWED_WALL_COLOR } from "@/lib/retrofit/measure-visuals";
-import { MATERIAL_TEXTURE_URLS, materialPickBinding, materialProjection, prepareMaterialExpression, updateMaterialExpression } from "../material-expression";
+import { MATERIAL_TEXTURE_URLS, materialPickBinding, materialProjection, prepareMaterialExpression, updateMaterialExpression, sourceGlassBinding } from "../material-expression";
 
 const manifest = JSON.parse(readFileSync(path.join(process.cwd(), "public/reference-buildings/fzk-haus/manifest.json"), "utf8")) as ReferenceBuildingManifest;
 const binding = manifest.materialFabric!.bindings.find((entry) => entry.group === "wall" && entry.representativeLayer?.name.startsWith("Leichtbeton"))!;
@@ -55,9 +55,17 @@ describe("illustrative material resource ownership", () => {
     const baselineColour = row.material.color.getHexString();
     const colourTexture = row.material.map!;
     const normalTexture = row.material.normalMap!;
+    const roughnessTexture = row.material.roughnessMap!;
     expect(colourTexture).not.toBe(textures[0]);
     expect(colourTexture.colorSpace).toBe(THREE.SRGBColorSpace);
     expect(normalTexture.colorSpace).toBe(THREE.NoColorSpace);
+    expect(roughnessTexture.colorSpace).toBe(THREE.NoColorSpace);
+    for (const texture of [colourTexture, normalTexture, roughnessTexture]) {
+      // The shipped concrete texture is 2:1; one tile illustrates 2 × 1 m.
+      expect(texture.repeat.toArray()).toEqual([0.5, 1]);
+      expect(texture.minFilter).toBe(THREE.LinearMipmapLinearFilter);
+      expect(texture.anisotropy).toBe(8);
+    }
     expect(colourTexture.wrapS).toBe(THREE.RepeatWrapping);
     expect(textures[0].wrapS).toBe(THREE.ClampToEdgeWrapping);
     updateMaterialExpression(prepared, manifest.id, true, { ...NO_RETROFIT_VISUALS, wallsUpgraded: true });
@@ -65,12 +73,14 @@ describe("illustrative material resource ownership", () => {
     expect(row.material.opacity).toBe(0.22);
     expect(row.material.depthWrite).toBe(false);
     expect(row.material.map).toBeNull();
+    expect(row.material.roughnessMap).toBeNull();
     updateMaterialExpression(prepared, manifest.id, false, NO_RETROFIT_VISUALS);
     expect(row.material.color.getHexString()).toBe(baselineColour);
     expect(row.material.opacity).toBe(1);
     expect(row.material.depthWrite).toBe(true);
     expect(row.material.map).toBe(colourTexture);
-    const disposals = [row.mesh.geometry, row.material, colourTexture, normalTexture, prepared.meshes[1].mesh as THREE.InstancedMesh].map((resource) => vi.spyOn(resource, "dispose"));
+    expect(row.material.roughnessMap).toBe(roughnessTexture);
+    const disposals = [row.mesh.geometry, row.material, colourTexture, normalTexture, roughnessTexture, prepared.meshes[1].mesh as THREE.InstancedMesh].map((resource) => vi.spyOn(resource, "dispose"));
     prepared.dispose();
     prepared.dispose();
     disposals.forEach((spy) => expect(spy).toHaveBeenCalledTimes(1));
@@ -81,6 +91,44 @@ describe("illustrative material resource ownership", () => {
     const remounted = prepareMaterialExpression(source, manifest, textures);
     expect(remounted.meshes[0].mesh.geometry).not.toBe(row.mesh.geometry);
     remounted.dispose();
+  });
+
+  it("uses optical transmission only for source-bound glass, with complete x-ray/proposal restoration", () => {
+    const clinic = JSON.parse(readFileSync(path.join(process.cwd(), "public/reference-buildings/bs-medical-dental-clinic/manifest.json"), "utf8")) as ReferenceBuildingManifest;
+    const entries = clinic.materialFabric!.bindings.filter((row) => row.group === "glazing");
+    expect(entries.map((entry) => [entry.materialNames[0] ?? "unassigned", sourceGlassBinding(entry)])).toEqual([
+      ["Glass", true], ["Metal - Chain Link", false], ["unassigned", false],
+    ]);
+    const source = new THREE.Group();
+    for (const entry of entries) {
+      const material = new THREE.MeshStandardMaterial({ name: entry.key });
+      source.add(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material));
+    }
+    const prepared = prepareMaterialExpression(source, clinic, MATERIAL_TEXTURE_URLS.map(() => new THREE.Texture()));
+    updateMaterialExpression(prepared, clinic.id, false, NO_RETROFIT_VISUALS);
+    const glass = prepared.meshes[0].material as THREE.MeshPhysicalMaterial;
+    expect(glass).toBeInstanceOf(THREE.MeshPhysicalMaterial);
+    expect(glass.transmission).toBe(0.9);
+    expect(glass.opacity).toBe(1);
+    expect(glass.thickness).toBe(0);
+    expect(glass.depthWrite).toBe(false);
+    // An explicitly metallic source occurrence must not become transparent
+    // merely because the extractor grouped it with curtain-wall geometry.
+    expect(prepared.meshes[1].material).not.toBeInstanceOf(THREE.MeshPhysicalMaterial);
+    expect(prepared.meshes[1].material.opacity).toBe(1);
+    expect(prepared.meshes[1].material.metalness).toBeGreaterThan(0.5);
+    expect(prepared.meshes[2].material).not.toBeInstanceOf(THREE.MeshPhysicalMaterial);
+    updateMaterialExpression(prepared, clinic.id, true, NO_RETROFIT_VISUALS);
+    expect(glass.transmission).toBe(0);
+    expect(glass.transparent).toBe(true);
+    updateMaterialExpression(prepared, clinic.id, false, { ...NO_RETROFIT_VISUALS, windowsUpgraded: true });
+    expect(glass.transmission).toBe(0);
+    expect(glass.opacity).toBeLessThan(1);
+    updateMaterialExpression(prepared, clinic.id, false, NO_RETROFIT_VISUALS);
+    expect(glass.transmission).toBe(0.9);
+    expect(glass.opacity).toBe(1);
+    expect(glass.transparent).toBe(false);
+    prepared.dispose();
   });
 
   it("rejects unsupported meshes and invalid projection input without changing the cached source", () => {

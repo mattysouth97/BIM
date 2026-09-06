@@ -44,7 +44,7 @@ export function ReferenceConstructionCard({ construction, buildingId, isKo, init
     <article ref={articleRef} className="scroll-mt-2 border-t border-border py-3" data-testid="reference-material-construction" data-construction-id={construction.id} data-material-selected={!!surfaceSelection}>
       <button ref={toggleRef} type="button" aria-expanded={expanded} aria-controls={bodyId} onClick={() => setInteraction((value) => ({ ...value, expanded: !value.expanded }))} data-testid="material-construction-toggle" className="w-full cursor-pointer rounded-sm text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
         <div className="flex items-start justify-between gap-3">
-          <span className="min-w-0 text-[12px] leading-relaxed text-foreground">{name}</span>
+          <span className="min-w-0 break-words text-[12px] leading-relaxed text-foreground">{name}</span>
           <span className="shrink-0 text-right font-mono text-[12px] text-foreground">
             <span className="block text-[9px] text-muted-foreground">{isKo ? "층 구성 계산" : "Layer calculation"}</span>
             {construction.uValueWPerM2K === null ? (isKo ? "U 미해결" : "U unresolved") : `U ${construction.uValueWPerM2K.toFixed(3)}`}

@@ -70,6 +70,15 @@ cleanup. Source-assigned assemblies use their thickest stated layer as an
 illustrative material sample, explicitly not a verified outer finish. Unsupported,
 ambiguous and unassigned surfaces stay neutral. Textures do not supply λ or U.
 
+The material renderer uses matched colour, normal and roughness maps with
+nominal metre-scale tiling. Node and instance scale both enter UV sampling;
+the apartment's reusable millimetre geometry therefore samples the same tile
+size as metre geometry. Tile dimensions and optical settings remain appearance
+assumptions. A GPU regression compares both encodings pixel for pixel. Source
+glass assignments can use thin-surface optical transmission; a whole-window
+category alone cannot make its unassigned frames and panes optical glass.
+X-ray and retrofit preview restore the original owned material resources.
+
 The material GLBs retain per-element IFC association references in a separate
 index. Occurrence associations take priority over type associations; neither
 missing nor conflicting evidence is guessed. Blender MCP lossless compression

@@ -152,7 +152,7 @@ export function ReferenceBuildingWorkspace({
       {/* Scrolls on its own so a short window never clips what is written
           here. The attribution in particular is a CC BY condition, and a
           licence term that only appears on a tall monitor is not met. */}
-      <aside className="flex min-h-0 w-full shrink-0 flex-col lg:w-[24rem]" aria-label={isKo ? "건물 정보" : "Building information"}>
+      <aside className="flex min-h-0 min-w-0 w-full shrink-0 flex-col lg:w-[24rem]" aria-label={isKo ? "건물 정보" : "Building information"}>
         <div className="mb-2 flex shrink-0 items-start gap-3">
         <Link
           href="/"
