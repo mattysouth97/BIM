@@ -336,6 +336,43 @@ describe("computeRetrofitDelta", () => {
     expect(d.changes).toHaveLength(0);
   });
 
+  it.each([0, 100])("separates additional PV from the total with existing area %s", (area) => {
+    const materials = makeMaterials();
+    Object.assign(materials.renewable.solarPV, { installed: true, capacity: 63.36, area, tiltAngle: 15 });
+    const d = computeRetrofitDelta({
+      materials, recipe: makeRecipe(), climate: CLIMATE,
+      measureIds: ["solar-pv-flat"], pvGeometricKWp: 4,
+    })!;
+    expect(d.after.materials.renewable.solarPV.capacity).toBeCloseTo(67.36, 9);
+    expect(d.after.materials.renewable.solarPV.area).toBe(area === 0 ? 0 : 117);
+    expect(d.changes[0].summaryEn).toBe("Additional PV capacity 0.0 → 4.0 kWp");
+    const total = d.changes.find((change) => change.field === "renewable.solarPV.capacity")!;
+    const parsed = /^Total PV capacity ([\d.]+) → ([\d.]+) kWp$/.exec(total.summaryEn)!;
+    expect(Number(parsed[2]) - Number(parsed[1])).toBeCloseTo(4, 9);
+    const additionalArea = d.changes.find((change) => change.field.endsWith("proposed.area"))!;
+    expect(additionalArea.summaryEn).toBe("Additional module surface area 0 → 17 m²");
+    expect(d.changes.some((change) => change.field === "renewable.solarPV.area")).toBe(false);
+    expect(d.isZeroDelta).toBe(true);
+    expect(d.measures[0].pricedByEngine).toBe(false);
+    const repeated = computeRetrofitDelta({
+      materials: d.after.materials, recipe: makeRecipe(), climate: CLIMATE,
+      measureIds: ["solar-pv-flat"], pvGeometricKWp: 4,
+    })!;
+    expect(repeated.changes).toHaveLength(0);
+    expect(materials.renewable.solarPV.capacity).toBe(63.36);
+  });
+
+  it("a roof with no room for additional modules leaves the installed PV alone", () => {
+    const materials = makeMaterials();
+    Object.assign(materials.renewable.solarPV, { installed: true, capacity: 63.36, tiltAngle: 15 });
+    const d = computeRetrofitDelta({
+      materials, recipe: makeRecipe(), climate: CLIMATE,
+      measureIds: ["solar-pv-flat"], pvGeometricKWp: 0,
+    })!;
+    expect(d.after.materials.renewable.solarPV).toEqual(materials.renewable.solarPV);
+    expect(d.changes).toHaveLength(0);
+  });
+
   it("an HRV on a mechanically-ventilated building reduces the air-exchange row", () => {
     const d = delta(["hvac-hrv"], makeMaterials({ ventType: "mechanical-exhaust", airflowRate: 0.5 }));
     const vent = d.elements.find((e) => e.element === VENTILATION_ELEMENT_NAME)!;

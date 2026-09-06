@@ -98,6 +98,29 @@ funding feature. Existing DCF, measure costs, energy prices and savings remain.
 - [measure-visuals.test.ts](../../src/lib/retrofit/__tests__/measure-visuals.test.ts) · [heating-fuel.test.ts](../../src/lib/retrofit/__tests__/heating-fuel.test.ts) · [solar-potential.test.ts](../../src/lib/retrofit/__tests__/solar-potential.test.ts)
 - [retrofit-bridge.test.ts](../../src/lib/energy-diagnostics/__tests__/retrofit-bridge.test.ts)
 
+## Existing and proposed PV
+
+The phase seam adds proposed PV to the original installed capacity. For example,
+63.36 kWp existing plus a 4 kWp proposal produces 67.36 kWp total. The proposal's
+claim, module area and economics cover only the new 4 kWp / 17 m². An installed
+array's area of 0 means unavailable: adding 17 m² does not turn that unknown
+total into a measured 17 m². A known existing 100 m² instead totals 117 m².
+
+`solarPV.retrofitAddition` retains the original and proposed arrays separately,
+with the proposal's module-layout or roof-utilization sizing basis and a named
+representative yield assumption. With existing PV, the legacy tilt, orientation
+and technology remain the original descriptors; no combined angle or technology
+is inferred. Reapplying a proposal does not accumulate it, and a layout that fits
+zero new modules leaves the existing PV unchanged. An installed array with
+unavailable capacity likewise retains an unknown total alongside the known
+proposal.
+
+The degree-day grade path still does not price PV generation. These changes
+correct the physical state and the new-work claims; they do not add baseline PV
+generation to that engine. The 64 tests across `apply-phase`, `retrofit-delta`
+and `measure-claim` verify capacity addition, unknown area, new-only costs,
+claim arithmetic, no-room behavior, input preservation and repeat application.
+
 ## Failure Modes
 
 - IRR is capped at `IRR_MAX = 5.0`; a degenerate cash flow returns the cap rather

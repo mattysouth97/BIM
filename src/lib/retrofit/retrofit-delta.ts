@@ -316,7 +316,10 @@ function change(
   pricedByEngine: boolean,
 ): RetrofitPhysicalChange {
   const tail = unit ? ` ${unit}` : "";
-  const reason = pricedByEngine ? undefined : (UNPRICED_REASONS[field] ?? GENERIC_UNPRICED);
+  const reason = pricedByEngine ? undefined : (
+    UNPRICED_REASONS[field] ??
+    (field.startsWith("renewable.solarPV.") ? UNPRICED_REASONS["renewable.solarPV.capacity"] : GENERIC_UNPRICED)
+  );
   return {
     measureId,
     field,
@@ -486,22 +489,48 @@ function changesForMeasure(
 
     default:
       if (pvRoofTypeFromId(measureId)) {
+        const beforePV = before.renewable.solarPV;
+        const afterPV = after.renewable.solarPV;
+        const addition = afterPV.retrofitAddition;
+        const extendsExisting = addition?.existing.installed === true;
+        // Lead an extension with NEW capacity, which is what its economics
+        // price. The total remains a separate physical state change.
+        if (addition && extendsExisting) {
+          add(
+            "renewable.solarPV.retrofitAddition.proposed.capacity",
+            "추가 태양광 용량",
+            "Additional PV capacity",
+            fmt(beforePV.retrofitAddition?.proposed.capacity ?? 0, 1),
+            fmt(addition.proposed.capacity, 1),
+            "kWp",
+          );
+        }
         add(
           "renewable.solarPV.capacity",
-          "태양광 용량",
-          "PV capacity",
-          fmt(before.renewable.solarPV.capacity, 1),
-          fmt(after.renewable.solarPV.capacity, 1),
+          extendsExisting ? "총 태양광 용량" : "태양광 용량",
+          extendsExisting ? "Total PV capacity" : "PV capacity",
+          fmt(beforePV.capacity, extendsExisting ? 2 : 1),
+          fmt(afterPV.capacity, extendsExisting ? 2 : 1),
           "kWp",
         );
-        // Area is only meaningful once an array exists; report it alongside.
-        if (after.renewable.solarPV.installed && !before.renewable.solarPV.installed) {
+        // Existing area may be unknown (0). The new work still has its own
+        // area; do not put that quantity in a row claiming a total area.
+        if (addition && extendsExisting) {
+          add(
+            "renewable.solarPV.retrofitAddition.proposed.area",
+            "추가 모듈 표면적",
+            "Additional module surface area",
+            fmt(beforePV.retrofitAddition?.proposed.area ?? 0, 0),
+            fmt(addition.proposed.area, 0),
+            "m²",
+          );
+        } else if (afterPV.installed && !beforePV.installed) {
           add(
             "renewable.solarPV.area",
             "모듈 표면적",
             "Module surface area",
-            fmt(before.renewable.solarPV.area, 0),
-            fmt(after.renewable.solarPV.area, 0),
+            fmt(beforePV.area, 0),
+            fmt(afterPV.area, 0),
             "m²",
           );
         }

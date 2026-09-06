@@ -113,15 +113,38 @@ export interface LightingProperties {
   lampType: "fluorescent" | "led" | "halogen";
 }
 
-export interface RenewableProperties {
-  solarPV: {
-    installed: boolean;
-    capacity: number;
-    panelType: "monocrystalline" | "polycrystalline" | "thin-film";
-    tiltAngle: number;
-    orientation: number;
-    area: number;
+export interface SolarPVArrayProperties {
+  installed: boolean;
+  /** Rated capacity (kWp); 0 on an installed array means unavailable. */
+  capacity: number;
+  panelType: "monocrystalline" | "polycrystalline" | "thin-film";
+  tiltAngle: number;
+  orientation: number;
+  /** Module surface area (m²); 0 on an installed array means unavailable. */
+  area: number;
+}
+
+export interface SolarPVProperties extends SolarPVArrayProperties {
+  /**
+   * A proposal is additional to the original array. Capacity and area above
+   * are totals only when both operands are known; an unknown total stays 0.
+   * With existing PV, the legacy tilt/orientation/panelType describe that
+   * original array, never a fabricated combined orientation or technology.
+   */
+  retrofitAddition?: {
+    measureId: string;
+    /** Original input, retained without upgrading its source confidence. */
+    existing: SolarPVArrayProperties;
+    /** New work only: its cost, generation estimate and area exclude existing PV. */
+    proposed: SolarPVArrayProperties;
+    sizingBasis: "module-layout" | "roof-utilization-assumption";
+    /** Representative values for the potential model, not measured panel poses. */
+    yieldBasis: "representative-south-facing-assumption";
   };
+}
+
+export interface RenewableProperties {
+  solarPV: SolarPVProperties;
   solarThermal: {
     installed: boolean;
     collectorArea: number;

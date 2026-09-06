@@ -15,6 +15,7 @@ import { SEOUL_CLIMATE } from "@/lib/energy/climate-data";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { calculateHeatLoss } from "@/lib/energy/heat-loss";
 import { computeRetrofitDelta } from "../retrofit-delta";
+import { calculateSolarPotential } from "../solar-potential";
 import { engineEnvelopeAreasFrom } from "@/hooks/use-retrofit-scenario";
 import { formatKrw } from "@/lib/twin-formatters";
 import {
@@ -339,6 +340,42 @@ describe("measureDisplayName", () => {
 });
 
 describe("claimAreaSqm", () => {
+  it.each([0, 100])("claims and costs only new modules beside an existing array of area %s", (area) => {
+    const materials = makeMaterials();
+    Object.assign(materials.renewable.solarPV, { installed: true, capacity: 63.36, area, tiltAngle: 15 });
+    const d = computeRetrofitDelta({
+      materials, recipe: RECIPE, climate: SEOUL_CLIMATE,
+      measureIds: ["solar-pv-flat"], pvGeometricKWp: 4,
+    })!;
+    // The measure generator receives the proposed layout's 4 kWp, never the
+    // installed + proposed 67.36 kWp. Its cost and saving stay new-only.
+    const proposed = calculateSolarPotential(AREAS.roofSqm, "flat", "seoul", 130, undefined, 4);
+    for (const lang of ["ko", "en"] as const) {
+      const claim = buildMeasureClaim({
+        measure: proposed, effect: d.measures[0], areas: AREAS,
+        totalFloorAreaSqm: TOTAL_FLOOR_AREA, lang,
+      });
+      const [capacity, moduleArea] = splitMeasureClaimLine(claim.line);
+      expect(capacity).toBe(lang === "ko"
+        ? "추가 태양광 용량 0.0 → 4.0 kWp" : "Additional PV capacity 0.0 → 4.0 kWp");
+      expect(Number(/^([\d,]+) m²$/.exec(moduleArea)?.[1])).toBe(17);
+      expect(claim.areaSqm).toBe(17);
+      expect(claim.costKrw).toBe(4 * 1_500_000);
+      expect(claim.pricedByEngine).toBe(false);
+      expect(claim.line).not.toContain("67.36");
+    }
+  });
+
+  it("does not claim existing module area when no additional modules fit", () => {
+    const materials = makeMaterials();
+    Object.assign(materials.renewable.solarPV, { installed: true, capacity: 63.36, area: 100 });
+    const d = computeRetrofitDelta({
+      materials, recipe: RECIPE, climate: SEOUL_CLIMATE,
+      measureIds: ["solar-pv-flat"], pvGeometricKWp: 0,
+    })!;
+    expect(claimAreaSqm("solar-pv-flat", AREAS, TOTAL_FLOOR_AREA, d.measures[0])).toBeUndefined();
+  });
+
   it("sizes PV on the panelled area, not the whole roof", () => {
     const pv = claimAreaSqm(
       "solar-pv-flat",

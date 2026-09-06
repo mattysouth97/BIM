@@ -150,8 +150,11 @@ export function claimAreaSqm(
   }
   if (measureId.startsWith("solar-pv-")) {
     // Module surface area from the same sizing the economics used, via the
-    // delta's change row. Geometric arrays use module count × module area.
-    const areaChange = effect?.changes.find((c) => c.field === "renewable.solarPV.area");
+    // delta's change row. An extension prices only NEW modules, including
+    // when the installed array has an unavailable (0) surface area.
+    const areaChange = effect?.changes.find(
+      (c) => c.field === "renewable.solarPV.retrofitAddition.proposed.area",
+    ) ?? effect?.changes.find((c) => c.field === "renewable.solarPV.area");
     const parsed = areaChange ? Number(areaChange.after) : NaN;
     return Number.isFinite(parsed) ? parsed : undefined;
   }

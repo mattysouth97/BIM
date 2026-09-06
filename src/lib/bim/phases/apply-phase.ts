@@ -59,7 +59,7 @@ export const HRV_EFFECTIVENESS = 0.75;
 /** Target LPD (W/m2) per lighting measure — the targets lighting-retrofits.ts prices. */
 export const LED_TARGET_LPD = 8;
 export const LED_SMART_TARGET_LPD = 6;
-/** Fixed array tilt (deg). Matches the 30 deg the twin's solar-panels.tsx renders. */
+/** Representative tilt for the potential model; measured-roof poses are separate. */
 export const PV_TILT_DEG = 30;
 /** Due south, as the plane-of-array gain in solar-potential.ts assumes. */
 export const PV_ORIENTATION_DEG = 180;
@@ -200,7 +200,10 @@ export function applyPhaseToMaterials(
   const pvId = [...ids].find((id) => pvRoofTypeFromId(id) !== null);
   const pvRoofType = pvId ? pvRoofTypeFromId(pvId) : null;
   const roofAreaSqm = context?.roofAreaSqm ?? 0;
-  if (pvRoofType && roofAreaSqm > 0 && context?.geometricKWp !== 0) {
+  const geometricKWp = context?.geometricKWp;
+  const canSizePV = Number.isFinite(roofAreaSqm) && roofAreaSqm > 0 &&
+    (geometricKWp == null || (Number.isFinite(geometricKWp) && geometricKWp > 0));
+  if (pvId && pvRoofType && canSizePV) {
     const pv = calculateSolarPotential(
       roofAreaSqm,
       pvRoofType,
@@ -212,18 +215,40 @@ export function applyPhaseToMaterials(
       // The measured-roof layout's kWp, when a layout exists (sixth argument).
       context?.geometricKWp,
     );
-    next.renewable.solarPV = {
-      ...next.renewable.solarPV,
+    // Reapplying or resizing a proposal always starts from the original PV,
+    // so an existing 63.36 kWp + a proposed 4 kWp never becomes 71.36 on retry.
+    const current = next.renewable.solarPV;
+    const { retrofitAddition: _previousAddition, ...original } = current;
+    const existing = current.retrofitAddition?.existing ?? original;
+    const proposed = {
       installed: true,
       capacity: pv.systemSizeKWp,
       // On the geometric path this is the SURFACE of the actual modules,
       // not a roof-utilisation estimate or their smaller plan projection.
-      area: context?.geometricKWp != null
+      area: geometricKWp != null
         ? (pv.systemSizeKWp / PV_PANEL_RATED_KWP) * PV_MODULE_LENGTH_M * PV_MODULE_WIDTH_M
         : roofAreaSqm * pv.roofUtilization,
       tiltAngle: PV_TILT_DEG,
       orientation: PV_ORIENTATION_DEG,
-      panelType: "monocrystalline",
+      panelType: "monocrystalline" as const,
+    };
+    next.renewable.solarPV = {
+      ...(existing.installed ? existing : proposed),
+      installed: true,
+      capacity: existing.installed
+        ? (existing.capacity > 0 ? existing.capacity + proposed.capacity : 0)
+        : proposed.capacity,
+      // Zero is unavailable for an installed array, not a measured zero area.
+      area: existing.installed
+        ? (existing.area > 0 ? existing.area + proposed.area : 0)
+        : proposed.area,
+      retrofitAddition: {
+        measureId: pvId,
+        existing,
+        proposed,
+        sizingBasis: geometricKWp != null ? "module-layout" : "roof-utilization-assumption",
+        yieldBasis: "representative-south-facing-assumption",
+      },
     };
   }
 

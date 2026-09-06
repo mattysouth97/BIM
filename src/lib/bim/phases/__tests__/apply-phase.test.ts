@@ -170,6 +170,72 @@ describe("applyPhaseToMaterials — plant, lighting and PV", () => {
     expect(next.renewable.solarPV.capacity).toBe(0);
   });
 
+  it.each([0, 100])("adds PV without inventing existing area or combined pose (existing area %s)", (area) => {
+    const materials = makeMaterials();
+    materials.renewable.solarPV = {
+      installed: true, capacity: 63.36, area,
+      tiltAngle: 15, orientation: 120, panelType: "polycrystalline",
+    };
+    const original = structuredClone(materials);
+    const next = applyPhaseToMaterials(materials, "retrofit", ["solar-pv-flat"], {
+      roofAreaSqm: 600, geometricKWp: 4,
+    });
+    const pv = next.renewable.solarPV;
+    expect(pv.capacity).toBeCloseTo(67.36, 9);
+    expect(pv.area).toBe(area === 0 ? 0 : 117);
+    expect(pv.tiltAngle).toBe(15);
+    expect(pv.orientation).toBe(120);
+    expect(pv.panelType).toBe("polycrystalline");
+    expect(pv.retrofitAddition?.existing).toEqual(original.renewable.solarPV);
+    expect(pv.retrofitAddition?.proposed).toEqual({
+      installed: true, capacity: 4, area: 17,
+      tiltAngle: 30, orientation: 180, panelType: "monocrystalline",
+    });
+    expect(pv.retrofitAddition?.sizingBasis).toBe("module-layout");
+    expect(pv.retrofitAddition?.yieldBasis).toBe("representative-south-facing-assumption");
+    expect(materials).toEqual(original);
+  });
+
+  it("preserves an unavailable existing capacity while recording the known proposal", () => {
+    const materials = makeMaterials();
+    materials.renewable.solarPV.installed = true;
+    const next = applyPhaseToMaterials(materials, "retrofit", ["solar-pv-flat"], {
+      roofAreaSqm: 600, geometricKWp: 4,
+    });
+    expect(next.renewable.solarPV.capacity).toBe(0);
+    expect(next.renewable.solarPV.retrofitAddition?.proposed.capacity).toBe(4);
+  });
+
+  it("reapplying or resizing a proposal retains one unchanged original array", () => {
+    const materials = makeMaterials();
+    Object.assign(materials.renewable.solarPV, { installed: true, capacity: 63.36 });
+    const context = { roofAreaSqm: 600, geometricKWp: 4 };
+    const first = applyPhaseToMaterials(materials, "retrofit", ["solar-pv-flat"], context);
+    const repeated = applyPhaseToMaterials(first, "retrofit", ["solar-pv-flat"], context);
+    expect(repeated).toEqual(first);
+    const resized = applyPhaseToMaterials(first, "retrofit", ["solar-pv-flat"], {
+      ...context, geometricKWp: 8,
+    });
+    expect(resized.renewable.solarPV.capacity).toBeCloseTo(71.36, 9);
+    expect(resized.renewable.solarPV.retrofitAddition?.proposed.area).toBe(34);
+    expect(resized.renewable.solarPV.retrofitAddition?.existing).toEqual(materials.renewable.solarPV);
+    expect(first.renewable.solarPV.capacity).toBeCloseTo(67.36, 9);
+  });
+
+  it.each([
+    { roofAreaSqm: 600, geometricKWp: 0 },
+    { roofAreaSqm: 0, geometricKWp: 4 },
+    {},
+  ])("keeps existing PV when no new array can be sized: %j", (context) => {
+    const materials = makeMaterials();
+    Object.assign(materials.renewable.solarPV, { installed: true, capacity: 63.36, tiltAngle: 15 });
+    const next = applyPhaseToMaterials(materials, "retrofit", ["solar-pv-flat"], context);
+    expect(next.renewable.solarPV).toEqual(materials.renewable.solarPV);
+    expect(next.renewable.solarPV.retrofitAddition).toBeUndefined();
+    expect(applyPhaseToMaterials(materials, "existing", ["solar-pv-flat"], context)).toBe(materials);
+    expect(applyPhaseToMaterials(materials, "retrofit", [], context)).toBe(materials);
+  });
+
   it("pvRoofTypeFromId reads the roof type out of the id, and rejects anything else", () => {
     expect(pvRoofTypeFromId("solar-pv-flat")).toBe("flat");
     expect(pvRoofTypeFromId("solar-pv-gable")).toBe("gable");
