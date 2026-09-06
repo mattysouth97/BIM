@@ -48,6 +48,13 @@ type Expected = Readonly<{
    */
   grade: string;
   demandPerSqm: string;
+  /**
+   * Whether a CAPEX track (공공 지자체) reports that it covers nothing in this
+   * building's FRESH chosen set. Measured 2026-09-06, not reasoned: three of
+   * the four say so, and the Clinic does not — see the test for why its
+   * silence is a different fact from the others' noise.
+   */
+  capexCoversNothing: boolean;
 }>;
 
 /**
@@ -60,15 +67,15 @@ const KNOWN_ZERO_REASONS = ["nothing-chosen", "only-unpriced", "targets-met"];
 // Grades are on the table the use code selects (3b9ff6a): the three
 // dwellings are scored 주거, the Clinic by density. kWh/m² did not move.
 const BUILDINGS: readonly Expected[] = [
-  { id: "bs-medical-dental-clinic", titleKo: "메디컬-덴탈 클리닉", grade: "1+", demandPerSqm: "108.8" },
-  { id: "schependomlaan", titleKo: "스헤펜돔라안 아파트", grade: "1++", demandPerSqm: "40.5" },
-  { id: "duplex-apartment", titleKo: "듀플렉스 아파트", grade: "4", demandPerSqm: "142.6" },
+  { id: "bs-medical-dental-clinic", titleKo: "메디컬-덴탈 클리닉", grade: "1+", demandPerSqm: "108.8", capexCoversNothing: false },
+  { id: "schependomlaan", titleKo: "스헤펜돔라안 아파트", grade: "1++", demandPerSqm: "40.5", capexCoversNothing: true },
+  { id: "duplex-apartment", titleKo: "듀플렉스 아파트", grade: "4", demandPerSqm: "142.6", capexCoversNothing: true },
   // The fourth building states NO services models at all — its manifest
   // carries an empty `serviceLayers`, so the layers panel is the fabric row
   // and nothing else, and its licence is KIT/IAI's own grant rather than a
   // Creative Commons one. Both are read from the manifest below rather than
   // written here, so neither can be quietly assumed to match the others'.
-  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "2", demandPerSqm: "92.6" },
+  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "2", demandPerSqm: "92.6", capexCoversNothing: true },
 ];
 
 type Manifest = {
@@ -333,10 +340,24 @@ for (const building of BUILDINGS) {
       const deltaBefore = await readDelta();
       const chosenBefore = await chosenChips.count();
 
-      // 민간 기본 rather than 공공 지자체: bim-24 measured this one moving NPV
-      // ₩1592만 → ₩3496만. Selecting 공공 지자체 here left the entire rail
-      // string byte-identical on all four buildings, which is reported to that
-      // lane rather than asserted either way from here.
+      // 민간 기본 rather than 공공 지자체, and the reason is the assertion's
+      // premise rather than a preference. RESOLVED by bim-24 after this test
+      // first recorded 공공 지자체 leaving the rail byte-identical on all four
+      // buildings and handed it over as an open question:
+      //
+      //   `KOREAN_GR_PRIVATE_BASE` carries only a `financingMix` and no
+      //   `subsidyByCategory`, so the private tracks are CATEGORY-BLIND — the
+      //   interest buy-down is taken on `debtFraction × effectiveCapex` and
+      //   never looks at `measure.category`. It therefore moves NPV for any
+      //   selection with a positive effective CAPEX, which is why this
+      //   assertion holds on all four. The public tracks are category-KEYED
+      //   and omit `renewable` on purpose, so a CAPEX track moves the rail
+      //   only for the part of the selection it actually covers.
+      //
+      // The boundary matters and is why the block above guarantees a chosen
+      // measure first: an EMPTY selection has zero effective CAPEX, so even a
+      // rate track moves nothing. "Any non-empty selection" is the true
+      // sentence; "any selection" would not be.
       const track = trackChip(page, /민간 기본/);
       await track.click();
       await expect(track).toHaveAttribute("aria-checked", "true");
@@ -348,6 +369,39 @@ for (const building of BUILDINGS) {
       // building would mean the money was choosing the work again.
       expect(await chosenChips.count()).toBe(chosenBefore);
       expect(await readDelta()).toBe(deltaBefore);
+    });
+
+    test("a CAPEX track says so when it covers nothing that is chosen", async ({ page }) => {
+      // The sharper half of the financing story, and the one that fails loudly
+      // if someone ever adds `renewable` to a public preset — a real product
+      // decision that would otherwise arrive disguised as a config tweak.
+      //
+      // Measured across all four rather than reasoned, and the result is not
+      // the Clinic-versus-FZK pair it was proposed as. THREE buildings raise
+      // the flag under 공공 지자체, not one: each arrives with a single chosen
+      // measure that resolves to a zero subsidy ratio under the public
+      // presets. The Clinic does NOT raise it, and its silence is a different
+      // fact from the others' — post-3C its knapsack recommends none of its
+      // six at the default budget, so nothing is chosen, and an empty set
+      // makes no coverage claim either way. Reading that absence as "the
+      // Clinic's work is covered" would be exactly wrong.
+      await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
+      await expect(page.locator("[data-measure-chip-row]")).toBeVisible({ timeout: FIRST_PAINT });
+
+      const track = trackChip(page, /공공 지자체/);
+      await track.click();
+      await expect(track).toHaveAttribute("aria-checked", "true");
+
+      const notice = page.locator("[data-track-covers-nothing]");
+      if (building.capexCoversNothing) {
+        await expect(notice).toHaveCount(1, { timeout: 15_000 });
+      } else {
+        // And the reason it is absent here, asserted rather than assumed.
+        await expect(notice).toHaveCount(0);
+        expect(
+          await page.locator('[data-measure-chip][data-measure-chosen="true"]').count(),
+        ).toBe(0);
+      }
     });
 
     test("at first load the recommended chips are the chosen set the rail counts", async ({ page }) => {
@@ -370,12 +424,12 @@ for (const building of BUILDINGS) {
       // not the test failing to look.
       const chosen = await row.locator('[data-measure-chip][data-measure-chosen="true"]').count();
 
-      // Counted by the 추천 marker, scoped to the chips so the 추천안으로
-      // reset button cannot be caught by the same substring. bim-24 is adding
-      // `data-measure-recommended` and this switches to it when it lands: a
-      // count of a fact beats a count of a rendering, and this form is
-      // language-coupled (the English render reads "Suggested").
-      const recommended = await row.locator('[data-measure-chip]:has-text("추천")').count();
+      // `data-measure-recommended` (bim-24, b5a68ca) rather than the 추천 text
+      // this counted first. A count of a fact rather than of a rendering, and
+      // it survives the chip names having gone bilingual in the same commit —
+      // the text form was language-coupled (the English render reads
+      // "Suggested") and would have started counting zero.
+      const recommended = await row.locator('[data-measure-recommended="true"]').count();
       expect(recommended).toBe(chosen);
 
       // And the rail is reporting that same set rather than a second one.
