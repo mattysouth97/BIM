@@ -515,3 +515,36 @@ describe("against the real stage-1 artifact, not a fixture", () => {
     expect(layout.grossProjectedSqm).toBeCloseTo(400, 6);
   });
 });
+
+describe("a plane whose outline and stated area disagree is refused by name", () => {
+  it("a sliver ring under a large stated area does not silently return zero", () => {
+    // Schependomlaan's `dakvloer-plane-0`: states 130.2 m², ring encloses
+    // 0.41 m². Without this the plane lays no modules and reports
+    // "no-usable-area-after-setback", which reads as a fact about the roof.
+    const broken = flatPlane({
+      projectedSqm: 130.2,
+      outline: [[[6.957, -7.971], [7.035, -7.98], [7.035, -2.657], [6.957, -2.657]]],
+    });
+    const layout = layoutPlane(broken);
+    expect(layout.excludedReason).toBe("outline-area-disagrees-with-stated");
+    expect(layout.moduleCount).toBe(0);
+  });
+
+  it("an honest plane is untouched by the guard", () => {
+    expect(planeExclusion(flatPlane())).toBeNull();
+    expect(planeExclusion(pitchedPlane())).toBeNull();
+  });
+
+  it("every plane in every shipped file either passes the guard or is named", async () => {
+    for (const id of ["bs-medical-dental-clinic", "duplex-apartment", "fzk-haus"] as const) {
+      const raw = (await import(`../../../../public/reference-buildings/${id}/roof-planes.json`)) as { default?: unknown };
+      const file = (raw.default ?? raw) as { planes: RoofPlane[] };
+      for (const plane of file.planes) {
+        expect(
+          planeExclusion(plane),
+          `${id}/${plane.id} trips the outline guard`,
+        ).not.toBe("outline-area-disagrees-with-stated");
+      }
+    }
+  });
+});

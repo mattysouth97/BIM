@@ -456,20 +456,40 @@ Run by **bim-54** off `2215bb9`, the library over all four shipped
 | FZK Haus | 2 | 1 | 143.0 | 60.8 | 22 | 8.8 | 17.1 | 0.51× | ₩2,567만 → ₩1,320만 | 20,113 → 10,343 | ₩1,954만 → ₩1,005만 |
 
 **Every building falls, and three of the four fall outside the 0.5–2× band.**
+(Schependomlaan's 0.00× is now known to be an artifact bug — see its row
+below. The Clinic, Duplex and FZK figures stand.)
 That is the finding, not a calibration problem: the ratio path multiplied a
 whole roof area by a utilisation factor, and the geometry then removes the
 setback, the obstruction clearance, the row pitch, the north-facing pitches
 and every patch too small or too steep to hold a module. Named, per building:
 
-- **Schependomlaan → zero.** All 51 planes refused: 19 `tilt-above-60` (the
-  63° tiled sporenkap, which is a wall in all but name), 23
-  `smaller-than-one-module`, 9 `no-usable-area-after-setback`. 227.9 m² of
-  gross plane leaves 15.5 m² usable. **The PV measure disappears from this
-  building**, and with it the one measure the knapsack was selecting — so its
-  retrofit section will now select nothing at the default budget, as the
-  Clinic already did. This is the honest answer for a steeply-tiled Dutch
-  roof of small fragments; it is also the largest single change in the round
-  and should be looked at on the page before deploy.
+- **Schependomlaan → zero. CORRECTED — this is a P1 artifact bug, not an
+  honest zero.** My first write-up called it "the honest answer for a
+  steeply-tiled Dutch roof of small fragments". main-coordinator doubted it,
+  on the grounds that the deck's ~130 m² is flat and should have carried
+  racks. They were right and I was wrong.
+
+  `dakvloer-plane-0` states `projectedSqm: 130.2` and its outline ring is
+  `[[6.957,−7.971],[7.035,−7.98],[7.035,−2.657],[6.957,−2.657]]` — a
+  0.078 × 5.31 m sliver enclosing **0.41 m², 0.3 % of the stated area**.
+  Three of the building's 51 planes are like this. **The other three
+  buildings have none** (checked: outline area ≥ 50 % of stated
+  `projectedSqm` on every plane of the Clinic, Duplex and FZK).
+
+  So the library was right and the input was not: it refused a plane whose
+  ring cannot hold a module, and reported `no-usable-area-after-setback` —
+  a true sentence about the wrong plane, which is exactly the failure this
+  round keeps producing. **Schependomlaan's PV figure is not yet a finding**
+  and the ₩0 in the table above should not be rendered or deployed until
+  the outline is re-extracted. The remaining 19 `tilt-above-60` refusals on
+  its 63° sporenkap ARE real and will stand.
+
+  Guarded, so this cannot recur silently: `planeExclusion` now refuses a
+  plane whose outline encloses under 50 % of its stated `projectedSqm` with
+  the named reason `outline-area-disagrees-with-stated`
+  (`PV_OUTLINE_AREA_MIN_RATIO`), and a test asserts no plane of the three
+  clean buildings trips it. **P1's owner: three Schependomlaan planes need
+  their outlines re-extracted; the stated areas look right.**
 - **Clinic 0.48×.** 80 of 82 planes refused (44 no-usable-area, 18
   north-facing, 18 sub-module) — the sky-occlusion pass leaves many small
   patches. The two surviving EPDM decks still carry 447 modules; the fall is

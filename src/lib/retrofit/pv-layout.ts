@@ -59,6 +59,20 @@ export const PV_SETBACK_PITCHED_M = 0.3;
 /** Working clearance grown around every obstruction. `A-PV-CLEARANCE`. */
 export const PV_OBSTRUCTION_CLEARANCE_M = 0.5;
 
+/**
+ * A plane's outline must enclose at least this fraction of the `projectedSqm`
+ * it states. Below it the two disagree so badly that one of them is wrong,
+ * and a layout run on the outline would report a silent zero for a roof the
+ * file says is large.
+ *
+ * Found on Schependomlaan: `dakvloer-plane-0` states 130.2 m² and its ring is
+ * a 0.078 × 5.31 m sliver enclosing 0.41 m² — 0.3 %. Three of its 51 planes
+ * are like this; the other three buildings have none. The zero PV that came
+ * out of it read as "a 63° tiled roof holds nothing", which is a true
+ * sentence about the wrong plane.
+ */
+export const PV_OUTLINE_AREA_MIN_RATIO = 0.5;
+
 /** Below this a plane is treated as flat and racked; above it, flush. */
 export const PV_FLAT_TILT_MAX_DEG = 10;
 /** Above this a plane is a wall in all but name. */
@@ -168,7 +182,8 @@ export type PlaneExclusionReason =
   | "smaller-than-one-module"
   | "north-facing-pitch"
   | "no-usable-area-after-setback"
-  | "outline-shape-not-trustworthy";
+  | "outline-shape-not-trustworthy"
+  | "outline-area-disagrees-with-stated";
 
 export interface PlaneSubtraction {
   kind: ObstructionKind | "setback";
@@ -344,6 +359,16 @@ export function rectangleFits(
  */
 export function planeExclusion(plane: RoofPlane): PlaneExclusionReason | null {
   if (plane.partialOverlap) return "outline-shape-not-trustworthy";
+  // The outline and the stated area must describe the same plane. When they
+  // do not, refuse BY NAME: a layout on a degenerate ring returns zero
+  // modules, and a zero with no reason is indistinguishable from a roof that
+  // genuinely holds nothing.
+  if (plane.projectedSqm > 0) {
+    const outlineSqm = polygonAreaSqm(toPolygon(plane.outline));
+    if (outlineSqm / plane.projectedSqm < PV_OUTLINE_AREA_MIN_RATIO) {
+      return "outline-area-disagrees-with-stated";
+    }
+  }
   if (plane.tiltDeg > PV_TILT_MAX_DEG) return "tilt-above-60";
   if (plane.projectedSqm < MODULE_AREA_SQM) return "smaller-than-one-module";
   if (plane.tiltDeg >= PV_FLAT_TILT_MAX_DEG && plane.azimuthDeg != null) {
