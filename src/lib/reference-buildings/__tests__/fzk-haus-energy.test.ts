@@ -3,10 +3,9 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
-import { calculateHeatLoss, VENTILATION_ELEMENT_NAME } from "@/lib/energy/heat-loss";
+import { calculateHeatLoss, meanWindowToWallRatio, VENTILATION_ELEMENT_NAME } from "@/lib/energy/heat-loss";
 import { getClimateData } from "@/lib/energy/climate-data";
 import type { ReferenceBuildingManifest } from "../manifest";
-import { meanWindowToWallRatio } from "@/lib/energy/heat-loss";
 import {
   FZK_HAUS_ASSUMPTIONS,
   FZK_HAUS_DOOR_BY_SECTOR_SQM,
@@ -23,7 +22,7 @@ import {
   FZK_HAUS_WALL_ASSEMBLY_SOLVED,
   FZK_HAUS_WALL_BY_SECTOR_SQM,
   FZK_HAUS_WALL_U_STATED,
-  FZK_HAUS_WWR_UNIFORM_LEGACY,
+  FZK_HAUS_WWR_UNIFORM,
 } from "../fzk-haus-energy";
 
 const manifest = JSON.parse(
@@ -88,24 +87,42 @@ describe("this building is genuinely rotated off true north", () => {
     );
   });
 
-  it("the four relabelled cardinal ratios are the real per-sector ones, not one uniform value", () => {
+  it("the engine gets ONE uniform ratio, not the four real per-sector ones", () => {
     const wwr = FZK_HAUS_MATERIALS.envelope.windows.windowToWallRatio;
-    expect(new Set([wwr.N, wwr.S, wwr.E, wwr.W]).size).toBe(4);
-    for (const v of Object.values(wwr)) {
-      expect(v).toBeGreaterThan(0);
-      expect(v).toBeLessThan(1);
-    }
+    expect(new Set([wwr.N, wwr.S, wwr.E, wwr.W]).size).toBe(1);
+    expect(wwr.N).toBeCloseTo(FZK_HAUS_WWR_UNIFORM, 6);
   });
 
-  it("the area-weighted mean reproduces the real total aperture, unlike the old uniform ratio", () => {
-    const weighted = meanWindowToWallRatio(FZK_HAUS_MATERIALS, FZK_HAUS_RECIPE);
-    const grossWallArea = FZK_HAUS_MEASURED_ENVELOPE.grossWallSqm;
-    expect(weighted * grossWallArea).toBeCloseTo(FZK_HAUS_MEASURED_ENVELOPE.glazingApertureSqm, 0);
-    // The legacy uniform ratio would have reproduced it exactly by
-    // construction (it WAS aperture/grossWall) — the new weighted mean is a
-    // genuinely different computation that still lands close, because this
-    // building's per-sector gross shares do not differ wildly.
-    expect(weighted).not.toBeCloseTo(FZK_HAUS_WWR_UNIFORM_LEGACY, 6);
+  it("meanWindowToWallRatio reproduces the aperture exactly under the uniform ratio", () => {
+    const mean = meanWindowToWallRatio(FZK_HAUS_MATERIALS, FZK_HAUS_RECIPE);
+    expect(mean).toBeCloseTo(FZK_HAUS_WWR_UNIFORM, 10);
+    expect(mean * FZK_HAUS_MEASURED_ENVELOPE.grossWallSqm).toBeCloseTo(
+      FZK_HAUS_MEASURED_ENVELOPE.glazingApertureSqm,
+      6,
+    );
+  });
+
+  it("weighting the four REAL per-sector ratios by net wall would understate the aperture — the reason they are not wired to the engine", () => {
+    // Same shape bim-83 measured on the Duplex (there, 10x larger). The
+    // per-sector ratios' own denominator is each sector's GROSS wall; the
+    // engine's weight would be NET wall (surfaceArea). They do not cancel.
+    const sectors = ["NE", "SE", "SW", "NW"] as const;
+    const ratio = (s: (typeof sectors)[number]) => {
+      const wall = FZK_HAUS_WALL_BY_SECTOR_SQM[s];
+      const gross = wall + FZK_HAUS_GLAZING_BY_SECTOR_SQM[s] + FZK_HAUS_DOOR_BY_SECTOR_SQM[s];
+      return FZK_HAUS_GLAZING_BY_SECTOR_SQM[s] / gross;
+    };
+    let weightedByNet = 0;
+    let netTotal = 0;
+    for (const s of sectors) {
+      const wall = FZK_HAUS_WALL_BY_SECTOR_SQM[s];
+      weightedByNet += ratio(s) * wall;
+      netTotal += wall;
+    }
+    weightedByNet /= netTotal;
+    const windowAreaUnderRealSplit = weightedByNet * FZK_HAUS_MEASURED_ENVELOPE.grossWallSqm;
+    expect(windowAreaUnderRealSplit).toBeLessThan(FZK_HAUS_MEASURED_ENVELOPE.glazingApertureSqm);
+    expect(weightedByNet).not.toBeCloseTo(FZK_HAUS_WWR_UNIFORM, 4);
   });
 });
 

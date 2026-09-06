@@ -256,33 +256,29 @@ export const FZK_HAUS_GROUND_FLOOR_RANGE = slabOnGroundUValueRange(groundInputs)
 // ── Window-to-wall ratio: real per-sector ratios, relabelled onto the engine's four keys ──
 
 /**
- * `heat-loss.ts`'s `meanWindowToWallRatio` (2026-09-06) weights the four
- * CARDINAL ratios by each cardinal's own `MaterialProperties.envelope.walls[].surfaceArea`
- * when `recipe.measuredEnvelope` exists — which this building's does. So,
- * unlike the uniform ratio this file carried before that change, each of the
- * four keys below is this building's REAL per-sector ratio (glazing over
- * wall+glazing+door, on its own true 8-sector split), relabelled onto the
- * engine's four cardinal slots exactly as `FZK_HAUS_MATERIALS.envelope.walls`
- * already relabels the wall areas (NE→N, SE→E, SW→S, NW→W). See
- * `A-NORTH-ROTATED`.
+ * ONE whole-building ratio, on all four cardinal keys — NOT the four
+ * measured per-sector ratios, even though this building's glazing genuinely
+ * is measured per sector. `heat-loss.ts`'s `meanWindowToWallRatio` weights
+ * by `walls[].surfaceArea`, which is NET opaque wall, while each per-sector
+ * ratio's own denominator is that sector's GROSS wall (wall+glazing+door) —
+ * they do not cancel, so handing the four real ratios in would move the
+ * engine's answer for no reason connected to what was actually measured.
+ * Measured on this building (bim-83 found the same shape on the Duplex,
+ * where the effect is 10x larger — see A-WWR-ENGINE-MEAN):
+ *
+ *   weighted-by-net-wall mean   0.141506   (uniform: 0.141585)
+ *   window area                22.996 m²  against a measured 23.6 m²
+ *
+ * The gap is tiny here (FZK Haus's four sector ratios span 0.125-0.190,
+ * against the Duplex's 0.10-0.37), but the mechanism is identical and the
+ * fix is the same: one ratio, against gross, is the only figure that
+ * reproduces the building's own measured aperture exactly — see
+ * `A-WWR-ENGINE-MEAN`. The real per-sector figures stay available in
+ * `FZK_HAUS_WALL_BY_SECTOR_SQM` / `_GLAZING_BY_SECTOR_SQM` / `_DOOR_BY_SECTOR_SQM`
+ * for the legend, which is the only current consumer that can say anything
+ * with four different numbers.
  */
-function sectorWwr(sector: WallSector): number {
-  const wall = FZK_HAUS_WALL_BY_SECTOR_SQM[sector];
-  const glazing = FZK_HAUS_GLAZING_BY_SECTOR_SQM[sector];
-  const door = FZK_HAUS_DOOR_BY_SECTOR_SQM[sector];
-  const gross = wall + glazing + door;
-  return gross > 0 ? glazing / gross : 0;
-}
-
-const WWR_BY_RELABELLED_CARDINAL = Object.freeze({
-  N: sectorWwr("NE"),
-  E: sectorWwr("SE"),
-  S: sectorWwr("SW"),
-  W: sectorWwr("NW"),
-});
-
-/** The single ratio this building would have carried under the OLD unweighted-mean engine, kept for `A-WWR-ENGINE-MEAN`'s worked comparison and pinned by a test. */
-export const FZK_HAUS_WWR_UNIFORM_LEGACY =
+export const FZK_HAUS_WWR_UNIFORM =
   FZK_HAUS_MEASURED_ENVELOPE.glazingApertureSqm / FZK_HAUS_MEASURED_ENVELOPE.grossWallSqm;
 
 // ── The recipe: shape and metadata only ───────────────────────────────────
@@ -401,7 +397,12 @@ export const FZK_HAUS_MATERIALS: MaterialProperties = {
       frameMaterial: "wood",
       airLeakageRate: 0.3,
       shadingCoefficient: 0.69,
-      windowToWallRatio: WWR_BY_RELABELLED_CARDINAL,
+      windowToWallRatio: {
+        N: FZK_HAUS_WWR_UNIFORM,
+        S: FZK_HAUS_WWR_UNIFORM,
+        E: FZK_HAUS_WWR_UNIFORM,
+        W: FZK_HAUS_WWR_UNIFORM,
+      },
     },
     foundation: {
       perimeterInsulationUValue: 0,
@@ -461,7 +462,7 @@ export const FZK_HAUS_ASSUMPTIONS: readonly FzkHausAssumption[] = Object.freeze(
 
   // ── Orientation ───────────────────────────────────────────────────────
   { id: "A-NORTH-ROTATED", assumes: "manifest.orientation.trueNorthDeg (50°) is the file's own stated true-north rotation, and this building's 8 exterior walls are genuinely all in the diagonal octants (NE/SE/SW/NW) with all four true cardinals at exactly 0.", why: "Unlike Schependomlaan (TrueNorth unstated, defaulting to the schema's 0°/cardinal-aligned reading) and the Clinic, this file states a real rotation and web-ifc's orientation pass reports it. Every interface this energy path hands numbers to — MaterialProperties.envelope.walls, ReferenceBuildingEnergyInputs.wallByOrientationSqm — only has four CARDINAL slots (N/S/E/W), so the true NE/SE/SW/NW split is relabelled onto them (NE→N, SE→E, SW→S, NW→W) for structural compatibility. THIS IS A KNOWN, UNFIXED GAP, not a resolved one: `reference-energy.tsx`'s orientation legend (Lane 2's file) renders these four keys captioned by their compass letter, so on this building's page that legend will show 'North: 39.56 m²' for what is genuinely this building's NORTHEAST wall — the number is right, the compass label is not, which is exactly the class of defect AGENTS.md names 'the label lies while the number is right'. Flagged to main-coordinator/Lane 2 rather than fixed here: fixing it needs the Orientation type and the legend widened to 8 sectors, which touches a file this lane does not own. The true, honestly-labelled split lives in FZK_HAUS_WALL_BY_SECTOR_SQM / FZK_HAUS_GLAZING_BY_SECTOR_SQM / FZK_HAUS_DOOR_BY_SECTOR_SQM. See A-WWR-ENGINE-MEAN." },
-  { id: "A-WWR-ENGINE-MEAN", assumes: "The four relabelled cardinal keys carry this building's REAL per-sector window-to-wall ratios (heat-loss.ts's meanWindowToWallRatio, landed 2026-09-06, area-weights them under a measuredEnvelope) rather than one uniform ratio spread across all four.", why: "Before the area-weighted mean landed, the only safe thing to hand four cardinal slots was one identical ratio — a real per-sector split multiplied by an unweighted mean would not reproduce the building's own aperture. Now that heat-loss.ts weights by MaterialProperties.envelope.walls[].surfaceArea, and this file already relabels that array's areas onto the same four keys, handing the matching real per-sector ratios (0.128/0.125/0.129/0.190 across the four relabelled sectors, glazing over wall+glazing+door) reproduces the true 23.6 m² aperture to within rounding (23.586 computed against 23.6 measured) — verified in the test file. What does NOT improve: the compass LABEL on each of those four numbers is still wrong per A-NORTH-ROTATED; only the ARITHMETIC got more honest, not the legend." },
+  { id: "A-WWR-ENGINE-MEAN", assumes: "All four cardinal ratios handed to MaterialProperties are the single whole-building 0.1416 (23.6 / 166.68), not the four measured per-sector ratios.", why: "Measured through the real engine on 2026-09-06, following bim-83's finding on the Duplex that the obvious next step — hand `meanWindowToWallRatio` the real per-sector split — is wrong. The weight is `walls[].surfaceArea`, which is NET opaque wall, while each ratio's own denominator is that sector's GROSS wall (wall+glazing+door); they do not cancel. Weighted by net wall this building's four real ratios (0.1279/0.1249/0.1287/0.1903) give a mean of 0.141506 and a window area of 22.996 m² against the measured 23.6 m² — small here (this building's four ratios span only 0.125-0.190) but the same-shaped error bim-83 measured at 10x the size on the Duplex, whose ratios span 0.10-0.37. Weighting instead by GROSS wall reproduces the aperture exactly — Σ(rᵢ·grossᵢ)/Σgrossᵢ ≡ Σglazing/Σgross is an identity, not a coincidence — but gross is not what `surfaceArea` is used for elsewhere (it sizes the wall-insulation retrofit measure as opaque wall). So one ratio is used, against gross, and it reproduces the measured aperture by construction; the four measured per-sector ratios stay in FZK_HAUS_WALL_BY_SECTOR_SQM/_GLAZING_BY_SECTOR_SQM/_DOOR_BY_SECTOR_SQM for the legend, the only present consumer that can do anything with four different numbers." },
 
   // ── Systems and people — the file states none of this ───────────────
   { id: "A-HVAC", assumes: "Individual gas heating at η 0.87, split-system cooling at COP 3.5, natural ventilation, gas DHW at η 0.85 — the repo's own 01000 (단독주택) row (korean-building-codes.ts).", why: "The file has no MEP model of any kind — no HVAC, electrical or plumbing IFC exists for this building at all (unlike the Clinic and the Duplex, both of which carry real services models). Rather than invent a residential system from nothing, this takes the Korean code table's own single-family-house row, exactly as A-CLIMATE already substitutes a Korean climate for this building's real German site." },
