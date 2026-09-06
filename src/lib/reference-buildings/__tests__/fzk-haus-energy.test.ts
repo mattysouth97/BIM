@@ -94,7 +94,7 @@ describe("this building is genuinely rotated off true north", () => {
   });
 
   it("meanWindowToWallRatio reproduces the aperture exactly under the uniform ratio", () => {
-    const mean = meanWindowToWallRatio(FZK_HAUS_MATERIALS, FZK_HAUS_RECIPE);
+    const mean = meanWindowToWallRatio(FZK_HAUS_MATERIALS);
     expect(mean).toBeCloseTo(FZK_HAUS_WWR_UNIFORM, 10);
     expect(mean * FZK_HAUS_MEASURED_ENVELOPE.grossWallSqm).toBeCloseTo(
       FZK_HAUS_MEASURED_ENVELOPE.glazingApertureSqm,

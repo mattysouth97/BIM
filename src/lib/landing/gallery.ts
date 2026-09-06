@@ -423,7 +423,94 @@ const DUPLEX: GalleryItem = {
  * The Duplex has no such question: same repository, same CC BY 4.0 grant and
  * the same named rights holder as the Clinic.
  */
-export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC, SCHEPENDOMLAAN, DUPLEX];
+/**
+ * KIT/IAI's "Simple Phantasy Building" — a validation test house, not a
+ * dated real project. Every wall, window, door and slab states a real,
+ * non-zero `ThermalTransmittance` (33 occurrences), the first building here
+ * where that is true; the Clinic states none and Schependomlaan's 97 are all
+ * a documented zero. Licence: `Template:Example-Source`, transcluded onto
+ * ifcwiki.org's KIT_IFC_Examples page — "unrestricted use", KIT/IAI
+ * attribution required, read from the source's raw wikitext.
+ */
+const FZK_HAUS: GalleryItem = {
+  id: "fzk-haus",
+  koTitle: "FZK 하우스",
+  enTitle: "FZK House",
+  koUse: "단독주택 · 지상 2층",
+  enUse: "Single-family house · two floors",
+  status: "modelling",
+  modelFile: "AC20-FZK-Haus.ifc",
+  ifcSchema: "IFC4",
+  viewDefinition: "QuantityTakeOffAddOnView, SpaceBoundary2ndLevelAddOnView",
+  authoringTool: "Graphisoft ArchiCAD 20",
+  modelDate: "n/a — a validation test house, no project date stated",
+  licence: "KIT/IAI unrestricted use (attribution required)",
+  attribution:
+    "Institute for Automation and Applied Informatics (IAI), Karlsruhe " +
+    'Institute of Technology (KIT), "AC20-FZK-Haus" — ' +
+    "https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+  datums: [
+    { name: "Dachgeschoss (Galerie)", elevationM: 2.7, rooms: 1, roomAreaSqm: 107.16, excludedSpaces: 0 },
+    { name: "Erdgeschoss", elevationM: 0, rooms: 6, roomAreaSqm: 101.39, excludedSpaces: 0 },
+  ],
+  figures: [
+    {
+      id: "floor-area",
+      ko: "실 면적 합계",
+      en: "Room floor area",
+      value: "208.6 m²",
+      read: "IfcSpace 7 × GrossFloorArea, 제외 없음",
+    },
+    {
+      id: "rooms",
+      ko: "실",
+      en: "Rooms",
+      value: "7",
+      read: "IfcSpace 7",
+    },
+    {
+      id: "walls",
+      ko: "벽",
+      en: "Walls",
+      value: "13",
+      read: "IfcWallStandardCase 13 (외벽 8·내벽 5)",
+    },
+    {
+      id: "windows",
+      ko: "창",
+      en: "Windows",
+      value: "11",
+      read: "IfcWindow 11",
+    },
+    {
+      id: "doors",
+      ko: "문",
+      en: "Doors",
+      value: "2",
+      read: "IfcDoor 5 − 3 내부 칸막이벽",
+    },
+    {
+      id: "u-values",
+      ko: "실측 열관류율",
+      en: "Stated U-values",
+      value: "33",
+      read: "IfcPropertySingleValue 'ThermalTransmittance', 요소당 1개",
+    },
+    {
+      id: "boundaries",
+      ko: "공간 경계",
+      en: "Space boundaries",
+      value: "36",
+      // classifyExternalElements resolves 0 of these — swept-curve boundary
+      // geometry, not IfcSurfaceOfLinearExtrusion — so envelope areas here
+      // come from the wall walk, never from this count.
+      read: "IfcRelSpaceBoundary 36 (분류 미해결, 벽체 산출과 무관)",
+    },
+  ],
+  href: "/models/fzk-haus",
+} as const;
+
+export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC, SCHEPENDOMLAAN, DUPLEX, FZK_HAUS];
 
 /** Lowest and highest datum, for the section diagram's vertical range. */
 export function datumRange(datums: readonly GalleryDatum[]) {

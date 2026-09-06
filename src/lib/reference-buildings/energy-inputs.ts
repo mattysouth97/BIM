@@ -36,6 +36,15 @@ import {
   DUPLEX_RECIPE,
   DUPLEX_WALL_BY_SECTOR_SQM,
 } from "./duplex-apartment-energy";
+import {
+  FZK_HAUS_ASSUMPTIONS,
+  FZK_HAUS_DOOR_BY_SECTOR_SQM,
+  FZK_HAUS_GLAZING_BY_SECTOR_SQM,
+  FZK_HAUS_MATERIALS,
+  FZK_HAUS_MEASURED_ENVELOPE,
+  FZK_HAUS_RECIPE,
+  FZK_HAUS_WALL_BY_SECTOR_SQM,
+} from "./fzk-haus-energy";
 
 export type Orientation = "N" | "S" | "E" | "W";
 
@@ -284,11 +293,68 @@ const DUPLEX: ReferenceBuildingEnergyInputs = Object.freeze({
   measurementState: "complete",
 });
 
+const FZK_HAUS: ReferenceBuildingEnergyInputs = Object.freeze({
+  buildingPk: referenceBuildingPk("fzk-haus"),
+  recipe: FZK_HAUS_RECIPE,
+  materials: FZK_HAUS_MATERIALS,
+  assumptions: FZK_HAUS_ASSUMPTIONS,
+  climate: Object.freeze({
+    // Seoul a fourth time. Unlike the other three, this building's site is
+    // both KNOWN and PRECISE — IfcSite states 49.100435N 8.436539E to the
+    // arc-second, plotting to Forschungszentrum Karlsruhe / KIT Campus North
+    // — and still cannot be used: getClimateData reads a Korean 시도 code and
+    // has no Germany row. Karlsruhe is milder in winter and has a smaller
+    // cooling load than Seoul. See A-CLIMATE.
+    sigunguCd: "11",
+    labelKo: "서울 기후 (가정)",
+    labelEn: "Seoul climate (assumed)",
+    assumptionId: "A-CLIMATE",
+  }),
+  // The four cardinals — but unlike every other building here, this one's
+  // TRUE walls are all diagonal (NE/SE/SW/NW), because the file states a
+  // real 50° true-north rotation. These four keys carry the diagonal areas
+  // relabelled onto them (NE→N, SE→E, SW→S, NW→W) so the total is preserved;
+  // reading them as literal compass directions for THIS building is wrong.
+  // See A-NORTH-ROTATED. FZK_HAUS_WALL_BY_SECTOR_SQM carries the true split.
+  wallByOrientationSqm: Object.freeze({
+    N: FZK_HAUS_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.NE,
+    E: FZK_HAUS_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.SE,
+    S: FZK_HAUS_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.SW,
+    W: FZK_HAUS_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.NW,
+  }),
+  northAssumed: FZK_HAUS_MEASURED_ENVELOPE.northAssumed,
+  // Two equal pitches, unambiguously: Dach-1 and Dach-2, 71.5 m² projected
+  // each at 30.0°, so the area-weighted tilt is exactly 30.0° — no barrel,
+  // no mixed family to disclose. Priced surface (171.13 m²) is the
+  // projected area over cos(30°), same relation as every other building.
+  roof: Object.freeze({
+    type: "gable" as const,
+    read: "2 roof rows · Dach-1 71.5 m² (projected) at 30.0° + Dach-2 71.5 m² (projected) at 30.0° → area-weighted 30.0° over the 171.13 m² priced",
+  }),
+  exteriorDoorSqm: FZK_HAUS_MEASURED_ENVELOPE.exteriorDoorSqm,
+  // The first building after the Duplex whose glazing AND doors are measured
+  // per sector — real, not spread pro rata — so this states the true gross
+  // denominator per relabelled cardinal, same NE→N/SE→E/SW→S/NW→W mapping
+  // as wallByOrientationSqm above.
+  grossWallByOrientationSqm: Object.freeze({
+    N: FZK_HAUS_WALL_BY_SECTOR_SQM.NE + FZK_HAUS_GLAZING_BY_SECTOR_SQM.NE + FZK_HAUS_DOOR_BY_SECTOR_SQM.NE,
+    E: FZK_HAUS_WALL_BY_SECTOR_SQM.SE + FZK_HAUS_GLAZING_BY_SECTOR_SQM.SE + FZK_HAUS_DOOR_BY_SECTOR_SQM.SE,
+    S: FZK_HAUS_WALL_BY_SECTOR_SQM.SW + FZK_HAUS_GLAZING_BY_SECTOR_SQM.SW + FZK_HAUS_DOOR_BY_SECTOR_SQM.SW,
+    W: FZK_HAUS_WALL_BY_SECTOR_SQM.NW + FZK_HAUS_GLAZING_BY_SECTOR_SQM.NW + FZK_HAUS_DOOR_BY_SECTOR_SQM.NW,
+  }),
+  // Complete: every envelope figure is read from the manifest or from the
+  // file's own stated per-element U-values — the first building here with
+  // no placeholder of any kind. Its known gap is the orientation LABEL
+  // (A-NORTH-ROTATED), not a missing measurement.
+  measurementState: "complete",
+});
+
 const ENERGY_INPUTS: Readonly<Record<ReferenceBuildingId, ReferenceBuildingEnergyInputs | null>> =
   Object.freeze({
     "bs-medical-dental-clinic": CLINIC,
     schependomlaan: SCHEPENDOMLAAN,
     "duplex-apartment": DUPLEX,
+    "fzk-haus": FZK_HAUS,
   });
 
 export function referenceBuildingEnergyInputs(
