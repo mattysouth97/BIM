@@ -219,3 +219,49 @@ transcript.
 ## Outcome
 
 _(filled in as lanes land)_
+
+## The stage-1 contract, as landed (P1, `7451e65`, merged)
+
+`public/reference-buildings/<id>/roof-planes.json`, `kind:
+"bimfit_reference_building_roof_planes"`, with `id`, `generatedAt`,
+`northAssumed`, a `note` stating the tolerances, and `planes[]`. Each plane:
+
+```text
+id, elementName, elementType, elementRef, family, storeyId,
+normal [x,y,z], tiltDeg, azimuthDeg (null when flat — 0 would read as due north),
+surfaceSqm, projectedSqm, minElevationM, maxElevationM, triangleCount,
+outline: [{ kind: "outer" | "hole", points: [[x,z], … closed] }],
+obstructions: []   // present and EMPTY on every plane today: an absent field and an empty one are different claims
+```
+
+A plane is a **connected patch**, not an algebraic plane: the Duplex's deck
+and its entrance pads are one plane algebraically and two roofs to a module,
+so the region-grow walks shared edges only. Stage 2 merges nothing implicitly.
+
+FZK, the regression named above, passes exactly: two planes, `Dach-1` tilt
+30.00 azimuth 180, `Dach-2` tilt 30.00 azimuth 0, projected 71.50 each,
+Σ = 143.00 = the manifest's `roofProjectedSqm`. Merged with tsc 0 and 318
+tests in reference-buildings + scripts green (bim-83 had not run them).
+
+**Surface-sum regression — decided, not tuned.** Σ `surfaceSqm` = 165.12 vs
+`roofSurfaceSqm` 171.13 (−3.5 %): this file keeps faces within 80° of up;
+`roofSurface()` in `ifc-horizontal.mjs` keeps verge and eave faces too. Both
+are right for their purpose — heat crosses a verge, a module cannot sit on
+one. The 1 % surface regression is **withdrawn**; the rule is Σ plane
+`surfaceSqm` ≤ `roofSurfaceSqm`, with the shortfall named as the non-upward
+faces in the file's `note`. Neither figure moves.
+
+### P1 — what remains (bim-83 stopped at the contract, correctly, near the end of its context)
+
+1. Build and commit `roof-planes.json` for the other three buildings (the
+   script already emits them), each with its own regression read: Duplex one
+   flat plane whose outline excludes the two pads; apartment planes at ~63°,
+   not one blended ~45°; the Clinic's EPDM and standing-seam families still
+   distinguishable.
+2. `obstructions` content — roof-hosted openings first (the Duplex's two
+   skylights, 1.49 m², already identified in `openings.json`), then
+   roof-mounted services elements, then parapets.
+3. The plan-view QA SVG per building.
+
+This is **Lane P1b**, for a fresh session. Own worktree off the current
+shared tip; same rules; report shas.
