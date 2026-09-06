@@ -1,0 +1,105 @@
+{
+  "kind": "bimfit_reference_building_roof_planes",
+  "id": "fzk-haus",
+  "generatedAt": "2026-09-04T00:00:00.000Z",
+  "northAssumed": false,
+  "note": "Upward faces (within 80°) of each roof element, region-grown into connected coplanar patches: normals within 2°, offsets within 20 mm, joined only across shared edges, so two parallel patches at different heights are two planes. tiltDeg and azimuthDeg are each plane's own and never a blend across the roof; azimuth is the downslope bearing clockwise from project north (the model's −Z), null where the plane is flat. outline rings are the union of the plane's triangles projected to plan, outer counter-clockwise and holes clockwise, simplified to 10 mm. obstructions is EMPTY in this pass: the shape is the contract, its content is a later stage.",
+  "planes": [
+    {
+      "id": "roof-59553-plane-0",
+      "elementName": "Dach-1",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-FZK-Haus.ifc#59553",
+      "family": "Dach-1",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.866025,
+        -0.5
+      ],
+      "tiltDeg": 30,
+      "azimuthDeg": 180,
+      "surfaceSqm": 82.56,
+      "projectedSqm": 71.5,
+      "minElevationM": 3.142,
+      "maxElevationM": 6.318,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.5,
+              -10.5
+            ],
+            [
+              12.5,
+              -10.5
+            ],
+            [
+              12.5,
+              -5
+            ],
+            [
+              -0.5,
+              -5
+            ],
+            [
+              -0.5,
+              -10.5
+            ]
+          ]
+        }
+      ],
+      "obstructions": []
+    },
+    {
+      "id": "roof-59753-plane-0",
+      "elementName": "Dach-2",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-FZK-Haus.ifc#59753",
+      "family": "Dach-2",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.866025,
+        0.5
+      ],
+      "tiltDeg": 30,
+      "azimuthDeg": 0,
+      "surfaceSqm": 82.56,
+      "projectedSqm": 71.5,
+      "minElevationM": 3.142,
+      "maxElevationM": 6.318,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.5,
+              -5
+            ],
+            [
+              12.5,
+              -5
+            ],
+            [
+              12.5,
+              0.5
+            ],
+            [
+              -0.5,
+              0.5
+            ],
+            [
+              -0.5,
+              -5
+            ]
+          ]
+        }
+      ],
+      "obstructions": []
+    }
+  ]
+}
