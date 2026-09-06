@@ -93,15 +93,22 @@ function mechanicalAch(
  *
  *     Σ(rᵢ·gᵢ) / Σgᵢ  ≡  Σglazingᵢ / Σgᵢ  =  aperture / gross
  *
- * Weight by anything else and the identity breaks. Measured on the Duplex's
- * real split (N .357 / E .104 / S .367 / W .105) against a 341.00 m² gross
- * carrying 73.46 m² of glazing: gross-weighted returns 0.2154 and prices
- * 73.46 m² exactly; weighting by the NET opaque wall returns 0.1946 and
- * prices 66.34; the unweighted arithmetic mean returns 0.2333 and prices
- * 79.54. This function weighted by the net wall between 222bf4a and its
- * correction on 2026-09-06, which under-priced glazing by 10 % on any
- * building with a genuine split — flattering, in the way an unmeasured
- * envelope input in this pipeline always is.
+ * Weight by anything else and the identity breaks. Measured on the Duplex
+ * Apartment, the first building here with a genuine split — 340.58 m² of
+ * gross wall carrying 64.46 m² of glazing, ratios N .3567 / E .1037 /
+ * S .3667 / W .1051:
+ *
+ *   - weighted by per-sector GROSS → 0.189265, prices 64.46 m², exact;
+ *   - weighted by the NET opaque wall → 0.169650, prices 57.78 m²;
+ *   - unweighted arithmetic mean     → 0.233057, prices 79.37 m².
+ *
+ * This function weighted by the net wall between 222bf4a and its correction
+ * on 2026-09-06, which lost 6.68 m² of measured glass into opaque wall —
+ * flattering, in the way an unmeasured envelope input in this pipeline always
+ * is. (Those three figures were quoted against an invented 341.00 / 73.46
+ * pair until bim-83 caught it; the ratios were the building's and the areas
+ * were a test fixture's. The arithmetic was right and the sentence was a
+ * claim about a building it had not been computed on.)
  *
  * So: pass `grossWallByOrientationSqm` and get the aperture-preserving mean.
  * Pass nothing and get the plain arithmetic mean, which is EXACT when the
