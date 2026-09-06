@@ -371,3 +371,72 @@ Surface sum: the apartment now reads 733.64 against the manifest's 692.04
 
 Remaining for this stage: roof-mounted plant and parapets as obstructions;
 drawing obstructions and, from stage 3, the modules onto the QA SVG.
+
+## P3b — implementation map (main-coordinator, 22:40; every seam read, none edited)
+
+Inputs on the branch: `layoutRoofPlanes(set: RoofPlaneSet, latitudeDeg)` in
+`src/lib/retrofit/pv-layout.ts` → `PvLayoutResult` (`planes[].modules[]` with
+`centre [x,y,z]` in model coordinates and `quaternion [x,y,z,w]`, plus
+`totalModules`, `totalKWp`, `totalUsableSqm`, `excludedPlanes`,
+`rackRowPitchM`); `RoofPlaneSet` is `{ kind, buildingId, northAssumed,
+planes }` — note `buildingId`, where `roof-planes.json` carries `id`, so an
+adapter is one line. `twinRoofPlanes(recipe)` in `twin-roof-planes.ts` for the
+twin. `calculateSolarPotential(roofArea, roofType, region, feedIn,
+electricityPrice?, geometricKWp?)` — kWp is the SIXTH argument.
+
+1. **Store** (`scenario-store.ts`): add `roofPlanes: RoofPlaneSet | null`,
+   session-only (NOT in `partialize`), cleared in `setBuildingInputs` when
+   `buildingPk` changes exactly like `appliedMeasureIds`; `setRoofPlanes`.
+2. **Hook** `src/hooks/use-pv-layout.ts`: `usePvLayout()` memoises
+   `layoutRoofPlanes(store.roofPlanes)`; null when none.
+3. **Publish**: model pages — in `reference-energy.tsx`'s `ReferenceEnergyFrame`,
+   fetch `${baseUrl}/roof-planes.json` the way `useReferenceZones` fetches
+   spaces (abortable, `kind` checked) and `setRoofPlanes({ ...file,
+   buildingId: file.id })`. Twin — `building-scene.tsx` near line 525 where
+   `recipe` and `retrofitVisuals` already exist: `setRoofPlanes(twinRoofPlanes(recipe))`
+   in an effect keyed on the recipe.
+4. **Economics**: `EnergyInstrumentHud` (call at line 151) passes
+   `pvGeometricKWp: usePvLayout()?.totalKWp` into `useRetrofitScenario`; the
+   hook (line 370) forwards it as the sixth argument. The delta:
+   `computeRetrofitDelta` builds `context = { roofAreaSqm, region }` at
+   `retrofit-delta.ts:548` and `apply-phase.ts:200-213` sizes `solarPV.capacity`
+   from `calculateSolarPotential(roofAreaSqm, …)` — add `geometricKWp` to that
+   context and pass it through, so the delta's capacity, the measure's kWp and
+   the drawn count are one number. Then the per-building before/after the P2
+   line asks for.
+5. **Viewer**: new `PvModulesVisual({ layout, centre })` — one
+   `InstancedMesh(BoxGeometry(1.7, 0.06, 1.0))`, each instance composed from
+   `module.centre` (minus the scene `centre` offset the viewer already applies)
+   and `module.quaternion`; exposes the count on the wrapper as `data-pv-drawn`.
+   In `reference-retrofit-visuals.tsx` DELETE `analyzeUpwardFaces`,
+   `resolveRoofFace`, `panelLayoutForRoof`, `classifyRoofTypeForSizing`,
+   `usePvSystemSizeOverride`, `usePvPanelMesh`, `FaceSetAnalysis` and the
+   PV half of `RoofingLayerRetrofitVisual` / `FabricSlabRetrofitVisual`; KEEP
+   their roof-TINT half (`splitTrianglesByElevation`, `roofElevationThresholdM`
+   are the roof-insulation tint, not the PV bug). Mount `PvModulesVisual`
+   beside `RoofRetrofitVisualBoundary` (viewer line 369) when
+   `visual.solarInstalled`. Twin: `solar-panels.tsx` becomes the same
+   component fed by the store's twin layout; keep `finishedRoofTopY` only if
+   the twin planes' elevations need it (they carry their own).
+6. **Tests**: `__tests__/reference-retrofit-visuals.test.ts` — delete the
+   `analyzeUpwardFaces`, `classifyRoofTypeForSizing`, `panelLayoutForRoof`
+   describes (lines 49, 117, 126), keep the rest; `…visuals.glb.test.ts` —
+   delete the describes at lines 166 (both-sheets artefact, an
+   `analyzeUpwardFaces` fact), 217 and 266 (`resolveRoofFace` on the roofing
+   GLB), keep the two slab-split describes. New: a test that every instance
+   the component composes equals a module the layout returned, count equal.
+7. **Legend**: `buildRetrofitLegendLines` gains the utilisation summary from
+   the layout ("지붕 N면 · 사용 가능 U / G m² · 모듈 M장 · K kWp · 제외 E면") and
+   the legend element carries `data-pv-modules={totalModules}`; the per-plane
+   rows (tilt, azimuth, gross, usable, modules, kWp, exclusion reason) go in
+   `reference-retrofit.tsx`'s panel as a table under the measures.
+8. **e2e** (`reference-buildings.spec.ts`, bim-83's, released): with PV chosen,
+   `data-pv-modules` on the legend equals `data-pv-drawn` on the viewer, per
+   building; on the apartment the tile planes' rows say `north-facing-pitch`
+   or `too-steep` and the deck row carries modules.
+
+Expected on screen when done: FZK — south pitch tiled with flush portrait
+modules, north pitch empty with its reason; Duplex — racked rows E-W on the
+deck, skylights and their clearance empty; apartment — racks on the 130 m²
+deck and the flat strips, none on the 65° band; Clinic — racks on the EPDM
+decks, the barrel's south facets flush, north facets empty.
