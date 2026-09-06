@@ -22,6 +22,8 @@
 // the weaker route stays visible in the record.
 
 import { num, refId, str } from "./ifc-reader.mjs";
+import { placementMatrix } from "./ifc-horizontal.mjs";
+import { allSpaceBoundaries } from "./ifc-space-evidence.mjs";
 
 /** Round to a sane number of decimals — IFC reals carry float dust. */
 const r6 = (value) => Math.round(value * 1e6) / 1e6;
@@ -50,7 +52,8 @@ export function extractStoreys(file, webIfc) {
       expressID: line.expressID,
       name: str(line.Name) ?? "",
       // Elevations come out as e.g. -3.5e-13; that is zero.
-      elevationM: r6((num(line.Elevation) ?? 0) * toM),
+      elevationM: r6(num(line.Elevation) != null ? num(line.Elevation) * toM : placementMatrix(file, line.ObjectPlacement)[14]),
+      ...(num(line.Elevation) == null && file.deref(line.ObjectPlacement) ? { elevationSource: "ObjectPlacement" } : {}),
     }))
     .sort((left, right) => left.elevationM - right.elevationM);
 
@@ -59,6 +62,7 @@ export function extractStoreys(file, webIfc) {
     return Object.freeze({
       id: `storey-${slug(storey.name)}`,
       name: storey.name,
+      ...(storey.elevationSource ? { elevationSource: storey.elevationSource } : {}),
       elevationM: Math.abs(storey.elevationM) < 1e-6 ? 0 : storey.elevationM,
       floorToFloorHeightM: next ? r3(next.elevationM - storey.elevationM) : 0,
       expressID: storey.expressID,
@@ -333,15 +337,29 @@ function quantityIndex(file, webIfc) {
 }
 
 /**
- * `IfcMaterialLayerSet` → ordered layers with thicknesses, outside-in.
- *
- * Names and thicknesses only. This model — like most coordination models —
- * carries no `IfcMaterialProperties`, so there is no conductivity to read; a
- * field for it here would be null in every row and would invite someone to
- * quietly fill it with a default. The mapping from a layer name to a
- * conductivity is an assumption and belongs where assumptions are recorded.
+ * IfcMaterialLayerSet: names, thicknesses and order exactly as authored.
+ * Optional source conductivity is emitted only under a verified SI policy.
+ * Missing properties stay absent; generic conductivity mappings belong in
+ * the assumption layer, never in this extraction record.
  */
-export function extractAssemblies(file, webIfc) {
+export function extractAssemblies(file, webIfc, { thermalPropertiesInSI = false } = {}) {
+  // Opt in only after the source's thermal units have been verified. A numeric
+  // property with an explicit unit must be converted, not silently treated as SI.
+  const conductivities = new Map();
+  if (thermalPropertiesInSI && typeof webIfc.IFCMATERIALPROPERTIES === "number") {
+    for (const set of file.byType(webIfc.IFCMATERIALPROPERTIES)) {
+      for (const slot of set.Properties ?? []) {
+        const property = file.deref(slot);
+        if (str(property?.Name) !== "ThermalConductivity" || property.Unit != null) continue;
+        const value = num(property.NominalValue);
+        if (!(value > 0)) continue;
+        conductivities.set(refId(set.Material), {
+          conductivityWPerMK: r6(value),
+          ref: file.ref(property.expressID),
+        });
+      }
+    }
+  }
   return file.byType(webIfc.IFCMATERIALLAYERSET).map((set) => {
     const layers = (set.MaterialLayers ?? [])
       .map((slot) => {
@@ -356,6 +374,7 @@ export function extractAssemblies(file, webIfc) {
           name: str(material?.Name) ?? "(unnamed)",
           thicknessM: r6(thicknessM),
           ref: file.ref(layer.expressID),
+          ...(conductivities.has(material?.expressID) ? { sourceThermalProperties: conductivities.get(material.expressID) } : {}),
         });
       })
       .filter(Boolean);
@@ -412,7 +431,7 @@ export function classifyExternalElements(file, webIfc) {
   const unresolved = [];
   let externalVirtual = 0;
 
-  for (const rel of file.byType(webIfc.IFCRELSPACEBOUNDARY)) {
+  for (const rel of allSpaceBoundaries(file, webIfc)) {
     const external = str(rel.InternalOrExternalBoundary) === "EXTERNAL";
     if (!external) continue;
     if (str(rel.PhysicalOrVirtualBoundary) !== "PHYSICAL") {

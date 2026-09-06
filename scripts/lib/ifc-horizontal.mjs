@@ -29,6 +29,7 @@
 //   silently.
 
 import { num, refId, str } from "./ifc-reader.mjs";
+import { allSpaceBoundaries } from "./ifc-space-evidence.mjs";
 import { elementTriangles } from "./ifc-face-area.mjs";
 import { planShadow, unionShadows, overlapSqm } from "./ifc-plan-shadow.mjs";
 import polygonClipping from "polygon-clipping";
@@ -208,7 +209,7 @@ export function spaceFootprints(api, webIfc, file, spaces) {
 /** element expressID → Set of space expressIDs it bounds, per IfcRelSpaceBoundary. */
 export function spaceBoundaryIndex(file, webIfc) {
   const index = new Map();
-  for (const rel of file.byType(webIfc.IFCRELSPACEBOUNDARY)) {
+  for (const rel of allSpaceBoundaries(file, webIfc)) {
     const element = refId(rel.RelatedBuildingElement);
     const space = refId(rel.RelatingSpace);
     if (element === null || space === null) continue;
@@ -244,6 +245,11 @@ function aggregateParents(file, webIfc) {
  */
 export function collectHorizontalElements(api, webIfc, file, storeys) {
   const storeyByExpressID = new Map(storeys.map((s) => [s.expressID, s]));
+  const typeByElement = new Map();
+  for (const rel of file.byType(webIfc.IFCRELDEFINESBYTYPE)) {
+    const type = file.deref(rel.RelatingType);
+    for (const object of rel.RelatedObjects ?? []) typeByElement.set(refId(object), type);
+  }
   const storeyOf = new Map();
   for (const rel of file.byType(webIfc.IFCRELCONTAINEDINSPATIALSTRUCTURE)) {
     const storey = storeyByExpressID.get(refId(rel.RelatingStructure));
@@ -272,7 +278,9 @@ export function collectHorizontalElements(api, webIfc, file, storeys) {
         globalId: str(line.GlobalId),
         typeName: file.typeName(line),
         name: str(line.Name) ?? "",
-        predefinedType: str(line.PredefinedType) ?? str(line.ShapeType) ?? null,
+        predefinedType: str(line.PredefinedType) ?? str(line.ShapeType) ?? str(typeByElement.get(mesh.expressID)?.PredefinedType) ?? null,
+        ...(str(line.PredefinedType) == null && str(line.ShapeType) == null && typeByElement.get(mesh.expressID)?.PredefinedType != null
+          ? { predefinedTypeSource: "type", predefinedTypeRef: file.ref(typeByElement.get(mesh.expressID).expressID) } : {}),
         // Contained directly, or through the aggregate that contains it.
         storey: storeyOf.get(mesh.expressID) ?? (parentId !== null ? storeyOf.get(parentId) : null) ?? null,
         partOf: parent && file.typeName(parent) === "IfcRoof" ? { expressID: parentId, ref: file.ref(parentId), name: str(parent.Name) ?? "" } : null,
@@ -323,23 +331,28 @@ export const roofFamily = (name) => String(name ?? "").replace(/:\d+$/, "");
  * `nameMatch` is the per-building list of slab names that ARE roof although
  * the file types them FLOOR. Case-insensitive substring, like
  * `exteriorWallMatch`.
+ * @param {Array<object>} rows
+ * @param {{ nameMatch?: string[], coveringNameMatch?: string[], excludeNames?: string[] }} options
  */
-export function classifyRoofs(rows, { nameMatch = [] } = {}) {
+export function classifyRoofs(rows, { nameMatch = [], coveringNameMatch = [], excludeNames = [] } = {}) {
   const matchers = nameMatch.map((m) => String(m).toLowerCase());
+  const coveringMatchers = coveringNameMatch.map((m) => String(m).toLowerCase());
   const out = [];
   for (const row of rows) {
+    if (excludeNames.some((name) => row.name.toLowerCase().includes(name.toLowerCase()))) continue;
     const type = row.typeName;
     const pdt = row.predefinedType;
     let basis = null;
     if (type === "IfcRoof") basis = "IfcRoof";
-    else if (type === "IfcSlab" && pdt === "ROOF") basis = "IfcSlab.PredefinedType=ROOF";
-    else if (type === "IfcCovering" && pdt === "ROOFING") basis = "IfcCovering.PredefinedType=ROOFING";
+    else if (type === "IfcSlab" && pdt === "ROOF") basis = row.predefinedTypeSource === "type" ? "IfcSlabType.PredefinedType=ROOF" : "IfcSlab.PredefinedType=ROOF";
+    else if (type === "IfcCovering" && pdt === "ROOFING") basis = row.predefinedTypeSource === "type" ? "IfcCoveringType.PredefinedType=ROOFING" : "IfcCovering.PredefinedType=ROOFING";
     else if (
       type === "IfcSlab" &&
       matchers.some((m) => row.name.toLowerCase().includes(m))
     ) {
       basis = "declared roof slab name";
     }
+    if (!basis && type === "IfcCovering" && coveringMatchers.some((name) => row.name.toLowerCase().includes(name))) basis = "declared roof covering name";
     if (basis) out.push({ ...row, basis });
   }
   return out;
@@ -434,6 +447,7 @@ export function measureRoofs(roofRows) {
       family,
       elementType: row.typeName,
       predefinedType: row.predefinedType,
+      ...(row.predefinedTypeSource ? { predefinedTypeSource: row.predefinedTypeSource, predefinedTypeRef: row.predefinedTypeRef } : {}),
       basis: row.basis,
       storeyId: row.storey?.id ?? null,
       /** Plan shadow of the element — see ifc-plan-shadow.mjs. */
