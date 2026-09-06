@@ -6,6 +6,7 @@
 
 import type { MaterialProperties } from "@/lib/material-types";
 import type { DeliveredEnergy } from "@/lib/energy/primary-energy";
+import { ledgerUseCategory } from "@/lib/ledger/floor-rows";
 
 export interface DemandLike {
   heatingDemand: number; // kWh/yr delivered
@@ -42,9 +43,51 @@ export function isResidentialOccupancy(
   return density !== undefined && density > 0.1;
 }
 
-/** Map materials to the official efficiency-rating threshold-table key. */
-export function buildingTypeFromMaterials(
-  materials: MaterialProperties | undefined
+/**
+ * Which official threshold table the efficiency grade is read off.
+ *
+ * **The use code decides it wherever there is one**, because that is what the
+ * question actually is: 건축물 에너지효율등급 has a 주거용 table and a
+ * 비주거용 table, and 주용도코드 is the field that says which a building is.
+ *
+ * It was decided by occupant density alone until 2026-09-06 — above 0.1
+ * persons/m² read as residential — and that test is backwards for dwellings,
+ * which are the least densely occupied buildings there are. An office runs at
+ * 0.05-0.1 p/m² and an apartment at 0.02-0.04, so the heuristic called dense
+ * offices residential and real housing not. Three of the four published
+ * reference buildings are dwellings (`mainPurpsCd` 02000, 02000, 01000) and
+ * all three were graded on the 비주거용 table, whose 1+++ band is 80
+ * kWh/m²·yr against the 주거용 60 — so each read one band better than its use
+ * type earns.
+ *
+ * The fallback is unchanged and still matters: a generated design or an
+ * authored model with no 주용도코드 has only its occupancy to go on, and the
+ * pages that show a grade on that basis say so.
+ *
+ * @param mainPurpsCd 주용도코드 from the recipe. A code this app cannot
+ *   classify (`ledgerUseCategory` → "default", e.g. 09000 의료시설) is not a
+ *   decision either way and falls through to occupancy rather than being
+ *   silently read as non-residential.
+ */
+export function buildingTypeForGrade(
+  materials: MaterialProperties | undefined,
+  mainPurpsCd?: string,
 ): "residential" | "non-residential" {
+  if (mainPurpsCd) {
+    const category = ledgerUseCategory(mainPurpsCd);
+    if (category === "residential") return "residential";
+    // 업무 / 공장 / 판매 are definitely not dwellings. "default" is not a
+    // statement about the building, so it does not get to be one here.
+    if (category !== "default") return "non-residential";
+  }
   return isResidentialOccupancy(materials) ? "residential" : "non-residential";
+}
+
+/**
+ * True when the grade's threshold table was chosen by occupancy density
+ * because no usable 주용도코드 reached it — the case the page has to disclose,
+ * since the density heuristic is the one that can be wrong about a dwelling.
+ */
+export function gradeTableIsFromOccupancy(mainPurpsCd?: string): boolean {
+  return !mainPurpsCd || ledgerUseCategory(mainPurpsCd) === "default";
 }

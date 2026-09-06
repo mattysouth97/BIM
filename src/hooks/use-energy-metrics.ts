@@ -22,7 +22,7 @@ import type { SystemBreakdown } from "@/lib/energy/system-breakdown";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import {
   deliveredFromDemand,
-  buildingTypeFromMaterials,
+  buildingTypeForGrade,
 } from "@/lib/energy/delivered-from-demand";
 import type { HeatLossResult } from "@/lib/energy/heat-loss";
 import type { AnnualDemand } from "@/lib/energy/annual-demand";
@@ -103,7 +103,7 @@ export function useEnergyMetrics(
     const rating = calculateEfficiencyRating(
       deliveredFromDemand(demand),
       totalFloorArea,
-      buildingTypeFromMaterials(materials)
+      buildingTypeForGrade(materials, effectiveRecipe.mainPurpsCd)
     );
     const grade = rating.grade as EnergyGrade;
     const gradeColor = getGradeColor(grade);

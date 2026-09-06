@@ -9,7 +9,7 @@ import { calculateCO2 } from "@/lib/energy/co2-emissions";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import {
   deliveredFromDemand,
-  buildingTypeFromMaterials,
+  buildingTypeForGrade,
 } from "@/lib/energy/delivered-from-demand";
 import { applyPhaseToMaterials } from "@/lib/bim/phases/apply-phase";
 import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
@@ -212,7 +212,7 @@ describe("computeRetrofitDelta", () => {
     const rating = calculateEfficiencyRating(
       deliveredFromDemand(demand),
       q.intensityFloorAreaSqm,
-      buildingTypeFromMaterials(afterMaterials),
+      buildingTypeForGrade(afterMaterials, recipe.mainPurpsCd),
     );
     const co2 = calculateCO2(
       demand,

@@ -20,7 +20,7 @@ import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
 import { SEOUL_CLIMATE } from "@/lib/energy/climate-data";
 import {
-  buildingTypeFromMaterials,
+  buildingTypeForGrade,
   deliveredFromDemand,
 } from "@/lib/energy/delivered-from-demand";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
@@ -72,7 +72,7 @@ function runEngine(materials: MaterialProperties, recipe: BuildingRecipe) {
   const rating = calculateEfficiencyRating(
     deliveredFromDemand(demand),
     totalFloorArea,
-    buildingTypeFromMaterials(materials),
+    buildingTypeForGrade(materials, recipe.mainPurpsCd),
   );
   return { totalFloorArea, heatLoss, demand, rating };
 }
@@ -160,7 +160,7 @@ describe("generated design → existing energy engine", () => {
       "1+++", "1++", "1+", "1", "2", "3", "4", "5", "6", "7",
     ]).toContain(rating.grade);
     // Office occupancy density must not be read as residential.
-    expect(buildingTypeFromMaterials(seed.materials)).toBe("non-residential");
+    expect(buildingTypeForGrade(seed.materials)).toBe("non-residential");
   });
 
   it("lands in the same band as the ledger path for an equivalent building", async () => {

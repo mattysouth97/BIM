@@ -17,10 +17,15 @@ import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
 import { getClimateData } from "@/lib/energy/climate-data";
 import {
   deliveredFromDemand,
-  buildingTypeFromMaterials,
+  buildingTypeForGrade,
+  gradeTableIsFromOccupancy,
+  isResidentialOccupancy,
 } from "@/lib/energy/delivered-from-demand";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
-import type { ReferenceBuildingId } from "@/lib/reference-buildings/manifest";
+import {
+  REFERENCE_BUILDING_IDS,
+  type ReferenceBuildingId,
+} from "@/lib/reference-buildings/manifest";
 
 function run(id: ReferenceBuildingId) {
   const energy = referenceBuildingEnergyInputs(id)!;
@@ -31,7 +36,7 @@ function run(id: ReferenceBuildingId) {
   const rating = calculateEfficiencyRating(
     deliveredFromDemand(demand),
     q.intensityFloorAreaSqm,
-    buildingTypeFromMaterials(energy.materials),
+    buildingTypeForGrade(energy.materials, energy.recipe.mainPurpsCd),
   );
   const sentence = gradeBasisText(
     energy,
@@ -77,38 +82,48 @@ describe("the grade sentence reproduces the numbers it explains", () => {
     });
   }
 
-  it("the Clinic's threshold table agrees with its use code, and the sentence says so", () => {
+  it("the Clinic falls back to occupancy, because 09000 is a code this app cannot classify", () => {
     const { energy, sentence } = run("bs-medical-dental-clinic");
-    // 09000 = 의료시설. A clinic really is non-residential.
+    // 의료시설. Genuinely non-residential, but `ledgerUseCategory` returns
+    // "default" for it, so the use code is not a decision and the density
+    // heuristic still picks the table — which is the one case left to
+    // disclose now that the mismatch itself is fixed.
     expect(energy.recipe.mainPurpsCd).toBe("09000");
-    expect(sentence).toContain("agrees with its use code 09000");
-    expect(sentence).not.toContain("one band lower");
+    expect(gradeTableIsFromOccupancy(energy.recipe.mainPurpsCd)).toBe(true);
+    expect(sentence).toContain("does not classify");
+    expect(sentence).toContain("picked by density, not by use");
   });
 
-  it("the apartment's does NOT, and the sentence declares the band it costs", () => {
-    const { energy, rating, sentence } = run("schependomlaan");
-    // 02000 = 공동주택. A 10-dwelling apartment block.
-    expect(energy.recipe.mainPurpsCd).toBe("02000");
-    expect(buildingTypeFromMaterials(energy.materials)).toBe("non-residential");
-    expect(sentence).toContain("which is residential");
-    expect(sentence).toContain("one band lower");
+  it("every dwelling is scored on the residential table its use code names", () => {
+    // Three of the four published buildings are dwellings and all three were
+    // graded on the 비주거용 table until 2026-09-06, each reading one band
+    // better than its use earns.
+    for (const id of REFERENCE_BUILDING_IDS) {
+      const energy = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!;
+      const code = energy.recipe.mainPurpsCd;
+      if (code !== "01000" && code !== "02000") continue;
 
-    // And that claim is checkable: re-grade the same primary energy on the
-    // residential table and confirm it really is a band worse. A sentence
-    // that merely SAID "one band lower" would pass a substring test while
-    // being false.
-    const q = envelopeQuantities(energy.recipe);
-    const climate = getClimateData(energy.climate.sigunguCd);
-    const heatLoss = calculateHeatLoss(energy.materials, energy.recipe, climate);
-    const demand = calculateAnnualDemand(heatLoss, energy.materials, energy.recipe, climate);
-    const asResidential = calculateEfficiencyRating(
-      deliveredFromDemand(demand),
-      q.intensityFloorAreaSqm,
-      "residential",
-    );
-    expect(rating.grade).toBe("1+++");
-    expect(asResidential.grade).toBe("1++");
-    expect(asResidential.primaryEnergyPerArea).toBeCloseTo(rating.primaryEnergyPerArea, 6);
+      expect(buildingTypeForGrade(energy.materials, code)).toBe("residential");
+      // And not by luck: its density alone would still say non-residential.
+      expect(isResidentialOccupancy(energy.materials)).toBe(false);
+
+      const { sentence } = run(id as ReferenceBuildingId);
+      expect(sentence).toContain(`chosen by its use code ${code}`);
+      expect(sentence).toContain("scored on the residential table");
+      // The disclosure it used to carry is gone, because the thing it
+      // disclosed no longer happens.
+      expect(sentence).not.toContain("one band lower");
+      expect(sentence).not.toContain("picked by density");
+    }
+  });
+
+  it("the grades that moved, and the ones that must not", () => {
+    // Quoted in the commit; asserted so the claim cannot rot.
+    expect(run("schependomlaan").rating.grade).toBe("1++");
+    expect(run("duplex-apartment").rating.grade).toBe("4");
+    expect(run("fzk-haus").rating.grade).toBe("2");
+    // The Clinic is not a dwelling and does not move.
+    expect(run("bs-medical-dental-clinic").rating.grade).toBe("1+");
   });
 
   it("the Korean sentence carries the same grade and the same two figures", () => {
@@ -126,6 +141,6 @@ describe("the grade sentence reproduces the numbers it explains", () => {
     expect(ko).toContain(energy.climate.assumptionId);
     const primary = ko.match(/1차에너지 ([\d,.]+) kWh\/m²·yr/);
     expect(Number(primary![1].replace(/,/g, ""))).toBeCloseTo(rating.primaryEnergyPerArea, 1);
-    expect(ko).toContain("한 등급 아래");
+    expect(ko).toContain("주용도코드 02000 기준 주거용 기준표");
   });
 });

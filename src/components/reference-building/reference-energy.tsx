@@ -29,8 +29,10 @@ import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { getClimateData } from "@/lib/energy/climate-data";
 import { meanWindowToWallRatio } from "@/lib/energy/heat-loss";
-import { isResidentialOccupancy } from "@/lib/energy/delivered-from-demand";
-import { ledgerUseCategory } from "@/lib/ledger/floor-rows";
+import {
+  buildingTypeForGrade,
+  gradeTableIsFromOccupancy,
+} from "@/lib/energy/delivered-from-demand";
 import { EnergyInstrumentHud } from "@/components/twin/energy-instrument-hud";
 import { AnalysisLegend } from "@/components/viewer/analysis-legend";
 import {
@@ -137,27 +139,25 @@ export function pendingBadgeText(
 }
 
 /**
- * What the grade badge on the frame actually is — because on these two
- * buildings it is three things a reader would not assume.
+ * What the grade badge on the frame actually is — because on these buildings
+ * it is three things a reader would not assume.
  *
- * 1. It is a **Korean** 건축물 에너지효율등급, on a US clinic and a Dutch
- *    apartment, computed under a Seoul climate neither building is in.
- * 2. It is scored on **primary** energy, which is not the site kWh/m²
- *    printed immediately to its right: the apartment reads 40.5 beside a
- *    grade struck at 65.7.
- * 3. It is read off the residential or the non-residential threshold table,
- *    and which one is decided by `isResidentialOccupancy` — occupant density
- *    above 0.1 persons/m². That test is backwards for dwellings, which are
- *    the LEAST densely occupied buildings there are: Schependomlaan is a
- *    10-세대 공동주택 (mainPurpsCd 02000) at 0.025 p/m², so it is graded on
- *    the non-residential table, whose 1+++ band is 80 kWh/m²·yr against the
- *    residential 60. Its 65.7 is 1+++ there and 1++ on the table its use
- *    code calls for.
+ * 1. It is a **Korean** 건축물 에너지효율등급, on a US clinic, a Dutch
+ *    apartment, a US duplex and a German house, computed under a Seoul
+ *    climate none of them is in.
+ * 2. It is scored on **primary** energy, which is not the site kWh/m² printed
+ *    immediately to its right: the apartment reads 40.5 beside a grade struck
+ *    at 65.7.
+ * 3. It is read off the 주거용 or the 비주거용 threshold table, and the
+ *    building's 주용도코드 is what chooses (`buildingTypeForGrade`).
  *
- * That last one is a defect in `delivered-from-demand.ts`, which is not this
- * lane's file and whose fix would move every 건축물대장 building's grade in
- * the app. So it is DISCLOSED here, with the band it costs, rather than
- * quietly left to flatter the building.
+ * That third one was decided by occupant density until 2026-09-06, which is
+ * backwards for dwellings, so this function used to disclose a mismatch
+ * between the table and the use code. The mismatch is fixed rather than
+ * disclosed now; what remains to disclose is the case the fix cannot reach —
+ * a building whose use code this app cannot classify (the Clinic's 09000
+ * 의료시설), where the table still comes from occupancy and can still be
+ * wrong about a dwelling.
  */
 export function gradeBasisText(
   energy: ReferenceBuildingEnergyInputs,
@@ -166,12 +166,10 @@ export function gradeBasisText(
   siteDemandPerSqm: number,
   isKo: boolean,
 ): string {
-  const table = isResidentialOccupancy(energy.materials)
-    ? "residential"
-    : "non-residential";
-  const useSaysResidential =
-    ledgerUseCategory(energy.recipe.mainPurpsCd ?? "") === "residential";
-  const mismatched = useSaysResidential !== (table === "residential");
+  const useCode = energy.recipe.mainPurpsCd;
+  const table = buildingTypeForGrade(energy.materials, useCode);
+  const fromOccupancy = gradeTableIsFromOccupancy(useCode);
+  const residential = table === "residential";
   const n = (v: number, d = 1) =>
     v.toLocaleString("en-US", { maximumFractionDigits: d });
 
@@ -179,13 +177,13 @@ export function gradeBasisText(
     ? `${grade} 등급은 대한민국 건축물 에너지효율등급이며, 1차에너지 ${n(primaryEnergyPerArea)} kWh/m²·yr 기준입니다 — 옆의 사용량 ${n(siteDemandPerSqm)} kWh/m²·yr가 아닙니다. 기후는 ${energy.climate.labelKo} (${energy.climate.assumptionId}).`
     : `Grade ${grade} is a Korean 건축물 에너지효율등급, struck on ${n(primaryEnergyPerArea)} kWh/m²·yr of PRIMARY energy — not the ${n(siteDemandPerSqm)} kWh/m²·yr of site demand beside it. Climate is ${energy.climate.labelEn} (${energy.climate.assumptionId}).`;
 
-  const tail = mismatched
+  const tail = fromOccupancy
     ? isKo
-      ? ` 재실밀도 ${energy.materials.occupancy.occupancyDensity} 인/m²가 0.1 이하라 비주거 기준표로 채점했으나, 이 건물의 주용도코드는 ${energy.recipe.mainPurpsCd} (주거)입니다. 주거 기준표였다면 같은 1차에너지가 한 등급 아래로 내려갑니다.`
-      : ` It was scored on the ${table} table because occupancy density ${energy.materials.occupancy.occupancyDensity} p/m² is not above 0.1 — but this building's use code is ${energy.recipe.mainPurpsCd}, which is residential. On the residential table the same primary energy is one band lower.`
+      ? ` 주용도코드 ${useCode ?? "미기재"}는 이 앱이 주거/비주거로 분류하지 않는 코드라, 재실밀도 ${energy.materials.occupancy.occupancyDensity} 인/m²로 ${residential ? "주거" : "비주거"} 기준표를 적용했습니다 — 용도가 아니라 밀도로 고른 표입니다.`
+      : ` Its use code ${useCode ?? "is absent"} is one this app does not classify, so the ${table} table was chosen from an occupancy density of ${energy.materials.occupancy.occupancyDensity} p/m² — picked by density, not by use.`
     : isKo
-      ? ` 재실밀도 ${energy.materials.occupancy.occupancyDensity} 인/m²로 비주거 기준표를 적용했고, 주용도코드 ${energy.recipe.mainPurpsCd}와 일치합니다.`
-      : ` It was scored on the ${table} table from an occupancy density of ${energy.materials.occupancy.occupancyDensity} p/m², which agrees with its use code ${energy.recipe.mainPurpsCd}.`;
+      ? ` 주용도코드 ${useCode} 기준 ${residential ? "주거용" : "비주거용"} 기준표를 적용했습니다.`
+      : ` It was scored on the ${residential ? "residential" : "non-residential"} table, chosen by its use code ${useCode}.`;
 
   return head + tail;
 }
