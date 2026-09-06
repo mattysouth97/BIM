@@ -421,6 +421,184 @@ export const SCHEPENDOMLAAN_LAYER_MAPPINGS: readonly LayerMapping[] = Object.fre
 ]);
 
 /**
+ * The Duplex Apartment's layer names.
+ *
+ * Both this building and the Clinic are Autodesk Revit Architecture 2011 US
+ * models, so eight of these names are the SAME strings the Clinic uses and
+ * carry the same mapping. That overlap is a reason to keep two tables rather
+ * than merge them: the two buildings agree today, and a merged table would
+ * make a future disagreement — the same name meaning something different in
+ * another model — impossible to express.
+ *
+ * Nine names are this building's own. None of them resolves by substring
+ * search either: "Masonry - Brick", "Site - Grass" and "Roofing - Barrier"
+ * all return nothing from `searchGenericMaterials`.
+ */
+export const DUPLEX_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
+  {
+    ifcName: "Masonry - Brick",
+    basis: "generic_material",
+    materialId: "st-redbrick",
+    basisNote:
+      "The exterior wall's 92 mm outer leaf: clay facing brick, the library's " +
+      "red-brick entry at λ 0.78. Distinct from Masonry - Concrete Block " +
+      "below, which is the structural inner leaf of the same wall.",
+  },
+  {
+    ifcName: "Masonry - Concrete Block",
+    basis: "generic_material",
+    materialId: "st-brick",
+    basisNote:
+      "193 mm CMU, mapped to the library's concrete-brick entry at λ 0.8. A " +
+      "US CMU is HOLLOW and the library has no hollow-block row, so this " +
+      "treats it as solid and understates the wall — see A-CONCRETE-BLOCK-" +
+      "LAMBDA. It is 12 % of the wall's resistance either way.",
+  },
+  {
+    ifcName: "Misc. Air Layers - Air Space",
+    basis: "generic_material",
+    materialId: "air-iso-h25",
+    basisNote:
+      "The one layer in this building that lands exactly on its entry: the " +
+      "model states 25 mm and air-iso-h25 IS ISO 6946 Table 2's 25 mm " +
+      "unventilated cavity at horizontal heat flow. No interpolation.",
+  },
+  {
+    ifcName: "Insulation / Thermal Barriers - Rigid insulation",
+    basis: "generic_material",
+    materialId: "ins-polyiso",
+    basisNote:
+      "Same name and same mapping as the Clinic's: rigid board in a US 2011 " +
+      "wall or roof of this type is polyisocyanurate. It appears twice in " +
+      "this model, 50 mm in the wall and 76 mm in the roof, and is the only " +
+      "insulation either assembly names.",
+  },
+  {
+    ifcName: "Metal - Stud Layer",
+    basis: "generic_material",
+    materialId: "air-iso-h25",
+    basisNote:
+      "Same name and same mapping as the Clinic's, and the same reasoning: " +
+      "the model names a stud layer and names nothing in it, so it is read " +
+      "as an unventilated air cavity and steel bridging is ignored. Here it " +
+      "is 41 mm rather than the Clinic's 152 mm, so it costs this building " +
+      "far less — see A-STUD-CAVITY for the counterfactual.",
+  },
+  {
+    ifcName: "Plasterboard",
+    basis: "generic_material",
+    materialId: "fin-gypsum",
+    basisNote: "Direct match: gypsum plasterboard, the library's finish entry.",
+  },
+  {
+    ifcName: "Concrete",
+    basis: "generic_material",
+    materialId: "st-rc",
+    basisNote:
+      "The 127 mm slab on grade's only layer. Mapped to reinforced concrete " +
+      "rather than a plain-concrete entry because a slab on grade is meshed; " +
+      "the library carries no unreinforced structural row in any case.",
+  },
+  {
+    ifcName: "Concrete - Cast In Situ",
+    basis: "generic_material",
+    materialId: "st-rc",
+    basisNote:
+      "Same name and same mapping as the Clinic's. Used by the two Foundation " +
+      "- Concrete walls and by the exterior entrance pad, neither of which is " +
+      "on the envelope list.",
+  },
+  {
+    ifcName: "Roofing - EPDM Membrane",
+    basis: "generic_material",
+    materialId: "mb-epdm",
+    basisNote:
+      "Same name and same mapping as the Clinic's: single-ply EPDM. Under a " +
+      "planted roof here rather than exposed, so it is the root barrier's " +
+      "substrate as much as the waterproofing.",
+  },
+  {
+    ifcName: "Wood - Sheathing - plywood",
+    basis: "generic_material",
+    materialId: "wd-plywood",
+    basisNote:
+      "Same name and same mapping as the Clinic's, at the 19 mm the model " +
+      "states. The roof deck over the joists.",
+  },
+  {
+    ifcName: "Wood - Dimensional Lumber",
+    basis: "generic_material",
+    materialId: "wd-structural",
+    basisNote:
+      "THE ROOF'S LARGEST LAYER AND ITS LARGEST ASSUMPTION. 286 mm, solved " +
+      "as solid softwood at λ 0.14 because that is the layer the model " +
+      "states — but a dimensional-lumber layer in a joist roof is joists at " +
+      "centres with air or batt between them, so ISO 6946 5.3.1's " +
+      "unsubdivided premise does not hold. Solid timber gives it R 2.043, " +
+      "38 % of the whole roof's resistance; as a cavity it would give 0.17. " +
+      "See A-JOIST-ZONE. Also used by the intermediate floor, which is not " +
+      "envelope.",
+  },
+  {
+    ifcName: "Wood - Flooring",
+    basis: "generic_material",
+    materialId: "wd-structural",
+    basisNote:
+      "16 mm finish flooring, the library's structural-timber λ for want of a " +
+      "flooring row. It is a finish over the intermediate floor and over the " +
+      "slab, and neither assembly it belongs to is on the envelope list.",
+  },
+  {
+    ifcName: "Insulation / Thermal Barriers - Semi-rigid insulation",
+    basis: "generic_material",
+    materialId: "ins-mw",
+    basisNote:
+      "3 mm under the wood finish floor — an acoustic underlay by thickness " +
+      "rather than a thermal layer. Semi-rigid board is mineral wool; the " +
+      "mapping is honest and the layer is negligible and not on the envelope.",
+  },
+  {
+    ifcName: "Ceramic Tile",
+    basis: "unresolved",
+    basisNote:
+      "10 mm bathroom tile. The library has no ceramic-tile row and there is " +
+      "no honest nearest match — stone is three times the conductivity and " +
+      "mortar is close but is the layer BELOW it, which this model names " +
+      "separately as Masonry - Grout. It is a finish inside the dwelling, so " +
+      "nothing on the envelope depends on it.",
+  },
+  {
+    ifcName: "Masonry - Grout",
+    basis: "generic_material",
+    materialId: "fin-mortar",
+    basisNote:
+      "3 mm tile bed, mapped to the library's mortar entry. A finish layer " +
+      "inside the dwelling; nothing on the envelope depends on it.",
+  },
+  {
+    ifcName: "Site - Grass",
+    basis: "unresolved",
+    basisNote:
+      "64 mm of growing medium on the Live Roof. The library has no soil or " +
+      "substrate row, and inventing a λ for one would put a number in the " +
+      "stack that no table supports — a green roof's benefit is evaporative " +
+      "and thermal-mass anyway, neither of which this engine models. Reported " +
+      "unresolved and dropped from the roof assembly, which removes " +
+      "resistance and so reads conservatively. See A-GREEN-ROOF.",
+  },
+  {
+    ifcName: "Roofing - Barrier",
+    basis: "unresolved",
+    basisNote:
+      "6 mm, and the name states a FUNCTION rather than a material — a vapour " +
+      "or root barrier, both films whose resistance is negligible at this " +
+      "thickness, and the library has a row for neither. Dropped from the " +
+      "roof assembly: at most 0.02 m²K/W, 0.4 % of its resistance, in the " +
+      "direction that reads worse. See A-ROOF-BARRIER.",
+  },
+]);
+
+/**
  * Mapping table per building, by `manifest.id`.
  *
  * An unknown id gets an empty table, which makes every layer unresolved and
@@ -432,6 +610,7 @@ const LAYER_MAPPINGS_BY_BUILDING: Readonly<Record<string, readonly LayerMapping[
   Object.freeze({
     "bs-medical-dental-clinic": CLINIC_LAYER_MAPPINGS,
     schependomlaan: SCHEPENDOMLAAN_LAYER_MAPPINGS,
+    "duplex-apartment": DUPLEX_LAYER_MAPPINGS,
   });
 
 export function layerMappingsFor(buildingId: string): readonly LayerMapping[] {
@@ -681,11 +860,44 @@ const SCHEPENDOMLAAN_ENVELOPE_ASSEMBLY_IDS: ReadonlySet<string> = new Set([
   "assembly-ifc-kozijn-90x114", // window frame
 ]);
 
+/**
+ * The Duplex is a Revit 2011 US model like the Clinic, so the Clinic's
+ * keyword rule very nearly works on it — and "very nearly" is why it gets a
+ * list instead.
+ *
+ * `exterior|roof|slab on grade|foundation` matches six of this model's
+ * fifteen assemblies, and two of the six are not envelope:
+ *
+ *   Floor:150mm Exterior Slab on Grade — matches TWICE over, on "exterior"
+ *     and on "slab on grade", and is the outdoor entrance pad. The ground
+ *     extraction already excluded its two elements by measurement, on the
+ *     evidence that no conditioned room stands on either (manifest
+ *     groundSlabs[], `excludedReason`). Letting the keyword rule put its
+ *     assembly on the envelope list would print a U-value for 50.84 m² of
+ *     slab that carries no envelope area — the two halves of this repo
+ *     disagreeing about the same two elements, in the same manifest.
+ *   Basic Wall:Foundation - Concrete (417mm / 435mm) — below grade, which is
+ *     a different boundary condition and a different U. The Clinic's rule
+ *     includes its foundation walls and this list does not; that is a
+ *     deliberate divergence, not an oversight, and it matches how this
+ *     building's own wall set is taken (A-WALL-SET-SCOPE excludes the six
+ *     Foundation - Concrete walls for exactly this reason). Reading them
+ *     air-to-air would report a wall that is not exposed to air.
+ *
+ * So the list is the three assemblies the energy path actually prices.
+ */
+const DUPLEX_ENVELOPE_ASSEMBLY_IDS: ReadonlySet<string> = new Set([
+  "assembly-basic-wall-exterior-brick-on-block", // the whole opaque wall, 267.16 m²
+  "assembly-basic-roof-live-roof-over-wood-joist-flat-roof", // the single roof, 132.93 m²
+  "assembly-floor-127mm-slab-on-grade", // the ground slab, 129.69 m²
+]);
+
 const ENVELOPE_PREDICATES: Readonly<
   Record<string, (c: SolvedConstruction) => boolean>
 > = Object.freeze({
   "bs-medical-dental-clinic": CLINIC_ENVELOPE_NAMES,
   schependomlaan: (c) => SCHEPENDOMLAAN_ENVELOPE_ASSEMBLY_IDS.has(c.id),
+  "duplex-apartment": (c) => DUPLEX_ENVELOPE_ASSEMBLY_IDS.has(c.id),
 });
 
 export function envelopeConstructions(

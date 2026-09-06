@@ -282,7 +282,132 @@ const SCHEPENDOMLAAN: GalleryItem = {
 } as const;
 
 /**
- * Both buildings render.
+ * Building #3 — the Duplex Apartment, two dwellings under one roof.
+ *
+ * Chosen for what it states that the other two do not: its MECHANICAL,
+ * ELECTRICAL and PLUMBING models, 1,522 elements across three files. The
+ * Clinic and Schependomlaan are envelope buildings; this is the first one
+ * here whose services can be seen.
+ *
+ * ── The trap, and it is the worst one any of these three has set ──────────
+ * `Duplex_M_20111024_ROOMS_AND_SPACES.ifc` states EVERY ROOM TWICE. Revit
+ * models an architectural Room and an analytical Space as two objects in the
+ * same place, and this export carries both: 37 IfcSpace for 19 distinct
+ * rooms, same Name, same LongName, same plan position, two GlobalIds and two
+ * slightly different areas. Nothing in the file calls either a duplicate.
+ *
+ * Summed as they come, the rows give 799.76 m²; with the existing ROOF rule
+ * removing the two 135.15 m² roof planes, 529.46 m². The building's floor is
+ * 284.98 m². Floor area is the denominator of every intensity, so the 529.46
+ * this project was about to publish would have shown the building reading
+ * 46 % better than it is — and it would have looked like a measurement,
+ * because both copies are real entities carrying real quantities.
+ *
+ * They are separated by property set, not by name: 18 rows carry all four
+ * Revit analysis sets (Energy Analysis, Mechanical - Airflow, Electrical -
+ * Loads, Electrical - Lighting) and 19 carry none, with nothing in between.
+ * The architectural half is kept, because its areas reproduce
+ * `Duplex_A_20110907.ifc`'s own `GSA BIM Area` exactly and because one room —
+ * A104 Bathroom 1 — has no analytical twin and would otherwise be lost.
+ *
+ * A second thing this building corrects: an earlier note in the build script
+ * explained the two files' disagreement by saying the architectural model
+ * held "one dwelling's rooms". It holds both — A101-A105 and B101-B105 are
+ * on Level 1 together — and the direction was inverted too, since a larger
+ * floor area makes a building read better, not worse.
+ *
+ * `excludedSpaces` on the datums below is therefore the analytical duplicates
+ * plus the roof planes: 7 + 10 + 2 = 19, against 18 rooms, for the 37 rows
+ * the file holds.
+ */
+const DUPLEX: GalleryItem = {
+  id: "duplex-apartment",
+  koTitle: "듀플렉스 아파트",
+  enTitle: "Duplex Apartment",
+  koUse: "공동주택 · 지상 2층 · 2세대",
+  enUse: "Residential · two floors · two dwellings",
+  status: "modelling",
+  modelFile: "Duplex_A_20110907.ifc",
+  ifcSchema: "IFC2X3",
+  viewDefinition: "CoordinationView",
+  authoringTool: "Autodesk Revit Architecture 2011",
+  modelDate: "2011-09-07",
+  licence: "CC BY 4.0",
+  // Same repository, same grant and the same named rights holder as the
+  // Clinic, which is why this building was taken before richer models with
+  // no licence behind them.
+  attribution:
+    'BSI (2020) "Duplex Apartment Test Files", buildingSMART International — https://github.com/buildingsmart-community/Community-Sample-Test-Files',
+  datums: [
+    // The roof datum carries two ROOF spaces — one architectural, one
+    // analytical — and no floor.
+    { name: "Roof", elevationM: 6, rooms: 0, roomAreaSqm: 0, excludedSpaces: 2 },
+    { name: "Level 2", elevationM: 3.1, rooms: 10, roomAreaSqm: 143.183, excludedSpaces: 10 },
+    { name: "Level 1", elevationM: 0, rooms: 8, roomAreaSqm: 141.792, excludedSpaces: 7 },
+  ],
+  figures: [
+    {
+      id: "floor-area",
+      ko: "실 면적 합계",
+      en: "Room floor area",
+      // 141.792 + 143.183 = 284.975. The manifest rounds it to 284.98; the
+      // storeys' own 2-dp rows would give 284.97, so this card carries the
+      // 3-dp datums and the test sums those.
+      value: "285.0 m²",
+      read: "18 × GSA BIM Area, 해석용 중복 18실·ROOF 1실 제외",
+    },
+    {
+      id: "rooms",
+      ko: "실",
+      en: "Rooms",
+      value: "18",
+      // 37 − 18 − 1 = 18. One of the two ROOF spaces is itself one of the 18
+      // analytical rows, so it is subtracted once, not twice.
+      read: "IfcSpace 37 − 18 해석용 중복 − 1 ROOF",
+    },
+    {
+      id: "walls",
+      ko: "벽",
+      en: "Walls",
+      value: "57",
+      read: "IfcWallStandardCase 56 + IfcWall 1",
+    },
+    {
+      id: "windows",
+      ko: "창",
+      en: "Windows",
+      value: "22",
+      // The two dropped are M_Skylight, hosted in the IfcRoof rather than in
+      // a wall. They are real glazing (1.49 m²) and the aperture omits them.
+      read: "IfcWindow 24 − 2 천창(지붕에 설치)",
+    },
+    {
+      id: "doors",
+      ko: "문",
+      en: "Doors",
+      value: "4",
+      read: "IfcDoor 14 − 10 내부 칸막이벽",
+    },
+    {
+      id: "services",
+      ko: "기계·전기·배관 요소",
+      en: "Mechanical, electrical & plumbing elements",
+      value: "1,522",
+      read: "Duplex_MEP 924 + Duplex_Electrical 100 + Duplex_Plumbing 498",
+    },
+    {
+      id: "boundaries",
+      ko: "공간 경계",
+      en: "Space boundaries",
+      value: "265",
+      read: "IfcRelSpaceBoundary",
+    },
+  ],
+  href: "/models/duplex-apartment",
+} as const;
+
+/**
+ * All three buildings render.
  *
  * Schependomlaan was briefly pulled out of this array on a relayed instruction
  * — "build now, publish later". That was an over-reading of it: taking the
@@ -294,8 +419,11 @@ const SCHEPENDOMLAAN: GalleryItem = {
  * and it is carried where it belongs: `SCHEPENDOMLAAN.attribution` stays null
  * and renders as a statement rather than a blank. It gates shipping this
  * building to production, not seeing it here.
+ *
+ * The Duplex has no such question: same repository, same CC BY 4.0 grant and
+ * the same named rights holder as the Clinic.
  */
-export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC, SCHEPENDOMLAAN];
+export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC, SCHEPENDOMLAAN, DUPLEX];
 
 /** Lowest and highest datum, for the section diagram's vertical range. */
 export function datumRange(datums: readonly GalleryDatum[]) {

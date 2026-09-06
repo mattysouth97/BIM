@@ -1,0 +1,1098 @@
+{
+  "kind": "bimfit_reference_building_openings",
+  "id": "duplex-apartment",
+  "note": "Glazing aperture 64.46 m² = 22 IfcWindow at OverallWidth × OverallHeight (64.46 m²). Exterior doors are separate — a door is aperture, not glazing: 4 IfcDoor, 8.96 m², OverallWidth × OverallHeight. Host wall by IfcRelFillsElement → IfcOpeningElement → IfcRelVoidsElement (26 openings). Sector is the host wall's, from the same orientation pass as the wall split. Envelope by a both-sides probe against the conditioned IfcSpace solids (18 of 18 have geometry); this file has no IfcCurtainWall; 10 openings hosted in walls outside the exterior set; 2 unresolved (1.49 m² where a size is stated). IsExternal is reported per row and never used as a filter — it means \"not an interior partition\" to an authoring tool, never \"bounds conditioned space against outdoor air\". It marks 4 door(s) here; 4 confirm against an exterior wall. Rows in openings.json.",
+  "summary": {
+    "interiorCurtainWalls": {
+      "count": 0,
+      "sqm": 0
+    },
+    "hostedInInteriorWalls": {
+      "count": 10,
+      "sqm": 16.73
+    },
+    "outsideWallSetWindows": {
+      "count": 0,
+      "sqm": 0
+    },
+    "outsideWallSetDoors": {
+      "count": 0,
+      "sqm": 0
+    },
+    "subFrames": 0,
+    "hostBasis": {
+      "fills": 26,
+      "adjacent": 0,
+      "self": 0,
+      "curtain-wall part": 0
+    },
+    "isExternalDoors": {
+      "total": 4,
+      "counted": 4,
+      "notCounted": []
+    },
+    "glazingApertureSqm": 64.46,
+    "glazingByOrientationSqm": {
+      "N": 20.32,
+      "NE": 0,
+      "E": 11.91,
+      "SE": 0,
+      "S": 20.32,
+      "SW": 0,
+      "W": 11.91,
+      "NW": 0
+    },
+    "exteriorDoorSqm": 8.96,
+    "exteriorDoorByOrientationSqm": {
+      "N": 1.97,
+      "NE": 0,
+      "E": 2.51,
+      "SE": 0,
+      "S": 1.97,
+      "SW": 0,
+      "W": 2.51,
+      "NW": 0
+    },
+    "windowCount": 22,
+    "windowSqm": 64.46,
+    "curtainWallCount": 0,
+    "curtainWallSqm": 0,
+    "curtainWallPlateSqm": 0,
+    "curtainWallBboxSqm": 0,
+    "doorCount": 4,
+    "unsectoredSqm": 0,
+    "unresolvedSqm": 1.49,
+    "probe": {
+      "usable": true,
+      "complete": true,
+      "spaceSolids": 18,
+      "conditionedSpaces": 18
+    }
+  },
+  "openings": [
+    {
+      "id": 6426,
+      "type": "IfcWindow",
+      "name": "M_Fixed:4835mm x 2420mm:4835mm x 2420mm:145788",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#6426",
+      "widthM": 4.835,
+      "heightM": 2.42,
+      "areaSqm": 11.701,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 4.84,
+        "depthM": 0.42,
+        "heightM": 2.42,
+        "bottomM": 0.1
+      },
+      "hostExpressID": 3797,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138062\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "N",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Living Room at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 6531,
+      "type": "IfcWindow",
+      "name": "M_Fixed:4835mm x 2420mm:4835mm x 2420mm:146016",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#6531",
+      "widthM": 4.835,
+      "heightM": 2.42,
+      "areaSqm": 11.701,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 4.84,
+        "depthM": 0.42,
+        "heightM": 2.42,
+        "bottomM": 0.1
+      },
+      "hostExpressID": 4043,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138237\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "S",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Living Room at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 6921,
+      "type": "IfcWindow",
+      "name": "M_Fixed:750mm x 2200mm:750mm x 2200mm:146885",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#6921",
+      "widthM": 0.75,
+      "heightM": 2.2,
+      "areaSqm": 1.65,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.75,
+        "depthM": 0.42,
+        "heightM": 2.2,
+        "bottomM": 0.1
+      },
+      "hostExpressID": 3999,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138157\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Kitchen at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 7025,
+      "type": "IfcWindow",
+      "name": "M_Fixed:750mm x 2200mm:750mm x 2200mm:147051",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#7025",
+      "widthM": 0.75,
+      "heightM": 2.2,
+      "areaSqm": 1.65,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.75,
+        "depthM": 0.42,
+        "heightM": 2.2,
+        "bottomM": 0.1
+      },
+      "hostExpressID": 4087,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138310\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "W",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Kitchen at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 7190,
+      "type": "IfcWindow",
+      "name": "M_Fixed:2800mm x 2410mm:2800mm x 2410mm:147686",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#7190",
+      "widthM": 2.8,
+      "heightM": 2.41,
+      "areaSqm": 6.748,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2.8,
+        "depthM": 0.42,
+        "heightM": 2.41,
+        "bottomM": 3.2
+      },
+      "hostExpressID": 5448,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143410\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "N",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 2 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 7407,
+      "type": "IfcWindow",
+      "name": "M_Fixed:819mm x 759mm:819mm x 759mm:147994",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#7407",
+      "widthM": 0.819,
+      "heightM": 0.759,
+      "areaSqm": 0.622,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.82,
+        "depthM": 0.42,
+        "heightM": 0.76,
+        "bottomM": 3.2
+      },
+      "hostExpressID": 5448,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143410\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "N",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 2 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 7639,
+      "type": "IfcWindow",
+      "name": "M_Casement:819mm x 759mm:819mm x 759mm:148607",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#7639",
+      "widthM": 0.819,
+      "heightM": 0.759,
+      "areaSqm": 0.622,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.82,
+        "depthM": 0.42,
+        "heightM": 0.76,
+        "bottomM": 4.03
+      },
+      "hostExpressID": 5448,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143410\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "N",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 2 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 7743,
+      "type": "IfcWindow",
+      "name": "M_Fixed:819mm x 759mm:819mm x 759mm:148722",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#7743",
+      "widthM": 0.819,
+      "heightM": 0.759,
+      "areaSqm": 0.622,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.82,
+        "depthM": 0.42,
+        "heightM": 0.76,
+        "bottomM": 4.85
+      },
+      "hostExpressID": 5448,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143410\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "N",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 2 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 7795,
+      "type": "IfcWindow",
+      "name": "M_Fixed:2800mm x 2410mm:2800mm x 2410mm:149278",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#7795",
+      "widthM": 2.8,
+      "heightM": 2.41,
+      "areaSqm": 6.748,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2.8,
+        "depthM": 0.42,
+        "heightM": 2.41,
+        "bottomM": 3.2
+      },
+      "hostExpressID": 5548,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143534\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "S",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 2 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 7847,
+      "type": "IfcWindow",
+      "name": "M_Fixed:819mm x 759mm:819mm x 759mm:149537",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#7847",
+      "widthM": 0.819,
+      "heightM": 0.759,
+      "areaSqm": 0.622,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.82,
+        "depthM": 0.42,
+        "heightM": 0.76,
+        "bottomM": 3.2
+      },
+      "hostExpressID": 5548,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143534\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "S",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 2 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 7899,
+      "type": "IfcWindow",
+      "name": "M_Casement:819mm x 759mm:819mm x 759mm:149736",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#7899",
+      "widthM": 0.819,
+      "heightM": 0.759,
+      "areaSqm": 0.622,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.82,
+        "depthM": 0.42,
+        "heightM": 0.76,
+        "bottomM": 4.03
+      },
+      "hostExpressID": 5548,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143534\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "S",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 2 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 7951,
+      "type": "IfcWindow",
+      "name": "M_Fixed:819mm x 759mm:819mm x 759mm:149924",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#7951",
+      "widthM": 0.819,
+      "heightM": 0.759,
+      "areaSqm": 0.622,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.82,
+        "depthM": 0.42,
+        "heightM": 0.76,
+        "bottomM": 4.85
+      },
+      "hostExpressID": 5548,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143534\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "S",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 2 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 21980,
+      "type": "IfcWindow",
+      "name": "M_Fixed:2800mm x 2410mm:2800mm x 2410mm:180318",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#21980",
+      "widthM": 2.8,
+      "heightM": 2.41,
+      "areaSqm": 6.748,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2.8,
+        "depthM": 0.42,
+        "heightM": 2.41,
+        "bottomM": 3.2
+      },
+      "hostExpressID": 5598,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143590\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "W",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 1 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 22032,
+      "type": "IfcWindow",
+      "name": "M_Fixed:819mm x 759mm:819mm x 759mm:180663",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#22032",
+      "widthM": 0.819,
+      "heightM": 0.759,
+      "areaSqm": 0.622,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.82,
+        "depthM": 0.42,
+        "heightM": 0.76,
+        "bottomM": 4.85
+      },
+      "hostExpressID": 5598,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143590\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "W",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 1 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 22084,
+      "type": "IfcWindow",
+      "name": "M_Fixed:819mm x 759mm:819mm x 759mm:180864",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#22084",
+      "widthM": 0.819,
+      "heightM": 0.759,
+      "areaSqm": 0.622,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.82,
+        "depthM": 0.42,
+        "heightM": 0.76,
+        "bottomM": 3.2
+      },
+      "hostExpressID": 5598,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143590\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "W",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 1 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 22136,
+      "type": "IfcWindow",
+      "name": "M_Casement:819mm x 759mm:819mm x 759mm:180994",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#22136",
+      "widthM": 0.819,
+      "heightM": 0.759,
+      "areaSqm": 0.622,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.82,
+        "depthM": 0.42,
+        "heightM": 0.76,
+        "bottomM": 4.03
+      },
+      "hostExpressID": 5598,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143590\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "W",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 1 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 22188,
+      "type": "IfcWindow",
+      "name": "M_Fixed:2800mm x 2410mm:2800mm x 2410mm:181096",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#22188",
+      "widthM": 2.8,
+      "heightM": 2.41,
+      "areaSqm": 6.748,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2.8,
+        "depthM": 0.42,
+        "heightM": 2.41,
+        "bottomM": 3.2
+      },
+      "hostExpressID": 5498,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143478\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 1 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 22240,
+      "type": "IfcWindow",
+      "name": "M_Fixed:819mm x 759mm:819mm x 759mm:181285",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#22240",
+      "widthM": 0.819,
+      "heightM": 0.759,
+      "areaSqm": 0.622,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.82,
+        "depthM": 0.42,
+        "heightM": 0.76,
+        "bottomM": 4.85
+      },
+      "hostExpressID": 5498,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143478\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 1 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 22292,
+      "type": "IfcWindow",
+      "name": "M_Casement:819mm x 759mm:819mm x 759mm:181548",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#22292",
+      "widthM": 0.819,
+      "heightM": 0.759,
+      "areaSqm": 0.622,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.82,
+        "depthM": 0.42,
+        "heightM": 0.76,
+        "bottomM": 4.03
+      },
+      "hostExpressID": 5498,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143478\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 1 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 22344,
+      "type": "IfcWindow",
+      "name": "M_Fixed:819mm x 759mm:819mm x 759mm:181583",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#22344",
+      "widthM": 0.819,
+      "heightM": 0.759,
+      "areaSqm": 0.622,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.82,
+        "depthM": 0.42,
+        "heightM": 0.76,
+        "bottomM": 3.2
+      },
+      "hostExpressID": 5498,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143478\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 1 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 22396,
+      "type": "IfcWindow",
+      "name": "M_Fixed:750mm x 2200mm:750mm x 2200mm:181930",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#22396",
+      "widthM": 0.75,
+      "heightM": 2.2,
+      "areaSqm": 1.65,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.75,
+        "depthM": 0.42,
+        "heightM": 2.2,
+        "bottomM": 3.2
+      },
+      "hostExpressID": 5498,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143478\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 2 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 22448,
+      "type": "IfcWindow",
+      "name": "M_Fixed:750mm x 2200mm:750mm x 2200mm:182101",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#22448",
+      "widthM": 0.75,
+      "heightM": 2.2,
+      "areaSqm": 1.65,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.75,
+        "depthM": 0.42,
+        "heightM": 2.2,
+        "bottomM": 3.2
+      },
+      "hostExpressID": 5598,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143590\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "W",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bedroom 2 at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 6652,
+      "type": "IfcDoor",
+      "name": "M_Single-Flush:1250mm x 2010mm:1250mm x 2010mm:146596",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#6652",
+      "widthM": 1.25,
+      "heightM": 2.01,
+      "areaSqm": 2.512,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.4,
+        "depthM": 0.47,
+        "heightM": 2.09,
+        "bottomM": 0
+      },
+      "hostExpressID": 3999,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138157\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Foyer at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 6757,
+      "type": "IfcDoor",
+      "name": "M_Single-Flush:1250mm x 2010mm:1250mm x 2010mm:146678",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#6757",
+      "widthM": 1.25,
+      "heightM": 2.01,
+      "areaSqm": 2.512,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.4,
+        "depthM": 0.47,
+        "heightM": 2.09,
+        "bottomM": 0
+      },
+      "hostExpressID": 4087,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138310\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "W",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Foyer at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 8066,
+      "type": "IfcDoor",
+      "name": "M_Single-Flush:0762 x 2032mm:0762 x 2032mm:150173",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://Duplex_A_20110907.ifc#8066",
+      "widthM": 0.762,
+      "heightM": 2.032,
+      "areaSqm": 1.548,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.91,
+        "depthM": 0.17,
+        "heightM": 2.11,
+        "bottomM": 0
+      },
+      "hostExpressID": 4508,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):139682\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):139682\" is not in the exterior-wall set"
+    },
+    {
+      "id": 8169,
+      "type": "IfcDoor",
+      "name": "M_Single-Flush:0762 x 2032mm:0762 x 2032mm:150257",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://Duplex_A_20110907.ifc#8169",
+      "widthM": 0.762,
+      "heightM": 2.032,
+      "areaSqm": 1.548,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.91,
+        "depthM": 0.17,
+        "heightM": 2.11,
+        "bottomM": 0
+      },
+      "hostExpressID": 4219,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):139143\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):139143\" is not in the exterior-wall set"
+    },
+    {
+      "id": 8283,
+      "type": "IfcDoor",
+      "name": "M_Single-Flush:0864 x 2032mm:0864 x 2032mm:150378",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://Duplex_A_20110907.ifc#8283",
+      "widthM": 0.864,
+      "heightM": 2.032,
+      "areaSqm": 1.756,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.02,
+        "depthM": 0.17,
+        "heightM": 2.11,
+        "bottomM": 3.1
+      },
+      "hostExpressID": 5642,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):143856\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):143856\" is not in the exterior-wall set"
+    },
+    {
+      "id": 8386,
+      "type": "IfcDoor",
+      "name": "M_Single-Flush:0864 x 2032mm:0864 x 2032mm:150478",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://Duplex_A_20110907.ifc#8386",
+      "widthM": 0.864,
+      "heightM": 2.032,
+      "areaSqm": 1.756,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.02,
+        "depthM": 0.17,
+        "heightM": 2.11,
+        "bottomM": 3.1
+      },
+      "hostExpressID": 5903,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):144518\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):144518\" is not in the exterior-wall set"
+    },
+    {
+      "id": 15962,
+      "type": "IfcDoor",
+      "name": "M_Single-Flush:0864 x 2032mm:0864 x 2032mm:159734",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://Duplex_A_20110907.ifc#15962",
+      "widthM": 0.864,
+      "heightM": 2.032,
+      "areaSqm": 1.756,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.02,
+        "depthM": 0.17,
+        "heightM": 2.11,
+        "bottomM": 3.1
+      },
+      "hostExpressID": 5731,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):143960\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):143960\" is not in the exterior-wall set"
+    },
+    {
+      "id": 16013,
+      "type": "IfcDoor",
+      "name": "M_Single-Flush:0864 x 2032mm:0864 x 2032mm:159834",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://Duplex_A_20110907.ifc#16013",
+      "widthM": 0.864,
+      "heightM": 2.032,
+      "areaSqm": 1.756,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.02,
+        "depthM": 0.17,
+        "heightM": 2.11,
+        "bottomM": 3.1
+      },
+      "hostExpressID": 5992,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):144633\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):144633\" is not in the exterior-wall set"
+    },
+    {
+      "id": 16064,
+      "type": "IfcDoor",
+      "name": "M_Single-Flush:0864 x 2032mm:0864 x 2032mm:160065",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://Duplex_A_20110907.ifc#16064",
+      "widthM": 0.864,
+      "heightM": 2.032,
+      "areaSqm": 1.756,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.02,
+        "depthM": 0.17,
+        "heightM": 2.11,
+        "bottomM": 3.1
+      },
+      "hostExpressID": 5687,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):143921\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):143921\" is not in the exterior-wall set"
+    },
+    {
+      "id": 16115,
+      "type": "IfcDoor",
+      "name": "M_Single-Flush:0864 x 2032mm:0864 x 2032mm:160208",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://Duplex_A_20110907.ifc#16115",
+      "widthM": 0.864,
+      "heightM": 2.032,
+      "areaSqm": 1.756,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.02,
+        "depthM": 0.17,
+        "heightM": 2.11,
+        "bottomM": 3.1
+      },
+      "hostExpressID": 5948,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):144586\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):144586\" is not in the exterior-wall set"
+    },
+    {
+      "id": 21821,
+      "type": "IfcDoor",
+      "name": "M_Single-Glass 1:0813 x 2420mm:0813 x 2420mm:171853",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#21821",
+      "widthM": 0.813,
+      "heightM": 2.42,
+      "areaSqm": 1.967,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.47,
+        "heightM": 2.5,
+        "bottomM": 0
+      },
+      "hostExpressID": 3797,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138062\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "N",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Living Room at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 21929,
+      "type": "IfcDoor",
+      "name": "M_Single-Glass 1:0813 x 2420mm:0813 x 2420mm:171975",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://Duplex_A_20110907.ifc#21929",
+      "widthM": 0.813,
+      "heightM": 2.42,
+      "areaSqm": 1.967,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.47,
+        "heightM": 2.5,
+        "bottomM": 0
+      },
+      "hostExpressID": 4043,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138237\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "S",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Living Room at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 35318,
+      "type": "IfcDoor",
+      "name": "M_Single-Flush:0762 x 2032mm:0762 x 2032mm:203720",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://Duplex_A_20110907.ifc#35318",
+      "widthM": 0.762,
+      "heightM": 2.032,
+      "areaSqm": 1.548,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.91,
+        "depthM": 0.17,
+        "heightM": 2.11,
+        "bottomM": 3.1
+      },
+      "hostExpressID": 35199,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):203347\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):203347\" is not in the exterior-wall set"
+    },
+    {
+      "id": 35413,
+      "type": "IfcDoor",
+      "name": "M_Single-Flush:0762 x 2032mm:0762 x 2032mm:204034",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://Duplex_A_20110907.ifc#35413",
+      "widthM": 0.762,
+      "heightM": 2.032,
+      "areaSqm": 1.548,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.91,
+        "depthM": 0.17,
+        "heightM": 2.11,
+        "bottomM": 3.1
+      },
+      "hostExpressID": 35357,
+      "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):203998\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):203998\" is not in the exterior-wall set"
+    }
+  ],
+  "unresolved": [
+    {
+      "id": 23162,
+      "type": "IfcWindow",
+      "name": "M_Skylight:1180 x 1170mm:1180 x 1170mm:185337",
+      "kind": "glazing",
+      "isExternal": false,
+      "ref": "ifc://Duplex_A_20110907.ifc#23162",
+      "widthM": 1.173,
+      "heightM": 0.635,
+      "areaSqm": 0.744,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.22,
+        "depthM": 1.17,
+        "heightM": 0.18,
+        "bottomM": 6.46
+      },
+      "reason": "fills host IfcRoof \"Basic Roof:Live Roof over Wood Joist Flat Roof:184483\" is not in the exterior-wall set; plan footprint 1.22 × 1.17 m is not a flat opening in a cardinal wall (corner, splayed or roof)"
+    },
+    {
+      "id": 23251,
+      "type": "IfcWindow",
+      "name": "M_Skylight:1180 x 1170mm:1180 x 1170mm:185718",
+      "kind": "glazing",
+      "isExternal": false,
+      "ref": "ifc://Duplex_A_20110907.ifc#23251",
+      "widthM": 1.173,
+      "heightM": 0.635,
+      "areaSqm": 0.744,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.22,
+        "depthM": 1.17,
+        "heightM": 0.18,
+        "bottomM": 6.46
+      },
+      "reason": "fills host IfcRoof \"Basic Roof:Live Roof over Wood Joist Flat Roof:184483\" is not in the exterior-wall set; plan footprint 1.22 × 1.17 m is not a flat opening in a cardinal wall (corner, splayed or roof)"
+    }
+  ]
+}

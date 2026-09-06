@@ -1,0 +1,822 @@
+{
+  "kind": "bimfit_reference_building_manifest",
+  "schemaVersion": 1,
+  "id": "duplex-apartment",
+  "name": {
+    "ko": "듀플렉스 아파트",
+    "en": "Duplex Apartment"
+  },
+  "summary": {
+    "ko": "buildingSMART 공개 표준 모델. 설비·전기·배관 모델을 모두 갖춘 2세대 주택.",
+    "en": "A two-dwelling house released as an open standard model, with its mechanical, electrical and plumbing models intact."
+  },
+  "useType": "apartment_building",
+  "licence": "CC BY 4.0",
+  "attribution": "BSI (2020) \"Duplex Apartment Test Files\", buildingSMART International — https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+  "sourceUrl": "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+  "generatedAt": "2026-09-04T00:00:00.000Z",
+  "sourceFiles": [
+    {
+      "role": "architectural",
+      "fileName": "Duplex_A_20110907.ifc",
+      "sha256": "b347a2c8aa8fff6db896a4417a9c50c22ac0ccd7c5cfc22b99b8d29336c606ed",
+      "byteLength": 2380763,
+      "units": {
+        "lengthToMetres": 1,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "METRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "rooms",
+      "fileName": "Duplex_M_20111024_ROOMS_AND_SPACES.ifc",
+      "sha256": "3cd577ecff9daf91632789a408070251a431b198de7be47f64e01c7fda1be92b",
+      "byteLength": 8781887,
+      "units": {
+        "lengthToMetres": 1,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "METRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "hvac",
+      "fileName": "Duplex_MEP_20110907.ifc",
+      "sha256": "13976a8e223f177a6d7123679e4b02e750cd90c13f7bb20c593be125d9407119",
+      "byteLength": 17871432,
+      "units": {
+        "lengthToMetres": 1,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "METRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "electrical",
+      "fileName": "Duplex_Electrical_20121207.ifc",
+      "sha256": "d47b014ed5b3428496683ee75e4664013f6df8237ea571b8d13f877cea0b7a94",
+      "byteLength": 1602758,
+      "units": {
+        "lengthToMetres": 0.3048,
+        "areaToSquareMetres": 0.09290304,
+        "lengthUnitName": "FOOT",
+        "areaUnitName": "SQUARE FOOT",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    },
+    {
+      "role": "plumbing",
+      "fileName": "Duplex_Plumbing_20121113.ifc",
+      "sha256": "abfaf5c0979b6b4b05182aec7ada8945374bdb414db76c763724d549b41b212b",
+      "byteLength": 31556138,
+      "units": {
+        "lengthToMetres": 0.001,
+        "areaToSquareMetres": 0.000001,
+        "lengthUnitName": "MILLIMETRE",
+        "areaUnitName": "MILLISQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    }
+  ],
+  "counts": {
+    "storeys": 3,
+    "spacesTotal": 37,
+    "spacesFloor": 18,
+    "assemblies": 15,
+    "externalElements": 33,
+    "exteriorWalls": 12,
+    "windows": 22,
+    "exteriorCurtainWalls": 0,
+    "exteriorDoors": 4
+  },
+  "areas": {
+    "totalFloorAreaSqm": 284.98,
+    "areaPlanTotalSqm": 799.76,
+    "exteriorWallNetSqm": 267.16,
+    "exteriorWallBelowRoofSqm": 211.61,
+    "exteriorWallAboveRoofSqm": 55.56,
+    "exteriorWallByOrientationSqm": {
+      "N": 34.67,
+      "NE": 0,
+      "E": 100.46,
+      "SE": 0,
+      "S": 33.12,
+      "SW": 0,
+      "W": 98.91,
+      "NW": 0
+    },
+    "glazingApertureSqm": 64.46,
+    "glazingByOrientationSqm": {
+      "N": 20.32,
+      "NE": 0,
+      "E": 11.91,
+      "SE": 0,
+      "S": 20.32,
+      "SW": 0,
+      "W": 11.91,
+      "NW": 0
+    },
+    "exteriorDoorSqm": 8.96,
+    "exteriorDoorByOrientationSqm": {
+      "N": 1.97,
+      "NE": 0,
+      "E": 2.51,
+      "SE": 0,
+      "S": 1.97,
+      "SW": 0,
+      "W": 2.51,
+      "NW": 0
+    },
+    "openingsNote": "Glazing aperture 64.46 m² = 22 IfcWindow at OverallWidth × OverallHeight (64.46 m²). Exterior doors are separate — a door is aperture, not glazing: 4 IfcDoor, 8.96 m², OverallWidth × OverallHeight. Host wall by IfcRelFillsElement → IfcOpeningElement → IfcRelVoidsElement (26 openings). Sector is the host wall's, from the same orientation pass as the wall split. Envelope by a both-sides probe against the conditioned IfcSpace solids (18 of 18 have geometry); this file has no IfcCurtainWall; 10 openings hosted in walls outside the exterior set; 2 unresolved (1.49 m² where a size is stated). IsExternal is reported per row and never used as a filter — it means \"not an interior partition\" to an authoring tool, never \"bounds conditioned space against outdoor air\". It marks 4 door(s) here; 4 confirm against an exterior wall. Rows in openings.json.",
+    "conditionedVolumeGrossM3": 854.79,
+    "roomVolumeNetM3": 639.88,
+    "volumeNote": "Gross from 18 spaces (floor area × storey height; voids, and rooms taller than their storey with no void above, as their own solids); net from 18 spaces (16 from own solid, 2 from floor area × solid height, solid not closed), ROOF excluded; a further 18 rows are the authoring tool's analytical spaces standing over these same rooms and are excluded from both figures, because that is the same air counted twice; 2 solids failed the closed-mesh test and are counted as floor area × their own height. A closed tessellation's signed volume is exact.",
+    "roofProjectedSqm": 132.93,
+    "roofProjectedByFamilySqm": {
+      "Basic Roof:Live Roof over Wood Joist Flat Roof": 132.93
+    },
+    "roofElementSumSqm": 132.93,
+    "roofUnionSqm": 132.93,
+    "roofSurfaceSqm": 132.93,
+    "roofSurfaceByFamilySqm": {
+      "Basic Roof:Live Roof over Wood Joist Flat Roof": 132.93
+    },
+    "roofNote": "Plan shadow per element (union of its projected triangles, ifc-plan-shadow.mjs): 1 elements — 1 IfcSlab.PredefinedType=ROOF. roofProjectedSqm sums 1 roof type(s), each as the union of its elements; the elements themselves sum to 132.93 m² (elements of one type overlapping in plan) and all types together cover 132.93 m² (one type above another). surfaceSqm is each element's true one-sheet surface (Σ area of its upward faces; ÷ 2 where a surface model has no downward face and both sheets are wound upward; ÷ the coverage where its parts cover its shadow more than once, as stacked layer solids do — surfaceBasis says which), summing to 132.93 m²; a flat deck's surface equals its shadow, a pitched roof's exceeds it. 1 IfcRoof carry no geometry of their own and are measured through the IfcSlab ROOF parts they aggregate. ",
+    "groundSlabSqm": 129.69,
+    "groundSlabSumSqm": 256.22,
+    "groundPerimeterM": 69.1,
+    "groundHolePerimeterM": 0,
+    "groundNote": "IfcSlab (not ROOF or LANDING) on storeys at or below Level 1 (0 m): 10 candidate(s). A slab counts as ground envelope when a conditioned space stands on it — its shadow overlaps a conditioned ground-storey space footprint (8 of 8 such spaces have one: 8 solid) or an IfcRelSpaceBoundary names it as bounding one. IsExternal is not consulted. 8 counted, 2 excluded: \"Floor:150mm Exterior Slab on Grade:216507\" 25.42 m², \"Floor:150mm Exterior Slab on Grade:216552\" 25.42 m². groundSlabSqm is the union of the counted shadows (they sum to 256.22 m²; stacked build-up layers count once); groundPerimeterM is the outline's outer rings (2 polygons)."
+  },
+  "assemblies": [
+    {
+      "id": "assembly-basic-wall-exterior-brick-on-block",
+      "name": "Basic Wall:Exterior - Brick on Block",
+      "totalThicknessM": 0.417,
+      "layers": [
+        {
+          "name": "Masonry - Brick",
+          "thicknessM": 0.092,
+          "ref": "ifc://Duplex_A_20110907.ifc#3892"
+        },
+        {
+          "name": "Misc. Air Layers - Air Space",
+          "thicknessM": 0.025,
+          "ref": "ifc://Duplex_A_20110907.ifc#3901"
+        },
+        {
+          "name": "Insulation / Thermal Barriers - Rigid insulation",
+          "thicknessM": 0.05,
+          "ref": "ifc://Duplex_A_20110907.ifc#3916"
+        },
+        {
+          "name": "Masonry - Concrete Block",
+          "thicknessM": 0.193,
+          "ref": "ifc://Duplex_A_20110907.ifc#3931"
+        },
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.041,
+          "ref": "ifc://Duplex_A_20110907.ifc#3940"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Duplex_A_20110907.ifc#3981"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#3982"
+    },
+    {
+      "id": "assembly-basic-wall-interior-partition-92mm-stud",
+      "name": "Basic Wall:Interior - Partition (92mm Stud)",
+      "totalThicknessM": 0.124,
+      "layers": [
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Duplex_A_20110907.ifc#4199"
+        },
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.092,
+          "ref": "ifc://Duplex_A_20110907.ifc#4200"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Duplex_A_20110907.ifc#4201"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#4202"
+    },
+    {
+      "id": "assembly-basic-wall-party-wall-cmu-residential-unit-dimising-wall",
+      "name": "Basic Wall:Party Wall - CMU Residential Unit Dimising Wall",
+      "totalThicknessM": 0.55,
+      "layers": [
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Duplex_A_20110907.ifc#4353"
+        },
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.041,
+          "ref": "ifc://Duplex_A_20110907.ifc#4354"
+        },
+        {
+          "name": "Masonry - Concrete Block",
+          "thicknessM": 0.193,
+          "ref": "ifc://Duplex_A_20110907.ifc#4355"
+        },
+        {
+          "name": "Misc. Air Layers - Air Space",
+          "thicknessM": 0.05,
+          "ref": "ifc://Duplex_A_20110907.ifc#4356"
+        },
+        {
+          "name": "Masonry - Concrete Block",
+          "thicknessM": 0.193,
+          "ref": "ifc://Duplex_A_20110907.ifc#4357"
+        },
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.041,
+          "ref": "ifc://Duplex_A_20110907.ifc#4358"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Duplex_A_20110907.ifc#4359"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#4360"
+    },
+    {
+      "id": "assembly-basic-wall-foundation-concrete-417mm",
+      "name": "Basic Wall:Foundation - Concrete (417mm)",
+      "totalThicknessM": 0.417,
+      "layers": [
+        {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.417,
+          "ref": "ifc://Duplex_A_20110907.ifc#4800"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#4801"
+    },
+    {
+      "id": "assembly-basic-wall-foundation-concrete-435mm",
+      "name": "Basic Wall:Foundation - Concrete (435mm)",
+      "totalThicknessM": 0.435,
+      "layers": [
+        {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.435,
+          "ref": "ifc://Duplex_A_20110907.ifc#5039"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#5040"
+    },
+    {
+      "id": "assembly-floor-127mm-slab-on-grade",
+      "name": "Floor:127mm Slab on Grade",
+      "totalThicknessM": 0.127,
+      "layers": [
+        {
+          "name": "Concrete",
+          "thicknessM": 0.127,
+          "ref": "ifc://Duplex_A_20110907.ifc#5243"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#5244"
+    },
+    {
+      "id": "assembly-basic-wall-interior-plumbing-152mm-stud",
+      "name": "Basic Wall:Interior - Plumbing (152mm Stud)",
+      "totalThicknessM": 0.184,
+      "layers": [
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Duplex_A_20110907.ifc#5839"
+        },
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.152,
+          "ref": "ifc://Duplex_A_20110907.ifc#5840"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Duplex_A_20110907.ifc#5841"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#5842"
+    },
+    {
+      "id": "assembly-floor-residential-wood-joist-with-subflooring",
+      "name": "Floor:Residential - Wood Joist with Subflooring",
+      "totalThicknessM": 0.305,
+      "layers": [
+        {
+          "name": "Wood - Sheathing - plywood",
+          "thicknessM": 0.019,
+          "ref": "ifc://Duplex_A_20110907.ifc#6212"
+        },
+        {
+          "name": "Wood - Dimensional Lumber",
+          "thicknessM": 0.286,
+          "ref": "ifc://Duplex_A_20110907.ifc#6221"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#6222"
+    },
+    {
+      "id": "assembly-floor-finish-floor-wood",
+      "name": "Floor:Finish Floor - Wood",
+      "totalThicknessM": 0.019,
+      "layers": [
+        {
+          "name": "Wood - Flooring",
+          "thicknessM": 0.016,
+          "ref": "ifc://Duplex_A_20110907.ifc#20870"
+        },
+        {
+          "name": "Insulation / Thermal Barriers - Semi-rigid insulation",
+          "thicknessM": 0.003,
+          "ref": "ifc://Duplex_A_20110907.ifc#20879"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#20880"
+    },
+    {
+      "id": "assembly-floor-finish-floor-ceramic-tile",
+      "name": "Floor:Finish Floor - Ceramic Tile",
+      "totalThicknessM": 0.013,
+      "layers": [
+        {
+          "name": "Ceramic Tile",
+          "thicknessM": 0.01,
+          "ref": "ifc://Duplex_A_20110907.ifc#21278"
+        },
+        {
+          "name": "Masonry - Grout",
+          "thicknessM": 0.003,
+          "ref": "ifc://Duplex_A_20110907.ifc#21319"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#21320"
+    },
+    {
+      "id": "assembly-basic-roof-live-roof-over-wood-joist-flat-roof",
+      "name": "Basic Roof:Live Roof over Wood Joist Flat Roof",
+      "totalThicknessM": 0.457,
+      "layers": [
+        {
+          "name": "Site - Grass",
+          "thicknessM": 0.064,
+          "ref": "ifc://Duplex_A_20110907.ifc#22624"
+        },
+        {
+          "name": "Roofing - Barrier",
+          "thicknessM": 0.006,
+          "ref": "ifc://Duplex_A_20110907.ifc#22633"
+        },
+        {
+          "name": "Roofing - EPDM Membrane",
+          "thicknessM": 0.006,
+          "ref": "ifc://Duplex_A_20110907.ifc#22642"
+        },
+        {
+          "name": "Insulation / Thermal Barriers - Rigid insulation",
+          "thicknessM": 0.076,
+          "ref": "ifc://Duplex_A_20110907.ifc#22643"
+        },
+        {
+          "name": "Wood - Sheathing - plywood",
+          "thicknessM": 0.019,
+          "ref": "ifc://Duplex_A_20110907.ifc#22644"
+        },
+        {
+          "name": "Wood - Dimensional Lumber",
+          "thicknessM": 0.286,
+          "ref": "ifc://Duplex_A_20110907.ifc#22645"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#22646"
+    },
+    {
+      "id": "assembly-compound-ceiling-gypsum-board",
+      "name": "Compound Ceiling:Gypsum Board",
+      "totalThicknessM": 0.057,
+      "layers": [
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.045,
+          "ref": "ifc://Duplex_A_20110907.ifc#23672"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.012,
+          "ref": "ifc://Duplex_A_20110907.ifc#23673"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#23674"
+    },
+    {
+      "id": "assembly-basic-wall-interior-furring-152-mm-stud",
+      "name": "Basic Wall:Interior - Furring (152 mm Stud)",
+      "totalThicknessM": 0.152,
+      "layers": [
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.136,
+          "ref": "ifc://Duplex_A_20110907.ifc#24661"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Duplex_A_20110907.ifc#24662"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#24663"
+    },
+    {
+      "id": "assembly-floor-150mm-exterior-slab-on-grade",
+      "name": "Floor:150mm Exterior Slab on Grade",
+      "totalThicknessM": 0.15,
+      "layers": [
+        {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.15,
+          "ref": "ifc://Duplex_A_20110907.ifc#37847"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#37848"
+    },
+    {
+      "id": "assembly-basic-wall-interior-furring-38-mm-stud",
+      "name": "Basic Wall:Interior - Furring (38 mm Stud)",
+      "totalThicknessM": 0.054,
+      "layers": [
+        {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.038,
+          "ref": "ifc://Duplex_A_20110907.ifc#37951"
+        },
+        {
+          "name": "Plasterboard",
+          "thicknessM": 0.016,
+          "ref": "ifc://Duplex_A_20110907.ifc#37952"
+        }
+      ],
+      "ref": "ifc://Duplex_A_20110907.ifc#37953"
+    }
+  ],
+  "orientation": {
+    "trueNorthDeg": null,
+    "northAssumed": true,
+    "weakOutwardCount": 0,
+    "offCardinalCount": 0,
+    "offCardinalSqm": 0,
+    "wallCount": 12,
+    "note": "Azimuths are clockwise from north, where north is the model's -Z after web-ifc's Z-up to Y-up conversion. Outward face inferred by comparing each face's centroid with the building centre, which is correct for a convex plan and can be wrong at a re-entrant corner."
+  },
+  "site": {
+    "declaredSiteName": "Default",
+    "declaredLatitudeDeg": 41.8744,
+    "declaredLongitudeDeg": -87.63939999972223,
+    "locationIsAuthoringDefault": true,
+    "locationNote": "IfcSite is an unfilled Autodesk Revit Architecture 2011 template: its Name is the literal 'Default', its postal address line is still the placeholder 'Enter address here', and its RefElevation is a signed zero. The 41.8744 N, 87.6394 W coordinate and the 'Chicago', 'IL' town and region are the template's own, not a survey and not a statement about this building, so no position, orientation, climate or solar geometry may be taken from any of them. TrueNorth is absent ($) in both the Model and Plan representation contexts, so the model states no orientation either.",
+    "statedTown": null,
+    "trueNorthStated": false
+  },
+  "storeys": [
+    {
+      "id": "storey-level-1",
+      "name": "Level 1",
+      "elevationM": 0,
+      "floorToFloorHeightM": 3.1,
+      "spaceCount": 15,
+      "spacesCountingAsFloor": 8,
+      "floorAreaSqm": 141.79,
+      "ref": "ifc://Duplex_M_20111024_ROOMS_AND_SPACES.ifc#39"
+    },
+    {
+      "id": "storey-level-2",
+      "name": "Level 2",
+      "elevationM": 3.1,
+      "floorToFloorHeightM": 2.9,
+      "spaceCount": 20,
+      "spacesCountingAsFloor": 10,
+      "floorAreaSqm": 143.18,
+      "ref": "ifc://Duplex_M_20111024_ROOMS_AND_SPACES.ifc#43"
+    },
+    {
+      "id": "storey-roof",
+      "name": "Roof",
+      "elevationM": 6,
+      "floorToFloorHeightM": 0,
+      "spaceCount": 2,
+      "spacesCountingAsFloor": 0,
+      "floorAreaSqm": 0,
+      "ref": "ifc://Duplex_M_20111024_ROOMS_AND_SPACES.ifc#47"
+    }
+  ],
+  "spacesFile": "spaces.json",
+  "roofs": [
+    {
+      "id": "roof-22492",
+      "name": "Basic Roof:Live Roof over Wood Joist Flat Roof:184483",
+      "family": "Basic Roof:Live Roof over Wood Joist Flat Roof",
+      "elementType": "IfcSlab",
+      "predefinedType": "ROOF",
+      "basis": "IfcSlab.PredefinedType=ROOF",
+      "storeyId": "storey-roof",
+      "projectedSqm": 132.93,
+      "upFacingProjectedSqm": 132.93,
+      "tiltDeg": 0,
+      "surfaceSqm": 132.93,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": "ifc://Duplex_A_20110907.ifc#22475",
+      "ref": "ifc://Duplex_A_20110907.ifc#22492"
+    }
+  ],
+  "groundSlabs": [
+    {
+      "id": "slab-5165",
+      "name": "Floor:127mm Slab on Grade:141232",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-level-1",
+      "projectedSqm": 64.78,
+      "countsAsGround": true,
+      "evidence": "63.17 m² under 4 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://Duplex_A_20110907.ifc#5165"
+    },
+    {
+      "id": "slab-5267",
+      "name": "Floor:127mm Slab on Grade:143106",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-level-1",
+      "projectedSqm": 64.91,
+      "countsAsGround": true,
+      "evidence": "63.17 m² under 4 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://Duplex_A_20110907.ifc#5267"
+    },
+    {
+      "id": "slab-21401",
+      "name": "Floor:Finish Floor - Wood:170352",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-level-1",
+      "projectedSqm": 47.15,
+      "countsAsGround": true,
+      "evidence": "47.06 m² under 2 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://Duplex_A_20110907.ifc#21401"
+    },
+    {
+      "id": "slab-21449",
+      "name": "Floor:Finish Floor - Ceramic Tile:170785",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-level-1",
+      "projectedSqm": 12.95,
+      "countsAsGround": true,
+      "evidence": "12.95 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://Duplex_A_20110907.ifc#21449"
+    },
+    {
+      "id": "slab-21497",
+      "name": "Floor:Finish Floor - Ceramic Tile:171230",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-level-1",
+      "projectedSqm": 3.16,
+      "countsAsGround": true,
+      "evidence": "3.16 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://Duplex_A_20110907.ifc#21497"
+    },
+    {
+      "id": "slab-21545",
+      "name": "Floor:Finish Floor - Ceramic Tile:171261",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-level-1",
+      "projectedSqm": 3.16,
+      "countsAsGround": true,
+      "evidence": "3.16 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://Duplex_A_20110907.ifc#21545"
+    },
+    {
+      "id": "slab-21610",
+      "name": "Floor:Finish Floor - Wood:171292",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-level-1",
+      "projectedSqm": 47.15,
+      "countsAsGround": true,
+      "evidence": "47.06 m² under 2 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://Duplex_A_20110907.ifc#21610"
+    },
+    {
+      "id": "slab-21658",
+      "name": "Floor:Finish Floor - Ceramic Tile:171444",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-level-1",
+      "projectedSqm": 12.95,
+      "countsAsGround": true,
+      "evidence": "12.95 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://Duplex_A_20110907.ifc#21658"
+    },
+    {
+      "id": "slab-37777",
+      "name": "Floor:150mm Exterior Slab on Grade:216507",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-level-1",
+      "projectedSqm": 25.42,
+      "countsAsGround": false,
+      "evidence": null,
+      "excludedReason": "no conditioned space stands on it: no conditioned ground-storey footprint overlaps its shadow and no IfcRelSpaceBoundary names it",
+      "ref": "ifc://Duplex_A_20110907.ifc#37777"
+    },
+    {
+      "id": "slab-37864",
+      "name": "Floor:150mm Exterior Slab on Grade:216552",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-level-1",
+      "projectedSqm": 25.42,
+      "countsAsGround": false,
+      "evidence": null,
+      "excludedReason": "no conditioned space stands on it: no conditioned ground-storey footprint overlaps its shadow and no IfcRelSpaceBoundary names it",
+      "ref": "ifc://Duplex_A_20110907.ifc#37864"
+    }
+  ],
+  "openingsFile": "openings.json",
+  "serviceLayers": [
+    {
+      "id": "hvac",
+      "ko": "냉난방환기",
+      "en": "HVAC",
+      "file": "hvac.glb",
+      "byteLength": 6587072,
+      "triangleCount": 107482,
+      "groups": [
+        "duct",
+        "valve",
+        "terminal",
+        "fitting",
+        "plant",
+        "duct-instanced",
+        "valve-instanced",
+        "terminal-instanced",
+        "fitting-instanced",
+        "plant-instanced"
+      ],
+      "elements": 924,
+      "distinctGeometries": 709,
+      "instancedShapes": 174,
+      "instancedPlacements": 1180,
+      "drawCalls": 179,
+      "flow": {
+        "file": null,
+        "ports": 0,
+        "connections": 0,
+        "directedEdges": 0,
+        "drawnEdges": 0,
+        "bidirectionalEdges": 0,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 0,
+        "supplySegments": 0,
+        "returnSegments": 0,
+        "reason": "The model declares no distribution ports, so it states no network to trace.",
+        "wavelengthM": null
+      }
+    },
+    {
+      "id": "electrical",
+      "ko": "전기",
+      "en": "Electrical",
+      "file": "electrical.glb",
+      "byteLength": 709764,
+      "triangleCount": 9651,
+      "groups": [
+        "terminal",
+        "plant",
+        "valve-instanced",
+        "terminal-instanced",
+        "plant-instanced",
+        "equipment-instanced"
+      ],
+      "elements": 100,
+      "distinctGeometries": 60,
+      "instancedShapes": 53,
+      "instancedPlacements": 248,
+      "drawCalls": 55,
+      "flow": {
+        "file": null,
+        "ports": 0,
+        "connections": 0,
+        "directedEdges": 0,
+        "drawnEdges": 0,
+        "bidirectionalEdges": 0,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 0,
+        "supplySegments": 0,
+        "returnSegments": 0,
+        "reason": "The model declares no distribution ports, so it states no network to trace.",
+        "wavelengthM": null
+      }
+    },
+    {
+      "id": "plumbing",
+      "ko": "급탕/배관",
+      "en": "Plumbing",
+      "file": "plumbing.glb",
+      "byteLength": 7744352,
+      "triangleCount": 105497,
+      "groups": [
+        "duct",
+        "valve",
+        "fitting",
+        "valve-instanced",
+        "terminal-instanced",
+        "fitting-instanced",
+        "plant-instanced"
+      ],
+      "elements": 498,
+      "distinctGeometries": 473,
+      "instancedShapes": 155,
+      "instancedPlacements": 681,
+      "drawCalls": 158,
+      "flow": {
+        "file": "plumbing-flow.json",
+        "ports": 970,
+        "connections": 485,
+        "directedEdges": 190,
+        "drawnEdges": 190,
+        "bidirectionalEdges": 295,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 0,
+        "supplySegments": 0,
+        "returnSegments": 190,
+        "reason": null,
+        "wavelengthM": 26
+      }
+    }
+  ],
+  "model": {
+    "file": "model.glb",
+    "byteLength": 505884,
+    "triangleCount": 7938,
+    "groups": [
+      "slab",
+      "wall",
+      "stair",
+      "glazing",
+      "door",
+      "mullion"
+    ],
+    "note": "Building fabric only: walls, slabs, roofs and openings. Furniture, fixtures, railings and the structural frame are not in this file.",
+    "serviceNote": "Service layers carry every component at the model's own geometry; a repeated shape is stored once and placed by instancing."
+  },
+  "invalidDiagnostics": {
+    "note": "Space-boundary strip sums. INVALID as envelope areas: room-height not storey-height, gross of openings, double-counted where boundaries overlap, and blind to any wall without a resolvable boundary surface. Diagnostic only; never an emitted area.",
+    "rawSumSqm": 600.42,
+    "rawSumByElementType": {
+      "IfcWallStandardCase": 456.582,
+      "IfcDoor": 12.308,
+      "IfcWindow": 63.57,
+      "IfcWall": 67.96
+    }
+  }
+}
