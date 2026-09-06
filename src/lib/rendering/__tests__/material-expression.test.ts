@@ -117,6 +117,9 @@ describe("illustrative material resource ownership", () => {
     expect(prepared.meshes[1].material).not.toBeInstanceOf(THREE.MeshPhysicalMaterial);
     expect(prepared.meshes[1].material.opacity).toBe(1);
     expect(prepared.meshes[1].material.metalness).toBeGreaterThan(0.5);
+    expect(prepared.meshes[1].material.map).not.toBeNull();
+    expect(prepared.meshes[1].material.normalMap).not.toBeNull();
+    expect(prepared.meshes[1].material.roughnessMap).not.toBeNull();
     expect(prepared.meshes[2].material).not.toBeInstanceOf(THREE.MeshPhysicalMaterial);
     updateMaterialExpression(prepared, clinic.id, true, NO_RETROFIT_VISUALS);
     expect(glass.transmission).toBe(0);
@@ -128,6 +131,51 @@ describe("illustrative material resource ownership", () => {
     expect(glass.transmission).toBe(0.9);
     expect(glass.opacity).toBe(1);
     expect(glass.transparent).toBe(false);
+    prepared.dispose();
+  });
+
+  it("keeps TalTech opaque and anonymous source panels neutral while distinguishing reviewed glass from whole-window fallback", () => {
+    // Source audit: 18 Puit WC panels, 2 Metal Deck solid panels and 2 unnamed
+    // structural stiffeners all occupy the broad glazing geometry group.
+    const names = ["Puit", "Metal Deck", "<Unnamed>", "0_Klaas"];
+    const entries: typeof binding[] = names.map((name, index) => ({
+      ...binding, key: `glazing-fixture-${index}`, group: "glazing", status: "single_material",
+      assemblyRef: null, assemblyName: null, representativeLayer: null, materialNames: [name],
+      materialRef: name === "0_Klaas" ? "ifc://DS3_TalTech_V4.ifc#253522" : `ifc://fixture#${index}`,
+    }));
+    entries.push({ ...entries[0], key: "whole-window-fixture", status: "unsupported", materialNames: [] });
+    const taltech: ReferenceBuildingManifest = { ...manifest, id: "taltech-maemaja", materialFabric: { ...manifest.materialFabric!, bindings: entries } };
+    const source = new THREE.Group();
+    for (const entry of entries) source.add(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshStandardMaterial({ name: entry.key })));
+    const prepared = prepareMaterialExpression(source, taltech, MATERIAL_TEXTURE_URLS.map(() => new THREE.Texture()));
+    updateMaterialExpression(prepared, taltech.id, false, NO_RETROFIT_VISUALS);
+    const opaque = prepared.meshes.slice(0, 3).map((row) => row.material);
+    const colours = opaque.map((material) => material.color.getHexString());
+    for (const material of opaque) {
+      expect(material).not.toBeInstanceOf(THREE.MeshPhysicalMaterial);
+      expect(material.opacity).toBe(1);
+      expect(material.transparent).toBe(false);
+      expect(material.depthWrite).toBe(true);
+      expect(material.map).toBeNull();
+    }
+    const glass = prepared.meshes[3].material as THREE.MeshPhysicalMaterial;
+    expect(glass).toBeInstanceOf(THREE.MeshPhysicalMaterial);
+    expect(glass.transmission).toBe(0.9);
+    expect(sourceGlassBinding({ ...entries[3], materialRef: "ifc://another-source#253522" })).toBe(false);
+    const unresolvedWindow = prepared.meshes[4].material;
+    expect(unresolvedWindow).not.toBeInstanceOf(THREE.MeshPhysicalMaterial);
+    expect(unresolvedWindow.opacity).toBe(0.45);
+    updateMaterialExpression(prepared, taltech.id, false, { ...NO_RETROFIT_VISUALS, windowsUpgraded: true });
+    opaque.forEach((material, index) => {
+      expect(material.opacity).toBe(1);
+      expect(material.color.getHexString()).toBe(colours[index]);
+    });
+    expect(glass.transmission).toBe(0);
+    updateMaterialExpression(prepared, taltech.id, true, NO_RETROFIT_VISUALS);
+    opaque.forEach((material) => expect(material.opacity).toBe(0.22));
+    updateMaterialExpression(prepared, taltech.id, false, NO_RETROFIT_VISUALS);
+    opaque.forEach((material) => expect(material.opacity).toBe(1));
+    expect(glass.transmission).toBe(0.9);
     prepared.dispose();
   });
 

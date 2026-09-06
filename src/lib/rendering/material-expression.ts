@@ -39,18 +39,29 @@ export function materialBindingSample(buildingId: string, binding: MaterialBindi
  * alone cannot justify applying optical transmission to every source part. */
 export function sourceGlassBinding(binding: MaterialBinding) {
   return binding.status === "single_material" && binding.materialNames.length === 1 &&
-    ["Glass", "WindowGlass_DoubleGlazing_1970_24mm"].includes(binding.materialNames[0]);
+    (["Glass", "WindowGlass_DoubleGlazing_1970_24mm"].includes(binding.materialNames[0]) ||
+      // TalTech's source material explicitly states Category=Glass. This is an
+      // appearance classification, not an optical or thermal property value.
+      (binding.materialNames[0] === "0_Klaas" && binding.materialRef === "ifc://DS3_TalTech_V4.ifc#253522"));
 }
 
 function isSourceMetal(binding: MaterialBinding) {
   return binding.status === "single_material" && binding.materialNames[0] === "Metal - Chain Link";
 }
 
+function materialTextureKind(buildingId: string, binding: MaterialBinding) {
+  return textureKindForSample(isSourceMetal(binding) ? "metal" : materialBindingSample(buildingId, binding).kind);
+}
+
 export function styleMaterialExpression(material: THREE.MeshStandardMaterial, binding: MaterialBinding, buildingId: string, xray: boolean, visual: RetrofitVisualState) {
   const sample = materialBindingSample(buildingId, binding);
-  const glass = sourceGlassBinding(binding) || (binding.group === "glazing" && !isSourceMetal(binding));
+  // IFC windows/plates can also be opaque panels and structural stiffeners.
+  // An unreviewed single material stays neutral and opaque; only whole-window
+  // assignments without a resolved material retain the category illustration.
+  const unresolvedWindow = binding.group === "glazing" && ["unassigned", "unsupported", "ambiguous"].includes(binding.status);
+  const glass = sourceGlassBinding(binding) || unresolvedWindow;
   const opticalGlass = sourceGlassBinding(binding) && material instanceof THREE.MeshPhysicalMaterial;
-  const kind = textureKindForSample(isSourceMetal(binding) ? "metal" : sample.kind);
+  const kind = materialTextureKind(buildingId, binding);
   const profile = kind ? MATERIAL_TEXTURE_PROFILES[kind] : null;
   // A photographic albedo already contains the material colour. Applying the
   // sidebar swatch again obscured its surface detail with a second dark tint.
@@ -132,7 +143,7 @@ export function prepareMaterialExpression(source: THREE.Group, manifest: Referen
       materials.push(material);
       mesh.material = material;
       mesh.userData.materialBinding = binding;
-      const kind = textureKindForSample(isSourceMetal(binding) ? "metal" : materialBindingSample(manifest.id, binding).kind);
+      const kind = materialTextureKind(manifest.id, binding);
       const profile = kind ? MATERIAL_TEXTURE_PROFILES[kind] : null;
       const textureIndex = kind ? MATERIAL_TEXTURE_TYPES.indexOf(kind) * MATERIAL_TEXTURE_CHANNELS.length : -1;
       if (profile && textureIndex >= 0 && (binding.group !== "glazing" || isSourceMetal(binding))) {

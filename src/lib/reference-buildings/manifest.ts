@@ -264,6 +264,8 @@ export type ReferenceBuildingManifest = Readonly<{
       sourceRole: string;
       status: "layer_set" | "single_material" | "unsupported" | "unassigned" | "ambiguous";
       assemblyRef: string | null;
+      /** Source material/select entity; absent when no unique association resolves. */
+      materialRef?: string;
       assemblyName: string | null;
       materialNames: readonly string[];
       representativeLayer: Readonly<{ name: string; thicknessM: number; ref: string }> | null;
