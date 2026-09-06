@@ -94,14 +94,14 @@ function groupFor(typeName, includeStructure) {
  * two-storey clinic — which is the useful kind of wrong, because it is
  * obviously wrong. A 20% error in the same place would have shipped.
  */
-export function collectFabric(api, webIfc, modelID, { includeStructure = false } = {}) {
+export function collectFabric(api, webIfc, modelID, { includeStructure = false, excludeTypes = [] } = {}) {
   const groups = new Map();
   const skipped = new Map();
 
   api.StreamAllMeshes(modelID, (mesh) => {
     const line = api.GetLine(modelID, mesh.expressID, false);
     const typeName = line ? api.GetNameFromTypeCode(line.type) : null;
-    const group = typeName ? groupFor(typeName, includeStructure) : null;
+    const group = typeName && !excludeTypes.includes(typeName) ? groupFor(typeName, includeStructure) : null;
     if (!group) {
       if (typeName) skipped.set(typeName, (skipped.get(typeName) ?? 0) + 1);
       return;

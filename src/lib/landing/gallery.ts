@@ -548,7 +548,33 @@ const KIT_OFFICE: GalleryItem = {
   href: "/models/kit-office",
 };
 
-export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC, SCHEPENDOMLAAN, DUPLEX, FZK_HAUS, KIT_OFFICE];
+const KLASSIQUA_OFFICE_1970: GalleryItem = {
+  id: "klassiqua-office-1970",
+  koTitle: "Klassiqua 1970 오피스", enTitle: "Klassiqua Office · 1970",
+  koUse: "통계 기반 연구용 오피스 원형 · 4개 층", enUse: "Synthetic office archetype · four storeys",
+  status: "published",
+  modelFile: "2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc", ifcSchema: "IFC4X3_ADD2",
+  viewDefinition: "ReferenceView", authoringTool: "Bonsai 0.8.5-post1 / IfcOpenShell 0.8.5-post1", modelDate: "2026-07-30",
+  licence: "CC BY 4.0",
+  attribution: "Verena Dannapfel, Moritz Müller, Rita Streblow, Dirk Müller, Lisa Karber and Alexander Hickertz; Klassiqua Office Building Archetypes, July 2026, Zenodo 21727160 (CC BY 4.0). Extracted and adapted by BIMFIT.",
+  datums: [
+    { name: "03", elevationM: 10.65, rooms: 12, roomAreaSqm: 376.756, excludedSpaces: 0 },
+    { name: "02", elevationM: 7.1, rooms: 12, roomAreaSqm: 376.756, excludedSpaces: 0 },
+    { name: "01", elevationM: 3.55, rooms: 12, roomAreaSqm: 376.756, excludedSpaces: 0 },
+    { name: "00", elevationM: 0, rooms: 12, roomAreaSqm: 376.756, excludedSpaces: 0 },
+  ],
+  figures: [
+    { id: "floor-area", ko: "모델 바닥 면적", en: "Model floor area", value: "1,507.0 m²", read: "48 IfcSpace solid-plan unions; geometry measurement, no stated area quantities" },
+    { id: "rooms", ko: "공간", en: "Spaces", value: "48", read: "12 spaces × 4 storeys = 48 IfcSpace" },
+    { id: "windows", ko: "창", en: "Windows", value: "167", read: "167 IfcWindow; all hosted by the exterior wall set" },
+    { id: "u-values", ko: "설계 창 U값", en: "Design window Uw", value: "4.18 W/m²K", read: "July source documentation table 3.4, area-weighted whole-window design value" },
+    { id: "boundaries", ko: "공간 경계", en: "Space boundaries", value: "675", read: "IfcRelSpaceBoundary2ndLevel; classification links, not area measurements" },
+    { id: "details", ko: "건축 상세", en: "Architectural details", value: "68", read: "52 IfcCovering + 16 opaque IfcCurtainWall = 68 source elements" },
+  ],
+  href: "/models/klassiqua-office-1970",
+};
+
+export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC, SCHEPENDOMLAAN, DUPLEX, FZK_HAUS, KIT_OFFICE, KLASSIQUA_OFFICE_1970];
 
 /** Lowest and highest datum, for the section diagram's vertical range. */
 export function datumRange(datums: readonly GalleryDatum[]) {

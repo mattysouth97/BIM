@@ -15,6 +15,7 @@ import type { MaterialProperties } from "@/lib/material-types";
 import type { ReferenceBuildingId } from "./manifest";
 import { REFERENCE_BUILDING_PK_PREFIX } from "./pk";
 import { KIT_OFFICE_ASSUMPTIONS, KIT_OFFICE_GROSS_BY_ORIENTATION, KIT_OFFICE_MATERIALS, KIT_OFFICE_MEASURED_ENVELOPE, KIT_OFFICE_RECIPE } from "./kit-office-energy";
+import { KLASSIQUA_ASSUMPTIONS, KLASSIQUA_GROSS_BY_ORIENTATION, KLASSIQUA_MATERIALS, KLASSIQUA_MEASURED, KLASSIQUA_RECIPE } from "./klassiqua-office-1970-energy";
 import {
   CLINIC_ASSUMPTIONS,
   CLINIC_MATERIALS,
@@ -299,6 +300,7 @@ const DUPLEX: ReferenceBuildingEnergyInputs = Object.freeze({
 });
 
 const FZK_HAUS: ReferenceBuildingEnergyInputs = Object.freeze({
+  orientationLabels: { N: "NE", E: "SE", S: "SW", W: "NW" },
   buildingPk: referenceBuildingPk("fzk-haus"),
   recipe: FZK_HAUS_RECIPE,
   materials: FZK_HAUS_MATERIALS,
@@ -387,6 +389,21 @@ const ENERGY_INPUTS: Readonly<Record<ReferenceBuildingId, ReferenceBuildingEnerg
     "duplex-apartment": DUPLEX,
     "fzk-haus": FZK_HAUS,
     "kit-office": KIT_OFFICE,
+    "klassiqua-office-1970": {
+      buildingPk: referenceBuildingPk("klassiqua-office-1970"),
+      recipe: KLASSIQUA_RECIPE, materials: KLASSIQUA_MATERIALS, assumptions: KLASSIQUA_ASSUMPTIONS,
+      climate: { sigunguCd: "11", labelKo: "서울 기후 (가정)", labelEn: "Seoul climate (assumed)", assumptionId: "A-CLIMATE" },
+      wallByOrientationSqm: KLASSIQUA_MEASURED.exteriorWallByOrientationSqm,
+      grossWallByOrientationSqm: KLASSIQUA_GROSS_BY_ORIENTATION,
+      orientationLabels: { N: "NE", E: "SE", S: "SW", W: "NW" },
+      northAssumed: false, exteriorDoorSqm: KLASSIQUA_MEASURED.exteriorDoorSqm,
+      roof: { type: "flat", read: "2 flat roof planes: roofing 397.96 m² + visible structural perimeter 22.98 m² = 420.94 m², at 0°; overlapping lower roof layers and parapet caps are excluded" },
+      measurementState: "complete",
+      scopeNotice: {
+        ko: "실제 준공 건물이 아닌 1970년 연구용 오피스 원형입니다. 면적은 IFC 형상에서 측정하고 외피 U값은 공개 설계 문서에서 읽었습니다. T1_1970은 냉방 설비가 없어 냉방 전력 0으로 계산되며 쾌적성을 보장하지 않습니다. 서울 기후·기밀·운전효율·재실은 가정입니다. 층간 슬래브 끝에도 동일한 벽 U값을 적용해 열교 손실이 작게 나올 수 있습니다.",
+        en: "Synthetic 1970 research archetype. Geometry is measured from IFC; envelope U-values are source design calculations. T1_1970 has no active cooling, so cooling electricity is zero, which does not establish comfort. Seoul climate, airtightness, efficiencies and occupancy are assumptions. Applying one wall U-value across floor-edge bands can understate thermal-bridge losses.",
+      },
+    },
   });
 
 export function referenceBuildingEnergyInputs(

@@ -56,7 +56,7 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     // ENTREE (entrance hall), GANG (hall), OVERLOOP (landing) — Schependomlaan.
     // FOYER, HALLWAY and the model's own misspelling HALLYWAY — the Duplex.
     // FLUR (hallway) — FZK Haus.
-    patterns: [/\bCORRIDOR\b/, /\bSTAIR\b/, /\bELEVATOR\b/, /\bELEV\.?\b/, /\bVEST\.?\b/, /\bENTREE\b/, /\bGANG\b/, /\bOVERLOOP\b/, /\bFOYER\b/, /\bHALLWAY\b/, /\bHALLYWAY\b/, /\bFLUR\b/],
+    patterns: [/\bSTAIRWELL\b/, /\bCORRIDOR\b/, /\bSTAIR\b/, /\bELEVATOR\b/, /\bELEV\.?\b/, /\bVEST\.?\b/, /\bENTREE\b/, /\bGANG\b/, /\bOVERLOOP\b/, /\bFOYER\b/, /\bHALLWAY\b/, /\bHALLYWAY\b/, /\bFLUR\b/],
   },
   {
     key: "sanitary",
@@ -75,7 +75,7 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     // RUIMTE is the plant room. Both Schependomlaan, both services.
     // UTILITY is the Duplex's equivalent: a 1.4-1.8 m² closet off each
     // dwelling's hallway, which is a services cupboard and not a room.
-    patterns: [/\bMECH/, /\bELEC/, /\bCOMM\. ROOM\b/, /\bCOMPUTER ROOM\b/, /\bADP EQUIP/, /\bDATA \//, /\bMK\b/, /\bINSTAL\.?/, /\bUTILITY\b/, /\bTECHNIKRAUM\b/],
+    patterns: [/\bTECHNICALROOM\b/, /\bMECH/, /\bELEC/, /\bCOMM\. ROOM\b/, /\bCOMPUTER ROOM\b/, /\bADP EQUIP/, /\bDATA \//, /\bMK\b/, /\bINSTAL\.?/, /\bUTILITY\b/, /\bTECHNIKRAUM\b/],
   },
   {
     key: "dental",
@@ -115,7 +115,7 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     // BUERO (office) — FZK Haus, the model's own ASCII transliteration of
     // Büro; appended to the existing row rather than given its own, checked
     // against all three prior buildings' space names for a collision (none).
-    patterns: [/\bOFFICE\b/, /\bOFF\.?\b/, /\bADMIN/, /\bANALYST\b/, /\bDIR\.?\b/, /\bDIRECTOR\b/, /\bCHIEF\b/, /\bMGR\b/, /\bSUPER\b/, /\bNCOIC\b/, /\bCMDR\b/, /\bSGT\b/, /\bTECH\.?\b/, /\bWORK STAT/, /\bWORK ROOM\b/, /\bCOPY\b/, /\bCREDENTIALS\b/, /\bCONF\.?/, /\bLIBRARY\b/, /\bCLASSROOM\b/, /\bTEAM\b/, /\bLOUNGE\b/, /\bBREAK ROOM\b/, /\bDRESS\b/, /\bFITTING\b/, /\bGROUP IS\b/, /\bBMET\b/, /\bDISP\.?\b/, /\bKITCHENET/, /\bCL\. UTL/, /\bBUERO\b/, /\bBESPRECHUNGSRAUM\b/, /\bSEMINARRAUM\b/],
+    patterns: [/\bOPENPLANOFFICE\b/, /\bMEETINGSPACE\b/, /\bOFFICE\b/, /\bOFF\.?\b/, /\bADMIN/, /\bANALYST\b/, /\bDIR\.?\b/, /\bDIRECTOR\b/, /\bCHIEF\b/, /\bMGR\b/, /\bSUPER\b/, /\bNCOIC\b/, /\bCMDR\b/, /\bSGT\b/, /\bTECH\.?\b/, /\bWORK STAT/, /\bWORK ROOM\b/, /\bCOPY\b/, /\bCREDENTIALS\b/, /\bCONF\.?/, /\bLIBRARY\b/, /\bCLASSROOM\b/, /\bTEAM\b/, /\bLOUNGE\b/, /\bBREAK ROOM\b/, /\bDRESS\b/, /\bFITTING\b/, /\bGROUP IS\b/, /\bBMET\b/, /\bDISP\.?\b/, /\bKITCHENET/, /\bCL\. UTL/, /\bBUERO\b/, /\bBESPRECHUNGSRAUM\b/, /\bSEMINARRAUM\b/],
   },
   // ── Residential programs. Appended last on purpose: every row above is
   // tried first, so adding these cannot move a room in a building that has
@@ -199,7 +199,10 @@ export const OTHER_PROGRAM: SpaceProgram = Object.freeze({
 });
 
 export function classifySpaceProgram(space: Pick<ReferenceBuildingSpace, "name" | "longName">): SpaceProgram {
-  const label = (space.longName ?? space.name ?? "").toUpperCase().trim();
+  // Klassiqua prefixes its eight explicit room programs with storey 00–03.
+  // Strip only that verified vocabulary; an unfamiliar underscore name remains unmatched.
+  const label = (space.longName ?? space.name ?? "").toUpperCase().trim()
+    .replace(/^0[0-3]_(?=(?:OPENPLANOFFICE|BATHROOM|TECHNICALROOM|OFFICE|MEETINGSPACE|KITCHEN|STAIRWELL|CORRIDOR)(?:\.|$))/, "");
   for (const program of SPACE_PROGRAMS) {
     if (program.patterns.some((p) => p.test(label))) return program;
   }

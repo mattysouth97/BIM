@@ -20,6 +20,11 @@ type ModelContext = {
 };
 
 const MODEL_CONTEXT: Readonly<Record<string, ModelContext>> = {
+  "klassiqua-office-1970": {
+    classification: "synthetic_example",
+    basis: "The Klassiqua research project derived office archetypes from German statistics. The 1970 case is a synthetic design variant with assigned simulation inputs, not a constructed office or metered dataset.",
+    sourceUrl: "https://zenodo.org/records/21727160",
+  },
   "bs-medical-dental-clinic": {
     classification: "real_world_status_unverified",
     basis: "The published model describes a US GSA outpatient clinic, but no independently verified constructed counterpart or actual location is supplied with this dataset.",
@@ -199,6 +204,7 @@ export function buildReferenceEnergyDataset(
       attribution: manifest.attribution,
       attributionStatus: manifest.attribution ? "stated" : "rights_holder_not_established",
       files: manifest.sourceFiles,
+      ...(manifest.documentation ? { documentation: manifest.documentation } : {}),
       extractedAt: manifest.generatedAt,
       manifestUrl: `/reference-buildings/${manifest.id}/manifest.json`,
       transformations: "IFC quantities/solids extracted by build-reference-building; baseline inputs adapted by reference-buildings/energy-inputs; screening outputs computed at export.",

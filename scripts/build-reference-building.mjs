@@ -49,6 +49,7 @@ import { ARCHITECTURAL_DETAIL_SOURCES, buildArchitecturalDetails } from "./lib/i
 import { buildAdditionalMepLayer, buildMepCoverage } from "./lib/ifc-mep-coverage.mjs";
 import { collectFlowNetwork, annotateFlow, serialiseFlow } from "./lib/ifc-flow.mjs";
 import { measureSpaceMeshes } from "./lib/ifc-space-volume.mjs";
+import { allSpaceBoundaries, withMeasuredSpaceAreas } from "./lib/ifc-space-evidence.mjs";
 import {
   spaceFootprints,
   spaceBoundaryIndex,
@@ -879,6 +880,45 @@ const BUILDINGS = Object.freeze({
   [DUPLEX.id]: DUPLEX,
   [FZK_HAUS.id]: FZK_HAUS,
   [KIT_OFFICE.id]: KIT_OFFICE,
+  "klassiqua-office-1970": {
+    id: "klassiqua-office-1970",
+    name: { ko: "Klassiqua 1970 오피스", en: "Klassiqua Office · 1970" },
+    summary: {
+      ko: "독일 오피스 통계를 바탕으로 만든 1970년 기준 연구용 원형. 실제 준공 건물이 아닌 4개 층·48개 공간의 에너지 비교 모델입니다.",
+      en: "A synthetic 1970 office archetype derived from German building statistics: four storeys and 48 spaces for energy comparison, not a constructed building.",
+    },
+    useType: "office_building",
+    licence: "CC BY 4.0",
+    attribution: "Verena Dannapfel, Moritz Müller, Rita Streblow, Dirk Müller, Lisa Karber and Alexander Hickertz; Klassiqua Office Building Archetypes, July 2026, Zenodo 21727160 (CC BY 4.0). Extracted and adapted by BIMFIT.",
+    sourceUrl: "https://zenodo.org/records/21727160",
+    documentation: [{
+      fileName: "2026-07_Klassiqua_Buero_Archetypen_Dokumentation.pdf",
+      url: "https://zenodo.org/api/records/21727160/files/2026-07_Klassiqua_Buero_Archetypen_Dokumentation.pdf/content",
+      sha256: "116268af3109e568616acf4aa83b61e81905ee05a8590f249166be0746afa659",
+      licence: "CC BY 4.0",
+      note: "July source documentation: archetype geometry table 2.1, combined envelope U-values table 3.1, window/door properties table 3.4, and technical scenario T1_1970 table 3.6. Source design inputs, not measured operation.",
+    }],
+    files: [{ role: "architectural", fileName: "2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc", url: "https://zenodo.org/api/records/21727160/files/2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc/content", sha256: "4d77774850b817d8ed9534e19886a1ff7fbcbe734a8f3138eebf2751e4c879fb" }],
+    serviceLayers: [],
+    fabricExcludeTypes: ["IfcCurtainWall"],
+    materialThermalPropertiesInSI: true,
+    exteriorWallsFromSpaceBoundaries: true,
+    exteriorWallExclude: ["Attica"],
+    exteriorWallNote: "Opaque envelope follows the 16 source AluminiumCladding_1970 solids, including floor-edge bands omitted by the masonry wall solids. Voided vertical faces are clipped from the lowest room floor to the highest room ceiling (0–14 m). The 16 PHYSICAL/EXTERNAL calcium-silicate walls remain the opening-host set. Upper parapet faces are recorded separately and excluded from the conditioned envelope; boundary areas are not used.",
+    opaqueFacade: { type: "IfcCurtainWall", name: "AluminiumCladding_1970" },
+    areaSource: "mesh",
+    roofDatumM: 14,
+    roofSlabMatch: ["FlatRoofSlab_ReinforcedConcrete"],
+    roofCoveringMatch: ["Roofing_Insulation_BituminousSheeting_Gravel"],
+    roofExclude: ["Attica"],
+    openings: { curtainWallExclude: [{ match: "AluminiumCladding_1970", reason: "Opaque mineral-wool and ventilated aluminium cladding assembly, not glazing; source material layer set CurtainWall_Aluminium_AirGap_Insulation_74mm_Exterior_1970." }] },
+    location: {
+      rejectCoordinate: true, statedTown: "Aachen (synthetic scenario)", trueNorthStated: true,
+      note: "The research archetype assigns Aachen and a true-north direction as simulation inputs. Its coordinates do not identify a constructed office. BIMFIT uses a separately disclosed Seoul climate comparison.",
+    },
+    spacesNote: "All 48 IfcSpace solids have measurable plan footprints but no floor-area quantities. Their plan unions total 1507.02 m², consistent with the documentation's rounded 1507 m² usable floor area. All 48 spaces are included in the energy conditioning scenario; this is not measured operation.",
+    roofNote: "The structural flat-roof slab and overlying roofing assembly are separate IFC elements. The sky-visible plane union supplies the single roof area; layer sums must not be priced twice.",
+  },
 });
 
 /**
@@ -938,11 +978,12 @@ function isWallType(typeName) {
 function exteriorWallPredicate(building, file, webIfc) {
   if (building.exteriorWallsFromSpaceBoundaries) {
     const exteriorIds = new Set();
-    for (const boundary of file.byType(webIfc.IFCRELSPACEBOUNDARY)) {
+    for (const boundary of allSpaceBoundaries(file, webIfc)) {
       if (str(boundary.PhysicalOrVirtualBoundary) !== "PHYSICAL" ||
           str(boundary.InternalOrExternalBoundary) !== "EXTERNAL") continue;
       const element = file.deref(boundary.RelatedBuildingElement);
-      if (element && isWallType(file.typeName(element))) exteriorIds.add(element.expressID);
+      if (element && isWallType(file.typeName(element)) &&
+          !(building.exteriorWallExclude ?? []).some((name) => (str(element.Name) ?? "").toLowerCase().includes(name.toLowerCase()))) exteriorIds.add(element.expressID);
     }
     if (exteriorIds.size === 0) throw new Error(`${building.id}: no physical exterior wall boundary membership`);
     return (_name, line) => exteriorIds.has(line?.expressID);
@@ -1204,9 +1245,13 @@ async function main() {
   // cannot be matched against it.
   const spaceFile = byRole.get(building.spacesRole ?? "architectural") ?? arch;
   const storeys = extractStoreys(spaceFile, webIfc);
-  const spaces = extractSpaces(spaceFile, webIfc, storeys, {
+  const statedSpaces = extractSpaces(spaceFile, webIfc, storeys, {
     analyticalPropertySets: building.analyticalPropertySets ?? null,
   });
+  const missingAreaSpaces = statedSpaces.filter((space) => space.floorAreaSqm == null);
+  const spaces = missingAreaSpaces.length
+    ? withMeasuredSpaceAreas(statedSpaces, spaceFootprints(api, webIfc, spaceFile, missingAreaSpaces))
+    : statedSpaces;
   const floorSpaces = spaces.filter((s) => s.countsAsFloorArea);
   assertAnalyticalSplit(building, spaces);
   // Volume and plan extent of every space, from its own solid. The Clinic
@@ -1303,6 +1348,7 @@ async function main() {
       storeyId: s.storeyId,
       floorAreaSqm: s.floorAreaSqm,
       areaQuantityName: s.areaQuantityName,
+      ...(s.floorAreaSource ? { floorAreaSource: s.floorAreaSource } : {}),
       countsAsFloorArea: s.countsAsFloorArea,
       countsAsConditionedVolume: s.countsAsConditionedVolume,
       excludedFromFloorAreaReason: s.excludedFromFloorAreaReason,
@@ -1395,7 +1441,7 @@ async function main() {
   // crash halfway through an extraction.
   const assemblies = [arch, struct]
     .filter(Boolean)
-    .flatMap((file) => extractAssemblies(file, webIfc));
+    .flatMap((file) => extractAssemblies(file, webIfc, { thermalPropertiesInSI: building.materialThermalPropertiesInSI ?? false }));
   const classification = classifyExternalElements(arch, webIfc);
 
   // Areas come from the built solid, never from space boundaries — see the
@@ -1551,7 +1597,31 @@ async function main() {
     break;
   }
 
-  const orientation = orientWalls(exteriorWalls, { trueNorthDeg });
+  const hostOrientation = orientWalls(exteriorWalls, { trueNorthDeg });
+  let orientation = hostOrientation;
+  let opaqueFacade = null;
+  if (building.opaqueFacade) {
+    const relevantMeshes = spaces.filter((s) => s.countsAsConditionedVolume).map((s) => spaceMeshes.get(s.expressID)).filter(Boolean);
+    const fromHeightM = Math.min(...relevantMeshes.map((mesh) => mesh.minY));
+    const toHeightM = Math.max(...relevantMeshes.map((mesh) => mesh.maxY));
+    if (!Number.isFinite(fromHeightM) || !Number.isFinite(toHeightM)) throw new Error("Opaque façade clipping needs measured room elevations");
+    const { type, name } = building.opaqueFacade;
+    const faces = netFaceAreasByElement(api, arch.modelId, (elementType, elementName) => elementType === type && elementName === name,
+      { heightFloorM: fromHeightM, heightSplitM: toHeightM });
+    const expected = arch.byType(webIfc[type.toUpperCase()]).filter((row) => str(row.Name) === name).length;
+    if (!expected || faces.size !== expected || [...faces.values()].some((face) => face.exceedsBounds || face.thinAxisForced)) throw new Error("Opaque façade geometry is incomplete or not a single vertical skin");
+    const clipped = new Map([...faces].map(([id, face]) => [id, { ...face, netFaceAreaSqm: face.netFaceAreaBelowSplitSqm }]));
+    const fullFaceSqm = [...faces.values()].reduce((sum, face) => sum + face.netFaceAreaSqm, 0);
+    wallNet = [...clipped.values()].reduce((sum, face) => sum + face.netFaceAreaSqm, 0);
+    wallBelowRoof = wallNet;
+    wallAboveRoof = 0;
+    orientation = orientWalls(clipped, { trueNorthDeg });
+    opaqueFacade = {
+      fullFaceSqm: r2(fullFaceSqm), conditionedFaceSqm: r2(wallNet), excludedFaceSqm: r2(fullFaceSqm - wallNet),
+      fromHeightM: r2(fromHeightM), toHeightM: r2(toHeightM),
+      elements: [...faces.keys()].map((id) => ({ ref: arch.ref(id), fullFaceSqm: r2(faces.get(id).netFaceAreaSqm), conditionedFaceSqm: r2(clipped.get(id).netFaceAreaSqm) })),
+    };
+  }
   // The oriented split must account for the same area as the headline total.
   // It did not on the first run — 7 walls with a single aligned face were
   // skipped, so the manifest would have carried 2,150.3 m² of wall and
@@ -1603,6 +1673,8 @@ async function main() {
   // cannot be un-flattened into the planes that cast it.
   const classifiedRoofs = classifyRoofs(horizontal.rows, {
     nameMatch: building.roofSlabMatch ?? [],
+    coveringNameMatch: building.roofCoveringMatch ?? [],
+    excludeNames: building.roofExclude ?? [],
   });
   const roofs = measureRoofs(classifiedRoofs);
   const roofPlaneResult = roofPlanes(
@@ -1660,8 +1732,8 @@ async function main() {
     (building.exteriorWallExclude ?? []).some((x) => String(name ?? "").toLowerCase().includes(x.toLowerCase()));
   const openings = openingApertures(api, arch, webIfc, {
     exteriorWalls,
-    sectorByHost: new Map(orientation.walls.map((w) => [w.id, w.sector])),
-    buildingCentre: orientation.buildingCentre,
+    sectorByHost: new Map(hostOrientation.walls.map((w) => [w.id, w.sector])),
+    buildingCentre: hostOrientation.buildingCentre,
     trueNorthDeg,
     spaceSolids,
     conditionedSpaceCount: conditionedIds.size,
@@ -1712,7 +1784,7 @@ async function main() {
   });
   const fabric = new Map();
   for (const file of [arch, struct].filter(Boolean)) {
-    mergeFabric(fabric, collectFabric(api, webIfc, file.modelId).groups);
+    mergeFabric(fabric, collectFabric(api, webIfc, file.modelId, { excludeTypes: building.fabricExcludeTypes ?? [] }).groups);
   }
   const glb = await writeGlb(path.join(outDir, "model.glb"), fabric, { generator });
 
@@ -1893,6 +1965,7 @@ async function main() {
     licence: building.licence,
     attribution: building.attribution,
     sourceUrl: building.sourceUrl,
+    ...(building.documentation ? { documentation: building.documentation } : {}),
     generatedAt,
     sourceFiles: sources.map((s, i) => ({
       role: s.role,
@@ -1955,12 +2028,16 @@ async function main() {
       totalFloorAreaSqm: round(
         floorSpaces.reduce((sum, s) => sum + (s.floorAreaSqm ?? 0), 0),
       ),
+      ...(spaces.some((s) => s.floorAreaSource) ? {
+        floorAreaNote: `${spaces.filter((s) => s.floorAreaSource).length} spaces with no area quantity use measured plan unions of their solid or FootPrint geometry; quantities retain priority where present. See spaces.json floorAreaSource per row.`,
+      } : {}),
       areaPlanTotalSqm: round(
         spaces.reduce((sum, s) => sum + (s.floorAreaSqm ?? 0), 0),
       ),
       exteriorWallNetSqm: round(wallNet),
+      ...(opaqueFacade ? { opaqueFacade } : {}),
       ...(building.exteriorWallsFromSpaceBoundaries ? {
-        exteriorWallNote: `${exteriorWalls.size} walls selected by IfcRelSpaceBoundary PHYSICAL/EXTERNAL element references; area from each wall's stated NetSideArea (openings already removed). Boundary surface areas are not used.`,
+        exteriorWallNote: building.exteriorWallNote ?? `${exteriorWalls.size} walls selected by IfcRelSpaceBoundary PHYSICAL/EXTERNAL element references; area from each wall's stated NetSideArea (openings already removed). Boundary surface areas are not used.`,
       } : {}),
       exteriorWallBelowRoofSqm: round(wallBelowRoof),
       exteriorWallAboveRoofSqm: round(wallAboveRoof),
@@ -2125,6 +2202,7 @@ async function main() {
         name: l.name,
         thicknessM: l.thicknessM,
         ref: l.ref,
+        ...(l.sourceThermalProperties ? { sourceThermalProperties: l.sourceThermalProperties } : {}),
       })),
       ref: a.ref,
     })),
@@ -2172,6 +2250,7 @@ async function main() {
       id: s.id,
       name: s.name,
       elevationM: s.elevationM,
+      ...(s.elevationSource ? { elevationSource: s.elevationSource } : {}),
       floorToFloorHeightM: s.floorToFloorHeightM,
       spaceCount: spaces.filter((sp) => sp.storeyId === s.id).length,
       /**
@@ -2394,6 +2473,7 @@ function describeOpenings(a, curtainWallExclude) {
     : "No conditioned space solids to probe, so envelope rests on the host wall alone";
   const named = curtainWallExclude.map((x) => {
     const hits = a.excluded.filter((e) => e.reason === x.reason);
+    if (hits.some((entry) => entry.areaSqm == null)) return `${hits.length} "${x.match}" excluded by name (aperture area not measured): ${x.reason.replace(/\.\s*$/, "")}`;
     return `${hits.length} "${x.match}" excluded by name (${r2s(hits.reduce((s, e) => s + (e.areaSqm ?? 0), 0))} m²): ${x.reason.replace(/\.\s*$/, "")}`;
   });
   // Revit repeats a family name three times over in `Name`

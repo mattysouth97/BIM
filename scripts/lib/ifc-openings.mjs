@@ -557,7 +557,12 @@ export function openingApertures(api, file, webIfc, opts) {
       if (type === "IfcPlate" && tris.length) plateSqm += netFaceArea(tris).netFaceAreaSqm;
     }
     if (allTris.length === 0) {
-      unresolved.push({ ...base, partCounts, reason: parts.length === 0 ? "aggregates no parts, and IfcCurtainWall itself emits no mesh" : `${parts.length} parts, none with geometry` });
+      const excluded = curtainWallExclude.find((x) => name.includes(x.match));
+      if (excluded) {
+        cwRows.push({ ...base, partCounts, areaSqm: null, areaBasis: "not measured as glazing: source-backed exclusion", doorIds, included: false, reason: excluded.reason });
+      } else {
+        unresolved.push({ ...base, partCounts, reason: parts.length === 0 ? "aggregates no parts; this aperture pass measures aggregated parts only" : `${parts.length} parts, none with geometry` });
+      }
       continue;
     }
     const b = boundsOf(allTris);

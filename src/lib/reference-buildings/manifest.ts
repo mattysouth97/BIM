@@ -85,6 +85,7 @@ export type ReferenceBuildingManifest = Readonly<{
    */
   attribution: string | null;
   sourceUrl: string;
+  documentation?: readonly Readonly<{ fileName: string; url: string; sha256: string; licence: string; note: string }>[];
   generatedAt: string;
   sourceFiles: readonly Readonly<{
     role: string;
@@ -107,11 +108,18 @@ export type ReferenceBuildingManifest = Readonly<{
   areas: Readonly<{
     /** Floor only. The denominator of every intensity figure. */
     totalFloorAreaSqm: number;
+    /** Distinguishes stated area quantities from measured space-plan geometry. */
+    floorAreaNote?: string;
     /** The model's own area-plan total. Recorded, never divided by. */
     areaPlanTotalSqm: number;
     exteriorWallNetSqm: number;
     /** How exterior-wall membership and area were established for this file. */
     exteriorWallNote?: string;
+    opaqueFacade?: Readonly<{
+      fullFaceSqm: number; conditionedFaceSqm: number; excludedFaceSqm: number;
+      fromHeightM: number; toHeightM: number;
+      elements: readonly Readonly<{ ref: string; fullFaceSqm: number; conditionedFaceSqm: number }>[];
+    }>;
     exteriorWallBelowRoofSqm: number;
     exteriorWallAboveRoofSqm: number;
     /**
@@ -274,6 +282,8 @@ export type ReferenceBuildingManifest = Readonly<{
     layers: readonly Readonly<{
       name: string;
       thicknessM: number;
+      /** Source IFC material conductivity; absent unless its SI unit basis was verified. */
+      sourceThermalProperties?: Readonly<{ conductivityWPerMK: number; ref: string }>;
       /** `ifc://<file>#<expressID>` — the entity the thickness was read from. */
       ref: string;
       /** Source property, only when extracted with verified SI units. */
@@ -388,6 +398,7 @@ export type ReferenceBuildingSpace = Readonly<{
   storeyId: string | null;
   floorAreaSqm: number | null;
   areaQuantityName: string | null;
+  floorAreaSource?: "solid_plan_union" | "footprint_representation";
   countsAsFloorArea: boolean;
   countsAsConditionedVolume: boolean;
   excludedFromFloorAreaReason: string | null;
@@ -530,6 +541,7 @@ export const REFERENCE_BUILDING_IDS = [
   "duplex-apartment",
   "fzk-haus",
   "kit-office",
+  "klassiqua-office-1970",
 ] as const;
 
 export type ReferenceBuildingId = (typeof REFERENCE_BUILDING_IDS)[number];

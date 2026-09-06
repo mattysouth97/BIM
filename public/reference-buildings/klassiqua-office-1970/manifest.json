@@ -1,0 +1,810 @@
+{
+  "kind": "bimfit_reference_building_manifest",
+  "schemaVersion": 1,
+  "id": "klassiqua-office-1970",
+  "name": {
+    "ko": "Klassiqua 1970 오피스",
+    "en": "Klassiqua Office · 1970"
+  },
+  "summary": {
+    "ko": "독일 오피스 통계를 바탕으로 만든 1970년 기준 연구용 원형. 실제 준공 건물이 아닌 4개 층·48개 공간의 에너지 비교 모델입니다.",
+    "en": "A synthetic 1970 office archetype derived from German building statistics: four storeys and 48 spaces for energy comparison, not a constructed building."
+  },
+  "useType": "office_building",
+  "licence": "CC BY 4.0",
+  "attribution": "Verena Dannapfel, Moritz Müller, Rita Streblow, Dirk Müller, Lisa Karber and Alexander Hickertz; Klassiqua Office Building Archetypes, July 2026, Zenodo 21727160 (CC BY 4.0). Extracted and adapted by BIMFIT.",
+  "sourceUrl": "https://zenodo.org/records/21727160",
+  "documentation": [
+    {
+      "fileName": "2026-07_Klassiqua_Buero_Archetypen_Dokumentation.pdf",
+      "url": "https://zenodo.org/api/records/21727160/files/2026-07_Klassiqua_Buero_Archetypen_Dokumentation.pdf/content",
+      "sha256": "116268af3109e568616acf4aa83b61e81905ee05a8590f249166be0746afa659",
+      "licence": "CC BY 4.0",
+      "note": "July source documentation: archetype geometry table 2.1, combined envelope U-values table 3.1, window/door properties table 3.4, and technical scenario T1_1970 table 3.6. Source design inputs, not measured operation."
+    }
+  ],
+  "generatedAt": "2026-09-07T00:00:00.000Z",
+  "sourceFiles": [
+    {
+      "role": "architectural",
+      "fileName": "2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc",
+      "sha256": "4d77774850b817d8ed9534e19886a1ff7fbcbe734a8f3138eebf2751e4c879fb",
+      "byteLength": 1471687,
+      "units": {
+        "lengthToMetres": 1,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "METRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    }
+  ],
+  "counts": {
+    "storeys": 4,
+    "spacesTotal": 48,
+    "spacesFloor": 48,
+    "assemblies": 15,
+    "externalElements": 0,
+    "exteriorWalls": 16,
+    "windows": 167,
+    "exteriorCurtainWalls": 0,
+    "exteriorDoors": 1,
+    "externalElementsNote": "235 external physical space boundaries exist and none resolved: swept curve is not a readable polyline. The classifier reads IfcSurfaceOfLinearExtrusion (Revit); this file's boundaries are another surface type. Envelope areas here come from stated wall NetSideArea or solid geometry. Exterior wall membership uses the boundary's element reference and PHYSICAL/EXTERNAL flags directly; it does not require a readable boundary surface or consume its area."
+  },
+  "areas": {
+    "totalFloorAreaSqm": 1507.02,
+    "floorAreaNote": "48 spaces with no area quantity use measured plan unions of their solid or FootPrint geometry; quantities retain priority where present. See spaces.json floorAreaSource per row.",
+    "areaPlanTotalSqm": 1507.02,
+    "exteriorWallNetSqm": 832.72,
+    "opaqueFacade": {
+      "fullFaceSqm": 881.33,
+      "conditionedFaceSqm": 832.72,
+      "excludedFaceSqm": 48.62,
+      "fromHeightM": 0,
+      "toHeightM": 14,
+      "elements": [
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#31165",
+          "fullFaceSqm": 69.02,
+          "conditionedFaceSqm": 69.02
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#31849",
+          "fullFaceSqm": 36.77,
+          "conditionedFaceSqm": 36.77
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#32036",
+          "fullFaceSqm": 69.52,
+          "conditionedFaceSqm": 69.52
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#32140",
+          "fullFaceSqm": 36.81,
+          "conditionedFaceSqm": 36.81
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#80962",
+          "fullFaceSqm": 79.8,
+          "conditionedFaceSqm": 63.81
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#81095",
+          "fullFaceSqm": 42.15,
+          "conditionedFaceSqm": 33.84
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#81174",
+          "fullFaceSqm": 79.8,
+          "conditionedFaceSqm": 63.81
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#81325",
+          "fullFaceSqm": 42.15,
+          "conditionedFaceSqm": 33.84
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#107804",
+          "fullFaceSqm": 69.52,
+          "conditionedFaceSqm": 69.52
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#107969",
+          "fullFaceSqm": 69.52,
+          "conditionedFaceSqm": 69.52
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#108108",
+          "fullFaceSqm": 36.81,
+          "conditionedFaceSqm": 36.81
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#108193",
+          "fullFaceSqm": 36.81,
+          "conditionedFaceSqm": 36.81
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#108278",
+          "fullFaceSqm": 69.52,
+          "conditionedFaceSqm": 69.52
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#108417",
+          "fullFaceSqm": 69.52,
+          "conditionedFaceSqm": 69.52
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#108556",
+          "fullFaceSqm": 36.83,
+          "conditionedFaceSqm": 36.83
+        },
+        {
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#108641",
+          "fullFaceSqm": 36.81,
+          "conditionedFaceSqm": 36.81
+        }
+      ]
+    },
+    "exteriorWallNote": "Opaque envelope follows the 16 source AluminiumCladding_1970 solids, including floor-edge bands omitted by the masonry wall solids. Voided vertical faces are clipped from the lowest room floor to the highest room ceiling (0–14 m). The 16 PHYSICAL/EXTERNAL calcium-silicate walls remain the opening-host set. Upper parapet faces are recorded separately and excluded from the conditioned envelope; boundary areas are not used.",
+    "exteriorWallBelowRoofSqm": 832.72,
+    "exteriorWallAboveRoofSqm": 0,
+    "exteriorWallByOrientationSqm": {
+      "N": 0,
+      "NE": 272.36,
+      "E": 0,
+      "SE": 144.25,
+      "S": 0,
+      "SW": 271.85,
+      "W": 0,
+      "NW": 144.26
+    },
+    "glazingApertureSqm": 379.92,
+    "glazingByOrientationSqm": {
+      "N": 0,
+      "NE": 127.4,
+      "E": 0,
+      "SE": 63.7,
+      "S": 0,
+      "SW": 125.13,
+      "W": 0,
+      "NW": 63.7
+    },
+    "exteriorDoorSqm": 2.78,
+    "exteriorDoorByOrientationSqm": {
+      "N": 0,
+      "NE": 0,
+      "E": 0,
+      "SE": 0,
+      "S": 0,
+      "SW": 2.78,
+      "W": 0,
+      "NW": 0
+    },
+    "openingsNote": "Glazing aperture 379.92 m² = 167 IfcWindow at OverallWidth × OverallHeight (379.92 m²). Exterior doors are separate — a door is aperture, not glazing: 1 IfcDoor, 2.78 m², OverallWidth × OverallHeight. Host wall by IfcRelFillsElement → IfcOpeningElement → IfcRelVoidsElement (168 openings). Sector is the host wall's, from the same orientation pass as the wall split. Envelope by a both-sides probe against the conditioned IfcSpace solids (48 of 48 have geometry): 0 curtain wall(s) with a room on both sides excluded as interior screens (0 m²); 16 \"AluminiumCladding_1970\" excluded by name (aperture area not measured): Opaque mineral-wool and ventilated aluminium cladding assembly, not glazing; source material layer set CurtainWall_Aluminium_AirGap_Insulation_74mm_Exterior_1970; 48 openings hosted in walls outside the exterior set; nothing unresolved. IsExternal is reported per row and never used as a filter — it means \"not an interior partition\" to an authoring tool, never \"bounds conditioned space against outdoor air\". It marks 0 door(s) here; 0 confirm against an exterior wall. Rows in openings.json.",
+    "conditionedVolumeGrossM3": 5274.63,
+    "roomVolumeNetM3": 5048.52,
+    "volumeNote": "Gross from 48 spaces (floor area × storey height; voids, and rooms taller than their storey with no void above, as their own solids); net from 48 spaces (48 from own solid). A closed tessellation's signed volume is exact.",
+    "roofProjectedSqm": 818.89,
+    "roofProjectedByFamilySqm": {
+      "FlatRoofSlab_ReinforcedConcrete_200mm": 420.93,
+      "Roofing_Insulation_BituminousSheeting_Gravel": 397.96
+    },
+    "roofElementSumSqm": 818.89,
+    "roofUnionSqm": 420.93,
+    "roofSurfaceSqm": 818.89,
+    "roofSurfaceByFamilySqm": {
+      "FlatRoofSlab_ReinforcedConcrete_200mm": 420.93,
+      "Roofing_Insulation_BituminousSheeting_Gravel": 397.96
+    },
+    "roofNote": "Plan shadow per element (union of its projected triangles, ifc-plan-shadow.mjs): 2 elements — 1 IfcSlabType.PredefinedType=ROOF, 1 declared roof covering name. roofProjectedSqm sums 2 roof type(s), each as the union of its elements; the elements themselves sum to 818.89 m² (elements of one type overlapping in plan) and all types together cover 420.93 m² (one type above another). surfaceSqm is each element's true one-sheet surface (Σ area of its upward faces; ÷ 2 where a surface model has no downward face and both sheets are wound upward; ÷ the coverage where its parts cover its shadow more than once, as stacked layer solids do — surfaceBasis says which), summing to 818.89 m²; a flat deck's surface equals its shadow, a pitched roof's exceeds it. The structural flat-roof slab and overlying roofing assembly are separate IFC elements. The sky-visible plane union supplies the single roof area; layer sums must not be priced twice.",
+    "groundSlabSqm": 427.36,
+    "groundSlabSumSqm": 427.36,
+    "groundPerimeterM": 87.11,
+    "groundHolePerimeterM": 0,
+    "groundNote": "IfcSlab (not ROOF or LANDING) on storeys at or below 00 (0 m): 1 candidate(s). A slab counts as ground envelope when a conditioned space stands on it — its shadow overlaps a conditioned ground-storey space footprint (12 of 12 such spaces have one: 12 solid) or an IfcRelSpaceBoundary names it as bounding one. IsExternal is not consulted. 1 counted, 0 excluded. groundSlabSqm is the union of the counted shadows (they sum to 427.36 m²; stacked build-up layers count once); groundPerimeterM is the outline's outer ring."
+  },
+  "assemblies": [
+    {
+      "id": "assembly-interiorwall-office-drywall-125mm",
+      "name": "InteriorWall_Office_DryWall_125mm",
+      "totalThicknessM": 0.125,
+      "layers": [
+        {
+          "name": "GypsumBoard_Drywall_12.5mm",
+          "thicknessM": 0.0125,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#7030",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.21,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6897"
+          }
+        },
+        {
+          "name": "GypsumBoard_Drywall_12.5mm",
+          "thicknessM": 0.0125,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#7031",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.21,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6897"
+          }
+        },
+        {
+          "name": "Insulation_MineralWool_InDryWall_Lambda0.040",
+          "thicknessM": 0.075,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6776",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.04,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6889"
+          }
+        },
+        {
+          "name": "GypsumBoard_Drywall_12.5mm",
+          "thicknessM": 0.0125,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#7032",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.21,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6897"
+          }
+        },
+        {
+          "name": "GypsumBoard_Drywall_12.5mm",
+          "thicknessM": 0.0125,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6777",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.21,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6897"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6774"
+    },
+    {
+      "id": "assembly-covering-insulation-xps-74mm-slabexterior",
+      "name": "Covering_Insulation_XPS_74mm_SlabExterior",
+      "totalThicknessM": 0.074,
+      "layers": [
+        {
+          "name": "Insulation_XPS_Lambda0.045_1970",
+          "thicknessM": 0.074,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#14367",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.045,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#85253"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#14368"
+    },
+    {
+      "id": "assembly-flooring-insulation-screedcement-carpet-95mm",
+      "name": "Flooring_Insulation_ScreedCement_Carpet_95mm",
+      "totalThicknessM": 0.095,
+      "layers": [
+        {
+          "name": "ImpactSoundInsulation_EPS_Lambda0.040",
+          "thicknessM": 0.03,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#30576",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.04,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13466"
+          }
+        },
+        {
+          "name": "ScreedCement",
+          "thicknessM": 0.06,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#30577",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 1.4,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13474"
+          }
+        },
+        {
+          "name": "Carpet_NeedleFelt_5mm",
+          "thicknessM": 0.005,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#30578",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.06,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13462"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#30426"
+    },
+    {
+      "id": "assembly-curtainwall-aluminium-airgap-insulation-74mm-exterior-1970",
+      "name": "CurtainWall_Aluminium_AirGap_Insulation_74mm_Exterior_1970",
+      "totalThicknessM": 0.074,
+      "layers": [
+        {
+          "name": "Insulation_MineralWool_Lambda0.045_1970",
+          "thicknessM": 0.02,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#31083",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.045,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#3294"
+          }
+        },
+        {
+          "name": "VentilatedAluminiumCladding_54mm",
+          "thicknessM": 0.054,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#31084"
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#31086"
+    },
+    {
+      "id": "assembly-roofing-insulation-bituminioussheeting-gravel-165mm",
+      "name": "Roofing_Insulation_BituminiousSheeting_Gravel_165mm",
+      "totalThicknessM": 0.165,
+      "layers": [
+        {
+          "name": "Insulation_XPS_Lambda0.045_1970",
+          "thicknessM": 0.06,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#80886",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.045,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#85253"
+          }
+        },
+        {
+          "name": "BituminousSheeting",
+          "thicknessM": 0.005,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#80887",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.17,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#14372"
+          }
+        },
+        {
+          "name": "Gravel",
+          "thicknessM": 0.1,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#80888",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 1.4,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#14375"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#80885"
+    },
+    {
+      "id": "assembly-attica-insulation-aluminium-269mm",
+      "name": "Attica_Insulation_Aluminium_269mm",
+      "totalThicknessM": 0.269,
+      "layers": [
+        {
+          "name": "Masonry_Silicate_Block_240mm",
+          "thicknessM": 0.24,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#92035",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.99,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#3502"
+          }
+        },
+        {
+          "name": "Insulation_MineralWool_Lambda0.045_1970",
+          "thicknessM": 0.02,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#92989",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.045,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#3294"
+          }
+        },
+        {
+          "name": "BituminousSheeting",
+          "thicknessM": 0.005,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#93094",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.17,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#14372"
+          }
+        },
+        {
+          "name": "AluminumCladding_4mm",
+          "thicknessM": 0.004,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#93199",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 160,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#3284"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#92034"
+    },
+    {
+      "id": "assembly-covering-aluminium-insulation-attica-29mm",
+      "name": "Covering_Aluminium_Insulation_Attica_29mm",
+      "totalThicknessM": 0.029,
+      "layers": [
+        {
+          "name": "Insulation_MineralWool_Lambda0.045_1970",
+          "thicknessM": 0.02,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#93440",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.045,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#3294"
+          }
+        },
+        {
+          "name": "BituminousSheeting",
+          "thicknessM": 0.005,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#93441",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.17,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#14372"
+          }
+        },
+        {
+          "name": "AluminumCladding_4mm",
+          "thicknessM": 0.004,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#93561",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 160,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#3284"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#93439"
+    },
+    {
+      "id": "assembly-covering-aluminium-attica-4mm",
+      "name": "Covering_Aluminium_Attica_4mm",
+      "totalThicknessM": 0.029,
+      "layers": [
+        {
+          "name": "AluminumCladding_4mm",
+          "thicknessM": 0.029,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#93776",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 160,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#3284"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#93773"
+    },
+    {
+      "id": "assembly-calcium-silicate-plaster-250mm",
+      "name": "Calcium_Silicate_Plaster_250mm",
+      "totalThicknessM": 0.25,
+      "layers": [
+        {
+          "name": "Masonry_Silicate_Block_240mm",
+          "thicknessM": 0.24,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114957",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.99,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#3502"
+          }
+        },
+        {
+          "name": "Plaster_Interior_Lime_Gypsum",
+          "thicknessM": 0.01,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114958",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.51,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114954"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114955"
+    },
+    {
+      "id": "assembly-interiorwall-office-calciumsilicate-260mm",
+      "name": "InteriorWall_Office_CalciumSilicate_260mm",
+      "totalThicknessM": 0.26,
+      "layers": [
+        {
+          "name": "Plaster_Interior_Lime_Gypsum",
+          "thicknessM": 0.01,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114964",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.51,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114954"
+          }
+        },
+        {
+          "name": "Masonry_Silicate_Block_240mm",
+          "thicknessM": 0.24,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114963",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.99,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#3502"
+          }
+        },
+        {
+          "name": "Plaster_Interior_Lime_Gypsum",
+          "thicknessM": 0.01,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114965",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.51,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114954"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114961"
+    },
+    {
+      "id": "assembly-flooring-insulation-screedcement-tiles-95mm",
+      "name": "Flooring_Insulation_ScreedCement_Tiles_95mm",
+      "totalThicknessM": 0.095,
+      "layers": [
+        {
+          "name": "ImpactSoundInsulation_EPS_Lambda0.040",
+          "thicknessM": 0.03,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#117303",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.04,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13466"
+          }
+        },
+        {
+          "name": "ScreedCement",
+          "thicknessM": 0.055,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#117304",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 1.4,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13474"
+          }
+        },
+        {
+          "name": "Tile_Ceramic",
+          "thicknessM": 0.01,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#117305",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 1.3,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#117295"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#117302"
+    },
+    {
+      "id": "assembly-baseslab-reinforcedconcrete-300mm",
+      "name": "Baseslab_ReinforcedConcrete_300mm",
+      "totalThicknessM": 0.3,
+      "layers": [
+        {
+          "name": "ReinforcedConcrete_Slabs",
+          "thicknessM": 0.3,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#126771",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 2.3,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13432"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#126769"
+    },
+    {
+      "id": "assembly-slab-reinforcedconcrete-200mm",
+      "name": "Slab_ReinforcedConcrete_200mm",
+      "totalThicknessM": 0.2,
+      "layers": [
+        {
+          "name": "ReinforcedConcrete_Slabs",
+          "thicknessM": 0.2,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139205",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 2.3,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13432"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139206"
+    },
+    {
+      "id": "assembly-stairlanding-reinforcedconcrete-200mm",
+      "name": "StairLanding_ReinforcedConcrete_200mm",
+      "totalThicknessM": 0.2,
+      "layers": [
+        {
+          "name": "ReinforcedConcrete_Slabs",
+          "thicknessM": 0.2,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139220",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 2.3,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13432"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139221"
+    },
+    {
+      "id": "assembly-flatroofslab-reinforcedconcrete-200mm",
+      "name": "FlatRoofSlab_ReinforcedConcrete_200mm",
+      "totalThicknessM": 0.2,
+      "layers": [
+        {
+          "name": "ReinforcedConcrete_Slabs",
+          "thicknessM": 0.2,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139229",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 2.3,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13432"
+          }
+        }
+      ],
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139230"
+    }
+  ],
+  "orientation": {
+    "trueNorthDeg": -36.95,
+    "northAssumed": false,
+    "weakOutwardCount": 0,
+    "offCardinalCount": 16,
+    "offCardinalSqm": 832.72,
+    "wallCount": 16,
+    "note": "Azimuths are clockwise from north, where north is the model's -Z after web-ifc's Z-up to Y-up conversion. Outward face inferred by comparing each face's centroid with the building centre, which is correct for a convex plan and can be wrong at a re-entrant corner."
+  },
+  "site": {
+    "declaredSiteName": "Office Typology",
+    "declaredLatitudeDeg": 50.775,
+    "declaredLongitudeDeg": 6.083333333333333,
+    "locationIsAuthoringDefault": true,
+    "locationNote": "The research archetype assigns Aachen and a true-north direction as simulation inputs. Its coordinates do not identify a constructed office. BIMFIT uses a separately disclosed Seoul climate comparison.",
+    "statedTown": "Aachen (synthetic scenario)",
+    "trueNorthStated": true
+  },
+  "storeys": [
+    {
+      "id": "storey-00",
+      "name": "00",
+      "elevationM": 0,
+      "elevationSource": "ObjectPlacement",
+      "floorToFloorHeightM": 3.55,
+      "spaceCount": 12,
+      "floorAreaSqm": 376.76,
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#1232"
+    },
+    {
+      "id": "storey-01",
+      "name": "01",
+      "elevationM": 3.55,
+      "elevationSource": "ObjectPlacement",
+      "floorToFloorHeightM": 3.55,
+      "spaceCount": 12,
+      "floorAreaSqm": 376.76,
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#1249"
+    },
+    {
+      "id": "storey-02",
+      "name": "02",
+      "elevationM": 7.1,
+      "elevationSource": "ObjectPlacement",
+      "floorToFloorHeightM": 3.55,
+      "spaceCount": 12,
+      "floorAreaSqm": 376.76,
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#56391"
+    },
+    {
+      "id": "storey-03",
+      "name": "03",
+      "elevationM": 10.65,
+      "elevationSource": "ObjectPlacement",
+      "floorToFloorHeightM": 0,
+      "spaceCount": 12,
+      "floorAreaSqm": 376.76,
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#56413"
+    }
+  ],
+  "spacesFile": "spaces.json",
+  "roofs": [
+    {
+      "id": "roof-78802",
+      "name": "FlatRoofSlab_ReinforcedConcrete_200mm",
+      "family": "FlatRoofSlab_ReinforcedConcrete_200mm",
+      "elementType": "IfcSlab",
+      "predefinedType": "ROOF",
+      "predefinedTypeSource": "type",
+      "predefinedTypeRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#78877",
+      "basis": "IfcSlabType.PredefinedType=ROOF",
+      "storeyId": "storey-03",
+      "projectedSqm": 420.93,
+      "upFacingProjectedSqm": 420.93,
+      "tiltDeg": 0,
+      "surfaceSqm": 420.93,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#78802"
+    },
+    {
+      "id": "roof-80889",
+      "name": "Roofing_Insulation_BituminousSheeting_Gravel",
+      "family": "Roofing_Insulation_BituminousSheeting_Gravel",
+      "elementType": "IfcCovering",
+      "predefinedType": "FLOORING",
+      "predefinedTypeSource": "type",
+      "predefinedTypeRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#80881",
+      "basis": "declared roof covering name",
+      "storeyId": "storey-03",
+      "projectedSqm": 397.96,
+      "upFacingProjectedSqm": 397.96,
+      "tiltDeg": 0,
+      "surfaceSqm": 397.96,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#80889"
+    }
+  ],
+  "groundSlabs": [
+    {
+      "id": "slab-8531",
+      "name": "BaseSlab_ReinforcedConcrete_300mm",
+      "elementType": "IfcSlab",
+      "predefinedType": "BASESLAB",
+      "storeyId": "storey-00",
+      "projectedSqm": 427.36,
+      "countsAsGround": true,
+      "evidence": "376.76 m² under 12 conditioned space footprint(s); bounds 12 conditioned space(s) per IfcRelSpaceBoundary",
+      "excludedReason": null,
+      "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#8531"
+    }
+  ],
+  "openingsFile": "openings.json",
+  "serviceLayers": [],
+  "architecturalDetails": {
+    "id": "details",
+    "ko": "건축 상세",
+    "en": "Architectural details",
+    "file": "architectural-details.glb",
+    "byteLength": 120560,
+    "sha256": "c097c16da96fbf5b37b0b54bd7ef6e47c517abc8187779d5df24248f7971b818",
+    "triangleCount": 2472,
+    "placedTriangleCount": 2472,
+    "triangleCountBasis": "triangleCount stores each instanced shape once; placedTriangleCount includes every placement",
+    "groups": [
+      "covering",
+      "curtain-wall"
+    ],
+    "elements": 68,
+    "distinctGeometries": 45,
+    "instancedShapes": 0,
+    "instancedPlacements": 0,
+    "drawCalls": 5,
+    "materials": 5,
+    "sourceFiles": [
+      {
+        "role": "architectural",
+        "fileName": "2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc",
+        "sha256": "4d77774850b817d8ed9534e19886a1ff7fbcbe734a8f3138eebf2751e4c879fb",
+        "types": [
+          {
+            "type": "IfcCovering",
+            "candidates": 52,
+            "rendered": 52,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcCurtainWall",
+            "candidates": 16,
+            "rendered": 16,
+            "withoutRenderedMesh": 0
+          }
+        ]
+      }
+    ],
+    "indexFile": "architectural-details-index.json",
+    "indexSha256": "4d3e243d0a9b772fd73dca2cbf65a3573f5c38e45143c68c82ef7f5e0a051439",
+    "appearance": "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
+    "note": "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate."
+  },
+  "model": {
+    "file": "model.glb",
+    "byteLength": 3005564,
+    "triangleCount": 45644,
+    "groups": [
+      "slab",
+      "wall",
+      "stair",
+      "glazing",
+      "door"
+    ],
+    "note": "Building fabric only: walls, slabs, roofs and openings. Furniture, fixtures, railings and the structural frame are not in this file."
+  },
+  "invalidDiagnostics": {
+    "note": "No space-boundary strips resolved in this file; there is no sum to refute.",
+    "rawSumSqm": 0,
+    "rawSumByElementType": {}
+  }
+}

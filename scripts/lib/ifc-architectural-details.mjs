@@ -18,6 +18,7 @@ export const ARCHITECTURAL_DETAIL_SOURCES = Object.freeze({
   },
   "fzk-haus": { architectural: ["IfcBeam", "IfcRailing"] },
   "kit-office": { architectural: ["IfcFurnishingElement", "IfcRailing", "IfcColumn"] },
+  "klassiqua-office-1970": { architectural: ["IfcCovering", "IfcCurtainWall"] },
 });
 
 const GROUP = {
@@ -27,6 +28,7 @@ const GROUP = {
   IfcBeam: "beam",
   IfcColumn: "column",
   IfcFooting: "footing",
+  IfcCurtainWall: "curtain-wall",
 };
 
 function colourForPart(part) {
