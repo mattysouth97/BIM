@@ -570,3 +570,5 @@ Deliverable:
 - Report on screen: the Clinic and the Duplex, both meanings, in a FOREGROUND tab.
 
 Files: `src/components/twin/{capex-input,energy-instrument-hud,scenario-rail}.tsx`, `src/store/scenario-store.ts`, `src/hooks/use-retrofit-scenario.ts`, the eight consumers above, tests. Owner: **unassigned — the next session that comes free** (bim-54 and bim-24, who own these files, are released). Off the current shared tip; path-scoped; tsc unpiped; report the sha to main-coordinator.
+
+Note for 3D's implementer (bim-24, 22:11, read on the way past): `selectMeasuresForBudget` returns an EMPTY selection at budget ≤ 0, and the 3C split reads `selection` as the recommendation. So "no budget" must never reach the knapsack as 0 — with `capexBudgetKrw === null` the recommendation is computed by the NPV-positive rule above, the knapsack is not called, and the seed uses that set. Settled here, not in the component.
