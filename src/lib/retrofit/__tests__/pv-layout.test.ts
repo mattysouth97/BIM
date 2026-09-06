@@ -180,7 +180,7 @@ describe("setback and clearance", () => {
   it("an obstruction is grown by its clearance and named in the subtractions", () => {
     const plane = flatPlane({
       obstructions: [
-        { kind: "plant", elementName: "AHU-1", outline: rect(8, 8, 2, 2) },
+        { kind: "plant", elementName: "AHU-1", plan: rect(8, 8, 2, 2) },
       ],
     });
     const usable = usableAreaFor(plane);
@@ -223,7 +223,7 @@ describe("placed modules obey the geometry — the invariants the box grid faile
       name: "flat, racked, landscape",
       plane: flatPlane({
         obstructions: [
-          { kind: "opening", elementName: "Skylight-1", outline: rect(9, 9, 1.2, 1.2) },
+          { kind: "opening", elementName: "Skylight-1", plan: rect(9, 9, 1.2, 1.2) },
         ],
       }),
       alongU: PV_MODULE_LENGTH_M,
@@ -338,7 +338,7 @@ describe("placed modules obey the geometry — the invariants the box grid faile
     const blocked = layoutPlane(
       flatPlane({
         obstructions: [
-          { kind: "plant", elementName: "AHU-1", outline: rect(6, 6, 6, 6) },
+          { kind: "plant", elementName: "AHU-1", plan: rect(6, 6, 6, 6) },
         ],
       }),
     );

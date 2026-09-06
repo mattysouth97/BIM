@@ -440,3 +440,58 @@ modules, north pitch empty with its reason; Duplex — racked rows E-W on the
 deck, skylights and their clearance empty; apartment — racks on the 130 m²
 deck and the flat strips, none on the 65° band; Clinic — racks on the EPDM
 decks, the barrel's south facets flush, north facets empty.
+
+## P2 closed — per-building PV economics
+
+Run by **bim-54** off `2215bb9`, the library over all four shipped
+`roof-planes.json`. Unsubsidised track, Seoul, ₩130/kWh feed-in; NPV over the
+20-year DCF. "ratio" is the old path — roof area × utilisation ÷ 5 m²/kWp;
+"geometric" is `count × 0.40 kWp` from modules actually laid on the planes.
+
+| building | planes | excluded | gross m² | usable m² | modules | geo kWp | ratio kWp | geo/ratio | cost ratio → geo | kWh/yr ratio → geo | NPV ratio → geo |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Clinic | 82 | 80 | 2,537.4 | 1,958.9 | 447 | 178.8 | 373.4 | **0.48×** | ₩5.60억 → ₩2.68억 | 438,896 → 210,144 | ₩4.26억 → ₩2.04억 |
+| Schependomlaan | 51 | 51 | 227.9 | 15.5 | **0** | **0.0** | 54.3 | **0.00×** | ₩8,144만 → ₩0 | 63,814 → 0 | ₩6,201만 → ₩0 |
+| Duplex | 1 | 0 | 132.9 | 60.9 | 14 | 5.6 | 18.6 | **0.30×** | ₩2,792만 → ₩840만 | 21,873 → 6,582 | ₩2,125만 → ₩640만 |
+| FZK Haus | 2 | 1 | 143.0 | 60.8 | 22 | 8.8 | 17.1 | 0.51× | ₩2,567만 → ₩1,320만 | 20,113 → 10,343 | ₩1,954만 → ₩1,005만 |
+
+**Every building falls, and three of the four fall outside the 0.5–2× band.**
+That is the finding, not a calibration problem: the ratio path multiplied a
+whole roof area by a utilisation factor, and the geometry then removes the
+setback, the obstruction clearance, the row pitch, the north-facing pitches
+and every patch too small or too steep to hold a module. Named, per building:
+
+- **Schependomlaan → zero.** All 51 planes refused: 19 `tilt-above-60` (the
+  63° tiled sporenkap, which is a wall in all but name), 23
+  `smaller-than-one-module`, 9 `no-usable-area-after-setback`. 227.9 m² of
+  gross plane leaves 15.5 m² usable. **The PV measure disappears from this
+  building**, and with it the one measure the knapsack was selecting — so its
+  retrofit section will now select nothing at the default budget, as the
+  Clinic already did. This is the honest answer for a steeply-tiled Dutch
+  roof of small fragments; it is also the largest single change in the round
+  and should be looked at on the page before deploy.
+- **Clinic 0.48×.** 80 of 82 planes refused (44 no-usable-area, 18
+  north-facing, 18 sub-module) — the sky-occlusion pass leaves many small
+  patches. The two surviving EPDM decks still carry 447 modules; the fall is
+  the flat-roof row pitch (1.769 m for a 1.0 m module) that a 0.7 utilisation
+  factor never charged for.
+- **Duplex 0.30×.** One flat plane, 132.9 m² gross → 60.9 m² usable after a
+  1.0 m setback on a small roof and two skylights at 0.5 m clearance. A 1.0 m
+  setback costs proportionally far more on a 133 m² roof than on a 2,500 m²
+  one, which is why the smallest building falls furthest.
+- **FZK 0.51×.** Two 30° pitches, north refused, south flush-mounted.
+
+**Two contract mismatches found while running this**, both fixed in the
+library rather than in the script, because a consumer written from the doc
+would hit them too:
+
+- Obstruction polygons are `plan` on disk; the doc calls the field `outline`.
+  Both are accepted (`obstructionPlan`) — reading only `outline` silently
+  subtracted nothing, which on the Duplex would have placed modules over two
+  skylights while reporting them as avoided.
+- Outline rings are tagged `{kind, points}`, and are read **by tag, not by
+  order**.
+
+Remaining for P3b: the legend's utilisation table and `data-pv-modules` come
+from `layoutRoofPlanes(...)` directly — `totalModules`, `totalKWp`, and the
+per-plane `excludedReason`, which is why every refusal above has a name.
