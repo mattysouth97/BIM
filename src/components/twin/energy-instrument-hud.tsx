@@ -32,6 +32,7 @@ import { ScenarioRail } from "./scenario-rail";
 import { CapexInput } from "./capex-input";
 import { ProgramTrackSelector } from "./program-track-selector";
 import { SelectedMeasuresStrip } from "./selected-measures-strip";
+import { RetrofitDeltaStrip } from "./retrofit-delta-strip";
 import { EnergyCards } from "@/components/viewer/energy-cards";
 
 export interface EnergyInstrumentHudProps {
@@ -132,6 +133,7 @@ export function EnergyInstrumentHud({
       bottom={
         <section className="overflow-hidden rounded-lg border border-border bg-card/95 shadow-sm backdrop-blur-md">
           <EnergyCards buildingPk={buildingPk} variant="strip" />
+          <RetrofitDeltaStrip />
           <SelectedMeasuresStrip
             measures={scenario.selection?.selected ?? []}
           />
