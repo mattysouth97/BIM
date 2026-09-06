@@ -34,12 +34,31 @@
 // triangles and 5.3 MB across the three layers to save 131 draw calls, which
 // is the wrong side of that trade in both directions.
 
+import { createHash } from "node:crypto";
+
 /**
  * Placed fewer times than this and a shape is merged instead of instanced.
  *
  * Two, and it should stay two — see the note above.
  */
 export const INSTANCE_MIN_USES = 2;
+
+export function assertTrsPlacement(matrix) {
+  const axes = [matrix.slice(0, 3), matrix.slice(4, 7), matrix.slice(8, 11)];
+  const length = axes.map((axis) => Math.hypot(...axis));
+  if (matrix.length !== 16 || !matrix.every(Number.isFinite) || length.some((x) => x <= 0)) {
+    throw new Error("IFC detail placement has a non-finite or singular transform");
+  }
+  for (const [a, b] of [[0, 1], [0, 2], [1, 2]]) {
+    const dot = axes[a].reduce((sum, x, i) => sum + x * axes[b][i], 0);
+    if (Math.abs(dot) > 1e-8 * length[a] * length[b]) {
+      throw new Error("IFC detail placement contains shear; cannot losslessly encode as glTF TRS");
+    }
+  }
+  if (Math.abs(matrix[3]) + Math.abs(matrix[7]) + Math.abs(matrix[11]) + Math.abs(matrix[15] - 1) > 1e-8) {
+    throw new Error("IFC detail placement is not affine");
+  }
+}
 
 /**
  * Split a 4x4 column-major transform into translation, rotation and scale.
@@ -114,7 +133,16 @@ export function collectServiceInstances(
   api,
   webIfc,
   modelID,
-  { serviceGroups, minUses = INSTANCE_MIN_USES },
+  {
+    serviceGroups,
+    minUses = INSTANCE_MIN_USES,
+    partGroup = null,
+    onElement = null,
+    bakeMirrors = false,
+    deduplicateGeometry = false,
+    minimumSavedVertices = 0,
+    validateTrs = false,
+  },
 ) {
   // One pass, and it has to be one pass: `StreamAllMeshes` frees a geometry
   // once its callback returns, so `GetGeometry` afterwards hands back an empty
@@ -139,9 +167,18 @@ export function collectServiceInstances(
     }
     elements += 1;
     const placed = mesh.geometries;
+    let emittedParts = 0;
+    let placedTriangles = 0;
     for (let i = 0; i < placed.size(); i += 1) {
       const part = placed.get(i);
-      const key = `${group}:${part.geometryExpressID}`;
+      const resolvedGroup = partGroup?.(group, part, line) ?? group;
+      const matrix = Array.from(part.flatTransformation);
+      if (validateTrs) assertTrsPlacement(matrix);
+      // three.js InstancedMesh does not support negative determinant matrices.
+      // Reflect a copy of the source geometry, including its winding, and
+      // reflect the placement back. The world-space shape is unchanged.
+      const mirrored = bakeMirrors && decompose(matrix).scale[0] < 0;
+      const key = `${resolvedGroup}:${part.geometryExpressID}${mirrored ? ":mirror" : ""}`;
       let record = placements.get(key);
       if (!record) {
         const geometry = api.GetGeometry(modelID, part.geometryExpressID);
@@ -154,19 +191,57 @@ export function collectServiceInstances(
           geometry.GetIndexDataSize(),
         );
         record = {
-          group,
+          group: resolvedGroup,
           // Copies, not views: both arrays are windows into WASM memory that
           // is reused by the next mesh.
           verts: Float32Array.from(verts),
           idx: Uint32Array.from(idx),
           matrices: [],
         };
+        if (mirrored) {
+          for (let v = 0; v < record.verts.length; v += 6) {
+            record.verts[v] *= -1;
+            record.verts[v + 3] *= -1;
+          }
+          for (let t = 0; t < record.idx.length; t += 3) {
+            const b = record.idx[t + 1];
+            record.idx[t + 1] = record.idx[t + 2];
+            record.idx[t + 2] = b;
+          }
+        }
         placements.set(key, record);
       }
       // Likewise a live view, so copy rather than reference.
-      record.matrices.push(Array.from(part.flatTransformation));
+      if (mirrored) for (let a = 0; a < 4; a += 1) matrix[a] *= -1;
+      record.matrices.push(matrix);
+      if (record.verts.length > 0 && record.idx.length > 0) {
+        emittedParts += 1;
+        placedTriangles += record.idx.length / 3;
+      }
     }
+    onElement?.({ line, typeName, group, emittedParts, placedTriangles });
   });
+
+  // Different IFC representation IDs can carry byte-identical shapes. The
+  // optional detail path shares these without changing any source placement.
+  let records = [...placements.values()];
+  if (deduplicateGeometry) {
+    const canonical = new Map();
+    for (const record of records) {
+      const hash = createHash("sha256")
+        .update(Buffer.from(record.verts.buffer))
+        .update(Buffer.from(record.idx.buffer))
+        .digest("hex");
+      const key = `${record.group}:${hash}`;
+      const existing = canonical.get(key);
+      if (existing) {
+        for (const matrix of record.matrices) existing.matrices.push(matrix);
+      } else {
+        canonical.set(key, record);
+      }
+    }
+    records = [...canonical.values()];
+  }
 
   // Pass 2: read each distinct geometry exactly once.
   const groups = new Map();
@@ -174,12 +249,12 @@ export function collectServiceInstances(
   let instancedTriangles = 0;
   let mergedTriangles = 0;
 
-  for (const record of placements.values()) {
+  for (const record of records) {
     const { verts, idx } = record;
     const vertexCount = verts.length / 6;
     if (vertexCount === 0 || idx.length === 0) continue;
 
-    if (record.matrices.length >= minUses) {
+    if (record.matrices.length >= minUses && vertexCount * (record.matrices.length - 1) >= minimumSavedVertices) {
       // One copy, in its own frame, placed by TRS attributes.
       const positions = new Float32Array(vertexCount * 3);
       const normals = new Float32Array(vertexCount * 3);
@@ -218,7 +293,11 @@ export function collectServiceInstances(
           m[1] * x + m[5] * y + m[9] * z + m[13],
           m[2] * x + m[6] * y + m[10] * z + m[14],
         );
-        const nx = verts[v + 3], ny = verts[v + 4], nz = verts[v + 5];
+        // With orthogonal TRS axes, inverse-transpose is M divided by each
+        // axis' squared scale. Preserve correct lighting for nonuniform scales.
+        const nx = verts[v + 3] / (validateTrs ? m[0] ** 2 + m[1] ** 2 + m[2] ** 2 : 1);
+        const ny = verts[v + 4] / (validateTrs ? m[4] ** 2 + m[5] ** 2 + m[6] ** 2 : 1);
+        const nz = verts[v + 5] / (validateTrs ? m[8] ** 2 + m[9] ** 2 + m[10] ** 2 : 1);
         const rx = m[0] * nx + m[4] * ny + m[8] * nz;
         const ry = m[1] * nx + m[5] * ny + m[9] * nz;
         const rz = m[2] * nx + m[6] * ny + m[10] * nz;
@@ -239,7 +318,7 @@ export function collectServiceInstances(
     skipped,
     stats: {
       elements,
-      distinctGeometries: placements.size,
+      distinctGeometries: records.length,
       instancedGeometries: instanced.length,
       instancedPlacements: instanced.reduce((s, e) => s + e.transforms.length, 0),
       instancedTriangles,

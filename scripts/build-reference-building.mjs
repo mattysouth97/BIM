@@ -15,7 +15,7 @@
 // are committed, so building them twice from the same inputs must produce
 // identical bytes or every rebuild shows up as a diff.
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import {
@@ -45,6 +45,7 @@ import {
   SERVICE_COLOUR,
 } from "./lib/ifc-glb.mjs";
 import { collectServiceInstances } from "./lib/ifc-instances.mjs";
+import { ARCHITECTURAL_DETAIL_SOURCES, buildArchitecturalDetails } from "./lib/ifc-architectural-details.mjs";
 import { collectFlowNetwork, annotateFlow, serialiseFlow } from "./lib/ifc-flow.mjs";
 import { measureSpaceMeshes } from "./lib/ifc-space-volume.mjs";
 import {
@@ -1072,6 +1073,17 @@ async function main() {
     : path.join(REPO, "public", "reference-buildings", building.id);
   await mkdir(outDir, { recursive: true });
 
+  // A details-only build leaves all measured quantities and existing GLBs
+  // alone. It also pins the cached IFC to the published source hash.
+  const detailsOnly = process.argv.includes("--details-only");
+  const manifestPath = path.join(outDir, "manifest.json");
+  const previousManifestText = detailsOnly ? await readFile(manifestPath, "utf8") : null;
+  const previousManifest = previousManifestText ? JSON.parse(previousManifestText) : null;
+  const detailRoles = Object.keys(ARCHITECTURAL_DETAIL_SOURCES[buildingId] ?? {});
+  if (detailsOnly && previousManifest?.id !== buildingId) {
+    throw new Error("--details-only requires this building's existing manifest.json in --out-dir");
+  }
+
   // ── Fetch (or reuse) the discipline models ─────────────────────────────
   const sources = [];
   const src = building.source ?? {
@@ -1086,6 +1098,7 @@ async function main() {
   // sub-directory of its own so the two folders' names can never collide.
   const toUrl = src.host === "raw" ? githubRawUrl : githubLfsUrl;
   for (const file of building.files) {
+    if (detailsOnly && !detailRoles.includes(file.role)) continue;
     const named = file.dir ? src.dirs?.[file.dir] : null;
     if (file.dir && !named) {
       throw new Error(
@@ -1100,8 +1113,12 @@ async function main() {
     const remoteDir = file.url ? null : named ? named.path : src.dir;
     const url = file.url ?? toUrl(src.owner, src.repo, src.ref, `${remoteDir}/${file.fileName}`);
     const cachePath = path.join(CACHE, named?.cache ?? "", file.fileName);
+    const expectedSha256 = detailsOnly
+      ? previousManifest.sourceFiles.find((entry) => entry.role === file.role)?.sha256
+      : file.sha256;
+    if (detailsOnly && !expectedSha256) throw new Error(`${file.fileName}: published source hash missing`);
     const fetched = await fetchSource(url, cachePath, {
-      expectedSha256: file.sha256,
+      expectedSha256,
     });
     sources.push({ ...file, ...fetched, cachePath, remoteDir });
     console.log(
@@ -1116,6 +1133,22 @@ async function main() {
   const byRole = new Map(sources.map((s, i) => [s.role, files[i]]));
   const arch = byRole.get("architectural");
   const struct = byRole.get("structural");
+
+  if (detailsOnly) {
+    try {
+      const architecturalDetails = await buildArchitecturalDetails({
+        buildingId, api, webIfc, byRole, sources, outDir,
+        generator: `bimfit build-reference-building (web-ifc ${webIfcVersion()})`,
+      });
+      const lineEnding = previousManifestText.includes("\r\n") ? "\r\n" : "\n";
+      await writeFile(manifestPath, `${JSON.stringify({ ...previousManifest, architecturalDetails }, null, 2)}\n`.replaceAll("\n", lineEnding));
+      console.log(`  architectural-details.glb ${architecturalDetails.elements} elements, ${architecturalDetails.byteLength} bytes, ${architecturalDetails.drawCalls} draw calls`);
+      console.log(JSON.stringify(architecturalDetails.sourceFiles, null, 2));
+    } finally {
+      files.forEach((file) => file.close());
+    }
+    return;
+  }
 
   // ── What the model states ──────────────────────────────────────────────
   // Spaces may live in a model of their own. The Duplex ships its rooms in a
@@ -1640,6 +1673,9 @@ async function main() {
 
   // ── Fabric geometry for the viewer ─────────────────────────────────────
   const generator = `bimfit build-reference-building (web-ifc ${webIfcVersion()})`;
+  const architecturalDetails = await buildArchitecturalDetails({
+    buildingId, api, webIfc, byRole, sources, outDir, generator,
+  });
   const fabric = new Map();
   for (const file of [arch, struct].filter(Boolean)) {
     mergeFabric(fabric, collectFabric(api, webIfc, file.modelId).groups);
@@ -2134,6 +2170,7 @@ async function main() {
     /** One row per IfcWindow, IfcDoor and IfcCurtainWall — counted, excluded with a reason, or unresolved. */
     openingsFile: "openings.json",
     serviceLayers,
+    architecturalDetails,
     model: {
       file: "model.glb",
       byteLength: glb.byteLength,

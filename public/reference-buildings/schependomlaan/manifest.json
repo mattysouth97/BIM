@@ -3528,5 +3528,45 @@
     "note": "No space-boundary strips resolved in this file; there is no sum to refute.",
     "rawSumSqm": 0,
     "rawSumByElementType": {}
+  },
+  "architecturalDetails": {
+    "id": "details",
+    "ko": "건축 상세",
+    "en": "Architectural details",
+    "file": "architectural-details.glb",
+    "byteLength": 1318168,
+    "sha256": "041c70cdd72cb39b1b33230418b1c9a3abaa164edfbafa720a70cda0df4e36ae",
+    "triangleCount": 28221,
+    "placedTriangleCount": 41869,
+    "triangleCountBasis": "triangleCount stores each instanced shape once; placedTriangleCount includes every placement",
+    "groups": [
+      "covering"
+    ],
+    "elements": 1214,
+    "distinctGeometries": 656,
+    "instancedShapes": 13,
+    "instancedPlacements": 339,
+    "drawCalls": 28,
+    "materials": 15,
+    "sourceFiles": [
+      {
+        "role": "architectural",
+        "fileName": "IFC Schependomlaan.ifc",
+        "sha256": "2c3565ca1904f2aa61adab92024cf3755b2c5b21a498144d3094d7cb58cebec7",
+        "types": [
+          {
+            "type": "IfcCovering",
+            "candidates": 1262,
+            "rendered": 1214,
+            "withoutRenderedMesh": 48
+          }
+        ]
+      }
+    ],
+    "indexFile": "architectural-details-index.json",
+    "indexSha256": "97738625b5904ec8e2ee3fdd9171a5fb16b287f0d6be91da68c88bb8740504c3",
+    "appearance": "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
+    "note": "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate.",
+    "selectionNote": "Architectural IfcCovering only; supplier steel, precast and railing layers already carry their own source models. Architectural beam, column and railing copies are excluded to avoid overlapping those layers."
   }
 }

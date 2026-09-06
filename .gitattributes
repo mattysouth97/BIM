@@ -1,3 +1,5 @@
 # v7.0 Prediction — Parquet + ONNX release artifacts are binary
 *.parquet binary
 *.onnx binary
+# Source detail indexes are byte-hashed by their manifests on every platform.
+public/reference-buildings/*/architectural-details-index.json text eol=lf

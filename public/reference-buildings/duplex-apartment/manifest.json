@@ -818,5 +818,72 @@
       "IfcWindow": 63.57,
       "IfcWall": 67.96
     }
+  },
+  "architecturalDetails": {
+    "id": "details",
+    "ko": "건축 상세",
+    "en": "Architectural details",
+    "file": "architectural-details.glb",
+    "byteLength": 647308,
+    "sha256": "df0bb8731446834d710b14a5b6ce785ca4aa8d318395cb90292b99aa6282948f",
+    "triangleCount": 12008,
+    "placedTriangleCount": 18836,
+    "triangleCountBasis": "triangleCount stores each instanced shape once; placedTriangleCount includes every placement",
+    "groups": [
+      "railing",
+      "furnishing",
+      "footing",
+      "covering",
+      "beam"
+    ],
+    "elements": 93,
+    "distinctGeometries": 182,
+    "instancedShapes": 11,
+    "instancedPlacements": 70,
+    "drawCalls": 20,
+    "materials": 9,
+    "sourceFiles": [
+      {
+        "role": "architectural",
+        "fileName": "Duplex_A_20110907.ifc",
+        "sha256": "b347a2c8aa8fff6db896a4417a9c50c22ac0ccd7c5cfc22b99b8d29336c606ed",
+        "types": [
+          {
+            "type": "IfcFurnishingElement",
+            "candidates": 61,
+            "rendered": 61,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcCovering",
+            "candidates": 13,
+            "rendered": 13,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcRailing",
+            "candidates": 4,
+            "rendered": 4,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcBeam",
+            "candidates": 8,
+            "rendered": 8,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcFooting",
+            "candidates": 7,
+            "rendered": 7,
+            "withoutRenderedMesh": 0
+          }
+        ]
+      }
+    ],
+    "indexFile": "architectural-details-index.json",
+    "indexSha256": "95c9bf729b0f6ae92121d40d48e1458e0dd423996a1b9cf51c6975ba9787086a",
+    "appearance": "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
+    "note": "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate."
   }
 }

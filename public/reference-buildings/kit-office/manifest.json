@@ -594,5 +594,58 @@
     "note": "No space-boundary strips resolved in this file; there is no sum to refute.",
     "rawSumSqm": 0,
     "rawSumByElementType": {}
+  },
+  "architecturalDetails": {
+    "id": "details",
+    "ko": "건축 상세",
+    "en": "Architectural details",
+    "file": "architectural-details.glb",
+    "byteLength": 27080,
+    "sha256": "2291d8abb3c6dc2a167ee4216a84db70fb30574e25dc229c7156ea5f8761b588",
+    "triangleCount": 252,
+    "placedTriangleCount": 3264,
+    "triangleCountBasis": "triangleCount stores each instanced shape once; placedTriangleCount includes every placement",
+    "groups": [
+      "furnishing",
+      "railing",
+      "column"
+    ],
+    "elements": 267,
+    "distinctGeometries": 5,
+    "instancedShapes": 2,
+    "instancedPlacements": 253,
+    "drawCalls": 4,
+    "materials": 3,
+    "sourceFiles": [
+      {
+        "role": "architectural",
+        "fileName": "AC20-Institute-Var-2.ifc",
+        "sha256": "cfb2124497b25d9a72101075e84be0feb44ff669cb1bd3251be11efebeea945c",
+        "types": [
+          {
+            "type": "IfcFurnishingElement",
+            "candidates": 253,
+            "rendered": 253,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcRailing",
+            "candidates": 12,
+            "rendered": 12,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcColumn",
+            "candidates": 2,
+            "rendered": 2,
+            "withoutRenderedMesh": 0
+          }
+        ]
+      }
+    ],
+    "indexFile": "architectural-details-index.json",
+    "indexSha256": "106494f67543fe3932ea07271ed0da3c1b99fa12a6b8018eccb9183e3646c723",
+    "appearance": "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
+    "note": "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate."
   }
 }

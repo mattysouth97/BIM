@@ -263,5 +263,51 @@
     "note": "No space-boundary strips resolved in this file; there is no sum to refute.",
     "rawSumSqm": 0,
     "rawSumByElementType": {}
+  },
+  "architecturalDetails": {
+    "id": "details",
+    "ko": "건축 상세",
+    "en": "Architectural details",
+    "file": "architectural-details.glb",
+    "byteLength": 84388,
+    "sha256": "68fa5a1992ab9bbcec0c40dd927b0ba52a3d43ec87006984156184815235a75d",
+    "triangleCount": 1832,
+    "placedTriangleCount": 7824,
+    "triangleCountBasis": "triangleCount stores each instanced shape once; placedTriangleCount includes every placement",
+    "groups": [
+      "beam",
+      "railing"
+    ],
+    "elements": 6,
+    "distinctGeometries": 8,
+    "instancedShapes": 2,
+    "instancedPlacements": 16,
+    "drawCalls": 4,
+    "materials": 2,
+    "sourceFiles": [
+      {
+        "role": "architectural",
+        "fileName": "AC20-FZK-Haus.ifc",
+        "sha256": "70cc8ff245fc0894201d96496c031005a5cbd7a96b22d8a1b87c5a883fb77994",
+        "types": [
+          {
+            "type": "IfcBeam",
+            "candidates": 4,
+            "rendered": 4,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcRailing",
+            "candidates": 2,
+            "rendered": 2,
+            "withoutRenderedMesh": 0
+          }
+        ]
+      }
+    ],
+    "indexFile": "architectural-details-index.json",
+    "indexSha256": "fa37f7d73294556a0cd3a0c016a86d9b2e5a33cd69bf52fa3161819c43f32377",
+    "appearance": "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
+    "note": "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate."
   }
 }

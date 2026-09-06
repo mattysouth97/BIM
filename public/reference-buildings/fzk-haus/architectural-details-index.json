@@ -1,0 +1,95 @@
+{
+  "kind": "bimfit_reference_architectural_details",
+  "schemaVersion": 1,
+  "buildingId": "fzk-haus",
+  "coordinateSystem": "metres, Y-up; original web-ifc model placements",
+  "sources": [
+    {
+      "role": "architectural",
+      "fileName": "AC20-FZK-Haus.ifc",
+      "sha256": "70cc8ff245fc0894201d96496c031005a5cbd7a96b22d8a1b87c5a883fb77994",
+      "types": [
+        {
+          "type": "IfcBeam",
+          "candidates": 4,
+          "rendered": 4,
+          "withoutRenderedMesh": 0
+        },
+        {
+          "type": "IfcRailing",
+          "candidates": 2,
+          "rendered": 2,
+          "withoutRenderedMesh": 0
+        }
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "sourceRole": "architectural",
+      "expressId": 20374,
+      "globalId": "3tCgZT92j6fw8fXgwCL3Jm",
+      "ifcType": "IfcBeam",
+      "group": "beam",
+      "name": "Unterzug-1",
+      "ref": "ifc://AC20-FZK-Haus.ifc#20374",
+      "geometryParts": 1,
+      "placedTriangles": 12
+    },
+    {
+      "sourceRole": "architectural",
+      "expressId": 37582,
+      "globalId": "0eaC0nL3XAOfFxRXK_2iAr",
+      "ifcType": "IfcBeam",
+      "group": "beam",
+      "name": "Pfette-2-1",
+      "ref": "ifc://AC20-FZK-Haus.ifc#37582",
+      "geometryParts": 1,
+      "placedTriangles": 12
+    },
+    {
+      "sourceRole": "architectural",
+      "expressId": 40416,
+      "globalId": "3jZHeNcfvDMf9wG$wx9XqG",
+      "ifcType": "IfcBeam",
+      "group": "beam",
+      "name": "Pfette-1-1",
+      "ref": "ifc://AC20-FZK-Haus.ifc#40416",
+      "geometryParts": 1,
+      "placedTriangles": 12
+    },
+    {
+      "sourceRole": "architectural",
+      "expressId": 40539,
+      "globalId": "20bTaetQDApP5w8egFxj13",
+      "ifcType": "IfcBeam",
+      "group": "beam",
+      "name": "First",
+      "ref": "ifc://AC20-FZK-Haus.ifc#40539",
+      "geometryParts": 1,
+      "placedTriangles": 12
+    },
+    {
+      "sourceRole": "architectural",
+      "expressId": 49831,
+      "globalId": "0o5vgCKyTBzO5$QJcI2YDP",
+      "ifcType": "IfcRailing",
+      "group": "railing",
+      "name": "",
+      "ref": "ifc://AC20-FZK-Haus.ifc#49831",
+      "geometryParts": 12,
+      "placedTriangles": 3888
+    },
+    {
+      "sourceRole": "architectural",
+      "expressId": 59075,
+      "globalId": "09axaKU7X1_O8n6dmmiZ1E",
+      "ifcType": "IfcRailing",
+      "group": "railing",
+      "name": "",
+      "ref": "ifc://AC20-FZK-Haus.ifc#59075",
+      "geometryParts": 12,
+      "placedTriangles": 3888
+    }
+  ]
+}

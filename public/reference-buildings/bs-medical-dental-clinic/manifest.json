@@ -906,5 +906,92 @@
       "IfcWall": 75.444,
       "IfcWindow": 18.558
     }
+  },
+  "architecturalDetails": {
+    "id": "details",
+    "ko": "건축 상세",
+    "en": "Architectural details",
+    "file": "architectural-details.glb",
+    "byteLength": 17733072,
+    "sha256": "8d3125619bbf6000d87efee534c3674a16ac8d054f33307f52b09d04712627d3",
+    "triangleCount": 345439,
+    "placedTriangleCount": 440159,
+    "triangleCountBasis": "triangleCount stores each instanced shape once; placedTriangleCount includes every placement",
+    "groups": [
+      "furnishing",
+      "covering",
+      "railing",
+      "beam",
+      "column",
+      "footing"
+    ],
+    "elements": 1409,
+    "distinctGeometries": 4452,
+    "instancedShapes": 119,
+    "instancedPlacements": 1773,
+    "drawCalls": 129,
+    "materials": 10,
+    "sourceFiles": [
+      {
+        "role": "architectural",
+        "fileName": "Clinic_Architectural.ifc",
+        "sha256": "2ac970ce065ecac4e0c9e5f453a257169e90d0067f419b7e33533a64ef837880",
+        "types": [
+          {
+            "type": "IfcFurnishingElement",
+            "candidates": 118,
+            "rendered": 118,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcCovering",
+            "candidates": 250,
+            "rendered": 250,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcRailing",
+            "candidates": 9,
+            "rendered": 9,
+            "withoutRenderedMesh": 0
+          }
+        ]
+      },
+      {
+        "role": "structural",
+        "fileName": "Clinic_Structural.ifc",
+        "sha256": "325287b375f154dc79504c4bbf67b40c501f458f23a8c4ba13b27171e00533d8",
+        "types": [
+          {
+            "type": "IfcBeam",
+            "candidates": 738,
+            "rendered": 738,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcColumn",
+            "candidates": 195,
+            "rendered": 195,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcFooting",
+            "candidates": 96,
+            "rendered": 96,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcRailing",
+            "candidates": 3,
+            "rendered": 3,
+            "withoutRenderedMesh": 0
+          }
+        ]
+      }
+    ],
+    "indexFile": "architectural-details-index.json",
+    "indexSha256": "52c39f9ebc5159395c925abc796f90a4c59ff8816c43ae799a4fbd57101eff3f",
+    "appearance": "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
+    "note": "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate."
   }
 }
