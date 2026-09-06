@@ -20,8 +20,10 @@ its own solids — or are named assumptions. `AGENTS.md`'s stated-versus-assumed
 rule applies unchanged; only the source of "stated" moves from the register to
 the IFC.
 
-Six are integrated: `bs-medical-dental-clinic`, `schependomlaan`,
-`duplex-apartment`, `fzk-haus`, `kit-office` and `klassiqua-office-1970`.
+Seven are integrated: `bs-medical-dental-clinic`, `schependomlaan`,
+`duplex-apartment`, `fzk-haus`, `kit-office`, `klassiqua-office-1970` and
+`taltech-maemaja`. [[TalTech Maemaja Reference]] documents its source-property
+archive, selected openings, existing PV, MEP and assumed comparison climate.
 The KIT examples and Klassiqua research archetype are synthetic buildings;
 a public IFC does not establish a real occupied site.
 `REFERENCE_BUILDING_IDS` in `src/lib/reference-buildings/manifest.ts` is the
@@ -60,7 +62,7 @@ applying to the base fabric file, since detail and service layers are separate.
 See [[Reference Architectural Details]], [[Reference MEP Coverage]] and
 [[Building Energy Datasets]].
 
-Source-bound material expression defaults on for all six models. The independent
+Source-bound material expression defaults on for all seven models. The independent
 material fabric replaces the base only after geometry and textures are ready;
 errors preserve the base and expose Retry. Clicking a surface opens its source
 assembly in Materials; an orbit drag does not select it. The toggle, selection,

@@ -52,7 +52,9 @@ describe("PV claims on the work chip and before/after strip", () => {
         const capacityPattern = /→ ([\d.]+) kWp/;
         expect(Number(claim.match(capacityPattern)?.[1])).toBeCloseTo(count * 0.4, 8);
         expect(Number(strip.match(capacityPattern)?.[1])).toBeCloseTo(count * 0.4, 8);
-        const areaPattern = lang === "ko" ? /모듈 표면적[^→]*→ ([\d,]+) m²/ : /Module surface area[^→]*→ ([\d,]+) m²/;
+        const areaPattern = energy.materials.renewable.solarPV.installed
+          ? lang === "ko" ? /추가 모듈 표면적[^→]*→ ([\d,]+) m²/ : /Additional module surface area[^→]*→ ([\d,]+) m²/
+          : lang === "ko" ? /모듈 표면적[^→]*→ ([\d,]+) m²/ : /Module surface area[^→]*→ ([\d,]+) m²/;
         expect(Number(strip.match(areaPattern)?.[1].replaceAll(",", ""))).toBe(Math.round(count * 1.7));
         const chipArea = claim.match(/ · ([\d,]+) m²/);
         expect(Number(chipArea?.[1].replaceAll(",", ""))).toBe(Math.round(count * 1.7));

@@ -11,7 +11,7 @@ import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import type { ReferenceBuildingEnergyInputs } from "./energy-inputs";
 import type { ReferenceBuildingManifest } from "./manifest";
 
-export const ENERGY_DATASET_SCHEMA_VERSION = "1.2.0";
+export const ENERGY_DATASET_SCHEMA_VERSION = "1.3.0";
 
 type ModelContext = {
   classification: "real_building_model" | "synthetic_example" | "real_world_status_unverified";

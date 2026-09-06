@@ -36,25 +36,28 @@ proposes a validated detailed/hourly architecture; it is research, not implement
 
 Local release validation on 2026-09-07:
 
-- Unit: **5,439 passed**, 4 skipped (452 passed files, 1 skipped).
-- Material integration: 22 browser checks passed before compression; all 11
-  material-loading/picking/fallback checks passed again after compression.
-  Six model orbit/zoom checks passed. Full Chromium: 149/150 passed; the sole
-  failure was an old five-card gallery assertion. The reviewed six-card set
-  and its rerun passed. All source/material/PV cases passed in the full run.
+- Unit: **5,492 passed**, 4 skipped (458 passed files, 1 skipped).
+- Full Chromium: 160/161 passed. One existing diagnostic test captured the
+  alternative placeholder before calculation finished; it now awaits the actual
+  evaluated result, and all 10 diagnostic browser checks pass on rerun. Every
+  source model, material, camera, dataset and proposed-work check passed.
+  TalTech's MEP screenshot waits for mounted service geometry and was inspected;
+  desktop/mobile proposed-work legend screenshots were also inspected.
 - TypeScript: clean. ESLint src/e2e: 0 errors, 6 pre-existing warnings.
 - KIT Office and demo expanded/collapsed canvas screenshots inspected; no page
   errors. Panel controls preserve state and do not overlap the rendering toolbar.
-- Last production verification: `d1b9dce` on 2026-09-07 01:40, full health SHA
-  and region `icn1`; 17 live material-loading/picking/retry and camera-depth
-  checks passed across the six models.
+- Last production verification: `2816ab5` on 2026-09-07 01:52, full health SHA
+  and region `icn1`; five live material-realism browser checks passed. The
+  seven-model release described below is locally integrated, deployment pending.
 
 ## Current product
 
-- Six integrated source models: Clinic, Schependomlaan, Duplex, FZK Haus,
-  KIT Office and Klassiqua Office 1970. KIT examples and the Klassiqua research
-  archetype are synthetic models, not verified occupied sites.
-- Source architectural details add 3,057 elements across these six models.
+- Seven integrated source models: Clinic, Schependomlaan, Duplex, FZK Haus,
+  KIT Office, Klassiqua Office 1970 and TalTech Mäemaja. KIT examples and the
+  Klassiqua research archetype are synthetic models, not verified occupied sites.
+  TalTech adds a licensed office/lab IFC with stated areas, thermal properties,
+  equipment and existing PV; its separate meter archive is not ingested.
+- Source architectural details add 4,040 elements across these seven models.
   The independent layer defaults on, preserves source placements, and supports
   retry without losing the base model. This is selected source detail, not a
   certified LOD claim. Clinic/Schependomlaan roof views were compared with the
@@ -63,12 +66,18 @@ Local release validation on 2026-09-07:
   opens the corresponding source assembly; loading/retry preserves the base.
   Samples illustrate the thickest stated layer, not a verified outer finish.
   Source thermal properties and generic assumptions remain distinct.
-  Blender MCP lossless optimization reduces these six material payloads by
-  54.1% with exact decoded geometry, normals, indices and instances preserved.
+  Blender MCP lossless optimization reduces the original six material payloads
+  by 54.1% and TalTech's by 51.3%, with exact decoded geometry, normals, indices
+  and instances preserved. Source assignment basis remains part of the binding.
+  Texture scale follows source units and instances; roughness and glass optics
+  are illustrative. Single-material wood/metal panels remain opaque.
 - MEP inventory is explicit for every model. Schependomlaan gains 73 source
   drainage/vent elements; zero typed MEP in FZK/KIT files does not mean those
   buildings have no services. Klassiqua also has no typed MEP in its source.
-  Dataset schema 1.2 includes material bindings and explicit floor/facade scope.
+  TalTech adds 528 source MEP elements and 1,644 ports; ambiguous connection
+  direction is disclosed and no flow animation is invented.
+  Dataset schema 1.3 includes material bindings, explicit floor/facade scope and
+  an optional hashed source-property archive (`source.statedPhysics`).
 - JSON/CSV published-baseline datasets on the gallery and each model page.
   They carry licenses, source and payload hashes, units, inputs, assumptions,
   partial measurement scope, and calculated energy. Metered energy is absent.
@@ -84,12 +93,19 @@ Local release validation on 2026-09-07:
   keyboard navigation, synchronized KO/EN, and a mobile split that keeps the
   model visible with initially collapsed energy rails. Thin-layer depth
   precision now follows the model bounds while orbiting/zooming; no source
-  faces were removed. Six model orbit/zoom browser checks passed.
+  faces were removed. Seven model orbit/zoom browser checks passed. The proposed
+  work legend starts compact and occupies the gap between the actual canvas
+  panels; its proposed status and selected count remain visible.
 - PV roof poses, drawn count, chips and economics share measured roof layout.
   Clinic 453/181.2 kWp, apartment 10/4.0, Duplex 14/5.6, FZK 44/17.6,
   Klassiqua 84/33.6; KIT 0 under the current module/setback rules. Downslope
   bearings now follow source normals and declared true north. Flat racks face
   true south; the yield estimate still does not resolve each slope's shading.
+  TalTech retains 63.36 kWp of source-stated installed PV and permits 10 proposed
+  modules / 4 kWp under the current rules. Its source latitude controls spacing;
+  source array, chiller and parapet plan projections constrain new placement.
+  New-work cost and area exclude existing arrays. The energy calculation still
+  uses explicitly assumed Seoul comparison weather, not Tallinn weather.
 
 Execution and release details: [[2026-09-07-product-datasets-and-viewer]].
 Superseded snapshots: [[Archive/2026-09-07-before-dataset-and-canvas-release]].
@@ -99,24 +115,21 @@ Prior PV and selection methods remain documented in
 
 ## Open work and limits
 
-- The sixth model/material-expression/Blender/PV-correction release is deployed
-  and production-verified as above.
-- Material realism is integrated and locally verified: source-instance metre/mm
-  texture scale, roughness variation, explicit-source glass and mobile layout.
-  Twenty-six material/gallery browser checks passed; deployment pending.
+- Material realism, professional mission and the research/business proposals
+  are deployed and production-verified. TalTech and the compact proposed-work
+  legend are integrated and locally verified; production deployment is pending.
 - Existing/new PV accounting now preserves installed capacity and scopes costs
   to the addition; the separate report/grade heat-carrier mismatch remains open.
-- TalTech's licensed office/lab model is being checked in an isolated worktree:
-  existing PV arrays need obstruction coverage, and IFC4 ports need traceable
-  ownership. It is not yet integrated or published.
-- Roof plant/parapet obstructions, full shading and structural feasibility are
-  unmeasured; current placement may overstate feasible PV capacity.
+- TalTech's IFC4 port ownership and selected roof obstructions are source-bound.
+  Full solar shading, unrecorded obstructions and structural feasibility remain
+  unmeasured. Other reference models do not have TalTech's obstruction coverage;
+  current placement may overstate feasible PV capacity.
 - The apartment's aperture extraction is partial: 106.06m² selected glazing and
   81.03m² doors do not establish complete exterior coverage. Keep 115.5/40m²
   stand-ins and bias notices until host-wall/remaining-opening scope is resolved.
 - HRV saving does not match the current engine's natural-ventilation path;
   LED/PV do not move the modeled kWh or grade. A sourced Nijmegen climate is open.
-- `.planning/STATE.md` was already modified by another session at entry and is
+- `.planning/STATE.md` and `.claude/settings.local.json` are unowned changes
   excluded from this release. Always inspect current git status.
 
 ## Active Systems
@@ -181,238 +194,54 @@ Prior PV and selection methods remain documented in
 | `src/app/api/bldrgst/_factory.ts` | Shared-key resolution and per-endpoint row caps |
 | `public/models/` | 173 GLBs (102 authoring, 58 equipment, 13 bim-assets) |
 
-## Recent Architectural Changes (2026-09-04 latest: directional setbacks)
+## Carry-forward evidence risks
 
-- **P2-31 — a step goes on one face.** `makeLevel` used to shrink each plate
-  about its centroid, splitting one real step across four faces. New
-  `src/lib/cad-reconstruction/setback.ts`: `chooseSetbackFace` picks the face
-  from 용도지역 + the slack the parcel actually shows; `insetEdgeToArea` takes
-  the area off it (half-plane clip, bisected on offset — area is monotonic in
-  the offset, so it converges and is deterministic).
-- **The invariant that keeps this honest: the rule picks the FACE, 층별개요 picks
-  the AMOUNT.** No figure from 건축법 시행령 제86조 is encoded anywhere — not
-  1.5 m, not H/2. A rule that contributes no numbers cannot contribute a wrong
-  one, and the amount stays sourced to the register.
-- **New `/api/vworld/zoning`** reads `LT_C_UQ111.uname` (verified: returns
-  "제3종일반주거지역", "일반상업지역" verbatim). `DAYLIGHT_SETBACK_DISTRICTS`
-  lists 전용/일반주거지역 only — **준주거지역 is deliberately absent**, it reads
-  like a 주거지역 and 제86조 does not list it. An absent district is *unknown*,
-  never residential.
-- **Degrade path, all tested:** 주거지역 + north slack → `daylight_setback`;
-  parcel only → `lot_slack` (geometry, explicitly not a code rule); neither →
-  `undetermined` + a stated assumption that per-orientation envelope is
-  unreliable. A single-face step that would collapse the plate emits a
-  `ConflictEntry` and falls back to concentric.
-- **`EvidenceInput.parcel` (additive)** closes a real gap: the model could hold
-  a building outline OR a parcel, never both, so the slack that decides the face
-  was unreachable whenever a real outline existed. Used only for the setback —
-  a parcel ring must never reach the footprint chain.
-- **Known bug in `evidence.ts`, owned elsewhere, not fixed here:**
-  `evidence.ts:383` builds `gisBox` from any GIS ring, missing the
-  `!gisRingIsParcel` guard that line 382 applies to `gisArea`. A parcel's bbox
-  becomes controls C5/C6 graded **B-OBSERVED**/`SRC-GIS-BLDG`, and
-  `reconstruct.ts:265` then builds the footprint from them with the method
-  string "사용자가 진술한 …" though no user stated anything. Reproduced: a 200 m²
-  building on a 7,060 m² lot yields `footprint.areaSqm = 7060.4`, B-OBSERVED.
-  The lot is reported as the building, graded as observed evidence.
-- **VWorld carries no building height — P2-25's measured-height tier is void.**
-  `LT_C_SPBD` returns exactly ten keys and `buld_hg` is not one of them:
-  verified across 34 production buildings (`height: null` in every case;
-  `groundFloors` real, 28/30) and four upstream bboxes in four cities. The
-  documented chain `ledger heit → VWorld measured → era estimate` has **no
-  supplier for the middle tier**; in practice it is `ledger heit → era
-  estimate`. `parseBuildingAttributes` is correct — the field is absent, not
-  mis-parsed. Six candidate layers were eliminated, which is a result about
-  **those six**, not about the platform: do not assume a height layer exists.
-  Genuinely unreachable code: `engine/steps/ingest.ts:17` can emit
-  `source: "vworld-measured"` for a height that nothing can supply. **NOT
-  unreachable, do not delete:** the `'measured'` heights grade in
-  `input-provenance.ts:74` — `ledgerHeit > 0` reaches it constantly, and only
-  the `measuredHeightM` disjunct is dead. No test caught any of this because
-  every test on the path injects the height itself.
-- **VWorld production was broken and is now fixed** (another session): the
-  functions ran in `iad1` (Washington) and api.vworld.kr refuses that egress —
-  `vercel.json` now pins `regions: ["icn1"]`. Verified `X-Vercel-Id`
-  `icn1::iad1` → `icn1::icn1`, 502 → 200 with a real 34-point ring. Until that
-  landed, every production user silently got the 건축면적-solved rectangle
-  instead of the observed outline. It was NOT a geo-block or a bad key.
+- The earlier parcel/bbox issue in `cad-reconstruction/evidence.ts` was
+  documented but is not resolved by the model/material releases. Verify its
+  runtime state before claiming reconstruction is complete.
+- The sampled VWorld building layer supplied no measured-height field. Missing
+  height must not be promoted to a measured value; preserve ledger/assumption
+  distinctions. Detailed evidence is in the archive linked below.
 
-## Recent Architectural Changes (2026-09-04 later: per-storey envelope)
+## Highest-priority next actions
 
-- **P2-30 — the stack is no longer one extruded prism.** `FloorSpec.plate`
-  (optional, `[outer, ...holes]` in the twin's local metre frame) threads
-  through slabs, facade faces, the column grid and the parapet;
-  `applyLevelPlates` is the shared adapter from `TwinLevel[]` onto floor
-  geometry. **Absent plate = building footprint**, so every pre-P2-30 building
-  is byte-identical — that equality is locked by a test, not a convention.
-- `envelopeQuantities` now returns `grossWallAreaSqm = Σ perimeterᵢ × heightᵢ`,
-  `roofAreaSqm = top plate + Σ max(0, areaᵢ − areaᵢ₊₁)`, `volumeM³` summed per
-  storey, and `planAreaSqm` = the lowest **above-grade** plate. Basements stay
-  recorded, not extruded.
-- The traceable engine walls each storey on its own plate and emits one roof
-  surface per terrace. Plates ride the ingestion boundary channel tagged
-  `LEVEL_PLATE_ENTITY_PREFIX`, carrying the **same grade** as the outline they
-  were scaled from.
-- **Traps:** slabs bucket by *distinct plate*, not per storey, so the draw-call
-  budget holds — and because a pick's `instanceId` is scoped to the batch it
-  hit, `resolvePickedFloor` reads the hit mesh's own `instanceToFloor` before
-  the building-wide lookup. A terrace surface carries the plate it sits on as
-  geometry while its **area** is the exposed difference; the canonical model has
-  no polygon-difference type, and the physics reads the area.
-- **VWorld finding (verified against the live API, 2026-09-04):**
-  - `LT_C_UQ111` returns 용도지역 verbatim in `uname` ("제3종일반주거지역",
-    "일반상업지역"). P2-31 was specced assuming this was unavailable; it is not,
-    so 일조권 사선제한 can be applied as a *sourced* rule. Item corrected.
-  - `LT_C_SPBD` returned **only** `gro_flo_co` among the P2-25 attributes — no
-    `buld_hg`, no `und_flo_co` — on the sample queried. If that holds generally,
-    the VWorld measured-height fallback never fires and `heit=0` falls straight
-    through to the era estimate. Worth confirming before relying on it.
-  - There is **no** open 3D-building endpoint: `req/3ddata` 404s and no
-    `LT_C_SPBD_3D`-style layer resolves. VWorld's 3D map is not an API here.
+1. Reconcile the visible engine's carrier/end-use accounting and unite the
+   traceable input path with the twin/report. Keep published baseline versions
+   explicit when numerical results change.
+2. Produce a reviewable envelope/HVAC screening decision package with sources,
+   comparable alternatives and a verification plan. Validate it with a
+   practitioner before claiming professional time savings.
+3. Implement the staged simulation programme in the research document, beginning
+   with a canonical thermal model and pinned detailed-engine experiment.
+4. Expand model coverage against source quality, use type, climate and system
+   diversity. Resolve uncertain input scope and seek permitted measured data;
+   model count alone is not the objective.
+5. Validate the proposed service and pricing through user-authorized paid pilots.
+   No outreach, customer contracts or payment collection has been performed.
 
-## Recent Architectural Changes (2026-09-04: one ledger geometry producer)
+## Verification and deployment
 
-- **P2-29 — `reconstruct()` is now the single producer of ledger geometry.**
-  Before this the app derived a building shape three times and they disagreed:
-  `building-geometry.ts` from a GIS **bbox** or a 1.5:1 rectangle,
-  `ledger-baseline-model.ts:1233` from its own 1.5:1 rectangle, and
-  `cad-reconstruction/reconstruct.ts` from the register's per-floor areas —
-  only the third reading 층별개요, and its levels discarded at
-  `upload-stage.tsx:427`.
-- New `src/lib/cad-reconstruction/ledger-bridge.ts` — `evidenceFromLedger`
-  (claims-free evidence), `reconstructModel` (model only, no DXF or documents),
-  `twinGeometryFromModel` (mm → local metres, bbox-centred, per-level plates),
-  `ledgerRingFromModel`, `provenancePatchForModel`. Pure; no store imports.
-- `useLedgerReconstruction` memoises it on content, not identity, and runs on
-  data the page already fetched — no extra register call.
-- **New `LedgerFootprint` kind `reconstructed`.** Its `observed` flag alone
-  decides authority: `repeated_graphical_evidence` for a trace,
-  `deterministic_rule_inference` + `LEDGER_FOOTPRINT_ASSUMPTION_ID` for a ring
-  solved from 건축면적. Neither is ever `dimensioned_vector_geometry` (ADR-003).
-- **Traps to keep:** `provenancePatchForModel` never returns
-  `hasCadFootprint`, and returns `null` outright when an uploaded CAD outline is
-  already recorded — the automatic path runs every render, the upload once.
-  A GIS trace is **not** flagged `reconstructedFootprint`; only a solved ring is.
-- Learned while building it: the model is more resilient than the item assumed —
-  C2 falls back 연면적 ÷ 지상층수 (`evidence.ts:410`), so blocking needs every
-  dimensional route closed, not just `archArea=0`.
-- `/building/demo` carries a canned `recipeOverride` and deliberately bypasses
-  this path; only a real ledger id exercises the twin side.
-- Next: **P2-30** (per-storey envelope — the stack is still one extruded prism),
-  then **P2-31** (directional setbacks). Strictly in that order.
+Use direct binaries as required by AGENTS.md; do not use bare pnpm or pnpm exec.
+Run checks appropriate to each change and inspect the displayed numerical claims.
+Deploy only a clean detached worktree with the team scope; preserve `icn1`.
 
-## Recent Architectural Changes (2026-09-02: architectural renderer)
-
-- **Real-time architectural renderer** layered on the existing R3F viewport
-  (`src/lib/rendering/`). BIM mode keeps the historical CAD look; Realistic /
-  Hyperreal resolve ledger structure/era/use into a PBR catalog, world-space
-  triplanar shaders, Preetham sky + solar sun, GTAO/SMAA, and an interior
-  occlusion volume. Engineering dimensions are unchanged.
-- Viewport chrome: `data-testid="render-mode-overlay"` (mode, time, weather,
-  quality, camera). Docs: `docs/rendering/`.
-- Do not treat this as path tracing. The street close-up is the first view
-  that stops reading as CAD; iso curtain-wall spandrels are still thin boxes.
-
-## Recent Architectural Changes (2026-08-31 later: material-aware diagnostics)
-
-- **New `src/lib/energy-standards/`** — verified 별표1 U-value ceilings
-  (제2025-738호), ZEB 등급표 (제2024-893호), ISO-6946 assembly physics
-  (U from layers, Rsi/Rse, target-U thickness solve), generic material
-  library (`confidence:"generic"` hardwired). Every number cites
-  `docs/05_Research/ENERGY_STANDARD_TRACEABILITY.md` — update that ledger
-  with any value change.
-- Ledger baselines now carry **assumed layer stacks** whose ISO-6946 sum
-  reproduces the era U exactly (insulation thickness solved; empty when
-  unreachable). Runs now carry `result.primary` (1차에너지, factors
-  embedded). `standards-assessment.ts` derives 계산 기준/별표1/ZEB-참고;
-  `sensitivity.ts` does thickness sweeps + parameter ranking with one real
-  engine run per point.
-- Workspace: assembly editor (건물 모델), standards + sensitivity panels
-  (결과). `runAssemblyScenario` in model-operations. New e2e
-  `material-diagnostics.spec.ts` (38 e2e total).
-- **Bug fixed:** the first autosave's URL rewrite dropped `building` from
-  `?method=ledger…`, which server-redirects to `/` — the ledger diagnostic
-  killed itself ~1.5 s after opening. `bindSavedProject` now preserves it.
-- Findings bug fixed: dominant-envelope evidence now matches
-  `envelope.construction.` (ledger) keys, not only tier-one `construction.`.
-- Feature doc: [[Material-Aware Energy Diagnostics]].
-
-## Recent Architectural Changes (2026-08-31: MEP graph engine)
-
-- **The MEP layer is graph-driven.** `src/lib/mep/` plans a canonical,
-  deterministic building-services network (plant → riser → main → branch →
-  terminal; engineered catalog sizes; explicit fittings; elevation-band +
-  channel coordination with a §28 self-repair pass; clash/gravity/connectivity
-  validation and a plausibility score). Layer generators 3/4/5/6/13 and
-  electrical-routing render FROM the model via `src/lib/layers/mep-render.ts`;
-  their group names, userData tags and toggles are unchanged, so the viewer
-  stack carried over (35/35 e2e green untouched).
-- Engineering rules live in `src/lib/mep/rules.ts`, each citing
-  `docs/05_Research/MEP Design Practice Research.md` (U/H/C/M classified).
-- CAD-driven MEP: classified room polygons flow
-  `classify-plan.roomPolygonsFromPlan → RecipeOverrides.cadRooms →
-  MepZone(source:"cad-room")`.
-- `/dev/mep` is the visual-QA harness (six QA buildings, provenance/clash
-  color modes, graph overlay, live validator metrics).
-- Regression thresholds (hard-clash ceilings, score floors) are in
-  `src/lib/mep/__tests__/mep-engine.test.ts` — ratchet down only. Case E
-  (pre-2000 central plant) keeps a documented residual; structure clashes are
-  asserted zero everywhere.
-- **설비 강조 (MEP x-ray)**: `layer-store.mepIsolation` (session-only) —
-  toggle under 기계전기설비 in the scene layer list and layer panel; ghosts
-  the massing via `ProceduralBuildingModel.mepIsolation` and clears
-  interior + analysis overlays on entry. This is how the graph MEP is meant
-  to be seen in the product.
-- Feature doc: [[MEP Systems]].
-
-## Earlier Architectural Changes
-
-- Product reversed to **register-first**; the generative engine became refinement
-  input and a secondary door.
-- The two landing pages were collapsed into one; `/diagnostics/new` without a
-  method redirects to `/`.
-- Register picks now route to `/building/[id]`, which is what made the four-step
-  workflow the actual product rather than an unreachable page.
-- New: `ledger-source.ts`, `ledger-baseline-model.ts`, `ledger-climate.ts`,
-  `refinement.ts`, `src/lib/ledger/floor-rows.ts`.
-
-## Testing Status
-
-Green. Run before claiming completion:
-
-```bash
+```powershell
 node node_modules/typescript/bin/tsc --noEmit
 node node_modules/vitest/vitest.mjs run
-node node_modules/@playwright/test/cli.js test
+node node_modules/@playwright/test/cli.js test --workers=2
+node node_modules/eslint/bin/eslint.js src e2e
+vercel --cwd <clean-detached-worktree> --prod --yes --scope matts-projects-d0677dc4
 ```
 
-Bare `pnpm` fails on this machine and `pnpm exec` attempts to purge
-`node_modules` — invoke binaries directly as above. See [[Build and Run]].
+The commit author must be `namseunghun97@gmail.com`. Verify the full deployed
+SHA and region through `/api/health`, then run focused live browser checks.
+`vercel --prod` uploads the working directory; a dirty main checkout is unsafe.
 
-## Deployment Status
+## Relevant documents
 
-Deployed. `vercel --prod --yes`.
+[[Business and Service Model]] · [[Energy0 Simulation Engine Research]] ·
+[[Product Intent]] · [[System Architecture]] · [[Reference Buildings]] ·
+[[Building Energy Datasets]] · [[2026-09-07-product-datasets-and-viewer]]
 
-**Trap:** a deploy returns `BLOCKED` — not a build failure — when the HEAD commit
-author email is not on the Vercel account. `git log -1 --format=%ae` must be
-`namseunghun97@gmail.com`.
-
-## Highest-Priority Next Actions
-
-1. **P2-31 — directional setbacks.** `makeLevel` still shrinks each plate about
-   its centroid, so a step's area is right and its face is not. Now unblocked
-   further than specced: `LT_C_UQ111` supplies 용도지역, so 일조권 사선제한 is a
-   sourced rule rather than a recognised pattern.
-2. Confirm whether `LT_C_SPBD` carries `buld_hg` at all (see above); if not,
-   P2-25's measured-height tier is dead code.
-3. Integrate the canonical engine into step 3; mount refinement inputs in the twin.
-4. Fix the two E2E defects above (canvas sizing, cross-test state leak).
-
-## Relevant Documents
-
-[[Current State]] · [[Project Overview]] · [[System Architecture]] ·
-[[Data Flow]] · [[Deployment and Environment]] · [[Testing Strategy]]
-
-## Last Verified
-
-2026-08-27 — against production and a full local test run.
+Historical ledger/rendering decisions and superseded task lists:
+[[Archive/2026-09-07-prior-ledger-and-rendering-history]].

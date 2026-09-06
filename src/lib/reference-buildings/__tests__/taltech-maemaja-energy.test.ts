@@ -85,6 +85,22 @@ describe("source thermal claims are weighted, not invented", () => {
 });
 
 describe("existing PV and modeled operation remain distinct", () => {
+  it("reconstructs the roof summary from its independently published plane areas and slopes", () => {
+    const read = referenceBuildingEnergyInputs("taltech-maemaja")!.roof!.read;
+    const parts = [...read.matchAll(/([\d,]+\.\d\d) m² at ([\d.]+)°/g)].map((match) => ({ area: Number(match[1].replaceAll(",", "")), tilt: Number(match[2]) }));
+    const first = roof.planes.find((plane) => plane.id === "basic-roof-kl-02-plane-0")!;
+    const second = roof.planes.find((plane) => plane.id === "basic-roof-kl-03-plane-0")!;
+    const remaining = roof.planes.filter((plane) => plane !== first && plane !== second);
+    expect(parts).toHaveLength(3);
+    expect(parts[0]).toEqual({ area: first.surfaceSqm, tilt: first.tiltDeg });
+    expect(parts[1]).toEqual({ area: second.surfaceSqm, tilt: second.tiltDeg });
+    const area = remaining.reduce((sum, plane) => sum + plane.surfaceSqm, 0);
+    const mean = remaining.reduce((sum, plane) => sum + plane.surfaceSqm * plane.tiltDeg, 0) / area;
+    expect(parts[2].area).toBeCloseTo(area, 8);
+    expect(parts[2].tilt).toBeCloseTo(mean, 2);
+    expect(Number(read.match(/remaining (\d+) patches/)?.[1])).toBe(remaining.length);
+    expect(read).toContain("full solar shading is not modeled");
+  });
   it("sums per-array ratings and module counts while retaining conflicting power fields", () => {
     const pv = physics.elements.filter((p) => p.type === "IfcSolarDevice");
     expect(pv).toHaveLength(48);

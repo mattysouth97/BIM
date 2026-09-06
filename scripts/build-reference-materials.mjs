@@ -57,7 +57,9 @@ export async function buildReferenceMaterials(buildingId) {
         minimumSavedVertices: 512, validateTrs: true,
         partGroup(group, _placed, line) {
           const assignment = resolve(line);
-          const key = `${group}__${source.role}_${(assignment.assemblyRef ?? assignment.materialRef ?? assignment.status).split("#").at(-1)}`;
+          // One layer set can be attached directly to some occurrences and
+          // inherited from a type by others. Keep those claim scopes distinct.
+          const key = `${group}__${source.role}_${(assignment.assemblyRef ?? assignment.materialRef ?? assignment.status).split("#").at(-1)}_${assignment.basis ?? "none"}`;
           if (!bindings.has(key)) {
             const assembly = assemblyByRef.get(assignment.assemblyRef);
             const representativeLayer = assembly?.layers.reduce((thickest, layer) => !thickest || layer.thicknessM > thickest.thicknessM ? layer : thickest, null) ?? null;
@@ -70,7 +72,7 @@ export async function buildReferenceMaterials(buildingId) {
           if (!emittedParts) return;
           const assignment = resolve(line);
           const group = Object.entries(fabricGroups).find(([, types]) => types.includes(typeName))[0];
-          const key = `${group}__${source.role}_${(assignment.assemblyRef ?? assignment.materialRef ?? assignment.status).split("#").at(-1)}`;
+          const key = `${group}__${source.role}_${(assignment.assemblyRef ?? assignment.materialRef ?? assignment.status).split("#").at(-1)}_${assignment.basis ?? "none"}`;
           bindings.get(key).elements++;
           entities.push({ sourceRole: source.role, expressId: line.expressID, ref: file.ref(line), globalId: str(line.GlobalId), name: str(line.Name), ifcType: typeName, binding: key, relationRef: assignment.relationRef, assignmentBasis: assignment.basis, placedTriangles });
         },

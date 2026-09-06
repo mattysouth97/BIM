@@ -545,6 +545,13 @@ test.describe("Canonical energy diagnostic", () => {
       "step",
     );
     const comparison = page.getByTestId("result-comparison");
+    // The empty comparison already contains the alternative heading and
+    // baseline units. Wait for the evaluated scenario before capturing it.
+    await expect(comparison.getByTestId("comparison-scenario-current")).toHaveAttribute(
+      "data-state",
+      "current",
+    );
+    await expect(comparison.getByTestId("result-annualEnergyKwh-scenario")).toContainText("kWh/yr");
     await expect(comparison).toContainText("Improvement alternative");
     await expect(comparison).toContainText("kWh/yr");
     const comparisonBeforeSave = normalizedText(await comparison.innerText());

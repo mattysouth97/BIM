@@ -19,7 +19,7 @@ gallery. The routes do not create an entry workflow. The catalogue iterates
 registry entry are available. A missing registered manifest fails the catalogue
 request instead of silently dropping a row.
 
-Schema: `bimfit_building_energy_dataset`, version `1.2.0`; catalogue kind:
+Schema: `bimfit_building_energy_dataset`, version `1.3.0`; catalogue kind:
 `bimfit_building_energy_catalogue`. Breaking field or semantic changes require a
 major schema increment. The HTTP response is a UTF-8 attachment with a stable
 ETag and conditional-GET support.
@@ -76,6 +76,12 @@ Inventory counts do not establish system connectivity or installed performance.
 The separate energy inputs continue to disclose their system assumptions.
 
 ### Material bindings and envelope evidence (schema 1.2)
+
+Schema 1.3 adds the optional source-property archive (`source.statedPhysics`)
+and its content hash. TalTech preserves typed property/set/type/occurrence
+references and conflicting alternatives there. Its separately published meter
+archive is not included and has not calibrated the exported energy. Earlier
+material/floor/facade fields remain compatible.
 
 `modelGeometry.materialFabric` publishes source-to-material bindings, artifact
 hashes and rendering counts. The textures illustrate the stated material class;

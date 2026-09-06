@@ -224,4 +224,53 @@ cost/claim area cover new work only. Reapplying a scenario does not stack it.
 Validation: 5,439 unit tests passed, four existing skips. TypeScript clean;
 ESLint 0 errors/six existing warnings. Twenty-six browser checks passed for
 material realism, source loading/picking/retry and the existing gallery/entry
-workflow. Production verification for this milestone is pending.
+workflow. Committed/pushed as `2816ab5`; clean production READY, full health
+SHA and `icn1` verified on 2026-09-07 01:52 KST. Five live material-realism
+browser checks passed.
+
+## Milestone 7 — source-rich TalTech model and reviewable existing PV
+
+TalTech Mäemaja is the seventh reference model: a CC BY 4.0 office/lab IFC
+with 115 spaces, stated gross floor area of 3,486.12 m², 983 rendered source
+architectural details and 528 MEP elements. IFC property/quantity references,
+units, source conflicts and selection rules are archived and linked through
+dataset schema 1.3's optional `source.statedPhysics`. The separate meter archive
+has not been ingested; the published result is an uncalibrated screening estimate
+under assumed Seoul comparison weather. Source export dates are not construction
+dates and source thermal properties are not measured in-use performance.
+
+The 63.36 kWp installed PV stays in the baseline. Source site latitude and selected
+array/chiller/parapet plan projections leave room for ten proposed modules,
+4 kWp, under the current placement rules. Costs and the 17 m² claim cover only
+new work. Full solar shading and structural feasibility remain unmodeled. The
+roof-read explanation reconciles all 37 sky-visible patches to 1,369.11 m² and
+their 4.51° area-weighted slope; a test independently recomputes the displayed
+group means from the published geometry. IFC4 nesting resolves source port
+ownership; connection direction remains ambiguous, so there is no flow animation.
+
+Source-bound material expression preserves opaque wood and metal even where a
+source element sits in a window/glazing group. Explicit source glass keeps its
+optical treatment. The new material build groups by source assignment basis as
+well as assembly, fixing a guard failure where occurrence/type assignments had
+been merged. Actual Blender MCP lossless compression reduces TalTech from
+3,950,408 to 1,923,980 bytes (51.3%) with all 260 draws, 807 occurrences and
+decoded source geometry preserved. The prior six assets remain unchanged.
+
+The proposed-work legend starts collapsed on desktop and mobile, keeps status
+and selection count visible, and follows the actual panel bounds. TalTech's
+already-low source U-values correctly yield no envelope candidates under the
+current upgrade targets; the previous all-model test assumption was corrected
+without inventing work. Existing-PV tests now distinguish additional module area.
+
+Validation: 5,492 unit tests passed, four existing skips; TypeScript clean;
+ESLint src/e2e zero errors and six existing warnings. The test environment still
+prints the existing disabled external DWG script-loading diagnostic. Thirty-one
+seven-model integration checks passed before the full-browser run. Full Chromium
+passed 160/161; the remaining diagnostic persistence test captured the alternative
+placeholder before its result finished. It now waits for the evaluated scenario
+and annual result; all ten diagnostic browser checks pass on rerun. TalTech's
+MEP screenshot waits for actual decoded service geometry to mount, rather than
+base-model readiness, and was visually inspected. Desktop/mobile proposed-work
+legend screenshots were inspected. Independent final review found no actionable
+regression in PV wording, service readiness, zero envelope proposals or schema
+1.3 property metadata. Production verification is pending.

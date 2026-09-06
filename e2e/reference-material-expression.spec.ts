@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
 import type { ReferenceBuildingManifest } from "../src/lib/reference-buildings/manifest";
 import { seedSeenTours } from "./helpers/app-state";
 
-const BUILDINGS = ["bs-medical-dental-clinic", "schependomlaan", "duplex-apartment", "fzk-haus", "kit-office", "klassiqua-office-1970"];
+const BUILDINGS = ["bs-medical-dental-clinic", "schependomlaan", "duplex-apartment", "fzk-haus", "kit-office", "klassiqua-office-1970", "taltech-maemaja"];
 const TIMEOUT = 60000;
 const source = (id: string): ReferenceBuildingManifest => JSON.parse(readFileSync(path.join(process.cwd(), "public/reference-buildings", id, "manifest.json"), "utf8"));
 

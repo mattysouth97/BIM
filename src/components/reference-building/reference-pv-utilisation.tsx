@@ -52,6 +52,9 @@ export function ReferencePvUtilisation({
   // This is module SURFACE area. It must never read as occupied plan area:
   // a tilted module's projected footprint is smaller than its own surface.
   const moduleSurfaceSqm = layout.planes.reduce((sum, plane) => sum + plane.moduleAreaSqm, 0);
+  const includesRoofEquipment = layout.planes.some((plane) => plane.subtractions.some(
+    (item) => (item.kind === "plant" || item.kind === "parapet") && item.areaSqm > 0,
+  ));
   const title = isKo ? "태양광 · 지붕면별 배치" : "PV · layout by roof plane";
   const latitudeLabel = layout.latitudeBasis === "accepted_source_site"
     ? isKo ? `원본 부지 위도 ${layout.latitudeDeg.toFixed(2)}°` : `source site latitude ${layout.latitudeDeg.toFixed(2)}°`
@@ -134,9 +137,13 @@ export function ReferencePvUtilisation({
           <p>{layout.northAssumed
             ? isKo ? "진북 정보가 없어 프로젝트 북쪽을 가정합니다. 방위각은 이 북쪽 기준입니다." : "True north is unavailable; project north is assumed. Azimuths use this north reference."
             : isKo ? "방위각은 지붕 데이터의 북쪽 기준입니다." : "Azimuths use the roof data's north reference."}</p>
-          <p>{isKo
-            ? "옥상 설비·파라펫 장애물은 아직 반영되지 않았습니다. 추가 측정 시 배치 용량이 줄어들 수 있습니다. 면적은 반올림 전 값으로 합산합니다."
-            : "Roof plant and parapet obstructions are not yet included. Measuring them may reduce capacity. Area totals are summed before rounding."}</p>
+          <p data-testid="reference-pv-obstruction-scope">{includesRoofEquipment
+            ? isKo
+              ? "입력된 옥상 장애물을 반영했습니다. 미확인 설비·파라펫을 추가 측정하면 배치 용량이 줄어들 수 있습니다. 면적은 반올림 전 값으로 합산합니다."
+              : "Input roof obstructions are included. Measuring unrecorded plant or parapets may reduce capacity. Area totals are summed before rounding."
+            : isKo
+              ? "옥상 설비·파라펫 장애물은 아직 반영되지 않았습니다. 추가 측정 시 배치 용량이 줄어들 수 있습니다. 면적은 반올림 전 값으로 합산합니다."
+              : "Roof plant and parapet obstructions are not yet included. Measuring them may reduce capacity. Area totals are summed before rounding."}</p>
         </div>
       </div>
     </details>

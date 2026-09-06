@@ -151,7 +151,8 @@ test.describe("Landing gallery", () => {
     await expect(page.getByTestId("gallery-item-fzk-haus")).toBeVisible();
     await expect(page.getByTestId("gallery-item-kit-office")).toBeVisible();
     await expect(page.getByTestId("gallery-item-klassiqua-office-1970")).toBeVisible();
-    await expect(gallery.locator("> li")).toHaveCount(6);
+    await expect(page.getByTestId("gallery-item-taltech-maemaja")).toBeVisible();
+    await expect(gallery.locator("> li")).toHaveCount(7);
 
     // The register sheet's furniture is gone from this page entirely.
     await expect(page.getByTestId("landing-ledger-lookup")).toHaveCount(0);

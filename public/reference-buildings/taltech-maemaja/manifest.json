@@ -3909,5 +3909,4381 @@
     "file": "source-physics.json",
     "sha256": "9bf969388b54aab55bef72404315379c7c2ace5f22de32b5c918242783c0a274",
     "note": "Typed and alternate source thermal/equipment properties with property-set and type references; not measured operating performance."
+  },
+  "materialFabric": {
+    "file": "material-fabric.glb",
+    "byteLength": 1923980,
+    "sha256": "9c8edb197b5c1bb251bee72f097502aefe071f41757398f945b39affab7743e8",
+    "indexFile": "material-fabric-index.json",
+    "indexSha256": "0738124227e233da6e8c8f35b334fee4d4cd3f2f37cf21055095314ff4a7aeb9",
+    "elements": 807,
+    "triangleCount": 78619,
+    "placedTriangleCount": 79571,
+    "drawCalls": 260,
+    "bindings": [
+      {
+        "key": "slab__architectural_180610_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#180610",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#180611",
+        "materialNames": [
+          "CONCRETE/Concrete_Undefined",
+          "Rigid insulation(4)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615760",
+        "basis": "occurrence",
+        "assemblyName": "Floor:trepp telg x aluspõrand",
+        "representativeLayer": {
+          "name": "CONCRETE/Concrete_Undefined",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#180608"
+        },
+        "elements": 7
+      },
+      {
+        "key": "slab__architectural_211026_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#211026",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616746",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_211122_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#211122",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#211122",
+        "materialNames": [
+          "Betoon",
+          "Vapour Retarder",
+          "Rigid insulation(2)",
+          "Radoonitõke",
+          "Rigid insulation(2)",
+          "Killustikalus"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617059",
+        "basis": "occurrence",
+        "assemblyName": "Floor:PP02",
+        "representativeLayer": {
+          "name": "Killustikalus",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211121"
+        },
+        "elements": 23
+      },
+      {
+        "key": "slab__architectural_211019_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#211019",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#212255",
+        "materialNames": [
+          "Air Infiltration Barrier",
+          "Betoon",
+          "Vapour Retarder",
+          "Rigid insulation(2)",
+          "Radoonitõke",
+          "Rigid insulation(2)",
+          "Killustikalus"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615773",
+        "basis": "occurrence",
+        "assemblyName": "Floor:PP03",
+        "representativeLayer": {
+          "name": "Killustikalus",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211018"
+        },
+        "elements": 16
+      },
+      {
+        "key": "slab__architectural_213708_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#213708",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#213709",
+        "materialNames": [
+          "Betoon",
+          "Vapour Retarder",
+          "Rigid insulation(3)",
+          "Radoonitõke",
+          "Rigid insulation(3)",
+          "Killustikalus"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615777",
+        "basis": "occurrence",
+        "assemblyName": "Floor:PP01",
+        "representativeLayer": {
+          "name": "Killustikalus",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#213707"
+        },
+        "elements": 5
+      },
+      {
+        "key": "slab__architectural_275465_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#275465",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#275466",
+        "materialNames": [
+          "Betoon(6)",
+          "PVC kile",
+          "Jäik mineraalvillaplaat(4)",
+          "Mürasummutus matt(1)",
+          "00_CLT"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615954",
+        "basis": "occurrence",
+        "assemblyName": "Floor:VL04",
+        "representativeLayer": {
+          "name": "00_CLT",
+          "thicknessM": 0.26,
+          "ref": "ifc://DS3_TalTech_V4.ifc#275464"
+        },
+        "elements": 2
+      },
+      {
+        "key": "slab__architectural_309475_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#309475",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#309476",
+        "materialNames": [
+          "Betoon",
+          "PVC kile",
+          "Jäik mineraalvillaplaat(3)",
+          "EPS(4)",
+          "Tulekindel kipsplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615964",
+        "basis": "occurrence",
+        "assemblyName": "Floor:VL03",
+        "representativeLayer": {
+          "name": "Tulekindel kipsplaat",
+          "thicknessM": 0.265,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309474"
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_310244_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#310244",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#310245",
+        "materialNames": [
+          "Hüdroisolatsioon",
+          "Peenbetoon(2)",
+          "PVC kile",
+          "EPS"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615966",
+        "basis": "occurrence",
+        "assemblyName": "Floor:Tuulekoja VL",
+        "representativeLayer": {
+          "name": "EPS",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#310243"
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_316896_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#316896",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#316897",
+        "materialNames": [
+          "ol.ol tasandusvalu",
+          "ol.ol r/b jõupõrand(1)",
+          "ol.ol monteeritav r/b õõnespaneel"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615972",
+        "basis": "occurrence",
+        "assemblyName": "Floor:Jõupõrand",
+        "representativeLayer": {
+          "name": "ol.ol r/b jõupõrand(1)",
+          "thicknessM": 0.58,
+          "ref": "ifc://DS3_TalTech_V4.ifc#316894"
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_319989_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#319989",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#319990",
+        "materialNames": [
+          "Betoon(3)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615979",
+        "basis": "occurrence",
+        "assemblyName": "Floor:Monoliitbetoon 4",
+        "representativeLayer": {
+          "name": "Betoon(3)",
+          "thicknessM": 0.22,
+          "ref": "ifc://DS3_TalTech_V4.ifc#319988"
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_393424_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#393424",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#393425",
+        "materialNames": [
+          "Betoon(5)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616542",
+        "basis": "occurrence",
+        "assemblyName": "Floor:Monoliitbetoon 3",
+        "representativeLayer": {
+          "name": "Betoon(5)",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#393423"
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_415914_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#415914",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#415915",
+        "materialNames": [
+          "Puit(2)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616634",
+        "basis": "occurrence",
+        "assemblyName": "Floor:Liivakast perimeeter",
+        "representativeLayer": {
+          "name": "Puit(2)",
+          "thicknessM": 0.16,
+          "ref": "ifc://DS3_TalTech_V4.ifc#415913"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_158259_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#158259",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#158260",
+        "materialNames": [
+          "Betoonõõnesplokk(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615664",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-02",
+        "representativeLayer": {
+          "name": "Betoonõõnesplokk(1)",
+          "thicknessM": 0.19,
+          "ref": "ifc://DS3_TalTech_V4.ifc#158258"
+        },
+        "elements": 14
+      },
+      {
+        "key": "wall__architectural_158479_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#158479",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#158480",
+        "materialNames": [
+          "R/B(5)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615666",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-01",
+        "representativeLayer": {
+          "name": "R/B(5)",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#158478"
+        },
+        "elements": 58
+      },
+      {
+        "key": "wall__architectural_159171_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#159171",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#159171",
+        "materialNames": [
+          "EPS(1)",
+          "Betoon C30/37"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617033",
+        "basis": "type",
+        "assemblyName": "Basic Wall:VS-03 sisesein ülemine",
+        "representativeLayer": {
+          "name": "EPS(1)",
+          "thicknessM": 0.25,
+          "ref": "ifc://DS3_TalTech_V4.ifc#159169"
+        },
+        "elements": 6
+      },
+      {
+        "key": "wall__architectural_159649_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#159649",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#159649",
+        "materialNames": [
+          "EPS",
+          "R/B(2)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617034",
+        "basis": "type",
+        "assemblyName": "Basic Wall:VS-03 sisesein",
+        "representativeLayer": {
+          "name": "EPS",
+          "thicknessM": 0.25,
+          "ref": "ifc://DS3_TalTech_V4.ifc#159647"
+        },
+        "elements": 4
+      },
+      {
+        "key": "wall__architectural_160823_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#160823",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#160824",
+        "materialNames": [
+          "Columbia Kivi(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615672",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Columbia kivi - 190",
+        "representativeLayer": {
+          "name": "Columbia Kivi(1)",
+          "thicknessM": 0.19,
+          "ref": "ifc://DS3_TalTech_V4.ifc#160822"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_160931_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#160931",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#160932",
+        "materialNames": [
+          "R/B(4)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615673",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-01*",
+        "representativeLayer": {
+          "name": "R/B(4)",
+          "thicknessM": 0.232,
+          "ref": "ifc://DS3_TalTech_V4.ifc#160930"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_158479_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#158479",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#158479",
+        "materialNames": [
+          "R/B(5)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617032",
+        "basis": "type",
+        "assemblyName": "Basic Wall:SS-01",
+        "representativeLayer": {
+          "name": "R/B(5)",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#158478"
+        },
+        "elements": 24
+      },
+      {
+        "key": "wall__architectural_162621_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#162621",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#162621",
+        "materialNames": [
+          "Betoon(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617037",
+        "basis": "type",
+        "assemblyName": "Basic Wall:SS-17",
+        "representativeLayer": {
+          "name": "Betoon(1)",
+          "thicknessM": 0.3,
+          "ref": "ifc://DS3_TalTech_V4.ifc#162620"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_162621_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#162621",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#163304",
+        "materialNames": [
+          "Betoon(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615681",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-17",
+        "representativeLayer": {
+          "name": "Betoon(1)",
+          "thicknessM": 0.3,
+          "ref": "ifc://DS3_TalTech_V4.ifc#162620"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_168066_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#168066",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#168067",
+        "materialNames": [
+          "Õhuvahe",
+          "Õhuvahe",
+          "Hüdroisolatsioon",
+          "Soojustus",
+          "Aurutõke",
+          "R/B(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615698",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:VS-08",
+        "representativeLayer": {
+          "name": "Soojustus",
+          "thicknessM": 0.22,
+          "ref": "ifc://DS3_TalTech_V4.ifc#168063"
+        },
+        "elements": 3
+      },
+      {
+        "key": "wall__architectural_171546_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#171546",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#171547",
+        "materialNames": [
+          "Betoon C35/45(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615707",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:VS-03 väliskoor",
+        "representativeLayer": {
+          "name": "Betoon C35/45(1)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#171545"
+        },
+        "elements": 15
+      },
+      {
+        "key": "wall__architectural_159171_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#159171",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#172149",
+        "materialNames": [
+          "EPS(1)",
+          "Betoon C30/37"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615713",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:VS-03 sisesein ülemine",
+        "representativeLayer": {
+          "name": "EPS(1)",
+          "thicknessM": 0.25,
+          "ref": "ifc://DS3_TalTech_V4.ifc#159169"
+        },
+        "elements": 8
+      },
+      {
+        "key": "wall__architectural_160823_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#160823",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#160823",
+        "materialNames": [
+          "Columbia Kivi(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617035",
+        "basis": "type",
+        "assemblyName": "Basic Wall:Columbia kivi - 190",
+        "representativeLayer": {
+          "name": "Columbia Kivi(1)",
+          "thicknessM": 0.19,
+          "ref": "ifc://DS3_TalTech_V4.ifc#160822"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_175016_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#175016",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#175017",
+        "materialNames": [
+          "Default Wall(2)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615723",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:RB tugimüür 200",
+        "representativeLayer": {
+          "name": "Default Wall(2)",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#175015"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_175165_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#175165",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#175166",
+        "materialNames": [
+          "Default Wall(3)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615725",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:RB tugimüür 120",
+        "representativeLayer": {
+          "name": "Default Wall(3)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#175164"
+        },
+        "elements": 8
+      },
+      {
+        "key": "wall__architectural_175373_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#175373",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#175374",
+        "materialNames": [
+          "Default Wall(5)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615728",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:RB tugimüür 100",
+        "representativeLayer": {
+          "name": "Default Wall(5)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#175372"
+        },
+        "elements": 11
+      },
+      {
+        "key": "wall__architectural_175165_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#175165",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#175165",
+        "materialNames": [
+          "Default Wall(3)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617045",
+        "basis": "type",
+        "assemblyName": "Basic Wall:RB tugimüür 120",
+        "representativeLayer": {
+          "name": "Default Wall(3)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#175164"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_175373_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#175373",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#175373",
+        "materialNames": [
+          "Default Wall(5)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617046",
+        "basis": "type",
+        "assemblyName": "Basic Wall:RB tugimüür 100",
+        "representativeLayer": {
+          "name": "Default Wall(5)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#175372"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_178433_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#178433",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#178434",
+        "materialNames": [
+          "R/B(4)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615754",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:RB tugimüür 240",
+        "representativeLayer": {
+          "name": "R/B(4)",
+          "thicknessM": 0.24,
+          "ref": "ifc://DS3_TalTech_V4.ifc#178432"
+        },
+        "elements": 3
+      },
+      {
+        "key": "wall__architectural_180436_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#180436",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#180437",
+        "materialNames": [
+          "R/B(5)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615758",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Monoliit",
+        "representativeLayer": {
+          "name": "R/B(5)",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#180435"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_181070_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#181070",
+        "materialNames": [
+          "CONCRETE/C20/25"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617055",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_209181_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#209181",
+        "materialNames": [
+          "CONCRETE/C30/37 4057"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617057",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_175016_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#175016",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#175016",
+        "materialNames": [
+          "Default Wall(2)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617044",
+        "basis": "type",
+        "assemblyName": "Basic Wall:RB tugimüür 200",
+        "representativeLayer": {
+          "name": "Default Wall(2)",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#175015"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_217033_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#217033",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#217033",
+        "materialNames": [
+          "Fassaadi plekk",
+          "Roov",
+          "Roov",
+          "Tuuletõkkeplaat",
+          "Kipsplaat",
+          "Kivivill(2)",
+          "Aurutõke",
+          "Mineraalvill"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617063",
+        "basis": "type",
+        "assemblyName": "Basic Wall:VS-06 2",
+        "representativeLayer": {
+          "name": "Kivivill(2)",
+          "thicknessM": 0.195,
+          "ref": "ifc://DS3_TalTech_V4.ifc#217030"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_222810_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#222810",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#222810",
+        "materialNames": [
+          "Roov",
+          "Distantsliist",
+          "Tuuletõkkeplaat",
+          "Roov",
+          "Kivivill",
+          "OSB",
+          "Aurutõke",
+          "Kivivill",
+          "Roov",
+          "Kipsplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617071",
+        "basis": "type",
+        "assemblyName": "Basic Wall:VS-04 2",
+        "representativeLayer": {
+          "name": "Kivivill",
+          "thicknessM": 0.195,
+          "ref": "ifc://DS3_TalTech_V4.ifc#222804"
+        },
+        "elements": 10
+      },
+      {
+        "key": "wall__architectural_225665_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#225665",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#225665",
+        "materialNames": [
+          "Fassaadi plekk",
+          "Roov",
+          "Distantsliist",
+          "Tuuletõkkeplaat",
+          "Roov",
+          "Kivivill",
+          "OSB",
+          "Aurutõke",
+          "Kivivill",
+          "Roov",
+          "Kipsplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617072",
+        "basis": "type",
+        "assemblyName": "Basic Wall:VS-04",
+        "representativeLayer": {
+          "name": "Kivivill",
+          "thicknessM": 0.195,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225659"
+        },
+        "elements": 5
+      },
+      {
+        "key": "wall__architectural_226085_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#226085",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#226086",
+        "materialNames": [
+          "Kipsplaat",
+          "OSB",
+          "Mineraalvill(1)",
+          "Kipsplaat",
+          "Mineraalvill(1)",
+          "OSB",
+          "Kipsplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615797",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-07",
+        "representativeLayer": {
+          "name": "Mineraalvill(1)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226080"
+        },
+        "elements": 11
+      },
+      {
+        "key": "wall__architectural_226178_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#226178",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#226179",
+        "materialNames": [
+          "Kipsplaat",
+          "OSB",
+          "Mineraalvill(4)",
+          "OSB",
+          "Kipsplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615798",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-06",
+        "representativeLayer": {
+          "name": "Mineraalvill(4)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226175"
+        },
+        "elements": 42
+      },
+      {
+        "key": "wall__architectural_226288_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#226288",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#226289",
+        "materialNames": [
+          "Kipsplaat",
+          "OSB",
+          "Profiil",
+          "Mineraalvill(3)",
+          "OSB",
+          "Kipsplaat",
+          "Kipsplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615799",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-06K",
+        "representativeLayer": {
+          "name": "Mineraalvill(3)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226284"
+        },
+        "elements": 13
+      },
+      {
+        "key": "wall__architectural_227181_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#227181",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#227182",
+        "materialNames": [
+          "Keraamiline plaat",
+          "Tsementkiudplaat(1)",
+          "Puitkarkass",
+          "Tsementkiudplaat(1)",
+          "Keraamiline plaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615810",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-05",
+        "representativeLayer": {
+          "name": "Puitkarkass",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#227178"
+        },
+        "elements": 13
+      },
+      {
+        "key": "wall__architectural_226085_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#226085",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#226085",
+        "materialNames": [
+          "Kipsplaat",
+          "OSB",
+          "Mineraalvill(1)",
+          "Kipsplaat",
+          "Mineraalvill(1)",
+          "OSB",
+          "Kipsplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617073",
+        "basis": "type",
+        "assemblyName": "Basic Wall:SS-07",
+        "representativeLayer": {
+          "name": "Mineraalvill(1)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226080"
+        },
+        "elements": 4
+      },
+      {
+        "key": "wall__architectural_229621_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#229621",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#229622",
+        "materialNames": [
+          "Kipsplaat",
+          "Puitkarkass(1)",
+          "Kipsplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615835",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-04",
+        "representativeLayer": {
+          "name": "Puitkarkass(1)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#229619"
+        },
+        "elements": 11
+      },
+      {
+        "key": "wall__architectural_229909_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#229909",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#229910",
+        "materialNames": [
+          "Betoonõõnesplokk",
+          "PIR paneel(1)",
+          "Õhuvahe"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615839",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-12",
+        "representativeLayer": {
+          "name": "Betoonõõnesplokk",
+          "thicknessM": 0.14,
+          "ref": "ifc://DS3_TalTech_V4.ifc#229906"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_230078_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#230078",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#230079",
+        "materialNames": [
+          "Betoonõõnesplokk(2)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615841",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-03",
+        "representativeLayer": {
+          "name": "Betoonõõnesplokk(2)",
+          "thicknessM": 0.14,
+          "ref": "ifc://DS3_TalTech_V4.ifc#230077"
+        },
+        "elements": 32
+      },
+      {
+        "key": "wall__architectural_230078_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#230078",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#230078",
+        "materialNames": [
+          "Betoonõõnesplokk(2)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617079",
+        "basis": "type",
+        "assemblyName": "Basic Wall:SS-03",
+        "representativeLayer": {
+          "name": "Betoonõõnesplokk(2)",
+          "thicknessM": 0.14,
+          "ref": "ifc://DS3_TalTech_V4.ifc#230077"
+        },
+        "elements": 3
+      },
+      {
+        "key": "wall__architectural_158259_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#158259",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#158259",
+        "materialNames": [
+          "Betoonõõnesplokk(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617031",
+        "basis": "type",
+        "assemblyName": "Basic Wall:SS-02",
+        "representativeLayer": {
+          "name": "Betoonõõnesplokk(1)",
+          "thicknessM": 0.19,
+          "ref": "ifc://DS3_TalTech_V4.ifc#158258"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_226288_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#226288",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#226288",
+        "materialNames": [
+          "Kipsplaat",
+          "OSB",
+          "Profiil",
+          "Mineraalvill(3)",
+          "OSB",
+          "Kipsplaat",
+          "Kipsplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617075",
+        "basis": "type",
+        "assemblyName": "Basic Wall:SS-06K",
+        "representativeLayer": {
+          "name": "Mineraalvill(3)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226284"
+        },
+        "elements": 5
+      },
+      {
+        "key": "wall__architectural_235328_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#235328",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#235328",
+        "materialNames": [
+          "Õhuvahe(1)",
+          "Puitkarkass(1)",
+          "Kipsplaat",
+          "Kipsplaat",
+          "Tsementkiudplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617080",
+        "basis": "type",
+        "assemblyName": "Basic Wall:SS-10",
+        "representativeLayer": {
+          "name": "Puitkarkass(1)",
+          "thicknessM": 0.095,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235324"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_235514_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#235514",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#235515",
+        "materialNames": [
+          "Tsementkiudplaat",
+          "Kipsplaat(1)",
+          "Mineraalvill(2)",
+          "CLT"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615888",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-14",
+        "representativeLayer": {
+          "name": "CLT",
+          "thicknessM": 0.16,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235513"
+        },
+        "elements": 3
+      },
+      {
+        "key": "wall__architectural_235514_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#235514",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#235514",
+        "materialNames": [
+          "Tsementkiudplaat",
+          "Kipsplaat(1)",
+          "Mineraalvill(2)",
+          "CLT"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617081",
+        "basis": "type",
+        "assemblyName": "Basic Wall:SS-14",
+        "representativeLayer": {
+          "name": "CLT",
+          "thicknessM": 0.16,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235513"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_236298_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#236298",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#236298",
+        "materialNames": [
+          "R/B(3)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617082",
+        "basis": "type",
+        "assemblyName": "Basic Wall:SS-11",
+        "representativeLayer": {
+          "name": "R/B(3)",
+          "thicknessM": 0.311,
+          "ref": "ifc://DS3_TalTech_V4.ifc#236297"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_238438_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#238438",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#238438",
+        "materialNames": [
+          "Tuuletõkkeplaat",
+          "Kivivill(4)",
+          "Kivivill(4)",
+          "ol.ol. tellissein"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617083",
+        "basis": "type",
+        "assemblyName": "Basic Wall:VS-05A",
+        "representativeLayer": {
+          "name": "ol.ol. tellissein",
+          "thicknessM": 0.51,
+          "ref": "ifc://DS3_TalTech_V4.ifc#238437"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_252287_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#252287",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#252288",
+        "materialNames": [
+          "R/B(4)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615890",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:ol.ol r/b sein",
+        "representativeLayer": {
+          "name": "R/B(4)",
+          "thicknessM": 0.24,
+          "ref": "ifc://DS3_TalTech_V4.ifc#252286"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_226178_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#226178",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#226178",
+        "materialNames": [
+          "Kipsplaat",
+          "OSB",
+          "Mineraalvill(4)",
+          "OSB",
+          "Kipsplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617074",
+        "basis": "type",
+        "assemblyName": "Basic Wall:SS-06",
+        "representativeLayer": {
+          "name": "Mineraalvill(4)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226175"
+        },
+        "elements": 5
+      },
+      {
+        "key": "wall__architectural_235328_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#235328",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#256555",
+        "materialNames": [
+          "Õhuvahe(1)",
+          "Puitkarkass(1)",
+          "Kipsplaat",
+          "Kipsplaat",
+          "Tsementkiudplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615892",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-10",
+        "representativeLayer": {
+          "name": "Puitkarkass(1)",
+          "thicknessM": 0.095,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235324"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_278187_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#278187",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#278187",
+        "materialNames": [
+          "Fassaadi plekk",
+          "Puitroov",
+          "Puitroov",
+          "Jäik mineraalvillaplaat",
+          "Tuuletõkkeplaat",
+          "Kivivill(5)",
+          "Klaasvill",
+          "ol.ol gaasbetoon paneel",
+          "Air",
+          "Vesialuseline akrüülil põhinev tolmupidur"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617102",
+        "basis": "type",
+        "assemblyName": "Basic Wall:VS-05B",
+        "representativeLayer": {
+          "name": "ol.ol gaasbetoon paneel",
+          "thicknessM": 0.3,
+          "ref": "ifc://DS3_TalTech_V4.ifc#278184"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_225665_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#225665",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#281055",
+        "materialNames": [
+          "Fassaadi plekk",
+          "Roov",
+          "Distantsliist",
+          "Tuuletõkkeplaat",
+          "Roov",
+          "Kivivill",
+          "OSB",
+          "Aurutõke",
+          "Kivivill",
+          "Roov",
+          "Kipsplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615955",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:VS-04",
+        "representativeLayer": {
+          "name": "Kivivill",
+          "thicknessM": 0.195,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225659"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_319676_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#319676",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#319677",
+        "materialNames": [
+          "Default Wall(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615975",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Soojustus- 350",
+        "representativeLayer": {
+          "name": "Default Wall(1)",
+          "thicknessM": 0.35,
+          "ref": "ifc://DS3_TalTech_V4.ifc#319675"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_321447_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#321447",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#321448",
+        "materialNames": [
+          "Fassaadi plekk",
+          "Puitkarkass",
+          "Puitroov",
+          "Jäik mineraalvillaplaat",
+          "Tuuletõkkeplaat",
+          "Kivivill(3)",
+          "Klaasvill"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615986",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:VS-05B**",
+        "representativeLayer": {
+          "name": "Kivivill(3)",
+          "thicknessM": 0.245,
+          "ref": "ifc://DS3_TalTech_V4.ifc#321445"
+        },
+        "elements": 4
+      },
+      {
+        "key": "wall__architectural_326625_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#326625",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#326626",
+        "materialNames": [
+          "Tsementkiudplaat",
+          "Puitkarkass(1)",
+          "Tsementkiudplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#615994",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-05*",
+        "representativeLayer": {
+          "name": "Puitkarkass(1)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#326623"
+        },
+        "elements": 7
+      },
+      {
+        "key": "wall__architectural_337702_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#337702",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#337703",
+        "materialNames": [
+          "Kergpaneel(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616025",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:SS-13",
+        "representativeLayer": {
+          "name": "Kergpaneel(1)",
+          "thicknessM": 0.14,
+          "ref": "ifc://DS3_TalTech_V4.ifc#337701"
+        },
+        "elements": 7
+      },
+      {
+        "key": "wall__architectural_337702_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#337702",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#337702",
+        "materialNames": [
+          "Kergpaneel(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617130",
+        "basis": "type",
+        "assemblyName": "Basic Wall:SS-13",
+        "representativeLayer": {
+          "name": "Kergpaneel(1)",
+          "thicknessM": 0.14,
+          "ref": "ifc://DS3_TalTech_V4.ifc#337701"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_321447_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#321447",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#321447",
+        "materialNames": [
+          "Fassaadi plekk",
+          "Puitkarkass",
+          "Puitroov",
+          "Jäik mineraalvillaplaat",
+          "Tuuletõkkeplaat",
+          "Kivivill(3)",
+          "Klaasvill"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617117",
+        "basis": "type",
+        "assemblyName": "Basic Wall:VS-05B**",
+        "representativeLayer": {
+          "name": "Kivivill(3)",
+          "thicknessM": 0.245,
+          "ref": "ifc://DS3_TalTech_V4.ifc#321445"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_171546_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#171546",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#171546",
+        "materialNames": [
+          "Betoon C35/45(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617043",
+        "basis": "type",
+        "assemblyName": "Basic Wall:VS-03 väliskoor",
+        "representativeLayer": {
+          "name": "Betoon C35/45(1)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#171545"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_356058_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#356058",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#356058",
+        "materialNames": [
+          "Default Wall(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617141",
+        "basis": "type",
+        "assemblyName": "Basic Wall:Soojustus- 300",
+        "representativeLayer": {
+          "name": "Default Wall(1)",
+          "thicknessM": 0.3,
+          "ref": "ifc://DS3_TalTech_V4.ifc#356057"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_356291_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#356291",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#356291",
+        "materialNames": [
+          "Default Wall(4)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617142",
+        "basis": "type",
+        "assemblyName": "Basic Wall:Soojustus-100",
+        "representativeLayer": {
+          "name": "Default Wall(4)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#356290"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_159649_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#159649",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#356397",
+        "materialNames": [
+          "EPS",
+          "R/B(2)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616205",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:VS-03 sisesein",
+        "representativeLayer": {
+          "name": "EPS",
+          "thicknessM": 0.25,
+          "ref": "ifc://DS3_TalTech_V4.ifc#159647"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_358219_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#358219",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#358219",
+        "materialNames": [
+          "EPS",
+          "R/B(2)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617144",
+        "basis": "type",
+        "assemblyName": "Basic Wall:VS-03* sisesein",
+        "representativeLayer": {
+          "name": "EPS",
+          "thicknessM": 0.3,
+          "ref": "ifc://DS3_TalTech_V4.ifc#358217"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_372734_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#372734",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#372735",
+        "materialNames": [
+          "PIR paneel(2)",
+          "Õhuvahe(2)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616367",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:PIR paneel",
+        "representativeLayer": {
+          "name": "PIR paneel(2)",
+          "thicknessM": 0.07,
+          "ref": "ifc://DS3_TalTech_V4.ifc#372732"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_393844_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#393844",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#393845",
+        "materialNames": [
+          "Fassaadi plekk",
+          "Roov",
+          "Distantsliist",
+          "Tuuletõkkeplaat",
+          "Roov",
+          "Kivivill(1)",
+          "OSB",
+          "Aurutõke"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616546",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:VS-04-parapet*",
+        "representativeLayer": {
+          "name": "Kivivill(1)",
+          "thicknessM": 0.195,
+          "ref": "ifc://DS3_TalTech_V4.ifc#393841"
+        },
+        "elements": 6
+      },
+      {
+        "key": "wall__architectural_217033_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#217033",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#415318",
+        "materialNames": [
+          "Fassaadi plekk",
+          "Roov",
+          "Roov",
+          "Tuuletõkkeplaat",
+          "Kipsplaat",
+          "Kivivill(2)",
+          "Aurutõke",
+          "Mineraalvill"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616629",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:VS-06 2",
+        "representativeLayer": {
+          "name": "Kivivill(2)",
+          "thicknessM": 0.195,
+          "ref": "ifc://DS3_TalTech_V4.ifc#217030"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_416582_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#416582",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#416582",
+        "materialNames": [
+          "R/B(6)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617163",
+        "basis": "type",
+        "assemblyName": "Basic Wall:Sein 60mm",
+        "representativeLayer": {
+          "name": "R/B(6)",
+          "thicknessM": 0.06,
+          "ref": "ifc://DS3_TalTech_V4.ifc#416581"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_416958_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#416958",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#416959",
+        "materialNames": [
+          "Soojustus",
+          "ol.ol r/b plokkidest sein(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616638",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:VS-02*",
+        "representativeLayer": {
+          "name": "ol.ol r/b plokkidest sein(1)",
+          "thicknessM": 0.4,
+          "ref": "ifc://DS3_TalTech_V4.ifc#416957"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_417259_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#417259",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#417260",
+        "materialNames": [
+          "Hüdroisolatsioon",
+          "Tycroc TWP(1)",
+          "Teraskarkass(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616642",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Tycroc sein",
+        "representativeLayer": {
+          "name": "Teraskarkass(1)",
+          "thicknessM": 0.095,
+          "ref": "ifc://DS3_TalTech_V4.ifc#417258"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_417259_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#417259",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#417259",
+        "materialNames": [
+          "Hüdroisolatsioon",
+          "Tycroc TWP(1)",
+          "Teraskarkass(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617165",
+        "basis": "type",
+        "assemblyName": "Basic Wall:Tycroc sein",
+        "representativeLayer": {
+          "name": "Teraskarkass(1)",
+          "thicknessM": 0.095,
+          "ref": "ifc://DS3_TalTech_V4.ifc#417258"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_356058_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#356058",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#417734",
+        "materialNames": [
+          "Default Wall(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616644",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Soojustus- 300",
+        "representativeLayer": {
+          "name": "Default Wall(1)",
+          "thicknessM": 0.3,
+          "ref": "ifc://DS3_TalTech_V4.ifc#356057"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_427816_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#427816",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#427817",
+        "materialNames": [
+          "ol.ol r/b plokkidest sein(1)",
+          "Soojustus"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616685",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:VS-02",
+        "representativeLayer": {
+          "name": "ol.ol r/b plokkidest sein(1)",
+          "thicknessM": 0.4,
+          "ref": "ifc://DS3_TalTech_V4.ifc#427814"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_222810_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#222810",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#431569",
+        "materialNames": [
+          "Roov",
+          "Distantsliist",
+          "Tuuletõkkeplaat",
+          "Roov",
+          "Kivivill",
+          "OSB",
+          "Aurutõke",
+          "Kivivill",
+          "Roov",
+          "Kipsplaat"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616718",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:VS-04 2",
+        "representativeLayer": {
+          "name": "Kivivill",
+          "thicknessM": 0.195,
+          "ref": "ifc://DS3_TalTech_V4.ifc#222804"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_500514_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#500514",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#500515",
+        "materialNames": [
+          "Default"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616726",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Generic 400",
+        "representativeLayer": {
+          "name": "Default",
+          "thicknessM": 0.4,
+          "ref": "ifc://DS3_TalTech_V4.ifc#500513"
+        },
+        "elements": 7
+      },
+      {
+        "key": "wall__architectural_500629_occurrence",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#500629",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#500630",
+        "materialNames": [
+          "Default"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616728",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Generic 510",
+        "representativeLayer": {
+          "name": "Default",
+          "thicknessM": 0.51,
+          "ref": "ifc://DS3_TalTech_V4.ifc#500628"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_500514_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#500514",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#500514",
+        "materialNames": [
+          "Default"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617174",
+        "basis": "type",
+        "assemblyName": "Basic Wall:Generic 400",
+        "representativeLayer": {
+          "name": "Default",
+          "thicknessM": 0.4,
+          "ref": "ifc://DS3_TalTech_V4.ifc#500513"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_427816_type",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#427816",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#427816",
+        "materialNames": [
+          "ol.ol r/b plokkidest sein(1)",
+          "Soojustus"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617169",
+        "basis": "type",
+        "assemblyName": "Basic Wall:VS-02",
+        "representativeLayer": {
+          "name": "ol.ol r/b plokkidest sein(1)",
+          "thicknessM": 0.4,
+          "ref": "ifc://DS3_TalTech_V4.ifc#427814"
+        },
+        "elements": 1
+      },
+      {
+        "key": "stair__architectural_171181_occurrence",
+        "group": "stair",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#171181",
+        "materialNames": [
+          "R/B"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617040",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 3
+      },
+      {
+        "key": "stair__architectural_238549_occurrence",
+        "group": "stair",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#238549",
+        "materialNames": [
+          "Puit"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617084",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 7
+      },
+      {
+        "key": "stair__architectural_221000_occurrence",
+        "group": "stair",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#221000",
+        "materialNames": [
+          "<Unnamed>"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617070",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 19
+      },
+      {
+        "key": "slab__architectural_295966_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#295966",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#295966",
+        "materialNames": [
+          "SBS-valge",
+          "Soojustus(3)",
+          "Aurutõke"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617106",
+        "basis": "occurrence",
+        "assemblyName": "Basic Roof:KL-02",
+        "representativeLayer": {
+          "name": "Soojustus(3)",
+          "thicknessM": 0.24,
+          "ref": "ifc://DS3_TalTech_V4.ifc#295964"
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_309058_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#309058",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#309058",
+        "materialNames": [
+          "Substraadikiht",
+          "Drenaažimatt",
+          "Soojustus(2)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617107",
+        "basis": "occurrence",
+        "assemblyName": "Basic Roof:KL-03",
+        "representativeLayer": {
+          "name": "Soojustus(2)",
+          "thicknessM": 0.22,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309057"
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_322555_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#322555",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#322555",
+        "materialNames": [
+          "SBS",
+          "Jäik mineraalvillaplaat(1)",
+          "Soojustus(1)",
+          "Aurutõke",
+          "Sileplekk"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617118",
+        "basis": "occurrence",
+        "assemblyName": "Basic Roof:KL-01*",
+        "representativeLayer": {
+          "name": "Soojustus(1)",
+          "thicknessM": 0.32,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322552"
+        },
+        "elements": 7
+      },
+      {
+        "key": "slab__architectural_322950_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#322950",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#322950",
+        "materialNames": [
+          "SBS",
+          "Jäik mineraalvillaplaat(2)",
+          "Rigid insulation(6)",
+          "Aurutõke",
+          "Sileplekk",
+          "ol.ol kandev profiilplekk",
+          "Tulekindel kipsplaat(1)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617119",
+        "basis": "occurrence",
+        "assemblyName": "Basic Roof:KL-01",
+        "representativeLayer": {
+          "name": "Rigid insulation(6)",
+          "thicknessM": 0.32,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322945"
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_325953_occurrence",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://DS3_TalTech_V4.ifc#325953",
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#325953",
+        "materialNames": [
+          "Õhuvahe",
+          "Õhuvahe",
+          "Hüdroisolatsioon",
+          "PIR",
+          "Aurutõke",
+          "Betoon C30/37(2)"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617124",
+        "basis": "occurrence",
+        "assemblyName": "Basic Roof:KL-04",
+        "representativeLayer": {
+          "name": "PIR",
+          "thicknessM": 0.24,
+          "ref": "ifc://DS3_TalTech_V4.ifc#325950"
+        },
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_221000_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#221000",
+        "materialNames": [
+          "<Unnamed>"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617070",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 2
+      },
+      {
+        "key": "glazing__architectural_253522_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#253522",
+        "materialNames": [
+          "0_Klaas"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617096",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 17
+      },
+      {
+        "key": "glazing__architectural_293840_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#293840",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616850",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_320350_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#320350",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616877",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_238549_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#238549",
+        "materialNames": [
+          "Puit"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617084",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 18
+      },
+      {
+        "key": "glazing__architectural_398456_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#398456",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616895",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_398703_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#398703",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616897",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_399367_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#399367",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616901",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_287791_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#287791",
+        "materialNames": [
+          "Metal Deck"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617103",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 2
+      },
+      {
+        "key": "glazing__architectural_503578_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#503578",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616929",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_503640_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#503640",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616930",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_503676_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#503676",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616931",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_503712_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#503712",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616932",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_503748_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#503748",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616933",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_503784_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#503784",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616934",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_503820_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#503820",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616935",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_508268_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#508268",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616937",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_510348_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#510348",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616939",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_514789_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#514789",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616941",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_516858_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#516858",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616943",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_519383_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#519383",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616945",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_519445_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#519445",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616946",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_521979_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#521979",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616948",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_524040_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#524040",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616950",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_524832_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#524832",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616952",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_524910_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#524910",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616953",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_526947_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#526947",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616955",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_526984_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#526984",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616956",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_529020_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#529020",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616958",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_531556_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#531556",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616960",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_533620_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#533620",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616962",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_536653_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#536653",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616964",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_539216_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#539216",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616966",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_542275_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#542275",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616968",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_544838_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#544838",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616970",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_552287_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#552287",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616972",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_554867_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#554867",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616974",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_557429_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#557429",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616976",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_558415_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#558415",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616978",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_561083_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#561083",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616980",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_563644_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#563644",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616982",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_566666_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#566666",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616984",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_568694_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#568694",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616986",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_574119_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#574119",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616988",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_576147_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#576147",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616990",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_578208_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#578208",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616992",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_579202_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#579202",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616994",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_581374_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#581374",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616996",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_581411_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#581411",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616997",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_583944_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#583944",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616999",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_586480_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#586480",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617001",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_587466_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#587466",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617003",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_592876_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#592876",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617009",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_594935_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#594935",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617011",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_598607_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#598607",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617015",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_600666_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#600666",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617017",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_601660_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#601660",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617019",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_601829_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#601829",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617020",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_601926_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#601926",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617021",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_602023_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#602023",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617022",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_602120_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#602120",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617023",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_602218_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#602218",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617024",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_602314_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#602314",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617025",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_602410_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#602410",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617026",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_605006_occurrence",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#605006",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617028",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_252460_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#252460",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616748",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_252655_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#252655",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616750",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_252820_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#252820",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616752",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_253546_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#253546",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616754",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_253702_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#253702",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616756",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_253845_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#253845",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616758",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_254025_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#254025",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616760",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_254245_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#254245",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616762",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_254415_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#254415",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616764",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_254585_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#254585",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616766",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_254753_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#254753",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616768",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_254809_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#254809",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616769",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_254974_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#254974",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616771",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_255140_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#255140",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616773",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_255306_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#255306",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616775",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_255471_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#255471",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616777",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_238549_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#238549",
+        "materialNames": [
+          "Puit"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617084",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 8
+      },
+      {
+        "key": "door__architectural_255645_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#255645",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616778",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_255770_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#255770",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616780",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_255860_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#255860",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616781",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_256079_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#256079",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616783",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_256273_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#256273",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616785",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_256424_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#256424",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616787",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_256739_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#256739",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616789",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_257263_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#257263",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616791",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_257319_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#257319",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616792",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_257373_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#257373",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616793",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_257508_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#257508",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616795",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_257693_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#257693",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616797",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_257869_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#257869",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616799",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_258119_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#258119",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616801",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_258212_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#258212",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616802",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_263482_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#263482",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616803",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_263647_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#263647",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616805",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_263806_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#263806",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616807",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_263897_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#263897",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616808",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_263952_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#263952",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616809",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_264006_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#264006",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616810",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_264063_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#264063",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616811",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_264375_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#264375",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616813",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_264599_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#264599",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616815",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_264657_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#264657",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616816",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_264715_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#264715",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616817",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_264926_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#264926",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616819",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_287651_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#287651",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616821",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_290082_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#290082",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616823",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_290284_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#290284",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616825",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_290370_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#290370",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616826",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_290535_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#290535",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616828",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_290845_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#290845",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616830",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_290988_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#290988",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616832",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_291081_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#291081",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616833",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_256715_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#256715",
+        "materialNames": [
+          "Teras"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617097",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 9
+      },
+      {
+        "key": "door__architectural_291408_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#291408",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616835",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_253522_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#253522",
+        "materialNames": [
+          "0_Klaas"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617096",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 4
+      },
+      {
+        "key": "door__architectural_291881_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#291881",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616837",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_292014_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#292014",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616839",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_292100_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#292100",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616840",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_292226_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#292226",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616842",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_292796_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#292796",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616844",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_292944_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#292944",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616846",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_293163_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#293163",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616848",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_293868_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#293868",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616851",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_294081_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#294081",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616853",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_294173_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#294173",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616854",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_294228_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#294228",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616855",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_294372_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#294372",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616857",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_294464_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#294464",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616858",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_294679_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#294679",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616860",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_295218_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#295218",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616862",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_295310_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#295310",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616863",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_295425_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#295425",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616865",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_295650_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#295650",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616867",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_296138_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#296138",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616869",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_296219_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#296219",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616870",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_310463_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#310463",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616872",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_320228_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#320228",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616875",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_325135_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#325135",
+        "materialNames": [
+          "RAL 3016"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617122",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_326199_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#326199",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616879",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_336032_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#336032",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616881",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_336124_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#336124",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616882",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_338295_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#338295",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616884",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_352365_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#352365",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616886",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_353910_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#353910",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616888",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_388385_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#388385",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616890",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_394107_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#394107",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616891",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_394272_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#394272",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616893",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_399177_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#399177",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616899",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_399463_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#399463",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616903",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_400252_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#400252",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616905",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_401118_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#401118",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616909",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_401579_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#401579",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616911",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_401627_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#401627",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#616913",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_287791_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#287791",
+        "materialNames": [
+          "Metal Deck"
+        ],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617103",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_589214_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#589214",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617005",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_590820_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#590820",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617007",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_596551_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#596551",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617013",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_607607_occurrence",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#607607",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617030",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "mullion__architectural_287796_type",
+        "group": "mullion",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#287796",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617104",
+        "basis": "type",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 53
+      },
+      {
+        "key": "mullion__architectural_310571_type",
+        "group": "mullion",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#310571",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617112",
+        "basis": "type",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 17
+      },
+      {
+        "key": "mullion__architectural_352487_type",
+        "group": "mullion",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://DS3_TalTech_V4.ifc#352487",
+        "materialNames": [],
+        "relationRef": "ifc://DS3_TalTech_V4.ifc#617139",
+        "basis": "type",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 22
+      }
+    ],
+    "appearanceBasis": "IFC occurrence or type material association. For a layer set, the thickest stated layer is used as an illustrative representative, not as the verified exterior finish. Source layer order does not establish installation direction. Unreviewed material names remain neutral. Glazing retains its base role appearance."
   }
 }

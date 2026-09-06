@@ -65,7 +65,8 @@ orientation remain assumptions. An aggregate existing module-face area is not
 established. The current grade conversion does not read baseline PV capacity.
 
 Proposal obstructions use one conservative convex envelope per connected
-source equipment shadow, plus source-named parapet walls. Holes/concavities
+source equipment plan projection, plus source-named parapet walls. These are
+vertical projections, not simulated shadows at the sun angle. Holes/concavities
 are filled, disconnected components remain separate, and exact source meshes
 are unchanged. Height association tolerances are selection rules, not measured
 mounting gaps. Every existing source array must be associated with a published
@@ -116,6 +117,10 @@ KL-04. The three geometry layers retain 79,571 core triangles, 40,555 placed
 architectural-detail triangles and 26,776 MEP triangles. Source body geometry
 is not claimed complete where the IFC tessellator provides no usable mesh.
 
-Browser presentation, production routing and the additional material-rendering
-variant are integration checks performed in the main checkout; they are not
-implied by these extraction and numerical tests.
+Main-checkout integration adds source-bound material appearance with 807 source
+occurrences and 260 draw calls; Blender MCP preserves decoded source geometry
+while reducing its payload by 51.3%. All 5,492 unit tests passed. TalTech's two
+browser checks pass for existing/new PV accounting and actually loaded service
+geometry, alongside seven-model material and camera checks. The material, roof
+and loaded MEP views were inspected. Production verification is recorded in
+[[2026-09-07-product-datasets-and-viewer]].

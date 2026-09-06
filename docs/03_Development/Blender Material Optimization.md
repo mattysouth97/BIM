@@ -101,6 +101,11 @@ Default Blender Meshopt settings were also rejected because they apply 12-bit
 position filtering and 8-bit quaternion filtering. Those settings are not used
 by this workflow.
 
+The later TalTech batch uses the same preservation contract: **3,950,408 →
+1,923,980 bytes (51.3% smaller), 260 draw calls unchanged**. Its material groups
+separate occurrence and inherited type assignments even when they share a layer
+set, so each displayed assignment basis describes every element in its group.
+
 Run the relevant guards and real material/picking browser checks after a batch:
 
 ```powershell

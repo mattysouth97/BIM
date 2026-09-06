@@ -412,7 +412,7 @@ const ENERGY_INPUTS: Readonly<Record<ReferenceBuildingId, ReferenceBuildingEnerg
       wallByOrientationSqm: TALTECH_MEASURED_ENVELOPE.exteriorWallByOrientationSqm,
       grossWallByOrientationSqm: TALTECH_GROSS_BY_ORIENTATION, northAssumed: true,
       exteriorDoorSqm: TALTECH_MEASURED_ENVELOPE.exteriorDoorSqm,
-      roof: { type: "flat", read: "Predominantly low-slope source roofs; 1,369.11 m² sky-visible surface. Source array, rooftop chiller and parapet shadow envelopes are excluded from proposed PV placement." },
+      roof: { type: "flat", read: "KL-02 609.36 m² at 1.64° + KL-03 141.19 m² at 0.75° + remaining 35 patches (group mean) 618.56 m² at 8.19° → area-weighted 4.51° over the 1,369.11 m² priced. Areas are sky-visible source surfaces. Source array, rooftop chiller and parapet plan envelopes are excluded from proposed PV placement; full solar shading is not modeled." },
       measurementState: "awaiting_measurement", pendingMeasurements: TALTECH_PENDING_MEASUREMENTS,
       scopeNotice: {
         ko: "실제 Tallinn 업무·연구시설의 IFC입니다. 형상과 원본 U값은 출처가 있지만 개구부 범위는 검토 중입니다. 서울 기후·운영 가정으로 계산하며 별도 계측 자료로 보정하지 않았습니다. 누락된 외부 개구부나 연구실 부하로 사용량이 낮게 나올 수 있습니다.",

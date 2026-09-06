@@ -61,6 +61,13 @@ describe("the roof table reconciles its rendered claims", () => {
           expect(explanation).not.toContain(locale === "ko" ? "서울 위도" : "Seoul latitude");
         }
         expect(explanation).toContain(locale === "ko" ? "용량이 줄어들 수" : "may reduce capacity");
+        if (id === "taltech-maemaja") {
+          expect(layout.planes.flatMap((plane) => plane.subtractions).filter((item) => item.kind === "plant" && item.areaSqm > 0).length).toBeGreaterThan(0);
+          expect(layout.planes.flatMap((plane) => plane.subtractions).filter((item) => item.kind === "parapet" && item.areaSqm > 0).length).toBeGreaterThan(0);
+          const scope = container.querySelector('[data-testid="reference-pv-obstruction-scope"]')!.textContent!;
+          expect(scope).toContain(locale === "ko" ? "입력된 옥상 장애물을 반영" : "Input roof obstructions are included");
+          expect(scope).not.toContain(locale === "ko" ? "아직 반영되지" : "not yet included");
+        }
         expect(container.querySelector('th[scope="col"]')?.textContent).toContain(locale === "ko" ? "지붕면" : "Roof plane");
         expect(container.querySelector('div[role="region"]')?.getAttribute("tabindex")).toBe("0");
         expect(container.querySelector("details")?.open).toBe(false);

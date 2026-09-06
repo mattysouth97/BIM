@@ -91,7 +91,18 @@ describe("the envelope measures cover the areas the engine priced", () => {
       check("envelope-floor-insulation", RETROFIT_COSTS.floorInsulation.perM2, engineEnvelopeAreas.groundFloorSqm);
       check("envelope-window-replacement", RETROFIT_COSTS.windowReplacement.perM2, engineEnvelopeAreas.windowSqm);
       check("envelope-wall-insulation", RETROFIT_COSTS.wallInsulation.perM2, engineEnvelopeAreas.opaqueWallSqm);
-      expect(checked).toBeGreaterThanOrEqual(3);
+      if (id === "taltech-maemaja") {
+        // This source's current inputs already beat all four proposal targets.
+        // A new model need not have three envelope deficiencies to be valid.
+        const { envelope } = engineFor(id).energy.materials;
+        expect(envelope.walls).toHaveLength(4);
+        for (const wall of envelope.walls) expect(wall.uValue).toBeLessThan(0.15);
+        expect(envelope.roof.uValue).toBeLessThan(0.15);
+        expect(envelope.windows.uValue).toBeLessThan(0.9);
+        expect(envelope.groundFloor.uValue).toBeLessThan(0.18);
+        expect(checked).toBe(0);
+        expect(scenario.allMeasures.filter((measure) => measure.category === "envelope")).toEqual([]);
+      } else expect(checked).toBeGreaterThanOrEqual(3);
     });
 
     it(`${id}: the window measure covers the aperture the file measured`, () => {
