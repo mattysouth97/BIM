@@ -286,8 +286,6 @@ export type ReferenceBuildingManifest = Readonly<{
       sourceThermalProperties?: Readonly<{ conductivityWPerMK: number; ref: string }>;
       /** `ifc://<file>#<expressID>` — the entity the thickness was read from. */
       ref: string;
-      /** Source property, only when extracted with verified SI units. */
-      sourceThermalProperties?: Readonly<{ conductivityWPerMK: number; ref: string }>;
     }>[];
     ref: string;
   }>[];
