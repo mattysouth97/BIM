@@ -164,6 +164,7 @@ for (const building of BUILDINGS) {
         { timeout: FIRST_PAINT },
       );
       // The legend says where the modules are and where they are not.
+      await legend.getByRole("button").click();
       await expect(legend).toContainText("kWp");
       const details = page.getByTestId("reference-pv-utilisation");
       await details.locator("summary").click();

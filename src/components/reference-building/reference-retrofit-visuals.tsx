@@ -16,7 +16,7 @@
 // Pure geometry/derivation functions are exported and unit-tested without a
 // WebGL context; the components below are the only part that touches THREE.
 
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
 
@@ -675,6 +675,47 @@ export function RetrofitLegend({
   pv?: PvLegendSummary | null;
   isKo: boolean;
 }) {
+  // Compact on every screen, without a viewport-dependent hydration change.
+  // Keep the user's disclosure choice through view, layer and measure changes.
+  const [expanded, setExpanded] = useState(false);
+  const detailsId = useId();
+  const legendRef = useRef<HTMLDivElement>(null);
+  const [insets, setInsets] = useState({ bottom: 48, detailsHeight: 200 });
+  useEffect(() => {
+    const legend = legendRef.current;
+    const canvas = legend?.closest<HTMLElement>('[data-testid="reference-model-canvas"]');
+    if (!legend || !canvas) return;
+    const measure = () => {
+      const bounds = canvas.getBoundingClientRect();
+      const panelBounds = (position: string) => {
+        const panel = canvas.querySelector<HTMLElement>(`[data-twin-panel="${position}"]`);
+        const rect = panel?.getBoundingClientRect();
+        return rect && rect.height > 0 ? rect : null;
+      };
+      const topPanel = panelBounds("top");
+      const bottomPanel = panelBounds("bottom");
+      const top = topPanel ? Math.max(12, topPanel.bottom - bounds.top + 8) : 12;
+      const bottom = bottomPanel ? Math.max(12, bounds.bottom - bottomPanel.top + 8) : 12;
+      const buttonHeight = legend.querySelector("button")?.getBoundingClientRect().height ?? 44;
+      const detailsHeight = Math.max(0, Math.min(224, bounds.height - top - bottom - buttonHeight - 2));
+      setInsets((current) => current.bottom === bottom && current.detailsHeight === detailsHeight
+        ? current : { bottom, detailsHeight });
+    };
+    const observed = new Set<Element>();
+    const resize = new ResizeObserver(measure);
+    const observePanels = () => {
+      for (const element of [canvas, legend.querySelector("button"), ...canvas.querySelectorAll("[data-twin-panel]")]) {
+        if (element && !observed.has(element)) {
+          resize.observe(element);
+          observed.add(element);
+        }
+      }
+    };
+    observePanels(); // ResizeObserver delivers the initial measurement.
+    const changes = new MutationObserver(() => { observePanels(); measure(); });
+    changes.observe(canvas, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
+    return () => { resize.disconnect(); changes.disconnect(); };
+  }, []);
   const lines = buildRetrofitLegendLines({
     selectedMeasureIds,
     previewProposal,
@@ -685,15 +726,55 @@ export function RetrofitLegend({
     pv,
   });
   if (lines.length === 0) return null;
+  const proposed = lines[0].key === "header";
+  const status = proposed
+    ? (isKo ? "제안 · 시공 전" : "Proposed · not built")
+    : !previewProposal
+      ? (isKo ? "현재 모델 · 미리보기 꺼짐" : "Existing model · preview off")
+      : selectedMeasureIds === null
+        ? (isKo ? "현재 모델 · 제안 평가 전" : "Existing model · no proposal yet")
+      : selectedMeasureIds?.length
+        ? (isKo ? "현재 모델 · 시각 변화 없음" : "Existing model · no visual change")
+        : (isKo ? "현재 모델 · 선택한 공사 없음" : "Existing model · no work selected");
+  const action = expanded
+    ? (isKo ? "상세 접기" : "Hide details")
+    : (isKo ? "상세 보기" : "Show details");
+  const countLabel = `${selectedMeasureIds?.length ?? 0}${isKo ? "개 항목" : selectedMeasureIds?.length === 1 ? " measure" : " measures"}`;
   return (
     <div
+      ref={legendRef}
       data-testid="reference-retrofit-legend"
       data-pv-modules={visual.solarInstalled && pv ? pv.modules : undefined}
-      className="pointer-events-none absolute bottom-12 right-3 z-20 max-w-[19rem] rounded-md border border-emerald-500/40 bg-emerald-950/80 px-2.5 py-1.5 font-mono text-[10px] leading-relaxed text-emerald-200 shadow-sm backdrop-blur"
+      style={{ bottom: insets.bottom }}
+      className="pointer-events-auto absolute right-3 z-20 w-[19rem] max-w-[calc(100%-1.5rem)] rounded-md border border-emerald-500/40 bg-emerald-950/90 font-mono text-[10px] leading-relaxed text-emerald-200 shadow-sm backdrop-blur"
     >
-      {lines.map((line) => (
-        <p key={line.key}>{isKo ? line.ko : line.en}</p>
-      ))}
+      <button
+        type="button"
+        aria-expanded={expanded}
+        aria-controls={detailsId}
+        aria-label={`${status}${proposed ? ` · ${countLabel}` : ""} — ${action}`}
+        onClick={() => setExpanded((value) => !value)}
+        className="flex min-h-11 w-full items-center gap-2 rounded-md px-2.5 py-2 text-left hover:bg-emerald-900/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+      >
+        <span className="min-w-0 flex-1 text-[11px] font-semibold">{status}</span>
+        {proposed && <span className="shrink-0 text-emerald-300">{countLabel}</span>}
+        <svg aria-hidden="true" viewBox="0 0 16 16" className={`h-4 w-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="m4 6 4 4 4-4" />
+        </svg>
+      </button>
+      <div
+        id={detailsId}
+        hidden={!expanded}
+        role="region"
+        aria-label={isKo ? "제안 미리보기 상세" : "Proposal preview details"}
+        tabIndex={0}
+        style={{ maxHeight: insets.detailsHeight }}
+        className="overflow-y-auto border-t border-emerald-500/30 px-2.5 py-2 focus-visible:outline-2 focus-visible:outline-emerald-300"
+      >
+        {lines.map((line) => (
+          <p key={line.key}>{isKo ? line.ko : line.en}</p>
+        ))}
+      </div>
     </div>
   );
 }

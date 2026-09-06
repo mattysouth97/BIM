@@ -96,7 +96,7 @@ function InstrumentPanel({
   );
 
   return (
-    <div className="flex min-h-0 min-w-0 shrink-0 max-h-[38%] flex-col gap-1">
+    <div data-twin-panel={position} className="flex min-h-0 min-w-0 shrink-0 max-h-[38%] flex-col gap-1">
       {position === "top" ? toggle : null}
       <div
         id={contentId}
