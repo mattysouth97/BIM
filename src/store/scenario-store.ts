@@ -37,8 +37,16 @@ export interface ScenarioBuildingInputs {
 export const DEFAULT_CAPEX_BUDGET_KRW = 250_000_000; // ₩2.5억 default scenario
 
 interface ScenarioState {
-  /** CAPEX budget in KRW driving the knapsack selection. */
-  capexBudgetKrw: number;
+  /**
+   * OPTIONAL budget, KRW. `null` (the default) means no ceiling: the
+   * recommendation is every measure with a positive NPV within the horizon,
+   * the knapsack is not called, and no utilisation is rendered. A value means
+   * "best set within ₩X" — today's knapsack, utilisation and over-budget
+   * reasons. Per building and session-only: the old ₩2.5억 default followed a
+   * reader across reloads and buildings and marked chips with a number nobody
+   * set for that building. Lane 3D, user-approved 2026-09-06.
+   */
+  capexBudgetKrw: number | null;
   /** 그린리모델링 program track. Default "none" = unsubsidised (legacy behavior). */
   programTrack: ProgramTrack;
   /**
@@ -91,7 +99,7 @@ interface ScenarioState {
    */
   roofPlanes: RoofPlaneSet | null;
   setRoofPlanes: (planes: RoofPlaneSet | null) => void;
-  setCapexBudget: (krw: number) => void;
+  setCapexBudget: (krw: number | null) => void;
   setProgramTrack: (track: ProgramTrack) => void;
   setBuildingInputs: (inputs: ScenarioBuildingInputs | null) => void;
   setSelectedMeasureIds: (ids: string[] | null) => void;
@@ -120,7 +128,7 @@ type ScenarioData = Omit<
  */
 function initialScenarioData(): ScenarioData {
   return {
-    capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
+    capexBudgetKrw: null,
     programTrack: "none",
     buildingInputs: null,
     selectedMeasureIds: null,
@@ -152,6 +160,7 @@ export const useScenarioStore = create<ScenarioState>()(
             selectedMeasureIds: sameBuilding ? state.selectedMeasureIds : null,
             appliedMeasureIds: sameBuilding ? state.appliedMeasureIds : null,
             roofPlanes: sameBuilding ? state.roofPlanes : null,
+            capexBudgetKrw: sameBuilding ? state.capexBudgetKrw : null,
           };
         }),
       setSelectedMeasureIds: (ids) =>
@@ -178,7 +187,6 @@ export const useScenarioStore = create<ScenarioState>()(
     {
       name: "bim-scenario-state",
       partialize: (state) => ({
-        capexBudgetKrw: state.capexBudgetKrw,
         programTrack: state.programTrack,
       }),
     },

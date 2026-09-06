@@ -294,14 +294,14 @@ export function EnergyPanel({ design, previous }: Props) {
 
         <label className="flex flex-col gap-1">
           <span className="text-[10px] text-muted-foreground">
-            CAPEX budget — {krw(capexBudgetKrw)}
+            CAPEX budget — {capexBudgetKrw === null ? "none (NPV-positive)" : krw(capexBudgetKrw)}
           </span>
           <input
             type="range"
             min={10_000_000}
             max={2_000_000_000}
             step={10_000_000}
-            value={capexBudgetKrw}
+            value={capexBudgetKrw ?? 10_000_000}
             aria-label="CAPEX budget"
             onChange={(event) => setCapexBudget(Number(event.target.value))}
             className="w-full"

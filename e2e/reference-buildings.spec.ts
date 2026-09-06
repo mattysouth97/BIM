@@ -67,7 +67,11 @@ const KNOWN_ZERO_REASONS = ["nothing-chosen", "only-unpriced", "targets-met"];
 // Grades are on the table the use code selects (3b9ff6a): the three
 // dwellings are scored 주거, the Clinic by density. kWh/m² did not move.
 const BUILDINGS: readonly Expected[] = [
-  { id: "bs-medical-dental-clinic", titleKo: "메디컬-덴탈 클리닉", grade: "1+", demandPerSqm: "108.8", capexCoversNothing: false },
+  // Since Lane 3D there is no default budget, so the Clinic's fresh chosen set
+  // is its NPV-positive work — the PV alone — and a public CAPEX track covers
+  // none of it, like the other three. Before 3D its knapsack at ₩2.5억 chose
+  // nothing, which is why this row once read false.
+  { id: "bs-medical-dental-clinic", titleKo: "메디컬-덴탈 클리닉", grade: "1+", demandPerSqm: "108.8", capexCoversNothing: true },
   { id: "schependomlaan", titleKo: "스헤펜돔라안 아파트", grade: "1++", demandPerSqm: "40.5", capexCoversNothing: true },
   { id: "duplex-apartment", titleKo: "듀플렉스 아파트", grade: "4", demandPerSqm: "142.6", capexCoversNothing: true },
   // The fourth building states NO services models at all — its manifest

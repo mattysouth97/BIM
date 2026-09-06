@@ -47,7 +47,8 @@ export interface RetrofitScenarioInputs {
   /** Active building primary key (mgmBldrgstPk). Used to look up materials. */
   buildingPk: string;
   /** CAPEX budget in KRW. The knapsack picks the optimal subset within this. */
-  capexBudgetKrw: number;
+  /** Optional ceiling. `null` → recommendation = NPV-positive measures, no knapsack. */
+  capexBudgetKrw: number | null;
   /** Total conditioned floor area (m²). From building geometry. */
   totalFloorArea: number;
   /** Footprint / roof area (m²). Drives solar potential. */
@@ -411,9 +412,16 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     }));
   }, [allMeasures, assumptions]);
 
-  // Knapsack RECOMMENDATION within budget.
+  // RECOMMENDATION: within the budget when one is set; otherwise every
+  // measure whose NPV is positive over the horizon. The knapsack is never
+  // handed a null — it returns an empty selection at budget ≤ 0, and an
+  // empty recommendation would read as "nothing is worth doing".
   const selection = useMemo<BudgetSelection | null>(() => {
     if (allMeasures.length === 0) return null;
+    if (capexBudgetKrw === null) {
+      const positive = allMeasures.filter((m) => (computeFinancials(m, assumptions).npv ?? 0) > 0);
+      return evaluateMeasureSet(positive, assumptions);
+    }
     return selectMeasuresForBudget(allMeasures, capexBudgetKrw, assumptions);
   }, [allMeasures, capexBudgetKrw, assumptions]);
 

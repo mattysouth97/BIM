@@ -68,7 +68,7 @@ const ROOF_TYPE_KO: Record<"flat" | "gable" | "hip" | "sawtooth", string> = {
 export function exclusionReason(
   measure: RetrofitMeasure,
   selected: boolean,
-  capexBudgetKrw: number,
+  capexBudgetKrw: number | null,
   isKo: boolean,
 ): string | null {
   if (selected) return null;
@@ -80,7 +80,7 @@ export function exclusionReason(
       ? `선택 안 됨 — 20년 NPV가 ${formatKRW(npv)}. 지금 조건에서는 절감액이 투자비를 회수하지 못합니다.`
       : `Not selected — 20-year NPV is ${formatKRW(npv)}. On these terms the saving never repays the outlay.`;
   }
-  if (effective > capexBudgetKrw) {
+  if (capexBudgetKrw !== null && effective > capexBudgetKrw) {
     return isKo
       ? `선택 안 됨 — NPV는 양수(${npv !== undefined ? formatKRW(npv) : "—"})지만 보조금 반영 투자비 ${formatKRW(effective)}가 예산 ${formatKRW(capexBudgetKrw)}를 넘습니다.`
       : `Not selected — NPV is positive (${npv !== undefined ? formatKRW(npv) : "—"}) but its post-subsidy cost ${formatKRW(effective)} exceeds the ${formatKRW(capexBudgetKrw)} budget.`;
@@ -232,9 +232,13 @@ export function ReferenceRetrofitPanel({
             className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground"
             data-testid="reference-model-retrofit-summary"
           >
-            {isKo
-              ? `후보 ${totals.candidates}개 중 예산 ₩${(capexBudgetKrw / 100_000_000).toFixed(1)}억 안에서 ${totals.count}개 선택 · 투자비 ${formatKRW(totals.capex)} · 절감 ${formatKWh(totals.saving)}/yr · NPV ${formatKRW(totals.npv)}`
-              : `${totals.count} of ${totals.candidates} candidates fit the ₩${(capexBudgetKrw / 100_000_000).toFixed(1)}억 budget · ${formatKRW(totals.capex)} capex · ${formatKWh(totals.saving)}/yr saved · NPV ${formatKRW(totals.npv)}`}
+            {capexBudgetKrw === null
+              ? isKo
+                ? `후보 ${totals.candidates}개 중 ${totals.count}개 선택 (예산 없음) · 투자비 ${formatKRW(totals.capex)} · 절감 ${formatKWh(totals.saving)}/yr · NPV ${formatKRW(totals.npv)}`
+                : `${totals.count} of ${totals.candidates} candidates chosen (no budget) · ${formatKRW(totals.capex)} capex · ${formatKWh(totals.saving)}/yr saved · NPV ${formatKRW(totals.npv)}`
+              : isKo
+                ? `후보 ${totals.candidates}개 중 예산 ₩${(capexBudgetKrw / 100_000_000).toFixed(1)}억 안에서 ${totals.count}개 선택 · 투자비 ${formatKRW(totals.capex)} · 절감 ${formatKWh(totals.saving)}/yr · NPV ${formatKRW(totals.npv)}`
+                : `${totals.count} of ${totals.candidates} candidates fit the ₩${(capexBudgetKrw / 100_000_000).toFixed(1)}억 budget · ${formatKRW(totals.capex)} capex · ${formatKWh(totals.saving)}/yr saved · NPV ${formatKRW(totals.npv)}`}
           </p>
           {totals.count === 0 ? (
             <p

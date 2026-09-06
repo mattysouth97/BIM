@@ -44,7 +44,6 @@ import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useScenarioStore } from "@/store/scenario-store";
 import { TwinInstrumentFrame } from "./twin-instrument-frame";
 import { ScenarioRail } from "./scenario-rail";
-import { CapexInput } from "./capex-input";
 import { ProgramTrackSelector } from "./program-track-selector";
 import { SelectedMeasuresStrip } from "./selected-measures-strip";
 import { MeasureChipRow } from "./measure-chip-row";
@@ -197,13 +196,6 @@ export function EnergyInstrumentHud({
     [scenario.selection],
   );
 
-  const summary = useMemo(() => {
-    if (!scenario.chosen) return undefined;
-    const sel = scenario.chosen.selected.length;
-    const total = scenario.allMeasures.length;
-    return `${sel}/${total} measures`;
-  }, [scenario.chosen, scenario.allMeasures.length]);
-
   return (
     <TwinInstrumentFrame
       top={
@@ -213,6 +205,7 @@ export function EnergyInstrumentHud({
               as selected, or the frame reports two different projects. */}
           <ScenarioRail
             capexBudgetKrw={capexBudgetKrw}
+            onBudgetChange={setCapexBudget}
             selection={scenario.chosen}
             assumptions={scenario.assumptions}
             totalCandidateMeasures={scenario.allMeasures.length}
@@ -258,11 +251,7 @@ export function EnergyInstrumentHud({
           <SelectedMeasuresStrip
             measures={scenario.chosen?.selected ?? []}
           />
-          <CapexInput
-            value={capexBudgetKrw}
-            onChange={setCapexBudget}
-            summary={summary}
-          />
+          {/* The budget band left the frame 2026-09-06 (Lane 3D): the budget is an optional field in the rail, and the cost of the chosen work is 실효 투자비 above. */}
         </section>
       }
     />

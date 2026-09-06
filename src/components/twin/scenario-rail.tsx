@@ -14,7 +14,8 @@ import { effectiveDiscountRate } from "@/lib/retrofit/economic-model";
 import type { BudgetSelection, EconomicAssumptions } from "@/lib/retrofit/economic-model";
 
 interface ScenarioRailProps {
-  capexBudgetKrw: number;
+  capexBudgetKrw: number | null;
+  onBudgetChange?: (krw: number | null) => void;
   selection: BudgetSelection | null;
   assumptions: EconomicAssumptions;
   totalCandidateMeasures: number;
@@ -34,6 +35,7 @@ function irrLetter(irr: number | null | undefined): string {
 
 export function ScenarioRail({
   capexBudgetKrw,
+  onBudgetChange,
   selection,
   assumptions,
   totalCandidateMeasures,
@@ -43,7 +45,7 @@ export function ScenarioRail({
   const payback = selection?.discountedPayback ?? Infinity;
   const effectiveCapex = selection?.effectiveCapex ?? 0;
   const selectedCount = selection?.selected.length ?? 0;
-  const utilisation = capexBudgetKrw > 0 ? effectiveCapex / capexBudgetKrw : 0;
+  const utilisation = capexBudgetKrw !== null && capexBudgetKrw > 0 ? effectiveCapex / capexBudgetKrw : 0;
   const { t, lang } = useT(); // P2-06
   const effectiveRate = effectiveDiscountRate(assumptions);
   const irr = selection?.selected.length
@@ -67,12 +69,40 @@ export function ScenarioRail({
         <span className="text-[16px] font-semibold tracking-tight text-foreground leading-tight">
           {t("CAPEX → ROI 시뮬레이션", "CAPEX → ROI simulation")}
         </span>
-        <span className="text-[10px] text-muted-foreground tabular-nums">
-          {t(
-            `${selectedCount}/${totalCandidateMeasures}개 선택 · 예산 ${formatKrw(capexBudgetKrw, "ko")} 중 ${formatPercent(utilisation, 0)} 사용`,
-            `${selectedCount}/${totalCandidateMeasures} selected · ${formatPercent(utilisation, 0)} of ${formatKrw(capexBudgetKrw, "en")} budget used`,
-          )}
+        <span className="text-[10px] text-muted-foreground tabular-nums" data-twin-rail-selection>
+          {capexBudgetKrw === null
+            ? t(
+                `${selectedCount}/${totalCandidateMeasures}개 선택 · 추천 = 분석 기간 내 NPV 양수`,
+                `${selectedCount}/${totalCandidateMeasures} selected · recommended = NPV-positive within the horizon`,
+              )
+            : t(
+                `${selectedCount}/${totalCandidateMeasures}개 선택 · 예산 ${formatKrw(capexBudgetKrw, "ko")} 중 ${formatPercent(utilisation, 0)} 사용 · 추천 = 예산 내 최적`,
+                `${selectedCount}/${totalCandidateMeasures} selected · ${formatPercent(utilisation, 0)} of ${formatKrw(capexBudgetKrw, "en")} used · recommended = best within budget`,
+              )}
         </span>
+        {onBudgetChange ? (
+          <label className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span>{t("예산 (선택)", "Budget (optional)")}</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              step={1000}
+              placeholder={t("없음", "none")}
+              aria-label={t("투자 예산, 만원, 선택 사항", "Budget, 만원, optional")}
+              data-twin-budget-input
+              className="w-20 rounded border border-border bg-background px-1 py-0.5 text-[10px] tabular-nums text-foreground"
+              value={capexBudgetKrw === null ? "" : Math.round(capexBudgetKrw / 10_000)}
+              onChange={(event) => {
+                const raw = event.target.value.trim();
+                if (raw === "") return onBudgetChange(null);
+                const man = Number(raw);
+                onBudgetChange(Number.isFinite(man) && man > 0 ? man * 10_000 : null);
+              }}
+            />
+            <span>{t("만원", "만원")}</span>
+          </label>
+        ) : null}
       </div>
 
       <Cell
