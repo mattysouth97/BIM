@@ -885,5 +885,117 @@
     "indexSha256": "95c9bf729b0f6ae92121d40d48e1458e0dd423996a1b9cf51c6975ba9787086a",
     "appearance": "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
     "note": "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate."
+  },
+  "mepCoverage": {
+    "schemaVersion": 1,
+    "status": "source_geometry_published",
+    "publishedLayerIds": [
+      "hvac",
+      "electrical",
+      "plumbing"
+    ],
+    "typedElementCount": 2010,
+    "distributionPortCount": 970,
+    "sources": [
+      {
+        "role": "architectural",
+        "fileName": "Duplex_A_20110907.ifc",
+        "sha256": "b347a2c8aa8fff6db896a4417a9c50c22ac0ccd7c5cfc22b99b8d29336c606ed",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "rooms",
+        "fileName": "Duplex_M_20111024_ROOMS_AND_SPACES.ifc",
+        "sha256": "3cd577ecff9daf91632789a408070251a431b198de7be47f64e01c7fda1be92b",
+        "schema": "IFC2X3",
+        "typedElementCount": 487,
+        "entitiesByType": {
+          "IfcEnergyConversionDevice": 22,
+          "IfcFlowSegment": 246,
+          "IfcFlowFitting": 207,
+          "IfcFlowMovingDevice": 4,
+          "IfcFlowController": 8
+        },
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "hvac",
+        "fileName": "Duplex_MEP_20110907.ifc",
+        "sha256": "13976a8e223f177a6d7123679e4b02e750cd90c13f7bb20c593be125d9407119",
+        "schema": "IFC2X3",
+        "typedElementCount": 926,
+        "entitiesByType": {
+          "IfcEnergyConversionDevice": 16,
+          "IfcFlowSegment": 427,
+          "IfcFlowFitting": 358,
+          "IfcFlowMovingDevice": 4,
+          "IfcFlowTerminal": 105,
+          "IfcFlowController": 14,
+          "IfcDistributionControlElement": 2
+        },
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "electrical",
+        "fileName": "Duplex_Electrical_20121207.ifc",
+        "sha256": "d47b014ed5b3428496683ee75e4664013f6df8237ea571b8d13f877cea0b7a94",
+        "schema": "IFC2X3",
+        "typedElementCount": 99,
+        "entitiesByType": {
+          "IfcEnergyConversionDevice": 2,
+          "IfcFlowMovingDevice": 4,
+          "IfcFlowTerminal": 82,
+          "IfcFlowController": 8,
+          "IfcDistributionControlElement": 3
+        },
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "plumbing",
+        "fileName": "Duplex_Plumbing_20121113.ifc",
+        "sha256": "abfaf5c0979b6b4b05182aec7ada8945374bdb414db76c763724d549b41b212b",
+        "schema": "IFC2X3",
+        "typedElementCount": 498,
+        "entitiesByType": {
+          "IfcEnergyConversionDevice": 2,
+          "IfcFlowMovingDevice": 2,
+          "IfcFlowController": 20,
+          "IfcFlowTerminal": 16,
+          "IfcFlowFitting": 227,
+          "IfcFlowSegment": 231
+        },
+        "distributionPorts": 970,
+        "systems": 0
+      }
+    ],
+    "summary": {
+      "ko": "공개된 냉난방환기·전기·배관 IFC를 각각 표시합니다. 모델 간 중복 가능성이 있어 원본 요소 수를 설치 설비의 고유 개수로 해석하지 않습니다.",
+      "en": "Published HVAC, electrical and plumbing IFCs are shown separately. Source occurrence counts can overlap between models and are not unique installed equipment counts."
+    },
+    "limitations": [
+      {
+        "ko": "해시로 고정된 IFC 파일에서 해당 스키마의 설비 분류 상속을 확인한 요소 목록이며, 실제 설치 설비의 완전성 조사가 아닙니다.",
+        "en": "Inventory of distribution occurrence classes using each pinned IFC file's schema inheritance, not a completeness survey of installed services."
+      },
+      {
+        "ko": "분야별·수정본 모델 간 요소가 중복될 수 있으며 파일 간 설비 중복 제거는 하지 않았습니다.",
+        "en": "Counts include overlapping discipline and revision models; there is no cross-file equipment deduplication."
+      },
+      {
+        "ko": "일반 IfcBuildingElementProxy·IfcFurnishingElement는 원본 근거 없이 MEP로 분류하지 않습니다.",
+        "en": "Generic IfcBuildingElementProxy and IfcFurnishingElement occurrences are not classified as MEP without source evidence."
+      },
+      {
+        "ko": "실·공간 IFC에도 별도 설비 표현이 있어 목록에 포함하되, 공개된 분야별 레이어 위에 겹쳐 표시하지 않습니다.",
+        "en": "The rooms-and-spaces IFC also contains an alternative services representation; it is inventoried but not overlaid on the published discipline layers."
+      }
+    ]
   }
 }

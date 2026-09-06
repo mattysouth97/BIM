@@ -309,5 +309,42 @@
     "indexSha256": "fa37f7d73294556a0cd3a0c016a86d9b2e5a33cd69bf52fa3161819c43f32377",
     "appearance": "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
     "note": "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate."
+  },
+  "mepCoverage": {
+    "schemaVersion": 1,
+    "status": "no_typed_mep_occurrences",
+    "publishedLayerIds": [],
+    "typedElementCount": 0,
+    "distributionPortCount": 0,
+    "sources": [
+      {
+        "role": "architectural",
+        "fileName": "AC20-FZK-Haus.ifc",
+        "sha256": "70cc8ff245fc0894201d96496c031005a5cbd7a96b22d8a1b87c5a883fb77994",
+        "schema": "IFC4",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      }
+    ],
+    "summary": {
+      "ko": "제공된 IFC에는 분류된 MEP 요소와 배관·덕트 포트가 없습니다. 일반 가구·프록시는 설비로 추정하지 않습니다.",
+      "en": "The supplied IFC contains no typed MEP elements or distribution ports. Generic furniture and proxies are not interpreted as services."
+    },
+    "limitations": [
+      {
+        "ko": "해시로 고정된 IFC 파일에서 해당 스키마의 설비 분류 상속을 확인한 요소 목록이며, 실제 설치 설비의 완전성 조사가 아닙니다.",
+        "en": "Inventory of distribution occurrence classes using each pinned IFC file's schema inheritance, not a completeness survey of installed services."
+      },
+      {
+        "ko": "분야별·수정본 모델 간 요소가 중복될 수 있으며 파일 간 설비 중복 제거는 하지 않았습니다.",
+        "en": "Counts include overlapping discipline and revision models; there is no cross-file equipment deduplication."
+      },
+      {
+        "ko": "일반 IfcBuildingElementProxy·IfcFurnishingElement는 원본 근거 없이 MEP로 분류하지 않습니다.",
+        "en": "Generic IfcBuildingElementProxy and IfcFurnishingElement occurrences are not classified as MEP without source evidence."
+      }
+    ]
   }
 }

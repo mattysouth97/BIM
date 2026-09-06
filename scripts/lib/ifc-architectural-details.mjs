@@ -70,10 +70,17 @@ export function weldDetailVertices(geometry) {
   };
 }
 
-export async function buildArchitecturalDetails({
+export async function buildSourceElementLayer({
   buildingId, api, webIfc, byRole, sources, outDir, generator,
+  selection = ARCHITECTURAL_DETAIL_SOURCES[buildingId],
+  groupByType = GROUP,
+  layer = {
+    id: "details", ko: "건축 상세", en: "Architectural details",
+    stem: "architectural-details", kind: "bimfit_reference_architectural_details",
+    note: "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate.",
+  },
 }) {
-  const policy = ARCHITECTURAL_DETAIL_SOURCES[buildingId];
+  const policy = selection;
   if (!policy) throw new Error(`No architectural detail policy for ${buildingId}`);
   const groups = new Map();
   const instanced = [];
@@ -93,7 +100,7 @@ export async function buildArchitecturalDetails({
       rendered: 0,
     }));
     const part = collectServiceInstances(api, webIfc, file.modelId, {
-      serviceGroups: Object.fromEntries(types.map((type) => [GROUP[type], [type]])),
+      serviceGroups: Object.fromEntries(types.map((type) => [groupByType[type], [type]])),
       bakeMirrors: true,
       deduplicateGeometry: true,
       // Tiny subparts (often one flange per beam) cost more in glTF metadata
@@ -141,7 +148,7 @@ export async function buildArchitecturalDetails({
   for (const [name, geometry] of groups) groups.set(name, weldDetailVertices(geometry));
   for (let i = 0; i < instanced.length; i += 1) instanced[i] = weldDetailVertices(instanced[i]);
 
-  const fileName = "architectural-details.glb";
+  const fileName = `${layer.stem}.glb`;
   const result = await writeGlb(path.join(outDir, fileName), groups, {
     generator, colours, instanced,
   });
@@ -150,9 +157,9 @@ export async function buildArchitecturalDetails({
   if (result.byteLength > 20 * 1024 * 1024 || result.drawCalls > 200) {
     throw new Error(`${buildingId}: details exceed 20 MiB / 200 draw-call budget: ${JSON.stringify(result)}`);
   }
-  const indexFile = "architectural-details-index.json";
+  const indexFile = `${layer.stem}-index.json`;
   const index = {
-    kind: "bimfit_reference_architectural_details",
+    kind: layer.kind,
     schemaVersion: 1,
     buildingId,
     coordinateSystem: "metres, Y-up; original web-ifc model placements",
@@ -163,9 +170,9 @@ export async function buildArchitecturalDetails({
   await writeFile(path.join(outDir, indexFile), indexBytes);
   const detailBytes = await readFile(path.join(outDir, fileName));
   return {
-    id: "details",
-    ko: "건축 상세",
-    en: "Architectural details",
+    id: layer.id,
+    ko: layer.ko,
+    en: layer.en,
     file: fileName,
     byteLength: result.byteLength,
     sha256: sha256(detailBytes),
@@ -183,9 +190,11 @@ export async function buildArchitecturalDetails({
     indexFile,
     indexSha256: sha256(indexBytes),
     appearance: "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
-    note: "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate.",
-    ...(buildingId === "schependomlaan" ? {
+    note: layer.note,
+    ...(layer.id === "details" && buildingId === "schependomlaan" ? {
       selectionNote: "Architectural IfcCovering only; supplier steel, precast and railing layers already carry their own source models. Architectural beam, column and railing copies are excluded to avoid overlapping those layers.",
     } : {}),
   };
 }
+
+export const buildArchitecturalDetails = (options) => buildSourceElementLayer(options);

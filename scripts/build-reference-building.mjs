@@ -46,6 +46,7 @@ import {
 } from "./lib/ifc-glb.mjs";
 import { collectServiceInstances } from "./lib/ifc-instances.mjs";
 import { ARCHITECTURAL_DETAIL_SOURCES, buildArchitecturalDetails } from "./lib/ifc-architectural-details.mjs";
+import { buildAdditionalMepLayer, buildMepCoverage } from "./lib/ifc-mep-coverage.mjs";
 import { collectFlowNetwork, annotateFlow, serialiseFlow } from "./lib/ifc-flow.mjs";
 import { measureSpaceMeshes } from "./lib/ifc-space-volume.mjs";
 import {
@@ -1076,12 +1077,15 @@ async function main() {
   // A details-only build leaves all measured quantities and existing GLBs
   // alone. It also pins the cached IFC to the published source hash.
   const detailsOnly = process.argv.includes("--details-only");
+  const mepOnly = process.argv.includes("--mep-only");
+  if (detailsOnly && mepOnly) throw new Error("Use --details-only or --mep-only, not both");
+  const incrementalOnly = detailsOnly || mepOnly;
   const manifestPath = path.join(outDir, "manifest.json");
-  const previousManifestText = detailsOnly ? await readFile(manifestPath, "utf8") : null;
+  const previousManifestText = incrementalOnly ? await readFile(manifestPath, "utf8") : null;
   const previousManifest = previousManifestText ? JSON.parse(previousManifestText) : null;
   const detailRoles = Object.keys(ARCHITECTURAL_DETAIL_SOURCES[buildingId] ?? {});
-  if (detailsOnly && previousManifest?.id !== buildingId) {
-    throw new Error("--details-only requires this building's existing manifest.json in --out-dir");
+  if (incrementalOnly && previousManifest?.id !== buildingId) {
+    throw new Error("Incremental extraction requires this building's existing manifest.json in --out-dir");
   }
 
   // ── Fetch (or reuse) the discipline models ─────────────────────────────
@@ -1113,10 +1117,10 @@ async function main() {
     const remoteDir = file.url ? null : named ? named.path : src.dir;
     const url = file.url ?? toUrl(src.owner, src.repo, src.ref, `${remoteDir}/${file.fileName}`);
     const cachePath = path.join(CACHE, named?.cache ?? "", file.fileName);
-    const expectedSha256 = detailsOnly
+    const expectedSha256 = incrementalOnly
       ? previousManifest.sourceFiles.find((entry) => entry.role === file.role)?.sha256
       : file.sha256;
-    if (detailsOnly && !expectedSha256) throw new Error(`${file.fileName}: published source hash missing`);
+    if (incrementalOnly && !expectedSha256) throw new Error(`${file.fileName}: published source hash missing`);
     const fetched = await fetchSource(url, cachePath, {
       expectedSha256,
     });
@@ -1147,6 +1151,36 @@ async function main() {
     } finally {
       files.forEach((file) => file.close());
     }
+    return;
+  }
+
+  if (mepOnly) {
+    let serviceLayers = [...(previousManifest.serviceLayers ?? [])];
+    // Only the newly added architectural service geometry needs tessellation.
+    // Inventory the other discipline/supplier IFCs directly from their STEP
+    // records so this mode does not reload and rewrite their existing GLBs.
+    if (buildingId === "schependomlaan") {
+      const selected = sources.filter((source) => source.role === "architectural");
+      const { api, files, webIfc } = await openIfcFiles(selected.map((s) => s.cachePath), {
+        wasmDir: path.join(REPO, "node_modules", "web-ifc") + path.sep,
+      });
+      try {
+        const additional = await buildAdditionalMepLayer({
+          buildingId, api, webIfc,
+          byRole: new Map(selected.map((s, i) => [s.role, files[i]])),
+          sources, outDir,
+          generator: `bimfit build-reference-building (web-ifc ${webIfcVersion()})`,
+        });
+        serviceLayers = serviceLayers.filter((layer) => layer.id !== additional.id);
+        serviceLayers.push(additional);
+      } finally {
+        files.forEach((file) => file.close());
+      }
+    }
+    const mepCoverage = await buildMepCoverage({ buildingId, sources, serviceLayers });
+    const lineEnding = previousManifestText.includes("\r\n") ? "\r\n" : "\n";
+    await writeFile(manifestPath, `${JSON.stringify({ ...previousManifest, serviceLayers, mepCoverage }, null, 2)}\n`.replaceAll("\n", lineEnding));
+    console.log(`  MEP inventory: ${mepCoverage.typedElementCount} source occurrences, ${mepCoverage.distributionPortCount} ports, published [${mepCoverage.publishedLayerIds.join(", ")}]`);
     return;
   }
 
@@ -1846,6 +1880,9 @@ async function main() {
   }
 
   const round = (n) => Math.round(n * 100) / 100;
+  const additionalMep = await buildAdditionalMepLayer({ buildingId, api, webIfc, byRole, sources, outDir, generator });
+  if (additionalMep) serviceLayers.push(additionalMep);
+  const mepCoverage = await buildMepCoverage({ buildingId, sources, serviceLayers });
   const manifest = {
     kind: "bimfit_reference_building_manifest",
     schemaVersion: 1,
@@ -2171,6 +2208,7 @@ async function main() {
     openingsFile: "openings.json",
     serviceLayers,
     architecturalDetails,
+    mepCoverage,
     model: {
       file: "model.glb",
       byteLength: glb.byteLength,

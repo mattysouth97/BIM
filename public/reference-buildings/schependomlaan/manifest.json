@@ -3507,6 +3507,52 @@
         "reason": "The model declares no distribution ports, so it states no network to trace.",
         "wavelengthM": null
       }
+    },
+    {
+      "id": "source-services",
+      "ko": "우수배수 · 환기구",
+      "en": "Rainwater drainage · vents",
+      "file": "source-services.glb",
+      "byteLength": 382940,
+      "sha256": "7014cd14a135cf83eb2b3a536fb85ad9af4f8e2f1ce5d9234e96fecf75363f1c",
+      "triangleCount": 8209,
+      "placedTriangleCount": 17662,
+      "triangleCountBasis": "triangleCount stores each instanced shape once; placedTriangleCount includes every placement",
+      "groups": [
+        "rainwater",
+        "vent"
+      ],
+      "elements": 73,
+      "distinctGeometries": 37,
+      "instancedShapes": 4,
+      "instancedPlacements": 18,
+      "drawCalls": 7,
+      "materials": 3,
+      "sourceFiles": [
+        {
+          "role": "architectural",
+          "fileName": "IFC Schependomlaan.ifc",
+          "sha256": "2c3565ca1904f2aa61adab92024cf3755b2c5b21a498144d3094d7cb58cebec7",
+          "types": [
+            {
+              "type": "IfcFlowSegment",
+              "candidates": 60,
+              "rendered": 60,
+              "withoutRenderedMesh": 0
+            },
+            {
+              "type": "IfcDistributionElement",
+              "candidates": 13,
+              "rendered": 13,
+              "withoutRenderedMesh": 0
+            }
+          ]
+        }
+      ],
+      "indexFile": "source-services-index.json",
+      "indexSha256": "93708bee8950465970b74f9db4c6b2a7720333bce6bef0daf367813e2962b885",
+      "appearance": "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
+      "note": "Source architectural IFC geometry: 60 IfcFlowSegment named 'hwa afvoer' (rainwater drainage) and 13 IfcDistributionElement named 'vent. rooster' (ventilation grille). No distribution ports are stated, so no connectivity or flow direction is inferred. This is a partial source services layer, not a complete MEP design."
     }
   ],
   "model": {
@@ -3568,5 +3614,378 @@
     "appearance": "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
     "note": "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate.",
     "selectionNote": "Architectural IfcCovering only; supplier steel, precast and railing layers already carry their own source models. Architectural beam, column and railing copies are excluded to avoid overlapping those layers."
+  },
+  "mepCoverage": {
+    "schemaVersion": 1,
+    "status": "source_geometry_published",
+    "publishedLayerIds": [
+      "utilities",
+      "source-services"
+    ],
+    "typedElementCount": 73,
+    "distributionPortCount": 0,
+    "sources": [
+      {
+        "role": "architectural",
+        "fileName": "IFC Schependomlaan.ifc",
+        "sha256": "2c3565ca1904f2aa61adab92024cf3755b2c5b21a498144d3094d7cb58cebec7",
+        "schema": "IFC2X3",
+        "typedElementCount": 73,
+        "entitiesByType": {
+          "IfcFlowSegment": 60,
+          "IfcDistributionElement": 13
+        },
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "bernts-steel",
+        "fileName": "BERNTS-Staalconstructie.ifc",
+        "sha256": "55ec4ff826ad6fe77cb1ff058a05634993925b7967e4b7b289dfe31bcacd8ebf",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "geelen-v1",
+        "fileName": "GEELEN-Breedplaat V1.ifc",
+        "sha256": "612f755f6e7de3bf37d5548c8ca9311d8ee49d36e7f0d6944ff8fe3495220997",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "geelen-v2",
+        "fileName": "GEELEN-Breedplaat V2.ifc",
+        "sha256": "bb3c05152e312fc7d3998055bf644c75abdc0a760572dd628bc10c751aef084c",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "geelen-v3",
+        "fileName": "GEELEN-Breedplaat V3.ifc",
+        "sha256": "d7f5a27ea3ec5faa733c77baf457dd18c817b25d090a020bcee6c9c010031319",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "geelen-roof",
+        "fileName": "GEELEN-Dakvloer.ifc",
+        "sha256": "84fe2eff9d724486ae23df823a228443ff2fb86e80d610161676df73d8873706",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "waardo-hollowcore",
+        "fileName": "WAARDO-Kanaalplaatvloer.ifc",
+        "sha256": "7ada57cf0dd1175d276f83c1ff11d1b917ccfc8d6d0a74a2b19524062d3ae37c",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "multicom-balconies",
+        "fileName": "MULTICOM-balkons.ifc",
+        "sha256": "32539ae4e8e7e6083b09cdfc0f75dbd554fea6979b2f5cf72ca1ae32840f3f41",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "multicom-bands",
+        "fileName": "MULTICOM-banden.ifc",
+        "sha256": "b93715ac7c813ffec6a2bf18ab7912619e5d4a8d0227e49fe1b6bf523de2fe52",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "multicom-stairs",
+        "fileName": "MULTICOM-trappen+bordessen.ifc",
+        "sha256": "0e21403de676a9f876a587883fd94ae49fc45646319c5ea1a276c6c75685934f",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "willemsen-high",
+        "fileName": "WILLEMSEN-Hoogbouw.ifc",
+        "sha256": "52d94e09b9d8139706a22099a0574b2cf957e732bcda1f1a19874e6db933c34e",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "willemsen-high-tiles",
+        "fileName": "WILLEMSEN-Hoogbouw dakpannen.ifc",
+        "sha256": "87d1ed450d95b30e8ab59604c0afeabb6ddc943c46d7cd7fab7643c06288a43e",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "willemsen-low",
+        "fileName": "WILLEMSEN-Laagbouw.ifc",
+        "sha256": "553d28f7adaa65d78c3cc2236444475c1446a5a73f5960da6b5c73a1fccd428b",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "willemsen-low-tiles",
+        "fileName": "WILLEMSEN-laagbouw dakpannen.ifc",
+        "sha256": "5b597e38da932dfc002a4b5712529031d9ff92b1cf081939889fba8e32298d8c",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "fek-balcony-2015-09",
+        "fileName": "BALKONHEKKEN 23-9-2015.IFC",
+        "sha256": "1c2ed565f3e6a094834279deae50172f7f563612129241999812f42f68241529",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "fek-balcony",
+        "fileName": "FEK - Balkonhekken en borstweringsleuningen.IFC",
+        "sha256": "91dfef874cd3757c9a5ae73f74dee0fa5d378bc47717b8842d932e50133b1337",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "fek-french",
+        "fileName": "FEK - Franse balkonhekken en doorvalbeveiliging.IFC",
+        "sha256": "06f962ffe10e315f6bde6c5314c314bc251ee95fa4561601792ee0cbacccfe32",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "fek-stair",
+        "fileName": "FEK - Traphekken.IFC",
+        "sha256": "aa5df99601f7d74831bd4a82c38f290010aa7ae0f8434a1f8ef0cb206a43eff1",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "xella-ground",
+        "fileName": "XELLA-Begane grond.ifc",
+        "sha256": "d860cc64e5e1161bf56576baff0534d153108db602787f1e64ec83cca7eb6cf8",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "xella-1",
+        "fileName": "XELLA-1e verdieping.ifc",
+        "sha256": "394fa778faff30c5c317d866db3028392ed94903469bbbe2a7cfdd630fa9b2a1",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "xella-2",
+        "fileName": "XELLA-2e verdieping.ifc",
+        "sha256": "bc579c3124c18901b043b725e063a7eb7e3d3b4fd4684652ec6acd15a99a748d",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "xella-3",
+        "fileName": "XELLA-3e verdieping.ifc",
+        "sha256": "c46c65262e7023ecbc2b75c086a675c672cfa6822a88426cd1ffc88c9131c12f",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "ytong-general",
+        "fileName": "YTONG-Algemeen.ifc",
+        "sha256": "81664cc4fb76f5ee2e5ba116f777b034f716c9da28468169f0dce2734667ab76",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "ytong-01",
+        "fileName": "YTONG-Kavel 01.ifc",
+        "sha256": "37a718f0742d382d52812f14f37e99554f7fcbdeafadfbc2b398ef0d201e98cb",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "ytong-02",
+        "fileName": "YTONG-Kavel 02.ifc",
+        "sha256": "4d553509c2c651b4c1c05d3c0c43d67b5150b9e74f62b57a51fcc5c7b08f779c",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "ytong-03",
+        "fileName": "YTONG-Kavel 03.ifc",
+        "sha256": "c1bff328647cca6a9e82e9ced46ac458bd6f5bcfa73ec9a623211abaf699d121",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "ytong-04",
+        "fileName": "YTONG-Kavel 04.ifc",
+        "sha256": "7d369b6d26d6fee96f7ed61fbc2ffae6643e11269b70e06145a0a0462e6fd1b0",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "ytong-05",
+        "fileName": "YTONG-Kavel 05.ifc",
+        "sha256": "d104efd1bec2da49abc35fc6a725a1bb139451356106f3ce66892a28e1c6d761",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "ytong-06",
+        "fileName": "YTONG-Kavel 06.ifc",
+        "sha256": "e0eb9daffcc2b2ea3d395689d00a34961b479b48c176e4e3b947f41fd1cc3539",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "ytong-07",
+        "fileName": "YTONG-Kavel 07.ifc",
+        "sha256": "e6ae54f84938e3be03990691c3826dd630178cab92d506ddc8efe00d26f7e35e",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "ytong-08",
+        "fileName": "YTONG-Kavel 08.ifc",
+        "sha256": "b3b4ee853e8737189ce27f298b8f622b4772b9629a1a8e1c27b9abd97d231758",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "ytong-09",
+        "fileName": "YTONG-Kavel 09.ifc",
+        "sha256": "188195bd08e82f62568e3d5845d544b74fb189c5ef1d1e916ee407417ca3fe19",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "ytong-10",
+        "fileName": "YTONG-Kavel 10.ifc",
+        "sha256": "add92d8fa490989ecf180464dfdb272ae0a377a38ad2651d56509ad8e67d6a95",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "hb-utilities",
+        "fileName": "HB_Nutsvoorzieningen.ifc",
+        "sha256": "f85baa7f5c45feffb45783464a7d01a1679f784487b6f866dfcaabdd1a86caf7",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      }
+    ],
+    "summary": {
+      "ko": "건축 IFC의 우수배수 60개·환기구 13개와 별도 공급업체 유틸리티 연결 형상을 표시합니다. 포트가 없어 흐름 방향은 추정하지 않습니다.",
+      "en": "Shows 60 rainwater drainage elements and 13 ventilation grilles from the architectural IFC, plus the supplier utility connections. No distribution ports; no inferred flow direction."
+    },
+    "limitations": [
+      {
+        "ko": "해시로 고정된 IFC 파일에서 해당 스키마의 설비 분류 상속을 확인한 요소 목록이며, 실제 설치 설비의 완전성 조사가 아닙니다.",
+        "en": "Inventory of distribution occurrence classes using each pinned IFC file's schema inheritance, not a completeness survey of installed services."
+      },
+      {
+        "ko": "분야별·수정본 모델 간 요소가 중복될 수 있으며 파일 간 설비 중복 제거는 하지 않았습니다.",
+        "en": "Counts include overlapping discipline and revision models; there is no cross-file equipment deduplication."
+      },
+      {
+        "ko": "일반 IfcBuildingElementProxy·IfcFurnishingElement는 원본 근거 없이 MEP로 분류하지 않습니다.",
+        "en": "Generic IfcBuildingElementProxy and IfcFurnishingElement occurrences are not classified as MEP without source evidence."
+      }
+    ]
   }
 }

@@ -993,5 +993,111 @@
     "indexSha256": "52c39f9ebc5159395c925abc796f90a4c59ff8816c43ae799a4fbd57101eff3f",
     "appearance": "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
     "note": "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate."
+  },
+  "mepCoverage": {
+    "schemaVersion": 1,
+    "status": "source_geometry_published",
+    "publishedLayerIds": [
+      "hvac",
+      "electrical",
+      "plumbing"
+    ],
+    "typedElementCount": 12482,
+    "distributionPortCount": 20448,
+    "sources": [
+      {
+        "role": "architectural",
+        "fileName": "Clinic_Architectural.ifc",
+        "sha256": "2ac970ce065ecac4e0c9e5f453a257169e90d0067f419b7e33533a64ef837880",
+        "schema": "IFC2X3",
+        "typedElementCount": 102,
+        "entitiesByType": {
+          "IfcFlowTerminal": 102
+        },
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "structural",
+        "fileName": "Clinic_Structural.ifc",
+        "sha256": "325287b375f154dc79504c4bbf67b40c501f458f23a8c4ba13b27171e00533d8",
+        "schema": "IFC2X3",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "hvac",
+        "fileName": "Clinic_HVAC.ifc",
+        "sha256": "39c88a79f48fbe56da86afb0fb3ebd188f8930df3df7dbfbd9ecaa535aaeab9b",
+        "schema": "IFC2X3",
+        "typedElementCount": 3704,
+        "entitiesByType": {
+          "IfcFlowSegment": 1548,
+          "IfcEnergyConversionDevice": 3,
+          "IfcFlowMovingDevice": 8,
+          "IfcFlowFitting": 1590,
+          "IfcFlowTerminal": 440,
+          "IfcFlowController": 115
+        },
+        "distributionPorts": 7390,
+        "systems": 0
+      },
+      {
+        "role": "electrical",
+        "fileName": "Clinic_Electrical.ifc",
+        "sha256": "70c436de1f1e8a860acfba61b68da1c9243d18dcbbddb98b88b550a642d95d32",
+        "schema": "IFC2X3",
+        "typedElementCount": 2089,
+        "entitiesByType": {
+          "IfcFlowTerminal": 2081,
+          "IfcFlowMovingDevice": 4,
+          "IfcEnergyConversionDevice": 3,
+          "IfcFlowStorageDevice": 1
+        },
+        "distributionPorts": 0,
+        "systems": 0
+      },
+      {
+        "role": "plumbing",
+        "fileName": "Clinic_Plumbing.ifc",
+        "sha256": "e662a8d0273694b745a313fc18ee8d4916db03453caa8f9d00d4d80b62bb6e23",
+        "schema": "IFC2X3",
+        "typedElementCount": 6587,
+        "entitiesByType": {
+          "IfcFlowController": 254,
+          "IfcFlowFitting": 3318,
+          "IfcFlowMovingDevice": 2,
+          "IfcFlowSegment": 2893,
+          "IfcFlowTerminal": 119,
+          "IfcFlowStorageDevice": 1
+        },
+        "distributionPorts": 13058,
+        "systems": 0
+      }
+    ],
+    "summary": {
+      "ko": "공개된 냉난방환기·전기·배관 IFC를 각각 표시합니다. 모델 간 중복 가능성이 있어 원본 요소 수를 설치 설비의 고유 개수로 해석하지 않습니다.",
+      "en": "Published HVAC, electrical and plumbing IFCs are shown separately. Source occurrence counts can overlap between models and are not unique installed equipment counts."
+    },
+    "limitations": [
+      {
+        "ko": "해시로 고정된 IFC 파일에서 해당 스키마의 설비 분류 상속을 확인한 요소 목록이며, 실제 설치 설비의 완전성 조사가 아닙니다.",
+        "en": "Inventory of distribution occurrence classes using each pinned IFC file's schema inheritance, not a completeness survey of installed services."
+      },
+      {
+        "ko": "분야별·수정본 모델 간 요소가 중복될 수 있으며 파일 간 설비 중복 제거는 하지 않았습니다.",
+        "en": "Counts include overlapping discipline and revision models; there is no cross-file equipment deduplication."
+      },
+      {
+        "ko": "일반 IfcBuildingElementProxy·IfcFurnishingElement는 원본 근거 없이 MEP로 분류하지 않습니다.",
+        "en": "Generic IfcBuildingElementProxy and IfcFurnishingElement occurrences are not classified as MEP without source evidence."
+      },
+      {
+        "ko": "건축 모델의 말단기기는 목록에 포함하되, 설비 모델과의 중복 식별이 해결되지 않아 추가로 겹쳐 표시하지 않습니다.",
+        "en": "Architectural terminal occurrences are inventoried but not added over the coordinated services; duplicate identity has not been resolved."
+      }
+    ]
   }
 }
