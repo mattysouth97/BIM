@@ -51,6 +51,7 @@ const LAYER_IDS = {
   schependomlaan: ["utilities", "source-services"],
   "fzk-haus": [],
   "kit-office": [],
+  "taltech-maemaja": ["mep"],
 };
 
 export async function buildMepCoverage({ buildingId, sources, serviceLayers }) {
@@ -84,6 +85,9 @@ export async function buildMepCoverage({ buildingId, sources, serviceLayers }) {
     } : buildingId === "schependomlaan" ? {
       ko: "건축 IFC의 우수배수 60개·환기구 13개와 별도 공급업체 유틸리티 연결 형상을 표시합니다. 포트가 없어 흐름 방향은 추정하지 않습니다.",
       en: "Shows 60 rainwater drainage elements and 13 ventilation grilles from the architectural IFC, plus the supplier utility connections. No distribution ports; no inferred flow direction.",
+    } : buildingId === "taltech-maemaja" ? {
+      ko: "통합 IFC의 냉난방·배관·말단기기와 기존 태양광 형상을 표시합니다. 별도 계측 파일을 연간 에너지 계산과 보정한 결과는 아닙니다.",
+      en: "Shows source heating/cooling equipment, pipes, terminals and existing PV from the combined IFC. The separate metering archive has not been used to calibrate the modeled annual energy output.",
     } : {
       ko: "공개된 냉난방환기·전기·배관 IFC를 각각 표시합니다. 모델 간 중복 가능성이 있어 원본 요소 수를 설치 설비의 고유 개수로 해석하지 않습니다.",
       en: "Published HVAC, electrical and plumbing IFCs are shown separately. Source occurrence counts can overlap between models and are not unique installed equipment counts.",

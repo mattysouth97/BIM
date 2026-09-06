@@ -574,7 +574,32 @@ const KLASSIQUA_OFFICE_1970: GalleryItem = {
   href: "/models/klassiqua-office-1970",
 };
 
-export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC, SCHEPENDOMLAAN, DUPLEX, FZK_HAUS, KIT_OFFICE, KLASSIQUA_OFFICE_1970];
+const TALTECH: GalleryItem = {
+  id: "taltech-maemaja", koTitle: "TalTech 매에마야", enTitle: "TalTech Mäemaja",
+  koUse: "실제 업무·연구시설 · Tallinn", enUse: "Office and laboratory · Tallinn",
+  status: "published", modelFile: "DS3_TalTech_V4.ifc", ifcSchema: "IFC4",
+  viewDefinition: "DesignTransferView_V1.0", authoringTool: "Autodesk Revit 2023", modelDate: "2025-04-03",
+  licence: "CC BY 4.0",
+  attribution: "Veliskaki, A., et al. (2025), SmartlivingEPC public building BIM model and measurements, v1, Zenodo, DOI: 10.5281/zenodo.15782433. CC BY 4.0.",
+  datums: [
+    { name: "Katus", elevationM: 14.51, rooms: 0, roomAreaSqm: 0, excludedSpaces: 0 },
+    { name: "3. korrus", elevationM: 9.8, rooms: 24, roomAreaSqm: 546.11, excludedSpaces: 0 },
+    { name: "2. korrus", elevationM: 4.9, rooms: 18, roomAreaSqm: 548.94, excludedSpaces: 0 },
+    { name: "1. korrus", elevationM: 0, rooms: 29, roomAreaSqm: 1230.4, excludedSpaces: 0 },
+    { name: "+Kelder", elevationM: -3.5, rooms: 44, roomAreaSqm: 1160.67, excludedSpaces: 0 },
+  ],
+  figures: [
+    { id: "floor-area", ko: "실 바닥면적 합계", en: "Space floor area", value: "3,486.1 m²", read: "115 IfcSpace floor-area quantities, including basement; conditioning is assumed" },
+    { id: "rooms", ko: "공간", en: "Spaces", value: "115", read: "IfcSpace 115 = basement 44 + upper floors 71" },
+    { id: "walls", ko: "선별 외벽", en: "Selected exterior walls", value: "40", read: "40 IfcWall linked by PHYSICAL/EXTERNAL IfcRelSpaceBoundary; NetSideArea or Dimensions.Area" },
+    { id: "pv-arrays", ko: "기존 태양광 배열", en: "Modeled PV arrays", value: "48", read: "48 IfcSolarDevice occurrences; Data.Total Number of Modules sums to 192 modules, not 48 modules" },
+    { id: "mep", ko: "원본 MEP 요소", en: "Source MEP occurrences", value: "528", read: "528 typed distribution occurrences in one IFC, including 48 solar arrays; not an installed-equipment completeness survey" },
+    { id: "u-values", ko: "원본 창 Uw", en: "Stated window Uw", value: "0.66 W/m²K", read: "Pset_WindowCommon.ThermalTransmittance for the counted 518.285 m² window aperture; curtain-wall U is unresolved" },
+  ],
+  href: "/models/taltech-maemaja",
+};
+
+export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC, SCHEPENDOMLAAN, DUPLEX, FZK_HAUS, KIT_OFFICE, KLASSIQUA_OFFICE_1970, TALTECH];
 
 /** Lowest and highest datum, for the section diagram's vertical range. */
 export function datumRange(datums: readonly GalleryDatum[]) {

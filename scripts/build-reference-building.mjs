@@ -27,6 +27,7 @@ import {
   str,
   num,
   refId,
+  sha256,
 } from "./lib/ifc-reader.mjs";
 import {
   extractStoreys,
@@ -47,6 +48,9 @@ import {
 import { collectServiceInstances } from "./lib/ifc-instances.mjs";
 import { ARCHITECTURAL_DETAIL_SOURCES, buildArchitecturalDetails } from "./lib/ifc-architectural-details.mjs";
 import { buildAdditionalMepLayer, buildMepCoverage } from "./lib/ifc-mep-coverage.mjs";
+import { positiveProperty, statedPropertyIndex } from "./lib/ifc-stated-properties.mjs";
+import { attachSourceRoofEquipment } from "./lib/ifc-roof-equipment.mjs";
+import { uniqueSourceIds } from "./lib/ifc-source-ids.mjs";
 import { collectFlowNetwork, annotateFlow, serialiseFlow } from "./lib/ifc-flow.mjs";
 import { measureSpaceMeshes } from "./lib/ifc-space-volume.mjs";
 import { allSpaceBoundaries, withMeasuredSpaceAreas } from "./lib/ifc-space-evidence.mjs";
@@ -873,6 +877,58 @@ const KIT_OFFICE = Object.freeze({
   roofNote: "Dach-001 consists of 21 IfcSlab ROOF strips forming curved roofs. Their surfaces are measured individually; no single flat or gable typology is asserted.",
 });
 
+/** SmartLivingEPC's real TalTech office/laboratory research building (CC BY 4.0). */
+const TALTECH = Object.freeze({
+  useSourceLatitudeForPv: true,
+  roofEquipmentTypes: ["IfcSolarDevice", "IfcChiller", "IfcUnitaryEquipment"],
+  roofParapetNameMatches: ["parapet"],
+  roofReverseWinding: [{
+    elementRef: "ifc://DS3_TalTech_V4.ifc#325938",
+    basis: "Source KL-04 roof tessellation is reversed: at X=-13.741179567555069, Z=16.853 its top Y=-12.51774794497 faces downward and bottom Y=-13.05256349195 faces upward. Reverse triangle order for roof-surface selection only; source mesh vertices and rendered geometry remain unchanged.",
+  }],
+  publishSourcePhysics: true,
+  id: "taltech-maemaja",
+  name: { ko: "TalTech 매에마야", en: "TalTech Mäemaja" },
+  summary: {
+    ko: "에스토니아 탈린 공과대학교의 실제 사무·연구시설. SmartLivingEPC가 IFC와 별도의 계측 데이터를 공개했습니다.",
+    en: "Tallinn University of Technology's office and laboratory building, published by SmartLivingEPC with its IFC and a separate measurement archive.",
+  },
+  useType: "office_laboratory",
+  licence: "CC BY 4.0",
+  attribution: "Veliskaki, A., et al. (2025), SmartlivingEPC public building BIM model and measurements, v1, Zenodo, DOI: 10.5281/zenodo.15782433. CC BY 4.0.",
+  sourceUrl: "https://zenodo.org/records/15782433",
+  files: [{
+    role: "architectural", fileName: "DS3_TalTech_V4.ifc",
+    url: "https://zenodo.org/api/records/15782433/files/DS3_TalTech_V4.ifc/content",
+    sha256: "05919eee0701b955d3d08501c4889c879d9c486e2389a6a1a5cdaad32a5d10ba",
+  }],
+  serviceLayers: [{
+    id: "mep", role: "architectural", ko: "설비 · 기존 태양광", en: "MEP · existing PV",
+    publishFlow: false,
+    groups: {
+      pipe: ["IfcPipeSegment"], fitting: ["IfcPipeFitting"],
+      terminal: ["IfcAirTerminal", "IfcSpaceHeater", "IfcLightFixture"],
+      plant: ["IfcChiller", "IfcTank", "IfcUnitaryEquipment", "IfcBoiler", "IfcAirToAirHeatRecovery"],
+      solar: ["IfcSolarDevice"],
+    },
+    colours: { pipe: [0.58, 0.72, 0.8, 1], solar: [0.12, 0.2, 0.3, 1] },
+    note: "Actual IFC4 equipment geometry from the combined source file, including its existing photovoltaic arrays. Colours distinguish visual categories; equipment capacity and modeled energy assumptions are documented separately. This is not an inferred whole-building MEP network.",
+  }],
+  exteriorWallsFromSpaceBoundaries: true,
+  areaSource: "stated_first",
+  statedWallAreaFallback: "Dimensions.Area",
+  // IFC geometry has a site/project vertical offset; storey Elevation is a
+  // relative building datum. Use the same world frame as the tessellated walls.
+  roofDatumM: -14.489991648154923,
+  location: {
+    rejectCoordinate: false,
+    statedTown: "Tallinn, Estonia",
+    note: "The source publication identifies TalTech Ehituse Mäemaja, Tallinn, Estonia. IFC coordinates are retained as stated by the source; energy climate selection is a separate explicit input.",
+  },
+  spacesNote: "The source states 115 IfcSpace floor quantities across basement and three occupied storeys. Treating all these spaces as conditioned is an operating assumption. The separate measurement archive has not been reconciled with the modeled annual energy output.",
+  roofNote: "Roof element geometry is measured from the IFC. Source photovoltaic equipment is inventoried separately and must be excluded from new PV installation footprints.",
+});
+
 /** Every building this script can build, selected with `--building <id>`. */
 const BUILDINGS = Object.freeze({
   [CLINIC.id]: CLINIC,
@@ -919,6 +975,7 @@ const BUILDINGS = Object.freeze({
     spacesNote: "All 48 IfcSpace solids have measurable plan footprints but no floor-area quantities. Their plan unions total 1507.02 m², consistent with the documentation's rounded 1507 m² usable floor area. All 48 spaces are included in the energy conditioning scenario; this is not measured operation.",
     roofNote: "The structural flat-roof slab and overlying roofing assembly are separate IFC elements. The sky-visible plane union supplies the single roof area; layer sums must not be priced twice.",
   },
+  [TALTECH.id]: TALTECH,
 });
 
 /**
@@ -1396,7 +1453,7 @@ async function main() {
   // each stated twice, 4 of the 6 failures were the analytical copies, so the
   // sentence promised 6 substitutions where the net figure made 2.
   const openSolids = spaceRows.filter(
-    (s) => s.countsAsConditionedVolume && s.solidClosed === false,
+    (s) => s.countsAsConditionedVolume && s.netVolumeSource === "area × solid height (solid not closed)",
   ).length;
   // Net is air below the ceiling; gross is everything inside the air barrier.
   // The first is a subset of the second by construction, so a row where it
@@ -1439,9 +1496,9 @@ async function main() {
   // architectural file; the Clinic is five. Absent roles are skipped rather
   // than assumed, so a missing discipline is an empty contribution and not a
   // crash halfway through an extraction.
-  const assemblies = [arch, struct]
+  const assemblies = uniqueSourceIds([arch, struct]
     .filter(Boolean)
-    .flatMap((file) => extractAssemblies(file, webIfc, { thermalPropertiesInSI: building.materialThermalPropertiesInSI ?? false }));
+    .flatMap((file) => extractAssemblies(file, webIfc, { thermalPropertiesInSI: building.materialThermalPropertiesInSI ?? false })));
   const classification = classifyExternalElements(arch, webIfc);
 
   // Areas come from the built solid, never from space boundaries — see the
@@ -1492,10 +1549,14 @@ async function main() {
   // different areas. Substituting only at the accumulator left the sector pass
   // still summing meshes, and the two disagreed by 40 m².
   const substituted = [];
+  const sourceProperties = building.statedWallAreaFallback ? statedPropertyIndex(arch, webIfc) : null;
   if (building.areaSource === "stated_first") {
     const stated = statedWallAreas(arch, webIfc);
     for (const [id, wall] of exteriorWalls) {
-      const value = stated.get(id);
+      const fallback = building.statedWallAreaFallback
+        ? positiveProperty(sourceProperties.get(id), building.statedWallAreaFallback)
+        : null;
+      const value = stated.get(id) ?? fallback?.value;
       if (value === undefined || value === null) continue;
       const mesh = wall.netFaceAreaSqm;
       // Split the stated area the way the mesh was split, so a roof datum keeps
@@ -1518,7 +1579,10 @@ async function main() {
         thinAxisForced: false,
         areaSource: "stated",
       });
-      substituted.push({ id, name: wall.name, mesh, stated: value });
+      substituted.push({
+        id, name: wall.name, mesh, stated: value,
+        ...(stated.has(id) ? {} : { property: fallback }),
+      });
     }
   }
 
@@ -1538,7 +1602,7 @@ async function main() {
     const disagreeing = substituted.filter((x) => x.mesh > 0);
     const worst = disagreeing.sort((a, b) => b.mesh / b.stated - a.mesh / a.stated)[0];
     console.log(
-      `  ${substituted.length} wall(s) measured from the model's stated NetSideArea` +
+      `  ${substituted.length} wall(s) measured from the model's stated NetSideArea${building.statedWallAreaFallback ? ` or ${building.statedWallAreaFallback}` : ""}` +
         (worst
           ? `, worst #${worst.id} "${worst.name}" mesh ${worst.mesh.toFixed(2)} vs stated ` +
             `${worst.stated.toFixed(2)} m² (${(worst.mesh / worst.stated).toFixed(2)}x)`
@@ -1684,7 +1748,7 @@ async function main() {
       family: roofFamily(row.name),
       storeyId: row.storey?.name ? `storey-${slug(row.storey.name)}` : null,
     })),
-    { trueNorthDeg },
+    { trueNorthDeg, reverseWinding: building.roofReverseWinding ?? [] },
   );
   const ground = measureGroundSlabs(horizontal.rows, {
     groundStorey,
@@ -1777,6 +1841,9 @@ async function main() {
       longitudeDeg !== null &&
       Math.abs(latitudeDeg - 42.35843) < 1e-3 &&
       Math.abs(longitudeDeg + 71.05978) < 1e-3;
+  if (building.useSourceLatitudeForPv && (isAuthoringDefault !== false || !(latitudeDeg > 0 && latitudeDeg < 90))) {
+    throw new Error("PV source latitude requires an explicitly accepted northern-hemisphere site coordinate");
+  }
 
   // ── Fabric geometry for the viewer ─────────────────────────────────────
   const generator = `bimfit build-reference-building (web-ifc ${webIfcVersion()})`;
@@ -1855,6 +1922,13 @@ async function main() {
       collected.stats.distinctGeometries += part.stats.distinctGeometries;
 
       const f = serialiseFlow(annotateFlow(collectFlowNetwork(api, webIfc, file.modelId)));
+      if (layer.publishFlow === false) {
+        f.segments = [];
+        f.counts.drawnEdges = 0;
+        f.counts.supplySegments = 0;
+        f.counts.returnSegments = 0;
+        f.reason = "Source port directions do not establish supply/return system roles in this combined model; animation is not published.";
+      }
       flowSegments.push(...f.segments);
       for (const [k, v] of Object.entries(f.counts)) {
         flowCounts[k] = (flowCounts[k] ?? 0) + v;
@@ -1947,7 +2021,7 @@ async function main() {
         `${written.triangleCount.toLocaleString()} tris, ` +
         `${written.instancedShapes} shapes x ${written.instancedPlacements} placements, ` +
         `${written.drawCalls} draw calls, ` +
-        `flow ${flow.counts.drawnEdges ?? 0}/${flow.counts.connections ?? 0} directed` +
+        `flow ${flow.counts.drawnEdges ?? 0} drawn / ${flow.counts.directedEdges ?? 0} source-directed / ${flow.counts.connections ?? 0} connections` +
         (layerFiles.length > 1 ? ` (${layerFiles.length} files)` : ""),
     );
   }
@@ -2038,7 +2112,10 @@ async function main() {
       exteriorWallNetSqm: round(wallNet),
       ...(opaqueFacade ? { opaqueFacade } : {}),
       ...(building.exteriorWallsFromSpaceBoundaries ? {
-        exteriorWallNote: building.exteriorWallNote ?? `${exteriorWalls.size} walls selected by IfcRelSpaceBoundary PHYSICAL/EXTERNAL element references; area from each wall's stated NetSideArea (openings already removed). Boundary surface areas are not used.`,
+        exteriorWallNote: building.exteriorWallNote ?? `${exteriorWalls.size} walls selected by IfcRelSpaceBoundary PHYSICAL/EXTERNAL element references; area from each wall's stated NetSideArea${building.statedWallAreaFallback ? `, falling back to ${building.statedWallAreaFallback} where no NetSideArea is stated` : ""} (openings already removed). Boundary surface areas are not used.`,
+        ...(building.statedWallAreaFallback ? {
+          wallAreaPropertyFallbacks: substituted.filter((row) => row.property).map(({ id, property }) => ({ expressId: id, ...property })),
+        } : {}),
       } : {}),
       exteriorWallBelowRoofSqm: round(wallBelowRoof),
       exteriorWallAboveRoofSqm: round(wallAboveRoof),
@@ -2202,8 +2279,8 @@ async function main() {
       layers: a.layers.map((l) => ({
         name: l.name,
         thicknessM: l.thicknessM,
-        ref: l.ref,
         ...(l.sourceThermalProperties ? { sourceThermalProperties: l.sourceThermalProperties } : {}),
+        ref: l.ref,
       })),
       ref: a.ref,
     })),
@@ -2357,6 +2434,29 @@ async function main() {
   // unresolved openings whose reason text mentions "roof" generically, and
   // every one of them sits at 0.78 m, four metres under any roof.
   attachOpeningObstructions(roofPlaneResult.planes, apertures.unresolved ?? []);
+  const equipmentRows = building.roofEquipmentTypes
+    ? attachSourceRoofEquipment({ api, webIfc, file: arch, planes: roofPlaneResult.planes, types: building.roofEquipmentTypes })
+    : [];
+  const parapetRows = building.roofParapetNameMatches
+    ? attachSourceRoofEquipment({ api, webIfc, file: arch, planes: roofPlaneResult.planes, types: ["IfcWall", "IfcWallStandardCase"], nameMatch: building.roofParapetNameMatches, kind: "parapet" })
+    : [];
+  if (building.publishSourcePhysics) {
+    const properties = statedPropertyIndex(arch, webIfc);
+    const rows = [];
+    const types = ["IfcWall", "IfcWindow", "IfcDoor", "IfcCurtainWall", "IfcRoof", "IfcSlab", "IfcCovering", "IfcSolarDevice", "IfcBoiler", "IfcChiller", "IfcUnitaryEquipment", "IfcAirToAirHeatRecovery"];
+    for (const type of types) for (const line of arch.byType(webIfc[type.toUpperCase()])) {
+      const selected = [...(properties.get(line.expressID)?.values() ?? [])].filter((p) => /ThermalTransmittance|Soojusläbivus|Heat Transfer Coefficient|RatedElectricPowerOutput|Total Number of Modules|Total Power Watt Peak|Inclination|Efficiency/i.test(p.name));
+      if (selected.length) rows.push({ ref: arch.ref(line), type, name: str(line.Name), properties: selected });
+    }
+    const unitAssignments = arch.byType(webIfc.IFCUNITASSIGNMENT).flatMap((assignment) => (assignment.Units ?? []).map((ref) => {
+      const unit = arch.deref(ref);
+      return { ref: arch.ref(unit), type: str(unit.UnitType), name: str(unit.Name), prefix: str(unit.Prefix),
+        elements: (unit.Elements ?? []).map((ref) => { const term = arch.deref(ref); const base = arch.deref(term.Unit); return { ref: arch.ref(term), exponent: num(term.Exponent), name: str(base.Name), prefix: str(base.Prefix), type: str(base.UnitType) }; }) };
+    }));
+    const physicsBytes = `${JSON.stringify({ schemaVersion: 1, id: building.id, sourceFile: arch.fileName, units: arch.units, unitAssignments, selectedWalls: orientation.walls.map((wall) => ({ ...wall, ref: arch.ref(wall.id) })), note: "Author-stated properties, including type inheritance; no metered or calibrated performance is implied. Differently named conflicting claims remain separate. Global and explicit units must be read before thermal use.", elements: rows }, null, 2)}\n`;
+    await writeFile(path.join(outDir, "source-physics.json"), physicsBytes);
+    manifest.sourcePhysics = { file: "source-physics.json", sha256: sha256(Buffer.from(physicsBytes)), note: "Typed and alternate source thermal/equipment properties with property-set and type references; not measured operating performance." };
+  }
   await writeFile(
     path.join(outDir, "roof-planes.json"),
     `${JSON.stringify(
@@ -2366,6 +2466,7 @@ async function main() {
         generatedAt,
         northAssumed: orientation.northAssumed,
         trueNorthDeg,
+        ...(building.useSourceLatitudeForPv ? { siteLatitudeDeg: latitudeDeg, siteLatitudeRef: arch.ref(site) } : {}),
         note:
           `Upward faces (within ${ROOF_PLANE_CONSTANTS.upwardWithinDeg}°) of each roof element, ` +
           `region-grown into connected coplanar patches: normals within ` +
@@ -2382,8 +2483,11 @@ async function main() {
           `are each plane's own and never a blend across the roof; azimuth is the downslope bearing ` +
           `clockwise from source true north when stated, otherwise project north (the model's −Z); trueNorthDeg records the rotation, and flat planes carry null. outline rings ` +
           `are the plane's visible plan area, outer counter-clockwise and holes clockwise, simplified ` +
-          `to ${ROOF_PLANE_CONSTANTS.simplifyM * 1000} mm. obstructions is EMPTY in this pass: the ` +
-          `shape is the contract, its content is a later stage.`,
+          `to ${ROOF_PLANE_CONSTANTS.simplifyM * 1000} mm; zero-area rings collapsed at 1 mm coordinate precision are omitted. Obstructions contain geometrically associated ` +
+          `unresolved openings where available. ` +
+          (equipmentRows.length ? `For this model, conservative convex hulls of connected source equipment mesh shadows and source-named parapet walls are also included when they overlap a roof and lie within the stated height-selection tolerance. Shadow holes and concavities are filled and may reduce candidate capacity; disconnected pieces stay separate. Exact source geometry is unchanged. Solar-device occurrences can represent arrays, not individual modules.` : `Roof-mounted equipment is not inventoried for this model.`),
+        ...(equipmentRows.length ? { equipment: { heightSelectionToleranceM: { belowRoof: 0.1, aboveRoof: 2 }, rows: equipmentRows } } : {}),
+        ...(parapetRows.length ? { parapets: { sourceNameMatches: building.roofParapetNameMatches, heightSelectionToleranceM: { belowRoof: 0.1, aboveRoof: 2 }, rows: parapetRows } } : {}),
         skyUnionSqm: roofPlaneResult.skyUnionSqm,
         occludedPlanes: roofPlaneResult.occludedPlanes,
         planes: roofPlaneResult.planes,

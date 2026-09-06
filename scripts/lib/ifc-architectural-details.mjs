@@ -19,6 +19,7 @@ export const ARCHITECTURAL_DETAIL_SOURCES = Object.freeze({
   "fzk-haus": { architectural: ["IfcBeam", "IfcRailing"] },
   "kit-office": { architectural: ["IfcFurnishingElement", "IfcRailing", "IfcColumn"] },
   "klassiqua-office-1970": { architectural: ["IfcCovering", "IfcCurtainWall"] },
+  "taltech-maemaja": { architectural: ["IfcCovering", "IfcColumn", "IfcBeam", "IfcRailing"] },
 });
 
 const GROUP = {

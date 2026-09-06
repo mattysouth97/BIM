@@ -33,6 +33,7 @@ const expectedCounts: Record<string, [number, number]> = {
   "fzk-haus": [6, 6],
   "kit-office": [267, 267],
   "klassiqua-office-1970": [68, 68],
+  "taltech-maemaja": [985, 983],
 };
 
 describe("published source architectural detail", () => {

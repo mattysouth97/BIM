@@ -53,6 +53,9 @@ export function ReferencePvUtilisation({
   // a tilted module's projected footprint is smaller than its own surface.
   const moduleSurfaceSqm = layout.planes.reduce((sum, plane) => sum + plane.moduleAreaSqm, 0);
   const title = isKo ? "태양광 · 지붕면별 배치" : "PV · layout by roof plane";
+  const latitudeLabel = layout.latitudeBasis === "accepted_source_site"
+    ? isKo ? `원본 부지 위도 ${layout.latitudeDeg.toFixed(2)}°` : `source site latitude ${layout.latitudeDeg.toFixed(2)}°`
+    : isKo ? `가정 위도 ${layout.latitudeDeg.toFixed(2)}°` : `assumed comparison latitude ${layout.latitudeDeg.toFixed(2)}°`;
   return (
     <details className="mt-3 rounded-[8px] border border-border bg-card" data-testid="reference-pv-utilisation">
       <summary className="cursor-pointer px-3 py-2 text-[11px] text-foreground focus-visible:outline-2 focus-visible:outline-ring">
@@ -126,8 +129,8 @@ export function ReferencePvUtilisation({
             ? `IFC에서 측정한 지붕 형상에 배치한 추정치입니다. 모듈 ${PV_MODULE_LENGTH_M.toFixed(2)} × ${PV_MODULE_WIDTH_M.toFixed(2)} m · 장당 ${PV_PANEL_RATED_KWP.toFixed(2)} kWp 가정: ${layout.totalModules}장 × ${PV_PANEL_RATED_KWP.toFixed(2)} = ${layout.totalKWp.toFixed(1)} kWp를 경제성 계산에 사용합니다.`
             : `Estimated placement on roof geometry measured from IFC. Assumed modules ${PV_MODULE_LENGTH_M.toFixed(2)} × ${PV_MODULE_WIDTH_M.toFixed(2)} m at ${PV_PANEL_RATED_KWP.toFixed(2)} kWp each: ${layout.totalModules} × ${PV_PANEL_RATED_KWP.toFixed(2)} = ${layout.totalKWp.toFixed(1)} kWp is the capacity priced in the economics.`}</p>
           <p>{isKo
-            ? `이격 가정: 평지붕 ${PV_SETBACK_FLAT_M.toFixed(1)} m / 경사지붕 ${PV_SETBACK_PITCHED_M.toFixed(1)} m (A-PV-SETBACK), 장애물 여유거리 ${PV_OBSTRUCTION_CLEARANCE_M.toFixed(1)} m (A-PV-CLEARANCE). 평지붕 거치대 ${PV_FIXED_RACK_TILT_DEG}° · 열 간격 ${layout.rackRowPitchM.toFixed(2)} m, 서울 위도 ${layout.latitudeDeg.toFixed(2)}°의 동지 정오 기준 (A-CLIMATE).`
-            : `Assumed setbacks: flat ${PV_SETBACK_FLAT_M.toFixed(1)} m / pitched ${PV_SETBACK_PITCHED_M.toFixed(1)} m (A-PV-SETBACK); obstruction clearance ${PV_OBSTRUCTION_CLEARANCE_M.toFixed(1)} m (A-PV-CLEARANCE). Flat-roof racks ${PV_FIXED_RACK_TILT_DEG}° at ${layout.rackRowPitchM.toFixed(2)} m row pitch, using winter-solstice noon at Seoul latitude ${layout.latitudeDeg.toFixed(2)}° (A-CLIMATE).`}</p>
+            ? `이격 가정: 평지붕 ${PV_SETBACK_FLAT_M.toFixed(1)} m / 경사지붕 ${PV_SETBACK_PITCHED_M.toFixed(1)} m (A-PV-SETBACK), 장애물 여유거리 ${PV_OBSTRUCTION_CLEARANCE_M.toFixed(1)} m (A-PV-CLEARANCE). 평지붕 거치대 ${PV_FIXED_RACK_TILT_DEG}° · 열 간격 ${layout.rackRowPitchM.toFixed(2)} m, ${latitudeLabel}의 동지 정오 기준. 에너지 계산의 기후 선택과 별개입니다.`
+            : `Assumed setbacks: flat ${PV_SETBACK_FLAT_M.toFixed(1)} m / pitched ${PV_SETBACK_PITCHED_M.toFixed(1)} m (A-PV-SETBACK); obstruction clearance ${PV_OBSTRUCTION_CLEARANCE_M.toFixed(1)} m (A-PV-CLEARANCE). Flat-roof racks ${PV_FIXED_RACK_TILT_DEG}° at ${layout.rackRowPitchM.toFixed(2)} m row pitch, using winter-solstice noon at ${latitudeLabel}. This is separate from the energy weather selection.`}</p>
           <p>{layout.northAssumed
             ? isKo ? "진북 정보가 없어 프로젝트 북쪽을 가정합니다. 방위각은 이 북쪽 기준입니다." : "True north is unavailable; project north is assumed. Azimuths use this north reference."
             : isKo ? "방위각은 지붕 데이터의 북쪽 기준입니다." : "Azimuths use the roof data's north reference."}</p>

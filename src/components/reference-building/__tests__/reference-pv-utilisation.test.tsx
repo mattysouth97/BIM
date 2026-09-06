@@ -55,6 +55,11 @@ describe("the roof table reconciles its rendered claims", () => {
         expect(Number(formula[1]) * Number(formula[2])).toBeCloseTo(Number(formula[3]), 8);
         expect(Number(formula[3])).toBe(shownTotals[4]);
         expect(explanation).toContain("A-PV-SETBACK");
+        expect(explanation).toContain(layout.latitudeDeg.toFixed(2));
+        if (input.siteLatitudeDeg != null) {
+          expect(explanation).toContain(locale === "ko" ? "원본 부지 위도" : "source site latitude");
+          expect(explanation).not.toContain(locale === "ko" ? "서울 위도" : "Seoul latitude");
+        }
         expect(explanation).toContain(locale === "ko" ? "용량이 줄어들 수" : "may reduce capacity");
         expect(container.querySelector('th[scope="col"]')?.textContent).toContain(locale === "ko" ? "지붕면" : "Roof plane");
         expect(container.querySelector('div[role="region"]')?.getAttribute("tabindex")).toBe("0");

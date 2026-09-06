@@ -103,6 +103,24 @@ export function collectFlowNetwork(api, webIfc, modelID) {
     portDirection.set(portIds.get(i), String(unwrap(port.FlowDirection)));
   }
 
+  // IFC4 nests ports under their owning occurrence. Keep a conflicting owner
+  // unresolved; a plausible nearest equipment would invent connectivity.
+  const nestedIds = api.GetLineIDsWithType(modelID, webIfc.IFCRELNESTS);
+  const ambiguousPorts = new Set();
+  for (let i = 0; i < nestedIds.size(); i += 1) {
+    const rel = api.GetLine(modelID, nestedIds.get(i), false);
+    const owner = unwrap(rel.RelatingObject);
+    for (const item of rel.RelatedObjects ?? []) {
+      const port = unwrap(item);
+      if (!portDirection.has(port) || !owner || ambiguousPorts.has(port)) continue;
+      const previous = portToElement.get(port);
+      if (previous !== undefined && previous !== owner) {
+        portToElement.delete(port);
+        ambiguousPorts.add(port);
+      } else portToElement.set(port, owner);
+    }
+  }
+
   const edges = [];
   let bidirectional = 0;
   let unresolved = 0;
@@ -145,7 +163,11 @@ export function collectFlowNetwork(api, webIfc, modelID) {
       reason:
         portIds.size() === 0
           ? "The model declares no distribution ports, so it states no network to trace."
-          : "Every connection the model declares is bidirectional, so it states no direction of flow.",
+          : connIds.size() === 0
+            ? "The model declares ports but no port-to-port connections."
+            : unresolved > 0
+              ? `${unresolved} of ${connIds.size()} port connections have unresolved or same-element ownership; no usable directed connection remains.`
+              : "The resolved connections have no unambiguous SOURCE-to-SINK port pair; direction is not inferred.",
     };
   }
 

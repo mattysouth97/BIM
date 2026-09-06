@@ -17,3 +17,23 @@ The renderer's cell face points along local +Y, sits 0.5 mm above the 40 mm fram
 `node scripts/rebuild-roof-bearings.mjs` regenerates bearings and QA SVG labels from published normals plus each manifest's stated north. It preserves all source geometry, areas, elevations and obstruction records. Full extraction uses the same function. Repeating the regeneration must be byte-identical.
 
 The orientation defect was discovered during shimmering investigation, but no evidence established it as the cause of temporal shimmer. Camera-depth precision and source face contacts are separate rendering concerns.
+
+TalTech Mäemaja adds an accepted source site latitude, independently of the
+energy weather assumption. Its 59.3949928283° latitude gives 4.8491 m winter
+row pitch, yielding 10 additional modules / 4.0 kWp around its existing source
+arrays and parapets. The default comparison latitude would fit 31 and is
+unsuitable for this site. `siteLatitudeDeg` is optional, so models with
+rejected/default coordinates retain the explicit comparison-latitude policy.
+The utilisation table identifies which basis supplies its latitude.
+
+This source also required a documented winding correction for roof #325938:
+the source top face pointed downward, and the old selection therefore chose
+the underside. The source-reference override selects the top surface without
+moving mesh vertices. All sampled actual cell faces clear the source model.
+See [[TalTech Maemaja Reference]] for source evidence and limitations.
+
+Area accounting retries polygon subtraction at a bounded vertex grid only
+when the exact operation throws (1 µm in TalTech). Original inset/obstruction
+rings still control module containment. Nondegenerate disconnected outline
+pieces are retained even when every piece is below 0.05 m²; only rings that
+collapse to zero area at published coordinate precision are omitted.

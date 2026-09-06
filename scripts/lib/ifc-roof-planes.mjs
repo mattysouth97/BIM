@@ -20,6 +20,7 @@
 
 import polygonClipping from "polygon-clipping";
 import { planShadow, measureMultiPolygon } from "./ifc-plan-shadow.mjs";
+import { uniqueSourceIds } from "./ifc-source-ids.mjs";
 
 /** Upward-facing, as the extractor already defines it elsewhere: within 80°. */
 const UP_COS = Math.cos((80 * Math.PI) / 180);
@@ -301,18 +302,17 @@ const r = (v, dp = 3) => {
 function outlineRings(multiPolygon) {
   const rings = [];
   for (const polygon of multiPolygon ?? []) {
-    // A polygon whose outer ring encloses under 0.05 m² is a clipping sliver
-    // (a zero-width strip the sky difference left behind), not a piece of
-    // roof. Found on the apartment's deck, where such a sliver was listed as
-    // the FIRST outer and a consumer that took the first outer laid the
-    // whole deck out on it. Dropped here so the file never states a roof
-    // piece that no module could ever sit on.
-    if (Math.abs(ringArea2(polygon[0] ?? [])) / 2 < 0.05) continue;
+    // Retain every nondegenerate connected piece. The old 0.05 m² cutoff
+    // could erase ALL outlines of a measured multi-piece plane. Runtime PV
+    // now checks every region and cannot place a module on a tiny fragment.
     polygon.forEach((ring, index) => {
       const simplified = simplifyRing(
         ring.map(([x, y]) => [r(x), r(y)]),
         SIMPLIFY_M,
       );
+      // Near-zero source slivers can collapse at the published 1 mm coordinate
+      // precision. A zero-area ring has no orientation and is not a valid hole.
+      if (Math.abs(ringArea2(simplified)) <= 1e-12) return;
       const wantPositive = index === 0; // outer CCW (positive shoelace), holes CW
       const oriented =
         ringArea2(simplified) >= 0 === wantPositive ? simplified : [...simplified].reverse();
@@ -379,6 +379,7 @@ function describePlane(row, facts) {
     elementName: row.name,
     elementType: row.typeName,
     elementRef: row.ref,
+    ...(row.windingCorrection ? { windingCorrection: row.windingCorrection } : {}),
     family: row.family ?? null,
     storeyId: row.storeyId ?? null,
     normal: [r(unit[0], 6), r(unit[1], 6), r(unit[2], 6)],
@@ -404,8 +405,10 @@ function describePlane(row, facts) {
  * shadow and used to discard them, which is the one change this needed
  * upstream. Planes are sorted largest-surface-first within an element so the
  * main deck of a roof is `planes[0]`, and elements keep the manifest's order.
+ * @param {object[]} roofRows
+ * @param {{ minSurfaceSqm?: number, trueNorthDeg?: number|null, reverseWinding?: { elementRef: string, basis: string }[] }} options
  */
-export function roofPlanes(roofRows, { minSurfaceSqm = 0.25, trueNorthDeg = null } = {}) {
+export function roofPlanes(roofRows, { minSurfaceSqm = 0.25, trueNorthDeg = null, reverseWinding = [] } = {}) {
   // Per element: connected coplanar patches, strips of one element merged.
   // Then per FAMILY across elements: the apartment's tiles are one IfcSlab
   // per rafter bay (124 `sporenkap` rows) and the Clinic's standing seam is
@@ -415,7 +418,10 @@ export function roofPlanes(roofRows, { minSurfaceSqm = 0.25, trueNorthDeg = null
   // pitch, a storey-higher deck, and a detached wing apart. A merged plane
   // names its largest element and counts the rest in `mergedElements`.
   const byFamily = new Map();
-  for (const row of roofRows) {
+  for (const sourceRow of roofRows) {
+    const correction = reverseWinding.find((item) => item.elementRef === sourceRow.ref);
+    const row = correction ? { ...sourceRow, windingCorrection: correction.basis,
+      triangles: sourceRow.triangles.map(([a, b, c]) => [a, c, b]) } : sourceRow;
     if (!Array.isArray(row.triangles) || row.triangles.length === 0) continue;
     const key = row.family ?? row.name ?? String(row.expressID);
     if (!byFamily.has(key)) byFamily.set(key, []);
@@ -442,7 +448,7 @@ export function roofPlanes(roofRows, { minSurfaceSqm = 0.25, trueNorthDeg = null
       planes.push({ id: `${slugFamily(family)}-plane-${index}`, ...plane });
     });
   }
-  const sky = occludeBySky(planes, minSurfaceSqm);
+  const sky = occludeBySky(uniqueSourceIds(planes, (plane) => `${plane.family}|${plane.elementRef}`), minSurfaceSqm);
   return {
     planes: sky.planes.map(({ shadowMultiPolygon: _shadow, ...plane }) => ({
       ...plane, azimuthDeg: roofAzimuthDeg(plane.normal, trueNorthDeg ?? 0),

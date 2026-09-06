@@ -25,6 +25,11 @@ const MODEL_CONTEXT: Readonly<Record<string, ModelContext>> = {
     basis: "The Klassiqua research project derived office archetypes from German statistics. The 1970 case is a synthetic design variant with assigned simulation inputs, not a constructed office or metered dataset.",
     sourceUrl: "https://zenodo.org/records/21727160",
   },
+  "taltech-maemaja": {
+    classification: "real_building_model",
+    basis: "The SmartLivingEPC source publication identifies Tallinn University of Technology's Ehituse Mäemaja office/laboratory and publishes its IFC with a separate measurement archive. This export does not include or calibrate against that archive.",
+    sourceUrl: "https://zenodo.org/records/15782433",
+  },
   "bs-medical-dental-clinic": {
     classification: "real_world_status_unverified",
     basis: "The published model describes a US GSA outpatient clinic, but no independently verified constructed counterpart or actual location is supplied with this dataset.",
@@ -54,7 +59,7 @@ const MODEL_CONTEXT: Readonly<Record<string, ModelContext>> = {
 
 export const ENERGY_DATASET_LIMITATIONS = [
   { id: "L-MODEL-NOT-SURVEY", text: "Geometric measurements come from IFC quantities and solids. They are not a field survey, and omitted or misclassified model elements can bias the envelope." },
-  { id: "L-NO-METER", text: "No metered energy series or calibration is supplied. Every energy output is modeled, not observed consumption." },
+  { id: "L-NO-METER", text: "No metered energy series or calibration is included in this export. Linked source archives may contain separate measurements; every energy output here is modeled, not observed consumption." },
   { id: "L-BASELINE", text: "This export uses the published baseline recipe and material inputs. It excludes browser edits, proposed retrofits, and financing selections." },
   { id: "L-CLIMATE", text: "The climate is the explicitly assumed engine climate, not a weather series for the IFC's declared site. Read the climate assumption before comparing sites." },
   { id: "L-SCREENING", text: "The annual degree-day engine is a screening model, not the unwired ISO 13790 monthly kernel, a dynamic hourly simulation, or a certified assessment." },
@@ -207,6 +212,9 @@ export function buildReferenceEnergyDataset(
       ...(manifest.documentation ? { documentation: manifest.documentation } : {}),
       extractedAt: manifest.generatedAt,
       manifestUrl: `/reference-buildings/${manifest.id}/manifest.json`,
+      statedPhysics: manifest.sourcePhysics ? {
+        ...manifest.sourcePhysics, url: `/reference-buildings/${manifest.id}/${manifest.sourcePhysics.file}`,
+      } : null,
       transformations: "IFC quantities/solids extracted by build-reference-building; baseline inputs adapted by reference-buildings/energy-inputs; screening outputs computed at export.",
     },
     modelGeometry: {
@@ -227,7 +235,7 @@ export function buildReferenceEnergyDataset(
       roofFamilyProjectedSum: quantity(areas.roofProjectedSqm, "m2", "areas.roofProjectedSqm", "Sum of plan unions by roof family; different families may overlap. Not a single union across the building."),
       roofPlanUnion: quantity(areas.roofUnionSqm, "m2", "areas.roofUnionSqm", "One plan union across all counted roof elements, irrespective of family."),
       groundContactArea: quantity(areas.groundSlabSqm, "m2", "areas.groundSlabSqm"),
-      groundExposedPerimeter: quantity(areas.groundPerimeterM, "m", "areas.groundPerimeterM"),
+      groundExposedPerimeter: quantity(areas.groundPerimeterM, "m", "areas.groundPerimeterM", "Outer ring length of the selected slab union. Slab gaps/fragmentation can increase it; this is not independently verified thermal exposure. Read the ground-coupling assumption."),
       conditionedGrossVolume: quantity(areas.conditionedVolumeGrossM3, "m3", "areas.conditionedVolumeGrossM3"),
       netRoomVolume: quantity(areas.roomVolumeNetM3, "m3", "areas.roomVolumeNetM3"),
       wallByOrientationSqm: areas.exteriorWallByOrientationSqm ?? null,

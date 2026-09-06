@@ -16,6 +16,7 @@ import type { ReferenceBuildingId } from "./manifest";
 import { REFERENCE_BUILDING_PK_PREFIX } from "./pk";
 import { KIT_OFFICE_ASSUMPTIONS, KIT_OFFICE_GROSS_BY_ORIENTATION, KIT_OFFICE_MATERIALS, KIT_OFFICE_MEASURED_ENVELOPE, KIT_OFFICE_RECIPE } from "./kit-office-energy";
 import { KLASSIQUA_ASSUMPTIONS, KLASSIQUA_GROSS_BY_ORIENTATION, KLASSIQUA_MATERIALS, KLASSIQUA_MEASURED, KLASSIQUA_RECIPE } from "./klassiqua-office-1970-energy";
+import { TALTECH_ASSUMPTIONS, TALTECH_GROSS_BY_ORIENTATION, TALTECH_MATERIALS, TALTECH_MEASURED_ENVELOPE, TALTECH_PENDING_MEASUREMENTS, TALTECH_RECIPE } from "./taltech-maemaja-energy";
 import {
   CLINIC_ASSUMPTIONS,
   CLINIC_MATERIALS,
@@ -402,6 +403,20 @@ const ENERGY_INPUTS: Readonly<Record<ReferenceBuildingId, ReferenceBuildingEnerg
       scopeNotice: {
         ko: "실제 준공 건물이 아닌 1970년 연구용 오피스 원형입니다. 면적은 IFC 형상에서 측정하고 외피 U값은 공개 설계 문서에서 읽었습니다. T1_1970은 냉방 설비가 없어 냉방 전력 0으로 계산되며 쾌적성을 보장하지 않습니다. 서울 기후·기밀·운전효율·재실은 가정입니다. 층간 슬래브 끝에도 동일한 벽 U값을 적용해 열교 손실이 작게 나올 수 있습니다.",
         en: "Synthetic 1970 research archetype. Geometry is measured from IFC; envelope U-values are source design calculations. T1_1970 has no active cooling, so cooling electricity is zero, which does not establish comfort. Seoul climate, airtightness, efficiencies and occupancy are assumptions. Applying one wall U-value across floor-edge bands can understate thermal-bridge losses.",
+      },
+    },
+    "taltech-maemaja": {
+      buildingPk: referenceBuildingPk("taltech-maemaja"), recipe: TALTECH_RECIPE,
+      materials: TALTECH_MATERIALS, assumptions: TALTECH_ASSUMPTIONS,
+      climate: { sigunguCd: "11", labelKo: "서울 비교 기후 (가정)", labelEn: "Seoul comparison climate (assumed)", assumptionId: "A-CLIMATE" },
+      wallByOrientationSqm: TALTECH_MEASURED_ENVELOPE.exteriorWallByOrientationSqm,
+      grossWallByOrientationSqm: TALTECH_GROSS_BY_ORIENTATION, northAssumed: true,
+      exteriorDoorSqm: TALTECH_MEASURED_ENVELOPE.exteriorDoorSqm,
+      roof: { type: "flat", read: "Predominantly low-slope source roofs; 1,369.11 m² sky-visible surface. Source array, rooftop chiller and parapet shadow envelopes are excluded from proposed PV placement." },
+      measurementState: "awaiting_measurement", pendingMeasurements: TALTECH_PENDING_MEASUREMENTS,
+      scopeNotice: {
+        ko: "실제 Tallinn 업무·연구시설의 IFC입니다. 형상과 원본 U값은 출처가 있지만 개구부 범위는 검토 중입니다. 서울 기후·운영 가정으로 계산하며 별도 계측 자료로 보정하지 않았습니다. 누락된 외부 개구부나 연구실 부하로 사용량이 낮게 나올 수 있습니다.",
+        en: "IFC of a real Tallinn office/laboratory. Geometry and typed source U-values are traceable; opening coverage remains under review. Energy uses assumed Seoul climate and operation, without calibration to the separate measurement archive. Omitted exterior openings and laboratory loads may make demand look too low.",
       },
     },
   });

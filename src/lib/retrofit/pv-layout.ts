@@ -174,6 +174,8 @@ export interface RoofPlaneSet {
   northAssumed: boolean;
   /** Clockwise from project -Z to source true north; null/absent uses project north. */
   trueNorthDeg?: number | null;
+  /** Accepted northern-hemisphere source site latitude for winter row spacing. */
+  siteLatitudeDeg?: number | null;
   planes: readonly RoofPlane[];
 }
 
@@ -233,6 +235,7 @@ export interface PvLayoutResult {
   /** Row pitch used on flat planes, and the latitude it came from. */
   rackRowPitchM: number;
   latitudeDeg: number;
+  latitudeBasis: "accepted_source_site" | "assumed_comparison";
   northAssumed: boolean;
 }
 
@@ -418,6 +421,27 @@ export interface UsableArea {
   blocked: PlanRing[];
   usableSqm: number;
   subtractions: PlaneSubtraction[];
+  /** Fallback vertex grid used only for area accounting; placement stays exact. */
+  accountingSnapM: number;
+}
+
+/** Martinez can fail at near-coincident intersections of valid source rings.
+ * Retry only the area-accounting operation at disclosed micrometre precision.
+ * The unrounded inset regions and obstruction rings still govern every module
+ * corner/edge test. Never omit an obstruction when a boolean operation fails.
+ */
+function subtractForAccounting(subject: MultiPolygon, clip: [number, number][][]) {
+  try { return { polygons: polygonClipping.difference(subject, clip), snapM: 0 }; }
+  catch (initialError) {
+    for (const snapM of [1e-6, 1e-5, 1e-4, 1e-3]) {
+      const snap = (polygons: MultiPolygon): MultiPolygon => polygons.map((polygon) => polygon.map((ring) =>
+        ring.map(([x, z]) => [Math.round(x / snapM) * snapM, Math.round(z / snapM) * snapM]),
+      ));
+      try { return { polygons: polygonClipping.difference(snap(subject), snap([clip])), snapM }; }
+      catch { /* Try the next bounded precision; report the original error if all fail. */ }
+    }
+    throw initialError;
+  }
 }
 
 /**
@@ -464,12 +488,15 @@ export function usableAreaFor(plane: RoofPlane): UsableArea {
   const blocked: PlanRing[] = [];
   let remaining = clippingPolygons(regions);
   let remainingSqm = insetSqm;
+  let accountingSnapM = 0;
   for (const obstruction of plane.obstructions ?? []) {
     const ring = obstructionPlan(obstruction);
     if (ring.length < 3) continue;
     const grown = outsetRing(ring, PV_OBSTRUCTION_CLEARANCE_M);
     blocked.push(grown);
-    const next = remaining.length ? polygonClipping.difference(remaining, [grown]) : [];
+    const subtraction = remaining.length ? subtractForAccounting(remaining, [grown]) : { polygons: [], snapM: 0 };
+    const next = subtraction.polygons;
+    accountingSnapM = Math.max(accountingSnapM, subtraction.snapM);
     const nextSqm = polygonsAreaSqm(planPolygons(next));
     const area = Math.max(0, remainingSqm - nextSqm);
     remaining = next;
@@ -486,6 +513,7 @@ export function usableAreaFor(plane: RoofPlane): UsableArea {
     blocked,
     usableSqm: remainingSqm,
     subtractions,
+    accountingSnapM,
   };
 }
 
@@ -761,7 +789,7 @@ function gridPlace(
 
 export function layoutRoofPlanes(
   set: RoofPlaneSet,
-  latitudeDeg = PV_LAYOUT_LATITUDE_DEG,
+  latitudeDeg = set.siteLatitudeDeg ?? PV_LAYOUT_LATITUDE_DEG,
 ): PvLayoutResult {
   const planes = set.planes.map((p) => layoutPlane(p, latitudeDeg, set.trueNorthDeg ?? 0));
   return {
@@ -773,6 +801,7 @@ export function layoutRoofPlanes(
     excludedPlanes: planes.filter((p) => p.excludedReason != null).length,
     rackRowPitchM: rackRowPitchM(latitudeDeg),
     latitudeDeg,
+    latitudeBasis: set.siteLatitudeDeg === latitudeDeg ? "accepted_source_site" : "assumed_comparison",
     northAssumed: set.northAssumed,
   };
 }

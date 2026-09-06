@@ -6,6 +6,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import polygonClipping from "polygon-clipping";
 
 import {
   REFERENCE_BUILDING_IDS,
@@ -29,20 +30,6 @@ const ringArea2 = (pts: readonly (readonly [number, number])[]) => {
   }
   return s;
 };
-function centreInside(
-  plan: readonly (readonly [number, number])[],
-  ring: readonly (readonly [number, number])[],
-): boolean {
-  const cx = plan.reduce((s, q) => s + q[0], 0) / plan.length;
-  const cz = plan.reduce((s, q) => s + q[1], 0) / plan.length;
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
-    const [xi, zi] = ring[i];
-    const [xj, zj] = ring[j];
-    if (zi > cz !== zj > cz && cx < ((xj - xi) * (cz - zi)) / (zj - zi) + xi) inside = !inside;
-  }
-  return inside;
-}
 
 describe("every published building ships roof planes that reconcile with its manifest", () => {
   for (const id of REFERENCE_BUILDING_IDS) {
@@ -104,11 +91,14 @@ describe("every published building ships roof planes that reconcile with its man
         }
       });
 
-      it("an obstruction sits inside the outer ring of the plane it is attached to", () => {
+      it("an obstruction overlaps a published outer roof region, including edge-crossing parapets", () => {
         for (const p of file.planes) {
-          const outer = p.outline.find((r) => r.kind === "outer")?.points ?? [];
+          const outers = p.outline.filter((r) => r.kind === "outer");
           for (const o of p.obstructions) {
-            expect(centreInside(o.plan, outer), `${p.id} ${o.elementName}`).toBe(true);
+            const overlappingArea = outers.reduce((area, ring) => area + polygonClipping.intersection(
+              [ring.points.map(([x,z]) => [x,z] as [number, number])], [o.plan.map(([x,z]) => [x,z] as [number, number])],
+            ).reduce((sum, polygon) => sum + Math.abs(ringArea2(polygon[0])) / 2, 0), 0);
+            expect(overlappingArea, `${p.id} ${o.elementName}`).toBeGreaterThan(1e-6);
           }
         }
       });

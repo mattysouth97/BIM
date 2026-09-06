@@ -86,6 +86,7 @@ export type ReferenceBuildingManifest = Readonly<{
   attribution: string | null;
   sourceUrl: string;
   documentation?: readonly Readonly<{ fileName: string; url: string; sha256: string; licence: string; note: string }>[];
+  sourcePhysics?: Readonly<{ file: string; sha256: string; note: string }>;
   generatedAt: string;
   sourceFiles: readonly Readonly<{
     role: string;
@@ -184,7 +185,7 @@ export type ReferenceBuildingManifest = Readonly<{
     groundSlabSqm?: number;
     /** Σ of the counted slabs' own shadows, so layering is visible. */
     groundSlabSumSqm?: number;
-    /** Outer ring(s) of the ground outline — the ISO 13370 exposed perimeter. */
+    /** Outer ring length of the selected slab union; thermal exposure needs review where slabs are fragmented. */
     groundPerimeterM?: number;
     /** Hole rings (a lift pit, a shaft) — reported, never added to the above. */
     groundHolePerimeterM?: number;
@@ -504,6 +505,9 @@ export type ReferenceBuildingRoofPlanes = Readonly<{
   northAssumed: boolean;
   /** Source true north clockwise from project -Z; null means project north is assumed. */
   trueNorthDeg?: number | null;
+  /** Accepted source site latitude for PV geometry, independent of assumed energy weather. */
+  siteLatitudeDeg?: number | null;
+  siteLatitudeRef?: string | null;
   note: string;
   /** Union of every upward roof shadow before occlusion — what the sky sees. */
   skyUnionSqm: number;
@@ -542,6 +546,7 @@ export const REFERENCE_BUILDING_IDS = [
   "fzk-haus",
   "kit-office",
   "klassiqua-office-1970",
+  "taltech-maemaja",
 ] as const;
 
 export type ReferenceBuildingId = (typeof REFERENCE_BUILDING_IDS)[number];

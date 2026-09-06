@@ -1,0 +1,3913 @@
+{
+  "kind": "bimfit_reference_building_manifest",
+  "schemaVersion": 1,
+  "id": "taltech-maemaja",
+  "name": {
+    "ko": "TalTech 매에마야",
+    "en": "TalTech Mäemaja"
+  },
+  "summary": {
+    "ko": "에스토니아 탈린 공과대학교의 실제 사무·연구시설. SmartLivingEPC가 IFC와 별도의 계측 데이터를 공개했습니다.",
+    "en": "Tallinn University of Technology's office and laboratory building, published by SmartLivingEPC with its IFC and a separate measurement archive."
+  },
+  "useType": "office_laboratory",
+  "licence": "CC BY 4.0",
+  "attribution": "Veliskaki, A., et al. (2025), SmartlivingEPC public building BIM model and measurements, v1, Zenodo, DOI: 10.5281/zenodo.15782433. CC BY 4.0.",
+  "sourceUrl": "https://zenodo.org/records/15782433",
+  "generatedAt": "2026-09-07T00:00:00.000Z",
+  "sourceFiles": [
+    {
+      "role": "architectural",
+      "fileName": "DS3_TalTech_V4.ifc",
+      "sha256": "05919eee0701b955d3d08501c4889c879d9c486e2389a6a1a5cdaad32a5d10ba",
+      "byteLength": 38728810,
+      "units": {
+        "lengthToMetres": 1,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "METRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    }
+  ],
+  "counts": {
+    "storeys": 4,
+    "spacesTotal": 115,
+    "spacesFloor": 115,
+    "assemblies": 111,
+    "externalElements": 118,
+    "exteriorWalls": 40,
+    "windows": 72,
+    "exteriorCurtainWalls": 5,
+    "exteriorDoors": 10
+  },
+  "areas": {
+    "totalFloorAreaSqm": 3486.12,
+    "areaPlanTotalSqm": 3486.12,
+    "exteriorWallNetSqm": 1939.94,
+    "exteriorWallNote": "40 walls selected by IfcRelSpaceBoundary PHYSICAL/EXTERNAL element references; area from each wall's stated NetSideArea, falling back to Dimensions.Area where no NetSideArea is stated (openings already removed). Boundary surface areas are not used.",
+    "wallAreaPropertyFallbacks": [
+      {
+        "expressId": 159082,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 5.479236841660532,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#159082",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#159213",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#159226",
+        "unitRef": null
+      },
+      {
+        "expressId": 159635,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 36.83158675681633,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#159635",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#159694",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#159706",
+        "unitRef": null
+      },
+      {
+        "expressId": 160038,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 14.35090995871887,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#160038",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#160077",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#160083",
+        "unitRef": null
+      },
+      {
+        "expressId": 160721,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 78.90723759384147,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#160721",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#160760",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#160766",
+        "unitRef": null
+      },
+      {
+        "expressId": 172366,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 6.437776926488505,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#172366",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#172400",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#172406",
+        "unitRef": null
+      },
+      {
+        "expressId": 173276,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 73.21887948237878,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#173276",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#173315",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#173321",
+        "unitRef": null
+      },
+      {
+        "expressId": 173742,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 3.6304259443658893,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#173742",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#173776",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#173782",
+        "unitRef": null
+      },
+      {
+        "expressId": 216971,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 89.09170788844389,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#216971",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#217074",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#217086",
+        "unitRef": null
+      },
+      {
+        "expressId": 222778,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 6.413927756073485,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#222778",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#222851",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#222864",
+        "unitRef": null
+      },
+      {
+        "expressId": 224049,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 14.056371737532173,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#224049",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#224085",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#224091",
+        "unitRef": null
+      },
+      {
+        "expressId": 225045,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 78.28508660456359,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#225045",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#225081",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#225087",
+        "unitRef": null
+      },
+      {
+        "expressId": 238412,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 139.17029677288102,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#238412",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#238481",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#238494",
+        "unitRef": null
+      },
+      {
+        "expressId": 278127,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 219.9050737873544,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#278127",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#278225",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#278238",
+        "unitRef": null
+      },
+      {
+        "expressId": 278642,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 14.354841373311453,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#278642",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#278678",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#278684",
+        "unitRef": null
+      },
+      {
+        "expressId": 279492,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 20.652065120951676,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#279492",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#279528",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#279534",
+        "unitRef": null
+      },
+      {
+        "expressId": 280879,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 88.07414854887644,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#280879",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#280915",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#280921",
+        "unitRef": null
+      },
+      {
+        "expressId": 287504,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 38.9958940377511,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#287504",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#287541",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#287547",
+        "unitRef": null
+      },
+      {
+        "expressId": 354579,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 45.665099602876545,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#354579",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#354614",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#354620",
+        "unitRef": null
+      },
+      {
+        "expressId": 355148,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 213.3997336539046,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#355148",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#355180",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#355186",
+        "unitRef": null
+      },
+      {
+        "expressId": 358216,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 65.97550218790415,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#358216",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#358263",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#358275",
+        "unitRef": null
+      },
+      {
+        "expressId": 406015,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 3.6676396349555422,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#406015",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#406040",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#406046",
+        "unitRef": null
+      },
+      {
+        "expressId": 416576,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 9.852300000000003,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#416576",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#416612",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#416624",
+        "unitRef": null
+      },
+      {
+        "expressId": 428362,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 2.189900688671556,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#428362",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#428396",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#428402",
+        "unitRef": null
+      },
+      {
+        "expressId": 430855,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 46.28890813673284,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#430855",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#430892",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#430898",
+        "unitRef": null
+      },
+      {
+        "expressId": 431357,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 68.97809960287637,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#431357",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#431392",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#431398",
+        "unitRef": null
+      },
+      {
+        "expressId": 432300,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 12.123650039430316,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#432300",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#432337",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#432343",
+        "unitRef": null
+      },
+      {
+        "expressId": 432913,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 65.29639006638098,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#432913",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#432950",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#432956",
+        "unitRef": null
+      },
+      {
+        "expressId": 605411,
+        "setName": "Dimensions",
+        "name": "Area",
+        "value": 88.43262959217519,
+        "valueType": "IFCAREAMEASURE",
+        "scope": "occurrence",
+        "elementRef": "ifc://DS3_TalTech_V4.ifc#605411",
+        "propertyRef": "ifc://DS3_TalTech_V4.ifc#605443",
+        "propertySetRef": "ifc://DS3_TalTech_V4.ifc#605449",
+        "unitRef": null
+      }
+    ],
+    "exteriorWallBelowRoofSqm": 1939.94,
+    "exteriorWallAboveRoofSqm": 0,
+    "exteriorWallByOrientationSqm": {
+      "N": 616.86,
+      "NE": 0,
+      "E": 467.15,
+      "SE": 0,
+      "S": 421.73,
+      "SW": 0,
+      "W": 434.21,
+      "NW": 0
+    },
+    "glazingApertureSqm": 548.52,
+    "glazingByOrientationSqm": {
+      "N": 88.69,
+      "NE": 0,
+      "E": 79.41,
+      "SE": 0,
+      "S": 71.57,
+      "SW": 0,
+      "W": 308.85,
+      "NW": 0
+    },
+    "exteriorDoorSqm": 58.34,
+    "exteriorDoorByOrientationSqm": {
+      "N": 6.4,
+      "NE": 0,
+      "E": 41.36,
+      "SE": 0,
+      "S": 3.89,
+      "SW": 0,
+      "W": 6.7,
+      "NW": 0
+    },
+    "openingsNote": "Glazing aperture 548.52 m² = 72 IfcWindow at OverallWidth × OverallHeight (518.29 m²) + 5 exterior IfcCurtainWall at the projected outline of their plates and mullions (30.23 m²; the glass plates alone give 0 m², the bounding rectangles 45.74 m²). Exterior doors are separate — a door is aperture, not glazing: 10 IfcDoor, 58.34 m², OverallWidth × OverallHeight. Host wall by IfcRelFillsElement → IfcOpeningElement → IfcRelVoidsElement (55 openings); a curtain wall is its own wall segment (5); 27 door(s) inside a curtain wall. Sector is the host wall's, from the same orientation pass as the wall split. Envelope by a both-sides probe against the conditioned IfcSpace solids (115 of 115 have geometry): 20 curtain wall(s) with a room on both sides excluded as interior screens (50.5 m²); 109 openings hosted in walls outside the exterior set; 0 window(s) (0 m²) and 3 door(s) (14.15 m²) sit in the plane of walls outside the exterior-wall set and are not counted — the wall names are on each row; 6 unresolved (3.43 m² where a size is stated). IsExternal is reported per row and never used as a filter — it means \"not an interior partition\" to an authoring tool, never \"bounds conditioned space against outdoor air\". It marks 16 door(s) here; 10 confirm against an exterior wall, 6 do not: #310460 SU-A04:2346868 4.4 m², #310477 SU-A04:3189385 4.06 m², #310527 SU-A04:2347869 4.06 m², #352362 Uks:2-paneeli:2893700 4.52 m², #502255 Uks_1:1-paneel:4487293 4.93 m², #325145 Uks-Vent. rest:Rest_3:2473430 3.43 m². Rows in openings.json.",
+    "conditionedVolumeGrossM3": 17503.65,
+    "roomVolumeNetM3": 15841.48,
+    "volumeNote": "Gross from 115 spaces (floor area × storey height; voids, and rooms taller than their storey with no void above, as their own solids); net from 115 spaces (115 from stated volume quantity). A closed tessellation's signed volume is exact.",
+    "roofProjectedSqm": 1539.02,
+    "roofProjectedByFamilySqm": {
+      "Basic Roof:KL-02": 633.45,
+      "Basic Roof:KL-01*": 511.95,
+      "Basic Roof:KL-03": 143.34,
+      "Basic Roof:KL-01": 74.72,
+      "Basic Roof:KL-04": 24.34,
+      "PP_4:PP_26": 18.53,
+      "PP_28:PP_26": 18.52,
+      "PP_30:PP_26": 18.52,
+      "PP_29:PP_26": 18.52,
+      "PP_27:PP_26": 18.39,
+      "PP_31:PP_26": 18.23,
+      "PP_26:PP_26": 17.32,
+      "PP_32:PP_26": 16.04,
+      "PP_68:PP_68": 7.13
+    },
+    "roofElementSumSqm": 1539.02,
+    "roofUnionSqm": 1361.56,
+    "roofSurfaceSqm": 1581.14,
+    "roofSurfaceByFamilySqm": {
+      "Basic Roof:KL-02": 667.59,
+      "Basic Roof:KL-01*": 516.73,
+      "Basic Roof:KL-03": 143.36,
+      "Basic Roof:KL-01": 75.45,
+      "Basic Roof:KL-04": 26.73,
+      "PP_4:PP_26": 18.53,
+      "PP_28:PP_26": 18.53,
+      "PP_29:PP_26": 18.53,
+      "PP_30:PP_26": 18.53,
+      "PP_27:PP_26": 18.4,
+      "PP_31:PP_26": 18.24,
+      "PP_26:PP_26": 17.33,
+      "PP_32:PP_26": 16.05,
+      "PP_68:PP_68": 7.13
+    },
+    "roofNote": "Plan shadow per element (union of its projected triangles, ifc-plan-shadow.mjs): 20 elements — 11 IfcRoof, 9 IfcCovering.PredefinedType=ROOFING. roofProjectedSqm sums 14 roof type(s), each as the union of its elements; the elements themselves sum to 1539.02 m² (elements of one type overlapping in plan) and all types together cover 1361.56 m² (one type above another). surfaceSqm is each element's true one-sheet surface (Σ area of its upward faces; ÷ 2 where a surface model has no downward face and both sheets are wound upward; ÷ the coverage where its parts cover its shadow more than once, as stacked layer solids do — surfaceBasis says which), summing to 1581.14 m²; a flat deck's surface equals its shadow, a pitched roof's exceeds it. 7 element(s) present their top face more than once (upward-face sum above shadow) — the reason the shadow is used and Σ area×n_y is not. Roof element geometry is measured from the IFC. Source photovoltaic equipment is inventoried separately and must be excluded from new PV installation footprints.",
+    "groundSlabSqm": 1173.44,
+    "groundSlabSumSqm": 1173.45,
+    "groundPerimeterM": 524.97,
+    "groundHolePerimeterM": 44.99,
+    "groundNote": "IfcSlab (not ROOF or LANDING) on storeys at or below +Kelder (-3.5 m): 52 candidate(s). A slab counts as ground envelope when a conditioned space stands on it — its shadow overlaps a conditioned ground-storey space footprint (44 of 44 such spaces have one: 44 solid) or an IfcRelSpaceBoundary names it as bounding one. IsExternal is not consulted. 45 counted, 7 excluded: \"Floor:trepp telg x aluspõrand:706309\" 21.13 m², \"Floor:trepp telg x aluspõrand:706541\" 1.25 m², \"Floor:trepp telg x aluspõrand:706698\" 1.58 m², \"Floor:trepp telg x aluspõrand:706763\" 0.92 m², \"Floor:trepp telg x aluspõrand:706812\" 1.25 m², \"Floor:trepp telg x aluspõrand:706851\" 1.26 m², \"Floor:trepp telg x aluspõrand:706861\" 0.28 m². groundSlabSqm is the union of the counted shadows (they sum to 1173.45 m²; stacked build-up layers count once); groundPerimeterM is the outline's outer rings (7 polygons); 4 hole ring(s) totalling 44.99 m are reported and not added."
+  },
+  "assemblies": [
+    {
+      "id": "assembly-basic-wall-ss-02",
+      "name": "Basic Wall:SS-02",
+      "totalThicknessM": 0.19,
+      "layers": [
+        {
+          "name": "Betoonõõnesplokk(1)",
+          "thicknessM": 0.19,
+          "ref": "ifc://DS3_TalTech_V4.ifc#158258"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#158259"
+    },
+    {
+      "id": "assembly-basic-wall-ss-01-source-18481975feee",
+      "name": "Basic Wall:SS-01",
+      "totalThicknessM": 0.2,
+      "layers": [
+        {
+          "name": "R/B(5)",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#158478"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#158479"
+    },
+    {
+      "id": "assembly-basic-wall-vs-03-sisesein-u-lemine",
+      "name": "Basic Wall:VS-03 sisesein ülemine",
+      "totalThicknessM": 0.4,
+      "layers": [
+        {
+          "name": "EPS(1)",
+          "thicknessM": 0.25,
+          "ref": "ifc://DS3_TalTech_V4.ifc#159169"
+        },
+        {
+          "name": "Betoon C30/37",
+          "thicknessM": 0.15,
+          "ref": "ifc://DS3_TalTech_V4.ifc#159170"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#159171"
+    },
+    {
+      "id": "assembly-basic-wall-vs-03-sisesein-source-b657ed2f8c87",
+      "name": "Basic Wall:VS-03 sisesein",
+      "totalThicknessM": 0.45,
+      "layers": [
+        {
+          "name": "EPS",
+          "thicknessM": 0.25,
+          "ref": "ifc://DS3_TalTech_V4.ifc#159647"
+        },
+        {
+          "name": "R/B(2)",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#159648"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#159649"
+    },
+    {
+      "id": "assembly-basic-wall-columbia-kivi-190",
+      "name": "Basic Wall:Columbia kivi - 190",
+      "totalThicknessM": 0.19,
+      "layers": [
+        {
+          "name": "Columbia Kivi(1)",
+          "thicknessM": 0.19,
+          "ref": "ifc://DS3_TalTech_V4.ifc#160822"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#160823"
+    },
+    {
+      "id": "assembly-basic-wall-ss-01-source-0a22991b65fd",
+      "name": "Basic Wall:SS-01*",
+      "totalThicknessM": 0.232,
+      "layers": [
+        {
+          "name": "R/B(4)",
+          "thicknessM": 0.232,
+          "ref": "ifc://DS3_TalTech_V4.ifc#160930"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#160931"
+    },
+    {
+      "id": "assembly-basic-wall-ss-17",
+      "name": "Basic Wall:SS-17",
+      "totalThicknessM": 0.3,
+      "layers": [
+        {
+          "name": "Betoon(1)",
+          "thicknessM": 0.3,
+          "ref": "ifc://DS3_TalTech_V4.ifc#162620"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#162621"
+    },
+    {
+      "id": "assembly-basic-wall-vs-08",
+      "name": "Basic Wall:VS-08",
+      "totalThicknessM": 0.482,
+      "layers": [
+        {
+          "name": "Õhuvahe",
+          "thicknessM": 0.022,
+          "ref": "ifc://DS3_TalTech_V4.ifc#168060"
+        },
+        {
+          "name": "Õhuvahe",
+          "thicknessM": 0.032,
+          "ref": "ifc://DS3_TalTech_V4.ifc#168061"
+        },
+        {
+          "name": "Hüdroisolatsioon",
+          "thicknessM": 0.004,
+          "ref": "ifc://DS3_TalTech_V4.ifc#168062"
+        },
+        {
+          "name": "Soojustus",
+          "thicknessM": 0.22,
+          "ref": "ifc://DS3_TalTech_V4.ifc#168063"
+        },
+        {
+          "name": "Aurutõke",
+          "thicknessM": 0.004,
+          "ref": "ifc://DS3_TalTech_V4.ifc#168064"
+        },
+        {
+          "name": "R/B(1)",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#168065"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#168066"
+    },
+    {
+      "id": "assembly-basic-wall-vs-03-va-liskoor",
+      "name": "Basic Wall:VS-03 väliskoor",
+      "totalThicknessM": 0.1,
+      "layers": [
+        {
+          "name": "Betoon C35/45(1)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#171545"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#171546"
+    },
+    {
+      "id": "assembly-basic-wall-rb-tugimu-u-r-200",
+      "name": "Basic Wall:RB tugimüür 200",
+      "totalThicknessM": 0.2,
+      "layers": [
+        {
+          "name": "Default Wall(2)",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#175015"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#175016"
+    },
+    {
+      "id": "assembly-basic-wall-rb-tugimu-u-r-120",
+      "name": "Basic Wall:RB tugimüür 120",
+      "totalThicknessM": 0.12,
+      "layers": [
+        {
+          "name": "Default Wall(3)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#175164"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#175165"
+    },
+    {
+      "id": "assembly-basic-wall-rb-tugimu-u-r-100",
+      "name": "Basic Wall:RB tugimüür 100",
+      "totalThicknessM": 0.1,
+      "layers": [
+        {
+          "name": "Default Wall(5)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#175372"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#175373"
+    },
+    {
+      "id": "assembly-floor-pandus",
+      "name": "Floor:pandus",
+      "totalThicknessM": 0.4,
+      "layers": [
+        {
+          "name": "CONCRETE/C35/45",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#176350"
+        },
+        {
+          "name": "Default Floor",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#176351"
+        },
+        {
+          "name": "Rigid insulation(4)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#176352"
+        },
+        {
+          "name": "Default Floor",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#176353"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#176354"
+    },
+    {
+      "id": "assembly-floor-terasrest",
+      "name": "Floor:Terasrest",
+      "totalThicknessM": 0.03,
+      "layers": [
+        {
+          "name": "STEEL/Steel_Undefined",
+          "thicknessM": 0.03,
+          "ref": "ifc://DS3_TalTech_V4.ifc#178239"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#178240"
+    },
+    {
+      "id": "assembly-basic-wall-rb-tugimu-u-r-240",
+      "name": "Basic Wall:RB tugimüür 240",
+      "totalThicknessM": 0.24,
+      "layers": [
+        {
+          "name": "R/B(4)",
+          "thicknessM": 0.24,
+          "ref": "ifc://DS3_TalTech_V4.ifc#178432"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#178433"
+    },
+    {
+      "id": "assembly-basic-wall-monoliit",
+      "name": "Basic Wall:Monoliit",
+      "totalThicknessM": 0.2,
+      "layers": [
+        {
+          "name": "R/B(5)",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#180435"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#180436"
+    },
+    {
+      "id": "assembly-floor-trepp-telg-8-trepialus-2",
+      "name": "Floor:trepp telg 8 trepialus 2",
+      "totalThicknessM": 0.26,
+      "layers": [
+        {
+          "name": "EPS",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#180522"
+        },
+        {
+          "name": "Default Floor",
+          "thicknessM": 0.16,
+          "ref": "ifc://DS3_TalTech_V4.ifc#180523"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#180524"
+    },
+    {
+      "id": "assembly-floor-trepp-telg-x-aluspo-rand",
+      "name": "Floor:trepp telg x aluspõrand",
+      "totalThicknessM": 0.2,
+      "layers": [
+        {
+          "name": "CONCRETE/Concrete_Undefined",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#180608"
+        },
+        {
+          "name": "Rigid insulation(4)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#180609"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#180610"
+    },
+    {
+      "id": "assembly-floor-pp03",
+      "name": "Floor:PP03",
+      "totalThicknessM": 0.47,
+      "layers": [
+        {
+          "name": "Air Infiltration Barrier",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211012"
+        },
+        {
+          "name": "Betoon",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211013"
+        },
+        {
+          "name": "Vapour Retarder",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211014"
+        },
+        {
+          "name": "Rigid insulation(2)",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211015"
+        },
+        {
+          "name": "Radoonitõke",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211016"
+        },
+        {
+          "name": "Rigid insulation(2)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211017"
+        },
+        {
+          "name": "Killustikalus",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211018"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#211019"
+    },
+    {
+      "id": "assembly-floor-pp02",
+      "name": "Floor:PP02",
+      "totalThicknessM": 0.47,
+      "layers": [
+        {
+          "name": "Betoon",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211116"
+        },
+        {
+          "name": "Vapour Retarder",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211117"
+        },
+        {
+          "name": "Rigid insulation(2)",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211118"
+        },
+        {
+          "name": "Radoonitõke",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211119"
+        },
+        {
+          "name": "Rigid insulation(2)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211120"
+        },
+        {
+          "name": "Killustikalus",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211121"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#211122"
+    },
+    {
+      "id": "assembly-floor-generic-200mm",
+      "name": "Floor:Generic 200mm",
+      "totalThicknessM": 0.2,
+      "layers": [
+        {
+          "name": "CONCRETE/C30/37",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#211735"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#211736"
+    },
+    {
+      "id": "assembly-floor-pp01",
+      "name": "Floor:PP01",
+      "totalThicknessM": 0.42,
+      "layers": [
+        {
+          "name": "Betoon",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#213702"
+        },
+        {
+          "name": "Vapour Retarder",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#213703"
+        },
+        {
+          "name": "Rigid insulation(3)",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#213704"
+        },
+        {
+          "name": "Radoonitõke",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#213705"
+        },
+        {
+          "name": "Rigid insulation(3)",
+          "thicknessM": 0.07,
+          "ref": "ifc://DS3_TalTech_V4.ifc#213706"
+        },
+        {
+          "name": "Killustikalus",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#213707"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#213708"
+    },
+    {
+      "id": "assembly-floor-trepp-telg-8-aluspo-rand",
+      "name": "Floor:trepp telg 8 aluspõrand",
+      "totalThicknessM": 0.25,
+      "layers": [
+        {
+          "name": "CONCRETE/Concrete_Undefined",
+          "thicknessM": 0.15,
+          "ref": "ifc://DS3_TalTech_V4.ifc#214515"
+        },
+        {
+          "name": "Rigid insulation(4)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#214516"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#214517"
+    },
+    {
+      "id": "assembly-basic-wall-vs-06-2",
+      "name": "Basic Wall:VS-06 2",
+      "totalThicknessM": 0.394,
+      "layers": [
+        {
+          "name": "Fassaadi plekk",
+          "thicknessM": 0.025,
+          "ref": "ifc://DS3_TalTech_V4.ifc#217025"
+        },
+        {
+          "name": "Roov",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#217026"
+        },
+        {
+          "name": "Roov",
+          "thicknessM": 0.045,
+          "ref": "ifc://DS3_TalTech_V4.ifc#217027"
+        },
+        {
+          "name": "Tuuletõkkeplaat",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#217028"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.009,
+          "ref": "ifc://DS3_TalTech_V4.ifc#217029"
+        },
+        {
+          "name": "Kivivill(2)",
+          "thicknessM": 0.195,
+          "ref": "ifc://DS3_TalTech_V4.ifc#217030"
+        },
+        {
+          "name": "Aurutõke",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#217031"
+        },
+        {
+          "name": "Mineraalvill",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#217032"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#217033"
+    },
+    {
+      "id": "assembly-floor-monoliitbetoon-2",
+      "name": "Floor:Monoliitbetoon 2",
+      "totalThicknessM": 0.24,
+      "layers": [
+        {
+          "name": "CONCRETE/C30/37",
+          "thicknessM": 0.24,
+          "ref": "ifc://DS3_TalTech_V4.ifc#219838"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#219839"
+    },
+    {
+      "id": "assembly-basic-wall-vs-04-2",
+      "name": "Basic Wall:VS-04 2",
+      "totalThicknessM": 0.461,
+      "layers": [
+        {
+          "name": "Roov",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#222800"
+        },
+        {
+          "name": "Distantsliist",
+          "thicknessM": 0.04,
+          "ref": "ifc://DS3_TalTech_V4.ifc#222801"
+        },
+        {
+          "name": "Tuuletõkkeplaat",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#222802"
+        },
+        {
+          "name": "Roov",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#222803"
+        },
+        {
+          "name": "Kivivill",
+          "thicknessM": 0.195,
+          "ref": "ifc://DS3_TalTech_V4.ifc#222804"
+        },
+        {
+          "name": "OSB",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#222805"
+        },
+        {
+          "name": "Aurutõke",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#222806"
+        },
+        {
+          "name": "Kivivill",
+          "thicknessM": 0.045,
+          "ref": "ifc://DS3_TalTech_V4.ifc#222807"
+        },
+        {
+          "name": "Roov",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#222808"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.026,
+          "ref": "ifc://DS3_TalTech_V4.ifc#222809"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#222810"
+    },
+    {
+      "id": "assembly-basic-wall-vs-04",
+      "name": "Basic Wall:VS-04",
+      "totalThicknessM": 0.486,
+      "layers": [
+        {
+          "name": "Fassaadi plekk",
+          "thicknessM": 0.025,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225654"
+        },
+        {
+          "name": "Roov",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225655"
+        },
+        {
+          "name": "Distantsliist",
+          "thicknessM": 0.04,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225656"
+        },
+        {
+          "name": "Tuuletõkkeplaat",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225657"
+        },
+        {
+          "name": "Roov",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225658"
+        },
+        {
+          "name": "Kivivill",
+          "thicknessM": 0.195,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225659"
+        },
+        {
+          "name": "OSB",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225660"
+        },
+        {
+          "name": "Aurutõke",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225661"
+        },
+        {
+          "name": "Kivivill",
+          "thicknessM": 0.045,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225662"
+        },
+        {
+          "name": "Roov",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225663"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.026,
+          "ref": "ifc://DS3_TalTech_V4.ifc#225664"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#225665"
+    },
+    {
+      "id": "assembly-basic-wall-ss-07",
+      "name": "Basic Wall:SS-07",
+      "totalThicknessM": 0.28,
+      "layers": [
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.025,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226078"
+        },
+        {
+          "name": "OSB",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226079"
+        },
+        {
+          "name": "Mineraalvill(1)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226080"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.0125,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226081"
+        },
+        {
+          "name": "Mineraalvill(1)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226082"
+        },
+        {
+          "name": "OSB",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226083"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.0125,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226084"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#226085"
+    },
+    {
+      "id": "assembly-basic-wall-ss-06",
+      "name": "Basic Wall:SS-06",
+      "totalThicknessM": 0.18,
+      "layers": [
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226173"
+        },
+        {
+          "name": "OSB",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226174"
+        },
+        {
+          "name": "Mineraalvill(4)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226175"
+        },
+        {
+          "name": "OSB",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226176"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226177"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#226178"
+    },
+    {
+      "id": "assembly-basic-wall-ss-06k",
+      "name": "Basic Wall:SS-06K",
+      "totalThicknessM": 0.22,
+      "layers": [
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226281"
+        },
+        {
+          "name": "OSB",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226282"
+        },
+        {
+          "name": "Profiil",
+          "thicknessM": 0.025,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226283"
+        },
+        {
+          "name": "Mineraalvill(3)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226284"
+        },
+        {
+          "name": "OSB",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226285"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226286"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#226287"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#226288"
+    },
+    {
+      "id": "assembly-basic-wall-ss-05-source-0ff4de8a3769",
+      "name": "Basic Wall:SS-05",
+      "totalThicknessM": 0.165,
+      "layers": [
+        {
+          "name": "Keraamiline plaat",
+          "thicknessM": 0.01,
+          "ref": "ifc://DS3_TalTech_V4.ifc#227176"
+        },
+        {
+          "name": "Tsementkiudplaat(1)",
+          "thicknessM": 0.0125,
+          "ref": "ifc://DS3_TalTech_V4.ifc#227177"
+        },
+        {
+          "name": "Puitkarkass",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#227178"
+        },
+        {
+          "name": "Tsementkiudplaat(1)",
+          "thicknessM": 0.0125,
+          "ref": "ifc://DS3_TalTech_V4.ifc#227179"
+        },
+        {
+          "name": "Keraamiline plaat",
+          "thicknessM": 0.01,
+          "ref": "ifc://DS3_TalTech_V4.ifc#227180"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#227181"
+    },
+    {
+      "id": "assembly-basic-wall-ss-04",
+      "name": "Basic Wall:SS-04",
+      "totalThicknessM": 0.145,
+      "layers": [
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.0125,
+          "ref": "ifc://DS3_TalTech_V4.ifc#229618"
+        },
+        {
+          "name": "Puitkarkass(1)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#229619"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.0125,
+          "ref": "ifc://DS3_TalTech_V4.ifc#229620"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#229621"
+    },
+    {
+      "id": "assembly-basic-wall-ss-12",
+      "name": "Basic Wall:SS-12",
+      "totalThicknessM": 0.232,
+      "layers": [
+        {
+          "name": "Betoonõõnesplokk",
+          "thicknessM": 0.14,
+          "ref": "ifc://DS3_TalTech_V4.ifc#229906"
+        },
+        {
+          "name": "PIR paneel(1)",
+          "thicknessM": 0.07,
+          "ref": "ifc://DS3_TalTech_V4.ifc#229907"
+        },
+        {
+          "name": "Õhuvahe",
+          "thicknessM": 0.022,
+          "ref": "ifc://DS3_TalTech_V4.ifc#229908"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#229909"
+    },
+    {
+      "id": "assembly-basic-wall-ss-03",
+      "name": "Basic Wall:SS-03",
+      "totalThicknessM": 0.14,
+      "layers": [
+        {
+          "name": "Betoonõõnesplokk(2)",
+          "thicknessM": 0.14,
+          "ref": "ifc://DS3_TalTech_V4.ifc#230077"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#230078"
+    },
+    {
+      "id": "assembly-basic-wall-ss-10",
+      "name": "Basic Wall:SS-10",
+      "totalThicknessM": 0.157,
+      "layers": [
+        {
+          "name": "Õhuvahe(1)",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235323"
+        },
+        {
+          "name": "Puitkarkass(1)",
+          "thicknessM": 0.095,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235324"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235325"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235326"
+        },
+        {
+          "name": "Tsementkiudplaat",
+          "thicknessM": 0.012,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235327"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#235328"
+    },
+    {
+      "id": "assembly-basic-wall-ss-14",
+      "name": "Basic Wall:SS-14",
+      "totalThicknessM": 0.232,
+      "layers": [
+        {
+          "name": "Tsementkiudplaat",
+          "thicknessM": 0.012,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235510"
+        },
+        {
+          "name": "Kipsplaat(1)",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235511"
+        },
+        {
+          "name": "Mineraalvill(2)",
+          "thicknessM": 0.045,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235512"
+        },
+        {
+          "name": "CLT",
+          "thicknessM": 0.16,
+          "ref": "ifc://DS3_TalTech_V4.ifc#235513"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#235514"
+    },
+    {
+      "id": "assembly-basic-wall-ss-11",
+      "name": "Basic Wall:SS-11",
+      "totalThicknessM": 0.311,
+      "layers": [
+        {
+          "name": "R/B(3)",
+          "thicknessM": 0.311,
+          "ref": "ifc://DS3_TalTech_V4.ifc#236297"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#236298"
+    },
+    {
+      "id": "assembly-basic-wall-vs-05a",
+      "name": "Basic Wall:VS-05A",
+      "totalThicknessM": 0.805,
+      "layers": [
+        {
+          "name": "Tuuletõkkeplaat",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#238434"
+        },
+        {
+          "name": "Kivivill(4)",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#238435"
+        },
+        {
+          "name": "Kivivill(4)",
+          "thicknessM": 0.195,
+          "ref": "ifc://DS3_TalTech_V4.ifc#238436"
+        },
+        {
+          "name": "ol.ol. tellissein",
+          "thicknessM": 0.51,
+          "ref": "ifc://DS3_TalTech_V4.ifc#238437"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#238438"
+    },
+    {
+      "id": "assembly-basic-wall-ol-ol-r-b-sein",
+      "name": "Basic Wall:ol.ol r/b sein",
+      "totalThicknessM": 0.24,
+      "layers": [
+        {
+          "name": "R/B(4)",
+          "thicknessM": 0.24,
+          "ref": "ifc://DS3_TalTech_V4.ifc#252286"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#252287"
+    },
+    {
+      "id": "assembly-compound-ceiling-akustiline-kipsplaatlagi-1",
+      "name": "Compound Ceiling:Akustiline kipsplaatlagi_1",
+      "totalThicknessM": 0.075,
+      "layers": [
+        {
+          "name": "Perfofeerfitud kipslagi",
+          "thicknessM": 0.075,
+          "ref": "ifc://DS3_TalTech_V4.ifc#270834"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#270835"
+    },
+    {
+      "id": "assembly-compound-ceiling-puitribilagi",
+      "name": "Compound Ceiling:Puitribilagi",
+      "totalThicknessM": 0.11,
+      "layers": [
+        {
+          "name": "Puit",
+          "thicknessM": 0.11,
+          "ref": "ifc://DS3_TalTech_V4.ifc#271002"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#271003"
+    },
+    {
+      "id": "assembly-compound-ceiling-ho-re-puitribilagi",
+      "name": "Compound Ceiling:Hõre puitribilagi",
+      "totalThicknessM": 0.11,
+      "layers": [
+        {
+          "name": "Puit",
+          "thicknessM": 0.11,
+          "ref": "ifc://DS3_TalTech_V4.ifc#271443"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#271444"
+    },
+    {
+      "id": "assembly-compound-ceiling-villaplaat",
+      "name": "Compound Ceiling:Villaplaat",
+      "totalThicknessM": 0.05,
+      "layers": [
+        {
+          "name": "Villaplaat",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#271871"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#271872"
+    },
+    {
+      "id": "assembly-compound-ceiling-puitribilagi-1",
+      "name": "Compound Ceiling:Puitribilagi_1",
+      "totalThicknessM": 0.11,
+      "layers": [
+        {
+          "name": "Puit",
+          "thicknessM": 0.11,
+          "ref": "ifc://DS3_TalTech_V4.ifc#275008"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#275009"
+    },
+    {
+      "id": "assembly-compound-ceiling-l-7",
+      "name": "Compound Ceiling:L-7",
+      "totalThicknessM": 0.027,
+      "layers": [
+        {
+          "name": "Puit",
+          "thicknessM": 0.027,
+          "ref": "ifc://DS3_TalTech_V4.ifc#275118"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#275119"
+    },
+    {
+      "id": "assembly-floor-vl04",
+      "name": "Floor:VL04",
+      "totalThicknessM": 0.42,
+      "layers": [
+        {
+          "name": "Betoon(6)",
+          "thicknessM": 0.08,
+          "ref": "ifc://DS3_TalTech_V4.ifc#275460"
+        },
+        {
+          "name": "PVC kile",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#275461"
+        },
+        {
+          "name": "Jäik mineraalvillaplaat(4)",
+          "thicknessM": 0.03,
+          "ref": "ifc://DS3_TalTech_V4.ifc#275462"
+        },
+        {
+          "name": "Mürasummutus matt(1)",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#275463"
+        },
+        {
+          "name": "00_CLT",
+          "thicknessM": 0.26,
+          "ref": "ifc://DS3_TalTech_V4.ifc#275464"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#275465"
+    },
+    {
+      "id": "assembly-basic-wall-vs-05b-source-816f5753d6ca",
+      "name": "Basic Wall:VS-05B",
+      "totalThicknessM": 0.747,
+      "layers": [
+        {
+          "name": "Fassaadi plekk",
+          "thicknessM": 0.025,
+          "ref": "ifc://DS3_TalTech_V4.ifc#278177"
+        },
+        {
+          "name": "Puitroov",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#278178"
+        },
+        {
+          "name": "Puitroov",
+          "thicknessM": 0.045,
+          "ref": "ifc://DS3_TalTech_V4.ifc#278179"
+        },
+        {
+          "name": "Jäik mineraalvillaplaat",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#278180"
+        },
+        {
+          "name": "Tuuletõkkeplaat",
+          "thicknessM": 0.009,
+          "ref": "ifc://DS3_TalTech_V4.ifc#278181"
+        },
+        {
+          "name": "Kivivill(5)",
+          "thicknessM": 0.245,
+          "ref": "ifc://DS3_TalTech_V4.ifc#278182"
+        },
+        {
+          "name": "Klaasvill",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#278183"
+        },
+        {
+          "name": "ol.ol gaasbetoon paneel",
+          "thicknessM": 0.3,
+          "ref": "ifc://DS3_TalTech_V4.ifc#278184"
+        },
+        {
+          "name": "Air",
+          "thicknessM": 0.001,
+          "ref": "ifc://DS3_TalTech_V4.ifc#278185"
+        },
+        {
+          "name": "Vesialuseline akrüülil põhinev tolmupidur",
+          "thicknessM": 0.002,
+          "ref": "ifc://DS3_TalTech_V4.ifc#278186"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#278187"
+    },
+    {
+      "id": "assembly-basic-wall-abisein",
+      "name": "Basic Wall:abisein",
+      "totalThicknessM": 0.02,
+      "layers": [
+        {
+          "name": "Default Wall",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#293049"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#293050"
+    },
+    {
+      "id": "assembly-basic-roof-kl-02",
+      "name": "Basic Roof:KL-02",
+      "totalThicknessM": 0.245,
+      "layers": [
+        {
+          "name": "SBS-valge",
+          "thicknessM": 0.005,
+          "ref": "ifc://DS3_TalTech_V4.ifc#295963"
+        },
+        {
+          "name": "Soojustus(3)",
+          "thicknessM": 0.24,
+          "ref": "ifc://DS3_TalTech_V4.ifc#295964"
+        },
+        {
+          "name": "Aurutõke",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#295965"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#295966"
+    },
+    {
+      "id": "assembly-basic-roof-kl-03",
+      "name": "Basic Roof:KL-03",
+      "totalThicknessM": 0.29,
+      "layers": [
+        {
+          "name": "Substraadikiht",
+          "thicknessM": 0.04,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309055"
+        },
+        {
+          "name": "Drenaažimatt",
+          "thicknessM": 0.03,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309056"
+        },
+        {
+          "name": "Soojustus(2)",
+          "thicknessM": 0.22,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309057"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#309058"
+    },
+    {
+      "id": "assembly-floor-ro-dupo-rand",
+      "name": "Floor:Rõdupõrand",
+      "totalThicknessM": 0.08,
+      "layers": [
+        {
+          "name": "Betoon C20/25",
+          "thicknessM": 0.08,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309150"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#309151"
+    },
+    {
+      "id": "assembly-floor-ro-dupo-rand-2",
+      "name": "Floor:Rõdupõrand_2",
+      "totalThicknessM": 0.1446,
+      "layers": [
+        {
+          "name": "Prussid",
+          "thicknessM": 0.028,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309245"
+        },
+        {
+          "name": "Hüdroisolatsioon",
+          "thicknessM": 0.0016,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309246"
+        },
+        {
+          "name": "Veekindel vineer",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309247"
+        },
+        {
+          "name": "Puitroov",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309248"
+        },
+        {
+          "name": "PIR",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309249"
+        },
+        {
+          "name": "Aurutõke",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309250"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#309251"
+    },
+    {
+      "id": "assembly-floor-vl03",
+      "name": "Floor:VL03",
+      "totalThicknessM": 0.465,
+      "layers": [
+        {
+          "name": "Betoon",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309470"
+        },
+        {
+          "name": "PVC kile",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309471"
+        },
+        {
+          "name": "Jäik mineraalvillaplaat(3)",
+          "thicknessM": 0.03,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309472"
+        },
+        {
+          "name": "EPS(4)",
+          "thicknessM": 0.07,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309473"
+        },
+        {
+          "name": "Tulekindel kipsplaat",
+          "thicknessM": 0.265,
+          "ref": "ifc://DS3_TalTech_V4.ifc#309474"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#309475"
+    },
+    {
+      "id": "assembly-floor-tuulekoja-vl",
+      "name": "Floor:Tuulekoja VL",
+      "totalThicknessM": 0.22,
+      "layers": [
+        {
+          "name": "Hüdroisolatsioon",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#310240"
+        },
+        {
+          "name": "Peenbetoon(2)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#310241"
+        },
+        {
+          "name": "PVC kile",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#310242"
+        },
+        {
+          "name": "EPS",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#310243"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#310244"
+    },
+    {
+      "id": "assembly-compound-ceiling-kapseldamine",
+      "name": "Compound Ceiling:Kapseldamine",
+      "totalThicknessM": 0.075,
+      "layers": [
+        {
+          "name": "Mineraalvill",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#311529"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.0125,
+          "ref": "ifc://DS3_TalTech_V4.ifc#311530"
+        },
+        {
+          "name": "Kipsplaat",
+          "thicknessM": 0.0125,
+          "ref": "ifc://DS3_TalTech_V4.ifc#311531"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#311532"
+    },
+    {
+      "id": "assembly-floor-jo-upo-rand",
+      "name": "Floor:Jõupõrand",
+      "totalThicknessM": 0.825,
+      "layers": [
+        {
+          "name": "ol.ol tasandusvalu",
+          "thicknessM": 0.025,
+          "ref": "ifc://DS3_TalTech_V4.ifc#316893"
+        },
+        {
+          "name": "ol.ol r/b jõupõrand(1)",
+          "thicknessM": 0.58,
+          "ref": "ifc://DS3_TalTech_V4.ifc#316894"
+        },
+        {
+          "name": "ol.ol monteeritav r/b õõnespaneel",
+          "thicknessM": 0.22,
+          "ref": "ifc://DS3_TalTech_V4.ifc#316895"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#316896"
+    },
+    {
+      "id": "assembly-floor-o-o-nespaneel",
+      "name": "Floor:Õõnespaneel",
+      "totalThicknessM": 0.22,
+      "layers": [
+        {
+          "name": "Betoon C20/25",
+          "thicknessM": 0.22,
+          "ref": "ifc://DS3_TalTech_V4.ifc#319432"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#319433"
+    },
+    {
+      "id": "assembly-basic-wall-soojustus-350",
+      "name": "Basic Wall:Soojustus- 350",
+      "totalThicknessM": 0.35,
+      "layers": [
+        {
+          "name": "Default Wall(1)",
+          "thicknessM": 0.35,
+          "ref": "ifc://DS3_TalTech_V4.ifc#319675"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#319676"
+    },
+    {
+      "id": "assembly-floor-monoliitbetoon-4",
+      "name": "Floor:Monoliitbetoon 4",
+      "totalThicknessM": 0.22,
+      "layers": [
+        {
+          "name": "Betoon(3)",
+          "thicknessM": 0.22,
+          "ref": "ifc://DS3_TalTech_V4.ifc#319988"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#319989"
+    },
+    {
+      "id": "assembly-basic-wall-vs-05b-source-5818c2348da3",
+      "name": "Basic Wall:VS-05B**",
+      "totalThicknessM": 0.444,
+      "layers": [
+        {
+          "name": "Fassaadi plekk",
+          "thicknessM": 0.025,
+          "ref": "ifc://DS3_TalTech_V4.ifc#321440"
+        },
+        {
+          "name": "Puitkarkass",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#321441"
+        },
+        {
+          "name": "Puitroov",
+          "thicknessM": 0.045,
+          "ref": "ifc://DS3_TalTech_V4.ifc#321442"
+        },
+        {
+          "name": "Jäik mineraalvillaplaat",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#321443"
+        },
+        {
+          "name": "Tuuletõkkeplaat",
+          "thicknessM": 0.009,
+          "ref": "ifc://DS3_TalTech_V4.ifc#321444"
+        },
+        {
+          "name": "Kivivill(3)",
+          "thicknessM": 0.245,
+          "ref": "ifc://DS3_TalTech_V4.ifc#321445"
+        },
+        {
+          "name": "Klaasvill",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#321446"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#321447"
+    },
+    {
+      "id": "assembly-basic-roof-kl-01-source-48bbf8e049ab",
+      "name": "Basic Roof:KL-01*",
+      "totalThicknessM": 0.35,
+      "layers": [
+        {
+          "name": "SBS",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322550"
+        },
+        {
+          "name": "Jäik mineraalvillaplaat(1)",
+          "thicknessM": 0.03,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322551"
+        },
+        {
+          "name": "Soojustus(1)",
+          "thicknessM": 0.32,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322552"
+        },
+        {
+          "name": "Aurutõke",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322553"
+        },
+        {
+          "name": "Sileplekk",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322554"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#322555"
+    },
+    {
+      "id": "assembly-basic-roof-kl-01-source-b8a798bc116b",
+      "name": "Basic Roof:KL-01",
+      "totalThicknessM": 0.52,
+      "layers": [
+        {
+          "name": "SBS",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322943"
+        },
+        {
+          "name": "Jäik mineraalvillaplaat(2)",
+          "thicknessM": 0.03,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322944"
+        },
+        {
+          "name": "Rigid insulation(6)",
+          "thicknessM": 0.32,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322945"
+        },
+        {
+          "name": "Aurutõke",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322946"
+        },
+        {
+          "name": "Sileplekk",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322947"
+        },
+        {
+          "name": "ol.ol kandev profiilplekk",
+          "thicknessM": 0.13,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322948"
+        },
+        {
+          "name": "Tulekindel kipsplaat(1)",
+          "thicknessM": 0.04,
+          "ref": "ifc://DS3_TalTech_V4.ifc#322949"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#322950"
+    },
+    {
+      "id": "assembly-basic-wall-veekindel-vineer-rullmaterjal",
+      "name": "Basic Wall:Veekindel vineer+ Rullmaterjal",
+      "totalThicknessM": 0.025,
+      "layers": [
+        {
+          "name": "IKO Carrara",
+          "thicknessM": 0.005,
+          "ref": "ifc://DS3_TalTech_V4.ifc#324224"
+        },
+        {
+          "name": "Veekindel vineer",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#324225"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#324226"
+    },
+    {
+      "id": "assembly-basic-roof-plekk",
+      "name": "Basic Roof:Plekk",
+      "totalThicknessM": 0.001,
+      "layers": [
+        {
+          "name": "RUUKKI Classic NextGen",
+          "thicknessM": 0.001,
+          "ref": "ifc://DS3_TalTech_V4.ifc#325649"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#325650"
+    },
+    {
+      "id": "assembly-basic-roof-kl-04",
+      "name": "Basic Roof:KL-04",
+      "totalThicknessM": 0.454,
+      "layers": [
+        {
+          "name": "Õhuvahe",
+          "thicknessM": 0.022,
+          "ref": "ifc://DS3_TalTech_V4.ifc#325947"
+        },
+        {
+          "name": "Õhuvahe",
+          "thicknessM": 0.032,
+          "ref": "ifc://DS3_TalTech_V4.ifc#325948"
+        },
+        {
+          "name": "Hüdroisolatsioon",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#325949"
+        },
+        {
+          "name": "PIR",
+          "thicknessM": 0.24,
+          "ref": "ifc://DS3_TalTech_V4.ifc#325950"
+        },
+        {
+          "name": "Aurutõke",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#325951"
+        },
+        {
+          "name": "Betoon C30/37(2)",
+          "thicknessM": 0.16,
+          "ref": "ifc://DS3_TalTech_V4.ifc#325952"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#325953"
+    },
+    {
+      "id": "assembly-basic-wall-ss-05-source-69c57d24fcd7",
+      "name": "Basic Wall:SS-05*",
+      "totalThicknessM": 0.145,
+      "layers": [
+        {
+          "name": "Tsementkiudplaat",
+          "thicknessM": 0.0125,
+          "ref": "ifc://DS3_TalTech_V4.ifc#326622"
+        },
+        {
+          "name": "Puitkarkass(1)",
+          "thicknessM": 0.12,
+          "ref": "ifc://DS3_TalTech_V4.ifc#326623"
+        },
+        {
+          "name": "Tsementkiudplaat",
+          "thicknessM": 0.0125,
+          "ref": "ifc://DS3_TalTech_V4.ifc#326624"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#326625"
+    },
+    {
+      "id": "assembly-floor-keraamiline-plaat",
+      "name": "Floor:Keraamiline plaat",
+      "totalThicknessM": 0.01,
+      "layers": [
+        {
+          "name": "Keraamika",
+          "thicknessM": 0.01,
+          "ref": "ifc://DS3_TalTech_V4.ifc#336199"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#336200"
+    },
+    {
+      "id": "assembly-floor-epo-po-randakate",
+      "name": "Floor:EPO põrandakate",
+      "totalThicknessM": 0.01,
+      "layers": [
+        {
+          "name": "Kahekomponendiline epoksüvaik",
+          "thicknessM": 0.01,
+          "ref": "ifc://DS3_TalTech_V4.ifc#336488"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#336489"
+    },
+    {
+      "id": "assembly-floor-pvc-po-randakate-2",
+      "name": "Floor:PVC põrandakate_2",
+      "totalThicknessM": 0.01,
+      "layers": [
+        {
+          "name": "Vinüülkate_2",
+          "thicknessM": 0.01,
+          "ref": "ifc://DS3_TalTech_V4.ifc#336881"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#336882"
+    },
+    {
+      "id": "assembly-basic-wall-ss-13",
+      "name": "Basic Wall:SS-13",
+      "totalThicknessM": 0.14,
+      "layers": [
+        {
+          "name": "Kergpaneel(1)",
+          "thicknessM": 0.14,
+          "ref": "ifc://DS3_TalTech_V4.ifc#337701"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#337702"
+    },
+    {
+      "id": "assembly-floor-pvc-po-randakate-1",
+      "name": "Floor:PVC põrandakate_1",
+      "totalThicknessM": 0.01,
+      "layers": [
+        {
+          "name": "Vinüülkate_1",
+          "thicknessM": 0.01,
+          "ref": "ifc://DS3_TalTech_V4.ifc#339934"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#339935"
+    },
+    {
+      "id": "assembly-basic-wall-s-3",
+      "name": "Basic Wall:S-3",
+      "totalThicknessM": 0.019,
+      "layers": [
+        {
+          "name": "Kuusk(1)",
+          "thicknessM": 0.019,
+          "ref": "ifc://DS3_TalTech_V4.ifc#340229"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#340230"
+    },
+    {
+      "id": "assembly-basic-wall-s-6-4",
+      "name": "Basic Wall:S-6-4",
+      "totalThicknessM": 0.005,
+      "layers": [
+        {
+          "name": "S-6-4- vesialuseline värv",
+          "thicknessM": 0.005,
+          "ref": "ifc://DS3_TalTech_V4.ifc#342178"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#342179"
+    },
+    {
+      "id": "assembly-basic-wall-s-6-3",
+      "name": "Basic Wall:S-6-3",
+      "totalThicknessM": 0.005,
+      "layers": [
+        {
+          "name": "S-6-3- vesialuseline värv",
+          "thicknessM": 0.005,
+          "ref": "ifc://DS3_TalTech_V4.ifc#342805"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#342806"
+    },
+    {
+      "id": "assembly-basic-wall-s-9",
+      "name": "Basic Wall:S-9",
+      "totalThicknessM": 0.002,
+      "layers": [
+        {
+          "name": "S-9- vesialuseline värv",
+          "thicknessM": 0.002,
+          "ref": "ifc://DS3_TalTech_V4.ifc#343724"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#343725"
+    },
+    {
+      "id": "assembly-basic-wall-s-7",
+      "name": "Basic Wall:S-7",
+      "totalThicknessM": 0.002,
+      "layers": [
+        {
+          "name": "Vesialuseline akrülaatvärv",
+          "thicknessM": 0.002,
+          "ref": "ifc://DS3_TalTech_V4.ifc#343909"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#343910"
+    },
+    {
+      "id": "assembly-basic-wall-s-2",
+      "name": "Basic Wall:S-2",
+      "totalThicknessM": 0.005,
+      "layers": [
+        {
+          "name": "Keraamika(1)",
+          "thicknessM": 0.005,
+          "ref": "ifc://DS3_TalTech_V4.ifc#344057"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#344058"
+    },
+    {
+      "id": "assembly-floor-betooni-to-o-tlus-penta-guard",
+      "name": "Floor:Betooni töötlus - Penta-Guard",
+      "totalThicknessM": 0.01,
+      "layers": [
+        {
+          "name": "Penta-Guard vedelik",
+          "thicknessM": 0.01,
+          "ref": "ifc://DS3_TalTech_V4.ifc#347720"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#347721"
+    },
+    {
+      "id": "assembly-basic-wall-soojustus-300",
+      "name": "Basic Wall:Soojustus- 300",
+      "totalThicknessM": 0.3,
+      "layers": [
+        {
+          "name": "Default Wall(1)",
+          "thicknessM": 0.3,
+          "ref": "ifc://DS3_TalTech_V4.ifc#356057"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#356058"
+    },
+    {
+      "id": "assembly-basic-wall-soojustus-100",
+      "name": "Basic Wall:Soojustus-100",
+      "totalThicknessM": 0.1,
+      "layers": [
+        {
+          "name": "Default Wall(4)",
+          "thicknessM": 0.1,
+          "ref": "ifc://DS3_TalTech_V4.ifc#356290"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#356291"
+    },
+    {
+      "id": "assembly-basic-wall-s-1",
+      "name": "Basic Wall:S-1",
+      "totalThicknessM": 0.002,
+      "layers": [
+        {
+          "name": "Vesialuseline akrüülil põhinev tolmupidur",
+          "thicknessM": 0.002,
+          "ref": "ifc://DS3_TalTech_V4.ifc#356555"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#356556"
+    },
+    {
+      "id": "assembly-basic-wall-vs-03-sisesein-source-b588f3dc6f04",
+      "name": "Basic Wall:VS-03* sisesein",
+      "totalThicknessM": 0.54,
+      "layers": [
+        {
+          "name": "EPS",
+          "thicknessM": 0.3,
+          "ref": "ifc://DS3_TalTech_V4.ifc#358217"
+        },
+        {
+          "name": "R/B(2)",
+          "thicknessM": 0.24,
+          "ref": "ifc://DS3_TalTech_V4.ifc#358218"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#358219"
+    },
+    {
+      "id": "assembly-basic-wall-s-6-1",
+      "name": "Basic Wall:S-6-1",
+      "totalThicknessM": 0.005,
+      "layers": [
+        {
+          "name": "S-6-1- vesialuseline värv",
+          "thicknessM": 0.005,
+          "ref": "ifc://DS3_TalTech_V4.ifc#361388"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#361389"
+    },
+    {
+      "id": "assembly-basic-wall-s-8",
+      "name": "Basic Wall:S-8",
+      "totalThicknessM": 0.005,
+      "layers": [
+        {
+          "name": "Savi",
+          "thicknessM": 0.005,
+          "ref": "ifc://DS3_TalTech_V4.ifc#363564"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#363565"
+    },
+    {
+      "id": "assembly-basic-wall-s-6-2",
+      "name": "Basic Wall:S-6-2",
+      "totalThicknessM": 0.005,
+      "layers": [
+        {
+          "name": "S-6-2- vesialuseline värv",
+          "thicknessM": 0.005,
+          "ref": "ifc://DS3_TalTech_V4.ifc#368458"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#368459"
+    },
+    {
+      "id": "assembly-basic-wall-pir-paneel",
+      "name": "Basic Wall:PIR paneel",
+      "totalThicknessM": 0.092,
+      "layers": [
+        {
+          "name": "PIR paneel(2)",
+          "thicknessM": 0.07,
+          "ref": "ifc://DS3_TalTech_V4.ifc#372732"
+        },
+        {
+          "name": "Õhuvahe(2)",
+          "thicknessM": 0.022,
+          "ref": "ifc://DS3_TalTech_V4.ifc#372733"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#372734"
+    },
+    {
+      "id": "assembly-basic-wall-s-5",
+      "name": "Basic Wall:S-5",
+      "totalThicknessM": 0.019,
+      "layers": [
+        {
+          "name": "Lepp",
+          "thicknessM": 0.019,
+          "ref": "ifc://DS3_TalTech_V4.ifc#372827"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#372828"
+    },
+    {
+      "id": "assembly-floor-porimatt",
+      "name": "Floor:Porimatt",
+      "totalThicknessM": 0.005,
+      "layers": [
+        {
+          "name": "Porimatt",
+          "thicknessM": 0.005,
+          "ref": "ifc://DS3_TalTech_V4.ifc#386478"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#386479"
+    },
+    {
+      "id": "assembly-basic-wall-s-4",
+      "name": "Basic Wall:S-4",
+      "totalThicknessM": 0.002,
+      "layers": [
+        {
+          "name": "CLT töötlus",
+          "thicknessM": 0.002,
+          "ref": "ifc://DS3_TalTech_V4.ifc#389926"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#389927"
+    },
+    {
+      "id": "assembly-compound-ceiling-clt-to-o-tlus",
+      "name": "Compound Ceiling:CLT töötlus",
+      "totalThicknessM": 0.002,
+      "layers": [
+        {
+          "name": "CLT töötlus",
+          "thicknessM": 0.002,
+          "ref": "ifc://DS3_TalTech_V4.ifc#392569"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#392570"
+    },
+    {
+      "id": "assembly-floor-monoliitbetoon-3",
+      "name": "Floor:Monoliitbetoon 3",
+      "totalThicknessM": 0.2,
+      "layers": [
+        {
+          "name": "Betoon(5)",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#393423"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#393424"
+    },
+    {
+      "id": "assembly-compound-ceiling-betoonito-o-ltus-tolmuto-ke",
+      "name": "Compound Ceiling:Betoonitööltus - tolmutõke",
+      "totalThicknessM": 0.002,
+      "layers": [
+        {
+          "name": "Vesialuseline akrüülil põhinev tolmupidur",
+          "thicknessM": 0.002,
+          "ref": "ifc://DS3_TalTech_V4.ifc#393586"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#393587"
+    },
+    {
+      "id": "assembly-basic-wall-vs-04-parapet",
+      "name": "Basic Wall:VS-04-parapet*",
+      "totalThicknessM": 0.395,
+      "layers": [
+        {
+          "name": "Fassaadi plekk",
+          "thicknessM": 0.025,
+          "ref": "ifc://DS3_TalTech_V4.ifc#393836"
+        },
+        {
+          "name": "Roov",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#393837"
+        },
+        {
+          "name": "Distantsliist",
+          "thicknessM": 0.04,
+          "ref": "ifc://DS3_TalTech_V4.ifc#393838"
+        },
+        {
+          "name": "Tuuletõkkeplaat",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#393839"
+        },
+        {
+          "name": "Roov",
+          "thicknessM": 0.05,
+          "ref": "ifc://DS3_TalTech_V4.ifc#393840"
+        },
+        {
+          "name": "Kivivill(1)",
+          "thicknessM": 0.195,
+          "ref": "ifc://DS3_TalTech_V4.ifc#393841"
+        },
+        {
+          "name": "OSB",
+          "thicknessM": 0.015,
+          "ref": "ifc://DS3_TalTech_V4.ifc#393842"
+        },
+        {
+          "name": "Aurutõke",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#393843"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#393844"
+    },
+    {
+      "id": "assembly-basic-wall-laudis",
+      "name": "Basic Wall:Laudis",
+      "totalThicknessM": 0.01,
+      "layers": [
+        {
+          "name": "Kuusk(1)",
+          "thicknessM": 0.01,
+          "ref": "ifc://DS3_TalTech_V4.ifc#394358"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#394359"
+    },
+    {
+      "id": "assembly-compound-ceiling-krohv",
+      "name": "Compound Ceiling:Krohv",
+      "totalThicknessM": 0.002,
+      "layers": [
+        {
+          "name": "Vesialuseline akrüülil põhinev tolmupidur",
+          "thicknessM": 0.002,
+          "ref": "ifc://DS3_TalTech_V4.ifc#395741"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#395742"
+    },
+    {
+      "id": "assembly-compound-ceiling-dold-paneel",
+      "name": "Compound Ceiling:DOLD paneel",
+      "totalThicknessM": 0.019,
+      "layers": [
+        {
+          "name": "Kuusk",
+          "thicknessM": 0.019,
+          "ref": "ifc://DS3_TalTech_V4.ifc#400595"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#400596"
+    },
+    {
+      "id": "assembly-basic-roof-rohekatus",
+      "name": "Basic Roof:Rohekatus",
+      "totalThicknessM": 0.03,
+      "layers": [
+        {
+          "name": "Muru",
+          "thicknessM": 0.03,
+          "ref": "ifc://DS3_TalTech_V4.ifc#405281"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#405282"
+    },
+    {
+      "id": "assembly-basic-wall-accoya",
+      "name": "Basic Wall:Accoya",
+      "totalThicknessM": 0.02,
+      "layers": [
+        {
+          "name": "Accoya",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#412703"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#412704"
+    },
+    {
+      "id": "assembly-basic-roof-veekindel-vineer-rullmaterjal",
+      "name": "Basic Roof:Veekindel vineer+ rullmaterjal",
+      "totalThicknessM": 0.025,
+      "layers": [
+        {
+          "name": "IKO Carrara",
+          "thicknessM": 0.005,
+          "ref": "ifc://DS3_TalTech_V4.ifc#414207"
+        },
+        {
+          "name": "Veekindel vineer",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#414208"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#414209"
+    },
+    {
+      "id": "assembly-floor-liivakast-perimeeter",
+      "name": "Floor:Liivakast perimeeter",
+      "totalThicknessM": 0.16,
+      "layers": [
+        {
+          "name": "Puit(2)",
+          "thicknessM": 0.16,
+          "ref": "ifc://DS3_TalTech_V4.ifc#415913"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#415914"
+    },
+    {
+      "id": "assembly-basic-wall-sein-60mm",
+      "name": "Basic Wall:Sein 60mm",
+      "totalThicknessM": 0.06,
+      "layers": [
+        {
+          "name": "R/B(6)",
+          "thicknessM": 0.06,
+          "ref": "ifc://DS3_TalTech_V4.ifc#416581"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#416582"
+    },
+    {
+      "id": "assembly-basic-wall-vs-02-source-bb26c1f3cc17",
+      "name": "Basic Wall:VS-02*",
+      "totalThicknessM": 0.555,
+      "layers": [
+        {
+          "name": "Soojustus",
+          "thicknessM": 0.155,
+          "ref": "ifc://DS3_TalTech_V4.ifc#416956"
+        },
+        {
+          "name": "ol.ol r/b plokkidest sein(1)",
+          "thicknessM": 0.4,
+          "ref": "ifc://DS3_TalTech_V4.ifc#416957"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#416958"
+    },
+    {
+      "id": "assembly-basic-wall-tycroc-sein",
+      "name": "Basic Wall:Tycroc sein",
+      "totalThicknessM": 0.107,
+      "layers": [
+        {
+          "name": "Hüdroisolatsioon",
+          "thicknessM": 0,
+          "ref": "ifc://DS3_TalTech_V4.ifc#417256"
+        },
+        {
+          "name": "Tycroc TWP(1)",
+          "thicknessM": 0.012,
+          "ref": "ifc://DS3_TalTech_V4.ifc#417257"
+        },
+        {
+          "name": "Teraskarkass(1)",
+          "thicknessM": 0.095,
+          "ref": "ifc://DS3_TalTech_V4.ifc#417258"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#417259"
+    },
+    {
+      "id": "assembly-basic-wall-ruukki-classic-nextgen",
+      "name": "Basic Wall:RUUKKI Classic NextGen",
+      "totalThicknessM": 0.001,
+      "layers": [
+        {
+          "name": "RUUKKI Classic NextGen",
+          "thicknessM": 0.001,
+          "ref": "ifc://DS3_TalTech_V4.ifc#422703"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#422704"
+    },
+    {
+      "id": "assembly-basic-wall-vs-02-source-e4dd148ead07",
+      "name": "Basic Wall:VS-02",
+      "totalThicknessM": 0.6,
+      "layers": [
+        {
+          "name": "ol.ol r/b plokkidest sein(1)",
+          "thicknessM": 0.4,
+          "ref": "ifc://DS3_TalTech_V4.ifc#427814"
+        },
+        {
+          "name": "Soojustus",
+          "thicknessM": 0.2,
+          "ref": "ifc://DS3_TalTech_V4.ifc#427815"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#427816"
+    },
+    {
+      "id": "assembly-basic-wall-plekk",
+      "name": "Basic Wall:Plekk",
+      "totalThicknessM": 0.025,
+      "layers": [
+        {
+          "name": "Fassaadi plekk",
+          "thicknessM": 0.025,
+          "ref": "ifc://DS3_TalTech_V4.ifc#429774"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#429775"
+    },
+    {
+      "id": "assembly-floor-plekk",
+      "name": "Floor:Plekk",
+      "totalThicknessM": 0.025,
+      "layers": [
+        {
+          "name": "Fassaadi plekk",
+          "thicknessM": 0.025,
+          "ref": "ifc://DS3_TalTech_V4.ifc#429966"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#429967"
+    },
+    {
+      "id": "assembly-basic-roof-fassaadi-plekk",
+      "name": "Basic Roof:Fassaadi plekk",
+      "totalThicknessM": 0.025,
+      "layers": [
+        {
+          "name": "Fassaadi plekk",
+          "thicknessM": 0.025,
+          "ref": "ifc://DS3_TalTech_V4.ifc#430131"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#430132"
+    },
+    {
+      "id": "assembly-basic-roof-sileplekk",
+      "name": "Basic Roof:Sileplekk",
+      "totalThicknessM": 0.02,
+      "layers": [
+        {
+          "name": "Sileplekk",
+          "thicknessM": 0.02,
+          "ref": "ifc://DS3_TalTech_V4.ifc#433112"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#433113"
+    },
+    {
+      "id": "assembly-basic-wall-generic-400",
+      "name": "Basic Wall:Generic 400",
+      "totalThicknessM": 0.4,
+      "layers": [
+        {
+          "name": "Default",
+          "thicknessM": 0.4,
+          "ref": "ifc://DS3_TalTech_V4.ifc#500513"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#500514"
+    },
+    {
+      "id": "assembly-basic-wall-generic-510",
+      "name": "Basic Wall:Generic 510",
+      "totalThicknessM": 0.51,
+      "layers": [
+        {
+          "name": "Default",
+          "thicknessM": 0.51,
+          "ref": "ifc://DS3_TalTech_V4.ifc#500628"
+        }
+      ],
+      "ref": "ifc://DS3_TalTech_V4.ifc#500629"
+    }
+  ],
+  "orientation": {
+    "trueNorthDeg": null,
+    "northAssumed": true,
+    "weakOutwardCount": 6,
+    "offCardinalCount": 0,
+    "offCardinalSqm": 0,
+    "wallCount": 40,
+    "note": "Azimuths are clockwise from north, where north is the model's -Z after web-ifc's Z-up to Y-up conversion. Outward face inferred by comparing each face's centroid with the building centre, which is correct for a convex plan and can be wrong at a re-entrant corner."
+  },
+  "site": {
+    "declaredSiteName": "Surface:4344263",
+    "declaredLatitudeDeg": 59.39499282833333,
+    "declaredLongitudeDeg": 24.659236907777775,
+    "locationIsAuthoringDefault": false,
+    "locationNote": "The source publication identifies TalTech Ehituse Mäemaja, Tallinn, Estonia. IFC coordinates are retained as stated by the source; energy climate selection is a separate explicit input.",
+    "statedTown": "Tallinn, Estonia",
+    "trueNorthStated": null
+  },
+  "storeys": [
+    {
+      "id": "storey-kelder",
+      "name": "+Kelder",
+      "elevationM": -3.5,
+      "floorToFloorHeightM": 3.5,
+      "spaceCount": 44,
+      "floorAreaSqm": 1160.67,
+      "ref": "ifc://DS3_TalTech_V4.ifc#37"
+    },
+    {
+      "id": "storey-1-korrus",
+      "name": "1. korrus",
+      "elevationM": 0,
+      "floorToFloorHeightM": 4.9,
+      "spaceCount": 29,
+      "floorAreaSqm": 1230.4,
+      "ref": "ifc://DS3_TalTech_V4.ifc#40"
+    },
+    {
+      "id": "storey-2-korrus",
+      "name": "2. korrus",
+      "elevationM": 4.9,
+      "floorToFloorHeightM": 4.9,
+      "spaceCount": 18,
+      "floorAreaSqm": 548.94,
+      "ref": "ifc://DS3_TalTech_V4.ifc#44"
+    },
+    {
+      "id": "storey-3-korrus",
+      "name": "3. korrus",
+      "elevationM": 9.8,
+      "floorToFloorHeightM": 4.71,
+      "spaceCount": 24,
+      "floorAreaSqm": 546.11,
+      "ref": "ifc://DS3_TalTech_V4.ifc#48"
+    },
+    {
+      "id": "storey-katus",
+      "name": "Katus",
+      "elevationM": 14.51,
+      "floorToFloorHeightM": 0,
+      "spaceCount": 0,
+      "floorAreaSqm": 0,
+      "ref": "ifc://DS3_TalTech_V4.ifc#52"
+    }
+  ],
+  "spacesFile": "spaces.json",
+  "roofs": [
+    {
+      "id": "roof-295950",
+      "name": "Basic Roof:KL-02:2320553",
+      "family": "Basic Roof:KL-02",
+      "elementType": "IfcRoof",
+      "predefinedType": "NOTDEFINED",
+      "basis": "IfcRoof",
+      "storeyId": "storey-katus",
+      "projectedSqm": 633.45,
+      "upFacingProjectedSqm": 667.32,
+      "tiltDeg": 1.6,
+      "surfaceSqm": 667.59,
+      "surfaceBasis": "upward faces: open surface, one sheet",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#295950"
+    },
+    {
+      "id": "roof-309035",
+      "name": "Basic Roof:KL-03:2326404",
+      "family": "Basic Roof:KL-03",
+      "elementType": "IfcRoof",
+      "predefinedType": "NOTDEFINED",
+      "basis": "IfcRoof",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 143.34,
+      "upFacingProjectedSqm": 143.33,
+      "tiltDeg": 0.8,
+      "surfaceSqm": 143.36,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#309035"
+    },
+    {
+      "id": "roof-322523",
+      "name": "Basic Roof:KL-01*:2454458",
+      "family": "Basic Roof:KL-01*",
+      "elementType": "IfcRoof",
+      "predefinedType": "NOTDEFINED",
+      "basis": "IfcRoof",
+      "storeyId": "storey-katus",
+      "projectedSqm": 431.16,
+      "upFacingProjectedSqm": 431.16,
+      "tiltDeg": 8.1,
+      "surfaceSqm": 435.94,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#322523"
+    },
+    {
+      "id": "roof-322913",
+      "name": "Basic Roof:KL-01:2457151",
+      "family": "Basic Roof:KL-01",
+      "elementType": "IfcRoof",
+      "predefinedType": "NOTDEFINED",
+      "basis": "IfcRoof",
+      "storeyId": "storey-katus",
+      "projectedSqm": 74.72,
+      "upFacingProjectedSqm": 74.72,
+      "tiltDeg": 8,
+      "surfaceSqm": 75.45,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#322913"
+    },
+    {
+      "id": "roof-323165",
+      "name": "Basic Roof:KL-01*:2457832",
+      "family": "Basic Roof:KL-01*",
+      "elementType": "IfcRoof",
+      "predefinedType": "NOTDEFINED",
+      "basis": "IfcRoof",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 15.14,
+      "upFacingProjectedSqm": 30.17,
+      "tiltDeg": 2.2,
+      "surfaceSqm": 15.1,
+      "surfaceBasis": "upward faces ÷ 2: surface model with no downward face, both sheets wound upward",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#323165"
+    },
+    {
+      "id": "roof-323361",
+      "name": "Basic Roof:KL-01*:2457876",
+      "family": "Basic Roof:KL-01*",
+      "elementType": "IfcRoof",
+      "predefinedType": "NOTDEFINED",
+      "basis": "IfcRoof",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 15.14,
+      "upFacingProjectedSqm": 30.17,
+      "tiltDeg": 2.2,
+      "surfaceSqm": 15.09,
+      "surfaceBasis": "upward faces ÷ 2: surface model with no downward face, both sheets wound upward",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#323361"
+    },
+    {
+      "id": "roof-323564",
+      "name": "Basic Roof:KL-01*:2457890",
+      "family": "Basic Roof:KL-01*",
+      "elementType": "IfcRoof",
+      "predefinedType": "NOTDEFINED",
+      "basis": "IfcRoof",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 15.14,
+      "upFacingProjectedSqm": 30.19,
+      "tiltDeg": 4.3,
+      "surfaceSqm": 15.14,
+      "surfaceBasis": "upward faces ÷ 2: surface model with no downward face, both sheets wound upward",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#323564"
+    },
+    {
+      "id": "roof-323766",
+      "name": "Basic Roof:KL-01*:2457900",
+      "family": "Basic Roof:KL-01*",
+      "elementType": "IfcRoof",
+      "predefinedType": "NOTDEFINED",
+      "basis": "IfcRoof",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 15.14,
+      "upFacingProjectedSqm": 30.2,
+      "tiltDeg": 4.3,
+      "surfaceSqm": 15.14,
+      "surfaceBasis": "upward faces ÷ 2: surface model with no downward face, both sheets wound upward",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#323766"
+    },
+    {
+      "id": "roof-323962",
+      "name": "Basic Roof:KL-01*:2457923",
+      "family": "Basic Roof:KL-01*",
+      "elementType": "IfcRoof",
+      "predefinedType": "NOTDEFINED",
+      "basis": "IfcRoof",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 10.07,
+      "upFacingProjectedSqm": 17.91,
+      "tiltDeg": 5.5,
+      "surfaceSqm": 10.11,
+      "surfaceBasis": "upward faces ÷ 1.78: the element's parts cover its shadow 1.78× over (stacked layer solids or overlapping pieces)",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#323962"
+    },
+    {
+      "id": "roof-324157",
+      "name": "Basic Roof:KL-01*:2457967",
+      "family": "Basic Roof:KL-01*",
+      "elementType": "IfcRoof",
+      "predefinedType": "NOTDEFINED",
+      "basis": "IfcRoof",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 10.15,
+      "upFacingProjectedSqm": 17.99,
+      "tiltDeg": 5.6,
+      "surfaceSqm": 10.2,
+      "surfaceBasis": "upward faces ÷ 1.77: the element's parts cover its shadow 1.77× over (stacked layer solids or overlapping pieces)",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#324157"
+    },
+    {
+      "id": "roof-325938",
+      "name": "Basic Roof:KL-04:2476301",
+      "family": "Basic Roof:KL-04",
+      "elementType": "IfcRoof",
+      "predefinedType": "NOTDEFINED",
+      "basis": "IfcRoof",
+      "storeyId": "storey-katus",
+      "projectedSqm": 24.34,
+      "upFacingProjectedSqm": 24.32,
+      "tiltDeg": 24.5,
+      "surfaceSqm": 26.73,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#325938"
+    },
+    {
+      "id": "roof-239761",
+      "name": "PP_26:PP_26:932499",
+      "family": "PP_26:PP_26",
+      "elementType": "IfcCovering",
+      "predefinedType": "ROOFING",
+      "basis": "IfcCovering.PredefinedType=ROOFING",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 17.32,
+      "upFacingProjectedSqm": 17.32,
+      "tiltDeg": 1.5,
+      "surfaceSqm": 17.33,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#239761"
+    },
+    {
+      "id": "roof-239815",
+      "name": "PP_4:PP_26:932675",
+      "family": "PP_4:PP_26",
+      "elementType": "IfcCovering",
+      "predefinedType": "ROOFING",
+      "basis": "IfcCovering.PredefinedType=ROOFING",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 18.53,
+      "upFacingProjectedSqm": 18.53,
+      "tiltDeg": 1.5,
+      "surfaceSqm": 18.53,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#239815"
+    },
+    {
+      "id": "roof-240152",
+      "name": "PP_27:PP_26:932829",
+      "family": "PP_27:PP_26",
+      "elementType": "IfcCovering",
+      "predefinedType": "ROOFING",
+      "basis": "IfcCovering.PredefinedType=ROOFING",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 18.39,
+      "upFacingProjectedSqm": 18.39,
+      "tiltDeg": 1.5,
+      "surfaceSqm": 18.4,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#240152"
+    },
+    {
+      "id": "roof-240204",
+      "name": "PP_28:PP_26:933032",
+      "family": "PP_28:PP_26",
+      "elementType": "IfcCovering",
+      "predefinedType": "ROOFING",
+      "basis": "IfcCovering.PredefinedType=ROOFING",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 18.52,
+      "upFacingProjectedSqm": 18.52,
+      "tiltDeg": 1.5,
+      "surfaceSqm": 18.53,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#240204"
+    },
+    {
+      "id": "roof-240258",
+      "name": "PP_29:PP_26:933210",
+      "family": "PP_29:PP_26",
+      "elementType": "IfcCovering",
+      "predefinedType": "ROOFING",
+      "basis": "IfcCovering.PredefinedType=ROOFING",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 18.52,
+      "upFacingProjectedSqm": 18.52,
+      "tiltDeg": 1.5,
+      "surfaceSqm": 18.53,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#240258"
+    },
+    {
+      "id": "roof-240312",
+      "name": "PP_30:PP_26:933301",
+      "family": "PP_30:PP_26",
+      "elementType": "IfcCovering",
+      "predefinedType": "ROOFING",
+      "basis": "IfcCovering.PredefinedType=ROOFING",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 18.52,
+      "upFacingProjectedSqm": 18.52,
+      "tiltDeg": 1.5,
+      "surfaceSqm": 18.53,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#240312"
+    },
+    {
+      "id": "roof-240528",
+      "name": "PP_31:PP_26:933379",
+      "family": "PP_31:PP_26",
+      "elementType": "IfcCovering",
+      "predefinedType": "ROOFING",
+      "basis": "IfcCovering.PredefinedType=ROOFING",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 18.23,
+      "upFacingProjectedSqm": 18.23,
+      "tiltDeg": 1.5,
+      "surfaceSqm": 18.24,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#240528"
+    },
+    {
+      "id": "roof-240799",
+      "name": "PP_32:PP_26:933455",
+      "family": "PP_32:PP_26",
+      "elementType": "IfcCovering",
+      "predefinedType": "ROOFING",
+      "basis": "IfcCovering.PredefinedType=ROOFING",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 16.04,
+      "upFacingProjectedSqm": 16.04,
+      "tiltDeg": 1.5,
+      "surfaceSqm": 16.05,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#240799"
+    },
+    {
+      "id": "roof-241133",
+      "name": "PP_68:PP_68:939345",
+      "family": "PP_68:PP_68",
+      "elementType": "IfcCovering",
+      "predefinedType": "ROOFING",
+      "basis": "IfcCovering.PredefinedType=ROOFING",
+      "storeyId": "storey-2-korrus",
+      "projectedSqm": 7.13,
+      "upFacingProjectedSqm": 7.13,
+      "tiltDeg": 0,
+      "surfaceSqm": 7.13,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#241133"
+    }
+  ],
+  "groundSlabs": [
+    {
+      "id": "slab-180599",
+      "name": "Floor:trepp telg x aluspõrand:706309",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 21.13,
+      "countsAsGround": false,
+      "evidence": null,
+      "excludedReason": "no conditioned space stands on it: no conditioned ground-storey footprint overlaps its shadow and no IfcRelSpaceBoundary names it",
+      "ref": "ifc://DS3_TalTech_V4.ifc#180599"
+    },
+    {
+      "id": "slab-180693",
+      "name": "Floor:trepp telg x aluspõrand:706541",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 1.25,
+      "countsAsGround": false,
+      "evidence": null,
+      "excludedReason": "no conditioned space stands on it: no conditioned ground-storey footprint overlaps its shadow and no IfcRelSpaceBoundary names it",
+      "ref": "ifc://DS3_TalTech_V4.ifc#180693"
+    },
+    {
+      "id": "slab-180762",
+      "name": "Floor:trepp telg x aluspõrand:706698",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 1.58,
+      "countsAsGround": false,
+      "evidence": null,
+      "excludedReason": "no conditioned space stands on it: no conditioned ground-storey footprint overlaps its shadow and no IfcRelSpaceBoundary names it",
+      "ref": "ifc://DS3_TalTech_V4.ifc#180762"
+    },
+    {
+      "id": "slab-180831",
+      "name": "Floor:trepp telg x aluspõrand:706763",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.92,
+      "countsAsGround": false,
+      "evidence": null,
+      "excludedReason": "no conditioned space stands on it: no conditioned ground-storey footprint overlaps its shadow and no IfcRelSpaceBoundary names it",
+      "ref": "ifc://DS3_TalTech_V4.ifc#180831"
+    },
+    {
+      "id": "slab-180900",
+      "name": "Floor:trepp telg x aluspõrand:706812",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 1.25,
+      "countsAsGround": false,
+      "evidence": null,
+      "excludedReason": "no conditioned space stands on it: no conditioned ground-storey footprint overlaps its shadow and no IfcRelSpaceBoundary names it",
+      "ref": "ifc://DS3_TalTech_V4.ifc#180900"
+    },
+    {
+      "id": "slab-180969",
+      "name": "Floor:trepp telg x aluspõrand:706851",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 1.26,
+      "countsAsGround": false,
+      "evidence": null,
+      "excludedReason": "no conditioned space stands on it: no conditioned ground-storey footprint overlaps its shadow and no IfcRelSpaceBoundary names it",
+      "ref": "ifc://DS3_TalTech_V4.ifc#180969"
+    },
+    {
+      "id": "slab-181038",
+      "name": "Floor:trepp telg x aluspõrand:706861",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.28,
+      "countsAsGround": false,
+      "evidence": null,
+      "excludedReason": "no conditioned space stands on it: no conditioned ground-storey footprint overlaps its shadow and no IfcRelSpaceBoundary names it",
+      "ref": "ifc://DS3_TalTech_V4.ifc#181038"
+    },
+    {
+      "id": "slab-210978",
+      "name": "Floor:PP03:729291",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 59.04,
+      "countsAsGround": true,
+      "evidence": "52.99 m² under 7 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#210978"
+    },
+    {
+      "id": "slab-211110",
+      "name": "Floor:PP02:730051",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.45,
+      "countsAsGround": true,
+      "evidence": "0.45 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211110"
+    },
+    {
+      "id": "slab-211141",
+      "name": "Floor:PP02:730051",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 11.99,
+      "countsAsGround": true,
+      "evidence": "11.99 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211141"
+    },
+    {
+      "id": "slab-211163",
+      "name": "Floor:PP02:730051",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.15,
+      "countsAsGround": true,
+      "evidence": "0.15 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211163"
+    },
+    {
+      "id": "slab-211184",
+      "name": "Floor:PP02:730051",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.67,
+      "countsAsGround": true,
+      "evidence": "0.67 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211184"
+    },
+    {
+      "id": "slab-211208",
+      "name": "Floor:PP02:730051",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 1.27,
+      "countsAsGround": true,
+      "evidence": "1.27 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211208"
+    },
+    {
+      "id": "slab-211231",
+      "name": "Floor:PP02:730051",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 11.14,
+      "countsAsGround": true,
+      "evidence": "11.14 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211231"
+    },
+    {
+      "id": "slab-211254",
+      "name": "Floor:PP02:730051",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 4.25,
+      "countsAsGround": true,
+      "evidence": "4.25 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211254"
+    },
+    {
+      "id": "slab-211277",
+      "name": "Floor:PP02:730051",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 12.67,
+      "countsAsGround": true,
+      "evidence": "12.67 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211277"
+    },
+    {
+      "id": "slab-211301",
+      "name": "Floor:PP02:730051",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 7.72,
+      "countsAsGround": true,
+      "evidence": "7.72 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211301"
+    },
+    {
+      "id": "slab-211324",
+      "name": "Floor:PP02:730051",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 17.1,
+      "countsAsGround": true,
+      "evidence": "17.1 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211324"
+    },
+    {
+      "id": "slab-211346",
+      "name": "Floor:PP02:730051",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.56,
+      "countsAsGround": true,
+      "evidence": "0.56 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211346"
+    },
+    {
+      "id": "slab-211364",
+      "name": "Floor:PP02:730051",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.06,
+      "countsAsGround": true,
+      "evidence": "0.06 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211364"
+    },
+    {
+      "id": "slab-211801",
+      "name": "Floor:PP02:732571",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 3.54,
+      "countsAsGround": true,
+      "evidence": "3.54 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211801"
+    },
+    {
+      "id": "slab-211825",
+      "name": "Floor:PP02:732571",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 4.25,
+      "countsAsGround": true,
+      "evidence": "4.25 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211825"
+    },
+    {
+      "id": "slab-211845",
+      "name": "Floor:PP02:732571",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.21,
+      "countsAsGround": true,
+      "evidence": "0.21 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211845"
+    },
+    {
+      "id": "slab-211868",
+      "name": "Floor:PP02:732571",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 3.36,
+      "countsAsGround": true,
+      "evidence": "3.36 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211868"
+    },
+    {
+      "id": "slab-211891",
+      "name": "Floor:PP02:732571",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.14,
+      "countsAsGround": true,
+      "evidence": "0.14 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211891"
+    },
+    {
+      "id": "slab-211914",
+      "name": "Floor:PP02:732571",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.3,
+      "countsAsGround": true,
+      "evidence": "0.3 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211914"
+    },
+    {
+      "id": "slab-211937",
+      "name": "Floor:PP02:732571",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 3.84,
+      "countsAsGround": true,
+      "evidence": "3.84 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211937"
+    },
+    {
+      "id": "slab-211955",
+      "name": "Floor:PP02:732571",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.06,
+      "countsAsGround": true,
+      "evidence": "0.06 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#211955"
+    },
+    {
+      "id": "slab-212254",
+      "name": "Floor:PP03:732813",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 7.1,
+      "countsAsGround": true,
+      "evidence": "5.38 m² under 2 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212254"
+    },
+    {
+      "id": "slab-212331",
+      "name": "Floor:PP03:732848",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 3.86,
+      "countsAsGround": true,
+      "evidence": "3.85 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212331"
+    },
+    {
+      "id": "slab-212355",
+      "name": "Floor:PP03:732848",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 4.14,
+      "countsAsGround": true,
+      "evidence": "3.6 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212355"
+    },
+    {
+      "id": "slab-212375",
+      "name": "Floor:PP03:732848",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.24,
+      "countsAsGround": true,
+      "evidence": "0.21 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212375"
+    },
+    {
+      "id": "slab-212398",
+      "name": "Floor:PP03:732848",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 3.51,
+      "countsAsGround": true,
+      "evidence": "3.5 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212398"
+    },
+    {
+      "id": "slab-212420",
+      "name": "Floor:PP03:732848",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.19,
+      "countsAsGround": true,
+      "evidence": "0.19 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212420"
+    },
+    {
+      "id": "slab-212442",
+      "name": "Floor:PP03:732848",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.29,
+      "countsAsGround": true,
+      "evidence": "0.29 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212442"
+    },
+    {
+      "id": "slab-212466",
+      "name": "Floor:PP03:732848",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 3.71,
+      "countsAsGround": true,
+      "evidence": "3.64 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212466"
+    },
+    {
+      "id": "slab-212484",
+      "name": "Floor:PP03:732848",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.06,
+      "countsAsGround": true,
+      "evidence": "0.06 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212484"
+    },
+    {
+      "id": "slab-212745",
+      "name": "Floor:PP03:733472",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.76,
+      "countsAsGround": true,
+      "evidence": "0.76 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212745"
+    },
+    {
+      "id": "slab-212768",
+      "name": "Floor:PP03:733472",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 1.35,
+      "countsAsGround": true,
+      "evidence": "1.35 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212768"
+    },
+    {
+      "id": "slab-212791",
+      "name": "Floor:PP03:733472",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 1.29,
+      "countsAsGround": true,
+      "evidence": "1.29 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212791"
+    },
+    {
+      "id": "slab-212812",
+      "name": "Floor:PP03:733472",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 1.3,
+      "countsAsGround": true,
+      "evidence": "1.04 m² under 2 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212812"
+    },
+    {
+      "id": "slab-212830",
+      "name": "Floor:PP03:733472",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.06,
+      "countsAsGround": true,
+      "evidence": "0.06 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212830"
+    },
+    {
+      "id": "slab-212853",
+      "name": "Floor:PP03:733472",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 0.39,
+      "countsAsGround": true,
+      "evidence": "0.39 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212853"
+    },
+    {
+      "id": "slab-212876",
+      "name": "Floor:PP03:733472",
+      "elementType": "IfcSlab",
+      "predefinedType": "NOTDEFINED",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 2.25,
+      "countsAsGround": true,
+      "evidence": "2.25 m² under 1 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#212876"
+    },
+    {
+      "id": "slab-213292",
+      "name": "Floor:PP02:733764",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 458.04,
+      "countsAsGround": true,
+      "evidence": "431.2 m² under 19 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#213292"
+    },
+    {
+      "id": "slab-213461",
+      "name": "Floor:PP02:735519",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 26.24,
+      "countsAsGround": true,
+      "evidence": "25.38 m² under 2 conditioned space footprint(s)",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#213461"
+    },
+    {
+      "id": "slab-213537",
+      "name": "Floor:PP02:736019",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 7.52,
+      "countsAsGround": true,
+      "evidence": "6.56 m² under 1 conditioned space footprint(s); bounds 1 conditioned space(s) per IfcRelSpaceBoundary",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#213537"
+    },
+    {
+      "id": "slab-213693",
+      "name": "Floor:PP01:736254",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 465.2,
+      "countsAsGround": true,
+      "evidence": "456.15 m² under 13 conditioned space footprint(s); bounds 12 conditioned space(s) per IfcRelSpaceBoundary",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#213693"
+    },
+    {
+      "id": "slab-213802",
+      "name": "Floor:PP01:736643",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 10.51,
+      "countsAsGround": true,
+      "evidence": "10.27 m² under 1 conditioned space footprint(s); bounds 1 conditioned space(s) per IfcRelSpaceBoundary",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#213802"
+    },
+    {
+      "id": "slab-213878",
+      "name": "Floor:PP01:736840",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 17.58,
+      "countsAsGround": true,
+      "evidence": "17.58 m² under 1 conditioned space footprint(s); bounds 1 conditioned space(s) per IfcRelSpaceBoundary",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#213878"
+    },
+    {
+      "id": "slab-213947",
+      "name": "Floor:PP01:736934",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 4.24,
+      "countsAsGround": true,
+      "evidence": "4.24 m² under 1 conditioned space footprint(s); bounds 1 conditioned space(s) per IfcRelSpaceBoundary",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#213947"
+    },
+    {
+      "id": "slab-214045",
+      "name": "Floor:PP01:736987",
+      "elementType": "IfcSlab",
+      "predefinedType": "FLOOR",
+      "storeyId": "storey-kelder",
+      "projectedSqm": 10.85,
+      "countsAsGround": true,
+      "evidence": "10.85 m² under 1 conditioned space footprint(s); bounds 1 conditioned space(s) per IfcRelSpaceBoundary",
+      "excludedReason": null,
+      "ref": "ifc://DS3_TalTech_V4.ifc#214045"
+    }
+  ],
+  "openingsFile": "openings.json",
+  "serviceLayers": [
+    {
+      "id": "mep",
+      "ko": "설비 · 기존 태양광",
+      "en": "MEP · existing PV",
+      "file": "mep.glb",
+      "byteLength": 1822576,
+      "triangleCount": 26776,
+      "groups": [
+        "terminal",
+        "plant",
+        "fitting",
+        "pipe",
+        "solar",
+        "terminal-instanced",
+        "fitting-instanced",
+        "solar-instanced"
+      ],
+      "elements": 528,
+      "distinctGeometries": 400,
+      "instancedShapes": 67,
+      "instancedPlacements": 382,
+      "drawCalls": 72,
+      "note": "Actual IFC4 equipment geometry from the combined source file, including its existing photovoltaic arrays. Colours distinguish visual categories; equipment capacity and modeled energy assumptions are documented separately. This is not an inferred whole-building MEP network.",
+      "flow": {
+        "file": null,
+        "ports": 1644,
+        "connections": 346,
+        "directedEdges": 1,
+        "drawnEdges": 0,
+        "bidirectionalEdges": 345,
+        "unresolvedConnections": 0,
+        "ungeometried": 0,
+        "unreachedEdges": 0,
+        "plantNodes": 0,
+        "supplySegments": 0,
+        "returnSegments": 0,
+        "reason": "Source port directions do not establish supply/return system roles in this combined model; animation is not published.",
+        "wavelengthM": 26
+      }
+    }
+  ],
+  "architecturalDetails": {
+    "id": "details",
+    "ko": "건축 상세",
+    "en": "Architectural details",
+    "file": "architectural-details.glb",
+    "byteLength": 2093396,
+    "sha256": "8340ed8c86636caf110a1d15d5ba30ada8ff1e75be29a4c27f644458cb00917e",
+    "triangleCount": 39307,
+    "placedTriangleCount": 40555,
+    "triangleCountBasis": "triangleCount stores each instanced shape once; placedTriangleCount includes every placement",
+    "groups": [
+      "column",
+      "covering",
+      "beam",
+      "railing"
+    ],
+    "elements": 983,
+    "distinctGeometries": 945,
+    "instancedShapes": 3,
+    "instancedPlacements": 59,
+    "drawCalls": 33,
+    "materials": 30,
+    "sourceFiles": [
+      {
+        "role": "architectural",
+        "fileName": "DS3_TalTech_V4.ifc",
+        "sha256": "05919eee0701b955d3d08501c4889c879d9c486e2389a6a1a5cdaad32a5d10ba",
+        "types": [
+          {
+            "type": "IfcCovering",
+            "candidates": 879,
+            "rendered": 877,
+            "withoutRenderedMesh": 2
+          },
+          {
+            "type": "IfcColumn",
+            "candidates": 102,
+            "rendered": 102,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcBeam",
+            "candidates": 2,
+            "rendered": 2,
+            "withoutRenderedMesh": 0
+          },
+          {
+            "type": "IfcRailing",
+            "candidates": 2,
+            "rendered": 2,
+            "withoutRenderedMesh": 0
+          }
+        ]
+      }
+    ],
+    "indexFile": "architectural-details-index.json",
+    "indexSha256": "2b829a6e16c9ae6fb5defb3e17dd348cbd3019283293c541cf94f1fbecd13210",
+    "appearance": "web-ifc tessellator RGBA, including possible default styles; no inferred finish textures. Metalness 0 and roughness 0.85 are renderer assumptions, not measured material properties.",
+    "note": "Selected source IFC entity classes omitted from the core fabric layer. Original tessellated geometry and placements; repeated shapes use GPU instancing. Not a claim of complete architectural or fabrication detail. Existing services remain separate."
+  },
+  "mepCoverage": {
+    "schemaVersion": 1,
+    "status": "source_geometry_published",
+    "publishedLayerIds": [
+      "mep"
+    ],
+    "typedElementCount": 528,
+    "distributionPortCount": 1644,
+    "sources": [
+      {
+        "role": "architectural",
+        "fileName": "DS3_TalTech_V4.ifc",
+        "sha256": "05919eee0701b955d3d08501c4889c879d9c486e2389a6a1a5cdaad32a5d10ba",
+        "schema": "IFC4",
+        "typedElementCount": 528,
+        "entitiesByType": {
+          "IfcChiller": 2,
+          "IfcTank": 1,
+          "IfcAirTerminal": 82,
+          "IfcPipeSegment": 174,
+          "IfcPipeFitting": 171,
+          "IfcUnitaryEquipment": 2,
+          "IfcBoiler": 2,
+          "IfcSpaceHeater": 44,
+          "IfcAirToAirHeatRecovery": 1,
+          "IfcSolarDevice": 48,
+          "IfcLightFixture": 1
+        },
+        "distributionPorts": 1644,
+        "systems": 6
+      }
+    ],
+    "summary": {
+      "ko": "통합 IFC의 냉난방·배관·말단기기와 기존 태양광 형상을 표시합니다. 별도 계측 파일을 연간 에너지 계산과 보정한 결과는 아닙니다.",
+      "en": "Shows source heating/cooling equipment, pipes, terminals and existing PV from the combined IFC. The separate metering archive has not been used to calibrate the modeled annual energy output."
+    },
+    "limitations": [
+      {
+        "ko": "해시로 고정된 IFC 파일에서 해당 스키마의 설비 분류 상속을 확인한 요소 목록이며, 실제 설치 설비의 완전성 조사가 아닙니다.",
+        "en": "Inventory of distribution occurrence classes using each pinned IFC file's schema inheritance, not a completeness survey of installed services."
+      },
+      {
+        "ko": "분야별·수정본 모델 간 요소가 중복될 수 있으며 파일 간 설비 중복 제거는 하지 않았습니다.",
+        "en": "Counts include overlapping discipline and revision models; there is no cross-file equipment deduplication."
+      },
+      {
+        "ko": "일반 IfcBuildingElementProxy·IfcFurnishingElement는 원본 근거 없이 MEP로 분류하지 않습니다.",
+        "en": "Generic IfcBuildingElementProxy and IfcFurnishingElement occurrences are not classified as MEP without source evidence."
+      }
+    ]
+  },
+  "model": {
+    "file": "model.glb",
+    "byteLength": 5020176,
+    "triangleCount": 79571,
+    "groups": [
+      "slab",
+      "wall",
+      "stair",
+      "glazing",
+      "door",
+      "mullion"
+    ],
+    "note": "Building fabric only: walls, slabs, roofs and openings. Furniture, fixtures, railings and the structural frame are not in this file.",
+    "serviceNote": "Service layers carry every component at the model's own geometry; a repeated shape is stored once and placed by instancing."
+  },
+  "invalidDiagnostics": {
+    "note": "Space-boundary strip sums. INVALID as envelope areas: room-height not storey-height, gross of openings, double-counted where boundaries overlap, and blind to any wall without a resolvable boundary surface. Diagnostic only; never an emitted area.",
+    "rawSumSqm": 2991.584,
+    "rawSumByElementType": {
+      "IfcWall": 2292.727,
+      "IfcDoor": 64.69,
+      "IfcCurtainWall": 111.593,
+      "IfcWindow": 522.475,
+      "IfcRoof": 0.099
+    }
+  },
+  "sourcePhysics": {
+    "file": "source-physics.json",
+    "sha256": "9bf969388b54aab55bef72404315379c7c2ace5f22de32b5c918242783c0a274",
+    "note": "Typed and alternate source thermal/equipment properties with property-set and type references; not measured operating performance."
+  }
+}
