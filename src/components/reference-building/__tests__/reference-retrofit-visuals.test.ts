@@ -194,9 +194,28 @@ describe("equipmentLayerReach", () => {
 });
 
 describe("buildRetrofitLegendLines", () => {
+  it("says the 3D preview is off when previewProposal is false, regardless of the selection", () => {
+    const lines = buildRetrofitLegendLines({
+      selectedMeasureIds: ["envelope-wall-insulation", "solar-pv-flat"],
+      previewProposal: false,
+      // The real chain would also hand this in as NO_RETROFIT_VISUALS
+      // (deriveVisualState(proposalVisualIds(false, ids)) === all-false),
+      // but the legend must not depend on that — it should say the same
+      // thing even if a visual state leaked through some other way.
+      visual: { ...NO_RETROFIT_VISUALS, wallsUpgraded: true, solarInstalled: true },
+      hvacReach: "not-modeled",
+      lightingReach: "not-modeled",
+      roofGeometryAvailable: true,
+    });
+    expect(lines).toHaveLength(1);
+    expect(lines[0].en).toMatch(/preview is off/i);
+    expect(lines[0].en).not.toMatch(/wall|solar/i);
+  });
+
   it("says no scenario has been evaluated when selectedMeasureIds is null", () => {
     const lines = buildRetrofitLegendLines({
       selectedMeasureIds: null,
+      previewProposal: true,
       visual: NO_RETROFIT_VISUALS,
       hvacReach: "not-modeled",
       lightingReach: "not-modeled",
@@ -209,6 +228,7 @@ describe("buildRetrofitLegendLines", () => {
   it("says nothing is selected when the array is empty", () => {
     const lines = buildRetrofitLegendLines({
       selectedMeasureIds: [],
+      previewProposal: true,
       visual: NO_RETROFIT_VISUALS,
       hvacReach: "not-modeled",
       lightingReach: "not-modeled",
@@ -220,6 +240,7 @@ describe("buildRetrofitLegendLines", () => {
   it("names exactly the envelope elements the visual state has on, and none it doesn't", () => {
     const lines = buildRetrofitLegendLines({
       selectedMeasureIds: ["envelope-wall-insulation", "envelope-window-replacement"],
+      previewProposal: true,
       visual: { ...NO_RETROFIT_VISUALS, wallsUpgraded: true, windowsUpgraded: true },
       hvacReach: "not-modeled",
       lightingReach: "not-modeled",
@@ -234,6 +255,7 @@ describe("buildRetrofitLegendLines", () => {
   it("flags solar as visual-only when the engine cannot price it", () => {
     const lines = buildRetrofitLegendLines({
       selectedMeasureIds: ["solar-pv-flat"],
+      previewProposal: true,
       visual: { ...NO_RETROFIT_VISUALS, solarInstalled: true },
       hvacReach: "not-modeled",
       lightingReach: "not-modeled",
@@ -246,6 +268,7 @@ describe("buildRetrofitLegendLines", () => {
   it("says panels cannot be placed when the building has no roof geometry", () => {
     const lines = buildRetrofitLegendLines({
       selectedMeasureIds: ["solar-pv-flat"],
+      previewProposal: true,
       visual: { ...NO_RETROFIT_VISUALS, solarInstalled: true },
       hvacReach: "not-modeled",
       lightingReach: "not-modeled",
@@ -258,6 +281,7 @@ describe("buildRetrofitLegendLines", () => {
   it("distinguishes 'layer is off' from 'model carries no such layer' for hvac/lighting", () => {
     const offLines = buildRetrofitLegendLines({
       selectedMeasureIds: ["hvac-heat-pump"],
+      previewProposal: true,
       visual: { ...NO_RETROFIT_VISUALS, hvacUpgraded: true },
       hvacReach: "layer-off",
       lightingReach: "not-modeled",
@@ -268,6 +292,7 @@ describe("buildRetrofitLegendLines", () => {
 
     const notModeledLines = buildRetrofitLegendLines({
       selectedMeasureIds: ["hvac-heat-pump"],
+      previewProposal: true,
       visual: { ...NO_RETROFIT_VISUALS, hvacUpgraded: true },
       hvacReach: "not-modeled",
       lightingReach: "not-modeled",
@@ -280,6 +305,7 @@ describe("buildRetrofitLegendLines", () => {
   it("falls back to 'no visible change' when a selection maps to no on-page visual", () => {
     const lines = buildRetrofitLegendLines({
       selectedMeasureIds: ["envelope-floor-insulation"],
+      previewProposal: true,
       visual: NO_RETROFIT_VISUALS,
       hvacReach: "not-modeled",
       lightingReach: "not-modeled",
@@ -296,6 +322,7 @@ describe("buildRetrofitLegendLines", () => {
     // still claimed "this model carries no HVAC file".
     const lines = buildRetrofitLegendLines({
       selectedMeasureIds: ["solar-pv-flat"],
+      previewProposal: true,
       visual: { ...NO_RETROFIT_VISUALS, solarInstalled: true },
       hvacReach: "not-modeled",
       lightingReach: "not-modeled",
@@ -307,6 +334,7 @@ describe("buildRetrofitLegendLines", () => {
   it("names the below-grade floor slab as having no visual here, rather than silently passing hasAnyVisual", () => {
     const lines = buildRetrofitLegendLines({
       selectedMeasureIds: ["envelope-floor-insulation"],
+      previewProposal: true,
       visual: { ...NO_RETROFIT_VISUALS, floorsUpgraded: true },
       hvacReach: "not-modeled",
       lightingReach: "not-modeled",
@@ -340,6 +368,7 @@ describe("end-to-end: the legend reproduces the state that produced it", () => {
 
     const lines = buildRetrofitLegendLines({
       selectedMeasureIds,
+      previewProposal: true,
       visual,
       hvacReach,
       lightingReach,
@@ -364,6 +393,7 @@ describe("end-to-end: the legend reproduces the state that produced it", () => {
 
     const lines = buildRetrofitLegendLines({
       selectedMeasureIds,
+      previewProposal: true,
       visual,
       hvacReach,
       lightingReach,
@@ -383,6 +413,7 @@ describe("end-to-end: the legend reproduces the state that produced it", () => {
 
     const lines = buildRetrofitLegendLines({
       selectedMeasureIds,
+      previewProposal: true,
       visual,
       hvacReach,
       lightingReach,

@@ -7,7 +7,7 @@ import { ContactShadows, Environment, OrbitControls, useGLTF } from "@react-thre
 
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
 import { FlowNetwork } from "./flow-network";
-import { useScenarioStore } from "@/store/scenario-store";
+import { useScenarioStore, useProposalVisualIds } from "@/store/scenario-store";
 import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
 import {
   EnvelopeRetrofitTint,
@@ -244,11 +244,17 @@ export function ReferenceModelViewer({
   // Green-remodelling preview: read directly from the scenario store rather
   // than through a prop, so the knapsack's selection reaches this canvas
   // without a line added to reference-building-workspace.tsx (Lane 2's file).
+  //
+  // The 3D visual is driven by `useProposalVisualIds()`, NOT the raw
+  // `selectedMeasureIds` — that hook is gated by `previewProposal`, the same
+  // switch `RetrofitDeltaStrip` exposes (mounted on this page inside
+  // `EnergyInstrumentHud`). Reading the raw field here would mean the switch
+  // turns the twin's proposal off while this page's building keeps showing
+  // it — two controls disagreeing about what "the" selection is.
   const selectedMeasureIds = useScenarioStore((s) => s.selectedMeasureIds);
-  const visual = useMemo(
-    () => deriveVisualState(selectedMeasureIds ?? []),
-    [selectedMeasureIds],
-  );
+  const previewProposal = useScenarioStore((s) => s.previewProposal);
+  const proposalIds = useProposalVisualIds();
+  const visual = useMemo(() => deriveVisualState(proposalIds), [proposalIds]);
   const hvacReach = equipmentLayerReach(services, active, "hvac");
   const lightingReach = equipmentLayerReach(services, active, "electrical");
   const roofingLayer = services.find((l) => l.id === "roofing");
@@ -371,6 +377,7 @@ export function ReferenceModelViewer({
       </Canvas>
       <RetrofitLegend
         selectedMeasureIds={selectedMeasureIds}
+        previewProposal={previewProposal}
         visual={visual}
         hvacReach={hvacReach}
         lightingReach={lightingReach}

@@ -22,6 +22,12 @@ import { useGLTF } from "@react-three/drei";
 
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
 import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
+import { computeRetrofitDelta } from "@/lib/retrofit/retrofit-delta";
+import { useScenarioStore, useProposalVisualIds } from "@/store/scenario-store";
+import { useMaterialStore } from "@/store/material-store";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
+import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
+import { getClimateData } from "@/lib/energy/climate-data";
 import {
   deriveVisualState,
   hasAnyVisual,
@@ -308,13 +314,31 @@ export interface RetrofitLegendLine {
 
 export function buildRetrofitLegendLines(args: {
   selectedMeasureIds: readonly string[] | null;
+  /**
+   * The `제안 미리보기` switch (`RetrofitDeltaStrip`, mounted on this same
+   * page inside `EnergyInstrumentHud`) — the gate behind `visual`, which is
+   * derived from `useProposalVisualIds()` rather than `selectedMeasureIds`
+   * directly. When this is off, `visual` is already all-false regardless of
+   * the selection, so the legend says so instead of reading as "nothing is
+   * selected".
+   */
+  previewProposal: boolean;
   visual: RetrofitVisualState;
   hvacReach: EquipmentReach;
   lightingReach: EquipmentReach;
   roofGeometryAvailable: boolean;
 }): RetrofitLegendLine[] {
-  const { selectedMeasureIds, visual, hvacReach, lightingReach, roofGeometryAvailable } = args;
+  const { selectedMeasureIds, previewProposal, visual, hvacReach, lightingReach, roofGeometryAvailable } = args;
 
+  if (!previewProposal) {
+    return [
+      {
+        key: "preview-off",
+        ko: "3D 미리보기가 꺼져 있어 모델은 현재 상태를 보여줍니다. 에너지 패널의 '제안 미리보기'로 켤 수 있습니다.",
+        en: "3D preview is off, so the model shows the building as it stands. Turn on \"Preview proposal\" in the energy panel to see it here.",
+      },
+    ];
+  }
   if (selectedMeasureIds === null) {
     return [
       {
@@ -553,11 +577,45 @@ export function EquipmentRetrofitTint({ url }: { url: string }) {
   return null;
 }
 
+/**
+ * The real kWp `retrofit-delta.ts` sized the PV measure at, read from the
+ * same global stores `RetrofitDeltaStrip` uses (no new props): `buildingPk`
+ * off `scenario-store.buildingInputs`, materials/recipe/climate off the
+ * stores `reference-energy.tsx`'s seeding effect already publishes for this
+ * building. `undefined` — never 0 — when no run is available yet, so
+ * `panelLayoutForRoof` falls back to its own area-based estimate rather than
+ * being told the array is empty.
+ */
+function usePvSystemSizeOverride(solarInstalled: boolean): number | undefined {
+  const buildingPk = useScenarioStore((s) => s.buildingInputs?.buildingPk ?? "");
+  const materials = useMaterialStore((s) => s.properties[buildingPk]);
+  const recipe = useEffectiveRecipe(buildingPk);
+  const sigunguCd = useActiveSigunguCd();
+  const proposalIds = useProposalVisualIds();
+
+  const delta = useMemo(() => {
+    if (!solarInstalled || !materials || !recipe) return null;
+    return computeRetrofitDelta({
+      materials,
+      recipe,
+      climate: getClimateData(sigunguCd),
+      measureIds: proposalIds,
+    });
+  }, [solarInstalled, materials, recipe, sigunguCd, proposalIds]);
+
+  const solarPV = delta?.after.materials.renewable.solarPV;
+  return solarPV?.installed ? solarPV.capacity : undefined;
+}
+
 /** An instanced array of tilted PV panels, shared by both roof sources below. */
-function usePvPanelMesh(face: FaceSetAnalysis | null, solarInstalled: boolean) {
+function usePvPanelMesh(
+  face: FaceSetAnalysis | null,
+  solarInstalled: boolean,
+  overrideSystemSizeKWp?: number,
+) {
   const panels = useMemo(
-    () => (solarInstalled && face ? panelLayoutForRoof(face) : null),
-    [solarInstalled, face],
+    () => (solarInstalled && face ? panelLayoutForRoof(face, overrideSystemSizeKWp) : null),
+    [solarInstalled, face, overrideSystemSizeKWp],
   );
   const panelMesh = useMemo(() => {
     if (!panels || panels.instances.length === 0) return null;
@@ -620,6 +678,7 @@ function RoofingLayerRetrofitVisual({
   centre: THREE.Vector3;
 }) {
   const { scene } = useGLTF(roofingUrl);
+  const overrideSystemSizeKWp = usePvSystemSizeOverride(visual.solarInstalled);
 
   useEffect(() => {
     if (!visual.roofUpgraded) return;
@@ -646,7 +705,7 @@ function RoofingLayerRetrofitVisual({
     return found;
   }, [scene, visual.solarInstalled]);
 
-  const panelMesh = usePvPanelMesh(face, visual.solarInstalled);
+  const panelMesh = usePvPanelMesh(face, visual.solarInstalled, overrideSystemSizeKWp);
 
   return (
     <group position={[-centre.x, -centre.y, -centre.z]}>
@@ -681,6 +740,7 @@ function FabricSlabRetrofitVisual({
   centre: THREE.Vector3;
 }) {
   const { scene } = useGLTF(fabricUrl);
+  const overrideSystemSizeKWp = usePvSystemSizeOverride(visual.solarInstalled);
 
   const roofTriangles = useMemo(() => {
     const threshold = roofElevationThresholdM(roofs, storeys);
@@ -732,7 +792,7 @@ function FabricSlabRetrofitVisual({
     };
   }, [overlay]);
 
-  const panelMesh = usePvPanelMesh(face, visual.solarInstalled);
+  const panelMesh = usePvPanelMesh(face, visual.solarInstalled, overrideSystemSizeKWp);
 
   return (
     <group position={[-centre.x, -centre.y, -centre.z]}>
@@ -792,6 +852,7 @@ export function blendFlowColourTowardProposal(hex: string, amount = 0.55): strin
  */
 export function RetrofitLegend({
   selectedMeasureIds,
+  previewProposal,
   visual,
   hvacReach,
   lightingReach,
@@ -799,6 +860,7 @@ export function RetrofitLegend({
   isKo,
 }: {
   selectedMeasureIds: readonly string[] | null;
+  previewProposal: boolean;
   visual: RetrofitVisualState;
   hvacReach: EquipmentReach;
   lightingReach: EquipmentReach;
@@ -807,6 +869,7 @@ export function RetrofitLegend({
 }) {
   const lines = buildRetrofitLegendLines({
     selectedMeasureIds,
+    previewProposal,
     visual,
     hvacReach,
     lightingReach,
