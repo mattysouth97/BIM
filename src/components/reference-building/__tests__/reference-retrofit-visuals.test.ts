@@ -12,7 +12,7 @@ import {
   PV_FIXED_RACK_TILT_DEG,
   type FaceSetAnalysis,
 } from "../reference-retrofit-visuals";
-import { NO_RETROFIT_VISUALS } from "@/lib/retrofit/measure-visuals";
+import { NO_RETROFIT_VISUALS, effectiveMeasureIds, proposalVisualIds } from "@/lib/retrofit/measure-visuals";
 
 /** Two coincident quads (4 verts each) sharing one position/index buffer: a floor at y=0, a roof at y=10. */
 function twoStoreyQuads() {
@@ -422,5 +422,38 @@ describe("end-to-end: the legend reproduces the state that produced it", () => {
     const text = lines.map((l) => l.en).join(" | ");
     expect(text).not.toMatch(/HVAC/i); // HVAC was never selected — must stay silent
     expect(text).toMatch(/Lighting.*this file carries no such discipline model/i);
+  });
+
+  it("header count matches the APPLIED set, not the recommendation, when the two disagree", () => {
+    // Regression: reference-model-viewer.tsx once fed the raw knapsack
+    // RECOMMENDATION (scenario-store.selectedMeasureIds) into the legend's
+    // header count while the bullets were driven by useProposalVisualIds()
+    // (which resolves the user's APPLIED set) — a real defect caught live on
+    // /models/schependomlaan: recommendation = 2 (HRV + PV), user's chosen
+    // set = 1 (PV only), header said "2개" over a single bullet. This
+    // replicates the viewer's actual wiring — effectiveMeasureIds() then
+    // proposalVisualIds() from the SAME resolved set — so the header and the
+    // bullets can never again come from two different ids.
+    const recommended = ["hvac-hrv", "solar-pv-flat"];
+    const applied = ["solar-pv-flat"];
+    const effective = effectiveMeasureIds(applied, recommended);
+    expect(effective).toEqual(["solar-pv-flat"]); // applied wins outright, not a merge
+
+    const isSeeded = applied !== null || recommended !== null;
+    const headerMeasureIds = isSeeded ? effective : null;
+    const visual = deriveVisualState(proposalVisualIds(true, effective));
+
+    const lines = buildRetrofitLegendLines({
+      selectedMeasureIds: headerMeasureIds,
+      previewProposal: true,
+      visual,
+      hvacReach: "not-modeled",
+      lightingReach: "not-modeled",
+      roofGeometryAvailable: true,
+    });
+    const header = lines.find((l) => l.key === "header")!;
+    expect(header.en).toMatch(/1 measure\(s\)/); // the applied count (1), never the recommendation's (2)
+    expect(lines.some((l) => l.key === "solar")).toBe(true);
+    expect(lines.some((l) => l.en.match(/HVAC/i))).toBe(false); // HRV was recommended, not applied — must not appear
   });
 });
