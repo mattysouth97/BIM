@@ -65,12 +65,23 @@ const BUILDINGS: readonly Expected[] = [
   // test for why that sentence is a stronger claim than the module can make.
   { id: "schependomlaan", titleKo: "스헤펜돔라안 아파트", grade: "1+++", demandPerSqm: "40.5", deltaMovesWithTrack: false },
   { id: "duplex-apartment", titleKo: "듀플렉스 아파트", grade: "1", demandPerSqm: "142.6", deltaMovesWithTrack: true },
+  // The fourth building states NO services models at all — its manifest
+  // carries an empty `serviceLayers`, so the layers panel is the fabric row
+  // and nothing else, and its licence is KIT/IAI's own grant rather than a
+  // Creative Commons one. Both are read from the manifest below rather than
+  // written here, so neither can be quietly assumed to match the others'.
+  //
+  // Measured 2026-09-06, and it is the SECOND building with the delta-strip
+  // defect: 공공 지자체 takes it 1/6 → 2/6 measures and NPV ₩1954만 →
+  // ₩2036만, with the strip saying through both that the selected measures
+  // move no kWh/m².
+  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "1+", demandPerSqm: "92.6", deltaMovesWithTrack: false },
 ];
 
 type Manifest = {
   id: string;
   licence: string;
-  serviceLayers?: { id: string; ko: string; en: string }[];
+  serviceLayers?: { id: string; ko: string; en: string; flow?: { file: string | null } }[];
 };
 
 function manifestFor(id: string): Manifest {
@@ -165,12 +176,30 @@ for (const building of BUILDINGS) {
       await expect(panel).toBeVisible({ timeout: FIRST_PAINT });
 
       // The fabric layer is always there; the services layers are whatever
-      // this building's own manifest declares, which is 3 for the Duplex, 3
-      // for the Clinic and 6 for Schependomlaan.
-      for (const layer of manifest.serviceLayers ?? []) {
+      // this building's own manifest declares — 3 for the Duplex, 3 for the
+      // Clinic, 6 for Schependomlaan and NONE for FZK Haus.
+      const services = manifest.serviceLayers ?? [];
+      for (const layer of services) {
         await expect(page.getByTestId(`reference-model-layer-${layer.id}`)).toBeVisible();
         await expect(panel).toContainText(layer.ko);
       }
+
+      // Counted, not just spot-checked, so the assertion still says something
+      // about a building that declares no services at all: FZK Haus must show
+      // the fabric row and nothing beside it. A loop over an empty array
+      // asserts nothing, and "asserts nothing" and "asserts it is empty" are
+      // different claims.
+      //
+      // The expected count is derived from the manifest rather than typed, so
+      // it stays true per building: one fabric row, one per services layer,
+      // and a flow-direction row ONLY where some layer actually shipped a
+      // flow file. Schependomlaan has six services models and no flow file
+      // among them, so it gets the heading and no toggle; FZK has neither.
+      const flowRow = services.some((layer) => layer.flow?.file) ? 1 : 0;
+      await expect(page.getByTestId("reference-model-layer-fabric")).toBeVisible();
+      await expect(
+        panel.locator('[data-testid^="reference-model-layer-"]:not([data-testid$="-note"])'),
+      ).toHaveCount(1 + services.length + flowRow);
     });
 
     test("carries the licence its grant requires", async ({ page }) => {
@@ -214,21 +243,32 @@ for (const building of BUILDINGS) {
     });
 
     test("answers the green-remodelling chips in the modelled before/after", async ({ page }) => {
-      // Separated from the scenario test on purpose, because on one building
-      // these two answers disagree and a single test could not say which.
+      // Separated from the scenario test on purpose, because on half these
+      // buildings the two answers disagree and a single test could not say
+      // which one moved.
       //
-      // Schependomlaan is marked expected-to-fail: the subsidy takes it from
-      // 1/5 measures to 2/5 and its NPV from ₩6201만 to ₩6345만 — the money
-      // moves and a measure is added — while the delta strip says, through
-      // both, that "the selected measures do not move this run's kWh/m²".
-      // That sentence is a claim about the BUILDING; what the module can
-      // actually support is a claim about ITSELF, that nothing it prices
-      // changed. `computeRetrofitDelta` splits its changes into priced and
-      // unpriced, so a selection made entirely of measures it cannot price
-      // produces exactly this, and the strip reports the physics rather than
-      // the gap. Owned by the retrofit-delta lane, not this file. When it is
-      // fixed this test starts passing and Playwright reports the unexpected
-      // pass, which is the notification we want.
+      // TWO of the four are marked expected-to-fail, and the shape is the
+      // same on both. Measured 2026-09-06 under 프로그램 없음 → 공공 지자체:
+      //
+      //   Clinic      0/6 → 3/6   ₩0      → ₩1.3억   strip: 1+ → 1++, −42.8 kWh/m²·yr
+      //   Duplex      moves
+      //   Schependom. 1/5 → 2/5   ₩6201만 → ₩6345만  strip: unchanged
+      //   FZK Haus    1/6 → 2/6   ₩1954만 → ₩2036만  strip: unchanged
+      //
+      // On the two that do not move, the money moves and a measure is added
+      // while the strip says "the selected measures do not move this run's
+      // kWh/m²" through both states. That sentence is a claim about the
+      // BUILDING; what the module can support is a claim about ITSELF — that
+      // nothing IT prices changed. `computeRetrofitDelta` already splits its
+      // changes into priced and unpriced, so a selection made entirely of
+      // measures it cannot price produces exactly this, and the zero-delta
+      // branch reports it as physics rather than as its own gap. Note the
+      // Clinic is the one building that starts at ZERO selected measures,
+      // which is why it is the one whose strip visibly changes.
+      //
+      // Owned by the retrofit-delta lane, not this file. When it is fixed
+      // these start passing and Playwright reports the unexpected pass,
+      // which is the notification we want.
       test.fail(
         !building.deltaMovesWithTrack,
         "delta strip reports no kWh/m² change while the selection and NPV both move",
