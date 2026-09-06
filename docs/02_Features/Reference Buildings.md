@@ -210,6 +210,29 @@ be a number nobody derived.
 
 ## Where things live
 
+### Roof inspection and PV accounting (2026-09-07)
+
+`ReferencePvUtilisation` exposes every plane from `usePvLayout`, including
+exclusions, in an expandable table. Gross and usable areas are plan areas
+derived from the roof outlines; module area is panel surface area. The sidebar
+candidate, measure chip, delta strip, legend and drawn instances use the same
+geometric capacity. No data means zero priced capacity until the measured
+planes arrive; the default chosen set waits for that arrival.
+
+Disconnected roof pieces are laid out separately. Setbacks and obstruction
+clearances are clipped/unioned for accounting; transformed module corners are
+tested against the roof geometry. Plant and parapet obstacles remain absent
+and are disclosed as potentially reducing fitted capacity.
+
+The sidebar offers exterior fit, roof view and model-focus mode. Focus mode
+hides the energy panels without unmounting their data/state effects. Opaque
+GLTF meshes receive and cast scale-fitted directional shadows; ghosted fabric
+does not cast an opaque silhouette. PV cells and frames share two instanced
+batches and the layout's exact poses.
+
+Implementation record and before/after values:
+[[2026-09-07-product-datasets-and-viewer]].
+
 | Path | What |
 |---|---|
 | `src/components/reference-building/reference-building-workspace.tsx` | The two halves, section order |

@@ -163,7 +163,7 @@ const PV_REASON_KO: Record<string, string> = {
   "tilt-above-60": "60° 초과",
   "smaller-than-one-module": "모듈 1장 미만",
   "north-facing-pitch": "북향 경사",
-  "no-usable-area-after-setback": "이격 후 면적 없음",
+  "no-usable-area-after-setback": "이격·여유거리 적용 후 모듈 배치 불가",
   "outline-shape-not-trustworthy": "외곽선 미확정",
   "outline-area-disagrees-with-stated": "외곽선·면적 불일치",
 };
@@ -199,7 +199,7 @@ export function pvLegendLine(pv: PvLegendSummary): RetrofitLegendLine {
     .map(([k, n]) => `${PV_REASON_KO[k] ?? k} ${n}면`)
     .join(", ");
   const reasonsEn = Object.entries(pv.reasons)
-    .map(([k, n]) => `${n} ${k}`)
+    .map(([k, n]) => `${n} ${k === "no-usable-area-after-setback" ? "no module fits after setbacks / clearances" : k}`)
     .join(", ");
   return {
     key: "pv-layout",

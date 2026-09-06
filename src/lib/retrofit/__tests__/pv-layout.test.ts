@@ -9,6 +9,7 @@
 // until bim-83's artifacts land, per the doc.
 
 import { describe, it, expect } from "vitest";
+import { Quaternion, Vector3 } from "three";
 import {
   layoutPlane,
   layoutRoofPlanes,
@@ -18,6 +19,7 @@ import {
   rectangleFits,
   ringAreaSqm,
   polygonAreaSqm,
+  toPolygons,
   PV_MODULE_LENGTH_M,
   PV_MODULE_WIDTH_M,
   PV_PANEL_RATED_KWP,
@@ -108,6 +110,13 @@ function planCorners(
 }
 
 describe("ring and polygon helpers", () => {
+  it("does not miss a small enclosed hole or a narrow notch between edge samples", () => {
+    const panel = rect(1, 1, 1.7, 1);
+    expect(rectangleFits(panel, { outer: rect(0, 0, 5, 5), holes: [rect(1.1, 1.1, 0.02, 0.02)] }, [])).toBe(false);
+    expect(rectangleFits(panel, { outer: rect(0, 0, 5, 5) }, [rect(1.1, 1.1, 0.02, 0.02)])).toBe(false);
+    const notched: PlanRing = [[0, 0], [1.1, 0], [1.1, 1.2], [1.12, 1.2], [1.12, 0], [5, 0], [5, 5], [0, 5]];
+    expect(rectangleFits(panel, { outer: notched }, [])).toBe(false);
+  });
   it("measures a rectangle and subtracts its holes", () => {
     expect(ringAreaSqm(rect(0, 0, 20, 10))).toBeCloseTo(200, 9);
     expect(
@@ -130,6 +139,130 @@ describe("ring and polygon helpers", () => {
     ] as [number, number][];
     expect(rectangleFits(inside, { outer: c }, [])).toBe(true);
   });
+});
+
+describe("disconnected pieces belong to the same measured roof plane", () => {
+  it("sums all pieces before the area guard and lays out each piece without spanning gaps", () => {
+    const outers = [rect(0, 0, 8, 8), rect(15, 0, 8, 8), rect(30, 0, 8, 8)];
+    const plane = flatPlane({
+      projectedSqm: 192, surfaceSqm: 192,
+      outline: outers.map((points) => ({ kind: "outer", points })),
+    });
+    const layout = layoutPlane(plane);
+    expect(layout.excludedReason).toBeNull();
+    expect(layout.grossProjectedSqm).toBe(192);
+    expect(layout.usableSqm).toBeCloseTo(3 * 6 * 6, 9);
+    const singleCount = layoutPlane(flatPlane({ projectedSqm: 64, outline: [outers[0]] })).moduleCount;
+    expect(singleCount).toBeGreaterThan(0);
+    expect(layout.moduleCount).toBe(singleCount * 3);
+    expect(layout.kWp).toBe(layout.moduleCount * PV_PANEL_RATED_KWP);
+    for (const outer of outers) {
+      const region = usableAreaFor({ ...plane, outline: [outer] }).regions[0];
+      expect(layout.modules.some((m) => rectangleFits(
+        planCorners(m.centre, m.azimuthDeg, m.tiltDeg, PV_MODULE_LENGTH_M, PV_MODULE_WIDTH_M), region, [],
+      ))).toBe(true);
+    }
+    expect(layout.modules.every((m) => m.planeId === plane.id)).toBe(true);
+    expect(new Set(layout.modules.map((m) => m.centre.join(","))).size).toBe(layout.moduleCount);
+    expect(layoutPlane(plane)).toEqual(layout);
+  });
+
+  it("keeps holes with their containing piece even when hole tags come first", () => {
+    const firstHole = rect(3, 3, 2, 2), secondHole = rect(23, 3, 2, 2);
+    const plane = flatPlane({
+      projectedSqm: 280,
+      outline: [
+        { kind: "hole", points: secondHole }, { kind: "hole", points: firstHole },
+        { kind: "outer", points: rect(0, 0, 12, 12) },
+        { kind: "outer", points: rect(20, 0, 12, 12) },
+      ],
+      obstructions: [{ kind: "plant", elementName: "AHU", plan: rect(8, 8, 2, 2) }],
+    });
+    const polygons = toPolygons(plane.outline);
+    expect(polygons[0].holes).toEqual([firstHole]);
+    expect(polygons[1].holes).toEqual([secondHole]);
+    const usable = usableAreaFor(plane);
+    expect(usable.usableSqm).toBeCloseTo(2 * (100 - 16) - 9, 9);
+    expect(280 - usable.subtractions.reduce((s, row) => s + row.areaSqm, 0)).toBeCloseTo(usable.usableSqm, 9);
+    for (const m of layoutPlane(plane).modules) {
+      const corners = planCorners(m.centre, m.azimuthDeg, m.tiltDeg, PV_MODULE_LENGTH_M, PV_MODULE_WIDTH_M);
+      expect(usable.regions.some((region) => rectangleFits(corners, region, usable.blocked))).toBe(true);
+    }
+  });
+
+  it("charges an obstruction crossing two pieces only for the roof it removes", () => {
+    const plane = flatPlane({
+      projectedSqm: 200,
+      outline: [
+        { kind: "outer", points: rect(0, 0, 10, 10) },
+        { kind: "outer", points: rect(11, 0, 10, 10) },
+      ],
+      obstructions: [{ kind: "plant", elementName: "Spanning plant", plan: rect(8, 3, 5, 2) }],
+    });
+    const usable = usableAreaFor(plane);
+    expect(usable.usableSqm).toBeCloseTo(2 * 64 - 9, 9);
+    expect(usable.subtractions.find((s) => s.kind === "plant")?.areaSqm).toBeCloseTo(9, 9);
+  });
+
+  it("does not double count overlapping obstruction clearances", () => {
+    const usable = usableAreaFor(flatPlane({ obstructions: [
+      { kind: "plant", elementName: "A", plan: rect(8, 8, 2, 2) },
+      { kind: "plant", elementName: "B", plan: rect(9, 8, 2, 2) },
+    ] }));
+    expect(usable.usableSqm).toBeCloseTo(324 - 12, 9);
+    expect(usable.subtractions.filter((s) => s.kind === "plant").map((s) => s.areaSqm)).toEqual([9, 3]);
+  });
+
+  it("a narrow piece cannot invert through its setback and become a fake module platform", () => {
+    const sliver = rect(0, 0, 0.078, 5.31);
+    const clear = rect(10, 0, 8, 8);
+    const plane = flatPlane({
+      projectedSqm: 64 + 0.078 * 5.31,
+      outline: [{ kind: "outer", points: sliver }, { kind: "outer", points: clear }],
+    });
+    const usable = usableAreaFor(plane);
+    expect(usable.regions).toHaveLength(1);
+    expect(usable.usableSqm).toBeCloseTo(36, 9);
+    expect(layoutPlane(plane).modules.every((m) => m.centre[0] > 10)).toBe(true);
+    const rotated = sliver.map(([x, z]) => [(x - z) / Math.SQRT2, (x + z) / Math.SQRT2] as const);
+    expect(usableAreaFor(flatPlane({ outline: [rotated] })).regions).toHaveLength(0);
+  });
+});
+
+describe("the actual rendered box matches the layout footprint and measured plane", () => {
+  const cases = [flatPlane(), flatPlane({ tiltDeg: 5, normal: [Math.sin(Math.PI / 36), Math.cos(Math.PI / 36), 0] }),
+    pitchedPlane({ projectedSqm: 400, outline: [
+      { kind: "outer", points: rect(0, 0, 20, 10) },
+      { kind: "outer", points: rect(0, 20, 20, 10) },
+    ] }), ...[60, 90, 135, 180, 225, 270, 300].map((azimuthDeg) => {
+    const a = azimuthDeg * Math.PI / 180, t = Math.PI / 6;
+    return pitchedPlane({ azimuthDeg, normal: [Math.sin(a) * Math.sin(t), Math.cos(t), Math.cos(a) * Math.sin(t)] });
+  })];
+  for (const plane of cases) {
+    it(`local X=1.7/Z=1.0 corners at tilt ${plane.tiltDeg}, azimuth ${plane.azimuthDeg}`, () => {
+      const layout = layoutPlane(plane);
+      const pitched = plane.tiltDeg >= 10;
+      const [nx, ny, nz] = plane.normal;
+      const offset = ny * plane.maxElevationM + Math.min(...toPolygons(plane.outline).flatMap((p) =>
+        p.outer.map(([x, z]) => nx * x + nz * z)));
+      expect(layout.modules.length).toBeGreaterThan(0);
+      for (const panel of layout.modules) {
+        const q = new Quaternion(...panel.quaternion);
+        const expected = planCorners(panel.centre, panel.azimuthDeg, panel.tiltDeg,
+          pitched ? PV_MODULE_WIDTH_M : PV_MODULE_LENGTH_M, pitched ? PV_MODULE_LENGTH_M : PV_MODULE_WIDTH_M);
+        const actual = [-1, 1].flatMap((x) => [-1, 1].map((z) =>
+          new Vector3(x * PV_MODULE_LENGTH_M / 2, 0, z * PV_MODULE_WIDTH_M / 2)
+            .applyQuaternion(q).add(new Vector3(...panel.centre))));
+        for (const corner of actual) {
+          expect(expected.some(([x, z]) => Math.hypot(corner.x - x, corner.z - z) < 1e-8)).toBe(true);
+          const aboveRoof = nx * corner.x + ny * corner.y + nz * corner.z - offset;
+          if (pitched) expect(aboveRoof).toBeCloseTo(0, 8);
+          else expect(aboveRoof).toBeGreaterThanOrEqual(-1e-8);
+        }
+        if (!pitched) expect(Math.min(...actual.map((p) => nx * p.x + ny * p.y + nz * p.z - offset))).toBeCloseTo(0, 8);
+      }
+    });
+  }
 });
 
 describe("suitability is decided, named, and never silent", () => {
@@ -245,7 +378,7 @@ describe("placed modules obey the geometry — the invariants the box grid faile
       for (const m of layout.modules) {
         const corners = planCorners(m.centre, m.azimuthDeg, m.tiltDeg, alongU, alongV);
         expect(
-          rectangleFits(corners, usable.region, usable.blocked),
+          usable.regions.some((region) => rectangleFits(corners, region, usable.blocked)),
           `${name}: a module at ${m.centre.map((n) => n.toFixed(2)).join(",")} is not inside`,
         ).toBe(true);
       }
@@ -354,7 +487,7 @@ describe("placed modules obey the geometry — the invariants the box grid faile
     const usable = usableAreaFor(withHole);
     for (const m of layout.modules) {
       const corners = planCorners(m.centre, m.azimuthDeg, m.tiltDeg, PV_MODULE_LENGTH_M, PV_MODULE_WIDTH_M);
-      expect(rectangleFits(corners, usable.region, usable.blocked)).toBe(true);
+      expect(usable.regions.some((region) => rectangleFits(corners, region, usable.blocked))).toBe(true);
     }
     expect(layout.moduleCount).toBeLessThan(layoutPlane(flatPlane()).moduleCount);
   });
@@ -465,6 +598,41 @@ describe("the economics price the modules that were drawn", () => {
 });
 
 describe("against the real stage-1 artifact, not a fixture", () => {
+  it.each([
+    { id: "bs-medical-dental-clinic", count: 453, gross: 2592.012572, usableSqm: 1693.557969 },
+    { id: "schependomlaan", count: 10, gross: 359.965591, usableSqm: 73.8249577442148 },
+    { id: "duplex-apartment", count: 14, gross: 132.922236, usableSqm: 80.15519 },
+    { id: "fzk-haus", count: 22, gross: 143, usableSqm: 60.76 },
+  ])(
+    "$id: every piece is counted and every drawn underside clears its measured roof",
+    async ({ id, count, gross, usableSqm }) => {
+      const raw = (await import(`../../../../public/reference-buildings/${id}/roof-planes.json`)) as { default?: unknown };
+      const file = (raw.default ?? raw) as RoofPlaneSet;
+      const result = layoutRoofPlanes(file);
+      expect(result.totalModules).toBe(count);
+      expect(result.totalKWp).toBe(count * PV_PANEL_RATED_KWP);
+      expect(result.totalGrossProjectedSqm).toBeCloseTo(gross, 6);
+      expect(result.totalUsableSqm).toBeCloseTo(usableSqm, 6);
+      for (const plane of file.planes) {
+        const layout = result.planes.find((p) => p.planeId === plane.id)!;
+        const usable = usableAreaFor(plane);
+        const polygons = toPolygons(plane.outline);
+        const [nx, ny, nz] = plane.normal;
+        const offset = ny * plane.maxElevationM + Math.min(...polygons.flatMap((p) => p.outer.map(([x, z]) => nx * x + nz * z)));
+        for (const panel of layout.modules) {
+          const q = new Quaternion(...panel.quaternion);
+          const corners = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([x, z]) =>
+            new Vector3(x * PV_MODULE_LENGTH_M / 2, 0, z * PV_MODULE_WIDTH_M / 2)
+              .applyQuaternion(q).add(new Vector3(...panel.centre)));
+          const plan = corners.map((p) => [p.x, p.z] as [number, number]);
+          expect(usable.regions.some((region) => rectangleFits(plan, region, usable.blocked)), `${id}/${plane.id}: rendered footprint`).toBe(true);
+          for (const corner of corners) {
+            expect(nx * corner.x + ny * corner.y + nz * corner.z - offset, `${id}/${plane.id}: roof clearance`).toBeGreaterThanOrEqual(-1e-6);
+          }
+        }
+      }
+    },
+  );
   // bim-83's `roof-planes.json` for FZK Haus: two 30° pitches facing 180 and
   // 0. This is the case the old bounding-box grid got most visibly wrong —
   // one representative plane where the roof has two facing opposite ways.
@@ -495,7 +663,7 @@ describe("against the real stage-1 artifact, not a fixture", () => {
     const usable = usableAreaFor(planes.find((p) => p.azimuthDeg === 180)!);
     for (const m of south.modules) {
       const corners = planCorners(m.centre, m.azimuthDeg, m.tiltDeg, PV_MODULE_WIDTH_M, PV_MODULE_LENGTH_M);
-      expect(rectangleFits(corners, usable.region, usable.blocked)).toBe(true);
+      expect(usable.regions.some((region) => rectangleFits(corners, region, usable.blocked))).toBe(true);
     }
 
     // The building total is the south pitch alone, and its kWp is the count.

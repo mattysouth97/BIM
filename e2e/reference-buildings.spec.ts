@@ -166,6 +166,40 @@ for (const building of BUILDINGS) {
       );
       // The legend says where the modules are and where they are not.
       await expect(legend).toContainText("kWp");
+      const details = page.getByTestId("reference-pv-utilisation");
+      await details.locator("summary").click();
+      const table = page.getByTestId("reference-pv-table");
+      await expect(table).toBeVisible();
+      const rows = table.locator("tbody tr");
+      let sumModules = 0;
+      let sumCapacity = 0;
+      for (const cells of await rows.locator("td:nth-last-child(2)").allTextContents()) sumModules += Number(cells);
+      for (const cells of await rows.locator("td:last-child").allTextContents()) sumCapacity += Number(cells);
+      expect(sumModules).toBe(Number(counted));
+      expect(sumCapacity).toBeCloseTo(sumModules * 0.4, 6);
+      const totals = page.getByTestId("reference-pv-totals");
+      await expect(totals.locator("td:nth-last-child(2)")).toHaveText(String(sumModules));
+      await expect(totals.locator("td:last-child")).toHaveText(sumCapacity.toFixed(1));
+      await expect(solar).toContainText(`${sumCapacity.toFixed(1)} kWp`);
+    });
+
+    test("roof inspection clears the energy panels and restores the chosen work", async ({ page }) => {
+      const viewer = page.getByTestId("reference-model-viewer");
+      const overlay = page.getByTestId("reference-energy-overlays").locator("[data-twin-instrument-frame]");
+      const selectedBefore = await page.locator('[data-measure-chosen="true"]').count();
+      const focus = page.getByTestId("reference-view-inspection");
+      await focus.focus();
+      await page.keyboard.press("Enter");
+      await expect(focus).toHaveAttribute("aria-pressed", "true");
+      await expect(overlay).toBeHidden();
+      await page.getByTestId("reference-view-roof").click();
+      await expect(viewer).toHaveAttribute("data-view", "roof");
+      await expect(viewer.locator("canvas")).toBeVisible();
+      await page.getByTestId("reference-view-exterior").click();
+      await expect(viewer).toHaveAttribute("data-view", "exterior");
+      await focus.click();
+      await expect(overlay).toBeVisible();
+      await expect(page.locator('[data-measure-chosen="true"]')).toHaveCount(selectedBefore);
     });
 
     test("renders its energy strip on a FIRST visit, with no reload", async ({ page }) => {

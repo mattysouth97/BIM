@@ -1,7 +1,7 @@
 ---
 type: handoff
 status: implemented
-last_verified: 2026-09-06
+last_verified: 2026-09-07
 ---
 
 # Current Project State
@@ -17,6 +17,12 @@ Make the fixed four-step workflow — 건물 검색 → 도면 업로드 → 디
 
 The workflow shape is **settled** (explicit product decision, 2026-08-27). Build
 inside it; do not add a fifth step or a second front door.
+
+User direction on 2026-09-07: improve 3D/model quality, grow the licensed model
+collection, and develop reusable building-energy datasets with explicit source,
+measurement/assumption and calculated-versus-metered distinctions. Commit, push
+and deploy each major verified milestone. Current execution record:
+`2026-09-07-product-datasets-and-viewer.md`.
 
 ## Verified Working State
 
@@ -62,20 +68,21 @@ the PV path.
 
 **Open, in priority order:**
 
-1. **A person has not yet looked at the PV modules on the pages.** Tests hold
-   (legend = drawn on all four), but the apartment's deck places 10 modules on
-   33 of 130 m² usable, which is low — six rooflight holes grown by 0.5 m plus
-   a 1 m setback and a 1.77 m rack pitch on a 3.9 m deck. Open
-   `/models/schependomlaan`, choose 태양광, and compare with
-   `/reference-buildings/schependomlaan/roof-planes-qa.svg`.
-2. The per-plane utilisation table in the model page's retrofit panel (the
-   legend carries only the summary line).
-3. Obstructions for roof-mounted plant and parapets (openings are done).
-4. `pv-layout.ts` `toPolygon` takes the LARGEST outer of a multipolygon plane
-   and drops the rest — understates usable roof; a per-piece layout removes it.
-5. Follow-ups outside these briefs: the engine cannot reproduce the HRV
+1. Obstructions for roof-mounted plant and parapets (openings are done).
+2. Follow-ups outside these briefs: the engine cannot reproduce the HRV
    table's saving (`mechanicalAch` 0 while type is natural); LED/PV never move
    kWh or grade (`delivered-from-demand.ts`); a sourced Nijmegen climate.
+
+**2026-09-07 local milestone:** the four reference models' exterior/roof
+screenshots were inspected. PV layout now retains every disconnected outer,
+correctly accounts clipped/overlapping removals and gives the renderer exact
+portrait poses and roof clearance. The Clinic holds 453 modules / 181.2 kWp
+(was 447); apartment 10 / 4.0, Duplex 14 / 5.6, FZK 22 / 8.8. The per-plane
+table, sidebar economics, chip capacity and module-surface-area claim all use
+this layout. Reference shadows are enabled and fitted to model size; sidebar
+exterior/roof/focus controls expose the full model. See the new execution
+record for validation and deployment status; the production SHA above remains
+the last verified production until that deploy completes.
 
 **Traps found today, all recorded where they bit:** rebuilding artifacts
 churns CRLF on every JSON (check `git diff --ignore-cr-at-eol`, restore the

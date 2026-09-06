@@ -13,6 +13,7 @@ import {
   useSeedReferenceEnergy,
 } from "./reference-energy";
 import { ReferenceRetrofitPanel } from "./reference-retrofit";
+import { ReferenceViewControls, type ReferenceViewRequest } from "./reference-view-controls";
 
 export const FABRIC_LAYER = "fabric";
 
@@ -68,6 +69,8 @@ export function ReferenceBuildingWorkspace({
     () => new Set([FABRIC_LAYER]),
   );
   const [flowVisible, setFlowVisible] = useState(true);
+  const [inspection, setInspection] = useState(false);
+  const [viewRequest, setViewRequest] = useState<ReferenceViewRequest>({ view: "exterior", revision: 0 });
 
   const toggle = (id: string) =>
     setActive((current) => {
@@ -102,14 +105,18 @@ export function ReferenceBuildingWorkspace({
           manifest={manifest}
           energy={energy}
           locale={locale}
+          viewRequest={viewRequest}
+          inspection={inspection}
         />
         {energy ? (
+          <div className={inspection ? "hidden" : undefined} data-testid="reference-energy-overlays">
           <ReferenceEnergyFrame
             energy={energy}
             manifest={manifest}
             baseUrl={baseUrl}
             locale={locale}
           />
+          </div>
         ) : null}
       </section>
 
@@ -130,6 +137,13 @@ export function ReferenceBuildingWorkspace({
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
           {manifest.summary.ko}
         </p>
+        <ReferenceViewControls
+          request={viewRequest}
+          onView={(view) => setViewRequest((current) => ({ view, revision: current.revision + 1 }))}
+          inspection={inspection}
+          onInspection={() => setInspection((current) => !current)}
+          isKo={isKo}
+        />
 
         <section className="mt-6" data-testid="reference-model-layers">
           <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">

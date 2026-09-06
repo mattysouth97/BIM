@@ -22,6 +22,7 @@
 //     from the model's project north. A flat plane has none.
 
 import { insetRing, pointInRing } from "@/lib/gis/ring-utils";
+import polygonClipping, { type MultiPolygon } from "polygon-clipping";
 
 // ── Module and rack constants ─────────────────────────────────────────────
 
@@ -122,7 +123,7 @@ export interface RoofObstruction {
    * The obstruction's plan polygon. `roof-planes.json` names this field
    * `plan`; `outline` is accepted as an alias because the methodology doc
    * called it that and a reader may well write it that way. Same tolerance,
-   * and the same reason, as `toPolygon` accepting two outline shapes: the
+   * and the same reason, as `toPolygons` accepting two outline shapes: the
    * artifact on disk is the contract, and a producer using the documented
    * name should not silently subtract nothing.
    */
@@ -150,10 +151,9 @@ export interface RoofPlane {
   minElevationM: number;
   maxElevationM: number;
   /**
-   * Plan outline as CLOSED rings, outer first then holes — the shape both
-   * producers emit (`roof-planes.json` from the IFC walk, `twinRoofPlanes`
-   * from the storey plates), so a measured plane and a twin plane come
-   * through one door.
+   * Tagged closed rings may contain several disjoint outers; holes belong
+   * to the outer that contains them. Bare rings from twin storey plates
+   * describe one polygon, with its outer first and then its holes.
    */
   outline: readonly (PlanRing | TaggedRing)[];
   obstructions?: readonly RoofObstruction[];
@@ -194,9 +194,9 @@ export interface PlaneSubtraction {
 /** A module, placed. */
 export interface PvModuleInstance {
   planeId: string;
-  /** Centre in model coordinates, [x, y, z], y up. */
+  /** Underside centre in model coordinates; racks are lifted clear of the roof. */
   centre: readonly [number, number, number];
-  /** Pose as a unit quaternion [x, y, z, w] taking +Y to the module normal. */
+  /** Pose for local X=1.70 m, Z=1.00 m, +Y normal; portrait on a pitch. */
   quaternion: readonly [number, number, number, number];
   /** The module's own tilt and bearing, which on a rack are the rack's. */
   tiltDeg: number;
@@ -239,7 +239,7 @@ export interface PvLayoutResult {
 const MODULE_AREA_SQM = PV_MODULE_LENGTH_M * PV_MODULE_WIDTH_M;
 
 /**
- * Normalise an outline to one outer ring and its holes.
+ * Preserve every outer ring, associating each hole with its containing outer.
  *
  * Two shapes arrive here and BOTH are real. `roof-planes.json` as bim-83
  * landed it tags each ring — `[{ kind: "outer" | "hole", points }]` — while
@@ -252,34 +252,36 @@ const MODULE_AREA_SQM = PV_MODULE_LENGTH_M * PV_MODULE_WIDTH_M;
  * tags and does NOT rely on order, because a producer that emits a hole first
  * would otherwise silently invert the roof.
  */
-export function toPolygon(outline: readonly (PlanRing | TaggedRing)[]): PlanPolygon {
+export function toPolygons(outline: readonly (PlanRing | TaggedRing)[]): PlanPolygon[] {
   const tagged = outline.filter((r): r is TaggedRing => !Array.isArray(r));
   if (tagged.length > 0) {
-    // A plane's outline on disk can be a MULTIPOLYGON — sky occlusion splits a
-    // plane into pieces, and each piece is its own tagged outer. Found on the
-    // apartment's 130 m² deck (`dakvloer-plane-0`: three outers, the first a
-    // zero-width sliver), where taking "the" first outer laid the deck out on
-    // the sliver and refused it as no-usable-area. The LARGEST outer is the
-    // plane; holes are kept only when they lie inside it. Smaller pieces are
-    // dropped, which UNDERSTATES usable roof — stated here, and a per-piece
-    // layout is the follow-up that removes the understatement.
-    const outers = tagged.filter((r) => r.kind === "outer");
-    const outer = outers.reduce<TaggedRing | null>(
-      (best, r) => (best === null || Math.abs(ringAreaSqm(r.points)) > Math.abs(ringAreaSqm(best.points)) ? r : best),
-      null,
-    );
-    const outerPoints = outer?.points ?? [];
-    const outerPolygon: PlanPolygon = { outer: outerPoints, holes: [] };
-    return {
-      outer: outerPoints,
-      holes: tagged
-        .filter((r) => r.kind === "hole")
-        .map((r) => r.points)
-        .filter((hole) => hole.length > 0 && pointInPolygon(hole[0][0], hole[0][1], outerPolygon)),
-    };
+    const polygons = tagged.filter((r) => r.kind === "outer")
+      .map((r) => ({ outer: r.points, holes: [] as PlanRing[] }));
+    for (const hole of tagged.filter((r) => r.kind === "hole")) {
+      if (hole.points.length === 0) continue;
+      // A nested island must not steal its surrounding polygon's hole.
+      // Choose the smallest outer containing the entire ring, not ring order.
+      const owner = polygons.filter((p) => hole.points.every(([x, z]) =>
+        pointInRing(x, z, toMutableRing(p.outer))))
+        .sort((a, b) => ringAreaSqm(a.outer) - ringAreaSqm(b.outer))[0];
+      owner?.holes.push(hole.points);
+    }
+    return polygons;
   }
   const rings = outline as readonly PlanRing[];
-  return { outer: rings[0] ?? [], holes: rings.slice(1) };
+  return rings.length ? [{ outer: rings[0], holes: rings.slice(1) }] : [];
+}
+
+function polygonsAreaSqm(polygons: readonly PlanPolygon[]): number {
+  return polygons.reduce((sum, polygon) => sum + polygonAreaSqm(polygon), 0);
+}
+
+function clippingPolygons(polygons: readonly PlanPolygon[]): MultiPolygon {
+  return polygons.map((p) => [p.outer, ...(p.holes ?? [])].map(toMutableRing));
+}
+
+function planPolygons(polygons: MultiPolygon): PlanPolygon[] {
+  return polygons.map(([outer, ...holes]) => ({ outer, holes }));
 }
 
 function toMutableRing(ring: PlanRing): [number, number][] {
@@ -288,6 +290,10 @@ function toMutableRing(ring: PlanRing): [number, number][] {
 
 /** Absolute shoelace area of a ring, m². */
 export function ringAreaSqm(ring: PlanRing): number {
+  return Math.abs(signedRingArea(ring));
+}
+
+function signedRingArea(ring: PlanRing): number {
   if (ring.length < 3) return 0;
   let twice = 0;
   for (let i = 0; i < ring.length; i++) {
@@ -295,7 +301,7 @@ export function ringAreaSqm(ring: PlanRing): number {
     const [x2, z2] = ring[(i + 1) % ring.length];
     twice += x1 * z2 - x2 * z1;
   }
-  return Math.abs(twice) / 2;
+  return twice / 2;
 }
 
 /** Outer ring less its holes. */
@@ -328,41 +334,47 @@ export function outsetRing(ring: PlanRing, distance: number): [number, number][]
  * Does the axis-aligned-in-(u,v) module rectangle, given as its four plan
  * corners, sit wholly inside `region` and clear of every `blocked` polygon?
  *
- * Corner containment alone is not enough for a concave region — a rectangle
- * can have all four corners inside a C-shape while spanning its mouth — so
- * the edges are sampled too. `EDGE_SAMPLES` at 1.7 m gives a sample every
- * ~14 cm, well under the smallest feature a 10 mm-simplified roof outline
- * carries, and the setback has already pulled the region 0.3-1.0 m off every
- * real edge.
+ * Check edge intersections as well as containment. Sampling an edge can
+ * miss a narrow notch, and sampling a centre can miss an enclosed hole.
  */
-const EDGE_SAMPLES = 12;
-
 export function rectangleFits(
   corners: readonly (readonly [number, number])[],
   region: PlanPolygon,
   blocked: readonly PlanRing[],
 ): boolean {
-  const probes: [number, number][] = [];
-  for (let i = 0; i < corners.length; i++) {
-    const [ax, az] = corners[i];
-    const [bx, bz] = corners[(i + 1) % corners.length];
-    for (let s = 0; s < EDGE_SAMPLES; s++) {
-      const t = s / EDGE_SAMPLES;
-      probes.push([ax + (bx - ax) * t, az + (bz - az) * t]);
+  if (corners.length !== 4 || !corners.every(([x, z]) => pointInPolygon(x, z, region))) return false;
+  const rectangle = toMutableRing(corners);
+  for (const ring of [region.outer, ...(region.holes ?? []), ...blocked]) {
+    for (let i = 0; i < corners.length; i++) {
+      for (let j = 0; j < ring.length; j++) {
+        if (segmentsIntersect(corners[i], corners[(i + 1) % corners.length],
+          ring[j], ring[(j + 1) % ring.length])) return false;
+      }
     }
   }
-  // Centre too: a rectangle enclosing a hole entirely would otherwise pass.
-  const cx = corners.reduce((s, c) => s + c[0], 0) / corners.length;
-  const cz = corners.reduce((s, c) => s + c[1], 0) / corners.length;
-  probes.push([cx, cz]);
-
-  for (const [x, z] of probes) {
-    if (!pointInPolygon(x, z, region)) return false;
-    for (const ring of blocked) {
-      if (pointInRing(x, z, toMutableRing(ring))) return false;
-    }
+  for (const ring of [...(region.holes ?? []), ...blocked]) {
+    if (ring.some(([x, z]) => pointInRing(x, z, rectangle)) ||
+      corners.some(([x, z]) => pointInRing(x, z, toMutableRing(ring)))) return false;
   }
   return true;
+}
+
+function segmentsIntersect(
+  a: readonly [number, number], b: readonly [number, number],
+  c: readonly [number, number], d: readonly [number, number],
+): boolean {
+  const cross = (p: readonly [number, number], q: readonly [number, number], r: readonly [number, number]) =>
+    (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]);
+  const abC = cross(a, b, c), abD = cross(a, b, d);
+  const cdA = cross(c, d, a), cdB = cross(c, d, b);
+  if (abC * abD < 0 && cdA * cdB < 0) return true;
+  const onSegment = (p: readonly [number, number], q: readonly [number, number], r: readonly [number, number]) =>
+    r[0] >= Math.min(p[0], q[0]) - 1e-9 && r[0] <= Math.max(p[0], q[0]) + 1e-9 &&
+    r[1] >= Math.min(p[1], q[1]) - 1e-9 && r[1] <= Math.max(p[1], q[1]) + 1e-9;
+  return (Math.abs(abC) < 1e-9 && onSegment(a, b, c)) ||
+    (Math.abs(abD) < 1e-9 && onSegment(a, b, d)) ||
+    (Math.abs(cdA) < 1e-9 && onSegment(c, d, a)) ||
+    (Math.abs(cdB) < 1e-9 && onSegment(c, d, b));
 }
 
 // ── Stage 2: suitability and usable area ──────────────────────────────────
@@ -381,7 +393,7 @@ export function planeExclusion(plane: RoofPlane): PlaneExclusionReason | null {
   // modules, and a zero with no reason is indistinguishable from a roof that
   // genuinely holds nothing.
   if (plane.projectedSqm > 0) {
-    const outlineSqm = polygonAreaSqm(toPolygon(plane.outline));
+    const outlineSqm = polygonsAreaSqm(toPolygons(plane.outline));
     if (outlineSqm / plane.projectedSqm < PV_OUTLINE_AREA_MIN_RATIO) {
       return "outline-area-disagrees-with-stated";
     }
@@ -399,7 +411,8 @@ export function planeExclusion(plane: RoofPlane): PlaneExclusionReason | null {
 }
 
 export interface UsableArea {
-  region: PlanPolygon;
+  /** One grid per inset piece; never bridge the empty space between them. */
+  regions: PlanPolygon[];
   blocked: PlanRing[];
   usableSqm: number;
   subtractions: PlaneSubtraction[];
@@ -408,31 +421,36 @@ export interface UsableArea {
 /**
  * Setback the outline, grow the obstructions, and report where the roof went.
  *
- * The usable region is the inset outline; obstructions are kept as a separate
- * `blocked` list rather than booleaned out of it. That is deliberate: a
- * polygon-boolean is the one primitive this codebase does not already have,
- * and placement only ever asks "is this rectangle inside the region and clear
- * of the obstructions", which needs no boolean at all. `usableSqm` subtracts
- * each grown obstruction's own area, which is exact while obstructions lie
- * inside the inset outline and do not overlap each other — true of skylights
- * and roof plant — and OVER-subtracts if one straddles the setback edge.
- * Over-subtracting understates the usable roof, which is the safe direction
- * and is the direction stated here rather than discovered later.
+ * Each outer receives its own setback. Grown holes and obstructions are
+ * clipped to these regions for accounting, so an obstruction crossing an
+ * edge or two pieces is charged only for the roof it actually removes.
+ * Overlapping obstructions are subtracted in input order, once in total.
+ * Placement retains the inset regions and a blocked list so adding an
+ * obstruction cannot move the grid origin or repack unaffected modules.
  */
 export function usableAreaFor(plane: RoofPlane): UsableArea {
   const setback =
     plane.tiltDeg < PV_FLAT_TILT_MAX_DEG ? PV_SETBACK_FLAT_M : PV_SETBACK_PITCHED_M;
 
-  const polygon = toPolygon(plane.outline);
-  const grossSqm = polygonAreaSqm(polygon);
-  const insetOuter = insetRing(toMutableRing(polygon.outer), setback);
-  // A hole is a void in the roof, so its edge needs the same setback — grown,
-  // not inset, because the usable side is outside it.
-  const insetHoles = (polygon.holes ?? []).map((h) => outsetRing(h, setback));
-  const region: PlanPolygon = { outer: insetOuter, holes: insetHoles };
+  const polygons = toPolygons(plane.outline);
+  const grossSqm = polygonsAreaSqm(polygons);
+  const regions = polygons.flatMap((polygon) => {
+    const insetOuter = insetRing(toMutableRing(polygon.outer), setback);
+    const bb = bboxOf(polygon.outer);
+    // The miter helper moves vertices but does not detect collapse. A thin
+    // sliver can turn inside out and grow into a fake roof after an inset.
+    if (bb.maxX - bb.minX <= 2 * setback || bb.maxZ - bb.minZ <= 2 * setback ||
+      signedRingArea(polygon.outer) * signedRingArea(insetOuter) <= 0) return [];
+    const insetHoles = (polygon.holes ?? []).map((h) => outsetRing(h, setback));
+    // Clipping also handles holes reaching an edge or overlapping after they
+    // grow; subtracting their full areas would count the same roof twice.
+    return planPolygons(polygonClipping.intersection(
+      [[insetOuter, ...insetHoles]], clippingPolygons([polygon]),
+    ));
+  });
 
   const subtractions: PlaneSubtraction[] = [];
-  const insetSqm = polygonAreaSqm(region);
+  const insetSqm = polygonsAreaSqm(regions);
   if (grossSqm - insetSqm > 1e-9) {
     subtractions.push({
       kind: "setback",
@@ -442,14 +460,18 @@ export function usableAreaFor(plane: RoofPlane): UsableArea {
   }
 
   const blocked: PlanRing[] = [];
-  let obstructionSqm = 0;
+  let remaining = clippingPolygons(regions);
+  let remainingSqm = insetSqm;
   for (const obstruction of plane.obstructions ?? []) {
     const ring = obstructionPlan(obstruction);
     if (ring.length < 3) continue;
     const grown = outsetRing(ring, PV_OBSTRUCTION_CLEARANCE_M);
     blocked.push(grown);
-    const area = ringAreaSqm(grown);
-    obstructionSqm += area;
+    const next = remaining.length ? polygonClipping.difference(remaining, [grown]) : [];
+    const nextSqm = polygonsAreaSqm(planPolygons(next));
+    const area = Math.max(0, remainingSqm - nextSqm);
+    remaining = next;
+    remainingSqm = nextSqm;
     subtractions.push({
       kind: obstruction.kind,
       elementName: obstruction.elementName,
@@ -458,9 +480,9 @@ export function usableAreaFor(plane: RoofPlane): UsableArea {
   }
 
   return {
-    region,
+    regions,
     blocked,
-    usableSqm: Math.max(0, insetSqm - obstructionSqm),
+    usableSqm: remainingSqm,
     subtractions,
   };
 }
@@ -505,21 +527,45 @@ function bboxOf(ring: PlanRing): { minX: number; maxX: number; minZ: number; max
   return { minX, maxX, minZ, maxZ };
 }
 
-/** Quaternion [x,y,z,w] rotating +Y onto `n`. */
-function quaternionFromUp(n: readonly [number, number, number]): [number, number, number, number] {
-  const [nx, ny, nz] = n;
-  const len = Math.hypot(nx, ny, nz) || 1;
-  const ux = nx / len, uy = ny / len, uz = nz / len;
-  // axis = up × n, angle = acos(up · n), with up = (0,1,0).
-  const ax = uz, ay = 0, az = -ux;
-  const s = Math.hypot(ax, ay, az);
-  if (s < 1e-12) {
-    return uy >= 0 ? [0, 0, 0, 1] : [1, 0, 0, 0]; // aligned or inverted
+/** Orient both the normal AND long edge of the renderer's 1.70 × 1.00 m box. */
+function moduleQuaternion(
+  f: GridFrame, normal: readonly [number, number, number], portrait: boolean,
+): [number, number, number, number] {
+  const length = Math.hypot(...normal);
+  const [nx, ny, nz] = normal.map((v) => v / length);
+  const slopeY = -(nx * f.dx + nz * f.dz) / ny;
+  const slopeLength = Math.hypot(1, slopeY);
+  const [xx, xy, xz] = portrait
+    ? [f.dx / slopeLength, slopeY / slopeLength, f.dz / slopeLength]
+    : [f.sx, 0, f.sz];
+  // Local Z = local X × local Y; columns form a right-handed rotation.
+  const zx = xy * nz - xz * ny, zy = xz * nx - xx * nz, zz = xx * ny - xy * nx;
+  const trace = xx + ny + zz;
+  let q: [number, number, number, number];
+  if (trace > 0) {
+    const s = Math.sqrt(trace + 1) * 2;
+    q = [(nz - zy) / s, (zx - xz) / s, (xy - nx) / s, s / 4];
+  } else if (xx > ny && xx > zz) {
+    const s = Math.sqrt(1 + xx - ny - zz) * 2;
+    q = [s / 4, (nx + xy) / s, (zx + xz) / s, (nz - zy) / s];
+  } else if (ny > zz) {
+    const s = Math.sqrt(1 + ny - xx - zz) * 2;
+    q = [(nx + xy) / s, s / 4, (zy + nz) / s, (zx - xz) / s];
+  } else {
+    const s = Math.sqrt(1 + zz - xx - ny) * 2;
+    q = [(zx + xz) / s, (zy + nz) / s, s / 4, (xy - nx) / s];
   }
-  const angle = Math.acos(Math.min(1, Math.max(-1, uy)));
-  const half = angle / 2;
-  const sinHalf = Math.sin(half);
-  return [(ax / s) * sinHalf, (ay / s) * sinHalf, (az / s) * sinHalf, Math.cos(half)];
+  const qLength = Math.hypot(...q);
+  return q.map((v) => v / qLength) as [number, number, number, number];
+}
+
+/** Highest measured outer vertex supplies one datum for every disconnected piece. */
+function elevationReference(plane: RoofPlane): readonly [number, number] {
+  const vertices = toPolygons(plane.outline).flatMap((p) => [...p.outer]);
+  const [nx, , nz] = plane.normal;
+  return vertices.reduce<readonly [number, number]>((highest, p) =>
+    nx * p[0] + nz * p[1] < nx * highest[0] + nz * highest[1] ? p : highest,
+  vertices[0] ?? [0, 0]);
 }
 
 /** Elevation of the plane at a plan point, from its normal and a known point. */
@@ -541,7 +587,7 @@ function elevationAt(plane: RoofPlane, x: number, z: number, ref: readonly [numb
  * reports zero and says so, which is a real answer about a real roof.
  */
 export function layoutPlane(plane: RoofPlane, latitudeDeg = PV_LAYOUT_LATITUDE_DEG): PlaneLayout {
-  const grossProjectedSqm = polygonAreaSqm(toPolygon(plane.outline));
+  const grossProjectedSqm = polygonsAreaSqm(toPolygons(plane.outline));
   const excluded = planeExclusion(plane);
 
   const base = {
@@ -662,36 +708,46 @@ function gridPlace(
   azimuthDeg: number,
   normal: readonly [number, number, number],
 ): PvModuleInstance[] {
-  const ring = usable.region.outer;
-  if (ring.length < 3) return [];
-  const bb = bboxOf(ring);
-  const originX = bb.minX;
-  const originZ = bb.minZ;
-  const span = Math.hypot(bb.maxX - bb.minX, bb.maxZ - bb.minZ);
-  const nU = Math.floor(span / f.stepU) + 2;
-  const nV = Math.floor(span / f.stepVPlan) + 2;
-  const quaternion = quaternionFromUp(normal);
-  const ref: [number, number] = [originX, originZ];
-
+  const quaternion = moduleQuaternion(f, normal, plane.tiltDeg >= PV_FLAT_TILT_MAX_DEG);
+  const ref = elevationReference(plane);
   const out: PvModuleInstance[] = [];
-  for (let iv = -nV; iv <= nV; iv++) {
-    for (let iu = -nU; iu <= nU; iu++) {
-      const cx = originX + f.sx * (iu * f.stepU) + f.dx * (iv * f.stepVPlan);
-      const cz = originZ + f.sz * (iu * f.stepU) + f.dz * (iv * f.stepVPlan);
-      const corners: [number, number][] = [
-        [cx - f.sx * f.halfU - f.dx * f.halfVPlan, cz - f.sz * f.halfU - f.dz * f.halfVPlan],
-        [cx + f.sx * f.halfU - f.dx * f.halfVPlan, cz + f.sz * f.halfU - f.dz * f.halfVPlan],
-        [cx + f.sx * f.halfU + f.dx * f.halfVPlan, cz + f.sz * f.halfU + f.dz * f.halfVPlan],
-        [cx - f.sx * f.halfU + f.dx * f.halfVPlan, cz - f.sz * f.halfU + f.dz * f.halfVPlan],
-      ];
-      if (!rectangleFits(corners, usable.region, usable.blocked)) continue;
-      out.push({
-        planeId: plane.id,
-        centre: [cx, elevationAt(plane, cx, cz, ref), cz],
-        quaternion,
-        tiltDeg,
-        azimuthDeg,
-      });
+  for (const region of usable.regions) {
+    const ring = region.outer;
+    if (ring.length < 3) continue;
+    const bb = bboxOf(ring);
+    const originX = bb.minX;
+    const originZ = bb.minZ;
+    const span = Math.hypot(bb.maxX - bb.minX, bb.maxZ - bb.minZ);
+    const nU = Math.floor(span / f.stepU) + 2;
+    const nV = Math.floor(span / f.stepVPlan) + 2;
+    for (let iv = -nV; iv <= nV; iv++) {
+      for (let iu = -nU; iu <= nU; iu++) {
+        const cx = originX + f.sx * (iu * f.stepU) + f.dx * (iv * f.stepVPlan);
+        const cz = originZ + f.sz * (iu * f.stepU) + f.dz * (iv * f.stepVPlan);
+        const corners: [number, number][] = [
+          [cx - f.sx * f.halfU - f.dx * f.halfVPlan, cz - f.sz * f.halfU - f.dz * f.halfVPlan],
+          [cx + f.sx * f.halfU - f.dx * f.halfVPlan, cz + f.sz * f.halfU - f.dz * f.halfVPlan],
+          [cx + f.sx * f.halfU + f.dx * f.halfVPlan, cz + f.sz * f.halfU + f.dz * f.halfVPlan],
+          [cx - f.sx * f.halfU + f.dx * f.halfVPlan, cz - f.sz * f.halfU + f.dz * f.halfVPlan],
+        ];
+        if (!rectangleFits(corners, region, usable.blocked)) continue;
+        const surfaceY = elevationAt(plane, cx, cz, ref);
+        // A racked panel's underside must clear the roof at ALL corners. The
+        // lift follows the measured plane and chosen rack tilt; there is no
+        // invented mounting height. Flush panels already share the roof plane.
+        const rackLift = plane.tiltDeg < PV_FLAT_TILT_MAX_DEG
+          ? Math.max(0, ...corners.map(([x, z]) =>
+            elevationAt(plane, x, z, ref) - surfaceY +
+            (normal[0] * (x - cx) + normal[2] * (z - cz)) / normal[1]))
+          : 0;
+        out.push({
+          planeId: plane.id,
+          centre: [cx, surfaceY + rackLift, cz],
+          quaternion,
+          tiltDeg,
+          azimuthDeg,
+        });
+      }
     }
   }
   return out;

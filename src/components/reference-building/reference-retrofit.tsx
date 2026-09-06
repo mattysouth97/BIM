@@ -28,6 +28,7 @@ import { useMemo } from "react";
 
 import { useScenarioStore } from "@/store/scenario-store";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
+import { usePvLayout } from "@/hooks/use-pv-layout";
 import {
   useRetrofitScenario,
   engineEnvelopeAreasFrom,
@@ -44,6 +45,7 @@ import {
 } from "@/components/retrofit/measure-card";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
 import type { ReferenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
+import { ReferencePvUtilisation } from "./reference-pv-utilisation";
 
 /**
  * The four roof typologies in Korean. `flat` alone was translated until FZK
@@ -124,11 +126,14 @@ export function retrofitBasisLines(
       : "Areas are the ones the engine itself priced — roof at the measured roof surface, floor at the ground slab, windows at the measured aperture, wall at gross − aperture − doors.",
     roof
       ? isKo
-        ? `태양광은 ${ROOF_TYPE_KO[roof.type]} 이용률로 산정했습니다 · ${roof.read}`
-        : `PV is sized on the ${roof.type}-roof utilisation factor · ${roof.read}`
+        ? `에너지 입력의 지붕 분류: ${ROOF_TYPE_KO[roof.type]} · ${roof.read}`
+        : `Energy-input roof category: ${roof.type} · ${roof.read}`
       : isKo
-        ? "이 건물 파일은 지붕 형태를 명시하지 않아 태양광은 평지붕 이용률(0.7)로 산정했습니다 — 실제 형태가 확인되면 바뀝니다."
-        : "This building's file states no roof typology, so PV is sized on the flat-deck utilisation factor (0.7) — a stand-in, not a reading.",
+        ? "이 건물 파일은 지붕 형태를 명시하지 않습니다. 태양광 용량은 지붕면 배치 결과로만 산정합니다."
+        : "This building's file states no roof typology. PV capacity comes only from the roof-plane layout.",
+    isKo
+      ? "태양광 용량은 지붕면에 배치된 모듈 수 × 가정 정격용량으로 산정하며, 지붕면 데이터가 없으면 용량을 산정하지 않습니다. 지붕면별 배치표에 면적·용량·제외 사유와 가정을 표시합니다."
+      : "PV capacity is the modules placed on the roof planes × assumed module rating; without roof-plane data no capacity is priced. The roof-plane table lists areas, capacity, exclusions and assumptions.",
     isKo
       ? "조명·태양광은 NPV만 움직이고 kWh/m²와 등급은 움직이지 못합니다: 엔진의 1차에너지 변환이 조명을 총수요의 15%로 고정하고 신재생을 0으로 두기 때문입니다."
       : "Lighting and PV move NPV only, and cannot move kWh/m² or the grade: the primary-energy step derives lighting as a flat 15 % of total demand and hard-codes renewable to 0.",
@@ -152,6 +157,7 @@ export function ReferenceRetrofitPanel({
   const { buildingPk, climate } = energy;
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
   const programTrack = useScenarioStore((s) => s.programTrack);
+  const pvLayout = usePvLayout();
 
   // The SAME engine run the frame's HUD uses — same store key, same sigungu
   // code — so the section under the canvas and the rail over it are priced
@@ -176,6 +182,7 @@ export function ReferenceRetrofitPanel({
     programTrack,
     engineDemand: metrics?.demand,
     engineEnvelopeAreas,
+    pvGeometricKWp: pvLayout?.totalKWp ?? 0,
   });
 
   const selectedIds = useMemo(
@@ -285,6 +292,8 @@ export function ReferenceRetrofitPanel({
           </div>
         </>
       )}
+
+      <ReferencePvUtilisation layout={pvLayout} locale={locale} />
 
       <details className="mt-3 group">
         <summary className="cursor-pointer text-[11px] text-foreground">

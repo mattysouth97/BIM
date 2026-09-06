@@ -7,6 +7,8 @@
 // selected says why in terms that reproduce its own figures.
 
 import { describe, it, expect, beforeEach } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { render, within, cleanup } from "@testing-library/react";
 import {
   ReferenceRetrofitPanel,
@@ -20,6 +22,9 @@ import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useScenarioStore } from "@/store/scenario-store";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
+import { layoutRoofPlanes, type RoofPlaneSet } from "@/lib/retrofit/pv-layout";
+import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
+import { formatKRW, formatKWh } from "@/components/retrofit/measure-card";
 import {
   REFERENCE_BUILDING_IDS,
   type ReferenceBuildingId,
@@ -113,7 +118,9 @@ describe("retrofitBasisLines", () => {
       const energy = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!;
       const lines = retrofitBasisLines(energy, false).join(" ");
       expect(lines).toContain(energy.roof!.read);
-      expect(lines).toContain(`${energy.roof!.type}-roof utilisation factor`);
+      expect(lines).toContain(`Energy-input roof category: ${energy.roof!.type}`);
+      expect(lines).toContain("modules placed on the roof planes × assumed module rating");
+      expect(lines).not.toContain("utilisation factor");
       expect(lines).not.toContain("states no roof typology");
     });
   }
@@ -123,7 +130,8 @@ describe("retrofitBasisLines", () => {
     const withoutRoof = { ...energy, roof: undefined };
     const lines = retrofitBasisLines(withoutRoof, false).join(" ");
     expect(lines).toContain("states no roof typology");
-    expect(lines).toContain("a stand-in, not a reading");
+    expect(lines).toContain("PV capacity comes only from the roof-plane layout");
+    expect(lines).not.toContain("0.7");
   });
 
   it("discloses the three things these measures do NOT do to the engine", () => {
@@ -150,13 +158,14 @@ describe("the section on a real building page", () => {
     cleanup();
     useMaterialStore.setState({ properties: {} });
     useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
-    useScenarioStore.setState({ capexBudgetKrw: 250_000_000, programTrack: "none" });
+    useScenarioStore.setState({ capexBudgetKrw: 250_000_000, programTrack: "none", roofPlanes: null });
   });
 
   function seed(id: ReferenceBuildingId) {
     const energy = referenceBuildingEnergyInputs(id)!;
     useMaterialStore.setState({ properties: { [energy.buildingPk]: energy.materials } });
     useRecipeStore.setState({ baseRecipes: { [energy.buildingPk]: energy.recipe } });
+    useScenarioStore.setState({ roofPlanes: JSON.parse(readFileSync(join(process.cwd(), "public/reference-buildings", id, "roof-planes.json"), "utf8")) as RoofPlaneSet });
     return energy;
   }
 
@@ -224,6 +233,22 @@ describe("the section on a real building page", () => {
       const ranks = ids.map(rank);
       expect([...ranks].sort((a, b) => a - b)).toEqual(ranks);
     });
+
+    it(`${id}: the PV candidate prices the modules in the roof table`, () => {
+      const energy = seed(id as ReferenceBuildingId);
+      const layout = layoutRoofPlanes(useScenarioStore.getState().roofPlanes!);
+      const drawnModules = layout.planes.reduce((sum, plane) => sum + plane.modules.length, 0);
+      const expected = calculateSolarPotential(1, energy.roof!.type, "seoul", 130, undefined, drawnModules * 0.4);
+      const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="en" />);
+      const card = container.querySelector(`[data-testid="retrofit-measure-solar-pv-${energy.roof!.type}"]`)!;
+      expect(card).not.toBeNull();
+      const capacity = card.textContent!.match(/([\d.]+) kWp/);
+      expect(Number(capacity?.[1])).toBeCloseTo(drawnModules * 0.4, 8);
+      expect(card.textContent).toContain(formatKRW(expected.estimatedCost));
+      expect(card.textContent).toContain(`${formatKWh(expected.annualGenerationKWh)}/yr`);
+      const totals = container.querySelector('[data-testid="reference-pv-totals"]')!;
+      expect(Number(totals.querySelectorAll("td")[4].textContent)).toBe(Number(capacity?.[1]));
+    });
   }
 
   it("the Clinic selects nothing at the default budget, and says so instead of showing an empty list", () => {
@@ -242,6 +267,14 @@ describe("the section on a real building page", () => {
     ).toBe(6);
     expect(within(container).queryByTestId("reference-model-retrofit-empty")).toBeNull();
   });
+
+  it("with no roof data it prices no PV candidate and states the absence", () => {
+    const energy = seed("bs-medical-dental-clinic");
+    useScenarioStore.setState({ roofPlanes: null });
+    const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="en" />);
+    expect(container.querySelector('[data-testid^="retrofit-measure-solar-pv"]')).toBeNull();
+    expect(within(container).getByTestId("reference-pv-unavailable").textContent).toContain("no PV capacity is priced");
+  });
 });
 
 describe("the Korean basis line names the roof in Korean", () => {
@@ -257,7 +290,8 @@ describe("the Korean basis line names the roof in Korean", () => {
         sentence,
         `${id}: the Korean PV basis line still carries the enum "${energy.roof.type}"`,
       ).not.toMatch(new RegExp(`\\b${energy.roof.type}\\b`));
-      expect(ko).toContain("이용률로 산정했습니다");
+      expect(ko).toContain("에너지 입력의 지붕 분류:");
+      expect(ko).not.toContain("이용률로 산정했습니다");
     }
   });
 });

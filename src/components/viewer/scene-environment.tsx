@@ -37,11 +37,11 @@ class EnvironmentBoundary extends Component<{ children: ReactNode }, BoundarySta
   }
 }
 
-export function SceneEnvironment() {
+export function SceneEnvironment({ intensity = 1 }: { intensity?: number }) {
   return (
     <EnvironmentBoundary>
       <Suspense fallback={null}>
-        <Environment files="/hdr/studio.hdr" background={false} />
+        <Environment files="/hdr/studio.hdr" background={false} environmentIntensity={intensity} />
       </Suspense>
     </EnvironmentBoundary>
   );

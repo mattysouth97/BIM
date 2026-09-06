@@ -39,6 +39,7 @@ import type { MaterialProperties } from "@/lib/material-types";
 import { KOREAN_2020_TARGET_U_VALUES } from "@/lib/retrofit/envelope-retrofits";
 import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
 import { normalizeEfficiency } from "@/lib/energy/annual-demand";
+import { PV_MODULE_LENGTH_M, PV_MODULE_WIDTH_M, PV_PANEL_RATED_KWP } from "@/lib/retrofit/pv-layout";
 
 export type TwinPhaseId = "existing" | "retrofit";
 
@@ -199,7 +200,7 @@ export function applyPhaseToMaterials(
   const pvId = [...ids].find((id) => pvRoofTypeFromId(id) !== null);
   const pvRoofType = pvId ? pvRoofTypeFromId(pvId) : null;
   const roofAreaSqm = context?.roofAreaSqm ?? 0;
-  if (pvRoofType && roofAreaSqm > 0) {
+  if (pvRoofType && roofAreaSqm > 0 && context?.geometricKWp !== 0) {
     const pv = calculateSolarPotential(
       roofAreaSqm,
       pvRoofType,
@@ -215,7 +216,11 @@ export function applyPhaseToMaterials(
       ...next.renewable.solarPV,
       installed: true,
       capacity: pv.systemSizeKWp,
-      area: roofAreaSqm * pv.roofUtilization,
+      // On the geometric path this is the SURFACE of the actual modules,
+      // not a roof-utilisation estimate or their smaller plan projection.
+      area: context?.geometricKWp != null
+        ? (pv.systemSizeKWp / PV_PANEL_RATED_KWP) * PV_MODULE_LENGTH_M * PV_MODULE_WIDTH_M
+        : roofAreaSqm * pv.roofUtilization,
       tiltAngle: PV_TILT_DEG,
       orientation: PV_ORIENTATION_DEG,
       panelType: "monocrystalline",

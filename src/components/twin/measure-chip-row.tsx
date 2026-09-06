@@ -35,6 +35,7 @@ import { useScenarioStore } from "@/store/scenario-store";
 import { useMaterialStore } from "@/store/material-store";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
+import { usePvLayout } from "@/hooks/use-pv-layout";
 import { getClimateData } from "@/lib/energy/climate-data";
 import { computeRetrofitDelta } from "@/lib/retrofit/retrofit-delta";
 import {
@@ -93,6 +94,7 @@ export function MeasureChipRow({
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
   const recipe = useEffectiveRecipe(buildingPk);
   const sigunguCd = useActiveSigunguCd();
+  const pvLayout = usePvLayout();
 
   const effectById = useMemo(() => {
     if (!materials || !recipe || measures.length === 0) return new Map();
@@ -101,9 +103,10 @@ export function MeasureChipRow({
       recipe,
       climate: getClimateData(sigunguCd),
       measureIds: measures.map((m) => m.id),
+      pvGeometricKWp: pvLayout?.totalKWp ?? 0,
     });
     return new Map((delta?.measures ?? []).map((e) => [e.measureId, e]));
-  }, [materials, recipe, sigunguCd, measures]);
+  }, [materials, recipe, sigunguCd, measures, pvLayout]);
 
   const claims = useMemo(
     () =>

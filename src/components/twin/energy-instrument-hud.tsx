@@ -164,7 +164,7 @@ export function EnergyInstrumentHud({
     engineEnvelopeAreas,
     // The kWp the measured-roof layout actually fits; the same object the 3D
     // draws and the legend counts.
-    pvGeometricKWp: pvLayout?.totalKWp,
+    pvGeometricKWp: pvLayout?.totalKWp ?? 0,
     // The work the user picked. Everything on this frame is priced against
     // it, not against the knapsack's optimum.
     chosenMeasureIds: appliedMeasureIds,
@@ -188,8 +188,11 @@ export function EnergyInstrumentHud({
   useEffect(() => {
     if (appliedMeasureIds !== null) return;
     if (!scenario.selection) return;
+    // Roof planes arrive asynchronously. Seeding before they arrive would
+    // permanently omit the PV recommendation using a temporary zero size.
+    if (!pvLayout) return;
     setAppliedMeasureIds(scenario.selection.selected.map((m) => m.id));
-  }, [appliedMeasureIds, scenario.selection, setAppliedMeasureIds]);
+  }, [appliedMeasureIds, scenario.selection, setAppliedMeasureIds, pvLayout]);
 
   const recommendedIds = useMemo(
     () => scenario.selection?.selected.map((m) => m.id) ?? [],

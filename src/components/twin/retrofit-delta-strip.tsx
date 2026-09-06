@@ -119,7 +119,7 @@ export function RetrofitDeltaStrip() {
       recipe,
       climate: getClimateData(sigunguCd),
       measureIds: chosenMeasureIds,
-      pvGeometricKWp: pvLayout?.totalKWp,
+      pvGeometricKWp: pvLayout?.totalKWp ?? 0,
     });
   }, [materials, recipe, sigunguCd, chosenMeasureIds, pvLayout]);
 

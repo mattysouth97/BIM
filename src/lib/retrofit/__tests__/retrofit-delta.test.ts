@@ -309,6 +309,33 @@ describe("computeRetrofitDelta", () => {
     expect(cap.unpricedReasonKo).toContain("재생에너지를 0으로 고정");
   });
 
+  it("geometric PV capacity and module surface area reproduce the placed array", () => {
+    const d = computeRetrofitDelta({
+      materials: makeMaterials(), recipe: makeRecipe(), climate: CLIMATE,
+      measureIds: ["solar-pv-flat"], pvGeometricKWp: 4,
+    })!;
+    expect(d.after.materials.renewable.solarPV.capacity).toBe(4);
+    // Ten 0.40 kWp modules, each 1.70 × 1.00 m — independent of roof area.
+    expect(d.after.materials.renewable.solarPV.area).toBe(17);
+    const capacity = d.changes.find((change) => change.field === "renewable.solarPV.capacity")!;
+    const area = d.changes.find((change) => change.field === "renewable.solarPV.area")!;
+    expect(Number(capacity.summaryEn.match(/→ ([\d.]+) kWp/)?.[1])).toBe(4);
+    expect(Number(area.summaryEn.match(/→ ([\d.]+) m²/)?.[1])).toBe(17);
+    expect(area.summaryEn).toContain("Module surface area");
+    expect(area.summaryKo).toContain("모듈 표면적");
+    expect(d.isZeroDelta).toBe(true);
+  });
+
+  it("zero geometric capacity does not invent an installed array", () => {
+    const d = computeRetrofitDelta({
+      materials: makeMaterials(), recipe: makeRecipe(), climate: CLIMATE,
+      measureIds: ["solar-pv-flat"], pvGeometricKWp: 0,
+    })!;
+    expect(d.after.materials.renewable.solarPV.installed).toBe(false);
+    expect(d.after.materials.renewable.solarPV.capacity).toBe(0);
+    expect(d.changes).toHaveLength(0);
+  });
+
   it("an HRV on a mechanically-ventilated building reduces the air-exchange row", () => {
     const d = delta(["hvac-hrv"], makeMaterials({ ventType: "mechanical-exhaust", airflowRate: 0.5 }));
     const vent = d.elements.find((e) => e.element === VENTILATION_ELEMENT_NAME)!;

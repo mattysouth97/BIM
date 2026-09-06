@@ -149,8 +149,8 @@ export function claimAreaSqm(
       break;
   }
   if (measureId.startsWith("solar-pv-")) {
-    // The panelled area, not the roof: a flat roof yields 70 % of its surface.
-    // Read off the same sizing the economics used, via the delta's change row.
+    // Module surface area from the same sizing the economics used, via the
+    // delta's change row. Geometric arrays use module count × module area.
     const areaChange = effect?.changes.find((c) => c.field === "renewable.solarPV.area");
     const parsed = areaChange ? Number(areaChange.after) : NaN;
     return Number.isFinite(parsed) ? parsed : undefined;

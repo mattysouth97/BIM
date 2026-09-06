@@ -5,8 +5,17 @@ import {
   equipmentLayerReach,
   buildRetrofitLegendLines,
   deriveVisualState,
+  pvLegendLine,
 } from "../reference-retrofit-visuals";
 import { NO_RETROFIT_VISUALS, effectiveMeasureIds, proposalVisualIds } from "@/lib/retrofit/measure-visuals";
+
+it("the PV legend does not call a fit rejection zero usable area", () => {
+  const line = pvLegendLine({ planes: 1, excludedPlanes: 1, usableSqm: 1.6, grossSqm: 22, modules: 0, kWp: 0, reasons: { "no-usable-area-after-setback": 1 } });
+  expect(line.ko).toContain("모듈 배치 불가");
+  expect(line.ko).not.toContain("면적 없음");
+  expect(line.en).toContain("no module fits after setbacks / clearances");
+  expect(line.en).not.toContain("no-usable-area");
+});
 
 /** Two coincident quads (4 verts each) sharing one position/index buffer: a floor at y=0, a roof at y=10. */
 function twoStoreyQuads() {

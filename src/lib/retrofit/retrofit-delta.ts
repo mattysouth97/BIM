@@ -498,8 +498,8 @@ function changesForMeasure(
         if (after.renewable.solarPV.installed && !before.renewable.solarPV.installed) {
           add(
             "renewable.solarPV.area",
-            "패널 설치 면적",
-            "Array area",
+            "모듈 표면적",
+            "Module surface area",
             fmt(before.renewable.solarPV.area, 0),
             fmt(after.renewable.solarPV.area, 0),
             "m²",

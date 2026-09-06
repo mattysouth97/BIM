@@ -3,7 +3,10 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useThree } from "@react-three/fiber";
-import { ContactShadows, Environment, OrbitControls, useGLTF } from "@react-three/drei";
+import { ContactShadows, OrbitControls, useGLTF } from "@react-three/drei";
+import { SceneEnvironment } from "@/components/viewer/scene-environment";
+import { referenceCameraPose, setReferenceShadows } from "@/lib/rendering/reference-scene";
+import type { ReferenceViewRequest } from "./reference-view-controls";
 
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
 import type { ReferenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
@@ -25,6 +28,7 @@ import {
 type SceneOffset = Readonly<{
   centre: THREE.Vector3;
   radius: number;
+  size: THREE.Vector3;
   /**
    * The underside of the building once the scene offset is applied.
    *
@@ -72,6 +76,8 @@ function Fabric({
   url,
   xray,
   onMeasured,
+  viewRequest,
+  inspection,
 }: {
   url: string;
   /**
@@ -85,12 +91,16 @@ function Fabric({
    */
   xray: boolean;
   onMeasured: (offset: SceneOffset) => void;
+  viewRequest: ReferenceViewRequest;
+  inspection: boolean;
 }) {
   const { scene } = useGLTF(url);
   // `get()` rather than selecting camera and controls directly: R3F expects
   // these to be mutated imperatively, and reading them through the store's
   // accessor keeps that out of React's rules about hook-returned values.
   const get = useThree((state) => state.get);
+  const width = useThree((state) => state.size.width);
+  const height = useThree((state) => state.size.height);
 
   const measured = useMemo<SceneOffset>(() => {
     const box = new THREE.Box3().setFromObject(scene);
@@ -98,21 +108,22 @@ function Fabric({
     return {
       centre,
       radius: box.getSize(new THREE.Vector3()).length() / 2,
+      size: box.getSize(new THREE.Vector3()),
       baseY: box.min.y - centre.y,
     };
   }, [scene]);
 
   useEffect(() => {
     onMeasured(measured);
+  }, [measured, onMeasured]);
+
+  useEffect(() => {
     const { camera, controls } = get() as unknown as {
       camera: THREE.PerspectiveCamera;
       controls: { target: THREE.Vector3; update: () => void } | null;
     };
-    // Far enough that the whole diagonal fits the vertical field of view, with
-    // a little headroom so the building is not cropped at the frame edge.
-    const fov = camera.fov ?? 40;
-    const distance = (measured.radius / Math.sin((fov * Math.PI) / 360)) * 0.92;
-    camera.position.set(distance * 0.7, distance * 0.42, distance * 0.7);
+    const { position, distance } = referenceCameraPose(measured.size, width / Math.max(1, height), camera.fov, viewRequest.view, inspection);
+    camera.position.copy(position);
     camera.near = Math.max(0.1, distance / 800);
     camera.far = distance * 12;
     camera.lookAt(0, 0, 0);
@@ -121,7 +132,9 @@ function Fabric({
       controls.target.set(0, 0, 0);
       controls.update();
     }
-  }, [get, measured, onMeasured]);
+  }, [get, measured, width, height, viewRequest, inspection]);
+
+  useEffect(() => setReferenceShadows(scene, xray), [scene, xray]);
 
   // `useGLTF` caches the parsed scene, so these materials outlive this
   // component and every change has to be undone on the way out — otherwise
@@ -181,6 +194,7 @@ function ServiceGeometry({
   centre: THREE.Vector3;
 }) {
   const { scene } = useGLTF(url);
+  useEffect(() => setReferenceShadows(scene), [scene]);
   return (
     <primitive object={scene} position={[-centre.x, -centre.y, -centre.z]} />
   );
@@ -219,6 +233,8 @@ export function ReferenceModelViewer({
   manifest,
   energy,
   locale = "ko",
+  viewRequest,
+  inspection,
 }: {
   modelUrl: string;
   /**
@@ -248,6 +264,8 @@ export function ReferenceModelViewer({
    */
   energy: ReferenceBuildingEnergyInputs | null;
   locale?: "ko" | "en";
+  viewRequest: ReferenceViewRequest;
+  inspection: boolean;
 }) {
   const [offset, setOffset] = useState<SceneOffset | null>(null);
   const onMeasured = useCallback((next: SceneOffset) => setOffset(next), []);
@@ -300,6 +318,8 @@ export function ReferenceModelViewer({
       data-testid="reference-model-viewer"
       data-pv-drawn={visual.solarInstalled ? pvDrawn : undefined}
       data-roof-planes={pvLayout ? "ready" : "pending"}
+      data-view={viewRequest.view}
+      data-inspection={inspection}
     >
       <Canvas
         shadows
@@ -311,26 +331,34 @@ export function ReferenceModelViewer({
         {/* Cool sky over a near-black ground bounce: enough fill to keep the
             undersides of ducts from going solid black, not enough to lift the
             background. */}
-        <hemisphereLight args={["#8fb6d8", "#0b0f14", 1.1]} />
+        <hemisphereLight args={["#b6cce0", "#20232a", 0.85]} />
         <directionalLight
-          position={[38, 64, 26]}
-          intensity={2.6}
+          position={offset ? [offset.radius * 1.8, offset.radius * 3, offset.radius * 1.5] : [38, 64, 26]}
+          intensity={2.15}
           color="#fff6e8"
           castShadow
           shadow-mapSize={[2048, 2048]}
+          shadow-camera-left={-(offset?.radius ?? 30) * 1.15}
+          shadow-camera-right={(offset?.radius ?? 30) * 1.15}
+          shadow-camera-top={(offset?.radius ?? 30) * 1.15}
+          shadow-camera-bottom={-(offset?.radius ?? 30) * 1.15}
+          shadow-camera-near={0.1}
+          shadow-camera-far={(offset?.radius ?? 30) * 7}
+          shadow-normalBias={0.025}
+          shadow-bias={-0.0001}
         />
         {/* A cool rim from behind, so the far side of a duct run separates
             from the background instead of merging into it. */}
         <directionalLight
           position={[-34, 26, -40]}
-          intensity={1.15}
+          intensity={0.7}
           color="#7fb2e8"
         />
+        <SceneEnvironment intensity={0.42} />
         <Suspense fallback={null}>
           {/* Reflections only, no background — ducts and plant are metal, and
               without an environment they shade as flat grey plastic. The file
               is the twin's own studio HDR rather than a CDN preset. */}
-          <Environment files="/hdr/studio.hdr" environmentIntensity={0.42} />
           {/* The fabric stays mounted even when hidden: it is what measures the
               scene, and unmounting it would strand every service layer without
               an offset to draw by. */}
@@ -339,6 +367,8 @@ export function ReferenceModelViewer({
               url={modelUrl}
               xray={fabricOn && shown.length > 0}
               onMeasured={onMeasured}
+              viewRequest={viewRequest}
+              inspection={inspection}
             />
             {/* Wall/glazing retrofit tint — mutates the SAME cached scene
                 `Fabric` renders, independently of its x-ray effect (see the
@@ -410,7 +440,7 @@ export function ReferenceModelViewer({
             </>
           ) : null}
         </Suspense>
-        <OrbitControls makeDefault enableDamping maxPolarAngle={Math.PI / 2.05} />
+        <OrbitControls makeDefault enableDamping minDistance={(offset?.radius ?? 1) * 0.15} maxDistance={(offset?.radius ?? 30) * 20} maxPolarAngle={Math.PI / 2.05} />
       </Canvas>
       <RetrofitLegend
         selectedMeasureIds={selectedMeasureIds}
