@@ -292,6 +292,7 @@ function quantityIndex(file, webIfc) {
     let areaSqm = null;
     let areaName = null;
     let volumeM3 = null;
+    let netVolumeM3 = null;
     for (const q of definition.Quantities ?? []) {
       const quantity = file.deref(q);
       if (!quantity) continue;
@@ -303,10 +304,23 @@ function quantityIndex(file, webIfc) {
         const rawArea = num(quantity.AreaValue);
         areaSqm = rawArea === null ? null : rawArea * (file.units?.areaToSquareMetres ?? 1);
         areaName = str(quantity.Name);
-      } else if (kind === "IfcQuantityVolume" && volumeM3 === null) {
-        volumeM3 = num(quantity.VolumeValue);
+      } else if (kind === "IfcQuantityVolume") {
+        if (volumeM3 === null) volumeM3 = num(quantity.VolumeValue);
+        // FZK-Haus (2026-09-06): a first-wins volume silently returned
+        // GrossVolume (428.64) for a space whose own Qto ALSO states
+        // NetVolume (217.53, confirmed exact against the space's own closed
+        // solid mesh) — Qto_SpaceBaseQuantities lists Gross before Net, and
+        // the build script's net-volume guard ("net ≤ gross by definition")
+        // caught the resulting building-wide total rather than silently
+        // shipping it. Preferring the NAMED NetVolume, where the set states
+        // one, fixes the mislabel without changing any file that states no
+        // such name — first-wins survives as the fallback for those.
+        if (str(quantity.Name) === "NetVolume") {
+          netVolumeM3 = num(quantity.VolumeValue);
+        }
       }
     }
+    if (netVolumeM3 !== null) volumeM3 = netVolumeM3;
     if (areaSqm === null && volumeM3 === null) continue;
     for (const object of rel.RelatedObjects ?? []) {
       const id = refId(object);
