@@ -104,7 +104,21 @@ export interface RoofObstruction {
   kind: ObstructionKind;
   /** The element it came from, so a subtraction can be traced to a thing. */
   elementName: string;
-  outline: PlanRing;
+  /**
+   * The obstruction's plan polygon. `roof-planes.json` names this field
+   * `plan`; `outline` is accepted as an alias because the methodology doc
+   * called it that and a reader may well write it that way. Same tolerance,
+   * and the same reason, as `toPolygon` accepting two outline shapes: the
+   * artifact on disk is the contract, and a producer using the documented
+   * name should not silently subtract nothing.
+   */
+  plan?: PlanRing;
+  outline?: PlanRing;
+}
+
+/** The obstruction's polygon under whichever of the two names it arrived by. */
+export function obstructionPlan(o: RoofObstruction): PlanRing {
+  return o.plan ?? o.outline ?? [];
 }
 
 /** One measured roof plane, as `roof-planes.json` states it. */
@@ -388,7 +402,9 @@ export function usableAreaFor(plane: RoofPlane): UsableArea {
   const blocked: PlanRing[] = [];
   let obstructionSqm = 0;
   for (const obstruction of plane.obstructions ?? []) {
-    const grown = outsetRing(obstruction.outline, PV_OBSTRUCTION_CLEARANCE_M);
+    const ring = obstructionPlan(obstruction);
+    if (ring.length < 3) continue;
+    const grown = outsetRing(ring, PV_OBSTRUCTION_CLEARANCE_M);
     blocked.push(grown);
     const area = ringAreaSqm(grown);
     obstructionSqm += area;
