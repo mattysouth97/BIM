@@ -17,6 +17,7 @@
 // a broken panel rather than as an answer.
 
 import { Sun, Thermometer, Lightbulb, Building2, CheckCircle2 } from "lucide-react";
+import { measureDisplayName } from "@/lib/retrofit/measure-claim";
 import type { RetrofitMeasure, RetrofitCategory } from "@/lib/retrofit/retrofit-types";
 
 // ── Formatting ────────────────────────────────────────────────────────────────
@@ -126,11 +127,23 @@ export function MeasureCard({
   measure,
   selected,
   note,
+  locale = "ko",
 }: {
   measure: RetrofitMeasure;
   selected: boolean;
   /** Why this measure is not in the selected set. Rendered under the figures. */
   note?: string;
+  /**
+   * Which language to name the measure in. The generators emit an English
+   * `name` ("Roof Insulation Upgrade"), which read as untranslated text on a
+   * Korean page; `measureDisplayName` is bim-24's shared ko/en catalog keyed
+   * by measure id, and the chips read the same one, so the card and the chip
+   * cannot name the same measure differently.
+   *
+   * The `description` has no bilingual source, so it stays the generator's
+   * text rather than acquiring a second table beside that one.
+   */
+  locale?: "ko" | "en";
 }) {
   const priority = priorityFromPayback(measure.paybackYears);
   const paybackFinite = Number.isFinite(measure.paybackYears) && measure.paybackYears < 999;
@@ -147,7 +160,9 @@ export function MeasureCard({
             category={measure.category}
             className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
           />
-          <p className="text-xs font-medium leading-tight truncate">{measure.name}</p>
+          <p className="text-xs font-medium leading-tight truncate">
+            {measureDisplayName(measure.id, locale, measure.name)}
+          </p>
         </div>
         <span className="flex items-center gap-1 shrink-0">
           {selected && (
