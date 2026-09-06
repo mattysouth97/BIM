@@ -85,7 +85,25 @@
         "widthM": 2,
         "depthM": 0.08,
         "heightM": 1.2,
-        "bottomM": 0.8
+        "bottomM": 0.8,
+        "plan": [
+          [
+            0.12,
+            -8.5
+          ],
+          [
+            0.2,
+            -8.5
+          ],
+          [
+            0.2,
+            -6.49
+          ],
+          [
+            0.12,
+            -6.49
+          ]
+        ]
       },
       "hostExpressID": 21966,
       "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-1\"",
@@ -114,7 +132,25 @@
         "widthM": 2,
         "depthM": 0.08,
         "heightM": 1.2,
-        "bottomM": 0.95
+        "bottomM": 0.95,
+        "plan": [
+          [
+            0.12,
+            -3.2
+          ],
+          [
+            0.2,
+            -3.2
+          ],
+          [
+            0.2,
+            -1.2
+          ],
+          [
+            0.12,
+            -1.2
+          ]
+        ]
       },
       "hostExpressID": 21966,
       "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-1\"",
@@ -143,7 +179,25 @@
         "widthM": 2,
         "depthM": 0.08,
         "heightM": 1.2,
-        "bottomM": 0.95
+        "bottomM": 0.95,
+        "plan": [
+          [
+            1.79,
+            -0.2
+          ],
+          [
+            3.79,
+            -0.2
+          ],
+          [
+            3.79,
+            -0.12
+          ],
+          [
+            1.79,
+            -0.12
+          ]
+        ]
       },
       "hostExpressID": 27421,
       "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-4\"",
@@ -172,7 +226,25 @@
         "widthM": 2,
         "depthM": 0.08,
         "heightM": 1.2,
-        "bottomM": 0.8
+        "bottomM": 0.8,
+        "plan": [
+          [
+            8.21,
+            -0.2
+          ],
+          [
+            10.21,
+            -0.2
+          ],
+          [
+            10.21,
+            -0.12
+          ],
+          [
+            8.21,
+            -0.12
+          ]
+        ]
       },
       "hostExpressID": 27421,
       "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-4\"",
@@ -201,7 +273,25 @@
         "widthM": 2,
         "depthM": 0.08,
         "heightM": 1.2,
-        "bottomM": 0.8
+        "bottomM": 0.8,
+        "plan": [
+          [
+            11.8,
+            -8.5
+          ],
+          [
+            11.88,
+            -8.5
+          ],
+          [
+            11.88,
+            -6.5
+          ],
+          [
+            11.8,
+            -6.5
+          ]
+        ]
       },
       "hostExpressID": 31470,
       "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-3\"",
@@ -230,7 +320,25 @@
         "widthM": 2,
         "depthM": 0.08,
         "heightM": 1.2,
-        "bottomM": 0.8
+        "bottomM": 0.8,
+        "plan": [
+          [
+            11.8,
+            -3.2
+          ],
+          [
+            11.88,
+            -3.2
+          ],
+          [
+            11.88,
+            -1.2
+          ],
+          [
+            11.8,
+            -1.2
+          ]
+        ]
       },
       "hostExpressID": 31470,
       "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-3\"",
@@ -259,7 +367,25 @@
         "widthM": 2,
         "depthM": 0.08,
         "heightM": 1.2,
-        "bottomM": 0.8
+        "bottomM": 0.8,
+        "plan": [
+          [
+            1.05,
+            -9.88
+          ],
+          [
+            3.05,
+            -9.88
+          ],
+          [
+            3.05,
+            -9.8
+          ],
+          [
+            1.05,
+            -9.8
+          ]
+        ]
       },
       "hostExpressID": 32407,
       "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-2\"",
@@ -288,7 +414,25 @@
         "widthM": 2,
         "depthM": 0.08,
         "heightM": 1.2,
-        "bottomM": 0.8
+        "bottomM": 0.8,
+        "plan": [
+          [
+            4.66,
+            -9.88
+          ],
+          [
+            6.66,
+            -9.88
+          ],
+          [
+            6.66,
+            -9.8
+          ],
+          [
+            4.66,
+            -9.8
+          ]
+        ]
       },
       "hostExpressID": 32407,
       "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-2\"",
@@ -317,7 +461,25 @@
         "widthM": 2,
         "depthM": 0.08,
         "heightM": 1.2,
-        "bottomM": 0.8
+        "bottomM": 0.8,
+        "plan": [
+          [
+            8.8,
+            -9.88
+          ],
+          [
+            10.8,
+            -9.88
+          ],
+          [
+            10.8,
+            -9.8
+          ],
+          [
+            8.8,
+            -9.8
+          ]
+        ]
       },
       "hostExpressID": 32407,
       "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-2\"",
@@ -346,7 +508,25 @@
         "widthM": 1,
         "depthM": 0.09,
         "heightM": 1,
-        "bottomM": 3.5
+        "bottomM": 3.5,
+        "plan": [
+          [
+            0.1,
+            -5.5
+          ],
+          [
+            0.18,
+            -5.5
+          ],
+          [
+            0.18,
+            -4.5
+          ],
+          [
+            0.1,
+            -4.5
+          ]
+        ]
       },
       "hostExpressID": 60012,
       "hostName": "IfcWallStandardCase \"Wand-Ext-OG-1\"",
@@ -375,7 +555,25 @@
         "widthM": 1,
         "depthM": 0.09,
         "heightM": 1,
-        "bottomM": 3.5
+        "bottomM": 3.5,
+        "plan": [
+          [
+            11.8,
+            -5.5
+          ],
+          [
+            11.88,
+            -5.5
+          ],
+          [
+            11.88,
+            -4.5
+          ],
+          [
+            11.8,
+            -4.5
+          ]
+        ]
       },
       "hostExpressID": 67828,
       "hostName": "IfcWallStandardCase \"Wand-Ext-OG-3\"",
@@ -404,7 +602,25 @@
         "widthM": 0.88,
         "depthM": 0.1,
         "heightM": 2.01,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            7.41,
+            -5.44
+          ],
+          [
+            7.51,
+            -5.44
+          ],
+          [
+            7.51,
+            -4.56
+          ],
+          [
+            7.41,
+            -4.56
+          ]
+        ]
       },
       "hostExpressID": 17040,
       "hostName": "IfcWallStandardCase \"Wand-Int-ERDG-2\"",
@@ -427,7 +643,25 @@
         "widthM": 0.88,
         "depthM": 0.1,
         "heightM": 2.01,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            5.22,
+            -5.85
+          ],
+          [
+            6.1,
+            -5.85
+          ],
+          [
+            6.1,
+            -5.75
+          ],
+          [
+            5.22,
+            -5.75
+          ]
+        ]
       },
       "hostExpressID": 18698,
       "hostName": "IfcWallStandardCase \"Wand-Int-ERDG-3\"",
@@ -450,7 +684,25 @@
         "widthM": 0.88,
         "depthM": 0.1,
         "heightM": 2.01,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            1.61,
+            -5.85
+          ],
+          [
+            2.49,
+            -5.85
+          ],
+          [
+            2.49,
+            -5.75
+          ],
+          [
+            1.61,
+            -5.75
+          ]
+        ]
       },
       "hostExpressID": 18698,
       "hostName": "IfcWallStandardCase \"Wand-Int-ERDG-3\"",
@@ -473,7 +725,25 @@
         "widthM": 1.01,
         "depthM": 0.19,
         "heightM": 2.01,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            0.16,
+            -5.5
+          ],
+          [
+            0.35,
+            -5.5
+          ],
+          [
+            0.35,
+            -4.5
+          ],
+          [
+            0.16,
+            -4.5
+          ]
+        ]
       },
       "hostExpressID": 21966,
       "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-1\"",
@@ -502,7 +772,25 @@
         "widthM": 2.01,
         "depthM": 0.21,
         "heightM": 2.38,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            5,
+            -0.33
+          ],
+          [
+            7,
+            -0.33
+          ],
+          [
+            7,
+            -0.12
+          ],
+          [
+            5,
+            -0.12
+          ]
+        ]
       },
       "hostExpressID": 27421,
       "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-4\"",

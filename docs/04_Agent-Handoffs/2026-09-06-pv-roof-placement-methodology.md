@@ -318,3 +318,56 @@ cost/saving/NPV per building once the other three `roof-planes.json` exist.
 
 Merged with tsc 0; retrofit + reference-buildings + energy suites green.
 **P3b is unblocked.**
+
+## P1b landed — main-coordinator, 22:20
+
+All four buildings ship `roof-planes.json` and a plan-view `roof-planes-qa.svg`.
+Three things the first contract build could not do, each found by reading the
+numbers against the manifest and fixed in `scripts/lib/ifc-roof-planes.mjs`:
+
+1. **Strips.** The Clinic's standing-seam roof is 244 pan solids, one per rib
+   bay, and the apartment's tiles are 124 `sporenkap` elements, one per rafter
+   bay; shared-edge growing can never join them. A second pass merges patches
+   of one FAMILY whose normals agree within 2°, offsets within 150 mm (a rib,
+   not a storey) and plan boxes touch within 50 mm. The apartment's south
+   tile band is now one 21.3 m² plane over seven elements
+   (`mergedElements: 7`); the Duplex's deck and pads stay apart.
+2. **Sky occlusion.** Every LAYER of a roof reports an upward face — tiles,
+   the deck under them, the insulation under that — so Σ projected read 2.5×
+   the plan coverage. Planes are now sorted highest-first and each keeps only
+   the plan area no higher plane covers (`occludedSqm` recorded; dropped planes
+   counted in `occludedPlanes`; `skyUnionSqm` = the union before occlusion).
+   Result: Σ projected = the manifest's `roofUnionSqm` on all four — Clinic
+   2592.28 / 2592.43, apartment 360.08 / 361.86, Duplex and FZK exact.
+3. **Flat means flat in both fields.** A plane leaning 0.3° from tessellation
+   noise was getting a confident azimuth of 270; below sin 0.5° the bearing is
+   now null, the same threshold `tiltDeg` rounds at.
+
+Obstructions, first content: unresolved openings now carry their plan
+rectangle (`footprint.plan`, from the bounding box `ifc-openings.mjs` already
+had), and the build attaches one to a plane when its centre lies inside the
+plane's outer ring AND its bottom is within 0.5 m of the plane's elevation —
+by geometry, not by name (the apartment has 52 unresolved openings whose
+reason text says "roof"; all sit at 0.78 m and none attach). Duplex: 2
+skylights, 1.43 m² each, which are ALSO holes in the deck's outline — a hole
+already excludes, the obstruction adds the clearance; apartment: 6 rooflights
+on tile planes; Clinic and FZK: none. Roof-mounted plant and parapets are
+still empty.
+
+What the drawings showed (looked at, `/reference-buildings/<id>/roof-planes-qa.svg`):
+the Clinic's standing seam is a **segmented barrel** over the spine — 54
+facets ≥ 2 m² at 2–29°, alternating south and north — not five planes, and
+that is the right reading for a layout (its north facets will be refused);
+the apartment's tiles are a **65° band around a flat 130 m² deck**, so the
+old viewer's "tilted panels on the tiled roof" was placing modules on a
+surface the suitability rule excludes as a wall — the deck and the flat
+strips are the PV roof. Both are recorded as pins in
+`src/lib/reference-buildings/__tests__/roof-planes.test.ts` beside the
+FZK/Duplex/family/ring/obstruction invariants.
+
+Surface sum: the apartment now reads 733.64 against the manifest's 692.04
+(+6 %) because merged strips overlap by their rib heights; the test caps at
++7 % and says so. Withdrawn-regression rule from P1 stands.
+
+Remaining for this stage: roof-mounted plant and parapets as obstructions;
+drawing obstructions and, from stage 3, the modules onto the QA SVG.

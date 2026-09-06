@@ -425,7 +425,23 @@ export function openingApertures(api, file, webIfc, opts) {
       const b = bounds.get(id) ?? null;
       const base = { id, type, name, kind, isExternal: isExternal.get(id) ?? null, ref: file.ref(id) };
       const span = b ? [b.hi[0] - b.lo[0], b.hi[1] - b.lo[1], b.hi[2] - b.lo[2]] : null;
-      const footprint = span ? { widthM: r2(Math.max(span[0], span[2])), depthM: r2(Math.min(span[0], span[2])), heightM: r2(span[1]), bottomM: r2(b.lo[1]) } : null;
+      // `plan` is the bounding rectangle in plan, [[x,z] × 4], so a roof-hosted
+      // opening can be handed to the roof planes as an obstruction with a
+      // position, not only a size (stage 1 of the PV methodology).
+      const footprint = span
+        ? {
+            widthM: r2(Math.max(span[0], span[2])),
+            depthM: r2(Math.min(span[0], span[2])),
+            heightM: r2(span[1]),
+            bottomM: r2(b.lo[1]),
+            plan: [
+              [r2(b.lo[0]), r2(b.lo[2])],
+              [r2(b.hi[0]), r2(b.lo[2])],
+              [r2(b.hi[0]), r2(b.hi[2])],
+              [r2(b.lo[0]), r2(b.hi[2])],
+            ],
+          }
+        : null;
 
       if (subFrameNames.some((s) => name.toLowerCase().includes(s.toLowerCase()))) {
         rows.push({ ...base, included: false, reason: `sub-frame (${name}): a frame component, not an opening of its own; it states no OverallWidth/OverallHeight`, areaSqm: null, footprint });

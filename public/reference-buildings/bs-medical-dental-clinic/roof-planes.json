@@ -1,0 +1,4306 @@
+{
+  "kind": "bimfit_reference_building_roof_planes",
+  "id": "bs-medical-dental-clinic",
+  "generatedAt": "2026-09-04T00:00:00.000Z",
+  "northAssumed": true,
+  "note": "Upward faces (within 80°) of each roof element, region-grown into connected coplanar patches: normals within 2°, offsets within 20 mm across shared edges; then patches of one element with the same normal, offsets within 150 mm and plan boxes touching within 50 mm are one surface (a ribbed metal roof is modelled as one pan solid per rib bay). Then what the sky sees: planes highest first, each keeping only the plan area no higher plane covers, so a roof's lower layers (deck under tiles, insulation under deck) are not planes; occludedSqm is what each kept plane lost, and skyUnionSqm the union of every upward shadow before occlusion. Because lower layers are dropped, sum(surfaceSqm) is BELOW the manifest's roofSurfaceSqm, which keeps every layer and every verge because heat crosses them. tiltDeg and azimuthDeg are each plane's own and never a blend across the roof; azimuth is the downslope bearing clockwise from project north (the model's −Z), null where the plane is flat. outline rings are the plane's visible plan area, outer counter-clockwise and holes clockwise, simplified to 10 mm. obstructions is EMPTY in this pass: the shape is the contract, its content is a later stage.",
+  "skyUnionSqm": 2592.43,
+  "occludedPlanes": 131,
+  "planes": [
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-0",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.986101,
+        0.166148
+      ],
+      "tiltDeg": 9.56,
+      "azimuthDeg": 0,
+      "surfaceSqm": 22.99,
+      "projectedSqm": 15.09,
+      "minElevationM": 13.316,
+      "maxElevationM": 13.707,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -30.262
+            ],
+            [
+              -20.048,
+              -30.262
+            ],
+            [
+              -20.048,
+              -29.557
+            ],
+            [
+              -41.429,
+              -29.557
+            ],
+            [
+              -41.429,
+              -30.262
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-1",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.995223,
+        0.097632
+      ],
+      "tiltDeg": 5.6,
+      "azimuthDeg": 0,
+      "surfaceSqm": 22.99,
+      "projectedSqm": 15.23,
+      "minElevationM": 13.418,
+      "maxElevationM": 13.781,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -30.974
+            ],
+            [
+              -20.048,
+              -30.974
+            ],
+            [
+              -20.048,
+              -30.262
+            ],
+            [
+              -41.429,
+              -30.262
+            ],
+            [
+              -41.429,
+              -30.974
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-2",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.972268,
+        0.23387
+      ],
+      "tiltDeg": 13.53,
+      "azimuthDeg": 0,
+      "surfaceSqm": 22.99,
+      "projectedSqm": 14.87,
+      "minElevationM": 13.165,
+      "maxElevationM": 13.586,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -29.557
+            ],
+            [
+              -20.048,
+              -29.557
+            ],
+            [
+              -20.048,
+              -28.861
+            ],
+            [
+              -41.429,
+              -28.861
+            ],
+            [
+              -41.429,
+              -29.557
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-3",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.95379,
+        0.300475
+      ],
+      "tiltDeg": 17.49,
+      "azimuthDeg": 0,
+      "surfaceSqm": 22.99,
+      "projectedSqm": 14.59,
+      "minElevationM": 12.964,
+      "maxElevationM": 13.416,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -28.861
+            ],
+            [
+              -20.048,
+              -28.861
+            ],
+            [
+              -20.048,
+              -28.178
+            ],
+            [
+              -41.429,
+              -28.178
+            ],
+            [
+              -41.429,
+              -28.861
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-4",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.903051,
+        -0.429533
+      ],
+      "tiltDeg": 25.44,
+      "azimuthDeg": 180,
+      "surfaceSqm": 15.31,
+      "projectedSqm": 13.82,
+      "minElevationM": 12.629,
+      "maxElevationM": 12.937,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -36.514
+            ],
+            [
+              -20.048,
+              -36.514
+            ],
+            [
+              -20.048,
+              -35.868
+            ],
+            [
+              -41.429,
+              -35.868
+            ],
+            [
+              -41.429,
+              -36.514
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-5",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.87163,
+        -0.490165
+      ],
+      "tiltDeg": 29.35,
+      "azimuthDeg": 180,
+      "surfaceSqm": 15.31,
+      "projectedSqm": 13.34,
+      "minElevationM": 12.278,
+      "maxElevationM": 12.629,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -37.138
+            ],
+            [
+              -20.048,
+              -37.138
+            ],
+            [
+              -20.048,
+              -36.514
+            ],
+            [
+              -41.429,
+              -36.514
+            ],
+            [
+              -41.429,
+              -37.138
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-6",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.930262,
+        -0.366897
+      ],
+      "tiltDeg": 21.52,
+      "azimuthDeg": 180,
+      "surfaceSqm": 15.31,
+      "projectedSqm": 14.24,
+      "minElevationM": 12.937,
+      "maxElevationM": 13.199,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -35.868
+            ],
+            [
+              -20.048,
+              -35.868
+            ],
+            [
+              -20.048,
+              -35.202
+            ],
+            [
+              -41.429,
+              -35.202
+            ],
+            [
+              -41.429,
+              -35.868
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-7",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.985456,
+        -0.169931
+      ],
+      "tiltDeg": 9.78,
+      "azimuthDeg": 180,
+      "surfaceSqm": 15.31,
+      "projectedSqm": 15.09,
+      "minElevationM": 13.586,
+      "maxElevationM": 13.707,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -33.824
+            ],
+            [
+              -20.048,
+              -33.824
+            ],
+            [
+              -20.048,
+              -33.118
+            ],
+            [
+              -41.429,
+              -33.118
+            ],
+            [
+              -41.429,
+              -33.824
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-8",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.97156,
+        -0.236793
+      ],
+      "tiltDeg": 13.7,
+      "azimuthDeg": 180,
+      "surfaceSqm": 15.31,
+      "projectedSqm": 14.87,
+      "minElevationM": 13.416,
+      "maxElevationM": 13.586,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -34.519
+            ],
+            [
+              -20.048,
+              -34.519
+            ],
+            [
+              -20.048,
+              -33.824
+            ],
+            [
+              -41.429,
+              -33.824
+            ],
+            [
+              -41.429,
+              -34.519
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-9",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.953133,
+        -0.30255
+      ],
+      "tiltDeg": 17.61,
+      "azimuthDeg": 180,
+      "surfaceSqm": 15.31,
+      "projectedSqm": 14.59,
+      "minElevationM": 13.199,
+      "maxElevationM": 13.416,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -35.202
+            ],
+            [
+              -20.048,
+              -35.202
+            ],
+            [
+              -20.048,
+              -34.519
+            ],
+            [
+              -41.429,
+              -34.519
+            ],
+            [
+              -41.429,
+              -35.202
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-10",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.994756,
+        -0.102277
+      ],
+      "tiltDeg": 5.87,
+      "azimuthDeg": 180,
+      "surfaceSqm": 15.31,
+      "projectedSqm": 15.23,
+      "minElevationM": 13.707,
+      "maxElevationM": 13.781,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -33.118
+            ],
+            [
+              -20.048,
+              -33.118
+            ],
+            [
+              -20.048,
+              -32.406
+            ],
+            [
+              -41.429,
+              -32.406
+            ],
+            [
+              -41.429,
+              -33.118
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-11",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.999417,
+        -0.034145
+      ],
+      "tiltDeg": 1.96,
+      "azimuthDeg": 180,
+      "surfaceSqm": 15.31,
+      "projectedSqm": 15.3,
+      "minElevationM": 13.781,
+      "maxElevationM": 13.805,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -32.406
+            ],
+            [
+              -20.048,
+              -32.406
+            ],
+            [
+              -20.048,
+              -31.69
+            ],
+            [
+              -41.429,
+              -31.69
+            ],
+            [
+              -41.429,
+              -32.406
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-12",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.903051,
+        0.429533
+      ],
+      "tiltDeg": 25.44,
+      "azimuthDeg": 0,
+      "surfaceSqm": 15.31,
+      "projectedSqm": 13.82,
+      "minElevationM": 12.629,
+      "maxElevationM": 12.937,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -27.512
+            ],
+            [
+              -20.048,
+              -27.512
+            ],
+            [
+              -20.048,
+              -26.866
+            ],
+            [
+              -41.429,
+              -26.866
+            ],
+            [
+              -41.429,
+              -27.512
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-13",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.930262,
+        0.366897
+      ],
+      "tiltDeg": 21.52,
+      "azimuthDeg": 0,
+      "surfaceSqm": 15.31,
+      "projectedSqm": 14.24,
+      "minElevationM": 12.937,
+      "maxElevationM": 13.199,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -28.178
+            ],
+            [
+              -20.048,
+              -28.178
+            ],
+            [
+              -20.048,
+              -27.512
+            ],
+            [
+              -41.429,
+              -27.512
+            ],
+            [
+              -41.429,
+              -28.178
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-14",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.87163,
+        0.490165
+      ],
+      "tiltDeg": 29.35,
+      "azimuthDeg": 0,
+      "surfaceSqm": 15.31,
+      "projectedSqm": 13.34,
+      "minElevationM": 12.278,
+      "maxElevationM": 12.629,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -26.866
+            ],
+            [
+              -20.048,
+              -26.866
+            ],
+            [
+              -20.048,
+              -26.242
+            ],
+            [
+              -41.429,
+              -26.242
+            ],
+            [
+              -41.429,
+              -26.866
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-15",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194478",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2280",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.999417,
+        0.034145
+      ],
+      "tiltDeg": 1.96,
+      "azimuthDeg": 0,
+      "surfaceSqm": 15.31,
+      "projectedSqm": 15.3,
+      "minElevationM": 13.781,
+      "maxElevationM": 13.805,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -41.429,
+              -31.69
+            ],
+            [
+              -20.048,
+              -31.69
+            ],
+            [
+              -20.048,
+              -30.974
+            ],
+            [
+              -41.429,
+              -30.974
+            ],
+            [
+              -41.429,
+              -31.69
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-16",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.992092,
+        0.125512
+      ],
+      "tiltDeg": 7.21,
+      "azimuthDeg": 0,
+      "surfaceSqm": 6.29,
+      "projectedSqm": 4.15,
+      "minElevationM": 11.558,
+      "maxElevationM": 11.927,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -30.886
+            ],
+            [
+              -13.548,
+              -30.886
+            ],
+            [
+              -13.548,
+              -30.247
+            ],
+            [
+              -20.048,
+              -30.247
+            ],
+            [
+              -20.048,
+              -30.886
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.47
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-17",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.979773,
+        0.200112
+      ],
+      "tiltDeg": 11.54,
+      "azimuthDeg": 0,
+      "surfaceSqm": 6.29,
+      "projectedSqm": 4.1,
+      "minElevationM": 11.445,
+      "maxElevationM": 11.844,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -30.247
+            ],
+            [
+              -13.548,
+              -30.247
+            ],
+            [
+              -13.548,
+              -29.617
+            ],
+            [
+              -20.048,
+              -29.617
+            ],
+            [
+              -20.048,
+              -30.247
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.45
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-18",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.961853,
+        0.273568
+      ],
+      "tiltDeg": 15.88,
+      "azimuthDeg": 0,
+      "surfaceSqm": 6.29,
+      "projectedSqm": 4.02,
+      "minElevationM": 11.283,
+      "maxElevationM": 11.713,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -29.617
+            ],
+            [
+              -13.548,
+              -29.617
+            ],
+            [
+              -13.548,
+              -28.998
+            ],
+            [
+              -20.048,
+              -28.998
+            ],
+            [
+              -20.048,
+              -29.617
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.42
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-47",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.88194,
+        -0.471363
+      ],
+      "tiltDeg": 28.12,
+      "azimuthDeg": 180,
+      "surfaceSqm": 5.47,
+      "projectedSqm": 3.26,
+      "minElevationM": 8.946,
+      "maxElevationM": 9.46,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -35.134
+            ],
+            [
+              -7.167,
+              -35.134
+            ],
+            [
+              -7.167,
+              -34.624
+            ],
+            [
+              -13.548,
+              -34.624
+            ],
+            [
+              -13.548,
+              -35.134
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.91
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-48",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.918916,
+        -0.394453
+      ],
+      "tiltDeg": 23.23,
+      "azimuthDeg": 180,
+      "surfaceSqm": 5.47,
+      "projectedSqm": 3.39,
+      "minElevationM": 9.202,
+      "maxElevationM": 9.687,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -34.624
+            ],
+            [
+              -7.167,
+              -34.624
+            ],
+            [
+              -7.167,
+              -34.093
+            ],
+            [
+              -13.548,
+              -34.093
+            ],
+            [
+              -13.548,
+              -34.624
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.94
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-49",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194845",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2279",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.891871,
+        -0.452289
+      ],
+      "tiltDeg": 26.89,
+      "azimuthDeg": 180,
+      "surfaceSqm": 4.57,
+      "projectedSqm": 2.76,
+      "minElevationM": 7.379,
+      "maxElevationM": 7.862,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -34.13
+            ],
+            [
+              -0.814,
+              -34.13
+            ],
+            [
+              -0.814,
+              -33.696
+            ],
+            [
+              -7.167,
+              -33.696
+            ],
+            [
+              -7.167,
+              -34.13
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.78
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-50",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194845",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2279",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.932138,
+        -0.362104
+      ],
+      "tiltDeg": 21.23,
+      "azimuthDeg": 180,
+      "surfaceSqm": 4.57,
+      "projectedSqm": 2.88,
+      "minElevationM": 7.583,
+      "maxElevationM": 8.036,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -33.696
+            ],
+            [
+              -0.814,
+              -33.696
+            ],
+            [
+              -0.814,
+              -33.243
+            ],
+            [
+              -7.167,
+              -33.243
+            ],
+            [
+              -7.167,
+              -33.696
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.81
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-51",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194845",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2279",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.963311,
+        -0.268386
+      ],
+      "tiltDeg": 15.57,
+      "azimuthDeg": 180,
+      "surfaceSqm": 4.57,
+      "projectedSqm": 2.97,
+      "minElevationM": 7.745,
+      "maxElevationM": 8.165,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -33.243
+            ],
+            [
+              -0.814,
+              -33.243
+            ],
+            [
+              -0.814,
+              -32.774
+            ],
+            [
+              -7.167,
+              -32.774
+            ],
+            [
+              -7.167,
+              -33.243
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.84
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-52",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.909589,
+        -0.41551
+      ],
+      "tiltDeg": 24.55,
+      "azimuthDeg": 180,
+      "surfaceSqm": 4.19,
+      "projectedSqm": 3.81,
+      "minElevationM": 11.044,
+      "maxElevationM": 11.312,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -35.573
+            ],
+            [
+              -13.548,
+              -35.573
+            ],
+            [
+              -13.548,
+              -34.987
+            ],
+            [
+              -20.048,
+              -34.987
+            ],
+            [
+              -20.048,
+              -35.573
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.35
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-53",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.876128,
+        -0.482079
+      ],
+      "tiltDeg": 28.82,
+      "azimuthDeg": 180,
+      "surfaceSqm": 4.19,
+      "projectedSqm": 3.67,
+      "minElevationM": 10.734,
+      "maxElevationM": 11.044,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -36.137
+            ],
+            [
+              -13.548,
+              -36.137
+            ],
+            [
+              -13.548,
+              -35.573
+            ],
+            [
+              -20.048,
+              -35.573
+            ],
+            [
+              -20.048,
+              -36.137
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.3
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-54",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.938,
+        -0.346635
+      ],
+      "tiltDeg": 20.28,
+      "azimuthDeg": 180,
+      "surfaceSqm": 4.19,
+      "projectedSqm": 3.93,
+      "minElevationM": 11.312,
+      "maxElevationM": 11.535,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -34.987
+            ],
+            [
+              -13.548,
+              -34.987
+            ],
+            [
+              -13.548,
+              -34.383
+            ],
+            [
+              -20.048,
+              -34.383
+            ],
+            [
+              -20.048,
+              -34.987
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.39
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-55",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.991508,
+        -0.130045
+      ],
+      "tiltDeg": 7.47,
+      "azimuthDeg": 180,
+      "surfaceSqm": 4.19,
+      "projectedSqm": 4.15,
+      "minElevationM": 11.844,
+      "maxElevationM": 11.927,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -33.133
+            ],
+            [
+              -13.548,
+              -33.133
+            ],
+            [
+              -13.548,
+              -32.494
+            ],
+            [
+              -20.048,
+              -32.494
+            ],
+            [
+              -20.048,
+              -33.133
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.47
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-56",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.979074,
+        -0.203505
+      ],
+      "tiltDeg": 11.74,
+      "azimuthDeg": 180,
+      "surfaceSqm": 4.19,
+      "projectedSqm": 4.1,
+      "minElevationM": 11.713,
+      "maxElevationM": 11.844,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -33.763
+            ],
+            [
+              -13.548,
+              -33.763
+            ],
+            [
+              -13.548,
+              -33.133
+            ],
+            [
+              -20.048,
+              -33.133
+            ],
+            [
+              -20.048,
+              -33.763
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.45
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-57",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.961205,
+        -0.275836
+      ],
+      "tiltDeg": 16.01,
+      "azimuthDeg": 180,
+      "surfaceSqm": 4.19,
+      "projectedSqm": 4.02,
+      "minElevationM": 11.535,
+      "maxElevationM": 11.713,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -34.383
+            ],
+            [
+              -13.548,
+              -34.383
+            ],
+            [
+              -13.548,
+              -33.763
+            ],
+            [
+              -20.048,
+              -33.763
+            ],
+            [
+              -20.048,
+              -34.383
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.42
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-58",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.998438,
+        -0.055863
+      ],
+      "tiltDeg": 3.2,
+      "azimuthDeg": 180,
+      "surfaceSqm": 4.19,
+      "projectedSqm": 4.18,
+      "minElevationM": 11.927,
+      "maxElevationM": 11.963,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -32.494
+            ],
+            [
+              -13.548,
+              -32.494
+            ],
+            [
+              -13.548,
+              -31.851
+            ],
+            [
+              -20.048,
+              -31.851
+            ],
+            [
+              -20.048,
+              -32.494
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.48
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-59",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.998438,
+        0.055863
+      ],
+      "tiltDeg": 3.2,
+      "azimuthDeg": 0,
+      "surfaceSqm": 4.19,
+      "projectedSqm": 4.18,
+      "minElevationM": 11.927,
+      "maxElevationM": 11.963,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -31.529
+            ],
+            [
+              -13.548,
+              -31.529
+            ],
+            [
+              -13.548,
+              -30.886
+            ],
+            [
+              -20.048,
+              -30.886
+            ],
+            [
+              -20.048,
+              -31.529
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.48
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-60",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.909589,
+        0.41551
+      ],
+      "tiltDeg": 24.55,
+      "azimuthDeg": 0,
+      "surfaceSqm": 4.19,
+      "projectedSqm": 3.81,
+      "minElevationM": 11.044,
+      "maxElevationM": 11.312,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -28.393
+            ],
+            [
+              -13.548,
+              -28.393
+            ],
+            [
+              -13.548,
+              -27.808
+            ],
+            [
+              -20.048,
+              -27.808
+            ],
+            [
+              -20.048,
+              -28.393
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.35
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-61",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.938,
+        0.346635
+      ],
+      "tiltDeg": 20.28,
+      "azimuthDeg": 0,
+      "surfaceSqm": 4.19,
+      "projectedSqm": 3.93,
+      "minElevationM": 11.312,
+      "maxElevationM": 11.535,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -28.998
+            ],
+            [
+              -13.548,
+              -28.998
+            ],
+            [
+              -13.548,
+              -28.393
+            ],
+            [
+              -20.048,
+              -28.393
+            ],
+            [
+              -20.048,
+              -28.998
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.39
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-62",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.876128,
+        0.482079
+      ],
+      "tiltDeg": 28.82,
+      "azimuthDeg": 0,
+      "surfaceSqm": 4.19,
+      "projectedSqm": 3.67,
+      "minElevationM": 10.734,
+      "maxElevationM": 11.044,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -27.808
+            ],
+            [
+              -13.548,
+              -27.808
+            ],
+            [
+              -13.548,
+              -27.243
+            ],
+            [
+              -20.048,
+              -27.243
+            ],
+            [
+              -20.048,
+              -27.808
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.3
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-63",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.988979,
+        -0.148053
+      ],
+      "tiltDeg": 8.51,
+      "azimuthDeg": 180,
+      "surfaceSqm": 3.68,
+      "projectedSqm": 3.65,
+      "minElevationM": 10.001,
+      "maxElevationM": 10.087,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -32.982
+            ],
+            [
+              -7.167,
+              -32.982
+            ],
+            [
+              -7.167,
+              -32.411
+            ],
+            [
+              -13.548,
+              -32.411
+            ],
+            [
+              -13.548,
+              -32.982
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.01
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-64",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.97286,
+        -0.231396
+      ],
+      "tiltDeg": 13.38,
+      "azimuthDeg": 180,
+      "surfaceSqm": 3.68,
+      "projectedSqm": 3.59,
+      "minElevationM": 9.867,
+      "maxElevationM": 10.001,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -33.544
+            ],
+            [
+              -7.167,
+              -33.544
+            ],
+            [
+              -7.167,
+              -32.982
+            ],
+            [
+              -13.548,
+              -32.982
+            ],
+            [
+              -13.548,
+              -33.544
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-65",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.949729,
+        -0.313072
+      ],
+      "tiltDeg": 18.24,
+      "azimuthDeg": 180,
+      "surfaceSqm": 3.68,
+      "projectedSqm": 3.5,
+      "minElevationM": 9.687,
+      "maxElevationM": 9.867,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -34.093
+            ],
+            [
+              -7.167,
+              -34.093
+            ],
+            [
+              -7.167,
+              -33.544
+            ],
+            [
+              -13.548,
+              -33.544
+            ],
+            [
+              -13.548,
+              -34.093
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.97
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-66",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.997973,
+        -0.063642
+      ],
+      "tiltDeg": 3.65,
+      "azimuthDeg": 180,
+      "surfaceSqm": 3.68,
+      "projectedSqm": 3.68,
+      "minElevationM": 10.087,
+      "maxElevationM": 10.123,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -32.411
+            ],
+            [
+              -7.167,
+              -32.411
+            ],
+            [
+              -7.167,
+              -31.834
+            ],
+            [
+              -13.548,
+              -31.834
+            ],
+            [
+              -13.548,
+              -32.411
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.02
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-67",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.997973,
+        0.063642
+      ],
+      "tiltDeg": 3.65,
+      "azimuthDeg": 0,
+      "surfaceSqm": 3.68,
+      "projectedSqm": 3.68,
+      "minElevationM": 10.087,
+      "maxElevationM": 10.123,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -31.546
+            ],
+            [
+              -7.167,
+              -31.546
+            ],
+            [
+              -7.167,
+              -30.969
+            ],
+            [
+              -13.548,
+              -30.969
+            ],
+            [
+              -13.548,
+              -31.546
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.02
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-68",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.988979,
+        0.148053
+      ],
+      "tiltDeg": 8.51,
+      "azimuthDeg": 0,
+      "surfaceSqm": 3.68,
+      "projectedSqm": 3.65,
+      "minElevationM": 10.001,
+      "maxElevationM": 10.087,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -30.969
+            ],
+            [
+              -7.167,
+              -30.969
+            ],
+            [
+              -7.167,
+              -30.398
+            ],
+            [
+              -13.548,
+              -30.398
+            ],
+            [
+              -13.548,
+              -30.969
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.01
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-69",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.919755,
+        0.392492
+      ],
+      "tiltDeg": 23.11,
+      "azimuthDeg": 0,
+      "surfaceSqm": 3.68,
+      "projectedSqm": 3.39,
+      "minElevationM": 9.46,
+      "maxElevationM": 9.687,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -29.287
+            ],
+            [
+              -7.167,
+              -29.287
+            ],
+            [
+              -7.167,
+              -28.756
+            ],
+            [
+              -13.548,
+              -28.756
+            ],
+            [
+              -13.548,
+              -29.287
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.94
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-70",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.949729,
+        0.313072
+      ],
+      "tiltDeg": 18.24,
+      "azimuthDeg": 0,
+      "surfaceSqm": 3.68,
+      "projectedSqm": 3.5,
+      "minElevationM": 9.687,
+      "maxElevationM": 9.867,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -29.836
+            ],
+            [
+              -7.167,
+              -29.836
+            ],
+            [
+              -7.167,
+              -29.287
+            ],
+            [
+              -13.548,
+              -29.287
+            ],
+            [
+              -13.548,
+              -29.836
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.97
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-71",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.97286,
+        0.231396
+      ],
+      "tiltDeg": 13.38,
+      "azimuthDeg": 0,
+      "surfaceSqm": 3.68,
+      "projectedSqm": 3.59,
+      "minElevationM": 9.867,
+      "maxElevationM": 10.001,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -30.398
+            ],
+            [
+              -7.167,
+              -30.398
+            ],
+            [
+              -7.167,
+              -29.836
+            ],
+            [
+              -13.548,
+              -29.836
+            ],
+            [
+              -13.548,
+              -30.398
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-72",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.883153,
+        0.469084
+      ],
+      "tiltDeg": 27.97,
+      "azimuthDeg": 0,
+      "surfaceSqm": 3.68,
+      "projectedSqm": 3.26,
+      "minElevationM": 9.189,
+      "maxElevationM": 9.46,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -28.756
+            ],
+            [
+              -7.167,
+              -28.756
+            ],
+            [
+              -7.167,
+              -28.246
+            ],
+            [
+              -13.548,
+              -28.246
+            ],
+            [
+              -13.548,
+              -28.756
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.91
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-73",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194845",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2279",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.985374,
+        -0.170403
+      ],
+      "tiltDeg": 9.81,
+      "azimuthDeg": 180,
+      "surfaceSqm": 3.09,
+      "projectedSqm": 3.04,
+      "minElevationM": 8.165,
+      "maxElevationM": 8.248,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -32.774
+            ],
+            [
+              -0.814,
+              -32.774
+            ],
+            [
+              -0.814,
+              -32.296
+            ],
+            [
+              -7.167,
+              -32.296
+            ],
+            [
+              -7.167,
+              -32.774
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.86
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-74",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194845",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2279",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.997308,
+        -0.073322
+      ],
+      "tiltDeg": 4.2,
+      "azimuthDeg": 180,
+      "surfaceSqm": 3.09,
+      "projectedSqm": 3.08,
+      "minElevationM": 8.248,
+      "maxElevationM": 8.283,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -32.296
+            ],
+            [
+              -0.814,
+              -32.296
+            ],
+            [
+              -0.814,
+              -31.811
+            ],
+            [
+              -7.167,
+              -31.811
+            ],
+            [
+              -7.167,
+              -32.296
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.87
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-75",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194845",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2279",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.997308,
+        0.073322
+      ],
+      "tiltDeg": 4.2,
+      "azimuthDeg": 0,
+      "surfaceSqm": 3.09,
+      "projectedSqm": 3.08,
+      "minElevationM": 8.248,
+      "maxElevationM": 8.283,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -31.569
+            ],
+            [
+              -0.814,
+              -31.569
+            ],
+            [
+              -0.814,
+              -31.084
+            ],
+            [
+              -7.167,
+              -31.084
+            ],
+            [
+              -7.167,
+              -31.569
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.87
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-76",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194845",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2279",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.985374,
+        0.170403
+      ],
+      "tiltDeg": 9.81,
+      "azimuthDeg": 0,
+      "surfaceSqm": 3.09,
+      "projectedSqm": 3.04,
+      "minElevationM": 8.165,
+      "maxElevationM": 8.248,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -31.084
+            ],
+            [
+              -0.814,
+              -31.084
+            ],
+            [
+              -0.814,
+              -30.606
+            ],
+            [
+              -7.167,
+              -30.606
+            ],
+            [
+              -7.167,
+              -31.084
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.86
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-77",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194845",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2279",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.93343,
+        0.358761
+      ],
+      "tiltDeg": 21.02,
+      "azimuthDeg": 0,
+      "surfaceSqm": 3.09,
+      "projectedSqm": 2.88,
+      "minElevationM": 7.862,
+      "maxElevationM": 8.036,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -30.138
+            ],
+            [
+              -0.814,
+              -30.138
+            ],
+            [
+              -0.814,
+              -29.684
+            ],
+            [
+              -7.167,
+              -29.684
+            ],
+            [
+              -7.167,
+              -30.138
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.81
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-78",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194845",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2279",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.964013,
+        0.265853
+      ],
+      "tiltDeg": 15.42,
+      "azimuthDeg": 0,
+      "surfaceSqm": 3.09,
+      "projectedSqm": 2.97,
+      "minElevationM": 8.036,
+      "maxElevationM": 8.165,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -30.606
+            ],
+            [
+              -0.814,
+              -30.606
+            ],
+            [
+              -0.814,
+              -30.138
+            ],
+            [
+              -7.167,
+              -30.138
+            ],
+            [
+              -7.167,
+              -30.606
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.84
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-79",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194845",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2279",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.893915,
+        0.448236
+      ],
+      "tiltDeg": 26.63,
+      "azimuthDeg": 0,
+      "surfaceSqm": 3.09,
+      "projectedSqm": 2.76,
+      "minElevationM": 7.644,
+      "maxElevationM": 7.862,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -29.684
+            ],
+            [
+              -0.814,
+              -29.684
+            ],
+            [
+              -0.814,
+              -29.25
+            ],
+            [
+              -7.167,
+              -29.25
+            ],
+            [
+              -7.167,
+              -29.684
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.78
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-80",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.000018,
+        0.969392,
+        0.245516
+      ],
+      "tiltDeg": 14.21,
+      "azimuthDeg": 360,
+      "surfaceSqm": 2.37,
+      "projectedSqm": 1.85,
+      "minElevationM": 5.054,
+      "maxElevationM": 5.462,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.814,
+              -30.286
+            ],
+            [
+              2.67,
+              -30.252
+            ],
+            [
+              2.67,
+              -29.691
+            ],
+            [
+              0.38,
+              -29.76
+            ],
+            [
+              -0.814,
+              -29.76
+            ],
+            [
+              -0.814,
+              -30.286
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.93
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-81",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.000076,
+        0.996459,
+        -0.084076
+      ],
+      "tiltDeg": 4.82,
+      "azimuthDeg": 180.05,
+      "surfaceSqm": 2,
+      "projectedSqm": 1.99,
+      "minElevationM": 5.55,
+      "maxElevationM": 5.599,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.814,
+              -32.542
+            ],
+            [
+              2.67,
+              -32.557
+            ],
+            [
+              2.67,
+              -31.98
+            ],
+            [
+              -0.814,
+              -31.977
+            ],
+            [
+              -0.814,
+              -32.542
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.98
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-82",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.000076,
+        1,
+        -0.000373
+      ],
+      "tiltDeg": 0.02,
+      "azimuthDeg": null,
+      "surfaceSqm": 2,
+      "projectedSqm": 2,
+      "minElevationM": 5.599,
+      "maxElevationM": 5.599,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.814,
+              -31.977
+            ],
+            [
+              2.67,
+              -31.98
+            ],
+            [
+              2.67,
+              -31.4
+            ],
+            [
+              -0.814,
+              -31.41
+            ],
+            [
+              -0.814,
+              -31.977
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.98
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-83",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.000076,
+        0.996522,
+        0.083332
+      ],
+      "tiltDeg": 4.78,
+      "azimuthDeg": 359.95,
+      "surfaceSqm": 2,
+      "projectedSqm": 1.99,
+      "minElevationM": 5.55,
+      "maxElevationM": 5.599,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.814,
+              -31.41
+            ],
+            [
+              2.67,
+              -31.4
+            ],
+            [
+              2.67,
+              -30.823
+            ],
+            [
+              -0.814,
+              -30.845
+            ],
+            [
+              -0.814,
+              -31.41
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.98
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-84",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        -0.000088,
+        0.968619,
+        -0.24855
+      ],
+      "tiltDeg": 14.39,
+      "azimuthDeg": 179.98,
+      "surfaceSqm": 1.8,
+      "projectedSqm": 1.46,
+      "minElevationM": 5.024,
+      "maxElevationM": 5.46,
+      "triangleCount": 3,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.814,
+              -33.63
+            ],
+            [
+              0.38,
+              -33.63
+            ],
+            [
+              1.207,
+              -33.449
+            ],
+            [
+              2.67,
+              -33.476
+            ],
+            [
+              2.67,
+              -33.207
+            ],
+            [
+              2.247,
+              -33.221
+            ],
+            [
+              2.67,
+              -33.128
+            ],
+            [
+              -0.814,
+              -33.101
+            ],
+            [
+              -0.814,
+              -33.63
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.94
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-111",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194564",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2282",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 2.09,
+      "projectedSqm": 2.09,
+      "minElevationM": 11.963,
+      "maxElevationM": 11.963,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -20.048,
+              -31.851
+            ],
+            [
+              -13.548,
+              -31.851
+            ],
+            [
+              -13.548,
+              -31.529
+            ],
+            [
+              -20.048,
+              -31.529
+            ],
+            [
+              -20.048,
+              -31.851
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.74
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-112",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194664",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2281",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 1.85,
+      "projectedSqm": 1.84,
+      "minElevationM": 10.123,
+      "maxElevationM": 10.123,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -31.834
+            ],
+            [
+              -7.167,
+              -31.834
+            ],
+            [
+              -7.167,
+              -31.546
+            ],
+            [
+              -13.548,
+              -31.546
+            ],
+            [
+              -13.548,
+              -31.834
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.51
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-137",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.000212,
+        0.986011,
+        0.166679
+      ],
+      "tiltDeg": 9.59,
+      "azimuthDeg": 359.93,
+      "surfaceSqm": 1.37,
+      "projectedSqm": 1.33,
+      "minElevationM": 5.169,
+      "maxElevationM": 5.55,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.814,
+              -30.477
+            ],
+            [
+              2.67,
+              -30.823
+            ],
+            [
+              2.67,
+              -30.252
+            ],
+            [
+              -0.814,
+              -30.286
+            ],
+            [
+              -0.814,
+              -30.477
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.8
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-138",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        -0.000047,
+        0.985978,
+        -0.166878
+      ],
+      "tiltDeg": 9.61,
+      "azimuthDeg": 179.98,
+      "surfaceSqm": 1.3,
+      "projectedSqm": 1.18,
+      "minElevationM": 5.154,
+      "maxElevationM": 5.552,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.814,
+              -32.91
+            ],
+            [
+              -0.641,
+              -32.892
+            ],
+            [
+              2.67,
+              -32.935
+            ],
+            [
+              2.67,
+              -32.661
+            ],
+            [
+              0.99,
+              -32.727
+            ],
+            [
+              2.67,
+              -32.557
+            ],
+            [
+              -0.814,
+              -32.542
+            ],
+            [
+              -0.814,
+              -32.91
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.8
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-139",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194845",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2279",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 1.54,
+      "projectedSqm": 1.54,
+      "minElevationM": 8.283,
+      "maxElevationM": 8.283,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -31.811
+            ],
+            [
+              -0.814,
+              -31.811
+            ],
+            [
+              -0.814,
+              -31.569
+            ],
+            [
+              -7.167,
+              -31.569
+            ],
+            [
+              -7.167,
+              -31.811
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.44
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-159",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.00032,
+        0.985524,
+        -0.169534
+      ],
+      "tiltDeg": 9.76,
+      "azimuthDeg": 180.11,
+      "surfaceSqm": 0.8,
+      "projectedSqm": 0.79,
+      "minElevationM": 5.451,
+      "maxElevationM": 5.55,
+      "triangleCount": 1,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.814,
+              -33.101
+            ],
+            [
+              2.67,
+              -33.128
+            ],
+            [
+              2.67,
+              -32.935
+            ],
+            [
+              -0.641,
+              -32.892
+            ],
+            [
+              -0.814,
+              -32.91
+            ],
+            [
+              -0.814,
+              -33.101
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.99,
+              -32.727
+            ],
+            [
+              2.67,
+              -32.661
+            ],
+            [
+              2.67,
+              -32.557
+            ],
+            [
+              0.99,
+              -32.727
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.7
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-160",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        -0.00025,
+        0.986582,
+        0.163266
+      ],
+      "tiltDeg": 9.4,
+      "azimuthDeg": 0.09,
+      "surfaceSqm": 0.65,
+      "projectedSqm": 0.64,
+      "minElevationM": 5.462,
+      "maxElevationM": 5.554,
+      "triangleCount": 1,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.814,
+              -30.845
+            ],
+            [
+              2.67,
+              -30.823
+            ],
+            [
+              -0.814,
+              -30.477
+            ],
+            [
+              -0.814,
+              -30.845
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.8
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-165",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.001775,
+        0.909246,
+        -0.416255
+      ],
+      "tiltDeg": 24.6,
+      "azimuthDeg": 180.24,
+      "surfaceSqm": 0.95,
+      "projectedSqm": 0.71,
+      "minElevationM": 4.612,
+      "maxElevationM": 5.111,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              2.67,
+              -34.763
+            ],
+            [
+              2.67,
+              -34.262
+            ],
+            [
+              2.54,
+              -34.252
+            ],
+            [
+              1.393,
+              -34.407
+            ],
+            [
+              0.38,
+              -34.321
+            ],
+            [
+              2.67,
+              -34.763
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-166",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.002208,
+        0.942402,
+        0.334476
+      ],
+      "tiltDeg": 19.54,
+      "azimuthDeg": 359.62,
+      "surfaceSqm": 0.95,
+      "projectedSqm": 0.89,
+      "minElevationM": 5.111,
+      "maxElevationM": 5.305,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.38,
+              -29.525
+            ],
+            [
+              2.67,
+              -29.691
+            ],
+            [
+              2.67,
+              -29.145
+            ],
+            [
+              0.38,
+              -29.293
+            ],
+            [
+              0.38,
+              -29.525
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-167",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.002214,
+        0.942297,
+        -0.334771
+      ],
+      "tiltDeg": 19.56,
+      "azimuthDeg": 180.38,
+      "surfaceSqm": 0.94,
+      "projectedSqm": 0.89,
+      "minElevationM": 5.111,
+      "maxElevationM": 5.305,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.38,
+              -34.093
+            ],
+            [
+              2.67,
+              -34.235
+            ],
+            [
+              2.67,
+              -33.689
+            ],
+            [
+              0.38,
+              -33.863
+            ],
+            [
+              0.38,
+              -34.093
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-184",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.001022,
+        0.967528,
+        -0.252763
+      ],
+      "tiltDeg": 14.64,
+      "azimuthDeg": 180.23,
+      "surfaceSqm": 0.42,
+      "projectedSqm": 0.4,
+      "minElevationM": 5.305,
+      "maxElevationM": 5.451,
+      "triangleCount": 1,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.38,
+              -33.63
+            ],
+            [
+              2.67,
+              -33.689
+            ],
+            [
+              2.67,
+              -33.476
+            ],
+            [
+              1.207,
+              -33.449
+            ],
+            [
+              0.38,
+              -33.63
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              2.247,
+              -33.221
+            ],
+            [
+              2.67,
+              -33.207
+            ],
+            [
+              2.67,
+              -33.128
+            ],
+            [
+              2.247,
+              -33.221
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.24
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-185",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.002634,
+        0.910668,
+        0.413131
+      ],
+      "tiltDeg": 24.4,
+      "azimuthDeg": 359.63,
+      "surfaceSqm": 0.66,
+      "projectedSqm": 0.6,
+      "minElevationM": 4.872,
+      "maxElevationM": 5.111,
+      "triangleCount": 1,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.38,
+              -28.839
+            ],
+            [
+              2.67,
+              -29.145
+            ],
+            [
+              2.67,
+              -28.617
+            ],
+            [
+              0.38,
+              -28.839
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-186",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.000106,
+        0.927496,
+        -0.373833
+      ],
+      "tiltDeg": 21.95,
+      "azimuthDeg": 180.02,
+      "surfaceSqm": 0.3,
+      "projectedSqm": 0.26,
+      "minElevationM": 4.742,
+      "maxElevationM": 5.167,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.38,
+              -34.319
+            ],
+            [
+              2.426,
+              -34.244
+            ],
+            [
+              2.67,
+              -34.262
+            ],
+            [
+              2.67,
+              -34.235
+            ],
+            [
+              0.38,
+              -34.093
+            ],
+            [
+              0.38,
+              -34.319
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.26
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-190",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0.000273,
+        0.918569,
+        0.395261
+      ],
+      "tiltDeg": 23.28,
+      "azimuthDeg": 359.96,
+      "surfaceSqm": 0.3,
+      "projectedSqm": 0.26,
+      "minElevationM": 4.718,
+      "maxElevationM": 5.111,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.38,
+              -29.064
+            ],
+            [
+              2.67,
+              -29.145
+            ],
+            [
+              0.38,
+              -28.839
+            ],
+            [
+              0.38,
+              -29.064
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.23
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-191",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        -0.000111,
+        0.903203,
+        0.429213
+      ],
+      "tiltDeg": 25.42,
+      "azimuthDeg": 0.01,
+      "surfaceSqm": 0.28,
+      "projectedSqm": 0.25,
+      "minElevationM": 4.613,
+      "maxElevationM": 4.979,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.38,
+              -28.839
+            ],
+            [
+              0.388,
+              -28.838
+            ],
+            [
+              2.67,
+              -28.617
+            ],
+            [
+              0.38,
+              -28.617
+            ],
+            [
+              0.38,
+              -28.839
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.26
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-198",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        -0.00036,
+        0.953236,
+        -0.302227
+      ],
+      "tiltDeg": 17.59,
+      "azimuthDeg": 179.93,
+      "surfaceSqm": 0.28,
+      "projectedSqm": 0.27,
+      "minElevationM": 5.249,
+      "maxElevationM": 5.323,
+      "triangleCount": 1,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.38,
+              -33.863
+            ],
+            [
+              2.67,
+              -33.689
+            ],
+            [
+              0.38,
+              -33.63
+            ],
+            [
+              0.38,
+              -33.863
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-199",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        0.900212,
+        -0.435451
+      ],
+      "tiltDeg": 25.81,
+      "azimuthDeg": 180,
+      "surfaceSqm": 0.28,
+      "projectedSqm": 0.25,
+      "minElevationM": 4.872,
+      "maxElevationM": 4.978,
+      "triangleCount": 1,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.38,
+              -34.763
+            ],
+            [
+              2.67,
+              -34.763
+            ],
+            [
+              0.38,
+              -34.544
+            ],
+            [
+              0.38,
+              -34.763
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-200",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        -0.000445,
+        0.929394,
+        0.369089
+      ],
+      "tiltDeg": 21.66,
+      "azimuthDeg": 0.07,
+      "surfaceSqm": 0.28,
+      "projectedSqm": 0.26,
+      "minElevationM": 5.078,
+      "maxElevationM": 5.169,
+      "triangleCount": 1,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.38,
+              -29.293
+            ],
+            [
+              2.67,
+              -29.145
+            ],
+            [
+              0.38,
+              -29.064
+            ],
+            [
+              0.38,
+              -29.293
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-standing-seam-metal-roof-plane-201",
+      "elementName": "Basic Roof:Standing Seam Metal Roof:194944",
+      "elementType": "IfcRoof",
+      "elementRef": "ifc://Clinic_Structural.ifc#2278",
+      "family": "Basic Roof:Standing Seam Metal Roof",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        -0.000402,
+        0.953649,
+        0.300922
+      ],
+      "tiltDeg": 17.51,
+      "azimuthDeg": 0.08,
+      "surfaceSqm": 0.28,
+      "projectedSqm": 0.27,
+      "minElevationM": 5.251,
+      "maxElevationM": 5.326,
+      "triangleCount": 1,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.38,
+              -29.76
+            ],
+            [
+              2.67,
+              -29.691
+            ],
+            [
+              0.38,
+              -29.525
+            ],
+            [
+              0.38,
+              -29.76
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-epdm-membrane-on-rigid-insul--plane-0",
+      "elementName": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck:190761",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://Clinic_Structural.ifc#232612",
+      "family": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 1519.19,
+      "projectedSqm": 1519.19,
+      "minElevationM": 9.37,
+      "maxElevationM": 9.37,
+      "triangleCount": 14,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -47.113,
+              -50.237
+            ],
+            [
+              -38.503,
+              -50.237
+            ],
+            [
+              -38.503,
+              -56.253
+            ],
+            [
+              -35.397,
+              -56.253
+            ],
+            [
+              -35.397,
+              -50.236
+            ],
+            [
+              0.113,
+              -50.236
+            ],
+            [
+              0.113,
+              -35.805
+            ],
+            [
+              -13.548,
+              -35.805
+            ],
+            [
+              -13.548,
+              -36.137
+            ],
+            [
+              -20.048,
+              -36.137
+            ],
+            [
+              -20.048,
+              -37.138
+            ],
+            [
+              -41.429,
+              -37.138
+            ],
+            [
+              -41.429,
+              -26.242
+            ],
+            [
+              -20.048,
+              -26.242
+            ],
+            [
+              -20.048,
+              -27.243
+            ],
+            [
+              -13.548,
+              -27.243
+            ],
+            [
+              -13.548,
+              -27.58
+            ],
+            [
+              0.113,
+              -27.58
+            ],
+            [
+              0.113,
+              -9.927
+            ],
+            [
+              -47.113,
+              -9.927
+            ],
+            [
+              -47.113,
+              -50.237
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 61.04
+    },
+    {
+      "id": "basic-roof-epdm-membrane-on-rigid-insul--plane-1",
+      "elementName": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck:192254",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://Clinic_Structural.ifc#232616",
+      "family": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck",
+      "storeyId": "storey-second-floor",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 655.3,
+      "projectedSqm": 655.3,
+      "minElevationM": 4.588,
+      "maxElevationM": 4.588,
+      "triangleCount": 8,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -52.013,
+              -56.253
+            ],
+            [
+              -38.503,
+              -56.253
+            ],
+            [
+              -38.503,
+              -50.237
+            ],
+            [
+              -47.113,
+              -50.237
+            ],
+            [
+              -47.113,
+              -9.927
+            ],
+            [
+              -19.947,
+              -9.927
+            ],
+            [
+              -19.947,
+              0.113
+            ],
+            [
+              -52.013,
+              0.113
+            ],
+            [
+              -52.013,
+              -56.253
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -35.397,
+              -56.253
+            ],
+            [
+              -26.327,
+              -56.253
+            ],
+            [
+              -26.327,
+              -50.236
+            ],
+            [
+              -35.397,
+              -50.236
+            ],
+            [
+              -35.397,
+              -56.253
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0
+    },
+    {
+      "id": "basic-roof-epdm-membrane-on-rigid-insul--plane-2",
+      "elementName": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck:234050",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://Clinic_Structural.ifc#232614",
+      "family": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 10.89,
+      "projectedSqm": 10.9,
+      "minElevationM": 8.056,
+      "maxElevationM": 8.056,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -28.246
+            ],
+            [
+              -7.167,
+              -28.246
+            ],
+            [
+              -7.167,
+              -28.493
+            ],
+            [
+              0.113,
+              -28.493
+            ],
+            [
+              0.113,
+              -27.58
+            ],
+            [
+              -13.548,
+              -27.58
+            ],
+            [
+              -13.548,
+              -28.246
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 4.04
+    },
+    {
+      "id": "basic-roof-epdm-membrane-on-rigid-insul--plane-3",
+      "elementName": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck:234228",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://Clinic_Structural.ifc#232615",
+      "family": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 10.89,
+      "projectedSqm": 10.89,
+      "minElevationM": 8.056,
+      "maxElevationM": 8.056,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -13.548,
+              -35.805
+            ],
+            [
+              0.113,
+              -35.805
+            ],
+            [
+              0.113,
+              -34.897
+            ],
+            [
+              -7.167,
+              -34.897
+            ],
+            [
+              -7.167,
+              -35.134
+            ],
+            [
+              -13.548,
+              -35.134
+            ],
+            [
+              -13.548,
+              -35.805
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 4.04
+    },
+    {
+      "id": "basic-roof-epdm-membrane-on-rigid-insul--plane-4",
+      "elementName": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck:234334",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://Clinic_Structural.ifc#232611",
+      "family": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 5.89,
+      "projectedSqm": 5.89,
+      "minElevationM": 6.761,
+      "maxElevationM": 6.761,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -34.897
+            ],
+            [
+              0.113,
+              -34.897
+            ],
+            [
+              0.113,
+              -33.804
+            ],
+            [
+              -0.814,
+              -33.804
+            ],
+            [
+              -0.814,
+              -34.13
+            ],
+            [
+              -7.167,
+              -34.13
+            ],
+            [
+              -7.167,
+              -34.897
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 4.88
+    },
+    {
+      "id": "basic-roof-epdm-membrane-on-rigid-insul--plane-5",
+      "elementName": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck:234248",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://Clinic_Structural.ifc#232613",
+      "family": "Basic Roof:EPDM Membrane on Rigid Insul on Metal Deck",
+      "storeyId": "storey-roof-main",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 5.83,
+      "projectedSqm": 5.82,
+      "minElevationM": 6.761,
+      "maxElevationM": 6.761,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -7.167,
+              -29.25
+            ],
+            [
+              -0.814,
+              -29.25
+            ],
+            [
+              -0.814,
+              -29.586
+            ],
+            [
+              0.113,
+              -29.586
+            ],
+            [
+              0.113,
+              -28.493
+            ],
+            [
+              -7.167,
+              -28.493
+            ],
+            [
+              -7.167,
+              -29.25
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 4.94
+    }
+  ]
+}

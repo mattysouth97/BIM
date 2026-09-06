@@ -116,7 +116,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -32.68,
+            -50.47
+          ],
+          [
+            -31.68,
+            -50.47
+          ],
+          [
+            -31.68,
+            -50.2
+          ],
+          [
+            -32.68,
+            -50.2
+          ]
+        ]
       },
       "hostExpressID": 146,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:146031\"",
@@ -145,7 +163,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -30.19,
+            -50.47
+          ],
+          [
+            -29.19,
+            -50.47
+          ],
+          [
+            -29.19,
+            -50.2
+          ],
+          [
+            -30.19,
+            -50.2
+          ]
+        ]
       },
       "hostExpressID": 146,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:146031\"",
@@ -174,7 +210,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -27.67,
+            -50.47
+          ],
+          [
+            -26.67,
+            -50.47
+          ],
+          [
+            -26.67,
+            -50.2
+          ],
+          [
+            -27.67,
+            -50.2
+          ]
+        ]
       },
       "hostExpressID": 146,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:146031\"",
@@ -203,7 +257,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -21.59,
+            -9.93
+          ],
+          [
+            -20.59,
+            -9.93
+          ],
+          [
+            -20.59,
+            -9.66
+          ],
+          [
+            -21.59,
+            -9.66
+          ]
+        ]
       },
       "hostExpressID": 94,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145344\"",
@@ -232,7 +304,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -25.58,
+            -9.93
+          ],
+          [
+            -24.58,
+            -9.93
+          ],
+          [
+            -24.58,
+            -9.66
+          ],
+          [
+            -25.58,
+            -9.66
+          ]
+        ]
       },
       "hostExpressID": 94,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145344\"",
@@ -261,7 +351,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -28.6,
+            -9.93
+          ],
+          [
+            -27.6,
+            -9.93
+          ],
+          [
+            -27.6,
+            -9.66
+          ],
+          [
+            -28.6,
+            -9.66
+          ]
+        ]
       },
       "hostExpressID": 94,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145344\"",
@@ -290,7 +398,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -30.58,
+            -9.93
+          ],
+          [
+            -29.58,
+            -9.93
+          ],
+          [
+            -29.58,
+            -9.66
+          ],
+          [
+            -30.58,
+            -9.66
+          ]
+        ]
       },
       "hostExpressID": 94,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145344\"",
@@ -319,7 +445,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -32.59,
+            -9.93
+          ],
+          [
+            -31.59,
+            -9.93
+          ],
+          [
+            -31.59,
+            -9.66
+          ],
+          [
+            -32.59,
+            -9.66
+          ]
+        ]
       },
       "hostExpressID": 94,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145344\"",
@@ -348,7 +492,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -35.45,
+            -9.93
+          ],
+          [
+            -34.45,
+            -9.93
+          ],
+          [
+            -34.45,
+            -9.66
+          ],
+          [
+            -35.45,
+            -9.66
+          ]
+        ]
       },
       "hostExpressID": 94,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145344\"",
@@ -377,7 +539,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -40.08,
+            -9.93
+          ],
+          [
+            -39.08,
+            -9.93
+          ],
+          [
+            -39.08,
+            -9.66
+          ],
+          [
+            -40.08,
+            -9.66
+          ]
+        ]
       },
       "hostExpressID": 94,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145344\"",
@@ -406,7 +586,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -44.59,
+            -9.93
+          ],
+          [
+            -43.59,
+            -9.93
+          ],
+          [
+            -43.59,
+            -9.66
+          ],
+          [
+            -44.59,
+            -9.66
+          ]
+        ]
       },
       "hostExpressID": 94,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145344\"",
@@ -435,7 +633,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -47.38,
+            -11.73
+          ],
+          [
+            -47.11,
+            -11.73
+          ],
+          [
+            -47.11,
+            -10.73
+          ],
+          [
+            -47.38,
+            -10.73
+          ]
+        ]
       },
       "hostExpressID": 101,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145481\"",
@@ -464,7 +680,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -47.38,
+            -15.23
+          ],
+          [
+            -47.11,
+            -15.23
+          ],
+          [
+            -47.11,
+            -14.23
+          ],
+          [
+            -47.38,
+            -14.23
+          ]
+        ]
       },
       "hostExpressID": 101,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145481\"",
@@ -493,7 +727,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -47.38,
+            -20.21
+          ],
+          [
+            -47.11,
+            -20.21
+          ],
+          [
+            -47.11,
+            -19.21
+          ],
+          [
+            -47.38,
+            -19.21
+          ]
+        ]
       },
       "hostExpressID": 101,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145481\"",
@@ -522,7 +774,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -47.38,
+            -46.04
+          ],
+          [
+            -47.11,
+            -46.04
+          ],
+          [
+            -47.11,
+            -45.04
+          ],
+          [
+            -47.38,
+            -45.04
+          ]
+        ]
       },
       "hostExpressID": 101,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145481\"",
@@ -551,7 +821,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -47.38,
+            -49.72
+          ],
+          [
+            -47.11,
+            -49.72
+          ],
+          [
+            -47.11,
+            -48.72
+          ],
+          [
+            -47.38,
+            -48.72
+          ]
+        ]
       },
       "hostExpressID": 101,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145481\"",
@@ -580,7 +868,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -46.23,
+            -50.5
+          ],
+          [
+            -45.23,
+            -50.5
+          ],
+          [
+            -45.23,
+            -50.24
+          ],
+          [
+            -46.23,
+            -50.24
+          ]
+        ]
       },
       "hostExpressID": 356,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145577\"",
@@ -609,7 +915,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -42.73,
+            -50.5
+          ],
+          [
+            -41.73,
+            -50.5
+          ],
+          [
+            -41.73,
+            -50.24
+          ],
+          [
+            -42.73,
+            -50.24
+          ]
+        ]
       },
       "hostExpressID": 356,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145577\"",
@@ -638,7 +962,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -44.73,
+            -56.52
+          ],
+          [
+            -43.73,
+            -56.52
+          ],
+          [
+            -43.73,
+            -56.25
+          ],
+          [
+            -44.73,
+            -56.25
+          ]
+        ]
       },
       "hostExpressID": 288,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:142977\"",
@@ -667,7 +1009,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -25.68,
+            -50.47
+          ],
+          [
+            -24.68,
+            -50.47
+          ],
+          [
+            -24.68,
+            -50.2
+          ],
+          [
+            -25.68,
+            -50.2
+          ]
+        ]
       },
       "hostExpressID": 432,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:142394\"",
@@ -696,7 +1056,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -13.7,
+            -50.47
+          ],
+          [
+            -12.7,
+            -50.47
+          ],
+          [
+            -12.7,
+            -50.2
+          ],
+          [
+            -13.7,
+            -50.2
+          ]
+        ]
       },
       "hostExpressID": 215,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:142601\"",
@@ -725,7 +1103,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -6.68,
+            -50.47
+          ],
+          [
+            -5.68,
+            -50.47
+          ],
+          [
+            -5.68,
+            -50.2
+          ],
+          [
+            -6.68,
+            -50.2
+          ]
+        ]
       },
       "hostExpressID": 215,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:142601\"",
@@ -754,7 +1150,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            0.11,
+            -49.14
+          ],
+          [
+            0.38,
+            -49.14
+          ],
+          [
+            0.38,
+            -48.14
+          ],
+          [
+            0.11,
+            -48.14
+          ]
+        ]
       },
       "hostExpressID": 216,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:140707\"",
@@ -783,7 +1197,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            0.11,
+            -46.63
+          ],
+          [
+            0.38,
+            -46.63
+          ],
+          [
+            0.38,
+            -45.63
+          ],
+          [
+            0.11,
+            -45.63
+          ]
+        ]
       },
       "hostExpressID": 216,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:140707\"",
@@ -812,7 +1244,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            0.11,
+            -42.13
+          ],
+          [
+            0.38,
+            -42.13
+          ],
+          [
+            0.38,
+            -41.13
+          ],
+          [
+            0.11,
+            -41.13
+          ]
+        ]
       },
       "hostExpressID": 216,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:140707\"",
@@ -841,7 +1291,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            0.11,
+            -36.63
+          ],
+          [
+            0.38,
+            -36.63
+          ],
+          [
+            0.38,
+            -35.63
+          ],
+          [
+            0.11,
+            -35.63
+          ]
+        ]
       },
       "hostExpressID": 216,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:140707\"",
@@ -870,7 +1338,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -6.58,
+            -9.93
+          ],
+          [
+            -5.58,
+            -9.93
+          ],
+          [
+            -5.58,
+            -9.66
+          ],
+          [
+            -6.58,
+            -9.66
+          ]
+        ]
       },
       "hostExpressID": 206,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:140832\"",
@@ -899,7 +1385,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -19.95,
+            -8.15
+          ],
+          [
+            -19.68,
+            -8.15
+          ],
+          [
+            -19.68,
+            -7.15
+          ],
+          [
+            -19.95,
+            -7.15
+          ]
+        ]
       },
       "hostExpressID": 302,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:140972\"",
@@ -928,7 +1432,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -19.95,
+            -4.14
+          ],
+          [
+            -19.68,
+            -4.14
+          ],
+          [
+            -19.68,
+            -3.14
+          ],
+          [
+            -19.95,
+            -3.14
+          ]
+        ]
       },
       "hostExpressID": 302,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:140972\"",
@@ -957,7 +1479,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -19.95,
+            -2.16
+          ],
+          [
+            -19.68,
+            -2.16
+          ],
+          [
+            -19.68,
+            -1.16
+          ],
+          [
+            -19.95,
+            -1.16
+          ]
+        ]
       },
       "hostExpressID": 302,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:140972\"",
@@ -986,7 +1526,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -52.28,
+            -27.77
+          ],
+          [
+            -52.01,
+            -27.77
+          ],
+          [
+            -52.01,
+            -26.77
+          ],
+          [
+            -52.28,
+            -26.77
+          ]
+        ]
       },
       "hostExpressID": 196,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:142014\"",
@@ -1015,7 +1573,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -23.18,
+            -50.47
+          ],
+          [
+            -22.18,
+            -50.47
+          ],
+          [
+            -22.18,
+            -50.2
+          ],
+          [
+            -23.18,
+            -50.2
+          ]
+        ]
       },
       "hostExpressID": 146,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:146031\"",
@@ -1044,7 +1620,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -19.67,
+            -50.47
+          ],
+          [
+            -18.67,
+            -50.47
+          ],
+          [
+            -18.67,
+            -50.2
+          ],
+          [
+            -19.67,
+            -50.2
+          ]
+        ]
       },
       "hostExpressID": 146,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:146031\"",
@@ -1073,7 +1667,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -16.17,
+            -50.47
+          ],
+          [
+            -15.17,
+            -50.47
+          ],
+          [
+            -15.17,
+            -50.2
+          ],
+          [
+            -16.17,
+            -50.2
+          ]
+        ]
       },
       "hostExpressID": 146,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:146031\"",
@@ -1102,7 +1714,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -12.69,
+            -50.47
+          ],
+          [
+            -11.69,
+            -50.47
+          ],
+          [
+            -11.69,
+            -50.2
+          ],
+          [
+            -12.69,
+            -50.2
+          ]
+        ]
       },
       "hostExpressID": 146,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:146031\"",
@@ -1131,7 +1761,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -9.68,
+            -50.47
+          ],
+          [
+            -8.68,
+            -50.47
+          ],
+          [
+            -8.68,
+            -50.2
+          ],
+          [
+            -9.68,
+            -50.2
+          ]
+        ]
       },
       "hostExpressID": 146,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:146031\"",
@@ -1160,7 +1808,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -6.69,
+            -50.47
+          ],
+          [
+            -5.69,
+            -50.47
+          ],
+          [
+            -5.69,
+            -50.2
+          ],
+          [
+            -6.69,
+            -50.2
+          ]
+        ]
       },
       "hostExpressID": 146,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:146031\"",
@@ -1189,7 +1855,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            0.11,
+            -49.11
+          ],
+          [
+            0.38,
+            -49.11
+          ],
+          [
+            0.38,
+            -48.11
+          ],
+          [
+            0.11,
+            -48.11
+          ]
+        ]
       },
       "hostExpressID": 207,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:144524\"",
@@ -1218,7 +1902,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            0.11,
+            -44.09
+          ],
+          [
+            0.38,
+            -44.09
+          ],
+          [
+            0.38,
+            -43.09
+          ],
+          [
+            0.11,
+            -43.09
+          ]
+        ]
       },
       "hostExpressID": 207,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:144524\"",
@@ -1247,7 +1949,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            0.11,
+            -42.16
+          ],
+          [
+            0.38,
+            -42.16
+          ],
+          [
+            0.38,
+            -41.16
+          ],
+          [
+            0.11,
+            -41.16
+          ]
+        ]
       },
       "hostExpressID": 207,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:144524\"",
@@ -1276,7 +1996,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            0.11,
+            -36.66
+          ],
+          [
+            0.38,
+            -36.66
+          ],
+          [
+            0.38,
+            -35.66
+          ],
+          [
+            0.11,
+            -35.66
+          ]
+        ]
       },
       "hostExpressID": 207,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:144524\"",
@@ -1305,7 +2043,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            0.11,
+            -27.79
+          ],
+          [
+            0.38,
+            -27.79
+          ],
+          [
+            0.38,
+            -26.79
+          ],
+          [
+            0.11,
+            -26.79
+          ]
+        ]
       },
       "hostExpressID": 167,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:144932\"",
@@ -1334,7 +2090,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            0.11,
+            -22.29
+          ],
+          [
+            0.38,
+            -22.29
+          ],
+          [
+            0.38,
+            -21.29
+          ],
+          [
+            0.11,
+            -21.29
+          ]
+        ]
       },
       "hostExpressID": 167,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:144932\"",
@@ -1363,7 +2137,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            0.11,
+            -20.25
+          ],
+          [
+            0.38,
+            -20.25
+          ],
+          [
+            0.38,
+            -19.25
+          ],
+          [
+            0.11,
+            -19.25
+          ]
+        ]
       },
       "hostExpressID": 167,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:144932\"",
@@ -1392,7 +2184,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            0.11,
+            -17.77
+          ],
+          [
+            0.38,
+            -17.77
+          ],
+          [
+            0.38,
+            -16.77
+          ],
+          [
+            0.11,
+            -16.77
+          ]
+        ]
       },
       "hostExpressID": 167,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:144932\"",
@@ -1421,7 +2231,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            0.11,
+            -12.76
+          ],
+          [
+            0.38,
+            -12.76
+          ],
+          [
+            0.38,
+            -11.76
+          ],
+          [
+            0.11,
+            -11.76
+          ]
+        ]
       },
       "hostExpressID": 167,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:144932\"",
@@ -1450,7 +2278,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -6.59,
+            -9.93
+          ],
+          [
+            -5.59,
+            -9.93
+          ],
+          [
+            -5.59,
+            -9.66
+          ],
+          [
+            -6.59,
+            -9.66
+          ]
+        ]
       },
       "hostExpressID": 94,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145344\"",
@@ -1479,7 +2325,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -11.08,
+            -9.93
+          ],
+          [
+            -10.08,
+            -9.93
+          ],
+          [
+            -10.08,
+            -9.66
+          ],
+          [
+            -11.08,
+            -9.66
+          ]
+        ]
       },
       "hostExpressID": 94,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145344\"",
@@ -1508,7 +2372,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 5.47
+        "bottomM": 5.47,
+        "plan": [
+          [
+            -19.59,
+            -9.93
+          ],
+          [
+            -18.59,
+            -9.93
+          ],
+          [
+            -18.59,
+            -9.66
+          ],
+          [
+            -19.59,
+            -9.66
+          ]
+        ]
       },
       "hostExpressID": 94,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145344\"",
@@ -1537,7 +2419,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            0.11,
+            -27.86
+          ],
+          [
+            0.38,
+            -27.86
+          ],
+          [
+            0.38,
+            -26.86
+          ],
+          [
+            0.11,
+            -26.86
+          ]
+        ]
       },
       "hostExpressID": 235,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:263032\"",
@@ -1566,7 +2466,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            0.11,
+            -22.26
+          ],
+          [
+            0.38,
+            -22.26
+          ],
+          [
+            0.38,
+            -21.26
+          ],
+          [
+            0.11,
+            -21.26
+          ]
+        ]
       },
       "hostExpressID": 235,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:263032\"",
@@ -1595,7 +2513,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            0.11,
+            -17.76
+          ],
+          [
+            0.38,
+            -17.76
+          ],
+          [
+            0.38,
+            -16.76
+          ],
+          [
+            0.11,
+            -16.76
+          ]
+        ]
       },
       "hostExpressID": 235,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:263032\"",
@@ -1624,7 +2560,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            0.11,
+            -15.26
+          ],
+          [
+            0.38,
+            -15.26
+          ],
+          [
+            0.38,
+            -14.26
+          ],
+          [
+            0.11,
+            -14.26
+          ]
+        ]
       },
       "hostExpressID": 235,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:263032\"",
@@ -1653,7 +2607,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            0.11,
+            -12.76
+          ],
+          [
+            0.38,
+            -12.76
+          ],
+          [
+            0.38,
+            -11.76
+          ],
+          [
+            0.11,
+            -11.76
+          ]
+        ]
       },
       "hostExpressID": 235,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:263032\"",
@@ -1682,7 +2654,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -52.28,
+            -36.64
+          ],
+          [
+            -52.01,
+            -36.64
+          ],
+          [
+            -52.01,
+            -35.64
+          ],
+          [
+            -52.28,
+            -35.64
+          ]
+        ]
       },
       "hostExpressID": 361,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:257918\"",
@@ -1711,7 +2701,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -52.28,
+            -46.63
+          ],
+          [
+            -52.01,
+            -46.63
+          ],
+          [
+            -52.01,
+            -45.63
+          ],
+          [
+            -52.28,
+            -45.63
+          ]
+        ]
       },
       "hostExpressID": 236,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:258588\"",
@@ -1740,7 +2748,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -52.28,
+            -49.13
+          ],
+          [
+            -52.01,
+            -49.13
+          ],
+          [
+            -52.01,
+            -48.13
+          ],
+          [
+            -52.28,
+            -48.13
+          ]
+        ]
       },
       "hostExpressID": 236,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:258588\"",
@@ -1769,7 +2795,25 @@
         "widthM": 1,
         "depthM": 0.27,
         "heightM": 1.74,
-        "bottomM": 0.9
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -52.28,
+            -51.62
+          ],
+          [
+            -52.01,
+            -51.62
+          ],
+          [
+            -52.01,
+            -50.62
+          ],
+          [
+            -52.28,
+            -50.62
+          ]
+        ]
       },
       "hostExpressID": 236,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:258588\"",
@@ -1798,7 +2842,25 @@
         "widthM": 1.88,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -38.75,
+            -54.39
+          ],
+          [
+            -38.57,
+            -54.39
+          ],
+          [
+            -38.57,
+            -52.51
+          ],
+          [
+            -38.75,
+            -52.51
+          ]
+        ]
       },
       "hostExpressID": 434,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):149814\"",
@@ -1821,7 +2883,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -13.39,
+            -44.14
+          ],
+          [
+            -12.32,
+            -44.14
+          ],
+          [
+            -12.32,
+            -43.96
+          ],
+          [
+            -13.39,
+            -43.96
+          ]
+        ]
       },
       "hostExpressID": 350,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):172351\"",
@@ -1844,7 +2924,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -15.35,
+            -37.59
+          ],
+          [
+            -15.17,
+            -37.59
+          ],
+          [
+            -15.17,
+            -36.52
+          ],
+          [
+            -15.35,
+            -36.52
+          ]
+        ]
       },
       "hostExpressID": 284,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):175951\"",
@@ -1867,7 +2965,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -37.66,
+            -45.07
+          ],
+          [
+            -36.59,
+            -45.07
+          ],
+          [
+            -36.59,
+            -44.9
+          ],
+          [
+            -37.66,
+            -44.9
+          ]
+        ]
       },
       "hostExpressID": 248,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):194392\"",
@@ -1890,7 +3006,25 @@
         "widthM": 1.98,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -33.58,
+            -31.15
+          ],
+          [
+            -33.4,
+            -31.15
+          ],
+          [
+            -33.4,
+            -29.17
+          ],
+          [
+            -33.58,
+            -29.17
+          ]
+        ]
       },
       "hostExpressID": 601,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):213603\"",
@@ -1913,7 +3047,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -9.97,
+            -12.81
+          ],
+          [
+            -8.9,
+            -12.81
+          ],
+          [
+            -8.9,
+            -12.63
+          ],
+          [
+            -9.97,
+            -12.63
+          ]
+        ]
       },
       "hostExpressID": 273,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):369550\"",
@@ -1936,7 +3088,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -31.75,
+            -51.04
+          ],
+          [
+            -31.57,
+            -51.04
+          ],
+          [
+            -31.57,
+            -49.97
+          ],
+          [
+            -31.75,
+            -49.97
+          ]
+        ]
       },
       "hostExpressID": 349,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):151575\"",
@@ -1959,7 +3129,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -4.23,
+            -34.93
+          ],
+          [
+            -3.16,
+            -34.93
+          ],
+          [
+            -3.16,
+            -34.75
+          ],
+          [
+            -4.23,
+            -34.75
+          ]
+        ]
       },
       "hostExpressID": 202,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):174960\"",
@@ -1982,7 +3170,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -7.2,
+            -19.87
+          ],
+          [
+            -7.02,
+            -19.87
+          ],
+          [
+            -7.02,
+            -18.8
+          ],
+          [
+            -7.2,
+            -18.8
+          ]
+        ]
       },
       "hostExpressID": 596,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):180522\"",
@@ -2005,7 +3211,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -43.04,
+            -11.24
+          ],
+          [
+            -41.97,
+            -11.24
+          ],
+          [
+            -41.97,
+            -11.07
+          ],
+          [
+            -43.04,
+            -11.07
+          ]
+        ]
       },
       "hostExpressID": 830,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):211999\"",
@@ -2028,7 +3252,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -49.55,
+            -53.29
+          ],
+          [
+            -48.48,
+            -53.29
+          ],
+          [
+            -48.48,
+            -53.11
+          ],
+          [
+            -49.55,
+            -53.11
+          ]
+        ]
       },
       "hostExpressID": 269,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):146380\"",
@@ -2051,7 +3293,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -48.35,
+            -53.29
+          ],
+          [
+            -47.28,
+            -53.29
+          ],
+          [
+            -47.28,
+            -53.11
+          ],
+          [
+            -48.35,
+            -53.11
+          ]
+        ]
       },
       "hostExpressID": 269,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):146380\"",
@@ -2074,7 +3334,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -45.15,
+            -53.29
+          ],
+          [
+            -44.08,
+            -53.29
+          ],
+          [
+            -44.08,
+            -53.11
+          ],
+          [
+            -45.15,
+            -53.11
+          ]
+        ]
       },
       "hostExpressID": 269,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):146380\"",
@@ -2097,7 +3375,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -40.56,
+            -54.32
+          ],
+          [
+            -40.39,
+            -54.32
+          ],
+          [
+            -40.39,
+            -53.25
+          ],
+          [
+            -40.56,
+            -53.25
+          ]
+        ]
       },
       "hostExpressID": 424,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):147026\"",
@@ -2120,7 +3416,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -40.56,
+            -53.18
+          ],
+          [
+            -40.39,
+            -53.18
+          ],
+          [
+            -40.39,
+            -52.11
+          ],
+          [
+            -40.56,
+            -52.11
+          ]
+        ]
       },
       "hostExpressID": 522,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):147363\"",
@@ -2143,7 +3457,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -37.78,
+            -51.37
+          ],
+          [
+            -37.61,
+            -51.37
+          ],
+          [
+            -37.61,
+            -50.3
+          ],
+          [
+            -37.78,
+            -50.3
+          ]
+        ]
       },
       "hostExpressID": 696,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Rated 1-HR (92mm Stud):150462\"",
@@ -2166,7 +3498,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -31.75,
+            -53.7
+          ],
+          [
+            -31.57,
+            -53.7
+          ],
+          [
+            -31.57,
+            -52.63
+          ],
+          [
+            -31.75,
+            -52.63
+          ]
+        ]
       },
       "hostExpressID": 349,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):151575\"",
@@ -2189,7 +3539,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -29.92,
+            -53.87
+          ],
+          [
+            -29.74,
+            -53.87
+          ],
+          [
+            -29.74,
+            -52.8
+          ],
+          [
+            -29.92,
+            -52.8
+          ]
+        ]
       },
       "hostExpressID": 523,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):152109\"",
@@ -2212,7 +3580,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -27.76,
+            -50.01
+          ],
+          [
+            -26.69,
+            -50.01
+          ],
+          [
+            -26.69,
+            -49.83
+          ],
+          [
+            -27.76,
+            -49.83
+          ]
+        ]
       },
       "hostExpressID": 592,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):152188\"",
@@ -2235,7 +3621,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -31.58,
+            -54.44
+          ],
+          [
+            -30.51,
+            -54.44
+          ],
+          [
+            -30.51,
+            -54.26
+          ],
+          [
+            -31.58,
+            -54.26
+          ]
+        ]
       },
       "hostExpressID": 593,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):152014\"",
@@ -2258,7 +3662,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -33.42,
+            -48.18
+          ],
+          [
+            -32.35,
+            -48.18
+          ],
+          [
+            -32.35,
+            -48
+          ],
+          [
+            -33.42,
+            -48
+          ]
+        ]
       },
       "hostExpressID": 233,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):156775\"",
@@ -2281,7 +3703,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -28.3,
+            -48.18
+          ],
+          [
+            -27.23,
+            -48.18
+          ],
+          [
+            -27.23,
+            -48
+          ],
+          [
+            -28.3,
+            -48
+          ]
+        ]
       },
       "hostExpressID": 233,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):156775\"",
@@ -2304,7 +3744,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -23.45,
+            -48.18
+          ],
+          [
+            -22.38,
+            -48.18
+          ],
+          [
+            -22.38,
+            -48
+          ],
+          [
+            -23.45,
+            -48
+          ]
+        ]
       },
       "hostExpressID": 233,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):156775\"",
@@ -2327,7 +3785,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -21.21,
+            -49.24
+          ],
+          [
+            -21.03,
+            -49.24
+          ],
+          [
+            -21.03,
+            -48.17
+          ],
+          [
+            -21.21,
+            -48.17
+          ]
+        ]
       },
       "hostExpressID": 594,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):152889\"",
@@ -2350,7 +3826,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -18.15,
+            -49.22
+          ],
+          [
+            -17.97,
+            -49.22
+          ],
+          [
+            -17.97,
+            -48.15
+          ],
+          [
+            -18.15,
+            -48.15
+          ]
+        ]
       },
       "hostExpressID": 231,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):171321\"",
@@ -2373,7 +3867,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -18.15,
+            -46.26
+          ],
+          [
+            -17.97,
+            -46.26
+          ],
+          [
+            -17.97,
+            -45.19
+          ],
+          [
+            -18.15,
+            -45.19
+          ]
+        ]
       },
       "hostExpressID": 231,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):171321\"",
@@ -2396,7 +3908,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -10.82,
+            -48.75
+          ],
+          [
+            -10.64,
+            -48.75
+          ],
+          [
+            -10.64,
+            -47.68
+          ],
+          [
+            -10.82,
+            -47.68
+          ]
+        ]
       },
       "hostExpressID": 376,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):172683\"",
@@ -2419,7 +3949,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -10.82,
+            -46.77
+          ],
+          [
+            -10.64,
+            -46.77
+          ],
+          [
+            -10.64,
+            -45.7
+          ],
+          [
+            -10.82,
+            -45.7
+          ]
+        ]
       },
       "hostExpressID": 376,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):172683\"",
@@ -2442,7 +3990,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -4.45,
+            -48.33
+          ],
+          [
+            -4.27,
+            -48.33
+          ],
+          [
+            -4.27,
+            -47.26
+          ],
+          [
+            -4.45,
+            -47.26
+          ]
+        ]
       },
       "hostExpressID": 297,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):173558\"",
@@ -2465,7 +4031,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -3.07,
+            -48.13
+          ],
+          [
+            -2.89,
+            -48.13
+          ],
+          [
+            -2.89,
+            -47.06
+          ],
+          [
+            -3.07,
+            -47.06
+          ]
+        ]
       },
       "hostExpressID": 524,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):174245\"",
@@ -2488,7 +4072,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -3.07,
+            -45.17
+          ],
+          [
+            -2.89,
+            -45.17
+          ],
+          [
+            -2.89,
+            -44.1
+          ],
+          [
+            -3.07,
+            -44.1
+          ]
+        ]
       },
       "hostExpressID": 524,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):174245\"",
@@ -2511,7 +4113,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -4.45,
+            -45.32
+          ],
+          [
+            -4.27,
+            -45.32
+          ],
+          [
+            -4.27,
+            -44.25
+          ],
+          [
+            -4.45,
+            -44.25
+          ]
+        ]
       },
       "hostExpressID": 297,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):173558\"",
@@ -2534,7 +4154,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -4.45,
+            -42.41
+          ],
+          [
+            -4.27,
+            -42.41
+          ],
+          [
+            -4.27,
+            -41.34
+          ],
+          [
+            -4.45,
+            -41.34
+          ]
+        ]
       },
       "hostExpressID": 297,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):173558\"",
@@ -2557,7 +4195,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -12.71,
+            -37.59
+          ],
+          [
+            -12.53,
+            -37.59
+          ],
+          [
+            -12.53,
+            -36.52
+          ],
+          [
+            -12.71,
+            -36.52
+          ]
+        ]
       },
       "hostExpressID": 973,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):176488\"",
@@ -2580,7 +4236,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -15.21,
+            -42.31
+          ],
+          [
+            -14.14,
+            -42.31
+          ],
+          [
+            -14.14,
+            -42.13
+          ],
+          [
+            -15.21,
+            -42.13
+          ]
+        ]
       },
       "hostExpressID": 270,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):176083\"",
@@ -2603,7 +4277,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -18.15,
+            -43.97
+          ],
+          [
+            -17.97,
+            -43.97
+          ],
+          [
+            -17.97,
+            -42.9
+          ],
+          [
+            -18.15,
+            -42.9
+          ]
+        ]
       },
       "hostExpressID": 231,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):171321\"",
@@ -2626,7 +4318,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -19.83,
+            -42.31
+          ],
+          [
+            -18.76,
+            -42.31
+          ],
+          [
+            -18.76,
+            -42.13
+          ],
+          [
+            -19.83,
+            -42.13
+          ]
+        ]
       },
       "hostExpressID": 270,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):176083\"",
@@ -2649,7 +4359,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -24.4,
+            -37.93
+          ],
+          [
+            -24.22,
+            -37.93
+          ],
+          [
+            -24.22,
+            -36.86
+          ],
+          [
+            -24.4,
+            -36.86
+          ]
+        ]
       },
       "hostExpressID": 377,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):153789\"",
@@ -2672,7 +4400,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -25.44,
+            -35.51
+          ],
+          [
+            -24.37,
+            -35.51
+          ],
+          [
+            -24.37,
+            -35.33
+          ],
+          [
+            -25.44,
+            -35.33
+          ]
+        ]
       },
       "hostExpressID": 974,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):224851\"",
@@ -2695,7 +4441,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -23.67,
+            -40.81
+          ],
+          [
+            -22.6,
+            -40.81
+          ],
+          [
+            -22.6,
+            -40.63
+          ],
+          [
+            -23.67,
+            -40.63
+          ]
+        ]
       },
       "hostExpressID": 351,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):154875\"",
@@ -2718,7 +4482,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -24.87,
+            -40.81
+          ],
+          [
+            -23.8,
+            -40.81
+          ],
+          [
+            -23.8,
+            -40.63
+          ],
+          [
+            -24.87,
+            -40.63
+          ]
+        ]
       },
       "hostExpressID": 351,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):154875\"",
@@ -2741,7 +4523,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -23.84,
+            -42.82
+          ],
+          [
+            -23.66,
+            -42.82
+          ],
+          [
+            -23.66,
+            -41.75
+          ],
+          [
+            -23.84,
+            -41.75
+          ]
+        ]
       },
       "hostExpressID": 975,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):160919\"",
@@ -2764,7 +4564,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -29.1,
+            -40.81
+          ],
+          [
+            -28.03,
+            -40.81
+          ],
+          [
+            -28.03,
+            -40.63
+          ],
+          [
+            -29.1,
+            -40.63
+          ]
+        ]
       },
       "hostExpressID": 262,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):156128\"",
@@ -2787,7 +4605,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -30.3,
+            -40.81
+          ],
+          [
+            -29.23,
+            -40.81
+          ],
+          [
+            -29.23,
+            -40.63
+          ],
+          [
+            -30.3,
+            -40.63
+          ]
+        ]
       },
       "hostExpressID": 262,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):156128\"",
@@ -2810,7 +4646,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -36.64,
+            -40.81
+          ],
+          [
+            -35.57,
+            -40.81
+          ],
+          [
+            -35.57,
+            -40.63
+          ],
+          [
+            -36.64,
+            -40.63
+          ]
+        ]
       },
       "hostExpressID": 262,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):156128\"",
@@ -2833,7 +4687,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -35.44,
+            -40.81
+          ],
+          [
+            -34.37,
+            -40.81
+          ],
+          [
+            -34.37,
+            -40.63
+          ],
+          [
+            -35.44,
+            -40.63
+          ]
+        ]
       },
       "hostExpressID": 262,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):156128\"",
@@ -2856,7 +4728,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -36.2,
+            -38.84
+          ],
+          [
+            -36.02,
+            -38.84
+          ],
+          [
+            -36.02,
+            -37.77
+          ],
+          [
+            -36.2,
+            -37.77
+          ]
+        ]
       },
       "hostExpressID": 595,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):158808\"",
@@ -2879,7 +4769,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -34.69,
+            -38.98
+          ],
+          [
+            -33.62,
+            -38.98
+          ],
+          [
+            -33.62,
+            -38.8
+          ],
+          [
+            -34.69,
+            -38.8
+          ]
+        ]
       },
       "hostExpressID": 212,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):157843\"",
@@ -2902,7 +4810,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -31.52,
+            -38.98
+          ],
+          [
+            -30.45,
+            -38.98
+          ],
+          [
+            -30.45,
+            -38.8
+          ],
+          [
+            -31.52,
+            -38.8
+          ]
+        ]
       },
       "hostExpressID": 212,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):157843\"",
@@ -2925,7 +4851,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -30.32,
+            -38.98
+          ],
+          [
+            -29.25,
+            -38.98
+          ],
+          [
+            -29.25,
+            -38.8
+          ],
+          [
+            -30.32,
+            -38.8
+          ]
+        ]
       },
       "hostExpressID": 212,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):157843\"",
@@ -2948,7 +4892,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -39.81,
+            -36.53
+          ],
+          [
+            -38.74,
+            -36.53
+          ],
+          [
+            -38.74,
+            -36.35
+          ],
+          [
+            -39.81,
+            -36.35
+          ]
+        ]
       },
       "hostExpressID": 976,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):159174\"",
@@ -2971,7 +4933,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -43.2,
+            -34.93
+          ],
+          [
+            -42.13,
+            -34.93
+          ],
+          [
+            -42.13,
+            -34.75
+          ],
+          [
+            -43.2,
+            -34.75
+          ]
+        ]
       },
       "hostExpressID": 263,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):147540\"",
@@ -2994,7 +4974,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -44.4,
+            -34.93
+          ],
+          [
+            -43.33,
+            -34.93
+          ],
+          [
+            -43.33,
+            -34.75
+          ],
+          [
+            -44.4,
+            -34.75
+          ]
+        ]
       },
       "hostExpressID": 263,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):147540\"",
@@ -3017,7 +5015,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -48.32,
+            -44.89
+          ],
+          [
+            -47.25,
+            -44.89
+          ],
+          [
+            -47.25,
+            -44.71
+          ],
+          [
+            -48.32,
+            -44.71
+          ]
+        ]
       },
       "hostExpressID": 697,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):148548\"",
@@ -3040,7 +5056,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -48.85,
+            -45.92
+          ],
+          [
+            -48.68,
+            -45.92
+          ],
+          [
+            -48.68,
+            -44.85
+          ],
+          [
+            -48.85,
+            -44.85
+          ]
+        ]
       },
       "hostExpressID": 977,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):148449\"",
@@ -3063,7 +5097,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -46.75,
+            -49.22
+          ],
+          [
+            -45.68,
+            -49.22
+          ],
+          [
+            -45.68,
+            -49.04
+          ],
+          [
+            -46.75,
+            -49.04
+          ]
+        ]
       },
       "hostExpressID": 320,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):148027\"",
@@ -3086,7 +5138,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -48.65,
+            -34.6
+          ],
+          [
+            -48.48,
+            -34.6
+          ],
+          [
+            -48.48,
+            -33.53
+          ],
+          [
+            -48.65,
+            -33.53
+          ]
+        ]
       },
       "hostExpressID": 978,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):161485\"",
@@ -3109,7 +5179,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -48.65,
+            -29.86
+          ],
+          [
+            -48.48,
+            -29.86
+          ],
+          [
+            -48.48,
+            -28.79
+          ],
+          [
+            -48.65,
+            -28.79
+          ]
+        ]
       },
       "hostExpressID": 979,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):161575\"",
@@ -3132,7 +5220,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -48.32,
+            -28.64
+          ],
+          [
+            -47.25,
+            -28.64
+          ],
+          [
+            -47.25,
+            -28.46
+          ],
+          [
+            -48.32,
+            -28.46
+          ]
+        ]
       },
       "hostExpressID": 352,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):161970\"",
@@ -3155,7 +5261,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -38.75,
+            -27.06
+          ],
+          [
+            -38.57,
+            -27.06
+          ],
+          [
+            -38.57,
+            -25.99
+          ],
+          [
+            -38.75,
+            -25.99
+          ]
+        ]
       },
       "hostExpressID": 425,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):166897\"",
@@ -3178,7 +5302,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -33.3,
+            -28.64
+          ],
+          [
+            -32.23,
+            -28.64
+          ],
+          [
+            -32.23,
+            -28.46
+          ],
+          [
+            -33.3,
+            -28.46
+          ]
+        ]
       },
       "hostExpressID": 264,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):167763\"",
@@ -3201,7 +5343,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -40.58,
+            -23.64
+          ],
+          [
+            -40.4,
+            -23.64
+          ],
+          [
+            -40.4,
+            -22.57
+          ],
+          [
+            -40.58,
+            -22.57
+          ]
+        ]
       },
       "hostExpressID": 156,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):162146\"",
@@ -3224,7 +5384,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -40.58,
+            -22.44
+          ],
+          [
+            -40.4,
+            -22.44
+          ],
+          [
+            -40.4,
+            -21.37
+          ],
+          [
+            -40.58,
+            -21.37
+          ]
+        ]
       },
       "hostExpressID": 156,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):162146\"",
@@ -3247,7 +5425,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -36.64,
+            -22.76
+          ],
+          [
+            -35.57,
+            -22.76
+          ],
+          [
+            -35.57,
+            -22.58
+          ],
+          [
+            -36.64,
+            -22.58
+          ]
+        ]
       },
       "hostExpressID": 184,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164924\"",
@@ -3270,7 +5466,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -35.44,
+            -22.76
+          ],
+          [
+            -34.37,
+            -22.76
+          ],
+          [
+            -34.37,
+            -22.58
+          ],
+          [
+            -35.44,
+            -22.58
+          ]
+        ]
       },
       "hostExpressID": 184,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164924\"",
@@ -3293,7 +5507,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -30.3,
+            -22.76
+          ],
+          [
+            -29.23,
+            -22.76
+          ],
+          [
+            -29.23,
+            -22.58
+          ],
+          [
+            -30.3,
+            -22.58
+          ]
+        ]
       },
       "hostExpressID": 184,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164924\"",
@@ -3316,7 +5548,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -29.1,
+            -22.76
+          ],
+          [
+            -28.03,
+            -22.76
+          ],
+          [
+            -28.03,
+            -22.58
+          ],
+          [
+            -29.1,
+            -22.58
+          ]
+        ]
       },
       "hostExpressID": 184,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164924\"",
@@ -3339,7 +5589,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -25.93,
+            -22.76
+          ],
+          [
+            -24.86,
+            -22.76
+          ],
+          [
+            -24.86,
+            -22.58
+          ],
+          [
+            -25.93,
+            -22.58
+          ]
+        ]
       },
       "hostExpressID": 184,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164924\"",
@@ -3362,7 +5630,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -24.4,
+            -26.86
+          ],
+          [
+            -24.22,
+            -26.86
+          ],
+          [
+            -24.22,
+            -25.79
+          ],
+          [
+            -24.4,
+            -25.79
+          ]
+        ]
       },
       "hostExpressID": 321,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):165494\"",
@@ -3385,7 +5671,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -9.44,
+            -27.13
+          ],
+          [
+            -9.26,
+            -27.13
+          ],
+          [
+            -9.26,
+            -26.06
+          ],
+          [
+            -9.44,
+            -26.06
+          ]
+        ]
       },
       "hostExpressID": 214,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):183218\"",
@@ -3408,7 +5712,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -9.44,
+            -25.93
+          ],
+          [
+            -9.26,
+            -25.93
+          ],
+          [
+            -9.26,
+            -24.86
+          ],
+          [
+            -9.44,
+            -24.86
+          ]
+        ]
       },
       "hostExpressID": 214,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):183218\"",
@@ -3431,7 +5753,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -8.67,
+            -27.67
+          ],
+          [
+            -7.6,
+            -27.67
+          ],
+          [
+            -7.6,
+            -27.49
+          ],
+          [
+            -8.67,
+            -27.49
+          ]
+        ]
       },
       "hostExpressID": 980,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):228493\"",
@@ -3454,7 +5794,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -3.82,
+            -27.12
+          ],
+          [
+            -3.64,
+            -27.12
+          ],
+          [
+            -3.64,
+            -26.05
+          ],
+          [
+            -3.82,
+            -26.05
+          ]
+        ]
       },
       "hostExpressID": 232,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):178094\"",
@@ -3477,7 +5835,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -3.82,
+            -25.92
+          ],
+          [
+            -3.64,
+            -25.92
+          ],
+          [
+            -3.64,
+            -24.85
+          ],
+          [
+            -3.82,
+            -24.85
+          ]
+        ]
       },
       "hostExpressID": 232,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):178094\"",
@@ -3500,7 +5876,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -3.05,
+            -27.67
+          ],
+          [
+            -1.98,
+            -27.67
+          ],
+          [
+            -1.98,
+            -27.49
+          ],
+          [
+            -3.05,
+            -27.49
+          ]
+        ]
       },
       "hostExpressID": 981,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):228833\"",
@@ -3523,7 +5917,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -1.98,
+            -26.48
+          ],
+          [
+            -1.81,
+            -26.48
+          ],
+          [
+            -1.81,
+            -25.41
+          ],
+          [
+            -1.98,
+            -25.41
+          ]
+        ]
       },
       "hostExpressID": 285,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):177813\"",
@@ -3546,7 +5958,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -3.65,
+            -24.57
+          ],
+          [
+            -2.58,
+            -24.57
+          ],
+          [
+            -2.58,
+            -24.39
+          ],
+          [
+            -3.65,
+            -24.39
+          ]
+        ]
       },
       "hostExpressID": 982,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):177773\"",
@@ -3569,7 +5999,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -7.6,
+            -22.66
+          ],
+          [
+            -7.43,
+            -22.66
+          ],
+          [
+            -7.43,
+            -21.59
+          ],
+          [
+            -7.6,
+            -21.59
+          ]
+        ]
       },
       "hostExpressID": 213,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):179359\"",
@@ -3592,7 +6040,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -7.6,
+            -21.01
+          ],
+          [
+            -7.43,
+            -21.01
+          ],
+          [
+            -7.43,
+            -19.94
+          ],
+          [
+            -7.6,
+            -19.94
+          ]
+        ]
       },
       "hostExpressID": 213,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):179359\"",
@@ -3615,7 +6081,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -5.89,
+            -15.99
+          ],
+          [
+            -4.83,
+            -15.99
+          ],
+          [
+            -4.83,
+            -15.81
+          ],
+          [
+            -5.89,
+            -15.81
+          ]
+        ]
       },
       "hostExpressID": 426,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):179634\"",
@@ -3638,7 +6122,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -2.37,
+            -14.16
+          ],
+          [
+            -1.3,
+            -14.16
+          ],
+          [
+            -1.3,
+            -13.98
+          ],
+          [
+            -2.37,
+            -13.98
+          ]
+        ]
       },
       "hostExpressID": 286,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):179860\"",
@@ -3661,7 +6163,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -4.92,
+            -14.16
+          ],
+          [
+            -3.85,
+            -14.16
+          ],
+          [
+            -3.85,
+            -13.98
+          ],
+          [
+            -4.92,
+            -13.98
+          ]
+        ]
       },
       "hostExpressID": 286,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):179860\"",
@@ -3684,7 +6204,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -6.12,
+            -14.16
+          ],
+          [
+            -5.05,
+            -14.16
+          ],
+          [
+            -5.05,
+            -13.98
+          ],
+          [
+            -6.12,
+            -13.98
+          ]
+        ]
       },
       "hostExpressID": 286,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):179860\"",
@@ -3707,7 +6245,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -6.6,
+            -15.22
+          ],
+          [
+            -6.43,
+            -15.22
+          ],
+          [
+            -6.43,
+            -14.15
+          ],
+          [
+            -6.6,
+            -14.15
+          ]
+        ]
       },
       "hostExpressID": 983,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):179701\"",
@@ -3730,7 +6286,25 @@
         "widthM": 1.15,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -16.71,
+            -14.47
+          ],
+          [
+            -16.53,
+            -14.47
+          ],
+          [
+            -16.53,
+            -13.31
+          ],
+          [
+            -16.71,
+            -13.31
+          ]
+        ]
       },
       "hostExpressID": 984,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):181936\"",
@@ -3753,7 +6327,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -17.86,
+            -12.65
+          ],
+          [
+            -17.68,
+            -12.65
+          ],
+          [
+            -17.68,
+            -11.58
+          ],
+          [
+            -17.86,
+            -11.58
+          ]
+        ]
       },
       "hostExpressID": 985,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Rated 1-HR (92mm Stud):181343\"",
@@ -3776,7 +6368,25 @@
         "widthM": 1.37,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -9.44,
+            -19.5
+          ],
+          [
+            -9.26,
+            -19.5
+          ],
+          [
+            -9.26,
+            -18.12
+          ],
+          [
+            -9.44,
+            -18.12
+          ]
+        ]
       },
       "hostExpressID": 214,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):183218\"",
@@ -3799,7 +6409,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -9.44,
+            -22.48
+          ],
+          [
+            -9.26,
+            -22.48
+          ],
+          [
+            -9.26,
+            -21.41
+          ],
+          [
+            -9.44,
+            -21.41
+          ]
+        ]
       },
       "hostExpressID": 214,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):183218\"",
@@ -3822,7 +6450,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -17.86,
+            -15.65
+          ],
+          [
+            -17.68,
+            -15.65
+          ],
+          [
+            -17.68,
+            -14.58
+          ],
+          [
+            -17.86,
+            -14.58
+          ]
+        ]
       },
       "hostExpressID": 525,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):182173\"",
@@ -3845,7 +6491,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -17.86,
+            -19.84
+          ],
+          [
+            -17.68,
+            -19.84
+          ],
+          [
+            -17.68,
+            -18.77
+          ],
+          [
+            -17.86,
+            -18.77
+          ]
+        ]
       },
       "hostExpressID": 525,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):182173\"",
@@ -3868,7 +6532,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -19.98,
+            -16.45
+          ],
+          [
+            -19.8,
+            -16.45
+          ],
+          [
+            -19.8,
+            -15.38
+          ],
+          [
+            -19.98,
+            -15.38
+          ]
+        ]
       },
       "hostExpressID": 303,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):166136\"",
@@ -3891,7 +6573,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -22.76,
+            -12.13
+          ],
+          [
+            -21.69,
+            -12.13
+          ],
+          [
+            -21.69,
+            -11.95
+          ],
+          [
+            -22.76,
+            -11.95
+          ]
+        ]
       },
       "hostExpressID": 163,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164694\"",
@@ -3914,7 +6614,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -24,
+            -12.13
+          ],
+          [
+            -22.93,
+            -12.13
+          ],
+          [
+            -22.93,
+            -11.95
+          ],
+          [
+            -24,
+            -11.95
+          ]
+        ]
       },
       "hostExpressID": 163,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164694\"",
@@ -3937,7 +6655,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -22.54,
+            -10.12
+          ],
+          [
+            -22.36,
+            -10.12
+          ],
+          [
+            -22.36,
+            -9.05
+          ],
+          [
+            -22.54,
+            -9.05
+          ]
+        ]
       },
       "hostExpressID": 597,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):188823\"",
@@ -3960,7 +6696,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -20.98,
+            -11.36
+          ],
+          [
+            -20.8,
+            -11.36
+          ],
+          [
+            -20.8,
+            -10.29
+          ],
+          [
+            -20.98,
+            -10.29
+          ]
+        ]
       },
       "hostExpressID": 986,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):231160\"",
@@ -3983,7 +6737,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -24.2,
+            -6.06
+          ],
+          [
+            -23.13,
+            -6.06
+          ],
+          [
+            -23.13,
+            -5.88
+          ],
+          [
+            -24.2,
+            -5.88
+          ]
+        ]
       },
       "hostExpressID": 322,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):185166\"",
@@ -4006,7 +6778,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -27.12,
+            -7.57
+          ],
+          [
+            -26.94,
+            -7.57
+          ],
+          [
+            -26.94,
+            -6.5
+          ],
+          [
+            -27.12,
+            -6.5
+          ]
+        ]
       },
       "hostExpressID": 698,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):185345\"",
@@ -4029,7 +6819,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -24.15,
+            -2.93
+          ],
+          [
+            -23.08,
+            -2.93
+          ],
+          [
+            -23.08,
+            -2.75
+          ],
+          [
+            -24.15,
+            -2.75
+          ]
+        ]
       },
       "hostExpressID": 526,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):189690\"",
@@ -4052,7 +6860,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -22.95,
+            -2.93
+          ],
+          [
+            -21.88,
+            -2.93
+          ],
+          [
+            -21.88,
+            -2.75
+          ],
+          [
+            -22.95,
+            -2.75
+          ]
+        ]
       },
       "hostExpressID": 526,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):189690\"",
@@ -4075,7 +6901,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -38.4,
+            -5.81
+          ],
+          [
+            -38.23,
+            -5.81
+          ],
+          [
+            -38.23,
+            -4.74
+          ],
+          [
+            -38.4,
+            -4.74
+          ]
+        ]
       },
       "hostExpressID": 298,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):188486\"",
@@ -4098,7 +6942,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -40.42,
+            -10.31
+          ],
+          [
+            -39.35,
+            -10.31
+          ],
+          [
+            -39.35,
+            -10.14
+          ],
+          [
+            -40.42,
+            -10.14
+          ]
+        ]
       },
       "hostExpressID": 169,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):186167\"",
@@ -4121,7 +6983,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -38.61,
+            -12.13
+          ],
+          [
+            -37.54,
+            -12.13
+          ],
+          [
+            -37.54,
+            -11.95
+          ],
+          [
+            -38.61,
+            -11.95
+          ]
+        ]
       },
       "hostExpressID": 163,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164694\"",
@@ -4144,7 +7024,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -35.93,
+            -12.13
+          ],
+          [
+            -34.86,
+            -12.13
+          ],
+          [
+            -34.86,
+            -11.95
+          ],
+          [
+            -35.93,
+            -11.95
+          ]
+        ]
       },
       "hostExpressID": 163,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164694\"",
@@ -4167,7 +7065,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -41.63,
+            -14.09
+          ],
+          [
+            -40.56,
+            -14.09
+          ],
+          [
+            -40.56,
+            -13.91
+          ],
+          [
+            -41.63,
+            -13.91
+          ]
+        ]
       },
       "hostExpressID": 598,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):231922\"",
@@ -4190,7 +7106,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -38.75,
+            -15.96
+          ],
+          [
+            -38.57,
+            -15.96
+          ],
+          [
+            -38.57,
+            -14.89
+          ],
+          [
+            -38.75,
+            -14.89
+          ]
+        ]
       },
       "hostExpressID": 299,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164812\"",
@@ -4213,7 +7147,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -40.58,
+            -18.36
+          ],
+          [
+            -40.4,
+            -18.36
+          ],
+          [
+            -40.4,
+            -17.29
+          ],
+          [
+            -40.58,
+            -17.29
+          ]
+        ]
       },
       "hostExpressID": 156,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):162146\"",
@@ -4236,7 +7188,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -31.62,
+            -16.74
+          ],
+          [
+            -31.44,
+            -16.74
+          ],
+          [
+            -31.44,
+            -15.67
+          ],
+          [
+            -31.62,
+            -15.67
+          ]
+        ]
       },
       "hostExpressID": 528,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):170283\"",
@@ -4259,7 +7229,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -31.62,
+            -15.54
+          ],
+          [
+            -31.44,
+            -15.54
+          ],
+          [
+            -31.44,
+            -14.47
+          ],
+          [
+            -31.62,
+            -14.47
+          ]
+        ]
       },
       "hostExpressID": 528,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):170283\"",
@@ -4282,7 +7270,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -32.65,
+            -12.13
+          ],
+          [
+            -31.58,
+            -12.13
+          ],
+          [
+            -31.58,
+            -11.95
+          ],
+          [
+            -32.65,
+            -11.95
+          ]
+        ]
       },
       "hostExpressID": 163,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164694\"",
@@ -4305,7 +7311,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -31.45,
+            -12.13
+          ],
+          [
+            -30.38,
+            -12.13
+          ],
+          [
+            -30.38,
+            -11.95
+          ],
+          [
+            -31.45,
+            -11.95
+          ]
+        ]
       },
       "hostExpressID": 163,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164694\"",
@@ -4328,7 +7352,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -40.41,
+            -16.84
+          ],
+          [
+            -39.34,
+            -16.84
+          ],
+          [
+            -39.34,
+            -16.66
+          ],
+          [
+            -40.41,
+            -16.66
+          ]
+        ]
       },
       "hostExpressID": 987,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):232773\"",
@@ -4351,7 +7393,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -46.69,
+            -12.13
+          ],
+          [
+            -45.62,
+            -12.13
+          ],
+          [
+            -45.62,
+            -11.95
+          ],
+          [
+            -46.69,
+            -11.95
+          ]
+        ]
       },
       "hostExpressID": 323,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):164156\"",
@@ -4374,7 +7434,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -48.66,
+            -10.31
+          ],
+          [
+            -47.59,
+            -10.31
+          ],
+          [
+            -47.59,
+            -10.14
+          ],
+          [
+            -48.66,
+            -10.14
+          ]
+        ]
       },
       "hostExpressID": 265,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):185718\"",
@@ -4397,7 +7475,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -46.75,
+            -10.31
+          ],
+          [
+            -45.68,
+            -10.31
+          ],
+          [
+            -45.68,
+            -10.14
+          ],
+          [
+            -46.75,
+            -10.14
+          ]
+        ]
       },
       "hostExpressID": 265,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):185718\"",
@@ -4420,7 +7516,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -47.48,
+            -6.96
+          ],
+          [
+            -47.3,
+            -6.96
+          ],
+          [
+            -47.3,
+            -5.89
+          ],
+          [
+            -47.48,
+            -5.89
+          ]
+        ]
       },
       "hostExpressID": 481,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):185879\"",
@@ -4443,7 +7557,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -26.23,
+            -27.89
+          ],
+          [
+            -26.05,
+            -27.89
+          ],
+          [
+            -26.05,
+            -26.82
+          ],
+          [
+            -26.23,
+            -26.82
+          ]
+        ]
       },
       "hostExpressID": 427,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):165239\"",
@@ -4466,7 +7598,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -25.44,
+            -28.06
+          ],
+          [
+            -24.37,
+            -28.06
+          ],
+          [
+            -24.37,
+            -27.88
+          ],
+          [
+            -25.44,
+            -27.88
+          ]
+        ]
       },
       "hostExpressID": 988,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):234058\"",
@@ -4489,7 +7639,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -40.3,
+            -46.9
+          ],
+          [
+            -39.23,
+            -46.9
+          ],
+          [
+            -39.23,
+            -46.73
+          ],
+          [
+            -40.3,
+            -46.73
+          ]
+        ]
       },
       "hostExpressID": 701,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):191720\"",
@@ -4512,7 +7680,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -38.14,
+            -50.04
+          ],
+          [
+            -37.07,
+            -50.04
+          ],
+          [
+            -37.07,
+            -49.87
+          ],
+          [
+            -38.14,
+            -49.87
+          ]
+        ]
       },
       "hostExpressID": 378,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Rated 1-HR (92mm Stud):191306\"",
@@ -4535,7 +7721,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -39.11,
+            -46.14
+          ],
+          [
+            -38.93,
+            -46.14
+          ],
+          [
+            -38.93,
+            -45.07
+          ],
+          [
+            -39.11,
+            -45.07
+          ]
+        ]
       },
       "hostExpressID": 428,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):192339\"",
@@ -4558,7 +7762,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -43.63,
+            -46.35
+          ],
+          [
+            -43.45,
+            -46.35
+          ],
+          [
+            -43.45,
+            -45.28
+          ],
+          [
+            -43.63,
+            -45.28
+          ]
+        ]
       },
       "hostExpressID": 989,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):216351\"",
@@ -4581,7 +7803,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -42,
+            -45.1
+          ],
+          [
+            -40.93,
+            -45.1
+          ],
+          [
+            -40.93,
+            -44.93
+          ],
+          [
+            -42,
+            -44.93
+          ]
+        ]
       },
       "hostExpressID": 324,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):216568\"",
@@ -4604,7 +7844,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -25.97,
+            -45.07
+          ],
+          [
+            -24.9,
+            -45.07
+          ],
+          [
+            -24.9,
+            -44.9
+          ],
+          [
+            -25.97,
+            -44.9
+          ]
+        ]
       },
       "hostExpressID": 166,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):217475\"",
@@ -4627,7 +7885,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -28.24,
+            -45.07
+          ],
+          [
+            -27.17,
+            -45.07
+          ],
+          [
+            -27.17,
+            -44.9
+          ],
+          [
+            -28.24,
+            -44.9
+          ]
+        ]
       },
       "hostExpressID": 166,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):217475\"",
@@ -4650,7 +7926,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -27.21,
+            -46.73
+          ],
+          [
+            -27.03,
+            -46.73
+          ],
+          [
+            -27.03,
+            -45.66
+          ],
+          [
+            -27.21,
+            -45.66
+          ]
+        ]
       },
       "hostExpressID": 990,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):235306\"",
@@ -4673,7 +7967,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -23.91,
+            -45.07
+          ],
+          [
+            -22.84,
+            -45.07
+          ],
+          [
+            -22.84,
+            -44.9
+          ],
+          [
+            -23.91,
+            -44.9
+          ]
+        ]
       },
       "hostExpressID": 166,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):217475\"",
@@ -4696,7 +8008,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -21.38,
+            -45.07
+          ],
+          [
+            -20.31,
+            -45.07
+          ],
+          [
+            -20.31,
+            -44.9
+          ],
+          [
+            -21.38,
+            -44.9
+          ]
+        ]
       },
       "hostExpressID": 166,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):217475\"",
@@ -4719,7 +8049,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -19.21,
+            -44.06
+          ],
+          [
+            -18.14,
+            -44.06
+          ],
+          [
+            -18.14,
+            -43.89
+          ],
+          [
+            -19.21,
+            -43.89
+          ]
+        ]
       },
       "hostExpressID": 702,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):194487\"",
@@ -4742,7 +8090,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -2.88,
+            -46.41
+          ],
+          [
+            -1.81,
+            -46.41
+          ],
+          [
+            -1.81,
+            -46.24
+          ],
+          [
+            -2.88,
+            -46.24
+          ]
+        ]
       },
       "hostExpressID": 991,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):193946\"",
@@ -4765,7 +8131,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -4.3,
+            -43.89
+          ],
+          [
+            -4.12,
+            -43.89
+          ],
+          [
+            -4.12,
+            -42.82
+          ],
+          [
+            -4.3,
+            -42.82
+          ]
+        ]
       },
       "hostExpressID": 379,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):196742\"",
@@ -4788,7 +8172,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -3.22,
+            -42.82
+          ],
+          [
+            -2.15,
+            -42.82
+          ],
+          [
+            -2.15,
+            -42.65
+          ],
+          [
+            -3.22,
+            -42.65
+          ]
+        ]
       },
       "hostExpressID": 599,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):195851\"",
@@ -4811,7 +8213,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -8.28,
+            -44.57
+          ],
+          [
+            -8.1,
+            -44.57
+          ],
+          [
+            -8.1,
+            -43.5
+          ],
+          [
+            -8.28,
+            -43.5
+          ]
+        ]
       },
       "hostExpressID": 827,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):195567\"",
@@ -4834,7 +8254,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -10.53,
+            -44.9
+          ],
+          [
+            -10.35,
+            -44.9
+          ],
+          [
+            -10.35,
+            -43.83
+          ],
+          [
+            -10.53,
+            -43.83
+          ]
+        ]
       },
       "hostExpressID": 992,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):195311\"",
@@ -4857,7 +8295,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -13.01,
+            -45.07
+          ],
+          [
+            -11.94,
+            -45.07
+          ],
+          [
+            -11.94,
+            -44.9
+          ],
+          [
+            -13.01,
+            -44.9
+          ]
+        ]
       },
       "hostExpressID": 482,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):194732\"",
@@ -4880,7 +8336,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -11.03,
+            -41.23
+          ],
+          [
+            -10.86,
+            -41.23
+          ],
+          [
+            -10.86,
+            -40.16
+          ],
+          [
+            -11.03,
+            -40.16
+          ]
+        ]
       },
       "hostExpressID": 993,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):197178\"",
@@ -4903,7 +8377,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -4.3,
+            -40.04
+          ],
+          [
+            -4.12,
+            -40.04
+          ],
+          [
+            -4.12,
+            -38.98
+          ],
+          [
+            -4.3,
+            -38.98
+          ]
+        ]
       },
       "hostExpressID": 271,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):196610\"",
@@ -4926,7 +8418,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -5.36,
+            -38.97
+          ],
+          [
+            -4.29,
+            -38.97
+          ],
+          [
+            -4.29,
+            -38.8
+          ],
+          [
+            -5.36,
+            -38.8
+          ]
+        ]
       },
       "hostExpressID": 994,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):197100\"",
@@ -4949,7 +8459,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -21.77,
+            -37.22
+          ],
+          [
+            -20.7,
+            -37.22
+          ],
+          [
+            -20.7,
+            -37.05
+          ],
+          [
+            -21.77,
+            -37.05
+          ]
+        ]
       },
       "hostExpressID": 431,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):198725\"",
@@ -4972,7 +8500,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -31.64,
+            -37.22
+          ],
+          [
+            -31.46,
+            -37.22
+          ],
+          [
+            -31.46,
+            -36.15
+          ],
+          [
+            -31.64,
+            -36.15
+          ]
+        ]
       },
       "hostExpressID": 325,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):217712\"",
@@ -4995,7 +8541,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -35.31,
+            -45.07
+          ],
+          [
+            -34.24,
+            -45.07
+          ],
+          [
+            -34.24,
+            -44.9
+          ],
+          [
+            -35.31,
+            -44.9
+          ]
+        ]
       },
       "hostExpressID": 248,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):194392\"",
@@ -5018,7 +8582,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -33.47,
+            -41.01
+          ],
+          [
+            -33.29,
+            -41.01
+          ],
+          [
+            -33.29,
+            -39.94
+          ],
+          [
+            -33.47,
+            -39.94
+          ]
+        ]
       },
       "hostExpressID": 287,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):214263\"",
@@ -5041,7 +8623,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -43.47,
+            -38.54
+          ],
+          [
+            -42.4,
+            -38.54
+          ],
+          [
+            -42.4,
+            -38.37
+          ],
+          [
+            -43.47,
+            -38.37
+          ]
+        ]
       },
       "hostExpressID": 380,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):213933\"",
@@ -5064,7 +8664,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -33.3,
+            -34.88
+          ],
+          [
+            -32.23,
+            -34.88
+          ],
+          [
+            -32.23,
+            -34.71
+          ],
+          [
+            -33.3,
+            -34.71
+          ]
+        ]
       },
       "hostExpressID": 429,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):215810\"",
@@ -5087,7 +8705,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -44.2,
+            -18.04
+          ],
+          [
+            -43.13,
+            -18.04
+          ],
+          [
+            -43.13,
+            -17.87
+          ],
+          [
+            -44.2,
+            -17.87
+          ]
+        ]
       },
       "hostExpressID": 995,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):212763\"",
@@ -5110,7 +8746,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -33.3,
+            -18.37
+          ],
+          [
+            -32.23,
+            -18.37
+          ],
+          [
+            -32.23,
+            -18.2
+          ],
+          [
+            -33.3,
+            -18.2
+          ]
+        ]
       },
       "hostExpressID": 600,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):214572\"",
@@ -5133,7 +8787,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -33.47,
+            -20.27
+          ],
+          [
+            -33.29,
+            -20.27
+          ],
+          [
+            -33.29,
+            -19.2
+          ],
+          [
+            -33.47,
+            -19.2
+          ]
+        ]
       },
       "hostExpressID": 353,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):214393\"",
@@ -5156,7 +8828,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -27.09,
+            -22.33
+          ],
+          [
+            -26.92,
+            -22.33
+          ],
+          [
+            -26.92,
+            -21.26
+          ],
+          [
+            -27.09,
+            -21.26
+          ]
+        ]
       },
       "hostExpressID": 996,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):201038\"",
@@ -5179,7 +8869,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -25.29,
+            -21.3
+          ],
+          [
+            -24.22,
+            -21.3
+          ],
+          [
+            -24.22,
+            -21.13
+          ],
+          [
+            -25.29,
+            -21.13
+          ]
+        ]
       },
       "hostExpressID": 326,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):201491\"",
@@ -5202,7 +8910,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -24.22,
+            -23.48
+          ],
+          [
+            -24.05,
+            -23.48
+          ],
+          [
+            -24.05,
+            -22.41
+          ],
+          [
+            -24.22,
+            -22.41
+          ]
+        ]
       },
       "hostExpressID": 354,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):201310\"",
@@ -5225,7 +8951,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -24.22,
+            -24.68
+          ],
+          [
+            -24.05,
+            -24.68
+          ],
+          [
+            -24.05,
+            -23.61
+          ],
+          [
+            -24.22,
+            -23.61
+          ]
+        ]
       },
       "hostExpressID": 354,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):201310\"",
@@ -5248,7 +8992,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -24.22,
+            -27.2
+          ],
+          [
+            -24.05,
+            -27.2
+          ],
+          [
+            -24.05,
+            -26.13
+          ],
+          [
+            -24.22,
+            -26.13
+          ]
+        ]
       },
       "hostExpressID": 354,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):201310\"",
@@ -5271,7 +9033,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -19.81,
+            -23
+          ],
+          [
+            -18.74,
+            -23
+          ],
+          [
+            -18.74,
+            -22.83
+          ],
+          [
+            -19.81,
+            -22.83
+          ]
+        ]
       },
       "hostExpressID": 300,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):208754\"",
@@ -5294,7 +9074,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -16.86,
+            -25.46
+          ],
+          [
+            -16.68,
+            -25.46
+          ],
+          [
+            -16.68,
+            -24.39
+          ],
+          [
+            -16.86,
+            -24.39
+          ]
+        ]
       },
       "hostExpressID": 997,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):208828\"",
@@ -5317,7 +9115,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -13.04,
+            -24.07
+          ],
+          [
+            -12.86,
+            -24.07
+          ],
+          [
+            -12.86,
+            -23
+          ],
+          [
+            -13.04,
+            -23
+          ]
+        ]
       },
       "hostExpressID": 703,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):204811\"",
@@ -5340,7 +9156,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -12.93,
+            -23
+          ],
+          [
+            -11.86,
+            -23
+          ],
+          [
+            -11.86,
+            -22.83
+          ],
+          [
+            -12.93,
+            -22.83
+          ]
+        ]
       },
       "hostExpressID": 249,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):205171\"",
@@ -5363,7 +9197,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -12.31,
+            -24.83
+          ],
+          [
+            -11.24,
+            -24.83
+          ],
+          [
+            -11.24,
+            -24.66
+          ],
+          [
+            -12.31,
+            -24.66
+          ]
+        ]
       },
       "hostExpressID": 203,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):204115\"",
@@ -5386,7 +9238,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -10.34,
+            -23
+          ],
+          [
+            -9.27,
+            -23
+          ],
+          [
+            -9.27,
+            -22.83
+          ],
+          [
+            -10.34,
+            -22.83
+          ]
+        ]
       },
       "hostExpressID": 249,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):205171\"",
@@ -5409,7 +9279,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -9.14,
+            -23
+          ],
+          [
+            -8.07,
+            -23
+          ],
+          [
+            -8.07,
+            -22.83
+          ],
+          [
+            -9.14,
+            -22.83
+          ]
+        ]
       },
       "hostExpressID": 249,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):205171\"",
@@ -5432,7 +9320,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -7.8,
+            -24.83
+          ],
+          [
+            -6.74,
+            -24.83
+          ],
+          [
+            -6.74,
+            -24.66
+          ],
+          [
+            -7.8,
+            -24.66
+          ]
+        ]
       },
       "hostExpressID": 203,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):204115\"",
@@ -5455,7 +9361,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -6.61,
+            -24.83
+          ],
+          [
+            -5.54,
+            -24.83
+          ],
+          [
+            -5.54,
+            -24.66
+          ],
+          [
+            -6.61,
+            -24.66
+          ]
+        ]
       },
       "hostExpressID": 203,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):204115\"",
@@ -5478,7 +9402,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -5.35,
+            -21.23
+          ],
+          [
+            -5.17,
+            -21.23
+          ],
+          [
+            -5.17,
+            -20.16
+          ],
+          [
+            -5.35,
+            -20.16
+          ]
+        ]
       },
       "hostExpressID": 266,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):205241\"",
@@ -5501,7 +9443,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -4.58,
+            -21.43
+          ],
+          [
+            -3.51,
+            -21.43
+          ],
+          [
+            -3.51,
+            -21.25
+          ],
+          [
+            -4.58,
+            -21.25
+          ]
+        ]
       },
       "hostExpressID": 828,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):205286\"",
@@ -5524,7 +9484,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -3.52,
+            -23.28
+          ],
+          [
+            -3.34,
+            -23.28
+          ],
+          [
+            -3.34,
+            -22.21
+          ],
+          [
+            -3.52,
+            -22.21
+          ]
+        ]
       },
       "hostExpressID": 829,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):205331\"",
@@ -5547,7 +9525,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -3.77,
+            -24.83
+          ],
+          [
+            -2.7,
+            -24.83
+          ],
+          [
+            -2.7,
+            -24.66
+          ],
+          [
+            -3.77,
+            -24.66
+          ]
+        ]
       },
       "hostExpressID": 203,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):204115\"",
@@ -5570,7 +9566,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -1.84,
+            -24.66
+          ],
+          [
+            -1.66,
+            -24.66
+          ],
+          [
+            -1.66,
+            -23.59
+          ],
+          [
+            -1.84,
+            -23.59
+          ]
+        ]
       },
       "hostExpressID": 998,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):239984\"",
@@ -5593,7 +9607,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -3.52,
+            -19.02
+          ],
+          [
+            -3.34,
+            -19.02
+          ],
+          [
+            -3.34,
+            -17.95
+          ],
+          [
+            -3.52,
+            -17.95
+          ]
+        ]
       },
       "hostExpressID": 301,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):205727\"",
@@ -5616,7 +9648,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -5.35,
+            -20.03
+          ],
+          [
+            -5.17,
+            -20.03
+          ],
+          [
+            -5.17,
+            -18.96
+          ],
+          [
+            -5.35,
+            -18.96
+          ]
+        ]
       },
       "hostExpressID": 266,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):205241\"",
@@ -5639,7 +9689,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -3.52,
+            -16.08
+          ],
+          [
+            -3.34,
+            -16.08
+          ],
+          [
+            -3.34,
+            -15.01
+          ],
+          [
+            -3.52,
+            -15.01
+          ]
+        ]
       },
       "hostExpressID": 301,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):205727\"",
@@ -5662,7 +9730,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -5.35,
+            -17.14
+          ],
+          [
+            -5.17,
+            -17.14
+          ],
+          [
+            -5.17,
+            -16.07
+          ],
+          [
+            -5.35,
+            -16.07
+          ]
+        ]
       },
       "hostExpressID": 266,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):205241\"",
@@ -5685,7 +9771,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -2.49,
+            -13.9
+          ],
+          [
+            -2.31,
+            -13.9
+          ],
+          [
+            -2.31,
+            -12.83
+          ],
+          [
+            -2.49,
+            -12.83
+          ]
+        ]
       },
       "hostExpressID": 704,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):206323\"",
@@ -5708,7 +9812,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -3.49,
+            -12.81
+          ],
+          [
+            -2.42,
+            -12.81
+          ],
+          [
+            -2.42,
+            -12.63
+          ],
+          [
+            -3.49,
+            -12.63
+          ]
+        ]
       },
       "hostExpressID": 205,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):206694\"",
@@ -5731,7 +9853,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -4.79,
+            -12.81
+          ],
+          [
+            -3.72,
+            -12.81
+          ],
+          [
+            -3.72,
+            -12.63
+          ],
+          [
+            -4.79,
+            -12.63
+          ]
+        ]
       },
       "hostExpressID": 205,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):206694\"",
@@ -5754,7 +9894,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -10.24,
+            -14.67
+          ],
+          [
+            -9.17,
+            -14.67
+          ],
+          [
+            -9.17,
+            -14.5
+          ],
+          [
+            -10.24,
+            -14.5
+          ]
+        ]
       },
       "hostExpressID": 272,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):207492\"",
@@ -5777,7 +9935,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -12.77,
+            -14.67
+          ],
+          [
+            -11.7,
+            -14.67
+          ],
+          [
+            -11.7,
+            -14.5
+          ],
+          [
+            -12.77,
+            -14.5
+          ]
+        ]
       },
       "hostExpressID": 272,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):207492\"",
@@ -5800,7 +9976,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -13.97,
+            -14.67
+          ],
+          [
+            -12.9,
+            -14.67
+          ],
+          [
+            -12.9,
+            -14.5
+          ],
+          [
+            -13.97,
+            -14.5
+          ]
+        ]
       },
       "hostExpressID": 272,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):207492\"",
@@ -5823,7 +10017,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -17.86,
+            -15.7
+          ],
+          [
+            -17.68,
+            -15.7
+          ],
+          [
+            -17.68,
+            -14.63
+          ],
+          [
+            -17.86,
+            -14.63
+          ]
+        ]
       },
       "hostExpressID": 483,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):207601\"",
@@ -5846,7 +10058,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -17.86,
+            -19.88
+          ],
+          [
+            -17.68,
+            -19.88
+          ],
+          [
+            -17.68,
+            -18.81
+          ],
+          [
+            -17.86,
+            -18.81
+          ]
+        ]
       },
       "hostExpressID": 483,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):207601\"",
@@ -5869,7 +10099,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -43.14,
+            -16.33
+          ],
+          [
+            -42.96,
+            -16.33
+          ],
+          [
+            -42.96,
+            -15.26
+          ],
+          [
+            -43.14,
+            -15.26
+          ]
+        ]
       },
       "hostExpressID": 430,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):212840\"",
@@ -5892,7 +10140,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -44.2,
+            -13.73
+          ],
+          [
+            -43.13,
+            -13.73
+          ],
+          [
+            -43.13,
+            -13.56
+          ],
+          [
+            -44.2,
+            -13.56
+          ]
+        ]
       },
       "hostExpressID": 159,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):210724\"",
@@ -5915,7 +10181,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -40.96,
+            -13.73
+          ],
+          [
+            -39.89,
+            -13.73
+          ],
+          [
+            -39.89,
+            -13.56
+          ],
+          [
+            -40.96,
+            -13.56
+          ]
+        ]
       },
       "hostExpressID": 159,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):210724\"",
@@ -5938,7 +10222,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -38.2,
+            -13.73
+          ],
+          [
+            -37.13,
+            -13.73
+          ],
+          [
+            -37.13,
+            -13.56
+          ],
+          [
+            -38.2,
+            -13.56
+          ]
+        ]
       },
       "hostExpressID": 159,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):210724\"",
@@ -5961,7 +10263,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -32.56,
+            -13.73
+          ],
+          [
+            -31.49,
+            -13.73
+          ],
+          [
+            -31.49,
+            -13.56
+          ],
+          [
+            -32.56,
+            -13.56
+          ]
+        ]
       },
       "hostExpressID": 159,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):210724\"",
@@ -5984,7 +10304,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -30.03,
+            -13.73
+          ],
+          [
+            -28.96,
+            -13.73
+          ],
+          [
+            -28.96,
+            -13.56
+          ],
+          [
+            -30.03,
+            -13.56
+          ]
+        ]
       },
       "hostExpressID": 159,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):210724\"",
@@ -6007,7 +10345,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -28.83,
+            -13.73
+          ],
+          [
+            -27.76,
+            -13.73
+          ],
+          [
+            -27.76,
+            -13.56
+          ],
+          [
+            -28.83,
+            -13.56
+          ]
+        ]
       },
       "hostExpressID": 159,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):210724\"",
@@ -6030,7 +10386,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -19.98,
+            -14.72
+          ],
+          [
+            -19.8,
+            -14.72
+          ],
+          [
+            -19.8,
+            -13.66
+          ],
+          [
+            -19.98,
+            -13.66
+          ]
+        ]
       },
       "hostExpressID": 355,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):210194\"",
@@ -6053,7 +10427,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -16.86,
+            -13.9
+          ],
+          [
+            -16.68,
+            -13.9
+          ],
+          [
+            -16.68,
+            -12.83
+          ],
+          [
+            -16.86,
+            -12.83
+          ]
+        ]
       },
       "hostExpressID": 999,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):207456\"",
@@ -6076,7 +10468,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -17.86,
+            -11.4
+          ],
+          [
+            -17.68,
+            -11.4
+          ],
+          [
+            -17.68,
+            -10.33
+          ],
+          [
+            -17.86,
+            -10.33
+          ]
+        ]
       },
       "hostExpressID": 530,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Rated 1-HR (92mm Stud):207426\"",
@@ -6099,7 +10509,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -9.51,
+            -12.81
+          ],
+          [
+            -8.44,
+            -12.81
+          ],
+          [
+            -8.44,
+            -12.63
+          ],
+          [
+            -9.51,
+            -12.63
+          ]
+        ]
       },
       "hostExpressID": 205,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):206694\"",
@@ -6122,7 +10550,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -8.31,
+            -12.81
+          ],
+          [
+            -7.24,
+            -12.81
+          ],
+          [
+            -7.24,
+            -12.63
+          ],
+          [
+            -8.31,
+            -12.63
+          ]
+        ]
       },
       "hostExpressID": 205,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):206694\"",
@@ -6145,7 +10591,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -14.35,
+            -36.35
+          ],
+          [
+            -14.17,
+            -36.35
+          ],
+          [
+            -14.17,
+            -35.28
+          ],
+          [
+            -14.35,
+            -35.28
+          ]
+        ]
       },
       "hostExpressID": 831,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):198335\"",
@@ -6168,7 +10632,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -19.16,
+            -37.22
+          ],
+          [
+            -18.09,
+            -37.22
+          ],
+          [
+            -18.09,
+            -37.05
+          ],
+          [
+            -19.16,
+            -37.05
+          ]
+        ]
       },
       "hostExpressID": 431,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):198725\"",
@@ -6191,7 +10673,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -26.09,
+            -14.8
+          ],
+          [
+            -25.91,
+            -14.8
+          ],
+          [
+            -25.91,
+            -13.73
+          ],
+          [
+            -26.09,
+            -13.73
+          ]
+        ]
       },
       "hostExpressID": 327,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):210458\"",
@@ -6214,7 +10714,25 @@
         "widthM": 1.98,
         "depthM": 0.32,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -37.98,
+            0.09
+          ],
+          [
+            -35.99,
+            0.09
+          ],
+          [
+            -35.99,
+            0.41
+          ],
+          [
+            -37.98,
+            0.41
+          ]
+        ]
       },
       "hostExpressID": 195,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:141152\"",
@@ -6243,7 +10761,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -19.98,
+            -18.37
+          ],
+          [
+            -19.8,
+            -18.37
+          ],
+          [
+            -19.8,
+            -17.3
+          ],
+          [
+            -19.98,
+            -17.3
+          ]
+        ]
       },
       "hostExpressID": 303,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):166136\"",
@@ -6266,7 +10802,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -20.32,
+            -27.06
+          ],
+          [
+            -20.14,
+            -27.06
+          ],
+          [
+            -20.14,
+            -26
+          ],
+          [
+            -20.32,
+            -26
+          ]
+        ]
       },
       "hostExpressID": 1022,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):355187\"",
@@ -6289,7 +10843,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -32.12,
+            -48.18
+          ],
+          [
+            -31.05,
+            -48.18
+          ],
+          [
+            -31.05,
+            -48
+          ],
+          [
+            -32.12,
+            -48
+          ]
+        ]
       },
       "hostExpressID": 233,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):156775\"",
@@ -6312,7 +10884,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -26.23,
+            -36.57
+          ],
+          [
+            -26.05,
+            -36.57
+          ],
+          [
+            -26.05,
+            -35.5
+          ],
+          [
+            -26.23,
+            -35.5
+          ]
+        ]
       },
       "hostExpressID": 381,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):158475\"",
@@ -6335,7 +10925,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -40.41,
+            -25.08
+          ],
+          [
+            -39.34,
+            -25.08
+          ],
+          [
+            -39.34,
+            -24.91
+          ],
+          [
+            -40.41,
+            -24.91
+          ]
+        ]
       },
       "hostExpressID": 1093,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):403859\"",
@@ -6358,7 +10966,25 @@
         "widthM": 1.98,
         "depthM": 0.32,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -47.41,
+            -32.72
+          ],
+          [
+            -47.09,
+            -32.72
+          ],
+          [
+            -47.09,
+            -30.74
+          ],
+          [
+            -47.41,
+            -30.74
+          ]
+        ]
       },
       "hostExpressID": 101,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:145481\"",
@@ -6387,7 +11013,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0.25
+        "bottomM": 0.25,
+        "plan": [
+          [
+            -25.93,
+            -16.55
+          ],
+          [
+            -25.75,
+            -16.55
+          ],
+          [
+            -25.75,
+            -15.48
+          ],
+          [
+            -25.93,
+            -15.48
+          ]
+        ]
       },
       "hostExpressID": 627,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):170491\"",
@@ -6410,7 +11054,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -40.56,
+            -42.02
+          ],
+          [
+            -40.39,
+            -42.02
+          ],
+          [
+            -40.39,
+            -40.95
+          ],
+          [
+            -40.56,
+            -40.95
+          ]
+        ]
       },
       "hostExpressID": 157,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):366211\"",
@@ -6433,7 +11095,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -40.56,
+            -38.06
+          ],
+          [
+            -40.39,
+            -38.06
+          ],
+          [
+            -40.39,
+            -36.99
+          ],
+          [
+            -40.56,
+            -36.99
+          ]
+        ]
       },
       "hostExpressID": 157,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):366211\"",
@@ -6456,7 +11136,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -48.32,
+            -34.93
+          ],
+          [
+            -47.25,
+            -34.93
+          ],
+          [
+            -47.25,
+            -34.75
+          ],
+          [
+            -48.32,
+            -34.75
+          ]
+        ]
       },
       "hostExpressID": 490,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):356578\"",
@@ -6479,7 +11177,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -40.56,
+            -49.05
+          ],
+          [
+            -40.39,
+            -49.05
+          ],
+          [
+            -40.39,
+            -47.98
+          ],
+          [
+            -40.56,
+            -47.98
+          ]
+        ]
       },
       "hostExpressID": 157,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):366211\"",
@@ -6502,7 +11218,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -44.38,
+            -28.64
+          ],
+          [
+            -43.31,
+            -28.64
+          ],
+          [
+            -43.31,
+            -28.46
+          ],
+          [
+            -44.38,
+            -28.46
+          ]
+        ]
       },
       "hostExpressID": 437,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):355734\"",
@@ -6525,7 +11259,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -43.2,
+            -28.64
+          ],
+          [
+            -42.13,
+            -28.64
+          ],
+          [
+            -42.13,
+            -28.46
+          ],
+          [
+            -43.2,
+            -28.46
+          ]
+        ]
       },
       "hostExpressID": 437,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):355734\"",
@@ -6548,7 +11300,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -34.69,
+            -24.59
+          ],
+          [
+            -33.62,
+            -24.59
+          ],
+          [
+            -33.62,
+            -24.41
+          ],
+          [
+            -34.69,
+            -24.41
+          ]
+        ]
       },
       "hostExpressID": 234,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):354436\"",
@@ -6571,7 +11341,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -33.49,
+            -24.59
+          ],
+          [
+            -32.42,
+            -24.59
+          ],
+          [
+            -32.42,
+            -24.41
+          ],
+          [
+            -33.49,
+            -24.41
+          ]
+        ]
       },
       "hostExpressID": 234,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):354436\"",
@@ -6594,7 +11382,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -28.34,
+            -24.59
+          ],
+          [
+            -27.28,
+            -24.59
+          ],
+          [
+            -27.28,
+            -24.41
+          ],
+          [
+            -28.34,
+            -24.41
+          ]
+        ]
       },
       "hostExpressID": 234,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):354436\"",
@@ -6617,7 +11423,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -8.67,
+            -12.81
+          ],
+          [
+            -7.6,
+            -12.81
+          ],
+          [
+            -7.6,
+            -12.63
+          ],
+          [
+            -8.67,
+            -12.63
+          ]
+        ]
       },
       "hostExpressID": 273,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):369550\"",
@@ -6640,7 +11464,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -11.39,
+            -12.81
+          ],
+          [
+            -10.32,
+            -12.81
+          ],
+          [
+            -10.32,
+            -12.63
+          ],
+          [
+            -11.39,
+            -12.63
+          ]
+        ]
       },
       "hostExpressID": 273,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):369550\"",
@@ -6663,7 +11505,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -19.81,
+            -25.83
+          ],
+          [
+            -18.74,
+            -25.83
+          ],
+          [
+            -18.74,
+            -25.66
+          ],
+          [
+            -19.81,
+            -25.66
+          ]
+        ]
       },
       "hostExpressID": 736,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):368550\"",
@@ -6686,7 +11546,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -42.07,
+            -7.65
+          ],
+          [
+            -41.89,
+            -7.65
+          ],
+          [
+            -41.89,
+            -6.58
+          ],
+          [
+            -42.07,
+            -6.58
+          ]
+        ]
       },
       "hostExpressID": 360,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):404985\"",
@@ -6709,7 +11587,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -45.55,
+            -46.9
+          ],
+          [
+            -44.48,
+            -46.9
+          ],
+          [
+            -44.48,
+            -46.73
+          ],
+          [
+            -45.55,
+            -46.73
+          ]
+        ]
       },
       "hostExpressID": 491,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):234588\"",
@@ -6732,7 +11628,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -36.04,
+            -46.9
+          ],
+          [
+            -34.97,
+            -46.9
+          ],
+          [
+            -34.97,
+            -46.73
+          ],
+          [
+            -36.04,
+            -46.73
+          ]
+        ]
       },
       "hostExpressID": 95,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):235927\"",
@@ -6755,7 +11669,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -32.63,
+            -46.9
+          ],
+          [
+            -31.56,
+            -46.9
+          ],
+          [
+            -31.56,
+            -46.73
+          ],
+          [
+            -32.63,
+            -46.73
+          ]
+        ]
       },
       "hostExpressID": 95,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):235927\"",
@@ -6778,7 +11710,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -29.22,
+            -46.9
+          ],
+          [
+            -28.15,
+            -46.9
+          ],
+          [
+            -28.15,
+            -46.73
+          ],
+          [
+            -29.22,
+            -46.73
+          ]
+        ]
       },
       "hostExpressID": 95,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):235927\"",
@@ -6801,7 +11751,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -25.91,
+            -46.9
+          ],
+          [
+            -24.84,
+            -46.9
+          ],
+          [
+            -24.84,
+            -46.73
+          ],
+          [
+            -25.91,
+            -46.73
+          ]
+        ]
       },
       "hostExpressID": 95,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):235927\"",
@@ -6824,7 +11792,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -31.64,
+            -44.2
+          ],
+          [
+            -31.46,
+            -44.2
+          ],
+          [
+            -31.46,
+            -43.13
+          ],
+          [
+            -31.64,
+            -43.13
+          ]
+        ]
       },
       "hostExpressID": 628,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):439833\"",
@@ -6847,7 +11833,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -21.75,
+            -38.66
+          ],
+          [
+            -20.68,
+            -38.66
+          ],
+          [
+            -20.68,
+            -38.49
+          ],
+          [
+            -21.75,
+            -38.49
+          ]
+        ]
       },
       "hostExpressID": 438,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):391583\"",
@@ -6870,7 +11874,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -43,
+            -18.37
+          ],
+          [
+            -41.93,
+            -18.37
+          ],
+          [
+            -41.93,
+            -18.2
+          ],
+          [
+            -43,
+            -18.2
+          ]
+        ]
       },
       "hostExpressID": 872,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):386438\"",
@@ -6893,7 +11915,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -38.32,
+            -18.37
+          ],
+          [
+            -37.25,
+            -18.37
+          ],
+          [
+            -37.25,
+            -18.2
+          ],
+          [
+            -38.32,
+            -18.2
+          ]
+        ]
       },
       "hostExpressID": 439,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):386945\"",
@@ -6916,7 +11956,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -36.66,
+            -18.37
+          ],
+          [
+            -35.59,
+            -18.37
+          ],
+          [
+            -35.59,
+            -18.2
+          ],
+          [
+            -36.66,
+            -18.2
+          ]
+        ]
       },
       "hostExpressID": 439,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):386945\"",
@@ -6939,7 +11997,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -21.38,
+            -19.47
+          ],
+          [
+            -20.31,
+            -19.47
+          ],
+          [
+            -20.31,
+            -19.3
+          ],
+          [
+            -21.38,
+            -19.3
+          ]
+        ]
       },
       "hostExpressID": 545,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):387394\"",
@@ -6962,7 +12038,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -25.52,
+            -19.47
+          ],
+          [
+            -24.45,
+            -19.47
+          ],
+          [
+            -24.45,
+            -19.3
+          ],
+          [
+            -25.52,
+            -19.3
+          ]
+        ]
       },
       "hostExpressID": 545,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):387394\"",
@@ -6985,7 +12079,25 @@
         "widthM": 1.07,
         "depthM": 0.17,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -40.56,
+            -40.81
+          ],
+          [
+            -40.39,
+            -40.81
+          ],
+          [
+            -40.39,
+            -39.74
+          ],
+          [
+            -40.56,
+            -39.74
+          ]
+        ]
       },
       "hostExpressID": 157,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):366211\"",
@@ -7008,7 +12120,25 @@
         "widthM": 1.07,
         "depthM": 0.32,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -39.91,
+            -55.58
+          ],
+          [
+            -38.84,
+            -55.58
+          ],
+          [
+            -38.84,
+            -55.26
+          ],
+          [
+            -39.91,
+            -55.26
+          ]
+        ]
       },
       "hostExpressID": 591,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:143081\"",
@@ -7037,7 +12167,25 @@
         "widthM": 1.07,
         "depthM": 0.32,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -42.07,
+            -2.35
+          ],
+          [
+            -41.75,
+            -2.35
+          ],
+          [
+            -41.75,
+            -1.28
+          ],
+          [
+            -42.07,
+            -1.28
+          ]
+        ]
       },
       "hostExpressID": 527,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:187224\"",
@@ -7066,7 +12214,25 @@
         "widthM": 1.07,
         "depthM": 0.32,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -42.07,
+            -3.69
+          ],
+          [
+            -41.75,
+            -3.69
+          ],
+          [
+            -41.75,
+            -2.62
+          ],
+          [
+            -42.07,
+            -2.62
+          ]
+        ]
       },
       "hostExpressID": 527,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:187224\"",
@@ -7095,7 +12261,25 @@
         "widthM": 1.07,
         "depthM": 0.32,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -51.34,
+            -12.02
+          ],
+          [
+            -51.02,
+            -12.02
+          ],
+          [
+            -51.02,
+            -10.95
+          ],
+          [
+            -51.34,
+            -10.95
+          ]
+        ]
       },
       "hostExpressID": 529,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:141763\"",
@@ -7124,7 +12308,25 @@
         "widthM": 1.37,
         "depthM": 0.32,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -43.72,
+            -5.95
+          ],
+          [
+            -42.35,
+            -5.95
+          ],
+          [
+            -42.35,
+            -5.63
+          ],
+          [
+            -43.72,
+            -5.63
+          ]
+        ]
       },
       "hostExpressID": 699,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:187053\"",
@@ -7153,7 +12355,25 @@
         "widthM": 1.07,
         "depthM": 0.32,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -44.11,
+            -1.06
+          ],
+          [
+            -43.79,
+            -1.06
+          ],
+          [
+            -43.79,
+            0.01
+          ],
+          [
+            -44.11,
+            0.01
+          ]
+        ]
       },
       "hostExpressID": 700,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:186606\"",
@@ -7182,7 +12402,25 @@
         "widthM": 1.98,
         "depthM": 0.32,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -52.31,
+            -14.98
+          ],
+          [
+            -51.99,
+            -14.98
+          ],
+          [
+            -51.99,
+            -12.99
+          ],
+          [
+            -52.31,
+            -12.99
+          ]
+        ]
       },
       "hostExpressID": 196,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:142014\"",
@@ -7211,7 +12449,25 @@
         "widthM": 1.98,
         "depthM": 0.32,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -52.31,
+            -17.8
+          ],
+          [
+            -51.99,
+            -17.8
+          ],
+          [
+            -51.99,
+            -15.81
+          ],
+          [
+            -52.31,
+            -15.81
+          ]
+        ]
       },
       "hostExpressID": 196,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:142014\"",
@@ -7240,7 +12496,25 @@
         "widthM": 1.07,
         "depthM": 0.32,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -19.22,
+            -50.14
+          ],
+          [
+            -18.15,
+            -50.14
+          ],
+          [
+            -18.15,
+            -49.82
+          ],
+          [
+            -19.22,
+            -49.82
+          ]
+        ]
       },
       "hostExpressID": 484,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:142496\"",
@@ -7269,7 +12543,25 @@
         "widthM": 1.07,
         "depthM": 0.32,
         "heightM": 2.21,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -4.07,
+            -50.14
+          ],
+          [
+            -3,
+            -50.14
+          ],
+          [
+            -3,
+            -49.82
+          ],
+          [
+            -4.07,
+            -49.82
+          ]
+        ]
       },
       "hostExpressID": 531,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Insul Panel on Mtl. Stud:142721\"",
@@ -7298,7 +12590,25 @@
         "widthM": 0.87,
         "depthM": 0.03,
         "heightM": 1.5,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -28.12,
+            -38.93
+          ],
+          [
+            -27.25,
+            -38.93
+          ],
+          [
+            -27.25,
+            -38.91
+          ],
+          [
+            -28.12,
+            -38.91
+          ]
+        ]
       },
       "hostExpressID": 2093,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Toilet Partition (25mm):408771\"",
@@ -7321,7 +12631,25 @@
         "widthM": 0.87,
         "depthM": 0.03,
         "heightM": 1.5,
-        "bottomM": 0.25
+        "bottomM": 0.25,
+        "plan": [
+          [
+            -16.14,
+            -50.12
+          ],
+          [
+            -16.11,
+            -50.12
+          ],
+          [
+            -16.11,
+            -49.25
+          ],
+          [
+            -16.14,
+            -49.25
+          ]
+        ]
       },
       "hostExpressID": 1094,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Toilet Partition (25mm):411446\"",
@@ -7344,7 +12672,25 @@
         "widthM": 0.87,
         "depthM": 0.03,
         "heightM": 1.5,
-        "bottomM": 0.25
+        "bottomM": 0.25,
+        "plan": [
+          [
+            -16.14,
+            -48.11
+          ],
+          [
+            -16.11,
+            -48.11
+          ],
+          [
+            -16.11,
+            -47.24
+          ],
+          [
+            -16.14,
+            -47.24
+          ]
+        ]
       },
       "hostExpressID": 1094,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Toilet Partition (25mm):411446\"",
@@ -7367,7 +12713,25 @@
         "widthM": 0.87,
         "depthM": 0.03,
         "heightM": 1.5,
-        "bottomM": 0.25
+        "bottomM": 0.25,
+        "plan": [
+          [
+            -16.14,
+            -47.04
+          ],
+          [
+            -16.11,
+            -47.04
+          ],
+          [
+            -16.11,
+            -46.17
+          ],
+          [
+            -16.14,
+            -46.17
+          ]
+        ]
       },
       "hostExpressID": 1831,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Toilet Partition (25mm):412768\"",
@@ -7390,7 +12754,25 @@
         "widthM": 0.87,
         "depthM": 0.03,
         "heightM": 1.5,
-        "bottomM": 4.82
+        "bottomM": 4.82,
+        "plan": [
+          [
+            -22.79,
+            -36.99
+          ],
+          [
+            -21.92,
+            -36.99
+          ],
+          [
+            -21.92,
+            -36.96
+          ],
+          [
+            -22.79,
+            -36.96
+          ]
+        ]
       },
       "hostExpressID": 1832,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Toilet Partition (25mm):412921\"",
@@ -7413,7 +12795,25 @@
         "widthM": 0.87,
         "depthM": 0.03,
         "heightM": 1.5,
-        "bottomM": 4.82
+        "bottomM": 4.82,
+        "plan": [
+          [
+            -21.77,
+            -40.46
+          ],
+          [
+            -21.74,
+            -40.46
+          ],
+          [
+            -21.74,
+            -39.59
+          ],
+          [
+            -21.77,
+            -39.59
+          ]
+        ]
       },
       "hostExpressID": 1096,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Toilet Partition (25mm):413112\"",
@@ -7436,7 +12836,25 @@
         "widthM": 0.87,
         "depthM": 0.03,
         "heightM": 1.5,
-        "bottomM": 4.82
+        "bottomM": 4.82,
+        "plan": [
+          [
+            -21.77,
+            -41.46
+          ],
+          [
+            -21.74,
+            -41.46
+          ],
+          [
+            -21.74,
+            -40.59
+          ],
+          [
+            -21.77,
+            -40.59
+          ]
+        ]
       },
       "hostExpressID": 1096,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Toilet Partition (25mm):413112\"",
@@ -7459,7 +12877,25 @@
         "widthM": 0.87,
         "depthM": 0.03,
         "heightM": 1.5,
-        "bottomM": 4.57
+        "bottomM": 4.57,
+        "plan": [
+          [
+            -31.42,
+            -38.93
+          ],
+          [
+            -30.56,
+            -38.93
+          ],
+          [
+            -30.56,
+            -38.91
+          ],
+          [
+            -31.42,
+            -38.91
+          ]
+        ]
       },
       "hostExpressID": 1331,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Toilet Partition (25mm):409027\"",
@@ -7482,7 +12918,25 @@
         "widthM": 1.8,
         "depthM": 0.12,
         "heightM": 2.33,
-        "bottomM": 0.05
+        "bottomM": 0.05,
+        "plan": [
+          [
+            0.23,
+            -32.6
+          ],
+          [
+            0.35,
+            -32.6
+          ],
+          [
+            0.35,
+            -30.79
+          ],
+          [
+            0.23,
+            -30.79
+          ]
+        ]
       },
       "hostExpressID": 742,
       "hostName": "IfcCurtainWall \"Curtain Wall:Storefront:263355\"",
@@ -7510,7 +12964,25 @@
         "widthM": 0.9,
         "depthM": 0.11,
         "heightM": 2.33,
-        "bottomM": 0.05
+        "bottomM": 0.05,
+        "plan": [
+          [
+            -37.91,
+            -29.56
+          ],
+          [
+            -37.79,
+            -29.56
+          ],
+          [
+            -37.79,
+            -28.66
+          ],
+          [
+            -37.91,
+            -28.66
+          ]
+        ]
       },
       "hostExpressID": 743,
       "hostName": "IfcCurtainWall \"Curtain Wall:Storefront - Interior:283067\"",
@@ -7538,7 +13010,25 @@
         "widthM": 0.9,
         "depthM": 0.11,
         "heightM": 2.33,
-        "bottomM": 0.05
+        "bottomM": 0.05,
+        "plan": [
+          [
+            -37.91,
+            -34.73
+          ],
+          [
+            -37.79,
+            -34.73
+          ],
+          [
+            -37.79,
+            -33.83
+          ],
+          [
+            -37.91,
+            -33.83
+          ]
+        ]
       },
       "hostExpressID": 744,
       "hostName": "IfcCurtainWall \"Curtain Wall:Storefront - Interior:283882\"",
@@ -7566,7 +13056,25 @@
         "widthM": 2.7,
         "depthM": 0.05,
         "heightM": 1.96,
-        "bottomM": -1
+        "bottomM": -1,
+        "plan": [
+          [
+            -38.03,
+            9.54
+          ],
+          [
+            -35.33,
+            9.54
+          ],
+          [
+            -35.33,
+            9.58
+          ],
+          [
+            -38.03,
+            9.58
+          ]
+        ]
       },
       "hostExpressID": 748,
       "hostName": "IfcCurtainWall \"Curtain Wall:Chain Link Fence:346963\"",
@@ -7594,7 +13102,25 @@
         "widthM": 2.7,
         "depthM": 0.05,
         "heightM": 1.96,
-        "bottomM": -1
+        "bottomM": -1,
+        "plan": [
+          [
+            -34.23,
+            9.54
+          ],
+          [
+            -31.53,
+            9.54
+          ],
+          [
+            -31.53,
+            9.58
+          ],
+          [
+            -34.23,
+            9.58
+          ]
+        ]
       },
       "hostExpressID": 748,
       "hostName": "IfcCurtainWall \"Curtain Wall:Chain Link Fence:346963\"",
@@ -8579,7 +14105,25 @@
         "widthM": 2.7,
         "depthM": 0.05,
         "heightM": 1.96,
-        "bottomM": -1
+        "bottomM": -1,
+        "plan": [
+          [
+            -34.23,
+            9.54
+          ],
+          [
+            -31.53,
+            9.54
+          ],
+          [
+            -31.53,
+            9.58
+          ],
+          [
+            -34.23,
+            9.58
+          ]
+        ]
       },
       "reason": "coincident with #2258 (same name, same bounds within 2 cm): exported twice, counted once",
       "included": false
@@ -8599,7 +14143,25 @@
         "widthM": 2.7,
         "depthM": 0.05,
         "heightM": 1.96,
-        "bottomM": -1
+        "bottomM": -1,
+        "plan": [
+          [
+            -38.03,
+            9.54
+          ],
+          [
+            -35.33,
+            9.54
+          ],
+          [
+            -35.33,
+            9.58
+          ],
+          [
+            -38.03,
+            9.58
+          ]
+        ]
       },
       "reason": "coincident with #2257 (same name, same bounds within 2 cm): exported twice, counted once",
       "included": false
@@ -8619,7 +14181,25 @@
         "widthM": 0.9,
         "depthM": 0.11,
         "heightM": 2.33,
-        "bottomM": 0.05
+        "bottomM": 0.05,
+        "plan": [
+          [
+            -37.91,
+            -34.73
+          ],
+          [
+            -37.79,
+            -34.73
+          ],
+          [
+            -37.79,
+            -33.83
+          ],
+          [
+            -37.91,
+            -33.83
+          ]
+        ]
       },
       "reason": "coincident with #2255 (same name, same bounds within 2 cm): exported twice, counted once",
       "included": false
@@ -8639,7 +14219,25 @@
         "widthM": 0.9,
         "depthM": 0.11,
         "heightM": 2.33,
-        "bottomM": 0.05
+        "bottomM": 0.05,
+        "plan": [
+          [
+            -37.91,
+            -29.56
+          ],
+          [
+            -37.79,
+            -29.56
+          ],
+          [
+            -37.79,
+            -28.66
+          ],
+          [
+            -37.91,
+            -28.66
+          ]
+        ]
       },
       "reason": "coincident with #2253 (same name, same bounds within 2 cm): exported twice, counted once",
       "included": false
@@ -8659,7 +14257,25 @@
         "widthM": 1.8,
         "depthM": 0.12,
         "heightM": 2.33,
-        "bottomM": 0.05
+        "bottomM": 0.05,
+        "plan": [
+          [
+            0.23,
+            -32.6
+          ],
+          [
+            0.35,
+            -32.6
+          ],
+          [
+            0.35,
+            -30.79
+          ],
+          [
+            0.23,
+            -30.79
+          ]
+        ]
       },
       "reason": "coincident with #2251 (same name, same bounds within 2 cm): exported twice, counted once",
       "included": false

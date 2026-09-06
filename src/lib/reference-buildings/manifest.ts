@@ -358,6 +358,60 @@ export type ReferenceBuildingOpening = Readonly<{
   reason: string | null;
 }>;
 
+/**
+ * One roof plane, measured at build time by `scripts/lib/ifc-roof-planes.mjs`
+ * (stage 1 of the PV placement methodology): a connected patch of coplanar
+ * upward faces, strips of one surface merged within a family, and clipped to
+ * what the sky sees. `azimuthDeg` is null on a flat plane — 0 would read as
+ * due north. `outline` rings are tagged, outer counter-clockwise and holes
+ * clockwise; read them by tag, never by order.
+ */
+export type ReferenceBuildingRoofPlane = Readonly<{
+  id: string;
+  elementName: string;
+  elementType: string;
+  elementRef: string;
+  family: string | null;
+  storeyId: string | null;
+  normal: readonly [number, number, number];
+  tiltDeg: number;
+  azimuthDeg: number | null;
+  surfaceSqm: number;
+  projectedSqm: number;
+  /** Plan area a higher plane covers, subtracted from `projectedSqm`. */
+  occludedSqm: number;
+  minElevationM: number;
+  maxElevationM: number;
+  triangleCount: number;
+  /** Elements merged into this plane; 1 when it is one element's own. */
+  mergedElements: number;
+  outline: readonly Readonly<{
+    kind: "outer" | "hole";
+    points: readonly (readonly [number, number])[];
+  }>[];
+  obstructions: readonly Readonly<{
+    kind: "opening" | "equipment" | "parapet";
+    elementRef: string;
+    elementName: string;
+    elementType: string;
+    plan: readonly (readonly [number, number])[];
+    areaSqm: number;
+  }>[];
+}>;
+
+export type ReferenceBuildingRoofPlanes = Readonly<{
+  kind: "bimfit_reference_building_roof_planes";
+  id: string;
+  generatedAt: string;
+  northAssumed: boolean;
+  note: string;
+  /** Union of every upward roof shadow before occlusion — what the sky sees. */
+  skyUnionSqm: number;
+  /** Planes dropped because a higher plane covered all but a sliver of them. */
+  occludedPlanes: number;
+  planes: readonly ReferenceBuildingRoofPlane[];
+}>;
+
 export type ReferenceBuildingOpenings = Readonly<{
   kind: "bimfit_reference_building_openings";
   id: string;

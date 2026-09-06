@@ -1,0 +1,170 @@
+{
+  "kind": "bimfit_reference_building_roof_planes",
+  "id": "duplex-apartment",
+  "generatedAt": "2026-09-04T00:00:00.000Z",
+  "northAssumed": true,
+  "note": "Upward faces (within 80°) of each roof element, region-grown into connected coplanar patches: normals within 2°, offsets within 20 mm across shared edges; then patches of one element with the same normal, offsets within 150 mm and plan boxes touching within 50 mm are one surface (a ribbed metal roof is modelled as one pan solid per rib bay). Then what the sky sees: planes highest first, each keeping only the plan area no higher plane covers, so a roof's lower layers (deck under tiles, insulation under deck) are not planes; occludedSqm is what each kept plane lost, and skyUnionSqm the union of every upward shadow before occlusion. Because lower layers are dropped, sum(surfaceSqm) is BELOW the manifest's roofSurfaceSqm, which keeps every layer and every verge because heat crosses them. tiltDeg and azimuthDeg are each plane's own and never a blend across the roof; azimuth is the downslope bearing clockwise from project north (the model's −Z), null where the plane is flat. outline rings are the plane's visible plan area, outer counter-clockwise and holes clockwise, simplified to 10 mm. obstructions is EMPTY in this pass: the shape is the contract, its content is a later stage.",
+  "skyUnionSqm": 132.93,
+  "occludedPlanes": 0,
+  "planes": [
+    {
+      "id": "basic-roof-live-roof-over-wood-joist-fla-plane-0",
+      "elementName": "Basic Roof:Live Roof over Wood Joist Flat Roof:184483",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://Duplex_A_20110907.ifc#22492",
+      "family": "Basic Roof:Live Roof over Wood Joist Flat Roof",
+      "storeyId": "storey-roof",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 132.93,
+      "projectedSqm": 132.93,
+      "minElevationM": 6.457,
+      "maxElevationM": 6.457,
+      "triangleCount": 14,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.417,
+              0.417
+            ],
+            [
+              8.383,
+              0.417
+            ],
+            [
+              8.383,
+              17.383
+            ],
+            [
+              0.417,
+              17.383
+            ],
+            [
+              0.417,
+              0.417
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              0.861,
+              10.124
+            ],
+            [
+              0.861,
+              11.206
+            ],
+            [
+              1.891,
+              11.206
+            ],
+            [
+              1.891,
+              10.124
+            ],
+            [
+              0.861,
+              10.124
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              6.894,
+              6.594
+            ],
+            [
+              6.894,
+              7.676
+            ],
+            [
+              7.924,
+              7.676
+            ],
+            [
+              7.924,
+              6.594
+            ],
+            [
+              6.894,
+              6.594
+            ]
+          ]
+        }
+      ],
+      "obstructions": [
+        {
+          "kind": "opening",
+          "elementRef": "ifc://Duplex_A_20110907.ifc#23162",
+          "elementName": "M_Skylight:1180 x 1170mm:1180 x 1170mm:185337",
+          "elementType": "IfcWindow",
+          "plan": [
+            [
+              0.79,
+              10.05
+            ],
+            [
+              1.96,
+              10.05
+            ],
+            [
+              1.96,
+              11.28
+            ],
+            [
+              0.79,
+              11.28
+            ],
+            [
+              0.79,
+              10.05
+            ]
+          ],
+          "areaSqm": 1.43
+        },
+        {
+          "kind": "opening",
+          "elementRef": "ifc://Duplex_A_20110907.ifc#23251",
+          "elementName": "M_Skylight:1180 x 1170mm:1180 x 1170mm:185718",
+          "elementType": "IfcWindow",
+          "plan": [
+            [
+              6.82,
+              6.52
+            ],
+            [
+              8,
+              6.52
+            ],
+            [
+              8,
+              7.75
+            ],
+            [
+              6.82,
+              7.75
+            ],
+            [
+              6.82,
+              6.52
+            ]
+          ],
+          "areaSqm": 1.43
+        }
+      ],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    }
+  ]
+}

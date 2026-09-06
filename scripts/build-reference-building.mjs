@@ -57,7 +57,7 @@ import {
   measureGroundSlabs,
   roofFamily,
 } from "./lib/ifc-horizontal.mjs";
-import { roofPlanes, ROOF_PLANE_CONSTANTS } from "./lib/ifc-roof-planes.mjs";
+import { roofPlanes, roofPlanesSvg, ROOF_PLANE_CONSTANTS } from "./lib/ifc-roof-planes.mjs";
 import { collectSpaceSolids, openingApertures, summariseApertures } from "./lib/ifc-openings.mjs";
 
 const REPO = process.cwd();
@@ -917,6 +917,41 @@ function exteriorWallPredicate(building) {
   };
 }
 
+
+function pointInRing(x, z, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
+    const [xi, zi] = ring[i];
+    const [xj, zj] = ring[j];
+    if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+function attachOpeningObstructions(planes, unresolved) {
+  for (const opening of unresolved) {
+    const plan = opening.footprint?.plan;
+    if (!Array.isArray(plan) || plan.length < 3) continue;
+    const cx = plan.reduce((s, q) => s + q[0], 0) / plan.length;
+    const cz = plan.reduce((s, q) => s + q[1], 0) / plan.length;
+    const bottom = opening.footprint.bottomM;
+    for (const plane of planes) {
+      const outer = plane.outline.find((ring) => ring.kind === "outer");
+      if (!outer || !pointInRing(cx, cz, outer.points)) continue;
+      if (bottom < plane.minElevationM - 0.5 || bottom > plane.maxElevationM + 0.5) continue;
+      plane.obstructions.push({
+        kind: "opening",
+        elementRef: opening.ref,
+        elementName: opening.name,
+        elementType: opening.type,
+        plan: [...plan, plan[0]],
+        areaSqm: Math.round(opening.footprint.widthM * opening.footprint.depthM * 100) / 100,
+      });
+      break;
+    }
+  }
+}
+
 function arg(name) {
   const i = process.argv.indexOf(`--${name}`);
   return i >= 0 ? process.argv[i + 1] : undefined;
@@ -1461,7 +1496,7 @@ async function main() {
     nameMatch: building.roofSlabMatch ?? [],
   });
   const roofs = measureRoofs(classifiedRoofs);
-  const roofPlaneRows = roofPlanes(
+  const roofPlaneResult = roofPlanes(
     classifiedRoofs.map((row) => ({
       ...row,
       id: `roof-${row.expressID}`,
@@ -2110,6 +2145,14 @@ async function main() {
   // built against this contract, and an absent field and an empty one are
   // different claims. Not yet populated: roof-hosted openings (the Duplex's
   // two skylights, already in openings.json), roof-mounted plant, parapets.
+  // Obstructions, first content: roof-hosted openings. An opening the aperture
+  // walk could not place in a wall, whose plan rectangle centre lies inside a
+  // plane's outer ring and whose bottom sits within 0.5 m of that plane's
+  // elevation range, is a hole a module cannot cover — the Duplex's two
+  // skylights. Judged by geometry, not by name: the apartment has 52
+  // unresolved openings whose reason text mentions "roof" generically, and
+  // every one of them sits at 0.78 m, four metres under any roof.
+  attachOpeningObstructions(roofPlaneResult.planes, apertures.unresolved ?? []);
   await writeFile(
     path.join(outDir, "roof-planes.json"),
     `${JSON.stringify(
@@ -2122,18 +2165,32 @@ async function main() {
           `Upward faces (within ${ROOF_PLANE_CONSTANTS.upwardWithinDeg}°) of each roof element, ` +
           `region-grown into connected coplanar patches: normals within ` +
           `${ROOF_PLANE_CONSTANTS.normalToleranceDeg}°, offsets within ` +
-          `${ROOF_PLANE_CONSTANTS.offsetToleranceM * 1000} mm, joined only across shared edges, so two ` +
-          `parallel patches at different heights are two planes. tiltDeg and azimuthDeg are each ` +
-          `plane's own and never a blend across the roof; azimuth is the downslope bearing clockwise ` +
-          `from project north (the model's −Z), null where the plane is flat. outline rings are the ` +
-          `union of the plane's triangles projected to plan, outer counter-clockwise and holes ` +
-          `clockwise, simplified to ${ROOF_PLANE_CONSTANTS.simplifyM * 1000} mm. obstructions is EMPTY ` +
-          `in this pass: the shape is the contract, its content is a later stage.`,
-        planes: roofPlaneRows,
+          `${ROOF_PLANE_CONSTANTS.offsetToleranceM * 1000} mm across shared edges; then patches of one ` +
+          `element with the same normal, offsets within ${ROOF_PLANE_CONSTANTS.mergeOffsetM * 1000} mm ` +
+          `and plan boxes touching within ${ROOF_PLANE_CONSTANTS.mergeGapM * 1000} mm are one surface ` +
+          `(a ribbed metal roof is modelled as one pan solid per rib bay). Then what the sky sees: ` +
+          `planes highest first, each keeping only the plan area no higher plane covers, so a roof's ` +
+          `lower layers (deck under tiles, insulation under deck) are not planes; occludedSqm is what ` +
+          `each kept plane lost, and skyUnionSqm the union of every upward shadow before occlusion. ` +
+          `Because lower layers are dropped, sum(surfaceSqm) is BELOW the manifest's roofSurfaceSqm, ` +
+          `which keeps every layer and every verge because heat crosses them. tiltDeg and azimuthDeg ` +
+          `are each plane's own and never a blend across the roof; azimuth is the downslope bearing ` +
+          `clockwise from project north (the model's −Z), null where the plane is flat. outline rings ` +
+          `are the plane's visible plan area, outer counter-clockwise and holes clockwise, simplified ` +
+          `to ${ROOF_PLANE_CONSTANTS.simplifyM * 1000} mm. obstructions is EMPTY in this pass: the ` +
+          `shape is the contract, its content is a later stage.`,
+        skyUnionSqm: roofPlaneResult.skyUnionSqm,
+        occludedPlanes: roofPlaneResult.occludedPlanes,
+        planes: roofPlaneResult.planes,
       },
       null,
       2,
     )}\n`,
+    "utf8",
+  );
+  await writeFile(
+    path.join(outDir, "roof-planes-qa.svg"),
+    roofPlanesSvg(roofPlaneResult.planes, { id: building.id, title: building.name?.en ?? "" }),
     "utf8",
   );
 

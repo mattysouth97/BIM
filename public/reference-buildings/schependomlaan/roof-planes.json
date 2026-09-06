@@ -1,0 +1,4172 @@
+{
+  "kind": "bimfit_reference_building_roof_planes",
+  "id": "schependomlaan",
+  "generatedAt": "2026-09-04T00:00:00.000Z",
+  "northAssumed": true,
+  "note": "Upward faces (within 80°) of each roof element, region-grown into connected coplanar patches: normals within 2°, offsets within 20 mm across shared edges; then patches of one element with the same normal, offsets within 150 mm and plan boxes touching within 50 mm are one surface (a ribbed metal roof is modelled as one pan solid per rib bay). Then what the sky sees: planes highest first, each keeping only the plan area no higher plane covers, so a roof's lower layers (deck under tiles, insulation under deck) are not planes; occludedSqm is what each kept plane lost, and skyUnionSqm the union of every upward shadow before occlusion. Because lower layers are dropped, sum(surfaceSqm) is BELOW the manifest's roofSurfaceSqm, which keeps every layer and every verge because heat crosses them. tiltDeg and azimuthDeg are each plane's own and never a blend across the roof; azimuth is the downslope bearing clockwise from project north (the model's −Z), null where the plane is flat. outline rings are the plane's visible plan area, outer counter-clockwise and holes clockwise, simplified to 10 mm. obstructions is EMPTY in this pass: the shape is the contract, its content is a later stage.",
+  "skyUnionSqm": 361.75,
+  "occludedPlanes": 34,
+  "planes": [
+    {
+      "id": "sporenkap-plane-0",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#820583",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        0.422618,
+        -0.906308
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 180,
+      "surfaceSqm": 85.32,
+      "projectedSqm": 21.3,
+      "minElevationM": 8.382,
+      "maxElevationM": 12.331,
+      "triangleCount": 38,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              5.04,
+              -15.98
+            ],
+            [
+              21.56,
+              -15.98
+            ],
+            [
+              19.744,
+              -14.164
+            ],
+            [
+              13.694,
+              -14.164
+            ],
+            [
+              13.694,
+              -14.134
+            ],
+            [
+              10.366,
+              -14.134
+            ],
+            [
+              10.366,
+              -14.164
+            ],
+            [
+              6.856,
+              -14.164
+            ],
+            [
+              5.04,
+              -15.98
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              9.52,
+              -15.394
+            ],
+            [
+              9.52,
+              -14.484
+            ],
+            [
+              14.741,
+              -14.484
+            ],
+            [
+              14.741,
+              -15.394
+            ],
+            [
+              9.52,
+              -15.394
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              18.241,
+              -15.39
+            ],
+            [
+              18.241,
+              -14.565
+            ],
+            [
+              19.149,
+              -14.565
+            ],
+            [
+              19.149,
+              -15.39
+            ],
+            [
+              18.241,
+              -15.39
+            ]
+          ]
+        }
+      ],
+      "obstructions": [
+        {
+          "kind": "opening",
+          "elementRef": "ifc://IFC Schependomlaan.ifc#823154",
+          "elementName": "merk A4",
+          "elementType": "IfcDoor",
+          "plan": [
+            [
+              11.54,
+              -15.13
+            ],
+            [
+              11.65,
+              -15.13
+            ],
+            [
+              11.65,
+              -14.12
+            ],
+            [
+              11.54,
+              -14.12
+            ],
+            [
+              11.54,
+              -15.13
+            ]
+          ],
+          "areaSqm": 0.11
+        }
+      ],
+      "mergedElements": 7,
+      "occludedSqm": 0
+    },
+    {
+      "id": "sporenkap-plane-1",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#814276",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0.906308,
+        0.422618,
+        0
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 270,
+      "surfaceSqm": 37,
+      "projectedSqm": 10.82,
+      "minElevationM": 8.383,
+      "maxElevationM": 12.484,
+      "triangleCount": 44,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              19.744,
+              -14.164
+            ],
+            [
+              21.56,
+              -15.98
+            ],
+            [
+              21.56,
+              -9.974
+            ],
+            [
+              19.744,
+              -8.17
+            ],
+            [
+              19.744,
+              -14.164
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              20.145,
+              -13.36
+            ],
+            [
+              20.145,
+              -12.452
+            ],
+            [
+              20.97,
+              -12.452
+            ],
+            [
+              20.97,
+              -13.36
+            ],
+            [
+              20.145,
+              -13.36
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              20.764,
+              -7.83
+            ],
+            [
+              20.936,
+              -7.83
+            ],
+            [
+              20.936,
+              -7.108
+            ],
+            [
+              20.764,
+              -7.108
+            ],
+            [
+              20.764,
+              -7.83
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              20.764,
+              -3.385
+            ],
+            [
+              20.936,
+              -3.385
+            ],
+            [
+              20.936,
+              -2.677
+            ],
+            [
+              20.764,
+              -2.677
+            ],
+            [
+              20.764,
+              -3.385
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              20.878,
+              -6.505
+            ],
+            [
+              21.05,
+              -6.505
+            ],
+            [
+              21.05,
+              -3.995
+            ],
+            [
+              20.878,
+              -3.995
+            ],
+            [
+              20.878,
+              -6.505
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              21.3,
+              -9.714
+            ],
+            [
+              21.477,
+              -9.677
+            ],
+            [
+              21.477,
+              -9.677
+            ],
+            [
+              21.472,
+              -9.678
+            ],
+            [
+              21.3,
+              -9.714
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 3,
+      "occludedSqm": 8.43
+    },
+    {
+      "id": "sporenkap-plane-2",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#795296",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        -0.906308,
+        0.422618,
+        0
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 90,
+      "surfaceSqm": 50.39,
+      "projectedSqm": 12.09,
+      "minElevationM": 8.383,
+      "maxElevationM": 12.566,
+      "triangleCount": 42,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              4.82,
+              -9.98
+            ],
+            [
+              6.775,
+              -8.03
+            ],
+            [
+              6.771,
+              -2.471
+            ],
+            [
+              4.82,
+              -0.52
+            ],
+            [
+              4.82,
+              -9.98
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              5.55,
+              -6.505
+            ],
+            [
+              5.55,
+              -3.995
+            ],
+            [
+              6.29,
+              -3.995
+            ],
+            [
+              6.29,
+              -6.505
+            ],
+            [
+              5.55,
+              -6.505
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              5.664,
+              -7.83
+            ],
+            [
+              5.664,
+              -7.108
+            ],
+            [
+              6.176,
+              -7.108
+            ],
+            [
+              6.176,
+              -7.83
+            ],
+            [
+              5.664,
+              -7.83
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              5.664,
+              -3.385
+            ],
+            [
+              5.664,
+              -2.677
+            ],
+            [
+              6.176,
+              -2.677
+            ],
+            [
+              6.176,
+              -3.385
+            ],
+            [
+              5.664,
+              -3.385
+            ]
+          ]
+        }
+      ],
+      "obstructions": [
+        {
+          "kind": "opening",
+          "elementRef": "ifc://IFC Schependomlaan.ifc#948940",
+          "elementName": "velux K08",
+          "elementType": "IfcWindow",
+          "plan": [
+            [
+              5.57,
+              -7.85
+            ],
+            [
+              6.21,
+              -7.85
+            ],
+            [
+              6.21,
+              -7.09
+            ],
+            [
+              5.57,
+              -7.09
+            ],
+            [
+              5.57,
+              -7.85
+            ]
+          ],
+          "areaSqm": 0.49
+        },
+        {
+          "kind": "opening",
+          "elementRef": "ifc://IFC Schependomlaan.ifc#967504",
+          "elementName": "velux K08",
+          "elementType": "IfcWindow",
+          "plan": [
+            [
+              5.57,
+              -3.41
+            ],
+            [
+              6.21,
+              -3.41
+            ],
+            [
+              6.21,
+              -2.65
+            ],
+            [
+              5.57,
+              -2.65
+            ],
+            [
+              5.57,
+              -3.41
+            ]
+          ],
+          "areaSqm": 0.49
+        }
+      ],
+      "mergedElements": 2,
+      "occludedSqm": 0
+    },
+    {
+      "id": "sporenkap-plane-3",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#841075",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0.906308,
+        0.422618,
+        0
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 270,
+      "surfaceSqm": 50.39,
+      "projectedSqm": 12.09,
+      "minElevationM": 8.383,
+      "maxElevationM": 12.566,
+      "triangleCount": 42,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              19.825,
+              -8.03
+            ],
+            [
+              21.78,
+              -9.98
+            ],
+            [
+              21.78,
+              -0.52
+            ],
+            [
+              19.825,
+              -2.475
+            ],
+            [
+              19.825,
+              -8.03
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              20.31,
+              -6.505
+            ],
+            [
+              20.31,
+              -3.995
+            ],
+            [
+              21.05,
+              -3.995
+            ],
+            [
+              21.05,
+              -6.505
+            ],
+            [
+              20.31,
+              -6.505
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              20.424,
+              -7.83
+            ],
+            [
+              20.424,
+              -7.108
+            ],
+            [
+              20.936,
+              -7.108
+            ],
+            [
+              20.936,
+              -7.83
+            ],
+            [
+              20.424,
+              -7.83
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              20.424,
+              -3.385
+            ],
+            [
+              20.424,
+              -2.677
+            ],
+            [
+              20.936,
+              -2.677
+            ],
+            [
+              20.936,
+              -3.385
+            ],
+            [
+              20.424,
+              -3.385
+            ]
+          ]
+        }
+      ],
+      "obstructions": [
+        {
+          "kind": "opening",
+          "elementRef": "ifc://IFC Schependomlaan.ifc#926256",
+          "elementName": "velux K08",
+          "elementType": "IfcWindow",
+          "plan": [
+            [
+              20.39,
+              -7.85
+            ],
+            [
+              21.03,
+              -7.85
+            ],
+            [
+              21.03,
+              -7.09
+            ],
+            [
+              20.39,
+              -7.09
+            ],
+            [
+              20.39,
+              -7.85
+            ]
+          ],
+          "areaSqm": 0.49
+        },
+        {
+          "kind": "opening",
+          "elementRef": "ifc://IFC Schependomlaan.ifc#944800",
+          "elementName": "velux K08",
+          "elementType": "IfcWindow",
+          "plan": [
+            [
+              20.39,
+              -3.41
+            ],
+            [
+              21.03,
+              -3.41
+            ],
+            [
+              21.03,
+              -2.65
+            ],
+            [
+              20.39,
+              -2.65
+            ],
+            [
+              20.39,
+              -3.41
+            ]
+          ],
+          "areaSqm": 0.49
+        }
+      ],
+      "mergedElements": 2,
+      "occludedSqm": 0
+    },
+    {
+      "id": "sporenkap-plane-4",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#785682",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        -0.906308,
+        0.422618,
+        0
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 90,
+      "surfaceSqm": 18.99,
+      "projectedSqm": 6.01,
+      "minElevationM": 8.383,
+      "maxElevationM": 12.484,
+      "triangleCount": 44,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              5.04,
+              -12.426
+            ],
+            [
+              6.856,
+              -12.426
+            ],
+            [
+              6.856,
+              -8.17
+            ],
+            [
+              5.04,
+              -9.974
+            ],
+            [
+              5.04,
+              -12.426
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              5.63,
+              -11.719
+            ],
+            [
+              5.63,
+              -10.811
+            ],
+            [
+              6.455,
+              -10.811
+            ],
+            [
+              6.455,
+              -11.719
+            ],
+            [
+              5.63,
+              -11.719
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              5.123,
+              -9.677
+            ],
+            [
+              5.3,
+              -9.714
+            ],
+            [
+              5.128,
+              -9.678
+            ],
+            [
+              5.123,
+              -9.677
+            ],
+            [
+              5.123,
+              -9.677
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              5.55,
+              -6.505
+            ],
+            [
+              5.722,
+              -6.505
+            ],
+            [
+              5.722,
+              -3.995
+            ],
+            [
+              5.55,
+              -3.995
+            ],
+            [
+              5.55,
+              -6.505
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              5.664,
+              -7.83
+            ],
+            [
+              5.836,
+              -7.83
+            ],
+            [
+              5.836,
+              -7.108
+            ],
+            [
+              5.664,
+              -7.108
+            ],
+            [
+              5.664,
+              -7.83
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              5.664,
+              -3.385
+            ],
+            [
+              5.836,
+              -3.385
+            ],
+            [
+              5.836,
+              -2.677
+            ],
+            [
+              5.664,
+              -2.677
+            ],
+            [
+              5.664,
+              -3.385
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 3,
+      "occludedSqm": 8.43
+    },
+    {
+      "id": "sporenkap-plane-5",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#420633",
+      "family": "sporenkap",
+      "storeyId": "storey-01-eerste-verdieping",
+      "normal": [
+        -0.906308,
+        0.422618,
+        0
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 90,
+      "surfaceSqm": 36.48,
+      "projectedSqm": 8.27,
+      "minElevationM": 3.705,
+      "maxElevationM": 5.932,
+      "triangleCount": 58,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.202,
+              -21.878
+            ],
+            [
+              0.798,
+              -21.878
+            ],
+            [
+              0.798,
+              -21.84
+            ],
+            [
+              0.842,
+              -21.84
+            ],
+            [
+              0.842,
+              -14.91
+            ],
+            [
+              -0.082,
+              -14.91
+            ],
+            [
+              -0.082,
+              -14.69
+            ],
+            [
+              0.842,
+              -14.69
+            ],
+            [
+              0.842,
+              -12.27
+            ],
+            [
+              0.798,
+              -12.27
+            ],
+            [
+              0.798,
+              -12.232
+            ],
+            [
+              -0.202,
+              -12.232
+            ],
+            [
+              -0.202,
+              -15.401
+            ],
+            [
+              -0.133,
+              -15.401
+            ],
+            [
+              -0.133,
+              -15.25
+            ],
+            [
+              -0.065,
+              -15.25
+            ],
+            [
+              -0.065,
+              -15.401
+            ],
+            [
+              0.651,
+              -15.401
+            ],
+            [
+              0.651,
+              -16.309
+            ],
+            [
+              -0.065,
+              -16.309
+            ],
+            [
+              -0.065,
+              -16.46
+            ],
+            [
+              -0.133,
+              -16.46
+            ],
+            [
+              -0.133,
+              -16.309
+            ],
+            [
+              -0.202,
+              -16.309
+            ],
+            [
+              -0.202,
+              -17.801
+            ],
+            [
+              -0.133,
+              -17.801
+            ],
+            [
+              -0.133,
+              -17.65
+            ],
+            [
+              -0.065,
+              -17.65
+            ],
+            [
+              -0.065,
+              -17.801
+            ],
+            [
+              0.651,
+              -17.801
+            ],
+            [
+              0.651,
+              -18.709
+            ],
+            [
+              -0.065,
+              -18.709
+            ],
+            [
+              -0.065,
+              -18.86
+            ],
+            [
+              -0.133,
+              -18.86
+            ],
+            [
+              -0.133,
+              -18.713
+            ],
+            [
+              -0.202,
+              -18.713
+            ],
+            [
+              -0.202,
+              -21.878
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 7,
+      "occludedSqm": 0
+    },
+    {
+      "id": "sporenkap-plane-7",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#795625",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        0.422618,
+        0.906308
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 360,
+      "surfaceSqm": 28.41,
+      "projectedSqm": 6.52,
+      "minElevationM": 8.383,
+      "maxElevationM": 12.566,
+      "triangleCount": 9,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              4.82,
+              -0.52
+            ],
+            [
+              6.775,
+              -2.475
+            ],
+            [
+              9.806,
+              -2.475
+            ],
+            [
+              9.806,
+              -2.141
+            ],
+            [
+              8.185,
+              -0.52
+            ],
+            [
+              4.82,
+              -0.52
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0.06
+    },
+    {
+      "id": "sporenkap-plane-8",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#800029",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        0.422618,
+        0.906308
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 0,
+      "surfaceSqm": 28.41,
+      "projectedSqm": 6.52,
+      "minElevationM": 8.383,
+      "maxElevationM": 12.566,
+      "triangleCount": 9,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              16.794,
+              -2.475
+            ],
+            [
+              19.829,
+              -2.471
+            ],
+            [
+              21.78,
+              -0.52
+            ],
+            [
+              18.415,
+              -0.52
+            ],
+            [
+              16.794,
+              -2.141
+            ],
+            [
+              16.794,
+              -2.475
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0.06
+    },
+    {
+      "id": "sporenkap-plane-9",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#797941",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        0.422618,
+        0.906308
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 0,
+      "surfaceSqm": 27.15,
+      "projectedSqm": 6.02,
+      "minElevationM": 8.382,
+      "maxElevationM": 12.566,
+      "triangleCount": 13,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              10.944,
+              -2.475
+            ],
+            [
+              13.43,
+              -2.475
+            ],
+            [
+              13.43,
+              -0.806
+            ],
+            [
+              13.77,
+              -0.806
+            ],
+            [
+              13.77,
+              -2.475
+            ],
+            [
+              15.656,
+              -2.475
+            ],
+            [
+              15.656,
+              -2.141
+            ],
+            [
+              14.035,
+              -0.52
+            ],
+            [
+              12.565,
+              -0.52
+            ],
+            [
+              10.944,
+              -2.141
+            ],
+            [
+              10.944,
+              -2.475
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 3,
+      "occludedSqm": 0.12
+    },
+    {
+      "id": "sporenkap-plane-10",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#422348",
+      "family": "sporenkap",
+      "storeyId": "storey-01-eerste-verdieping",
+      "normal": [
+        0.906308,
+        0.422618,
+        0
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 270,
+      "surfaceSqm": 20.23,
+      "projectedSqm": 4.56,
+      "minElevationM": 3.705,
+      "maxElevationM": 5.932,
+      "triangleCount": 45,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              14.958,
+              -21.84
+            ],
+            [
+              15.002,
+              -21.84
+            ],
+            [
+              15.002,
+              -21.878
+            ],
+            [
+              16.002,
+              -21.878
+            ],
+            [
+              16.002,
+              -20.164
+            ],
+            [
+              15.933,
+              -20.164
+            ],
+            [
+              15.933,
+              -20.315
+            ],
+            [
+              15.865,
+              -20.315
+            ],
+            [
+              15.865,
+              -20.164
+            ],
+            [
+              15.149,
+              -20.164
+            ],
+            [
+              15.149,
+              -19.256
+            ],
+            [
+              15.865,
+              -19.256
+            ],
+            [
+              15.865,
+              -19.105
+            ],
+            [
+              15.933,
+              -19.105
+            ],
+            [
+              15.933,
+              -19.256
+            ],
+            [
+              16.002,
+              -19.256
+            ],
+            [
+              16.002,
+              -17.764
+            ],
+            [
+              15.933,
+              -17.764
+            ],
+            [
+              15.933,
+              -17.915
+            ],
+            [
+              15.865,
+              -17.915
+            ],
+            [
+              15.865,
+              -17.764
+            ],
+            [
+              15.149,
+              -17.764
+            ],
+            [
+              15.149,
+              -16.856
+            ],
+            [
+              15.865,
+              -16.856
+            ],
+            [
+              15.865,
+              -16.705
+            ],
+            [
+              15.933,
+              -16.705
+            ],
+            [
+              15.933,
+              -16.856
+            ],
+            [
+              16.002,
+              -16.856
+            ],
+            [
+              16.002,
+              -15.98
+            ],
+            [
+              14.958,
+              -15.98
+            ],
+            [
+              14.958,
+              -21.84
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 5,
+      "occludedSqm": 0.34
+    },
+    {
+      "id": "sporenkap-plane-12",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#797664",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        -0.906308,
+        0.422618,
+        0
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 90,
+      "surfaceSqm": 18.35,
+      "projectedSqm": 3.51,
+      "minElevationM": 8.302,
+      "maxElevationM": 13.08,
+      "triangleCount": 20,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              8.147,
+              -0.482
+            ],
+            [
+              9.806,
+              -2.141
+            ],
+            [
+              9.806,
+              -2.819
+            ],
+            [
+              10.333,
+              -2.819
+            ],
+            [
+              10.333,
+              -0.402
+            ],
+            [
+              10.375,
+              -0.402
+            ],
+            [
+              10.375,
+              -0.074
+            ],
+            [
+              8.147,
+              -0.074
+            ],
+            [
+              8.147,
+              -0.482
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0
+    },
+    {
+      "id": "sporenkap-plane-13",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#798290",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0.906308,
+        0.422618,
+        0
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 270,
+      "surfaceSqm": 18.35,
+      "projectedSqm": 3.51,
+      "minElevationM": 8.302,
+      "maxElevationM": 13.08,
+      "triangleCount": 20,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              10.375,
+              -0.402
+            ],
+            [
+              10.417,
+              -0.402
+            ],
+            [
+              10.417,
+              -2.819
+            ],
+            [
+              10.944,
+              -2.819
+            ],
+            [
+              10.944,
+              -2.141
+            ],
+            [
+              12.603,
+              -0.482
+            ],
+            [
+              12.603,
+              -0.074
+            ],
+            [
+              10.375,
+              -0.074
+            ],
+            [
+              10.375,
+              -0.402
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0
+    },
+    {
+      "id": "sporenkap-plane-14",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#860751",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0.906308,
+        0.422618,
+        0
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 270,
+      "surfaceSqm": 18.2,
+      "projectedSqm": 3.51,
+      "minElevationM": 8.302,
+      "maxElevationM": 13.08,
+      "triangleCount": 20,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              16.225,
+              -0.37
+            ],
+            [
+              16.267,
+              -0.37
+            ],
+            [
+              16.267,
+              -2.819
+            ],
+            [
+              16.794,
+              -2.819
+            ],
+            [
+              16.794,
+              -2.141
+            ],
+            [
+              18.453,
+              -0.482
+            ],
+            [
+              18.453,
+              -0.074
+            ],
+            [
+              16.225,
+              -0.074
+            ],
+            [
+              16.225,
+              -0.37
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0
+    },
+    {
+      "id": "sporenkap-plane-15",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#861311",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        -0.906308,
+        0.422618,
+        0
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 90,
+      "surfaceSqm": 18.2,
+      "projectedSqm": 3.51,
+      "minElevationM": 8.302,
+      "maxElevationM": 13.08,
+      "triangleCount": 20,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              13.997,
+              -0.482
+            ],
+            [
+              15.656,
+              -2.141
+            ],
+            [
+              15.656,
+              -2.819
+            ],
+            [
+              16.183,
+              -2.819
+            ],
+            [
+              16.183,
+              -0.37
+            ],
+            [
+              16.225,
+              -0.37
+            ],
+            [
+              16.225,
+              -0.074
+            ],
+            [
+              13.997,
+              -0.074
+            ],
+            [
+              13.997,
+              -0.482
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0
+    },
+    {
+      "id": "sporenkap-plane-16",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#796179",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        -0.906308,
+        0.422618,
+        0
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 90,
+      "surfaceSqm": 17.57,
+      "projectedSqm": 4.19,
+      "minElevationM": 8.383,
+      "maxElevationM": 12.267,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              5.04,
+              -15.98
+            ],
+            [
+              6.856,
+              -14.164
+            ],
+            [
+              6.856,
+              -12.766
+            ],
+            [
+              5.04,
+              -12.766
+            ],
+            [
+              5.04,
+              -15.98
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0
+    },
+    {
+      "id": "sporenkap-plane-33",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#814276",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        -0.422619,
+        0.906308,
+        0
+      ],
+      "tiltDeg": 25,
+      "azimuthDeg": 90,
+      "surfaceSqm": 1.21,
+      "projectedSqm": 1.1,
+      "minElevationM": 12.18,
+      "maxElevationM": 12.267,
+      "triangleCount": 8,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              19.744,
+              -14.164
+            ],
+            [
+              19.744,
+              -8.17
+            ],
+            [
+              19.643,
+              -8.069
+            ],
+            [
+              19.643,
+              -7.971
+            ],
+            [
+              19.562,
+              -7.988
+            ],
+            [
+              19.744,
+              -14.164
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.04
+    },
+    {
+      "id": "sporenkap-plane-34",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#795296",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0.422618,
+        0.906308,
+        0
+      ],
+      "tiltDeg": 25,
+      "azimuthDeg": 270,
+      "surfaceSqm": 1.1,
+      "projectedSqm": 1,
+      "minElevationM": 12.479,
+      "maxElevationM": 12.566,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              6.775,
+              -8.03
+            ],
+            [
+              6.957,
+              -8.069
+            ],
+            [
+              6.957,
+              -2.657
+            ],
+            [
+              6.775,
+              -2.475
+            ],
+            [
+              6.775,
+              -8.03
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.03
+    },
+    {
+      "id": "sporenkap-plane-35",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#841075",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        -0.422618,
+        0.906308,
+        0
+      ],
+      "tiltDeg": 25,
+      "azimuthDeg": 90,
+      "surfaceSqm": 1.1,
+      "projectedSqm": 1,
+      "minElevationM": 12.479,
+      "maxElevationM": 12.566,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              19.643,
+              -8.069
+            ],
+            [
+              19.825,
+              -8.03
+            ],
+            [
+              19.825,
+              -2.475
+            ],
+            [
+              19.643,
+              -2.657
+            ],
+            [
+              19.643,
+              -8.069
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.03
+    },
+    {
+      "id": "sporenkap-plane-37",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#820583",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        0.906312,
+        0.422608
+      ],
+      "tiltDeg": 25,
+      "azimuthDeg": 0,
+      "surfaceSqm": 1.01,
+      "projectedSqm": 0.92,
+      "minElevationM": 12.18,
+      "maxElevationM": 12.267,
+      "triangleCount": 10,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              13.694,
+              -14.164
+            ],
+            [
+              19.744,
+              -14.164
+            ],
+            [
+              19.562,
+              -13.982
+            ],
+            [
+              14.741,
+              -13.982
+            ],
+            [
+              14.741,
+              -14.141
+            ],
+            [
+              13.694,
+              -14.141
+            ],
+            [
+              13.694,
+              -14.164
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0.03
+    },
+    {
+      "id": "sporenkap-plane-38",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#795296",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0.004639,
+        0.420836,
+        -0.907125
+      ],
+      "tiltDeg": 65.11,
+      "azimuthDeg": 180.29,
+      "surfaceSqm": 1.01,
+      "projectedSqm": 0.42,
+      "minElevationM": 8.383,
+      "maxElevationM": 12.566,
+      "triangleCount": 8,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              4.82,
+              -9.98
+            ],
+            [
+              5.035,
+              -9.979
+            ],
+            [
+              5.3,
+              -9.714
+            ],
+            [
+              5.123,
+              -9.677
+            ],
+            [
+              4.82,
+              -9.98
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              5.123,
+              -9.677
+            ],
+            [
+              5.128,
+              -9.678
+            ],
+            [
+              5.128,
+              -9.672
+            ],
+            [
+              5.123,
+              -9.677
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              5.128,
+              -9.678
+            ],
+            [
+              5.31,
+              -9.716
+            ],
+            [
+              6.947,
+              -8.067
+            ],
+            [
+              6.775,
+              -8.03
+            ],
+            [
+              5.128,
+              -9.678
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0.01
+    },
+    {
+      "id": "sporenkap-plane-39",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#841075",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        -0.004639,
+        0.420836,
+        -0.907125
+      ],
+      "tiltDeg": 65.11,
+      "azimuthDeg": 179.71,
+      "surfaceSqm": 1.01,
+      "projectedSqm": 0.42,
+      "minElevationM": 8.383,
+      "maxElevationM": 12.566,
+      "triangleCount": 8,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              19.643,
+              -8.069
+            ],
+            [
+              21.29,
+              -9.716
+            ],
+            [
+              21.3,
+              -9.714
+            ],
+            [
+              21.472,
+              -9.678
+            ],
+            [
+              19.825,
+              -8.03
+            ],
+            [
+              19.653,
+              -8.067
+            ],
+            [
+              19.643,
+              -8.069
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              21.3,
+              -9.714
+            ],
+            [
+              21.565,
+              -9.979
+            ],
+            [
+              21.78,
+              -9.98
+            ],
+            [
+              21.477,
+              -9.677
+            ],
+            [
+              21.3,
+              -9.714
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              21.472,
+              -9.678
+            ],
+            [
+              21.477,
+              -9.677
+            ],
+            [
+              21.472,
+              -9.672
+            ],
+            [
+              21.472,
+              -9.678
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0.01
+    },
+    {
+      "id": "sporenkap-plane-40",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#785682",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0.422619,
+        0.906308,
+        0
+      ],
+      "tiltDeg": 25,
+      "azimuthDeg": 270,
+      "surfaceSqm": 0.88,
+      "projectedSqm": 0.8,
+      "minElevationM": 12.18,
+      "maxElevationM": 12.267,
+      "triangleCount": 8,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              6.856,
+              -12.426
+            ],
+            [
+              7.038,
+              -12.426
+            ],
+            [
+              7.028,
+              -7.986
+            ],
+            [
+              6.957,
+              -7.971
+            ],
+            [
+              6.957,
+              -8.069
+            ],
+            [
+              6.856,
+              -8.17
+            ],
+            [
+              6.856,
+              -12.426
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.04
+    },
+    {
+      "id": "sporenkap-plane-41",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#420633",
+      "family": "sporenkap",
+      "storeyId": "storey-01-eerste-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 0.83,
+      "projectedSqm": 0.83,
+      "minElevationM": 5.838,
+      "maxElevationM": 5.932,
+      "triangleCount": 12,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.798,
+              -21.878
+            ],
+            [
+              0.903,
+              -21.878
+            ],
+            [
+              0.903,
+              -21.84
+            ],
+            [
+              0.947,
+              -21.84
+            ],
+            [
+              0.947,
+              -21.026
+            ],
+            [
+              0.964,
+              -21.026
+            ],
+            [
+              0.964,
+              -14.91
+            ],
+            [
+              0.842,
+              -14.91
+            ],
+            [
+              0.842,
+              -21.84
+            ],
+            [
+              0.798,
+              -21.84
+            ],
+            [
+              0.798,
+              -21.878
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0.04
+    },
+    {
+      "id": "sporenkap-plane-42",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#422348",
+      "family": "sporenkap",
+      "storeyId": "storey-01-eerste-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 0.71,
+      "projectedSqm": 0.7,
+      "minElevationM": 5.838,
+      "maxElevationM": 5.932,
+      "triangleCount": 16,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              14.836,
+              -21.026
+            ],
+            [
+              14.853,
+              -21.026
+            ],
+            [
+              14.853,
+              -21.84
+            ],
+            [
+              14.897,
+              -21.84
+            ],
+            [
+              14.897,
+              -21.878
+            ],
+            [
+              15.002,
+              -21.878
+            ],
+            [
+              15.002,
+              -21.84
+            ],
+            [
+              14.958,
+              -21.84
+            ],
+            [
+              14.958,
+              -15.98
+            ],
+            [
+              14.836,
+              -15.98
+            ],
+            [
+              14.836,
+              -21.026
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0.07
+    },
+    {
+      "id": "sporenkap-plane-43",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#795625",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        0.906308,
+        -0.422618
+      ],
+      "tiltDeg": 25,
+      "azimuthDeg": 180,
+      "surfaceSqm": 0.59,
+      "projectedSqm": 0.54,
+      "minElevationM": 12.479,
+      "maxElevationM": 12.566,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              6.775,
+              -2.475
+            ],
+            [
+              6.957,
+              -2.657
+            ],
+            [
+              9.806,
+              -2.657
+            ],
+            [
+              9.806,
+              -2.475
+            ],
+            [
+              6.775,
+              -2.475
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.07
+    },
+    {
+      "id": "sporenkap-plane-44",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#800029",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        0.906308,
+        -0.422618
+      ],
+      "tiltDeg": 25,
+      "azimuthDeg": 180,
+      "surfaceSqm": 0.59,
+      "projectedSqm": 0.54,
+      "minElevationM": 12.479,
+      "maxElevationM": 12.566,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              16.794,
+              -2.657
+            ],
+            [
+              19.653,
+              -2.647
+            ],
+            [
+              19.825,
+              -2.475
+            ],
+            [
+              16.794,
+              -2.475
+            ],
+            [
+              16.794,
+              -2.657
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.07
+    },
+    {
+      "id": "sporenkap-plane-47",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#797941",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        0.906308,
+        -0.422618
+      ],
+      "tiltDeg": 25,
+      "azimuthDeg": 180,
+      "surfaceSqm": 0.5,
+      "projectedSqm": 0.45,
+      "minElevationM": 12.479,
+      "maxElevationM": 12.566,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              10.944,
+              -2.657
+            ],
+            [
+              13.43,
+              -2.657
+            ],
+            [
+              13.43,
+              -2.475
+            ],
+            [
+              10.944,
+              -2.475
+            ],
+            [
+              10.944,
+              -2.657
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.09
+    },
+    {
+      "id": "sporenkap-plane-48",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#795902",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        0.906314,
+        0.422605
+      ],
+      "tiltDeg": 25,
+      "azimuthDeg": 0,
+      "surfaceSqm": 0.54,
+      "projectedSqm": 0.49,
+      "minElevationM": 12.18,
+      "maxElevationM": 12.267,
+      "triangleCount": 10,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              6.856,
+              -14.164
+            ],
+            [
+              10.366,
+              -14.164
+            ],
+            [
+              10.366,
+              -14.141
+            ],
+            [
+              9.52,
+              -14.141
+            ],
+            [
+              9.52,
+              -13.982
+            ],
+            [
+              7.028,
+              -13.992
+            ],
+            [
+              6.856,
+              -14.164
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0.02
+    },
+    {
+      "id": "sporenkap-plane-52",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#800358",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        0.906308,
+        -0.422618
+      ],
+      "tiltDeg": 25,
+      "azimuthDeg": 180,
+      "surfaceSqm": 0.38,
+      "projectedSqm": 0.34,
+      "minElevationM": 12.479,
+      "maxElevationM": 12.566,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              13.77,
+              -2.657
+            ],
+            [
+              15.656,
+              -2.657
+            ],
+            [
+              15.656,
+              -2.475
+            ],
+            [
+              13.77,
+              -2.475
+            ],
+            [
+              13.77,
+              -2.657
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.07
+    },
+    {
+      "id": "sporenkap-plane-54",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#335985",
+      "family": "sporenkap",
+      "storeyId": "storey-01-eerste-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 0.29,
+      "projectedSqm": 0.29,
+      "minElevationM": 5.838,
+      "maxElevationM": 5.932,
+      "triangleCount": 12,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.798,
+              -12.27
+            ],
+            [
+              0.842,
+              -12.27
+            ],
+            [
+              0.842,
+              -14.69
+            ],
+            [
+              0.964,
+              -14.69
+            ],
+            [
+              0.964,
+              -13.084
+            ],
+            [
+              0.947,
+              -13.084
+            ],
+            [
+              0.947,
+              -12.27
+            ],
+            [
+              0.903,
+              -12.27
+            ],
+            [
+              0.903,
+              -12.232
+            ],
+            [
+              0.798,
+              -12.232
+            ],
+            [
+              0.798,
+              -12.27
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 2,
+      "occludedSqm": 0.01
+    },
+    {
+      "id": "sporenkap-plane-55",
+      "elementName": "sporenkap",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#820180",
+      "family": "sporenkap",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 0.26,
+      "projectedSqm": 0.26,
+      "minElevationM": 12.331,
+      "maxElevationM": 12.331,
+      "triangleCount": 4,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              10.366,
+              -14.134
+            ],
+            [
+              13.694,
+              -14.134
+            ],
+            [
+              13.694,
+              -14.056
+            ],
+            [
+              10.366,
+              -14.056
+            ],
+            [
+              10.366,
+              -14.134
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.02
+    },
+    {
+      "id": "dakisolatie-plane-0",
+      "elementName": "dakisolatie",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#797314",
+      "family": "dakisolatie",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        0.422618,
+        0.906308
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 0,
+      "surfaceSqm": 1.33,
+      "projectedSqm": 0.56,
+      "minElevationM": 9.041,
+      "maxElevationM": 12.574,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              13.43,
+              -2.453
+            ],
+            [
+              13.77,
+              -2.453
+            ],
+            [
+              13.77,
+              -0.806
+            ],
+            [
+              13.43,
+              -0.806
+            ],
+            [
+              13.43,
+              -2.453
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "dakisolatie-plane-1",
+      "elementName": "dakisolatie",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#797154",
+      "family": "dakisolatie",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        -0.906308,
+        0.422618,
+        0
+      ],
+      "tiltDeg": 65,
+      "azimuthDeg": 90,
+      "surfaceSqm": 1.28,
+      "projectedSqm": 0.54,
+      "minElevationM": 8.867,
+      "maxElevationM": 12.275,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              5.245,
+              -12.766
+            ],
+            [
+              6.834,
+              -12.766
+            ],
+            [
+              6.834,
+              -12.426
+            ],
+            [
+              5.245,
+              -12.426
+            ],
+            [
+              5.245,
+              -12.766
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "dak-dakkapel-plane-0",
+      "elementName": "dak dakkapel",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#778448",
+      "family": "dak dakkapel",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 4.76,
+      "projectedSqm": 4.77,
+      "minElevationM": 11.592,
+      "maxElevationM": 11.592,
+      "triangleCount": 7,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              9.52,
+              -15.39
+            ],
+            [
+              14.741,
+              -15.39
+            ],
+            [
+              14.741,
+              -14.484
+            ],
+            [
+              9.52,
+              -14.484
+            ],
+            [
+              9.52,
+              -15.39
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              9.52,
+              -14.141
+            ],
+            [
+              10.366,
+              -14.141
+            ],
+            [
+              10.366,
+              -14.12
+            ],
+            [
+              9.52,
+              -14.12
+            ],
+            [
+              9.52,
+              -14.141
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              13.694,
+              -14.141
+            ],
+            [
+              14.741,
+              -14.141
+            ],
+            [
+              14.741,
+              -14.12
+            ],
+            [
+              13.694,
+              -14.12
+            ],
+            [
+              13.694,
+              -14.141
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 2.14
+    },
+    {
+      "id": "dak-dakkapel-plane-1",
+      "elementName": "dak dakkapel",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#824921",
+      "family": "dak dakkapel",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 1.69,
+      "projectedSqm": 0.59,
+      "minElevationM": 11.429,
+      "maxElevationM": 11.592,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              18.241,
+              -15.218
+            ],
+            [
+              19.149,
+              -15.218
+            ],
+            [
+              19.149,
+              -14.565
+            ],
+            [
+              18.241,
+              -14.565
+            ],
+            [
+              18.241,
+              -15.218
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.5
+    },
+    {
+      "id": "dak-dakkapel-plane-2",
+      "elementName": "dak dakkapel",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#831372",
+      "family": "dak dakkapel",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 1.69,
+      "projectedSqm": 0.59,
+      "minElevationM": 11.43,
+      "maxElevationM": 11.592,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              20.145,
+              -13.36
+            ],
+            [
+              20.798,
+              -13.36
+            ],
+            [
+              20.798,
+              -12.452
+            ],
+            [
+              20.145,
+              -12.452
+            ],
+            [
+              20.145,
+              -13.36
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.5
+    },
+    {
+      "id": "dak-dakkapel-plane-3",
+      "elementName": "dak dakkapel",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#828385",
+      "family": "dak dakkapel",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 1.55,
+      "projectedSqm": 0.59,
+      "minElevationM": 11.429,
+      "maxElevationM": 11.592,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              5.802,
+              -11.719
+            ],
+            [
+              6.455,
+              -11.719
+            ],
+            [
+              6.455,
+              -10.811
+            ],
+            [
+              5.802,
+              -10.811
+            ],
+            [
+              5.802,
+              -11.719
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.5
+    },
+    {
+      "id": "dak-dakkapel-plane-4",
+      "elementName": "dak dakkapel",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#460524",
+      "family": "dak dakkapel",
+      "storeyId": "storey-01-eerste-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 1.91,
+      "projectedSqm": 0.73,
+      "minElevationM": 5.546,
+      "maxElevationM": 5.708,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.133,
+              -16.46
+            ],
+            [
+              -0.065,
+              -16.46
+            ],
+            [
+              -0.065,
+              -16.309
+            ],
+            [
+              0.651,
+              -16.309
+            ],
+            [
+              0.651,
+              -15.401
+            ],
+            [
+              -0.065,
+              -15.401
+            ],
+            [
+              -0.065,
+              -15.25
+            ],
+            [
+              -0.133,
+              -15.25
+            ],
+            [
+              -0.133,
+              -16.46
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.31
+    },
+    {
+      "id": "dak-dakkapel-plane-5",
+      "elementName": "dak dakkapel",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#466489",
+      "family": "dak dakkapel",
+      "storeyId": "storey-01-eerste-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 1.91,
+      "projectedSqm": 0.73,
+      "minElevationM": 5.546,
+      "maxElevationM": 5.708,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              15.149,
+              -20.164
+            ],
+            [
+              15.865,
+              -20.164
+            ],
+            [
+              15.865,
+              -20.315
+            ],
+            [
+              15.933,
+              -20.315
+            ],
+            [
+              15.933,
+              -19.105
+            ],
+            [
+              15.865,
+              -19.105
+            ],
+            [
+              15.865,
+              -19.256
+            ],
+            [
+              15.149,
+              -19.256
+            ],
+            [
+              15.149,
+              -20.164
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.31
+    },
+    {
+      "id": "dak-dakkapel-plane-6",
+      "elementName": "dak dakkapel",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#466803",
+      "family": "dak dakkapel",
+      "storeyId": "storey-01-eerste-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 1.91,
+      "projectedSqm": 0.73,
+      "minElevationM": 5.546,
+      "maxElevationM": 5.708,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              15.149,
+              -17.764
+            ],
+            [
+              15.865,
+              -17.764
+            ],
+            [
+              15.865,
+              -17.915
+            ],
+            [
+              15.933,
+              -17.915
+            ],
+            [
+              15.933,
+              -16.705
+            ],
+            [
+              15.865,
+              -16.705
+            ],
+            [
+              15.865,
+              -16.856
+            ],
+            [
+              15.149,
+              -16.856
+            ],
+            [
+              15.149,
+              -17.764
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.31
+    },
+    {
+      "id": "dak-dakkapel-plane-7",
+      "elementName": "dak dakkapel",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#469449",
+      "family": "dak dakkapel",
+      "storeyId": "storey-01-eerste-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 1.91,
+      "projectedSqm": 0.73,
+      "minElevationM": 5.546,
+      "maxElevationM": 5.708,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -0.133,
+              -18.86
+            ],
+            [
+              -0.065,
+              -18.86
+            ],
+            [
+              -0.065,
+              -18.709
+            ],
+            [
+              0.651,
+              -18.709
+            ],
+            [
+              0.651,
+              -17.801
+            ],
+            [
+              -0.065,
+              -17.801
+            ],
+            [
+              -0.065,
+              -17.65
+            ],
+            [
+              -0.133,
+              -17.65
+            ],
+            [
+              -0.133,
+              -18.86
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.31
+    },
+    {
+      "id": "plat-dak-plane-0",
+      "elementName": "plat dak",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#699294",
+      "family": "plat dak",
+      "storeyId": "storey-02-tweede-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 19.63,
+      "projectedSqm": 19.45,
+      "minElevationM": 5.819,
+      "maxElevationM": 5.838,
+      "triangleCount": 12,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              3.432,
+              -21.878
+            ],
+            [
+              6.432,
+              -21.878
+            ],
+            [
+              6.432,
+              -15.98
+            ],
+            [
+              5.04,
+              -15.98
+            ],
+            [
+              5.04,
+              -14.889
+            ],
+            [
+              3.432,
+              -14.889
+            ],
+            [
+              3.432,
+              -21.878
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.81
+    },
+    {
+      "id": "plat-dak-plane-1",
+      "elementName": "plat dak",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#699539",
+      "family": "plat dak",
+      "storeyId": "storey-02-tweede-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 17.88,
+      "projectedSqm": 17.69,
+      "minElevationM": 5.819,
+      "maxElevationM": 5.838,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              6.632,
+              -21.878
+            ],
+            [
+              9.632,
+              -21.878
+            ],
+            [
+              9.632,
+              -15.98
+            ],
+            [
+              6.632,
+              -15.98
+            ],
+            [
+              6.632,
+              -21.878
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.15
+    },
+    {
+      "id": "plat-dak-plane-2",
+      "elementName": "plat dak",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#699776",
+      "family": "plat dak",
+      "storeyId": "storey-02-tweede-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 16.32,
+      "projectedSqm": 15.92,
+      "minElevationM": 5.819,
+      "maxElevationM": 5.838,
+      "triangleCount": 6,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              9.832,
+              -21.878
+            ],
+            [
+              12.532,
+              -21.878
+            ],
+            [
+              12.532,
+              -15.98
+            ],
+            [
+              9.832,
+              -15.98
+            ],
+            [
+              9.832,
+              -21.878
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.04
+    },
+    {
+      "id": "plat-dak-plane-3",
+      "elementName": "plat dak",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#700382",
+      "family": "plat dak",
+      "storeyId": "storey-02-tweede-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 16.18,
+      "projectedSqm": 15.78,
+      "minElevationM": 5.819,
+      "maxElevationM": 5.838,
+      "triangleCount": 10,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.974,
+              -21.878
+            ],
+            [
+              3.232,
+              -21.878
+            ],
+            [
+              3.232,
+              -14.889
+            ],
+            [
+              0.974,
+              -14.889
+            ],
+            [
+              0.974,
+              -21.878
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "plat-dak-plane-4",
+      "elementName": "plat dak",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#700118",
+      "family": "plat dak",
+      "storeyId": "storey-02-tweede-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 11.49,
+      "projectedSqm": 11.4,
+      "minElevationM": 5.819,
+      "maxElevationM": 5.838,
+      "triangleCount": 21,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              12.732,
+              -21.878
+            ],
+            [
+              14.826,
+              -21.878
+            ],
+            [
+              14.826,
+              -15.98
+            ],
+            [
+              12.732,
+              -15.98
+            ],
+            [
+              12.732,
+              -21.878
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              12.881,
+              -16.787
+            ],
+            [
+              13.863,
+              -16.787
+            ],
+            [
+              13.863,
+              -17.759
+            ],
+            [
+              12.881,
+              -16.787
+            ]
+          ]
+        }
+      ],
+      "obstructions": [
+        {
+          "kind": "opening",
+          "elementRef": "ifc://IFC Schependomlaan.ifc#769613",
+          "elementName": "dakkoepel 1000x",
+          "elementType": "IfcWindow",
+          "plan": [
+            [
+              12.78,
+              -17.87
+            ],
+            [
+              13.97,
+              -17.87
+            ],
+            [
+              13.97,
+              -16.68
+            ],
+            [
+              12.78,
+              -16.68
+            ],
+            [
+              12.78,
+              -17.87
+            ]
+          ],
+          "areaSqm": 1.42
+        }
+      ],
+      "mergedElements": 1,
+      "occludedSqm": 0.8
+    },
+    {
+      "id": "plat-dak-plane-5",
+      "elementName": "plat dak",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#700628",
+      "family": "plat dak",
+      "storeyId": "storey-02-tweede-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 10.08,
+      "projectedSqm": 10.08,
+      "minElevationM": 5.832,
+      "maxElevationM": 5.838,
+      "triangleCount": 12,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              0.964,
+              -14.699
+            ],
+            [
+              5.04,
+              -14.699
+            ],
+            [
+              5.04,
+              -12.766
+            ],
+            [
+              5.245,
+              -12.766
+            ],
+            [
+              5.245,
+              -12.426
+            ],
+            [
+              5.04,
+              -12.426
+            ],
+            [
+              5.04,
+              -12.232
+            ],
+            [
+              0.964,
+              -12.232
+            ],
+            [
+              0.964,
+              -12.776
+            ],
+            [
+              1.542,
+              -12.776
+            ],
+            [
+              1.542,
+              -12.85
+            ],
+            [
+              0.964,
+              -12.85
+            ],
+            [
+              0.964,
+              -14.699
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0.88
+    },
+    {
+      "id": "plafond-plane-0",
+      "elementName": "plafond",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#836065",
+      "family": "plafond",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 0.35,
+      "projectedSqm": 0.35,
+      "minElevationM": 11.428,
+      "maxElevationM": 11.428,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              6.152,
+              -6.505
+            ],
+            [
+              6.29,
+              -6.505
+            ],
+            [
+              6.29,
+              -3.995
+            ],
+            [
+              6.152,
+              -3.995
+            ],
+            [
+              6.152,
+              -6.505
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.32
+    },
+    {
+      "id": "plafond-plane-1",
+      "elementName": "plafond",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#851831",
+      "family": "plafond",
+      "storeyId": "storey-03-derde-verdieping",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 0.35,
+      "projectedSqm": 0.35,
+      "minElevationM": 11.428,
+      "maxElevationM": 11.428,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              20.31,
+              -6.505
+            ],
+            [
+              20.448,
+              -6.505
+            ],
+            [
+              20.448,
+              -3.995
+            ],
+            [
+              20.31,
+              -3.995
+            ],
+            [
+              20.31,
+              -6.505
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.32
+    },
+    {
+      "id": "lifttop-plane-0",
+      "elementName": "lifttop",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#984466",
+      "family": "lifttop",
+      "storeyId": "storey-04-dak",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 5.75,
+      "projectedSqm": 5.75,
+      "minElevationM": 12.8,
+      "maxElevationM": 12.8,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              10.566,
+              -13.836
+            ],
+            [
+              13.494,
+              -13.836
+            ],
+            [
+              13.494,
+              -11.872
+            ],
+            [
+              10.566,
+              -11.872
+            ],
+            [
+              10.566,
+              -13.836
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "dakvloer-plane-0",
+      "elementName": "dakvloer",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://IFC Schependomlaan.ifc#986563",
+      "family": "dakvloer",
+      "storeyId": "storey-04-dak",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 130.22,
+      "projectedSqm": 130.22,
+      "minElevationM": 11.824,
+      "maxElevationM": 11.84,
+      "triangleCount": 93,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              6.957,
+              -7.971
+            ],
+            [
+              7.035,
+              -7.98
+            ],
+            [
+              7.035,
+              -2.657
+            ],
+            [
+              6.957,
+              -2.657
+            ],
+            [
+              6.957,
+              -7.971
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              7.045,
+              -13.98
+            ],
+            [
+              10.536,
+              -13.976
+            ],
+            [
+              10.536,
+              -11.842
+            ],
+            [
+              13.536,
+              -11.842
+            ],
+            [
+              13.536,
+              -13.976
+            ],
+            [
+              19.56,
+              -13.975
+            ],
+            [
+              19.555,
+              -2.657
+            ],
+            [
+              16.794,
+              -2.657
+            ],
+            [
+              16.794,
+              -2.819
+            ],
+            [
+              15.656,
+              -2.819
+            ],
+            [
+              15.656,
+              -2.657
+            ],
+            [
+              13.77,
+              -2.657
+            ],
+            [
+              13.77,
+              -2.523
+            ],
+            [
+              13.43,
+              -2.523
+            ],
+            [
+              13.43,
+              -2.657
+            ],
+            [
+              10.944,
+              -2.657
+            ],
+            [
+              10.944,
+              -2.819
+            ],
+            [
+              9.806,
+              -2.819
+            ],
+            [
+              9.806,
+              -2.657
+            ],
+            [
+              7.045,
+              -2.657
+            ],
+            [
+              7.045,
+              -13.98
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              7.362,
+              -11.926
+            ],
+            [
+              7.362,
+              -10.944
+            ],
+            [
+              8.344,
+              -10.944
+            ],
+            [
+              8.344,
+              -11.926
+            ],
+            [
+              7.362,
+              -11.926
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              7.903,
+              -9.086
+            ],
+            [
+              7.903,
+              -8.098
+            ],
+            [
+              8.891,
+              -8.098
+            ],
+            [
+              8.891,
+              -9.086
+            ],
+            [
+              7.903,
+              -9.086
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              9.043,
+              -13.34
+            ],
+            [
+              9.043,
+              -12.358
+            ],
+            [
+              10.025,
+              -12.358
+            ],
+            [
+              10.025,
+              -13.34
+            ],
+            [
+              9.043,
+              -13.34
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              15.531,
+              -8.676
+            ],
+            [
+              15.531,
+              -7.688
+            ],
+            [
+              16.519,
+              -7.688
+            ],
+            [
+              16.519,
+              -8.676
+            ],
+            [
+              15.531,
+              -8.676
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              17.096,
+              -9.557
+            ],
+            [
+              17.096,
+              -9.107
+            ],
+            [
+              18.501,
+              -9.107
+            ],
+            [
+              18.501,
+              -9.557
+            ],
+            [
+              17.096,
+              -9.557
+            ]
+          ]
+        },
+        {
+          "kind": "hole",
+          "points": [
+            [
+              18.117,
+              -13.039
+            ],
+            [
+              18.117,
+              -12.051
+            ],
+            [
+              19.105,
+              -12.051
+            ],
+            [
+              19.105,
+              -13.039
+            ],
+            [
+              18.117,
+              -13.039
+            ]
+          ]
+        },
+        {
+          "kind": "outer",
+          "points": [
+            [
+              19.565,
+              -7.98
+            ],
+            [
+              19.643,
+              -7.971
+            ],
+            [
+              19.643,
+              -2.657
+            ],
+            [
+              19.565,
+              -2.657
+            ],
+            [
+              19.565,
+              -7.98
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 5.04
+    }
+  ]
+}

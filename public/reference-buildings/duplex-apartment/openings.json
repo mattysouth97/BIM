@@ -85,7 +85,25 @@
         "widthM": 4.84,
         "depthM": 0.42,
         "heightM": 2.42,
-        "bottomM": 0.1
+        "bottomM": 0.1,
+        "plan": [
+          [
+            3.55,
+            0
+          ],
+          [
+            8.38,
+            0
+          ],
+          [
+            8.38,
+            0.42
+          ],
+          [
+            3.55,
+            0.42
+          ]
+        ]
       },
       "hostExpressID": 3797,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138062\"",
@@ -114,7 +132,25 @@
         "widthM": 4.84,
         "depthM": 0.42,
         "heightM": 2.42,
-        "bottomM": 0.1
+        "bottomM": 0.1,
+        "plan": [
+          [
+            0.42,
+            17.38
+          ],
+          [
+            5.25,
+            17.38
+          ],
+          [
+            5.25,
+            17.8
+          ],
+          [
+            0.42,
+            17.8
+          ]
+        ]
       },
       "hostExpressID": 4043,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138237\"",
@@ -143,7 +179,25 @@
         "widthM": 0.75,
         "depthM": 0.42,
         "heightM": 2.2,
-        "bottomM": 0.1
+        "bottomM": 0.1,
+        "plan": [
+          [
+            8.38,
+            5.2
+          ],
+          [
+            8.8,
+            5.2
+          ],
+          [
+            8.8,
+            5.95
+          ],
+          [
+            8.38,
+            5.95
+          ]
+        ]
       },
       "hostExpressID": 3999,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138157\"",
@@ -172,7 +226,25 @@
         "widthM": 0.75,
         "depthM": 0.42,
         "heightM": 2.2,
-        "bottomM": 0.1
+        "bottomM": 0.1,
+        "plan": [
+          [
+            0,
+            11.85
+          ],
+          [
+            0.42,
+            11.85
+          ],
+          [
+            0.42,
+            12.6
+          ],
+          [
+            0,
+            12.6
+          ]
+        ]
       },
       "hostExpressID": 4087,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138310\"",
@@ -201,7 +273,25 @@
         "widthM": 2.8,
         "depthM": 0.42,
         "heightM": 2.41,
-        "bottomM": 3.2
+        "bottomM": 3.2,
+        "plan": [
+          [
+            1.33,
+            0
+          ],
+          [
+            4.12,
+            0
+          ],
+          [
+            4.12,
+            0.42
+          ],
+          [
+            1.33,
+            0.42
+          ]
+        ]
       },
       "hostExpressID": 5448,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143410\"",
@@ -230,7 +320,25 @@
         "widthM": 0.82,
         "depthM": 0.42,
         "heightM": 0.76,
-        "bottomM": 3.2
+        "bottomM": 3.2,
+        "plan": [
+          [
+            0.42,
+            0
+          ],
+          [
+            1.24,
+            0
+          ],
+          [
+            1.24,
+            0.42
+          ],
+          [
+            0.42,
+            0.42
+          ]
+        ]
       },
       "hostExpressID": 5448,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143410\"",
@@ -259,7 +367,25 @@
         "widthM": 0.82,
         "depthM": 0.42,
         "heightM": 0.76,
-        "bottomM": 4.03
+        "bottomM": 4.03,
+        "plan": [
+          [
+            0.42,
+            0
+          ],
+          [
+            1.24,
+            0
+          ],
+          [
+            1.24,
+            0.42
+          ],
+          [
+            0.42,
+            0.42
+          ]
+        ]
       },
       "hostExpressID": 5448,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143410\"",
@@ -288,7 +414,25 @@
         "widthM": 0.82,
         "depthM": 0.42,
         "heightM": 0.76,
-        "bottomM": 4.85
+        "bottomM": 4.85,
+        "plan": [
+          [
+            0.42,
+            0
+          ],
+          [
+            1.24,
+            0
+          ],
+          [
+            1.24,
+            0.42
+          ],
+          [
+            0.42,
+            0.42
+          ]
+        ]
       },
       "hostExpressID": 5448,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143410\"",
@@ -317,7 +461,25 @@
         "widthM": 2.8,
         "depthM": 0.42,
         "heightM": 2.41,
-        "bottomM": 3.2
+        "bottomM": 3.2,
+        "plan": [
+          [
+            4.68,
+            17.38
+          ],
+          [
+            7.47,
+            17.38
+          ],
+          [
+            7.47,
+            17.8
+          ],
+          [
+            4.68,
+            17.8
+          ]
+        ]
       },
       "hostExpressID": 5548,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143534\"",
@@ -346,7 +508,25 @@
         "widthM": 0.82,
         "depthM": 0.42,
         "heightM": 0.76,
-        "bottomM": 3.2
+        "bottomM": 3.2,
+        "plan": [
+          [
+            7.56,
+            17.38
+          ],
+          [
+            8.38,
+            17.38
+          ],
+          [
+            8.38,
+            17.8
+          ],
+          [
+            7.56,
+            17.8
+          ]
+        ]
       },
       "hostExpressID": 5548,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143534\"",
@@ -375,7 +555,25 @@
         "widthM": 0.82,
         "depthM": 0.42,
         "heightM": 0.76,
-        "bottomM": 4.03
+        "bottomM": 4.03,
+        "plan": [
+          [
+            7.56,
+            17.38
+          ],
+          [
+            8.38,
+            17.38
+          ],
+          [
+            8.38,
+            17.8
+          ],
+          [
+            7.56,
+            17.8
+          ]
+        ]
       },
       "hostExpressID": 5548,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143534\"",
@@ -404,7 +602,25 @@
         "widthM": 0.82,
         "depthM": 0.42,
         "heightM": 0.76,
-        "bottomM": 4.85
+        "bottomM": 4.85,
+        "plan": [
+          [
+            7.56,
+            17.38
+          ],
+          [
+            8.38,
+            17.38
+          ],
+          [
+            8.38,
+            17.8
+          ],
+          [
+            7.56,
+            17.8
+          ]
+        ]
       },
       "hostExpressID": 5548,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143534\"",
@@ -433,7 +649,25 @@
         "widthM": 2.8,
         "depthM": 0.42,
         "heightM": 2.41,
-        "bottomM": 3.2
+        "bottomM": 3.2,
+        "plan": [
+          [
+            0,
+            14.58
+          ],
+          [
+            0.42,
+            14.58
+          ],
+          [
+            0.42,
+            17.38
+          ],
+          [
+            0,
+            17.38
+          ]
+        ]
       },
       "hostExpressID": 5598,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143590\"",
@@ -462,7 +696,25 @@
         "widthM": 0.82,
         "depthM": 0.42,
         "heightM": 0.76,
-        "bottomM": 4.85
+        "bottomM": 4.85,
+        "plan": [
+          [
+            0,
+            13.66
+          ],
+          [
+            0.42,
+            13.66
+          ],
+          [
+            0.42,
+            14.48
+          ],
+          [
+            0,
+            14.48
+          ]
+        ]
       },
       "hostExpressID": 5598,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143590\"",
@@ -491,7 +743,25 @@
         "widthM": 0.82,
         "depthM": 0.42,
         "heightM": 0.76,
-        "bottomM": 3.2
+        "bottomM": 3.2,
+        "plan": [
+          [
+            0,
+            13.66
+          ],
+          [
+            0.42,
+            13.66
+          ],
+          [
+            0.42,
+            14.48
+          ],
+          [
+            0,
+            14.48
+          ]
+        ]
       },
       "hostExpressID": 5598,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143590\"",
@@ -520,7 +790,25 @@
         "widthM": 0.82,
         "depthM": 0.42,
         "heightM": 0.76,
-        "bottomM": 4.03
+        "bottomM": 4.03,
+        "plan": [
+          [
+            0,
+            13.66
+          ],
+          [
+            0.42,
+            13.66
+          ],
+          [
+            0.42,
+            14.48
+          ],
+          [
+            0,
+            14.48
+          ]
+        ]
       },
       "hostExpressID": 5598,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143590\"",
@@ -549,7 +837,25 @@
         "widthM": 2.8,
         "depthM": 0.42,
         "heightM": 2.41,
-        "bottomM": 3.2
+        "bottomM": 3.2,
+        "plan": [
+          [
+            8.38,
+            0.42
+          ],
+          [
+            8.8,
+            0.42
+          ],
+          [
+            8.8,
+            3.22
+          ],
+          [
+            8.38,
+            3.22
+          ]
+        ]
       },
       "hostExpressID": 5498,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143478\"",
@@ -578,7 +884,25 @@
         "widthM": 0.82,
         "depthM": 0.42,
         "heightM": 0.76,
-        "bottomM": 4.85
+        "bottomM": 4.85,
+        "plan": [
+          [
+            8.38,
+            3.32
+          ],
+          [
+            8.8,
+            3.32
+          ],
+          [
+            8.8,
+            4.14
+          ],
+          [
+            8.38,
+            4.14
+          ]
+        ]
       },
       "hostExpressID": 5498,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143478\"",
@@ -607,7 +931,25 @@
         "widthM": 0.82,
         "depthM": 0.42,
         "heightM": 0.76,
-        "bottomM": 4.03
+        "bottomM": 4.03,
+        "plan": [
+          [
+            8.38,
+            3.32
+          ],
+          [
+            8.8,
+            3.32
+          ],
+          [
+            8.8,
+            4.14
+          ],
+          [
+            8.38,
+            4.14
+          ]
+        ]
       },
       "hostExpressID": 5498,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143478\"",
@@ -636,7 +978,25 @@
         "widthM": 0.82,
         "depthM": 0.42,
         "heightM": 0.76,
-        "bottomM": 3.2
+        "bottomM": 3.2,
+        "plan": [
+          [
+            8.38,
+            3.32
+          ],
+          [
+            8.8,
+            3.32
+          ],
+          [
+            8.8,
+            4.14
+          ],
+          [
+            8.38,
+            4.14
+          ]
+        ]
       },
       "hostExpressID": 5498,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143478\"",
@@ -665,7 +1025,25 @@
         "widthM": 0.75,
         "depthM": 0.42,
         "heightM": 2.2,
-        "bottomM": 3.2
+        "bottomM": 3.2,
+        "plan": [
+          [
+            8.38,
+            11.77
+          ],
+          [
+            8.8,
+            11.77
+          ],
+          [
+            8.8,
+            12.52
+          ],
+          [
+            8.38,
+            12.52
+          ]
+        ]
       },
       "hostExpressID": 5498,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143478\"",
@@ -694,7 +1072,25 @@
         "widthM": 0.75,
         "depthM": 0.42,
         "heightM": 2.2,
-        "bottomM": 3.2
+        "bottomM": 3.2,
+        "plan": [
+          [
+            0,
+            5.28
+          ],
+          [
+            0.42,
+            5.28
+          ],
+          [
+            0.42,
+            6.03
+          ],
+          [
+            0,
+            6.03
+          ]
+        ]
       },
       "hostExpressID": 5598,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:143590\"",
@@ -723,7 +1119,25 @@
         "widthM": 1.4,
         "depthM": 0.47,
         "heightM": 2.09,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            8.36,
+            15.48
+          ],
+          [
+            8.83,
+            15.48
+          ],
+          [
+            8.83,
+            16.88
+          ],
+          [
+            8.36,
+            16.88
+          ]
+        ]
       },
       "hostExpressID": 3999,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138157\"",
@@ -752,7 +1166,25 @@
         "widthM": 1.4,
         "depthM": 0.47,
         "heightM": 2.09,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            -0.03,
+            0.92
+          ],
+          [
+            0.44,
+            0.92
+          ],
+          [
+            0.44,
+            2.32
+          ],
+          [
+            -0.03,
+            2.32
+          ]
+        ]
       },
       "hostExpressID": 4087,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138310\"",
@@ -781,7 +1213,25 @@
         "widthM": 0.91,
         "depthM": 0.17,
         "heightM": 2.11,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            6.2,
+            9.22
+          ],
+          [
+            6.38,
+            9.22
+          ],
+          [
+            6.38,
+            10.13
+          ],
+          [
+            6.2,
+            10.13
+          ]
+        ]
       },
       "hostExpressID": 4508,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):139682\"",
@@ -804,7 +1254,25 @@
         "widthM": 0.91,
         "depthM": 0.17,
         "heightM": 2.11,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            2.42,
+            7.67
+          ],
+          [
+            2.6,
+            7.67
+          ],
+          [
+            2.6,
+            8.59
+          ],
+          [
+            2.42,
+            8.59
+          ]
+        ]
       },
       "hostExpressID": 4219,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):139143\"",
@@ -827,7 +1295,25 @@
         "widthM": 1.02,
         "depthM": 0.17,
         "heightM": 2.11,
-        "bottomM": 3.1
+        "bottomM": 3.1,
+        "plan": [
+          [
+            1.41,
+            6.1
+          ],
+          [
+            2.42,
+            6.1
+          ],
+          [
+            2.42,
+            6.28
+          ],
+          [
+            1.41,
+            6.28
+          ]
+        ]
       },
       "hostExpressID": 5642,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):143856\"",
@@ -850,7 +1336,25 @@
         "widthM": 1.02,
         "depthM": 0.17,
         "heightM": 2.11,
-        "bottomM": 3.1
+        "bottomM": 3.1,
+        "plan": [
+          [
+            6.38,
+            11.52
+          ],
+          [
+            7.4,
+            11.52
+          ],
+          [
+            7.4,
+            11.7
+          ],
+          [
+            6.38,
+            11.7
+          ]
+        ]
       },
       "hostExpressID": 5903,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):144518\"",
@@ -873,7 +1377,25 @@
         "widthM": 1.02,
         "depthM": 0.17,
         "heightM": 2.11,
-        "bottomM": 3.1
+        "bottomM": 3.1,
+        "plan": [
+          [
+            1.34,
+            11.52
+          ],
+          [
+            2.36,
+            11.52
+          ],
+          [
+            2.36,
+            11.7
+          ],
+          [
+            1.34,
+            11.7
+          ]
+        ]
       },
       "hostExpressID": 5731,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):143960\"",
@@ -896,7 +1418,25 @@
         "widthM": 1.02,
         "depthM": 0.17,
         "heightM": 2.11,
-        "bottomM": 3.1
+        "bottomM": 3.1,
+        "plan": [
+          [
+            6.4,
+            6.1
+          ],
+          [
+            7.42,
+            6.1
+          ],
+          [
+            7.42,
+            6.28
+          ],
+          [
+            6.4,
+            6.28
+          ]
+        ]
       },
       "hostExpressID": 5992,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):144633\"",
@@ -919,7 +1459,25 @@
         "widthM": 1.02,
         "depthM": 0.17,
         "heightM": 2.11,
-        "bottomM": 3.1
+        "bottomM": 3.1,
+        "plan": [
+          [
+            2.36,
+            8.93
+          ],
+          [
+            2.53,
+            8.93
+          ],
+          [
+            2.53,
+            9.95
+          ],
+          [
+            2.36,
+            9.95
+          ]
+        ]
       },
       "hostExpressID": 5687,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):143921\"",
@@ -942,7 +1500,25 @@
         "widthM": 1.02,
         "depthM": 0.17,
         "heightM": 2.11,
-        "bottomM": 3.1
+        "bottomM": 3.1,
+        "plan": [
+          [
+            6.27,
+            7.87
+          ],
+          [
+            6.44,
+            7.87
+          ],
+          [
+            6.44,
+            8.89
+          ],
+          [
+            6.27,
+            8.89
+          ]
+        ]
       },
       "hostExpressID": 5948,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):144586\"",
@@ -965,7 +1541,25 @@
         "widthM": 0.96,
         "depthM": 0.47,
         "heightM": 2.5,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            2.56,
+            -0.03
+          ],
+          [
+            3.52,
+            -0.03
+          ],
+          [
+            3.52,
+            0.44
+          ],
+          [
+            2.56,
+            0.44
+          ]
+        ]
       },
       "hostExpressID": 3797,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138062\"",
@@ -994,7 +1588,25 @@
         "widthM": 0.96,
         "depthM": 0.47,
         "heightM": 2.5,
-        "bottomM": 0
+        "bottomM": 0,
+        "plan": [
+          [
+            5.28,
+            17.36
+          ],
+          [
+            6.24,
+            17.36
+          ],
+          [
+            6.24,
+            17.83
+          ],
+          [
+            5.28,
+            17.83
+          ]
+        ]
       },
       "hostExpressID": 4043,
       "hostName": "IfcWallStandardCase \"Basic Wall:Exterior - Brick on Block:138237\"",
@@ -1023,7 +1635,25 @@
         "widthM": 0.91,
         "depthM": 0.17,
         "heightM": 2.11,
-        "bottomM": 3.1
+        "bottomM": 3.1,
+        "plan": [
+          [
+            2.45,
+            9.95
+          ],
+          [
+            3.36,
+            9.95
+          ],
+          [
+            3.36,
+            10.12
+          ],
+          [
+            2.45,
+            10.12
+          ]
+        ]
       },
       "hostExpressID": 35199,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):203347\"",
@@ -1046,7 +1676,25 @@
         "widthM": 0.91,
         "depthM": 0.17,
         "heightM": 2.11,
-        "bottomM": 3.1
+        "bottomM": 3.1,
+        "plan": [
+          [
+            5.46,
+            7.7
+          ],
+          [
+            6.37,
+            7.7
+          ],
+          [
+            6.37,
+            7.87
+          ],
+          [
+            5.46,
+            7.87
+          ]
+        ]
       },
       "hostExpressID": 35357,
       "hostName": "IfcWallStandardCase \"Basic Wall:Interior - Partition (92mm Stud):203998\"",
@@ -1071,7 +1719,25 @@
         "widthM": 1.22,
         "depthM": 1.17,
         "heightM": 0.18,
-        "bottomM": 6.46
+        "bottomM": 6.46,
+        "plan": [
+          [
+            0.79,
+            10.05
+          ],
+          [
+            1.96,
+            10.05
+          ],
+          [
+            1.96,
+            11.28
+          ],
+          [
+            0.79,
+            11.28
+          ]
+        ]
       },
       "reason": "fills host IfcRoof \"Basic Roof:Live Roof over Wood Joist Flat Roof:184483\" is not in the exterior-wall set; plan footprint 1.22 × 1.17 m is not a flat opening in a cardinal wall (corner, splayed or roof)"
     },
@@ -1090,7 +1756,25 @@
         "widthM": 1.22,
         "depthM": 1.17,
         "heightM": 0.18,
-        "bottomM": 6.46
+        "bottomM": 6.46,
+        "plan": [
+          [
+            6.82,
+            6.52
+          ],
+          [
+            8,
+            6.52
+          ],
+          [
+            8,
+            7.75
+          ],
+          [
+            6.82,
+            7.75
+          ]
+        ]
       },
       "reason": "fills host IfcRoof \"Basic Roof:Live Roof over Wood Joist Flat Roof:184483\" is not in the exterior-wall set; plan footprint 1.22 × 1.17 m is not a flat opening in a cardinal wall (corner, splayed or roof)"
     }
