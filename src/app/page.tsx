@@ -4,7 +4,7 @@ import { LandingPage } from "@/components/landing/landing-page";
 export const metadata: Metadata = {
   title: "BIMFIT | 모델 갤러리",
   description:
-    "BIMFIT으로 보는 빌딩의 내부 모습과 에너지 프로필. 각 카드는 그 건물의 BIM 파일이 스스로 말하는 값만 싣습니다.",
+    "공개 BIM의 재료·설비와 에너지 성능의 근거를 살펴보세요. 출처와 가정을 구분하고, 간이 계산으로 건물 개선안을 검토합니다.",
 };
 
 export default function Home() {

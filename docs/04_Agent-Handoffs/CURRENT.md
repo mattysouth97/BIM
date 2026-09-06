@@ -24,11 +24,19 @@ measurement/assumption and calculated-versus-metered distinctions. Commit, push
 and deploy each major verified milestone. Current execution record:
 `2026-09-07-product-datasets-and-viewer.md`.
 
+Latest mission: make BIMFIT valuable to paying building professionals through
+good judgment and evidence-based problem structure. Prioritize a defensible
+retrofit decision, source-to-result traceability, consistent comparisons and
+reviewable handover. [[Business and Service Model]] defines an assisted-service
+and subscription proposal with explicit test prices; no paid service is launched.
+[[Energy0 Simulation Engine Research]] audits the current screening engine and
+proposes a validated detailed/hourly architecture; it is research, not implemented.
+
 ## Verified Working State
 
 Local release validation on 2026-09-07:
 
-- Unit: **5,425 passed**, 4 skipped (452 passed files, 1 skipped).
+- Unit: **5,439 passed**, 4 skipped (452 passed files, 1 skipped).
 - Material integration: 22 browser checks passed before compression; all 11
   material-loading/picking/fallback checks passed again after compression.
   Six model orbit/zoom checks passed. Full Chromium: 149/150 passed; the sole
@@ -37,8 +45,9 @@ Local release validation on 2026-09-07:
 - TypeScript: clean. ESLint src/e2e: 0 errors, 6 pre-existing warnings.
 - KIT Office and demo expanded/collapsed canvas screenshots inspected; no page
   errors. Panel controls preserve state and do not overlap the rendering toolbar.
-- Last production verification: `95f9ada` on 2026-09-07 01:15, health SHA and
-  region `icn1`; 10 live navigation and camera orbit/zoom checks passed.
+- Last production verification: `d1b9dce` on 2026-09-07 01:40, full health SHA
+  and region `icn1`; 17 live material-loading/picking/retry and camera-depth
+  checks passed across the six models.
 
 ## Current product
 
@@ -90,10 +99,13 @@ Prior PV and selection methods remain documented in
 
 ## Open work and limits
 
-- The sixth model/material-expression/Blender/PV-correction release is locally
-  verified as above and awaiting production verification.
-- Next material realism work corrects source-instance texture scale and adds
-  physical roughness/glass treatment; this is separate from source thermal data.
+- The sixth model/material-expression/Blender/PV-correction release is deployed
+  and production-verified as above.
+- Material realism is integrated and locally verified: source-instance metre/mm
+  texture scale, roughness variation, explicit-source glass and mobile layout.
+  Twenty-six material/gallery browser checks passed; deployment pending.
+- Existing/new PV accounting now preserves installed capacity and scopes costs
+  to the addition; the separate report/grade heat-carrier mismatch remains open.
 - TalTech's licensed office/lab model is being checked in an isolated worktree:
   existing PV arrays need obstruction coverage, and IFC4 ports need traceable
   ownership. It is not yet integrated or published.

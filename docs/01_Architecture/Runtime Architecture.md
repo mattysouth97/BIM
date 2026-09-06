@@ -146,8 +146,8 @@ reproduced from the register plus whatever the browser kept.
 `public/models/authoring/` (~100 GLB + `catalog.json`, surfaced at `/dev/symbols`),
 `public/models/equipment/` (71 GLB: chiller, cooling-tower, boiler,
 boiler-condensing, VRF, AHU, elevator, panels, PV, battery…),
-`public/bim-assets/`, `public/textures/` (7 PBR sets, applied to the **ground
-plane** — the building facade uses recipe-driven materials, not these maps),
+`public/bim-assets/`, `public/textures/` (PBR samples used by the ground plane
+and source-bound illustrative materials on reference models),
 `public/hdr/studio.hdr` (reflections only), `public/samples/`,
 `public/releases/`.
 
@@ -159,8 +159,11 @@ regeneration. A load failure degrades to coarse procedural geometry.
 ## Deployment
 
 Production is **Vercel**, project `bim` (org `matts-projects-d0677dc4`), at
-<https://bim-self.vercel.app>. Deploy with `vercel --prod --yes`. There is no
-`vercel.json` — all build behaviour comes from `next.config.ts`.
+<https://bim-self.vercel.app>. Deploy a clean detached worktree with
+`vercel --prod --yes --scope matts-projects-d0677dc4`.
+`vercel.json` pins function compute to `icn1`; preserve it because VWorld
+rejects the default US-region egress. Build configuration also lives in
+`next.config.ts`.
 
 Two traps that have each cost a deploy:
 

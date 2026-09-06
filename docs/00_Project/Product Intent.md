@@ -1,7 +1,7 @@
 ---
 type: project
 status: implemented
-last_verified: 2026-08-27
+last_verified: 2026-09-07
 ---
 
 # Product Intent
@@ -12,9 +12,21 @@ during development. Where intent could not be established, it says so.
 
 ## Purpose
 
-Give someone assessing a real Korean building a defensible energy number and the
-retrofit investment case that follows — starting from data that already exists
-about that building, not from a survey they have to commission first.
+Help building professionals turn incomplete evidence into a defensible retrofit
+recommendation: what to improve, why, what it may achieve, and what to verify
+before committing capital. Start from available data and make the limits of the
+first screening result explicit.
+
+The user's 2026-09-07 mission makes professional judgment and evidence-based
+problem structure the development standard. Good taste means selecting the
+important question and presenting its tradeoffs clearly. A useful model helps a
+person inspect evidence, correct assumptions and explain a decision.
+
+[[Business and Service Model]] defines the proposed initial customer, reviewed
+decision package, assisted-service scope, test pricing and willingness-to-pay
+experiments. These commercial hypotheses are not a launched paid service.
+[[Energy0 Simulation Engine Research]] defines the proposed validation and
+simulation programme; it is not an implemented replacement engine.
 
 ## The primary workflow is fixed
 
@@ -29,6 +41,10 @@ a fifth step or a parallel entry screen.
 
 The repository has twice drifted into having two competing front doors; both
 times it made the product harder to explain. See [[Current State]].
+
+The gallery at `/` precedes these steps and has no diagnostic entry. Register
+search is `/diagnostics/new?method=ledger`; retain the deliberate separation in
+[[ADR-004 - The Landing Page Is a Model Gallery]].
 
 ## The central constraint: stated versus assumed
 
@@ -57,21 +73,25 @@ Consequences that follow from this constraint, each with a regression test:
   traceable path uses `classifyEraExplicit` instead.
 - An outline synthesised from 건축면적 is an inference, not survey geometry, and
   must never be labelled as dimensioned.
-- Below-grade storeys are recorded but not extruded, because the engine prices
-  every storey against outdoor air and no ground-coupling path exists. The
-  excluded area is named rather than silently dropped.
+- Conditioned floor area, gross source area, voids and below-grade scope must
+  remain distinct. A source quantity's name alone does not establish the area
+  appropriate for an energy-intensity denominator.
 
 ## User outcomes that matter
 
-1. **Zero-input first answer.** Choosing a building is the only input required to
-   see an energy result. Anything that demands data entry before the first number
-   works against the product.
+1. **Useful first screening.** Choosing a building should give the best supported
+   initial result, with missing inputs visible. An unavailable result is preferable
+   to a fabricated number when the minimum evidence is absent.
 2. **Visible uncertainty.** The user can always see how much of the answer is
    assumed, and what would improve it.
 3. **Refinement moves the number.** Correcting a value must change the result
    visibly, and must be reversible.
-4. **An investment case, not just a number.** The energy result has to reach
-   NPV, payback and a subsidy program track to be actionable.
+4. **Comparable investment options.** Physical work, costs and modeled benefits
+   must share a baseline and scope. Funding-program controls were removed by
+   user request; current economics use the unsubsidized baseline.
+5. **A reviewable handover.** Another practitioner should be able to reconstruct
+   the recommendation, identify unresolved evidence and plan the next action.
+   Versioned professional review is a product priority, not a current paid feature.
 
 ## Non-goals
 
@@ -97,12 +117,13 @@ Consequences that follow from this constraint, each with a regression test:
 | Fact | A single traceable value with provenance (`EnergyFact`) |
 | Assumption | A named, reversible record explaining a value the register did not state |
 | Fidelity | How much of the twin is measured rather than assumed |
-| 그린리모델링 | Korean green-remodeling subsidy program; drives the finance tracks |
+| Decision package | Proposed reviewed baseline, alternatives, evidence register and verification plan |
 
 ## Uncertain
 
-- The intended **commercial** model (who pays, per-building or per-seat) is not
-  established anywhere in the repository.
+- The **commercial** model now has a concrete test proposal in
+  [[Business and Service Model]]. Willingness to pay and the eventual charging
+  unit remain unvalidated.
 - The generative "describe a building" entry is **not reachable at runtime**.
   `/studio` has no `describe` branch — it redirects `draw` to `?method=create`,
   `diagnose` to `?method=upload`, and everything else to the landing page — and

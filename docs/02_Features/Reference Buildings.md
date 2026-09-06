@@ -48,8 +48,8 @@ energy rails initially collapse below 768px and retain later user choices.
 The ordinary building twin keeps its existing expanded defaults.
 
 Over the canvas, the frame (`EnergyInstrumentHud`, shared verbatim with
-`/building/[id]`) carries **에너지 평가**: the scenario rail, the 그린리모델링
-track chips, the notice band, the grade/kWh/CO₂/heat-loss strip, the grade
+`/building/[id]`) carries **에너지 평가**: the physical-work scenario rail,
+the notice band, the grade/kWh/CO₂/heat-loss strip, the grade
 basis line, and the CAPEX grip.
 
 The 2026-09-07 integration adds independent default-on architectural detail

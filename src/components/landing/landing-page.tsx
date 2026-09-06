@@ -40,20 +40,18 @@ export function LandingPage() {
           </span>
         </div>
 
-        {/* What the gallery contains, and — just as important — what it does
-            not. The cards carry figures that look like building performance
-            data, so the page says up front that they are only what the model
-            file itself states. */}
+        {/* Lead with the professional task, then distinguish sourced inputs,
+            assumptions and calculated results. No new entry flow. */}
         <div className="mt-6 max-w-[44rem]" data-testid="landing-gallery-lede">
           <p className="gallery-lede text-balance break-keep text-foreground">
             {isKo
-              ? "BIMFIT으로 보는 빌딩의 내부 모습과 에너지 프로필"
-              : "A building's interior and energy profile, seen through BIMFIT"}
+              ? "건물의 에너지 성능, 근거부터 살펴보세요"
+              : "Inspect the evidence behind a building's energy performance"}
           </p>
           <p className="mt-3 text-[13px] leading-6 text-muted-foreground">
             {isKo
-              ? "실제 건물의 조정 모델과 검증용 예제 모델을 함께 살펴봅니다. 면적·부재 수와 파일이 명시한 열성능은 어디에서 읽었는지 함께 적습니다. 빠진 열성능·운영 조건·기후는 가정으로 구분합니다. 에너지 프로필은 이 입력으로 계산한 결과이며, 계량기로 측정한 실제 사용량이 아닙니다."
-              : "Explore coordination models of real buildings alongside validation examples. Areas, element counts and thermal properties stated by a file carry their sources. Missing thermal properties, operating conditions and climate remain explicit assumptions. Energy profiles are calculated from these inputs; they are not metered consumption."}
+              ? "공개 BIM에서 재료·설비와 그 근거를 확인하고, 개선안을 검토하세요. 실제 건물의 조정 모델과 연구·예제 모델을 함께 제공합니다. 파일에서 읽은 값과 가정을 구분하며, 에너지 수치는 실측 사용량이 아닌 간이 계산 결과입니다."
+              : "Inspect materials, systems and their sources in public BIM, then explore retrofit options. The collection includes real-building coordination models and research examples. Source values and assumptions stay distinct; energy figures are screening calculations, not metered consumption."}
           </p>
         </div>
 

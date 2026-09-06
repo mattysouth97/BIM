@@ -1,7 +1,7 @@
 ---
 type: project
 status: implemented
-last_verified: 2026-08-27
+last_verified: 2026-09-07
 ---
 
 # Project Overview
@@ -9,6 +9,12 @@ last_verified: 2026-08-27
 **BIMFIT** turns a Korean building's public register entry into a working energy
 model, then lets the user sharpen that model toward the real building until the
 retrofit economics are worth acting on.
+
+The product mission is to help professionals structure a building-improvement
+decision from evidence. Models, materials, simulation and reports should clarify
+what to improve, why, and which missing information could change the advice.
+[[Business and Service Model]] defines the proposed customer and service offer;
+pricing and willingness to pay remain hypotheses for paid-pilot validation.
 
 The product's whole credibility rests on one distinction: what the register
 actually *states*, versus what has been *assumed* on its behalf. That distinction
@@ -20,7 +26,7 @@ The product is four fixed steps. This shape is settled; features are added
 *inside* it rather than beside it.
 
 ```text
-1. 건물 검색      Landing page IS the 건축물대장 (building register) search        →  /
+1. 건물 검색      건축물대장 (building register) search                          →  /diagnostics/new?method=ledger
 2. 도면 업로드    Upload the building's CAD drawings                              →  /building/[id]
 3. 디지털 트윈    The 3D twin; typed inputs recompute the energy profile           →  /building/[id]
 4. 보고서         Report, exported as PDF / CSV / JSON                            →  /building/[id]
@@ -28,6 +34,9 @@ The product is four fixed steps. This shape is settled; features are added
 
 Step 1 hands off to steps 2–4, which all live in the twin workspace at
 `/building/[id]`. See [[Data Flow]] for what moves between them.
+
+`/` is the source-model gallery, preceding the workflow without a link to step 1
+(the deliberate decision in [[ADR-004 - The Landing Page Is a Model Gallery]]).
 
 ## What it does
 
@@ -40,9 +49,10 @@ Step 1 hands off to steps 2–4, which all live in the twin workspace at
   code tables and is recorded as a **named, visible, reversible assumption**.
 - **Shows the building.** A 3D twin with envelope, structure, MEP, electrical,
   lighting, plumbing, fire, lift and gas layers, plus energy zones.
-- **Prices the retrofit.** Measures with investment, payback, saving and NPV,
-  a CAPEX budget knapsack, and the Korean 그린리모델링 program tracks
-  (public/private subsidy and interest-rate variants) under a DCF model.
+- **Prices the retrofit.** Physical measures with investment, payback, saving
+  and NPV under a DCF model and an optional CAPEX budget. Funding-program
+  controls are removed; economics use the unsubsidized baseline. Current energy
+  calculations do not yet quantify every measure's benefit.
 - **Produces a report.** Energy audit and compliance previews, exportable.
 
 ## Who it is for
@@ -70,12 +80,14 @@ the investment case that follows from it.
 
 ```mermaid
 flowchart LR
-    User --> Landing["/ — register search"]
-    Landing --> Twin["/building/[id] — steps 2-4"]
+    User --> Gallery["/ — source-model gallery"]
+    Gallery --> Models["/models/[id] — reference model"]
+    User --> Search["/diagnostics/new?method=ledger"]
+    Search --> Twin["/building/[id] — steps 2-4"]
     Twin --> Energy["Energy core<br/>src/lib/energy"]
     Twin --> Retrofit["Retrofit economics<br/>src/lib/retrofit"]
     Twin --> Report["Report export"]
-    Landing --> Proxy["/api/bldrgst/*"]
+    Search --> Proxy["/api/bldrgst/*"]
     Proxy --> DataGoKr[("data.go.kr<br/>건축물대장")]
     Twin --> VWorld[("VWorld GIS")]
 ```

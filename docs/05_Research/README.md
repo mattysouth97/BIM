@@ -20,6 +20,12 @@ Use [[Research Note]] as the template.
 
 ## Existing research in this repository
 
+- [[Energy0 Simulation Engine Research]] — 2026-09-07: current-code audit,
+  detailed/fast solver strategy, BIM-to-thermal conversion, calibration,
+  validation and a staged implementation programme. **Proposed, not implemented.**
+- [[Business and Service Model]] — professional decision value, assisted-service
+  scope, test pricing and commercial validation gates. **No paid service launched.**
+
 Historical research predates this vault and was deliberately left where it is,
 because the surrounding plans and specs cross-reference it by path:
 

@@ -188,4 +188,40 @@ Validation: 5,425 unit tests passed, 4 existing skips; TypeScript clean; ESLint
 gallery expectation still counted five models. Updated the explicitly reviewed
 six-card set, and its rerun passed. Six compressed views inspected; all 11
 material loading/picking/retry checks and six camera orbit/zoom checks passed.
-Production verification pending.
+Committed/pushed as `d1b9dce`; clean production READY, full health SHA and
+`icn1` verified on 2026-09-07 01:40 KST. Seventeen live material and camera
+checks passed across all six models.
+
+## Milestone 6 — professional mission and material realism
+
+The user's mission is now recorded in Project Overview, Product Intent and
+`Business and Service Model.md`: improve professional judgment through evidence,
+comparable options and reviewable decisions. The business proposal defines an
+initial consultancy customer, assisted screening package, hypothetical prices,
+delivery economics and paid-pilot validation gates. No paid service, payment
+system or customer outreach has been launched. Gallery copy now leads with
+inspection of energy evidence while retaining its source/assumption limits.
+
+`Energy0 Simulation Engine Research.md` reviews current code and primary
+technical sources, then proposes a common traceable thermal model with a detailed
+EnergyPlus backend and a later validated fast solver. It covers physics,
+BIM-to-BEM, weather, calibration, validation, interoperability and Korean scope.
+The report identifies the existing report/grade carrier split as a P0 issue;
+writing the research has not fixed that engine or proved superior accuracy.
+Independent reviews checked business arithmetic/readiness and current-code
+physics claims; recommendations were incorporated.
+
+Material realism now includes instance-aware physical texture scale, nominal
+tile aspect, roughness maps and source-bound optical glass. Millimetre and metre
+encodings produce identical nonblank GPU samples. Surface geometry, thermal
+properties and source bindings are unchanged. Six desktop views, close orbits
+and mobile inspected; the Klassiqua mobile source-name overflow is fixed.
+
+Existing PV is preserved when adding new retrofit arrays. Total capacity sums
+known existing/new values, unknown existing area remains unknown, and capital
+cost/claim area cover new work only. Reapplying a scenario does not stack it.
+
+Validation: 5,439 unit tests passed, four existing skips. TypeScript clean;
+ESLint 0 errors/six existing warnings. Twenty-six browser checks passed for
+material realism, source loading/picking/retry and the existing gallery/entry
+workflow. Production verification for this milestone is pending.
