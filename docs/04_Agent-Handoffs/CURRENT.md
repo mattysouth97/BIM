@@ -20,12 +20,13 @@ inside it; do not add a fifth step or a second front door.
 
 ## Verified Working State
 
-Validated on 2026-09-06 (production `223736a`, after the gallery / contract / remodelling round — see `2026-09-06-gallery-consistency-visuals-brief.md`):
+Validated on 2026-09-06 (production `eb84d61`, PV drawn from measured roof planes on every surface — see `2026-09-06-pv-roof-placement-methodology.md`; earlier that day `223736a`, after the gallery / contract / remodelling round — see `2026-09-06-gallery-consistency-visuals-brief.md`):
 
 - Unit: **5,076 passed**, 4 skipped, 424 files
 - E2E: **84 passed, 0 failed** (Playwright, chromium; one cold-run load flake in `cad-reconstruction.spec.ts:29`, green isolated and warm)
 - `tsc --noEmit`: clean (clear `.next/dev/types` first in a checkout that has served pages — Next's generated route types reject a page export); `eslint src e2e`: 0 errors, 6 pre-existing warnings
-- Production live at `https://bim-self.vercel.app`, `/api/health` commit `223736a`, region `icn1`
+- Production live at `https://bim-self.vercel.app`, `/api/health` commit `eb84d61`, region `icn1`
+- Open: Lane 3D (the CAPEX gauge becomes an optional budget field — spec in the gallery brief, user-approved, unassigned); per-plane utilisation table; plant/parapet obstructions
 
 **Four reference buildings** are published under `/models/<id>`: `bs-medical-dental-clinic`, `schependomlaan`, `duplex-apartment`, `fzk-haus` (DigitalHub was refused — no reuse grant). Every model page renders the same contract (`docs/02_Features/Reference Buildings.md`): the energy frame priced against the engine's own demand on measured areas, the grade on the table the use code selects (dwellings 주거: apartment 1++, Duplex 4, FZK 2), a retrofit section, and a measure-first 그린리모델링 row whose financing re-prices and never re-picks. The 3D and the delta strip answer a measure chip on the twin and on every model page.
 

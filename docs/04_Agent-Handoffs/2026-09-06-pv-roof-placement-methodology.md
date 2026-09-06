@@ -571,3 +571,8 @@ racked rows) are the layout's, and the QA drawings are the check.
 
 Still open from this lane: the per-plane utilisation table in the side
 panel (the legend carries the summary); obstructions for plant and parapets.
+
+**Deployed 23:20 — production `eb84d61`.** `/api/health` reports the sha in
+`icn1`; all four model pages 200 with `roof-planes.json` served; the VWorld
+canary still returns a building ring. Lane 3D remains the only open item
+from the day's briefs.
