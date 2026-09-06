@@ -273,12 +273,11 @@ for (const building of BUILDINGS) {
       // 예산·트랙에서 선택된 개선 항목 없음" — a caption describing a different
       // selection from the picture it labels.
       //
-      // One line in Lane 3B's file, not this one. When it is fixed this starts
-      // passing and Playwright reports the unexpected pass.
-      test.fail(
-        building.id === "bs-medical-dental-clinic",
-        "legend reads selectedMeasureIds (knapsack) while the 3D reads the applied set",
-      );
+      // Fixed by b61eba2 (Lane 3B), which landed one merge before this spec:
+      // the legend now reads `useEffectiveMeasureIds()`, the same resolved set
+      // the 3D renders. The `test.fail()` that recorded the defect flipped to an
+      // unexpected pass at merge and was removed here; the test now guards
+      // against the wiring regressing on every building, the Clinic included.
 
       await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
       const row = page.locator("[data-measure-chip-row]");
