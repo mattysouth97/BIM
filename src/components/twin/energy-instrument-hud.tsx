@@ -12,15 +12,27 @@
 // D₃: scenario state (budget, program track, derived building inputs)
 // lives in `useScenarioStore` so the SceneOutliner left dock reads the
 // exact same inputs and the two surfaces always agree.
+//
+// ONE BASELINE (2026-09-06). The bottom strip's kWh/m² and the top bar's NPV
+// used to come from two different buildings: `EnergyCards` ran the degree-day
+// engine, while `useRetrofitScenario`, handed no demand, priced every measure
+// against `floorArea × 120`. On the Clinic that proxy is 1.35× the engine's
+// heating demand and on the apartment 3.30×. The HUD now runs the engine
+// itself — with the SAME `(buildingPk, sigunguCd)` pair `EnergyCards` uses, so
+// the two calls memoise to one answer rather than to two that happen to
+// agree — and hands the result to the scenario hook.
 
 import { useEffect, useMemo } from "react";
 import { useRetrofitScenario } from "@/hooks/use-retrofit-scenario";
+import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
+import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useScenarioStore } from "@/store/scenario-store";
 import { TwinInstrumentFrame } from "./twin-instrument-frame";
 import { ScenarioRail } from "./scenario-rail";
 import { CapexInput } from "./capex-input";
 import { ProgramTrackSelector } from "./program-track-selector";
 import { SelectedMeasuresStrip } from "./selected-measures-strip";
+import { RetrofitDeltaStrip } from "./retrofit-delta-strip";
 import { EnergyCards } from "@/components/viewer/energy-cards";
 
 export interface EnergyInstrumentHudProps {
@@ -60,6 +72,14 @@ export function EnergyInstrumentHud({
     });
   }, [buildingPk, totalFloorArea, footprintArea, roofType, sidoPrefix, setBuildingInputs]);
 
+  // The same call `EnergyCards` makes, so the demand behind NPV and the kWh
+  // on the strip below it are one number and not two. `sigunguCd` is the
+  // active-building store's, exactly as `EnergyCards` reads it, with the
+  // caller's 시도 prefix only as the fallback — `getClimateData` reads the
+  // first two digits of either.
+  const sigunguCd = useActiveSigunguCd();
+  const metrics = useEnergyMetrics(buildingPk, sigunguCd ?? sidoPrefix);
+
   const scenario = useRetrofitScenario({
     buildingPk,
     capexBudgetKrw,
@@ -68,6 +88,10 @@ export function EnergyInstrumentHud({
     roofType,
     sidoPrefix,
     programTrack,
+    // Undefined until the stores are seeded; the hook then falls back to its
+    // coarse proxy, which is the honest state for a frame with no engine
+    // answer yet rather than a number pretending to be one.
+    engineDemand: metrics?.demand,
   });
 
   // Publish the knapsack selection so the 3D MEP layers can physically swap
@@ -109,6 +133,7 @@ export function EnergyInstrumentHud({
       bottom={
         <section className="overflow-hidden rounded-lg border border-border bg-card/95 shadow-sm backdrop-blur-md">
           <EnergyCards buildingPk={buildingPk} variant="strip" />
+          <RetrofitDeltaStrip />
           <SelectedMeasuresStrip
             measures={scenario.selection?.selected ?? []}
           />

@@ -13,6 +13,10 @@
 
 import { useMemo } from "react";
 import { useMaterialStore } from "@/store/material-store";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
+import { meanWindowToWallRatio } from "@/lib/energy/heat-loss";
+import { normalizeEfficiency } from "@/lib/energy/annual-demand";
+import type { MaterialProperties } from "@/lib/material-types";
 import { generateEnvelopeRetrofits, KOREAN_2020_TARGET_U_VALUES } from "@/lib/retrofit/envelope-retrofits";
 import { generateHvacRetrofits } from "@/lib/retrofit/hvac-retrofits";
 import { generateLightingRetrofits } from "@/lib/retrofit/lighting-retrofits";
@@ -50,10 +54,26 @@ export interface RetrofitScenarioInputs {
   sidoPrefix?: string;
   /** Annual lighting operating hours; defaults office (2500). */
   annualOperatingHours?: number;
-  /** Annual heating demand (kWh/yr); used by HVAC retrofits. Defaults to a coarse estimate. */
+  /** Annual USEFUL heating demand (kWh/yr); used by HVAC retrofits. Defaults to a coarse estimate. */
   annualHeatingDemand?: number;
-  /** Annual cooling demand (kWh/yr); used by HVAC retrofits. Defaults coarse. */
+  /** Annual USEFUL cooling demand (kWh/yr); used by HVAC retrofits. Defaults coarse. */
   annualCoolingDemand?: number;
+  /**
+   * The degree-day engine's own answer for this building — pass
+   * `useEnergyMetrics(pk, sido)?.demand` straight in. Wins over
+   * `annualHeatingDemand` / `annualCoolingDemand`, and is the only way to get
+   * the measures priced against the same baseline the kWh/m² on screen came
+   * from. Without it the hook falls back to `floorArea × 120` and `× 30`,
+   * which on the two reference buildings is 1.35× and 3.30× their real
+   * heating demand — so NPV and kWh on one frame described two buildings.
+   *
+   * NOTE the unit change this performs. `AnnualDemand` reports DELIVERED
+   * energy (useful ÷ η, cooling ÷ COP) because that is what a meter reads,
+   * while `generateHvacRetrofits` documents its input as USEFUL heat and
+   * divides by η itself. Handing the delivered figure straight over would
+   * inflate every boiler saving by 1/η. It is converted back below.
+   */
+  engineDemand?: { heatingDemand: number; coolingDemand: number };
   /** Feed-in tariff (KRW/kWh) for solar. Defaults to 130. */
   feedInTariffKrw?: number;
   /**
@@ -89,6 +109,38 @@ export interface RetrofitScenario {
 }
 
 /**
+ * Turn the engine's DELIVERED annual demand back into the USEFUL heat and
+ * cooling the retrofit generators are documented to take.
+ *
+ * `calculateAnnualDemand` divides by the heating efficiency and the cooling
+ * COP before it reports (`annual-demand.ts`, "heatingDemand = heatingRaw /
+ * heatingEfficiency"), and `generateHvacRetrofits` divides by the efficiency
+ * AGAIN to get fuel input. Multiplying back here is what stops the same η
+ * being applied twice — for the Clinic's 0.85 boiler that is an 18 %
+ * overstatement of every heating-side saving.
+ *
+ * The clamps mirror `annual-demand.ts` exactly, and `usefulDemandRoundTrip`
+ * in the tests fails if that file's clamps ever move without this one.
+ */
+export function usefulDemandFromEngine(
+  demand: { heatingDemand: number; coolingDemand: number },
+  materials: MaterialProperties,
+): { heating: number; cooling: number } {
+  const eta = Math.min(
+    Math.max(normalizeEfficiency(materials.hvac.heating.efficiency), 0.3),
+    6,
+  );
+  const copRaw = normalizeEfficiency(materials.hvac.cooling.efficiency);
+  const cop = copRaw > 0 ? Math.max(copRaw, 1) : 0;
+  return {
+    heating: demand.heatingDemand * eta,
+    // A building with no cooling system has a COP of 0 and a cooling demand
+    // of 0; the product is 0, which is the right answer and not a divide.
+    cooling: demand.coolingDemand * cop,
+  };
+}
+
+/**
  * Aggregate per-orientation walls into a single (uValue, area) pair using
  * area-weighted average uValue.
  */
@@ -117,6 +169,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     annualOperatingHours = 2_500,
     annualHeatingDemand,
     annualCoolingDemand,
+    engineDemand,
     feedInTariffKrw = 130,
     programTrack = "none",
     assumptions: assumptionsOverride,
@@ -131,6 +184,11 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
   }, [assumptionsOverride, programTrack]);
 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
+  // Read only for `meanWindowToWallRatio`, which needs to know whether this
+  // building's envelope was MEASURED or extruded. Undefined for a caller
+  // that seeded no recipe, and the ratio falls back to the unweighted mean —
+  // i.e. exactly today's behaviour where nothing new is known.
+  const recipe = useEffectiveRecipe(buildingPk);
 
   // Build all candidate measures from current materials.
   const allMeasures = useMemo<RetrofitMeasure[]>(() => {
@@ -148,10 +206,12 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
 
     // ── Envelope ──
     const wallAgg = aggregateWalls(materials.envelope.walls);
-    const wwr = materials.envelope.windows.windowToWallRatio;
     // Total wall area including windows. Windows live ON the walls, so
-    // window area is wallAgg.area × WWR (averaged over orientations).
-    const avgWwr = (wwr.N + wwr.S + wwr.E + wwr.W) / 4;
+    // window area is wallAgg.area × WWR. The ratio comes from the engine's
+    // own function — area-weighted on a measured envelope, unweighted
+    // otherwise — so the measures and `calculateHeatLoss` cannot end up
+    // multiplying by two different means of the same four numbers.
+    const avgWwr = meanWindowToWallRatio(materials, recipe);
     const opaqueWallArea = wallAgg.area * (1 - avgWwr);
     const windowArea = wallAgg.area * avgWwr;
 
@@ -175,14 +235,21 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     );
 
     // ── HVAC ──
-    // If annual demand isn't provided, do a coarse degree-day estimate so
-    // the hook still returns something useful. Real callers should pass
-    // pre-computed values from the energy engine.
+    // The engine's own answer first, converted delivered → useful; then an
+    // explicitly-passed useful figure; then, only for a caller that has run
+    // no engine at all, the coarse proxy. The proxy is a floor-area rule of
+    // thumb and it is wrong by 1.35× on the Clinic and 3.30× on the
+    // apartment — anything that shows kWh beside NPV must not reach it.
+    const engineUseful = engineDemand
+      ? usefulDemandFromEngine(engineDemand, materials)
+      : null;
     const heatingDemand =
+      engineUseful?.heating ??
       annualHeatingDemand ??
       // crude proxy: ~120 kWh/m²/yr × heating efficiency (older buildings)
       totalFloorArea * 120;
-    const coolingDemand = annualCoolingDemand ?? totalFloorArea * 30;
+    const coolingDemand =
+      engineUseful?.cooling ?? annualCoolingDemand ?? totalFloorArea * 30;
     // P1-01 sequential damping: HVAC measures act on the demand REMAINING
     // after the envelope package (physical order: envelope first). Passing
     // the post-envelope residual prevents double-counting the same heating
@@ -224,6 +291,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     return [...envelopeMeasures, ...hvacMeasures, ...lightingMeasures, ...solarMeasures];
   }, [
     materials,
+    recipe,
     totalFloorArea,
     footprintArea,
     roofType,
@@ -232,6 +300,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     annualOperatingHours,
     annualHeatingDemand,
     annualCoolingDemand,
+    engineDemand,
     feedInTariffKrw,
   ]);
 
@@ -251,11 +320,14 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
   }, [allMeasures, capexBudgetKrw, assumptions]);
 
   // D₂.5 — improvement vs baseline for the GR private-tier suggestion.
-  // Baseline mirrors the demand fallbacks used for measure generation above.
+  // Baseline mirrors the demand resolution used for measure generation above,
+  // in the same order — a tier hint computed against a different baseline
+  // from the measures it is hinting about would be the same bug one level up.
   const energyImprovementFraction = useMemo(() => {
     if (!selection || !materials || totalFloorArea <= 0) return 0;
-    const heatingDemand = annualHeatingDemand ?? totalFloorArea * 120;
-    const coolingDemand = annualCoolingDemand ?? totalFloorArea * 30;
+    const useful = engineDemand ? usefulDemandFromEngine(engineDemand, materials) : null;
+    const heatingDemand = useful?.heating ?? annualHeatingDemand ?? totalFloorArea * 120;
+    const coolingDemand = useful?.cooling ?? annualCoolingDemand ?? totalFloorArea * 30;
     const lightingDemand =
       (materials.lighting.lightingPowerDensity * totalFloorArea * annualOperatingHours) / 1000;
     const baseline = heatingDemand + coolingDemand + lightingDemand;
@@ -280,6 +352,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     totalFloorArea,
     annualHeatingDemand,
     annualCoolingDemand,
+    engineDemand,
     annualOperatingHours,
   ]);
 
