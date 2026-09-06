@@ -151,7 +151,9 @@ test.describe("Landing gallery", () => {
     await expect(page.getByTestId("gallery-item-clinic")).toBeVisible();
     await expect(page.getByTestId("gallery-item-schependomlaan")).toBeVisible();
     await expect(page.getByTestId("gallery-item-duplex-apartment")).toBeVisible();
-    await expect(gallery.locator("> li")).toHaveCount(3);
+    // FZK Haus (Lane 1B) merged one commit before the spec that set this to 3.
+    await expect(page.getByTestId("gallery-item-fzk-haus")).toBeVisible();
+    await expect(gallery.locator("> li")).toHaveCount(4);
 
     // The register sheet's furniture is gone from this page entirely.
     await expect(page.getByTestId("landing-ledger-lookup")).toHaveCount(0);
