@@ -323,13 +323,20 @@ const FZK_HAUS: ReferenceBuildingEnergyInputs = Object.freeze({
     W: FZK_HAUS_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.NW,
   }),
   northAssumed: FZK_HAUS_MEASURED_ENVELOPE.northAssumed,
-  // Two equal pitches, unambiguously: Dach-1 and Dach-2, 71.5 m² projected
-  // each at 30.0°, so the area-weighted tilt is exactly 30.0° — no barrel,
-  // no mixed family to disclose. Priced surface (171.13 m²) is the
-  // projected area over cos(30°), same relation as every other building.
+  // Two equal pitches, unambiguously: Dach-1 and Dach-2 at 30.0° each, so the
+  // area-weighted tilt is exactly 30.0° — no barrel, no mixed family to
+  // disclose.
+  //
+  // The row figures are each roof's SURFACE (85.56 m², `roofs[].surfaceSqm`),
+  // not its 71.5 m² plan shadow. Both are true of this building and only one
+  // of them sums to the thing the sentence claims to be over: 85.56 × 2 =
+  // 171.12 against a priced 171.13, where 71.5 × 2 = 143 is the projection
+  // and reconciles with nothing in the sentence. Every other building's
+  // string is the surface for the same reason. (The 0.01 is two 2-dp rows
+  // summed against an independently-rounded total — see the parser's note.)
   roof: Object.freeze({
     type: "gable" as const,
-    read: "2 roof rows · Dach-1 71.5 m² (projected) at 30.0° + Dach-2 71.5 m² (projected) at 30.0° → area-weighted 30.0° over the 171.13 m² priced",
+    read: "2 roof rows · Dach-1 85.56 m² at 30.0° + Dach-2 85.56 m² at 30.0° → area-weighted 30.0° over the 171.13 m² priced",
   }),
   exteriorDoorSqm: FZK_HAUS_MEASURED_ENVELOPE.exteriorDoorSqm,
   // The first building after the Duplex whose glazing AND doors are measured

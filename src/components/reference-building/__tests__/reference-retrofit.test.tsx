@@ -242,3 +242,21 @@ describe("the section on a real building page", () => {
     expect(within(container).queryByTestId("reference-model-retrofit-empty")).toBeNull();
   });
 });
+
+describe("the Korean basis line names the roof in Korean", () => {
+  it("never prints the raw English enum in the Korean sentence", () => {
+    // FZK Haus's `gable` rendered as "태양광은 gable 이용률로 산정했습니다"
+    // because only `flat` had been translated.
+    for (const id of REFERENCE_BUILDING_IDS) {
+      const energy = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!;
+      if (!energy.roof) continue;
+      const ko = retrofitBasisLines(energy, true).join(" ");
+      const sentence = ko.split(" · ")[0];
+      expect(
+        sentence,
+        `${id}: the Korean PV basis line still carries the enum "${energy.roof.type}"`,
+      ).not.toMatch(new RegExp(`\\b${energy.roof.type}\\b`));
+      expect(ko).toContain("이용률로 산정했습니다");
+    }
+  });
+});

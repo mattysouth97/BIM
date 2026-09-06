@@ -8,10 +8,19 @@
  *
  * So every figure carries `read` — the IFC entity class or quantity set the
  * value was counted or summed from, INCLUDING what was excluded from it.
- * Nothing on a card is inferred, rounded up, or borrowed from a sibling model,
- * and there is no U-value, airtightness, HVAC or climate figure here at all: a
- * coordination model states none of them, and a gallery card is exactly the
- * wrong place to start pretending otherwise.
+ * Nothing on a card is inferred, rounded up, or borrowed from a sibling model.
+ * There is no airtightness, HVAC or climate figure here at all: no model in
+ * this gallery states any of them, and a card is exactly the wrong place to
+ * start pretending otherwise.
+ *
+ * A U-value figure is admissible ONLY where the file states one and the
+ * figure's `read` names the property or quantity that states it — FZK Haus
+ * carries 33 in `IfcPropertySingleValue 'ThermalTransmittance'`, and that it
+ * does so is the whole distinction between it and the other four. The rule
+ * was a flat ban until 2026-09-06, written when no published model stated a
+ * U-value; a flat ban would now suppress the most load-bearing fact on that
+ * card. What is forbidden is a thermal figure whose `read` cites nothing,
+ * which is the assumed value the ban existed to keep out.
  *
  * ── The trap this file already fell into once ───────────────────────────────
  * Summing all 269 `GSA BIM Area` quantities gives 6,935.8 m², and that number

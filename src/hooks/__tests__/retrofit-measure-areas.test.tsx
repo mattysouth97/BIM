@@ -184,15 +184,41 @@ describe("roof typology reaches the measure that renders it", () => {
       }));
       const claimedMean = roof.read.match(/area-weighted ([\d.]+)°/);
       const claimedTotal = roof.read.match(/over the ([\d,]+\.\d\d) m²/);
+
       // One constituent is a legitimate roof (the Duplex has a single flat
-      // row); the arithmetic below still has to reproduce the claim.
-      expect(parts.length).toBeGreaterThanOrEqual(1);
-      expect(claimedMean).not.toBeNull();
-      expect(claimedTotal).not.toBeNull();
+      // row); the arithmetic below still has to reproduce the claim. The
+      // message names the shape, because "expected 0 to be >= 1" sends the
+      // next reader looking for a missing roof rather than a mis-shaped
+      // sentence — which is what FZK Haus's first string actually was.
+      expect(
+        parts.length,
+        `roof.read for ${id} states no parseable constituent. Expected one or more ` +
+          `"<name> <area with 2 decimals> m² at <tilt>°" terms, then ` +
+          `"→ area-weighted <tilt>° over the <total> m² priced". ` +
+          `Areas must be each roof's SURFACE (roofs[].surfaceSqm), since that is ` +
+          `what sums to the priced total. Got: ${roof.read}`,
+      ).toBeGreaterThanOrEqual(1);
+      expect(claimedMean, `roof.read for ${id} states no "area-weighted N°"`).not.toBeNull();
+      expect(claimedTotal, `roof.read for ${id} states no "over the N m²"`).not.toBeNull();
 
       const totalArea = parts.reduce((s, p) => s + p.area, 0);
-      // The constituents add up to the total the sentence claims to be over.
-      expect(totalArea).toBeCloseTo(Number(claimedTotal![1].replace(/,/g, "")), 2);
+      const claimed = Number(claimedTotal![1].replace(/,/g, ""));
+      // Each constituent is a 2-dp figure and the total is rounded
+      // independently of them, so summing n of them can drift by at most
+      // n × 0.005. FZK's two 85.56 m² pitches sum to 171.12 against a stated
+      // 171.13. Anything wider than that is a real disagreement, not
+      // rounding — which is why the tolerance is derived from the count
+      // rather than picked.
+      const roundingSlack = parts.length * 0.005;
+      expect(
+        Math.abs(totalArea - claimed),
+        `roof.read for ${id}: constituents sum to ${totalArea.toFixed(2)} but the ` +
+          `sentence says it is over ${claimed.toFixed(2)} — a gap of ` +
+          `${Math.abs(totalArea - claimed).toFixed(2)} m², wider than the ` +
+          `${roundingSlack.toFixed(3)} m² that rounding ${parts.length} two-decimal ` +
+          `figures can produce.`,
+      ).toBeLessThanOrEqual(roundingSlack);
+
       // And they produce the mean tilt it claims.
       const mean = parts.reduce((s, p) => s + p.area * p.tilt, 0) / totalArea;
       expect(mean).toBeCloseTo(Number(claimedMean![1]), 2);
