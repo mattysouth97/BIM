@@ -8,7 +8,7 @@ import { ContactShadows, Environment, OrbitControls, useGLTF } from "@react-thre
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
 import type { ReferenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
 import { FlowNetwork } from "./flow-network";
-import { useScenarioStore, useProposalVisualIds } from "@/store/scenario-store";
+import { useScenarioStore, useProposalVisualIds, useEffectiveMeasureIds } from "@/store/scenario-store";
 import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
 import {
   EnvelopeRetrofitTint,
@@ -261,7 +261,17 @@ export function ReferenceModelViewer({
   // `EnergyInstrumentHud`). Reading the raw field here would mean the switch
   // turns the twin's proposal off while this page's building keeps showing
   // it — two controls disagreeing about what "the" selection is.
-  const selectedMeasureIds = useScenarioStore((s) => s.selectedMeasureIds);
+  // `selectedMeasureIds` is now the knapsack's RECOMMENDATION only (marks
+  // chips 추천); `appliedMeasureIds` is the user's actual chosen set once the
+  // HUD has seeded it, and can differ from the recommendation the moment the
+  // user edits a chip. The legend must narrate the EFFECTIVE set (what
+  // `useProposalVisualIds()` actually draws), not the recommendation alone —
+  // otherwise it can report "N measures" while M are really on the building.
+  const rawSelectedMeasureIds = useScenarioStore((s) => s.selectedMeasureIds);
+  const appliedMeasureIds = useScenarioStore((s) => s.appliedMeasureIds);
+  const effectiveMeasureIds = useEffectiveMeasureIds();
+  const isScenarioSeeded = rawSelectedMeasureIds !== null || appliedMeasureIds !== null;
+  const selectedMeasureIds = isScenarioSeeded ? effectiveMeasureIds : null;
   const previewProposal = useScenarioStore((s) => s.previewProposal);
   const proposalIds = useProposalVisualIds();
   const visual = useMemo(() => deriveVisualState(proposalIds), [proposalIds]);
