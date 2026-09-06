@@ -210,12 +210,20 @@ function Fabric({
 function ServiceGeometry({
   url,
   centre,
+  onMounted,
 }: {
   url: string;
   centre: THREE.Vector3;
+  onMounted: (url: string, mounted: boolean) => void;
 }) {
   const { scene } = useGLTF(url);
   useEffect(() => setReferenceShadows(scene), [scene]);
+  useEffect(() => {
+    // useGLTF suspends until decoding finishes; this effect runs only after
+    // its primitive has committed to the scene, not merely after selection.
+    onMounted(url, true);
+    return () => onMounted(url, false);
+  }, [scene, url, onMounted]);
   return (
     <primitive object={scene} position={[-centre.x, -centre.y, -centre.z]} />
   );
@@ -302,8 +310,23 @@ export function ReferenceModelViewer({
 }) {
   const [offset, setOffset] = useState<SceneOffset | null>(null);
   const onMeasured = useCallback((next: SceneOffset) => setOffset(next), []);
+  const [loadedServiceUrls, setLoadedServiceUrls] = useState<ReadonlySet<string>>(() => new Set());
+  const onServiceMounted = useCallback((url: string, mounted: boolean) => {
+    setLoadedServiceUrls((current) => {
+      if (current.has(url) === mounted) return current;
+      const next = new Set(current);
+      if (mounted) next.add(url);
+      else next.delete(url);
+      return next;
+    });
+  }, []);
   const fabricOn = active.has(fabricLayerId);
   const shown = services.filter((layer) => active.has(layer.id));
+  // Match the current URL as well as active selection: an old building's
+  // cached layer with the same id must not make a new request appear ready.
+  const loadedServiceIds = shown
+    .filter((layer) => loadedServiceUrls.has(`${baseUrl}/${layer.file}`))
+    .map((layer) => layer.id).sort();
   const details = manifest.architecturalDetails;
   const detailsOn = details !== undefined && active.has(details.id);
   const materialRequested = materialEnabled && !!manifest.materialFabric;
@@ -356,6 +379,7 @@ export function ReferenceModelViewer({
       data-pv-drawn={visual.solarInstalled ? pvDrawn : undefined}
       data-roof-planes={pvLayout ? "ready" : "pending"}
       data-model-loaded={offset !== null}
+      data-service-layers-loaded={loadedServiceIds.join(",")}
       data-view={viewRequest.view}
       data-inspection={inspection}
       data-details-visible={detailsOn}
@@ -442,6 +466,7 @@ export function ReferenceModelViewer({
                   <ServiceGeometry
                     url={`${baseUrl}/${layer.file}`}
                     centre={offset.centre}
+                    onMounted={onServiceMounted}
                   />
                   {/* Renewed-equipment tint — only when this discipline's own
                       measures are selected AND its layer is on; otherwise the
