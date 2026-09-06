@@ -99,6 +99,8 @@ export function ReferenceBuildingWorkspace({
           active={active}
           fabricLayerId={FABRIC_LAYER}
           flowVisible={flowVisible}
+          manifest={manifest}
+          locale={locale}
         />
         {energy ? (
           <ReferenceEnergyFrame

@@ -7,6 +7,16 @@ import { ContactShadows, Environment, OrbitControls, useGLTF } from "@react-thre
 
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
 import { FlowNetwork } from "./flow-network";
+import { useScenarioStore } from "@/store/scenario-store";
+import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
+import {
+  EnvelopeRetrofitTint,
+  EquipmentRetrofitTint,
+  RoofRetrofitVisualBoundary,
+  RetrofitLegend,
+  equipmentLayerReach,
+  roofElevationThresholdM,
+} from "./reference-retrofit-visuals";
 
 type SceneOffset = Readonly<{
   centre: THREE.Vector3;
@@ -202,6 +212,8 @@ export function ReferenceModelViewer({
   active,
   fabricLayerId,
   flowVisible,
+  manifest,
+  locale = "ko",
 }: {
   modelUrl: string;
   /**
@@ -215,11 +227,38 @@ export function ReferenceModelViewer({
   active: ReadonlySet<string>;
   fabricLayerId: string;
   flowVisible: boolean;
+  /**
+   * Only `roofs`/`storeys` are read here (telling a roof from a floor slab in
+   * the merged fabric bucket) — the whole manifest is threaded through rather
+   * than picking two fields so a future consumer of it here needs no second
+   * prop added to `ReferenceBuildingWorkspace`'s call site.
+   */
+  manifest: ReferenceBuildingManifest;
+  locale?: "ko" | "en";
 }) {
   const [offset, setOffset] = useState<SceneOffset | null>(null);
   const onMeasured = useCallback((next: SceneOffset) => setOffset(next), []);
   const fabricOn = active.has(fabricLayerId);
   const shown = services.filter((layer) => active.has(layer.id));
+
+  // Green-remodelling preview: read directly from the scenario store rather
+  // than through a prop, so the knapsack's selection reaches this canvas
+  // without a line added to reference-building-workspace.tsx (Lane 2's file).
+  const selectedMeasureIds = useScenarioStore((s) => s.selectedMeasureIds);
+  const visual = useMemo(
+    () => deriveVisualState(selectedMeasureIds ?? []),
+    [selectedMeasureIds],
+  );
+  const hvacReach = equipmentLayerReach(services, active, "hvac");
+  const lightingReach = equipmentLayerReach(services, active, "electrical");
+  const roofingLayer = services.find((l) => l.id === "roofing");
+  const roofingUrl = roofingLayer ? `${baseUrl}/${roofingLayer.file}` : null;
+  // Known from the manifest alone, before any GLTF has loaded — a synchronous
+  // proxy for "can a roof visual exist on this building" so the legend text
+  // does not have to wait on (or lift state up from) the 3D geometry split.
+  const roofGeometryAvailable =
+    roofingUrl !== null ||
+    roofElevationThresholdM(manifest.roofs, manifest.storeys) !== null;
 
   return (
     <div className="h-full w-full" data-testid="reference-model-viewer">
@@ -262,6 +301,10 @@ export function ReferenceModelViewer({
               xray={fabricOn && shown.length > 0}
               onMeasured={onMeasured}
             />
+            {/* Wall/glazing retrofit tint — mutates the SAME cached scene
+                `Fabric` renders, independently of its x-ray effect (see the
+                comment on `EnvelopeRetrofitTint`). */}
+            {fabricOn ? <EnvelopeRetrofitTint url={modelUrl} visual={visual} /> : null}
           </group>
           {offset
             ? shown.map((layer) => (
@@ -270,6 +313,13 @@ export function ReferenceModelViewer({
                     url={`${baseUrl}/${layer.file}`}
                     centre={offset.centre}
                   />
+                  {/* Renewed-equipment tint — only when this discipline's own
+                      measures are selected AND its layer is on; otherwise the
+                      legend explains why nothing here changed. */}
+                  {((layer.id === "hvac" && visual.hvacUpgraded) ||
+                    (layer.id === "electrical" && visual.lightingUpgraded)) && (
+                    <EquipmentRetrofitTint url={`${baseUrl}/${layer.file}`} />
+                  )}
                 </Suspense>
               ))
             : null}
@@ -282,9 +332,23 @@ export function ReferenceModelViewer({
                     url={`${baseUrl}/${layer.flow?.file}`}
                     centre={offset.centre}
                     layerId={layer.id}
+                    proposed={
+                      (layer.id === "hvac" && visual.hvacUpgraded) ||
+                      (layer.id === "electrical" && visual.lightingUpgraded)
+                    }
                   />
                 ))
             : null}
+          {offset ? (
+            <RoofRetrofitVisualBoundary
+              fabricUrl={modelUrl}
+              roofingUrl={roofingUrl}
+              roofs={manifest.roofs}
+              storeys={manifest.storeys}
+              visual={visual}
+              centre={offset.centre}
+            />
+          ) : null}
           {offset ? (
             <>
               <Ground y={offset.baseY} extent={offset.radius * 5} />
@@ -305,6 +369,14 @@ export function ReferenceModelViewer({
         </Suspense>
         <OrbitControls makeDefault enableDamping maxPolarAngle={Math.PI / 2.05} />
       </Canvas>
+      <RetrofitLegend
+        selectedMeasureIds={selectedMeasureIds}
+        visual={visual}
+        hvacReach={hvacReach}
+        lightingReach={lightingReach}
+        roofGeometryAvailable={roofGeometryAvailable}
+        isKo={locale === "ko"}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
+import { blendFlowColourTowardProposal } from "./reference-retrofit-visuals";
 
 /** `[ax, ay, az, bx, by, bz, progressA, progressB, isSupply]` */
 type FlowSegment = readonly number[];
@@ -72,12 +73,20 @@ export function FlowNetwork({
   centre,
   layerId,
   opacity = 1,
+  proposed = false,
 }: {
   url: string;
   /** The fabric's offset, so flow stays registered with the building. */
   centre: THREE.Vector3;
   layerId: string;
   opacity?: number;
+  /**
+   * True when this discipline's equipment is being shown as a green-remodelling
+   * proposal (`EquipmentRetrofitTint` is tinting the same layer's GLB) — the
+   * flow lines shift toward the shared "proposed" accent so the animated
+   * duct/pipe run and the equipment it serves read as one change, not two.
+   */
+  proposed?: boolean;
 }) {
   const [doc, setDoc] = useState<FlowDocument | null>(null);
   const material = useRef<THREE.ShaderMaterial | null>(null);
@@ -106,8 +115,8 @@ export function FlowNetwork({
     if (!doc?.segments.length) return null;
     const [supplyHex, returnHex] =
       FLOW_COLOUR[layerId] ?? (["#9ecfe0", "#a8a29e"] as const);
-    const supply = new THREE.Color(supplyHex);
-    const back = new THREE.Color(returnHex);
+    const supply = new THREE.Color(proposed ? blendFlowColourTowardProposal(supplyHex) : supplyHex);
+    const back = new THREE.Color(proposed ? blendFlowColourTowardProposal(returnHex) : returnHex);
 
     const count = doc.segments.length;
     const positions = new Float32Array(count * 6);
@@ -128,7 +137,7 @@ export function FlowNetwork({
     geo.setAttribute("lineProgress", new THREE.BufferAttribute(progress, 1));
     geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     return geo;
-  }, [doc, layerId]);
+  }, [doc, layerId, proposed]);
 
   useEffect(() => () => geometry?.dispose(), [geometry]);
 
