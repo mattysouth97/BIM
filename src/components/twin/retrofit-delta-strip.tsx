@@ -5,11 +5,14 @@
 // says what the building is now.
 //
 // Takes no props on purpose. The HUD's own numbers are already published to
-// `scenario-store` (buildingInputs, selectedMeasureIds), and the climate comes
-// from `useActiveSigunguCd()` — the same source `EnergyCards` uses — so the
-// row above and this row are one engine on one climate. Mounting it is one
-// line, which matters because `energy-instrument-hud.tsx` belongs to another
-// lane.
+// `scenario-store` (buildingInputs, and the chosen work via
+// `useEffectiveMeasureIds`), and the climate comes from `useActiveSigunguCd()`
+// — the same source `EnergyCards` uses — so the row above and this row are one
+// engine on one climate. Mounting it is one line.
+//
+// It reports on the work the USER chose, not on the knapsack's optimum: the
+// measure chips above are the selection, and this says what that selection
+// does to the building.
 //
 // It also carries the 제안 미리보기 switch, which is what makes the twin's 3D
 // retrofit visuals reachable at all: `measure-visuals.ts` reads
@@ -24,14 +27,21 @@
 
 import { useMemo, useState } from "react";
 import { useT } from "@/lib/i18n";
-import { useScenarioStore, useProposalVisualIds } from "@/store/scenario-store";
+import {
+  useScenarioStore,
+  useProposalVisualIds,
+  useEffectiveMeasureIds,
+} from "@/store/scenario-store";
 import { useMaterialStore } from "@/store/material-store";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { getClimateData } from "@/lib/energy/climate-data";
 import { getGradeColor } from "@/lib/energy/energy-grade";
 import type { EnergyGrade } from "@/lib/energy/energy-grade";
-import { computeRetrofitDelta } from "@/lib/retrofit/retrofit-delta";
+import {
+  computeRetrofitDelta,
+  zeroDeltaReason,
+} from "@/lib/retrofit/retrofit-delta";
 import type { RetrofitPhysicalChange } from "@/lib/retrofit/retrofit-delta";
 
 /** A signed number with its unit, coloured by whether it is an improvement. */
@@ -84,7 +94,9 @@ export function RetrofitDeltaStrip() {
   const [expanded, setExpanded] = useState(false);
 
   const buildingInputs = useScenarioStore((s) => s.buildingInputs);
-  const selectedMeasureIds = useScenarioStore((s) => s.selectedMeasureIds);
+  // The work in force — what the user chose, which is what every other
+  // number on this frame is struck against.
+  const chosenMeasureIds = useEffectiveMeasureIds();
   const previewProposal = useScenarioStore((s) => s.previewProposal);
   const setPreviewProposal = useScenarioStore((s) => s.setPreviewProposal);
   // Subscribed so the switch's effect on the model is visible from here even
@@ -104,13 +116,31 @@ export function RetrofitDeltaStrip() {
       materials,
       recipe,
       climate: getClimateData(sigunguCd),
-      measureIds: selectedMeasureIds ?? [],
+      measureIds: chosenMeasureIds,
     });
-  }, [materials, recipe, sigunguCd, selectedMeasureIds]);
+  }, [materials, recipe, sigunguCd, chosenMeasureIds]);
 
   const priced = delta?.changes.filter((c) => c.pricedByEngine) ?? [];
   const unpriced = delta?.changes.filter((c) => !c.pricedByEngine) ?? [];
   const movedElements = delta?.elements.filter((e) => e.deltaHCoefficient !== 0) ?? [];
+
+  // WHY the delta is zero — three different facts that used to share one
+  // sentence. Found on /models/schependomlaan, where a selection made only of
+  // unpriced measures rendered "the chosen work does not move this run's
+  // kWh/m²". True of the run; false as stated about the work, which had
+  // changed the building and moved NPV by ₩144만. `isZeroDelta` licenses a
+  // claim about THIS MODULE, never about the building:
+  //
+  //  - nothing is chosen at all;
+  //  - work is chosen, but every item of it is something this engine cannot
+  //    price (LED, PV) — so the run is silent and the work is not;
+  //  - work is chosen and priceable, but its targets are already met, so
+  //    there is genuinely nothing left for it to change.
+  const chosenEffects = delta?.measures ?? [];
+  const unpricedMeasures = chosenEffects.filter(
+    (m) => m.changes.length > 0 && !m.pricedByEngine,
+  );
+  const zeroReason = zeroDeltaReason(chosenMeasureIds.length, chosenEffects);
 
   const previewToggle = (
     <button
@@ -153,16 +183,24 @@ export function RetrofitDeltaStrip() {
         {previewToggle}
 
         {delta.isZeroDelta ? (
-          <span className="shrink-0 text-[11px] text-muted-foreground">
-            {selectedMeasureIds && selectedMeasureIds.length > 0
+          <span
+            className="shrink-0 text-[11px] text-muted-foreground"
+            data-zero-reason={zeroReason}
+          >
+            {zeroReason === "nothing-chosen"
               ? t(
-                  "선택된 측정치는 이 실행의 kWh/m²를 움직이지 않습니다.",
-                  "The selected measures do not move this run's kWh/m².",
+                  "선택한 공사 없음 — 위에서 공사를 고르면 변화가 여기에 나타납니다.",
+                  "No work chosen — pick work above and the change appears here.",
                 )
-              : t(
-                  "선택된 제안 없음 — 프로그램이나 예산을 고르면 변화가 여기에 나타납니다.",
-                  "Nothing selected — pick a program or budget and the change appears here.",
-                )}
+              : zeroReason === "only-unpriced"
+                ? t(
+                    `이 실행이 반영할 수 있는 공사가 선택되어 있지 않습니다 — 선택한 ${unpricedMeasures.length}건은 아래 사유로 kWh/m²에 반영되지 않습니다. 건물과 NPV는 바뀝니다.`,
+                    `No measure this run can price is selected — the ${unpricedMeasures.length} chosen are excluded for the reason below. The building and the NPV do change.`,
+                  )
+                : t(
+                    "선택한 공사의 목표 성능을 이 건물이 이미 충족하고 있어 바뀌는 값이 없습니다.",
+                    "This building already meets the targets of the chosen work, so nothing moves.",
+                  )}
           </span>
         ) : (
           <>
@@ -204,7 +242,12 @@ export function RetrofitDeltaStrip() {
         )}
       </div>
 
-      {expanded && (
+      {/* Normally a disclosure. But when the ONLY thing to report is that the
+          selected work is unpriceable by this run, the reason IS the answer —
+          hiding it behind "자세히" leaves the headline sounding like a verdict
+          on the work. In that state priced rows and moved elements are both
+          empty, so this shows exactly the unpriced block and its explanation. */}
+      {(expanded || zeroReason === "only-unpriced") && (
         <div className="flex flex-col gap-1.5 border-t border-border px-3 py-2">
           {movedElements.length > 0 && (
             <div className="flex items-center gap-1.5 overflow-x-auto">

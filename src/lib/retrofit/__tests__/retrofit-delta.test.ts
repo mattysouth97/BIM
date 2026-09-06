@@ -13,7 +13,7 @@ import {
 } from "@/lib/energy/delivered-from-demand";
 import { applyPhaseToMaterials } from "@/lib/bim/phases/apply-phase";
 import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
-import { computeRetrofitDelta } from "../retrofit-delta";
+import { computeRetrofitDelta, zeroDeltaReason } from "../retrofit-delta";
 
 function makeMaterials(overrides?: Partial<{
   wallU: number;
@@ -362,6 +362,34 @@ describe("computeRetrofitDelta", () => {
     const walls = d.elements.find((e) => e.element === "Walls")!;
     const windows = d.elements.find((e) => e.element === "Windows")!;
     expect(walls.beforeArea + windows.beforeArea).toBeCloseTo(q.grossWallAreaSqm, 9);
+  });
+
+  it("distinguishes the three reasons a delta can be zero", () => {
+    // The bug this pins, found on /models/schependomlaan: a selection made
+    // only of unpriced measures rendered "the chosen work does not move this
+    // run's kWh/m2". True of the run, false as stated about the work, which
+    // had changed the building and moved NPV. `isZeroDelta` alone cannot tell
+    // these apart, so no caller may build a sentence from it.
+    const nothing = delta([]);
+    expect(nothing.isZeroDelta).toBe(true);
+    expect(zeroDeltaReason(0, nothing.measures)).toBe("nothing-chosen");
+
+    const pvOnly = delta(["solar-pv-flat"]);
+    expect(pvOnly.isZeroDelta).toBe(true);
+    expect(zeroDeltaReason(1, pvOnly.measures)).toBe("only-unpriced");
+
+    // A priceable measure whose target this building already meets: nothing
+    // moved, and nothing was left to move — a different fact again.
+    const alreadyMet = delta(
+      ["envelope-wall-insulation"],
+      makeMaterials({ wallU: 0.1 }),
+    );
+    expect(alreadyMet.isZeroDelta).toBe(true);
+    expect(zeroDeltaReason(1, alreadyMet.measures)).toBe("targets-met");
+  });
+
+  it("does not call a moving selection zero", () => {
+    expect(delta(["envelope-wall-insulation"]).isZeroDelta).toBe(false);
   });
 
   it("does not mutate the materials it was given", () => {

@@ -316,10 +316,23 @@ function resolveFuel(measure: RetrofitMeasure): Fuel {
   return "electricity";
 }
 
-/** Mutual-exclusion key: pivot `conflictGroup` wins, else local `exclusiveGroup`. */
-function exclusionKey(measure: RetrofitMeasure): string | undefined {
+/**
+ * Mutual-exclusion key: pivot `conflictGroup` wins, else local `exclusiveGroup`.
+ *
+ * Exported because the knapsack is no longer the only thing that has to honour
+ * it. Once the user picks the work themselves, the chip row must refuse a
+ * second member of the same group at click time — and it has to refuse it by
+ * the SAME rule the optimiser uses, or a hand-picked set could contain a pair
+ * the engine would never have selected. Note this is the exclusion rule; the
+ * overlap DAMPING for measures that merely share a demand stream is a
+ * different thing and lives in `measure-interactions.ts`.
+ */
+export function measureExclusionKey(measure: RetrofitMeasure): string | undefined {
   return measure.conflictGroup ?? measure.exclusiveGroup;
 }
+
+/** Internal alias kept so the knapsack below reads as it always did. */
+const exclusionKey = measureExclusionKey;
 
 /**
  * Build the year-1..N cash-flow vector for a single measure.
@@ -847,7 +860,29 @@ export function selectMeasuresForBudget(
       best = result;
     }
   }
-  let selected = best?.selected ?? [];
+  const bestSelected = best?.selected ?? [];
+
+  return evaluateMeasureSet(bestSelected, assumptions, baselineAnnualEnergyCost);
+}
+
+/**
+ * Price an EXACT set of measures — the aggregate the knapsack used to compute
+ * inline, extracted so a set the USER picked is evaluated by the identical
+ * arithmetic rather than by a second implementation that agrees today.
+ *
+ * `selectMeasuresForBudget` now ends by calling this on its optimum, so the
+ * recommendation and a hand-picked set are the same computation on different
+ * inputs. This function does NOT enforce budget or exclusivity: it prices what
+ * it is given, because the caller that let the user choose is the one that
+ * knows whether an over-budget or conflicting set should be shown at all.
+ * Use `measureExclusionKey` at click time for the second of those.
+ */
+export function evaluateMeasureSet(
+  measures: RetrofitMeasure[],
+  assumptions: EconomicAssumptions,
+  baselineAnnualEnergyCost?: number,
+): BudgetSelection {
+  let selected = measures;
 
   // Baseline savings cap (audit finding #9): total savings cannot exceed the
   // building's annual energy cost. Scale the heating-side (non-electricity)

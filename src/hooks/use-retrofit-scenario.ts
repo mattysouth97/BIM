@@ -22,6 +22,7 @@ import { generateLightingRetrofits } from "@/lib/retrofit/lighting-retrofits";
 import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
 import {
   selectMeasuresForBudget,
+  evaluateMeasureSet,
   computeFinancials,
   resolveHeatingFuel,
   type EconomicAssumptions,
@@ -111,19 +112,42 @@ export interface RetrofitScenarioInputs {
    * built-in presets don't fit.
    */
   assumptions?: EconomicAssumptions;
+  /**
+   * The work the USER chose, from `scenario-store.appliedMeasureIds`. When
+   * given, `chosen` prices exactly this set and the GR tier hint follows it.
+   * `null`/omitted means nothing is chosen yet and the recommendation stands
+   * in — the state a page is in for the moment before the HUD seeds it.
+   *
+   * Ids absent from the generated catalogue are ignored: a measure the
+   * generators did not produce for this building cannot be priced for it.
+   */
+  chosenMeasureIds?: string[] | null;
 }
 
 export interface RetrofitScenario {
   /** All technically-viable measures the engine produced (financially enriched). */
   allMeasures: RetrofitMeasure[];
-  /** Knapsack-selected subset within capexBudgetKrw, NPV-maximising. */
+  /**
+   * The knapsack's RECOMMENDATION — NPV-maximising subset within the budget.
+   * Since 2026-09-06 this is what the chips mark 추천; it is not what the frame
+   * prices. `chosen` is.
+   */
   selection: BudgetSelection | null;
+  /**
+   * The economics of the work the user actually chose, evaluated by the same
+   * `evaluateMeasureSet` the knapsack ends with — one aggregation, two inputs.
+   * Falls back to `selection` while nothing has been chosen; `null` only when
+   * there are no measures at all.
+   */
+  chosen: BudgetSelection | null;
   /** The economic assumptions used (for display in the UI). */
   assumptions: EconomicAssumptions;
   /**
-   * D₂.5 — selected-scenario energy saving as a fraction of the baseline
-   * annual demand (heating + cooling + lighting). Drives the private-tier
-   * suggestion; 0 when nothing is selected or baseline is unknown.
+   * D₂.5 — CHOSEN-scenario energy saving as a fraction of the baseline annual
+   * demand (heating + cooling + lighting). Drives the private-tier suggestion;
+   * 0 when nothing is chosen or the baseline is unknown. It follows the chosen
+   * work rather than the recommendation, because the tier a building qualifies
+   * for depends on the work it actually does.
    */
   energyImprovementFraction: number;
   /** GR private-track tier the improvement fraction qualifies for (UI hint only). */
@@ -228,6 +252,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     feedInTariffKrw = 130,
     programTrack = "none",
     assumptions: assumptionsOverride,
+    chosenMeasureIds = null,
   } = inputs;
 
   // Resolve effective assumptions: explicit override > program-track preset >
@@ -375,18 +400,32 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     }));
   }, [allMeasures, assumptions]);
 
-  // Knapsack selection within budget.
+  // Knapsack RECOMMENDATION within budget.
   const selection = useMemo<BudgetSelection | null>(() => {
     if (allMeasures.length === 0) return null;
     return selectMeasuresForBudget(allMeasures, capexBudgetKrw, assumptions);
   }, [allMeasures, capexBudgetKrw, assumptions]);
+
+  // The economics of the CHOSEN work. The same `evaluateMeasureSet` the
+  // knapsack ends with, so a hand-picked set and the optimum are one
+  // computation on two inputs rather than two implementations that agree
+  // today. Deliberately NOT budget-clamped: the user is allowed to choose
+  // more work than the budget covers, and the rail says so — silently
+  // dropping their last click would be worse than an honest overrun.
+  const chosen = useMemo<BudgetSelection | null>(() => {
+    if (allMeasures.length === 0) return null;
+    if (chosenMeasureIds == null) return selection;
+    const wanted = new Set(chosenMeasureIds);
+    const picked = allMeasures.filter((m) => wanted.has(m.id));
+    return evaluateMeasureSet(picked, assumptions);
+  }, [allMeasures, chosenMeasureIds, assumptions, selection]);
 
   // D₂.5 — improvement vs baseline for the GR private-tier suggestion.
   // Baseline mirrors the demand resolution used for measure generation above,
   // in the same order — a tier hint computed against a different baseline
   // from the measures it is hinting about would be the same bug one level up.
   const energyImprovementFraction = useMemo(() => {
-    if (!selection || !materials || totalFloorArea <= 0) return 0;
+    if (!chosen || !materials || totalFloorArea <= 0) return 0;
     const useful = engineDemand ? usefulDemandFromEngine(engineDemand, materials) : null;
     const heatingDemand = useful?.heating ?? annualHeatingDemand ?? totalFloorArea * 120;
     const coolingDemand = useful?.cooling ?? annualCoolingDemand ?? totalFloorArea * 30;
@@ -399,7 +438,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     // improve the building's own performance — counting it would suggest
     // GR tiers the building doesn't qualify for. Knapsack/ROI still use
     // full generation; only this eligibility input excludes it.
-    const saved = selection.selected.reduce(
+    const saved = chosen.selected.reduce(
       (s, m) => (m.category === "renewable" ? s : s + m.annualEnergySaving),
       0,
     );
@@ -409,7 +448,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     // a 100% improvement claim.
     return Math.max(0, Math.min(1, saved / baseline));
   }, [
-    selection,
+    chosen,
     materials,
     totalFloorArea,
     annualHeatingDemand,
@@ -421,6 +460,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
   return {
     allMeasures: enriched,
     selection,
+    chosen,
     assumptions,
     energyImprovementFraction,
     suggestedPrivateTrack: suggestPrivateTrack(energyImprovementFraction),

@@ -1,9 +1,20 @@
 "use client";
 
 // src/components/twin/energy-instrument-hud.tsx
-// The energy instrument itself: top answer bar (NPV + 그린리모델링 chips,
-// program track) and bottom strip (grade / kWh / CO₂ / heat loss, selected
-// measures, CAPEX grip). Extracted from TwinStageOverlay on 2026-09-04 so a
+// The energy instrument itself: top answer bar (NPV over the chosen work, the
+// measure chips, then financing) and bottom strip (grade / kWh / CO₂ / heat
+// loss, the before→after delta, chosen measures, CAPEX grip).
+//
+// WORK FIRST (2026-09-06 15:37, user's instruction). The top section used to
+// be NPV over six financing chips, and the knapsack decided what got built —
+// so a person could not pick a measure, and the building changed as a side
+// effect of a money choice. Now the primary row is `MeasureChipRow`, one chip
+// per physical measure carrying what it does to this building; the knapsack's
+// optimum is a 추천 mark on those chips; and the programme moved below them as
+// 지원 재원, which re-prices the chosen work and never re-picks it. Every
+// number on the frame is struck against `scenario.chosen`.
+//
+// Extracted from TwinStageOverlay on 2026-09-04 so a
 // building that is not a 건축물대장 row — a reference model whose inputs are
 // measured from its IFC — can carry the identical frame without faking a
 // register title to get it. What the HUD needs is five numbers and a store
@@ -35,6 +46,7 @@ import { ScenarioRail } from "./scenario-rail";
 import { CapexInput } from "./capex-input";
 import { ProgramTrackSelector } from "./program-track-selector";
 import { SelectedMeasuresStrip } from "./selected-measures-strip";
+import { MeasureChipRow } from "./measure-chip-row";
 import { RetrofitDeltaStrip } from "./retrofit-delta-strip";
 import { EnergyCards } from "@/components/viewer/energy-cards";
 
@@ -99,6 +111,8 @@ export function EnergyInstrumentHud({
   const setCapexBudget = useScenarioStore((s) => s.setCapexBudget);
   const setProgramTrack = useScenarioStore((s) => s.setProgramTrack);
   const setBuildingInputs = useScenarioStore((s) => s.setBuildingInputs);
+  const appliedMeasureIds = useScenarioStore((s) => s.appliedMeasureIds);
+  const setAppliedMeasureIds = useScenarioStore((s) => s.setAppliedMeasureIds);
 
   // Publish the derived inputs so other surfaces (SceneOutliner) feed the
   // engine from the same record instead of re-deriving their own.
@@ -147,11 +161,13 @@ export function EnergyInstrumentHud({
     // answer yet rather than a number pretending to be one.
     engineDemand: metrics?.demand,
     engineEnvelopeAreas,
+    // The work the user picked. Everything on this frame is priced against
+    // it, not against the knapsack's optimum.
+    chosenMeasureIds: appliedMeasureIds,
   });
 
-  // Publish the knapsack selection so the 3D MEP layers can physically swap
-  // equipment (boiler→condensing/ASHP, fluorescent→LED, PV on/off) whenever
-  // the budget or program track changes the selected measures.
+  // Publish the knapsack RECOMMENDATION. Since 2026-09-06 it marks chips 추천
+  // and nothing else — it no longer decides what the model shows.
   const setSelectedMeasureIds = useScenarioStore((s) => s.setSelectedMeasureIds);
   useEffect(() => {
     if (!scenario.selection) return;
@@ -159,23 +175,55 @@ export function EnergyInstrumentHud({
     setSelectedMeasureIds(ids);
   }, [scenario.selection, setSelectedMeasureIds]);
 
+  // Seed the user's set ONCE per building, from the first recommendation, so
+  // the page arrives showing work rather than a bare building. After that the
+  // field is the user's alone — note the guard is `=== null`, not "differs
+  // from the recommendation": re-seeding on divergence would overwrite every
+  // deselection, and changing a financing chip would move the building again,
+  // which is exactly the behaviour this lane exists to remove.
+  useEffect(() => {
+    if (appliedMeasureIds !== null) return;
+    if (!scenario.selection) return;
+    setAppliedMeasureIds(scenario.selection.selected.map((m) => m.id));
+  }, [appliedMeasureIds, scenario.selection, setAppliedMeasureIds]);
+
+  const recommendedIds = useMemo(
+    () => scenario.selection?.selected.map((m) => m.id) ?? [],
+    [scenario.selection],
+  );
+
   const summary = useMemo(() => {
-    if (!scenario.selection) return undefined;
-    const sel = scenario.selection.selected.length;
+    if (!scenario.chosen) return undefined;
+    const sel = scenario.chosen.selected.length;
     const total = scenario.allMeasures.length;
     return `${sel}/${total} measures`;
-  }, [scenario.selection, scenario.allMeasures.length]);
+  }, [scenario.chosen, scenario.allMeasures.length]);
 
   return (
     <TwinInstrumentFrame
       top={
         <section className="overflow-hidden rounded-lg border border-border bg-card/95 shadow-sm backdrop-blur-md">
+          {/* The rail answers for the CHOSEN work, not the optimum — the
+              numbers above the chips have to describe the set the chips show
+              as selected, or the frame reports two different projects. */}
           <ScenarioRail
             capexBudgetKrw={capexBudgetKrw}
-            selection={scenario.selection}
+            selection={scenario.chosen}
             assumptions={scenario.assumptions}
             totalCandidateMeasures={scenario.allMeasures.length}
           />
+          {/* PRIMARY control: the work. Above financing, because the work is
+              what the user is choosing and the money is a consequence. */}
+          <div className="border-t border-border">
+            <MeasureChipRow
+              measures={scenario.allMeasures}
+              recommendedIds={recommendedIds}
+              areas={engineEnvelopeAreas}
+              totalFloorAreaSqm={totalFloorArea}
+            />
+          </div>
+          {/* SECONDARY: how it is paid for. Re-prices the chosen work; never
+              re-picks it. */}
           <div className="border-t border-border">
             <ProgramTrackSelector
               value={programTrack}
@@ -202,7 +250,7 @@ export function EnergyInstrumentHud({
           ) : null}
           <RetrofitDeltaStrip />
           <SelectedMeasuresStrip
-            measures={scenario.selection?.selected ?? []}
+            measures={scenario.chosen?.selected ?? []}
           />
           <CapexInput
             value={capexBudgetKrw}

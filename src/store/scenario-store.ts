@@ -14,7 +14,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ProgramTrack } from "@/lib/retrofit/cost-database";
-import { proposalVisualIds } from "@/lib/retrofit/measure-visuals";
+import {
+  proposalVisualIds,
+  effectiveMeasureIds,
+} from "@/lib/retrofit/measure-visuals";
 
 /** Engine inputs derived from ledger title + footprint geometry. */
 export interface ScenarioBuildingInputs {
@@ -43,24 +46,35 @@ interface ScenarioState {
    */
   buildingInputs: ScenarioBuildingInputs | null;
   /**
-   * Knapsack-selected retrofit measure ids, published by the twin-stage
-   * overlay after each budget/track evaluation. `null` = no scenario has
-   * been evaluated yet (3D layers render the showcase equipment kit).
-   * Drives the physical equipment swaps in the MEP layers.
+   * The knapsack's RECOMMENDATION — the NPV-optimal subset within the budget,
+   * published by the HUD after each evaluation. `null` = nothing evaluated yet.
+   *
+   * Since 2026-09-06 this is advice, not the answer. It marks chips 추천; it
+   * does not decide what the building shows or what the economics price.
+   * `appliedMeasureIds` does.
    */
   selectedMeasureIds: string[] | null;
   /**
-   * Whether the 3D model shows the selected proposal (renewed walls, low-e
-   * glass, new roof, PV, replacement plant) or the building as it stands.
-   * Default on. The HUD's "제안 미리보기 / Preview proposal" switch writes it.
+   * The work the USER has chosen — the primary selection. It drives the 3D
+   * visuals, the delta strip and the economics.
    *
-   * This replaced `appliedMeasureIds` on 2026-09-06. That field was the only
-   * driver of the envelope visuals and its only writer, `toggleAppliedMeasure`,
-   * lost its last caller when `397882b` deleted the "클릭하여 3D 적용" buttons —
-   * so from the user's side the visuals were unreachable while the code that
-   * drew them looked alive. It is deleted rather than kept as a third state
-   * nobody writes: the visuals now read the knapsack's `selectedMeasureIds`,
-   * gated by this flag, which is the same set the numbers are computed from.
+   * `null` means "not seeded for this building yet": the HUD copies the first
+   * recommendation in once, so the page arrives useful. From that moment it is
+   * the user's, and **nothing but the user changes it**. That is the whole
+   * point of the field. Before it, the only control was a financing chip and
+   * the building changed as a side effect of a money choice; now changing
+   * 지원 재원 re-prices the chosen work and never re-picks it.
+   *
+   * It was deleted earlier the same day for having no writer at all. It is back
+   * because it now has one — the measure chip row — not because the mechanism
+   * that had none was revived.
+   */
+  appliedMeasureIds: string[] | null;
+  /**
+   * Whether the 3D model shows the chosen work (renewed walls, low-e glass,
+   * new roof, PV, replacement plant) or the building as it stands. Default on.
+   * The HUD's "제안 미리보기 / Preview proposal" switch writes it.
+   *
    * Session-only, deliberately: it says what you are looking at right now, and
    * persisting it would let a hydrated `false` silently hide the proposal on
    * a fresh page.
@@ -70,6 +84,8 @@ interface ScenarioState {
   setProgramTrack: (track: ProgramTrack) => void;
   setBuildingInputs: (inputs: ScenarioBuildingInputs | null) => void;
   setSelectedMeasureIds: (ids: string[] | null) => void;
+  /** Write the user's chosen work. `null` returns to "follow the recommendation". */
+  setAppliedMeasureIds: (ids: string[] | null) => void;
   setPreviewProposal: (on: boolean) => void;
   resetScenario: () => void;
 }
@@ -81,6 +97,7 @@ type ScenarioData = Omit<
   | "setProgramTrack"
   | "setBuildingInputs"
   | "setSelectedMeasureIds"
+  | "setAppliedMeasureIds"
   | "setPreviewProposal"
   | "resetScenario"
 >;
@@ -95,6 +112,7 @@ function initialScenarioData(): ScenarioData {
     programTrack: "none",
     buildingInputs: null,
     selectedMeasureIds: null,
+    appliedMeasureIds: null,
     previewProposal: true,
   };
 }
@@ -106,18 +124,22 @@ export const useScenarioStore = create<ScenarioState>()(
 
       setCapexBudget: (krw) => set({ capexBudgetKrw: krw }),
       setProgramTrack: (track) => set({ programTrack: track }),
-      // A selection belongs to one building — switching buildings drops it so
-      // building A's proposal never draws itself on building B in the frames
-      // before the HUD republishes. Republishing the SAME building (an overlay
-      // re-mount) keeps it.
+      // A selection belongs to one building — switching buildings drops BOTH
+      // the recommendation and the user's chosen work, so building A's
+      // proposal never draws itself on building B in the frames before the HUD
+      // republishes, and A's chosen work is never re-priced against B's
+      // envelope. Republishing the SAME building (an overlay re-mount) keeps
+      // both: a re-mount must not silently discard what the user picked.
       setBuildingInputs: (inputs) =>
-        set((state) => ({
-          buildingInputs: inputs,
-          selectedMeasureIds:
-            inputs?.buildingPk === state.buildingInputs?.buildingPk
-              ? state.selectedMeasureIds
-              : null,
-        })),
+        set((state) => {
+          const sameBuilding =
+            inputs?.buildingPk === state.buildingInputs?.buildingPk;
+          return {
+            buildingInputs: inputs,
+            selectedMeasureIds: sameBuilding ? state.selectedMeasureIds : null,
+            appliedMeasureIds: sameBuilding ? state.appliedMeasureIds : null,
+          };
+        }),
       setSelectedMeasureIds: (ids) =>
         set((state) => {
           // Referential stability: skip the update when the id set is unchanged
@@ -134,6 +156,7 @@ export const useScenarioStore = create<ScenarioState>()(
           if (prev === null && ids === null) return state;
           return { selectedMeasureIds: ids };
         }),
+      setAppliedMeasureIds: (ids) => set({ appliedMeasureIds: ids }),
       setPreviewProposal: (on) => set({ previewProposal: on }),
       resetScenario: () => set(initialScenarioData()),
     }),
@@ -148,17 +171,43 @@ export const useScenarioStore = create<ScenarioState>()(
 );
 
 /**
- * The measure ids the 3D model should draw as proposed: the knapsack's
- * selection while the preview is on, nothing while it is off.
+ * The work in force: what the user chose, falling back to the recommendation
+ * only until the HUD has seeded the user's set for this building.
  *
- * Every visual consumer reads this rather than the raw fields, so the twin
- * and the model pages cannot end up showing different id sets. Both branches
- * return a referentially stable array — `selectedMeasureIds` is identity-
- * guarded in `setSelectedMeasureIds`, and "off" is one shared empty array —
- * so the layer generators do not regenerate on every render.
+ * ONE definition, used by the visuals, the delta strip and the economics, so
+ * the picture, the kWh and the NPV on a single frame cannot describe three
+ * different buildings.
+ */
+export function useEffectiveMeasureIds(): string[] {
+  const appliedMeasureIds = useScenarioStore((s) => s.appliedMeasureIds);
+  const selectedMeasureIds = useScenarioStore((s) => s.selectedMeasureIds);
+  return effectiveMeasureIds(appliedMeasureIds, selectedMeasureIds);
+}
+
+/**
+ * The measure ids the 3D model should draw as proposed. **The single gate.**
+ *
+ * The twin's viewer and the model-page viewer both resolve what to draw
+ * through this one selector, and nothing else may. Two selectors is what let
+ * the two surfaces disagree about "the" selection before, so do not add a
+ * second one — extend this.
+ *
+ * Semantics, pinned by test in `measure-visuals.test.ts`:
+ *
+ *   chip on                    → drawn
+ *   chip off but 추천-marked    → NOT drawn; the mark is advice, and a
+ *                                recommendation must never put geometry on a
+ *                                building the user did not choose
+ *   제안 미리보기 off            → nothing drawn, whatever is chosen
+ *   user's set not yet seeded  → the recommendation is drawn, which is the
+ *                                one moment it decides anything
+ *
+ * Both empty branches return a referentially stable array — the store's
+ * setters are identity-guarded and "off" is one shared empty array — so the
+ * layer generators do not regenerate on every render.
  */
 export function useProposalVisualIds(): string[] {
   const previewProposal = useScenarioStore((s) => s.previewProposal);
-  const selectedMeasureIds = useScenarioStore((s) => s.selectedMeasureIds);
-  return proposalVisualIds(previewProposal, selectedMeasureIds);
+  const effective = useEffectiveMeasureIds();
+  return proposalVisualIds(previewProposal, effective);
 }

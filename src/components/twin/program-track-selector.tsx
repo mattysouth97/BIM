@@ -1,9 +1,17 @@
 "use client";
 
 // src/components/twin/program-track-selector.tsx
-// 그린리모델링 사업 track chip group (D₃, dossier §7 item 5). Sits directly
-// under the scenario rail. Default "none" preserves the unsubsidised
-// Phase A/B/C behavior; the four presets come from cost-database.ts.
+// 그린리모델링 사업 track chip group (D₃, dossier §7 item 5). Default "none"
+// preserves the unsubsidised Phase A/B/C behavior; the presets come from
+// cost-database.ts.
+//
+// SECONDARY since 2026-09-06. This row used to be the only thing a person
+// could click, so the building changed as a side effect of picking a subsidy.
+// It now sits UNDER `MeasureChipRow` and is labelled 지원 재원 / Financing:
+// what it selects is how the chosen work is PAID FOR, not what work is done.
+// Changing it re-prices; it must never re-pick. The label carries that —
+// "그린리모델링" over a row of subsidy percentages reads as though the programme
+// were the thing being chosen, which is the confusion the user asked to remove.
 
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
@@ -46,10 +54,13 @@ export function ProgramTrackSelector({ value, onChange, suggestedTrack }: Progra
       )}
       data-twin-track-selector
       role="radiogroup"
-      aria-label={t("그린리모델링 지원 트랙", "Green Remodeling support track")}
+      aria-label={t(
+        "그린리모델링 지원 재원 — 선택한 공사의 재원",
+        "Green Remodeling financing for the chosen work",
+      )}
     >
       <span className="text-[10px] font-medium text-muted-foreground pr-2 border-r border-border">
-        {t("그린리모델링", "Green Remodeling")}
+        {t("지원 재원", "Financing")}
       </span>
       {TRACK_OPTIONS.map(({ track, label, detail }) => {
         const active = track === value;

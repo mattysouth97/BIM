@@ -159,6 +159,36 @@ export interface RetrofitDelta {
   totalFloorAreaSqm: number;
 }
 
+/**
+ * Why a delta came back zero — three different facts a single sentence used to
+ * conflate on screen.
+ *
+ * `isZeroDelta` says nothing moved in THIS RUN. It does not say the work does
+ * nothing: a selection made only of LED and PV changes the building and moves
+ * NPV while this engine stays silent, because `deliveredFromDemand` cannot see
+ * either. Rendering "the chosen work does not move kWh/m²" over such a
+ * selection was found on /models/schependomlaan — true of the run, false as
+ * stated about the work. Branch on this, never on `isZeroDelta` alone.
+ */
+export type ZeroDeltaReason =
+  /** Nothing is selected. */
+  | "nothing-chosen"
+  /** Work is selected, but every item changes only fields this run cannot read. */
+  | "only-unpriced"
+  /** Work is selected and priceable, but its targets are already met. */
+  | "targets-met";
+
+export function zeroDeltaReason(
+  chosenCount: number,
+  measures: readonly RetrofitMeasureEffect[],
+): ZeroDeltaReason {
+  if (chosenCount === 0) return "nothing-chosen";
+  const changedButUnpriced = measures.some(
+    (m) => m.changes.length > 0 && !m.pricedByEngine,
+  );
+  return changedButUnpriced ? "only-unpriced" : "targets-met";
+}
+
 export interface RetrofitDeltaInput {
   materials: MaterialProperties;
   recipe: BuildingRecipe;
