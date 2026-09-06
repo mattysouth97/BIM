@@ -7,6 +7,7 @@ import {
   panelLayoutForRoof,
   equipmentLayerReach,
   buildRetrofitLegendLines,
+  deriveVisualState,
   PV_PANEL_RATED_KWP,
   PV_FIXED_RACK_TILT_DEG,
   type FaceSetAnalysis,
@@ -286,5 +287,109 @@ describe("buildRetrofitLegendLines", () => {
     });
     expect(lines).toHaveLength(1);
     expect(lines[0].en).toMatch(/none map to a visible change/i);
+  });
+
+  it("says nothing about HVAC or lighting when neither measure is in the selection", () => {
+    // Regression: an earlier draft named HVAC/lighting reach whenever ANY
+    // visual was showing, not just when that discipline's own measure was
+    // selected — caught live on Schependomlaan, where a solar-only selection
+    // still claimed "this model carries no HVAC file".
+    const lines = buildRetrofitLegendLines({
+      selectedMeasureIds: ["solar-pv-flat"],
+      visual: { ...NO_RETROFIT_VISUALS, solarInstalled: true },
+      hvacReach: "not-modeled",
+      lightingReach: "not-modeled",
+      roofGeometryAvailable: true,
+    });
+    expect(lines.some((l) => l.key.startsWith("equipment-"))).toBe(false);
+  });
+
+  it("names the below-grade floor slab as having no visual here, rather than silently passing hasAnyVisual", () => {
+    const lines = buildRetrofitLegendLines({
+      selectedMeasureIds: ["envelope-floor-insulation"],
+      visual: { ...NO_RETROFIT_VISUALS, floorsUpgraded: true },
+      hvacReach: "not-modeled",
+      lightingReach: "not-modeled",
+      roofGeometryAvailable: false,
+    });
+    const floorLine = lines.find((l) => l.key === "floor")!;
+    expect(floorLine).toBeDefined();
+    expect(floorLine.en).toMatch(/not visible from this camera/i);
+  });
+});
+
+describe("end-to-end: the legend reproduces the state that produced it", () => {
+  // Runs the REAL derivation chain (deriveVisualState + equipmentLayerReach)
+  // instead of a hand-built `visual`/`reach`, then parses the legend text
+  // back and checks it names exactly the measures/layers that chain
+  // actually produced — the same failure shape AGENTS.md names for the
+  // apartment's awaiting-measurement badge: a claim that was right when
+  // written and silently stopped matching the state behind it.
+  const services = [{ id: "hvac" }, { id: "electrical" }];
+
+  it("a wall+window+hvac selection with HVAC's layer OFF and no electrical activity", () => {
+    const selectedMeasureIds = [
+      "envelope-wall-insulation",
+      "envelope-window-replacement",
+      "hvac-heat-pump",
+    ];
+    const visual = deriveVisualState(selectedMeasureIds);
+    const active = new Set<string>(); // neither hvac nor electrical switched on
+    const hvacReach = equipmentLayerReach(services, active, "hvac");
+    const lightingReach = equipmentLayerReach(services, active, "electrical");
+
+    const lines = buildRetrofitLegendLines({
+      selectedMeasureIds,
+      visual,
+      hvacReach,
+      lightingReach,
+      roofGeometryAvailable: false,
+    });
+    const text = lines.map((l) => l.en).join(" | ");
+
+    expect(text).toMatch(/3 measure\(s\)/i);
+    expect(text).toMatch(/wall finish/i);
+    expect(text).toMatch(/glazing/i);
+    expect(text).not.toMatch(/roof finish/i); // roof was never selected
+    expect(text).toMatch(/HVAC: its discipline layer is switched off/i);
+    expect(text).not.toMatch(/Lighting/i); // lighting was never selected
+  });
+
+  it("the same selection with HVAC's layer switched ON reports 'tinted', not 'off'", () => {
+    const selectedMeasureIds = ["hvac-boiler-upgrade"];
+    const visual = deriveVisualState(selectedMeasureIds);
+    const active = new Set(["hvac"]);
+    const hvacReach = equipmentLayerReach(services, active, "hvac");
+    const lightingReach = equipmentLayerReach(services, active, "electrical");
+
+    const lines = buildRetrofitLegendLines({
+      selectedMeasureIds,
+      visual,
+      hvacReach,
+      lightingReach,
+      roofGeometryAvailable: false,
+    });
+    const text = lines.map((l) => l.en).join(" | ");
+    expect(text).toMatch(/HVAC: shown as renewed equipment/i);
+  });
+
+  it("a lighting-only selection on a building with no electrical file names the absence, not 'off'", () => {
+    const selectedMeasureIds = ["lighting-led-smart"];
+    const visual = deriveVisualState(selectedMeasureIds);
+    const noServices: { id: string }[] = []; // e.g. Schependomlaan
+    const active = new Set<string>();
+    const hvacReach = equipmentLayerReach(noServices, active, "hvac");
+    const lightingReach = equipmentLayerReach(noServices, active, "electrical");
+
+    const lines = buildRetrofitLegendLines({
+      selectedMeasureIds,
+      visual,
+      hvacReach,
+      lightingReach,
+      roofGeometryAvailable: false,
+    });
+    const text = lines.map((l) => l.en).join(" | ");
+    expect(text).not.toMatch(/HVAC/i); // HVAC was never selected — must stay silent
+    expect(text).toMatch(/Lighting.*this file carries no such discipline model/i);
   });
 });
