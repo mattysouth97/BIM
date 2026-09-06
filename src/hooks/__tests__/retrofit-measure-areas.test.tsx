@@ -174,16 +174,23 @@ describe("roof typology reaches the measure that renders it", () => {
 
   for (const id of REFERENCE_BUILDING_IDS) {
     it(`${id}: the roof \`read\` reproduces the tilt it claims`, () => {
-      const roof = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!.roof!;
+      const roof = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!.roof;
+      if (id === "kit-office") {
+        // Curved roof strips have no supported flat/gable/hip/sawtooth label.
+        // Their real per-plane slopes are checked in kit-office-energy.test.
+        expect(roof).toBeUndefined();
+        return;
+      }
+      expect(roof).toBeDefined();
       // The explanation is parsed back and its arithmetic checked, rather
       // than the test asserting that some words appear. Every constituent
       // states its own tilt, so nothing has to be inferred.
-      const parts = [...roof.read.matchAll(/([\d,]+\.\d\d) m² at ([\d.]+)°/g)].map((m) => ({
+      const parts = [...roof!.read.matchAll(/([\d,]+\.\d\d) m² at ([\d.]+)°/g)].map((m) => ({
         area: Number(m[1].replace(/,/g, "")),
         tilt: Number(m[2]),
       }));
-      const claimedMean = roof.read.match(/area-weighted ([\d.]+)°/);
-      const claimedTotal = roof.read.match(/over the ([\d,]+\.\d\d) m²/);
+      const claimedMean = roof!.read.match(/area-weighted ([\d.]+)°/);
+      const claimedTotal = roof!.read.match(/over the ([\d,]+\.\d\d) m²/);
 
       // One constituent is a legitimate roof (the Duplex has a single flat
       // row); the arithmetic below still has to reproduce the claim. The
@@ -196,7 +203,7 @@ describe("roof typology reaches the measure that renders it", () => {
           `"<name> <area with 2 decimals> m² at <tilt>°" terms, then ` +
           `"→ area-weighted <tilt>° over the <total> m² priced". ` +
           `Areas must be each roof's SURFACE (roofs[].surfaceSqm), since that is ` +
-          `what sums to the priced total. Got: ${roof.read}`,
+          `what sums to the priced total. Got: ${roof!.read}`,
       ).toBeGreaterThanOrEqual(1);
       expect(claimedMean, `roof.read for ${id} states no "area-weighted N°"`).not.toBeNull();
       expect(claimedTotal, `roof.read for ${id} states no "over the N m²"`).not.toBeNull();

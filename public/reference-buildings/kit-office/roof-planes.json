@@ -1,0 +1,1061 @@
+{
+  "kind": "bimfit_reference_building_roof_planes",
+  "id": "kit-office",
+  "generatedAt": "2026-09-07T00:00:00.000Z",
+  "northAssumed": true,
+  "note": "Upward faces (within 80°) of each roof element, region-grown into connected coplanar patches: normals within 2°, offsets within 20 mm across shared edges; then patches of one element with the same normal, offsets within 150 mm and plan boxes touching within 50 mm are one surface (a ribbed metal roof is modelled as one pan solid per rib bay). Then what the sky sees: planes highest first, each keeping only the plan area no higher plane covers, so a roof's lower layers (deck under tiles, insulation under deck) are not planes; occludedSqm is what each kept plane lost, and skyUnionSqm the union of every upward shadow before occlusion. Because lower layers are dropped, sum(surfaceSqm) is BELOW the manifest's roofSurfaceSqm, which keeps every layer and every verge because heat crosses them. tiltDeg and azimuthDeg are each plane's own and never a blend across the roof; azimuth is the downslope bearing clockwise from project north (the model's −Z), null where the plane is flat. outline rings are the plane's visible plan area, outer counter-clockwise and holes clockwise, simplified to 10 mm. obstructions is EMPTY in this pass: the shape is the contract, its content is a later stage.",
+  "skyUnionSqm": 632,
+  "occludedPlanes": 12,
+  "planes": [
+    {
+      "id": "dach-001-plane-0",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#221140",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.95632,
+        -0.292323
+      ],
+      "tiltDeg": 17,
+      "azimuthDeg": 180,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 35.99,
+      "minElevationM": 10.1,
+      "maxElevationM": 10.711,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -1,
+              -13.113
+            ],
+            [
+              17,
+              -13.113
+            ],
+            [
+              17,
+              -11.113
+            ],
+            [
+              -1,
+              -11.113
+            ],
+            [
+              -1,
+              -13.113
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 2
+    },
+    {
+      "id": "dach-001-plane-1",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#221373",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.98902,
+        -0.147784
+      ],
+      "tiltDeg": 8.5,
+      "azimuthDeg": 180,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 37.22,
+      "minElevationM": 10.711,
+      "maxElevationM": 11.02,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -1,
+              -11.113
+            ],
+            [
+              17,
+              -11.113
+            ],
+            [
+              17,
+              -9.045
+            ],
+            [
+              -1,
+              -9.045
+            ],
+            [
+              -1,
+              -11.113
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 2.07
+    },
+    {
+      "id": "dach-001-plane-2",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#221585",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 37.63,
+      "minElevationM": 11.02,
+      "maxElevationM": 11.02,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -1,
+              -9.045
+            ],
+            [
+              17,
+              -9.045
+            ],
+            [
+              17,
+              -6.955
+            ],
+            [
+              -1,
+              -6.955
+            ],
+            [
+              -1,
+              -9.045
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 2.09
+    },
+    {
+      "id": "dach-001-plane-3",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#221797",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.98902,
+        0.147784
+      ],
+      "tiltDeg": 8.5,
+      "azimuthDeg": 0,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 37.22,
+      "minElevationM": 10.711,
+      "maxElevationM": 11.02,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -1,
+              -6.955
+            ],
+            [
+              17,
+              -6.955
+            ],
+            [
+              17,
+              -4.887
+            ],
+            [
+              -1,
+              -4.887
+            ],
+            [
+              -1,
+              -6.955
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 2.07
+    },
+    {
+      "id": "dach-001-plane-4",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#222009",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.95632,
+        0.292323
+      ],
+      "tiltDeg": 17,
+      "azimuthDeg": 0,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 35.99,
+      "minElevationM": 10.1,
+      "maxElevationM": 10.711,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -1,
+              -4.887
+            ],
+            [
+              17,
+              -4.887
+            ],
+            [
+              17,
+              -2.887
+            ],
+            [
+              -1,
+              -2.887
+            ],
+            [
+              -1,
+              -4.887
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 2
+    },
+    {
+      "id": "dach-001-plane-5",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#222221",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.902618,
+        0.430442
+      ],
+      "tiltDeg": 25.5,
+      "azimuthDeg": 0,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 33.97,
+      "minElevationM": 9.2,
+      "maxElevationM": 10.1,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -1,
+              -2.887
+            ],
+            [
+              17,
+              -2.887
+            ],
+            [
+              17,
+              -1
+            ],
+            [
+              -1,
+              -1
+            ],
+            [
+              -1,
+              -2.887
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.89
+    },
+    {
+      "id": "dach-001-plane-6",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#223917",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.902618,
+        -0.430442
+      ],
+      "tiltDeg": 25.5,
+      "azimuthDeg": 180,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 33.97,
+      "minElevationM": 9.2,
+      "maxElevationM": 10.1,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              25,
+              -15
+            ],
+            [
+              43,
+              -15
+            ],
+            [
+              43,
+              -13.113
+            ],
+            [
+              25,
+              -13.113
+            ],
+            [
+              25,
+              -15
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.89
+    },
+    {
+      "id": "dach-001-plane-7",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#224129",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.95632,
+        -0.292323
+      ],
+      "tiltDeg": 17,
+      "azimuthDeg": 180,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 35.99,
+      "minElevationM": 10.1,
+      "maxElevationM": 10.711,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              25,
+              -13.113
+            ],
+            [
+              43,
+              -13.113
+            ],
+            [
+              43,
+              -11.113
+            ],
+            [
+              25,
+              -11.113
+            ],
+            [
+              25,
+              -13.113
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 2
+    },
+    {
+      "id": "dach-001-plane-8",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#224341",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.98902,
+        -0.147784
+      ],
+      "tiltDeg": 8.5,
+      "azimuthDeg": 180,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 37.22,
+      "minElevationM": 10.711,
+      "maxElevationM": 11.02,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              25,
+              -11.113
+            ],
+            [
+              43,
+              -11.113
+            ],
+            [
+              43,
+              -9.045
+            ],
+            [
+              25,
+              -9.045
+            ],
+            [
+              25,
+              -11.113
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 2.07
+    },
+    {
+      "id": "dach-001-plane-9",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#224553",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 37.63,
+      "minElevationM": 11.02,
+      "maxElevationM": 11.02,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              25,
+              -9.045
+            ],
+            [
+              43,
+              -9.045
+            ],
+            [
+              43,
+              -6.955
+            ],
+            [
+              25,
+              -6.955
+            ],
+            [
+              25,
+              -9.045
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 2.09
+    },
+    {
+      "id": "dach-001-plane-10",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#224765",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.98902,
+        0.147784
+      ],
+      "tiltDeg": 8.5,
+      "azimuthDeg": 0,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 37.22,
+      "minElevationM": 10.711,
+      "maxElevationM": 11.02,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              25,
+              -6.955
+            ],
+            [
+              43,
+              -6.955
+            ],
+            [
+              43,
+              -4.887
+            ],
+            [
+              25,
+              -4.887
+            ],
+            [
+              25,
+              -6.955
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 2.07
+    },
+    {
+      "id": "dach-001-plane-11",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#224977",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.95632,
+        0.292323
+      ],
+      "tiltDeg": 17,
+      "azimuthDeg": 0,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 35.99,
+      "minElevationM": 10.1,
+      "maxElevationM": 10.711,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              25,
+              -4.887
+            ],
+            [
+              43,
+              -4.887
+            ],
+            [
+              43,
+              -2.887
+            ],
+            [
+              25,
+              -2.887
+            ],
+            [
+              25,
+              -4.887
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 2
+    },
+    {
+      "id": "dach-001-plane-12",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#225189",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.902618,
+        0.430442
+      ],
+      "tiltDeg": 25.5,
+      "azimuthDeg": 0,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 33.97,
+      "minElevationM": 9.2,
+      "maxElevationM": 10.1,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              25,
+              -2.887
+            ],
+            [
+              43,
+              -2.887
+            ],
+            [
+              43,
+              -1
+            ],
+            [
+              25,
+              -1
+            ],
+            [
+              25,
+              -2.887
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.89
+    },
+    {
+      "id": "dach-001-plane-13",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#225401",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.902618,
+        -0.430442
+      ],
+      "tiltDeg": 25.5,
+      "azimuthDeg": 180,
+      "surfaceSqm": 37.64,
+      "projectedSqm": 33.97,
+      "minElevationM": 9.2,
+      "maxElevationM": 10.1,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              -1,
+              -15
+            ],
+            [
+              17,
+              -15
+            ],
+            [
+              17,
+              -13.113
+            ],
+            [
+              -1,
+              -13.113
+            ],
+            [
+              -1,
+              -15
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 1.89
+    },
+    {
+      "id": "dach-001-plane-14",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#222433",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.922066,
+        -0.387034
+      ],
+      "tiltDeg": 22.77,
+      "azimuthDeg": 180,
+      "surfaceSqm": 18.94,
+      "projectedSqm": 17.47,
+      "minElevationM": 10.2,
+      "maxElevationM": 11.116,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              17,
+              -17
+            ],
+            [
+              25,
+              -17
+            ],
+            [
+              25,
+              -14.817
+            ],
+            [
+              17,
+              -14.817
+            ],
+            [
+              17,
+              -17
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "dach-001-plane-15",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#222645",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.965108,
+        -0.261853
+      ],
+      "tiltDeg": 15.18,
+      "azimuthDeg": 180,
+      "surfaceSqm": 18.94,
+      "projectedSqm": 18.28,
+      "minElevationM": 11.116,
+      "maxElevationM": 11.737,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              17,
+              -14.817
+            ],
+            [
+              25,
+              -14.817
+            ],
+            [
+              25,
+              -12.531
+            ],
+            [
+              17,
+              -12.531
+            ],
+            [
+              17,
+              -14.817
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "dach-001-plane-16",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#222857",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.991239,
+        -0.132084
+      ],
+      "tiltDeg": 7.59,
+      "azimuthDeg": 180,
+      "surfaceSqm": 18.94,
+      "projectedSqm": 18.78,
+      "minElevationM": 11.737,
+      "maxElevationM": 12.049,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              17,
+              -12.531
+            ],
+            [
+              25,
+              -12.531
+            ],
+            [
+              25,
+              -10.184
+            ],
+            [
+              17,
+              -10.184
+            ],
+            [
+              17,
+              -12.531
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "dach-001-plane-17",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#223069",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "tiltDeg": 0,
+      "azimuthDeg": null,
+      "surfaceSqm": 18.94,
+      "projectedSqm": 18.94,
+      "minElevationM": 12.049,
+      "maxElevationM": 12.049,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              17,
+              -10.184
+            ],
+            [
+              25,
+              -10.184
+            ],
+            [
+              25,
+              -7.816
+            ],
+            [
+              17,
+              -7.816
+            ],
+            [
+              17,
+              -10.184
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "dach-001-plane-18",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#223281",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.991239,
+        0.132084
+      ],
+      "tiltDeg": 7.59,
+      "azimuthDeg": 0,
+      "surfaceSqm": 18.94,
+      "projectedSqm": 18.78,
+      "minElevationM": 11.737,
+      "maxElevationM": 12.049,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              17,
+              -7.816
+            ],
+            [
+              25,
+              -7.816
+            ],
+            [
+              25,
+              -5.469
+            ],
+            [
+              17,
+              -5.469
+            ],
+            [
+              17,
+              -7.816
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "dach-001-plane-19",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#223493",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.965108,
+        0.261853
+      ],
+      "tiltDeg": 15.18,
+      "azimuthDeg": 0,
+      "surfaceSqm": 18.94,
+      "projectedSqm": 18.28,
+      "minElevationM": 11.116,
+      "maxElevationM": 11.737,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              17,
+              -5.469
+            ],
+            [
+              25,
+              -5.469
+            ],
+            [
+              25,
+              -3.183
+            ],
+            [
+              17,
+              -3.183
+            ],
+            [
+              17,
+              -5.469
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    },
+    {
+      "id": "dach-001-plane-20",
+      "elementName": "Dach-001",
+      "elementType": "IfcSlab",
+      "elementRef": "ifc://AC20-Institute-Var-2.ifc#223705",
+      "family": "Dach-001",
+      "storeyId": "storey-dachgeschoss",
+      "normal": [
+        0,
+        0.922066,
+        0.387034
+      ],
+      "tiltDeg": 22.77,
+      "azimuthDeg": 0,
+      "surfaceSqm": 18.94,
+      "projectedSqm": 17.47,
+      "minElevationM": 10.2,
+      "maxElevationM": 11.116,
+      "triangleCount": 2,
+      "outline": [
+        {
+          "kind": "outer",
+          "points": [
+            [
+              17,
+              -3.183
+            ],
+            [
+              25,
+              -3.183
+            ],
+            [
+              25,
+              -1
+            ],
+            [
+              17,
+              -1
+            ],
+            [
+              17,
+              -3.183
+            ]
+          ]
+        }
+      ],
+      "obstructions": [],
+      "mergedElements": 1,
+      "occludedSqm": 0
+    }
+  ]
+}

@@ -519,7 +519,36 @@ const FZK_HAUS: GalleryItem = {
   href: "/models/fzk-haus",
 } as const;
 
-export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC, SCHEPENDOMLAAN, DUPLEX, FZK_HAUS];
+const KIT_OFFICE: GalleryItem = {
+  id: "kit-office",
+  koTitle: "KIT 오피스", enTitle: "KIT Office",
+  koUse: "사무·연구시설 예제 · 지하층과 다락 포함 5개 층",
+  enUse: "Fictional office example · five levels including basement and attic",
+  status: "published",
+  modelFile: "AC20-Institute-Var-2.ifc", ifcSchema: "IFC4",
+  viewDefinition: "QuantityTakeOffAddOnView, SpaceBoundary2ndLevelAddOnView",
+  authoringTool: "Graphisoft ArchiCAD 20", modelDate: "2017-01-11",
+  licence: "KIT/IAI unrestricted use (attribution required)",
+  attribution: 'Institute for Automation and Applied Informatics (IAI), Karlsruhe Institute of Technology (KIT), "AC20-Institute-Var-2" — https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples',
+  datums: [
+    { name: "Dachgeschoss", elevationM: 9, rooms: 3, roomAreaSqm: 475.92, excludedSpaces: 0 },
+    { name: "2. Obergeschoss", elevationM: 6, rooms: 22, roomAreaSqm: 441.62, excludedSpaces: 0 },
+    { name: "1. Obergeschoss", elevationM: 3, rooms: 22, roomAreaSqm: 441.62, excludedSpaces: 0 },
+    { name: "Erdgeschoss", elevationM: 0, rooms: 18, roomAreaSqm: 455.8, excludedSpaces: 0 },
+    { name: "Keller", elevationM: -3, rooms: 17, roomAreaSqm: 451.7, excludedSpaces: 0 },
+  ],
+  figures: [
+    { id: "floor-area", ko: "실 면적 합계", en: "Enclosed-space floor area", value: "2,266.7 m²", read: "IfcSpace 82 × GrossFloorArea, 지하·다락 포함, 냉난방 면적은 가정" },
+    { id: "rooms", ko: "실", en: "Spaces", value: "82", read: "IfcSpace 82 (지하 17 + 지상 사무층 62 + 다락 3)" },
+    { id: "walls", ko: "외벽", en: "Exterior walls", value: "44", read: "IfcRelSpaceBoundary PHYSICAL/EXTERNAL에 연결된 IfcWallStandardCase 44" },
+    { id: "windows", ko: "외부 창", en: "Exterior windows", value: "206", read: "IfcWindow 206, 외벽 호스트 확인, OverallWidth × OverallHeight" },
+    { id: "doors", ko: "외부 문", en: "Exterior doors", value: "1", read: "IfcDoor 1, 외벽 호스트 확인, OverallWidth × OverallHeight" },
+    { id: "roof", ko: "곡면 지붕 조각", en: "Curved roof strips", value: "21", read: "IfcSlab PredefinedType=ROOF 21" },
+  ],
+  href: "/models/kit-office",
+};
+
+export const GALLERY_ITEMS: readonly GalleryItem[] = [CLINIC, SCHEPENDOMLAAN, DUPLEX, FZK_HAUS, KIT_OFFICE];
 
 /** Lowest and highest datum, for the section diagram's vertical range. */
 export function datumRange(datums: readonly GalleryDatum[]) {

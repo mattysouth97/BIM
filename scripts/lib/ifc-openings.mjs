@@ -477,7 +477,7 @@ export function openingApertures(api, file, webIfc, opts) {
         const hType = file.typeName(hl);
         const hName = str(hl?.Name) ?? "";
         const isWall = hType === "IfcWall" || hType === "IfcWallStandardCase";
-        if (isWall && !isExcludedWallName(hName) && !isExteriorWallName(hName)) {
+        if (isWall && !isExcludedWallName(hName) && !isExteriorWallName(hName, hl)) {
           rows.push({ ...base, ...measured, hostExpressID: chainHost, hostName: wallName(chainHost), hostBasis: "fills", included: false, reason: `host ${wallName(chainHost)} is not in the exterior-wall set` });
           continue;
         }

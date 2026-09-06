@@ -65,7 +65,7 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     // BADKAMER (bathroom) — Schependomlaan. TOILET is already Dutch as it stands.
     // BATHROOM (1 and 2) — the Duplex. BAD (bathroom) — FZK Haus; \b keeps it
     // from ever matching inside BADKAMER (no boundary between D and K).
-    patterns: [/\bTOILET\b/, /\bJAN\.?\b/, /\bHK\b/, /\bSOIL\.?/, /\bTRASH\b/, /\bCLEAN U\.?/, /\bDIPC\b/, /\bSCOPE WASH\b/, /\bDECON/, /\bBADKAMER\b/, /\bBATHROOM\b/, /\bBAD\b/],
+    patterns: [/\bTOILET\b/, /\bJAN\.?\b/, /\bHK\b/, /\bSOIL\.?/, /\bTRASH\b/, /\bCLEAN U\.?/, /\bDIPC\b/, /\bSCOPE WASH\b/, /\bDECON/, /\bBADKAMER\b/, /\bBATHROOM\b/, /\bBAD\b/, /\bWC\b/],
   },
   {
     key: "plant",
@@ -75,7 +75,7 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     // RUIMTE is the plant room. Both Schependomlaan, both services.
     // UTILITY is the Duplex's equivalent: a 1.4-1.8 m² closet off each
     // dwelling's hallway, which is a services cupboard and not a room.
-    patterns: [/\bMECH/, /\bELEC/, /\bCOMM\. ROOM\b/, /\bCOMPUTER ROOM\b/, /\bADP EQUIP/, /\bDATA \//, /\bMK\b/, /\bINSTAL\.?/, /\bUTILITY\b/],
+    patterns: [/\bMECH/, /\bELEC/, /\bCOMM\. ROOM\b/, /\bCOMPUTER ROOM\b/, /\bADP EQUIP/, /\bDATA \//, /\bMK\b/, /\bINSTAL\.?/, /\bUTILITY\b/, /\bTECHNIKRAUM\b/],
   },
   {
     key: "dental",
@@ -87,7 +87,7 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     key: "lab",
     labelKo: "검사실·약국·영상",
     labelEn: "Laboratory, pharmacy & imaging",
-    patterns: [/\bLAB\b/, /\bSPECIMEN\b/, /\bPHARM\.?/, /\bX-RAY\b/, /\bRADIOGRAPHIC\b/, /\bFILM VIEW\b/, /\bDEVELOPING\b/, /\bMDIS VIEW\b/, /\bFUNDUS\b/],
+    patterns: [/\bLAB\b/, /\bLABOR\b/, /\bSPECIMEN\b/, /\bPHARM\.?/, /\bX-RAY\b/, /\bRADIOGRAPHIC\b/, /\bFILM VIEW\b/, /\bDEVELOPING\b/, /\bMDIS VIEW\b/, /\bFUNDUS\b/],
   },
   {
     key: "clinical",
@@ -115,7 +115,7 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     // BUERO (office) — FZK Haus, the model's own ASCII transliteration of
     // Büro; appended to the existing row rather than given its own, checked
     // against all three prior buildings' space names for a collision (none).
-    patterns: [/\bOFFICE\b/, /\bOFF\.?\b/, /\bADMIN/, /\bANALYST\b/, /\bDIR\.?\b/, /\bDIRECTOR\b/, /\bCHIEF\b/, /\bMGR\b/, /\bSUPER\b/, /\bNCOIC\b/, /\bCMDR\b/, /\bSGT\b/, /\bTECH\.?\b/, /\bWORK STAT/, /\bWORK ROOM\b/, /\bCOPY\b/, /\bCREDENTIALS\b/, /\bCONF\.?/, /\bLIBRARY\b/, /\bCLASSROOM\b/, /\bTEAM\b/, /\bLOUNGE\b/, /\bBREAK ROOM\b/, /\bDRESS\b/, /\bFITTING\b/, /\bGROUP IS\b/, /\bBMET\b/, /\bDISP\.?\b/, /\bKITCHENET/, /\bCL\. UTL/, /\bBUERO\b/],
+    patterns: [/\bOFFICE\b/, /\bOFF\.?\b/, /\bADMIN/, /\bANALYST\b/, /\bDIR\.?\b/, /\bDIRECTOR\b/, /\bCHIEF\b/, /\bMGR\b/, /\bSUPER\b/, /\bNCOIC\b/, /\bCMDR\b/, /\bSGT\b/, /\bTECH\.?\b/, /\bWORK STAT/, /\bWORK ROOM\b/, /\bCOPY\b/, /\bCREDENTIALS\b/, /\bCONF\.?/, /\bLIBRARY\b/, /\bCLASSROOM\b/, /\bTEAM\b/, /\bLOUNGE\b/, /\bBREAK ROOM\b/, /\bDRESS\b/, /\bFITTING\b/, /\bGROUP IS\b/, /\bBMET\b/, /\bDISP\.?\b/, /\bKITCHENET/, /\bCL\. UTL/, /\bBUERO\b/, /\bBESPRECHUNGSRAUM\b/, /\bSEMINARRAUM\b/],
   },
   // ── Residential programs. Appended last on purpose: every row above is
   // tried first, so adding these cannot move a room in a building that has

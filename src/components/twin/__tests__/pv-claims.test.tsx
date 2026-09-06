@@ -25,6 +25,16 @@ describe("PV claims on the work chip and before/after strip", () => {
         const planes = JSON.parse(readFileSync(join(process.cwd(), "public/reference-buildings", id, "roof-planes.json"), "utf8")) as RoofPlaneSet;
         const layout = layoutRoofPlanes(planes);
         const count = layout.planes.reduce((sum, plane) => sum + plane.modules.length, 0);
+        if (id === "kit-office") {
+          // Narrow curved strips cannot fit this layout policy. The real
+          // scenario emits no PV candidate (reference-retrofit.test.tsx).
+          // An empty PV chip set must make no capacity/surface-area claim.
+          expect(count).toBe(0);
+          expect(layout.totalKWp).toBe(0);
+          const { container } = render(<MeasureChipRow measures={[]} recommendedIds={[]} totalFloorAreaSqm={1} assumptions={DEFAULT_ECONOMIC_ASSUMPTIONS} />);
+          expect(container.querySelector('[data-measure-claim]')).toBeNull();
+          return;
+        }
         const measure = calculateSolarPotential(1, energy.roof!.type, "seoul", 130, undefined, count * 0.4);
         useAppStore.setState({ language: lang });
         useActiveBuildingStore.setState({ buildingPk: energy.buildingPk, sigunguCd: energy.climate.sigunguCd });

@@ -49,6 +49,8 @@ export type ReferenceBuildingManifest = Readonly<{
     /** The model's own area-plan total. Recorded, never divided by. */
     areaPlanTotalSqm: number;
     exteriorWallNetSqm: number;
+    /** How exterior-wall membership and area were established for this file. */
+    exteriorWallNote?: string;
     exteriorWallBelowRoofSqm: number;
     exteriorWallAboveRoofSqm: number;
     /**
@@ -440,6 +442,7 @@ export const REFERENCE_BUILDING_IDS = [
   "schependomlaan",
   "duplex-apartment",
   "fzk-haus",
+  "kit-office",
 ] as const;
 
 export type ReferenceBuildingId = (typeof REFERENCE_BUILDING_IDS)[number];

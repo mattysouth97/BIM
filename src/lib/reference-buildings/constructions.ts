@@ -652,12 +652,18 @@ export const FZK_HAUS_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
  * with no table of its own must show that it has none, not silently borrow
  * the Clinic's Anglophone names and resolve nothing while looking healthy.
  */
+export const KIT_OFFICE_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
+  { ifcName: "Stahlbeton 2747937872", basis: "generic_material", materialId: "st-rc", basisNote: "Reinforced concrete, mapped to the generic library at the model's stated 0.30 m slab thickness. Ground coupling is solved separately; this air-to-air assembly U is not the basement U." },
+  ...["Kalksandstein 2816491304", "Kalksandstein 2774059904"].map((ifcName): LayerMapping => ({ ifcName, basis: "generic_material", materialId: "st-brick", basisNote: "Calcium-silicate masonry: no matching library entry exists. Generic concrete-brick conductivity is an explicit surrogate (A-WALL-CONDUCTIVITY), not a measured property or an exact material identity. Thickness is read from each layer set." })),
+]);
+
 const LAYER_MAPPINGS_BY_BUILDING: Readonly<Record<string, readonly LayerMapping[]>> =
   Object.freeze({
     "bs-medical-dental-clinic": CLINIC_LAYER_MAPPINGS,
     schependomlaan: SCHEPENDOMLAAN_LAYER_MAPPINGS,
     "duplex-apartment": DUPLEX_LAYER_MAPPINGS,
     "fzk-haus": FZK_HAUS_LAYER_MAPPINGS,
+    "kit-office": KIT_OFFICE_LAYER_MAPPINGS,
   });
 
 export function layerMappingsFor(buildingId: string): readonly LayerMapping[] {

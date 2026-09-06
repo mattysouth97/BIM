@@ -117,11 +117,16 @@ describe("retrofitBasisLines", () => {
     it(`${id}: quotes the building's own roof reading, not a generic sentence`, () => {
       const energy = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!;
       const lines = retrofitBasisLines(energy, false).join(" ");
-      expect(lines).toContain(energy.roof!.read);
-      expect(lines).toContain(`Energy-input roof category: ${energy.roof!.type}`);
+      if (energy.roof) {
+        expect(lines).toContain(energy.roof.read);
+        expect(lines).toContain(`Energy-input roof category: ${energy.roof.type}`);
+        expect(lines).not.toContain("states no roof typology");
+      } else {
+        expect(lines).toContain("states no roof typology");
+        expect(lines).toContain("PV capacity comes only from the roof-plane layout");
+      }
       expect(lines).toContain("modules placed on the roof planes × assumed module rating");
       expect(lines).not.toContain("utilisation factor");
-      expect(lines).not.toContain("states no roof typology");
     });
   }
 
@@ -238,9 +243,21 @@ describe("the section on a real building page", () => {
       const energy = seed(id as ReferenceBuildingId);
       const layout = layoutRoofPlanes(useScenarioStore.getState().roofPlanes!);
       const drawnModules = layout.planes.reduce((sum, plane) => sum + plane.modules.length, 0);
-      const expected = calculateSolarPotential(1, energy.roof!.type, "seoul", 130, undefined, drawnModules * 0.4);
+      const roofType = energy.roof?.type ?? "flat";
+      const expected = calculateSolarPotential(1, roofType, "seoul", 130, undefined, drawnModules * 0.4);
       const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="en" />);
-      const card = container.querySelector(`[data-testid="retrofit-measure-solar-pv-${energy.roof!.type}"]`)!;
+      const card = container.querySelector(`[data-testid="retrofit-measure-solar-pv-${roofType}"]`)!;
+      if (id === "kit-office") {
+        // The curved strips are narrower than the fixed portrait-module
+        // policy plus setbacks. Zero is a visible placement result, not an
+        // absent table or a PV measure priced from an unrelated area ratio.
+        expect(drawnModules).toBe(0);
+        expect(card).toBeNull();
+        const totals = container.querySelector('[data-testid="reference-pv-totals"]')!;
+        expect(Number(totals.querySelectorAll("td")[4].textContent)).toBe(0);
+        expect(layout.planes.every((plane) => plane.excludedReason !== null)).toBe(true);
+        return;
+      }
       expect(card).not.toBeNull();
       const capacity = card.textContent!.match(/([\d.]+) kWp/);
       expect(Number(capacity?.[1])).toBeCloseTo(drawnModules * 0.4, 8);

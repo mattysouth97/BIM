@@ -840,12 +840,43 @@ const FZK_HAUS = Object.freeze({
     "independently re-derived.",
 });
 
+/** KIT/IAI's explicitly fictional office example; licence verified at source. */
+const KIT_OFFICE = Object.freeze({
+  id: "kit-office",
+  name: { ko: "KIT 오피스", en: "KIT Office" },
+  summary: {
+    ko: "KIT IAI가 공개한 사무·연구시설 예제 모델. 실제 부지의 건물이 아닌 IFC 검증용 설계입니다.",
+    en: "KIT IAI's fictional office and laboratory example, released for IFC validation; not a surveyed building.",
+  },
+  useType: "office_building",
+  licence: "KIT/IAI unrestricted use (attribution required)",
+  attribution: 'Institute for Automation and Applied Informatics (IAI), Karlsruhe Institute of Technology (KIT), "AC20-Institute-Var-2" — https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples',
+  sourceUrl: "https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+  files: [{ role: "architectural", fileName: "AC20-Institute-Var-2.ifc", url: "https://www.ifcwiki.org/images/9/98/AC20-Institute-Var-2.ifc", sha256: "cfb2124497b25d9a72101075e84be0feb44ff669cb1bd3251be11efebeea945c" }],
+  serviceLayers: [],
+  // Names repeat between internal and external walls; IsExternal is absent.
+  // Read PHYSICAL/EXTERNAL boundary membership by element id, never infer
+  // it from a matching wall name. Boundary strip areas are never consumed.
+  exteriorWallsFromSpaceBoundaries: true,
+  areaSource: "stated_first",
+  roofDatumM: 9,
+  location: {
+    rejectCoordinate: true,
+    statedTown: null,
+    trueNorthStated: false,
+    note: "IfcSite.Description explicitly states 'No real site'. The coordinate is an example location, not a surveyed site; the page uses a separately named Seoul climate assumption.",
+  },
+  spacesNote: "The file models basement laboratories, office rooms and two attic spaces. All enclosed IfcSpace floor quantities are recorded here; conditioning every enclosed space is a separately disclosed energy assumption, not an IFC reading.",
+  roofNote: "Dach-001 consists of 21 IfcSlab ROOF strips forming curved roofs. Their surfaces are measured individually; no single flat or gable typology is asserted.",
+});
+
 /** Every building this script can build, selected with `--building <id>`. */
 const BUILDINGS = Object.freeze({
   [CLINIC.id]: CLINIC,
   [SCHEPENDOMLAAN.id]: SCHEPENDOMLAAN,
   [DUPLEX.id]: DUPLEX,
   [FZK_HAUS.id]: FZK_HAUS,
+  [KIT_OFFICE.id]: KIT_OFFICE,
 });
 
 /**
@@ -902,7 +933,18 @@ function isWallType(typeName) {
   return typeName === "IfcWallStandardCase" || typeName === "IfcWall";
 }
 
-function exteriorWallPredicate(building) {
+function exteriorWallPredicate(building, file, webIfc) {
+  if (building.exteriorWallsFromSpaceBoundaries) {
+    const exteriorIds = new Set();
+    for (const boundary of file.byType(webIfc.IFCRELSPACEBOUNDARY)) {
+      if (str(boundary.PhysicalOrVirtualBoundary) !== "PHYSICAL" ||
+          str(boundary.InternalOrExternalBoundary) !== "EXTERNAL") continue;
+      const element = file.deref(boundary.RelatedBuildingElement);
+      if (element && isWallType(file.typeName(element))) exteriorIds.add(element.expressID);
+    }
+    if (exteriorIds.size === 0) throw new Error(`${building.id}: no physical exterior wall boundary membership`);
+    return (_name, line) => exteriorIds.has(line?.expressID);
+  }
   const match = building.exteriorWallMatch;
   const exclude = building.exteriorWallExclude ?? [];
   return (name) => {
@@ -1291,11 +1333,11 @@ async function main() {
 
   // Areas come from the built solid, never from space boundaries — see the
   // retraction in ifc-envelope.mjs.
-  const isExteriorWallName = exteriorWallPredicate(building);
+  const isExteriorWallName = exteriorWallPredicate(building, arch, webIfc);
   const exteriorWalls = netFaceAreasByElement(
     api,
     arch.modelId,
-    (typeName, name) => isWallType(typeName) && isExteriorWallName(name),
+    (typeName, name, line) => isWallType(typeName) && isExteriorWallName(name, line),
     { heightSplitM: building.roofDatumM },
   );
   // How many walls SHOULD there be, counted from the file's own entity list
@@ -1310,7 +1352,7 @@ async function main() {
   let namedWalls = 0;
   for (const type of [webIfc.IFCWALLSTANDARDCASE, webIfc.IFCWALL]) {
     for (const line of arch.byType(type)) {
-      if (isExteriorWallName(str(line.Name) ?? "")) {
+      if (isExteriorWallName(str(line.Name) ?? "", line)) {
         namedWalls += 1;
       }
     }
@@ -1828,7 +1870,11 @@ async function main() {
               `${[...new Set(classification.unresolved.map((u) => u.reason))].join("; ")}. ` +
               `The classifier reads IfcSurfaceOfLinearExtrusion (Revit); this file's ` +
               `boundaries are another surface type. Envelope areas here come from ` +
-              `the wall walk, not from boundaries, so nothing published depends on this.`,
+              (building.exteriorWallsFromSpaceBoundaries
+                ? `stated wall NetSideArea or solid geometry. Exterior wall membership uses ` +
+                  `the boundary's element reference and PHYSICAL/EXTERNAL flags directly; ` +
+                  `it does not require a readable boundary surface or consume its area.`
+                : `the wall walk, not from boundaries, so nothing published depends on this.`),
           }
         : {}),
     },
@@ -1840,6 +1886,9 @@ async function main() {
         spaces.reduce((sum, s) => sum + (s.floorAreaSqm ?? 0), 0),
       ),
       exteriorWallNetSqm: round(wallNet),
+      ...(building.exteriorWallsFromSpaceBoundaries ? {
+        exteriorWallNote: `${exteriorWalls.size} walls selected by IfcRelSpaceBoundary PHYSICAL/EXTERNAL element references; area from each wall's stated NetSideArea (openings already removed). Boundary surface areas are not used.`,
+      } : {}),
       exteriorWallBelowRoofSqm: round(wallBelowRoof),
       exteriorWallAboveRoofSqm: round(wallAboveRoof),
       /**

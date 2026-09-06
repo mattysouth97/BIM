@@ -14,6 +14,7 @@ import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { MaterialProperties } from "@/lib/material-types";
 import type { ReferenceBuildingId } from "./manifest";
 import { REFERENCE_BUILDING_PK_PREFIX } from "./pk";
+import { KIT_OFFICE_ASSUMPTIONS, KIT_OFFICE_GROSS_BY_ORIENTATION, KIT_OFFICE_MATERIALS, KIT_OFFICE_MEASURED_ENVELOPE, KIT_OFFICE_RECIPE } from "./kit-office-energy";
 import {
   CLINIC_ASSUMPTIONS,
   CLINIC_MATERIALS,
@@ -129,6 +130,8 @@ export type ReferenceBuildingEnergyInputs = Readonly<{
    * Nothing downstream can tell the difference unless the registry says so.
    */
   measurementState?: "complete" | "awaiting_measurement";
+  /** Visible scope caveat where measured geometry is not measured operation. */
+  scopeNotice?: Readonly<{ ko: string; en: string }>;
   pendingMeasurements?: readonly Readonly<{
     manifestField: string;
     constant: string;
@@ -356,12 +359,32 @@ const FZK_HAUS: ReferenceBuildingEnergyInputs = Object.freeze({
   measurementState: "complete",
 });
 
+const KIT_OFFICE: ReferenceBuildingEnergyInputs = Object.freeze({
+  buildingPk: referenceBuildingPk("kit-office"),
+  recipe: KIT_OFFICE_RECIPE,
+  materials: KIT_OFFICE_MATERIALS,
+  assumptions: KIT_OFFICE_ASSUMPTIONS,
+  climate: Object.freeze({ sigunguCd: "11", labelKo: "서울 기후 (가정)", labelEn: "Seoul climate (assumed)", assumptionId: "A-CLIMATE" }),
+  wallByOrientationSqm: KIT_OFFICE_MEASURED_ENVELOPE.exteriorWallByOrientationSqm,
+  grossWallByOrientationSqm: KIT_OFFICE_GROSS_BY_ORIENTATION,
+  northAssumed: true,
+  exteriorDoorSqm: KIT_OFFICE_MEASURED_ENVELOPE.exteriorDoorSqm,
+  // Its curved roof is not any of the four supported typologies. Roof-plane
+  // placement supplies PV directly; no flat/gable classification is invented.
+  measurementState: "complete",
+  scopeNotice: Object.freeze({
+    ko: "검증용 가상 건물입니다. 면적은 모델에서 측정했지만 냉난방 범위와 성능은 가정입니다. 계단·동선을 포함한 다락층 475.92 m²를 냉난방 면적에 넣어 면적당 사용량이 낮게 나올 수 있고, 지붕을 무단열로 가정해 지붕 개선 절감액이 크게 나올 수 있습니다. 지하 외벽을 외기로 계산해 난방 수요가 높게 나올 수 있습니다.",
+    en: "Fictional validation building. Geometry is measured; conditioning and performance are assumed. Including the 475.92 m² attic storey (with stair/circulation) as conditioned can understate energy intensity, while assuming an uninsulated roof can overstate roof-retrofit savings. Pricing basement walls as outdoor walls can overstate heating demand.",
+  }),
+});
+
 const ENERGY_INPUTS: Readonly<Record<ReferenceBuildingId, ReferenceBuildingEnergyInputs | null>> =
   Object.freeze({
     "bs-medical-dental-clinic": CLINIC,
     schependomlaan: SCHEPENDOMLAAN,
     "duplex-apartment": DUPLEX,
     "fzk-haus": FZK_HAUS,
+    "kit-office": KIT_OFFICE,
   });
 
 export function referenceBuildingEnergyInputs(
