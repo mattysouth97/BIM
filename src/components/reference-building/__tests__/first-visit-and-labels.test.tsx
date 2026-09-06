@@ -11,6 +11,8 @@ import { renderHook, cleanup } from "@testing-library/react";
 import {
   useSeedReferenceEnergy,
   orientationWwrNote,
+  summarisePendingBias,
+  pendingBadgeText,
   measuredOrientationRows,
 } from "../reference-energy";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
@@ -278,6 +280,68 @@ describe("the legend rows are per-sector, not the whole building repeated", () =
       // below 1, so the window slack can never exceed the gross slack.
       const sumWindows = rows.reduce((s, r) => s + r.windowAreaSqm, 0);
       expect(Math.abs(sumWindows - aperture)).toBeLessThanOrEqual(slack);
+    }
+  });
+});
+
+describe("the frame's measurement-state line is the contract's, not the building's prose", () => {
+  // Every building answers the same question in the same shape: one sentence,
+  // in the reader's language, derived from `measurementState` and the pending
+  // count. The building's own `measuredEnvelope.basis` is a paragraph of
+  // provenance in the file's own register — it belongs in the panel's basis
+  // row, and its opening words vary per building ("FULLY MEASURED — …",
+  // "PARTLY PLACEHOLDER — …", "Read from the buildingSMART Clinic IFCs …").
+  // If the frame ever sourced that, four pages would answer in four shapes
+  // and two languages.
+  for (const id of REFERENCE_BUILDING_IDS) {
+    it(`${id}: one short sentence, in the locale, in the contract's two shapes`, () => {
+      const energy = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!;
+      const bias = summarisePendingBias(energy.pendingMeasurements);
+      const awaiting = energy.measurementState === "awaiting_measurement";
+
+      const ko = awaiting
+        ? pendingBadgeText(bias, true)
+        : "실측 완료 · 이 프레임의 모든 외피 면적은 이 파일에서 측정한 값입니다";
+      const en = awaiting
+        ? pendingBadgeText(bias, false)
+        : "Measurement complete · every envelope area behind this frame is measured from the file";
+
+      // The Korean line is Korean and the English line is not.
+      expect(ko).toMatch(/[가-힣]/);
+      expect(en).not.toMatch(/[가-힣]/);
+
+      // One sentence, not a paragraph.
+      expect(ko.length).toBeLessThan(140);
+      expect(en.length).toBeLessThan(200);
+
+      // And neither is the building's basis prose, whatever that says.
+      const basis = energy.recipe.measuredEnvelope?.basis;
+      expect(basis, `${id} states no basis`).toBeTruthy();
+      expect(ko).not.toBe(basis);
+      expect(en).not.toBe(basis);
+      expect(basis!.length).toBeGreaterThan(200);
+
+      // The two shapes are exclusive and exhaustive: a building is complete
+      // or it is awaiting, and the sentence says which.
+      if (awaiting) {
+        expect(ko).toContain("측정 대기");
+        expect(en).toContain("Awaiting measurement");
+        expect(bias.total).toBeGreaterThan(0);
+      } else {
+        expect(ko).toContain("실측 완료");
+        expect(en).toContain("Measurement complete");
+        expect(bias.total).toBe(0);
+      }
+    });
+  }
+
+  it("no building's basis is short enough to be mistaken for the contract line", () => {
+    // The failure this guards is a basis string trimmed to one line, which
+    // would then look like the contract sentence while saying something the
+    // contract never promised.
+    for (const id of REFERENCE_BUILDING_IDS) {
+      const energy = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!;
+      expect(energy.recipe.measuredEnvelope!.basis.length).toBeGreaterThan(200);
     }
   });
 });
