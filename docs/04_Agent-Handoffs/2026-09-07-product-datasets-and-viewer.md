@@ -154,4 +154,6 @@ UX browser run 66/71 initially passed; five assertions still expected the old
 blanket conductivity assumption label. All six material tests passed after
 checking the truthful per-layer source/assumption wording, and final five
 navigation checks passed. Full unit run: 5,343 passed, 4 existing skips
-(443 passed files, 1 skipped). Clean production deployment pending.
+(443 passed files, 1 skipped). Committed/pushed as `95f9ada`; clean production
+READY, health SHA and `icn1` verified on 2026-09-07 01:15 KST. Ten live
+navigation and camera orbit/zoom checks passed.

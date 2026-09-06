@@ -346,5 +346,185 @@
         "en": "Generic IfcBuildingElementProxy and IfcFurnishingElement occurrences are not classified as MEP without source evidence."
       }
     ]
+  },
+  "materialFabric": {
+    "file": "material-fabric.glb",
+    "byteLength": 305176,
+    "sha256": "ed2fc17d106a45f86e4500ceb7823add9f021074d3ef0399692e3a68d17d03fb",
+    "indexFile": "material-fabric-index.json",
+    "indexSha256": "fd61c19f8408bb8f85d38e726cf96c061447520b9416e08b1f1321b7f7995172",
+    "elements": 76,
+    "triangleCount": 12262,
+    "placedTriangleCount": 13778,
+    "drawCalls": 12,
+    "bindings": [
+      {
+        "key": "slab__architectural_34527",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://AC20-FZK-Haus.ifc#34527",
+        "materialRef": "ifc://AC20-FZK-Haus.ifc#34530",
+        "materialNames": [
+          "Stahlbeton 65690"
+        ],
+        "relationRef": "ifc://AC20-FZK-Haus.ifc#34531",
+        "basis": "occurrence",
+        "assemblyName": "Stahlbeton 65690 0.2",
+        "representativeLayer": {
+          "name": "Stahlbeton 65690",
+          "thicknessM": 0.2,
+          "ref": "ifc://AC20-FZK-Haus.ifc#34526"
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_59316",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://AC20-FZK-Haus.ifc#59316",
+        "materialRef": "ifc://AC20-FZK-Haus.ifc#59319",
+        "materialNames": [
+          "Solid 397409098"
+        ],
+        "relationRef": "ifc://AC20-FZK-Haus.ifc#59320",
+        "basis": "occurrence",
+        "assemblyName": "Solid 397409098 0.2",
+        "representativeLayer": {
+          "name": "Solid 397409098",
+          "thicknessM": 0.2,
+          "ref": "ifc://AC20-FZK-Haus.ifc#59315"
+        },
+        "elements": 3
+      },
+      {
+        "key": "wall__architectural_15069",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://AC20-FZK-Haus.ifc#15069",
+        "materialRef": "ifc://AC20-FZK-Haus.ifc#15072",
+        "materialNames": [
+          "Leichtbeton 102890359"
+        ],
+        "relationRef": "ifc://AC20-FZK-Haus.ifc#15074",
+        "basis": "occurrence",
+        "assemblyName": "Leichtbeton 102890359 0.24",
+        "representativeLayer": {
+          "name": "Leichtbeton 102890359",
+          "thicknessM": 0.24,
+          "ref": "ifc://AC20-FZK-Haus.ifc#15067"
+        },
+        "elements": 5
+      },
+      {
+        "key": "wall__architectural_21971",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://AC20-FZK-Haus.ifc#21971",
+        "materialRef": "ifc://AC20-FZK-Haus.ifc#21974",
+        "materialNames": [
+          "Leichtbeton 102890359"
+        ],
+        "relationRef": "ifc://AC20-FZK-Haus.ifc#21975",
+        "basis": "occurrence",
+        "assemblyName": "Leichtbeton 102890359 0.3",
+        "representativeLayer": {
+          "name": "Leichtbeton 102890359",
+          "thicknessM": 0.3,
+          "ref": "ifc://AC20-FZK-Haus.ifc#21970"
+        },
+        "elements": 8
+      },
+      {
+        "key": "stair__architectural_14521",
+        "group": "stair",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://AC20-FZK-Haus.ifc#14521",
+        "materialNames": [
+          "Holz"
+        ],
+        "relationRef": "ifc://AC20-FZK-Haus.ifc#14528",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "glazing__architectural_17475",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://AC20-FZK-Haus.ifc#17475",
+        "materialNames": [],
+        "relationRef": "ifc://AC20-FZK-Haus.ifc#17477",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 9
+      },
+      {
+        "key": "glazing__architectural_unassigned",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 2
+      },
+      {
+        "key": "door__architectural_17475",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://AC20-FZK-Haus.ifc#17475",
+        "materialNames": [],
+        "relationRef": "ifc://AC20-FZK-Haus.ifc#17477",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 3
+      },
+      {
+        "key": "door__architectural_unassigned",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 2
+      },
+      {
+        "key": "mullion__architectural_35176",
+        "group": "mullion",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://AC20-FZK-Haus.ifc#35176",
+        "materialNames": [
+          "Solid"
+        ],
+        "relationRef": "ifc://AC20-FZK-Haus.ifc#35177",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 42
+      }
+    ],
+    "appearanceBasis": "IFC occurrence or type material association. For a layer set, the thickest stated layer is used as an illustrative representative, not as the verified exterior finish. Source layer order does not establish installation direction. Unreviewed material names remain neutral. Glazing retains its base role appearance."
   }
 }

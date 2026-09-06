@@ -656,7 +656,7 @@ export const KIT_OFFICE_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze(
 const KLASSIQUA_DOCUMENTATION = "https://zenodo.org/records/21727160/files/2026-07_Klassiqua_Buero_Archetypen_Dokumentation.pdf";
 export const KLASSIQUA_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
   ...["Insulation_MineralWool_Lambda0.045_1970", "Insulation_MineralWool_InDryWall_Lambda0.040", "ImpactSoundInsulation_EPS_Lambda0.040", "Insulation_XPS_Lambda0.045_1970"].map((ifcName): LayerMapping => ({
-    ifcName, basis: "source_property", sourceConductivityFactor: { factor: 1.03, ref: `${KLASSIQUA_DOCUMENTATION}#page=11` },
+    ifcName, basis: "source_property", sourceConductivityFactor: { factor: 1.03, ref: `${KLASSIQUA_DOCUMENTATION}#page=13` },
     basisNote: "Source insulation conductivity is declared lambda D. The source documentation specifies design lambda B = lambda D x 1.03; this layer calculation applies that factor.",
   })),
 ]);
@@ -766,7 +766,9 @@ export function solveConstruction(
       }
       const conductivity = source.conductivityWPerMK * factor;
       return {
-        ifcName: layer.name, thicknessM: layer.thicknessM, ref: layer.ref, mapping,
+        ifcName: layer.name, thicknessM: layer.thicknessM, ref: layer.ref,
+        // Do not display a superseded generic assumption beside a source value.
+        mapping: mapping?.basis === "source_property" ? mapping : null,
         conductivityWPerMK: conductivity, resistanceM2KPerW: layer.thicknessM / conductivity,
         thermalSource: { ref: source.ref, declaredConductivityWPerMK: source.conductivityWPerMK, designFactor: factor, conversionRef: mapping?.sourceConductivityFactor?.ref },
       };

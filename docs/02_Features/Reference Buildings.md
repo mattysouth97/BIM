@@ -20,9 +20,10 @@ its own solids — or are named assumptions. `AGENTS.md`'s stated-versus-assumed
 rule applies unchanged; only the source of "stated" moves from the register to
 the IFC.
 
-Five are integrated: `bs-medical-dental-clinic`, `schependomlaan`,
-`duplex-apartment`, `fzk-haus` and `kit-office`. The KIT examples are fictional
-validation buildings; a public IFC does not establish a real occupied site.
+Six are integrated: `bs-medical-dental-clinic`, `schependomlaan`,
+`duplex-apartment`, `fzk-haus`, `kit-office` and `klassiqua-office-1970`.
+The KIT examples and Klassiqua research archetype are synthetic buildings;
+a public IFC does not establish a real occupied site.
 `REFERENCE_BUILDING_IDS` in `src/lib/reference-buildings/manifest.ts` is the
 list, and a building missing from it does not route.
 
@@ -58,6 +59,23 @@ unknown values explicitly unresolved. Base-file exclusions are labelled as
 applying to the base fabric file, since detail and service layers are separate.
 See [[Reference Architectural Details]], [[Reference MEP Coverage]] and
 [[Building Energy Datasets]].
+
+Source-bound material expression defaults on for all six models. The independent
+material fabric replaces the base only after geometry and textures are ready;
+errors preserve the base and expose Retry. Clicking a surface opens its source
+assembly in Materials; an orbit drag does not select it. The toggle, selection,
+X-ray and proposal state survive category navigation. Geometry and transforms
+remain those of the source, with owned UV/material resources and cache-safe
+cleanup. Source-assigned assemblies use their thickest stated layer as an
+illustrative material sample, explicitly not a verified outer finish. Unsupported,
+ambiguous and unassigned surfaces stay neutral. Textures do not supply λ or U.
+
+The material GLBs retain per-element IFC association references in a separate
+index. Occurrence associations take priority over type associations; neither
+missing nor conflicting evidence is guessed. Blender MCP lossless compression
+reduces the six files from 7,456,144 to 3,418,856 bytes while preserving every
+decoded buffer, source graph and material binding. See
+[[../03_Development/Blender Material Optimization|Blender Material Optimization]].
 
 The camera now updates near/far clipping against the model bounds on orbit,
 pan and zoom. The old `distance/800` near plane wasted depth precision at

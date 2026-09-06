@@ -684,5 +684,159 @@
         "en": "Generic IfcBuildingElementProxy and IfcFurnishingElement occurrences are not classified as MEP without source evidence."
       }
     ]
+  },
+  "materialFabric": {
+    "file": "material-fabric.glb",
+    "byteLength": 235124,
+    "sha256": "338ed94b5e3e99776c00237a6e9674e097d28d40559427bc407bbe566b446c33",
+    "indexFile": "material-fabric-index.json",
+    "indexSha256": "a1ad5ac37c1bfb45d2c0547487cdba0586ced19f7bdfd9d933805961ff77db3d",
+    "elements": 434,
+    "triangleCount": 11015,
+    "placedTriangleCount": 40288,
+    "drawCalls": 26,
+    "bindings": [
+      {
+        "key": "slab__architectural_22659",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://AC20-Institute-Var-2.ifc#22659",
+        "materialRef": "ifc://AC20-Institute-Var-2.ifc#22662",
+        "materialNames": [
+          "Stahlbeton 2747937872"
+        ],
+        "relationRef": "ifc://AC20-Institute-Var-2.ifc#22664",
+        "basis": "occurrence",
+        "assemblyName": "Stahlbeton 2747937872 0.3",
+        "representativeLayer": {
+          "name": "Stahlbeton 2747937872",
+          "thicknessM": 0.3,
+          "ref": "ifc://AC20-Institute-Var-2.ifc#22657"
+        },
+        "elements": 5
+      },
+      {
+        "key": "slab__architectural_221144",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://AC20-Institute-Var-2.ifc#221144",
+        "materialNames": [
+          "Aluminium 131198"
+        ],
+        "relationRef": "ifc://AC20-Institute-Var-2.ifc#221157",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 21
+      },
+      {
+        "key": "wall__architectural_31216",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://AC20-Institute-Var-2.ifc#31216",
+        "materialRef": "ifc://AC20-Institute-Var-2.ifc#31219",
+        "materialNames": [
+          "Kalksandstein 2816491304"
+        ],
+        "relationRef": "ifc://AC20-Institute-Var-2.ifc#31220",
+        "basis": "occurrence",
+        "assemblyName": "Kalksandstein 2816491304 0.3",
+        "representativeLayer": {
+          "name": "Kalksandstein 2816491304",
+          "thicknessM": 0.3,
+          "ref": "ifc://AC20-Institute-Var-2.ifc#31215"
+        },
+        "elements": 59
+      },
+      {
+        "key": "wall__architectural_53014",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://AC20-Institute-Var-2.ifc#53014",
+        "materialRef": "ifc://AC20-Institute-Var-2.ifc#53017",
+        "materialNames": [
+          "Kalksandstein 2816491304"
+        ],
+        "relationRef": "ifc://AC20-Institute-Var-2.ifc#53018",
+        "basis": "occurrence",
+        "assemblyName": "Kalksandstein 2816491304 0.2",
+        "representativeLayer": {
+          "name": "Kalksandstein 2816491304",
+          "thicknessM": 0.2,
+          "ref": "ifc://AC20-Institute-Var-2.ifc#53013"
+        },
+        "elements": 54
+      },
+      {
+        "key": "wall__architectural_57234",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://AC20-Institute-Var-2.ifc#57234",
+        "materialRef": "ifc://AC20-Institute-Var-2.ifc#57237",
+        "materialNames": [
+          "Kalksandstein 2774059904"
+        ],
+        "relationRef": "ifc://AC20-Institute-Var-2.ifc#57238",
+        "basis": "occurrence",
+        "assemblyName": "Kalksandstein 2774059904 0.3",
+        "representativeLayer": {
+          "name": "Kalksandstein 2774059904",
+          "thicknessM": 0.3,
+          "ref": "ifc://AC20-Institute-Var-2.ifc#57233"
+        },
+        "elements": 8
+      },
+      {
+        "key": "stair__architectural_22135",
+        "group": "stair",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://AC20-Institute-Var-2.ifc#22135",
+        "materialNames": [
+          "Stahlbeton"
+        ],
+        "relationRef": "ifc://AC20-Institute-Var-2.ifc#22136",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 4
+      },
+      {
+        "key": "glazing__architectural_32591",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://AC20-Institute-Var-2.ifc#32591",
+        "materialNames": [],
+        "relationRef": "ifc://AC20-Institute-Var-2.ifc#32593",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 206
+      },
+      {
+        "key": "door__architectural_32591",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://AC20-Institute-Var-2.ifc#32591",
+        "materialNames": [],
+        "relationRef": "ifc://AC20-Institute-Var-2.ifc#32593",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 77
+      }
+    ],
+    "appearanceBasis": "IFC occurrence or type material association. For a layer set, the thickest stated layer is used as an illustrative representative, not as the verified exterior finish. Source layer order does not establish installation direction. Unreviewed material names remain neutral. Glazing retains its base role appearance."
   }
 }

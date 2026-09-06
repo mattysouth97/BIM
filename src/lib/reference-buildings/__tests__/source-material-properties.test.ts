@@ -24,6 +24,7 @@ describe("source thermal properties", () => {
     const solved = solveConstruction(assembly([layer(2)]), [{ ifcName: "Source concrete", basis: "generic_material", materialId: "st-brick", basisNote: "Surrogate" }]);
     expect(solved.layers[0].conductivityWPerMK).toBe(2);
     expect(solved.assumptions).toEqual([]);
+    expect(solved.layers[0].mapping).toBeNull();
   });
   it("applies the documented insulation design factor once", () => {
     const solved = solveConstruction(assembly([layer(0.045, "Insulation_XPS_Lambda0.045_1970")]), KLASSIQUA_LAYER_MAPPINGS);

@@ -48,6 +48,8 @@ type Expected = Readonly<{
    */
   grade: string;
   demandPerSqm: string;
+  /** Independent geometry regression pins, not values read back from the UI. */
+  pv?: { modules: number; kWp: number };
 }>;
 
 /**
@@ -68,8 +70,9 @@ const BUILDINGS: readonly Expected[] = [
   // and nothing else, and its licence is KIT/IAI's own grant rather than a
   // Creative Commons one. Both are read from the manifest below rather than
   // written here, so neither can be quietly assumed to match the others'.
-  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "2", demandPerSqm: "92.6" },
+  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "2", demandPerSqm: "92.6", pv: { modules: 44, kWp: 17.6 } },
   { id: "kit-office", titleKo: "KIT 오피스", grade: "5", demandPerSqm: "269.1" },
+  { id: "klassiqua-office-1970", titleKo: "Klassiqua 1970 오피스", grade: "2", demandPerSqm: "177.1", pv: { modules: 84, kWp: 33.6 } },
 ];
 
 type Manifest = {
@@ -138,6 +141,7 @@ for (const building of BUILDINGS) {
       const row = page.locator("[data-measure-chip-row]");
       await expect(row).toBeVisible({ timeout: FIRST_PAINT });
       const solar = row.locator('[data-measure-chip^="solar-pv"]').first();
+      if (building.pv) await expect(solar).toBeVisible();
       if ((await solar.count()) === 0) {
         const details = page.getByTestId("reference-pv-utilisation");
         await details.locator("summary").click();
@@ -150,6 +154,10 @@ for (const building of BUILDINGS) {
       const legend = page.getByTestId("reference-retrofit-legend");
       await expect(legend).toHaveAttribute("data-pv-modules", /^\d+$/, { timeout: FIRST_PAINT });
       const counted = await legend.getAttribute("data-pv-modules");
+      if (building.pv) {
+        expect(Number(counted)).toBe(building.pv.modules);
+        await expect(solar).toContainText(`${building.pv.kWp.toFixed(1)} kWp`);
+      }
       await expect(page.getByTestId("reference-model-viewer")).toHaveAttribute(
         "data-pv-drawn",
         counted ?? "",
@@ -228,6 +236,14 @@ for (const building of BUILDINGS) {
         await expect(page.getByTestId("reference-energy-scope-notice")).toContainText("475.92");
         await expect(page.getByTestId("reference-energy-scope-notice")).toContainText("가정");
         await expect(page.getByTestId("reference-energy-scope-notice")).toContainText("지하");
+      }
+      if (building.id === "klassiqua-office-1970") {
+        const scope = page.getByTestId("reference-energy-scope-notice");
+        await expect(scope).toContainText("실제 준공 건물이 아닌 1970년 연구용 오피스 원형");
+        await expect(scope).toContainText("냉방 전력 0");
+        await expect(scope).toContainText("쾌적성을 보장하지 않습니다");
+        await expect(scope).toContainText("서울 기후·기밀·운전효율·재실은 가정");
+        await expect(scope).toContainText("열교 손실이 작게 나올 수 있습니다");
       }
       await expect(strip.getByText(building.grade, { exact: true }).first()).toBeVisible();
     });
@@ -430,3 +446,71 @@ for (const building of BUILDINGS) {
     });
   });
 }
+
+test("Klassiqua keeps source design values, clipped geometry and operating assumptions distinct", async ({ page }, testInfo) => {
+  await seedSeenTours(page);
+  await page.addInitScript(() => {
+    const stored = JSON.parse(localStorage.getItem("korea-building-info-storage")!);
+    stored.state.language = "en";
+    localStorage.setItem("korea-building-info-storage", JSON.stringify(stored));
+  });
+  await page.goto("/models/klassiqua-office-1970");
+  const viewer = page.getByTestId("reference-model-viewer");
+  await expect(viewer).toHaveAttribute("data-material-status", "ready", { timeout: FIRST_PAINT });
+  const overview = page.getByTestId("reference-model-energy");
+  const wall = overview.locator("dl > div").filter({ has: page.getByText("Gross wall", { exact: true }) });
+  const gross = Number((await wall.locator("dd").first().innerText()).replaceAll(",", "").match(/[\d.]+/)?.[0]);
+  const wallRead = (await wall.locator("dd").last().innerText()).replaceAll(",", "");
+  const [, windowArea, wwr, opaqueArea] = wallRead.match(/windows ([\d.]+) m² \(WWR ([\d.]+) %\) · opaque ([\d.]+) m² \(doors included\)/)!;
+  expect(gross).toBe(1215.4);
+  expect(Number(windowArea)).toBe(379.9);
+  expect(Number(opaqueArea)).toBe(835.5);
+  expect(Number(windowArea) + Number(opaqueArea)).toBeCloseTo(gross, 1);
+  expect(Number(wwr)).toBeCloseTo(Number(windowArea) / gross * 100, 1);
+  await expect(overview).toContainText("420.9 · 427.4 m² · 5,275 m³");
+  await overview.locator("summary").filter({ hasText: "input basis records" }).click();
+  const source = page.getByTestId("reference-assumption-S-SOURCE-THERMAL");
+  await expect(source).toContainText("full wall U 1.05, roof U 0.62, effective ground U 0.45, whole-window Uw 4.18");
+  await expect(source).toContainText("archetype design calculations, not measured in-use properties");
+  await expect(source).toContainText("Ground U already includes ISO 13370; no second ground solver");
+  const scope = page.getByTestId("reference-assumption-A-ENVELOPE-SCOPE");
+  await expect(scope).toContainText("All 48 spaces are conditioned");
+  await expect(scope).toContainText("0–14 m; parapet faces are excluded");
+  await expect(scope).toContainText("30.13% façade window ratio has a different façade scope");
+  const scenario = page.getByTestId("reference-assumption-A-SCENARIO-T1");
+  await expect(scenario).toContainText("table 3.5 (PDF page 19)");
+  await expect(scenario).toContainText("Heating efficiency 0.90 and gas DHW efficiency 0.85 are BIMFIT assumptions");
+  const doorText = await page.getByTestId("reference-assumption-A-DOORS").innerText();
+  const [, doorU, wallU, doorArea, deficit] = doorText.match(/\(([\d.]+)−([\d.]+)\)×([\d.]+) = ([\d.]+) W\/K/)!;
+  expect([Number(doorU), Number(wallU), Number(doorArea)]).toEqual([4.33, 1.05, 2.78]);
+  expect((Number(doorU) - Number(wallU)) * Number(doorArea)).toBeCloseTo(Number(deficit), 8);
+
+  await page.getByTestId("reference-info-tab-materials").click();
+  const roof = page.locator('[data-construction-id="assembly-roofing-insulation-bituminioussheeting-gravel-165mm"]');
+  const toggle = roof.getByTestId("material-construction-toggle");
+  if (await toggle.getAttribute("aria-expanded") === "false") await toggle.click();
+  await roof.getByRole("group", { name: "Select a source material layer" }).getByRole("button").first().click();
+  const layer = roof.getByTestId("material-layer-detail");
+  await expect(layer).toContainText("Thermal property stated in source");
+  await expect(layer.getByTestId("material-thermal-source")).toContainText(".ifc#85253");
+  const conversion = layer.getByTestId("material-design-conversion");
+  const [, declared, factor, design] = (await conversion.innerText()).match(/λD ([\d.]+) × ([\d.]+) = λB ([\d.]+) W\/mK/)!;
+  expect([Number(declared), Number(factor)]).toEqual([0.045, 1.03]);
+  expect(Number(declared) * Number(factor)).toBeCloseTo(Number(design), 8);
+  const resistance = Number((await layer.innerText()).match(/R ([\d.]+) m²K\/W/)?.[1]);
+  expect(resistance).toBeCloseTo(0.06 / Number(design), 3);
+  await expect(conversion.getByRole("link")).toHaveAttribute("href", /21727160\/files\/.*\.pdf#page=13$/);
+  await expect(roof).toContainText("building energy input may instead use ground coupling, combined wall leaves or a source-stated U");
+  await page.screenshot({ path: testInfo.outputPath("klassiqua-source-material.png") });
+
+  await page.getByTestId("reference-info-tab-data").click();
+  const data = page.getByTestId("reference-info-panel-data");
+  await data.locator("summary").filter({ hasText: "Model quantities & evidence" }).click();
+  const floor = data.locator("dl > div").filter({ has: page.getByText("Floor area", { exact: true }) });
+  expect(Number((await floor.locator("dd").first().innerText()).replaceAll(",", "").match(/[\d.]+/)?.[0])).toBe(1507);
+  await expect(floor).toContainText("48 spaces with no area quantity use measured plan unions");
+  await expect(data).toContainText("832.7 m²");
+  await expect(data).toContainText("floor-edge bands");
+  await expect(data).toContainText("(0–14 m)");
+  await expect(data).toContainText("Upper parapet faces are recorded separately and excluded");
+});

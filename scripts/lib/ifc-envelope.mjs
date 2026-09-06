@@ -352,7 +352,7 @@ export function extractAssemblies(file, webIfc, { thermalPropertiesInSI = false 
         const property = file.deref(slot);
         if (str(property?.Name) !== "ThermalConductivity" || property.Unit != null) continue;
         const value = num(property.NominalValue);
-        if (!(value > 0)) continue;
+        if (!(value > 0) || !Number.isFinite(value)) continue;
         conductivities.set(refId(set.Material), {
           conductivityWPerMK: r6(value),
           ref: file.ref(property.expressID),

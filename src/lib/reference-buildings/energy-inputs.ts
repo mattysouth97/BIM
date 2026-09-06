@@ -397,7 +397,7 @@ const ENERGY_INPUTS: Readonly<Record<ReferenceBuildingId, ReferenceBuildingEnerg
       grossWallByOrientationSqm: KLASSIQUA_GROSS_BY_ORIENTATION,
       orientationLabels: { N: "NE", E: "SE", S: "SW", W: "NW" },
       northAssumed: false, exteriorDoorSqm: KLASSIQUA_MEASURED.exteriorDoorSqm,
-      roof: { type: "flat", read: "2 flat roof planes: roofing 397.96 m² + visible structural perimeter 22.98 m² = 420.94 m², at 0°; overlapping lower roof layers and parapet caps are excluded" },
+      roof: { type: "flat", read: "Roofing 397.96 m² at 0° + visible structural perimeter 22.98 m² at 0° → area-weighted 0° over the 420.94 m² priced. Overlapping lower roof layers and parapet caps are excluded." },
       measurementState: "complete",
       scopeNotice: {
         ko: "실제 준공 건물이 아닌 1970년 연구용 오피스 원형입니다. 면적은 IFC 형상에서 측정하고 외피 U값은 공개 설계 문서에서 읽었습니다. T1_1970은 냉방 설비가 없어 냉방 전력 0으로 계산되며 쾌적성을 보장하지 않습니다. 서울 기후·기밀·운전효율·재실은 가정입니다. 층간 슬래브 끝에도 동일한 벽 U값을 적용해 열교 손실이 작게 나올 수 있습니다.",

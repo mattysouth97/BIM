@@ -570,8 +570,8 @@ export function ReferenceEnergyPanel({
       <details className="mt-4 group">
         <summary className="cursor-pointer text-xs text-foreground">
           {isKo
-            ? `외피 범위와 가정 ${energy.assumptions.length}건`
-            : `Envelope scope & ${energy.assumptions.length} assumptions`}
+            ? `외피 범위 · 근거와 가정 ${energy.assumptions.length}건`
+            : `Envelope scope & ${energy.assumptions.length} input basis records`}
         </summary>
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
           {energy.recipe.measuredEnvelope?.basis ?? (isKo ? "외곽선 압출" : "extruded from the footprint")}

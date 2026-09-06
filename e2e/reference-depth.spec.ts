@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
+import { REFERENCE_BUILDING_IDS } from "../src/lib/reference-buildings/manifest";
 
-for (const id of ["bs-medical-dental-clinic", "schependomlaan", "duplex-apartment", "fzk-haus", "kit-office"]) {
+for (const id of REFERENCE_BUILDING_IDS) {
   test(`${id}: thin-layer depth precision follows orbit and zoom`, async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));

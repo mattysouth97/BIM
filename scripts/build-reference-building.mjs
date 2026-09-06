@@ -896,7 +896,7 @@ const BUILDINGS = Object.freeze({
       url: "https://zenodo.org/api/records/21727160/files/2026-07_Klassiqua_Buero_Archetypen_Dokumentation.pdf/content",
       sha256: "116268af3109e568616acf4aa83b61e81905ee05a8590f249166be0746afa659",
       licence: "CC BY 4.0",
-      note: "July source documentation: archetype geometry table 2.1, combined envelope U-values table 3.1, window/door properties table 3.4, and technical scenario T1_1970 table 3.6. Source design inputs, not measured operation.",
+      note: "July source documentation: archetype geometry table 2.1, combined envelope U-values table 3.1, window/door properties table 3.4, and technical scenario T1_1970 table 3.5. Source design inputs, not measured operation.",
     }],
     files: [{ role: "architectural", fileName: "2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc", url: "https://zenodo.org/api/records/21727160/files/2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc/content", sha256: "4d77774850b817d8ed9534e19886a1ff7fbcbe734a8f3138eebf2751e4c879fb" }],
     serviceLayers: [],

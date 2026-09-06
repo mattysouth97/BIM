@@ -1,6 +1,6 @@
 # Source architectural detail layers
 
-The five published reference buildings now have a separate
+The six integrated reference buildings have a separate
 `architectural-details.glb`, described by `manifest.architecturalDetails`.
 This is source geometry previously omitted by the core fabric extractor.
 It does not change envelope measurements, energy inputs or existing service
@@ -16,6 +16,7 @@ trigger the service layers' envelope X-ray treatment.
 | Duplex Apartment | 93 | 647,308 | 12,008 | 20 |
 | FZK House | 6 | 84,388 | 1,832 | 4 |
 | KIT Office | 267 | 27,080 | 252 | 4 |
+| Klassiqua Office 1970 | 68 | 120,560 | 2,472 | 5 |
 
 The triangle figures above are the stored meshes, counting an instanced shape
 once. `placedTriangleCount` counts every actual placement and is reconciled
@@ -37,6 +38,8 @@ Selected classes and source roles:
   and 7 footings.
 - FZK architectural: 4 beams and 2 railings.
 - KIT Office architectural: 253 furnishings, 12 railings and 2 columns.
+- Klassiqua: 52 coverings and 16 opaque curtain-wall cladding elements. The
+  opaque cladding is excluded from the core glazing bucket and appears once.
 
 `architectural-details-index.json` names every rendered element by source
 role, IFC express ID, GlobalId, class, name and source reference, with mesh

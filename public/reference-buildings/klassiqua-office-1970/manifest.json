@@ -20,7 +20,7 @@
       "url": "https://zenodo.org/api/records/21727160/files/2026-07_Klassiqua_Buero_Archetypen_Dokumentation.pdf/content",
       "sha256": "116268af3109e568616acf4aa83b61e81905ee05a8590f249166be0746afa659",
       "licence": "CC BY 4.0",
-      "note": "July source documentation: archetype geometry table 2.1, combined envelope U-values table 3.1, window/door properties table 3.4, and technical scenario T1_1970 table 3.6. Source design inputs, not measured operation."
+      "note": "July source documentation: archetype geometry table 2.1, combined envelope U-values table 3.1, window/door properties table 3.4, and technical scenario T1_1970 table 3.5. Source design inputs, not measured operation."
     }
   ],
   "generatedAt": "2026-09-07T00:00:00.000Z",
@@ -806,5 +806,374 @@
     "note": "No space-boundary strips resolved in this file; there is no sum to refute.",
     "rawSumSqm": 0,
     "rawSumByElementType": {}
+  },
+  "materialFabric": {
+    "file": "material-fabric.glb",
+    "byteLength": 215552,
+    "sha256": "13ab8be64a7d2a2142e6eafcc21015c9125555d4fac493a1eb770a2a7365d2d4",
+    "indexFile": "material-fabric-index.json",
+    "indexSha256": "02713ba0b377bfd6ffbd698afeebb63b840168a216d7db19cd7478f702f2b99c",
+    "elements": 321,
+    "triangleCount": 6908,
+    "placedTriangleCount": 45644,
+    "drawCalls": 37,
+    "bindings": [
+      {
+        "key": "slab__architectural_126769",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#126769",
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#126769",
+        "materialNames": [
+          "ReinforcedConcrete_Slabs"
+        ],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#126770",
+        "basis": "type",
+        "assemblyName": "Baseslab_ReinforcedConcrete_300mm",
+        "representativeLayer": {
+          "name": "ReinforcedConcrete_Slabs",
+          "thicknessM": 0.3,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#126771",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 2.3,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13432"
+          }
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_139221",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139221",
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139223",
+        "materialNames": [
+          "ReinforcedConcrete_Slabs"
+        ],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139224",
+        "basis": "occurrence",
+        "assemblyName": "StairLanding_ReinforcedConcrete_200mm",
+        "representativeLayer": {
+          "name": "ReinforcedConcrete_Slabs",
+          "thicknessM": 0.2,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139220",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 2.3,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13432"
+          }
+        },
+        "elements": 3
+      },
+      {
+        "key": "slab__architectural_139206",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139206",
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139208",
+        "materialNames": [
+          "ReinforcedConcrete_Slabs"
+        ],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139209",
+        "basis": "occurrence",
+        "assemblyName": "Slab_ReinforcedConcrete_200mm",
+        "representativeLayer": {
+          "name": "ReinforcedConcrete_Slabs",
+          "thicknessM": 0.2,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139205",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 2.3,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13432"
+          }
+        },
+        "elements": 6
+      },
+      {
+        "key": "slab__architectural_139230",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139230",
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139232",
+        "materialNames": [
+          "ReinforcedConcrete_Slabs"
+        ],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139233",
+        "basis": "occurrence",
+        "assemblyName": "FlatRoofSlab_ReinforcedConcrete_200mm",
+        "representativeLayer": {
+          "name": "ReinforcedConcrete_Slabs",
+          "thicknessM": 0.2,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139229",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 2.3,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13432"
+          }
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_114955",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114955",
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114955",
+        "materialNames": [
+          "Masonry_Silicate_Block_240mm",
+          "Plaster_Interior_Lime_Gypsum"
+        ],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114956",
+        "basis": "type",
+        "assemblyName": "Calcium_Silicate_Plaster_250mm",
+        "representativeLayer": {
+          "name": "Masonry_Silicate_Block_240mm",
+          "thicknessM": 0.24,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114957",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.99,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#3502"
+          }
+        },
+        "elements": 16
+      },
+      {
+        "key": "wall__architectural_114961",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114961",
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114961",
+        "materialNames": [
+          "Plaster_Interior_Lime_Gypsum",
+          "Masonry_Silicate_Block_240mm",
+          "Plaster_Interior_Lime_Gypsum"
+        ],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114962",
+        "basis": "type",
+        "assemblyName": "InteriorWall_Office_CalciumSilicate_260mm",
+        "representativeLayer": {
+          "name": "Masonry_Silicate_Block_240mm",
+          "thicknessM": 0.24,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#114963",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.99,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#3502"
+          }
+        },
+        "elements": 48
+      },
+      {
+        "key": "wall__architectural_6774",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6774",
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6780",
+        "materialNames": [
+          "GypsumBoard_Drywall_12.5mm",
+          "GypsumBoard_Drywall_12.5mm",
+          "Insulation_MineralWool_InDryWall_Lambda0.040",
+          "GypsumBoard_Drywall_12.5mm",
+          "GypsumBoard_Drywall_12.5mm"
+        ],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6781",
+        "basis": "occurrence",
+        "assemblyName": "InteriorWall_Office_DryWall_125mm",
+        "representativeLayer": {
+          "name": "Insulation_MineralWool_InDryWall_Lambda0.040",
+          "thicknessM": 0.075,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6776",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.04,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#6889"
+          }
+        },
+        "elements": 20
+      },
+      {
+        "key": "wall__architectural_92034",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#92034",
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#92161",
+        "materialNames": [
+          "Masonry_Silicate_Block_240mm",
+          "Insulation_MineralWool_Lambda0.045_1970",
+          "BituminousSheeting",
+          "AluminumCladding_4mm"
+        ],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#92162",
+        "basis": "occurrence",
+        "assemblyName": "Attica_Insulation_Aluminium_269mm",
+        "representativeLayer": {
+          "name": "Masonry_Silicate_Block_240mm",
+          "thicknessM": 0.24,
+          "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#92035",
+          "sourceThermalProperties": {
+            "conductivityWPerMK": 0.99,
+            "ref": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#3502"
+          }
+        },
+        "elements": 4
+      },
+      {
+        "key": "stair__architectural_13429",
+        "group": "stair",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#13429",
+        "materialNames": [
+          "ReinforcedConcrete_Slabs"
+        ],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#40513",
+        "basis": "type",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 6
+      },
+      {
+        "key": "glazing__architectural_139160",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139160",
+        "materialNames": [],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139161",
+        "basis": "type",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 135
+      },
+      {
+        "key": "glazing__architectural_139166",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139166",
+        "materialNames": [],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139167",
+        "basis": "type",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 31
+      },
+      {
+        "key": "glazing__architectural_99355",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#99355",
+        "materialNames": [
+          "WindowGlass_DoubleGlazing_1970_24mm"
+        ],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#138619",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_140267",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#140267",
+        "materialNames": [],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#140270",
+        "basis": "type",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 27
+      },
+      {
+        "key": "door__architectural_143526",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#143526",
+        "materialNames": [],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#143529",
+        "basis": "type",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 8
+      },
+      {
+        "key": "door__architectural_143836",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#143836",
+        "materialNames": [],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#143839",
+        "basis": "type",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "door__architectural_139518",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139518",
+        "materialNames": [],
+        "relationRef": "ifc://2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc#139521",
+        "basis": "type",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 13
+      }
+    ],
+    "appearanceBasis": "IFC occurrence or type material association. For a layer set, the thickest stated layer is used as an illustrative representative, not as the verified exterior finish. Source layer order does not establish installation direction. Unreviewed material names remain neutral. Glazing retains its base role appearance."
+  },
+  "mepCoverage": {
+    "schemaVersion": 1,
+    "status": "no_typed_mep_occurrences",
+    "publishedLayerIds": [],
+    "typedElementCount": 0,
+    "distributionPortCount": 0,
+    "sources": [
+      {
+        "role": "architectural",
+        "fileName": "2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc",
+        "sha256": "4d77774850b817d8ed9534e19886a1ff7fbcbe734a8f3138eebf2751e4c879fb",
+        "schema": "IFC4X3_ADD2",
+        "typedElementCount": 0,
+        "entitiesByType": {},
+        "distributionPorts": 0,
+        "systems": 0
+      }
+    ],
+    "summary": {
+      "ko": "제공된 IFC에는 분류된 MEP 요소와 배관·덕트 포트가 없습니다. 일반 가구·프록시는 설비로 추정하지 않습니다.",
+      "en": "The supplied IFC contains no typed MEP elements or distribution ports. Generic furniture and proxies are not interpreted as services."
+    },
+    "limitations": [
+      {
+        "ko": "해시로 고정된 IFC 파일에서 해당 스키마의 설비 분류 상속을 확인한 요소 목록이며, 실제 설치 설비의 완전성 조사가 아닙니다.",
+        "en": "Inventory of distribution occurrence classes using each pinned IFC file's schema inheritance, not a completeness survey of installed services."
+      },
+      {
+        "ko": "분야별·수정본 모델 간 요소가 중복될 수 있으며 파일 간 설비 중복 제거는 하지 않았습니다.",
+        "en": "Counts include overlapping discipline and revision models; there is no cross-file equipment deduplication."
+      },
+      {
+        "ko": "일반 IfcBuildingElementProxy·IfcFurnishingElement는 원본 근거 없이 MEP로 분류하지 않습니다.",
+        "en": "Generic IfcBuildingElementProxy and IfcFurnishingElement occurrences are not classified as MEP without source evidence."
+      }
+    ]
   }
 }

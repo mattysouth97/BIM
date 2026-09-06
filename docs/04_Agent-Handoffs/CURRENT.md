@@ -28,33 +28,37 @@ and deploy each major verified milestone. Current execution record:
 
 Local release validation on 2026-09-07:
 
-- Unit: **5,343 passed**, 4 skipped (443 passed files, 1 skipped).
-- E2E: **101/102 passed** in the full Chromium run; one unrelated CAD setup
-  exceeded its 30s hook budget. Its full five-test rerun passed. The
-  corrected legacy-funding regression separately passed for all five models.
-- Latest detail/material integration: 63/69 initially passed. Five expectations
-  omitted the newly added details row; one test clicked before hydration.
-  Corrected source-derived counts and client readiness: all six reruns passed.
+- Unit: **5,425 passed**, 4 skipped (452 passed files, 1 skipped).
+- Material integration: 22 browser checks passed before compression; all 11
+  material-loading/picking/fallback checks passed again after compression.
+  Six model orbit/zoom checks passed. Expanded energy/PV and full browser
+  release verification are in progress; see execution record for earlier runs.
 - TypeScript: clean. ESLint src/e2e: 0 errors, 6 pre-existing warnings.
 - KIT Office and demo expanded/collapsed canvas screenshots inspected; no page
   errors. Panel controls preserve state and do not overlap the rendering toolbar.
-- Last production verification: `347636d` on 2026-09-07 00:55, health SHA and
-  region `icn1`; 12 live detail/material/dataset smoke checks passed.
+- Last production verification: `95f9ada` on 2026-09-07 01:15, health SHA and
+  region `icn1`; 10 live navigation and camera orbit/zoom checks passed.
 
 ## Current product
 
-- Five source models: Clinic, Schependomlaan, Duplex, FZK Haus and KIT Office.
-  KIT examples are fictional validation models, not verified occupied sites.
-- Source architectural details add 2,989 elements across these five models.
+- Six integrated source models: Clinic, Schependomlaan, Duplex, FZK Haus,
+  KIT Office and Klassiqua Office 1970. KIT examples and the Klassiqua research
+  archetype are synthetic models, not verified occupied sites.
+- Source architectural details add 3,057 elements across these six models.
   The independent layer defaults on, preserves source placements, and supports
   retry without losing the base model. This is selected source detail, not a
   certified LOD claim. Clinic/Schependomlaan roof views were compared with the
   layer on/off; the PV placement remains aligned.
-- Material cards expose source names, measured layer thickness and illustrative
-  samples alongside thermal assumptions. Unknown materials stay unresolved.
+- Source-bound textures now show on the model by default. Surface selection
+  opens the corresponding source assembly; loading/retry preserves the base.
+  Samples illustrate the thickest stated layer, not a verified outer finish.
+  Source thermal properties and generic assumptions remain distinct.
+  Blender MCP lossless optimization reduces these six material payloads by
+  54.1% with exact decoded geometry, normals, indices and instances preserved.
 - MEP inventory is explicit for every model. Schependomlaan gains 73 source
   drainage/vent elements; zero typed MEP in FZK/KIT files does not mean those
-  buildings have no services. Dataset schema 1.1 includes geometry/MEP coverage.
+  buildings have no services. Klassiqua also has no typed MEP in its source.
+  Dataset schema 1.2 includes material bindings and explicit floor/facade scope.
 - JSON/CSV published-baseline datasets on the gallery and each model page.
   They carry licenses, source and payload hashes, units, inputs, assumptions,
   partial measurement scope, and calculated energy. Metered energy is absent.
@@ -65,15 +69,17 @@ Local release validation on 2026-09-07:
   user; recommendation changes do not replace it.
 - Top investment/work and bottom energy panels collapse independently while
   keeping their state mounted. Both reopen controls remain accessible.
-- Locally verified next release: four persistent information categories
+- Published: four persistent information categories
   (Overview/Materials/Layers/Data), concise core copy, browser history and
   keyboard navigation, synchronized KO/EN, and a mobile split that keeps the
   model visible with initially collapsed energy rails. Thin-layer depth
   precision now follows the model bounds while orbiting/zooming; no source
-  faces were removed. Five model orbit/zoom browser checks passed.
+  faces were removed. Six model orbit/zoom browser checks passed.
 - PV roof poses, drawn count, chips and economics share measured roof layout.
-  Clinic 453/181.2 kWp, apartment 10/4.0, Duplex 14/5.6, FZK 22/8.8; KIT 0 under the
-  current module/setback rules. Inspection offers exterior fit, roof and focus.
+  Clinic 453/181.2 kWp, apartment 10/4.0, Duplex 14/5.6, FZK 44/17.6,
+  Klassiqua 84/33.6; KIT 0 under the current module/setback rules. Downslope
+  bearings now follow source normals and declared true north. Flat racks face
+  true south; the yield estimate still does not resolve each slope's shading.
 
 Execution and release details: [[2026-09-07-product-datasets-and-viewer]].
 Superseded snapshots: [[Archive/2026-09-07-before-dataset-and-canvas-release]].
@@ -83,10 +89,11 @@ Prior PV and selection methods remain documented in
 
 ## Open work and limits
 
-- Next: source-bound material expression directly on the model and licensed
-  TalTech/Klassiqua models. Blender MCP availability and an optimization
-  comparison are being investigated by user request. These lanes are not yet
-  published. Material-fabric artifacts on disk are still uncommitted WIP.
+- The sixth model/material-expression/Blender/PV-correction release is locally
+  verified as above and awaiting final browser checks, commit and deployment.
+- TalTech's licensed office/lab model is being checked in an isolated worktree:
+  existing PV arrays need obstruction coverage, and IFC4 ports need traceable
+  ownership. It is not yet integrated or published.
 - Roof plant/parapet obstructions, full shading and structural feasibility are
   unmeasured; current placement may overstate feasible PV capacity.
 - The apartment's aperture extraction is partial: 106.06m² selected glazing and

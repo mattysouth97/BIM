@@ -12,13 +12,15 @@ discipline models and alternative revisions can overlap.
 | Schependomlaan | 73 | 0 | Rainwater drainage / ventilation grilles, supplier utility connections |
 | FZK House | 0 | 0 | None supported by the supplied file's typed MEP entities |
 | KIT Office | 0 | 0 | None supported by the supplied file's typed MEP entities |
+| Klassiqua Office 1970 | 0 | 0 | None supported by the supplied file's typed MEP entities |
 
 The inventory uses the actual web-ifc schema class inheritance under
 `IfcDistributionElement`, plus legacy `IfcElectricalElement`. It supports
 IFC2x3, IFC4 and IFC4x3, and excludes type definitions, relationships and
 generic furnishings/proxies. Unknown schemas fail instead of reporting zero.
 Every inventory row retains the source role, filename and verified SHA-256.
-FZK and KIT Office use IFC4; the other three architectural sources use IFC2x3.
+FZK and KIT Office use IFC4, and Klassiqua uses IFC4X3_ADD2; the other three
+architectural sources use IFC2x3.
 
 Generic furnishings in the Office include source names such as `Objekt-002`
 and `Objekt-006`. They are not evidence of a connected MEP system. The absence

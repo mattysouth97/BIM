@@ -22,6 +22,9 @@ import { clearArchitecturalDetails } from "./reference-detail-geometry";
 import { ReferenceMepCoverage } from "./reference-mep-coverage";
 import { ReferenceMaterialDetails } from "./reference-material-details";
 import { ReferenceInfoNavigation, useReferenceInfoSection } from "./reference-info-navigation";
+import { ReferenceMaterialControls } from "./reference-material-controls";
+import { clearMaterialGeometry, type MaterialGeometryStatus } from "./reference-material-geometry";
+import type { MaterialSurfaceSelection } from "@/lib/reference-buildings/material-selection";
 
 export const FABRIC_LAYER = "fabric";
 
@@ -80,6 +83,10 @@ export function ReferenceBuildingWorkspace({
   );
   const [detailsStatus, setDetailsStatus] = useState<ArchitecturalDetailsStatus>("waiting");
   const [detailsRetry, setDetailsRetry] = useState(0);
+  const [materialEnabled, setMaterialEnabled] = useState(!!manifest.materialFabric);
+  const [materialStatus, setMaterialStatus] = useState<MaterialGeometryStatus>("waiting");
+  const [materialRetry, setMaterialRetry] = useState(0);
+  const [materialSelection, setMaterialSelection] = useState<MaterialSurfaceSelection | null>(null);
   const [flowVisible, setFlowVisible] = useState(true);
   const [inspection, setInspection] = useState(false);
   const [viewRequest, setViewRequest] = useState<ReferenceViewRequest>({ view: "exterior", revision: 0 });
@@ -121,6 +128,14 @@ export function ReferenceBuildingWorkspace({
           inspection={inspection}
           detailsRetry={detailsRetry}
           onDetailsStatus={setDetailsStatus}
+          materialEnabled={materialEnabled}
+          materialStatus={materialStatus}
+          materialRetry={materialRetry}
+          onMaterialStatus={setMaterialStatus}
+          onMaterialPick={(binding) => {
+            setMaterialSelection((current) => ({ binding, revision: (current?.revision ?? 0) + 1 }));
+            setActiveSection("materials");
+          }}
         />
         {energy ? (
           <div className={inspection ? "hidden" : undefined} data-testid="reference-energy-overlays">
@@ -175,7 +190,16 @@ export function ReferenceBuildingWorkspace({
               <ReferenceRetrofitPanel energy={energy} locale={locale} />
             </> : <p className="mt-4 text-xs text-muted-foreground">{isKo ? "이 모델의 에너지 입력은 아직 준비되지 않았습니다." : "Energy inputs are not yet available for this model."}</p>}
           </>,
-          materials: <div className="[&>section]:mt-0"><ReferenceMaterialDetails manifest={manifest} constructions={constructions} isKo={isKo} /></div>,
+          materials: <div className="[&>section]:mt-0">
+            <ReferenceMaterialControls available={!!manifest.materialFabric} enabled={materialEnabled} status={materialStatus} isKo={isKo}
+              onToggle={() => { setMaterialStatus("waiting"); setMaterialEnabled((current) => !current); }}
+              onRetry={() => {
+                clearMaterialGeometry(`${baseUrl}/${manifest.materialFabric!.file}`);
+                setMaterialStatus("waiting");
+                setMaterialRetry((current) => current + 1);
+              }} />
+            <ReferenceMaterialDetails manifest={manifest} constructions={constructions} isKo={isKo} selection={materialSelection} />
+          </div>,
           layers: <>
         <section data-testid="reference-model-layers">
           <h2 className="text-sm font-medium text-foreground">
@@ -191,7 +215,7 @@ export function ReferenceBuildingWorkspace({
               // The manifest said so all along in `model.note`; the label
               // contradicted it and the note was never rendered.
               label={isKo ? "외피" : "Fabric"}
-              detail={`${manifest.model.triangleCount.toLocaleString()} ${isKo ? "삼각형" : "tris"} · ${(manifest.model.byteLength / 1048576).toFixed(1)} MB`}
+              detail={fmtBytes(manifest.model.byteLength)}
               colour={LAYER_COLOUR.fabric}
               on={active.has(FABRIC_LAYER)}
               onToggle={toggle}
@@ -216,19 +240,9 @@ export function ReferenceBuildingWorkspace({
                 <LayerRow
                   id={layer.id}
                   label={isKo ? layer.ko : layer.en}
-                  // "0 shapes → 0 placements" under a layer of 4,293 roof
-                  // tiles is a true sentence that reads as an empty layer. A
-                  // set with no repeated shape gets the fabric row's form —
-                  // triangles and bytes — instead of an instancing figure
-                  // that has nothing to count.
                   detail={
-                    layer.instancedShapes > 0
-                      ? isKo
-                        ? `요소 ${layer.elements.toLocaleString()} · 형상 ${layer.instancedShapes.toLocaleString()}종 → ${layer.instancedPlacements.toLocaleString()}회 · ${fmtBytes(layer.byteLength)}`
-                        : `${layer.elements.toLocaleString()} elements · ${layer.instancedShapes.toLocaleString()} shapes → ${layer.instancedPlacements.toLocaleString()} placements · ${fmtBytes(layer.byteLength)}`
-                      : isKo
-                        ? `요소 ${layer.elements.toLocaleString()} · ${layer.triangleCount.toLocaleString()} 삼각형 · ${fmtBytes(layer.byteLength)}`
-                        : `${layer.elements.toLocaleString()} elements · ${layer.triangleCount.toLocaleString()} tris · ${fmtBytes(layer.byteLength)}`
+                    isKo ? `원본 요소 ${layer.elements.toLocaleString()}개 · ${fmtBytes(layer.byteLength)}`
+                      : `${layer.elements.toLocaleString()} source elements · ${fmtBytes(layer.byteLength)}`
                   }
                   colour={LAYER_COLOUR[layer.id] ?? "#9aa0a6"}
                   on={active.has(layer.id)}
@@ -327,6 +341,7 @@ export function ReferenceBuildingWorkspace({
         <h2 className="text-sm font-medium text-foreground">{isKo ? "원본 데이터" : "Source data"}</h2>
         <div className="mt-3">
           <ReferenceDatasetDownloads buildingId={manifest.id as ReferenceBuildingId} locale={locale} />
+          <a href={`${baseUrl}/manifest.json`} download className="mt-2 inline-block text-xs text-muted-foreground underline underline-offset-2">{isKo ? "모델 메타데이터 · 형상 통계 (JSON)" : "Model metadata & geometry statistics (JSON)"}</a>
         </div>
         <details className="mt-4 rounded-md border border-border p-3">
           <summary className="cursor-pointer text-xs font-medium text-foreground">{isKo ? "모델 수량과 산출 근거" : "Model quantities & evidence"}</summary>
@@ -340,11 +355,11 @@ export function ReferenceBuildingWorkspace({
             // rooms. The Clinic's exclusions are named in its spaces.json
             // per row; here only the arithmetic the manifest states is shown.
             read={
-              manifest.counts.spacesTotal > manifest.counts.spacesFloor
+              manifest.areas.floorAreaNote ?? (manifest.counts.spacesTotal > manifest.counts.spacesFloor
                 ? `${manifest.counts.spacesFloor} of ${manifest.counts.spacesTotal} spaces · the model's own area quantity, less ${fmt(
                     manifest.areas.areaPlanTotalSqm - manifest.areas.totalFloorAreaSqm,
                   )} m² over ${manifest.counts.spacesTotal - manifest.counts.spacesFloor} non-floor spaces`
-                : `${manifest.counts.spacesFloor} spaces · the model's own area quantity · every space is floor`
+                : `${manifest.counts.spacesFloor} spaces · the model's own area quantity · every space is floor`)
             }
           />
           <Stated

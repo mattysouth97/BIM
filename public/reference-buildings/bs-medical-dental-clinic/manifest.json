@@ -1099,5 +1099,433 @@
         "en": "Architectural terminal occurrences are inventoried but not added over the coordinated services; duplicate identity has not been resolved."
       }
     ]
+  },
+  "materialFabric": {
+    "file": "material-fabric.glb",
+    "byteLength": 890712,
+    "sha256": "bfdd6e462331c6c1bdbd2902394cab1ae38a33fcc645f2e33a491d1a516a89a4",
+    "indexFile": "material-fabric-index.json",
+    "indexSha256": "14ecf368b01b6284407f1f5e71db53400b57cba3bdcf499160a8438bff921fba",
+    "elements": 2153,
+    "triangleCount": 40220,
+    "placedTriangleCount": 68368,
+    "drawCalls": 45,
+    "bindings": [
+      {
+        "key": "slab__architectural_unassigned",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 3
+      },
+      {
+        "key": "wall__architectural_40341",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Architectural.ifc#40341",
+        "materialRef": "ifc://Clinic_Architectural.ifc#97",
+        "materialNames": [
+          "Insulation - Insulated Panel",
+          "Metal - Firring",
+          "Wood - Sheathing - plywood",
+          "Metal - Stud Layer",
+          "Plasterboard"
+        ],
+        "relationRef": "ifc://Clinic_Architectural.ifc#186711",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Exterior - Insul Panel on Mtl. Stud",
+        "representativeLayer": {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.152,
+          "ref": "ifc://Clinic_Architectural.ifc#28093"
+        },
+        "elements": 80
+      },
+      {
+        "key": "wall__architectural_40002",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Architectural.ifc#40002",
+        "materialRef": "ifc://Clinic_Architectural.ifc#40",
+        "materialNames": [
+          "Plasterboard",
+          "Metal - Stud Layer",
+          "Plasterboard"
+        ],
+        "relationRef": "ifc://Clinic_Architectural.ifc#187243",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Interior - Partition (92mm Stud)",
+        "representativeLayer": {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.092,
+          "ref": "ifc://Clinic_Architectural.ifc#31917"
+        },
+        "elements": 466
+      },
+      {
+        "key": "wall__architectural_127603",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Architectural.ifc#127603",
+        "materialRef": "ifc://Clinic_Architectural.ifc#258",
+        "materialNames": [
+          "Metal - Stud Layer",
+          "Plasterboard"
+        ],
+        "relationRef": "ifc://Clinic_Architectural.ifc#186983",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Interior - Furring (152 mm Stud)",
+        "representativeLayer": {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.152,
+          "ref": "ifc://Clinic_Architectural.ifc#28093"
+        },
+        "elements": 30
+      },
+      {
+        "key": "wall__architectural_32521",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Architectural.ifc#32521",
+        "materialRef": "ifc://Clinic_Architectural.ifc#48",
+        "materialNames": [
+          "Metal - Stud Layer",
+          "Plasterboard"
+        ],
+        "relationRef": "ifc://Clinic_Architectural.ifc#187648",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Interior - Furring (38 mm Stud)",
+        "representativeLayer": {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.038,
+          "ref": "ifc://Clinic_Architectural.ifc#118167"
+        },
+        "elements": 451
+      },
+      {
+        "key": "wall__architectural_142812",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Architectural.ifc#142812",
+        "materialRef": "ifc://Clinic_Architectural.ifc#259",
+        "materialNames": [
+          "Type-X Plasterboard",
+          "Metal - Stud Layer",
+          "Type-X Plasterboard"
+        ],
+        "relationRef": "ifc://Clinic_Architectural.ifc#186739",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Interior - Rated 1-HR (92mm Stud)",
+        "representativeLayer": {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.092,
+          "ref": "ifc://Clinic_Architectural.ifc#31917"
+        },
+        "elements": 30
+      },
+      {
+        "key": "wall__architectural_142813",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Architectural.ifc#142813",
+        "materialRef": "ifc://Clinic_Architectural.ifc#2012",
+        "materialNames": [
+          "Plasterboard",
+          "Metal - Stud Layer",
+          "Plasterboard"
+        ],
+        "relationRef": "ifc://Clinic_Architectural.ifc#187229",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Interior - Plumbing (152mm Stud)",
+        "representativeLayer": {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.152,
+          "ref": "ifc://Clinic_Architectural.ifc#28093"
+        },
+        "elements": 13
+      },
+      {
+        "key": "wall__architectural_31919",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Architectural.ifc#31919",
+        "materialRef": "ifc://Clinic_Architectural.ifc#31920",
+        "materialNames": [
+          "Laminate - Ivory, Matte"
+        ],
+        "relationRef": "ifc://Clinic_Architectural.ifc#187992",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Interior - Toilet Partition (25mm)",
+        "representativeLayer": {
+          "name": "Laminate - Ivory, Matte",
+          "thicknessM": 0.025,
+          "ref": "ifc://Clinic_Architectural.ifc#118172"
+        },
+        "elements": 10
+      },
+      {
+        "key": "stair__architectural_unassigned",
+        "group": "stair",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 6
+      },
+      {
+        "key": "glazing__architectural_30228",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://Clinic_Architectural.ifc#30228",
+        "materialNames": [
+          "Glass"
+        ],
+        "relationRef": "ifc://Clinic_Architectural.ifc#209219",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 167
+      },
+      {
+        "key": "glazing__architectural_30232",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://Clinic_Architectural.ifc#30232",
+        "materialNames": [
+          "Metal - Chain Link"
+        ],
+        "relationRef": "ifc://Clinic_Architectural.ifc#209001",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 5
+      },
+      {
+        "key": "glazing__architectural_unassigned",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 58
+      },
+      {
+        "key": "door__architectural_unassigned",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 254
+      },
+      {
+        "key": "mullion__architectural_30229",
+        "group": "mullion",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://Clinic_Architectural.ifc#30229",
+        "materialNames": [
+          "Metal - Aluminium"
+        ],
+        "relationRef": "ifc://Clinic_Architectural.ifc#209254",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 522
+      },
+      {
+        "key": "mullion__architectural_unassigned",
+        "group": "mullion",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 12
+      },
+      {
+        "key": "slab__structural_221003",
+        "group": "slab",
+        "sourceRole": "structural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Structural.ifc#221003",
+        "materialRef": "ifc://Clinic_Structural.ifc#88227",
+        "materialNames": [
+          "Concrete - Cast in Situ Lightweight",
+          "Metal - Decking"
+        ],
+        "relationRef": "ifc://Clinic_Structural.ifc#307970",
+        "basis": "occurrence",
+        "assemblyName": "Floor:64mm Concrete With 38mm Metal Deck",
+        "representativeLayer": {
+          "name": "Concrete - Cast in Situ Lightweight",
+          "thicknessM": 0.064,
+          "ref": "ifc://Clinic_Structural.ifc#218228"
+        },
+        "elements": 2
+      },
+      {
+        "key": "slab__structural_218235",
+        "group": "slab",
+        "sourceRole": "structural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Structural.ifc#218235",
+        "materialRef": "ifc://Clinic_Structural.ifc#80429",
+        "materialNames": [
+          "Concrete - Cast In Situ"
+        ],
+        "relationRef": "ifc://Clinic_Structural.ifc#307982",
+        "basis": "occurrence",
+        "assemblyName": "Floor:150mm Slab on Grade",
+        "representativeLayer": {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.15,
+          "ref": "ifc://Clinic_Structural.ifc#88226"
+        },
+        "elements": 3
+      },
+      {
+        "key": "slab__structural_218237",
+        "group": "slab",
+        "sourceRole": "structural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Structural.ifc#218237",
+        "materialRef": "ifc://Clinic_Structural.ifc#218239",
+        "materialNames": [
+          "Concrete - Cast In Situ"
+        ],
+        "relationRef": "ifc://Clinic_Structural.ifc#307993",
+        "basis": "occurrence",
+        "assemblyName": "Floor:150mm Exterior Slab on Grade",
+        "representativeLayer": {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.15,
+          "ref": "ifc://Clinic_Structural.ifc#88226"
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__structural_unassigned",
+        "group": "slab",
+        "sourceRole": "structural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 7
+      },
+      {
+        "key": "wall__structural_218236",
+        "group": "wall",
+        "sourceRole": "structural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Structural.ifc#218236",
+        "materialRef": "ifc://Clinic_Structural.ifc#312",
+        "materialNames": [
+          "Concrete - Cast In Situ"
+        ],
+        "relationRef": "ifc://Clinic_Structural.ifc#308002",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Foundation - Concrete (264mm)",
+        "representativeLayer": {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.264,
+          "ref": "ifc://Clinic_Structural.ifc#218229"
+        },
+        "elements": 22
+      },
+      {
+        "key": "wall__structural_218238",
+        "group": "wall",
+        "sourceRole": "structural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Structural.ifc#218238",
+        "materialRef": "ifc://Clinic_Structural.ifc#23336",
+        "materialNames": [
+          "Concrete - Cast In Situ"
+        ],
+        "relationRef": "ifc://Clinic_Structural.ifc#307986",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Foundation - Concrete (300mm)",
+        "representativeLayer": {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.3,
+          "ref": "ifc://Clinic_Structural.ifc#218230"
+        },
+        "elements": 4
+      },
+      {
+        "key": "stair__structural_unassigned",
+        "group": "stair",
+        "sourceRole": "structural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 2
+      },
+      {
+        "key": "slab__structural_229562",
+        "group": "slab",
+        "sourceRole": "structural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Clinic_Structural.ifc#229562",
+        "materialRef": "ifc://Clinic_Structural.ifc#20242",
+        "materialNames": [
+          "Roofing - Metal",
+          "Metal - Decking",
+          "Structure - Steel Bar Joist Layer"
+        ],
+        "relationRef": "ifc://Clinic_Structural.ifc#307975",
+        "basis": "occurrence",
+        "assemblyName": "Basic Roof:Standing Seam Metal Roof",
+        "representativeLayer": {
+          "name": "Structure - Steel Bar Joist Layer",
+          "thicknessM": 0.286,
+          "ref": "ifc://Clinic_Structural.ifc#218233"
+        },
+        "elements": 5
+      }
+    ],
+    "appearanceBasis": "IFC occurrence or type material association. For a layer set, the thickest stated layer is used as an illustrative representative, not as the verified exterior finish. Source layer order does not establish installation direction. Unreviewed material names remain neutral. Glazing retains its base role appearance."
   }
 }

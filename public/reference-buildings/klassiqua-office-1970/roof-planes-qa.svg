@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="650" height="376" viewBox="0 0 650 376" font-family="monospace">
 <rect width="100%" height="100%" fill="#f8fafc"/>
-<text x="8" y="14" font-size="11" fill="#111827">klassiqua-office-1970 Klassiqua Office · 1970 — roof planes, plan view, 20 px/m; grey flat, green pitched ≤ 60°, red steeper; north is −z (up)</text>
+<text x="8" y="14" font-size="11" fill="#111827">klassiqua-office-1970 Klassiqua Office · 1970 — roof planes, plan view, 20 px/m; grey flat, green pitched ≤ 60°, red steeper; project −z is up; true north -36.95° clockwise</text>
 <path d="M40.0 40.0 L609.6 40.0 L609.6 335.6 L40.0 335.6 L40.0 40.0 Z M45.4 45.4 L45.4 330.2 L604.2 330.2 L604.2 45.4 L45.4 45.4 Z" fill="#cbd5e1" fill-rule="evenodd" stroke="#1f2937" stroke-width="1"><title>flatroofslab-reinforcedconcrete-200mm-plane-0 FlatRoofSlab_ReinforcedConcrete_200mm</title></path><text x="267.8" y="158.2" font-size="9" text-anchor="middle" fill="#111827">0° · 22.98 m²</text>
 <path d="M45.4 45.4 L604.2 45.4 L604.2 330.2 L45.4 330.2 L45.4 45.4 Z" fill="#cbd5e1" fill-rule="evenodd" stroke="#1f2937" stroke-width="1"><title>roofing-insulation-bituminoussheeting-gr-plane-0 Roofing_Insulation_BituminousSheeting_Gravel</title></path><text x="268.9" y="159.3" font-size="9" text-anchor="middle" fill="#111827">0° · 397.96 m²</text>
 </svg>

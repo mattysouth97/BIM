@@ -997,5 +997,364 @@
         "en": "The rooms-and-spaces IFC also contains an alternative services representation; it is inventoried but not overlaid on the published discipline layers."
       }
     ]
+  },
+  "materialFabric": {
+    "file": "material-fabric.glb",
+    "byteLength": 170460,
+    "sha256": "4f80915ec367a61423cb2faa44c6d187f9333bc02de244ae326a0a01eb2b40c0",
+    "indexFile": "material-fabric-index.json",
+    "indexSha256": "b86cc7ea76c1841fe5c573ed7fa259d3e63f6885d4b141b6955b9214e53b36f6",
+    "elements": 122,
+    "triangleCount": 7590,
+    "placedTriangleCount": 7938,
+    "drawCalls": 19,
+    "bindings": [
+      {
+        "key": "slab__architectural_5244",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#5244",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#5245",
+        "materialNames": [
+          "Concrete"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38375",
+        "basis": "occurrence",
+        "assemblyName": "Floor:127mm Slab on Grade",
+        "representativeLayer": {
+          "name": "Concrete",
+          "thicknessM": 0.127,
+          "ref": "ifc://Duplex_A_20110907.ifc#5243"
+        },
+        "elements": 2
+      },
+      {
+        "key": "slab__architectural_6222",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#6222",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#6223",
+        "materialNames": [
+          "Wood - Sheathing - plywood",
+          "Wood - Dimensional Lumber"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38392",
+        "basis": "occurrence",
+        "assemblyName": "Floor:Residential - Wood Joist with Subflooring",
+        "representativeLayer": {
+          "name": "Wood - Dimensional Lumber",
+          "thicknessM": 0.286,
+          "ref": "ifc://Duplex_A_20110907.ifc#6221"
+        },
+        "elements": 2
+      },
+      {
+        "key": "slab__architectural_20880",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#20880",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#20881",
+        "materialNames": [
+          "Wood - Flooring",
+          "Insulation / Thermal Barriers - Semi-rigid insulation"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38394",
+        "basis": "occurrence",
+        "assemblyName": "Floor:Finish Floor - Wood",
+        "representativeLayer": {
+          "name": "Wood - Flooring",
+          "thicknessM": 0.016,
+          "ref": "ifc://Duplex_A_20110907.ifc#20870"
+        },
+        "elements": 8
+      },
+      {
+        "key": "slab__architectural_21320",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#21320",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#21321",
+        "materialNames": [
+          "Ceramic Tile",
+          "Masonry - Grout"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38400",
+        "basis": "occurrence",
+        "assemblyName": "Floor:Finish Floor - Ceramic Tile",
+        "representativeLayer": {
+          "name": "Ceramic Tile",
+          "thicknessM": 0.01,
+          "ref": "ifc://Duplex_A_20110907.ifc#21278"
+        },
+        "elements": 6
+      },
+      {
+        "key": "slab__architectural_unassigned",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_37848",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#37848",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#37849",
+        "materialNames": [
+          "Concrete - Cast In Situ"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38437",
+        "basis": "occurrence",
+        "assemblyName": "Floor:150mm Exterior Slab on Grade",
+        "representativeLayer": {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.15,
+          "ref": "ifc://Duplex_A_20110907.ifc#37847"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_4202",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#4202",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#4203",
+        "materialNames": [
+          "Plasterboard",
+          "Metal - Stud Layer",
+          "Plasterboard"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38360",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Interior - Partition (92mm Stud)",
+        "representativeLayer": {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.092,
+          "ref": "ifc://Duplex_A_20110907.ifc#4200"
+        },
+        "elements": 18
+      },
+      {
+        "key": "wall__architectural_4360",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#4360",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#4361",
+        "materialNames": [
+          "Plasterboard",
+          "Metal - Stud Layer",
+          "Masonry - Concrete Block",
+          "Misc. Air Layers - Air Space",
+          "Masonry - Concrete Block",
+          "Metal - Stud Layer",
+          "Plasterboard"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38362",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Party Wall - CMU Residential Unit Dimising Wall",
+        "representativeLayer": {
+          "name": "Masonry - Concrete Block",
+          "thicknessM": 0.193,
+          "ref": "ifc://Duplex_A_20110907.ifc#4355"
+        },
+        "elements": 4
+      },
+      {
+        "key": "wall__architectural_4801",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#4801",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#4802",
+        "materialNames": [
+          "Concrete - Cast In Situ"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38368",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Foundation - Concrete (417mm)",
+        "representativeLayer": {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.417,
+          "ref": "ifc://Duplex_A_20110907.ifc#4800"
+        },
+        "elements": 4
+      },
+      {
+        "key": "wall__architectural_5040",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#5040",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#5041",
+        "materialNames": [
+          "Concrete - Cast In Situ"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38372",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Foundation - Concrete (435mm)",
+        "representativeLayer": {
+          "name": "Concrete - Cast In Situ",
+          "thicknessM": 0.435,
+          "ref": "ifc://Duplex_A_20110907.ifc#5039"
+        },
+        "elements": 3
+      },
+      {
+        "key": "wall__architectural_5842",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#5842",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#5843",
+        "materialNames": [
+          "Plasterboard",
+          "Metal - Stud Layer",
+          "Plasterboard"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38385",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Interior - Plumbing (152mm Stud)",
+        "representativeLayer": {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.152,
+          "ref": "ifc://Duplex_A_20110907.ifc#5840"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_3982",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#3982",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#4027",
+        "materialNames": [
+          "Masonry - Brick",
+          "Misc. Air Layers - Air Space",
+          "Insulation / Thermal Barriers - Rigid insulation",
+          "Masonry - Concrete Block",
+          "Metal - Stud Layer",
+          "Plasterboard"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38357",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Exterior - Brick on Block",
+        "representativeLayer": {
+          "name": "Masonry - Concrete Block",
+          "thicknessM": 0.193,
+          "ref": "ifc://Duplex_A_20110907.ifc#3931"
+        },
+        "elements": 12
+      },
+      {
+        "key": "wall__architectural_24663",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#24663",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#24664",
+        "materialNames": [
+          "Metal - Stud Layer",
+          "Plasterboard"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38426",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Interior - Furring (152 mm Stud)",
+        "representativeLayer": {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.136,
+          "ref": "ifc://Duplex_A_20110907.ifc#24661"
+        },
+        "elements": 6
+      },
+      {
+        "key": "wall__architectural_37953",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://Duplex_A_20110907.ifc#37953",
+        "materialRef": "ifc://Duplex_A_20110907.ifc#37954",
+        "materialNames": [
+          "Metal - Stud Layer",
+          "Plasterboard"
+        ],
+        "relationRef": "ifc://Duplex_A_20110907.ifc#38439",
+        "basis": "occurrence",
+        "assemblyName": "Basic Wall:Interior - Furring (38 mm Stud)",
+        "representativeLayer": {
+          "name": "Metal - Stud Layer",
+          "thicknessM": 0.038,
+          "ref": "ifc://Duplex_A_20110907.ifc#37951"
+        },
+        "elements": 8
+      },
+      {
+        "key": "stair__architectural_unassigned",
+        "group": "stair",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 2
+      },
+      {
+        "key": "glazing__architectural_unassigned",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 24
+      },
+      {
+        "key": "door__architectural_unassigned",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 14
+      },
+      {
+        "key": "mullion__architectural_unassigned",
+        "group": "mullion",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 4
+      }
+    ],
+    "appearanceBasis": "IFC occurrence or type material association. For a layer set, the thickest stated layer is used as an illustrative representative, not as the verified exterior finish. Source layer order does not establish installation direction. Unreviewed material names remain neutral. Glazing retains its base role appearance."
   }
 }

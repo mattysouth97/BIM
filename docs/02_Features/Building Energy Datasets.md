@@ -19,7 +19,7 @@ gallery. The routes do not create an entry workflow. The catalogue iterates
 registry entry are available. A missing registered manifest fails the catalogue
 request instead of silently dropping a row.
 
-Schema: `bimfit_building_energy_dataset`, version `1.1.0`; catalogue kind:
+Schema: `bimfit_building_energy_dataset`, version `1.2.0`; catalogue kind:
 `bimfit_building_energy_catalogue`. Breaking field or semantic changes require a
 major schema increment. The HTTP response is a UTF-8 attachment with a stable
 ETag and conditional-GET support.
@@ -30,7 +30,7 @@ ETag and conditional-GET support.
 |---|---|
 | `measuredEnvelope` | Values copied from the current manifest; measured **from the model**, not surveyed on site. Each quantity names its unit, manifest field and selection scope. |
 | `modelInputs` | The exact published recipe/material inputs, with mixed provenance explicitly stated. Legacy source/confidence metadata does not certify individual parameters. |
-| `assumptions` | The adapter's named assumptions, including its climate substitution and system/occupancy assumptions. |
+| `assumptions` | The adapter's named input-basis records, including assumptions and explicitly cited source inputs. Read each record's claim; the historical field name does not make a source-stated value an assumption. |
 | `modelInputs.pendingMeasurements` | Values the energy adapter still uses as stand-ins, including derivation and direction of bias. |
 | `modelInputs.pendingMeasurementReconciliation` | Whether the current manifest now contains a figure for each pending field. Availability requires a scope review, not automatic replacement. |
 | `modeledEnergy.hvac` | Heating/cooling delivered energy after efficiency/COP, in kWh/year and kWh/(m²·year). |
@@ -75,6 +75,19 @@ is a statement about the IFC sources, not proof that a building has no systems.
 Inventory counts do not establish system connectivity or installed performance.
 The separate energy inputs continue to disclose their system assumptions.
 
+### Material bindings and envelope evidence (schema 1.2)
+
+`modelGeometry.materialFabric` publishes source-to-material bindings, artifact
+hashes and rendering counts. The textures illustrate the stated material class;
+they do not establish an observed finish or alter thermal conductivity.
+
+Floor-area scope and `extractionNotes.floor` preserve whether area came from
+quantities or source space geometry. Klassiqua's 48 closed-space footprints
+produce 1,507.02 m²; its source has no floor-area quantities. Its
+`opaqueFacadeScope` records clipping cladding to the occupied-height envelope,
+so the energy wall area excludes the parapet. Source-declared conductivity and
+the documented insulation design factor remain separate from generic values.
+
 ## Reproducibility and reuse
 
 The export reads manifest JSON from disk at request time and computes energy
@@ -109,7 +122,7 @@ serverless bundle; meshes do not need to be bundled into these functions.
 - Server loading, hashes and HTTP downloads: `energy-dataset-server.ts`
 - Route/provenance/CSV tests: `__tests__/energy-dataset.test.ts`
 
-Tests compare the five published baseline demand/grade pairs with the values
+Tests compare published baseline demand/grade pairs with the values
 already exercised by the model-page E2E suite, verify source/payload/HTTP hashes,
 distinguish aperture stand-ins from extracted subsets, and check CSV null/zero,
 Unicode, quoting, formula protection and path rejection. These checks do not

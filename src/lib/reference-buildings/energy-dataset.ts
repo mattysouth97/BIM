@@ -11,7 +11,7 @@ import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import type { ReferenceBuildingEnergyInputs } from "./energy-inputs";
 import type { ReferenceBuildingManifest } from "./manifest";
 
-export const ENERGY_DATASET_SCHEMA_VERSION = "1.1.0";
+export const ENERGY_DATASET_SCHEMA_VERSION = "1.2.0";
 
 type ModelContext = {
   classification: "real_building_model" | "synthetic_example" | "real_world_status_unverified";
@@ -212,13 +212,14 @@ export function buildReferenceEnergyDataset(
     modelGeometry: {
       artifactBaseUrl: `/reference-buildings/${manifest.id}/`,
       architecturalDetails: manifest.architecturalDetails ?? null,
+      materialFabric: manifest.materialFabric ?? null,
       mepCoverage: manifest.mepCoverage ?? null,
       serviceLayers: manifest.serviceLayers ?? [],
       scope: "Source geometry and occurrence inventory only. Geometry does not establish installed thermal performance, system connectivity or operating efficiency; energy inputs are recorded separately.",
     },
     measuredEnvelope: {
       basis: "Measurements of model geometry and quantities; not on-site measurements.",
-      floorArea: quantity(areas.totalFloorAreaSqm, "m2", "areas.totalFloorAreaSqm"),
+      floorArea: quantity(areas.totalFloorAreaSqm, "m2", "areas.totalFloorAreaSqm", areas.floorAreaNote),
       opaqueWallNetArea: quantity(areas.exteriorWallNetSqm, "m2", "areas.exteriorWallNetSqm"),
       glazingApertureArea: { ...quantity(areas.glazingApertureSqm, "m2", "areas.glazingApertureSqm", "Counted openings selected by the extractor's host-wall and envelope rules; excluded and unresolved openings are not in this sum."), coverage: openingCoverage },
       exteriorDoorArea: { ...quantity(areas.exteriorDoorSqm, "m2", "areas.exteriorDoorSqm", "Counted exterior door leaves selected by the extractor; not every IfcDoor or IsExternal flag."), coverage: openingCoverage },
@@ -235,11 +236,13 @@ export function buildReferenceEnergyDataset(
       orientation: manifest.orientation ?? null,
       openingRecordsUrl: manifest.openingsFile ? `/reference-buildings/${manifest.id}/${manifest.openingsFile}` : null,
       extractionNotes: {
+        floor: areas.floorAreaNote ?? null,
         openings: areas.openingsNote ?? null,
         roof: areas.roofNote ?? null,
         ground: areas.groundNote ?? null,
         volume: areas.volumeNote ?? null,
       },
+      opaqueFacadeScope: areas.opaqueFacade ?? null,
     },
     modelInputs: inputs ? {
       provenance: "mixed_model_measurements_and_named_assumptions",

@@ -70,9 +70,22 @@ describe("published baseline datasets preserve provenance", () => {
     expect(dataset.measuredEnvelope.floorArea.value).toBeGreaterThan(0);
   });
 
+  it("publishes Klassiqua's geometry-derived floor and clipped facade scope with its material bindings", async () => {
+    const dataset = (await loadReferenceEnergyDataset("klassiqua-office-1970"))!;
+    const source = manifest("klassiqua-office-1970");
+    expect(dataset.schemaVersion).toBe("1.2.0");
+    expect(dataset.measuredEnvelope.floorArea.scope).toBe(source.areas.floorAreaNote);
+    expect(dataset.measuredEnvelope.extractionNotes.floor).toContain("48");
+    expect(dataset.measuredEnvelope.opaqueFacadeScope).toEqual(source.areas.opaqueFacade);
+    expect(dataset.modelGeometry.materialFabric).toEqual(source.materialFabric);
+    expect(dataset.building.modelContext.classification).toBe("synthetic_example");
+    expect(dataset.modeledEnergy!.hvac.coolingDeliveredKWhPerYear).toBe(0);
+    expect(dataset.isMetered).toBe(false);
+  });
+
   it("exports source MEP coverage without treating missing typed systems as measured equipment", async () => {
     const apartment = (await loadReferenceEnergyDataset("schependomlaan"))!;
-    expect(apartment.schemaVersion).toBe("1.1.0");
+    expect(apartment.schemaVersion).toBe("1.2.0");
     expect(apartment.modelGeometry.mepCoverage!.status).toBe("source_geometry_published");
     expect(apartment.modelGeometry.mepCoverage!.publishedLayerIds).toContain("source-services");
     expect(apartment.modelGeometry.architecturalDetails).toEqual(manifest("schependomlaan").architecturalDetails);

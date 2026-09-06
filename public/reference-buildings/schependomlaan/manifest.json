@@ -3987,5 +3987,1251 @@
         "en": "Generic IfcBuildingElementProxy and IfcFurnishingElement occurrences are not classified as MEP without source evidence."
       }
     ]
+  },
+  "materialFabric": {
+    "file": "material-fabric.glb",
+    "byteLength": 1601832,
+    "sha256": "911c6861d8b387e34f0bf5fadb78da5cd8f7033b3b2e1eafc31a469cc90dab23",
+    "indexFile": "material-fabric-index.json",
+    "indexSha256": "e75607381e8f04a2d2a4b61c1f8945cfd8a63ff658557b15614ae4a01df54486",
+    "elements": 1640,
+    "triangleCount": 76793,
+    "placedTriangleCount": 173937,
+    "drawCalls": 124,
+    "bindings": [
+      {
+        "key": "slab__architectural_482",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#482",
+        "materialNames": [
+          "02 Beton gewapend - ihw"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#5719",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_33253",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#33253",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#33257",
+        "materialNames": [
+          "02 Beton gewapend - prefab VLOER",
+          "99 Isolatie - EPS"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#33258",
+        "basis": "occurrence",
+        "assemblyName": "IFC_vloer_geisoleerde_kanaalplaat_Rc=3,00",
+        "representativeLayer": {
+          "name": "02 Beton gewapend - prefab VLOER",
+          "thicknessM": 0.2,
+          "ref": "ifc://IFC Schependomlaan.ifc#33236"
+        },
+        "elements": 43
+      },
+      {
+        "key": "slab__architectural_34626",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#34626",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#34628",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 3
+      },
+      {
+        "key": "slab__architectural_39432",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#39432",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#39436",
+        "materialNames": [
+          "02 Beton ongewapend C",
+          "99 Isolatie - EPS"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#39437",
+        "basis": "occurrence",
+        "assemblyName": "IFC_vloer_EPS_stortstrook_Rc=3,00",
+        "representativeLayer": {
+          "name": "02 Beton ongewapend C",
+          "thicknessM": 0.185,
+          "ref": "ifc://IFC Schependomlaan.ifc#39430"
+        },
+        "elements": 4
+      },
+      {
+        "key": "slab__architectural_40398",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#40398",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#40400",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_43832",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#43832",
+        "materialNames": [
+          "02 Beton ongewapend"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#43841",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_61511",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#61511",
+        "materialNames": [
+          "24 Cementdekvloer 90mm"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#61526",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 17
+      },
+      {
+        "key": "slab__architectural_90824",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#90824",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#90827",
+        "materialNames": [
+          "24 Cementdekvloer 90mm"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#90828",
+        "basis": "occurrence",
+        "assemblyName": "IFC_dekvloer",
+        "representativeLayer": {
+          "name": "24 Cementdekvloer 90mm",
+          "thicknessM": 0.09,
+          "ref": "ifc://IFC Schependomlaan.ifc#90823"
+        },
+        "elements": 9
+      },
+      {
+        "key": "slab__architectural_294350",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#294350",
+        "materialNames": [
+          "12 Keramisch - vloertegel"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#294365",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_294525",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#294525",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#294528",
+        "materialNames": [
+          "12 Schoonloopmat"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#294529",
+        "basis": "occurrence",
+        "assemblyName": "IFC schoonloopmat",
+        "representativeLayer": {
+          "name": "12 Schoonloopmat",
+          "thicknessM": 0.008,
+          "ref": "ifc://IFC Schependomlaan.ifc#294524"
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_318652",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#318652",
+        "materialNames": [
+          "02 Beton gewapend - ihw VLOER"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#318661",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 6
+      },
+      {
+        "key": "slab__architectural_318804",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#318804",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#318807",
+        "materialNames": [
+          "02 Beton gewapend - prefab"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#318808",
+        "basis": "occurrence",
+        "assemblyName": "IFC_breedplaat_schil_60mm",
+        "representativeLayer": {
+          "name": "02 Beton gewapend - prefab",
+          "thicknessM": 0.06,
+          "ref": "ifc://IFC Schependomlaan.ifc#318803"
+        },
+        "elements": 42
+      },
+      {
+        "key": "slab__architectural_27355",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#27355",
+        "materialNames": [
+          "02 Beton gewapend - prefab"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#327998",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 13
+      },
+      {
+        "key": "slab__architectural_325058",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#325058",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#335989",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 19
+      },
+      {
+        "key": "slab__architectural_54625",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#54625",
+        "materialNames": [
+          "99 Lucht frame"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#367848",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 29
+      },
+      {
+        "key": "slab__architectural_419868",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#419868",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#419870",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 3
+      },
+      {
+        "key": "slab__architectural_325049",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#325049",
+        "materialNames": [
+          "99 Isolatie - Glaswol 190mm"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#453189",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 3
+      },
+      {
+        "key": "slab__architectural_460528",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#460528",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#460530",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 7
+      },
+      {
+        "key": "slab__architectural_39886",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#39886",
+        "materialNames": [
+          "04 Zink"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#467416",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_517040",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#517040",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#517042",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 30
+      },
+      {
+        "key": "slab__architectural_522025",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#522025",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#522029",
+        "materialNames": [
+          "24 Cementdekvloer 70mm",
+          "99 Isolatie - zwevende dekvloer"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#522030",
+        "basis": "occurrence",
+        "assemblyName": "IFC_dekvloer_zwevend",
+        "representativeLayer": {
+          "name": "24 Cementdekvloer 70mm",
+          "thicknessM": 0.07,
+          "ref": "ifc://IFC Schependomlaan.ifc#522023"
+        },
+        "elements": 22
+      },
+      {
+        "key": "slab__architectural_374098",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#374098",
+        "materialNames": [
+          "99 Isolatie - Glaswol 170mm"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#699298",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 6
+      },
+      {
+        "key": "slab__architectural_705123",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#705123",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#705126",
+        "materialNames": [
+          "01 plaatmateriaal - multiplex"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#705127",
+        "basis": "occurrence",
+        "assemblyName": "01 plaatmateriaal - multiplex 18",
+        "representativeLayer": {
+          "name": "01 plaatmateriaal - multiplex",
+          "thicknessM": 0.018,
+          "ref": "ifc://IFC Schependomlaan.ifc#705122"
+        },
+        "elements": 3
+      },
+      {
+        "key": "slab__architectural_54616",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#54616",
+        "materialNames": [
+          "99 Isolatie - PIR 120mm"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#778452",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_797168",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#797168",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#797171",
+        "materialNames": [
+          "99 Isolatie - Glaswol 70mm"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#797172",
+        "basis": "occurrence",
+        "assemblyName": "IFC_isolatie_110mm_glaswol",
+        "representativeLayer": {
+          "name": "99 Isolatie - Glaswol 70mm",
+          "thicknessM": 0.11,
+          "ref": "ifc://IFC Schependomlaan.ifc#797167"
+        },
+        "elements": 2
+      },
+      {
+        "key": "slab__architectural_809511",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#809511",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#809516",
+        "materialNames": [
+          "99 Lucht frame",
+          "99 Isolatie - Glaswol 190mm",
+          "01 plaatmateriaal - spaanplaat - wit"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#809517",
+        "basis": "occurrence",
+        "assemblyName": "IFC_dakplaat_geisoleerd_Rc=4,00",
+        "representativeLayer": {
+          "name": "99 Isolatie - Glaswol 190mm",
+          "thicknessM": 0.19,
+          "ref": "ifc://IFC Schependomlaan.ifc#809509"
+        },
+        "elements": 1
+      },
+      {
+        "key": "slab__architectural_809857",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#809857",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#809859",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 4
+      },
+      {
+        "key": "slab__architectural_33237",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#33237",
+        "materialNames": [
+          "99 Isolatie - EPS"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#811323",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 3
+      },
+      {
+        "key": "slab__architectural_836070",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#836070",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#836073",
+        "materialNames": [
+          "99 Lucht frame"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#836074",
+        "basis": "occurrence",
+        "assemblyName": "IFC_verlaagd_plafond",
+        "representativeLayer": {
+          "name": "99 Lucht frame",
+          "thicknessM": 0.05,
+          "ref": "ifc://IFC Schependomlaan.ifc#836069"
+        },
+        "elements": 2
+      },
+      {
+        "key": "slab__architectural_984474",
+        "group": "slab",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#984474",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#984477",
+        "materialNames": [
+          "02 Beton gewapend - prefab"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#984478",
+        "basis": "occurrence",
+        "assemblyName": "IFC_betonvloer_prefab_200mm",
+        "representativeLayer": {
+          "name": "02 Beton gewapend - prefab",
+          "thicknessM": 0.2,
+          "ref": "ifc://IFC Schependomlaan.ifc#984473"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_262",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#262",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#265",
+        "materialNames": [
+          "03 Metselwerk - kalkzandsteen C"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#266",
+        "basis": "occurrence",
+        "assemblyName": "IFC_kalkzandsteen_100mm",
+        "representativeLayer": {
+          "name": "03 Metselwerk - kalkzandsteen C",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#260"
+        },
+        "elements": 16
+      },
+      {
+        "key": "wall__architectural_27843",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#27843",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#27846",
+        "materialNames": [
+          "03 Metselwerk - kalkzandsteen C"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#27847",
+        "basis": "occurrence",
+        "assemblyName": "IFC_kalkzandsteen_300mm",
+        "representativeLayer": {
+          "name": "03 Metselwerk - kalkzandsteen C",
+          "thicknessM": 0.3,
+          "ref": "ifc://IFC Schependomlaan.ifc#27842"
+        },
+        "elements": 20
+      },
+      {
+        "key": "wall__architectural_28268",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#28268",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#28271",
+        "materialNames": [
+          "03 Metselwerk - kalkzandsteen C"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#28272",
+        "basis": "occurrence",
+        "assemblyName": "IFC_kalkzandsteen_214mm",
+        "representativeLayer": {
+          "name": "03 Metselwerk - kalkzandsteen C",
+          "thicknessM": 0.214,
+          "ref": "ifc://IFC Schependomlaan.ifc#28267"
+        },
+        "elements": 35
+      },
+      {
+        "key": "wall__architectural_28640",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#28640",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#28643",
+        "materialNames": [
+          "03 Metselwerk - kalkzandsteen C"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#28644",
+        "basis": "occurrence",
+        "assemblyName": "IFC_kalkzandsteen_175mm",
+        "representativeLayer": {
+          "name": "03 Metselwerk - kalkzandsteen C",
+          "thicknessM": 0.175,
+          "ref": "ifc://IFC Schependomlaan.ifc#28639"
+        },
+        "elements": 12
+      },
+      {
+        "key": "wall__architectural_29200",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#29200",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#29203",
+        "materialNames": [
+          "03 Metselwerk - kalkzandsteen C"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#29204",
+        "basis": "occurrence",
+        "assemblyName": "IFC_kalkzandsteen_120mm",
+        "representativeLayer": {
+          "name": "03 Metselwerk - kalkzandsteen C",
+          "thicknessM": 0.12,
+          "ref": "ifc://IFC Schependomlaan.ifc#29199"
+        },
+        "elements": 7
+      },
+      {
+        "key": "wall__architectural_46162",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#46162",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#46165",
+        "materialNames": [
+          "03 mw-baksteen - geel (liggend)"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#46166",
+        "basis": "occurrence",
+        "assemblyName": "IFC_baksteen_kopergeel_100mm_liggend",
+        "representativeLayer": {
+          "name": "03 mw-baksteen - geel (liggend)",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#46161"
+        },
+        "elements": 4
+      },
+      {
+        "key": "wall__architectural_46555",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#46555",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#46558",
+        "materialNames": [
+          "01 Hout - hardhout"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#46559",
+        "basis": "occurrence",
+        "assemblyName": "IFC_kozijn_90x114",
+        "representativeLayer": {
+          "name": "01 Hout - hardhout",
+          "thicknessM": 0.114,
+          "ref": "ifc://IFC Schependomlaan.ifc#46554"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_51780",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#51780",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#51783",
+        "materialNames": [
+          "03 mw-baksteen - bruin (staand)"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#51784",
+        "basis": "occurrence",
+        "assemblyName": "IFC_baksteen_roodbruin_100mm_staand",
+        "representativeLayer": {
+          "name": "03 mw-baksteen - bruin (staand)",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#51779"
+        },
+        "elements": 22
+      },
+      {
+        "key": "wall__architectural_146918",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#146918",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#146921",
+        "materialNames": [
+          "03 mw-baksteen - bruin (liggend)"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#146922",
+        "basis": "occurrence",
+        "assemblyName": "IFC_baksteen_roodbruin_100mm_liggend",
+        "representativeLayer": {
+          "name": "03 mw-baksteen - bruin (liggend)",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#146917"
+        },
+        "elements": 5
+      },
+      {
+        "key": "wall__architectural_178134",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#178134",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#178137",
+        "materialNames": [
+          "03 mw-baksteen - geel (staand)"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#178138",
+        "basis": "occurrence",
+        "assemblyName": "IFC_baksteen_kopergeel_100mm_staand",
+        "representativeLayer": {
+          "name": "03 mw-baksteen - geel (staand)",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#178133"
+        },
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_210119",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#210119",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#210122",
+        "materialNames": [
+          "99 Lichte scheidingswand - normaal"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#210123",
+        "basis": "occurrence",
+        "assemblyName": "IFC_separatiewand_gasbeton_100mm",
+        "representativeLayer": {
+          "name": "99 Lichte scheidingswand - normaal",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#210118"
+        },
+        "elements": 51
+      },
+      {
+        "key": "wall__architectural_216535",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#216535",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#216538",
+        "materialNames": [
+          "99 Lichte scheidingswand - hydro"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#216539",
+        "basis": "occurrence",
+        "assemblyName": "IFC_separatiewand_gasbeton_100mm_hydro",
+        "representativeLayer": {
+          "name": "99 Lichte scheidingswand - hydro",
+          "thicknessM": 0.1,
+          "ref": "ifc://IFC Schependomlaan.ifc#216534"
+        },
+        "elements": 10
+      },
+      {
+        "key": "wall__architectural_220567",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#220567",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#220570",
+        "materialNames": [
+          "99 Lichte scheidingswand - gipsblokken"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#220571",
+        "basis": "occurrence",
+        "assemblyName": "IFC_gipsblokken_70mm",
+        "representativeLayer": {
+          "name": "99 Lichte scheidingswand - gipsblokken",
+          "thicknessM": 0.07,
+          "ref": "ifc://IFC Schependomlaan.ifc#220566"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_228226",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#228226",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#228229",
+        "materialNames": [
+          "99 Lichte scheidingswand - normaal"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#228230",
+        "basis": "occurrence",
+        "assemblyName": "IFC_separatiewand_gasbeton_70mm",
+        "representativeLayer": {
+          "name": "99 Lichte scheidingswand - normaal",
+          "thicknessM": 0.07,
+          "ref": "ifc://IFC Schependomlaan.ifc#228225"
+        },
+        "elements": 38
+      },
+      {
+        "key": "wall__architectural_456165",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#456165",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#456169",
+        "materialNames": [
+          "99 Isolatie - Glaswol zacht",
+          "01 plaatmateriaal - spaanplaat - wit"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#456170",
+        "basis": "occurrence",
+        "assemblyName": "IFC_dakkapel_zijwang",
+        "representativeLayer": {
+          "name": "99 Isolatie - Glaswol zacht",
+          "thicknessM": 0.14,
+          "ref": "ifc://IFC Schependomlaan.ifc#456163"
+        },
+        "elements": 5
+      },
+      {
+        "key": "wall__architectural_534012",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#534012",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#534015",
+        "materialNames": [
+          "99 Lichte scheidingswand - hydro"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#534016",
+        "basis": "occurrence",
+        "assemblyName": "IFC_separatiewand_gasbeton_70mm_hydro",
+        "representativeLayer": {
+          "name": "99 Lichte scheidingswand - hydro",
+          "thicknessM": 0.07,
+          "ref": "ifc://IFC Schependomlaan.ifc#534011"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_898877",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "layer_set",
+        "assemblyRef": "ifc://IFC Schependomlaan.ifc#898877",
+        "materialRef": "ifc://IFC Schependomlaan.ifc#898880",
+        "materialNames": [
+          "99 Lichte scheidingswand - normaal"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#898881",
+        "basis": "occurrence",
+        "assemblyName": "IFC_HSB_70mm",
+        "representativeLayer": {
+          "name": "99 Lichte scheidingswand - normaal",
+          "thicknessM": 0.07,
+          "ref": "ifc://IFC Schependomlaan.ifc#898876"
+        },
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_243",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#243",
+        "materialNames": [
+          "03 Metselwerk - kalkzandsteen C"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#13533",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 92
+      },
+      {
+        "key": "wall__architectural_33032",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#33032",
+        "materialNames": [
+          "03 mw-baksteen - bruin (liggend)"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#33047",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 195
+      },
+      {
+        "key": "wall__architectural_54634",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#54634",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#54636",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 36
+      },
+      {
+        "key": "wall__architectural_51764",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#51764",
+        "materialNames": [
+          "03 mw-baksteen - bruin (staand)"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#60051",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 76
+      },
+      {
+        "key": "wall__architectural_79986",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#79986",
+        "materialNames": [
+          "99 Lichte scheidingswand - normaal"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#80001",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 73
+      },
+      {
+        "key": "wall__architectural_149995",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#149995",
+        "materialNames": [
+          "03 mw-baksteen - geel (staand)"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#150010",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 37
+      },
+      {
+        "key": "wall__architectural_220166",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#220166",
+        "materialNames": [
+          "99 Lichte scheidingswand - gipsblokken"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#220175",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 2
+      },
+      {
+        "key": "wall__architectural_216525",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#216525",
+        "materialNames": [
+          "99 Lichte scheidingswand - hydro"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#228858",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 14
+      },
+      {
+        "key": "wall__architectural_46146",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#46146",
+        "materialNames": [
+          "03 mw-baksteen - geel (liggend)"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#324720",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 26
+      },
+      {
+        "key": "wall__architectural_325058",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#325058",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#325060",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 11
+      },
+      {
+        "key": "wall__architectural_357922",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#357922",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#357924",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 22
+      },
+      {
+        "key": "wall__architectural_325049",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#325049",
+        "materialNames": [
+          "99 Isolatie - Glaswol 190mm"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#453569",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 1
+      },
+      {
+        "key": "wall__architectural_455345",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#455345",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#455347",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 19
+      },
+      {
+        "key": "wall__architectural_624288",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#624288",
+        "materialNames": [
+          "03 Metselwerk - cellenbeton"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#624303",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 6
+      },
+      {
+        "key": "wall__architectural_831830",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#831830",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#831832",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 32
+      },
+      {
+        "key": "wall__architectural_44657",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#44657",
+        "materialNames": [
+          "99 Isolatie - PIR 74mm"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#988864",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 4
+      },
+      {
+        "key": "wall__architectural_39886",
+        "group": "wall",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#39886",
+        "materialNames": [
+          "04 Zink"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#1014041",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 2
+      },
+      {
+        "key": "stair__architectural_27355",
+        "group": "stair",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#27355",
+        "materialNames": [
+          "02 Beton gewapend - prefab"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#27364",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 9
+      },
+      {
+        "key": "glazing__architectural_47484",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#47484",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#47486",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 63
+      },
+      {
+        "key": "glazing__architectural_unassigned",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 192
+      },
+      {
+        "key": "glazing__architectural_877371",
+        "group": "glazing",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#877371",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#877373",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 4
+      },
+      {
+        "key": "door__architectural_unassigned",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unassigned",
+        "assemblyRef": null,
+        "materialNames": [],
+        "relationRef": null,
+        "basis": null,
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 175
+      },
+      {
+        "key": "door__architectural_73081",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#73081",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#73083",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 14
+      },
+      {
+        "key": "door__architectural_77763",
+        "group": "door",
+        "sourceRole": "architectural",
+        "status": "unsupported",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#77763",
+        "materialNames": [],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#77765",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 16
+      },
+      {
+        "key": "mullion__architectural_42545",
+        "group": "mullion",
+        "sourceRole": "architectural",
+        "status": "single_material",
+        "assemblyRef": null,
+        "materialRef": "ifc://IFC Schependomlaan.ifc#42545",
+        "materialNames": [
+          "033 - constructief staal"
+        ],
+        "relationRef": "ifc://IFC Schependomlaan.ifc#470309",
+        "basis": "occurrence",
+        "assemblyName": null,
+        "representativeLayer": null,
+        "elements": 9
+      }
+    ],
+    "appearanceBasis": "IFC occurrence or type material association. For a layer set, the thickest stated layer is used as an illustrative representative, not as the verified exterior finish. Source layer order does not establish installation direction. Unreviewed material names remain neutral. Glazing retains its base role appearance."
   }
 }

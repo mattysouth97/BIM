@@ -13,6 +13,8 @@ import type { ReferenceBuildingEnergyInputs } from "@/lib/reference-buildings/en
 import { FlowNetwork } from "./flow-network";
 import { ReferenceDetailGeometry } from "./reference-detail-geometry";
 import type { ArchitecturalDetailsStatus } from "./reference-architectural-details";
+import { ReferenceMaterialGeometry, type MaterialGeometryStatus } from "./reference-material-geometry";
+import type { MaterialBinding } from "@/lib/rendering/material-expression";
 import { PvModulesVisual } from "@/components/viewer/pv-modules";
 import { usePvLayout } from "@/hooks/use-pv-layout";
 import { useScenarioStore, useProposalVisualIds, useEffectiveMeasureIds } from "@/store/scenario-store";
@@ -256,6 +258,11 @@ export function ReferenceModelViewer({
   inspection,
   detailsRetry,
   onDetailsStatus,
+  materialEnabled,
+  materialStatus,
+  materialRetry,
+  onMaterialStatus,
+  onMaterialPick,
 }: {
   modelUrl: string;
   /**
@@ -287,6 +294,11 @@ export function ReferenceModelViewer({
   inspection: boolean;
   detailsRetry: number;
   onDetailsStatus: (status: ArchitecturalDetailsStatus) => void;
+  materialEnabled: boolean;
+  materialStatus: MaterialGeometryStatus;
+  materialRetry: number;
+  onMaterialStatus: (status: MaterialGeometryStatus) => void;
+  onMaterialPick: (binding: MaterialBinding) => void;
 }) {
   const [offset, setOffset] = useState<SceneOffset | null>(null);
   const onMeasured = useCallback((next: SceneOffset) => setOffset(next), []);
@@ -294,6 +306,8 @@ export function ReferenceModelViewer({
   const shown = services.filter((layer) => active.has(layer.id));
   const details = manifest.architecturalDetails;
   const detailsOn = details !== undefined && active.has(details.id);
+  const materialRequested = materialEnabled && !!manifest.materialFabric;
+  const materialReady = materialRequested && materialStatus === "ready";
 
   // Green-remodelling preview: read directly from the scenario store rather
   // than through a prop, so the knapsack's selection reaches this canvas
@@ -347,6 +361,10 @@ export function ReferenceModelViewer({
       data-details-visible={detailsOn}
       data-fabric-xray={fabricOn && shown.length > 0}
       data-depth-range="adaptive"
+      data-material-status={materialRequested ? materialStatus : "off"}
+      data-fabric-appearance={materialReady ? "materials" : "original"}
+      data-material-fabric-visible={fabricOn && materialReady}
+      data-original-fabric-visible={fabricOn && !materialReady}
     >
       <Canvas
         shadows
@@ -390,7 +408,7 @@ export function ReferenceModelViewer({
           {/* The fabric stays mounted even when hidden: it is what measures the
               scene, and unmounting it would strand every service layer without
               an offset to draw by. */}
-          <group visible={fabricOn}>
+          <group visible={fabricOn && !materialReady}>
             <Fabric
               url={modelUrl}
               xray={fabricOn && shown.length > 0}
@@ -403,6 +421,13 @@ export function ReferenceModelViewer({
                 comment on `EnvelopeRetrofitTint`). */}
             {fabricOn ? <EnvelopeRetrofitTint url={modelUrl} visual={visual} /> : null}
           </group>
+          {offset && materialRequested ? <group visible={fabricOn && materialReady}>
+            <ReferenceMaterialGeometry
+              url={`${baseUrl}/${manifest.materialFabric!.file}`} manifest={manifest} centre={offset.centre}
+              xray={fabricOn && shown.length > 0} visual={visual} retry={materialRetry}
+              onStatus={onMaterialStatus} onPick={onMaterialPick}
+            />
+          </group> : null}
           {offset && detailsOn ? (
             <ReferenceDetailGeometry
               url={`${baseUrl}/${details.file}`}
@@ -478,6 +503,7 @@ export function ReferenceModelViewer({
         </Suspense>
         <OrbitControls makeDefault enableDamping minDistance={(offset?.radius ?? 1) * 0.15} maxDistance={(offset?.radius ?? 30) * 20} maxPolarAngle={Math.PI / 2.05} />
       </Canvas>
+      {fabricOn && materialReady ? <span className="pointer-events-none absolute top-3 left-3 rounded border border-border bg-card/90 px-2 py-1 text-[10px] text-foreground" data-testid="reference-material-canvas-label">{locale === "ko" ? "재료 예시" : "Illustrative materials"}</span> : null}
       <RetrofitLegend
         selectedMeasureIds={selectedMeasureIds}
         previewProposal={previewProposal}
