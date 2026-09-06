@@ -13,6 +13,8 @@
 
 import { useMemo } from "react";
 import { useMaterialStore } from "@/store/material-store";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
+import { meanWindowToWallRatio } from "@/lib/energy/heat-loss";
 import { generateEnvelopeRetrofits, KOREAN_2020_TARGET_U_VALUES } from "@/lib/retrofit/envelope-retrofits";
 import { generateHvacRetrofits } from "@/lib/retrofit/hvac-retrofits";
 import { generateLightingRetrofits } from "@/lib/retrofit/lighting-retrofits";
@@ -131,6 +133,11 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
   }, [assumptionsOverride, programTrack]);
 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
+  // Read only for `meanWindowToWallRatio`, which needs to know whether this
+  // building's envelope was MEASURED or extruded. Undefined for a caller
+  // that seeded no recipe, and the ratio falls back to the unweighted mean —
+  // i.e. exactly today's behaviour where nothing new is known.
+  const recipe = useEffectiveRecipe(buildingPk);
 
   // Build all candidate measures from current materials.
   const allMeasures = useMemo<RetrofitMeasure[]>(() => {
@@ -148,10 +155,12 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
 
     // ── Envelope ──
     const wallAgg = aggregateWalls(materials.envelope.walls);
-    const wwr = materials.envelope.windows.windowToWallRatio;
     // Total wall area including windows. Windows live ON the walls, so
-    // window area is wallAgg.area × WWR (averaged over orientations).
-    const avgWwr = (wwr.N + wwr.S + wwr.E + wwr.W) / 4;
+    // window area is wallAgg.area × WWR. The ratio comes from the engine's
+    // own function — area-weighted on a measured envelope, unweighted
+    // otherwise — so the measures and `calculateHeatLoss` cannot end up
+    // multiplying by two different means of the same four numbers.
+    const avgWwr = meanWindowToWallRatio(materials, recipe);
     const opaqueWallArea = wallAgg.area * (1 - avgWwr);
     const windowArea = wallAgg.area * avgWwr;
 
@@ -224,6 +233,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     return [...envelopeMeasures, ...hvacMeasures, ...lightingMeasures, ...solarMeasures];
   }, [
     materials,
+    recipe,
     totalFloorArea,
     footprintArea,
     roofType,
