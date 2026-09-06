@@ -301,6 +301,13 @@ const r = (v, dp = 3) => {
 function outlineRings(multiPolygon) {
   const rings = [];
   for (const polygon of multiPolygon ?? []) {
+    // A polygon whose outer ring encloses under 0.05 m² is a clipping sliver
+    // (a zero-width strip the sky difference left behind), not a piece of
+    // roof. Found on the apartment's deck, where such a sliver was listed as
+    // the FIRST outer and a consumer that took the first outer laid the
+    // whole deck out on it. Dropped here so the file never states a roof
+    // piece that no module could ever sit on.
+    if (Math.abs(ringArea2(polygon[0] ?? [])) / 2 < 0.05) continue;
     polygon.forEach((ring, index) => {
       const simplified = simplifyRing(
         ring.map(([x, y]) => [r(x), r(y)]),

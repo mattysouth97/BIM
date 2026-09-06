@@ -255,10 +255,27 @@ const MODULE_AREA_SQM = PV_MODULE_LENGTH_M * PV_MODULE_WIDTH_M;
 export function toPolygon(outline: readonly (PlanRing | TaggedRing)[]): PlanPolygon {
   const tagged = outline.filter((r): r is TaggedRing => !Array.isArray(r));
   if (tagged.length > 0) {
-    const outer = tagged.find((r) => r.kind === "outer");
+    // A plane's outline on disk can be a MULTIPOLYGON — sky occlusion splits a
+    // plane into pieces, and each piece is its own tagged outer. Found on the
+    // apartment's 130 m² deck (`dakvloer-plane-0`: three outers, the first a
+    // zero-width sliver), where taking "the" first outer laid the deck out on
+    // the sliver and refused it as no-usable-area. The LARGEST outer is the
+    // plane; holes are kept only when they lie inside it. Smaller pieces are
+    // dropped, which UNDERSTATES usable roof — stated here, and a per-piece
+    // layout is the follow-up that removes the understatement.
+    const outers = tagged.filter((r) => r.kind === "outer");
+    const outer = outers.reduce<TaggedRing | null>(
+      (best, r) => (best === null || Math.abs(ringAreaSqm(r.points)) > Math.abs(ringAreaSqm(best.points)) ? r : best),
+      null,
+    );
+    const outerPoints = outer?.points ?? [];
+    const outerPolygon: PlanPolygon = { outer: outerPoints, holes: [] };
     return {
-      outer: outer?.points ?? [],
-      holes: tagged.filter((r) => r.kind === "hole").map((r) => r.points),
+      outer: outerPoints,
+      holes: tagged
+        .filter((r) => r.kind === "hole")
+        .map((r) => r.points)
+        .filter((hole) => hole.length > 0 && pointInPolygon(hole[0][0], hole[0][1], outerPolygon)),
     };
   }
   const rings = outline as readonly PlanRing[];

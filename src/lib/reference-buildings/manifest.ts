@@ -390,7 +390,7 @@ export type ReferenceBuildingRoofPlane = Readonly<{
     points: readonly (readonly [number, number])[];
   }>[];
   obstructions: readonly Readonly<{
-    kind: "opening" | "equipment" | "parapet";
+    kind: "opening" | "plant" | "parapet";
     elementRef: string;
     elementName: string;
     elementType: string;

@@ -515,3 +515,30 @@ would hit them too:
 Remaining for P3b: the legend's utilisation table and `data-pv-modules` come
 from `layoutRoofPlanes(...)` directly — `totalModules`, `totalKWp`, and the
 per-plane `excludedReason`, which is why every refusal above has a name.
+
+## The apartment's zero was a sliver, not a roof (22:25)
+
+bim-54's P2 table put Schependomlaan at 0 modules and they, correctly, would
+not let it deploy on that reading. Both of us found the cause within minutes
+of each other: `dakvloer-plane-0` (the 130 m² flat deck) carried a MULTIPOLYGON
+outline — three tagged outers, the first a 0.078 × 5.31 m clipping sliver the
+sky-difference left behind — and the library took the first outer as "the"
+plane. It laid the deck out on 0.41 m² and refused it. Fixed on both sides,
+because a consumer written from the field list would hit it again:
+
+- extractor (`outlineRings`): a polygon whose outer encloses under 0.05 m² is
+  dropped — the file never states a roof piece no module could sit on;
+- library (`toPolygon`): the LARGEST outer is the plane, holes kept only when
+  inside it; smaller pieces are dropped, which understates usable roof and
+  says so — a per-piece layout is the follow-up;
+- library (`planeExclusion`, bim-54 `d5c1283`): a plane whose outline encloses
+  under 50 % of its stated area is refused as
+  `outline-area-disagrees-with-stated`, never a bare zero.
+
+After: the deck places 10 modules / 4.0 kWp on 33.1 m² usable — real, and
+low for a 130 m² deck (six rooflight holes grown by 0.5 m, a 1 m setback, and a
+1.77 m rack pitch on a 3.9 m-wide deck). **P3b's owner: look at the deck on
+the QA drawing before accepting 33 m²**; the other 50 refusals (19 too steep,
+22 too small, 8 no area after setback, 1 outline disagreement) stand.
+Regression lesson, third time this round: **build against the file, not the
+field list, and construct the case a guard claims to catch.**
