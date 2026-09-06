@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="239" height="419" viewBox="0 0 239 419" font-family="monospace">
 <rect width="100%" height="100%" fill="#f8fafc"/>
-<text x="8" y="14" font-size="11" fill="#111827">duplex-apartment Duplex Apartment — roof planes, plan view, 20 px/m; grey flat, green pitched ≤ 60°, red steeper; north is −z (up)</text>
+<text x="8" y="14" font-size="11" fill="#111827">duplex-apartment Duplex Apartment — roof planes, plan view, 20 px/m; grey flat, green pitched ≤ 60°, red steeper; project −z is up; north assumed</text>
 <path d="M40.0 40.0 L199.3 40.0 L199.3 379.3 L40.0 379.3 L40.0 40.0 Z M48.9 234.1 L48.9 255.8 L69.5 255.8 L69.5 234.1 L48.9 234.1 Z M169.5 163.5 L169.5 185.2 L190.1 185.2 L190.1 163.5 L169.5 163.5 Z" fill="#cbd5e1" fill-rule="evenodd" stroke="#1f2937" stroke-width="1"><title>basic-roof-live-roof-over-wood-joist-fla-plane-0 Basic Roof:Live Roof over Wood Joist Flat Roof:184483</title></path><text x="103.7" y="175.7" font-size="9" text-anchor="middle" fill="#111827">0° · 132.93 m²</text>
 </svg>

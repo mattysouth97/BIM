@@ -172,6 +172,8 @@ export interface RoofPlaneSet {
   buildingId: string;
   /** True when project north was used because the model states no true north. */
   northAssumed: boolean;
+  /** Clockwise from project -Z to source true north; null/absent uses project north. */
+  trueNorthDeg?: number | null;
   planes: readonly RoofPlane[];
 }
 
@@ -586,7 +588,7 @@ function elevationAt(plane: RoofPlane, x: number, z: number, ref: readonly [numb
  * — never a count handed down from an area ratio. If nothing fits, the plane
  * reports zero and says so, which is a real answer about a real roof.
  */
-export function layoutPlane(plane: RoofPlane, latitudeDeg = PV_LAYOUT_LATITUDE_DEG): PlaneLayout {
+export function layoutPlane(plane: RoofPlane, latitudeDeg = PV_LAYOUT_LATITUDE_DEG, trueNorthDeg = 0): PlaneLayout {
   const grossProjectedSqm = polygonsAreaSqm(toPolygons(plane.outline));
   const excluded = planeExclusion(plane);
 
@@ -616,7 +618,7 @@ export function layoutPlane(plane: RoofPlane, latitudeDeg = PV_LAYOUT_LATITUDE_D
   const usable = usableAreaFor(plane);
   const flat = plane.tiltDeg < PV_FLAT_TILT_MAX_DEG;
   const modules = flat
-    ? layoutFlat(plane, usable, latitudeDeg)
+    ? layoutFlat(plane, usable, latitudeDeg, trueNorthDeg)
     : layoutPitched(plane, usable);
 
   return {
@@ -644,19 +646,20 @@ export function layoutPlane(plane: RoofPlane, latitudeDeg = PV_LAYOUT_LATITUDE_D
  */
 function layoutPitched(plane: RoofPlane, usable: UsableArea): PvModuleInstance[] {
   const azimuth = plane.azimuthDeg ?? 180;
-  const tilt = (plane.tiltDeg * Math.PI) / 180;
-  const down = (azimuth * Math.PI) / 180;
-  // Downslope unit vector in plan (bearing measured clockwise from +Z north).
-  const dx = Math.sin(down);
-  const dz = Math.cos(down);
+  const cosTilt = plane.normal[1] / Math.hypot(...plane.normal);
+  // Measured normal determines the geometric frame. Using the rounded bearing
+  // would slightly skew a non-cardinal module; north is world -Z, south +Z.
+  const horizontal = Math.hypot(plane.normal[0], plane.normal[2]);
+  const dx = plane.normal[0] / horizontal;
+  const dz = plane.normal[2] / horizontal;
   // Strike is perpendicular to it, in plan.
   const sx = dz;
   const sz = -dx;
 
   const stepU = PV_MODULE_WIDTH_M + PV_MODULE_GAP_M;
-  const stepVPlan = PV_MODULE_LENGTH_M * Math.cos(tilt) + PV_ROW_GAP_M;
+  const stepVPlan = PV_MODULE_LENGTH_M * cosTilt + PV_ROW_GAP_M;
   const halfU = PV_MODULE_WIDTH_M / 2;
-  const halfVPlan = (PV_MODULE_LENGTH_M * Math.cos(tilt)) / 2;
+  const halfVPlan = (PV_MODULE_LENGTH_M * cosTilt) / 2;
 
   return gridPlace(plane, usable, { sx, sz, dx, dz, stepU, stepVPlan, halfU, halfVPlan }, plane.tiltDeg, azimuth, plane.normal);
 }
@@ -669,13 +672,14 @@ function layoutPitched(plane: RoofPlane, usable: UsableArea): PvModuleInstance[]
  * which is a much larger number, and that spacing is what makes a flat roof
  * hold so much less than its area suggests.
  */
-function layoutFlat(plane: RoofPlane, usable: UsableArea, latitudeDeg: number): PvModuleInstance[] {
+function layoutFlat(plane: RoofPlane, usable: UsableArea, latitudeDeg: number, trueNorthDeg: number): PvModuleInstance[] {
   const tiltDeg = PV_FIXED_RACK_TILT_DEG;
   const tilt = (tiltDeg * Math.PI) / 180;
   // Facing south: bearing 180 from project north.
   const azimuth = 180;
-  const dx = Math.sin((azimuth * Math.PI) / 180);
-  const dz = Math.cos((azimuth * Math.PI) / 180);
+  const worldBearing = ((azimuth + trueNorthDeg) * Math.PI) / 180;
+  const dx = Math.sin(worldBearing);
+  const dz = -Math.cos(worldBearing);
   const sx = dz;
   const sz = -dx;
 
@@ -759,7 +763,7 @@ export function layoutRoofPlanes(
   set: RoofPlaneSet,
   latitudeDeg = PV_LAYOUT_LATITUDE_DEG,
 ): PvLayoutResult {
-  const planes = set.planes.map((p) => layoutPlane(p, latitudeDeg));
+  const planes = set.planes.map((p) => layoutPlane(p, latitudeDeg, set.trueNorthDeg ?? 0));
   return {
     planes,
     totalModules: planes.reduce((s, p) => s + p.moduleCount, 0),

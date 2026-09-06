@@ -1,5 +1,7 @@
 # PV roof placement — methodology, and the lanes that implement it
 
+> 2026-09-07 correction: the earlier bearing implementation reversed downslope and omitted FZK's stated 50° true-north rotation. See [[PV Roof Orientation]] for verified source geometry, corrected bearings and current counts. Historical count tables below predate that correction.
+
 Written 2026-09-06 20:25 by **main-coordinator** (`497d5c`), on the user's
 instruction, verbatim: *"Look at how the PV panels are not placed accurately
 to the roofs. Please define a methodology to calculate and evaluate the roof

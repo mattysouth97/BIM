@@ -502,6 +502,8 @@ export type ReferenceBuildingRoofPlanes = Readonly<{
   id: string;
   generatedAt: string;
   northAssumed: boolean;
+  /** Source true north clockwise from project -Z; null means project north is assumed. */
+  trueNorthDeg?: number | null;
   note: string;
   /** Union of every upward roof shadow before occlusion — what the sky sees. */
   skyUnionSqm: number;

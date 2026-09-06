@@ -68,12 +68,12 @@ function flatPlane(over: Partial<RoofPlane> = {}): RoofPlane {
 function pitchedPlane(over: Partial<RoofPlane> = {}): RoofPlane {
   const tilt = 30;
   const t = (tilt * Math.PI) / 180;
-  // Downslope points south (bearing 180 → +? in XZ with north = +Z).
+  // South is +Z after IFC +Y north becomes web-ifc -Z.
   return {
     id: "plane-south",
     elementName: "Dach-1",
     elementType: "IfcSlab",
-    normal: [0, Math.cos(t), -Math.sin(t)],
+    normal: [0, Math.cos(t), Math.sin(t)],
     tiltDeg: tilt,
     azimuthDeg: 180,
     surfaceSqm: 200 / Math.cos(t),
@@ -95,7 +95,7 @@ function planCorners(
 ): [number, number][] {
   const a = (azimuthDeg * Math.PI) / 180;
   const dx = Math.sin(a);
-  const dz = Math.cos(a);
+  const dz = -Math.cos(a);
   const sx = dz;
   const sz = -dx;
   const hu = alongU / 2;
@@ -236,7 +236,7 @@ describe("the actual rendered box matches the layout footprint and measured plan
       { kind: "outer", points: rect(0, 20, 20, 10) },
     ] }), ...[60, 90, 135, 180, 225, 270, 300].map((azimuthDeg) => {
     const a = azimuthDeg * Math.PI / 180, t = Math.PI / 6;
-    return pitchedPlane({ azimuthDeg, normal: [Math.sin(a) * Math.sin(t), Math.cos(t), Math.cos(a) * Math.sin(t)] });
+    return pitchedPlane({ azimuthDeg, normal: [Math.sin(a) * Math.sin(t), Math.cos(t), -Math.cos(a) * Math.sin(t)] });
   })];
   for (const plane of cases) {
     it(`local X=1.7/Z=1.0 corners at tilt ${plane.tiltDeg}, azimuth ${plane.azimuthDeg}`, () => {
@@ -599,10 +599,10 @@ describe("the economics price the modules that were drawn", () => {
 
 describe("against the real stage-1 artifact, not a fixture", () => {
   it.each([
-    { id: "bs-medical-dental-clinic", count: 453, gross: 2592.012572, usableSqm: 1693.557969 },
+    { id: "bs-medical-dental-clinic", count: 453, gross: 2592.012572, usableSqm: 1693.57875 },
     { id: "schependomlaan", count: 10, gross: 359.965591, usableSqm: 73.8249577442148 },
     { id: "duplex-apartment", count: 14, gross: 132.922236, usableSqm: 80.15519 },
-    { id: "fzk-haus", count: 22, gross: 143, usableSqm: 60.76 },
+    { id: "fzk-haus", count: 44, gross: 143, usableSqm: 121.52 },
   ])(
     "$id: every piece is counted and every drawn underside clears its measured roof",
     async ({ id, count, gross, usableSqm }) => {
@@ -633,10 +633,9 @@ describe("against the real stage-1 artifact, not a fixture", () => {
       }
     },
   );
-  // bim-83's `roof-planes.json` for FZK Haus: two 30° pitches facing 180 and
-  // 0. This is the case the old bounding-box grid got most visibly wrong —
-  // one representative plane where the roof has two facing opposite ways.
-  it("FZK Haus: the south pitch is laid out and the north one is refused", async () => {
+  // The source TrueNorth rotation makes these SE130° / NW310°. The existing
+  // ±45° north exclusion leaves both eligible, each with its own source pose.
+  it("FZK Haus: source-oriented SE and NW pitches are independently fitted", async () => {
     const set = (await import(
       "../../../../public/reference-buildings/fzk-haus/roof-planes.json"
     )) as unknown as { default: RoofPlaneSet };
@@ -650,26 +649,30 @@ describe("against the real stage-1 artifact, not a fixture", () => {
       planes,
     });
 
-    const south = result.planes.find((p) => p.azimuthDeg === 180)!;
-    const north = result.planes.find((p) => p.azimuthDeg === 0)!;
+    const south = result.planes.find((p) => p.azimuthDeg === 130)!;
+    const north = result.planes.find((p) => p.azimuthDeg === 310)!;
 
-    expect(north.excludedReason).toBe("north-facing-pitch");
-    expect(north.moduleCount).toBe(0);
+    expect(north.excludedReason).toBeNull();
+    expect(north.moduleCount).toBe(22);
     expect(south.mounting).toBe("flush");
     expect(south.moduleCount).toBeGreaterThan(0);
     expect(south.tiltDeg).toBeCloseTo(30, 6);
 
     // Every module on the south pitch is inside its own usable region.
-    const usable = usableAreaFor(planes.find((p) => p.azimuthDeg === 180)!);
+    const sourcePlane = planes.find((p) => p.azimuthDeg === 130)!;
+    const usable = usableAreaFor(sourcePlane);
     for (const m of south.modules) {
-      const corners = planCorners(m.centre, m.azimuthDeg, m.tiltDeg, PV_MODULE_WIDTH_M, PV_MODULE_LENGTH_M);
+      const q = new Quaternion(...m.quaternion);
+      const corners = [[-0.85, -0.5], [0.85, -0.5], [0.85, 0.5], [-0.85, 0.5]].map(([x, z]) => {
+        const p = new Vector3(x, 0, z).applyQuaternion(q).add(new Vector3(...m.centre));
+        return [p.x, p.z] as [number, number];
+      });
       expect(usable.regions.some((region) => rectangleFits(corners, region, usable.blocked))).toBe(true);
     }
 
-    // The building total is the south pitch alone, and its kWp is the count.
-    expect(result.totalModules).toBe(south.moduleCount);
-    expect(result.totalKWp).toBeCloseTo(south.moduleCount * PV_PANEL_RATED_KWP, 12);
-    expect(result.excludedPlanes).toBe(1);
+    expect(result.totalModules).toBe(south.moduleCount + north.moduleCount);
+    expect(result.totalKWp).toBeCloseTo(result.totalModules * PV_PANEL_RATED_KWP, 12);
+    expect(result.excludedPlanes).toBe(0);
     // Placed area cannot exceed what the roof had to give.
     expect(south.moduleAreaSqm).toBeLessThanOrEqual(south.usableSqm + 1e-9);
   });

@@ -123,8 +123,11 @@ describe("the regressions the methodology named, by building", () => {
     const [a, b] = [...f.planes].sort((x, y) => (x.azimuthDeg ?? 0) - (y.azimuthDeg ?? 0));
     expect(a.tiltDeg).toBeCloseTo(30, 1);
     expect(b.tiltDeg).toBeCloseTo(30, 1);
-    expect(a.azimuthDeg).toBe(0);
-    expect(b.azimuthDeg).toBe(180);
+    // Source TrueNorth is 50° clockwise from IFC +Y / world -Z.
+    // Independent source-mesh and raw direction checks live in pv-bearing-source.
+    expect(f.trueNorthDeg).toBeCloseTo(50, 6);
+    expect(a.azimuthDeg).toBe(130);
+    expect(b.azimuthDeg).toBe(310);
     expect(a.projectedSqm).toBe(71.5);
     expect(b.projectedSqm).toBe(71.5);
     expect(f.skyUnionSqm).toBe(manifestOf("fzk-haus").areas.roofProjectedSqm);

@@ -323,24 +323,26 @@ function outlineRings(multiPolygon) {
 }
 
 /**
- * Bearing of the downslope direction, degrees clockwise from project north.
+ * Bearing of the downslope direction, clockwise from the requested north.
  *
  * North is the model's −Z after web-ifc's Z-up to Y-up conversion, which is
  * the same convention `manifest.orientation` states and the same one the wall
- * split is binned by; `northAssumed` travels with it because on three of these
- * four buildings there is no stated true north at all. A flat plane has no
+ * split is binned by. Subtract the source true-north rotation when supplied;
+ * otherwise use project north and mark it assumed. A flat plane has no
  * downslope and returns null rather than 0 — 0 would read as due north.
  */
-function azimuthDeg(unit) {
-  const dx = -unit[0];
-  const dz = -unit[2];
+export function roofAzimuthDeg(unit, trueNorthDeg = 0) {
+  // For n·p=d and n_y>0, height gradients are (-n_x/n_y,-n_z/n_y).
+  // Therefore +[n_x,n_z] is DOWN slope; negating it reports the uphill face.
+  const dx = unit[0];
+  const dz = unit[2];
   const len = Math.hypot(dx, dz);
   // A plane tilted under half a degree is flat, and its horizontal normal
   // component is tessellation noise, not a slope: no bearing rather than a
   // confident 270 read off a 0.3° lean. Same threshold `tiltDeg` rounds at.
   if (!(len > FLAT_SIN)) return null;
   const deg = (Math.atan2(dx / len, -(dz / len)) * 180) / Math.PI;
-  return r((deg + 360) % 360, 2);
+  return r(((deg - trueNorthDeg) % 360 + 360) % 360, 2) % 360;
 }
 
 const slugFamily = (name) =>
@@ -381,7 +383,7 @@ function describePlane(row, facts) {
     storeyId: row.storeyId ?? null,
     normal: [r(unit[0], 6), r(unit[1], 6), r(unit[2], 6)],
     tiltDeg: r((Math.acos(Math.min(1, Math.max(-1, unit[1]))) * 180) / Math.PI, 2),
-    azimuthDeg: azimuthDeg(unit),
+    azimuthDeg: roofAzimuthDeg(unit),
     surfaceSqm: r(surface, 2),
     projectedSqm: r(projected, 2),
     minElevationM: r(minY),
@@ -403,7 +405,7 @@ function describePlane(row, facts) {
  * upstream. Planes are sorted largest-surface-first within an element so the
  * main deck of a roof is `planes[0]`, and elements keep the manifest's order.
  */
-export function roofPlanes(roofRows, { minSurfaceSqm = 0.25 } = {}) {
+export function roofPlanes(roofRows, { minSurfaceSqm = 0.25, trueNorthDeg = null } = {}) {
   // Per element: connected coplanar patches, strips of one element merged.
   // Then per FAMILY across elements: the apartment's tiles are one IfcSlab
   // per rafter bay (124 `sporenkap` rows) and the Clinic's standing seam is
@@ -442,7 +444,9 @@ export function roofPlanes(roofRows, { minSurfaceSqm = 0.25 } = {}) {
   }
   const sky = occludeBySky(planes, minSurfaceSqm);
   return {
-    planes: sky.planes.map(({ shadowMultiPolygon: _shadow, ...plane }) => plane),
+    planes: sky.planes.map(({ shadowMultiPolygon: _shadow, ...plane }) => ({
+      ...plane, azimuthDeg: roofAzimuthDeg(plane.normal, trueNorthDeg ?? 0),
+    })),
     occludedPlanes: sky.occludedPlanes,
     skyUnionSqm: r(
       measureMultiPolygon(
@@ -461,7 +465,7 @@ export function roofPlanes(roofRows, { minSurfaceSqm = 0.25 } = {}) {
  * test caught. Outer rings filled by tilt, holes cut, each plane labelled with
  * its tilt and azimuth. Stage 3 draws the modules onto the same drawing.
  */
-export function roofPlanesSvg(planes, { id, title = "" } = {}) {
+export function roofPlanesSvg(planes, { id, title = "", trueNorthDeg = null } = {}) {
   let minX = Infinity;
   let maxX = -Infinity;
   let minZ = Infinity;
@@ -506,7 +510,7 @@ export function roofPlanesSvg(planes, { id, title = "" } = {}) {
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${(w * scale).toFixed(0)}" height="${(h * scale).toFixed(0)}" viewBox="0 0 ${(w * scale).toFixed(0)} ${(h * scale).toFixed(0)}" font-family="monospace">\n` +
     `<rect width="100%" height="100%" fill="#f8fafc"/>\n` +
-    `<text x="8" y="14" font-size="11" fill="#111827">${id ?? ""} ${title} — roof planes, plan view, ${scale} px/m; grey flat, green pitched ≤ 60°, red steeper; north is −z (up)</text>\n` +
+    `<text x="8" y="14" font-size="11" fill="#111827">${id ?? ""} ${title} — roof planes, plan view, ${scale} px/m; grey flat, green pitched ≤ 60°, red steeper; project −z is up; ${trueNorthDeg == null ? "north assumed" : `true north ${trueNorthDeg}° clockwise`}</text>\n` +
     `${paths}\n</svg>\n`
   );
 }

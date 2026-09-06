@@ -1684,6 +1684,7 @@ async function main() {
       family: roofFamily(row.name),
       storeyId: row.storey?.name ? `storey-${slug(row.storey.name)}` : null,
     })),
+    { trueNorthDeg },
   );
   const ground = measureGroundSlabs(horizontal.rows, {
     groundStorey,
@@ -2364,6 +2365,7 @@ async function main() {
         id: building.id,
         generatedAt,
         northAssumed: orientation.northAssumed,
+        trueNorthDeg,
         note:
           `Upward faces (within ${ROOF_PLANE_CONSTANTS.upwardWithinDeg}°) of each roof element, ` +
           `region-grown into connected coplanar patches: normals within ` +
@@ -2378,7 +2380,7 @@ async function main() {
           `Because lower layers are dropped, sum(surfaceSqm) is BELOW the manifest's roofSurfaceSqm, ` +
           `which keeps every layer and every verge because heat crosses them. tiltDeg and azimuthDeg ` +
           `are each plane's own and never a blend across the roof; azimuth is the downslope bearing ` +
-          `clockwise from project north (the model's −Z), null where the plane is flat. outline rings ` +
+          `clockwise from source true north when stated, otherwise project north (the model's −Z); trueNorthDeg records the rotation, and flat planes carry null. outline rings ` +
           `are the plane's visible plan area, outer counter-clockwise and holes clockwise, simplified ` +
           `to ${ROOF_PLANE_CONSTANTS.simplifyM * 1000} mm. obstructions is EMPTY in this pass: the ` +
           `shape is the contract, its content is a later stage.`,
@@ -2393,7 +2395,7 @@ async function main() {
   );
   await writeFile(
     path.join(outDir, "roof-planes-qa.svg"),
-    roofPlanesSvg(roofPlaneResult.planes, { id: building.id, title: building.name?.en ?? "" }),
+    roofPlanesSvg(roofPlaneResult.planes, { id: building.id, title: building.name?.en ?? "", trueNorthDeg }),
     "utf8",
   );
 
