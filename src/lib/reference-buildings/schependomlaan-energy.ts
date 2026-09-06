@@ -79,6 +79,13 @@ export type PendingMeasurement = Readonly<{
   derivedFrom: string;
   /** Which way it is wrong, in the building's favour or against it. */
   biasDirection: string;
+  /**
+   * The same claim as `biasDirection`, as a value a summariser can count.
+   * See the field's doc on `ReferenceBuildingEnergyInputs` for why reading
+   * the prose instead turned "understates the spread" into a prediction
+   * about the grade.
+   */
+  envelopeBias: "understates" | "overstates" | "neutral" | "unknown" | "distribution";
 }>;
 
 // ── Measured geometry, from the committed manifest ────────────────────────
@@ -244,6 +251,9 @@ export const SCHEPENDOMLAAN_PENDING_MEASUREMENTS: readonly PendingMeasurement[] 
         "77 windows counted by bim-bf × an invented 1.5 m² mean pane. The count is evidence; the mean is not.",
       biasDirection:
         "Unknown. A Dutch apartment mixes 3-4 m² living-room windows with 0.3-0.5 m² toilet lights, and 1.5 m² is a guess at the mean of that mixture.",
+      // Genuinely either way: the mean pane could be 1.0 or 2.5 and this is
+      // the one row that really is a coin flip.
+      envelopeBias: "unknown",
     },
     {
       manifestField: "areas.glazingByOrientationSqm",
@@ -254,6 +264,11 @@ export const SCHEPENDOMLAAN_PENDING_MEASUREMENTS: readonly PendingMeasurement[] 
         "The placeholder aperture distributed pro rata to the MEASURED wall split, giving one identical WWR on every sector.",
       biasDirection:
         "Understates the spread. A real Dutch block glazes its living-room facade far harder than its stair-and-service facade, so the true per-sector ratios straddle this one.",
+      // The error is in the DISTRIBUTION between elevations, not in how much
+      // envelope there is: this row's aperture sums to the row above it. It
+      // says nothing about whether the grade will move, and a badge that
+      // read the leading word of the sentence above said it did.
+      envelopeBias: "distribution",
     },
     {
       manifestField: "areas.exteriorDoorSqm",
@@ -264,6 +279,7 @@ export const SCHEPENDOMLAAN_PENDING_MEASUREMENTS: readonly PendingMeasurement[] 
         "20 exterior door leaves counted by bim-bf × an invented 2.0 m² leaf.",
       biasDirection:
         "Roughly neutral on total loss — doors are priced at the wall U (A-DOORS) — but it moves the WWR denominator, so it is not free.",
+      envelopeBias: "neutral",
     },
     // areas.roofProjectedSqm, areas.groundSlabSqm and areas.groundPerimeterM
     // left this table on 2026-09-04 when the extractor emitted them. All
@@ -685,7 +701,7 @@ export const SCHEPENDOMLAAN_ASSUMPTIONS: readonly SchependomlaanAssumption[] =
 
     // ── The engine's own limits, disclosed ────────────────────────────────
     { id: "A-WWR-DENOMINATOR", assumes: "WWR 0.1984 against GROSS wall area (opaque 426.63 + glazing 115.50 + doors 40.00 = 582.13 m²).", why: "heat-loss.ts computes windows = gross × WWR and prices the remainder as opaque wall, so the ratio must be quoted against the same gross the engine is handed. Against the net 426.63 the windows would land right and 155 m² of real wall would be priced as nothing. Derived from the parts in code, never typed — so when the placeholders are replaced the expression is unchanged and the ratio simply moves." },
-    { id: "A-WWR-ENGINE-MEAN", assumes: "All four cardinal ratios handed to MaterialProperties are still the single whole-building ratio — but the engine no longer averages them unweighted.", why: "The blocker this entry recorded is gone: `meanWindowToWallRatio` in heat-loss.ts now weights the four cardinals by each orientation's own measured wall wherever a recipe carries a measuredEnvelope, and use-retrofit-scenario.ts sizes its window and wall measures from that same function, so one ratio serves both. Because all four ratios here are currently identical, the weighted mean equals the unweighted one to the last bit and this building's kWh/m² did not move — the change is what makes a genuine per-sector split SAFE to land, not a correction to today's number. What remains assumed is the split itself: SCHEPENDOMLAAN_WWR_BY_SECTOR is built from PLACEHOLDER_GLAZING_BY_SECTOR_SQM, so wiring it in would feed the engine four invented ratios instead of one, and a placeholder spread is worse than no spread. It is wired the day bim-bf's extractor measures the glazing per sector." },
+    { id: "A-WWR-ENGINE-MEAN", assumes: "All four cardinal ratios handed to MaterialProperties are the single whole-building ratio, and the engine takes their plain arithmetic mean.", why: "Not an oversight and not a thing to improve. Each per-sector ratio is quoted against that sector's GROSS wall, so the only mean that reproduces the aperture is Σ(rᵢ·grossᵢ)/Σgrossᵢ — which is identically Σglazing/Σgross, i.e. the single ratio this file already hands over. Weighting a genuine split by gross therefore CANNOT move the whole-building number, and weighting it by anything else moves it wrongly: measured on the Duplex, net-opaque weighting prices 57.78 m² and the unweighted mean 79.39 m², against 64.46 measured. `calculateHeatLoss` has no per-sector gross to weight by (a MeasuredEnvelope carries one whole-building figure), so it is handed the uniform ratio and is exact. The split belongs in the legend, and SCHEPENDOMLAAN_WWR_BY_SECTOR keeps it — built from PLACEHOLDER_GLAZING_BY_SECTOR_SQM here, so this building's split is not even measured yet." },
     { id: "A-DOORS", assumes: "The 40.00 m² of exterior door leaves are priced at the wall U-value.", why: "The engine knows walls and windows and nothing between. A Dutch apartment entrance door is an insulated opaque leaf, so the wall U is the nearer of the two; leaving the doors out entirely would make the modelled envelope smaller than the building." },
     { id: "A-GROUND-DT", assumes: "The engine's 13.5 °C ground temperature and 4,380 h ground season.", why: "ISO 13370's U pairs with the annual-mean external air temperature, and the engine applies a fixed 6.5 K drop instead. The mismatch is about 13 % conservative — in the direction that makes the building look worse. It is disclosed rather than reconciled here, because reconciling it moves every other building in the app." },
 

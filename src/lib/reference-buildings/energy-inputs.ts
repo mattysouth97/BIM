@@ -29,9 +29,12 @@ import {
 } from "./schependomlaan-energy";
 import {
   DUPLEX_ASSUMPTIONS,
+  DUPLEX_DOOR_BY_SECTOR_SQM,
+  DUPLEX_GLAZING_BY_SECTOR_SQM,
   DUPLEX_MATERIALS,
   DUPLEX_MEASURED_ENVELOPE,
   DUPLEX_RECIPE,
+  DUPLEX_WALL_BY_SECTOR_SQM,
 } from "./duplex-apartment-energy";
 
 export type Orientation = "N" | "S" | "E" | "W";
@@ -63,6 +66,48 @@ export type ReferenceBuildingEnergyInputs = Readonly<{
   /** True when the model states no true north and the split uses project north. */
   northAssumed: boolean;
   /**
+   * GROSS exterior wall per cardinal sector, m² — opaque + glazing + doors.
+   *
+   * The area each per-orientation WWR is quoted AGAINST, and therefore the
+   * only correct weighting for `meanWindowToWallRatio` and the only correct
+   * denominator for a per-orientation legend row. Absent where a building has
+   * measured its opaque wall per sector but not its openings; the legend then
+   * apportions the whole gross by each sector's opaque share, which is exact
+   * while the ratios are uniform and is the reason they must be.
+   */
+  grossWallByOrientationSqm?: Readonly<Record<Orientation, number>>;
+  /**
+   * Roof typology, and the roof rows it was read from.
+   *
+   * This exists because `roofType` decides two user-visible things and was
+   * hard-coded `"flat"` for every building until 2026-09-06: the PV measure's
+   * roof-utilisation factor (flat 0.7, gable 0.5, hip 0.4, sawtooth 0.3) and
+   * the measure's own NAME, which renders as "Solar PV (flat roof, 373 kWp)".
+   * A tiled 63° roof described as a flat roof on screen is the label lying
+   * about the number beside it.
+   *
+   * Optional, and an absence is RENDERED as an absence rather than defaulted:
+   * a building whose file states no typology says so in the retrofit basis
+   * line instead of quietly being called flat.
+   */
+  roof?: Readonly<{
+    type: "flat" | "gable" | "hip" | "sawtooth";
+    /** The manifest rows and the area-weighted tilt behind the choice. */
+    read: string;
+  }>;
+  /**
+   * Measured exterior door aperture, m².
+   *
+   * The engine knows walls and windows and nothing between, so it prices
+   * doors at the wall U (A-DOORS) and its "Walls" element is `gross −
+   * aperture`, doors included. A wall-INSULATION measure is a different
+   * question: nobody insulates a door. Stating the door area here is what
+   * lets the measure be sized at `gross − aperture − doors` while the
+   * engine's own element stays intact. Absent means the file states no door
+   * area, and the measure then covers the whole wall element and says so.
+   */
+  exteriorDoorSqm?: number;
+  /**
    * Absent, or `"complete"`, when every envelope area behind these numbers is
    * measured. `"awaiting_measurement"` when some are stand-ins — and then
    * `pendingMeasurements` says which, what they stand in for and which way
@@ -82,6 +127,22 @@ export type ReferenceBuildingEnergyInputs = Readonly<{
     unit: "m2" | "m";
     derivedFrom: string;
     biasDirection: string;
+    /**
+     * Which way this stand-in moves the MODELLED ENVELOPE, as a value rather
+     * than as prose.
+     *
+     * `summarisePendingBias` used to sniff `biasDirection` for a leading
+     * "Understates". On the apartment that matched the per-sector glazing
+     * row, whose text is "Understates the spread" — a statement about how
+     * glazing is DISTRIBUTED between elevations, not about how much envelope
+     * there is — and the badge turned it into "1 understates the envelope, so
+     * the grade will likely fall". Right instinct, wrong noun, in a sentence
+     * that predicts a grade.
+     *
+     * `"distribution"` is the row whose error is in the split and not the
+     * magnitude; it is counted as neither direction.
+     */
+    envelopeBias: "understates" | "overstates" | "neutral" | "unknown" | "distribution";
   }>[];
 }>;
 
@@ -105,6 +166,17 @@ const CLINIC: ReferenceBuildingEnergyInputs = Object.freeze({
   }),
   wallByOrientationSqm: CLINIC_MEASURED_ENVELOPE.exteriorWallByOrientationSqm,
   northAssumed: CLINIC_MEASURED_ENVELOPE.northAssumed,
+  // Flat, and not because everything on it is flat. The 12 `roofs` rows split
+  // two ways: EPDM deck at tiltDeg 0.0 and standing-seam barrel at an
+  // area-weighted 17.9°. Over the 2,667.38 m² the engine actually prices
+  // (CLINIC_ROOF_AREA_SQM: the exposed EPDM plus the barrels) that is a mean
+  // of 3.05°, so the flat-deck utilisation factor is the right one of the
+  // four and the 17 % of barrel is the error that choice carries.
+  roof: Object.freeze({
+    type: "flat" as const,
+    read: "12 roof rows · EPDM deck 2,212.38 m² at 0.0° + standing seam 455.00 m² at 17.9° → area-weighted 3.05° over the 2,667.38 m² priced",
+  }),
+  exteriorDoorSqm: CLINIC_MEASURED_ENVELOPE.exteriorDoorSqm,
   measurementState: "complete",
 });
 
@@ -135,6 +207,18 @@ const SCHEPENDOMLAAN: ReferenceBuildingEnergyInputs = Object.freeze({
     W: SCHEPENDOMLAAN_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.W,
   }),
   northAssumed: SCHEPENDOMLAAN_MEASURED_ENVELOPE.northAssumed,
+  // Pitched, and the `roofing` layer on this page is 기와 — 4,293 tile
+  // elements. Of the 542.96 m² the engine prices (A-ROOF-STACK), 306.00 m² is
+  // the tiled sporenkap whose 44 rows carry an area-weighted 63.2° tilt, and
+  // 236.96 m² is flat deck; over the priced surface that is a mean of 35.6°.
+  // "gable" is the only pitched typology the solar model offers and its 0.5
+  // utilisation is the nearest of the four — NOT a claim that the roof is a
+  // simple two-sided gable, which the 78 roof rows do not say.
+  roof: Object.freeze({
+    type: "gable" as const,
+      read: "78 roof rows · tiled sporenkap 306.00 m² at 63.2° + flat deck 236.96 m² at 0.0° → area-weighted 35.62° over the 542.96 m² priced",
+  }),
+  exteriorDoorSqm: SCHEPENDOMLAAN_MEASURED_ENVELOPE.exteriorDoorSqm,
   // NOT complete. Three envelope areas — glazing, per-sector glazing and
   // doors — are stand-ins awaiting bim-bf's extractor pass (roof and ground
   // landed 2026-09-04), and the frame this registry feeds will happily
@@ -170,6 +254,23 @@ const DUPLEX: ReferenceBuildingEnergyInputs = Object.freeze({
     W: DUPLEX_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.W,
   }),
   northAssumed: DUPLEX_MEASURED_ENVELOPE.northAssumed,
+  // Flat, and unambiguously so: the manifest carries ONE roof row, "Live Roof
+  // over Wood Joist Flat Roof", 132.93 m² at tiltDeg 0.00. No weighting to
+  // do and no barrel to disclose.
+  roof: Object.freeze({
+    type: "flat" as const,
+    read: "1 roof row · Live Roof over Wood Joist Flat Roof 132.93 m² at 0.00° → area-weighted 0.00° over the 132.93 m² priced",
+  }),
+  exteriorDoorSqm: DUPLEX_MEASURED_ENVELOPE.exteriorDoorSqm,
+  // The first building that can state this: its glazing and doors ARE
+  // measured per sector, so each legend row gets its own true denominator
+  // instead of the whole gross apportioned by opaque share.
+  grossWallByOrientationSqm: Object.freeze({
+    N: DUPLEX_WALL_BY_SECTOR_SQM.N + DUPLEX_GLAZING_BY_SECTOR_SQM.N + DUPLEX_DOOR_BY_SECTOR_SQM.N,
+    E: DUPLEX_WALL_BY_SECTOR_SQM.E + DUPLEX_GLAZING_BY_SECTOR_SQM.E + DUPLEX_DOOR_BY_SECTOR_SQM.E,
+    S: DUPLEX_WALL_BY_SECTOR_SQM.S + DUPLEX_GLAZING_BY_SECTOR_SQM.S + DUPLEX_DOOR_BY_SECTOR_SQM.S,
+    W: DUPLEX_WALL_BY_SECTOR_SQM.W + DUPLEX_GLAZING_BY_SECTOR_SQM.W + DUPLEX_DOOR_BY_SECTOR_SQM.W,
+  }),
   // Complete, and this is the first building here whose per-orientation
   // GLAZING is measured rather than spread pro rata — so the per-sector WWR
   // legend on this page shows the building's real asymmetry (N 0.36 / E 0.10

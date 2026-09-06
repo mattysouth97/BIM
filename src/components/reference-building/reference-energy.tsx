@@ -28,6 +28,9 @@ import { useLayerStore } from "@/store/layer-store";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { getClimateData } from "@/lib/energy/climate-data";
+import { meanWindowToWallRatio } from "@/lib/energy/heat-loss";
+import { isResidentialOccupancy } from "@/lib/energy/delivered-from-demand";
+import { ledgerUseCategory } from "@/lib/ledger/floor-rows";
 import { EnergyInstrumentHud } from "@/components/twin/energy-instrument-hud";
 import { AnalysisLegend } from "@/components/viewer/analysis-legend";
 import {
@@ -50,24 +53,41 @@ import { buildReferenceEnergyZones } from "@/lib/reference-buildings/zones";
 const ORIENTATIONS: readonly Orientation[] = ["N", "E", "S", "W"];
 
 /**
- * How the stand-ins lean, counted from their own `biasDirection` strings.
+ * How the stand-ins lean, counted from the `envelopeBias` each row DECLARES.
  *
- * "Provisional" is a hedge; a reader takes it as "might move either way". On
- * the apartment three of six placeholders say "Understates" outright — a
- * smaller roof, a smaller slab, the minimum-perimeter square that ISO 13370
- * rewards — so the honest expectation is that the grade goes DOWN when the
- * measurements land, and the badge should predict that rather than hedge.
- * Every correction on these buildings today went the same way; an
- * unmeasured envelope input here is a systematic optimism, not a coin flip.
+ * "Provisional" is a hedge and a reader takes it as "might move either way",
+ * so where the rows do state a direction the badge should predict it: every
+ * correction to an unmeasured envelope input on these buildings has gone the
+ * same way, because what a model omits is envelope and what it states is
+ * floor.
+ *
+ * It counted the leading word of the `biasDirection` PROSE until 2026-09-06,
+ * and on the apartment that matched "Understates the spread" — a claim about
+ * how glazing is distributed between elevations, whose own aperture sums to
+ * the row above it — and rendered it as "1개가 외피를 과소평가하므로 실측 후
+ * 등급이 내려갈 가능성이 큽니다". Right instinct about which rows were
+ * uncertain, wrong noun, in a sentence that predicts a grade. `distribution`
+ * rows are now counted as neither direction.
  */
 export function summarisePendingBias(
   pending: ReferenceBuildingEnergyInputs["pendingMeasurements"] | undefined,
-): { total: number; understates: number; overstates: number } {
+): {
+  total: number;
+  understates: number;
+  overstates: number;
+  neutral: number;
+  unknown: number;
+  distribution: number;
+} {
   const rows = pending ?? [];
+  const count = (bias: string) => rows.filter((p) => p.envelopeBias === bias).length;
   return {
     total: rows.length,
-    understates: rows.filter((p) => /^understates/i.test(p.biasDirection.trim())).length,
-    overstates: rows.filter((p) => /^overstates/i.test(p.biasDirection.trim())).length,
+    understates: count("understates"),
+    overstates: count("overstates"),
+    neutral: count("neutral"),
+    unknown: count("unknown"),
+    distribution: count("distribution"),
   };
 }
 
@@ -75,19 +95,99 @@ export function pendingBadgeText(
   bias: ReturnType<typeof summarisePendingBias>,
   isKo: boolean,
 ): string {
-  const lean =
-    bias.understates > bias.overstates
-      ? isKo
-        ? ` — ${bias.understates}개가 외피를 과소평가하므로 실측 후 등급이 내려갈 가능성이 큽니다`
-        : ` — ${bias.understates} understate the envelope, so the grade will likely fall once measured`
-      : bias.overstates > bias.understates
+  let lean: string;
+  if (bias.understates > bias.overstates) {
+    lean = isKo
+      ? ` — ${bias.understates}개가 외피를 과소평가하므로 실측 후 등급이 내려갈 가능성이 큽니다`
+      : ` — ${bias.understates} understate the envelope, so the grade will likely fall once measured`;
+  } else if (bias.overstates > bias.understates) {
+    lean = isKo
+      ? ` — ${bias.overstates}개가 외피를 과대평가하므로 실측 후 등급이 올라갈 수 있습니다`
+      : ` — ${bias.overstates} overstate the envelope, so the grade may rise once measured`;
+  } else if (bias.total > 0) {
+    // No row claims a direction for the envelope. Saying nothing here would
+    // leave a bare count that reads as a hedge; the composition says why
+    // there is no prediction to make.
+    const parts = [
+      bias.unknown > 0
         ? isKo
-          ? ` — ${bias.overstates}개가 외피를 과대평가하므로 실측 후 등급이 올라갈 수 있습니다`
-          : ` — ${bias.overstates} overstate the envelope, so the grade may rise once measured`
-        : "";
+          ? `불확실 ${bias.unknown}`
+          : `${bias.unknown} unknown`
+        : null,
+      bias.neutral > 0
+        ? isKo
+          ? `총손실 중립 ${bias.neutral}`
+          : `${bias.neutral} neutral on total loss`
+        : null,
+      bias.distribution > 0
+        ? isKo
+          ? `분포만 ${bias.distribution}`
+          : `${bias.distribution} affecting only the split`
+        : null,
+    ].filter(Boolean);
+    lean = isKo
+      ? ` — 외피 크기의 방향을 말하는 항목은 없습니다 (${parts.join(" · ")})`
+      : ` — none of them states which way the envelope moves (${parts.join(" · ")})`;
+  } else {
+    lean = "";
+  }
   return isKo
     ? `측정 대기 · 자리표시자 ${bias.total}개${lean}`
     : `Awaiting measurement · ${bias.total} stand-ins${lean}`;
+}
+
+/**
+ * What the grade badge on the frame actually is — because on these two
+ * buildings it is three things a reader would not assume.
+ *
+ * 1. It is a **Korean** 건축물 에너지효율등급, on a US clinic and a Dutch
+ *    apartment, computed under a Seoul climate neither building is in.
+ * 2. It is scored on **primary** energy, which is not the site kWh/m²
+ *    printed immediately to its right: the apartment reads 40.5 beside a
+ *    grade struck at 65.7.
+ * 3. It is read off the residential or the non-residential threshold table,
+ *    and which one is decided by `isResidentialOccupancy` — occupant density
+ *    above 0.1 persons/m². That test is backwards for dwellings, which are
+ *    the LEAST densely occupied buildings there are: Schependomlaan is a
+ *    10-세대 공동주택 (mainPurpsCd 02000) at 0.025 p/m², so it is graded on
+ *    the non-residential table, whose 1+++ band is 80 kWh/m²·yr against the
+ *    residential 60. Its 65.7 is 1+++ there and 1++ on the table its use
+ *    code calls for.
+ *
+ * That last one is a defect in `delivered-from-demand.ts`, which is not this
+ * lane's file and whose fix would move every 건축물대장 building's grade in
+ * the app. So it is DISCLOSED here, with the band it costs, rather than
+ * quietly left to flatter the building.
+ */
+export function gradeBasisText(
+  energy: ReferenceBuildingEnergyInputs,
+  grade: string,
+  primaryEnergyPerArea: number,
+  siteDemandPerSqm: number,
+  isKo: boolean,
+): string {
+  const table = isResidentialOccupancy(energy.materials)
+    ? "residential"
+    : "non-residential";
+  const useSaysResidential =
+    ledgerUseCategory(energy.recipe.mainPurpsCd ?? "") === "residential";
+  const mismatched = useSaysResidential !== (table === "residential");
+  const n = (v: number, d = 1) =>
+    v.toLocaleString("en-US", { maximumFractionDigits: d });
+
+  const head = isKo
+    ? `${grade} 등급은 대한민국 건축물 에너지효율등급이며, 1차에너지 ${n(primaryEnergyPerArea)} kWh/m²·yr 기준입니다 — 옆의 사용량 ${n(siteDemandPerSqm)} kWh/m²·yr가 아닙니다. 기후는 ${energy.climate.labelKo} (${energy.climate.assumptionId}).`
+    : `Grade ${grade} is a Korean 건축물 에너지효율등급, struck on ${n(primaryEnergyPerArea)} kWh/m²·yr of PRIMARY energy — not the ${n(siteDemandPerSqm)} kWh/m²·yr of site demand beside it. Climate is ${energy.climate.labelEn} (${energy.climate.assumptionId}).`;
+
+  const tail = mismatched
+    ? isKo
+      ? ` 재실밀도 ${energy.materials.occupancy.occupancyDensity} 인/m²가 0.1 이하라 비주거 기준표로 채점했으나, 이 건물의 주용도코드는 ${energy.recipe.mainPurpsCd} (주거)입니다. 주거 기준표였다면 같은 1차에너지가 한 등급 아래로 내려갑니다.`
+      : ` It was scored on the ${table} table because occupancy density ${energy.materials.occupancy.occupancyDensity} p/m² is not above 0.1 — but this building's use code is ${energy.recipe.mainPurpsCd}, which is residential. On the residential table the same primary energy is one band lower.`
+    : isKo
+      ? ` 재실밀도 ${energy.materials.occupancy.occupancyDensity} 인/m²로 비주거 기준표를 적용했고, 주용도코드 ${energy.recipe.mainPurpsCd}와 일치합니다.`
+      : ` It was scored on the ${table} table from an occupancy density of ${energy.materials.occupancy.occupancyDensity} p/m², which agrees with its use code ${energy.recipe.mainPurpsCd}.`;
+
+  return head + tail;
 }
 
 /**
@@ -115,19 +215,67 @@ export function useSeedReferenceEnergy(energy: ReferenceBuildingEnergyInputs | n
   }, [energy, setProperties, setBaseRecipe, setActivePk, setActiveBuilding]);
 }
 
-/** The measured wall split, under the uniform ratio the engine applies. */
-function measuredOrientationRows(
+/**
+ * What the 방위별 창면적비 legend says about the four ratios beside it.
+ *
+ * "The ratio is assumed uniform" was hard-coded here, and it stops being true
+ * the moment a building hands over a MEASURED per-orientation glazing split.
+ * The sentence now reads the ratios it is describing: uniform only when they
+ * are, and otherwise saying what the engine is actually handed — their
+ * wall-area-weighted mean (`meanWindowToWallRatio`).
+ *
+ * Exported so a test can check the claim against the numbers rather than
+ * against a substring.
+ */
+export function orientationWwrNote(
+  wwr: Record<Orientation, number>,
+  northAssumed: boolean,
+  isKo: boolean,
+): string {
+  const uniform = ORIENTATIONS.every(
+    (o) => Math.abs(wwr[o] - wwr[ORIENTATIONS[0]]) < 1e-9,
+  );
+  const north = northAssumed
+    ? isKo
+      ? " · 북쪽은 모델의 −Z 축 (진북 미기재)"
+      : " · north is the model's −Z (no true north stated)"
+    : "";
+  if (uniform) {
+    return isKo
+      ? `벽면적은 방위별 측정값. 창면적비는 전 방위 균등 가정 (A-WWR-DENOMINATOR)${north}.`
+      : `Wall areas are measured per orientation. The ratio is assumed uniform (A-WWR-DENOMINATOR)${north}.`;
+  }
+  return isKo
+    ? `벽면적과 창면적비 모두 방위별 측정값입니다. 엔진에는 벽면적으로 가중한 평균을 넘깁니다${north}.`
+    : `Wall areas and window ratios are both measured per orientation. The engine is handed their wall-area-weighted mean${north}.`;
+}
+
+/**
+ * The per-orientation rows the 방위별 창면적비 legend draws.
+ *
+ * Each row's window area is that sector's OWN gross × that sector's OWN
+ * ratio. It used to be the WHOLE building's gross × the sector's ratio, which
+ * is the same number only while the ratios are uniform: on a building with a
+ * genuine split the north row would have read 121.5 m² for a sector holding
+ * 20.32 m² of glass.
+ *
+ * Where the file states `grossWallByOrientationSqm` those are the
+ * denominators. Where it does not, the whole gross is apportioned by each
+ * sector's measured OPAQUE share — the only split that keeps the four rows
+ * summing to the building's measured aperture, and stated as such in the
+ * note beside them.
+ */
+export function measuredOrientationRows(
   energy: ReferenceBuildingEnergyInputs,
   wwr: Record<Orientation, number>,
 ): OrientationWwrRow[] {
+  const stated = energy.grossWallByOrientationSqm;
   const net = ORIENTATIONS.reduce((sum, o) => sum + energy.wallByOrientationSqm[o], 0);
   const gross = envelopeQuantities(energy.recipe).grossWallAreaSqm;
-  // Openings are not measured per orientation, so each sector's gross is
-  // its measured opaque share of the whole gross — the only split that
-  // keeps the four windows summing to the building's measured aperture.
   const scale = net > 0 ? gross / net : 1;
   return ORIENTATIONS.map((orientation) => {
-    const grossWallAreaSqm = energy.wallByOrientationSqm[orientation] * scale;
+    const grossWallAreaSqm =
+      stated?.[orientation] ?? energy.wallByOrientationSqm[orientation] * scale;
     return {
       orientation,
       grossWallAreaSqm,
@@ -186,9 +334,7 @@ export function ReferenceEnergyFrame({
   const envelopeOverride = useMemo<EnvelopeAnalysis | null>(() => {
     if (!viewerEnvelope || !materials) return null;
     const wwr = materials.envelope.windows.windowToWallRatio;
-    const note = isKo
-      ? `벽면적은 방위별 측정값. 창면적비는 전 방위 균등 가정 (A-WWR-DENOMINATOR)${energy.northAssumed ? " · 북쪽은 모델의 −Z 축 (진북 미기재)" : ""}.`
-      : `Wall areas are measured per orientation. The ratio is assumed uniform (A-WWR-DENOMINATOR)${energy.northAssumed ? " · north is the model's −Z (no true north stated)" : ""}.`;
+    const note = orientationWwrNote(wwr, energy.northAssumed, isKo);
     return {
       ...viewerEnvelope,
       orientationWwr: measuredOrientationRows(energy, wwr),
@@ -207,22 +353,58 @@ export function ReferenceEnergyFrame({
         buildingPk={buildingPk}
         totalFloorArea={quantities.intensityFloorAreaSqm}
         footprintArea={quantities.planAreaSqm}
-        roofType="flat"
+        // Hard-coded "flat" until 2026-09-06, on a page showing a tiled
+        // pitched roof, in a measure whose NAME renders the word. Where the
+        // building states no typology the fallback stays flat AND the
+        // retrofit section says the typology is unstated, rather than the
+        // page quietly asserting a flat roof nobody read.
+        roofType={energy.roof?.type ?? "flat"}
+        exteriorDoorSqm={energy.exteriorDoorSqm}
         sidoPrefix={climate.sigunguCd.slice(0, 2)}
+        gradeBasis={
+          metrics
+            ? gradeBasisText(
+                energy,
+                metrics.grade,
+                metrics.primaryEnergyPerArea,
+                metrics.demand.demandPerSqm,
+                isKo,
+              )
+            : undefined
+        }
+        /* A stand-in travels on `measuredEnvelope` exactly like a measurement
+           and reports `source: "measured"` — the quantities function refuses
+           a zero, so a placeholder has to be a real positive number. The
+           registry is the only thing that knows, so the page has to say it
+           where the numbers are, not only in a panel a reader may not open.
+
+           In the frame's own notice band, not floated at `right-3 top-3`,
+           where it covered the rail's 실효 투자비 cell — the top band
+           occupies 13-135 px of this section and the badge sat at 12-40. */
+        notice={
+          awaiting ? (
+            <p
+              className="px-3 py-1.5 font-mono text-[10px] leading-tight text-amber-300"
+              data-testid="reference-energy-awaiting-measurement"
+            >
+              {pendingBadgeText(bias, isKo)}
+            </p>
+          ) : (
+            /* The Clinic never said "complete" — the absence of a warning is
+               not a statement, and one page carrying a measurement-state row
+               while the other carries none is the drift this contract is
+               for. */
+            <p
+              className="px-3 py-1.5 font-mono text-[10px] leading-tight text-muted-foreground"
+              data-testid="reference-energy-measurement-complete"
+            >
+              {isKo
+                ? "실측 완료 · 이 프레임의 모든 외피 면적은 이 파일에서 측정한 값입니다"
+                : "Measurement complete · every envelope area behind this frame is measured from the file"}
+            </p>
+          )
+        }
       />
-      {/* A stand-in travels on `measuredEnvelope` exactly like a measurement
-          and reports `source: "measured"` — the quantities function refuses
-          a zero, so a placeholder has to be a real positive number. The
-          registry is the only thing that knows, so the page has to say it
-          where the numbers are, not only in a panel a reader may not open. */}
-      {awaiting ? (
-        <div
-          className="pointer-events-none absolute right-3 top-3 z-30 rounded-md border border-amber-500/60 bg-amber-950/80 px-2.5 py-1.5 font-mono text-[10px] leading-tight text-amber-200 shadow-sm backdrop-blur"
-          data-testid="reference-energy-awaiting-measurement"
-        >
-          {pendingBadgeText(bias, isKo)}
-        </div>
-      ) : null}
       {/* The legend positions itself `absolute left-3 top-16`; this wrapper
           moves its origin below the frame's top band and stops above the
           bottom strip, and scrolls: the Clinic's zone list is ten programs
@@ -271,7 +453,14 @@ export function ReferenceEnergyPanel({
   const climate = getClimateData(energy.climate.sigunguCd);
   const materials = useMaterialStore((s) => s.properties[energy.buildingPk]);
   const fmt = (n: number, d = 1) => n.toLocaleString("en-US", { maximumFractionDigits: d });
-  const wwr = materials?.envelope.windows.windowToWallRatio.S;
+  // The south ratio alone until 2026-09-06, printed as "창 X m² (WWR Y %)" —
+  // the building's whole-envelope figure taken from one elevation. Identical
+  // while the four are uniform and wrong the moment they are not: on a real
+  // split the Duplex's south 0.367 would have claimed 124.9 m² of glazing
+  // against 64.46 measured. This is the number the engine actually uses.
+  const wwr = materials
+    ? meanWindowToWallRatio(materials, energy.grossWallByOrientationSqm)
+    : undefined;
 
   return (
     <section className="mt-6" data-testid="reference-model-energy">

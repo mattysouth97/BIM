@@ -12,6 +12,7 @@ import {
   ReferenceEnergyPanel,
   useSeedReferenceEnergy,
 } from "./reference-energy";
+import { ReferenceRetrofitPanel } from "./reference-retrofit";
 
 export const FABRIC_LAYER = "fabric";
 
@@ -225,9 +226,24 @@ export function ReferenceBuildingWorkspace({
                   onToggle={() => setFlowVisible((on) => !on)}
                 />
               ) : (
-                <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {isKo ? "흐름 방향" : "Flow direction"}
-                </p>
+                <>
+                  <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {isKo ? "흐름 방향" : "Flow direction"}
+                  </p>
+                  {/* A heading with nothing under it is an absence rendered as
+                      a blank. The generator's own sentence about WHY says so
+                      in the services note, which a reader has no reason to
+                      connect to this heading — so the reason is stated here,
+                      where the question is asked. */}
+                  <p
+                    className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground"
+                    data-testid="reference-model-flow-absent"
+                  >
+                    {isKo
+                      ? `이 건물의 서비스 모델 ${services.length}개는 모두 배분 포트를 선언하지 않습니다. 방향을 읽을 그래프가 없으므로 애니메이션을 제공하지 않습니다 — 표시할 것이 없다는 사실 자체가 이 파일에 대한 정보입니다.`
+                      : `All ${services.length} of this building's service models declare no distribution ports. There is no port graph to read a direction from, so no animation is offered — that there is nothing to show is itself a fact about the file.`}
+                  </p>
+                </>
               )}
               {activeServices.map((layer) => (
                 <FlowNote
@@ -263,8 +279,16 @@ export function ReferenceBuildingWorkspace({
           </section>
         ) : null}
 
+        {/* 에너지 평가 / 에너지 프로파일 / 리트로핏, in that order, on every
+            model page. The retrofit section was invisible on desktop until
+            2026-09-06: `SelectedMeasuresStrip` in the frame returns null
+            unless the viewport is narrow, so a laptop reader got four numbers
+            in the top rail and nothing under them. */}
         {energy ? (
-          <ReferenceEnergyPanel energy={energy} manifest={manifest} locale={locale} />
+          <>
+            <ReferenceEnergyPanel energy={energy} manifest={manifest} locale={locale} />
+            <ReferenceRetrofitPanel energy={energy} locale={locale} />
+          </>
         ) : null}
 
         <dl className="mt-6">
@@ -336,7 +360,62 @@ type ServiceLayer = NonNullable<
  * no ports at all is the most informative line on this panel: it is a concrete
  * statement about what a coordination model does and does not carry, and it
  * would be invisible if the layer simply animated nothing.
+ *
+ * It said "N downstream of plant, M upstream" until 2026-09-06, which is a
+ * supply/return claim the extractor never makes. `supplySegments` is what the
+ * walk REACHED from a plant node and `returnSegments` is, in the manifest
+ * type's own words, "the rest" — so on a layer with no plant the second
+ * number is every segment there is, and the sentence describes a
+ * classification that never ran on a plant the file does not contain.
  */
+/**
+ * The sentence itself, as a pure function so a test can parse the claim back
+ * out. Exported for that reason and no other.
+ */
+export function flowNoteBody(
+  flow: NonNullable<ServiceLayer["flow"]>,
+  isKo: boolean,
+): string {
+  const n = (value: number) => value.toLocaleString("en-US");
+
+  if (flow.ports === 0) {
+    return isKo
+      ? "배분 포트를 선언하지 않음 — 이 파일에는 계통 위상이 없습니다."
+      : "declares no distribution ports — this file carries no network topology.";
+  }
+  if (flow.drawnEdges === 0) {
+    return isKo
+      ? `연결 ${n(flow.connections)}개가 모두 양방향으로 선언됨 — 방향을 읽을 수 없습니다.`
+      : `all ${n(flow.connections)} connections are declared bidirectional — no direction to read.`;
+  }
+  const ratio =
+    flow.drawnEdges === flow.connections
+      ? isKo
+        ? `연결 ${n(flow.connections)}개 전부에 방향이 명시됨`
+        : `all ${n(flow.connections)} connections state a direction`
+      : isKo
+        ? `연결 ${n(flow.connections)}개 중 ${n(flow.drawnEdges)}개만 방향이 명시됨 (나머지 ${n(flow.bidirectionalEdges)}개는 양방향 선언)`
+        : `${n(flow.drawnEdges)} of ${n(flow.connections)} connections state a direction (the other ${n(flow.bidirectionalEdges)} are declared bidirectional)`;
+
+  // `returnSegments` is not "return" — the manifest's own field comment calls
+  // it "the rest": everything the walk did not reach from a plant node.
+  // Printing it as 상류/upstream states a classification the file did not
+  // make, and with no plant to walk from it states one that never ran. The
+  // Clinic's plumbing declares 2 plant nodes and lands 944 of its 954
+  // directed segments in "the rest"; domestic water is mostly supply to
+  // fixtures, so that is a reachability result, not a supply/return split.
+  const split =
+    flow.plantNodes === 0
+      ? isKo
+        ? ` · 기기(플랜트)를 선언하지 않아 급기/환기 구분은 계산되지 않았습니다`
+        : ` · no plant is declared, so supply and return were never classified`
+      : isKo
+        ? ` · 선언된 기기 ${n(flow.plantNodes)}개에서 도달 가능한 구간 ${n(flow.supplySegments)} · 도달하지 못한 구간 ${n(flow.returnSegments)}`
+        : ` · ${n(flow.supplySegments)} reachable from the ${n(flow.plantNodes)} declared plant node${flow.plantNodes === 1 ? "" : "s"}, ${n(flow.returnSegments)} not reached`;
+
+  return ratio + split;
+}
+
 function FlowNote({
   label,
   flow,
@@ -347,35 +426,9 @@ function FlowNote({
   isKo: boolean;
 }) {
   if (!flow) return null;
-  const n = (value: number) => value.toLocaleString("en-US");
-
-  let body: string;
-  if (flow.ports === 0) {
-    body = isKo
-      ? "배분 포트를 선언하지 않음 — 이 파일에는 계통 위상이 없습니다."
-      : "declares no distribution ports — this file carries no network topology.";
-  } else if (flow.drawnEdges === 0) {
-    body = isKo
-      ? `연결 ${n(flow.connections)}개가 모두 양방향으로 선언됨 — 방향을 읽을 수 없습니다.`
-      : `all ${n(flow.connections)} connections are declared bidirectional — no direction to read.`;
-  } else {
-    const ratio =
-      flow.drawnEdges === flow.connections
-        ? isKo
-          ? `연결 ${n(flow.connections)}개 전부에 방향이 명시됨`
-          : `all ${n(flow.connections)} connections state a direction`
-        : isKo
-          ? `연결 ${n(flow.connections)}개 중 ${n(flow.drawnEdges)}개만 방향이 명시됨 (나머지 ${n(flow.bidirectionalEdges)}개는 양방향 선언)`
-          : `${n(flow.drawnEdges)} of ${n(flow.connections)} connections state a direction (the other ${n(flow.bidirectionalEdges)} are declared bidirectional)`;
-    const split = isKo
-      ? ` · 기기 하류 ${n(flow.supplySegments)} · 상류 ${n(flow.returnSegments)}`
-      : ` · ${n(flow.supplySegments)} downstream of plant, ${n(flow.returnSegments)} upstream`;
-    body = ratio + split;
-  }
-
   return (
     <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
-      <span className="text-foreground/70">{label}</span> — {body}
+      <span className="text-foreground/70">{label}</span> — {flowNoteBody(flow, isKo)}
     </p>
   );
 }

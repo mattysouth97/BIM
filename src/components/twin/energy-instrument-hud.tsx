@@ -23,7 +23,10 @@
 // agree — and hands the result to the scenario hook.
 
 import { useEffect, useMemo } from "react";
-import { useRetrofitScenario } from "@/hooks/use-retrofit-scenario";
+import {
+  useRetrofitScenario,
+  engineEnvelopeAreasFrom,
+} from "@/hooks/use-retrofit-scenario";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useScenarioStore } from "@/store/scenario-store";
@@ -42,9 +45,43 @@ export interface EnergyInstrumentHudProps {
   totalFloorArea: number;
   /** Footprint / roof area, m² — drives solar potential. */
   footprintArea: number;
+  /**
+   * Roof typology, which sets the PV utilisation factor AND appears in the
+   * measure's own name ("Solar PV (flat roof, 373 kWp)"). The caller reads it
+   * from the building; it is not a default this component may invent.
+   */
   roofType: "flat" | "gable" | "hip" | "sawtooth";
   /** Two-digit 시도 prefix for the regional climate. */
   sidoPrefix: string;
+  /**
+   * Measured exterior door aperture, m², excluded from the wall-insulation
+   * measure. The engine prices doors at the wall U and keeps them inside its
+   * "Walls" element; nobody insulates a door. Omitted where the building
+   * states no door area — the measure then covers the whole wall element.
+   */
+  exteriorDoorSqm?: number;
+  /**
+   * A band rendered INSIDE the top section, under the program chips.
+   *
+   * It is a slot rather than something a caller absolutely-positions over the
+   * canvas: the apartment's awaiting-measurement badge sat at `right-3 top-3`
+   * with z-30 and covered the top rail's 실효 투자비 cell, because that is
+   * exactly where this frame's own top band already is. `TwinInstrumentFrame`
+   * says it in its doc — widgets sit in the frame, they do not choose their
+   * own corners — and this is the seam that lets them.
+   */
+  notice?: React.ReactNode;
+  /**
+   * One line under the grade/kWh/CO₂ strip saying what the grade IS.
+   *
+   * The badge renders a bare "1+++" and three things about it are not
+   * inferable from the frame: that it is a Korean 건축물 에너지효율등급, that
+   * it is struck on PRIMARY energy rather than the site figure printed two
+   * centimetres to its right, and which threshold table it was read off.
+   * `EnergyCards` owns the badge and belongs to another lane, so the sentence
+   * sits beside it here rather than being wedged inside it.
+   */
+  gradeBasis?: string;
 }
 
 export function EnergyInstrumentHud({
@@ -53,6 +90,9 @@ export function EnergyInstrumentHud({
   footprintArea,
   roofType,
   sidoPrefix,
+  exteriorDoorSqm,
+  notice,
+  gradeBasis,
 }: EnergyInstrumentHudProps) {
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
   const programTrack = useScenarioStore((s) => s.programTrack);
@@ -80,6 +120,20 @@ export function EnergyInstrumentHud({
   const sigunguCd = useActiveSigunguCd();
   const metrics = useEnergyMetrics(buildingPk, sigunguCd ?? sidoPrefix);
 
+  // The measures are sized on the areas the engine ITSELF priced, read back
+  // off the heat-loss elements rather than re-derived. `footprintArea` used
+  // to stand in for both the roof and the ground slab, which on the apartment
+  // is a 36 % understatement of the roof — it has a pitched tiled roof of
+  // 542.96 m² over a 345.81 m² footprint. The derivation is shared with the
+  // side panel's retrofit list so the two cannot drift.
+  const engineEnvelopeAreas = useMemo(
+    () =>
+      metrics
+        ? engineEnvelopeAreasFrom(metrics.heatLoss.elements, exteriorDoorSqm ?? 0)
+        : undefined,
+    [metrics, exteriorDoorSqm],
+  );
+
   const scenario = useRetrofitScenario({
     buildingPk,
     capexBudgetKrw,
@@ -92,6 +146,7 @@ export function EnergyInstrumentHud({
     // coarse proxy, which is the honest state for a frame with no engine
     // answer yet rather than a number pretending to be one.
     engineDemand: metrics?.demand,
+    engineEnvelopeAreas,
   });
 
   // Publish the knapsack selection so the 3D MEP layers can physically swap
@@ -128,11 +183,23 @@ export function EnergyInstrumentHud({
               suggestedTrack={scenario.suggestedPrivateTrack}
             />
           </div>
+          {notice ? <div className="border-t border-border">{notice}</div> : null}
         </section>
       }
       bottom={
         <section className="overflow-hidden rounded-lg border border-border bg-card/95 shadow-sm backdrop-blur-md">
           <EnergyCards buildingPk={buildingPk} variant="strip" />
+          {/* Directly under the badge it explains, and ABOVE the delta strip:
+              the sentence says what the "before" number is, so it has to be
+              read before the before→after row that builds on it. */}
+          {gradeBasis ? (
+            <p
+              className="border-b border-border px-3 py-1.5 text-[10px] leading-relaxed text-muted-foreground"
+              data-testid="energy-grade-basis"
+            >
+              {gradeBasis}
+            </p>
+          ) : null}
           <RetrofitDeltaStrip />
           <SelectedMeasuresStrip
             measures={scenario.selection?.selected ?? []}

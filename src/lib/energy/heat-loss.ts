@@ -83,45 +83,56 @@ function mechanicalAch(
 }
 
 /**
- * The single window-to-wall ratio the engine multiplies the gross wall by.
+ * The single window-to-wall ratio a caller multiplies the GROSS wall by.
  *
- * Two rules, and the recipe decides which applies — not the caller:
+ * The arithmetic that governs this, and the reason the obvious implementation
+ * is wrong: each cardinal ratio rᵢ is quoted against that sector's own GROSS
+ * wall gᵢ (`A-WWR-DENOMINATOR`), so the only mean that reproduces the
+ * building's aperture is the one weighted by the very areas the ratios are
+ * quoted against —
  *
- * - **A measured envelope** (`recipe.measuredEnvelope`) carries per-orientation
- *   wall areas read off a model's own solids, so the four cardinal ratios are
- *   weighted by the wall each one actually applies to. Schependomlaan's north
- *   elevation is 148.90 m² and its south 74.12 m²; an unweighted mean gives
- *   those equal say in a number that is then multiplied by the WHOLE gross
- *   wall, and the result stops reproducing the building's own aperture the
- *   moment the per-sector ratios differ.
- * - **Everything else** — every 건축물대장 building, whose per-orientation
- *   areas are an extrusion of one footprint rather than an independent
- *   measurement — keeps the unweighted arithmetic mean. Weighting an
- *   extrusion by its own extrusion learns nothing and would move numbers
- *   nothing new was found out about.
+ *     Σ(rᵢ·gᵢ) / Σgᵢ  ≡  Σglazingᵢ / Σgᵢ  =  aperture / gross
  *
- * Exported because `use-retrofit-scenario.ts` sizes the window and wall
- * measures from the same ratio. Two means on one frame is how the retrofit
- * areas and the engine areas came to disagree in the first place.
+ * Weight by anything else and the identity breaks. Measured on the Duplex's
+ * real split (N .357 / E .104 / S .367 / W .105) against a 341.00 m² gross
+ * carrying 73.46 m² of glazing: gross-weighted returns 0.2154 and prices
+ * 73.46 m² exactly; weighting by the NET opaque wall returns 0.1946 and
+ * prices 66.34; the unweighted arithmetic mean returns 0.2333 and prices
+ * 79.54. This function weighted by the net wall between 222bf4a and its
+ * correction on 2026-09-06, which under-priced glazing by 10 % on any
+ * building with a genuine split — flattering, in the way an unmeasured
+ * envelope input in this pipeline always is.
+ *
+ * So: pass `grossWallByOrientationSqm` and get the aperture-preserving mean.
+ * Pass nothing and get the plain arithmetic mean, which is EXACT when the
+ * four ratios are equal — the invariant `A-WWR-DENOMINATOR` exists to
+ * maintain — and wrong the moment they are not.
+ *
+ * `calculateHeatLoss` and `use-retrofit-scenario.ts` both call it without
+ * weights, because neither is handed a per-sector gross: a `MeasuredEnvelope`
+ * carries one whole-building gross and no split. That is not a gap to paper
+ * over with an inference. A building whose glazing IS measured per sector
+ * must still hand the engine its whole-building ratio (which is this same
+ * number, by the identity above) and keep the split for the legend.
  */
 export function meanWindowToWallRatio(
   materials: MaterialProperties,
-  recipe: BuildingRecipe | null | undefined,
+  grossWallByOrientationSqm?: Partial<Record<"N" | "S" | "E" | "W", number>>,
 ): number {
   const wwr = materials.envelope.windows.windowToWallRatio;
   const unweighted = (wwr.N + wwr.S + wwr.E + wwr.W) / 4;
-  if (!recipe?.measuredEnvelope) return unweighted;
+  if (!grossWallByOrientationSqm) return unweighted;
 
   let weighted = 0;
   let total = 0;
-  for (const w of materials.envelope.walls) {
-    if (!Number.isFinite(w.surfaceArea) || w.surfaceArea <= 0) continue;
-    weighted += wwr[w.orientation] * w.surfaceArea;
-    total += w.surfaceArea;
+  for (const o of ["N", "S", "E", "W"] as const) {
+    const gross = grossWallByOrientationSqm[o];
+    if (gross == null || !Number.isFinite(gross) || gross <= 0) continue;
+    weighted += wwr[o] * gross;
+    total += gross;
   }
-  // A measured envelope whose wall split never reached `materials` has
-  // nothing to weight BY. Falling back is not the same as weighting by zero:
-  // it keeps the ratio the file states instead of returning 0.
+  // Weights that did not survive are not weights of zero: fall back to the
+  // ratio the file states rather than returning 0.
   return total > 0 ? weighted / total : unweighted;
 }
 
@@ -148,7 +159,10 @@ export function calculateHeatLoss(
   const groundDeltaT = Math.max(climate.indoorTemp - groundTemp, 0);
 
   const grossWallArea = q.grossWallAreaSqm;
-  const avgWWR = meanWindowToWallRatio(materials, recipe);
+  // No weights: a MeasuredEnvelope carries one whole-building gross and no
+  // per-sector split, and the ratios the files hand over are uniform, for
+  // which the plain mean is exact. See the function's own note.
+  const avgWWR = meanWindowToWallRatio(materials);
   const totalWindowArea = grossWallArea * avgWWR;
   const netWallArea = grossWallArea - totalWindowArea;
 

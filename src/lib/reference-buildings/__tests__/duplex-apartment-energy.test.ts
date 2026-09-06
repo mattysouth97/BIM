@@ -257,12 +257,13 @@ describe("gross x wwr reproduces the measured aperture", () => {
     expect(wouldPrice - DUPLEX_MEASURED_ENVELOPE.glazingApertureSqm).toBeCloseTo(14.93, 1);
   });
 
-  it("the engine's own window area IS the measured aperture, through the weighted mean", () => {
-    // `meanWindowToWallRatio` takes its MEASURED branch here (this recipe has
-    // a measuredEnvelope), so this exercises the weighted path, not the
-    // unweighted fallback — and the answer still has to be the aperture the
-    // openings walk counted.
-    const mean = meanWindowToWallRatio(DUPLEX_MATERIALS, DUPLEX_RECIPE);
+  it("the engine's own window area IS the measured aperture", () => {
+    // The engine is handed ONE ratio on all four cardinals
+    // (A-WWR-DENOMINATOR), so the plain mean is exact and the answer has to
+    // be the aperture the openings walk counted. `meanWindowToWallRatio` is
+    // called without weights here because that is how `calculateHeatLoss`
+    // calls it — a MeasuredEnvelope carries no per-sector gross.
+    const mean = meanWindowToWallRatio(DUPLEX_MATERIALS);
     const q = envelopeQuantities(DUPLEX_RECIPE);
     expect(q.grossWallAreaSqm * mean).toBeCloseTo(
       DUPLEX_MEASURED_ENVELOPE.glazingApertureSqm,
@@ -280,13 +281,18 @@ describe("gross x wwr reproduces the measured aperture", () => {
     expect(opaque).toBeCloseTo(276.12, 2);
   });
 
-  it("handing the engine the per-sector ratios would LOSE glazing, not gain accuracy", () => {
+  it("handing the engine the per-sector ratios, unweighted, would GAIN glazing it does not have", () => {
     // A-WWR-ENGINE-MEAN's measurement, pinned so the "obvious improvement"
-    // cannot be made silently. The weight is net opaque wall and each
-    // ratio's denominator is gross wall, so the two do not cancel: the
-    // weighted mean lands at 0.1697 and the engine prices 57.78 m² against a
-    // measured 64.46 — 10 % of the glazing gone, in the direction that makes
-    // the building look better than it is.
+    // cannot be made silently. `calculateHeatLoss` has no per-sector gross to
+    // weight by, so four genuinely different ratios reach it as a plain
+    // arithmetic mean and the engine prices 79.39 m² against a measured
+    // 64.46 — 23 % of glazing the building does not have.
+    //
+    // (Between 222bf4a and its correction the function weighted by the NET
+    // opaque wall when a recipe carried a measuredEnvelope, which erred the
+    // other way and priced 57.78. Both are wrong; only the gross-weighted
+    // mean below is the aperture, and it is what the uniform ratio already
+    // gives.)
     const perSector: MaterialProperties = {
       ...DUPLEX_MATERIALS,
       envelope: {
@@ -303,11 +309,24 @@ describe("gross x wwr reproduces the measured aperture", () => {
       },
     };
     const q = envelopeQuantities(DUPLEX_RECIPE);
-    const mean = meanWindowToWallRatio(perSector, DUPLEX_RECIPE);
-    expect(mean).toBeCloseTo(0.16965, 5);
+    const mean = meanWindowToWallRatio(perSector);
+    expect(mean).toBeCloseTo(DUPLEX_WWR_UNWEIGHTED_MEAN, 12);
     const window = q.grossWallAreaSqm * mean;
-    expect(window).toBeCloseTo(57.78, 2);
-    expect(DUPLEX_MEASURED_ENVELOPE.glazingApertureSqm - window).toBeCloseTo(6.68, 2);
+    expect(window - DUPLEX_MEASURED_ENVELOPE.glazingApertureSqm).toBeCloseTo(14.93, 1);
+
+    // Weighted by the areas the ratios are quoted against, the same four
+    // ratios land back on the aperture exactly.
+    const grossBySector = {
+      N: DUPLEX_WALL_BY_SECTOR_SQM.N + DUPLEX_GLAZING_BY_SECTOR_SQM.N + DUPLEX_DOOR_BY_SECTOR_SQM.N,
+      E: DUPLEX_WALL_BY_SECTOR_SQM.E + DUPLEX_GLAZING_BY_SECTOR_SQM.E + DUPLEX_DOOR_BY_SECTOR_SQM.E,
+      S: DUPLEX_WALL_BY_SECTOR_SQM.S + DUPLEX_GLAZING_BY_SECTOR_SQM.S + DUPLEX_DOOR_BY_SECTOR_SQM.S,
+      W: DUPLEX_WALL_BY_SECTOR_SQM.W + DUPLEX_GLAZING_BY_SECTOR_SQM.W + DUPLEX_DOOR_BY_SECTOR_SQM.W,
+    };
+    const weighted = meanWindowToWallRatio(perSector, grossBySector);
+    expect(q.grossWallAreaSqm * weighted).toBeCloseTo(
+      DUPLEX_MEASURED_ENVELOPE.glazingApertureSqm,
+      6,
+    );
   });
 
   it("weighting per-sector ratios by GROSS wall is an identity, not an improvement", () => {
@@ -326,10 +345,7 @@ describe("gross x wwr reproduces the measured aperture", () => {
       weighted += DUPLEX_WWR_BY_SECTOR[s] * gross;
       total += gross;
     }
-    expect(weighted / total).toBeCloseTo(
-      meanWindowToWallRatio(DUPLEX_MATERIALS, DUPLEX_RECIPE),
-      12,
-    );
+    expect(weighted / total).toBeCloseTo(meanWindowToWallRatio(DUPLEX_MATERIALS), 12);
   });
 
   it("the per-sector ratios are the measured split, not one number repeated", () => {
