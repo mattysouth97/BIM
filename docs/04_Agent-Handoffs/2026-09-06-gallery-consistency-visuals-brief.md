@@ -540,3 +540,16 @@ Open at 16:55, all routed with evidence: bim-83 (spec rewrite to 3C's premise + 
 | 1C · spec follow-up | bim-83 | `047f84c` | (c) counts `[data-measure-recommended="true"]` (bilingual names would have zeroed a text count); financing comment rewritten to the resolved mechanism ("any non-empty selection" — an empty set has zero effective CAPEX, so even a rate track moves nothing); FZK premise corrected. **Instruction corrected by measurement:** `[data-track-covers-nothing]` is present on THREE of four (apartment, Duplex, FZK each arrive with one renewable-only chosen measure), and the Clinic's absence is a different fact — nothing chosen makes no coverage claim — so the test asserts 0 chosen beside the absent notice, not absence alone. 36 passed. |
 | 2 · basis openers + card names | bim-54 | `29ea7df`, `9c8c90c`, merged `2a17f7f` | Status openers stripped from both basis strings, provenance kept; the apartment's "that table" pointer re-anchored to `SCHEPENDOMLAAN_PENDING_MEASUREMENTS` with a test. The new assertion checks itself against the two strings it exists to catch and the openings that must survive — first draft missed both Korean forms (`\b` does not fire after Hangul) and caught a provenance sentence; rule now: a status claim stands alone as an opening clause closed by — : ·. An opposing test rewritten, not deleted. `MeasureCard` resolves names through `measureDisplayName` with a locale; description stays English rather than a second table. Full vitest 5,076; spec 32. |
 | **FINAL TREE `2a17f7f`** | main-coordinator | merge 15 | tsc 0 · full vitest **5,076 passed / 4 skipped, 424 files** · eslint 0 errors (6 pre-existing warnings) · `check-untracked-imports` clean. bim-83 running the full Playwright suite on exactly this sha; deploy on green. |
+
+## Outcome — 17:20, production `223736a`
+
+| check | result |
+|---|---|
+| bim-83's full Playwright run on exactly `2a17f7f` | **84 passed, exit 0** (warm); cold run 83/1, the 1 = `cad-reconstruction.spec.ts:29`, the documented load flake, green isolated and green warm |
+| deploy | clean detached worktree at `223736a` (= `2a17f7f` + one docs commit, chosen deliberately), `-e DEPLOY_COMMIT_SHA` set, author `namseunghun97@gmail.com` |
+| `/api/health` | `commit 223736a…`, `region icn1` |
+| VWorld canary `lat=37.5663&lng=126.9779` | `X-Vercel-Id icn1::icn1`, `source: "building"`, polygon 34 points, `groundFloors 6` |
+| `/models/*` | four pages 200, four manifests served, gallery renders four cards |
+| Duplex on production | grade 4 · 142.6 kWh/m²·yr, seven Korean-named chips, residential-table sentence, legend "3개 개선 항목" |
+
+The three tasks: (1) four buildings published (Duplex, FZK Haus added; DigitalHub refused on licence); (2) one energy/retrofit contract on every model page, priced against the engine's own demand, on measured areas, on the table the use code selects; (3) the row picks work, financing re-prices it, and the building and the delta strip answer the click on the twin and on every model page. Three coordinator instructions were refuted by measurement during the round and are recorded above as such.

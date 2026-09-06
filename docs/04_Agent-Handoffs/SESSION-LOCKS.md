@@ -15,6 +15,10 @@ Project state lives in `CURRENT.md`. Delete this file once the tree is down to o
 > Untracked bought a clean history and cost the file its entire purpose.
 > Deleting it later is one commit; being unreadable was permanent.
 
+## Round closed 17:20 — production `223736a`; every lane released
+
+All five lanes merged and deployed; bim-83, bim-54, bim-24 released, bim-7c and bim-ae exited or near-exhausted. Nothing is claimed. Outcome table in the brief.
+
 ## Roster 2026-09-06 13:55 — a new fleet, five lanes, one brief
 
 **Every session named below the 09-04 sections has EXITED.** `ListAgents` at 13:53 today
