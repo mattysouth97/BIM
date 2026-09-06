@@ -265,3 +265,25 @@ faces in the file's `note`. Neither figure moves.
 
 This is **Lane P1b**, for a fresh session. Own worktree off the current
 shared tip; same rules; report shas.
+
+## P3a landed — `4e3079e` (bim-24), merged
+
+`twinRoofPlanes(recipe): RoofPlane[]` in `src/lib/retrofit/twin-roof-planes.ts`:
+one plane for the top plate at `finishedRoofTopY`, one per terrace a setback
+exposes, none where a storey overhangs; storeys walked in
+`envelope-quantities.ts:198-210`'s order with the same exported
+`floorPlateAreaSqm`, so **Σ projectedSqm === roofAreaSqm by construction**.
+Pinned on a stepped recipe, a prism and an overhang. tsc 0, 795 tests.
+
+**Stage-5 addition, from a mistake bim-24 made and its own test caught:** the
+terrace `partialOverlap` flag ("the outline's shape is inference") was first
+implemented as the same arithmetic on the same two numbers the area already
+used — so it could never fire while its name claimed to measure containment.
+Now a vertex-containment test. **A flag that cannot fire is not a check; the
+way to tell is to construct the case it claims to catch and watch it fire.**
+That is the bounding-box bug in miniature.
+
+For P2/P3b: flat planes carry `azimuthDeg: null`, never `0` — `0` would read
+as due north and the library's north-facing exclusion would silently drop
+every twin plane; terrace outlines carry holes, so the setback inset must
+offset outer rings inward and holes outward.
