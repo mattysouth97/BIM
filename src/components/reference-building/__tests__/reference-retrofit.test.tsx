@@ -14,6 +14,7 @@ import {
   retrofitBasisLines,
 } from "../reference-retrofit";
 import { RETROFIT_CATEGORY_ORDER } from "@/components/retrofit/measure-card";
+import { measureDisplayName } from "@/lib/retrofit/measure-claim";
 import { referenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
 import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
@@ -257,6 +258,57 @@ describe("the Korean basis line names the roof in Korean", () => {
         `${id}: the Korean PV basis line still carries the enum "${energy.roof.type}"`,
       ).not.toMatch(new RegExp(`\\b${energy.roof.type}\\b`));
       expect(ko).toContain("이용률로 산정했습니다");
+    }
+  });
+});
+
+describe("the cards name measures in the reader's language", () => {
+  beforeEach(() => {
+    cleanup();
+    useMaterialStore.setState({ properties: {} });
+    useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
+    useScenarioStore.setState({ capexBudgetKrw: 250_000_000, programTrack: "none" });
+  });
+
+  it("a Korean page carries no untranslated generator name", () => {
+    const energy = referenceBuildingEnergyInputs("bs-medical-dental-clinic")!;
+    useMaterialStore.setState({ properties: { [energy.buildingPk]: energy.materials } });
+    useRecipeStore.setState({ baseRecipes: { [energy.buildingPk]: energy.recipe } });
+
+    const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="ko" />);
+    const cards = [
+      ...container.querySelectorAll<HTMLElement>(
+        '[data-testid^="retrofit-measure-"]:not([data-testid$="-note"])',
+      ),
+    ];
+    expect(cards.length).toBeGreaterThan(0);
+
+    for (const card of cards) {
+      const id = card.dataset.testid!.replace("retrofit-measure-", "");
+      const title = card.querySelector("p")!.textContent!.trim();
+      // The name is whatever the shared catalog says, not the generator's.
+      expect(title).toBe(measureDisplayName(id, "ko", title));
+      // And for every id the catalog knows, that is Korean.
+      const en = measureDisplayName(id, "en", "\u0000FALLBACK");
+      if (en !== "\u0000FALLBACK") {
+        expect(title, `${id} still shows the English name on a Korean page`).not.toBe(en);
+        expect(title).toMatch(/[가-힣]/);
+      }
+    }
+  });
+
+  it("the English page gets the English name from the same catalog", () => {
+    const energy = referenceBuildingEnergyInputs("bs-medical-dental-clinic")!;
+    useMaterialStore.setState({ properties: { [energy.buildingPk]: energy.materials } });
+    useRecipeStore.setState({ baseRecipes: { [energy.buildingPk]: energy.recipe } });
+
+    const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="en" />);
+    for (const card of container.querySelectorAll<HTMLElement>(
+      '[data-testid^="retrofit-measure-"]:not([data-testid$="-note"])',
+    )) {
+      const id = card.dataset.testid!.replace("retrofit-measure-", "");
+      const title = card.querySelector("p")!.textContent!.trim();
+      expect(title).toBe(measureDisplayName(id, "en", title));
     }
   });
 });

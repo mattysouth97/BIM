@@ -269,6 +269,7 @@ export function ReferenceRetrofitPanel({
                     key={m.id}
                     measure={m}
                     selected={selectedIds.has(m.id)}
+                    locale={locale}
                     note={
                       exclusionReason(m, selectedIds.has(m.id), capexBudgetKrw, isKo) ??
                       undefined

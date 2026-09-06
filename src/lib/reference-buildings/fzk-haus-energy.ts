@@ -330,7 +330,11 @@ export const FZK_HAUS_RECIPE: BuildingRecipe = {
     volumeM3: FZK_HAUS_MEASURED_ENVELOPE.conditionedVolumeGrossM3,
     derivedFloorAreaSqm: FZK_HAUS_TOTAL_FLOOR_AREA_SQM,
     basis:
-      "FULLY MEASURED — no placeholder in this building. Wall, glazing, door, roof, " +
+      // Opened "FULLY MEASURED — no placeholder in this building." until
+      // 2026-09-06. `measurementState` is the one source of that claim and
+      // the frame renders it; a second copy here, in English, in a paragraph,
+      // is a claim nothing keeps in step with the first. Provenance only now.
+      "Wall, glazing, door, roof, " +
       "ground and volume areas are read from the FZK Haus IFC by " +
       "scripts/build-reference-building.mjs (name-matched exterior wall walk against " +
       "stated NetSideArea, IfcSpace stated quantities, per-element roof shadows, the " +

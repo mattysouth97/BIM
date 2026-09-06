@@ -566,7 +566,11 @@ export const SCHEPENDOMLAAN_RECIPE: BuildingRecipe = {
     volumeM3: SCHEPENDOMLAAN_MEASURED_ENVELOPE.conditionedVolumeGrossM3,
     derivedFloorAreaSqm: SCHEPENDOMLAAN_TOTAL_FLOOR_AREA_SQM,
     basis:
-      "PARTLY PLACEHOLDER — see SCHEPENDOMLAAN_PENDING_MEASUREMENTS. Wall areas, " +
+      // Opened "PARTLY PLACEHOLDER — see SCHEPENDOMLAAN_PENDING_MEASUREMENTS."
+      // until 2026-09-06; `measurementState` owns that claim and the frame
+      // renders it. The pointer is not lost — it moved to the closing
+      // sentence, which is where the fields it names are described.
+      "Wall areas, " +
       "floor areas, volumes, roof and ground are read from the Schependomlaan IFC " +
       "by scripts/build-reference-building.mjs (inner-leaf exterior-wall walk, " +
       "IfcSpace rows, storey datums, per-element roof shadows and one-sheet " +
@@ -575,7 +579,7 @@ export const SCHEPENDOMLAAN_RECIPE: BuildingRecipe = {
       "(roofUnionSqm 361.86 − sporenkap plan 124.90) = 542.96 m² (A-ROOF-STACK). " +
       "Glazing aperture and exterior-door aperture are NOT measured: they are " +
       "stand-ins awaiting bim-bf's extractor pass and each biases the answer in " +
-      "the direction that table records.",
+      "the direction SCHEPENDOMLAAN_PENDING_MEASUREMENTS records.",
   },
 };
 
