@@ -553,3 +553,20 @@ Open at 16:55, all routed with evidence: bim-83 (spec rewrite to 3C's premise + 
 | Duplex on production | grade 4 · 142.6 kWh/m²·yr, seven Korean-named chips, residential-table sentence, legend "3개 개선 항목" |
 
 The three tasks: (1) four buildings published (Duplex, FZK Haus added; DigitalHub refused on licence); (2) one energy/retrofit contract on every model page, priced against the engine's own demand, on measured areas, on the table the use code selects; (3) the row picks work, financing re-prices it, and the building and the delta strip answer the click on the twin and on every model page. Three coordinator instructions were refuted by measurement during the round and are recorded above as such.
+
+## Lane 3D — the budget becomes an optional constraint, not a gauge (user-approved 21:38)
+
+User, 20:34: *"evaluate if 투자예산 gauge is necessary"*; verdict accepted 21:38: **demote, do not delete.**
+
+What the gauge drives today (read from the code after 3C): the knapsack, whose only outputs are now the 추천 marks and the one-time seed of the chosen set; the rail's "n/m 선택 · 예산 ₩X 중 y% 사용" line; the retrofit panel's "후보 N개 중 예산 내 M개" sentence and its per-measure "NPV는 양수이나 예산 초과" reason; the report stage and equipment cards read the same value. Nothing enforces it — the Clinic showed 113 % on 09-06 with no consequence but a percentage. The cost of the chosen work is already 실효 투자비. Its default (₩2.5억, `DEFAULT_CAPEX_BUDGET_KRW`) has no basis, and it persists across reloads and buildings, so a school and a two-family house open with the same budget and the 추천 marks move with a number nobody set for that building. It is also the largest fixed element of the bottom block that squeezes the canvas at laptop height.
+
+Deliverable:
+- `CapexInput` (the slider band) is removed from `EnergyInstrumentHud`'s bottom section. In its place, an **optional** budget field in the rail's first cell (`ScenarioRail`), labelled 예산 (선택) / Budget (optional), empty by default, **per building** (keyed like `appliedMeasureIds`, cleared on building change), **not persisted**.
+- `capexBudgetKrw` becomes `number | null`. With **null**: the 추천 marks mean "NPV-positive within the horizon" (select measures with `financials.npv > 0`, ordered by NPV; no knapsack), the utilisation line and the "예산 내 M개" sentence are not rendered, and the per-measure exclusion reason never says "예산 초과". With a **value**: exactly today's behaviour — knapsack within ₩X, utilisation, over-budget reasons.
+- The first-recommendation seed of `appliedMeasureIds` uses whichever recommendation is in force; a later budget entry never re-seeds (the `=== null` guard stays).
+- Every consumer of `capexBudgetKrw` (`energy-panel.tsx`, `reference-retrofit.tsx`, `report-stage.tsx`, `equipment-info-panel.tsx`, `equipment-insight-card.tsx`, `scene-outliner.tsx`, `use-retrofit-scenario.ts`, `scenario-rail.tsx`) handles null explicitly; `tsc` finds them — do not leave a `?? DEFAULT` that quietly restores the gauge's number.
+- The rail's 추천 legend line says which meaning is in force: "추천 = 분석 기간 내 NPV 양수" or "추천 = 예산 ₩X 내 최적".
+- Tests: null → no knapsack call, marks = NPV-positive set, no budget strings rendered; value → today's assertions unchanged; building switch clears the field; the seed is not overwritten by a later budget. `e2e/reference-buildings.spec.ts` (bim-83's; coordinate) loses the slider selectors and gains one case: enter a budget → 추천 marks and utilisation appear; clear it → they go.
+- Report on screen: the Clinic and the Duplex, both meanings, in a FOREGROUND tab.
+
+Files: `src/components/twin/{capex-input,energy-instrument-hud,scenario-rail}.tsx`, `src/store/scenario-store.ts`, `src/hooks/use-retrofit-scenario.ts`, the eight consumers above, tests. Owner: **unassigned — the next session that comes free** (bim-54 and bim-24, who own these files, are released). Off the current shared tip; path-scoped; tsc unpiped; report the sha to main-coordinator.
