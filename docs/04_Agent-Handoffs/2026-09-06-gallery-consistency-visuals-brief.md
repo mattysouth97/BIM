@@ -383,3 +383,7 @@ message rather than scaling the lane down silently.
 ## Outcome
 
 _(filled in by main-coordinator as lanes land)_
+
+| lane | who | landed as | result |
+|---|---|---|---|
+| 3A step 1 · retrofit-delta | bim-24 | `0d0ced2` on `lane3a-retrofit-delta` (off `b8c9278`) | `retrofit-delta.ts` + `apply-phase.ts` extended; tsc 0, eslint 0, 201 tests in retrofit+phases. `pricedByEngine` is measured per id by re-running the engine. Three engine facts recorded in their message and handed to Lane 2: LED/PV move NPV but not kWh/m² or grade (`deliveredFromDemand` hard-codes renewable 0 and lighting 15 %); an HRV on a naturally-ventilated building RAISES modelled heat loss (engine reads `airflowRate` only once type is heat-recovery); window replacement leaves SHGC alone on purpose. Not merged yet. |
