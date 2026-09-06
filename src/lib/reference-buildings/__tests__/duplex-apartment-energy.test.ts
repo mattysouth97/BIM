@@ -3,6 +3,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
+import { meanWindowToWallRatio } from "@/lib/energy/heat-loss";
+import type { MaterialProperties } from "@/lib/material-types";
 import type { ReferenceBuildingManifest } from "../manifest";
 import { REFERENCE_BUILDING_IDS } from "../manifest";
 import { referenceBuildingEnergyInputs } from "../energy-inputs";
@@ -253,6 +255,81 @@ describe("gross x wwr reproduces the measured aperture", () => {
     expect(Math.round(inflation * 100)).toBe(23);
     const wouldPrice = DUPLEX_MEASURED_ENVELOPE.grossWallSqm * DUPLEX_WWR_UNWEIGHTED_MEAN;
     expect(wouldPrice - DUPLEX_MEASURED_ENVELOPE.glazingApertureSqm).toBeCloseTo(14.93, 1);
+  });
+
+  it("the engine's own window area IS the measured aperture, through the weighted mean", () => {
+    // `meanWindowToWallRatio` takes its MEASURED branch here (this recipe has
+    // a measuredEnvelope), so this exercises the weighted path, not the
+    // unweighted fallback — and the answer still has to be the aperture the
+    // openings walk counted.
+    const mean = meanWindowToWallRatio(DUPLEX_MATERIALS, DUPLEX_RECIPE);
+    const q = envelopeQuantities(DUPLEX_RECIPE);
+    expect(q.grossWallAreaSqm * mean).toBeCloseTo(
+      DUPLEX_MEASURED_ENVELOPE.glazingApertureSqm,
+      6,
+    );
+    // What the engine prices as opaque is gross − window = net wall + doors:
+    // the doors are INSIDE the opaque figure, at the wall U, by A-DOORS. It
+    // is deliberately NOT gross − aperture − doors (267.16), which would
+    // leave 8.96 m² of envelope priced as nothing.
+    const opaque = q.grossWallAreaSqm - q.grossWallAreaSqm * mean;
+    expect(opaque).toBeCloseTo(
+      DUPLEX_MEASURED_ENVELOPE.exteriorWallNetSqm + DUPLEX_MEASURED_ENVELOPE.exteriorDoorSqm,
+      6,
+    );
+    expect(opaque).toBeCloseTo(276.12, 2);
+  });
+
+  it("handing the engine the per-sector ratios would LOSE glazing, not gain accuracy", () => {
+    // A-WWR-ENGINE-MEAN's measurement, pinned so the "obvious improvement"
+    // cannot be made silently. The weight is net opaque wall and each
+    // ratio's denominator is gross wall, so the two do not cancel: the
+    // weighted mean lands at 0.1697 and the engine prices 57.78 m² against a
+    // measured 64.46 — 10 % of the glazing gone, in the direction that makes
+    // the building look better than it is.
+    const perSector: MaterialProperties = {
+      ...DUPLEX_MATERIALS,
+      envelope: {
+        ...DUPLEX_MATERIALS.envelope,
+        windows: {
+          ...DUPLEX_MATERIALS.envelope.windows,
+          windowToWallRatio: {
+            N: DUPLEX_WWR_BY_SECTOR.N,
+            S: DUPLEX_WWR_BY_SECTOR.S,
+            E: DUPLEX_WWR_BY_SECTOR.E,
+            W: DUPLEX_WWR_BY_SECTOR.W,
+          },
+        },
+      },
+    };
+    const q = envelopeQuantities(DUPLEX_RECIPE);
+    const mean = meanWindowToWallRatio(perSector, DUPLEX_RECIPE);
+    expect(mean).toBeCloseTo(0.16965, 5);
+    const window = q.grossWallAreaSqm * mean;
+    expect(window).toBeCloseTo(57.78, 2);
+    expect(DUPLEX_MEASURED_ENVELOPE.glazingApertureSqm - window).toBeCloseTo(6.68, 2);
+  });
+
+  it("weighting per-sector ratios by GROSS wall is an identity, not an improvement", () => {
+    // The version that DOES reproduce the aperture returns exactly what the
+    // uniform ratio returns: Σ(rᵢ·grossᵢ)/Σgrossᵢ ≡ Σglazing/Σgross. So no
+    // wiring of the measured split can move the whole-building mean, which
+    // is why it is not wired in.
+    const sectors = ["N", "E", "S", "W"] as const;
+    let weighted = 0;
+    let total = 0;
+    for (const s of sectors) {
+      const gross =
+        DUPLEX_WALL_BY_SECTOR_SQM[s] +
+        DUPLEX_GLAZING_BY_SECTOR_SQM[s] +
+        DUPLEX_DOOR_BY_SECTOR_SQM[s];
+      weighted += DUPLEX_WWR_BY_SECTOR[s] * gross;
+      total += gross;
+    }
+    expect(weighted / total).toBeCloseTo(
+      meanWindowToWallRatio(DUPLEX_MATERIALS, DUPLEX_RECIPE),
+      12,
+    );
   });
 
   it("the per-sector ratios are the measured split, not one number repeated", () => {
