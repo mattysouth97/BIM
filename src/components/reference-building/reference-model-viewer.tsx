@@ -6,6 +6,7 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { ContactShadows, Environment, OrbitControls, useGLTF } from "@react-three/drei";
 
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
+import type { ReferenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
 import { FlowNetwork } from "./flow-network";
 import { useScenarioStore, useProposalVisualIds } from "@/store/scenario-store";
 import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
@@ -213,6 +214,7 @@ export function ReferenceModelViewer({
   fabricLayerId,
   flowVisible,
   manifest,
+  energy,
   locale = "ko",
 }: {
   modelUrl: string;
@@ -234,6 +236,14 @@ export function ReferenceModelViewer({
    * prop added to `ReferenceBuildingWorkspace`'s call site.
    */
   manifest: ReferenceBuildingManifest;
+  /**
+   * Only `energy?.roof?.type` is read (the PV array's flat-vs-pitched
+   * classification, and the seam that isolates a tiled roof's own pitch from
+   * a flat deck merged into the same mesh — see `resolveRoofFace`). `null`
+   * when this building's energy inputs are not wired yet; the array then
+   * falls back to this module's own geometric classification.
+   */
+  energy: ReferenceBuildingEnergyInputs | null;
   locale?: "ko" | "en";
 }) {
   const [offset, setOffset] = useState<SceneOffset | null>(null);
@@ -353,6 +363,7 @@ export function ReferenceModelViewer({
               storeys={manifest.storeys}
               visual={visual}
               centre={offset.centre}
+              statedRoofType={energy?.roof?.type}
             />
           ) : null}
           {offset ? (

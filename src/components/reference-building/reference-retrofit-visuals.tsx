@@ -133,10 +133,46 @@ const UP_FACE_MIN_COS = 0.05; // matches the sub-5.7° cutoff the extractor uses
  * the same subset) are excluded so they cannot cancel the tilt or inflate the
  * footprint — the same reason the extractor's own `tiltDeg`/`upFacingProjectedSqm`
  * only ever sum upward faces.
+ *
+ * `areaSqm` CAN read well over the true one-sheet surface, for two DIFFERENT
+ * reasons this project has hit on the published files, neither of which
+ * survives merging into one mesh for this function to detect or correct:
+ * a roof authored as a "both-sheets-wound-upward" surface model rather than
+ * a closed solid (the Clinic's standing-seam sections, ~1.15-1.6x their
+ * stated `surfaceSqm`), or one built from several stacked/overlapping layer
+ * solids whose own shadows the extractor reports covering "1.01x-2.90x
+ * over" per element (Schependomlaan's tiled sporenkap, blended ~1.5-2x over
+ * the whole roofing model). The extractor knows the per-element correction
+ * factor for each of these from the source IFC and applies it before this
+ * GLB is ever built; once merged into one mesh that knowledge is gone, so
+ * this function does not attempt to guess which triangles need which
+ * correction. Both are confirmed and pinned on the published files
+ * (`reference-retrofit-visuals.glb.test.ts`), not treated as noise.
+ * `tiltDeg` cancels this artefact ONLY where the over-count factor is the
+ * SAME across every face — true enough on the Clinic (one mild mechanism,
+ * one dominant nearly-flat surface) that its tilt lands close to stated.
+ * It is NOT true on Schependomlaan: the per-element factors span 1.01x-2.90x,
+ * and the steep tiled faces there carry higher factors than the flat deck,
+ * so the over-counted mean shifts toward the steep component — measured at
+ * ~45° here against a stated 35.62°. Read `tiltDeg` as "closer to whichever
+ * component is more heavily stacked", not as exact, whenever a roof mixes
+ * genuinely different pitches. This is exactly why `panelLayoutForRoof`'s
+ * own `overrideSystemSizeKWp`
+ * must always be preferred over this module's area-based estimate wherever
+ * one is available — see its doc comment.
  */
 export function analyzeUpwardFaces(
   positions: ArrayLike<number>,
   index: ArrayLike<number>,
+  /**
+   * Excludes faces tilted less than this from the analysis entirely — not
+   * just from the tilt mean, from the footprint and apex too. Lets a caller
+   * isolate a roof's steeply-pitched sub-population from a flatter deck it
+   * is merged with (see `resolveRoofFace` below), rather than reporting one
+   * physically-nonexistent blended angle for two real, differently-pitched
+   * surfaces.
+   */
+  minTiltDeg = 0,
 ): FaceSetAnalysis | null {
   let areaSqm = 0;
   let tiltWeighted = 0;
@@ -167,6 +203,7 @@ export function analyzeUpwardFaces(
 
     const area = len / 2;
     const tiltDeg = (Math.acos(Math.min(1, Math.max(-1, normalY))) * 180) / Math.PI;
+    if (tiltDeg < minTiltDeg) continue;
     areaSqm += area;
     tiltWeighted += tiltDeg * area;
     minX = Math.min(minX, ax, bx, cx);
@@ -200,6 +237,42 @@ const MAX_PV_INSTANCES = 400;
 
 export function classifyRoofTypeForSizing(tiltDeg: number): "flat" | "gable" {
   return tiltDeg < PV_FLAT_TILT_THRESHOLD_DEG ? "flat" : "gable";
+}
+
+export type StatedRoofType = "flat" | "gable" | "hip" | "sawtooth";
+
+/** Separates a genuinely pitched roof surface from a flat/low-slope deck merged with it in the same mesh — see `resolveRoofFace`. */
+const STEEP_ROOF_MIN_TILT_DEG = 15;
+
+/**
+ * The face set a PV array should actually be laid on.
+ *
+ * A blended `analyzeUpwardFaces(pos, idx)` over a mixed roof (a pitched tile
+ * surface AND a flat deck merged in one mesh, e.g. Schependomlaan) reports
+ * an area-weighted mean tilt that is a PHYSICALLY NONEXISTENT angle — no
+ * panel can sit at "45°" on a roof that is only ever 63° or 0° — and the
+ * flat deck's near-zero faces drag that blend well off the tile's own
+ * pitch. When `statedRoofType` (from `ReferenceBuildingEnergyInputs.roof`,
+ * the same fact the PV measure's own name and utilisation factor are built
+ * from) says this roof is pitched, restrict the analysis to faces steeper
+ * than `STEEP_ROOF_MIN_TILT_DEG`, isolating the tile from the deck. Falls
+ * back to the blended figure if that steep-only subset is empty (a pitched
+ * roof this shallow could exist) or the stated type is absent (in which
+ * case this module's own blended tilt decides, matching prior behaviour).
+ * A stated "flat" is trusted outright and never goes looking for a steep
+ * sub-population that the fact says should not be there.
+ */
+export function resolveRoofFace(
+  positions: ArrayLike<number>,
+  index: ArrayLike<number>,
+  statedRoofType: StatedRoofType | undefined,
+): FaceSetAnalysis | null {
+  const blended = analyzeUpwardFaces(positions, index);
+  if (!blended) return null;
+  const isPitched = statedRoofType ? statedRoofType !== "flat" : blended.tiltDeg >= PV_FLAT_TILT_THRESHOLD_DEG;
+  if (!isPitched) return blended;
+  const steep = analyzeUpwardFaces(positions, index, STEEP_ROOF_MIN_TILT_DEG);
+  return steep ?? blended;
 }
 
 export interface PanelInstance {
@@ -684,10 +757,12 @@ function RoofingLayerRetrofitVisual({
   roofingUrl,
   visual,
   centre,
+  statedRoofType,
 }: {
   roofingUrl: string;
   visual: RetrofitVisualState;
   centre: THREE.Vector3;
+  statedRoofType: StatedRoofType | undefined;
 }) {
   const { scene } = useGLTF(roofingUrl);
   const overrideSystemSizeKWp = usePvSystemSizeOverride(visual.solarInstalled);
@@ -712,10 +787,10 @@ function RoofingLayerRetrofitVisual({
       const pos = mesh.geometry.attributes.position?.array;
       const idx = mesh.geometry.index?.array;
       if (!pos || !idx) return;
-      found = analyzeUpwardFaces(pos, idx);
+      found = resolveRoofFace(pos, idx, statedRoofType);
     });
     return found;
-  }, [scene, visual.solarInstalled]);
+  }, [scene, visual.solarInstalled, statedRoofType]);
 
   const panelMesh = usePvPanelMesh(face, visual.solarInstalled, overrideSystemSizeKWp);
 
@@ -744,12 +819,14 @@ function FabricSlabRetrofitVisual({
   storeys,
   visual,
   centre,
+  statedRoofType,
 }: {
   fabricUrl: string;
   roofs: ReferenceBuildingManifest["roofs"];
   storeys: ReferenceBuildingManifest["storeys"];
   visual: RetrofitVisualState;
   centre: THREE.Vector3;
+  statedRoofType: StatedRoofType | undefined;
 }) {
   const { scene } = useGLTF(fabricUrl);
   const overrideSystemSizeKWp = usePvSystemSizeOverride(visual.solarInstalled);
@@ -770,8 +847,8 @@ function FabricSlabRetrofitVisual({
 
   const face = useMemo<FaceSetAnalysis | null>(() => {
     if (!roofTriangles) return null;
-    return analyzeUpwardFaces(roofTriangles.pos, roofTriangles.above);
-  }, [roofTriangles]);
+    return resolveRoofFace(roofTriangles.pos, roofTriangles.above, statedRoofType);
+  }, [roofTriangles, statedRoofType]);
 
   const overlay = useMemo(() => {
     if (!visual.roofUpgraded || !roofTriangles) return null;
@@ -829,6 +906,7 @@ export function RoofRetrofitVisualBoundary({
   storeys,
   visual,
   centre,
+  statedRoofType,
 }: {
   fabricUrl: string;
   /** URL of a dedicated "roofing" service layer GLB, or null when this building has none. */
@@ -837,14 +915,16 @@ export function RoofRetrofitVisualBoundary({
   storeys: ReferenceBuildingManifest["storeys"];
   visual: RetrofitVisualState;
   centre: THREE.Vector3;
+  /** `ReferenceBuildingEnergyInputs.roof?.type` — the same fact the PV measure's own name/utilisation factor are built from. Undefined falls back to this module's own geometric tilt. */
+  statedRoofType: StatedRoofType | undefined;
 }) {
   if (!visual.roofUpgraded && !visual.solarInstalled) return null;
   return (
     <Suspense fallback={null}>
       {roofingUrl ? (
-        <RoofingLayerRetrofitVisual roofingUrl={roofingUrl} visual={visual} centre={centre} />
+        <RoofingLayerRetrofitVisual roofingUrl={roofingUrl} visual={visual} centre={centre} statedRoofType={statedRoofType} />
       ) : (
-        <FabricSlabRetrofitVisual fabricUrl={fabricUrl} roofs={roofs} storeys={storeys} visual={visual} centre={centre} />
+        <FabricSlabRetrofitVisual fabricUrl={fabricUrl} roofs={roofs} storeys={storeys} visual={visual} centre={centre} statedRoofType={statedRoofType} />
       )}
     </Suspense>
   );
