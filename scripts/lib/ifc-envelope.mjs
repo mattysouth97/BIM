@@ -80,8 +80,14 @@ export function extractStoreys(file, webIfc) {
  * `GSA Space Areas` set, which no generic reader would guess. The name that was
  * read is returned so the record can cite it instead of implying a standard
  * quantity that isn't there.
+ *
+ * `options.analyticalPropertySets` names the property sets whose JOINT presence
+ * marks a space as the authoring tool's ANALYTICAL space rather than a room —
+ * see `classifyAnalyticalSpace` for why that distinction has to be made by
+ * property set and not by name. Omitted by default, so a building that does not
+ * declare the signature is read exactly as it was before this option existed.
  */
-export function extractSpaces(file, webIfc, storeys) {
+export function extractSpaces(file, webIfc, storeys, options = {}) {
   const storeyByExpressID = new Map(storeys.map((s) => [s.expressID, s]));
   const spaceToStorey = new Map();
 
@@ -102,6 +108,10 @@ export function extractSpaces(file, webIfc, storeys) {
   }
 
   const quantities = quantityIndex(file, webIfc);
+  const analyticalSignature = options.analyticalPropertySets ?? null;
+  const propertySets = analyticalSignature
+    ? propertySetNameIndex(file, webIfc)
+    : null;
 
   return file.byType(webIfc.IFCSPACE).map((space) => {
     const storeyExpressID = spaceToStorey.get(space.expressID) ?? null;
@@ -112,7 +122,11 @@ export function extractSpaces(file, webIfc, storeys) {
       id: `space-${space.expressID}`,
       name,
       longName,
-      ...classifySpaceFloorArea(name, longName),
+      ...(classifyAnalyticalSpace(
+        propertySets?.get(space.expressID),
+        analyticalSignature,
+        longName ?? name,
+      ) ?? classifySpaceFloorArea(name, longName)),
       storeyId: storeyExpressID
         ? (storeyByExpressID.get(storeyExpressID)?.id ?? null)
         : null,
@@ -166,11 +180,94 @@ const NON_FLOOR_SPACE_RULES = Object.freeze([
   }),
 ]);
 
+/**
+ * One room stated twice: the architectural Room, and the analytical Space laid
+ * over it.
+ *
+ * Revit models a *Room* (architectural) and a *Space* (MEP/energy analysis) as
+ * two separate objects standing in the same place, and an IFC export that
+ * carries both writes two `IfcSpace` entities per room — different GlobalIds,
+ * the same Name, the same LongName, the same plan position, and two slightly
+ * different areas. Summing them doubles the building.
+ *
+ * The Duplex's `ROOMS_AND_SPACES` file is exactly this: 37 `IfcSpace` for 19
+ * distinct rooms, 18 of them stated twice. Its total reads 799.76 m² and the
+ * building's floor is 284.98 m². Because floor area is the denominator of
+ * every intensity figure, that arrives as a kWh/m² about 46 % too good — the
+ * same shape as the Clinic's `ROOF` / `OPEN TO BELOW` trap, and invisible in
+ * the same way: both copies are real entities carrying real quantities, and
+ * nothing in the file calls either one a duplicate.
+ *
+ * **Name cannot separate them, and neither can geometry.** Both rows carry the
+ * same Name and LongName, so `NON_FLOOR_SPACE_RULES` — a name table — is blind
+ * to this. What does separate them is what an analysis object is FOR: Revit
+ * hangs `PSet_Revit_Energy Analysis`, `Mechanical - Airflow`,
+ * `Electrical - Loads` and `Electrical - Lighting` on a Space and on nothing
+ * else. Measured on this file, that signature splits 37 rows into 18 analytical
+ * and 19 architectural with no partial matches in between, and every analytical
+ * row is paired with a room of the same name. So the signature is declared per
+ * building rather than detected, and the count is asserted after the split.
+ *
+ * The ROOM is kept and the analytical Space dropped, in that direction because
+ * the kept areas reproduce `Duplex_A_20110907.ifc`'s own `GSA BIM Area`
+ * exactly, and because one room — `A104 Bathroom 1` — has a Room and no
+ * analytical Space at all, so keeping the analytical set would lose it.
+ *
+ * Dropped rows stay in `spaces.json` carrying the reason, exactly as an
+ * excluded ROOF row does. They are not deleted from the record; they stop
+ * counting toward floor area and toward conditioned volume, because the air
+ * inside an analytical Space is the same air as the room it overlays.
+ *
+ * Returns `null` when the building declares no signature or the space does not
+ * match it, so the caller falls through to the name rules.
+ */
+export function classifyAnalyticalSpace(setNames, signature, label) {
+  if (!signature || !setNames) return null;
+  if (!signature.every((required) => setNames.has(required))) return null;
+  return Object.freeze({
+    // Which rule dropped this row, for consumers that must not treat the two
+    // exclusions alike. A name exclusion can be reported by naming the rooms
+    // ("ROOF excluded"); this one cannot, because both copies of a room carry
+    // the same name and listing them would claim BEDROOM 1 was excluded when
+    // a BEDROOM 1 is counted. Internal — never emitted into spaces.json.
+    excludedBy: "analytical",
+    countsAsFloorArea: false,
+    // The same air as the room underneath. Counting it would double the
+    // ventilation term the way counting its area doubles the floor.
+    countsAsConditionedVolume: false,
+    excludedFromFloorAreaReason:
+      `"${String(label ?? "").trim()}" — the authoring tool's analytical space ` +
+      `for a room stated separately in this file; it carries ${signature.length} ` +
+      `analysis property sets (${signature.join(", ")}) and duplicates that ` +
+      `room's area and air`,
+  });
+}
+
+/** `IfcSpace` expressID → the set of `IfcPropertySet` names attached to it. */
+function propertySetNameIndex(file, webIfc) {
+  const byObject = new Map();
+  for (const rel of file.byType(webIfc.IFCRELDEFINESBYPROPERTIES)) {
+    const definition = file.deref(rel.RelatingPropertyDefinition);
+    if (!definition || file.typeName(definition) !== "IfcPropertySet") continue;
+    const name = str(definition.Name);
+    if (!name) continue;
+    for (const object of rel.RelatedObjects ?? []) {
+      const id = refId(object);
+      if (id === null) continue;
+      let names = byObject.get(id);
+      if (!names) byObject.set(id, (names = new Set()));
+      names.add(name);
+    }
+  }
+  return byObject;
+}
+
 export function classifySpaceFloorArea(name, longName) {
   const label = String(longName ?? name ?? "").trim();
   for (const rule of NON_FLOOR_SPACE_RULES) {
     if (rule.pattern.test(label)) {
       return Object.freeze({
+        excludedBy: "name",
         countsAsFloorArea: false,
         countsAsConditionedVolume: rule.countsAsConditionedVolume,
         excludedFromFloorAreaReason: `"${label}" — ${rule.reason}`,
@@ -178,6 +275,7 @@ export function classifySpaceFloorArea(name, longName) {
     }
   }
   return Object.freeze({
+    excludedBy: null,
     countsAsFloorArea: true,
     countsAsConditionedVolume: true,
     excludedFromFloorAreaReason: null,

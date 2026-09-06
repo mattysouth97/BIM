@@ -150,4 +150,98 @@ describe("gallery record", () => {
     }
   });
 
+  it("every card opens its own building, never a sibling's", () => {
+    // A card that navigates to a different building is the same lie as a card
+    // illustrated with a different building's render, and it gets easier to
+    // make with every building added.
+    for (const item of GALLERY_ITEMS) {
+      if (item.href === null) continue;
+      expect(item.href.startsWith("/models/")).toBe(true);
+    }
+    expect(new Set(GALLERY_ITEMS.map((i) => i.href)).size).toBe(GALLERY_ITEMS.length);
+  });
+});
+
+describe("the duplex apartment card", () => {
+  const duplex = GALLERY_ITEMS.find((i) => i.id === "duplex-apartment")!;
+  const figure = (id: string) => duplex.figures.find((f) => f.id === id)!;
+
+  it("is on the gallery, with the licence its grant requires", () => {
+    expect(duplex).toBeTruthy();
+    expect(duplex.licence).toBe("CC BY 4.0");
+    expect(duplex.attribution).toContain("buildingSMART International");
+    expect(duplex.href).toBe("/models/duplex-apartment");
+  });
+
+  it("reads its storey stack the way the model records it", () => {
+    // Two occupied storeys and a roof datum. The datum carries two ROOF
+    // spaces and no floor; drawing it as occupied would put a floor where
+    // the model has a roof.
+    expect(occupiedDatums(duplex.datums).map((d) => d.name)).toEqual([
+      "Level 2",
+      "Level 1",
+    ]);
+    expect(datumRange(duplex.datums)).toEqual({ minM: 0, maxM: 6 });
+  });
+
+  it("reconciles rooms and excluded spaces to the 37 rows the file holds", () => {
+    // 8 + 10 rooms, and 7 + 10 + 2 excluded, is 37 IfcSpace. The excluded
+    // column is this building's whole finding: 18 analytical duplicates plus
+    // one architectural ROOF plane.
+    const rooms = duplex.datums.reduce((t, d) => t + d.rooms, 0);
+    const excluded = duplex.datums.reduce((t, d) => t + d.excludedSpaces, 0);
+    expect(rooms).toBe(18);
+    expect(excluded).toBe(19);
+    expect(rooms + excluded).toBe(37);
+    expect(figure("rooms").value).toBe(String(rooms));
+  });
+
+  it("keeps the storey areas adding up to the stated floor area", () => {
+    // 141.792 + 143.183 = 284.975, which the card shows to 1 dp. The 2-dp
+    // storey rows would give 284.97, which is why the datums carry 3 dp.
+    const summed = duplex.datums.reduce((t, d) => t + d.roomAreaSqm, 0);
+    expect(summed).toBeCloseTo(284.975, 3);
+    expect(figure("floor-area").value).toBe("285.0 m²");
+  });
+
+  it("the read string on every subtraction figure reproduces its own value", () => {
+    // Not "the words appear" — the arithmetic in the explanation is parsed
+    // back out and has to give the number printed beside it.
+    const reproduces = (id: string) => {
+      const f = figure(id);
+      const terms = [...f.read.matchAll(/([+-−])?\s*(\d[\d,]*)/g)];
+      let total = 0;
+      terms.forEach((m, i) => {
+        const n = Number(m[2].replace(/,/g, ""));
+        const sign = m[1] === "-" || m[1] === "−" ? -1 : 1;
+        total += i === 0 && !m[1] ? n : sign * n;
+      });
+      return { total, value: Number(f.value.replace(/[^\d.]/g, "")) };
+    };
+    // "IfcSpace 37 − 18 해석용 중복 − 1 ROOF" = 18
+    expect(reproduces("rooms").total).toBe(reproduces("rooms").value);
+    // "IfcWallStandardCase 56 + IfcWall 1" = 57
+    expect(reproduces("walls").total).toBe(reproduces("walls").value);
+    // "IfcWindow 24 − 2 천창(지붕에 설치)" = 22
+    expect(reproduces("windows").total).toBe(reproduces("windows").value);
+    // "IfcDoor 14 − 10 내부 칸막이벽" = 4
+    expect(reproduces("doors").total).toBe(reproduces("doors").value);
+    // "Duplex_MEP 924 + Duplex_Electrical 100 + Duplex_Plumbing 498" = 1,522
+    expect(reproduces("services").total).toBe(reproduces("services").value);
+  });
+
+  it("names what the floor area excludes, since that is why it is right", () => {
+    const area = figure("floor-area");
+    expect(area.read).toMatch(/해석용 중복/);
+    expect(area.read).toMatch(/ROOF/);
+  });
+
+  it("shows the naive totals nowhere — neither is a floor area", () => {
+    // 799.76 m² is every IfcSpace row; 529.46 m² is what survives the ROOF
+    // rule and is the figure this project was about to publish. Both read
+    // like the answer and both are the building counted about twice.
+    const text = JSON.stringify(duplex);
+    expect(text).not.toContain("799.76");
+    expect(text).not.toContain("529.46");
+  });
 });

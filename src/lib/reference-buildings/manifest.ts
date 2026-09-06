@@ -384,6 +384,7 @@ export type ReferenceBuildingOpenings = Readonly<{
 export const REFERENCE_BUILDING_IDS = [
   "bs-medical-dental-clinic",
   "schependomlaan",
+  "duplex-apartment",
 ] as const;
 
 export type ReferenceBuildingId = (typeof REFERENCE_BUILDING_IDS)[number];

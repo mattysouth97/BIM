@@ -54,14 +54,16 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     labelKo: "동선 (복도·계단·승강기)",
     labelEn: "Circulation (corridor, stair, lift)",
     // ENTREE (entrance hall), GANG (hall), OVERLOOP (landing) — Schependomlaan.
-    patterns: [/\bCORRIDOR\b/, /\bSTAIR\b/, /\bELEVATOR\b/, /\bELEV\.?\b/, /\bVEST\.?\b/, /\bENTREE\b/, /\bGANG\b/, /\bOVERLOOP\b/],
+    // FOYER, HALLWAY and the model's own misspelling HALLYWAY — the Duplex.
+    patterns: [/\bCORRIDOR\b/, /\bSTAIR\b/, /\bELEVATOR\b/, /\bELEV\.?\b/, /\bVEST\.?\b/, /\bENTREE\b/, /\bGANG\b/, /\bOVERLOOP\b/, /\bFOYER\b/, /\bHALLWAY\b/, /\bHALLYWAY\b/],
   },
   {
     key: "sanitary",
     labelKo: "위생·청소 (화장실·잡용실)",
     labelEn: "Sanitary & housekeeping",
     // BADKAMER (bathroom) — Schependomlaan. TOILET is already Dutch as it stands.
-    patterns: [/\bTOILET\b/, /\bJAN\.?\b/, /\bHK\b/, /\bSOIL\.?/, /\bTRASH\b/, /\bCLEAN U\.?/, /\bDIPC\b/, /\bSCOPE WASH\b/, /\bDECON/, /\bBADKAMER\b/],
+    // BATHROOM (1 and 2) — the Duplex.
+    patterns: [/\bTOILET\b/, /\bJAN\.?\b/, /\bHK\b/, /\bSOIL\.?/, /\bTRASH\b/, /\bCLEAN U\.?/, /\bDIPC\b/, /\bSCOPE WASH\b/, /\bDECON/, /\bBADKAMER\b/, /\bBATHROOM\b/],
   },
   {
     key: "plant",
@@ -69,7 +71,9 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     labelEn: "Mechanical, electrical & comms",
     // MK is the meterkast, the dwelling's utility-meter cupboard; INSTAL.
     // RUIMTE is the plant room. Both Schependomlaan, both services.
-    patterns: [/\bMECH/, /\bELEC/, /\bCOMM\. ROOM\b/, /\bCOMPUTER ROOM\b/, /\bADP EQUIP/, /\bDATA \//, /\bMK\b/, /\bINSTAL\.?/],
+    // UTILITY is the Duplex's equivalent: a 1.4-1.8 m² closet off each
+    // dwelling's hallway, which is a services cupboard and not a room.
+    patterns: [/\bMECH/, /\bELEC/, /\bCOMM\. ROOM\b/, /\bCOMPUTER ROOM\b/, /\bADP EQUIP/, /\bDATA \//, /\bMK\b/, /\bINSTAL\.?/, /\bUTILITY\b/],
   },
   {
     key: "dental",
@@ -118,7 +122,9 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     // WOONKAMER (living room), SLAAPKAMER (bedroom, numbered or bare).
     // One program, not two, because the parity brief groups them and because
     // a dwelling heats and occupies both on the same schedule.
-    patterns: [/\bWOONKAMER\b/, /\bSLAAPKAMER\b/],
+    // LIVING ROOM, BEDROOM 1 and BEDROOM 2 — the Duplex's English for the
+    // same two programs, joining the same row for the same reason.
+    patterns: [/\bWOONKAMER\b/, /\bSLAAPKAMER\b/, /\bLIVING ROOM\b/, /\bBEDROOM\b/],
   },
   {
     key: "kitchen",
@@ -127,9 +133,42 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     // KEUKEN. Its own row rather than folded into 거실·침실: a kitchen's
     // internal gains and hot-water draw are the part of a dwelling that is
     // least like the rest of it.
-    patterns: [/\bKEUKEN\b/],
+    //
+    // KITCHEN is the Duplex's English name for the same program. Note the
+    // office row above already carries /\bKITCHENET/ for the Clinic's
+    // kitchenettes, and it does NOT match "KITCHEN" — the pattern needs the
+    // letters "KITCHENET", which a bare KITCHEN does not have — so a
+    // dwelling kitchen cannot be swallowed by the staff-room row.
+    patterns: [/\bKEUKEN\b/, /\bKITCHEN\b/],
   },
 ]);
+
+/**
+ * The Duplex Apartment's English room names, appended to the rows above
+ * rather than given rows of their own.
+ *
+ * Measured before adding them: none of BATHROOM, BEDROOM, FOYER, HALLWAY,
+ * HALLYWAY, KITCHEN, LIVING or UTILITY appears in any of the Clinic's 269 or
+ * Schependomlaan's 100 space names, so every pattern below is inert on both
+ * existing buildings and no room in either can move. That check is what makes
+ * it safe to put UTILITY on the `plant` row, which is EARLY in the table —
+ * the residential rows are appended last precisely because appending cannot
+ * reorder, but `plant` is not appended and needed the collision check.
+ *
+ * The rows these join:
+ *   BATHROOM 1 / 2   → sanitary
+ *   BEDROOM 1 / 2, LIVING ROOM → dwelling
+ *   FOYER, HALLWAY, HALLYWAY → circulation
+ *   KITCHEN          → kitchen
+ *   UTILITY          → plant
+ *
+ * `HALLYWAY` is not a typo in this comment. The model spells it that way, on
+ * exactly one of its 37 rows (B201's Room; the analytical Space over the same
+ * room spells it HALLWAY). The pattern matches the misspelling because the
+ * table's job is to classify the name the file states, not the name it meant
+ * — and the alternative is one hallway landing in 기타 beside its own twin.
+ */
+
 
 /**
  * Schependomlaan's ONBEN. RUIMTE — "onbenoemde ruimte", an unallocated space

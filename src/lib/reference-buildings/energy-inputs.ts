@@ -27,6 +27,12 @@ import {
   SCHEPENDOMLAAN_PENDING_MEASUREMENTS,
   SCHEPENDOMLAAN_RECIPE,
 } from "./schependomlaan-energy";
+import {
+  DUPLEX_ASSUMPTIONS,
+  DUPLEX_MATERIALS,
+  DUPLEX_MEASURED_ENVELOPE,
+  DUPLEX_RECIPE,
+} from "./duplex-apartment-energy";
 
 export type Orientation = "N" | "S" | "E" | "W";
 
@@ -137,10 +143,51 @@ const SCHEPENDOMLAAN: ReferenceBuildingEnergyInputs = Object.freeze({
   pendingMeasurements: SCHEPENDOMLAAN_PENDING_MEASUREMENTS,
 });
 
+const DUPLEX: ReferenceBuildingEnergyInputs = Object.freeze({
+  buildingPk: referenceBuildingPk("duplex-apartment"),
+  recipe: DUPLEX_RECIPE,
+  materials: DUPLEX_MATERIALS,
+  assumptions: DUPLEX_ASSUMPTIONS,
+  climate: Object.freeze({
+    // Seoul a third time, and here for the strongest reason of the three.
+    // The Clinic's location is unknown and Schependomlaan's is known but
+    // unusable; this model states NO location — its IfcSite is an unfilled
+    // Revit template whose postal address line still reads the placeholder
+    // "Enter address here". Its Chicago coordinate is the template's, not
+    // the building's. See A-CLIMATE.
+    sigunguCd: "11",
+    labelKo: "서울 기후 (가정)",
+    labelEn: "Seoul climate (assumed)",
+    assumptionId: "A-CLIMATE",
+  }),
+  // The four cardinals. The other four sectors are 0 by measurement, not by
+  // omission: `manifest.orientation` reports offCardinalCount 0 over all 12
+  // exterior walls. `DUPLEX_WALL_BY_SECTOR_SQM` keeps the full eight.
+  wallByOrientationSqm: Object.freeze({
+    N: DUPLEX_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.N,
+    E: DUPLEX_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.E,
+    S: DUPLEX_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.S,
+    W: DUPLEX_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.W,
+  }),
+  northAssumed: DUPLEX_MEASURED_ENVELOPE.northAssumed,
+  // Complete, and this is the first building here whose per-orientation
+  // GLAZING is measured rather than spread pro rata — so the per-sector WWR
+  // legend on this page shows the building's real asymmetry (N 0.36 / E 0.10
+  // / S 0.37 / W 0.11) instead of one ratio repeated four times.
+  //
+  // "Complete" is a claim about the AREAS, not about the building. Its
+  // constructions carry three large stated assumptions (A-STUD-CAVITY,
+  // A-JOIST-ZONE, A-GROUND-UNINSULATED) and one measured area is knowingly
+  // short by 1.49 m² of skylight (A-SKYLIGHTS). Those are in the assumption
+  // ledger, which is where a reader is meant to find them.
+  measurementState: "complete",
+});
+
 const ENERGY_INPUTS: Readonly<Record<ReferenceBuildingId, ReferenceBuildingEnergyInputs | null>> =
   Object.freeze({
     "bs-medical-dental-clinic": CLINIC,
     schependomlaan: SCHEPENDOMLAAN,
+    "duplex-apartment": DUPLEX,
   });
 
 export function referenceBuildingEnergyInputs(

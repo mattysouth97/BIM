@@ -581,17 +581,97 @@ const DUPLEX = Object.freeze({
   ],
 
   /**
-   * Rooms live in their own model. Measured: the architectural file holds
-   * 10 spaces per level (141.79 + 134.53 m²) where ROOMS_AND_SPACES holds
-   * 15 and 20 (264.97 + 264.49). It carries one dwelling's rooms; a duplex
-   * has two.
+   * Rooms live in their own model. `ROOMS_AND_SPACES` subdivides the plan more
+   * finely than the architectural file — it states 18 rooms where `Duplex_A`
+   * states 20, folding each unit's stair into the hallway (hallway 12.13 m²
+   * against `Duplex_A`'s 7.80 m² + 4.92 m² stair).
+   *
+   * A CORRECTION to what this comment said until 2026-09-06. It read: "the
+   * architectural file holds 10 spaces per level (141.79 + 134.53 m²) where
+   * ROOMS_AND_SPACES holds 15 and 20 (264.97 + 264.49). It carries one
+   * dwelling's rooms; a duplex has two." The first sentence's numbers are
+   * right and the explanation of them is wrong. `Duplex_A` holds A101-A105
+   * AND B101-B105 on Level 1 — both dwellings, five rooms each — so it is not
+   * short a dwelling. What actually made the rooms file twice the size is
+   * `analyticalPropertySets` below: it states every room twice. And the
+   * direction was inverted too — a larger floor area makes a building read
+   * MORE efficient, not less, so the trap was never the one described.
    *
    * A third set is a decoy — `Duplex_MEP` has 42 spaces totalling 797.79 m²,
-   * within 2 m² of the correct model, so a check on the TOTAL cannot separate
-   * them. Only the names can: they read "Kitchen MEP Space", and they are
-   * ventilation zones rather than rooms.
+   * within 2 m² of this file's UNFILTERED 799.76, so a check on the TOTAL
+   * cannot separate them. Only the names can: they read "Kitchen MEP Space",
+   * and they are ventilation zones rather than rooms.
    */
   spacesRole: "rooms",
+
+  /**
+   * The property sets that mark an `IfcSpace` as Revit's ANALYTICAL space
+   * rather than a room. `classifyAnalyticalSpace` explains the trap; this is
+   * the signature measured on this file, and `analyticalSplit` is the result
+   * it must reproduce.
+   *
+   * Measured 2026-09-06 over all 37 rows: 18 carry all four of these sets and
+   * 19 carry none of them — no row carries some. Both copies of a room state
+   * the same Name, LongName and plan position, so no name rule and no geometry
+   * test can tell them apart; the analysis psets are the only discriminator in
+   * the file. The 19 kept rows reproduce `Duplex_A_20110907.ifc`'s own
+   * `GSA BIM Area` values, which is the check that says the right half was
+   * kept.
+   */
+  analyticalPropertySets: [
+    "PSet_Revit_Energy Analysis",
+    "PSet_Revit_Mechanical - Airflow",
+    "PSet_Revit_Electrical - Loads",
+    "PSet_Revit_Electrical - Lighting",
+  ],
+
+  /**
+   * What the split above must produce. 18 analytical + 19 kept = 37 rows, and
+   * of the 19 kept, 18 are floor and one is the ROOF space the name rules
+   * drop separately — so `rooms` counts the floor-counting survivors.
+   *
+   * `A104 Bathroom 1` is the one room with no analytical twin: the file simply
+   * has no Space over it. That asymmetry is the reason the ROOM set is kept
+   * rather than the analytical one — keeping the analytical set would silently
+   * lose a bathroom.
+   */
+  analyticalSplit: { analyticalSpaces: 18, rooms: 18, unpairedRooms: ["A104"] },
+
+  /**
+   * How this building's coordinate is to be judged. Declared, because the
+   * fallback test is the Clinic's specific Boston point and this file's
+   * coordinate is a different one — left undeclared it would fall through and
+   * be reported as an ordinary unverified location, which is weaker than what
+   * the file actually says about itself.
+   *
+   * The tell here is not the coordinate at all. It is that the template was
+   * never filled in, stated three separate ways in the file:
+   *   - `IfcSite.Name` is the literal string `'Default'`;
+   *   - `IfcPostalAddress.AddressLines` is `('Enter address here')` — the
+   *     authoring tool's own placeholder prompt, still in place;
+   *   - `IfcSite.RefElevation` is `-0.`, a signed zero, i.e. unset.
+   * `Town` reads 'Chicago' and `Region` 'IL', which is what the template
+   * shipped with and not a statement about this building — so unlike
+   * Schependomlaan, which states Nijmegen on two entities and is merely
+   * unusable, this model states no location at all.
+   */
+  location: {
+    rejectCoordinate: true,
+    /** Nothing to fall back to: the town is part of the unfilled template. */
+    statedTown: null,
+    /** TrueNorth is `$` — absent — in BOTH representation contexts. */
+    trueNorthStated: false,
+    note:
+      "IfcSite is an unfilled Autodesk Revit Architecture 2011 template: its " +
+      "Name is the literal 'Default', its postal address line is still the " +
+      "placeholder 'Enter address here', and its RefElevation is a signed " +
+      "zero. The 41.8744 N, 87.6394 W coordinate and the 'Chicago', 'IL' " +
+      "town and region are the template's own, not a survey and not a " +
+      "statement about this building, so no position, orientation, climate " +
+      "or solar geometry may be taken from any of them. TrueNorth is absent " +
+      "($) in both the Model and Plan representation contexts, so the model " +
+      "states no orientation either.",
+  },
 
   /**
    * `IsExternal` is true on 23 of 57 walls and only 13 of those are envelope.
@@ -696,6 +776,53 @@ function arg(name) {
   return i >= 0 ? process.argv[i + 1] : undefined;
 }
 
+/**
+ * The analytical-space split, asserted rather than trusted.
+ *
+ * `classifyAnalyticalSpace` drops roughly half this building's `IfcSpace` rows,
+ * which is the largest single subtraction any building here makes. A signature
+ * that silently stopped matching — a Revit version renaming a property set, a
+ * re-export dropping the analysis psets — would not fail: it would quietly
+ * publish a doubled floor area again, and a doubled floor area reads as a
+ * building that is twice as efficient. So the count the split is expected to
+ * produce is declared in the config and checked here, and the expectation is
+ * checked from BOTH sides: how many rows matched, and how many survived.
+ *
+ * `unpairedRooms` is the other half of the evidence. Every analytical space on
+ * this file overlays a room of the same Name, and exactly one room (`A104`) has
+ * no analytical twin. If that pairing ever fails, the two sets are not what
+ * this function thinks they are and the split is not a de-duplication.
+ */
+function assertAnalyticalSplit(building, spaces) {
+  const expected = building.analyticalSplit;
+  if (!expected) return;
+  const dropped = spaces.filter((s) => s.excludedBy === "analytical");
+  const kept = spaces.filter((s) => s.countsAsFloorArea);
+  if (dropped.length !== expected.analyticalSpaces || kept.length !== expected.rooms) {
+    throw new Error(
+      `${building.id}: the analytical-space signature split ${spaces.length} IfcSpace into ` +
+        `${dropped.length} analytical / ${kept.length} floor-counting, and the config ` +
+        `declares ${expected.analyticalSpaces} / ${expected.rooms}. Either the file changed ` +
+        "or the property-set signature no longer identifies the analysis objects. Do NOT " +
+        "relax this check: an unmatched signature republishes a doubled floor area, which " +
+        "reads as a building twice as efficient as it is.",
+    );
+  }
+  const analyticalNames = new Set(dropped.map((s) => s.name));
+  const unpaired = kept
+    .filter((s) => s.countsAsFloorArea && !analyticalNames.has(s.name))
+    .map((s) => s.name)
+    .sort();
+  const declared = [...(expected.unpairedRooms ?? [])].sort();
+  if (unpaired.join("|") !== declared.join("|")) {
+    throw new Error(
+      `${building.id}: rooms with no analytical twin are [${unpaired.join(", ")}], and the ` +
+        `config declares [${declared.join(", ")}]. The two sets are not the room/space pair ` +
+        "this split assumes.",
+    );
+  }
+}
+
 async function main() {
   const generatedAt = arg("generated-at");
   if (!generatedAt || Number.isNaN(Date.parse(generatedAt))) {
@@ -764,18 +891,29 @@ async function main() {
 
   // ── What the model states ──────────────────────────────────────────────
   // Spaces may live in a model of their own. The Duplex ships its rooms in a
-  // separate `ROOMS_AND_SPACES` file, and its architectural model carries only
-  // one of the two dwellings' rooms — 276.32 m² of floor against a real
-  // 529.46, so defaulting to `arch` would have made the building read about
-  // twice as efficient as it is.
+  // separate `ROOMS_AND_SPACES` file, which subdivides the plan more finely
+  // than the architectural model does — it splits the stair into the hallway
+  // and states 18 rooms where `Duplex_A` states 20.
+  //
+  // It also states every one of those rooms TWICE, once as an architectural
+  // Room and once as an analytical Space (`analyticalPropertySets` below, and
+  // `classifyAnalyticalSpace`). Reading the file naively gives 799.76 m² of
+  // floor for a building whose floor is 284.98 m². An earlier revision of this
+  // comment recorded the opposite conclusion — that `arch` held one dwelling
+  // and the rooms file both — and it was wrong twice over: `Duplex_A` carries
+  // A- and B-unit rooms alike, and a LARGER floor area makes a building read
+  // MORE efficient, not less. Both dwellings are in both files.
   //
   // Storeys come from the SAME file, not from `arch`: a space is linked to its
   // storey by expressID within one file, so a storey list from another model
   // cannot be matched against it.
   const spaceFile = byRole.get(building.spacesRole ?? "architectural") ?? arch;
   const storeys = extractStoreys(spaceFile, webIfc);
-  const spaces = extractSpaces(spaceFile, webIfc, storeys);
+  const spaces = extractSpaces(spaceFile, webIfc, storeys, {
+    analyticalPropertySets: building.analyticalPropertySets ?? null,
+  });
   const floorSpaces = spaces.filter((s) => s.countsAsFloorArea);
+  assertAnalyticalSplit(building, spaces);
   // Volume and plan extent of every space, from its own solid. The Clinic
   // states no volume quantity anywhere, so until this pass the conditioned
   // volume was a range (Σ floor × floor-to-floor, or slab × roof datum) with
@@ -910,7 +1048,15 @@ async function main() {
   const unmeasuredConditioned = spaceRows.filter(
     (s) => s.countsAsConditionedVolume && s.netVolumeM3 == null,
   ).length;
-  const openSolids = spaceRows.filter((s) => s.solidClosed === false).length;
+  // Only rows that actually reach a volume figure. The note this feeds says
+  // these solids "are counted as floor area × their own height", which is a
+  // claim about rows that are counted — an excluded row whose solid also
+  // failed to close is not counted as anything. On a building whose rooms are
+  // each stated twice, 4 of the 6 failures were the analytical copies, so the
+  // sentence promised 6 substitutions where the net figure made 2.
+  const openSolids = spaceRows.filter(
+    (s) => s.countsAsConditionedVolume && s.solidClosed === false,
+  ).length;
   // Net is air below the ceiling; gross is everything inside the air barrier.
   // The first is a subset of the second by construction, so a row where it
   // is not is a measurement that went wrong, and it stops the build here
@@ -931,13 +1077,23 @@ async function main() {
   }
   // The names actually excluded from the conditioned volume on THIS
   // building, so the note never mentions a room the building does not have.
+  //
+  // NAME exclusions only. An analytical-space exclusion cannot be reported by
+  // naming rooms: both copies carry the same LongName, so the list would read
+  // "BEDROOM 1 ... excluded" about a building whose BEDROOM 1 is counted —
+  // every word true, the sentence false. Those rows are counted instead, in
+  // the clause below.
+  // Read from `spaces`, not `spaceRows`: `spaceRows` is the shape written to
+  // spaces.json and lists its fields explicitly, so it deliberately does not
+  // carry the internal `excludedBy` tag. The two arrays are 1:1.
   const excludedNames = [
     ...new Set(
-      spaceRows
-        .filter((s) => !s.countsAsConditionedVolume)
+      spaces
+        .filter((s) => !s.countsAsConditionedVolume && s.excludedBy === "name")
         .map((s) => (s.longName ?? s.name).trim().toUpperCase()),
     ),
   ].sort();
+  const analyticalExcluded = spaces.filter((s) => s.excludedBy === "analytical").length;
   // A building need not have a structural model. Schependomlaan is one
   // architectural file; the Clinic is five. Absent roles are skipped rather
   // than assumed, so a missing discipline is an empty contribution and not a
@@ -1545,6 +1701,9 @@ async function main() {
           .join(", ") +
         ")" +
         (excludedNames.length > 0 ? `, ${excludedNames.join(" and ")} excluded` : "") +
+        (analyticalExcluded > 0
+          ? `; a further ${analyticalExcluded} rows are the authoring tool's analytical spaces standing over these same rooms and are excluded from both figures, because that is the same air counted twice`
+          : "") +
         (openSolids > 0
           ? `; ${openSolids} solids failed the closed-mesh test and are counted as floor area × their own height`
           : "") +
@@ -1695,6 +1854,24 @@ async function main() {
       elevationM: s.elevationM,
       floorToFloorHeightM: s.floorToFloorHeightM,
       spaceCount: spaces.filter((sp) => sp.storeyId === s.id).length,
+      /**
+       * `spaceCount` is EVERY `IfcSpace` on the storey and `floorAreaSqm` is
+       * the floor-counting subset's area, so the pair reads as a per-room mean
+       * that is not one — the Clinic's roof storey has shipped "6 spaces,
+       * 64.8 m²" for one 64.8 m² room since it was first built.
+       *
+       * On a building whose rooms are each stated twice that gap stops being a
+       * detail: Level 1 would read "15 spaces, 141.79 m²" for 8 rooms. So the
+       * floor-counting count is emitted beside it — and ONLY for a building
+       * that declares the analytical signature, so adding this does not
+       * rewrite the two manifests already committed. Same rule, and the same
+       * reason, as `site.statedTown` above.
+       */
+      ...(building.analyticalPropertySets
+        ? {
+            spacesCountingAsFloor: floorSpaces.filter((sp) => sp.storeyId === s.id).length,
+          }
+        : {}),
       floorAreaSqm: round(
         floorSpaces
           .filter((sp) => sp.storeyId === s.id)
