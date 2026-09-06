@@ -19,7 +19,10 @@ import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useScenarioStore } from "@/store/scenario-store";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
-import type { ReferenceBuildingId } from "@/lib/reference-buildings/manifest";
+import {
+  REFERENCE_BUILDING_IDS,
+  type ReferenceBuildingId,
+} from "@/lib/reference-buildings/manifest";
 
 function measure(over: Partial<RetrofitMeasure> = {}): RetrofitMeasure {
   return {
@@ -104,9 +107,9 @@ describe("exclusionReason states the fact that actually excluded the measure", (
 });
 
 describe("retrofitBasisLines", () => {
-  for (const id of ["bs-medical-dental-clinic", "schependomlaan"] as const) {
+  for (const id of REFERENCE_BUILDING_IDS) {
     it(`${id}: quotes the building's own roof reading, not a generic sentence`, () => {
-      const energy = referenceBuildingEnergyInputs(id)!;
+      const energy = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!;
       const lines = retrofitBasisLines(energy, false).join(" ");
       expect(lines).toContain(energy.roof!.read);
       expect(lines).toContain(`${energy.roof!.type}-roof utilisation factor`);
@@ -156,9 +159,13 @@ describe("the section on a real building page", () => {
     return energy;
   }
 
-  for (const id of ["bs-medical-dental-clinic", "schependomlaan"] as const) {
+  // Driven off the registry, not a hand-written list: the contract's whole
+  // claim is that a NEW building renders the same section with the same rows
+  // in the same order, and a list somebody has to remember to extend cannot
+  // check that.
+  for (const id of REFERENCE_BUILDING_IDS) {
     it(`${id}: renders EVERY candidate, not only the selected ones`, () => {
-      const energy = seed(id);
+      const energy = seed(id as ReferenceBuildingId);
       const { container } = render(
         <ReferenceRetrofitPanel energy={energy} locale="en" />,
       );
@@ -178,7 +185,7 @@ describe("the section on a real building page", () => {
     });
 
     it(`${id}: every unselected card carries a reason`, () => {
-      const energy = seed(id);
+      const energy = seed(id as ReferenceBuildingId);
       const { container } = render(
         <ReferenceRetrofitPanel energy={energy} locale="en" />,
       );
@@ -197,7 +204,7 @@ describe("the section on a real building page", () => {
     });
 
     it(`${id}: lists categories in the shared order`, () => {
-      const energy = seed(id);
+      const energy = seed(id as ReferenceBuildingId);
       const { container } = render(
         <ReferenceRetrofitPanel energy={energy} locale="en" />,
       );

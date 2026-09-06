@@ -29,9 +29,12 @@ import {
 } from "./schependomlaan-energy";
 import {
   DUPLEX_ASSUMPTIONS,
+  DUPLEX_DOOR_BY_SECTOR_SQM,
+  DUPLEX_GLAZING_BY_SECTOR_SQM,
   DUPLEX_MATERIALS,
   DUPLEX_MEASURED_ENVELOPE,
   DUPLEX_RECIPE,
+  DUPLEX_WALL_BY_SECTOR_SQM,
 } from "./duplex-apartment-energy";
 
 export type Orientation = "N" | "S" | "E" | "W";
@@ -251,6 +254,23 @@ const DUPLEX: ReferenceBuildingEnergyInputs = Object.freeze({
     W: DUPLEX_MEASURED_ENVELOPE.exteriorWallByOrientationSqm.W,
   }),
   northAssumed: DUPLEX_MEASURED_ENVELOPE.northAssumed,
+  // Flat, and unambiguously so: the manifest carries ONE roof row, "Live Roof
+  // over Wood Joist Flat Roof", 132.93 m² at tiltDeg 0.00. No weighting to
+  // do and no barrel to disclose.
+  roof: Object.freeze({
+    type: "flat" as const,
+    read: "1 roof row · Live Roof over Wood Joist Flat Roof 132.93 m² at 0.00° → area-weighted 0.00° over the 132.93 m² priced",
+  }),
+  exteriorDoorSqm: DUPLEX_MEASURED_ENVELOPE.exteriorDoorSqm,
+  // The first building that can state this: its glazing and doors ARE
+  // measured per sector, so each legend row gets its own true denominator
+  // instead of the whole gross apportioned by opaque share.
+  grossWallByOrientationSqm: Object.freeze({
+    N: DUPLEX_WALL_BY_SECTOR_SQM.N + DUPLEX_GLAZING_BY_SECTOR_SQM.N + DUPLEX_DOOR_BY_SECTOR_SQM.N,
+    E: DUPLEX_WALL_BY_SECTOR_SQM.E + DUPLEX_GLAZING_BY_SECTOR_SQM.E + DUPLEX_DOOR_BY_SECTOR_SQM.E,
+    S: DUPLEX_WALL_BY_SECTOR_SQM.S + DUPLEX_GLAZING_BY_SECTOR_SQM.S + DUPLEX_DOOR_BY_SECTOR_SQM.S,
+    W: DUPLEX_WALL_BY_SECTOR_SQM.W + DUPLEX_GLAZING_BY_SECTOR_SQM.W + DUPLEX_DOOR_BY_SECTOR_SQM.W,
+  }),
   // Complete, and this is the first building here whose per-orientation
   // GLAZING is measured rather than spread pro rata — so the per-sector WWR
   // legend on this page shows the building's real asymmetry (N 0.36 / E 0.10

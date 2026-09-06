@@ -18,7 +18,10 @@ import { calculateHeatLoss, meanWindowToWallRatio } from "@/lib/energy/heat-loss
 import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
 import { getClimateData } from "@/lib/energy/climate-data";
 import { RETROFIT_COSTS } from "@/lib/retrofit/cost-database";
-import type { ReferenceBuildingId } from "@/lib/reference-buildings/manifest";
+import {
+  REFERENCE_BUILDING_IDS,
+  type ReferenceBuildingId,
+} from "@/lib/reference-buildings/manifest";
 
 const PK = "TEST-PK-MEASURE-AREAS";
 
@@ -62,10 +65,10 @@ describe("the envelope measures cover the areas the engine priced", () => {
     useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
   });
 
-  for (const id of ["bs-medical-dental-clinic", "schependomlaan"] as const) {
+  for (const id of REFERENCE_BUILDING_IDS) {
     it(`${id}: each measure's cost divides back to the engine's own area`, () => {
-      const { engineEnvelopeAreas } = engineFor(id);
-      const scenario = render(id, true);
+      const { engineEnvelopeAreas } = engineFor(id as ReferenceBuildingId);
+      const scenario = render(id as ReferenceBuildingId, true);
       const byId = new Map(scenario.allMeasures.map((m) => [m.id, m]));
 
       // Cost is area × unit rate, so the rendered cost divides back to the
@@ -92,7 +95,7 @@ describe("the envelope measures cover the areas the engine priced", () => {
     });
 
     it(`${id}: the window measure covers the aperture the file measured`, () => {
-      const { energy, q, engineEnvelopeAreas } = engineFor(id);
+      const { energy, q, engineEnvelopeAreas } = engineFor(id as ReferenceBuildingId);
       // gross × the engine's own mean ratio IS the building's aperture.
       const aperture =
         q.grossWallAreaSqm * meanWindowToWallRatio(energy.materials);
@@ -100,7 +103,7 @@ describe("the envelope measures cover the areas the engine priced", () => {
     });
 
     it(`${id}: the wall measure is gross − aperture − doors, and excludes the doors`, () => {
-      const { energy, q, engineEnvelopeAreas } = engineFor(id);
+      const { energy, q, engineEnvelopeAreas } = engineFor(id as ReferenceBuildingId);
       const doors = energy.exteriorDoorSqm!;
       expect(doors).toBeGreaterThan(0);
 
@@ -169,9 +172,9 @@ describe("roof typology reaches the measure that renders it", () => {
     expect(pv.name).toContain("flat roof");
   });
 
-  for (const id of ["bs-medical-dental-clinic", "schependomlaan"] as const) {
+  for (const id of REFERENCE_BUILDING_IDS) {
     it(`${id}: the roof \`read\` reproduces the tilt it claims`, () => {
-      const roof = referenceBuildingEnergyInputs(id)!.roof!;
+      const roof = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!.roof!;
       // The explanation is parsed back and its arithmetic checked, rather
       // than the test asserting that some words appear. Every constituent
       // states its own tilt, so nothing has to be inferred.
@@ -181,7 +184,9 @@ describe("roof typology reaches the measure that renders it", () => {
       }));
       const claimedMean = roof.read.match(/area-weighted ([\d.]+)°/);
       const claimedTotal = roof.read.match(/over the ([\d,]+\.\d\d) m²/);
-      expect(parts.length).toBeGreaterThanOrEqual(2);
+      // One constituent is a legitimate roof (the Duplex has a single flat
+      // row); the arithmetic below still has to reproduce the claim.
+      expect(parts.length).toBeGreaterThanOrEqual(1);
       expect(claimedMean).not.toBeNull();
       expect(claimedTotal).not.toBeNull();
 
