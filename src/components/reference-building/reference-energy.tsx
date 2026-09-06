@@ -28,6 +28,7 @@ import { useLayerStore } from "@/store/layer-store";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { getClimateData } from "@/lib/energy/climate-data";
+import { meanWindowToWallRatio } from "@/lib/energy/heat-loss";
 import { isResidentialOccupancy } from "@/lib/energy/delivered-from-demand";
 import { ledgerUseCategory } from "@/lib/ledger/floor-rows";
 import { EnergyInstrumentHud } from "@/components/twin/energy-instrument-hud";
@@ -214,19 +215,67 @@ export function useSeedReferenceEnergy(energy: ReferenceBuildingEnergyInputs | n
   }, [energy, setProperties, setBaseRecipe, setActivePk, setActiveBuilding]);
 }
 
-/** The measured wall split, under the uniform ratio the engine applies. */
-function measuredOrientationRows(
+/**
+ * What the 방위별 창면적비 legend says about the four ratios beside it.
+ *
+ * "The ratio is assumed uniform" was hard-coded here, and it stops being true
+ * the moment a building hands over a MEASURED per-orientation glazing split.
+ * The sentence now reads the ratios it is describing: uniform only when they
+ * are, and otherwise saying what the engine is actually handed — their
+ * wall-area-weighted mean (`meanWindowToWallRatio`).
+ *
+ * Exported so a test can check the claim against the numbers rather than
+ * against a substring.
+ */
+export function orientationWwrNote(
+  wwr: Record<Orientation, number>,
+  northAssumed: boolean,
+  isKo: boolean,
+): string {
+  const uniform = ORIENTATIONS.every(
+    (o) => Math.abs(wwr[o] - wwr[ORIENTATIONS[0]]) < 1e-9,
+  );
+  const north = northAssumed
+    ? isKo
+      ? " · 북쪽은 모델의 −Z 축 (진북 미기재)"
+      : " · north is the model's −Z (no true north stated)"
+    : "";
+  if (uniform) {
+    return isKo
+      ? `벽면적은 방위별 측정값. 창면적비는 전 방위 균등 가정 (A-WWR-DENOMINATOR)${north}.`
+      : `Wall areas are measured per orientation. The ratio is assumed uniform (A-WWR-DENOMINATOR)${north}.`;
+  }
+  return isKo
+    ? `벽면적과 창면적비 모두 방위별 측정값입니다. 엔진에는 벽면적으로 가중한 평균을 넘깁니다${north}.`
+    : `Wall areas and window ratios are both measured per orientation. The engine is handed their wall-area-weighted mean${north}.`;
+}
+
+/**
+ * The per-orientation rows the 방위별 창면적비 legend draws.
+ *
+ * Each row's window area is that sector's OWN gross × that sector's OWN
+ * ratio. It used to be the WHOLE building's gross × the sector's ratio, which
+ * is the same number only while the ratios are uniform: on a building with a
+ * genuine split the north row would have read 121.5 m² for a sector holding
+ * 20.32 m² of glass.
+ *
+ * Where the file states `grossWallByOrientationSqm` those are the
+ * denominators. Where it does not, the whole gross is apportioned by each
+ * sector's measured OPAQUE share — the only split that keeps the four rows
+ * summing to the building's measured aperture, and stated as such in the
+ * note beside them.
+ */
+export function measuredOrientationRows(
   energy: ReferenceBuildingEnergyInputs,
   wwr: Record<Orientation, number>,
 ): OrientationWwrRow[] {
+  const stated = energy.grossWallByOrientationSqm;
   const net = ORIENTATIONS.reduce((sum, o) => sum + energy.wallByOrientationSqm[o], 0);
   const gross = envelopeQuantities(energy.recipe).grossWallAreaSqm;
-  // Openings are not measured per orientation, so each sector's gross is
-  // its measured opaque share of the whole gross — the only split that
-  // keeps the four windows summing to the building's measured aperture.
   const scale = net > 0 ? gross / net : 1;
   return ORIENTATIONS.map((orientation) => {
-    const grossWallAreaSqm = energy.wallByOrientationSqm[orientation] * scale;
+    const grossWallAreaSqm =
+      stated?.[orientation] ?? energy.wallByOrientationSqm[orientation] * scale;
     return {
       orientation,
       grossWallAreaSqm,
@@ -285,9 +334,7 @@ export function ReferenceEnergyFrame({
   const envelopeOverride = useMemo<EnvelopeAnalysis | null>(() => {
     if (!viewerEnvelope || !materials) return null;
     const wwr = materials.envelope.windows.windowToWallRatio;
-    const note = isKo
-      ? `벽면적은 방위별 측정값. 창면적비는 전 방위 균등 가정 (A-WWR-DENOMINATOR)${energy.northAssumed ? " · 북쪽은 모델의 −Z 축 (진북 미기재)" : ""}.`
-      : `Wall areas are measured per orientation. The ratio is assumed uniform (A-WWR-DENOMINATOR)${energy.northAssumed ? " · north is the model's −Z (no true north stated)" : ""}.`;
+    const note = orientationWwrNote(wwr, energy.northAssumed, isKo);
     return {
       ...viewerEnvelope,
       orientationWwr: measuredOrientationRows(energy, wwr),
@@ -406,7 +453,14 @@ export function ReferenceEnergyPanel({
   const climate = getClimateData(energy.climate.sigunguCd);
   const materials = useMaterialStore((s) => s.properties[energy.buildingPk]);
   const fmt = (n: number, d = 1) => n.toLocaleString("en-US", { maximumFractionDigits: d });
-  const wwr = materials?.envelope.windows.windowToWallRatio.S;
+  // The south ratio alone until 2026-09-06, printed as "창 X m² (WWR Y %)" —
+  // the building's whole-envelope figure taken from one elevation. Identical
+  // while the four are uniform and wrong the moment they are not: on a real
+  // split the Duplex's south 0.367 would have claimed 124.9 m² of glazing
+  // against 64.46 measured. This is the number the engine actually uses.
+  const wwr = materials
+    ? meanWindowToWallRatio(materials, energy.grossWallByOrientationSqm)
+    : undefined;
 
   return (
     <section className="mt-6" data-testid="reference-model-energy">

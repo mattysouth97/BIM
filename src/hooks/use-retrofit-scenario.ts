@@ -13,7 +13,6 @@
 
 import { useMemo } from "react";
 import { useMaterialStore } from "@/store/material-store";
-import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { meanWindowToWallRatio } from "@/lib/energy/heat-loss";
 import { normalizeEfficiency } from "@/lib/energy/annual-demand";
 import type { MaterialProperties } from "@/lib/material-types";
@@ -240,11 +239,6 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
   }, [assumptionsOverride, programTrack]);
 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
-  // Read only for `meanWindowToWallRatio`, which needs to know whether this
-  // building's envelope was MEASURED or extruded. Undefined for a caller
-  // that seeded no recipe, and the ratio falls back to the unweighted mean —
-  // i.e. exactly today's behaviour where nothing new is known.
-  const recipe = useEffectiveRecipe(buildingPk);
 
   // Build all candidate measures from current materials.
   const allMeasures = useMemo<RetrofitMeasure[]>(() => {
@@ -267,7 +261,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     // own function — area-weighted on a measured envelope, unweighted
     // otherwise — so the measures and `calculateHeatLoss` cannot end up
     // multiplying by two different means of the same four numbers.
-    const avgWwr = meanWindowToWallRatio(materials, recipe);
+    const avgWwr = meanWindowToWallRatio(materials);
     // The engine's own element areas when the caller has them, and only then
     // the derived ones. `footprintArea` standing in for the roof is the
     // single largest of the old errors: it is the GROUND slab, and a building
@@ -359,7 +353,6 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     return [...envelopeMeasures, ...hvacMeasures, ...lightingMeasures, ...solarMeasures];
   }, [
     materials,
-    recipe,
     totalFloorArea,
     footprintArea,
     roofType,

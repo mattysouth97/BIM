@@ -95,7 +95,7 @@ describe("the envelope measures cover the areas the engine priced", () => {
       const { energy, q, engineEnvelopeAreas } = engineFor(id);
       // gross × the engine's own mean ratio IS the building's aperture.
       const aperture =
-        q.grossWallAreaSqm * meanWindowToWallRatio(energy.materials, energy.recipe);
+        q.grossWallAreaSqm * meanWindowToWallRatio(energy.materials);
       expect(engineEnvelopeAreas.windowSqm).toBeCloseTo(aperture, 6);
     });
 
@@ -105,7 +105,7 @@ describe("the envelope measures cover the areas the engine priced", () => {
       expect(doors).toBeGreaterThan(0);
 
       const aperture =
-        q.grossWallAreaSqm * meanWindowToWallRatio(energy.materials, energy.recipe);
+        q.grossWallAreaSqm * meanWindowToWallRatio(energy.materials);
       expect(engineEnvelopeAreas.opaqueWallSqm).toBeCloseTo(
         q.grossWallAreaSqm - aperture - doors,
         6,

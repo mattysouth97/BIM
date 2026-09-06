@@ -63,6 +63,17 @@ export type ReferenceBuildingEnergyInputs = Readonly<{
   /** True when the model states no true north and the split uses project north. */
   northAssumed: boolean;
   /**
+   * GROSS exterior wall per cardinal sector, m² — opaque + glazing + doors.
+   *
+   * The area each per-orientation WWR is quoted AGAINST, and therefore the
+   * only correct weighting for `meanWindowToWallRatio` and the only correct
+   * denominator for a per-orientation legend row. Absent where a building has
+   * measured its opaque wall per sector but not its openings; the legend then
+   * apportions the whole gross by each sector's opaque share, which is exact
+   * while the ratios are uniform and is the reason they must be.
+   */
+  grossWallByOrientationSqm?: Readonly<Record<Orientation, number>>;
+  /**
    * Roof typology, and the roof rows it was read from.
    *
    * This exists because `roofType` decides two user-visible things and was
