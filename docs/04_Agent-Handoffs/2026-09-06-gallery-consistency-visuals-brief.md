@@ -165,6 +165,76 @@ and in `docs/04_Agent-Handoffs/` — the Duplex commit message is the model.
 Work in your own worktree; touch the five shared registries last, after 1A
 has landed, and rebase.
 
+### Licence check, run 2026-09-06 14:xx by bim-ae — DigitalHub REFUTED, KIT ACCEPTED
+
+**1. DigitalHub — no explicit reuse grant, read from three independent primary
+sources, not from a mirror or a wiki claim:**
+
+- `https://publications.rwth-aachen.de/record/809124` (the RWTH publications
+  landing page for DOI `10.18154/RWTH-2020-12381`, "Dataset to: Technical
+  Report: IFC Model DigitalHub", Pauen/Unruh/Schlütter/Siwiecki/Frisch/van
+  Treeck, RWTH Aachen 2020) is itself behind a JS bot-challenge
+  (`/fast-challenge/`) and returns no readable content to an automated
+  fetch — so it cannot be read directly, which is itself worth recording
+  rather than papering over.
+- **DataCite's own metadata record for that DOI** (`api.datacite.org/dois/10.18154/rwth-2020-12381`,
+  queried directly) carries `"rightsList":[]` — empty. DataCite is the DOI
+  registration authority; this is as close to "the source repository itself"
+  as the bot-walled landing page prevents getting.
+- **The repository's own OAI-PMH record** (`publications.rwth-aachen.de/oai2d?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:publications.rwth-aachen.de:809124`)
+  carries `<dc:rights>info:eu-repo/semantics/openAccess</dc:rights>` and
+  nothing else. `openAccess` is an OpenAIRE **access-rights** vocabulary term
+  — "free to read/download" — not a reuse licence. There is no `dc:license`
+  field, no CC identifier, nowhere in either machine-readable record.
+- The companion technical-report page (`e3d.rwth-aachen.de/go/id/iync/file/807912`)
+  states no licence either.
+
+**Verdict: not explicit. Per the rule, recorded here and NOT published.**
+Nobody should re-spend time re-checking this — three independent reads of
+the primary metadata converge on the same absence.
+
+**2. KIT IAI sample buildings — explicit grant, verified by reading the raw
+source myself after a first AI-summarised fetch of the same URL gave two
+contradicting answers (worth naming: a `WebFetch` render-mode summary
+reported a licence quote, a raw-wikitext fetch of the identical URL reported
+none — MediaWiki's `action=raw` does not expand transclusions, so the second
+answer was a false negative, and I did not trust either summary until I
+pulled the transcluded template myself and read it):**
+
+`https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples` transcludes
+`Template:Example-Source`. Its raw wikitext, fetched directly
+(`…&action=raw`), reads in full:
+
+> These examples are made by the Institute for Applied Computer Science
+> (IAI) at the Karlsruhe Institute of Technology (KIT), and are for
+> **unrestricted use**. If you use these examples for publications, please
+> provide the following **source:** Institute for Automation and Applied
+> Informatics (IAI) / Karlsruhe Institute of Technology (KIT) or Institut
+> für Automation und angewandte Information / Karlsruher Institut für
+> Technologie
+
+Holder: Karlsruhe Institute of Technology (KIT), Institute for Automation
+and Applied Informatics (IAI). Grant: unrestricted use with mandatory
+attribution — an explicit textual licence, not a named one like CC BY, but
+no less a grant. Caveat carried forward honestly, in the same spirit as
+Schependomlaan's stamped-coordinate correction: the files are served from
+`ifcwiki.org/images/...`, a third-party wiki mirror, not from `iai.kit.edu`
+directly — KIT's own current downloads pages (`iai.kit.edu/english/1302.php`,
+`/1648.php`) no longer list these files at all. The statement is attributed
+to KIT by the wiki, corroborated by the same attribution appearing
+independently everywhere these files are cited in the literature
+(`ibpsa/project1-wp-2-2-bim`, TUM's `ifc-to-citygml3`, multiple BPS
+validation papers), but the wiki itself is not KIT's own domain.
+
+**Decision: KIT accepted. Building #4 is `AC20-FZK-Haus.ifc`** ("FZK Haus",
+ArchiCAD 20, IFC4) — the single most-cited validation building in the
+building-energy-simulation literature, a single-family house, small and
+tractable. `AC20-Institute-Var-2.ifc` ("Office Building") is the same
+licence and cached candidate for a #5 if wanted, not built now. Both
+download from `ifcwiki.org/images/e/e3/AC20-FZK-Haus.ifc` and
+`ifcwiki.org/images/9/98/AC20-Institute-Var-2.ifc` per the template's own
+table. Candidate 3 (`Community-Sample-Test-Files`) not needed.
+
 ## Lane 2 — one information contract for every model page · **bim-54**
 
 Deliverable: `/models/<any id>` renders the **same sections, in the same
