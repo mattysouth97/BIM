@@ -68,6 +68,17 @@ export interface EnergyInstrumentHudProps {
    * own corners — and this is the seam that lets them.
    */
   notice?: React.ReactNode;
+  /**
+   * One line under the grade/kWh/CO₂ strip saying what the grade IS.
+   *
+   * The badge renders a bare "1+++" and three things about it are not
+   * inferable from the frame: that it is a Korean 건축물 에너지효율등급, that
+   * it is struck on PRIMARY energy rather than the site figure printed two
+   * centimetres to its right, and which threshold table it was read off.
+   * `EnergyCards` owns the badge and belongs to another lane, so the sentence
+   * sits beside it here rather than being wedged inside it.
+   */
+  gradeBasis?: string;
 }
 
 export function EnergyInstrumentHud({
@@ -78,6 +89,7 @@ export function EnergyInstrumentHud({
   sidoPrefix,
   exteriorDoorSqm,
   notice,
+  gradeBasis,
 }: EnergyInstrumentHudProps) {
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
   const programTrack = useScenarioStore((s) => s.programTrack);
@@ -187,6 +199,17 @@ export function EnergyInstrumentHud({
       bottom={
         <section className="overflow-hidden rounded-lg border border-border bg-card/95 shadow-sm backdrop-blur-md">
           <EnergyCards buildingPk={buildingPk} variant="strip" />
+          {/* Directly under the badge it explains, and ABOVE the delta strip:
+              the sentence says what the "before" number is, so it has to be
+              read before the before→after row that builds on it. */}
+          {gradeBasis ? (
+            <p
+              className="border-b border-border px-3 py-1.5 text-[10px] leading-relaxed text-muted-foreground"
+              data-testid="energy-grade-basis"
+            >
+              {gradeBasis}
+            </p>
+          ) : null}
           <RetrofitDeltaStrip />
           <SelectedMeasuresStrip
             measures={scenario.selection?.selected ?? []}

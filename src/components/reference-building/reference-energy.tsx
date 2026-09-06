@@ -28,6 +28,8 @@ import { useLayerStore } from "@/store/layer-store";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { getClimateData } from "@/lib/energy/climate-data";
+import { isResidentialOccupancy } from "@/lib/energy/delivered-from-demand";
+import { ledgerUseCategory } from "@/lib/ledger/floor-rows";
 import { EnergyInstrumentHud } from "@/components/twin/energy-instrument-hud";
 import { AnalysisLegend } from "@/components/viewer/analysis-legend";
 import {
@@ -131,6 +133,60 @@ export function pendingBadgeText(
   return isKo
     ? `측정 대기 · 자리표시자 ${bias.total}개${lean}`
     : `Awaiting measurement · ${bias.total} stand-ins${lean}`;
+}
+
+/**
+ * What the grade badge on the frame actually is — because on these two
+ * buildings it is three things a reader would not assume.
+ *
+ * 1. It is a **Korean** 건축물 에너지효율등급, on a US clinic and a Dutch
+ *    apartment, computed under a Seoul climate neither building is in.
+ * 2. It is scored on **primary** energy, which is not the site kWh/m²
+ *    printed immediately to its right: the apartment reads 40.5 beside a
+ *    grade struck at 65.7.
+ * 3. It is read off the residential or the non-residential threshold table,
+ *    and which one is decided by `isResidentialOccupancy` — occupant density
+ *    above 0.1 persons/m². That test is backwards for dwellings, which are
+ *    the LEAST densely occupied buildings there are: Schependomlaan is a
+ *    10-세대 공동주택 (mainPurpsCd 02000) at 0.025 p/m², so it is graded on
+ *    the non-residential table, whose 1+++ band is 80 kWh/m²·yr against the
+ *    residential 60. Its 65.7 is 1+++ there and 1++ on the table its use
+ *    code calls for.
+ *
+ * That last one is a defect in `delivered-from-demand.ts`, which is not this
+ * lane's file and whose fix would move every 건축물대장 building's grade in
+ * the app. So it is DISCLOSED here, with the band it costs, rather than
+ * quietly left to flatter the building.
+ */
+export function gradeBasisText(
+  energy: ReferenceBuildingEnergyInputs,
+  grade: string,
+  primaryEnergyPerArea: number,
+  siteDemandPerSqm: number,
+  isKo: boolean,
+): string {
+  const table = isResidentialOccupancy(energy.materials)
+    ? "residential"
+    : "non-residential";
+  const useSaysResidential =
+    ledgerUseCategory(energy.recipe.mainPurpsCd ?? "") === "residential";
+  const mismatched = useSaysResidential !== (table === "residential");
+  const n = (v: number, d = 1) =>
+    v.toLocaleString("en-US", { maximumFractionDigits: d });
+
+  const head = isKo
+    ? `${grade} 등급은 대한민국 건축물 에너지효율등급이며, 1차에너지 ${n(primaryEnergyPerArea)} kWh/m²·yr 기준입니다 — 옆의 사용량 ${n(siteDemandPerSqm)} kWh/m²·yr가 아닙니다. 기후는 ${energy.climate.labelKo} (${energy.climate.assumptionId}).`
+    : `Grade ${grade} is a Korean 건축물 에너지효율등급, struck on ${n(primaryEnergyPerArea)} kWh/m²·yr of PRIMARY energy — not the ${n(siteDemandPerSqm)} kWh/m²·yr of site demand beside it. Climate is ${energy.climate.labelEn} (${energy.climate.assumptionId}).`;
+
+  const tail = mismatched
+    ? isKo
+      ? ` 재실밀도 ${energy.materials.occupancy.occupancyDensity} 인/m²가 0.1 이하라 비주거 기준표로 채점했으나, 이 건물의 주용도코드는 ${energy.recipe.mainPurpsCd} (주거)입니다. 주거 기준표였다면 같은 1차에너지가 한 등급 아래로 내려갑니다.`
+      : ` It was scored on the ${table} table because occupancy density ${energy.materials.occupancy.occupancyDensity} p/m² is not above 0.1 — but this building's use code is ${energy.recipe.mainPurpsCd}, which is residential. On the residential table the same primary energy is one band lower.`
+    : isKo
+      ? ` 재실밀도 ${energy.materials.occupancy.occupancyDensity} 인/m²로 비주거 기준표를 적용했고, 주용도코드 ${energy.recipe.mainPurpsCd}와 일치합니다.`
+      : ` It was scored on the ${table} table from an occupancy density of ${energy.materials.occupancy.occupancyDensity} p/m², which agrees with its use code ${energy.recipe.mainPurpsCd}.`;
+
+  return head + tail;
 }
 
 /**
@@ -258,6 +314,17 @@ export function ReferenceEnergyFrame({
         roofType={energy.roof?.type ?? "flat"}
         exteriorDoorSqm={energy.exteriorDoorSqm}
         sidoPrefix={climate.sigunguCd.slice(0, 2)}
+        gradeBasis={
+          metrics
+            ? gradeBasisText(
+                energy,
+                metrics.grade,
+                metrics.primaryEnergyPerArea,
+                metrics.demand.demandPerSqm,
+                isKo,
+              )
+            : undefined
+        }
         /* A stand-in travels on `measuredEnvelope` exactly like a measurement
            and reports `source: "measured"` — the quantities function refuses
            a zero, so a placeholder has to be a real positive number. The
