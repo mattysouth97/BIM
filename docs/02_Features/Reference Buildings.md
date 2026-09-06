@@ -129,16 +129,29 @@ the frame, and the `energy-grade-basis` row states all three:
    The apartment reads 40.5 next to a grade struck at 65.7.
 3. It is read off the residential or the non-residential threshold table.
 
-**Known defect, disclosed rather than fixed.** Which table is chosen by
-`isResidentialOccupancy` — occupant density above 0.1 persons/m². That test is
-backwards for dwellings, which are the least densely occupied buildings there
-are. Schependomlaan is a 10-세대 공동주택 (`mainPurpsCd` 02000) at 0.025 p/m²,
-so it is graded on the non-residential table, whose 1+++ band is 80 kWh/m²·yr
-against the residential 60. Its 65.7 is 1+++ there and **1++** on the table its
-use code calls for. Fixing `delivered-from-demand.ts` would move every
-건축물대장 building's grade in the app, so the model page declares the band it
-costs instead, and the test re-grades on the residential table to prove the
-claim rather than matching the sentence.
+**Fixed 2026-09-06, and it moved grades.** Which table is used was decided by
+`isResidentialOccupancy` — occupant density above 0.1 persons/m² — and that
+test is backwards for dwellings, which are the least densely occupied
+buildings there are. Three of the four published buildings are dwellings
+(`mainPurpsCd` 02000, 02000, 01000) and all three were graded on the 비주거용
+table, whose 1+++ band is 80 kWh/m²·yr against the 주거용 60.
+
+`buildingTypeForGrade(materials, mainPurpsCd?)` now lets the use code decide
+where there is one. Site kWh/m² did not change anywhere — the table is a
+scale, not a physics change — but the grades did:
+
+| building | use code | grade |
+|---|---|---|
+| Clinic | 09000 | 1+ → 1+ (unchanged) |
+| Schependomlaan | 02000 | 1+++ → **1++** |
+| Duplex Apartment | 02000 | 1 → **4** |
+| FZK Haus | 01000 | 1+ → **2** |
+
+건축물대장 rows whose register says 단독/공동주택 move the same way; an
+업무시설 row does not. A code the app cannot classify — 09000 의료시설 returns
+`"default"` from `ledgerUseCategory` — is **not** a decision and falls through
+to occupancy rather than being silently read as non-residential. That case is
+the one the grade row still discloses.
 
 ## Retrofit
 

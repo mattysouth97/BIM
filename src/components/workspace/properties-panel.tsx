@@ -13,7 +13,7 @@ import { useMaterialStore } from "@/store/material-store";
 import { useActiveBuildingPk, useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import {
   deliveredFromDemand,
-  buildingTypeFromMaterials,
+  buildingTypeForGrade,
   isResidentialOccupancy,
 } from "@/lib/energy/delivered-from-demand";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
@@ -242,7 +242,7 @@ export function PropertiesPanel({
     return calculateEfficiencyRating(
       deliveredFromDemand(metrics.demand),
       totalArea,
-      buildingTypeFromMaterials(materials)
+      buildingTypeForGrade(materials, effectiveRecipe.mainPurpsCd)
     );
   }, [metrics, effectiveRecipe, materials]);
 

@@ -13,7 +13,7 @@ import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import {
   deliveredFromDemand,
-  buildingTypeFromMaterials,
+  buildingTypeForGrade,
 } from "@/lib/energy/delivered-from-demand";
 import { getEnergyGrade } from "@/lib/energy/energy-grade";
 
@@ -88,7 +88,9 @@ describe("useEnergyMetrics", () => {
     const expected = calculateEfficiencyRating(
       deliveredFromDemand(metrics!.demand),
       totalArea,
-      buildingTypeFromMaterials(makeMaterials())
+      // The recipe's 주용도코드 reaches the table choice, exactly as
+      // `useEnergyMetrics` passes it — this fixture is 02000, a dwelling.
+      buildingTypeForGrade(makeMaterials(), recipe.mainPurpsCd)
     );
     expect(metrics!.grade).toBe(expected.grade);
     expect(metrics!.primaryEnergyPerArea).toBeCloseTo(
@@ -103,21 +105,44 @@ describe("useEnergyMetrics", () => {
     }
   });
 
-  it("the residential/non-residential split changes the grade for identical demand (P1-05)", () => {
-    const residentialMaterials = makeMaterials();
-    residentialMaterials.occupancy.occupancyDensity = 0.2; // residential
+  it("the threshold table follows the USE CODE, not the occupancy density (P1-05)", () => {
+    // This test asserted the opposite until 2026-09-06: that flipping the
+    // density flipped the table. It did, and that was the defect — a dwelling
+    // is the least densely occupied building there is, so density read three
+    // of the four reference buildings onto the 비주거용 table and graded them
+    // a band better than their use earns.
+    const dense = makeMaterials();
+    dense.occupancy.occupancyDensity = 0.2;
 
+    // `makeRecipe()` is mainPurpsCd 02000 — 공동주택.
     useMaterialStore.setState({ properties: { [PK]: makeMaterials() } });
     useRecipeStore.setState({ baseRecipes: { [PK]: makeRecipe() } });
-    const nonRes = renderHook(() => useEnergyMetrics(PK)).result.current;
+    const sparse = renderHook(() => useEnergyMetrics(PK)).result.current;
 
-    useMaterialStore.setState({ properties: { [PK]: residentialMaterials } });
-    const res = renderHook(() => useEnergyMetrics(PK)).result.current;
+    useMaterialStore.setState({ properties: { [PK]: dense } });
+    const crowded = renderHook(() => useEnergyMetrics(PK)).result.current;
 
-    // Same demand, different threshold table ⇒ different grade (residential
-    // thresholds are stricter at every band in this fixture's primary range).
-    expect(res!.demand.totalDemand).toBeCloseTo(nonRes!.demand.totalDemand, 6);
-    expect(res!.grade).not.toBe(nonRes!.grade);
+    // Same building, same demand, and now the SAME grade: the register says
+    // it is housing either way, so the density no longer gets a vote.
+    expect(crowded!.demand.totalDemand).toBeCloseTo(sparse!.demand.totalDemand, 6);
+    expect(crowded!.grade).toBe(sparse!.grade);
+  });
+
+  it("the split still follows density where the recipe states no usable use code (P1-05)", () => {
+    // The fallback the fix cannot reach, and the one the pages disclose.
+    const noUseCode = { ...makeRecipe(), mainPurpsCd: "09000" };
+    const dense = makeMaterials();
+    dense.occupancy.occupancyDensity = 0.2;
+
+    useRecipeStore.setState({ baseRecipes: { [PK]: noUseCode } });
+    useMaterialStore.setState({ properties: { [PK]: makeMaterials() } });
+    const sparse = renderHook(() => useEnergyMetrics(PK)).result.current;
+
+    useMaterialStore.setState({ properties: { [PK]: dense } });
+    const crowded = renderHook(() => useEnergyMetrics(PK)).result.current;
+
+    expect(crowded!.demand.totalDemand).toBeCloseTo(sparse!.demand.totalDemand, 6);
+    expect(crowded!.grade).not.toBe(sparse!.grade);
   });
 
   it("returns null (no fabricated grade) when total floor area is not positive (P1-05)", () => {

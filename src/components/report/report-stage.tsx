@@ -45,7 +45,7 @@ import { calibrateEnergy } from "@/lib/energy/calibration";
 import { compareToBenchmark } from "@/lib/energy/benchmark-comparison";
 import {
   deliveredFromDemand,
-  buildingTypeFromMaterials,
+  buildingTypeForGrade,
   isResidentialOccupancy,
 } from "@/lib/energy/delivered-from-demand";
 import type { EnergyAuditInput } from "@/lib/report/templates/energy-audit";
@@ -264,7 +264,7 @@ export function ReportStage({
     return calculateEfficiencyRating(
       deliveredFromDemand(metrics.demand),
       totalArea,
-      buildingTypeFromMaterials(materials)
+      buildingTypeForGrade(materials, effectiveRecipe.mainPurpsCd)
     );
   }, [metrics, effectiveRecipe, materials, totalArea]);
 

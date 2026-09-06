@@ -47,7 +47,7 @@ import { calculateCO2 } from "@/lib/energy/co2-emissions";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import {
   deliveredFromDemand,
-  buildingTypeFromMaterials,
+  buildingTypeForGrade,
 } from "@/lib/energy/delivered-from-demand";
 import { applyPhaseToMaterials, pvRoofTypeFromId } from "@/lib/bim/phases/apply-phase";
 
@@ -245,7 +245,7 @@ export function runEnergyEngine(
   const rating = calculateEfficiencyRating(
     deliveredFromDemand(demand),
     totalFloorArea,
-    buildingTypeFromMaterials(materials),
+    buildingTypeForGrade(materials, recipe.mainPurpsCd),
   );
   const co2 = calculateCO2(demand, totalFloorArea, materials.hvac.heating.fuelType);
 
