@@ -11,7 +11,7 @@ import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import type { ReferenceBuildingEnergyInputs } from "./energy-inputs";
 import type { ReferenceBuildingManifest } from "./manifest";
 
-export const ENERGY_DATASET_SCHEMA_VERSION = "1.0.0";
+export const ENERGY_DATASET_SCHEMA_VERSION = "1.1.0";
 
 type ModelContext = {
   classification: "real_building_model" | "synthetic_example" | "real_world_status_unverified";
@@ -202,6 +202,13 @@ export function buildReferenceEnergyDataset(
       extractedAt: manifest.generatedAt,
       manifestUrl: `/reference-buildings/${manifest.id}/manifest.json`,
       transformations: "IFC quantities/solids extracted by build-reference-building; baseline inputs adapted by reference-buildings/energy-inputs; screening outputs computed at export.",
+    },
+    modelGeometry: {
+      artifactBaseUrl: `/reference-buildings/${manifest.id}/`,
+      architecturalDetails: manifest.architecturalDetails ?? null,
+      mepCoverage: manifest.mepCoverage ?? null,
+      serviceLayers: manifest.serviceLayers ?? [],
+      scope: "Source geometry and occurrence inventory only. Geometry does not establish installed thermal performance, system connectivity or operating efficiency; energy inputs are recorded separately.",
     },
     measuredEnvelope: {
       basis: "Measurements of model geometry and quantities; not on-site measurements.",

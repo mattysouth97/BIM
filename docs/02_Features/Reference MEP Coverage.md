@@ -67,5 +67,5 @@ classes, rejected unknown schemas, all five source/count/layer descriptions,
 and the actual Schependomlaan GLB. The prose explaining 60 drainage elements
 and 13 grilles is parsed back and reconciled with the source index. Geometry
 hashes and stored/placed triangles are independently checked through Three's
-GLTFLoader. Viewer interaction and screenshot checks are performed by the
-integrating viewer milestone.
+GLTFLoader. Integration checks all five coverage panels and the apartment's
+separate 73-element source layer, with independent detail/service controls.

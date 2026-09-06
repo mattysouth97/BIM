@@ -103,4 +103,3 @@ detail: `clinic-glazing-and-usage-sources.md`. The ISO 13790 monthly kernel
 done, unwired. Open: the apartment's wall-set scope (A-WALL-SET-SCOPE, a
 measurement in progress), an area-weighted WWR mean in heat-loss.ts (moves
 both buildings; not decided), a sourced Nijmegen climate.
-

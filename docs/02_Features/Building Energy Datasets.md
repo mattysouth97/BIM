@@ -19,7 +19,7 @@ gallery. The routes do not create an entry workflow. The catalogue iterates
 registry entry are available. A missing registered manifest fails the catalogue
 request instead of silently dropping a row.
 
-Schema: `bimfit_building_energy_dataset`, version `1.0.0`; catalogue kind:
+Schema: `bimfit_building_energy_dataset`, version `1.1.0`; catalogue kind:
 `bimfit_building_energy_catalogue`. Breaking field or semantic changes require a
 major schema increment. The HTTP response is a UTF-8 attachment with a stable
 ETag and conditional-GET support.
@@ -66,6 +66,14 @@ unknown model IDs return 404; unavailable artifacts return 503.
   Their models do not establish occupied buildings at their IFC coordinates.
   Clinic and Duplex real-world status remains unverified in the dataset;
   Schependomlaan's project archive supplies constructed-building context.
+
+### Source geometry coverage (schema 1.1)
+
+`modelGeometry` adds the artifact base URL, source architectural-detail records,
+service-layer metadata and MEP coverage inventories. Missing typed MEP geometry
+is a statement about the IFC sources, not proof that a building has no systems.
+Inventory counts do not establish system connectivity or installed performance.
+The separate energy inputs continue to disclose their system assumptions.
 
 ## Reproducibility and reuse
 

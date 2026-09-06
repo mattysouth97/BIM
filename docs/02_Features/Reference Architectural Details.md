@@ -83,5 +83,7 @@ GLTFLoader, checks stored and placed triangles, positive instance determinants,
 finite geometry, index identity/counts, source hashes, and payload limits.
 Fixtures check reflection/winding, rejected shear, nonuniform normal transforms
 and exact vertex reuse. Source counts and IFC identities were separately
-audited against cached raw STEP records. Viewer screenshot validation belongs
-to the integrating viewer milestone.
+audited against cached raw STEP records. Integration verifies all five default
+loads, independent service/detail toggles, failed-download recovery and deferred
+loading after a disabled layer is enabled. Paired Clinic/Schependomlaan roof
+screenshots confirm source alignment without changing the PV placement.

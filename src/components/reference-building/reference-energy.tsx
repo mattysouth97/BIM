@@ -411,7 +411,7 @@ export function ReferenceEnergyFrame({
           <>
           {awaiting ? (
             <p
-              className="px-3 py-1.5 font-mono text-[10px] leading-tight text-amber-300"
+              className="px-3 py-1.5 font-mono text-[10px] leading-tight text-amber-700 dark:text-amber-300"
               data-testid="reference-energy-awaiting-measurement"
             >
               {pendingBadgeText(bias, isKo)}
@@ -502,27 +502,27 @@ export function ReferenceEnergyPanel({
       </p>
       <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
         {isKo
-          ? "캔버스 위의 계기판은 /building/demo와 같은 엔진(도일법)입니다. 외피 면적은 이 파일에서 측정한 값이고, U-값·창·기밀·설비·재실은 아래에 이름 붙인 가정입니다."
-          : "The frame over the canvas is the same degree-day engine as /building/demo. Envelope areas are measured from this file; U-values, glazing, airtightness, systems and occupancy are the named assumptions below."}
+          ? "캔버스 위의 계기판은 /building/demo와 같은 도일법 엔진입니다. 입력에는 모델에서 추출한 형상·물성, 미측정 대체값과 가정이 함께 사용됩니다. 아래에서 각 값의 근거와 적용 범위를 확인하세요."
+          : "The frame uses the same degree-day engine as /building/demo. Its inputs combine model-derived geometry and properties with unmeasured stand-ins and assumptions. Review the evidence and scope for each value below."}
       </p>
 
       {energy.measurementState === "awaiting_measurement" && energy.pendingMeasurements ? (
         <div
-          className="mt-3 rounded-md border border-amber-500/50 bg-amber-950/40 px-3 py-2"
+          className="mt-3 rounded-md border border-amber-500/50 bg-amber-50 dark:bg-amber-950/40 px-3 py-2"
           data-testid="reference-energy-pending-measurements"
         >
-          <p className="font-mono text-[10px] uppercase tracking-wide text-amber-300">
+          <p className="font-mono text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-300">
             {pendingBadgeText(summarisePendingBias(energy.pendingMeasurements), isKo)}
           </p>
-          <p className="mt-1 text-[10px] leading-relaxed text-amber-100/80">
+          <p className="mt-1 text-[10px] leading-relaxed text-amber-900 dark:text-amber-100/80">
             {isKo
-              ? "아래 수치는 아직 이 파일에서 측정되지 않았습니다. 엔진에는 양수만 넘길 수 있어 자리표시자를 넣었고, 각 값이 무엇에서 유도되었고 어느 방향으로 틀릴 수 있는지를 적습니다. 위 계기판의 수치는 그만큼 잠정적입니다."
-              : "These figures have not been measured from this file yet. The engine accepts only positive numbers, so stand-ins were used; each says what it was derived from and which way it errs. The frame's numbers above are provisional to that extent."}
+              ? "아래 입력은 전체 외피 범위에 대한 검증이 끝나지 않아 대체값을 사용합니다. 일부 추출값이 있어도 전체 범위를 대표한다고 볼 수 없습니다. 각 값의 유도 근거와 열손실을 과소·과대평가할 수 있는 방향을 함께 표시합니다."
+              : "These inputs use stand-ins because complete envelope coverage has not been verified. Partial extracted quantities do not establish a complete measurement. Each entry names its derivation and the direction in which it may understate or overstate heat loss."}
           </p>
           <ul className="mt-2 space-y-1.5">
             {energy.pendingMeasurements.map((p) => (
               <li key={p.manifestField} className="font-mono text-[10px] leading-relaxed">
-                <span className="text-amber-200">{p.manifestField}</span>
+                <span className="text-amber-800 dark:text-amber-200">{p.manifestField}</span>
                 <span className="text-muted-foreground">
                   {" "}
                   = {p.placeholderValue.toLocaleString("en-US")} {p.unit === "m2" ? "m²" : p.unit} ·{" "}

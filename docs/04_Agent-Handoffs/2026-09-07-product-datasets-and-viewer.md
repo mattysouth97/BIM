@@ -76,7 +76,9 @@ The modelled energy path still does not credit LED/PV in kWh or grade.
 
 ## Milestone 2 — collection, datasets and canvas controls
 
-Local implementation verified; clean production deployment pending.
+Committed/pushed as `dae269e`; clean production deployment verified on
+2026-09-07 00:36 KST. Health reports that commit and `icn1`; nine live smoke
+checks passed for downloads/hashes, both canvas routes and old funding state.
 
 - Fifth source model: licensed KIT Office IFC example (fictional validation
   building), 82 modeled spaces / 2,266.66 m², 269.1 kWh/(m²·yr), grade 5 under
@@ -106,8 +108,22 @@ Earlier failing tests were resolved: actual bottom-control pointer interception,
 five new regression assertions mistakenly waiting on a nonexistent attribute,
 and an in-flight unit run reading a pre-edit wording assertion. None skipped.
 
-## In progress — material explanations and source detail
+## Milestone 3 — material explanations and source detail
 
-Next lane adds source-derived architectural geometry on all five models,
-illustrative material layer textures with source and thermal assumptions, and
-MEP geometry where the IFC supplies it. This work is not yet published.
+Local implementation adds 2,989 source architectural elements across all five
+models, independent default-on detail controls and recoverable detail loading.
+Material cards show actual source names/thickness, illustrative texture samples
+and thermal assumptions. MEP coverage is inventoried for every source; the
+apartment now publishes 73 source drainage/vent elements. Dataset schema 1.1
+adds downloadable geometry and MEP coverage. No assumed MEP network is drawn.
+
+Full unit validation: 5,321 passed, 4 existing skips. TypeScript clean;
+ESLint src/e2e: 0 errors and 6 existing warnings. Paired Clinic/Schependomlaan
+detail-on/off roof screenshots inspected; geometry and PV remain aligned.
+Browser integration: 63/69 passed initially; five old row-count expectations
+omitted the new details control and one test clicked before hydration. Counts
+now include source details and the gated-load test waits for client readiness;
+all six reruns passed. Clean production deployment is pending.
+
+Next work: source-bound material expression on the model, concise categorized
+model navigation, and additional licensed public TalTech/Klassiqua models.

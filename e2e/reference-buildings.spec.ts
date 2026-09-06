@@ -75,6 +75,7 @@ const BUILDINGS: readonly Expected[] = [
 type Manifest = {
   id: string;
   licence: string;
+  architecturalDetails?: { file: string };
   serviceLayers?: { id: string; ko: string; en: string; flow?: { file: string | null } }[];
 };
 
@@ -236,31 +237,20 @@ for (const building of BUILDINGS) {
       const panel = page.getByTestId("reference-model-layers");
       await expect(panel).toBeVisible({ timeout: FIRST_PAINT });
 
-      // The fabric layer is always there; the services layers are whatever
-      // this building's own manifest declares — 3 for the Duplex, 3 for the
-      // Clinic, 6 for Schependomlaan and NONE for FZK Haus.
+      // Every source service in this building's manifest needs a control.
       const services = manifest.serviceLayers ?? [];
       for (const layer of services) {
         await expect(page.getByTestId(`reference-model-layer-${layer.id}`)).toBeVisible();
         await expect(panel).toContainText(layer.ko);
       }
 
-      // Counted, not just spot-checked, so the assertion still says something
-      // about a building that declares no services at all: FZK Haus must show
-      // the fabric row and nothing beside it. A loop over an empty array
-      // asserts nothing, and "asserts nothing" and "asserts it is empty" are
-      // different claims.
-      //
-      // The expected count is derived from the manifest rather than typed, so
-      // it stays true per building: one fabric row, one per services layer,
-      // and a flow-direction row ONLY where some layer actually shipped a
-      // flow file. Schependomlaan has six services models and no flow file
-      // among them, so it gets the heading and no toggle; FZK has neither.
+      // Count all controls, including the independent architectural details.
+      // A flow control requires an actual flow file; absence is not invented.
       const flowRow = services.some((layer) => layer.flow?.file) ? 1 : 0;
       await expect(page.getByTestId("reference-model-layer-fabric")).toBeVisible();
       await expect(
         panel.locator('[data-testid^="reference-model-layer-"]:not([data-testid$="-note"])'),
-      ).toHaveCount(1 + services.length + flowRow);
+      ).toHaveCount(1 + services.length + flowRow + (manifest.architecturalDetails ? 1 : 0));
     });
 
     test("carries the licence its grant requires", async ({ page }) => {

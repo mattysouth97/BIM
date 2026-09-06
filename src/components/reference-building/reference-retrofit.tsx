@@ -122,8 +122,8 @@ export function retrofitBasisLines(
       ? "단가는 KICT 2024 표준품셈, 내용연수는 ASHRAE 기준입니다. 지원금·이자 지원을 적용하지 않은 투자비이며, 할인율 5.0%, 분석기간 20년입니다."
       : "Unit costs KICT 2024, lifetimes ASHRAE. Costs exclude grants and interest support; discount rate 5.0 %, 20-year horizon.",
     isKo
-      ? "면적은 엔진이 실제로 계산한 외피 면적입니다 — 지붕은 실측 지붕 표면, 바닥은 지반 슬래브, 창은 실측 개구부, 벽은 총벽 − 개구부 − 출입문."
-      : "Areas are the ones the engine itself priced — roof at the measured roof surface, floor at the ground slab, windows at the measured aperture, wall at gross − aperture − doors.",
+      ? "면적은 현재 에너지 입력과 같습니다 — 지붕 표면, 지반 슬래브, 창 개구부, 벽은 총벽 − 개구부 − 출입문입니다. 실측 범위와 미측정 대체값은 에너지 프로파일의 근거를 확인하세요."
+      : "Areas follow the current energy inputs: roof surface, ground slab, window aperture, and wall at gross − aperture − doors. The energy profile distinguishes extraction scope from unmeasured stand-ins.",
     roof
       ? isKo
         ? `에너지 입력의 지붕 분류: ${ROOF_TYPE_KO[roof.type]} · ${roof.read}`

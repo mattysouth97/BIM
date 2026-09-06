@@ -7,6 +7,67 @@
  * come from the same file, or the two drift the first time extraction changes
  * and nothing notices.
  */
+/** Selected original IFC classes, separate from the fabric and service layers. */
+export type ReferenceArchitecturalDetailsLayer = Readonly<{
+  id: "details";
+  ko: string;
+  en: string;
+  file: string;
+  byteLength: number;
+  sha256: string;
+  /** Stored triangles count each instanced shape once. */
+  triangleCount: number;
+  /** Triangles after every original source placement is included. */
+  placedTriangleCount: number;
+  triangleCountBasis: string;
+  groups: readonly string[];
+  /** Source elements with at least one emitted geometry part. */
+  elements: number;
+  distinctGeometries: number;
+  instancedShapes: number;
+  instancedPlacements: number;
+  drawCalls: number;
+  materials: number;
+  sourceFiles: readonly Readonly<{
+    role: string;
+    fileName: string;
+    sha256: string;
+    types: readonly Readonly<{
+      type: string;
+      candidates: number;
+      rendered: number;
+      /** A source element was queried, but no usable mesh was emitted. */
+      withoutRenderedMesh: number;
+    }>[];
+  }>[];
+  indexFile: string;
+  indexSha256: string;
+  appearance: string;
+  note: string;
+  selectionNote?: string;
+}>;
+
+export type ReferenceMepCoverage = Readonly<{
+  schemaVersion: 1;
+  status: "source_geometry_published" | "no_typed_mep_occurrences" | "source_occurrences_unpublished";
+  publishedLayerIds: readonly string[];
+  /** Source-file occurrences can overlap across copies or discipline variants. */
+  typedElementCount: number;
+  distributionPortCount: number;
+  sources: readonly Readonly<{
+    role: string;
+    fileName: string;
+    sha256: string;
+    schema: string;
+    typedElementCount: number;
+    entitiesByType: Readonly<Record<string, number>>;
+    distributionPorts: number;
+    systems: number;
+  }>[];
+  summary: Readonly<{ ko: string; en: string }>;
+  limitations: readonly Readonly<{ ko: string; en: string }>[];
+}>;
+
 export type ReferenceBuildingManifest = Readonly<{
   kind: "bimfit_reference_building_manifest";
   schemaVersion: 1;
@@ -274,6 +335,8 @@ export type ReferenceBuildingManifest = Readonly<{
       wavelengthM: number | null;
     }>;
   }>[];
+  architecturalDetails?: ReferenceArchitecturalDetailsLayer;
+  mepCoverage?: ReferenceMepCoverage;
   model: Readonly<{
     file: string;
     byteLength: number;

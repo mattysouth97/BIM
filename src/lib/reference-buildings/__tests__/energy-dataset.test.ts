@@ -70,6 +70,20 @@ describe("published baseline datasets preserve provenance", () => {
     expect(dataset.measuredEnvelope.floorArea.value).toBeGreaterThan(0);
   });
 
+  it("exports source MEP coverage without treating missing typed systems as measured equipment", async () => {
+    const apartment = (await loadReferenceEnergyDataset("schependomlaan"))!;
+    expect(apartment.schemaVersion).toBe("1.1.0");
+    expect(apartment.modelGeometry.mepCoverage!.status).toBe("source_geometry_published");
+    expect(apartment.modelGeometry.mepCoverage!.publishedLayerIds).toContain("source-services");
+    expect(apartment.modelGeometry.architecturalDetails).toEqual(manifest("schependomlaan").architecturalDetails);
+    const fzk = (await loadReferenceEnergyDataset("fzk-haus"))!;
+    expect(fzk.modelGeometry.mepCoverage!.status).toBe("no_typed_mep_occurrences");
+    expect(fzk.modelGeometry.mepCoverage!.typedElementCount).toBe(0);
+    // Missing source geometry does not erase the separate assumed HVAC inputs.
+    expect(fzk.modelInputs!.materials.hvac.heating).toBeTruthy();
+    expect(fzk.modelGeometry.scope).toContain("operating efficiency");
+  });
+
   it("matches the published screen baselines without reinterpreting HVAC energy as whole-building energy", async () => {
     const published = [
       ["bs-medical-dental-clinic", "1+", "108.8"],

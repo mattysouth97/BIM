@@ -28,20 +28,34 @@ and deploy each major verified milestone. Current execution record:
 
 Local release validation on 2026-09-07:
 
-- Unit: **5,255 passed**, 4 skipped (434 passed files, 1 skipped).
+- Unit: **5,321 passed**, 4 skipped (441 passed files, 1 skipped).
 - E2E: **101/102 passed** in the full Chromium run; one unrelated CAD setup
   exceeded its 30s hook budget. Its full five-test rerun passed. The
   corrected legacy-funding regression separately passed for all five models.
+- Latest detail/material integration: 63/69 initially passed. Five expectations
+  omitted the newly added details row; one test clicked before hydration.
+  Corrected source-derived counts and client readiness: all six reruns passed.
 - TypeScript: clean. ESLint src/e2e: 0 errors, 6 pre-existing warnings.
 - KIT Office and demo expanded/collapsed canvas screenshots inspected; no page
   errors. Panel controls preserve state and do not overlap the rendering toolbar.
-- Last production verification: `23f8f49` on 2026-09-07 00:10, health SHA and
-  region `icn1`. This release awaits a clean detached deployment.
+- Last production verification: `dae269e` on 2026-09-07 00:36, health SHA and
+  region `icn1`; nine production smoke checks passed. The subsequent material,
+  architectural-detail and MEP release awaits a clean detached deployment.
 
 ## Current product
 
 - Five source models: Clinic, Schependomlaan, Duplex, FZK Haus and KIT Office.
   KIT examples are fictional validation models, not verified occupied sites.
+- Source architectural details add 2,989 elements across these five models.
+  The independent layer defaults on, preserves source placements, and supports
+  retry without losing the base model. This is selected source detail, not a
+  certified LOD claim. Clinic/Schependomlaan roof views were compared with the
+  layer on/off; the PV placement remains aligned.
+- Material cards expose source names, measured layer thickness and illustrative
+  samples alongside thermal assumptions. Unknown materials stay unresolved.
+- MEP inventory is explicit for every model. Schependomlaan gains 73 source
+  drainage/vent elements; zero typed MEP in FZK/KIT files does not mean those
+  buildings have no services. Dataset schema 1.1 includes geometry/MEP coverage.
 - JSON/CSV published-baseline datasets on the gallery and each model page.
   They carry licenses, source and payload hashes, units, inputs, assumptions,
   partial measurement scope, and calculated energy. Metered energy is absent.
@@ -64,9 +78,9 @@ Prior PV and selection methods remain documented in
 
 ## Open work and limits
 
-- Source architectural-detail layers, material texture/thermal explanations,
-  and source MEP coverage for every model are in progress in separate lanes.
-  Do not describe these as published until the next verified release.
+- Next: source-bound material expression directly on the model, categorized
+  navigation with concise core information, and licensed TalTech/Klassiqua
+  models. These lanes are in progress, not yet published.
 - Roof plant/parapet obstructions, full shading and structural feasibility are
   unmeasured; current placement may overstate feasible PV capacity.
 - The apartment's aperture extraction is partial: 106.06m² selected glazing and

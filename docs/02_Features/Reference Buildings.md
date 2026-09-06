@@ -20,7 +20,9 @@ its own solids — or are named assumptions. `AGENTS.md`'s stated-versus-assumed
 rule applies unchanged; only the source of "stated" moves from the register to
 the IFC.
 
-Two are published: `bs-medical-dental-clinic` and `schependomlaan`.
+Five are integrated: `bs-medical-dental-clinic`, `schependomlaan`,
+`duplex-apartment`, `fzk-haus` and `kit-office`. The KIT examples are fictional
+validation buildings; a public IFC does not establish a real occupied site.
 `REFERENCE_BUILDING_IDS` in `src/lib/reference-buildings/manifest.ts` is the
 list, and a building missing from it does not route.
 
@@ -48,6 +50,14 @@ Over the canvas, the frame (`EnergyInstrumentHud`, shared verbatim with
 `/building/[id]`) carries **에너지 평가**: the scenario rail, the 그린리모델링
 track chips, the notice band, the grade/kWh/CO₂/heat-loss strip, the grade
 basis line, and the CAPEX grip.
+
+The 2026-09-07 integration adds independent default-on architectural detail
+controls and source MEP coverage to Layers. Materials now shows thickness-scaled
+illustrative samples, actual IFC names and per-layer thermal assumptions with
+unknown values explicitly unresolved. Base-file exclusions are labelled as
+applying to the base fabric file, since detail and service layers are separate.
+See [[Reference Architectural Details]], [[Reference MEP Coverage]] and
+[[Building Energy Datasets]]. Categorized sidebar navigation is the next lane.
 
 ### Rows that state an absence
 

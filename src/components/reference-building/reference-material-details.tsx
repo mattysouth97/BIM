@@ -91,8 +91,8 @@ export function ReferenceConstructionCard({ construction, buildingId, isKo, init
   );
 }
 
-export function ReferenceMaterialDetails({ manifest, isKo }: { manifest: ReferenceBuildingManifest; isKo: boolean }) {
-  const envelope = envelopeConstructions(manifest);
+export function ReferenceMaterialDetails({ manifest, isKo, constructions: suppliedConstructions }: { manifest: ReferenceBuildingManifest; isKo: boolean; constructions?: readonly SolvedConstruction[] }) {
+  const envelope = suppliedConstructions ?? envelopeConstructions(manifest);
   // The KIT models name materials rather than envelope roles. Show those sets
   // explicitly as such; a material name does not establish exterior placement.
   const constructions = envelope.length ? envelope : solveConstructions(manifest);

@@ -152,6 +152,10 @@ describe("retrofitBasisLines", () => {
     expect(lines).toContain("ASHRAE");
     expect(lines).toContain("Costs exclude grants and interest support");
     expect(lines).not.toContain("2026.1");
+    // The apartment still uses aperture stand-ins; the generic costing basis
+    // must not turn them into measured openings by its label.
+    expect(lines).toContain("unmeasured stand-ins");
+    expect(lines).not.toContain("windows at the measured aperture");
   });
 });
 

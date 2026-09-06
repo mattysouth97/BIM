@@ -1,9 +1,7 @@
 // src/app/models/[id]/page.tsx — thin server wrapper for a reference building.
 //
 // The gallery card opens this. It is a detail view of one model, not another
-// way into the product: it has no form, takes no input, and links onward into
-// step 1 like the gallery does. AGENTS.md's "no further front door" rule is
-// about entry points, and this is a leaf.
+// way into the product. The gallery deliberately has no diagnostic entry action.
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -38,10 +36,8 @@ export default async function ReferenceBuildingPage({ params }: Props) {
   // empty viewer: a page that renders nothing looks like a broken model.
   if (!manifest) notFound();
 
-  // Solved here rather than in the client component: the U-values are pure
-  // functions of the manifest plus the material library, and computing them on
-  // the server keeps the whole standards library out of the browser bundle for
-  // a page that only needs the answers.
+  // Solve once on the server and share these results with the material cards.
+  // The client also reads material metadata for the source/assumption details.
   const constructions = envelopeConstructions(manifest);
   // The recipe + materials the demo's energy frame consumes, or null for a
   // building whose inputs are not written yet. Resolved here for the same

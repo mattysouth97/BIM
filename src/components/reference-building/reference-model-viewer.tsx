@@ -11,6 +11,8 @@ import type { ReferenceViewRequest } from "./reference-view-controls";
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
 import type { ReferenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
 import { FlowNetwork } from "./flow-network";
+import { ReferenceDetailGeometry } from "./reference-detail-geometry";
+import type { ArchitecturalDetailsStatus } from "./reference-architectural-details";
 import { PvModulesVisual } from "@/components/viewer/pv-modules";
 import { usePvLayout } from "@/hooks/use-pv-layout";
 import { useScenarioStore, useProposalVisualIds, useEffectiveMeasureIds } from "@/store/scenario-store";
@@ -235,6 +237,8 @@ export function ReferenceModelViewer({
   locale = "ko",
   viewRequest,
   inspection,
+  detailsRetry,
+  onDetailsStatus,
 }: {
   modelUrl: string;
   /**
@@ -264,11 +268,15 @@ export function ReferenceModelViewer({
   locale?: "ko" | "en";
   viewRequest: ReferenceViewRequest;
   inspection: boolean;
+  detailsRetry: number;
+  onDetailsStatus: (status: ArchitecturalDetailsStatus) => void;
 }) {
   const [offset, setOffset] = useState<SceneOffset | null>(null);
   const onMeasured = useCallback((next: SceneOffset) => setOffset(next), []);
   const fabricOn = active.has(fabricLayerId);
   const shown = services.filter((layer) => active.has(layer.id));
+  const details = manifest.architecturalDetails;
+  const detailsOn = details !== undefined && active.has(details.id);
 
   // Green-remodelling preview: read directly from the scenario store rather
   // than through a prop, so the knapsack's selection reaches this canvas
@@ -319,6 +327,8 @@ export function ReferenceModelViewer({
       data-model-loaded={offset !== null}
       data-view={viewRequest.view}
       data-inspection={inspection}
+      data-details-visible={detailsOn}
+      data-fabric-xray={fabricOn && shown.length > 0}
     >
       <Canvas
         shadows
@@ -374,6 +384,14 @@ export function ReferenceModelViewer({
                 comment on `EnvelopeRetrofitTint`). */}
             {fabricOn ? <EnvelopeRetrofitTint url={modelUrl} visual={visual} /> : null}
           </group>
+          {offset && detailsOn ? (
+            <ReferenceDetailGeometry
+              url={`${baseUrl}/${details.file}`}
+              centre={offset.centre}
+              retry={detailsRetry}
+              onStatus={onDetailsStatus}
+            />
+          ) : null}
           {offset
             ? shown.map((layer) => (
                 <Suspense key={layer.id} fallback={null}>
