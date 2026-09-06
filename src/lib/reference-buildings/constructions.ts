@@ -599,6 +599,52 @@ export const DUPLEX_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
 ]);
 
 /**
+ * FZK Haus is the odd one out: this building states real per-element
+ * `ThermalTransmittance` values (see `fzk-haus-energy.ts`'s `A-STATED-U-PRIMARY`),
+ * so THIS table is the disclosed cross-check, not the primary source — the
+ * energy path uses the stated U directly. Two of its three material names
+ * carry no real conductivity at all: `Leichtbeton` maps to the library's
+ * autoclaved-lightweight-concrete row on name and category, and `Solid` is
+ * an ArchiCAD placeholder object name, not a material specification, so it
+ * resolves to nothing rather than a guess.
+ */
+export const FZK_HAUS_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
+  {
+    ifcName: "Leichtbeton 102890359",
+    basis: "generic_material",
+    materialId: "st-lwc",
+    basisNote:
+      "Lightweight/aerated concrete, mapped to the library's autoclaved-" +
+      "lightweight-concrete row (λ 0.16, 500 kg/m³). Used at two thicknesses " +
+      "in this model — 0.3 m on the exterior walls, 0.24 m on the interior " +
+      "partitions — and this row solves the exterior wall to U 0.489, 22% " +
+      "worse than the file's own stated 0.4, which the energy path uses " +
+      "instead (A-STATED-U-PRIMARY).",
+  },
+  {
+    ifcName: "Stahlbeton 65690",
+    basis: "generic_material",
+    materialId: "st-rc",
+    basisNote:
+      "Reinforced concrete, direct match. The 0.2 m ground slab (Bodenplatte) " +
+      "has no insulation layer at all — this is its only stated layer — so " +
+      "the solved R_f (0.087 m²K/W) feeds ISO 13370 directly rather than a " +
+      "generic-library air-to-air U (A-GROUND-STATED-U-NOT-AIR-TO-AIR).",
+  },
+  {
+    ifcName: "Solid 397409098",
+    basis: "unresolved",
+    basisNote:
+      "An ArchiCAD generic-object placeholder name, not a material " +
+      "specification — unlike the wall's 'Leichtbeton' or the slab's " +
+      "'Stahlbeton', it names no physical substance. Used on the roof decks " +
+      "(Dach-1/Dach-2) and the mezzanine floor (Slab-033); the roof's stated " +
+      "U 0.3 is used as-is (A-ROOF-MATERIAL-UNIDENTIFIED) because there is " +
+      "nothing here to solve a second reading from.",
+  },
+]);
+
+/**
  * Mapping table per building, by `manifest.id`.
  *
  * An unknown id gets an empty table, which makes every layer unresolved and
@@ -611,6 +657,7 @@ const LAYER_MAPPINGS_BY_BUILDING: Readonly<Record<string, readonly LayerMapping[
     "bs-medical-dental-clinic": CLINIC_LAYER_MAPPINGS,
     schependomlaan: SCHEPENDOMLAAN_LAYER_MAPPINGS,
     "duplex-apartment": DUPLEX_LAYER_MAPPINGS,
+    "fzk-haus": FZK_HAUS_LAYER_MAPPINGS,
   });
 
 export function layerMappingsFor(buildingId: string): readonly LayerMapping[] {

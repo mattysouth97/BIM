@@ -46,6 +46,19 @@ import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
 import type { ReferenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
 
 /**
+ * The four roof typologies in Korean. `flat` alone was translated until FZK
+ * Haus arrived with a `gable`, and the Korean sentence printed the bare
+ * English enum. The words are the register's own (박공 / 우진각), which is
+ * the vocabulary `twin-stage-overlay.tsx` already reads roof codes in.
+ */
+const ROOF_TYPE_KO: Record<"flat" | "gable" | "hip" | "sawtooth", string> = {
+  flat: "평지붕",
+  gable: "박공지붕",
+  hip: "우진각지붕",
+  sawtooth: "톱날지붕",
+};
+
+/**
  * Why a candidate is not in the selected set.
  *
  * Read off the same three facts the knapsack used — post-subsidy CAPEX, NPV,
@@ -111,7 +124,7 @@ export function retrofitBasisLines(
       : "Areas are the ones the engine itself priced — roof at the measured roof surface, floor at the ground slab, windows at the measured aperture, wall at gross − aperture − doors.",
     roof
       ? isKo
-        ? `태양광은 ${roof.type === "flat" ? "평지붕" : roof.type} 이용률로 산정했습니다 · ${roof.read}`
+        ? `태양광은 ${ROOF_TYPE_KO[roof.type]} 이용률로 산정했습니다 · ${roof.read}`
         : `PV is sized on the ${roof.type}-roof utilisation factor · ${roof.read}`
       : isKo
         ? "이 건물 파일은 지붕 형태를 명시하지 않아 태양광은 평지붕 이용률(0.7)로 산정했습니다 — 실제 형태가 확인되면 바뀝니다."

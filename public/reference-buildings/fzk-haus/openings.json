@@ -1,0 +1,521 @@
+{
+  "kind": "bimfit_reference_building_openings",
+  "id": "fzk-haus",
+  "note": "Glazing aperture 23.6 m² = 11 IfcWindow at OverallWidth × OverallHeight (23.6 m²). Exterior doors are separate — a door is aperture, not glazing: 2 IfcDoor, 6.8 m², OverallWidth × OverallHeight. Host wall by IfcRelFillsElement → IfcOpeningElement → IfcRelVoidsElement (13 openings). Sector is the host wall's, from the same orientation pass as the wall split. Envelope by a both-sides probe against the conditioned IfcSpace solids (7 of 7 have geometry); this file has no IfcCurtainWall; 3 openings hosted in walls outside the exterior set; nothing unresolved. IsExternal is reported per row and never used as a filter — it means \"not an interior partition\" to an authoring tool, never \"bounds conditioned space against outdoor air\". It marks 0 door(s) here; 0 confirm against an exterior wall. Rows in openings.json.",
+  "summary": {
+    "interiorCurtainWalls": {
+      "count": 0,
+      "sqm": 0
+    },
+    "hostedInInteriorWalls": {
+      "count": 3,
+      "sqm": 5.34
+    },
+    "outsideWallSetWindows": {
+      "count": 0,
+      "sqm": 0
+    },
+    "outsideWallSetDoors": {
+      "count": 0,
+      "sqm": 0
+    },
+    "subFrames": 0,
+    "hostBasis": {
+      "fills": 13,
+      "adjacent": 0,
+      "self": 0,
+      "curtain-wall part": 0
+    },
+    "isExternalDoors": {
+      "total": 0,
+      "counted": 0,
+      "notCounted": []
+    },
+    "glazingApertureSqm": 23.6,
+    "glazingByOrientationSqm": {
+      "N": 0,
+      "NE": 5.8,
+      "E": 0,
+      "SE": 4.8,
+      "S": 0,
+      "SW": 5.8,
+      "W": 0,
+      "NW": 7.2
+    },
+    "exteriorDoorSqm": 6.8,
+    "exteriorDoorByOrientationSqm": {
+      "N": 0,
+      "NE": 0,
+      "E": 0,
+      "SE": 4.77,
+      "S": 0,
+      "SW": 2.03,
+      "W": 0,
+      "NW": 0
+    },
+    "windowCount": 11,
+    "windowSqm": 23.6,
+    "curtainWallCount": 0,
+    "curtainWallSqm": 0,
+    "curtainWallPlateSqm": 0,
+    "curtainWallBboxSqm": 0,
+    "doorCount": 2,
+    "unsectoredSqm": 0,
+    "unresolvedSqm": 0,
+    "probe": {
+      "usable": true,
+      "complete": true,
+      "spaceSolids": 7,
+      "conditionedSpaces": 7
+    }
+  },
+  "openings": [
+    {
+      "id": 23024,
+      "type": "IfcWindow",
+      "name": "EG-Fenster-6",
+      "kind": "glazing",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#23024",
+      "widthM": 2,
+      "heightM": 1.2,
+      "areaSqm": 2.4,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2,
+        "depthM": 0.08,
+        "heightM": 1.2,
+        "bottomM": 0.8
+      },
+      "hostExpressID": 21966,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-1\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "SW",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Buero at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 23944,
+      "type": "IfcWindow",
+      "name": "EG-Fenster-7",
+      "kind": "glazing",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#23944",
+      "widthM": 2,
+      "heightM": 1.2,
+      "areaSqm": 2.4,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2,
+        "depthM": 0.08,
+        "heightM": 1.2,
+        "bottomM": 0.95
+      },
+      "hostExpressID": 21966,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-1\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "SW",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Küche at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 27833,
+      "type": "IfcWindow",
+      "name": "EG-Fenster-4",
+      "kind": "glazing",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#27833",
+      "widthM": 2,
+      "heightM": 1.2,
+      "areaSqm": 2.4,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2,
+        "depthM": 0.08,
+        "heightM": 1.2,
+        "bottomM": 0.95
+      },
+      "hostExpressID": 27421,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-4\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "SE",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Küche at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 28113,
+      "type": "IfcWindow",
+      "name": "EG-Fenster-5",
+      "kind": "glazing",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#28113",
+      "widthM": 2,
+      "heightM": 1.2,
+      "areaSqm": 2.4,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2,
+        "depthM": 0.08,
+        "heightM": 1.2,
+        "bottomM": 0.8
+      },
+      "hostExpressID": 27421,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-4\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "SE",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Wohnen at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 31818,
+      "type": "IfcWindow",
+      "name": "EG-Fenster-8",
+      "kind": "glazing",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#31818",
+      "widthM": 2,
+      "heightM": 1.2,
+      "areaSqm": 2.4,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2,
+        "depthM": 0.08,
+        "heightM": 1.2,
+        "bottomM": 0.8
+      },
+      "hostExpressID": 31470,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-3\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "NE",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Schlafzimmer at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 32098,
+      "type": "IfcWindow",
+      "name": "EG-Fenster-9",
+      "kind": "glazing",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#32098",
+      "widthM": 2,
+      "heightM": 1.2,
+      "areaSqm": 2.4,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2,
+        "depthM": 0.08,
+        "heightM": 1.2,
+        "bottomM": 0.8
+      },
+      "hostExpressID": 31470,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-3\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "NE",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Wohnen at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 32829,
+      "type": "IfcWindow",
+      "name": "EG-Fenster-1",
+      "kind": "glazing",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#32829",
+      "widthM": 2,
+      "heightM": 1.2,
+      "areaSqm": 2.4,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2,
+        "depthM": 0.08,
+        "heightM": 1.2,
+        "bottomM": 0.8
+      },
+      "hostExpressID": 32407,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-2\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "NW",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Buero at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 33109,
+      "type": "IfcWindow",
+      "name": "EG-Fenster-2",
+      "kind": "glazing",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#33109",
+      "widthM": 2,
+      "heightM": 1.2,
+      "areaSqm": 2.4,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2,
+        "depthM": 0.08,
+        "heightM": 1.2,
+        "bottomM": 0.8
+      },
+      "hostExpressID": 32407,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-2\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "NW",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Bad at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 33389,
+      "type": "IfcWindow",
+      "name": "EG-Fenster-3",
+      "kind": "glazing",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#33389",
+      "widthM": 2,
+      "heightM": 1.2,
+      "areaSqm": 2.4,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2,
+        "depthM": 0.08,
+        "heightM": 1.2,
+        "bottomM": 0.8
+      },
+      "hostExpressID": 32407,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-2\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "NW",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Schlafzimmer at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 66459,
+      "type": "IfcWindow",
+      "name": "OG-Fenster-2",
+      "kind": "glazing",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#66459",
+      "widthM": 1,
+      "heightM": 1,
+      "areaSqm": 1,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.09,
+        "heightM": 1,
+        "bottomM": 3.5
+      },
+      "hostExpressID": 60012,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-OG-1\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "SW",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Galerie at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 74280,
+      "type": "IfcWindow",
+      "name": "OG-Fenster-1",
+      "kind": "glazing",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#74280",
+      "widthM": 1,
+      "heightM": 1,
+      "areaSqm": 1,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.09,
+        "heightM": 1,
+        "bottomM": 3.5
+      },
+      "hostExpressID": 67828,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-OG-3\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "NE",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Galerie at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 17468,
+      "type": "IfcDoor",
+      "name": "Innentuer-1",
+      "kind": "door",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#17468",
+      "widthM": 0.885,
+      "heightM": 2.01,
+      "areaSqm": 1.779,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.88,
+        "depthM": 0.1,
+        "heightM": 2.01,
+        "bottomM": 0
+      },
+      "hostExpressID": 17040,
+      "hostName": "IfcWallStandardCase \"Wand-Int-ERDG-2\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Wand-Int-ERDG-2\" is not in the exterior-wall set"
+    },
+    {
+      "id": 19199,
+      "type": "IfcDoor",
+      "name": "Innentuer-2",
+      "kind": "door",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#19199",
+      "widthM": 0.885,
+      "heightM": 2.01,
+      "areaSqm": 1.779,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.88,
+        "depthM": 0.1,
+        "heightM": 2.01,
+        "bottomM": 0
+      },
+      "hostExpressID": 18698,
+      "hostName": "IfcWallStandardCase \"Wand-Int-ERDG-3\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Wand-Int-ERDG-3\" is not in the exterior-wall set"
+    },
+    {
+      "id": 19504,
+      "type": "IfcDoor",
+      "name": "Innentuer-3",
+      "kind": "door",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#19504",
+      "widthM": 0.885,
+      "heightM": 2.01,
+      "areaSqm": 1.779,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.88,
+        "depthM": 0.1,
+        "heightM": 2.01,
+        "bottomM": 0
+      },
+      "hostExpressID": 18698,
+      "hostName": "IfcWallStandardCase \"Wand-Int-ERDG-3\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWallStandardCase \"Wand-Int-ERDG-3\" is not in the exterior-wall set"
+    },
+    {
+      "id": 27013,
+      "type": "IfcDoor",
+      "name": "Haustuer",
+      "kind": "door",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#27013",
+      "widthM": 1.01,
+      "heightM": 2.01,
+      "areaSqm": 2.03,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.01,
+        "depthM": 0.19,
+        "heightM": 2.01,
+        "bottomM": 0
+      },
+      "hostExpressID": 21966,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-1\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "SW",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Flur at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    },
+    {
+      "id": 31079,
+      "type": "IfcDoor",
+      "name": "Terrassentuer",
+      "kind": "door",
+      "isExternal": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#31079",
+      "widthM": 2.01,
+      "heightM": 2.375,
+      "areaSqm": 4.774,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 2.01,
+        "depthM": 0.21,
+        "heightM": 2.38,
+        "bottomM": 0
+      },
+      "hostExpressID": 27421,
+      "hostName": "IfcWallStandardCase \"Wand-Ext-ERDG-4\"",
+      "hostBasis": "fills",
+      "hostDetail": null,
+      "sector": "SE",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Wohnen at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null
+    }
+  ],
+  "unresolved": []
+}

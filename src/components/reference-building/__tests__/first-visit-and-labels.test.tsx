@@ -226,7 +226,7 @@ describe("the legend rows are per-sector, not the whole building repeated", () =
     expect(total).toBeCloseTo(73.46, 1);
   });
 
-  it("both published buildings' rows still sum to their measured aperture", () => {
+  it("every published building's rows sum to its measured gross and aperture", () => {
     for (const id of REFERENCE_BUILDING_IDS) {
       const energy = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!;
       const wwr = energy.materials.envelope.windows.windowToWallRatio;
@@ -234,8 +234,28 @@ describe("the legend rows are per-sector, not the whole building repeated", () =
       const gross = envelopeQuantities(energy.recipe).grossWallAreaSqm;
       const aperture = gross * meanWindowToWallRatio(energy.materials);
 
-      expect(rows.reduce((s, r) => s + r.grossWallAreaSqm, 0)).toBeCloseTo(gross, 6);
-      expect(rows.reduce((s, r) => s + r.windowAreaSqm, 0)).toBeCloseTo(aperture, 6);
+      // A building that STATES its four sector grosses states four 2-dp
+      // figures, each rounded independently of the total they are supposed
+      // to reconcile with: FZK Haus's sum to 166.67 against a stated 166.68.
+      // The apportioned fallback is computed from the total and is exact, so
+      // it gets no slack at all. Four figures can drift by at most 4 × 0.005
+      // — anything wider is a real disagreement about the envelope.
+      const stated = energy.grossWallByOrientationSqm != null;
+      const slack = stated ? 4 * 0.005 : 1e-6;
+      const sumGross = rows.reduce((s, r) => s + r.grossWallAreaSqm, 0);
+      expect(
+        Math.abs(sumGross - gross),
+        `${id}: the four legend rows sum to ${sumGross.toFixed(2)} m² of gross wall ` +
+          `against the ${gross.toFixed(2)} m² the engine was handed — a gap of ` +
+          `${Math.abs(sumGross - gross).toFixed(3)} m², wider than the ${slack} m² ` +
+          `that ${stated ? "rounding four stated 2-decimal sectors" : "the apportionment"} ` +
+          `can produce.`,
+      ).toBeLessThanOrEqual(slack);
+
+      // The apertures inherit the same rounding through the ratio, which is
+      // below 1, so the window slack can never exceed the gross slack.
+      const sumWindows = rows.reduce((s, r) => s + r.windowAreaSqm, 0);
+      expect(Math.abs(sumWindows - aperture)).toBeLessThanOrEqual(slack);
     }
   });
 });

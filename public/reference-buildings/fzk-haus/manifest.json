@@ -1,0 +1,267 @@
+{
+  "kind": "bimfit_reference_building_manifest",
+  "schemaVersion": 1,
+  "id": "fzk-haus",
+  "name": {
+    "ko": "FZK 하우스",
+    "en": "FZK House"
+  },
+  "summary": {
+    "ko": "KIT(카를스루에 공과대학교) IAI가 공개한 검증용 단독주택 표준 모델.",
+    "en": "KIT's (Karlsruhe Institute of Technology) open validation single-family house."
+  },
+  "useType": "single_family_house",
+  "licence": "KIT/IAI unrestricted use (attribution required)",
+  "attribution": "Institute for Automation and Applied Informatics (IAI), Karlsruhe Institute of Technology (KIT), \"AC20-FZK-Haus\" — https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+  "sourceUrl": "https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+  "generatedAt": "2026-09-04T00:00:00.000Z",
+  "sourceFiles": [
+    {
+      "role": "architectural",
+      "fileName": "AC20-FZK-Haus.ifc",
+      "sha256": "70cc8ff245fc0894201d96496c031005a5cbd7a96b22d8a1b87c5a883fb77994",
+      "byteLength": 2570803,
+      "units": {
+        "lengthToMetres": 1,
+        "areaToSquareMetres": 1,
+        "lengthUnitName": "METRE",
+        "areaUnitName": "SQUARE_METRE",
+        "lengthAssumed": false,
+        "areaAssumed": false
+      }
+    }
+  ],
+  "counts": {
+    "storeys": 2,
+    "spacesTotal": 7,
+    "spacesFloor": 7,
+    "assemblies": 4,
+    "externalElements": 0,
+    "exteriorWalls": 8,
+    "windows": 11,
+    "exteriorCurtainWalls": 0,
+    "exteriorDoors": 2,
+    "externalElementsNote": "36 external physical space boundaries exist and none resolved: swept curve is not a readable polyline. The classifier reads IfcSurfaceOfLinearExtrusion (Revit); this file's boundaries are another surface type. Envelope areas here come from the wall walk, not from boundaries, so nothing published depends on this."
+  },
+  "areas": {
+    "totalFloorAreaSqm": 208.55,
+    "areaPlanTotalSqm": 208.55,
+    "exteriorWallNetSqm": 136.28,
+    "exteriorWallBelowRoofSqm": 85.66,
+    "exteriorWallAboveRoofSqm": 50.62,
+    "exteriorWallByOrientationSqm": {
+      "N": 0,
+      "NE": 39.56,
+      "E": 0,
+      "SE": 28.85,
+      "S": 0,
+      "SW": 37.23,
+      "W": 0,
+      "NW": 30.63
+    },
+    "glazingApertureSqm": 23.6,
+    "glazingByOrientationSqm": {
+      "N": 0,
+      "NE": 5.8,
+      "E": 0,
+      "SE": 4.8,
+      "S": 0,
+      "SW": 5.8,
+      "W": 0,
+      "NW": 7.2
+    },
+    "exteriorDoorSqm": 6.8,
+    "exteriorDoorByOrientationSqm": {
+      "N": 0,
+      "NE": 0,
+      "E": 0,
+      "SE": 4.77,
+      "S": 0,
+      "SW": 2.03,
+      "W": 0,
+      "NW": 0
+    },
+    "openingsNote": "Glazing aperture 23.6 m² = 11 IfcWindow at OverallWidth × OverallHeight (23.6 m²). Exterior doors are separate — a door is aperture, not glazing: 2 IfcDoor, 6.8 m², OverallWidth × OverallHeight. Host wall by IfcRelFillsElement → IfcOpeningElement → IfcRelVoidsElement (13 openings). Sector is the host wall's, from the same orientation pass as the wall split. Envelope by a both-sides probe against the conditioned IfcSpace solids (7 of 7 have geometry); this file has no IfcCurtainWall; 3 openings hosted in walls outside the exterior set; nothing unresolved. IsExternal is reported per row and never used as a filter — it means \"not an interior partition\" to an authoring tool, never \"bounds conditioned space against outdoor air\". It marks 0 door(s) here; 0 confirm against an exterior wall. Rows in openings.json.",
+    "conditionedVolumeGrossM3": 636.66,
+    "roomVolumeNetM3": 470.82,
+    "volumeNote": "Gross from 7 spaces (floor area × storey height; voids, and rooms taller than their storey with no void above, as their own solids); net from 7 spaces (7 from stated volume quantity). A closed tessellation's signed volume is exact.",
+    "roofProjectedSqm": 143,
+    "roofProjectedByFamilySqm": {
+      "Dach-1": 71.5,
+      "Dach-2": 71.5
+    },
+    "roofElementSumSqm": 143,
+    "roofUnionSqm": 143,
+    "roofSurfaceSqm": 171.13,
+    "roofSurfaceByFamilySqm": {
+      "Dach-2": 85.56,
+      "Dach-1": 85.56
+    },
+    "roofNote": "Plan shadow per element (union of its projected triangles, ifc-plan-shadow.mjs): 2 elements — 2 IfcSlab.PredefinedType=ROOF. roofProjectedSqm sums 2 roof type(s), each as the union of its elements; the elements themselves sum to 143 m² (elements of one type overlapping in plan) and all types together cover 143 m² (one type above another). surfaceSqm is each element's true one-sheet surface (Σ area of its upward faces; ÷ 2 where a surface model has no downward face and both sheets are wound upward; ÷ the coverage where its parts cover its shadow more than once, as stacked layer solids do — surfaceBasis says which), summing to 171.13 m²; a flat deck's surface equals its shadow, a pitched roof's exceeds it. Dach-1 and Dach-2 are IfcSlab typed PredefinedType=ROOF directly, so classifyRoofs matches them with no nameMatch list. Slab-033 (PredefinedType=FLOOR, the 2.7 m mezzanine floor under the Galerie) is correctly excluded as an interior floor, not envelope.",
+    "groundSlabSqm": 120,
+    "groundSlabSumSqm": 120,
+    "groundPerimeterM": 44,
+    "groundHolePerimeterM": 0,
+    "groundNote": "IfcSlab (not ROOF or LANDING) on storeys at or below Erdgeschoss (0 m): 1 candidate(s). A slab counts as ground envelope when a conditioned space stands on it — its shadow overlaps a conditioned ground-storey space footprint (6 of 6 such spaces have one: 6 solid) or an IfcRelSpaceBoundary names it as bounding one. IsExternal is not consulted. 1 counted, 0 excluded. groundSlabSqm is the union of the counted shadows (they sum to 120 m²; stacked build-up layers count once); groundPerimeterM is the outline's outer ring."
+  },
+  "assemblies": [
+    {
+      "id": "assembly-leichtbeton-102890359-0-24",
+      "name": "Leichtbeton 102890359 0.24",
+      "totalThicknessM": 0.24,
+      "layers": [
+        {
+          "name": "Leichtbeton 102890359",
+          "thicknessM": 0.24,
+          "ref": "ifc://AC20-FZK-Haus.ifc#15067"
+        }
+      ],
+      "ref": "ifc://AC20-FZK-Haus.ifc#15069"
+    },
+    {
+      "id": "assembly-leichtbeton-102890359-0-3",
+      "name": "Leichtbeton 102890359 0.3",
+      "totalThicknessM": 0.3,
+      "layers": [
+        {
+          "name": "Leichtbeton 102890359",
+          "thicknessM": 0.3,
+          "ref": "ifc://AC20-FZK-Haus.ifc#21970"
+        }
+      ],
+      "ref": "ifc://AC20-FZK-Haus.ifc#21971"
+    },
+    {
+      "id": "assembly-stahlbeton-65690-0-2",
+      "name": "Stahlbeton 65690 0.2",
+      "totalThicknessM": 0.2,
+      "layers": [
+        {
+          "name": "Stahlbeton 65690",
+          "thicknessM": 0.2,
+          "ref": "ifc://AC20-FZK-Haus.ifc#34526"
+        }
+      ],
+      "ref": "ifc://AC20-FZK-Haus.ifc#34527"
+    },
+    {
+      "id": "assembly-solid-397409098-0-2",
+      "name": "Solid 397409098 0.2",
+      "totalThicknessM": 0.2,
+      "layers": [
+        {
+          "name": "Solid 397409098",
+          "thicknessM": 0.2,
+          "ref": "ifc://AC20-FZK-Haus.ifc#59315"
+        }
+      ],
+      "ref": "ifc://AC20-FZK-Haus.ifc#59316"
+    }
+  ],
+  "orientation": {
+    "trueNorthDeg": 50,
+    "northAssumed": false,
+    "weakOutwardCount": 0,
+    "offCardinalCount": 8,
+    "offCardinalSqm": 136.28,
+    "wallCount": 8,
+    "note": "Azimuths are clockwise from north, where north is the model's -Z after web-ifc's Z-up to Y-up conversion. Outward face inferred by comparing each face's centroid with the building centre, which is correct for a convex plan and can be wrong at a re-entrant corner."
+  },
+  "site": {
+    "declaredSiteName": "Gelaende",
+    "declaredLatitudeDeg": 49.100435,
+    "declaredLongitudeDeg": 8.436539,
+    "locationIsAuthoringDefault": false,
+    "locationNote": "IfcSite coordinates recorded; not verified against any other source."
+  },
+  "storeys": [
+    {
+      "id": "storey-erdgeschoss",
+      "name": "Erdgeschoss",
+      "elevationM": 0,
+      "floorToFloorHeightM": 2.7,
+      "spaceCount": 6,
+      "floorAreaSqm": 101.39,
+      "ref": "ifc://AC20-FZK-Haus.ifc#479"
+    },
+    {
+      "id": "storey-dachgeschoss",
+      "name": "Dachgeschoss",
+      "elevationM": 2.7,
+      "floorToFloorHeightM": 0,
+      "spaceCount": 1,
+      "floorAreaSqm": 107.16,
+      "ref": "ifc://AC20-FZK-Haus.ifc#35065"
+    }
+  ],
+  "spacesFile": "spaces.json",
+  "roofs": [
+    {
+      "id": "roof-59553",
+      "name": "Dach-1",
+      "family": "Dach-1",
+      "elementType": "IfcSlab",
+      "predefinedType": "ROOF",
+      "basis": "IfcSlab.PredefinedType=ROOF",
+      "storeyId": "storey-dachgeschoss",
+      "projectedSqm": 71.5,
+      "upFacingProjectedSqm": 71.5,
+      "tiltDeg": 30,
+      "surfaceSqm": 85.56,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#59553"
+    },
+    {
+      "id": "roof-59753",
+      "name": "Dach-2",
+      "family": "Dach-2",
+      "elementType": "IfcSlab",
+      "predefinedType": "ROOF",
+      "basis": "IfcSlab.PredefinedType=ROOF",
+      "storeyId": "storey-dachgeschoss",
+      "projectedSqm": 71.5,
+      "upFacingProjectedSqm": 71.5,
+      "tiltDeg": 30,
+      "surfaceSqm": 85.56,
+      "surfaceBasis": "upward faces of a closed solid",
+      "partOf": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#59753"
+    }
+  ],
+  "groundSlabs": [
+    {
+      "id": "slab-34509",
+      "name": "Bodenplatte",
+      "elementType": "IfcSlab",
+      "predefinedType": "BASESLAB",
+      "storeyId": "storey-erdgeschoss",
+      "projectedSqm": 120,
+      "countsAsGround": true,
+      "evidence": "101.39 m² under 6 conditioned space footprint(s); bounds 6 conditioned space(s) per IfcRelSpaceBoundary",
+      "excludedReason": null,
+      "ref": "ifc://AC20-FZK-Haus.ifc#34509"
+    }
+  ],
+  "openingsFile": "openings.json",
+  "serviceLayers": [],
+  "model": {
+    "file": "model.glb",
+    "byteLength": 754608,
+    "triangleCount": 13778,
+    "groups": [
+      "slab",
+      "wall",
+      "stair",
+      "glazing",
+      "door",
+      "mullion"
+    ],
+    "note": "Building fabric only: walls, slabs, roofs and openings. Furniture, fixtures, railings and the structural frame are not in this file."
+  },
+  "invalidDiagnostics": {
+    "note": "No space-boundary strips resolved in this file; there is no sum to refute.",
+    "rawSumSqm": 0,
+    "rawSumByElementType": {}
+  }
+}

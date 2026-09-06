@@ -139,15 +139,52 @@ describe("gallery record", () => {
     expect(rooms?.read).toMatch(/OPEN TO BELOW/);
   });
 
-  it("states no U-value, airtightness, HVAC or climate", () => {
-    // A coordination model carries none of these. If one ever appears in a
-    // figure label, it was assumed somewhere and is being shown as a fact.
-    const forbidden = /u-?value|열관류|airtight|기밀|hvac|설비|climate|기후/i;
+  it("states no airtightness, HVAC or climate, and a U-value only where the file states one", () => {
+    // The rule was "no U-value figure at all", written when no published
+    // model stated one — so any that appeared had been assumed somewhere and
+    // was being shown as a fact. FZK Haus states 33 of them, in
+    // IfcPropertySingleValue 'ThermalTransmittance', and that it does so is
+    // the whole distinction between it and the other four. Forbidding the
+    // figure would suppress the most load-bearing thing on its card.
+    //
+    // So the rule is now about PROVENANCE, not about the word: a U-value
+    // figure is admissible exactly when its `read` names the IFC property or
+    // quantity that carries it. Airtightness, HVAC and climate stay
+    // forbidden outright — no coordination model in this gallery states any
+    // of them, so there is no honest version of those figures yet.
+    const alwaysForbidden = /airtight|기밀|hvac|설비|climate|기후/i;
+    const thermal = /u-?value|열관류/i;
+    // The property/quantity names an IFC file can actually carry one in.
+    const statesItsSource =
+      /IfcPropertySingleValue|IfcThermalTransmittanceMeasure|IfcElementQuantity|Pset[_A-Za-z]*/;
+
     for (const item of GALLERY_ITEMS) {
       for (const figure of item.figures) {
-        expect(`${figure.ko} ${figure.en} ${figure.read}`).not.toMatch(forbidden);
+        const label = `${figure.ko} ${figure.en} ${figure.read}`;
+        expect(label, `${item.id}/${figure.id}: ${label}`).not.toMatch(alwaysForbidden);
+        if (thermal.test(label)) {
+          expect(
+            figure.read,
+            `${item.id}/${figure.id} states a U-value figure, so its \`read\` must name ` +
+              `the IFC property or quantity that carries it ` +
+              `(IfcPropertySingleValue / IfcThermalTransmittanceMeasure / Pset / ` +
+              `IfcElementQuantity). Got: "${figure.read}"`,
+          ).toMatch(statesItsSource);
+        }
       }
     }
+  });
+
+  it("a U-value figure that cites nothing is still refused", () => {
+    // The point of loosening the rule was provenance, not the word. A card
+    // claiming a U-value with a `read` that does not name where it is stated
+    // must still fail — otherwise the change reads as "U-values are fine now".
+    const statesItsSource =
+      /IfcPropertySingleValue|IfcThermalTransmittanceMeasure|IfcElementQuantity|Pset[_A-Za-z]*/;
+    expect("era table default, 1990-1999").not.toMatch(statesItsSource);
+    expect("IfcPropertySingleValue 'ThermalTransmittance', 요소당 1개").toMatch(
+      statesItsSource,
+    );
   });
 
   it("every card opens its own building, never a sibling's", () => {

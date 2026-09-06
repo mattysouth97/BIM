@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { calculateHeatLoss, VENTILATION_ELEMENT_NAME } from "@/lib/energy/heat-loss";
+import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
 import { getClimateData } from "@/lib/energy/climate-data";
 import type { ReferenceBuildingManifest } from "../manifest";
 import {
@@ -209,6 +210,66 @@ describe("measured geometry survives intact, and matches the shipped manifest", 
     // Gross = Σ storey floor area × 3.00 m, and every term is in the manifest.
     const byStorey = SCHEPENDOMLAAN_TOTAL_FLOOR_AREA_SQM * 3;
     expect(e.conditionedVolumeGrossM3).toBeCloseTo(byStorey, 0);
+  });
+
+  it("the 2026-09-06 NetVolume fix moved roomVolumeNetM3, and nothing that reaches kWh", () => {
+    // 12 rooms under the pitched roof (mostly storey 03) had their own Qto's
+    // GrossVolume read where NetVolume was meant — the same shape FZK Haus's
+    // Galerie surfaced. 2530.05 -> 2497.61, recorded but never consumed: the
+    // recipe's own measuredEnvelope.volumeM3 is the GROSS figure, untouched.
+    expect(SCHEPENDOMLAAN_MEASURED_ENVELOPE.roomVolumeNetM3).toBeCloseTo(2497.61, 2);
+    expect(SCHEPENDOMLAAN_MEASURED_ENVELOPE.roomVolumeNetM3).not.toBeCloseTo(2530.05, 2);
+    expect(SCHEPENDOMLAAN_RECIPE.measuredEnvelope?.volumeM3).toBe(
+      SCHEPENDOMLAAN_MEASURED_ENVELOPE.conditionedVolumeGrossM3,
+    );
+    expect(SCHEPENDOMLAAN_RECIPE.measuredEnvelope?.volumeM3).not.toBe(
+      SCHEPENDOMLAAN_MEASURED_ENVELOPE.roomVolumeNetM3,
+    );
+  });
+
+  it("annual demand is unmoved by the NetVolume fix — the engine never reads roomVolumeNetM3 at all", () => {
+    // Ventilation loss is computed from calculateHeatLoss's own element,
+    // which sources its volume from envelopeQuantities(recipe).volumeM3 —
+    // the recipe's measuredEnvelope.volumeM3, i.e. GROSS. Swapping in the
+    // OLD net figure at the one place a volume enters the pipeline (a
+    // counterfactual recipe whose measuredEnvelope.volumeM3 is forced to the
+    // net constant instead of gross) DOES move demand — proving volume is a
+    // real, load-bearing input the engine is sensitive to — while the actual
+    // shipped recipe, unaffected by the net-only correction, does not move.
+    const climate = getClimateData(undefined);
+    const realHeatLoss = calculateHeatLoss(SCHEPENDOMLAAN_MATERIALS, SCHEPENDOMLAAN_RECIPE, climate);
+    const realDemand = calculateAnnualDemand(
+      realHeatLoss,
+      SCHEPENDOMLAAN_MATERIALS,
+      SCHEPENDOMLAAN_RECIPE,
+      climate,
+    );
+
+    const netVolumeRecipe: typeof SCHEPENDOMLAAN_RECIPE = {
+      ...SCHEPENDOMLAAN_RECIPE,
+      measuredEnvelope: SCHEPENDOMLAAN_RECIPE.measuredEnvelope
+        ? {
+            ...SCHEPENDOMLAAN_RECIPE.measuredEnvelope,
+            volumeM3: SCHEPENDOMLAAN_MEASURED_ENVELOPE.roomVolumeNetM3,
+          }
+        : undefined,
+    };
+    const netHeatLoss = calculateHeatLoss(SCHEPENDOMLAAN_MATERIALS, netVolumeRecipe, climate);
+    const netDemand = calculateAnnualDemand(
+      netHeatLoss,
+      SCHEPENDOMLAAN_MATERIALS,
+      netVolumeRecipe,
+      climate,
+    );
+
+    // Volume genuinely matters to the engine (rules out "nothing reads
+    // volume at all" as a trivial explanation)...
+    expect(netDemand.demandPerSqm).not.toBeCloseTo(realDemand.demandPerSqm, 2);
+    // ...but the SHIPPED recipe never wires roomVolumeNetM3 in, so the fix
+    // that only touched that recorded-not-used field moved nothing here.
+    expect(SCHEPENDOMLAAN_RECIPE.measuredEnvelope?.volumeM3).not.toBe(
+      SCHEPENDOMLAAN_MEASURED_ENVELOPE.roomVolumeNetM3,
+    );
   });
 });
 

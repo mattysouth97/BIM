@@ -695,11 +695,154 @@ const DUPLEX = Object.freeze({
   roofDatumM: 5.5,
 });
 
+/**
+ * Reference building #4 — the FZK Haus.
+ *
+ * KIT/IAI's "Simple Phantasy Building", ArchiCAD 20, IFC4, from
+ * `https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples` — chosen over
+ * the cached DigitalHub set (four IFCs, `%LOCALAPPDATA%\Temp\bimfit-reference-buildings\FM_*`)
+ * because DigitalHub's own metadata states no reuse licence: DataCite's
+ * record for its DOI (`10.18154/RWTH-2020-12381`) carries an empty
+ * `rightsList`, and the repository's own OAI-PMH record's `dc:rights` is
+ * `info:eu-repo/semantics/openAccess` — an access-rights term, not a licence.
+ * Full finding in `docs/04_Agent-Handoffs/2026-09-06-gallery-consistency-visuals-brief.md`
+ * under Lane 1B. KIT's grant, by contrast, is explicit and read from the
+ * source: `Template:Example-Source`, transcluded onto the KIT_IFC_Examples
+ * page, states in full "these examples are made by the Institute for
+ * Applied Computer Science (IAI) at the Karlsruhe Institute of Technology
+ * (KIT), and are for unrestricted use", with a named attribution string.
+ *
+ * The first building here with genuinely usable STATED U-values — not a
+ * documented zero (Schependomlaan: 97 occurrences, all `0.`) and not absent
+ * (Duplex: none at all). All 33 envelope-relevant elements (13 walls + 11
+ * windows + 5 doors + 4 slabs) carry exactly one `IfcPropertySingleValue`
+ * named `ThermalTransmittance`, non-zero and plausible for German
+ * pre-WSchV/WSchV-era construction (exterior wall 0.4, interior partition
+ * 1.5 — irrelevant to heat loss but present, window 1.4, exterior door 1.4,
+ * ground slab 0.4, mezzanine floor 0.5, roof 0.3). Every element ALSO carries
+ * an `IfcMaterialLayerSetUsage` with a real single-layer thickness (0.3 m
+ * exterior wall / 0.24 m interior / 0.2 m slabs) — the criterion the 09-04
+ * selection note asked for — though the material itself is a generic
+ * ArchiCAD "Solid" for the slabs, so the thickness is real and the material
+ * name is not; the stated U carries the physics, not a layer-conductivity
+ * derivation.
+ *
+ * No services model of any kind (no MEP, electrical or plumbing IFC exists
+ * for this building) — the inverse of DigitalHub and the mirror image of the
+ * Duplex/DigitalHub framing already written for #3: this building states
+ * ONLY its envelope, cleanly, and nothing else. `serviceLayers` is empty by
+ * fact, not by omission.
+ *
+ * Site: `IfcSite` states `RefLatitude (49,6,1,566000)`,
+ * `RefLongitude (8,26,11,540400)` → 49.100435N, 8.436539E — Eggenstein-
+ * Leopoldshafen, the actual site of Forschungszentrum Karlsruhe (FZK, KIT
+ * Campus North) the file is named for. Unlike Schependomlaan's coordinate
+ * (52°09'/5°23' to the exact minute, zero seconds — a stamped datum
+ * constant), this one carries fractional seconds (1.566", 11.5404") and
+ * plots to the model's own naming institution, so it reads as a real
+ * surveyed site rather than a tool default — carried as a stated fact, not
+ * upgraded to a "surveyed" claim beyond what the digits themselves show.
+ * `IfcPostalAddress` states no town, so the town name (Eggenstein-
+ * Leopoldshafen / Karlsruhe) is read FROM the coordinate, not from a stated
+ * place name — record it as derived, not stated, when it reaches the energy
+ * inputs.
+ */
+const FZK_HAUS = Object.freeze({
+  id: "fzk-haus",
+  name: { ko: "FZK 하우스", en: "FZK House" },
+  summary: {
+    ko: "KIT(카를스루에 공과대학교) IAI가 공개한 검증용 단독주택 표준 모델.",
+    en: "KIT's (Karlsruhe Institute of Technology) open validation single-family house.",
+  },
+  useType: "single_family_house",
+  licence: "KIT/IAI unrestricted use (attribution required)",
+  attribution:
+    "Institute for Automation and Applied Informatics (IAI), Karlsruhe " +
+    'Institute of Technology (KIT), "AC20-FZK-Haus" — ' +
+    "https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+  sourceUrl: "https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+  files: [
+    {
+      role: "architectural",
+      fileName: "AC20-FZK-Haus.ifc",
+      url: "http://www.ifcwiki.org/images/e/e3/AC20-FZK-Haus.ifc",
+    },
+  ],
+  serviceLayers: [],
+
+  /**
+   * The file states no `IsExternal` on any of its 13 walls at all (not one
+   * true, not one false — the property is simply absent, a fourth way the
+   * predicate can fail, distinct from Duplex's "true but wrong on 10 of
+   * 23"). Naming carries the whole distinction instead, and does so without
+   * ambiguity: 8 walls named `Wand-Ext-{ERDG,OG}-#` (German "exterior wall,
+   * ground/upper floor"), 5 named `Wand-Int-ERDG-#` ("interior wall").
+   */
+  exteriorWallMatch: "Wand-Ext",
+
+  /**
+   * ArchiCAD's own Qto_WallBaseQuantities is present on every wall in
+   * ENGLISH (`NetSideArea`, `GrossSideArea`, …) alongside a duplicate
+   * German-language property set — the same shape as the Clinic and Duplex,
+   * a quantity take-off export rather than a bare coordination model
+   * (the file's own header names `QuantityTakeOffAddOnView`). Stated
+   * exterior `NetSideArea` sums to 136.28 m² (85.66 ground + 50.62 upper);
+   * interior partitions (excluded from the envelope) sum to 54.19 m².
+   */
+  areaSource: "stated_first",
+
+  /**
+   * The upper-storey ("Dachgeschoss") exterior walls are gable ends of
+   * variable height (0.5-3.39 m) rising from the 2.7 m storey datum to the
+   * ridge; 2.7 m is where the roof zone begins.
+   */
+  roofDatumM: 2.7,
+
+  /**
+   * Both roof decks (`Dach-1`, `Dach-2`, 82.56 m² each by NetArea, 71.5 m²
+   * each by the file's own projected `Fläche`) are `IfcSlab` typed
+   * `PredefinedType=ROOF` directly — `classifyRoofs` picks them up with no
+   * `nameMatch` needed, the one trap the first three buildings each hit in
+   * a different shape (Duplex/Schependomlaan type their flat decks FLOOR
+   * and need a name list; the Clinic's are `IfcRoof` proper). Fourth
+   * building, fourth outcome: this one needed nothing extra at all.
+   *
+   * `Slab-033` (the mezzanine/gallery floor at 2.7 m, `PredefinedType=FLOOR`,
+   * NetArea 99.84 m², a 15.80 m² void where the stairwell/double-height
+   * living space opens through it) is correctly excluded by the same
+   * PredefinedType test — it separates two conditioned storeys and is not
+   * envelope on either count basis.
+   */
+  roofNote:
+    "Dach-1 and Dach-2 are IfcSlab typed PredefinedType=ROOF directly, so " +
+    "classifyRoofs matches them with no nameMatch list. Slab-033 " +
+    "(PredefinedType=FLOOR, the 2.7 m mezzanine floor under the Galerie) is " +
+    "correctly excluded as an interior floor, not envelope.",
+
+  /**
+   * The upper storey's one IfcSpace, "Galerie" (107.16 m² GrossFloorArea),
+   * is larger than the mezzanine's own physical floor slab (Slab-033, net
+   * 99.84 m²) and than either roof deck's projected shadow (71.5 m² each).
+   * Plausible for an open gallery overlooking a double-height living room
+   * under a full-width pitched roof, but not independently cross-checked
+   * against a plan drawing — recorded as read from the file's own stated
+   * GrossFloorArea quantity, not re-derived or verified against the
+   * building's other stated areas the way the Clinic's space list was.
+   */
+  spacesNote:
+    "The Dachgeschoss space 'Galerie' (107.16 m²) exceeds its own storey's " +
+    "physical floor slab (Slab-033, 99.84 m² net) and the roof's projected " +
+    "footprint (71.5 m² per deck) — plausible for an open mezzanine over a " +
+    "double-height room, taken as stated (GrossFloorArea quantity) and not " +
+    "independently re-derived.",
+});
+
 /** Every building this script can build, selected with `--building <id>`. */
 const BUILDINGS = Object.freeze({
   [CLINIC.id]: CLINIC,
   [SCHEPENDOMLAAN.id]: SCHEPENDOMLAAN,
   [DUPLEX.id]: DUPLEX,
+  [FZK_HAUS.id]: FZK_HAUS,
 });
 
 /**
@@ -869,8 +1012,13 @@ async function main() {
         `"${file.fileName}" names dir "${file.dir}", which source.dirs does not declare.`,
       );
     }
-    const remoteDir = named ? named.path : src.dir;
-    const url = toUrl(src.owner, src.repo, src.ref, `${remoteDir}/${file.fileName}`);
+    // FZK-Haus is the first building not hosted in a GitHub repository — it
+    // ships from a MediaWiki file upload (ifcwiki.org/images/...), which has
+    // no owner/repo/ref/dir shape to assemble a URL from. `file.url` is a
+    // literal escape hatch for that case; every other building keeps
+    // resolving through the GitHub-shaped `source` object above.
+    const remoteDir = file.url ? null : named ? named.path : src.dir;
+    const url = file.url ?? toUrl(src.owner, src.repo, src.ref, `${remoteDir}/${file.fileName}`);
     const cachePath = path.join(CACHE, named?.cache ?? "", file.fileName);
     const fetched = await fetchSource(url, cachePath, {
       expectedSha256: file.sha256,

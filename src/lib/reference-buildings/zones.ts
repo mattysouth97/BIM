@@ -55,15 +55,17 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     labelEn: "Circulation (corridor, stair, lift)",
     // ENTREE (entrance hall), GANG (hall), OVERLOOP (landing) — Schependomlaan.
     // FOYER, HALLWAY and the model's own misspelling HALLYWAY — the Duplex.
-    patterns: [/\bCORRIDOR\b/, /\bSTAIR\b/, /\bELEVATOR\b/, /\bELEV\.?\b/, /\bVEST\.?\b/, /\bENTREE\b/, /\bGANG\b/, /\bOVERLOOP\b/, /\bFOYER\b/, /\bHALLWAY\b/, /\bHALLYWAY\b/],
+    // FLUR (hallway) — FZK Haus.
+    patterns: [/\bCORRIDOR\b/, /\bSTAIR\b/, /\bELEVATOR\b/, /\bELEV\.?\b/, /\bVEST\.?\b/, /\bENTREE\b/, /\bGANG\b/, /\bOVERLOOP\b/, /\bFOYER\b/, /\bHALLWAY\b/, /\bHALLYWAY\b/, /\bFLUR\b/],
   },
   {
     key: "sanitary",
     labelKo: "위생·청소 (화장실·잡용실)",
     labelEn: "Sanitary & housekeeping",
     // BADKAMER (bathroom) — Schependomlaan. TOILET is already Dutch as it stands.
-    // BATHROOM (1 and 2) — the Duplex.
-    patterns: [/\bTOILET\b/, /\bJAN\.?\b/, /\bHK\b/, /\bSOIL\.?/, /\bTRASH\b/, /\bCLEAN U\.?/, /\bDIPC\b/, /\bSCOPE WASH\b/, /\bDECON/, /\bBADKAMER\b/, /\bBATHROOM\b/],
+    // BATHROOM (1 and 2) — the Duplex. BAD (bathroom) — FZK Haus; \b keeps it
+    // from ever matching inside BADKAMER (no boundary between D and K).
+    patterns: [/\bTOILET\b/, /\bJAN\.?\b/, /\bHK\b/, /\bSOIL\.?/, /\bTRASH\b/, /\bCLEAN U\.?/, /\bDIPC\b/, /\bSCOPE WASH\b/, /\bDECON/, /\bBADKAMER\b/, /\bBATHROOM\b/, /\bBAD\b/],
   },
   {
     key: "plant",
@@ -110,7 +112,10 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     key: "office",
     labelKo: "사무·회의·휴게",
     labelEn: "Office, meeting & staff",
-    patterns: [/\bOFFICE\b/, /\bOFF\.?\b/, /\bADMIN/, /\bANALYST\b/, /\bDIR\.?\b/, /\bDIRECTOR\b/, /\bCHIEF\b/, /\bMGR\b/, /\bSUPER\b/, /\bNCOIC\b/, /\bCMDR\b/, /\bSGT\b/, /\bTECH\.?\b/, /\bWORK STAT/, /\bWORK ROOM\b/, /\bCOPY\b/, /\bCREDENTIALS\b/, /\bCONF\.?/, /\bLIBRARY\b/, /\bCLASSROOM\b/, /\bTEAM\b/, /\bLOUNGE\b/, /\bBREAK ROOM\b/, /\bDRESS\b/, /\bFITTING\b/, /\bGROUP IS\b/, /\bBMET\b/, /\bDISP\.?\b/, /\bKITCHENET/, /\bCL\. UTL/],
+    // BUERO (office) — FZK Haus, the model's own ASCII transliteration of
+    // Büro; appended to the existing row rather than given its own, checked
+    // against all three prior buildings' space names for a collision (none).
+    patterns: [/\bOFFICE\b/, /\bOFF\.?\b/, /\bADMIN/, /\bANALYST\b/, /\bDIR\.?\b/, /\bDIRECTOR\b/, /\bCHIEF\b/, /\bMGR\b/, /\bSUPER\b/, /\bNCOIC\b/, /\bCMDR\b/, /\bSGT\b/, /\bTECH\.?\b/, /\bWORK STAT/, /\bWORK ROOM\b/, /\bCOPY\b/, /\bCREDENTIALS\b/, /\bCONF\.?/, /\bLIBRARY\b/, /\bCLASSROOM\b/, /\bTEAM\b/, /\bLOUNGE\b/, /\bBREAK ROOM\b/, /\bDRESS\b/, /\bFITTING\b/, /\bGROUP IS\b/, /\bBMET\b/, /\bDISP\.?\b/, /\bKITCHENET/, /\bCL\. UTL/, /\bBUERO\b/],
   },
   // ── Residential programs. Appended last on purpose: every row above is
   // tried first, so adding these cannot move a room in a building that has
@@ -124,7 +129,12 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     // a dwelling heats and occupies both on the same schedule.
     // LIVING ROOM, BEDROOM 1 and BEDROOM 2 — the Duplex's English for the
     // same two programs, joining the same row for the same reason.
-    patterns: [/\bWOONKAMER\b/, /\bSLAAPKAMER\b/, /\bLIVING ROOM\b/, /\bBEDROOM\b/],
+    // WOHNEN (living), SCHLAFZIMMER (bedroom) — FZK Haus's German. GALERIE
+    // (the Dachgeschoss mezzanine) joins here too: it is an open gallery
+    // over the living room below, not a distinct program of its own — see
+    // the FZK_HAUS config comment (build-reference-building.mjs) for the
+    // area/volume caveats on that one space.
+    patterns: [/\bWOONKAMER\b/, /\bSLAAPKAMER\b/, /\bLIVING ROOM\b/, /\bBEDROOM\b/, /\bWOHNEN\b/, /\bSCHLAFZIMMER\b/, /\bGALERIE\b/],
   },
   {
     key: "kitchen",
@@ -139,7 +149,11 @@ export const SPACE_PROGRAMS: readonly SpaceProgram[] = Object.freeze([
     // kitchenettes, and it does NOT match "KITCHEN" — the pattern needs the
     // letters "KITCHENET", which a bare KITCHEN does not have — so a
     // dwelling kitchen cannot be swallowed by the staff-room row.
-    patterns: [/\bKEUKEN\b/, /\bKITCHEN\b/],
+    //
+    // KÜCHE — FZK Haus's German. The umlaut survives classifySpaceProgram's
+    // toUpperCase() (Unicode-aware in JS), and \b only anchors the pattern's
+    // own start/end, so it does not care that Ü sits outside \w internally.
+    patterns: [/\bKEUKEN\b/, /\bKITCHEN\b/, /\bKÜCHE\b/],
   },
 ]);
 
