@@ -218,12 +218,24 @@ export interface PanelLayout {
 /**
  * Lay out an instanced PV array over a roof's measured footprint.
  *
- * `overrideSystemSizeKWp` is the seam for Lane 3A's `retrofit-delta.ts` —
- * once `computeRetrofitDelta(...).after.materials.renewable.solarPV.capacity`
- * is wired through, pass it here and this stops estimating its own kWp from
- * roof area. Until then the estimate uses the same `calculateSolarPotential`
- * the economics engine uses, at a fixed "seoul" irradiance — a stated
- * simplification for the ON-SCREEN array size only; it prices nothing.
+ * `overrideSystemSizeKWp` is filled by `usePvSystemSizeOverride` from
+ * `computeRetrofitDelta(...).after.materials.renewable.solarPV.capacity` —
+ * the same kWp the economics card prices the measure at. The area-based
+ * fallback below only fires when that run isn't available yet (no
+ * materials/recipe seeded), which per bim-24 (2026-09-06) is close to
+ * unreachable in practice: `visual.solarInstalled` cannot go true before
+ * `reference-energy.tsx`'s seeding effect has already published both, at
+ * which point `computeRetrofitDelta` also stops returning null. Kept as a
+ * safety net, not a live path.
+ *
+ * If it ever DOES fire, note the fallback prices a DIFFERENT roof area than
+ * the delta does: `face.areaSqm` is this component's own measurement — the
+ * mesh's upward-facing triangle area above the resolved elevation/roofing
+ * source — while the delta's sizing comes from
+ * `envelopeQuantities(recipe).roofAreaSqm`, the manifest's STATED measured
+ * roof surface for the whole building. They can legitimately disagree; a
+ * visible resize on the fallback→override swap would be that disagreement
+ * surfacing, not a rendering glitch.
  */
 export function panelLayoutForRoof(
   face: FaceSetAnalysis,
