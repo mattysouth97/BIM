@@ -599,8 +599,15 @@ export function computeDiscountedPayback(
  *   2. `subsidyByCategory[measure.category]` — category default (used by
  *      the 공공건축물 그린리모델링 presets)
  *   3. 0 — unsubsidised
+ *
+ * Exported so the UI can say when a track applies to NOTHING the user chose.
+ * Measured on /models/fzk-haus: its opening selection is the PV alone, and the
+ * public presets omit `renewable` on purpose (solar is funded by 신재생에너지
+ * 보급사업), so clicking a chip labelled "CAPEX 70%" left every rail figure
+ * byte-identical while every chip price fell to 30 %. Both are correct; a chip
+ * promising 70 % that changes nothing about YOUR selection is not.
  */
-function resolveSubsidyRatio(
+export function measureSubsidyRatio(
   measure: RetrofitMeasure,
   assumptions: EconomicAssumptions,
 ): number {
@@ -619,7 +626,7 @@ function applyEffectiveCapex(
   measure: RetrofitMeasure,
   assumptions: EconomicAssumptions,
 ): number {
-  const ratio = resolveSubsidyRatio(measure, assumptions);
+  const ratio = measureSubsidyRatio(measure, assumptions);
   return measure.estimatedCost * (1 - ratio);
 }
 

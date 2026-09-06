@@ -220,6 +220,7 @@ export function EnergyInstrumentHud({
               recommendedIds={recommendedIds}
               areas={engineEnvelopeAreas}
               totalFloorAreaSqm={totalFloorArea}
+              assumptions={scenario.assumptions}
             />
           </div>
           {/* SECONDARY: how it is paid for. Re-prices the chosen work; never
