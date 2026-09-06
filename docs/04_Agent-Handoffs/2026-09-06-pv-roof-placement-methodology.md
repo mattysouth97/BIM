@@ -287,3 +287,34 @@ For P2/P3b: flat planes carry `azimuthDeg: null`, never `0` — `0` would read
 as due north and the library's north-facing exclusion would silently drop
 every twin plane; terrace outlines carry holes, so the setback inset must
 offset outer rings inward and holes outward.
+
+## P2 landed — `8d66037` (bim-54), merged
+
+`src/lib/retrofit/pv-layout.ts`, stages 2–3, pure; reuses `insetRing` and
+`pointInRing` rather than a second geometry kernel. **No polygon boolean:**
+placement asks "inside the region, clear of the grown obstructions", and
+`usableSqm` subtracts each grown obstruction's own area — exact while an
+obstruction sits inside the inset outline, and it UNDERSTATES usable roof when
+one straddles the edge; stated at the function. Tested on FZK's shipped
+artifact: south pitch populated, north refused as `north-facing-pitch`, every
+module's whole rectangle inside its region, `totalKWp === count × 0.40`.
+`calculateSolarPotential(..., undefined, layout.totalKWp)` — the geometric kWp
+is the **sixth** positional argument, the fifth is `electricityPrice`; passing
+it in the fifth slot prices the system at ₩59/kWh and leaves the size on the
+ratio path, a wrong number rather than a type error. A building with no
+`roof-planes.json` keeps the ratio estimate and its description says so.
+
+**Contract note:** the outline on disk is tagged rings
+`[{kind:"outer"|"hole", points:[[x,z]…]}]`; the coordinator's message said
+"closed rings" and bim-24's type said `PlanRing[]`, and a probe comparing
+`outline[0][0]` to `outline[0][last]` on an object returned `undefined ===
+undefined` — true, of the wrong thing. The library reads the tagged form BY
+TAG and accepts the bare form too. Row pitch at Seoul is **1.769 m**; the
+comment had said 1.43 and the test asserts the formula, which is how it was
+caught.
+
+**P2 remaining (one line, for whoever holds P1b or P3b):** before/after PV
+cost/saving/NPV per building once the other three `roof-planes.json` exist.
+
+Merged with tsc 0; retrofit + reference-buildings + energy suites green.
+**P3b is unblocked.**
