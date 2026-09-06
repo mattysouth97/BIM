@@ -469,3 +469,36 @@ _(filled in by main-coordinator as lanes land)_
 | 1C · e2e for /models/* (assigned 15:35) | bim-83 | pending | New `e2e/reference-buildings.spec.ts` over all three ids, fresh browser context, visible page: strip renders on first visit without reload and its kWh/m² matches the headless engine; layers; attribution; chip round-trip on the delta strip and legend. Its first job is to reproduce (or refute) the first-visit missing-strip race for Lane 2 — left red if it reproduces, fix stays with bim-54. |
 | 2 · complete | bim-54 | `995fbfb`, `3659f52`, `d6e7d9e`, `ad1e8f1`, `d83efc4` on `lane2-contract` (on `e38bf68`) | 2(b) measured measure-areas + `roofType` per building; 2(d) grade sentence names the table; Step 3 retrofit section on every model page (`components/retrofit/measure-card.tsx`) + `docs/02_Features/Reference Buildings.md`; badge overlap + bias scope; legend `.S` and per-sector rows; flow supply/return label; Duplex contract fields. **222bf4a corrected in `ad1e8f1`**: the axis was never measured-vs-extruded but whether the caller holds the areas the ratios are quoted against — `meanWindowToWallRatio(materials, grossWallByOrientationSqm?)` weights by gross when given it, plain mean otherwise; both engine callers pass no weights, so every building is back to its pre-222bf4a number by construction; the Duplex test lands on 64.46 exactly. Three call sites in bim-83's Duplex test rewritten to today's truth. **Hydration race: not reproduced** — cleared localStorage, visible tab, 500 ms sampling, strip correct at t=0 on the Clinic and on a never-seeded Duplex; a mounted-together unit test pins the chain for every id. Lane 1C's e2e is the arbiter. **Scope widened, accepted**: `engineEnvelopeAreas` passed unconditionally from the HUD, so `/building/[id]` measure areas move too — the alternative recreates two-numbers-on-one-frame one surface over. Full suite 4,909. |
 | merge 3 | main-coordinator | `b364ed8` = shared branch + `origin/lane2-contract` | tsc exit 0; vitest on reference-buildings/reference-building/twin/hooks/energy/retrofit 91 files 1,142 passed. **Open lanes (1B, 1C, 3B) rebase onto `b364ed8`.** |
+
+## Lane 3C — the 그린리모델링 row picks WORK, not a programme · **bim-24** (assigned 15:40)
+
+User, 15:37, verbatim: *"What are the 그린리모델링 programs based on. Make sure they
+are implementation-oriented not program oriented."*
+
+What the row is today: six chips from `cost-database.ts` `KOREAN_GR_PRESETS`,
+sourced to the D₁ dossier `docs/superpowers/research/2026-04-30-green-remodeling.md`
+(parameters `2026.1`, programme restarted 2026-03): 공공 서울·중앙 = 50 % CAPEX
+subsidy on envelope/HVAC/lighting, 공공 지자체 = 70 %, 민간 기본/2단계/고성능 =
+4.5 / 4.0 / 5.5 pp interest buy-down on a 70 %-debt, 5.5 % loan over a 10-year
+assumed term. Every chip changes **money**, and the knapsack then decides the
+**work**. The user never chooses a measure; the building changes as a side
+effect of a financing choice. That is programme-oriented.
+
+Deliverable: the primary row is the **implementation** — the physical measures
+the engine already generates (`envelope-wall-insulation`, `-roof-`, `-window-`,
+`-floor-`, `hvac-hrv`, `hvac-heat-pump`, `hvac-boiler-upgrade`, `lighting-led`,
+`solar-pv-*`), each chip carrying what it does to the building in one line
+(외벽 U 0.58 → 0.15 · 340 m² · ₩4,100만), toggled by the user, driving the
+visuals, the delta strip and the economics directly. The knapsack's
+budget-optimal set is shown as a **추천** mark on those chips, not as the
+selection. The financing programme becomes a secondary control labelled for
+what it is (지원 재원 / Financing), still from the same presets, applied to the
+chosen work. `appliedMeasureIds` (the user's set) is the primary state again;
+`selectedMeasureIds` (the knapsack) is the recommendation. Mutual exclusions
+from `measure-interactions.ts` are enforced on click and said in the chip.
+Same row on `/building/*` and `/models/*` — one component. Test: the chip's
+one-line claim parsed back against the measure it names.
+
+Yours: `program-track-selector.tsx` (rename to what it becomes), `scenario-store.ts`,
+`energy-instrument-hud.tsx` (handed over from Lane 2, closed), new measure-chip
+component + test. Base `b364ed8`.
