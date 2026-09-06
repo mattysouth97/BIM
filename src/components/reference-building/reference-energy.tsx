@@ -50,24 +50,41 @@ import { buildReferenceEnergyZones } from "@/lib/reference-buildings/zones";
 const ORIENTATIONS: readonly Orientation[] = ["N", "E", "S", "W"];
 
 /**
- * How the stand-ins lean, counted from their own `biasDirection` strings.
+ * How the stand-ins lean, counted from the `envelopeBias` each row DECLARES.
  *
- * "Provisional" is a hedge; a reader takes it as "might move either way". On
- * the apartment three of six placeholders say "Understates" outright — a
- * smaller roof, a smaller slab, the minimum-perimeter square that ISO 13370
- * rewards — so the honest expectation is that the grade goes DOWN when the
- * measurements land, and the badge should predict that rather than hedge.
- * Every correction on these buildings today went the same way; an
- * unmeasured envelope input here is a systematic optimism, not a coin flip.
+ * "Provisional" is a hedge and a reader takes it as "might move either way",
+ * so where the rows do state a direction the badge should predict it: every
+ * correction to an unmeasured envelope input on these buildings has gone the
+ * same way, because what a model omits is envelope and what it states is
+ * floor.
+ *
+ * It counted the leading word of the `biasDirection` PROSE until 2026-09-06,
+ * and on the apartment that matched "Understates the spread" — a claim about
+ * how glazing is distributed between elevations, whose own aperture sums to
+ * the row above it — and rendered it as "1개가 외피를 과소평가하므로 실측 후
+ * 등급이 내려갈 가능성이 큽니다". Right instinct about which rows were
+ * uncertain, wrong noun, in a sentence that predicts a grade. `distribution`
+ * rows are now counted as neither direction.
  */
 export function summarisePendingBias(
   pending: ReferenceBuildingEnergyInputs["pendingMeasurements"] | undefined,
-): { total: number; understates: number; overstates: number } {
+): {
+  total: number;
+  understates: number;
+  overstates: number;
+  neutral: number;
+  unknown: number;
+  distribution: number;
+} {
   const rows = pending ?? [];
+  const count = (bias: string) => rows.filter((p) => p.envelopeBias === bias).length;
   return {
     total: rows.length,
-    understates: rows.filter((p) => /^understates/i.test(p.biasDirection.trim())).length,
-    overstates: rows.filter((p) => /^overstates/i.test(p.biasDirection.trim())).length,
+    understates: count("understates"),
+    overstates: count("overstates"),
+    neutral: count("neutral"),
+    unknown: count("unknown"),
+    distribution: count("distribution"),
   };
 }
 
@@ -75,16 +92,42 @@ export function pendingBadgeText(
   bias: ReturnType<typeof summarisePendingBias>,
   isKo: boolean,
 ): string {
-  const lean =
-    bias.understates > bias.overstates
-      ? isKo
-        ? ` — ${bias.understates}개가 외피를 과소평가하므로 실측 후 등급이 내려갈 가능성이 큽니다`
-        : ` — ${bias.understates} understate the envelope, so the grade will likely fall once measured`
-      : bias.overstates > bias.understates
+  let lean: string;
+  if (bias.understates > bias.overstates) {
+    lean = isKo
+      ? ` — ${bias.understates}개가 외피를 과소평가하므로 실측 후 등급이 내려갈 가능성이 큽니다`
+      : ` — ${bias.understates} understate the envelope, so the grade will likely fall once measured`;
+  } else if (bias.overstates > bias.understates) {
+    lean = isKo
+      ? ` — ${bias.overstates}개가 외피를 과대평가하므로 실측 후 등급이 올라갈 수 있습니다`
+      : ` — ${bias.overstates} overstate the envelope, so the grade may rise once measured`;
+  } else if (bias.total > 0) {
+    // No row claims a direction for the envelope. Saying nothing here would
+    // leave a bare count that reads as a hedge; the composition says why
+    // there is no prediction to make.
+    const parts = [
+      bias.unknown > 0
         ? isKo
-          ? ` — ${bias.overstates}개가 외피를 과대평가하므로 실측 후 등급이 올라갈 수 있습니다`
-          : ` — ${bias.overstates} overstate the envelope, so the grade may rise once measured`
-        : "";
+          ? `불확실 ${bias.unknown}`
+          : `${bias.unknown} unknown`
+        : null,
+      bias.neutral > 0
+        ? isKo
+          ? `총손실 중립 ${bias.neutral}`
+          : `${bias.neutral} neutral on total loss`
+        : null,
+      bias.distribution > 0
+        ? isKo
+          ? `분포만 ${bias.distribution}`
+          : `${bias.distribution} affecting only the split`
+        : null,
+    ].filter(Boolean);
+    lean = isKo
+      ? ` — 외피 크기의 방향을 말하는 항목은 없습니다 (${parts.join(" · ")})`
+      : ` — none of them states which way the envelope moves (${parts.join(" · ")})`;
+  } else {
+    lean = "";
+  }
   return isKo
     ? `측정 대기 · 자리표시자 ${bias.total}개${lean}`
     : `Awaiting measurement · ${bias.total} stand-ins${lean}`;
@@ -207,22 +250,47 @@ export function ReferenceEnergyFrame({
         buildingPk={buildingPk}
         totalFloorArea={quantities.intensityFloorAreaSqm}
         footprintArea={quantities.planAreaSqm}
-        roofType="flat"
+        // Hard-coded "flat" until 2026-09-06, on a page showing a tiled
+        // pitched roof, in a measure whose NAME renders the word. Where the
+        // building states no typology the fallback stays flat AND the
+        // retrofit section says the typology is unstated, rather than the
+        // page quietly asserting a flat roof nobody read.
+        roofType={energy.roof?.type ?? "flat"}
+        exteriorDoorSqm={energy.exteriorDoorSqm}
         sidoPrefix={climate.sigunguCd.slice(0, 2)}
+        /* A stand-in travels on `measuredEnvelope` exactly like a measurement
+           and reports `source: "measured"` — the quantities function refuses
+           a zero, so a placeholder has to be a real positive number. The
+           registry is the only thing that knows, so the page has to say it
+           where the numbers are, not only in a panel a reader may not open.
+
+           In the frame's own notice band, not floated at `right-3 top-3`,
+           where it covered the rail's 실효 투자비 cell — the top band
+           occupies 13-135 px of this section and the badge sat at 12-40. */
+        notice={
+          awaiting ? (
+            <p
+              className="px-3 py-1.5 font-mono text-[10px] leading-tight text-amber-300"
+              data-testid="reference-energy-awaiting-measurement"
+            >
+              {pendingBadgeText(bias, isKo)}
+            </p>
+          ) : (
+            /* The Clinic never said "complete" — the absence of a warning is
+               not a statement, and one page carrying a measurement-state row
+               while the other carries none is the drift this contract is
+               for. */
+            <p
+              className="px-3 py-1.5 font-mono text-[10px] leading-tight text-muted-foreground"
+              data-testid="reference-energy-measurement-complete"
+            >
+              {isKo
+                ? "실측 완료 · 이 프레임의 모든 외피 면적은 이 파일에서 측정한 값입니다"
+                : "Measurement complete · every envelope area behind this frame is measured from the file"}
+            </p>
+          )
+        }
       />
-      {/* A stand-in travels on `measuredEnvelope` exactly like a measurement
-          and reports `source: "measured"` — the quantities function refuses
-          a zero, so a placeholder has to be a real positive number. The
-          registry is the only thing that knows, so the page has to say it
-          where the numbers are, not only in a panel a reader may not open. */}
-      {awaiting ? (
-        <div
-          className="pointer-events-none absolute right-3 top-3 z-30 rounded-md border border-amber-500/60 bg-amber-950/80 px-2.5 py-1.5 font-mono text-[10px] leading-tight text-amber-200 shadow-sm backdrop-blur"
-          data-testid="reference-energy-awaiting-measurement"
-        >
-          {pendingBadgeText(bias, isKo)}
-        </div>
-      ) : null}
       {/* The legend positions itself `absolute left-3 top-16`; this wrapper
           moves its origin below the frame's top band and stops above the
           bottom strip, and scrolls: the Clinic's zone list is ten programs

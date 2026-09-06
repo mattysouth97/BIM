@@ -74,6 +74,29 @@ export interface RetrofitScenarioInputs {
    * inflate every boiler saving by 1/η. It is converted back below.
    */
   engineDemand?: { heatingDemand: number; coolingDemand: number };
+  /**
+   * The areas the engine actually priced, straight off its own heat-loss
+   * elements. Every measure's cost AND saving is linear in its area
+   * (`envelope-retrofits.ts`), so an area the engine did not use produces a
+   * number that cannot be reconciled with the W/K on the same frame.
+   *
+   * Without it the hook derives areas from `materials.envelope.walls` and
+   * `footprintArea`, which on the two reference buildings understates the
+   * apartment's roof measure by 36 % (footprint 345.81 m² against a measured
+   * roof surface of 542.96) and its window measure by 27 % (the ratio applied
+   * to the NET wall rather than the gross the engine multiplies).
+   *
+   * `opaqueWallSqm` is the one figure that is deliberately NOT the engine's:
+   * the engine's "Walls" element is `gross − aperture` with the doors inside
+   * it, and a wall-insulation measure should not be sized over a door. The
+   * caller subtracts a STATED door area or nothing at all.
+   */
+  engineEnvelopeAreas?: {
+    opaqueWallSqm: number;
+    windowSqm: number;
+    roofSqm: number;
+    groundFloorSqm: number;
+  };
   /** Feed-in tariff (KRW/kWh) for solar. Defaults to 130. */
   feedInTariffKrw?: number;
   /**
@@ -170,6 +193,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     annualHeatingDemand,
     annualCoolingDemand,
     engineDemand,
+    engineEnvelopeAreas,
     feedInTariffKrw = 130,
     programTrack = "none",
     assumptions: assumptionsOverride,
@@ -212,8 +236,16 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     // otherwise — so the measures and `calculateHeatLoss` cannot end up
     // multiplying by two different means of the same four numbers.
     const avgWwr = meanWindowToWallRatio(materials, recipe);
-    const opaqueWallArea = wallAgg.area * (1 - avgWwr);
-    const windowArea = wallAgg.area * avgWwr;
+    // The engine's own element areas when the caller has them, and only then
+    // the derived ones. `footprintArea` standing in for the roof is the
+    // single largest of the old errors: it is the GROUND slab, and a building
+    // whose roof steps, pitches or oversails does not have a roof the size of
+    // its footprint.
+    const opaqueWallArea =
+      engineEnvelopeAreas?.opaqueWallSqm ?? wallAgg.area * (1 - avgWwr);
+    const windowArea = engineEnvelopeAreas?.windowSqm ?? wallAgg.area * avgWwr;
+    const roofArea = engineEnvelopeAreas?.roofSqm ?? footprintArea;
+    const groundFloorArea = engineEnvelopeAreas?.groundFloorSqm ?? footprintArea;
 
     const envelopeMeasures = generateEnvelopeRetrofits(
       {
@@ -225,9 +257,9 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
       KOREAN_2020_TARGET_U_VALUES,
       {
         wall: opaqueWallArea,
-        roof: footprintArea,
+        roof: roofArea,
         window: windowArea,
-        floor: footprintArea,
+        floor: groundFloorArea,
       },
       hdd,
       materials.hvac.heating.efficiency,
@@ -280,8 +312,12 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     );
 
     // ── Solar PV ──
+    // Panels go on the ROOF, and the roof is not the footprint. The
+    // utilisation factor already discounts for pitch and orientation
+    // (flat 0.7, gable 0.5), so the area to hand it is the roof surface the
+    // engine priced — the same one the roof-insulation measure covers.
     const solar = calculateSolarPotential(
-      footprintArea,
+      roofArea,
       roofType,
       region,
       feedInTariffKrw,
@@ -301,6 +337,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     annualHeatingDemand,
     annualCoolingDemand,
     engineDemand,
+    engineEnvelopeAreas,
     feedInTariffKrw,
   ]);
 

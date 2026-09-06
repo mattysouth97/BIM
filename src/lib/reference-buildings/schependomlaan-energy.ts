@@ -79,6 +79,13 @@ export type PendingMeasurement = Readonly<{
   derivedFrom: string;
   /** Which way it is wrong, in the building's favour or against it. */
   biasDirection: string;
+  /**
+   * The same claim as `biasDirection`, as a value a summariser can count.
+   * See the field's doc on `ReferenceBuildingEnergyInputs` for why reading
+   * the prose instead turned "understates the spread" into a prediction
+   * about the grade.
+   */
+  envelopeBias: "understates" | "overstates" | "neutral" | "unknown" | "distribution";
 }>;
 
 // ── Measured geometry, from the committed manifest ────────────────────────
@@ -244,6 +251,9 @@ export const SCHEPENDOMLAAN_PENDING_MEASUREMENTS: readonly PendingMeasurement[] 
         "77 windows counted by bim-bf × an invented 1.5 m² mean pane. The count is evidence; the mean is not.",
       biasDirection:
         "Unknown. A Dutch apartment mixes 3-4 m² living-room windows with 0.3-0.5 m² toilet lights, and 1.5 m² is a guess at the mean of that mixture.",
+      // Genuinely either way: the mean pane could be 1.0 or 2.5 and this is
+      // the one row that really is a coin flip.
+      envelopeBias: "unknown",
     },
     {
       manifestField: "areas.glazingByOrientationSqm",
@@ -254,6 +264,11 @@ export const SCHEPENDOMLAAN_PENDING_MEASUREMENTS: readonly PendingMeasurement[] 
         "The placeholder aperture distributed pro rata to the MEASURED wall split, giving one identical WWR on every sector.",
       biasDirection:
         "Understates the spread. A real Dutch block glazes its living-room facade far harder than its stair-and-service facade, so the true per-sector ratios straddle this one.",
+      // The error is in the DISTRIBUTION between elevations, not in how much
+      // envelope there is: this row's aperture sums to the row above it. It
+      // says nothing about whether the grade will move, and a badge that
+      // read the leading word of the sentence above said it did.
+      envelopeBias: "distribution",
     },
     {
       manifestField: "areas.exteriorDoorSqm",
@@ -264,6 +279,7 @@ export const SCHEPENDOMLAAN_PENDING_MEASUREMENTS: readonly PendingMeasurement[] 
         "20 exterior door leaves counted by bim-bf × an invented 2.0 m² leaf.",
       biasDirection:
         "Roughly neutral on total loss — doors are priced at the wall U (A-DOORS) — but it moves the WWR denominator, so it is not free.",
+      envelopeBias: "neutral",
     },
     // areas.roofProjectedSqm, areas.groundSlabSqm and areas.groundPerimeterM
     // left this table on 2026-09-04 when the extractor emitted them. All
