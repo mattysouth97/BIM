@@ -57,16 +57,32 @@ const PANEL_DEGRADATION_RATE = 0.005;
 /** CO2 emission factor for Korean grid (tCO2/kWh) — shared constant, tCO2/MWh ÷ 1000 */
 const CO2_FACTOR_ELECTRICITY = CO2_FACTORS.electricity / 1000;
 
+/**
+ * `geometricKWp`: where the roof HAS been measured into planes and modules
+ * laid out on them (`pv-layout.ts`), the size the economics prices is the
+ * drawn count × the module rating. The utilisation-ratio path below is the
+ * fallback for a roof with no measured planes, and it is why the picture and
+ * the price disagreed: it turns an area into a kWp by a factor that never
+ * meets the geometry, so the Clinic could be priced at 373 kWp while the grid
+ * drew whatever fitted a box that included its courtyards. A count wins.
+ */
 export function calculateSolarPotential(
   roofArea: number, // m2
   roofType: 'flat' | 'gable' | 'hip' | 'sawtooth',
   region: string,
   feedInTariffRate: number, // KRW/kWh — user-configurable
   electricityPrice: number = DEFAULT_ELECTRICITY_PRICE,
+  /**
+   * SIXTH positional argument, after `electricityPrice`. Passing the kWp in
+   * the fifth slot silently prices the system at that number per kWh and
+   * leaves the size on the ratio path — a wrong number, not a type error.
+   */
+  geometricKWp?: number,
 ): SolarPVResult {
   const roofUtilization = ROOF_UTILIZATION_FACTORS[roofType];
   const usableArea = roofArea * roofUtilization;
-  const systemSizeKWp = usableArea / M2_PER_KWP;
+  const systemSizeKWp =
+    geometricKWp != null && geometricKWp >= 0 ? geometricKWp : usableArea / M2_PER_KWP;
 
   const peakSunHours = REGIONAL_IRRADIANCE[region.toLowerCase()] ?? DEFAULT_PEAK_SUN_HOURS;
   // Seoul (3.5 PSH): 3.5 × 365 × 1.15 × 0.80 ≈ 1,175 kWh/kWp — inside the
@@ -90,7 +106,10 @@ export function calculateSolarPotential(
     lifetimeYears: MEASURE_LIFETIMES['solar-pv'],
     category: 'renewable',
     name: `Solar PV (${roofType} roof, ${systemSizeKWp.toFixed(1)} kWp)`,
-    description: `Solar PV system (${roofType} roof, ${systemSizeKWp.toFixed(1)} kWp)`,
+    description:
+      geometricKWp != null
+        ? `Solar PV system (${roofType} roof, ${systemSizeKWp.toFixed(1)} kWp) — sized from the modules laid out on the measured roof planes, not from a utilisation ratio.`
+        : `Solar PV system (${roofType} roof, ${systemSizeKWp.toFixed(1)} kWp) — sized from ${roofArea.toFixed(0)} m² of roof at a ${roofUtilization} utilisation ratio; this roof has not been measured into planes.`,
     estimatedCost,
     annualEnergySaving: annualGenerationKWh,
     annualCostSaving,
