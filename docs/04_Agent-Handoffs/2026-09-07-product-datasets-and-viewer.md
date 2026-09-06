@@ -157,3 +157,35 @@ navigation checks passed. Full unit run: 5,343 passed, 4 existing skips
 (443 passed files, 1 skipped). Committed/pushed as `95f9ada`; clean production
 READY, health SHA and `icn1` verified on 2026-09-07 01:15 KST. Ten live
 navigation and camera orbit/zoom checks passed.
+
+## Milestone 5 — material rendering, sixth model and source solar orientation
+
+Klassiqua Office 1970 adds a licensed synthetic research archetype with 48
+geometry-measured spaces and source document whole-envelope thermal values.
+The source review corrected table/page citations, retained the 1.03 insulation
+design factor, and quantified the door and floor-edge modeling limitations.
+Source MEP inventory states zero typed occurrences without inventing systems.
+
+All six models now default to source-bound material expression. Source surface
+selection opens its exact assembly; source/assumed thermal values remain separate
+from illustrative finishes. Loading errors preserve the original model and Retry
+clears the relevant failed caches. Resource tests protect shared GPU caches.
+
+Actual Blender Lab MCP comparison rejected a mesh roundtrip and lossy default
+compression. The accepted byte-preserving Meshopt workflow reduces material
+payloads from 7,456,144 to 3,418,856 bytes, retaining 263 draw calls and every
+decoded attribute, index, instance transform, source graph and binding. Negative
+publish tests reject altered names, index order and transforms. Reproducible
+commands and source/tool pins are in `Blender Material Optimization.md`.
+
+Independent source-axis checks corrected roof downslope and true-north bearing;
+FZK now fits 44 modules / 17.6 kWp under the existing orientation policy.
+Flat racks face true south. Actual cell-face clearance was checked against each
+PV-capable source GLB, including Klassiqua. This is separate from camera depth.
+
+Validation: 5,425 unit tests passed, 4 existing skips; TypeScript clean; ESLint
+0 errors and 6 existing warnings. Full Chromium 149/150 passed; the sole old
+gallery expectation still counted five models. Updated the explicitly reviewed
+six-card set, and its rerun passed. Six compressed views inspected; all 11
+material loading/picking/retry checks and six camera orbit/zoom checks passed.
+Production verification pending.

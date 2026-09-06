@@ -31,8 +31,9 @@ Local release validation on 2026-09-07:
 - Unit: **5,425 passed**, 4 skipped (452 passed files, 1 skipped).
 - Material integration: 22 browser checks passed before compression; all 11
   material-loading/picking/fallback checks passed again after compression.
-  Six model orbit/zoom checks passed. Expanded energy/PV and full browser
-  release verification are in progress; see execution record for earlier runs.
+  Six model orbit/zoom checks passed. Full Chromium: 149/150 passed; the sole
+  failure was an old five-card gallery assertion. The reviewed six-card set
+  and its rerun passed. All source/material/PV cases passed in the full run.
 - TypeScript: clean. ESLint src/e2e: 0 errors, 6 pre-existing warnings.
 - KIT Office and demo expanded/collapsed canvas screenshots inspected; no page
   errors. Panel controls preserve state and do not overlap the rendering toolbar.
@@ -90,7 +91,9 @@ Prior PV and selection methods remain documented in
 ## Open work and limits
 
 - The sixth model/material-expression/Blender/PV-correction release is locally
-  verified as above and awaiting final browser checks, commit and deployment.
+  verified as above and awaiting production verification.
+- Next material realism work corrects source-instance texture scale and adds
+  physical roughness/glass treatment; this is separate from source thermal data.
 - TalTech's licensed office/lab model is being checked in an isolated worktree:
   existing PV arrays need obstruction coverage, and IFC4 ports need traceable
   ownership. It is not yet integrated or published.

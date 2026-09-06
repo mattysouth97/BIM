@@ -139,11 +139,7 @@ test.describe("Landing gallery", () => {
     const gallery = page.getByTestId("landing-gallery");
     await expect(gallery).toBeVisible();
 
-    // All three buildings render. The licence question on Schependomlaan
-    // gates the deploy, not what the gallery shows; the Duplex has no such
-    // question, carrying the Clinic's grant and rights holder exactly.
-    //
-    // The count is exact and hand-maintained on purpose: a fourth building
+    // The reviewed publication set is exact and hand-maintained: a new building
     // must fail here and be added deliberately, because this test's claim is
     // "these models and nothing else" and a count derived from the array
     // under test could not make that claim. It went red once already, when
@@ -154,7 +150,8 @@ test.describe("Landing gallery", () => {
     // FZK Haus (Lane 1B) merged one commit before the spec that set this to 3.
     await expect(page.getByTestId("gallery-item-fzk-haus")).toBeVisible();
     await expect(page.getByTestId("gallery-item-kit-office")).toBeVisible();
-    await expect(gallery.locator("> li")).toHaveCount(5);
+    await expect(page.getByTestId("gallery-item-klassiqua-office-1970")).toBeVisible();
+    await expect(gallery.locator("> li")).toHaveCount(6);
 
     // The register sheet's furniture is gone from this page entirely.
     await expect(page.getByTestId("landing-ledger-lookup")).toHaveCount(0);
