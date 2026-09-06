@@ -130,8 +130,28 @@ describe("the file says, unmissably, which state it is in", () => {
     expect(total).toBeCloseTo(e.roofAreaSqm, 2);
   });
 
-  it("the recipe's own basis string leads with the word, not with a caveat at the end", () => {
-    expect(SCHEPENDOMLAAN_RECIPE.measuredEnvelope?.basis).toMatch(/^PARTLY PLACEHOLDER/);
+  it("the basis names which fields are stand-ins, without opening with a status claim", () => {
+    // This asserted `/^PARTLY PLACEHOLDER/` until 2026-09-06 — the basis had
+    // to LEAD with the word so a reader could not miss the building's state.
+    // The intent was right and the placement was the problem: the basis is
+    // rendered in the side panel, so that opener put an English status claim
+    // where the page's measurement-state line does not live, and gave the
+    // same claim two sources that nothing kept in step. `measurementState`
+    // is now the only one, and the frame renders it in the reader's language.
+    //
+    // What the basis must still do is say WHICH fields are stand-ins, which
+    // is specific provenance and is exactly what a basis is for.
+    const basis = SCHEPENDOMLAAN_RECIPE.measuredEnvelope!.basis;
+    expect(basis).not.toMatch(/^PARTLY PLACEHOLDER/);
+    expect(basis).toMatch(/^Wall areas/);
+    expect(basis).toContain("Glazing aperture and exterior-door aperture are NOT measured");
+    // And the pointer the old opener carried survived the cut: the closing
+    // sentence used to say "the direction that table records", where "that
+    // table" was the constant the opener named.
+    expect(basis).toContain("SCHEPENDOMLAAN_PENDING_MEASUREMENTS");
+    expect(basis).not.toContain("that table");
+    // The state itself is still declared, out of band, where the page reads it.
+    expect(SCHEPENDOMLAAN_INPUT_STATE).toBe("awaiting_lane_b_measurements");
   });
 
   it("the placeholders are still positive numbers, because envelopeQuantities refuses zeros", () => {

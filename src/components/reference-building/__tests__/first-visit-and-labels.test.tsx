@@ -335,6 +335,60 @@ describe("the frame's measurement-state line is the contract's, not the building
     });
   }
 
+  it("no building's basis OPENS with a status claim — measurementState owns that", () => {
+    // Two of them did. FZK's opened "FULLY MEASURED — no placeholder in this
+    // building." and Schependomlaan's "PARTLY PLACEHOLDER — see
+    // SCHEPENDOMLAAN_PENDING_MEASUREMENTS.", which is how a paragraph of
+    // provenance in the panel came to look like the measurement-state line
+    // from the frame, in the wrong language and the wrong place. It also
+    // meant the same claim had two sources and nothing kept them in step.
+    //
+    // Provenance may still say which FIELDS are stand-ins — that is specific
+    // and it is what the basis is for. What it may not do is open by
+    // declaring the building's overall state.
+    // A status claim stands alone as an opening clause and is closed by an
+    // em-dash, colon or middot. Provenance runs straight on into a
+    // preposition — "Measured from the Duplex IFC by the openings walk" is a
+    // perfectly good opening and must not be caught. The first version of
+    // this regex caught it, and missed both Korean forms, because \b is
+    // defined on [A-Za-z0-9_] and does not fire after Hangul.
+    const statusOpener =
+      /^\s*(?:(?:fully|partly|not|no)\s+)?(?:measured|placeholder|complete|incomplete|awaiting|provisional)\b[^.\n]{0,60}?[—:·]|^\s*(?:실측|측정|미측정)\s*(?:완료|대기)?\s*[·—:]/i;
+
+    // The regex is checked against the two strings it exists to have caught,
+    // and against the openings that must survive — a test that asserts
+    // nothing matches would pass just as well with a regex that matches
+    // nothing at all.
+    expect("FULLY MEASURED — no placeholder in this building. Wall…").toMatch(statusOpener);
+    expect("PARTLY PLACEHOLDER — see SCHEPENDOMLAAN_PENDING_MEASUREMENTS. Wall…").toMatch(statusOpener);
+    expect("실측 완료 · 모든 외피 면적은…").toMatch(statusOpener);
+    expect("측정 대기 · 자리표시자 3개…").toMatch(statusOpener);
+    expect("Measured from the Duplex IFC by the openings walk.").not.toMatch(statusOpener);
+    expect("Read from the buildingSMART Clinic IFCs by the build script.").not.toMatch(statusOpener);
+
+    for (const id of REFERENCE_BUILDING_IDS) {
+      const energy = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!;
+      const basis = energy.recipe.measuredEnvelope!.basis;
+      expect(
+        basis,
+        `${id}: measuredEnvelope.basis opens with a status claim — ` +
+          `"${basis.slice(0, 60)}…". measurementState is the only source of ` +
+          `that, and the frame is the only place it is rendered. Keep the ` +
+          `provenance, drop the opener.`,
+      ).not.toMatch(statusOpener);
+    }
+  });
+
+  it("the pointer Schependomlaan's opener carried survived the cut", () => {
+    // The removed opener named SCHEPENDOMLAAN_PENDING_MEASUREMENTS, and the
+    // closing sentence said "the direction that table records" — cutting the
+    // opener alone would have left "that table" pointing at nothing.
+    const basis = referenceBuildingEnergyInputs("schependomlaan")!.recipe
+      .measuredEnvelope!.basis;
+    expect(basis).toContain("SCHEPENDOMLAAN_PENDING_MEASUREMENTS");
+    expect(basis).not.toContain("that table");
+  });
+
   it("no building's basis is short enough to be mistaken for the contract line", () => {
     // The failure this guards is a basis string trimmed to one line, which
     // would then look like the contract sentence while saying something the
