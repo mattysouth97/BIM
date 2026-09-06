@@ -20,15 +20,76 @@ inside it; do not add a fifth step or a second front door.
 
 ## Verified Working State
 
-Validated on 2026-09-06 (production `eb84d61`, PV drawn from measured roof planes on every surface — see `2026-09-06-pv-roof-placement-methodology.md`; earlier that day `223736a`, after the gallery / contract / remodelling round — see `2026-09-06-gallery-consistency-visuals-brief.md`):
+Validated on 2026-09-06 23:50 (production `21835a7`, `/api/health` confirms the sha in `icn1`):
 
-- Unit: **5,076 passed**, 4 skipped, 424 files
-- E2E: **84 passed, 0 failed** (Playwright, chromium; one cold-run load flake in `cad-reconstruction.spec.ts:29`, green isolated and warm)
-- `tsc --noEmit`: clean (clear `.next/dev/types` first in a checkout that has served pages — Next's generated route types reject a page export); `eslint src e2e`: 0 errors, 6 pre-existing warnings
-- Production live at `https://bim-self.vercel.app`, `/api/health` commit `eb84d61`, region `icn1`
-- Open: Lane 3D (the CAPEX gauge becomes an optional budget field — spec in the gallery brief, user-approved, unassigned); per-plane utilisation table; plant/parapet obstructions
+- Unit: **5,137 passed**, 4 skipped, 427 files
+- E2E: **88 passed, 0 failed** (Playwright, chromium)
+- `tsc --noEmit`: clean (clear `.next/dev/types` first in a checkout that has served pages); `eslint src e2e`: 0 errors, 6 pre-existing warnings
+- Production live at `https://bim-self.vercel.app`; deployed from a clean detached worktree with `DEPLOY_COMMIT_SHA` set
 
-**Four reference buildings** are published under `/models/<id>`: `bs-medical-dental-clinic`, `schependomlaan`, `duplex-apartment`, `fzk-haus` (DigitalHub was refused — no reuse grant). Every model page renders the same contract (`docs/02_Features/Reference Buildings.md`): the energy frame priced against the engine's own demand on measured areas, the grade on the table the use code selects (dwellings 주거: apartment 1++, Duplex 4, FZK 2), a retrofit section, and a measure-first 그린리모델링 row whose financing re-prices and never re-picks. The 3D and the delta strip answer a measure chip on the twin and on every model page.
+## Handoff — what the day landed, and what the next session picks up
+
+Two briefs carry the full record with shas and verification per lane:
+`2026-09-06-gallery-consistency-visuals-brief.md` (three user tasks + the
+measure-first row + the optional budget) and
+`2026-09-06-pv-roof-placement-methodology.md` (PV placement, five stages, all
+implemented). Read them before touching the energy frame, the model pages or
+the PV path.
+
+**State of the product on `21835a7`:**
+
+- **Four reference buildings** at `/models/<id>`: Clinic, Schependomlaan,
+  Duplex Apartment, FZK Haus (DigitalHub refused — no licence). Every page
+  renders one contract (`docs/02_Features/Reference Buildings.md`).
+- **Grades on the table the use code selects** — dwellings 주거: apartment
+  1++, Duplex 4, FZK 2; kWh/m² unchanged. Ledger dwellings move the same way.
+- **Retrofit priced against the engine's own demand** on measured areas, with
+  the HRV gap and LED/PV not moving the grade stated on the page.
+- **The 그린리모델링 row picks WORK** (one chip per measure, bilingual, with
+  its one-line claim); financing is a secondary 지원 재원 row that re-prices
+  and never re-picks. `appliedMeasureIds` is the user's set;
+  `useProposalVisualIds()` is the single 3D gate.
+- **Budget is optional** (Lane 3D): `capexBudgetKrw: number | null`, null by
+  default, per building, not persisted; null → recommendation = NPV-positive
+  set, no knapsack; a value → the knapsack. The slider band is gone.
+- **PV modules are drawn where measured roof planes put them** on the twin and
+  the model pages: `roof-planes.json` + `roof-planes-qa.svg` per building
+  (strip-merged, sky-occluded, skylights as obstructions), `pv-layout.ts`
+  (setbacks, clearances, north pitches refused, solstice row pitch),
+  `use-pv-layout.ts` as the one source for the modules drawn, the legend's
+  count (`data-pv-modules` = `data-pv-drawn`) and the kWp the economics
+  prices. The bounding-box path is deleted.
+
+**Open, in priority order:**
+
+1. **A person has not yet looked at the PV modules on the pages.** Tests hold
+   (legend = drawn on all four), but the apartment's deck places 10 modules on
+   33 of 130 m² usable, which is low — six rooflight holes grown by 0.5 m plus
+   a 1 m setback and a 1.77 m rack pitch on a 3.9 m deck. Open
+   `/models/schependomlaan`, choose 태양광, and compare with
+   `/reference-buildings/schependomlaan/roof-planes-qa.svg`.
+2. The per-plane utilisation table in the model page's retrofit panel (the
+   legend carries only the summary line).
+3. Obstructions for roof-mounted plant and parapets (openings are done).
+4. `pv-layout.ts` `toPolygon` takes the LARGEST outer of a multipolygon plane
+   and drops the rest — understates usable roof; a per-piece layout removes it.
+5. Follow-ups outside these briefs: the engine cannot reproduce the HRV
+   table's saving (`mechanicalAch` 0 while type is natural); LED/PV never move
+   kWh or grade (`delivered-from-demand.ts`); a sourced Nijmegen climate.
+
+**Traps found today, all recorded where they bit:** rebuilding artifacts
+churns CRLF on every JSON (check `git diff --ignore-cr-at-eol`, restore the
+untouched ones; byte-identity is checked against the git blob);
+`calculateSolarPotential`'s kWp is the SIXTH argument; outline rings on disk
+are tagged and read by tag; a plane's outline can be a multipolygon; a
+python/bash heredoc containing template literals fails to parse in this
+shell — write the script to a file; any change to a rendered string or
+number runs `e2e/reference-buildings.spec.ts`, the only check that reads the
+page; equal numbers on screen are not evidence of a shared source — reconcile
+with a figure computed a different way.
+
+**Fleet:** every session from 2026-09-06 is released or out of context;
+`SESSION-LOCKS.md` says nothing is claimed.
 
 ## Active Systems
 
