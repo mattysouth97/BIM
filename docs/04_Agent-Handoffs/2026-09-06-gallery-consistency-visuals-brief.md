@@ -310,6 +310,68 @@ verification lines you actually ran (with the real exit status), and what
 you looked at on screen. Anything you could not do, say so in the same
 message rather than scaling the lane down silently.
 
+## Lane 3A step 1 has landed — `retrofit-delta.ts`, the signature 3B builds on
+
+Posted by **bim-24**, as the brief asks, the moment it compiled.
+
+```ts
+import { computeRetrofitDelta } from "@/lib/retrofit/retrofit-delta";
+
+computeRetrofitDelta({
+  materials,   // MaterialProperties
+  recipe,      // BuildingRecipe
+  climate,     // ClimateData — getClimateData(sigunguCd)
+  measureIds,  // Iterable<string> — the knapsack's selectedMeasureIds
+  region?,     // solar irradiance key, default "seoul"
+}): RetrofitDelta | null   // null when intensityFloorAreaSqm <= 0
+```
+
+- `before` / `after`: `RetrofitRun = { materials, heatLoss, demand, sitePerSqm,
+  primaryPerSqm, grade, co2, totalHCoefficient }` — two real engine runs on one
+  recipe and one climate; `after` runs on
+  `applyPhaseToMaterials(materials, "retrofit", ids, ctx)`.
+- `elements[]`: one row per heat-loss element (Walls / Windows / Roof / Ground
+  Floor / Infiltration-Ventilation) with `before|after` × `Area, U,
+  HCoefficient` and `deltaHCoefficient` in W/K.
+- `measures[]`: `{ measureId, changes[], pricedByEngine, soloDelta, unrecognized }`.
+- `changes[]` (also flattened at the top level): `{ measureId, field, labelKo,
+  labelEn, before, after, unit?, summaryKo, summaryEn, pricedByEngine,
+  unpricedReasonKo?, unpricedReasonEn? }`. `summaryKo` reads
+  `외벽 U 1.10 → 0.15 W/m²·K` and its test parses it back to the numbers.
+- `deltaSitePerSqm`, `deltaPrimaryPerSqm`, `deltaCo2PerSqm`,
+  `deltaTotalHCoefficient` (all after − before, so negative is an improvement),
+  `isZeroDelta`, `totalFloorAreaSqm`.
+
+Three facts anyone rendering this must not get wrong:
+
+1. **`pricedByEngine` is measured, not declared.** Each id is applied ALONE and
+   the engine re-run; the flag is true only when an output actually moved. LED
+   and PV come back **false** — `deliveredFromDemand` fixes lighting at 15 % of
+   total and hard-codes `renewable: 0`, so neither reaches kWh/m² or the grade.
+   They still move NPV and still get a 3D response; the strip renders them as a
+   stated absence carrying `unpricedReason*`, never as a movement.
+2. **Areas are the engine's own**, straight off `calculateHeatLoss` →
+   `envelopeQuantities(recipe)`. Nothing here re-derives an area, which is the
+   same rule Lane 2 is applying to the measure sizing.
+3. **`soloDelta` does not sum to the whole-selection delta.** Measures interact
+   (boiler efficiency divides the envelope saving; HVAC sees the post-envelope
+   residual). Use it to attribute one measure, never to add up.
+
+`applyPhaseToMaterials` gained a 4th argument, `context?: { roofAreaSqm?, region? }`,
+and now covers plant, lighting and PV as well as the envelope — the id→field
+table is at the top of `apply-phase.ts`, and every target is the same number the
+matching measure generator prices its saving against. PV is sized by the same
+`calculateSolarPotential` the economics used, so `after.materials.renewable
+.solarPV.capacity` IS the kWp on the measure card. Without `roofAreaSqm` the
+renewable block is left untouched: an unsized array is not a fact.
+
+One disagreement found rather than smoothed, and pinned by a test: an HRV on a
+**naturally**-ventilated building makes the modelled air-exchange loss RISE. The
+engine ignores `airflowRate` while the type is `natural`, so switching to
+heat-recovery makes it read that flow for the first time. The measure's own
+15 %-saving assumption is not derived from this engine, and the two disagree.
+`retrofit-delta` reports the rise as a rise.
+
 ## Outcome
 
 _(filled in by main-coordinator as lanes land)_
