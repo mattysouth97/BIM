@@ -12,6 +12,7 @@ import {
   ReferenceEnergyPanel,
   useSeedReferenceEnergy,
 } from "./reference-energy";
+import { ReferenceRetrofitPanel } from "./reference-retrofit";
 
 export const FABRIC_LAYER = "fabric";
 
@@ -225,9 +226,24 @@ export function ReferenceBuildingWorkspace({
                   onToggle={() => setFlowVisible((on) => !on)}
                 />
               ) : (
-                <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {isKo ? "흐름 방향" : "Flow direction"}
-                </p>
+                <>
+                  <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {isKo ? "흐름 방향" : "Flow direction"}
+                  </p>
+                  {/* A heading with nothing under it is an absence rendered as
+                      a blank. The generator's own sentence about WHY says so
+                      in the services note, which a reader has no reason to
+                      connect to this heading — so the reason is stated here,
+                      where the question is asked. */}
+                  <p
+                    className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground"
+                    data-testid="reference-model-flow-absent"
+                  >
+                    {isKo
+                      ? `이 건물의 서비스 모델 ${services.length}개는 모두 배분 포트를 선언하지 않습니다. 방향을 읽을 그래프가 없으므로 애니메이션을 제공하지 않습니다 — 표시할 것이 없다는 사실 자체가 이 파일에 대한 정보입니다.`
+                      : `All ${services.length} of this building's service models declare no distribution ports. There is no port graph to read a direction from, so no animation is offered — that there is nothing to show is itself a fact about the file.`}
+                  </p>
+                </>
               )}
               {activeServices.map((layer) => (
                 <FlowNote
@@ -263,8 +279,16 @@ export function ReferenceBuildingWorkspace({
           </section>
         ) : null}
 
+        {/* 에너지 평가 / 에너지 프로파일 / 리트로핏, in that order, on every
+            model page. The retrofit section was invisible on desktop until
+            2026-09-06: `SelectedMeasuresStrip` in the frame returns null
+            unless the viewport is narrow, so a laptop reader got four numbers
+            in the top rail and nothing under them. */}
         {energy ? (
-          <ReferenceEnergyPanel energy={energy} manifest={manifest} locale={locale} />
+          <>
+            <ReferenceEnergyPanel energy={energy} manifest={manifest} locale={locale} />
+            <ReferenceRetrofitPanel energy={energy} locale={locale} />
+          </>
         ) : null}
 
         <dl className="mt-6">

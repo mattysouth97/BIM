@@ -23,7 +23,10 @@
 // agree — and hands the result to the scenario hook.
 
 import { useEffect, useMemo } from "react";
-import { useRetrofitScenario } from "@/hooks/use-retrofit-scenario";
+import {
+  useRetrofitScenario,
+  engineEnvelopeAreasFrom,
+} from "@/hooks/use-retrofit-scenario";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useScenarioStore } from "@/store/scenario-store";
@@ -121,28 +124,15 @@ export function EnergyInstrumentHud({
   // off the heat-loss elements rather than re-derived. `footprintArea` used
   // to stand in for both the roof and the ground slab, which on the apartment
   // is a 36 % understatement of the roof — it has a pitched tiled roof of
-  // 542.96 m² over a 345.81 m² footprint.
-  const engineEnvelopeAreas = useMemo(() => {
-    if (!metrics) return undefined;
-    const area = (name: string) =>
-      metrics.heatLoss.elements.find((e) => e.element === name)?.area;
-    const walls = area("Walls");
-    const windows = area("Windows");
-    const roof = area("Roof");
-    const ground = area("Ground Floor");
-    if (walls == null || windows == null || roof == null || ground == null) {
-      return undefined;
-    }
-    return {
-      // The engine's wall element is `gross − aperture` and the doors are
-      // inside it (A-DOORS). Insulation does not go on a door, so a STATED
-      // door area comes off — and where none is stated nothing is guessed.
-      opaqueWallSqm: Math.max(0, walls - (exteriorDoorSqm ?? 0)),
-      windowSqm: windows,
-      roofSqm: roof,
-      groundFloorSqm: ground,
-    };
-  }, [metrics, exteriorDoorSqm]);
+  // 542.96 m² over a 345.81 m² footprint. The derivation is shared with the
+  // side panel's retrofit list so the two cannot drift.
+  const engineEnvelopeAreas = useMemo(
+    () =>
+      metrics
+        ? engineEnvelopeAreasFrom(metrics.heatLoss.elements, exteriorDoorSqm ?? 0)
+        : undefined,
+    [metrics, exteriorDoorSqm],
+  );
 
   const scenario = useRetrofitScenario({
     buildingPk,

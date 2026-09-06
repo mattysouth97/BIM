@@ -164,6 +164,38 @@ export function usefulDemandFromEngine(
 }
 
 /**
+ * Read the engine's own element areas off a heat-loss result.
+ *
+ * Exported because two surfaces need them and must not each derive their own:
+ * the instrument frame over the canvas and the retrofit list in the side
+ * panel of `/models/[id]`. Returns `undefined` rather than a partial object
+ * when any element is missing, so the hook falls back to its documented
+ * derivation instead of being handed a hole.
+ */
+export function engineEnvelopeAreasFrom(
+  elements: readonly { element: string; area: number }[],
+  exteriorDoorSqm = 0,
+): RetrofitScenarioInputs["engineEnvelopeAreas"] {
+  const area = (name: string) => elements.find((e) => e.element === name)?.area;
+  const walls = area("Walls");
+  const windows = area("Windows");
+  const roof = area("Roof");
+  const ground = area("Ground Floor");
+  if (walls == null || windows == null || roof == null || ground == null) {
+    return undefined;
+  }
+  return {
+    // The engine's wall element is `gross − aperture` with the doors inside
+    // it (A-DOORS). Insulation does not go on a door, so a STATED door area
+    // comes off — and where none is stated nothing is guessed.
+    opaqueWallSqm: Math.max(0, walls - exteriorDoorSqm),
+    windowSqm: windows,
+    roofSqm: roof,
+    groundFloorSqm: ground,
+  };
+}
+
+/**
  * Aggregate per-orientation walls into a single (uValue, area) pair using
  * area-weighted average uValue.
  */
