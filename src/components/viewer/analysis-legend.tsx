@@ -140,7 +140,7 @@ export function AnalysisLegend({
                         key={row.orientation}
                         className="flex items-center justify-between text-[10px]"
                       >
-                        <span className="text-muted-foreground">{row.orientation}</span>
+                        <span className="text-muted-foreground">{row.orientationLabel ?? row.orientation}</span>
                         <span className="tabular-nums">
                           {pct(row.wwr)}
                           <span className="ml-1 text-muted-foreground">

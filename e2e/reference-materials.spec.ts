@@ -22,13 +22,13 @@ for (const building of CASES) {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await seedSeenTours(page);
-    await page.goto(`/models/${building.id}`);
+    await page.goto(`/models/${building.id}#materials`);
     await page.bringToFront();
     const viewer = page.getByTestId("reference-model-viewer");
     await expect(viewer).toHaveAttribute("data-model-loaded", "true", { timeout: 45_000 });
     const section = page.getByTestId("reference-model-constructions");
     await section.scrollIntoViewIfNeeded();
-    await expect(section).toContainText("열전도율 λ와 공기층 R은 가정");
+    await expect(section).toContainText("열 물성은 층별로 원본·가정을 구분합니다");
     const cards = section.getByTestId("reference-material-construction");
     await expect(cards).toHaveCount(building.cards);
 
@@ -93,7 +93,7 @@ for (const building of CASES) {
 
 test("unidentified FZK material and the Dutch 70mm name do not become invented properties", async ({ page }) => {
   await seedSeenTours(page);
-  await page.goto("/models/fzk-haus");
+  await page.goto("/models/fzk-haus#materials");
   const unknown = page.locator('[data-construction-id="assembly-solid-397409098-0-2"]');
   await unknown.getByTestId("material-construction-toggle").click();
   const detail = unknown.getByTestId("material-layer-detail");
@@ -101,7 +101,7 @@ test("unidentified FZK material and the Dutch 70mm name do not become invented p
   await expect(detail).toContainText("물성 미확인");
   await expect(detail).toContainText("R — m²K/W");
   await expect(detail.getByTestId("material-resistance-share")).toHaveCount(0);
-  await page.goto("/models/schependomlaan");
+  await page.goto("/models/schependomlaan#materials");
   const wool = page.locator('[data-construction-id="assembly-ifc-isolatie-110mm-glaswol"]');
   await wool.getByTestId("material-construction-toggle").click();
   await expect(wool.getByTestId("material-layer-detail")).toContainText("99 Isolatie - Glaswol 70mm");

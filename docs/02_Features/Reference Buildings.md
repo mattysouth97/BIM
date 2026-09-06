@@ -28,23 +28,23 @@ list, and a building missing from it does not route.
 
 ## The information contract
 
-Every `/models/[id]` page renders **the same sections in the same order with
-the same row set**, and a row the building's file cannot supply is rendered as
-a row that says so. Omission is how the two pages came to differ in the first
-place: one had a warning, the other had silence, and silence read as "fine".
+Every `/models/[id]` uses the same four information categories. Missing source
+data is stated explicitly in the relevant category; silence is not confirmation.
 
-Order down the side panel:
+| Category | Content | URL fragment |
+|---|---|---|
+| Overview | Core quantities, energy profile, bias, retrofit | `#overview` |
+| Materials | Source layer stacks, thermal basis, illustrative samples | `#materials` |
+| Layers | Fabric/details/services, MEP coverage, analysis overlays and flow | `#layers` |
+| Data | Dataset exports, detailed quantities, source notes and attribution | `#data` |
 
-| # | Section | `data-testid` | Source |
-|---|---|---|---|
-| 1 | Title, name, summary | — | `manifest.name`, `manifest.summary` |
-| 2 | 디지털 트윈 레이어 | `reference-model-layers` | `manifest.model`, `manifest.serviceLayers` |
-| 3 | 흐름 방향 | `reference-model-flow-absent` when no layer states ports | `serviceLayers[].flow` |
-| 4 | 외피 구성 · U-값 | `reference-model-constructions` | `constructions.ts`, solved from the model's own `IfcMaterialLayerSet` |
-| 5 | **에너지 프로파일** | `reference-model-energy` | `ReferenceEnergyPanel` |
-| 6 | **리트로핏** | `reference-model-retrofit` | `ReferenceRetrofitPanel` |
-| 7 | 연면적 / 외벽(순) / 지상층 / 구성 | — | `manifest.areas`, `manifest.counts` |
-| 8 | Location note, attribution | `reference-model-attribution` | `manifest.site`, `manifest.licence` |
+Tab content stays mounted, preserving selections and independent scroll.
+Explicit changes create browser history entries; Back and keyboard navigation
+work. Camera controls and category navigation stay outside the scrolling body.
+Global Korean/English preference controls the sidebar as well as the energy HUD.
+On mobile the model and information area share the viewport; reference-model
+energy rails initially collapse below 768px and retain later user choices.
+The ordinary building twin keeps its existing expanded defaults.
 
 Over the canvas, the frame (`EnergyInstrumentHud`, shared verbatim with
 `/building/[id]`) carries **에너지 평가**: the scenario rail, the 그린리모델링
@@ -57,7 +57,13 @@ illustrative samples, actual IFC names and per-layer thermal assumptions with
 unknown values explicitly unresolved. Base-file exclusions are labelled as
 applying to the base fabric file, since detail and service layers are separate.
 See [[Reference Architectural Details]], [[Reference MEP Coverage]] and
-[[Building Energy Datasets]]. Categorized sidebar navigation is the next lane.
+[[Building Energy Datasets]].
+
+The camera now updates near/far clipping against the model bounds on orbit,
+pan and zoom. The old `distance/800` near plane wasted depth precision at
+building scale: a 0.1mm gap fell below one 24-bit depth increment in tested
+views. The adaptive range gives over 100 times finer separation while keeping
+measured bounds visible. Source triangles and contact faces are unchanged.
 
 ### Rows that state an absence
 

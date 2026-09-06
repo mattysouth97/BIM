@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useAppStore } from "@/store/app-store";
 
 import type { ReferenceBuildingId, ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
 import type { SolvedConstruction } from "@/lib/reference-buildings/constructions";
@@ -10,6 +11,7 @@ import { ReferenceModelViewer } from "./reference-model-viewer";
 import {
   ReferenceEnergyFrame,
   ReferenceEnergyPanel,
+  ReferenceAnalysisOverlays,
   useSeedReferenceEnergy,
 } from "./reference-energy";
 import { ReferenceRetrofitPanel } from "./reference-retrofit";
@@ -19,6 +21,7 @@ import { ReferenceArchitecturalDetails, type ArchitecturalDetailsStatus } from "
 import { clearArchitecturalDetails } from "./reference-detail-geometry";
 import { ReferenceMepCoverage } from "./reference-mep-coverage";
 import { ReferenceMaterialDetails } from "./reference-material-details";
+import { ReferenceInfoNavigation, useReferenceInfoSection } from "./reference-info-navigation";
 
 export const FABRIC_LAYER = "fabric";
 
@@ -53,7 +56,7 @@ export function ReferenceBuildingWorkspace({
   baseUrl,
   constructions,
   energy,
-  locale,
+  locale: fallbackLocale,
 }: {
   manifest: ReferenceBuildingManifest;
   modelUrl: string;
@@ -68,7 +71,9 @@ export function ReferenceBuildingWorkspace({
   energy: ReferenceBuildingEnergyInputs | null;
   locale: "ko" | "en";
 }) {
+  const locale = useAppStore((state) => state.language) ?? fallbackLocale;
   const isKo = locale === "ko";
+  const [activeSection, setActiveSection] = useReferenceInfoSection();
   useSeedReferenceEnergy(energy);
   const [active, setActive] = useState<ReadonlySet<string>>(
     () => new Set([FABRIC_LAYER, ...(manifest.architecturalDetails ? [manifest.architecturalDetails.id] : [])]),
@@ -96,12 +101,12 @@ export function ReferenceBuildingWorkspace({
     bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
   return (
-    // `h-dvh` minus the app header's own `h-12`, and a div rather than a
+    // `h-dvh` minus the app header's h-12 row and one-pixel border. A div rather than a
     // second <main>: the root layout already provides one, and nesting them
     // both broke the landmark and pushed this panel's heading up behind the
     // header bar where it was clipped.
-    <div className="mx-auto flex h-[calc(100dvh-3rem)] max-w-[92rem] flex-col gap-4 px-4 py-4 lg:flex-row">
-      <section className="relative min-h-[24rem] flex-1 overflow-hidden rounded-[8px] border border-border bg-card shadow-xs">
+    <div className="mx-auto grid h-[calc(100dvh-3rem-1px)] max-w-[92rem] grid-rows-[minmax(15rem,42%)_minmax(0,1fr)] gap-3 p-3 lg:flex lg:gap-4 lg:p-4" data-testid="reference-workspace">
+      <section className="relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-border bg-card shadow-xs" data-testid="reference-model-canvas">
         <ReferenceModelViewer
           modelUrl={modelUrl}
           baseUrl={baseUrl}
@@ -132,20 +137,17 @@ export function ReferenceBuildingWorkspace({
       {/* Scrolls on its own so a short window never clips what is written
           here. The attribution in particular is a CC BY condition, and a
           licence term that only appears on a tall monitor is not met. */}
-      <aside className="w-full shrink-0 overflow-y-auto lg:w-[23rem]">
+      <aside className="flex min-h-0 w-full shrink-0 flex-col lg:w-[24rem]" aria-label={isKo ? "건물 정보" : "Building information"}>
+        <div className="mb-2 flex shrink-0 items-start gap-3">
         <Link
           href="/"
-          className="font-mono text-[11px] text-muted-foreground hover:text-foreground"
+          aria-label={isKo ? "모델 갤러리로 돌아가기" : "Back to model gallery"}
+          className="inline-flex min-h-8 items-center rounded-sm font-mono text-[11px] text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
         >
           ← BIMFIT
         </Link>
-        <h1 className="mt-4 text-2xl text-foreground">{manifest.name.ko}</h1>
-        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-          {manifest.name.en}
-        </p>
-        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-          {manifest.summary.ko}
-        </p>
+        <h1 className="min-w-0 flex-1 pt-1 text-base font-medium leading-snug text-foreground lg:text-lg">{isKo ? manifest.name.ko : manifest.name.en}</h1>
+        </div>
         <ReferenceViewControls
           request={viewRequest}
           onView={(view) => setViewRequest((current) => ({ view, revision: current.revision + 1 }))}
@@ -153,14 +155,32 @@ export function ReferenceBuildingWorkspace({
           onInspection={() => setInspection((current) => !current)}
           isKo={isKo}
         />
-        <div className="mt-4">
-          <ReferenceDatasetDownloads buildingId={manifest.id as ReferenceBuildingId} locale={locale} />
-        </div>
-
-        <section className="mt-6" data-testid="reference-model-layers">
-          <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-            {isKo ? "디지털 트윈 레이어" : "Model layers"}
-          </p>
+        <ReferenceInfoNavigation activeSection={activeSection} onSectionChange={setActiveSection} isKo={isKo}>
+        {{
+          overview: <>
+            <h2 className="text-sm font-medium text-foreground">{isKo ? "건물과 에너지" : "Building & energy"}</h2>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{isKo ? manifest.summary.ko : manifest.summary.en}</p>
+            <dl className="mt-3 grid grid-cols-2 gap-2">
+              <div className="rounded-md border border-border p-3">
+                <dt className="text-xs text-muted-foreground">{isKo ? "원본 연면적" : "Source floor area"}</dt>
+                <dd className="mt-1 font-mono text-base">{fmt(manifest.areas.totalFloorAreaSqm)} <span className="text-xs">m²</span></dd>
+              </div>
+              <div className="rounded-md border border-border p-3">
+                <dt className="text-xs text-muted-foreground">{isKo ? "공간이 기록된 층" : "Storeys with spaces"}</dt>
+                <dd className="mt-1 font-mono text-base">{manifest.counts.storeys}</dd>
+              </div>
+            </dl>
+            {energy ? <>
+              <ReferenceEnergyPanel energy={energy} manifest={manifest} locale={locale} />
+              <ReferenceRetrofitPanel energy={energy} locale={locale} />
+            </> : <p className="mt-4 text-xs text-muted-foreground">{isKo ? "이 모델의 에너지 입력은 아직 준비되지 않았습니다." : "Energy inputs are not yet available for this model."}</p>}
+          </>,
+          materials: <div className="[&>section]:mt-0"><ReferenceMaterialDetails manifest={manifest} constructions={constructions} isKo={isKo} /></div>,
+          layers: <>
+        <section data-testid="reference-model-layers">
+          <h2 className="text-sm font-medium text-foreground">
+            {isKo ? "모델 레이어" : "Model layers"}
+          </h2>
           <div className="mt-2">
             <LayerRow
               id={FABRIC_LAYER}
@@ -232,20 +252,18 @@ export function ReferenceBuildingWorkspace({
               were packed, when it wrote one. The generic line below it
               claimed every component was the model's own geometry, which
               stopped being true the day a layer shipped as boxes. */}
-          <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground">
-            {manifest.model.serviceNote ??
-              (isKo
-                ? "모든 부재가 모델의 실제 형상입니다. 반복되는 형상은 한 번만 담고 배치 정보로 놓았습니다. 레이어는 켤 때 내려받습니다."
-                : "Every component is the model's own geometry. A repeated shape is stored once and placed many times. Layers download when switched on.")}
-          </p>
+          <details className="mt-3 rounded-md border border-border p-3">
+            <summary className="cursor-pointer text-xs text-foreground">{isKo ? "레이어 범위와 생략 항목" : "Layer scope & omissions"}</summary>
+            {manifest.model.serviceNote ? <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{manifest.model.serviceNote}</p> : null}
           {/* What the fabric GLB leaves out, in the generator's own words.
               The manifest has carried this sentence since the first build and
               nothing displayed it, so the one place a reader could learn that
               the structural frame is absent was a file they never open. */}
-          <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
             <span className="text-foreground/70">{isKo ? "기본 외피 파일: " : "Base fabric file: "}</span>
             {manifest.model.note}
           </p>
+          </details>
 
           {/* Flow is a property of the SOURCE, not a decoration we add. The
               toggle sits with the layers, but what each discipline can say
@@ -286,8 +304,8 @@ export function ReferenceBuildingWorkspace({
                     data-testid="reference-model-flow-absent"
                   >
                     {isKo
-                      ? `이 건물의 서비스 모델 ${services.length}개는 모두 배분 포트를 선언하지 않습니다. 방향을 읽을 그래프가 없으므로 애니메이션을 제공하지 않습니다 — 표시할 것이 없다는 사실 자체가 이 파일에 대한 정보입니다.`
-                      : `All ${services.length} of this building's service models declare no distribution ports. There is no port graph to read a direction from, so no animation is offered — that there is nothing to show is itself a fact about the file.`}
+                      ? `서비스 모델 ${services.length}개 모두 배분 포트가 명시되지 않아 흐름 방향을 표시할 수 없습니다.`
+                      : `None of the ${services.length} service models declares distribution ports, so flow direction is unavailable.`}
                   </p>
                 </>
               )}
@@ -303,27 +321,18 @@ export function ReferenceBuildingWorkspace({
           ) : null}
         </section>
 
-        {/* What the envelope is made of, and what that makes it worth
-            thermally. Worst first: the standing-seam roof at U 3.45 sits
-            beside an EPDM roof at 0.317, and an alphabetical list would bury
-            the worst surface in the building under the best one. */}
-        <ReferenceMaterialDetails manifest={manifest} constructions={constructions} isKo={isKo} />
-
-        {/* 에너지 평가 / 에너지 프로파일 / 리트로핏, in that order, on every
-            model page. The retrofit section was invisible on desktop until
-            2026-09-06: `SelectedMeasuresStrip` in the frame returns null
-            unless the viewport is narrow, so a laptop reader got four numbers
-            in the top rail and nothing under them. */}
-        {energy ? (
-          <>
-            <ReferenceEnergyPanel energy={energy} manifest={manifest} locale={locale} />
-            <ReferenceRetrofitPanel energy={energy} locale={locale} />
-          </>
-        ) : null}
-
-        <dl className="mt-6">
+        {energy ? <ReferenceAnalysisOverlays locale={locale} /> : null}
+          </>,
+          data: <>
+        <h2 className="text-sm font-medium text-foreground">{isKo ? "원본 데이터" : "Source data"}</h2>
+        <div className="mt-3">
+          <ReferenceDatasetDownloads buildingId={manifest.id as ReferenceBuildingId} locale={locale} />
+        </div>
+        <details className="mt-4 rounded-md border border-border p-3">
+          <summary className="cursor-pointer text-xs font-medium text-foreground">{isKo ? "모델 수량과 산출 근거" : "Model quantities & evidence"}</summary>
+        <dl className="mt-3">
           <Stated
-            label="연면적"
+            label={isKo ? "연면적" : "Floor area"}
             value={`${fmt(manifest.areas.totalFloorAreaSqm)} m²`}
             // Written from the counts, not from a sentence: this line read
             // "GSA BIM Area, less 0 m² of ROOF / OPEN TO BELOW / MECH. YARD"
@@ -339,7 +348,7 @@ export function ReferenceBuildingWorkspace({
             }
           />
           <Stated
-            label="외벽 (순)"
+            label={isKo ? "외벽 (순)" : "Net exterior wall"}
             value={`${fmt(manifest.areas.exteriorWallNetSqm)} m²`}
             read={manifest.areas.exteriorWallNote ?? `${manifest.counts.exteriorWalls} walls · extracted net area of selected exterior walls`}
           />
@@ -349,11 +358,12 @@ export function ReferenceBuildingWorkspace({
             read="IfcBuildingStorey referenced by at least one IfcSpace · includes below-grade storeys"
           />
           <Stated
-            label="구성 (레이어)"
+            label={isKo ? "재료층 구성" : "Material assemblies"}
             value={`${manifest.counts.assemblies}`}
             read="IfcMaterialLayerSet · layer names and thicknesses"
           />
         </dl>
+        </details>
 
         {/* The model states no location, and saying so is the point. */}
         {manifest.site.locationIsAuthoringDefault ? (
@@ -362,16 +372,22 @@ export function ReferenceBuildingWorkspace({
           </p>
         ) : null}
 
+        <section className="mt-4 border-t border-border pt-4">
+        <h3 className="text-xs font-medium">{isKo ? "출처와 라이선스" : "Source & licence"}</h3>
         <p
-          className="mt-4 pb-6 font-mono text-[10px] leading-relaxed break-words text-muted-foreground"
+          className="mt-2 text-xs leading-relaxed break-words text-muted-foreground"
           data-testid="reference-model-attribution"
         >
           {manifest.attribution
             ? `${manifest.licence} · ${manifest.attribution}`
             : locale === "ko"
-              ? `${manifest.licence} · 저작권자가 확인되지 않아 표기를 비워 둡니다. 틀린 이름을 적는 것보다 낫습니다.`
-              : `${manifest.licence} · the rights holder is not established, so no credit is given. A wrong name would be worse than none.`}
+              ? `${manifest.licence} · 저작권자 미확인`
+              : `${manifest.licence} · rights holder unconfirmed`}
         </p>
+        </section>
+          </>,
+        }}
+        </ReferenceInfoNavigation>
       </aside>
     </div>
   );
@@ -505,7 +521,7 @@ function LayerRow({
       onClick={() => onToggle(id)}
       aria-pressed={on}
       data-testid={`reference-model-layer-${id}`}
-      className="flex w-full items-start gap-2 rounded-[6px] px-1.5 py-1.5 text-left transition-colors hover:bg-muted/60"
+      className="flex min-h-11 w-full items-start gap-2 rounded-md px-2 py-2 text-left transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-ring"
     >
       <span
         aria-hidden
@@ -517,11 +533,11 @@ function LayerRow({
       />
       <span className="min-w-0">
         <span
-          className={`block truncate text-[11px] ${on ? "text-foreground" : "text-muted-foreground"}`}
+          className={`block text-xs ${on ? "text-foreground" : "text-muted-foreground"}`}
         >
           {label}
         </span>
-        <span className="block truncate font-mono text-[9px] text-muted-foreground">
+        <span className="mt-0.5 block font-mono text-[10px] text-muted-foreground">
           {detail}
         </span>
       </span>

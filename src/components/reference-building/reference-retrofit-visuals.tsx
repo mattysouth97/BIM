@@ -689,7 +689,7 @@ export function RetrofitLegend({
     <div
       data-testid="reference-retrofit-legend"
       data-pv-modules={visual.solarInstalled && pv ? pv.modules : undefined}
-      className="pointer-events-none absolute bottom-3 right-3 z-20 max-w-[19rem] rounded-md border border-emerald-500/40 bg-emerald-950/80 px-2.5 py-1.5 font-mono text-[10px] leading-relaxed text-emerald-200 shadow-sm backdrop-blur"
+      className="pointer-events-none absolute bottom-12 right-3 z-20 max-w-[19rem] rounded-md border border-emerald-500/40 bg-emerald-950/80 px-2.5 py-1.5 font-mono text-[10px] leading-relaxed text-emerald-200 shadow-sm backdrop-blur"
     >
       {lines.map((line) => (
         <p key={line.key}>{isKo ? line.ko : line.en}</p>

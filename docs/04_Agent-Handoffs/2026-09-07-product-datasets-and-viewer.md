@@ -123,7 +123,35 @@ detail-on/off roof screenshots inspected; geometry and PV remain aligned.
 Browser integration: 63/69 passed initially; five old row-count expectations
 omitted the new details control and one test clicked before hydration. Counts
 now include source details and the gated-load test waits for client readiness;
-all six reruns passed. Clean production deployment is pending.
+all six reruns passed. Committed/pushed as `347636d`; clean production READY,
+health SHA and `icn1` verified on 2026-09-07 00:55 KST. Twelve live smoke tests
+passed for source detail, material cards and dataset downloads.
 
 Next work: source-bound material expression on the model, concise categorized
 model navigation, and additional licensed public TalTech/Klassiqua models.
+
+## Milestone 4 — focused information and thin-layer stability
+
+Four mounted categories organize model exploration: Overview, Materials,
+Layers and Data. Core energy/material facts remain prominent; source detail
+and repeated process explanations move into the relevant category/disclosure.
+Keyboard navigation, hash links, Back, preserved state/scroll and actual global
+KO/EN preference work. Mobile keeps the model visible and initially collapses
+its energy rails without resetting later user choices.
+
+The thin-layer shimmer report was checked against the source GLBs. Most exact
+core/detail coincidences are opposing contact faces; deleting them is not
+justified. The camera's old near/far range cannot distinguish 0.1mm layers at
+the tested viewing distances. A model-relative range now updates with camera
+movement and improves numerical separation over 100-fold in those cases.
+Clipping tests keep all measured corners visible during exterior orbit/zoom;
+inside inspection retains a 2cm near plane. Five real model orbit/zoom browser
+checks pass with no page errors, and Clinic/apartment/FZK screenshots inspected.
+
+Validation so far: 169 UX unit tests, 36 material/source-property tests and
+12 camera/shadow tests; TypeScript clean, ESLint 0 errors/6 existing warnings.
+UX browser run 66/71 initially passed; five assertions still expected the old
+blanket conductivity assumption label. All six material tests passed after
+checking the truthful per-layer source/assumption wording, and final five
+navigation checks passed. Full unit run: 5,343 passed, 4 existing skips
+(443 passed files, 1 skipped). Clean production deployment pending.

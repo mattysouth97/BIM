@@ -73,6 +73,8 @@ export type ReferenceBuildingEnergyInputs = Readonly<{
   }>;
   /** Measured opaque wall by compass sector, m². Sums to the net wall. */
   wallByOrientationSqm: Readonly<Record<Orientation, number>>;
+  /** Source compass captions when four engine slots represent other sectors. */
+  orientationLabels?: Readonly<Partial<Record<Orientation, string>>>;
   /** True when the model states no true north and the split uses project north. */
   northAssumed: boolean;
   /**

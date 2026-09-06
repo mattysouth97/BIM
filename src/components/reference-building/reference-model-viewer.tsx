@@ -2,10 +2,10 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, OrbitControls, useGLTF } from "@react-three/drei";
 import { SceneEnvironment } from "@/components/viewer/scene-environment";
-import { referenceCameraPose, setReferenceShadows } from "@/lib/rendering/reference-scene";
+import { referenceCameraPose, referenceDepthRange, setReferenceShadows } from "@/lib/rendering/reference-scene";
 import type { ReferenceViewRequest } from "./reference-view-controls";
 
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
@@ -64,6 +64,22 @@ const XRAY_FACTOR = 0.22;
  */
 const CANVAS_BACKGROUND = "#0d1117";
 const GROUND_COLOUR = "#171c22";
+
+function ModelDepthRange({ radius }: { radius: number }) {
+  const forward = useMemo(() => new THREE.Vector3(), []);
+  useFrame(({ camera, gl }) => {
+    camera.getWorldDirection(forward);
+    const range = referenceDepthRange(radius, -camera.position.dot(forward));
+    if (!gl.domElement.dataset.cameraNear || Math.abs(camera.near - range.near) > 0.0001 || Math.abs(camera.far - range.far) > 0.0001) {
+      camera.near = range.near;
+      camera.far = range.far;
+      camera.updateProjectionMatrix();
+      gl.domElement.dataset.cameraNear = range.near.toString();
+      gl.domElement.dataset.cameraFar = range.far.toString();
+    }
+  });
+  return null;
+}
 
 /**
  * The building itself, and the thing that measures the scene.
@@ -126,8 +142,9 @@ function Fabric({
     };
     const { position, distance } = referenceCameraPose(measured.size, width / Math.max(1, height), camera.fov, viewRequest.view, inspection);
     camera.position.copy(position);
-    camera.near = Math.max(0.1, distance / 800);
-    camera.far = distance * 12;
+    const depth = referenceDepthRange(measured.radius, distance);
+    camera.near = depth.near;
+    camera.far = depth.far;
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
     if (controls) {
@@ -329,6 +346,7 @@ export function ReferenceModelViewer({
       data-inspection={inspection}
       data-details-visible={detailsOn}
       data-fabric-xray={fabricOn && shown.length > 0}
+      data-depth-range="adaptive"
     >
       <Canvas
         shadows
@@ -364,6 +382,7 @@ export function ReferenceModelViewer({
           color="#7fb2e8"
         />
         <SceneEnvironment intensity={0.42} />
+        {offset ? <ModelDepthRange radius={offset.radius} /> : null}
         <Suspense fallback={null}>
           {/* Reflections only, no background — ducts and plant are metal, and
               without an environment they shade as flat grey plastic. The file

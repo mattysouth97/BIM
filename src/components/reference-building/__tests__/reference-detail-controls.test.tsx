@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useAppStore } from "@/store/app-store";
 import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
 import type { ArchitecturalDetailsStatus } from "../reference-architectural-details";
 
@@ -17,14 +18,15 @@ vi.mock("../reference-model-viewer", () => ({
 }));
 vi.mock("../reference-detail-geometry", () => ({ clearArchitecturalDetails: vi.fn() }));
 vi.mock("../reference-energy", () => ({
-  useSeedReferenceEnergy: () => {}, ReferenceEnergyFrame: () => null, ReferenceEnergyPanel: () => null,
+  useSeedReferenceEnergy: () => {}, ReferenceEnergyFrame: () => null, ReferenceEnergyPanel: () => null, ReferenceAnalysisOverlays: () => null,
 }));
 vi.mock("../reference-retrofit", () => ({ ReferenceRetrofitPanel: () => null }));
 
 import { ReferenceBuildingWorkspace } from "../reference-building-workspace";
 import { clearArchitecturalDetails } from "../reference-detail-geometry";
 
-afterEach(() => { cleanup(); vi.clearAllMocks(); });
+beforeEach(() => useAppStore.setState({ language: "en" }));
+afterEach(() => { cleanup(); vi.clearAllMocks(); window.history.replaceState(null, "", "/"); });
 
 const manifest = JSON.parse(readFileSync(join(process.cwd(), "public/reference-buildings/bs-medical-dental-clinic/manifest.json"), "utf8")) as ReferenceBuildingManifest;
 const props = { manifest, modelUrl: "/fabric.glb", baseUrl: "/reference-buildings/bs-medical-dental-clinic", constructions: [], energy: null, locale: "en" as const };
@@ -32,6 +34,7 @@ const props = { manifest, modelUrl: "/fabric.glb", baseUrl: "/reference-building
 describe("source detail controls in the reference workspace", () => {
   it("defaults details on and changes them independently of fabric and source services", () => {
     render(<ReferenceBuildingWorkspace {...props} />);
+    fireEvent.mouseDown(screen.getByTestId("reference-info-tab-layers"), { button: 0, ctrlKey: false });
     const viewer = screen.getByTestId("detail-test-viewer");
     const toggle = screen.getByTestId("reference-model-layer-details");
     expect(toggle.getAttribute("aria-pressed")).toBe("true");
@@ -49,6 +52,7 @@ describe("source detail controls in the reference workspace", () => {
 
   it("retries a failed detail request while keeping the base model and its controls available", () => {
     render(<ReferenceBuildingWorkspace {...props} />);
+    fireEvent.mouseDown(screen.getByTestId("reference-info-tab-layers"), { button: 0, ctrlKey: false });
     fireEvent.click(screen.getByRole("button", { name: "Simulate detail load failure" }));
     expect(screen.getByTestId("reference-details-status").getAttribute("data-status")).toBe("error");
     fireEvent.click(screen.getByRole("button", { name: "Retry loading" }));

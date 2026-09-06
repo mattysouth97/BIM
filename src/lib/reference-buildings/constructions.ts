@@ -1,13 +1,10 @@
 /**
  * A reference building's U-values, solved from its own layer stacks.
  *
- * This module is where the building stops being evidence and starts being an
- * assumption, and the split is deliberate. The manifest carries what the IFC
- * states — layer order, layer names, thicknesses, each citable to an entity.
- * It carries no conductivity, because the file carries none: a coordination
- * model routinely has no `IfcMaterialProperties` at all. So every λ here is a
- * mapping *we* chose, and it is named, sourced and reversible rather than
- * folded into a number.
+ * The manifest carries source layer order, names and thicknesses. Where a
+ * source actually states conductivity with verified units, it takes priority.
+ * Otherwise the per-building mapping is an explicit, reversible assumption.
+ * Source properties and any sourced design conversion retain their citations.
  *
  * That is why this lives in `src/` and not in the build script. Putting a
  * solved U-value into `manifest.json` would file an assumption alongside
@@ -36,6 +33,7 @@ import type { ReferenceBuildingManifest } from "./manifest";
 
 /** How a layer name was resolved to a thermal property. */
 export type LayerBasis =
+  | "source_property"
   /** Resolved to a `GENERIC_MATERIALS` entry, by λ or by a cavity's fixed R. */
   | "generic_material"
   /** The model names the layer but nothing in the library matches it. */
@@ -49,6 +47,8 @@ export type LayerMapping = Readonly<{
   materialId?: string;
   /** Why this mapping and not another. Shown in the assumption ledger. */
   basisNote: string;
+  /** Sourced conversion from declared to design conductivity, where applicable. */
+  sourceConductivityFactor?: Readonly<{ factor: number; ref: string }>;
 }>;
 
 /**
@@ -653,6 +653,14 @@ export const KIT_OFFICE_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze(
   ...["Kalksandstein 2816491304", "Kalksandstein 2774059904"].map((ifcName): LayerMapping => ({ ifcName, basis: "generic_material", materialId: "st-brick", basisNote: "Calcium-silicate masonry: no matching library entry exists. Generic concrete-brick conductivity is an explicit surrogate (A-WALL-CONDUCTIVITY), not a measured property or an exact material identity. Thickness is read from each layer set." })),
 ]);
 
+const KLASSIQUA_DOCUMENTATION = "https://zenodo.org/records/21727160/files/2026-07_Klassiqua_Buero_Archetypen_Dokumentation.pdf";
+export const KLASSIQUA_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
+  ...["Insulation_MineralWool_Lambda0.045_1970", "Insulation_MineralWool_InDryWall_Lambda0.040", "ImpactSoundInsulation_EPS_Lambda0.040", "Insulation_XPS_Lambda0.045_1970"].map((ifcName): LayerMapping => ({
+    ifcName, basis: "source_property", sourceConductivityFactor: { factor: 1.03, ref: `${KLASSIQUA_DOCUMENTATION}#page=11` },
+    basisNote: "Source insulation conductivity is declared lambda D. The source documentation specifies design lambda B = lambda D x 1.03; this layer calculation applies that factor.",
+  })),
+]);
+
 const LAYER_MAPPINGS_BY_BUILDING: Readonly<Record<string, readonly LayerMapping[]>> =
   Object.freeze({
     "bs-medical-dental-clinic": CLINIC_LAYER_MAPPINGS,
@@ -660,6 +668,7 @@ const LAYER_MAPPINGS_BY_BUILDING: Readonly<Record<string, readonly LayerMapping[
     "duplex-apartment": DUPLEX_LAYER_MAPPINGS,
     "fzk-haus": FZK_HAUS_LAYER_MAPPINGS,
     "kit-office": KIT_OFFICE_LAYER_MAPPINGS,
+    "klassiqua-office-1970": KLASSIQUA_LAYER_MAPPINGS,
   });
 
 export function layerMappingsFor(buildingId: string): readonly LayerMapping[] {
@@ -676,10 +685,12 @@ export type SolvedLayer = Readonly<{
   mapping: LayerMapping | null;
   conductivityWPerMK: number | null;
   resistanceM2KPerW: number | null;
+  thermalSource?: Readonly<{ ref: string; declaredConductivityWPerMK: number; designFactor: number; conversionRef?: string }>;
 }>;
 
 export type SolvedConstruction = Readonly<{
   id: string;
+  ref?: string;
   name: string;
   direction: HeatFlowDirection;
   totalThicknessM: number;
@@ -746,6 +757,20 @@ export function solveConstruction(
 
   const layers: SolvedLayer[] = assembly.layers.map((layer) => {
     const mapping = byName.get(layer.name) ?? null;
+    const source = layer.sourceThermalProperties;
+    if (source) {
+      const factor = mapping?.sourceConductivityFactor?.factor ?? 1;
+      if (!(source.conductivityWPerMK > 0) || !Number.isFinite(source.conductivityWPerMK) || !source.ref?.startsWith("ifc://") || !(factor > 0) || !Number.isFinite(factor)) {
+        unresolved.push(`${layer.name} (invalid source conductivity)`);
+        return { ifcName: layer.name, thicknessM: layer.thicknessM, ref: layer.ref, mapping, conductivityWPerMK: null, resistanceM2KPerW: null };
+      }
+      const conductivity = source.conductivityWPerMK * factor;
+      return {
+        ifcName: layer.name, thicknessM: layer.thicknessM, ref: layer.ref, mapping,
+        conductivityWPerMK: conductivity, resistanceM2KPerW: layer.thicknessM / conductivity,
+        thermalSource: { ref: source.ref, declaredConductivityWPerMK: source.conductivityWPerMK, designFactor: factor, conversionRef: mapping?.sourceConductivityFactor?.ref },
+      };
+    }
     // Two ways to be unresolved, and the difference is worth keeping. A name
     // the table does not carry at all is a GAP — nobody has looked. A row
     // with `basis: "unresolved"` is a DECISION: somebody looked, found no
@@ -821,6 +846,7 @@ export function solveConstruction(
   if (unresolved.length > 0) {
     return {
       id: assembly.id,
+      ref: assembly.ref,
       name: assembly.name,
       direction,
       totalThicknessM: assembly.totalThicknessM,
@@ -845,6 +871,7 @@ export function solveConstruction(
 
   return {
     id: assembly.id,
+    ref: assembly.ref,
     name: assembly.name,
     direction,
     totalThicknessM: assembly.totalThicknessM,

@@ -93,6 +93,7 @@ export interface EnergyInstrumentHudProps {
    * sits beside it here rather than being wedged inside it.
    */
   gradeBasis?: string;
+  collapsePanelsOnMobile?: boolean;
 }
 
 export function EnergyInstrumentHud({
@@ -104,6 +105,7 @@ export function EnergyInstrumentHud({
   exteriorDoorSqm,
   notice,
   gradeBasis,
+  collapsePanelsOnMobile,
 }: EnergyInstrumentHudProps) {
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
   const setCapexBudget = useScenarioStore((s) => s.setCapexBudget);
@@ -197,6 +199,7 @@ export function EnergyInstrumentHud({
 
   return (
     <TwinInstrumentFrame
+      collapsePanelsOnMobile={collapsePanelsOnMobile}
       top={
         <section className="overflow-hidden rounded-lg border border-border bg-card/95 shadow-sm backdrop-blur-md">
           {/* The rail answers for the CHOSEN work, not the optimum — the

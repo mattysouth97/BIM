@@ -237,13 +237,35 @@ export type ReferenceBuildingManifest = Readonly<{
   spacesFile?: string;
   /** Sibling file with one row per IfcWindow, IfcDoor and IfcCurtainWall — see `ReferenceBuildingOpening`. */
   openingsFile?: string;
-  /**
-   * Layer stacks as the model states them, outside-in.
-   *
-   * Names and thicknesses only, because the file states nothing else — no
-   * conductivity, no U-value. Solving these into U-values is the job of
-   * `constructions.ts`, deliberately outside this manifest: every λ is an
-   * assumption, and this document reports only what the model says.
+  /** Alternate fabric grouped by explicit source material association. */
+  materialFabric?: Readonly<{
+    file: string;
+    byteLength: number;
+    sha256: string;
+    indexFile: string;
+    indexSha256: string;
+    elements: number;
+    triangleCount: number;
+    placedTriangleCount: number;
+    drawCalls: number;
+    appearanceBasis: string;
+    bindings: readonly Readonly<{
+      key: string;
+      group: string;
+      sourceRole: string;
+      status: "layer_set" | "single_material" | "unsupported" | "unassigned" | "ambiguous";
+      assemblyRef: string | null;
+      assemblyName: string | null;
+      materialNames: readonly string[];
+      representativeLayer: Readonly<{ name: string; thicknessM: number; ref: string }> | null;
+      relationRef: string | null;
+      basis: "occurrence" | "type" | null;
+      elements: number;
+    }>[];
+  }>;
+  /** Source layer order does not by itself establish the exterior face.
+   * Conductivity is optional source evidence, never an attached default.
+   * Runtime layer calculations and generic mappings live in constructions.ts.
    */
   assemblies?: readonly Readonly<{
     id: string;
@@ -254,6 +276,8 @@ export type ReferenceBuildingManifest = Readonly<{
       thicknessM: number;
       /** `ifc://<file>#<expressID>` — the entity the thickness was read from. */
       ref: string;
+      /** Source property, only when extracted with verified SI units. */
+      sourceThermalProperties?: Readonly<{ conductivityWPerMK: number; ref: string }>;
     }>[];
     ref: string;
   }>[];

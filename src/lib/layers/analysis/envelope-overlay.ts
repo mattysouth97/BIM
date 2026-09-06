@@ -127,6 +127,8 @@ export type Orientation = "N" | "S" | "E" | "W";
 
 export interface OrientationWwrRow {
   orientation: Orientation;
+  /** Source compass caption; the calculation slot stays cardinal. */
+  orientationLabel?: string;
   /** Gross wall area facing this orientation, m². */
   grossWallAreaSqm: number;
   /** grossWallAreaSqm × the store's WWR for this orientation, m². */

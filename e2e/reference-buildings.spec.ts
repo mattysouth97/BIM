@@ -233,6 +233,7 @@ for (const building of BUILDINGS) {
     });
 
     test("lists every services layer the manifest carries", async ({ page }) => {
+      await page.getByTestId("reference-info-tab-layers").click();
       const manifest = manifestFor(building.id);
       const panel = page.getByTestId("reference-model-layers");
       await expect(panel).toBeVisible({ timeout: FIRST_PAINT });
@@ -254,6 +255,7 @@ for (const building of BUILDINGS) {
     });
 
     test("carries the licence its grant requires", async ({ page }) => {
+      await page.getByTestId("reference-info-tab-data").click();
       const manifest = manifestFor(building.id);
       const credit = page.getByTestId("reference-model-attribution");
       await expect(credit).toBeVisible({ timeout: FIRST_PAINT });

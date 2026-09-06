@@ -278,6 +278,7 @@ export function measuredOrientationRows(
       stated?.[orientation] ?? energy.wallByOrientationSqm[orientation] * scale;
     return {
       orientation,
+      orientationLabel: energy.orientationLabels?.[orientation],
       grossWallAreaSqm,
       windowAreaSqm: grossWallAreaSqm * wwr[orientation],
       wwr: wwr[orientation],
@@ -376,6 +377,7 @@ export function ReferenceEnergyFrame({
   return (
     <>
       <EnergyInstrumentHud
+        collapsePanelsOnMobile
         buildingPk={buildingPk}
         totalFloorArea={quantities.intensityFloorAreaSqm}
         footprintArea={quantities.planAreaSqm}
@@ -480,8 +482,6 @@ export function ReferenceEnergyPanel({
   locale: "ko" | "en";
 }) {
   const isKo = locale === "ko";
-  const overlays = useLayerStore((s) => s.analysisOverlays);
-  const setOverlay = useLayerStore((s) => s.setAnalysisOverlayVisible);
   const quantities = envelopeQuantities(energy.recipe);
   const climate = getClimateData(energy.climate.sigunguCd);
   const materials = useMaterialStore((s) => s.properties[energy.buildingPk]);
@@ -497,14 +497,15 @@ export function ReferenceEnergyPanel({
 
   return (
     <section className="mt-6" data-testid="reference-model-energy">
-      <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-        {isKo ? "에너지 프로파일 · 분석 오버레이" : "Energy profile · analysis overlays"}
-      </p>
-      <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
+      <h2 className="text-sm font-medium text-foreground">
+        {isKo ? "에너지 계산 기준" : "Energy calculation basis"}
+      </h2>
+      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
         {isKo
-          ? "캔버스 위의 계기판은 /building/demo와 같은 도일법 엔진입니다. 입력에는 모델에서 추출한 형상·물성, 미측정 대체값과 가정이 함께 사용됩니다. 아래에서 각 값의 근거와 적용 범위를 확인하세요."
-          : "The frame uses the same degree-day engine as /building/demo. Its inputs combine model-derived geometry and properties with unmeasured stand-ins and assumptions. Review the evidence and scope for each value below."}
+          ? "모델에서 추출한 수량과 열성능·운영 가정을 사용한 추정값입니다. 실측 에너지 사용량이 아닙니다."
+          : "Estimates use model quantities and thermal and operating assumptions. They are not metered energy use."}
       </p>
+      {energy.scopeNotice ? <p className="mt-2 text-xs leading-relaxed text-amber-700 dark:text-amber-300" data-testid="reference-overview-scope-notice">{isKo ? energy.scopeNotice.ko : energy.scopeNotice.en}</p> : null}
 
       {energy.measurementState === "awaiting_measurement" && energy.pendingMeasurements ? (
         <div
@@ -514,11 +515,13 @@ export function ReferenceEnergyPanel({
           <p className="font-mono text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-300">
             {pendingBadgeText(summarisePendingBias(energy.pendingMeasurements), isKo)}
           </p>
-          <p className="mt-1 text-[10px] leading-relaxed text-amber-900 dark:text-amber-100/80">
+          <p className="mt-1 text-xs leading-relaxed text-amber-900 dark:text-amber-100/80">
             {isKo
-              ? "아래 입력은 전체 외피 범위에 대한 검증이 끝나지 않아 대체값을 사용합니다. 일부 추출값이 있어도 전체 범위를 대표한다고 볼 수 없습니다. 각 값의 유도 근거와 열손실을 과소·과대평가할 수 있는 방향을 함께 표시합니다."
-              : "These inputs use stand-ins because complete envelope coverage has not been verified. Partial extracted quantities do not establish a complete measurement. Each entry names its derivation and the direction in which it may understate or overstate heat loss."}
+              ? "전체 외피 범위가 검증되지 않은 입력에는 대체값을 사용합니다. 부분 추출값은 전체 측정값이 아닙니다."
+              : "Inputs with unverified envelope coverage use stand-ins. Partial extraction is not a complete measurement."}
           </p>
+          <details className="mt-2">
+          <summary className="cursor-pointer text-xs">{isKo ? `대체값 ${energy.pendingMeasurements.length}건과 오차 방향` : `${energy.pendingMeasurements.length} stand-ins & bias directions`}</summary>
           <ul className="mt-2 space-y-1.5">
             {energy.pendingMeasurements.map((p) => (
               <li key={p.manifestField} className="font-mono text-[10px] leading-relaxed">
@@ -531,38 +534,9 @@ export function ReferenceEnergyPanel({
               </li>
             ))}
           </ul>
+          </details>
         </div>
       ) : null}
-
-      <div className="mt-2">
-        {OVERLAYS.map((o) => (
-          <button
-            key={o.id}
-            type="button"
-            onClick={() => setOverlay(o.id, !overlays[o.id])}
-            aria-pressed={overlays[o.id]}
-            data-testid={`reference-model-overlay-${o.id}`}
-            className="flex w-full items-start gap-2 rounded-[6px] px-1.5 py-1.5 text-left transition-colors hover:bg-muted/60"
-          >
-            <span
-              aria-hidden
-              className="mt-[3px] size-2.5 shrink-0 rounded-full border"
-              style={{
-                backgroundColor: overlays[o.id] ? "#8fd3b6" : "transparent",
-                borderColor: "#8fd3b6",
-              }}
-            />
-            <span className="min-w-0">
-              <span className={`block truncate text-[11px] ${overlays[o.id] ? "text-foreground" : "text-muted-foreground"}`}>
-                {isKo ? o.ko : o.en}
-              </span>
-              <span className="block truncate font-mono text-[9px] text-muted-foreground">
-                {isKo ? o.detailKo : o.detailEn}
-              </span>
-            </span>
-          </button>
-        ))}
-      </div>
 
       <dl className="mt-4">
         <Handed
@@ -593,16 +567,15 @@ export function ReferenceEnergyPanel({
           }
         />
       </dl>
-      <p className="mt-2 font-mono text-[9px] leading-relaxed text-muted-foreground">
-        {energy.recipe.measuredEnvelope?.basis ?? (isKo ? "외곽선 압출" : "extruded from the footprint")}
-      </p>
-
       <details className="mt-4 group">
-        <summary className="cursor-pointer text-[11px] text-foreground">
+        <summary className="cursor-pointer text-xs text-foreground">
           {isKo
-            ? `가정 ${energy.assumptions.length}건 — 모두 이름 붙임`
-            : `${energy.assumptions.length} assumptions, every one named`}
+            ? `외피 범위와 가정 ${energy.assumptions.length}건`
+            : `Envelope scope & ${energy.assumptions.length} assumptions`}
         </summary>
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          {energy.recipe.measuredEnvelope?.basis ?? (isKo ? "외곽선 압출" : "extruded from the footprint")}
+        </p>
         <ol className="mt-2 space-y-2">
           {energy.assumptions.map((a) => (
             <li key={a.id} className="border-t border-border pt-2" data-testid={`reference-assumption-${a.id}`}>
@@ -616,6 +589,27 @@ export function ReferenceEnergyPanel({
       </details>
     </section>
   );
+}
+
+export function ReferenceAnalysisOverlays({ locale }: { locale: "ko" | "en" }) {
+  const isKo = locale === "ko";
+  const overlays = useLayerStore((s) => s.analysisOverlays);
+  const setOverlay = useLayerStore((s) => s.setAnalysisOverlayVisible);
+  return <section className="mt-5 border-t border-border pt-4" data-testid="reference-analysis-overlays">
+    <h2 className="text-sm font-medium">{isKo ? "에너지 오버레이" : "Energy overlays"}</h2>
+    <div className="mt-2">
+      {OVERLAYS.map((o) => <button key={o.id} type="button"
+        onClick={() => setOverlay(o.id, !overlays[o.id])} aria-pressed={overlays[o.id]}
+        data-testid={`reference-model-overlay-${o.id}`}
+        className="flex min-h-11 w-full items-start gap-2 rounded-md px-2 py-2 text-left hover:bg-muted/60 focus-visible:outline-2 focus-visible:outline-ring">
+        <span aria-hidden className="mt-1 size-2.5 shrink-0 rounded-full border border-primary" style={{ backgroundColor: overlays[o.id] ? "var(--primary)" : "transparent" }} />
+        <span>
+          <span className={`block text-xs ${overlays[o.id] ? "text-foreground" : "text-muted-foreground"}`}>{isKo ? o.ko : o.en}</span>
+          <span className="mt-0.5 block text-[10px] text-muted-foreground">{isKo ? o.detailKo : o.detailEn}</span>
+        </span>
+      </button>)}
+    </div>
+  </section>;
 }
 
 /** A figure the engine was handed, and how it was arrived at. */

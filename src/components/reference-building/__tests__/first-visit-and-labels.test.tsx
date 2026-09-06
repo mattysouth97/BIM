@@ -241,6 +241,16 @@ describe("the legend rows are per-sector, not the whole building repeated", () =
     expect(total).toBeCloseTo(64.46, 1);
   });
 
+  it("keeps compass captions separate from the engine slots and their quantities", () => {
+    const sourceLabels = { N: "NE", E: "SE", S: "SW", W: "NW" };
+    const rows = measuredOrientationRows({ ...duplex, orientationLabels: sourceLabels }, PER_SECTOR);
+    expect(rows.map((row) => row.orientationLabel)).toEqual(["NE", "SE", "SW", "NW"]);
+    expect(rows.map((row) => row.orientation)).toEqual(["N", "E", "S", "W"]);
+    for (const row of rows) expect(row.windowAreaSqm).toBeCloseTo(GROSS[row.orientation] * PER_SECTOR[row.orientation], 6);
+    const defaultRows = measuredOrientationRows(duplex, PER_SECTOR);
+    expect(defaultRows.map((row) => row.orientationLabel ?? row.orientation)).toEqual(["N", "E", "S", "W"]);
+  });
+
   it("the uniform ratio the engine IS handed gives the same four grosses", () => {
     // The denominators are a property of the building, not of which ratios
     // are fed through them.

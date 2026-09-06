@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useAppStore } from "@/store/app-store";
 import { TwinInstrumentFrame } from "../twin-instrument-frame";
 
 beforeEach(() => useAppStore.setState({ language: "en" }));
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 function StatefulPanel({ name }: { name: string }) {
   const [chosen, setChosen] = useState(false);
@@ -23,6 +23,28 @@ function StatefulPanel({ name }: { name: string }) {
 }
 
 describe("TwinInstrumentFrame panel visibility", () => {
+  it("can start compact on mobile without resetting a user's panel choice on resize", () => {
+    const matchMedia = vi.fn(() => ({ matches: true }));
+    vi.stubGlobal("matchMedia", matchMedia);
+    const { rerender } = render(<TwinInstrumentFrame collapsePanelsOnMobile top={<StatefulPanel name="Investment" />} bottom="Energy" />);
+    const top = screen.getByTestId("twin-panel-top-toggle");
+    expect(top.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByTestId("twin-panel-bottom-toggle").getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(top);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Retained budget" } });
+    matchMedia.mockReturnValue({ matches: false });
+    rerender(<TwinInstrumentFrame collapsePanelsOnMobile top={<StatefulPanel name="Investment" />} bottom="Energy" />);
+    expect(top.getAttribute("aria-expanded")).toBe("true");
+    expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("Retained budget");
+    expect(screen.getByTestId("twin-panel-bottom-toggle").getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("keeps desktop panels expanded when compact-mobile behavior is requested", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    render(<TwinInstrumentFrame collapsePanelsOnMobile top="Investment" bottom="Energy" />);
+    expect(screen.getAllByRole("button").every((button) => button.getAttribute("aria-expanded") === "true")).toBe(true);
+  });
+
   for (const language of ["en", "ko"] as const) {
     it(`starts expanded with distinct, localized controls (${language})`, () => {
       useAppStore.setState({ language });

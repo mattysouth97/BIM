@@ -19,7 +19,7 @@ for (const id of DETAIL_BUILDINGS) {
     const manifest = manifestFor(id);
     const layer = manifest.architecturalDetails!;
     const responsePromise = page.waitForResponse((response) => response.url().endsWith(`/${id}/${layer.file}`), { timeout: LOAD_TIMEOUT });
-    await page.goto(`/models/${id}`);
+    await page.goto(`/models/${id}#layers`);
     const response = await responsePromise;
     expect(response.ok()).toBe(true);
     // Payload budgets are checked by decoding actual GLBs in the unit suite.
@@ -39,7 +39,7 @@ test("detail and service toggles remain independent, including fabric transparen
   test.setTimeout(90_000);
   const manifest = manifestFor("bs-medical-dental-clinic");
   const service = manifest.serviceLayers![0];
-  await page.goto(`/models/${manifest.id}`);
+  await page.goto(`/models/${manifest.id}#layers`);
   await expect(page.getByTestId("reference-details-status")).toHaveAttribute("data-status", "ready", { timeout: LOAD_TIMEOUT });
   const viewer = page.getByTestId("reference-model-viewer");
   const detailsToggle = page.getByTestId("reference-model-layer-details");
@@ -63,7 +63,7 @@ test("Schependomlaan publishes source drainage and vents as a separate MEP layer
   test.setTimeout(90_000);
   const manifest = manifestFor("schependomlaan");
   const layer = manifest.serviceLayers!.find((entry) => entry.id === "source-services")!;
-  await page.goto(`/models/${manifest.id}`);
+  await page.goto(`/models/${manifest.id}#layers`);
   await expect(page.getByTestId("reference-details-status")).toHaveAttribute("data-status", "ready", { timeout: LOAD_TIMEOUT });
   const toggle = page.getByTestId("reference-model-layer-source-services");
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
@@ -85,7 +85,7 @@ test("a failed detail GLB keeps the base model usable and can retry the same sou
     if (attempts === 1) await route.fulfill({ status: 503, body: "Temporary source asset failure" });
     else await route.continue();
   });
-  await page.goto("/models/fzk-haus");
+  await page.goto("/models/fzk-haus#layers");
   await expect(page.getByTestId("reference-details-status")).toHaveAttribute("data-status", "error", { timeout: LOAD_TIMEOUT });
   const viewer = page.getByTestId("reference-model-viewer");
   await expect(viewer).toHaveAttribute("data-model-loaded", "true");
@@ -108,7 +108,7 @@ test("details disabled before the base model loads are fetched only when enabled
   let detailRequests = 0;
   await page.route(`**/fzk-haus/${manifest.model.file}`, async (route) => { await baseGate; await route.continue(); });
   page.on("request", (request) => { if (request.url().endsWith("/fzk-haus/architectural-details.glb")) detailRequests += 1; });
-  await page.goto("/models/fzk-haus", { waitUntil: "domcontentloaded" });
+  await page.goto("/models/fzk-haus#layers", { waitUntil: "domcontentloaded" });
   // Roof data arrives through a client effect independently of the gated GLB.
   // Wait for hydration before clicking the server-rendered control.
   await expect(page.getByTestId("reference-model-viewer")).toHaveAttribute("data-roof-planes", "ready", { timeout: LOAD_TIMEOUT });

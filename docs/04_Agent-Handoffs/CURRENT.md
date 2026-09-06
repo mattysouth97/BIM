@@ -28,7 +28,7 @@ and deploy each major verified milestone. Current execution record:
 
 Local release validation on 2026-09-07:
 
-- Unit: **5,321 passed**, 4 skipped (441 passed files, 1 skipped).
+- Unit: **5,343 passed**, 4 skipped (443 passed files, 1 skipped).
 - E2E: **101/102 passed** in the full Chromium run; one unrelated CAD setup
   exceeded its 30s hook budget. Its full five-test rerun passed. The
   corrected legacy-funding regression separately passed for all five models.
@@ -38,9 +38,8 @@ Local release validation on 2026-09-07:
 - TypeScript: clean. ESLint src/e2e: 0 errors, 6 pre-existing warnings.
 - KIT Office and demo expanded/collapsed canvas screenshots inspected; no page
   errors. Panel controls preserve state and do not overlap the rendering toolbar.
-- Last production verification: `dae269e` on 2026-09-07 00:36, health SHA and
-  region `icn1`; nine production smoke checks passed. The subsequent material,
-  architectural-detail and MEP release awaits a clean detached deployment.
+- Last production verification: `347636d` on 2026-09-07 00:55, health SHA and
+  region `icn1`; 12 live detail/material/dataset smoke checks passed.
 
 ## Current product
 
@@ -66,6 +65,12 @@ Local release validation on 2026-09-07:
   user; recommendation changes do not replace it.
 - Top investment/work and bottom energy panels collapse independently while
   keeping their state mounted. Both reopen controls remain accessible.
+- Locally verified next release: four persistent information categories
+  (Overview/Materials/Layers/Data), concise core copy, browser history and
+  keyboard navigation, synchronized KO/EN, and a mobile split that keeps the
+  model visible with initially collapsed energy rails. Thin-layer depth
+  precision now follows the model bounds while orbiting/zooming; no source
+  faces were removed. Five model orbit/zoom browser checks passed.
 - PV roof poses, drawn count, chips and economics share measured roof layout.
   Clinic 453/181.2 kWp, apartment 10/4.0, Duplex 14/5.6, FZK 22/8.8; KIT 0 under the
   current module/setback rules. Inspection offers exterior fit, roof and focus.
@@ -78,9 +83,10 @@ Prior PV and selection methods remain documented in
 
 ## Open work and limits
 
-- Next: source-bound material expression directly on the model, categorized
-  navigation with concise core information, and licensed TalTech/Klassiqua
-  models. These lanes are in progress, not yet published.
+- Next: source-bound material expression directly on the model and licensed
+  TalTech/Klassiqua models. Blender MCP availability and an optimization
+  comparison are being investigated by user request. These lanes are not yet
+  published. Material-fabric artifacts on disk are still uncommitted WIP.
 - Roof plant/parapet obstructions, full shading and structural feasibility are
   unmeasured; current placement may overstate feasible PV capacity.
 - The apartment's aperture extraction is partial: 106.06m² selected glazing and

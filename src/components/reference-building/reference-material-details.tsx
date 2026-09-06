@@ -69,12 +69,16 @@ export function ReferenceConstructionCard({ construction, buildingId, isKo, init
           </div>
         </div>
         <div className="mt-3 border-t border-border pt-3">
-          <p className="text-[10px] text-muted-foreground">{isKo ? "열 계산에 사용한 가정" : "Assumption used for heat transfer"}</p>
-          <p className="mt-1 text-[11px] text-foreground">{thermal.material ? (isKo ? thermal.material.nameKo : thermal.material.nameEn) : (isKo ? "물성 미확인 — 열저항을 계산하지 않습니다" : "Property unresolved — no resistance calculated")}</p>
+          <p className="text-[10px] text-muted-foreground">{layer.thermalSource ? (isKo ? "원본에 명시된 열 물성" : "Thermal property stated in source") : (isKo ? "열 계산에 사용한 가정" : "Assumption used for heat transfer")}</p>
+          <p className="mt-1 text-[11px] text-foreground">{layer.thermalSource ? layer.ifcName : thermal.material ? (isKo ? thermal.material.nameKo : thermal.material.nameEn) : (isKo ? "물성 미확인 — 열저항을 계산하지 않습니다" : "Property unresolved — no resistance calculated")}</p>
+          {layer.thermalSource ? <p className="mt-1 break-words font-mono text-[9px] text-muted-foreground" data-testid="material-thermal-source">{layer.thermalSource.ref}</p> : null}
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] text-foreground">
             {layer.conductivityWPerMK !== null ? <span>λ {layer.conductivityWPerMK.toFixed(4)} W/mK</span> : null}
             <span>{thermal.fixedResistance ? (isKo ? "고정 " : "Fixed ") : ""}R {layer.resistanceM2KPerW === null ? "—" : layer.resistanceM2KPerW.toFixed(3)} m²K/W</span>
           </div>
+          {layer.thermalSource && layer.thermalSource.designFactor !== 1 ? <p className="mt-2 text-[10px] text-muted-foreground" data-testid="material-design-conversion">
+            λD {layer.thermalSource.declaredConductivityWPerMK.toFixed(4)} × {layer.thermalSource.designFactor} = λB {layer.conductivityWPerMK?.toFixed(5)} W/mK · <a href={layer.thermalSource.conversionRef} target="_blank" rel="noreferrer" className="underline">{isKo ? "원본 설계값 환산" : "Source design conversion"}</a>
+          </p> : null}
           {thermal.shareOfTotal !== null ? <div className="mt-2" data-testid="material-resistance-share" data-share={thermal.shareOfTotal}>
             <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-foreground/60" style={{ width: `${thermal.shareOfTotal * 100}%` }} /></div>
             <p className="mt-1 text-[10px] text-muted-foreground">{isKo ? "표면 저항을 포함한 전체 R의 " : "Of total R, including surface resistance: "}{(thermal.shareOfTotal * 100).toFixed(1)}%</p>
@@ -98,7 +102,7 @@ export function ReferenceMaterialDetails({ manifest, isKo, constructions: suppli
   const constructions = envelope.length ? envelope : solveConstructions(manifest);
   return <section className="mt-6" data-testid="reference-model-constructions">
     <h2 className="text-[12px] font-medium text-foreground">{isKo ? "재료와 열 전달" : "Materials and heat transfer"}</h2>
-    <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{isKo ? "두께와 재료명은 모델에서 읽었습니다. 열전도율 λ와 공기층 R은 가정입니다. 같은 면적·온도차에서 R이 커지면 열을 더 잘 막고, U가 작아지면 통과하는 열이 줄어듭니다." : "Layer names and thicknesses come from the model. Conductivity λ and cavity R are assumptions. For the same area and temperature difference, higher R resists heat transfer and lower U means less heat passes through."}</p>
+    <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">{isKo ? "두께·재료명은 원본 값입니다. 열 물성은 층별로 원본·가정을 구분합니다. R이 클수록, U가 작을수록 열 손실이 줄어듭니다." : "Names and thicknesses come from the source. Each layer distinguishes stated thermal properties from assumptions. Higher R and lower U reduce heat transfer."}</p>
     <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">{envelope.length ? (isKo ? "아래는 외피 관련 층 구성입니다. 개별 벽체 층이 건물 전체 벽의 성능을 뜻하지는 않습니다." : "These are envelope-related layer sets. An individual wall leaf is not the performance of the whole wall.") : (isKo ? "아래는 모델의 재료층 목록입니다. 재료명만으로 외벽·지붕·바닥 위치를 정하지 않습니다." : "These are the model's material layer sets. Names alone do not establish wall, roof or floor placement.")}</p>
     {constructions.length ? <div className="mt-3">{constructions.map((construction, index) => <ReferenceConstructionCard key={construction.id} construction={construction} buildingId={manifest.id} isKo={isKo} initiallyOpen={index === 0} />)}</div> : <p className="mt-3 text-[11px] text-muted-foreground">{isKo ? "모델에 재료층 정보가 없습니다." : "The model supplies no material layer sets."}</p>}
   </section>;

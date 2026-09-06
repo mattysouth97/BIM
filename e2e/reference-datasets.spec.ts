@@ -36,6 +36,7 @@ test("model-page download is the published baseline even after a retrofit select
   await expect(page.getByTestId("reference-model-viewer")).toHaveAttribute("data-roof-planes", "ready", { timeout: 45000 });
   const solar = page.locator('[data-measure-chip^="solar-pv"]').first();
   if (await solar.getAttribute("data-measure-chosen") !== "true") await solar.click();
+  await page.getByTestId("reference-info-tab-data").click();
   const [download] = await Promise.all([
     page.waitForEvent("download"),
     page.getByTestId("reference-dataset-downloads").locator('a[href="/api/reference-buildings/fzk-haus/dataset"]').click(),

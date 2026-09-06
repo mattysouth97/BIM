@@ -2,6 +2,18 @@ import * as THREE from "three";
 
 export type ReferenceView = "exterior" | "roof";
 
+/** Keep the depth buffer concentrated on the model. A fixed tiny near plane
+ * wastes precision at building scale and makes millimetre layers compete.
+ * The padded sphere also leaves room for services and a ground receiver.
+ */
+export function referenceDepthRange(radius: number, centreDepth: number) {
+  const safeRadius = Math.max(0.1, radius);
+  const nearest = centreDepth - safeRadius * 1.15;
+  const near = Math.max(0.02, nearest * 0.5);
+  const far = Math.max(near + 10, centreDepth + safeRadius * 4);
+  return { near, far };
+}
+
 /** Fit all eight measured corners, including on a narrow portrait canvas. */
 export function referenceCameraPose(
   size: THREE.Vector3,

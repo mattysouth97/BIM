@@ -2,7 +2,7 @@ import { genericMaterialById } from "@/lib/energy-standards/materials";
 import { layerMappingsFor, type SolvedConstruction, type SolvedLayer } from "./constructions";
 
 /** Illustrations of a named source material, never a measured finish or a GLB binding. */
-export type MaterialSampleKind = "concrete" | "masonry" | "brick" | "wood" | "board" | "mortar" | "metal" | "panel" | "framing" | "fibre" | "foam" | "membrane" | "air" | "unknown";
+export type MaterialSampleKind = "concrete" | "masonry" | "brick" | "wood" | "board" | "mortar" | "metal" | "panel" | "framing" | "fibre" | "foam" | "membrane" | "air" | "gravel" | "ceramic" | "carpet" | "unknown";
 
 export type MaterialSample = Readonly<{
   kind: MaterialSampleKind;
@@ -14,6 +14,9 @@ export type MaterialSample = Readonly<{
 }>;
 
 const SAMPLES: Record<MaterialSampleKind, MaterialSample> = {
+  gravel: { kind: "gravel", ko: "자갈", en: "Gravel", colour: "#a6a298", image: "radial-gradient(ellipse, #d5d1c8 0 35%, transparent 40%)", size: "8px 6px" },
+  ceramic: { kind: "ceramic", ko: "세라믹 타일", en: "Ceramic tile", colour: "#d8d3c6", image: "linear-gradient(0deg, transparent 94%, #8c897d 94%), linear-gradient(90deg, transparent 94%, #8c897d 94%)", size: "30px 30px" },
+  carpet: { kind: "carpet", ko: "카펫", en: "Carpet", colour: "#98928a", image: "repeating-linear-gradient(25deg, transparent 0 2px, #e5e0d844 2px 3px)" },
   concrete: { kind: "concrete", ko: "콘크리트", en: "Concrete", colour: "#aaa9a1", image: "url('/textures/concrete_rough/color.jpg')", size: "180px" },
   masonry: { kind: "masonry", ko: "조적재", en: "Masonry", colour: "#d0cbbd", image: "linear-gradient(0deg, transparent 94%, #938e8055 94%), linear-gradient(90deg, transparent 96%, #938e8055 96%)", size: "64px 28px" },
   brick: { kind: "brick", ko: "점토 벽돌", en: "Clay brick", colour: "#a97357", image: "url('/textures/brick/color.jpg')", size: "180px" },
@@ -80,7 +83,21 @@ const SOURCE_SAMPLE: Readonly<Record<string, MaterialSampleKind>> = {
   "Kalksandstein 2774059904": "masonry",
 };
 
+const KLASSIQUA_SAMPLES: Readonly<Record<string, MaterialSampleKind>> = {
+  "GypsumBoard_Drywall_12.5mm": "board",
+  "Insulation_MineralWool_InDryWall_Lambda0.040": "fibre",
+  "Insulation_MineralWool_Lambda0.045_1970": "fibre",
+  "Insulation_XPS_Lambda0.045_1970": "foam",
+  "ImpactSoundInsulation_EPS_Lambda0.040": "foam",
+  ScreedCement: "mortar", Carpet_NeedleFelt_5mm: "carpet",
+  VentilatedAluminiumCladding_54mm: "metal", AluminumCladding_4mm: "metal",
+  BituminousSheeting: "membrane", Gravel: "gravel",
+  Masonry_Silicate_Block_240mm: "masonry", Plaster_Interior_Lime_Gypsum: "mortar",
+  Tile_Ceramic: "ceramic", ReinforcedConcrete_Slabs: "concrete",
+};
+
 export function sourceMaterialSample(buildingId: string, ifcName: string): MaterialSample {
+  if (buildingId === "klassiqua-office-1970") return SAMPLES[KLASSIQUA_SAMPLES[ifcName] ?? "unknown"];
   // A source name in a new building needs review even if its spelling is familiar.
   if (!layerMappingsFor(buildingId).some((mapping) => mapping.ifcName === ifcName)) return SAMPLES.unknown;
   const sample = SAMPLES[SOURCE_SAMPLE[ifcName] ?? "unknown"];
