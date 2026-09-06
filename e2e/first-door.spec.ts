@@ -139,11 +139,19 @@ test.describe("Landing gallery", () => {
     const gallery = page.getByTestId("landing-gallery");
     await expect(gallery).toBeVisible();
 
-    // Both buildings render. The licence question on Schependomlaan gates the
-    // deploy, not what the gallery shows.
+    // All three buildings render. The licence question on Schependomlaan
+    // gates the deploy, not what the gallery shows; the Duplex has no such
+    // question, carrying the Clinic's grant and rights holder exactly.
+    //
+    // The count is exact and hand-maintained on purpose: a fourth building
+    // must fail here and be added deliberately, because this test's claim is
+    // "these models and nothing else" and a count derived from the array
+    // under test could not make that claim. It went red once already, when
+    // the Duplex was published by a lane that ran vitest and not Playwright.
     await expect(page.getByTestId("gallery-item-clinic")).toBeVisible();
     await expect(page.getByTestId("gallery-item-schependomlaan")).toBeVisible();
-    await expect(gallery.locator("> li")).toHaveCount(2);
+    await expect(page.getByTestId("gallery-item-duplex-apartment")).toBeVisible();
+    await expect(gallery.locator("> li")).toHaveCount(3);
 
     // The register sheet's furniture is gone from this page entirely.
     await expect(page.getByTestId("landing-ledger-lookup")).toHaveCount(0);
