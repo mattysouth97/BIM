@@ -93,9 +93,8 @@ export const CLINIC_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
     basisNote:
       "THE LARGEST ASSUMPTION IN THIS BUILDING. The model names no insulation " +
       "in the 152 mm stud cavity, so none is assumed and it is treated as an " +
-      "unventilated air layer, horizontal flow. Filling it with an R-13 batt " +
-      "would take the wall from U 0.404 to U 0.218 — 1.85x better — so this " +
-      "is the assumption to argue with first. Steel stud bridging is likewise " +
+      "unventilated air layer, horizontal flow. Insulating that cavity would " +
+      "increase its resistance, so this is an assumption to verify. Steel stud bridging is likewise " +
       "ignored, which pushes the other way.",
   },
   {
@@ -203,7 +202,7 @@ export const SCHEPENDOMLAAN_LAYER_MAPPINGS: readonly LayerMapping[] = Object.fre
       "leaf and most of the internal load-bearing walls. The library has no " +
       "calcium-silicate row, so the concrete-brick entry at λ 0.8 stands in; " +
       "real kalkzandsteen is nearer λ 1.0, which would cut a 100 mm leaf's R " +
-      "from 0.125 to 0.100 — 0.7 % of the cavity wall.",
+      "from 0.125 to 0.100 m²K/W.",
   },
   {
     ifcName: "03 mw-baksteen - bruin (staand)",
@@ -256,8 +255,8 @@ export const SCHEPENDOMLAAN_LAYER_MAPPINGS: readonly LayerMapping[] = Object.fre
     materialId: "ins-gw",
     basisNote:
       "Glass wool, the roof panel's insulation, at the 190 mm the assembly " +
-      "states. This single layer is 96 % of the roof's resistance, so the " +
-      "λ 0.036 chosen here is the roof's U-value in all but name.",
+      "states. Its resistance is calculated with assumed λ 0.036; " +
+      "the contribution depends on the complete layer set and surface resistances.",
   },
   {
     ifcName: "99 Isolatie - Glaswol zacht",
@@ -296,8 +295,7 @@ export const SCHEPENDOMLAAN_LAYER_MAPPINGS: readonly LayerMapping[] = Object.fre
       "SOLID reinforced concrete. Its voids give the real slab more " +
       "resistance than this, so the mapping understates the floor; the " +
       "library has no hollow-core entry and an effective λ for one would be " +
-      "a product figure dressed as a generic table value. 2.3 % of the " +
-      "stack's resistance either way.",
+      "a product figure dressed as a generic table value.",
   },
   {
     ifcName: "02 Beton gewapend - prefab",
@@ -314,8 +312,7 @@ export const SCHEPENDOMLAAN_LAYER_MAPPINGS: readonly LayerMapping[] = Object.fre
     basisNote:
       "Unreinforced concrete in the EPS stortstrook edge detail. The " +
       "library has only the reinforced entry (λ 2.3); plain concrete is " +
-      "nearer 1.7, so this over-states the layer's conductivity — it is " +
-      "5 % of that assembly's resistance.",
+      "nearer 1.7, so this over-states the layer's conductivity.",
   },
   {
     ifcName: "24 Cementdekvloer 90mm",
@@ -359,8 +356,7 @@ export const SCHEPENDOMLAAN_LAYER_MAPPINGS: readonly LayerMapping[] = Object.fre
     basisNote:
       "White-faced particleboard, the roof panel's and dormer cheek's inner " +
       "lining. Mapped to plywood (λ 0.13); EN 12524 puts particleboard at " +
-      "ρ 600 / λ 0.14, so the difference is under 8 % on an 11 mm layer " +
-      "worth 1.5 % of the roof.",
+      "ρ 600 / λ 0.14, rather than the plywood value used here.",
   },
   {
     ifcName: "99 Lichte scheidingswand - normaal",
@@ -402,7 +398,7 @@ export const SCHEPENDOMLAAN_LAYER_MAPPINGS: readonly LayerMapping[] = Object.fre
       "ceiling. Two problems, both disclosed rather than tuned. (1) 5 mm is " +
       "below every available row — ISO 6946 Table 2's flat values start at " +
       "25 mm and the library's smallest cavity is 10 mm — so the 0.14 used " +
-      "here over-states that layer by about 0.03 m²K/W, 0.5 % of the roof. " +
+      "here over-states the resistance of a thin void. " +
       "(2) The name says 'frame': the void is SUBDIVIDED, which breaks " +
       "ISO 6946 5.3.1 outright, and the bridge is unrepresented. A " +
       "name-keyed table also cannot carry two heat-flow directions for one " +
@@ -452,7 +448,7 @@ export const DUPLEX_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
       "193 mm CMU, mapped to the library's concrete-brick entry at λ 0.8. A " +
       "US CMU is HOLLOW and the library has no hollow-block row, so this " +
       "treats it as solid and understates the wall — see A-CONCRETE-BLOCK-" +
-      "LAMBDA. It is 12 % of the wall's resistance either way.",
+      "LAMBDA. Its share depends on the complete layer set.",
   },
   {
     ifcName: "Misc. Air Layers - Air Space",
@@ -534,8 +530,8 @@ export const DUPLEX_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
       "as solid softwood at λ 0.14 because that is the layer the model " +
       "states — but a dimensional-lumber layer in a joist roof is joists at " +
       "centres with air or batt between them, so ISO 6946 5.3.1's " +
-      "unsubdivided premise does not hold. Solid timber gives it R 2.043, " +
-      "38 % of the whole roof's resistance; as a cavity it would give 0.17. " +
+      "unsubdivided premise does not hold. The solid-timber approximation " +
+      "gives more resistance than an uninsulated cavity would. " +
       "See A-JOIST-ZONE. Also used by the intermediate floor, which is not " +
       "envelope.",
   },
@@ -593,8 +589,8 @@ export const DUPLEX_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
       "6 mm, and the name states a FUNCTION rather than a material — a vapour " +
       "or root barrier, both films whose resistance is negligible at this " +
       "thickness, and the library has a row for neither. Dropped from the " +
-      "roof assembly: at most 0.02 m²K/W, 0.4 % of its resistance, in the " +
-      "direction that reads worse. See A-ROOF-BARRIER.",
+      "energy-path roof assembly; any uncounted positive resistance makes " +
+      "that estimate more conservative. See A-ROOF-BARRIER.",
   },
 ]);
 
@@ -617,8 +613,8 @@ export const FZK_HAUS_LAYER_MAPPINGS: readonly LayerMapping[] = Object.freeze([
       "Lightweight/aerated concrete, mapped to the library's autoclaved-" +
       "lightweight-concrete row (λ 0.16, 500 kg/m³). Used at two thicknesses " +
       "in this model — 0.3 m on the exterior walls, 0.24 m on the interior " +
-      "partitions — and this row solves the exterior wall to U 0.489, 22% " +
-      "worse than the file's own stated 0.4, which the energy path uses " +
+      "partitions. The generic layer calculation differs from the file's " +
+      "own stated U 0.4, which the energy path uses " +
       "instead (A-STATED-U-PRIMARY).",
   },
   {
