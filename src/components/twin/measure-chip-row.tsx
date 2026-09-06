@@ -12,9 +12,7 @@
 // generates — one chip each, each carrying in one line what it does to THIS
 // building: 외벽 U 0.58 → 0.15 W/m²·K · 340 m² · ₩4,100만. Clicking a chip is
 // what changes the model, the delta strip and the economics. The knapsack's
-// budget-optimal set is now a 추천 mark on these chips and nothing more, and
-// the financing programme moved to a secondary control below (지원 재원), which
-// re-prices the chosen work and never re-picks it.
+// budget-optimal set is now a 추천 mark on these chips and nothing more.
 //
 // Two rules this row is responsible for holding:
 //
@@ -46,8 +44,6 @@ import type { ClaimEnvelopeAreas } from "@/lib/retrofit/measure-claim";
 import { toggleMeasure, conflictsWith } from "@/lib/retrofit/measure-selection";
 import { effectiveMeasureIds } from "@/lib/retrofit/measure-visuals";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
-import { measureSubsidyRatio } from "@/lib/retrofit/economic-model";
-import type { EconomicAssumptions } from "@/lib/retrofit/economic-model";
 
 export interface MeasureChipRowProps {
   /** Every measure the generators produced, financially enriched. */
@@ -58,8 +54,6 @@ export interface MeasureChipRowProps {
   areas?: ClaimEnvelopeAreas;
   /** Conditioned floor area (m²) — the basis plant and lighting are priced on. */
   totalFloorAreaSqm: number;
-  /** The financing assumptions in force, to say when they apply to nothing chosen. */
-  assumptions: EconomicAssumptions;
 }
 
 /** Short category label so a reader can group the row at a glance. */
@@ -75,7 +69,6 @@ export function MeasureChipRow({
   recommendedIds,
   areas,
   totalFloorAreaSqm,
-  assumptions,
 }: MeasureChipRowProps) {
   const { t, lang } = useT();
 
@@ -129,18 +122,6 @@ export function MeasureChipRow({
     const { next } = toggleMeasure(chosenIds, measureId, measures);
     setAppliedMeasureIds(next);
   };
-
-  // A financing chip reading "CAPEX 70%" over a selection it does not cover
-  // promises something it will not do. Measured on /models/fzk-haus, whose
-  // opening selection is the PV alone: every rail figure stayed byte-identical
-  // while every chip price fell to 30 %, because the public presets omit
-  // `renewable` — solar is funded by 신재생에너지 보급사업, a different
-  // programme. Correct arithmetic, and a label that needed saying out loud.
-  const chosenMeasures = measures.filter((m) => chosenIds.includes(m.id));
-  const trackCoversNothing =
-    chosenMeasures.length > 0 &&
-    chosenMeasures.every((m) => measureSubsidyRatio(m, assumptions) === 0) &&
-    Object.keys(assumptions.subsidyByCategory ?? {}).length > 0;
 
   const deviates =
     appliedMeasureIds !== null &&
@@ -264,17 +245,6 @@ export function MeasureChipRow({
         })}
       </div>
 
-      {trackCoversNothing ? (
-        <p
-          className="text-[10px] leading-tight text-amber-600 dark:text-amber-400"
-          data-track-covers-nothing
-        >
-          {t(
-            "선택한 공사에는 이 지원 재원이 적용되지 않습니다 — 태양광은 신재생에너지 보급사업 소관입니다.",
-            "This financing does not apply to the chosen work — solar is funded by a separate programme (신재생에너지 보급사업).",
-          )}
-        </p>
-      ) : null}
     </div>
   );
 }

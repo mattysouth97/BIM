@@ -63,7 +63,7 @@ const ROOF_TYPE_KO: Record<"flat" | "gable" | "hip" | "sawtooth", string> = {
 /**
  * Why a candidate is not in the selected set.
  *
- * Read off the same three facts the knapsack used — post-subsidy CAPEX, NPV,
+ * Read off the same three facts the knapsack used — effective CAPEX, NPV,
  * and the budget — so the reason cannot disagree with the selection it is
  * explaining. `null` for a selected measure.
  */
@@ -84,8 +84,8 @@ export function exclusionReason(
   }
   if (capexBudgetKrw !== null && effective > capexBudgetKrw) {
     return isKo
-      ? `선택 안 됨 — NPV는 양수(${npv !== undefined ? formatKRW(npv) : "—"})지만 보조금 반영 투자비 ${formatKRW(effective)}가 예산 ${formatKRW(capexBudgetKrw)}를 넘습니다.`
-      : `Not selected — NPV is positive (${npv !== undefined ? formatKRW(npv) : "—"}) but its post-subsidy cost ${formatKRW(effective)} exceeds the ${formatKRW(capexBudgetKrw)} budget.`;
+      ? `선택 안 됨 — NPV는 양수(${npv !== undefined ? formatKRW(npv) : "—"})지만 투자비 ${formatKRW(effective)}가 예산 ${formatKRW(capexBudgetKrw)}를 넘습니다.`
+      : `Not selected — NPV is positive (${npv !== undefined ? formatKRW(npv) : "—"}) but its cost ${formatKRW(effective)} exceeds the ${formatKRW(capexBudgetKrw)} budget.`;
   }
   if (measure.conflictGroup ?? measure.exclusiveGroup) {
     return isKo
@@ -119,8 +119,8 @@ export function retrofitBasisLines(
   const roof = energy.roof;
   return [
     isKo
-      ? "단가는 KICT 2024 표준품셈, 내용연수는 ASHRAE, 보조·이자 조건은 그린리모델링 2026.1 기준입니다. 할인율 5.0%, 분석기간 20년."
-      : "Unit costs KICT 2024, lifetimes ASHRAE, subsidy and interest terms 그린리모델링 2026.1. Discount rate 5.0 %, 20-year horizon.",
+      ? "단가는 KICT 2024 표준품셈, 내용연수는 ASHRAE 기준입니다. 지원금·이자 지원을 적용하지 않은 투자비이며, 할인율 5.0%, 분석기간 20년입니다."
+      : "Unit costs KICT 2024, lifetimes ASHRAE. Costs exclude grants and interest support; discount rate 5.0 %, 20-year horizon.",
     isKo
       ? "면적은 엔진이 실제로 계산한 외피 면적입니다 — 지붕은 실측 지붕 표면, 바닥은 지반 슬래브, 창은 실측 개구부, 벽은 총벽 − 개구부 − 출입문."
       : "Areas are the ones the engine itself priced — roof at the measured roof surface, floor at the ground slab, windows at the measured aperture, wall at gross − aperture − doors.",
@@ -156,7 +156,6 @@ export function ReferenceRetrofitPanel({
   const isKo = locale === "ko";
   const { buildingPk, climate } = energy;
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
-  const programTrack = useScenarioStore((s) => s.programTrack);
   const pvLayout = usePvLayout();
 
   // The SAME engine run the frame's HUD uses — same store key, same sigungu
@@ -179,7 +178,6 @@ export function ReferenceRetrofitPanel({
     footprintArea: quantities.planAreaSqm,
     roofType: energy.roof?.type ?? "flat",
     sidoPrefix: climate.sigunguCd.slice(0, 2),
-    programTrack,
     engineDemand: metrics?.demand,
     engineEnvelopeAreas,
     pvGeometricKWp: pvLayout?.totalKWp ?? 0,
@@ -253,8 +251,8 @@ export function ReferenceRetrofitPanel({
               data-testid="reference-model-retrofit-none-selected"
             >
               {isKo
-                ? "선택된 개선안이 없습니다. 아래 카드마다 이유를 적었습니다 — 예산을 올리거나 그린리모델링 보조 트랙을 선택하면 달라집니다."
-                : "Nothing was selected. Each card below says why — raising the budget or picking a 그린리모델링 track changes it."}
+                ? "선택된 개선안이 없습니다. 아래 카드에서 비용과 선정되지 않은 이유를 확인하고, 모델 상단에서 원하는 공사를 선택할 수 있습니다."
+                : "No work is selected. Review the costs and reasons below, then choose work in the panel above the model."}
             </p>
           ) : null}
 

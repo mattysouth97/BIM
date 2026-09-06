@@ -75,7 +75,6 @@ describe("scenario-store — the proposal is what the model draws", () => {
   beforeEach(() => {
     useScenarioStore.setState({
       capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
-      programTrack: "none",
       buildingInputs: null,
       selectedMeasureIds: null,
       previewProposal: true,

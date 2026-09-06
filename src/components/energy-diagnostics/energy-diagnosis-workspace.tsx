@@ -78,7 +78,6 @@ import {
 import {
   analyzeRetrofitEconomics,
   type DiagnosticsRetrofitAnalysis,
-  type ProgramTrack,
 } from "@/lib/energy-diagnostics/retrofit-bridge";
 
 import { diagnosisCopy } from "./copy";
@@ -248,7 +247,6 @@ export function EnergyDiagnosisWorkspace({
   const [tierOneOutcome, setTierOneOutcome] =
     useState<TierOneModelBuildOutcome | null>(null);
   const [zoneSelection, setZoneSelection] = useState<readonly string[]>([]);
-  const [programTrack, setProgramTrack] = useState<ProgramTrack>("none");
   const [autosavedAt, setAutosavedAt] = useState<string | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
@@ -1236,9 +1234,9 @@ export function EnergyDiagnosisWorkspace({
   const retrofitAnalysis = useMemo(
     () =>
       baselineRun != null
-        ? analyzeRetrofitEconomics(baselineRun, programTrack)
+        ? analyzeRetrofitEconomics(baselineRun)
         : null,
-    [baselineRun, programTrack],
+    [baselineRun],
   );
 
   const sceneContext = model
@@ -1340,8 +1338,6 @@ export function EnergyDiagnosisWorkspace({
         onImprovementEditorOpen: setImprovementEditorOpen,
         findings,
         retrofitAnalysis,
-        programTrack,
-        onProgramTrack: setProgramTrack,
         zoneSelection,
         onToggleZoneSelection: toggleZoneSelection,
         onRefineModel: refineModel,
@@ -1915,8 +1911,6 @@ function renderStagePanel({
   onImprovementEditorOpen,
   findings,
   retrofitAnalysis,
-  programTrack,
-  onProgramTrack,
   zoneSelection,
   onToggleZoneSelection,
   onRefineModel,
@@ -1954,8 +1948,6 @@ function renderStagePanel({
   onImprovementEditorOpen: (open: boolean) => void;
   findings: readonly import("@/lib/energy-diagnostics/findings").DiagnosticFinding[];
   retrofitAnalysis: DiagnosticsRetrofitAnalysis | null;
-  programTrack: ProgramTrack;
-  onProgramTrack: (track: ProgramTrack) => void;
   zoneSelection: readonly string[];
   onToggleZoneSelection: (zoneId: string) => void;
   onRefineModel: (upgrades: readonly FactUpgrade[]) => void;
@@ -2507,8 +2499,6 @@ function renderStagePanel({
       <RetrofitEconomicsPanel
         analysis={retrofitAnalysis}
         locale={locale}
-        programTrack={programTrack}
-        onProgramTrack={onProgramTrack}
       />
     </section>
   );

@@ -4,6 +4,7 @@ import { GALLERY_ITEMS } from "@/lib/landing/gallery";
 import { landingCopy } from "@/lib/landing/copy";
 import { useAppStore } from "@/store/app-store";
 import { GalleryCard } from "./gallery-card";
+import { ReferenceDatasetDownloads } from "@/components/reference-building/reference-dataset-downloads";
 
 /**
  * The landing page is a gallery of the models this project has taken in —
@@ -51,12 +52,16 @@ export function LandingPage() {
           </p>
           <p className="mt-3 text-[13px] leading-6 text-muted-foreground">
             {isKo
-              ? "각 카드는 그 건물의 BIM 파일이 스스로 말하는 값만 싣고, 값마다 그것을 어디에서 읽었는지 함께 적습니다. 열관류율·기밀·설비·기후는 여기에 없습니다. 조정용 모델은 그런 값을 쓸 수 있는 형태로 담지 않고, 0으로 적힌 값은 '없음'으로 봅니다. 그런 값은 건물을 열고 들어간 뒤 연식 기반 가정으로 채우며, 그때도 가정이라고 표시된 채로 남습니다."
-              : "Each card carries only what that building's BIM file states, and names what states it, figure by figure. U-values, airtightness, HVAC and climate are not here: a coordination model does not carry them usably, and a value recorded as zero counts as unavailable. Those get filled in from era-indexed assumptions once you open the building, and stay marked as assumptions when they are."}
+              ? "실제 건물의 조정 모델과 검증용 예제 모델을 함께 살펴봅니다. 면적·부재 수와 파일이 명시한 열성능은 어디에서 읽었는지 함께 적습니다. 빠진 열성능·운영 조건·기후는 가정으로 구분합니다. 에너지 프로필은 이 입력으로 계산한 결과이며, 계량기로 측정한 실제 사용량이 아닙니다."
+              : "Explore coordination models of real buildings alongside validation examples. Areas, element counts and thermal properties stated by a file carry their sources. Missing thermal properties, operating conditions and climate remain explicit assumptions. Energy profiles are calculated from these inputs; they are not metered consumption."}
           </p>
         </div>
 
-        <ul id="gallery" className="gallery-grid mt-14 sm:mt-16" data-testid="landing-gallery">
+        <div className="mt-6 border-t border-border pt-4">
+          <ReferenceDatasetDownloads locale={isKo ? "ko" : "en"} />
+        </div>
+
+        <ul id="gallery" className="gallery-grid mt-10 sm:mt-12" data-testid="landing-gallery">
           {GALLERY_ITEMS.map((item) => (
             <li key={item.id} className="flex">
               <GalleryCard item={item} isKo={isKo} />

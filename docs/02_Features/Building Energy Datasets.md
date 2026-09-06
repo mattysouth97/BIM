@@ -101,7 +101,7 @@ serverless bundle; meshes do not need to be bundled into these functions.
 - Server loading, hashes and HTTP downloads: `energy-dataset-server.ts`
 - Route/provenance/CSV tests: `__tests__/energy-dataset.test.ts`
 
-Tests compare the four published baseline demand/grade pairs with the values
+Tests compare the five published baseline demand/grade pairs with the values
 already exercised by the model-page E2E suite, verify source/payload/HTTP hashes,
 distinguish aperture stand-ins from extracted subsets, and check CSV null/zero,
 Unicode, quoting, formula protection and path rejection. These checks do not

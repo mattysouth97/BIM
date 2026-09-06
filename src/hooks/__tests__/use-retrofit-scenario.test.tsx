@@ -8,6 +8,8 @@ import { renderHook } from "@testing-library/react";
 import { useRetrofitScenario } from "../use-retrofit-scenario";
 import { useMaterialStore } from "@/store/material-store";
 import { makeMaterials } from "./test-fixtures";
+import { DEFAULT_ECONOMIC_ASSUMPTIONS } from "@/lib/retrofit/cost-database";
+import { computeFinancials, effectiveDiscountRate } from "@/lib/retrofit/economic-model";
 
 const PK = "TEST-PK-RETRO";
 
@@ -66,5 +68,33 @@ describe("useRetrofitScenario sequential damping (P1-01)", () => {
     const scenario = renderScenario(100_000);
     expect(scenario.energyImprovementFraction).toBeGreaterThanOrEqual(0);
     expect(scenario.energyImprovementFraction).toBeLessThanOrEqual(1);
+  });
+
+  it("uses unsubsidized costs and DCF even when a legacy caller supplies a funding track", () => {
+    useMaterialStore.setState({ properties: { [PK]: makeMaterials() } });
+    for (const programTrack of ["public-local", "public-seoul-or-central", "private-base", "private-tier2", "private-high-perf"]) {
+      // A runtime legacy object may have extra keys even though the hook's
+      // public input type no longer offers programTrack.
+      const legacyInputs = {
+        buildingPk: PK,
+        capexBudgetKrw: 250_000_000,
+        totalFloorArea: 840,
+        footprintArea: 84,
+        annualHeatingDemand: 100_000,
+        annualCoolingDemand: 30_000,
+        chosenMeasureIds: ["envelope-wall-insulation"],
+        programTrack,
+      };
+      const { result, unmount } = renderHook(() => useRetrofitScenario(legacyInputs));
+      const scenario = result.current;
+      expect(scenario.assumptions).toBe(DEFAULT_ECONOMIC_ASSUMPTIONS);
+      expect(effectiveDiscountRate(scenario.assumptions)).toBe(0.05);
+      expect(scenario.chosen?.selected.map((measure) => measure.id)).toEqual(legacyInputs.chosenMeasureIds);
+      const chosen = scenario.chosen!.selected[0];
+      expect(scenario.chosen!.effectiveCapex).toBe(chosen.estimatedCost);
+      expect(scenario.chosen!.npv).toBeCloseTo(computeFinancials(chosen, DEFAULT_ECONOMIC_ASSUMPTIONS).npv, 6);
+      expect(scenario).not.toHaveProperty("suggestedPrivateTrack");
+      unmount();
+    }
   });
 });

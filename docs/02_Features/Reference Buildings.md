@@ -65,6 +65,18 @@ These exist because the alternative is a blank, and a blank is not a claim:
 
 ## Energy: one baseline
 
+Schependomlaan still uses **115.50 m² glazing and 40.00 m² doors as named
+stand-ins**. This does not mean that aperture extraction is absent. Its
+committed `openings.json` records 51 counted windows / 106.06 m² and 16
+counted doors / 81.03 m², resolved against the current exterior-wall set.
+Twelve further sized windows / 19.49 m² sit by omitted knee/dormer walls,
+four corner/splayed windows / 5.57 m² remain unresolved, and ten rooflights
+have no stated dimensions. Only 6 of 100 conditioned spaces have solids
+for the boundary probe. These totals are a selected-host subset, so they
+must not replace the whole-envelope stand-ins as completed measurements.
+Resolve the wall and opening scope together (`A-WALL-SET-SCOPE`) before
+promoting them; the three pending-input records remain in force.
+
 The frame's kWh/m² and its NPV are computed from **one** engine run.
 
 `EnergyInstrumentHud` calls `useEnergyMetrics(buildingPk, sigunguCd)` with the
@@ -161,16 +173,17 @@ the one the grade row still discloses.
 `scene-outliner.tsx` renders on `/building/[id]`, extracted rather than copied.
 
 Every measure not in the selected set carries the reason, read off the three
-facts the knapsack itself used (post-subsidy CAPEX, NPV, budget):
+facts the knapsack itself used (unsubsidized CAPEX, NPV, budget):
 
 - NPV < 0 → the saving never repays the outlay on these terms.
 - NPV ≥ 0 but effective CAPEX > budget → it would pay, it does not fit.
 - One of a mutually-exclusive pair → the alternative is already in the set.
 - Otherwise → another combination within the same budget sums to a higher NPV.
 
-This matters more than it sounds. At the default ₩2.5억 with no subsidy the
-Clinic selects **0 of its 6** measures. Six cards each saying why is an answer;
-an empty list under "0개 선택 · NPV ₩0" reads as a broken panel.
+The budget is optional and defaults to no ceiling. Recommendations then include
+NPV-positive work; a supplied budget applies the knapsack. The user's chosen
+work is seeded once and is not silently replaced by later budget changes.
+Support-program controls were removed on 2026-09-07; costs are unsubsidized.
 
 ### What these measures do NOT do to the engine
 
@@ -243,3 +256,20 @@ Implementation record and before/after values:
 | `src/hooks/use-retrofit-scenario.ts` | Measures, `usefulDemandFromEngine`, `engineEnvelopeAreasFrom` |
 | `src/lib/energy/heat-loss.ts` | `meanWindowToWallRatio` |
 | `src/lib/reference-buildings/energy-inputs.ts` | The registry, and the shape a new building fills in |
+
+### Canvas panels and dataset reuse (2026-09-07)
+
+Top investment/work and bottom energy panels collapse independently using
+keyboard-accessible buttons. Contents remain mounted, preserving the budget,
+chosen measures and open details; each collapsed panel retains a reopen button.
+
+The gallery and every model page provide JSON and CSV published-baseline
+downloads. See [[Building Energy Datasets]] for units, scope, provenance, hashes
+and the distinction between calculated energy and absent metered consumption.
+
+The fifth model is KIT Office, a licensed fictional IFC example with 82 modeled
+spaces. Source-based floor/roof quantities are separate from conditioning and
+uninsulated-roof assumptions; their direction of bias is visible beside the
+measurement badge. Its curved roof does not fit modules under the current
+layout assumptions; the per-plane table records exclusions rather than
+inventing solar capacity. See [[2026-09-07-kit-office-ingestion]].

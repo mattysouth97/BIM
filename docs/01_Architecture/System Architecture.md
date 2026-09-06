@@ -14,7 +14,7 @@ The product is four fixed steps — see [[ADR-001 - Register-First Product Direc
 
 ```text
 건물 검색  →  도면 업로드  →  디지털 트윈  →  보고서
-   /            step 2         step 3        step 4
+  ledger        step 2         step 3        step 4
                 └────────── /building/[id] ──────────┘
 ```
 
@@ -25,10 +25,11 @@ Everything below is organised around one question: **where does a change go?**
 ```mermaid
 flowchart TB
   subgraph routes["Routes (src/app)"]
-    LP["/ — landing = 건축물대장 search"]
+    LP["/ — model gallery"]
+    MD["/models/[id] — reference model"]
     BW["/building/[id] — steps 2·3·4"]
     DX["/diagnostics/new — traceable diagnosis"]
-    API["/api/* — 21 route handlers"]
+    API["/api/* — route handlers"]
   end
 
   subgraph ui["Component layer (src/components)"]
@@ -58,8 +59,7 @@ flowchart TB
     ANT["Anthropic"]
   end
 
-  LP --> ED
-  LP --> BW
+  LP --> MD
   BW --> WS --> VW & UP & RP
   DX --> ED
   WS --> ST
@@ -234,3 +234,16 @@ Real code, real tests, no mount point. Do not describe these as features:
 
 [[Data Flow]] · [[Runtime Architecture]] · [[Integration Map]] ·
 [[ADR-000 - Architecture Decision Record Guide]] · [[Repository Map]]
+
+## Published reference energy datasets (2026-09-07)
+
+The existing gallery (see ADR-004; it precedes the four-step workflow) and model
+pages link to `/api/reference-buildings/[id]/dataset` and
+`/api/reference-buildings/datasets`. Server route handlers load only allowlisted
+committed manifests, add hashes and HTTP attachment metadata, and call the pure
+`reference-buildings/energy-dataset.ts` exporter. This uses the existing input
+registry and energy functions, independently of mutable browser scenarios.
+Manifest-only Next output tracing includes those artifacts in production.
+
+See [[Building Energy Datasets]] and
+[[ADR-005 - Publish Reproducible Reference Energy Datasets]] for schema semantics.

@@ -231,6 +231,7 @@ export function buildReferenceEnergyDataset(
     modelInputs: inputs ? {
       provenance: "mixed_model_measurements_and_named_assumptions",
       measurementState: inputs.measurementState ?? "not_assessed",
+      scopeNotice: inputs.scopeNotice ?? null,
       pendingMeasurements: inputs.pendingMeasurements ?? [],
       pendingMeasurementReconciliation: pendingReconciliation,
       // These exact objects reproduce the calculations. Their legacy source /

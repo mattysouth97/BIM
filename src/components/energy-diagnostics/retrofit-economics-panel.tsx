@@ -6,43 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type {
   DiagnosticsRetrofitAnalysis,
-  ProgramTrack,
 } from "@/lib/energy-diagnostics/retrofit-bridge";
 
 import type { DiagnosisLocale } from "./types";
-
-const TRACK_LABEL: Record<DiagnosisLocale, Record<ProgramTrack, string>> = {
-  ko: {
-    none: "지원 없음",
-    "public-seoul-or-central": "그린리모델링 공공 (서울·중앙)",
-    "public-local": "그린리모델링 공공 (지방)",
-    "private-base": "그린리모델링 민간 기본",
-    "private-tier2": "그린리모델링 민간 2단계",
-    "private-high-perf": "그린리모델링 민간 고성능",
-  },
-  en: {
-    none: "No subsidy",
-    "public-seoul-or-central": "Green Remodeling public (Seoul/central)",
-    "public-local": "Green Remodeling public (local)",
-    "private-base": "Green Remodeling private base",
-    "private-tier2": "Green Remodeling private tier 2",
-    "private-high-perf": "Green Remodeling private high-performance",
-  },
-};
 
 const CATEGORY_LABEL: Record<DiagnosisLocale, Record<string, string>> = {
   ko: { envelope: "외피", hvac: "설비", lighting: "조명", renewable: "신재생" },
   en: { envelope: "Envelope", hvac: "HVAC", lighting: "Lighting", renewable: "Renewable" },
 };
-
-const PROGRAM_TRACKS: readonly ProgramTrack[] = [
-  "none",
-  "public-seoul-or-central",
-  "public-local",
-  "private-base",
-  "private-tier2",
-  "private-high-perf",
-];
 
 function formatKrw(value: number): string {
   const abs = Math.abs(value);
@@ -59,13 +30,9 @@ function formatKrw(value: number): string {
 export function RetrofitEconomicsPanel({
   analysis,
   locale,
-  programTrack,
-  onProgramTrack,
 }: Readonly<{
   analysis: DiagnosticsRetrofitAnalysis | null;
   locale: DiagnosisLocale;
-  programTrack: ProgramTrack;
-  onProgramTrack: (track: ProgramTrack) => void;
 }>) {
   if (!analysis) return null;
   return (
@@ -81,22 +48,6 @@ export function RetrofitEconomicsPanel({
               : "Measures worth their investment against this baseline"}
           </h3>
         </div>
-        <label className="text-[10px] font-medium text-muted-foreground">
-          {locale === "ko" ? "지원 트랙" : "Subsidy track"}
-          <select
-            value={programTrack}
-            onChange={(event) => onProgramTrack(event.target.value as ProgramTrack)}
-            className="ml-2 h-7 rounded-md border bg-background px-2 text-[10px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label={locale === "ko" ? "그린리모델링 지원 트랙" : "Green Remodeling subsidy track"}
-            data-testid="retrofit-program-track"
-          >
-            {PROGRAM_TRACKS.map((track) => (
-              <option key={track} value={track}>
-                {TRACK_LABEL[locale][track]}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
       {analysis.measures.length === 0 ? (
         <p className="rounded-lg border border-dashed p-4 text-xs text-muted-foreground">

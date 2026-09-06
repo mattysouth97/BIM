@@ -128,7 +128,7 @@ export function ScenarioRail({
         </span>
       </Cell>
 
-      <Cell label={t("실효 투자비", "Effective CAPEX")} sublabel={t("보조금 반영", "Post-subsidy")}>
+      <Cell label={t("투자비", "CAPEX")} sublabel={t("선택한 공사 비용", "Cost of chosen work")}>
         <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
           {formatKrw(effectiveCapex, lang)}
         </span>

@@ -408,7 +408,8 @@ export function ReferenceEnergyFrame({
            where it covered the rail's 실효 투자비 cell — the top band
            occupies 13-135 px of this section and the badge sat at 12-40. */
         notice={
-          awaiting ? (
+          <>
+          {awaiting ? (
             <p
               className="px-3 py-1.5 font-mono text-[10px] leading-tight text-amber-300"
               data-testid="reference-energy-awaiting-measurement"
@@ -428,7 +429,13 @@ export function ReferenceEnergyFrame({
                 ? "실측 완료 · 이 프레임의 모든 외피 면적은 이 파일에서 측정한 값입니다"
                 : "Measurement complete · every envelope area behind this frame is measured from the file"}
             </p>
-          )
+          )}
+          {energy.scopeNotice ? (
+            <p className="border-t border-border px-3 py-2 text-[10px] leading-relaxed text-amber-700 dark:text-amber-300" data-testid="reference-energy-scope-notice">
+              {isKo ? energy.scopeNotice.ko : energy.scopeNotice.en}
+            </p>
+          ) : null}
+          </>
         }
       />
       {/* The legend positions itself `absolute left-3 top-16`; this wrapper

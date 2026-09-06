@@ -19,7 +19,9 @@ Execution prompt:
 
 ## Milestone 1 — roof geometry and an inspectable model
 
-Verified locally; production deployment follows this commit:
+Committed/pushed as `23f8f49`; clean detached deployment is READY and aliased to
+`https://bim-self.vercel.app`. `/api/health` verified the full commit SHA and
+`region: icn1` on 2026-09-07 00:10 KST.
 
 - Full unit run: 5,184 passed, 4 skipped (429 passed files, 1 skipped).
 - Full Chromium E2E run: 92 passed. Final changed geometry/labels/camera tests:
@@ -72,9 +74,40 @@ Open: roof plant/parapet obstructions, structural/load feasibility and full
 shading survey; setbacks, module class and Seoul climate remain assumptions.
 The modelled energy path still does not credit LED/PV in kWh or grade.
 
-## Next milestone — collection and reusable records
+## Milestone 2 — collection, datasets and canvas controls
 
-In progress separately, not yet verified or published: KIT office example
-(explicit fictional site), and versioned per-building/catalogue dataset
-downloads carrying source licences, hashes, measurement status, assumptions,
-climate, calculated outputs and missing metered consumption.
+Local implementation verified; clean production deployment pending.
+
+- Fifth source model: licensed KIT Office IFC example (fictional validation
+  building), 82 modeled spaces / 2,266.66 m², 269.1 kWh/(m²·yr), grade 5 under
+  the declared assumptions. Conditioned basement/attic and uninsulated roof
+  bias is visible; curved-roof PV exclusions are preserved. No meter data.
+- Per-building and catalogue JSON/CSV downloads on the existing gallery/model
+  pages. Records include source licences/attribution, units, source/manifest/
+  input/payload SHA-256 hashes, code revision, assumptions, partial extraction
+  status, modeled outputs and null metered consumption.
+- Schependomlaan partial opening extraction is explicitly distinguished from
+  the still-active 115.5/40 m² stand-ins. No partial quantity is promoted to a
+  complete envelope measurement.
+- Independent accessible top/bottom panel collapse preserves local input and
+  chosen work. Bottom control relocated after the content because runtime
+  testing found the rendering toolbar intercepted its earlier position.
+- Removed support-program controls from model/twin/diagnostics/generative
+  economics and their shared store. Old localStorage funding selections are
+  ignored; report, outliner, equipment and work costs use unsubsidized defaults.
+  DCF, chosen measures and optional budgets remain.
+
+Validation: 5,255 unit tests passed, 4 existing skips. TypeScript clean; src/e2e
+ESLint 0 errors and 6 existing warnings. Full browser run 101 passed/1 CAD setup
+timeout; the full five-test CAD rerun passed. All five legacy funding regression tests
+pass. Dataset download/hashes, all five model pages, panel state and PV checks
+passed in the full run. KIT and demo screenshots inspected with zero pageerrors.
+Earlier failing tests were resolved: actual bottom-control pointer interception,
+five new regression assertions mistakenly waiting on a nonexistent attribute,
+and an in-flight unit run reading a pre-edit wording assertion. None skipped.
+
+## In progress — material explanations and source detail
+
+Next lane adds source-derived architectural geometry on all five models,
+illustrative material layer textures with source and thermal assumptions, and
+MEP geometry where the IFC supplies it. This work is not yet published.

@@ -12,9 +12,7 @@
 // feeds `useRetrofitScenario` from the same record.
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type { RoofPlaneSet } from "@/lib/retrofit/pv-layout";
-import type { ProgramTrack } from "@/lib/retrofit/cost-database";
 import {
   proposalVisualIds,
   effectiveMeasureIds,
@@ -47,8 +45,6 @@ interface ScenarioState {
    * set for that building. Lane 3D, user-approved 2026-09-06.
    */
   capexBudgetKrw: number | null;
-  /** 그린리모델링 program track. Default "none" = unsubsidised (legacy behavior). */
-  programTrack: ProgramTrack;
   /**
    * Derived engine inputs for the active building, published by the surface
    * that has the ledger data. `null` until a building is loaded.
@@ -70,9 +66,7 @@ interface ScenarioState {
    * `null` means "not seeded for this building yet": the HUD copies the first
    * recommendation in once, so the page arrives useful. From that moment it is
    * the user's, and **nothing but the user changes it**. That is the whole
-   * point of the field. Before it, the only control was a financing chip and
-   * the building changed as a side effect of a money choice; now changing
-   * 지원 재원 re-prices the chosen work and never re-picks it.
+   * point of the field. Budget changes never replace the user's chosen work.
    *
    * It was deleted earlier the same day for having no writer at all. It is back
    * because it now has one — the measure chip row — not because the mechanism
@@ -100,7 +94,6 @@ interface ScenarioState {
   roofPlanes: RoofPlaneSet | null;
   setRoofPlanes: (planes: RoofPlaneSet | null) => void;
   setCapexBudget: (krw: number | null) => void;
-  setProgramTrack: (track: ProgramTrack) => void;
   setBuildingInputs: (inputs: ScenarioBuildingInputs | null) => void;
   setSelectedMeasureIds: (ids: string[] | null) => void;
   /** Write the user's chosen work. `null` returns to "follow the recommendation". */
@@ -113,7 +106,6 @@ interface ScenarioState {
 type ScenarioData = Omit<
   ScenarioState,
   | "setCapexBudget"
-  | "setProgramTrack"
   | "setBuildingInputs"
   | "setSelectedMeasureIds"
   | "setAppliedMeasureIds"
@@ -129,7 +121,6 @@ type ScenarioData = Omit<
 function initialScenarioData(): ScenarioData {
   return {
     capexBudgetKrw: null,
-    programTrack: "none",
     buildingInputs: null,
     selectedMeasureIds: null,
     appliedMeasureIds: null,
@@ -138,13 +129,14 @@ function initialScenarioData(): ScenarioData {
   };
 }
 
+// All remaining scenario state belongs to this building/session. The removed
+// funding-program feature was the only persisted field. Do not hydrate the old
+// bim-scenario-state record: a saved subsidy must not silently alter costs.
 export const useScenarioStore = create<ScenarioState>()(
-  persist(
     (set) => ({
       ...initialScenarioData(),
 
       setCapexBudget: (krw) => set({ capexBudgetKrw: krw }),
-      setProgramTrack: (track) => set({ programTrack: track }),
       // A selection belongs to one building — switching buildings drops BOTH
       // the recommendation and the user's chosen work, so building A's
       // proposal never draws itself on building B in the frames before the HUD
@@ -184,13 +176,6 @@ export const useScenarioStore = create<ScenarioState>()(
       setRoofPlanes: (planes) => set({ roofPlanes: planes }),
       resetScenario: () => set(initialScenarioData()),
     }),
-    {
-      name: "bim-scenario-state",
-      partialize: (state) => ({
-        programTrack: state.programTrack,
-      }),
-    },
-  ),
 );
 
 /**

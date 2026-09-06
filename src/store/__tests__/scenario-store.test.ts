@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   useScenarioStore,
   type ScenarioBuildingInputs,
@@ -17,21 +17,16 @@ describe("useScenarioStore", () => {
     useScenarioStore.getState().resetScenario();
   });
 
-  it("defaults to unsubsidised track, NO budget (Lane 3D), and no building", () => {
+  it("defaults to no budget and no building, without a funding-program field", () => {
     const s = useScenarioStore.getState();
     expect(s.capexBudgetKrw).toBeNull();
-    expect(s.programTrack).toBe("none");
+    expect(s).not.toHaveProperty("programTrack");
     expect(s.buildingInputs).toBeNull();
   });
 
   it("setCapexBudget updates the budget", () => {
     useScenarioStore.getState().setCapexBudget(500_000_000);
     expect(useScenarioStore.getState().capexBudgetKrw).toBe(500_000_000);
-  });
-
-  it("setProgramTrack switches tracks", () => {
-    useScenarioStore.getState().setProgramTrack("private-base");
-    expect(useScenarioStore.getState().programTrack).toBe("private-base");
   });
 
   it("setBuildingInputs publishes and clears derived inputs", () => {
@@ -42,32 +37,33 @@ describe("useScenarioStore", () => {
     expect(useScenarioStore.getState().buildingInputs).toBeNull();
   });
 
-  it("persists only the budget and program track so tomorrow reopens the same answer", () => {
-    useScenarioStore.getState().setCapexBudget(500_000_000);
-    useScenarioStore.getState().setProgramTrack("public-seoul-or-central");
-    useScenarioStore.getState().setBuildingInputs(SAMPLE_INPUTS);
-    const partial = useScenarioStore.persist.getOptions().partialize!(
-      useScenarioStore.getState(),
-    );
-    // The budget is per building and never persisted (Lane 3D).
-    expect(partial).toEqual({
-      programTrack: "public-seoul-or-central",
-    });
-    expect(partial).not.toHaveProperty("buildingInputs");
-    expect(partial).not.toHaveProperty("capexBudgetKrw");
+  it("ignores a previously saved subsidy when the store loads fresh", async () => {
+    localStorage.setItem("bim-scenario-state", JSON.stringify({
+      state: { programTrack: "public-local", capexBudgetKrw: 1_000_000_000 },
+      version: 0,
+    }));
+    try {
+      vi.resetModules();
+      const { useScenarioStore: freshStore } = await import("../scenario-store");
+      expect(freshStore.getState()).not.toHaveProperty("programTrack");
+      expect(freshStore.getState()).not.toHaveProperty("setProgramTrack");
+      expect(freshStore.getState().capexBudgetKrw).toBeNull();
+      expect(freshStore.getState().appliedMeasureIds).toBeNull();
+    } finally {
+      localStorage.removeItem("bim-scenario-state");
+    }
   });
 
   it("resetScenario restores all defaults", () => {
     const s = useScenarioStore.getState();
     s.setCapexBudget(1_000_000_000);
-    s.setProgramTrack("public-local");
     s.setBuildingInputs(SAMPLE_INPUTS);
 
     useScenarioStore.getState().resetScenario();
 
     const after = useScenarioStore.getState();
     expect(after.capexBudgetKrw).toBeNull();
-    expect(after.programTrack).toBe("none");
+    expect(after).not.toHaveProperty("programTrack");
     expect(after.buildingInputs).toBeNull();
   });
 });

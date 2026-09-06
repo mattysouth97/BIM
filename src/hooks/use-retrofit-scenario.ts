@@ -30,9 +30,6 @@ import {
 } from "@/lib/retrofit/economic-model";
 import {
   DEFAULT_ECONOMIC_ASSUMPTIONS,
-  KOREAN_GR_PRESETS,
-  suggestPrivateTrack,
-  type ProgramTrack,
 } from "@/lib/retrofit/cost-database";
 import { SEOUL_CLIMATE, REGIONAL_CLIMATE } from "@/lib/energy/climate-data";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
@@ -107,21 +104,13 @@ export interface RetrofitScenarioInputs {
   /** Feed-in tariff (KRW/kWh) for solar. Defaults to 130. */
   feedInTariffKrw?: number;
   /**
-   * 그린리모델링 사업 program track to apply. Default `"none"` (unsubsidised).
-   * Public tracks apply 50/70% category-level CAPEX subsidy; private tracks
-   * apply interest-rate buy-down via `financingMix` (WACC adjustment).
-   * If `assumptions` is also provided, it wins over the preset.
-   */
-  programTrack?: ProgramTrack;
-  /**
-   * Explicit economic assumptions; overrides `programTrack`. Use for
-   * sensitivity analysis (custom discount rate, escalation, etc.) when the
-   * built-in presets don't fit.
+   * Explicit economic assumptions for sensitivity analysis (custom discount
+   * rate, escalation, etc.). The product uses the unsubsidized default.
    */
   assumptions?: EconomicAssumptions;
   /**
    * The work the USER chose, from `scenario-store.appliedMeasureIds`. When
-   * given, `chosen` prices exactly this set and the GR tier hint follows it.
+   * given, `chosen` prices exactly this set.
    * `null`/omitted means nothing is chosen yet and the recommendation stands
    * in — the state a page is in for the moment before the HUD seeds it.
    *
@@ -151,14 +140,11 @@ export interface RetrofitScenario {
   assumptions: EconomicAssumptions;
   /**
    * D₂.5 — CHOSEN-scenario energy saving as a fraction of the baseline annual
-   * demand (heating + cooling + lighting). Drives the private-tier suggestion;
+   * demand (heating + cooling + lighting), excluding renewable generation;
    * 0 when nothing is chosen or the baseline is unknown. It follows the chosen
-   * work rather than the recommendation, because the tier a building qualifies
-   * for depends on the work it actually does.
+   * work rather than the recommendation.
    */
   energyImprovementFraction: number;
-  /** GR private-track tier the improvement fraction qualifies for (UI hint only). */
-  suggestedPrivateTrack: ProgramTrack;
 }
 
 /**
@@ -258,18 +244,13 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     engineEnvelopeAreas,
     pvGeometricKWp,
     feedInTariffKrw = 130,
-    programTrack = "none",
     assumptions: assumptionsOverride,
     chosenMeasureIds = null,
   } = inputs;
 
-  // Resolve effective assumptions: explicit override > program-track preset >
-  // unsubsidized default. Memoised so identity is stable across renders when
-  // only the unrelated inputs change.
-  const assumptions = useMemo<EconomicAssumptions>(() => {
-    if (assumptionsOverride) return assumptionsOverride;
-    return KOREAN_GR_PRESETS[programTrack] ?? DEFAULT_ECONOMIC_ASSUMPTIONS;
-  }, [assumptionsOverride, programTrack]);
+  // Funding-program selection was removed. Product calculations always start
+  // from the unsubsidized baseline; legacy programTrack inputs have no effect.
+  const assumptions = assumptionsOverride ?? DEFAULT_ECONOMIC_ASSUMPTIONS;
 
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
 
@@ -439,10 +420,9 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     return evaluateMeasureSet(picked, assumptions);
   }, [allMeasures, chosenMeasureIds, assumptions, selection]);
 
-  // D₂.5 — improvement vs baseline for the GR private-tier suggestion.
+  // D₂.5 — chosen work's improvement against its own baseline.
   // Baseline mirrors the demand resolution used for measure generation above,
-  // in the same order — a tier hint computed against a different baseline
-  // from the measures it is hinting about would be the same bug one level up.
+  // in the same order, so the savings and baseline describe the same building.
   const energyImprovementFraction = useMemo(() => {
     if (!chosen || !materials || totalFloorArea <= 0) return 0;
     const useful = engineDemand ? usefulDemandFromEngine(engineDemand, materials) : null;
@@ -454,16 +434,15 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     if (baseline <= 0) return 0;
     // Exclude renewable: solar annualEnergySaving is FULL generation
     // (self-consumption + grid feed-in), and exported energy does not
-    // improve the building's own performance — counting it would suggest
-    // GR tiers the building doesn't qualify for. Knapsack/ROI still use
-    // full generation; only this eligibility input excludes it.
+    // improve the building's own performance. Knapsack/ROI still use full
+    // generation; only this building-performance fraction excludes it.
     const saved = chosen.selected.reduce(
       (s, m) => (m.category === "renewable" ? s : s + m.annualEnergySaving),
       0,
     );
     // P1-01: measures are generated with sequential damping (HVAC sees the
     // post-envelope residual), so this sum is already physically bounded;
-    // the clamp guards degenerate inputs so the GR tier hint never exceeds
+    // the clamp guards degenerate inputs so the improvement never exceeds
     // a 100% improvement claim.
     return Math.max(0, Math.min(1, saved / baseline));
   }, [
@@ -482,6 +461,5 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     chosen,
     assumptions,
     energyImprovementFraction,
-    suggestedPrivateTrack: suggestPrivateTrack(energyImprovementFraction),
   };
 }

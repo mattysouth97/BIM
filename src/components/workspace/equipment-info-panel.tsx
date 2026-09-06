@@ -59,7 +59,6 @@ export function EquipmentInfoPanel() {
 
   const publishedInputs = useScenarioStore((s) => s.buildingInputs);
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
-  const programTrack = useScenarioStore((s) => s.programTrack);
 
   // Same input-sharing convention as SceneOutliner: prefer the ledger-derived
   // inputs the Twin overlay publishes; with nothing published the areas are 0
@@ -72,7 +71,6 @@ export function EquipmentInfoPanel() {
     footprintArea: inputsMatch ? publishedInputs.footprintArea : 0,
     roofType: inputsMatch ? publishedInputs.roofType : "flat",
     sidoPrefix: inputsMatch ? publishedInputs.sidoPrefix : undefined,
-    programTrack,
   });
 
   const story = useMemo(() => {

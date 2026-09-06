@@ -256,11 +256,9 @@ export function ReferenceModelViewer({
    */
   manifest: ReferenceBuildingManifest;
   /**
-   * Only `energy?.roof?.type` is read (the PV array's flat-vs-pitched
-   * classification, and the seam that isolates a tiled roof's own pitch from
-   * a flat deck merged into the same mesh — see `resolveRoofFace`). `null`
-   * when this building's energy inputs are not wired yet; the array then
-   * falls back to this module's own geometric classification.
+   * The roof-insulation preview reads `energy?.roof?.type`. PV placement
+   * comes exclusively from measured roof planes, including when an unusual
+   * roof has no supported energy-input category.
    */
   energy: ReferenceBuildingEnergyInputs | null;
   locale?: "ko" | "en";
@@ -318,6 +316,7 @@ export function ReferenceModelViewer({
       data-testid="reference-model-viewer"
       data-pv-drawn={visual.solarInstalled ? pvDrawn : undefined}
       data-roof-planes={pvLayout ? "ready" : "pending"}
+      data-model-loaded={offset !== null}
       data-view={viewRequest.view}
       data-inspection={inspection}
     >

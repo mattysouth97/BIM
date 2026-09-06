@@ -1,7 +1,7 @@
 ---
 type: feature
 status: implemented
-last_verified: 2026-08-27
+last_verified: 2026-09-07
 ---
 
 # Retrofit Economics (CAPEX · ROI · 그린리모델링)
@@ -13,12 +13,17 @@ payload of the diagnosis.
 
 ## User / System Outcome
 
-The user sets a CAPEX budget and picks a 그린리모델링 program track. The app
-generates candidate measures (envelope, HVAC, lighting, solar), selects a set
-that fits the budget, and shows NPV, IRR, discounted payback and interest saved.
-The selection also changes **what renders in 3D** — a condensing-boiler cascade
-replaces the boiler, fluorescent fixtures become LED, PV appears on the roof — so
-the money and the model agree.
+The user chooses retrofit measures and can optionally set an investment budget.
+The app recommends measures using NPV (or a budget-constrained selection), while
+the user's chosen work drives 3D changes, costs and the energy comparison.
+NPV, IRR and discounted payback use the unsubsidized baseline.
+
+The **지원 재원 / support-program feature was removed** at the user's request on
+2026-09-07. Neither the twin/reference-model HUD nor the diagnostics economics
+panel offers funding tracks. Old `bim-scenario-state` subsidy selections are not
+hydrated; all active report, outliner and equipment consumers use the same
+unsubsidized hook. The reusable domain finance functions remain available, but
+no reachable product control chooses their subsidy presets.
 
 ## Current Status
 
@@ -43,7 +48,7 @@ authoring. The scenario itself still publishes to the store while hidden.
 flowchart TD
   subgraph twin["twin path (step 3)"]
     MS[material-store] --> URS[use-retrofit-scenario]
-    SS["scenario-store<br/>budget · track · inputs"] --> URS
+    SS["scenario-store<br/>optional budget · chosen work · inputs"] --> URS
   end
   subgraph diag["diagnostics path"]
     EP["succeeded baseline<br/>engine payload"] --> RBR[retrofit-bridge.ts]
@@ -61,19 +66,16 @@ flowchart TD
 `computeInterestSavedSchedule` (`LOAN_TERM_YEARS = 5`), `computeFinancials` and
 the knapsack.
 
-**그린리모델링 presets are real programme parameters**, versioned with an
-effective date in `cost-database.ts`: 공공건축물 서울·중앙 at 50 % direct
-subsidy, 공공 그 외 지자체 at 70 %, and three 민간 interest-support tiers on
-70 % LTV over a five-year loan term. `suggestPrivateTrack` picks a tier from the
-improvement fraction. Provenance for these figures is the sourced research
-dossier in `docs/superpowers/research/2026-04-30-green-remodeling.md`.
+Historic programme presets and their dated research remain in the domain
+library. They are not used by the active product economics after removal of the
+funding feature. Existing DCF, measure costs, energy prices and savings remain.
 
 ## State Ownership
 
-- `useScenarioStore` (persist `bim-scenario-state`) — `capexBudgetKrw`
-  (`DEFAULT_CAPEX_BUDGET_KRW = 250,000,000`), `programTrack`, `appliedMeasureIds`
-  and the derived `ScenarioBuildingInputs`. The store's own header states why it
-  exists: so the `TwinStageOverlay` and the `SceneOutliner` cannot disagree.
+- `useScenarioStore` is session-only. `capexBudgetKrw: number | null` defaults
+  to null (no ceiling); `appliedMeasureIds` records the user's chosen work and
+  `selectedMeasureIds` is the recommendation. Building changes reset this state.
+  There is no `programTrack` field or persistence middleware.
 - `useMaterialStore` — the twin path's measure inputs.
 - The diagnostics path owns **no** store state. `retrofit-bridge.ts` is
   explicitly pure: it reads only the exact engine payload of a succeeded baseline
@@ -86,7 +88,7 @@ dossier in `docs/superpowers/research/2026-04-30-green-remodeling.md`.
 - [cost-database.ts](../../src/lib/retrofit/cost-database.ts) — KRW costs, energy prices, 그린리모델링 presets
 - [use-retrofit-scenario.ts](../../src/hooks/use-retrofit-scenario.ts) — the twin-side bridge
 - [retrofit-bridge.ts](../../src/lib/energy-diagnostics/retrofit-bridge.ts) — the diagnostics-side bridge
-- [twin-stage-overlay.tsx](../../src/components/twin/twin-stage-overlay.tsx) + `capex-input.tsx`, `program-track-selector.tsx`
+- [twin-stage-overlay.tsx](../../src/components/twin/twin-stage-overlay.tsx) + `scenario-rail.tsx`, `measure-chip-row.tsx`
 - [measure-visuals.ts](../../src/lib/retrofit/measure-visuals.ts) · [equipment-scenario.ts](../../src/lib/layers/equipment-scenario.ts) — money → geometry
 
 ## Relevant Tests

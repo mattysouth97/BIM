@@ -19,7 +19,6 @@
 import { useMemo } from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { ProgramTrackSelector } from "@/components/twin/program-track-selector";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useRetrofitScenario } from "@/hooks/use-retrofit-scenario";
 import {
@@ -113,12 +112,9 @@ export function EnergyPanel({ design, previous }: Props) {
     [seed, design.metrics],
   );
 
-  // Budget and program track are the user's scenario, not the design's, so they
-  // live in the shared scenario store — the same two controls the twin uses.
+  // The user's budget lives in the shared scenario store, as in the twin.
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
-  const programTrack = useScenarioStore((s) => s.programTrack);
   const setCapexBudget = useScenarioStore((s) => s.setCapexBudget);
-  const setProgramTrack = useScenarioStore((s) => s.setProgramTrack);
 
   const scenario = useRetrofitScenario({
     buildingPk: seed.pk,
@@ -127,7 +123,6 @@ export function EnergyPanel({ design, previous }: Props) {
     footprintArea: scenarioInputs.footprintArea,
     roofType: scenarioInputs.roofType,
     sidoPrefix: scenarioInputs.sidoPrefix,
-    programTrack,
     // The engine's own demand, not the hook's coarse fallback — the energy
     // model and the retrofit model must not disagree about this building.
     annualHeatingDemand: metrics?.demand.heatingDemand,
@@ -308,12 +303,6 @@ export function EnergyPanel({ design, previous }: Props) {
           />
         </label>
 
-        <ProgramTrackSelector
-          value={programTrack}
-          onChange={setProgramTrack}
-          suggestedTrack={scenario.suggestedPrivateTrack}
-        />
-
         {selection && selection.selected.length > 0 ? (
           <>
             <dl className="font-mono text-xs">
@@ -351,17 +340,11 @@ export function EnergyPanel({ design, previous }: Props) {
               ))}
             </ul>
 
-            {selection.loanCapExceeded && (
-              <p className="text-[10px] text-amber-600">
-                This budget exceeds the program&apos;s per-applicant loan cap — the
-                financing shown is not available in full under this track.
-              </p>
-            )}
           </>
         ) : (
           <p className="text-[11px] text-muted-foreground">
-            No measure clears this budget with a positive NPV. Raise the budget or
-            pick a 그린리모델링 track to see a package.
+            No measure clears this budget with a positive NPV. Review the budget
+            and the estimated costs and savings.
           </p>
         )}
 

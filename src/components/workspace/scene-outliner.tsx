@@ -4,7 +4,7 @@
 // Retrofit Recommendations panel — "Twin Insights" left dock.
 //
 // D₃ unification: measures come from `useRetrofitScenario` — the SAME hook
-// (and the same scenario-store inputs, budget, and 그린리모델링 track) that
+// (and the same scenario-store inputs and budget) that
 // drives the Twin-stage overlay — so both surfaces always agree. When the
 // Twin overlay hasn't published ledger-derived inputs yet (e.g. standalone
 // usage), floor areas fall back to the recipe-store geometry.
@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/accordion";
 import { assembleRetrofitReport } from "@/lib/retrofit/retrofit-report";
 import type { RetrofitMeasure, RetrofitCategory } from "@/lib/retrofit/retrofit-types";
-import type { ProgramTrack } from "@/lib/retrofit/cost-database";
 import { Building2 } from "lucide-react";
 import { SceneLayerList } from "./scene-layer-list";
 // One card, one set of formatters, shared with the reference-building model
@@ -43,15 +42,6 @@ interface SceneOutlinerProps {
   /** Optional override — if omitted, derives from the material store. */
   buildingPk?: string;
 }
-
-const TRACK_BADGE_LABELS: Record<ProgramTrack, string | null> = {
-  none: null,
-  "public-seoul-or-central": "공공 50%",
-  "public-local": "공공 70%",
-  "private-base": "민간 4.5%p",
-  "private-tier2": "민간 4.0%p",
-  "private-high-perf": "민간 5.5%p",
-};
 
 // ── Category section (accordion item) ────────────────────────────────────────
 
@@ -105,7 +95,6 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
   const overrides = useRecipeStore((s) => s.overrides[buildingPk]);
 
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
-  const programTrack = useScenarioStore((s) => s.programTrack);
   const publishedInputs = useScenarioStore((s) => s.buildingInputs);
 
   // Recipe-derived fallback geometry, used only when the Twin overlay hasn't
@@ -139,7 +128,6 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
     footprintArea,
     roofType: inputsMatch ? publishedInputs.roofType : "flat",
     sidoPrefix: inputsMatch ? publishedInputs.sidoPrefix : undefined,
-    programTrack,
   });
 
   const selectedIds = useMemo(
@@ -152,8 +140,6 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
     if (scenario.allMeasures.length === 0) return null;
     return assembleRetrofitReport(scenario.allMeasures);
   }, [scenario.allMeasures]);
-
-  const trackBadge = TRACK_BADGE_LABELS[programTrack];
 
   // ── No building selected ──────────────────────────────────────────────────
 
@@ -207,11 +193,6 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
       <div className="px-3 pt-3 pb-2 border-b shrink-0">
         <div className="flex items-center justify-between mb-1.5">
           <p className="text-xs font-semibold">개선 권장사항</p>
-          {trackBadge && (
-            <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-cyan-300 text-cyan-700">
-              그린리모델링 {trackBadge}
-            </Badge>
-          )}
         </div>
         <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
           <span className="text-muted-foreground">

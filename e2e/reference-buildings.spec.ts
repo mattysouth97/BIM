@@ -48,13 +48,6 @@ type Expected = Readonly<{
    */
   grade: string;
   demandPerSqm: string;
-  /**
-   * Whether a CAPEX track (공공 지자체) reports that it covers nothing in this
-   * building's FRESH chosen set. Measured 2026-09-06, not reasoned: three of
-   * the four say so, and the Clinic does not — see the test for why its
-   * silence is a different fact from the others' noise.
-   */
-  capexCoversNothing: boolean;
 }>;
 
 /**
@@ -67,19 +60,16 @@ const KNOWN_ZERO_REASONS = ["nothing-chosen", "only-unpriced", "targets-met"];
 // Grades are on the table the use code selects (3b9ff6a): the three
 // dwellings are scored 주거, the Clinic by density. kWh/m² did not move.
 const BUILDINGS: readonly Expected[] = [
-  // Since Lane 3D there is no default budget, so the Clinic's fresh chosen set
-  // is its NPV-positive work — the PV alone — and a public CAPEX track covers
-  // none of it, like the other three. Before 3D its knapsack at ₩2.5억 chose
-  // nothing, which is why this row once read false.
-  { id: "bs-medical-dental-clinic", titleKo: "메디컬-덴탈 클리닉", grade: "1+", demandPerSqm: "108.8", capexCoversNothing: true },
-  { id: "schependomlaan", titleKo: "스헤펜돔라안 아파트", grade: "1++", demandPerSqm: "40.5", capexCoversNothing: true },
-  { id: "duplex-apartment", titleKo: "듀플렉스 아파트", grade: "4", demandPerSqm: "142.6", capexCoversNothing: true },
+  { id: "bs-medical-dental-clinic", titleKo: "메디컬-덴탈 클리닉", grade: "1+", demandPerSqm: "108.8" },
+  { id: "schependomlaan", titleKo: "스헤펜돔라안 아파트", grade: "1++", demandPerSqm: "40.5" },
+  { id: "duplex-apartment", titleKo: "듀플렉스 아파트", grade: "4", demandPerSqm: "142.6" },
   // The fourth building states NO services models at all — its manifest
   // carries an empty `serviceLayers`, so the layers panel is the fabric row
   // and nothing else, and its licence is KIT/IAI's own grant rather than a
   // Creative Commons one. Both are read from the manifest below rather than
   // written here, so neither can be quietly assumed to match the others'.
-  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "2", demandPerSqm: "92.6", capexCoversNothing: true },
+  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "2", demandPerSqm: "92.6" },
+  { id: "kit-office", titleKo: "KIT 오피스", grade: "5", demandPerSqm: "269.1" },
 ];
 
 type Manifest = {
@@ -113,14 +103,6 @@ function energyStrip(page: Page) {
 
 const deltaStrip = (page: Page) => page.locator("[data-retrofit-delta-strip]");
 
-/**
- * The chips are `role="radio"` in a radiogroup, not buttons, and each one's
- * accessible name is its label AND its subsidy detail ("프로그램 없음" +
- * "무보조"), so the name has to be matched as a pattern rather than whole.
- */
-const trackChip = (page: Page, label: RegExp) =>
-  page.locator("[data-twin-track-selector]").getByRole("radio", { name: label });
-
 /** Generous: a dev server may be compiling this route for the first time. */
 const FIRST_PAINT = 45_000;
 
@@ -147,6 +129,7 @@ for (const building of BUILDINGS) {
         "ready",
         { timeout: FIRST_PAINT },
       );
+      await expect(page.getByTestId("reference-model-viewer")).toHaveAttribute("data-model-loaded", "true", { timeout: FIRST_PAINT });
     });
 
     test("the PV modules drawn are the modules the legend counts", async ({ page }) => {
@@ -154,7 +137,14 @@ for (const building of BUILDINGS) {
       const row = page.locator("[data-measure-chip-row]");
       await expect(row).toBeVisible({ timeout: FIRST_PAINT });
       const solar = row.locator('[data-measure-chip^="solar-pv"]').first();
-      if ((await solar.count()) === 0) return;
+      if ((await solar.count()) === 0) {
+        const details = page.getByTestId("reference-pv-utilisation");
+        await details.locator("summary").click();
+        await expect(page.getByTestId("reference-pv-totals").locator("td:nth-last-child(2)")).toHaveText("0");
+        await expect(page.getByTestId("reference-pv-totals").locator("td:last-child")).toHaveText("0.0");
+        await expect(page.getByTestId("reference-pv-table").locator('tbody tr[data-pv-excluded=""]')).toHaveCount(0);
+        return;
+      }
       if ((await solar.getAttribute("data-measure-chosen")) !== "true") await solar.click();
       const legend = page.getByTestId("reference-retrofit-legend");
       await expect(legend).toHaveAttribute("data-pv-modules", /^\d+$/, { timeout: FIRST_PAINT });
@@ -233,6 +223,11 @@ for (const building of BUILDINGS) {
       await expect(strip).toContainText(`${building.demandPerSqm} kWh/m²·yr`, {
         timeout: FIRST_PAINT,
       });
+      if (building.id === "kit-office") {
+        await expect(page.getByTestId("reference-energy-scope-notice")).toContainText("475.92");
+        await expect(page.getByTestId("reference-energy-scope-notice")).toContainText("가정");
+        await expect(page.getByTestId("reference-energy-scope-notice")).toContainText("지하");
+      }
       await expect(strip.getByText(building.grade, { exact: true }).first()).toBeVisible();
     });
 
@@ -278,19 +273,11 @@ for (const building of BUILDINGS) {
     });
 
     test("a measure chip changes the model, and clicking it again puts it back", async ({ page }) => {
-      // 3C inverted this row: the PRIMARY control is now one chip per measure,
-      // and the six financing chips moved beneath it. So the thing that moves
-      // the building is a measure chip, and the previous version of this test
-      // — which clicked a financing chip and demanded the model change — was
-      // asserting something 3C makes invariant on purpose.
+      // Each measure controls the chosen work and the energy delta.
       await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
       const row = page.locator("[data-measure-chip-row]");
       await expect(row).toBeVisible({ timeout: FIRST_PAINT });
 
-      // Everything here goes through attributes, never coordinates: the chip
-      // row sits directly above the financing row inside one section, so a
-      // stray position lands on the wrong control and silently re-picks the
-      // work instead of re-pricing it.
       // Resolve the chip's ID FIRST and locate by that. Keying the locator on
       // `data-measure-chosen` — the attribute this test exists to flip — means
       // the element stops matching the moment the click lands, and the very
@@ -307,10 +294,7 @@ for (const building of BUILDINGS) {
       const chipId = await target.getAttribute("data-measure-chip");
       const chip = row.locator(`[data-measure-chip="${chipId}"]`);
 
-      // Either direction. The Clinic arrives with NOTHING chosen — its
-      // knapsack recommends none of its six at the default budget on the
-      // unsubsidised track — so this test cannot assume there is a selected
-      // chip to turn off, only that a chip can be toggled and put back.
+      // Toggle either direction and restore the initial selection.
       const startedChosen = (await chip.getAttribute("data-measure-chosen")) === "true";
       const flipped = startedChosen ? "false" : "true";
       const restored = startedChosen ? "true" : "false";
@@ -374,100 +358,21 @@ for (const building of BUILDINGS) {
       await expect.poll(readLegend, { timeout: 15_000 }).toBe(legendBefore);
     });
 
-    test("a financing chip re-prices the work and does not re-pick it", async ({ page }) => {
-      // The point of 3C: money is a consequence of the chosen work, never a
-      // chooser of it. So this asserts a change AND an invariant, and the
-      // invariant is the half that used to be wrong.
-      await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
+    test("removed funding controls and old saved programs cannot change the estimate", async ({ page }) => {
       const rail = page.locator("[data-twin-rail]");
       await expect(rail).toBeVisible({ timeout: FIRST_PAINT });
-
       const readRail = async () => (await rail.innerText()).replace(/\s+/g, " ").trim();
-      const readDelta = async () =>
-        (await deltaStrip(page).innerText()).replace(/\s+/g, " ").trim();
-      const chosenChips = page.locator('[data-measure-chip][data-measure-chosen="true"]');
-
-      // There has to be work before financing can re-price anything. The
-      // Clinic arrives with none chosen, and on an empty selection the rail is
-      // all zeroes and correctly does not move for any track — which would
-      // make this test pass vacuously on three buildings and fail on the one
-      // that had nothing to price. So choose a measure first if none is.
-      if ((await chosenChips.count()) === 0) {
-        const first = page.locator("[data-measure-chip]").first();
-        const id = await first.getAttribute("data-measure-chip");
-        await first.click();
-        await expect(page.locator(`[data-measure-chip="${id}"]`)).toHaveAttribute(
-          "data-measure-chosen",
-          "true",
-        );
-      }
-
-      const railBefore = await readRail();
-      const deltaBefore = await readDelta();
-      const chosenBefore = await chosenChips.count();
-
-      // 민간 기본 rather than 공공 지자체, and the reason is the assertion's
-      // premise rather than a preference. RESOLVED by bim-24 after this test
-      // first recorded 공공 지자체 leaving the rail byte-identical on all four
-      // buildings and handed it over as an open question:
-      //
-      //   `KOREAN_GR_PRIVATE_BASE` carries only a `financingMix` and no
-      //   `subsidyByCategory`, so the private tracks are CATEGORY-BLIND — the
-      //   interest buy-down is taken on `debtFraction × effectiveCapex` and
-      //   never looks at `measure.category`. It therefore moves NPV for any
-      //   selection with a positive effective CAPEX, which is why this
-      //   assertion holds on all four. The public tracks are category-KEYED
-      //   and omit `renewable` on purpose, so a CAPEX track moves the rail
-      //   only for the part of the selection it actually covers.
-      //
-      // The boundary matters and is why the block above guarantees a chosen
-      // measure first: an EMPTY selection has zero effective CAPEX, so even a
-      // rate track moves nothing. "Any non-empty selection" is the true
-      // sentence; "any selection" would not be.
-      const track = trackChip(page, /민간 기본/);
-      await track.click();
-      await expect(track).toHaveAttribute("aria-checked", "true");
-
-      // Re-prices: the rail's numbers move.
-      await expect.poll(readRail, { timeout: FIRST_PAINT }).not.toBe(railBefore);
-      // Does not re-pick: the chosen set is untouched and the modelled
-      // before/after is byte-identical. A financing chip that moved the
-      // building would mean the money was choosing the work again.
-      expect(await chosenChips.count()).toBe(chosenBefore);
-      expect(await readDelta()).toBe(deltaBefore);
-    });
-
-    test("a CAPEX track says so when it covers nothing that is chosen", async ({ page }) => {
-      // The sharper half of the financing story, and the one that fails loudly
-      // if someone ever adds `renewable` to a public preset — a real product
-      // decision that would otherwise arrive disguised as a config tweak.
-      //
-      // Measured across all four rather than reasoned, and the result is not
-      // the Clinic-versus-FZK pair it was proposed as. THREE buildings raise
-      // the flag under 공공 지자체, not one: each arrives with a single chosen
-      // measure that resolves to a zero subsidy ratio under the public
-      // presets. The Clinic does NOT raise it, and its silence is a different
-      // fact from the others' — post-3C its knapsack recommends none of its
-      // six at the default budget, so nothing is chosen, and an empty set
-      // makes no coverage claim either way. Reading that absence as "the
-      // Clinic's work is covered" would be exactly wrong.
-      await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
-      await expect(page.locator("[data-measure-chip-row]")).toBeVisible({ timeout: FIRST_PAINT });
-
-      const track = trackChip(page, /공공 지자체/);
-      await track.click();
-      await expect(track).toHaveAttribute("aria-checked", "true");
-
-      const notice = page.locator("[data-track-covers-nothing]");
-      if (building.capexCoversNothing) {
-        await expect(notice).toHaveCount(1, { timeout: 15_000 });
-      } else {
-        // And the reason it is absent here, asserted rather than assumed.
-        await expect(notice).toHaveCount(0);
-        expect(
-          await page.locator('[data-measure-chip][data-measure-chosen="true"]').count(),
-        ).toBe(0);
-      }
+      const baseline = await readRail();
+      await expect(page.locator("[data-twin-track-selector]")).toHaveCount(0);
+      await expect(rail).not.toContainText("보조금 반영");
+      await page.evaluate(() => localStorage.setItem("bim-scenario-state", JSON.stringify({
+        state: { programTrack: "public-seoul-or-central" }, version: 0,
+      })));
+      await page.reload();
+      await expect(page.getByTestId("reference-model-viewer")).toHaveAttribute("data-roof-planes", "ready", { timeout: FIRST_PAINT });
+      await expect(rail).toBeVisible({ timeout: FIRST_PAINT });
+      await expect.poll(readRail, { timeout: FIRST_PAINT }).toBe(baseline);
+      await expect(page.locator("[data-twin-track-selector]")).toHaveCount(0);
     });
 
     test("at first load the recommended chips are the chosen set the rail counts", async ({ page }) => {

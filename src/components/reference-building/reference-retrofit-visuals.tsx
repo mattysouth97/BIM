@@ -245,8 +245,8 @@ export function buildRetrofitLegendLines(args: {
     return [
       {
         key: "no-scenario",
-        ko: "그린리모델링 시나리오가 아직 평가되지 않음 — 미리보기 없음.",
-        en: "No green-remodelling scenario evaluated yet — nothing to preview.",
+        ko: "개보수 시나리오가 아직 평가되지 않아 미리보기가 없습니다.",
+        en: "No retrofit scenario evaluated yet — nothing to preview.",
       },
     ];
   }
@@ -254,8 +254,8 @@ export function buildRetrofitLegendLines(args: {
     return [
       {
         key: "empty-selection",
-        ko: "현재 예산·트랙에서 선택된 개선 항목 없음.",
-        en: "No measures selected under the current budget and track.",
+        ko: "선택한 공사가 없습니다. 모델 상단 패널에서 공사를 선택할 수 있습니다.",
+        en: "No work is selected. Choose work in the panel above the model.",
       },
     ];
   }

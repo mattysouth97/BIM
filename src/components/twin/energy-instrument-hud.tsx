@@ -2,7 +2,7 @@
 
 // src/components/twin/energy-instrument-hud.tsx
 // The energy instrument itself: top answer bar (NPV over the chosen work, the
-// measure chips, then financing) and bottom strip (grade / kWh / CO₂ / heat
+// measure chips) and bottom strip (grade / kWh / CO₂ / heat
 // loss, the before→after delta, chosen measures, CAPEX grip).
 //
 // WORK FIRST (2026-09-06 15:37, user's instruction). The top section used to
@@ -10,9 +10,9 @@
 // so a person could not pick a measure, and the building changed as a side
 // effect of a money choice. Now the primary row is `MeasureChipRow`, one chip
 // per physical measure carrying what it does to this building; the knapsack's
-// optimum is a 추천 mark on those chips; and the programme moved below them as
-// 지원 재원, which re-prices the chosen work and never re-picks it. Every
-// number on the frame is struck against `scenario.chosen`.
+// optimum is a 추천 mark on those chips. Funding-program selection was removed
+// by user request. Every number uses the unsubsidized baseline and is struck
+// against `scenario.chosen`.
 //
 // Extracted from TwinStageOverlay on 2026-09-04 so a
 // building that is not a 건축물대장 row — a reference model whose inputs are
@@ -20,7 +20,7 @@
 // register title to get it. What the HUD needs is five numbers and a store
 // key; where they come from is the caller's business.
 //
-// D₃: scenario state (budget, program track, derived building inputs)
+// D₃: scenario state (budget, chosen work, derived building inputs)
 // lives in `useScenarioStore` so the SceneOutliner left dock reads the
 // exact same inputs and the two surfaces always agree.
 //
@@ -44,7 +44,6 @@ import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useScenarioStore } from "@/store/scenario-store";
 import { TwinInstrumentFrame } from "./twin-instrument-frame";
 import { ScenarioRail } from "./scenario-rail";
-import { ProgramTrackSelector } from "./program-track-selector";
 import { SelectedMeasuresStrip } from "./selected-measures-strip";
 import { MeasureChipRow } from "./measure-chip-row";
 import { RetrofitDeltaStrip } from "./retrofit-delta-strip";
@@ -73,7 +72,7 @@ export interface EnergyInstrumentHudProps {
    */
   exteriorDoorSqm?: number;
   /**
-   * A band rendered INSIDE the top section, under the program chips.
+   * A band rendered INSIDE the top section, under the work chips.
    *
    * It is a slot rather than something a caller absolutely-positions over the
    * canvas: the apartment's awaiting-measurement badge sat at `right-3 top-3`
@@ -107,9 +106,7 @@ export function EnergyInstrumentHud({
   gradeBasis,
 }: EnergyInstrumentHudProps) {
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
-  const programTrack = useScenarioStore((s) => s.programTrack);
   const setCapexBudget = useScenarioStore((s) => s.setCapexBudget);
-  const setProgramTrack = useScenarioStore((s) => s.setProgramTrack);
   const setBuildingInputs = useScenarioStore((s) => s.setBuildingInputs);
   const appliedMeasureIds = useScenarioStore((s) => s.appliedMeasureIds);
   const setAppliedMeasureIds = useScenarioStore((s) => s.setAppliedMeasureIds);
@@ -156,7 +153,6 @@ export function EnergyInstrumentHud({
     footprintArea,
     roofType,
     sidoPrefix,
-    programTrack,
     // Undefined until the stores are seeded; the hook then falls back to its
     // coarse proxy, which is the honest state for a frame with no engine
     // answer yet rather than a number pretending to be one.
@@ -213,24 +209,13 @@ export function EnergyInstrumentHud({
             assumptions={scenario.assumptions}
             totalCandidateMeasures={scenario.allMeasures.length}
           />
-          {/* PRIMARY control: the work. Above financing, because the work is
-              what the user is choosing and the money is a consequence. */}
+          {/* PRIMARY control: choosing work updates the model and its costs. */}
           <div className="border-t border-border">
             <MeasureChipRow
               measures={scenario.allMeasures}
               recommendedIds={recommendedIds}
               areas={engineEnvelopeAreas}
               totalFloorAreaSqm={totalFloorArea}
-              assumptions={scenario.assumptions}
-            />
-          </div>
-          {/* SECONDARY: how it is paid for. Re-prices the chosen work; never
-              re-picks it. */}
-          <div className="border-t border-border">
-            <ProgramTrackSelector
-              value={programTrack}
-              onChange={setProgramTrack}
-              suggestedTrack={scenario.suggestedPrivateTrack}
             />
           </div>
           {notice ? <div className="border-t border-border">{notice}</div> : null}

@@ -42,7 +42,6 @@ export function EquipmentInsightCard() {
   const materials = useMaterialStore((s) => s.properties[buildingPk]);
   const publishedInputs = useScenarioStore((s) => s.buildingInputs);
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
-  const programTrack = useScenarioStore((s) => s.programTrack);
   const cardRef = useRef<HTMLElement>(null);
 
   const inputsMatch = publishedInputs?.buildingPk === buildingPk;
@@ -53,7 +52,6 @@ export function EquipmentInsightCard() {
     footprintArea: inputsMatch ? publishedInputs.footprintArea : 0,
     roofType: inputsMatch ? publishedInputs.roofType : "flat",
     sidoPrefix: inputsMatch ? publishedInputs.sidoPrefix : undefined,
-    programTrack,
   });
 
   const story = useMemo(() => {

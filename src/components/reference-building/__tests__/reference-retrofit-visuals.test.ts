@@ -133,7 +133,8 @@ describe("buildRetrofitLegendLines", () => {
       roofGeometryAvailable: false,
     });
     expect(lines).toHaveLength(1);
-    expect(lines[0].en).toMatch(/no green-remodelling scenario evaluated/i);
+    expect(lines[0].en).toMatch(/no retrofit scenario evaluated/i);
+    expect(`${lines[0].ko} ${lines[0].en}`).not.toMatch(/그린리모델링|green-remodelling|track|트랙/i);
   });
 
   it("says nothing is selected when the array is empty", () => {
@@ -145,7 +146,9 @@ describe("buildRetrofitLegendLines", () => {
       lightingReach: "not-modeled",
       roofGeometryAvailable: false,
     });
-    expect(lines[0].en).toMatch(/no measures selected/i);
+    expect(lines[0].en).toMatch(/no work is selected/i);
+    expect(lines[0].en).toContain("Choose work in the panel above the model");
+    expect(`${lines[0].ko} ${lines[0].en}`).not.toMatch(/budget|track|예산|트랙/i);
   });
 
   it("names exactly the envelope elements the visual state has on, and none it doesn't", () => {

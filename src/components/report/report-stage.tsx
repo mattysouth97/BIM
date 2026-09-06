@@ -133,7 +133,6 @@ export function ReportStage({
   // drift from what the UI shows. Inputs published for a different building
   // (stale) are ignored — recipe area then keeps the BIMFIT report populated.
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
-  const programTrack = useScenarioStore((s) => s.programTrack);
   const scenarioInputs = useScenarioStore((s) => s.buildingInputs);
   const scenarioApplies =
     scenarioInputs !== null && scenarioInputs.buildingPk === buildingPk;
@@ -159,7 +158,6 @@ export function ReportStage({
     footprintArea: scenarioApplies ? scenarioInputs.footprintArea : recipeFootprint,
     roofType: scenarioApplies ? scenarioInputs.roofType : "flat",
     sidoPrefix: scenarioApplies ? scenarioInputs.sidoPrefix : undefined,
-    programTrack,
   });
 
   const portfolio = useMemo(

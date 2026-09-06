@@ -37,7 +37,7 @@ const manifest = JSON.parse(
 ) as ReferenceBuildingManifest;
 
 describe("the file says, unmissably, which state it is in", () => {
-  // The single most important property of this deliverable. Six envelope
+  // The single most important property of this deliverable. Three envelope
   // areas are stand-ins, and `envelopeQuantities` will report `source:
   // "measured"` for all of them because it cannot tell the difference — it
   // only refuses zeros and NaNs. So the declaration has to be explicit, and
@@ -62,6 +62,47 @@ describe("the file says, unmissably, which state it is in", () => {
       "areas.glazingByOrientationSqm",
     ]);
     expect(SCHEPENDOMLAAN_PENDING_MEASUREMENTS).toHaveLength(3);
+  });
+
+  it("partial extraction is described from its rows without being promoted to a complete envelope", () => {
+    type Opening = { type: string; name: string; included?: boolean; outsideWallSet?: boolean; areaSqm?: number | null };
+    const openings = JSON.parse(readFileSync(
+      path.join(process.cwd(), "public/reference-buildings/schependomlaan/openings.json"), "utf8",
+    )) as { openings: Opening[]; unresolved: Opening[]; summary: { probe: { complete: boolean; spaceSolids: number; conditionedSpaces: number } } };
+    const countedWindows = openings.openings.filter((row) => row.type === "IfcWindow" && row.included);
+    const outsideWindows = openings.openings.filter((row) => row.type === "IfcWindow" && row.outsideWallSet);
+    const cornerWindows = openings.unresolved.filter((row) => row.type === "IfcWindow" && row.areaSqm != null);
+    const rooflights = openings.unresolved.filter((row) => row.type === "IfcWindow" && row.areaSqm == null);
+    const countedDoors = openings.openings.filter((row) => row.type === "IfcDoor" && row.included);
+    const statement = SCHEPENDOMLAAN_ASSUMPTIONS.find((row) => row.id === "A-PLACEHOLDER-STATE")!.why;
+    const sum = (rows: Opening[]) => rows.reduce((total, row) => total + (row.areaSqm ?? 0), 0);
+    const groups: [string, Opening[]][] = [
+      ["counted windows", countedWindows],
+      ["sized windows outside the exterior-wall set", outsideWindows],
+      ["unresolved corner/splayed windows", cornerWindows],
+      ["counted doors", countedDoors],
+    ];
+    for (const [label, rows] of groups) {
+      const claim = statement.match(new RegExp(`(\\d+) ${label} \\(([\\d.]+) m²\\)`));
+      expect(claim, label).not.toBeNull();
+      expect(Number(claim![1]), label).toBe(rows.length);
+      expect(Number(claim![2]), label).toBe(Number(sum(rows).toFixed(2)));
+    }
+    expect(rooflights.every((row) => /dakkoepel|velux/i.test(row.name))).toBe(true);
+    expect(Number(statement.match(/(\d+) rooflights without stated dimensions/)?.[1])).toBe(rooflights.length);
+    expect(countedWindows.length + outsideWindows.length + cornerWindows.length + rooflights.length).toBe(77);
+    const probe = statement.match(/Only (\d+) of (\d+) conditioned spaces have solids/)!;
+    expect(Number(probe[1])).toBe(openings.summary.probe.spaceSolids);
+    expect(Number(probe[2])).toBe(openings.summary.probe.conditionedSpaces);
+    expect(openings.summary.probe.complete).toBe(false);
+    expect(outsideWindows.length + cornerWindows.length + rooflights.length).toBeGreaterThan(0);
+    expect(sum(countedWindows)).toBeCloseTo(manifest.areas.glazingApertureSqm!, 2);
+    expect(sum(countedDoors)).toBeCloseTo(manifest.areas.exteriorDoorSqm!, 2);
+    expect(SCHEPENDOMLAAN_MEASURED_ENVELOPE.glazingApertureSqm).toBe(115.5);
+    expect(SCHEPENDOMLAAN_MEASURED_ENVELOPE.exteriorDoorSqm).toBe(40);
+    expect(SCHEPENDOMLAAN_INPUT_STATE).toBe("awaiting_lane_b_measurements");
+    expect(SCHEPENDOMLAAN_PENDING_MEASUREMENTS).toHaveLength(3);
+    expect(statement).not.toContain("manifest carries none");
   });
 
   it("the three that landed match the shipped manifest, and each moved the way its bias note said", () => {
@@ -144,7 +185,8 @@ describe("the file says, unmissably, which state it is in", () => {
     const basis = SCHEPENDOMLAAN_RECIPE.measuredEnvelope!.basis;
     expect(basis).not.toMatch(/^PARTLY PLACEHOLDER/);
     expect(basis).toMatch(/^Wall areas/);
-    expect(basis).toContain("Glazing aperture and exterior-door aperture are NOT measured");
+    expect(basis).toContain("Glazing aperture and exterior-door aperture used here are stand-ins");
+    expect(basis).toContain("full scope unresolved");
     // And the pointer the old opener carried survived the cut: the closing
     // sentence used to say "the direction that table records", where "that
     // table" was the constant the opener named.

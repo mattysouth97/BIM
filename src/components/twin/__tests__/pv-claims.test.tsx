@@ -8,7 +8,6 @@ import { referenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-
 import { REFERENCE_BUILDING_IDS } from "@/lib/reference-buildings/manifest";
 import { layoutRoofPlanes, type RoofPlaneSet } from "@/lib/retrofit/pv-layout";
 import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
-import { DEFAULT_ECONOMIC_ASSUMPTIONS } from "@/lib/retrofit/cost-database";
 import { useAppStore } from "@/store/app-store";
 import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
@@ -31,7 +30,7 @@ describe("PV claims on the work chip and before/after strip", () => {
           // An empty PV chip set must make no capacity/surface-area claim.
           expect(count).toBe(0);
           expect(layout.totalKWp).toBe(0);
-          const { container } = render(<MeasureChipRow measures={[]} recommendedIds={[]} totalFloorAreaSqm={1} assumptions={DEFAULT_ECONOMIC_ASSUMPTIONS} />);
+          const { container } = render(<MeasureChipRow measures={[]} recommendedIds={[]} totalFloorAreaSqm={1} />);
           expect(container.querySelector('[data-measure-claim]')).toBeNull();
           return;
         }
@@ -45,7 +44,7 @@ describe("PV claims on the work chip and before/after strip", () => {
           buildingInputs: { buildingPk: energy.buildingPk, totalFloorArea: 1, footprintArea: 1, roofType: energy.roof!.type, sidoPrefix: "11" },
         });
         const { container } = render(<>
-          <MeasureChipRow measures={[measure]} recommendedIds={[measure.id]} totalFloorAreaSqm={1} assumptions={DEFAULT_ECONOMIC_ASSUMPTIONS} />
+          <MeasureChipRow measures={[measure]} recommendedIds={[measure.id]} totalFloorAreaSqm={1} />
           <RetrofitDeltaStrip />
         </>);
         const claim = container.querySelector('[data-measure-claim]')!.textContent!;

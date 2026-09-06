@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import type { ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
+import type { ReferenceBuildingId, ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
 import type { SolvedConstruction } from "@/lib/reference-buildings/constructions";
 import type { ReferenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
 import { ReferenceModelViewer } from "./reference-model-viewer";
@@ -14,6 +14,7 @@ import {
 } from "./reference-energy";
 import { ReferenceRetrofitPanel } from "./reference-retrofit";
 import { ReferenceViewControls, type ReferenceViewRequest } from "./reference-view-controls";
+import { ReferenceDatasetDownloads } from "./reference-dataset-downloads";
 
 export const FABRIC_LAYER = "fabric";
 
@@ -144,6 +145,9 @@ export function ReferenceBuildingWorkspace({
           onInspection={() => setInspection((current) => !current)}
           isKo={isKo}
         />
+        <div className="mt-4">
+          <ReferenceDatasetDownloads buildingId={manifest.id as ReferenceBuildingId} locale={locale} />
+        </div>
 
         <section className="mt-6" data-testid="reference-model-layers">
           <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -328,17 +332,17 @@ export function ReferenceBuildingWorkspace({
           <Stated
             label="외벽 (순)"
             value={`${fmt(manifest.areas.exteriorWallNetSqm)} m²`}
-            read={`${manifest.counts.exteriorWalls} walls · tessellated solid, openings and clips already voided`}
+            read={manifest.areas.exteriorWallNote ?? `${manifest.counts.exteriorWalls} walls · extracted net area of selected exterior walls`}
           />
           <Stated
-            label="지상층"
+            label={isKo ? "공간이 기록된 층" : "Storeys with modeled spaces"}
             value={`${manifest.counts.storeys}`}
-            read="IfcBuildingStorey with a storey above it"
+            read="IfcBuildingStorey referenced by at least one IfcSpace · includes below-grade storeys"
           />
           <Stated
             label="구성 (레이어)"
             value={`${manifest.counts.assemblies}`}
-            read="IfcMaterialLayerSet · names and thicknesses only, no U-value stated"
+            read="IfcMaterialLayerSet · layer names and thicknesses"
           />
         </dl>
 

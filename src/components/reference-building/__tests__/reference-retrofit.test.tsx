@@ -150,7 +150,8 @@ describe("retrofitBasisLines", () => {
     // And the costing provenance the brief asks for.
     expect(lines).toContain("KICT 2024");
     expect(lines).toContain("ASHRAE");
-    expect(lines).toContain("2026.1");
+    expect(lines).toContain("Costs exclude grants and interest support");
+    expect(lines).not.toContain("2026.1");
   });
 });
 
@@ -163,7 +164,7 @@ describe("the section on a real building page", () => {
     cleanup();
     useMaterialStore.setState({ properties: {} });
     useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
-    useScenarioStore.setState({ capexBudgetKrw: 250_000_000, programTrack: "none", roofPlanes: null });
+    useScenarioStore.setState({ capexBudgetKrw: 250_000_000, roofPlanes: null });
   });
 
   function seed(id: ReferenceBuildingId) {
@@ -318,7 +319,7 @@ describe("the cards name measures in the reader's language", () => {
     cleanup();
     useMaterialStore.setState({ properties: {} });
     useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
-    useScenarioStore.setState({ capexBudgetKrw: 250_000_000, programTrack: "none" });
+    useScenarioStore.setState({ capexBudgetKrw: 250_000_000 });
   });
 
   it("a Korean page carries no untranslated generator name", () => {

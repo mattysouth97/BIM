@@ -9,13 +9,14 @@
  *  field, exactly which inputs are stand-ins, what they are stand-ins FOR,
  *  and which way each one biases the answer.
  *
- *  Three of this building's envelope inputs have never been measured: the
- *  glazing aperture (total and per orientation) and the exterior-door
- *  aperture, because `manifest.json` does not carry them yet. bim-bf's
- *  extractor pass (Lane B of the parity brief) will emit them under the
- *  manifest field names named in that table; swapping them in is a value
- *  change, not a rename, and flipping `SCHEPENDOMLAAN_INPUT_STATE` to
- *  "measured" is the last step.
+ *  Three whole-envelope inputs remain unestablished: glazing aperture
+ *  (total and per orientation) and exterior-door aperture. The manifest DOES
+ *  carry a partial extraction: 51 windows / 106.06 m² and 16 doors / 81.03 m²
+ *  matched to the current exterior-wall set. Twelve sized windows sit by
+ *  omitted knee/dormer walls, four corner/splayed windows are unresolved,
+ *  and ten rooflights state no size. These selected-host totals are not the
+ *  complete exterior aperture. Resolve that scope with A-WALL-SET-SCOPE
+ *  before replacing the stand-ins or marking the input state "measured".
  *
  *  Three more WERE placeholders until 2026-09-04 and are now measured: the
  *  roof (`areas.roofSurfaceByFamilySqm`, `roofUnionSqm`, `roofs[]`), the
@@ -27,9 +28,9 @@
  *  So: the wall areas, roof, ground, volumes, floor areas, storey datums
  *  and every layer thickness ARE measured and come from the committed
  *  manifest. The roof U, the wall U and the ground R_f are solved from the
- *  model's own stated layer sets. What is NOT measured is the glazed and
- *  door area, which sets the window term and the WWR denominator. A kWh/yr
- *  out of this file today is still provisional on that account.
+ *  model's own stated layer sets. The glazed and door areas used HERE are
+ *  still stand-ins, which set the window term and WWR denominator. The
+ *  partial extraction must not be promoted to a complete measurement.
  * ══════════════════════════════════════════════════════════════════════════
  *
  * Same discipline as `bs-medical-dental-clinic-energy.ts`, same four exports.
@@ -69,7 +70,7 @@ export const SCHEPENDOMLAAN_INPUT_STATE: SchependomlaanInputState =
   "awaiting_lane_b_measurements";
 
 export type PendingMeasurement = Readonly<{
-  /** The `manifest.areas.*` field that will replace this value verbatim. */
+  /** The `manifest.areas.*` field to adopt once its envelope scope is resolved. */
   manifestField: string;
   /** The constant in this file that holds the stand-in. */
   constant: string;
@@ -120,7 +121,7 @@ const EXTERIOR_WALL_NET_SQM = 426.63;
  * carries them. The four diagonals are 0 BY MEASUREMENT, not by omission:
  * `manifest.orientation.note` records that all 122 inner-leaf walls are
  * cardinal and that the 88 placements at 47.94° belong to the excluded outer
- * leaf. Lane B's per-sector glazing will arrive on these same eight keys.
+ * leaf. The partial glazing extraction uses these same eight sector keys.
  */
 export type WallSector = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW";
 
@@ -143,17 +144,19 @@ const SECTORS = Object.keys(SCHEPENDOMLAAN_WALL_BY_SECTOR_SQM) as readonly WallS
 /**
  * PLACEHOLDER for `areas.glazingApertureSqm`.
  *
- * The manifest states the COUNT — 77 windows — and no area at all. This is
- * that count times an assumed mean pane, which is a product of one measured
- * number and one invented one. See `A-GLAZING-AREA-PLACEHOLDER`.
+ * This keeps the original 77-window count times an assumed mean pane.
+ * The extractor now reports 51 selected-host windows at 106.06 m², with the
+ * other 26 outside that set or unresolved. Replacing a whole-building guess
+ * by that partial sum would hide the missing scope. See A-PLACEHOLDER-STATE.
  */
 const WINDOW_COUNT = 77;
 const PLACEHOLDER_MEAN_WINDOW_SQM = 1.5;
 const PLACEHOLDER_GLAZING_APERTURE_SQM = WINDOW_COUNT * PLACEHOLDER_MEAN_WINDOW_SQM;
 
 /**
- * PLACEHOLDER for `areas.exteriorDoorSqm`. 20 exterior door leaves, counted;
- * 2.0 m² each, invented. Kept a SEPARATE field from glazing from the start —
+ * PLACEHOLDER for `areas.exteriorDoorSqm`. 20 IfcDoor marked IsExternal;
+ * 2.0 m² each, invented. That property is not an exterior-boundary verdict:
+ * only 16 resolve against the current wall set. Kept separate from glazing —
  * on the Clinic that separation is what stopped 267 m² of real wall going
  * un-priced, and folding doors into glazing here would repeat it.
  */
@@ -218,8 +221,9 @@ export const SCHEPENDOMLAAN_ROOF_AREA_SQM = ROOF_SPORENKAP_SURFACE_SQM + ROOF_FL
 
 /**
  * PLACEHOLDER for `areas.glazingByOrientationSqm`, on the same eight keys as
- * the wall split, so aperture ÷ wall gives a per-sector WWR the moment Lane B
- * lands. Distributed PRO RATA to the measured wall split, which is exactly
+ * the wall split. The manifest's current split covers only selected hosts;
+ * it cannot yet replace the whole-envelope spread. Distributed PRO RATA to
+ * the measured wall split, which is exactly
  * what "a uniform ratio across orientations" means — the diagonals stay 0
  * because their walls are 0. The real data is per-sector and will not be
  * uniform; see `A-WWR-UNIFORM-PLACEHOLDER`.
@@ -276,7 +280,7 @@ export const SCHEPENDOMLAAN_PENDING_MEASUREMENTS: readonly PendingMeasurement[] 
       placeholderValue: PLACEHOLDER_EXTERIOR_DOOR_SQM,
       unit: "m2",
       derivedFrom:
-        "20 exterior door leaves counted by bim-bf × an invented 2.0 m² leaf.",
+        "20 IfcDoor marked IsExternal × an invented 2.0 m² leaf; the property is not a verified exterior boundary.",
       biasDirection:
         "Roughly neutral on total loss — doors are priced at the wall U (A-DOORS) — but it moves the WWR denominator, so it is not free.",
       envelopeBias: "neutral",
@@ -290,7 +294,7 @@ export const SCHEPENDOMLAAN_PENDING_MEASUREMENTS: readonly PendingMeasurement[] 
 
 /**
  * `provenance` is the point of this object: every field says whether it is a
- * manifest measurement, a placeholder awaiting Lane B, or derived from the
+ * manifest measurement, a placeholder awaiting scope resolution, or derived from the
  * two. The Clinic has no equivalent because the Clinic has no placeholders.
  */
 export const SCHEPENDOMLAAN_MEASURED_ENVELOPE = Object.freeze({
@@ -577,9 +581,12 @@ export const SCHEPENDOMLAAN_RECIPE: BuildingRecipe = {
       "surfaces, the union of the ground-storey slab shadows and its outer ring). " +
       "The roof area is the outer surface, derived as sporenkap surface 306.00 + " +
       "(roofUnionSqm 361.86 − sporenkap plan 124.90) = 542.96 m² (A-ROOF-STACK). " +
-      "Glazing aperture and exterior-door aperture are NOT measured: they are " +
-      "stand-ins awaiting bim-bf's extractor pass and each biases the answer in " +
-      "the direction SCHEPENDOMLAAN_PENDING_MEASUREMENTS records.",
+      "Glazing aperture and exterior-door aperture used here are stand-ins. " +
+      "The manifest's 106.06 m² glazing and 81.03 m² doors cover only openings " +
+      "resolved against the current exterior-wall set; missing knee/dormer " +
+      "hosts, corner windows and rooflights leave the full scope unresolved " +
+      "(A-WALL-SET-SCOPE). SCHEPENDOMLAAN_PENDING_MEASUREMENTS records the " +
+      "retained assumptions and their stated bias.",
   },
 };
 
@@ -708,11 +715,11 @@ export type SchependomlaanAssumption = Readonly<{ id: string; assumes: string; w
 export const SCHEPENDOMLAAN_ASSUMPTIONS: readonly SchependomlaanAssumption[] =
   Object.freeze([
     // ── The placeholder state itself ──────────────────────────────────────
-    { id: "A-PLACEHOLDER-STATE", assumes: "Three envelope inputs are stand-ins, not measurements: glazing aperture, per-orientation glazing and exterior-door aperture.", why: "The committed manifest carries none of them — it states window and door COUNTS (77 / 20) and no apertures. bim-bf's extractor pass emits them as areas.glazingApertureSqm, areas.glazingByOrientationSqm and areas.exteriorDoorSqm; SCHEPENDOMLAAN_PENDING_MEASUREMENTS names each stand-in, how it was derived and which way it is wrong. SCHEPENDOMLAAN_INPUT_STATE reads 'awaiting_lane_b_measurements' until every one of them is replaced. Three more — roof, ground-slab area and ground perimeter — were stand-ins until 2026-09-04 and are measured now; each had said 'Understates' and each did (roof 302.24 → 542.96 m², slab 302.24 → 345.81 m², perimeter 69.54 → 90.08 m). A kWh figure from this file today is provisional on its window term in a way its U-values are not." },
+    { id: "A-PLACEHOLDER-STATE", assumes: "Three engine inputs remain stand-ins: glazing aperture, per-orientation glazing and exterior-door aperture. Partial aperture measurements exist; the complete envelope scope is unresolved.", why: "The committed openings.json records 51 counted windows (106.06 m²), 12 sized windows outside the exterior-wall set (19.49 m²), 4 unresolved corner/splayed windows (5.57 m²), and 10 rooflights without stated dimensions. It records 16 counted doors (81.03 m²); 4 of the 20 IsExternal doors fall outside that wall set. Only 6 of 100 conditioned spaces have solids, so the probe cannot establish a complete boundary and host adjacency decides the counted set. The manifest's glazing and door totals therefore describe selected hosts, not a complete building envelope. Resolve omitted knee/dormer hosts and the remaining openings with A-WALL-SET-SCOPE before replacing the whole-building placeholders or changing the input state. SCHEPENDOMLAAN_PENDING_MEASUREMENTS keeps the original 115.50 m² glazing and 40.00 m² doors explicitly assumed; the legacy state name 'awaiting_lane_b_measurements' denotes this unresolved scope, not an absent extraction file." },
     { id: "A-GLAZING-AREA-PLACEHOLDER", assumes: "77 windows at a mean 1.5 m² give a 115.50 m² aperture.", why: "The count is bim-bf's measurement; the mean pane is invented. A Dutch apartment mixes 3-4 m² living-room windows with 0.3-0.5 m² toilet lights and the mean of that mixture is not knowable from a count. The resulting 19.8 % WWR against gross wall is plausible for Dutch housing, which is exactly why it must be labelled — a plausible number is indistinguishable from a measured one once it has been multiplied by a U-value." },
-    { id: "A-DOORS-AREA-PLACEHOLDER", assumes: "20 exterior door leaves at a mean 2.0 m² give 40.00 m².", why: "Same shape as the glazing placeholder: the count is measured, the leaf area is not. Doors are kept a separate field from glazing rather than folded in, because on the Clinic that separation is what stopped 267 m² of real wall being priced as nothing, and the gross-wall denominator is wrong the moment they merge." },
+    { id: "A-DOORS-AREA-PLACEHOLDER", assumes: "20 IfcDoor marked IsExternal at an assumed mean 2.0 m² give 40.00 m².", why: "The count is an authoring-property count, not a confirmed exterior-boundary count. The extractor resolves 16 against the current exterior-wall set at 81.03 m²; four merk F-R doors sit outside it, and A-WALL-SET-SCOPE remains open. The 40.00 m² stays explicitly assumed while that scope is resolved. Doors remain separate from glazing so the gross-wall denominator keeps both quantities visible." },
     { id: "A-ROOF-STACK", assumes: "The roof the engine prices is the outer surface, 542.96 m² = sporenkap surface 306.00 + (roofUnionSqm 361.86 − sporenkap plan 124.90), not the 692.04 m² the ten family surfaces sum to and not the 383.55 m² roofProjectedSqm.", why: "The family surfaces cannot simply be summed, because they overlap in plan and are layers of the same roofs: dakvloer's nine slabs on storey '04 dak' (11.62–11.84 m) surface 259.73 but union to 135.37 — eight build-up slabs stacked on one deck, which a sum prices twice; the eight dormer roofs (14.49) and the thin plafond / dakisolatie / spouwisolatie / dakaftimmering pieces (10.77) sit inside the sporenkap's plan on top of it. What the rows do NOT show is the dakvloer under the sporenkap — the 64° sporenkap (44 ROOF slabs, 32 of them on storey 03 at 9.00 m, under the dakvloer's 11.62–11.84 m) is a steep band about 1.3 m wide around the top storey, and the flat dakvloer, plat dak and lifttop lie beside it: their unions 135.37 + 95.01 + 5.75 = 236.13 against the all-family union's 361.86 − 124.90 = 236.96, disjoint from the pitched roof to within 0.83 m². So the outer surface is the pitched roof at its surface plus the flat roofs at their plan, which is their surface. The dormer roofs are left inside the sporenkap's figure rather than added — if the sporenkap is cut at the dormers this understates by up to 14.49 m² plus the dormer cheeks. One solved roof U (the dakplaat panel) is applied to all of it, because the model resolves no separate flat-deck build-up; the flat decks may be built differently and the file does not say." },
-    { id: "A-WWR-UNIFORM-PLACEHOLDER", assumes: "The placeholder glazing is spread pro rata to the measured wall split, so every sector reads the same WWR.", why: "Lane B emits glazingByOrientationSqm on the same eight sector keys as the wall split, so a genuine per-sector WWR is coming and this file is structured to take one — SCHEPENDOMLAAN_WWR_BY_SECTOR already computes eight ratios. Until then a uniform spread is the only distribution that adds no information the file does not have. It is not what the building looks like: a Dutch block glazes its living-room facade far harder than its stair-and-service facade." },
+    { id: "A-WWR-UNIFORM-PLACEHOLDER", assumes: "The placeholder glazing is spread pro rata to the measured wall split, so every sector reads the same WWR.", why: "The manifest now carries glazingByOrientationSqm on the same eight sector keys, but only for the selected-host aperture subset (A-PLACEHOLDER-STATE). Its non-uniform split is not yet a complete envelope distribution. SCHEPENDOMLAAN_WWR_BY_SECTOR keeps the original assumed spread until the wall/opening scope is resolved; a field being present is not evidence that its coverage is complete." },
 
     // ── The engine's own limits, disclosed ────────────────────────────────
     { id: "A-WWR-DENOMINATOR", assumes: "WWR 0.1984 against GROSS wall area (opaque 426.63 + glazing 115.50 + doors 40.00 = 582.13 m²).", why: "heat-loss.ts computes windows = gross × WWR and prices the remainder as opaque wall, so the ratio must be quoted against the same gross the engine is handed. Against the net 426.63 the windows would land right and 155 m² of real wall would be priced as nothing. Derived from the parts in code, never typed — so when the placeholders are replaced the expression is unchanged and the ratio simply moves." },
