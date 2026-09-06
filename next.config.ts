@@ -30,6 +30,9 @@ const nextConfig: NextConfig = {
    */
   outputFileTracingIncludes: {
     "/api/cad/convert": ["node_modules/@mlightcad/libredwg-web/wasm/**"],
+    // Dataset routes read only manifest JSON at runtime; include those files
+    // explicitly without pulling GLB meshes into the serverless functions.
+    "/api/reference-buildings/**": ["public/reference-buildings/*/manifest.json"],
   },
 };
 
