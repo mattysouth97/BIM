@@ -14,6 +14,7 @@ import {
   measuredOrientationRows,
 } from "../reference-energy";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
+import { DUPLEX_WWR_BY_SECTOR } from "@/lib/reference-buildings/duplex-apartment-energy";
 import { meanWindowToWallRatio } from "@/lib/energy/heat-loss";
 import { flowNoteBody } from "../reference-building-workspace";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
@@ -200,30 +201,51 @@ describe("orientationWwrNote reads the ratios it is describing", () => {
 });
 
 describe("the legend rows are per-sector, not the whole building repeated", () => {
-  // A split like the Duplex's: uneven walls, uneven ratios.
-  const GROSS = { N: 56.9, E: 78.4, S: 89.3, W: 116.4 } as const;
-  const WWR = { N: 0.357, E: 0.104, S: 0.367, W: 0.105 } as const;
+  // The Duplex's real split, read from its own file rather than typed: it is
+  // the building with genuinely uneven walls AND uneven ratios, which is the
+  // only shape in which this bug is visible. (These were four invented
+  // numbers summing to 341.00 m² until 2026-09-06 — plausible, arithmetically
+  // consistent, and not this or any other building.)
+  const duplex = referenceBuildingEnergyInputs("duplex-apartment")!;
+  const GROSS = duplex.grossWallByOrientationSqm!;
+  const WWR = duplex.materials.envelope.windows.windowToWallRatio;
+  const PER_SECTOR = {
+    N: DUPLEX_WWR_BY_SECTOR.N,
+    E: DUPLEX_WWR_BY_SECTOR.E,
+    S: DUPLEX_WWR_BY_SECTOR.S,
+    W: DUPLEX_WWR_BY_SECTOR.W,
+  };
 
   it("each row's window area is its OWN gross times its OWN ratio", () => {
-    const energy = referenceBuildingEnergyInputs("bs-medical-dental-clinic")!;
-    const withSplit = { ...energy, grossWallByOrientationSqm: GROSS };
-    const rows = measuredOrientationRows(withSplit, WWR);
+    // Fed the per-sector ratios the file measured but does NOT hand the
+    // engine (A-WWR-ENGINE-MEAN), which is what the legend is for.
+    const rows = measuredOrientationRows(duplex, PER_SECTOR);
 
     for (const row of rows) {
       expect(row.grossWallAreaSqm).toBeCloseTo(GROSS[row.orientation], 6);
       expect(row.windowAreaSqm).toBeCloseTo(
-        GROSS[row.orientation] * WWR[row.orientation],
+        GROSS[row.orientation] * PER_SECTOR[row.orientation],
         6,
       );
     }
-    // North holds 20.32 m² of glass, not the 121.5 m² the whole-building
-    // gross times the north ratio would have claimed.
+    // North holds 20.32 m² of glass. The whole-building gross (340.58) times
+    // the north ratio would have claimed 121.5 — six times the truth.
     const north = rows.find((r) => r.orientation === "N")!;
-    expect(north.windowAreaSqm).toBeCloseTo(20.31, 1);
+    expect(north.windowAreaSqm).toBeCloseTo(20.32, 1);
+    expect(340.58 * PER_SECTOR.N).toBeCloseTo(121.5, 1);
 
-    // And the four rows still sum to the building's aperture.
+    // And the four rows sum to the aperture the openings walk counted.
     const total = rows.reduce((s, r) => s + r.windowAreaSqm, 0);
-    expect(total).toBeCloseTo(73.46, 1);
+    expect(total).toBeCloseTo(64.46, 1);
+  });
+
+  it("the uniform ratio the engine IS handed gives the same four grosses", () => {
+    // The denominators are a property of the building, not of which ratios
+    // are fed through them.
+    const rows = measuredOrientationRows(duplex, WWR);
+    for (const row of rows) {
+      expect(row.grossWallAreaSqm).toBeCloseTo(GROSS[row.orientation], 6);
+    }
   });
 
   it("every published building's rows sum to its measured gross and aperture", () => {

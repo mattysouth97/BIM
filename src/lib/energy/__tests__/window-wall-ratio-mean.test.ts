@@ -15,6 +15,13 @@ import { calculateHeatLoss, meanWindowToWallRatio } from "../heat-loss";
 import { envelopeQuantities } from "../envelope-quantities";
 import { SEOUL_CLIMATE } from "../climate-data";
 import { referenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
+import {
+  DUPLEX_DOOR_BY_SECTOR_SQM,
+  DUPLEX_GLAZING_BY_SECTOR_SQM,
+  DUPLEX_MEASURED_ENVELOPE,
+  DUPLEX_WALL_BY_SECTOR_SQM,
+  DUPLEX_WWR_BY_SECTOR,
+} from "@/lib/reference-buildings/duplex-apartment-energy";
 import type { MaterialProperties } from "@/lib/material-types";
 
 /** The formula that stood in both callers before this function existed. */
@@ -26,10 +33,31 @@ function unweightedMean(m: MaterialProperties): number {
 /**
  * The Duplex's measured per-orientation split — the first building with
  * genuinely different ratios, and the one that showed the weighting bug.
+ *
+ * Read from `duplex-apartment-energy.ts` rather than typed, so the fixture IS
+ * the building. It was four invented numbers until 2026-09-06: the ratios
+ * were the Duplex's and the gross areas were a plausible split I made up
+ * summing to 341.00 m², which then travelled into `heat-loss.ts`'s doc
+ * comment under the word "measured". Nothing was arithmetically wrong and the
+ * sentence was still a claim about a building nobody had computed it on.
  */
-const WWR = { N: 0.357, E: 0.104, S: 0.367, W: 0.105 } as const;
-/** A gross split summing to 341.00 m², so the aperture is 73.46 m². */
-const GROSS = { N: 56.9, E: 78.4, S: 89.3, W: 116.4 } as const;
+const WWR = {
+  N: DUPLEX_WWR_BY_SECTOR.N,
+  E: DUPLEX_WWR_BY_SECTOR.E,
+  S: DUPLEX_WWR_BY_SECTOR.S,
+  W: DUPLEX_WWR_BY_SECTOR.W,
+} as const;
+
+const grossOf = (o: "N" | "E" | "S" | "W") =>
+  DUPLEX_WALL_BY_SECTOR_SQM[o] + DUPLEX_GLAZING_BY_SECTOR_SQM[o] + DUPLEX_DOOR_BY_SECTOR_SQM[o];
+
+/** The measured per-sector gross: 340.58 m² in total, glazing 64.46 m². */
+const GROSS = {
+  N: grossOf("N"),
+  E: grossOf("E"),
+  S: grossOf("S"),
+  W: grossOf("W"),
+} as const;
 
 function materialsWith(wwr: Record<"N" | "S" | "E" | "W", number>): MaterialProperties {
   const energy = referenceBuildingEnergyInputs("bs-medical-dental-clinic")!;
@@ -48,35 +76,44 @@ describe("weighting by gross reproduces the aperture; nothing else does", () => 
   const aperture =
     GROSS.N * WWR.N + GROSS.E * WWR.E + GROSS.S * WWR.S + GROSS.W * WWR.W;
 
-  it("the fixture is the shape the identity needs", () => {
-    expect(grossTotal).toBeCloseTo(341.0, 2);
-    expect(aperture).toBeCloseTo(73.46, 2);
+  it("the fixture is the building, and reconciles with what the file states", () => {
+    expect(grossTotal).toBeCloseTo(DUPLEX_MEASURED_ENVELOPE.grossWallSqm, 2);
+    expect(grossTotal).toBeCloseTo(340.58, 2);
+    expect(aperture).toBeCloseTo(DUPLEX_MEASURED_ENVELOPE.glazingApertureSqm, 2);
+    expect(aperture).toBeCloseTo(64.46, 2);
   });
 
   it("gross-weighted × gross === the measured aperture, exactly", () => {
     const mean = meanWindowToWallRatio(materials, GROSS);
     expect(mean).toBeCloseTo(aperture / grossTotal, 12);
+    expect(mean).toBeCloseTo(0.189265, 6);
     expect(grossTotal * mean).toBeCloseTo(aperture, 8);
   });
 
   it("weighting by the NET opaque wall does NOT — this was the bug", () => {
+    // The building's OWN net opaque wall, which is gross less glazing AND
+    // doors — not gross × (1 − wwr), which leaves the doors in and is a
+    // different number. This is the array `aggregateWalls` reads, and
+    // therefore exactly what the broken version weighted by.
     const net = {
-      N: GROSS.N * (1 - WWR.N),
-      E: GROSS.E * (1 - WWR.E),
-      S: GROSS.S * (1 - WWR.S),
-      W: GROSS.W * (1 - WWR.W),
+      N: DUPLEX_WALL_BY_SECTOR_SQM.N,
+      E: DUPLEX_WALL_BY_SECTOR_SQM.E,
+      S: DUPLEX_WALL_BY_SECTOR_SQM.S,
+      W: DUPLEX_WALL_BY_SECTOR_SQM.W,
     };
     const byNet = meanWindowToWallRatio(materials, net);
-    expect(grossTotal * byNet).toBeCloseTo(66.34, 1);
-    // 7.12 m² of measured glazing priced as opaque wall.
-    expect(grossTotal * byNet).toBeLessThan(aperture - 5);
+    expect(byNet).toBeCloseTo(0.16965, 5);
+    expect(grossTotal * byNet).toBeCloseTo(57.78, 2);
+    // 6.68 m² of measured glazing priced as opaque wall.
+    expect(aperture - grossTotal * byNet).toBeCloseTo(6.68, 2);
   });
 
   it("the unweighted mean does not either, and errs the other way", () => {
     const plain = meanWindowToWallRatio(materials);
     expect(plain).toBeCloseTo(unweightedMean(materials), 12);
-    expect(grossTotal * plain).toBeCloseTo(79.54, 1);
-    expect(grossTotal * plain).toBeGreaterThan(aperture + 5);
+    expect(plain).toBeCloseTo(0.233057, 5);
+    expect(grossTotal * plain).toBeCloseTo(79.37, 2);
+    expect(grossTotal * plain - aperture).toBeCloseTo(14.91, 1);
   });
 
   it("falls back to the stated ratio when the weights are unusable, not to zero", () => {
