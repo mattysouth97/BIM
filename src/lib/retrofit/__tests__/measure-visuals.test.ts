@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   deriveVisualState,
   hasAnyVisual,
+  proposalVisualIds,
   NO_RETROFIT_VISUALS,
 } from "../measure-visuals";
 import { useScenarioStore, DEFAULT_CAPEX_BUDGET_KRW } from "@/store/scenario-store";
@@ -43,24 +44,55 @@ describe("deriveVisualState", () => {
   });
 });
 
-describe("scenario-store applied measures (P2-20)", () => {
+describe("proposalVisualIds — the one gate between the knapsack and the model", () => {
+  it("shows the knapsack's selection while the preview is on", () => {
+    const selected = ["envelope-wall-insulation", "solar-pv-flat"];
+    expect(proposalVisualIds(true, selected)).toBe(selected);
+    expect(deriveVisualState(proposalVisualIds(true, selected)).wallsUpgraded).toBe(true);
+  });
+
+  it("shows the building as it stands while the preview is off", () => {
+    const selected = ["envelope-wall-insulation", "solar-pv-flat"];
+    expect(proposalVisualIds(false, selected)).toEqual([]);
+    expect(deriveVisualState(proposalVisualIds(false, selected))).toEqual(NO_RETROFIT_VISUALS);
+  });
+
+  it("treats an unevaluated scenario as nothing proposed, not as an error", () => {
+    expect(proposalVisualIds(true, null)).toEqual([]);
+    expect(proposalVisualIds(false, null)).toEqual([]);
+  });
+
+  it("returns a stable reference either way, so layers do not regenerate", () => {
+    // The generators key off this array's identity; a fresh [] per render
+    // would rebuild the MEP scene on every frame.
+    expect(proposalVisualIds(false, ["a"])).toBe(proposalVisualIds(false, ["b"]));
+    expect(proposalVisualIds(true, null)).toBe(proposalVisualIds(false, null));
+  });
+});
+
+describe("scenario-store — the proposal is what the model draws", () => {
   beforeEach(() => {
     useScenarioStore.setState({
       capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
       programTrack: "none",
       buildingInputs: null,
-      appliedMeasureIds: [],
+      selectedMeasureIds: null,
+      previewProposal: true,
     });
   });
 
-  it("toggleAppliedMeasure adds then removes", () => {
-    useScenarioStore.getState().toggleAppliedMeasure("hvac-hrv");
-    expect(useScenarioStore.getState().appliedMeasureIds).toEqual(["hvac-hrv"]);
-    useScenarioStore.getState().toggleAppliedMeasure("hvac-hrv");
-    expect(useScenarioStore.getState().appliedMeasureIds).toEqual([]);
+  it("previews the proposal by default", () => {
+    expect(useScenarioStore.getState().previewProposal).toBe(true);
   });
 
-  it("switching buildings clears applied measures; same building keeps them", () => {
+  it("setPreviewProposal is the only writer of that flag", () => {
+    useScenarioStore.getState().setPreviewProposal(false);
+    expect(useScenarioStore.getState().previewProposal).toBe(false);
+    useScenarioStore.getState().setPreviewProposal(true);
+    expect(useScenarioStore.getState().previewProposal).toBe(true);
+  });
+
+  it("switching buildings drops the selection; republishing the same one keeps it", () => {
     const inputs = {
       buildingPk: "bldg-A",
       totalFloorArea: 1000,
@@ -69,20 +101,30 @@ describe("scenario-store applied measures (P2-20)", () => {
       sidoPrefix: "11",
     };
     useScenarioStore.getState().setBuildingInputs(inputs);
-    useScenarioStore.getState().toggleAppliedMeasure("solar-pv-flat");
+    useScenarioStore.getState().setSelectedMeasureIds(["solar-pv-flat"]);
 
     // Republishing the SAME building (overlay re-mount) keeps the selection
     useScenarioStore.getState().setBuildingInputs({ ...inputs });
-    expect(useScenarioStore.getState().appliedMeasureIds).toEqual(["solar-pv-flat"]);
+    expect(useScenarioStore.getState().selectedMeasureIds).toEqual(["solar-pv-flat"]);
 
-    // A different building clears it
+    // A different building drops it, so building A's proposal never draws
+    // itself on building B in the frames before the HUD republishes.
     useScenarioStore.getState().setBuildingInputs({ ...inputs, buildingPk: "bldg-B" });
-    expect(useScenarioStore.getState().appliedMeasureIds).toEqual([]);
+    expect(useScenarioStore.getState().selectedMeasureIds).toBeNull();
   });
 
-  it("resetScenario clears applied measures", () => {
-    useScenarioStore.getState().toggleAppliedMeasure("lighting-led");
+  it("resetScenario returns to previewing an empty selection", () => {
+    useScenarioStore.getState().setSelectedMeasureIds(["lighting-led"]);
+    useScenarioStore.getState().setPreviewProposal(false);
     useScenarioStore.getState().resetScenario();
-    expect(useScenarioStore.getState().appliedMeasureIds).toEqual([]);
+    expect(useScenarioStore.getState().selectedMeasureIds).toBeNull();
+    expect(useScenarioStore.getState().previewProposal).toBe(true);
+  });
+
+  it("keeps the selection's identity when the knapsack republishes the same set", () => {
+    useScenarioStore.getState().setSelectedMeasureIds(["envelope-wall-insulation"]);
+    const first = useScenarioStore.getState().selectedMeasureIds;
+    useScenarioStore.getState().setSelectedMeasureIds(["envelope-wall-insulation"]);
+    expect(useScenarioStore.getState().selectedMeasureIds).toBe(first);
   });
 });

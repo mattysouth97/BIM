@@ -14,6 +14,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ProgramTrack } from "@/lib/retrofit/cost-database";
+import { proposalVisualIds } from "@/lib/retrofit/measure-visuals";
 
 /** Engine inputs derived from ledger title + footprint geometry. */
 export interface ScenarioBuildingInputs {
@@ -49,17 +50,27 @@ interface ScenarioState {
    */
   selectedMeasureIds: string[] | null;
   /**
-   * P2-20 — measures the user has clicked "apply" on in the manifest. This
-   * drives the 3D visual response (tints, PV panels); it is independent of
-   * the knapsack's budget-optimal recommendation set. Session-only.
+   * Whether the 3D model shows the selected proposal (renewed walls, low-e
+   * glass, new roof, PV, replacement plant) or the building as it stands.
+   * Default on. The HUD's "제안 미리보기 / Preview proposal" switch writes it.
+   *
+   * This replaced `appliedMeasureIds` on 2026-09-06. That field was the only
+   * driver of the envelope visuals and its only writer, `toggleAppliedMeasure`,
+   * lost its last caller when `397882b` deleted the "클릭하여 3D 적용" buttons —
+   * so from the user's side the visuals were unreachable while the code that
+   * drew them looked alive. It is deleted rather than kept as a third state
+   * nobody writes: the visuals now read the knapsack's `selectedMeasureIds`,
+   * gated by this flag, which is the same set the numbers are computed from.
+   * Session-only, deliberately: it says what you are looking at right now, and
+   * persisting it would let a hydrated `false` silently hide the proposal on
+   * a fresh page.
    */
-  appliedMeasureIds: string[];
+  previewProposal: boolean;
   setCapexBudget: (krw: number) => void;
   setProgramTrack: (track: ProgramTrack) => void;
   setBuildingInputs: (inputs: ScenarioBuildingInputs | null) => void;
   setSelectedMeasureIds: (ids: string[] | null) => void;
-  toggleAppliedMeasure: (measureId: string) => void;
-  clearAppliedMeasures: () => void;
+  setPreviewProposal: (on: boolean) => void;
   resetScenario: () => void;
 }
 
@@ -70,16 +81,13 @@ type ScenarioData = Omit<
   | "setProgramTrack"
   | "setBuildingInputs"
   | "setSelectedMeasureIds"
-  | "toggleAppliedMeasure"
-  | "clearAppliedMeasures"
+  | "setPreviewProposal"
   | "resetScenario"
 >;
 
 /**
  * Starting values, as a factory so the store's initial state and
  * `resetScenario` cannot drift apart — a field added here reaches both.
- * A factory rather than a shared constant so each reset gets its own
- * `appliedMeasureIds` array instead of aliasing one across resets.
  */
 function initialScenarioData(): ScenarioData {
   return {
@@ -87,7 +95,7 @@ function initialScenarioData(): ScenarioData {
     programTrack: "none",
     buildingInputs: null,
     selectedMeasureIds: null,
-    appliedMeasureIds: [],
+    previewProposal: true,
   };
 }
 
@@ -98,15 +106,17 @@ export const useScenarioStore = create<ScenarioState>()(
 
       setCapexBudget: (krw) => set({ capexBudgetKrw: krw }),
       setProgramTrack: (track) => set({ programTrack: track }),
-      // Applied measures belong to one building — switching buildings clears them
-      // so building A's visual transformations never appear on building B.
+      // A selection belongs to one building — switching buildings drops it so
+      // building A's proposal never draws itself on building B in the frames
+      // before the HUD republishes. Republishing the SAME building (an overlay
+      // re-mount) keeps it.
       setBuildingInputs: (inputs) =>
         set((state) => ({
           buildingInputs: inputs,
-          appliedMeasureIds:
+          selectedMeasureIds:
             inputs?.buildingPk === state.buildingInputs?.buildingPk
-              ? state.appliedMeasureIds
-              : [],
+              ? state.selectedMeasureIds
+              : null,
         })),
       setSelectedMeasureIds: (ids) =>
         set((state) => {
@@ -124,13 +134,7 @@ export const useScenarioStore = create<ScenarioState>()(
           if (prev === null && ids === null) return state;
           return { selectedMeasureIds: ids };
         }),
-      toggleAppliedMeasure: (measureId) =>
-        set((state) => ({
-          appliedMeasureIds: state.appliedMeasureIds.includes(measureId)
-            ? state.appliedMeasureIds.filter((id) => id !== measureId)
-            : [...state.appliedMeasureIds, measureId],
-        })),
-      clearAppliedMeasures: () => set({ appliedMeasureIds: [] }),
+      setPreviewProposal: (on) => set({ previewProposal: on }),
       resetScenario: () => set(initialScenarioData()),
     }),
     {
@@ -142,3 +146,19 @@ export const useScenarioStore = create<ScenarioState>()(
     },
   ),
 );
+
+/**
+ * The measure ids the 3D model should draw as proposed: the knapsack's
+ * selection while the preview is on, nothing while it is off.
+ *
+ * Every visual consumer reads this rather than the raw fields, so the twin
+ * and the model pages cannot end up showing different id sets. Both branches
+ * return a referentially stable array — `selectedMeasureIds` is identity-
+ * guarded in `setSelectedMeasureIds`, and "off" is one shared empty array —
+ * so the layer generators do not regenerate on every render.
+ */
+export function useProposalVisualIds(): string[] {
+  const previewProposal = useScenarioStore((s) => s.previewProposal);
+  const selectedMeasureIds = useScenarioStore((s) => s.selectedMeasureIds);
+  return proposalVisualIds(previewProposal, selectedMeasureIds);
+}

@@ -1,9 +1,20 @@
 // src/lib/retrofit/measure-visuals.ts
-// P2-20 — maps the user's applied retrofit measures onto the 3D visual state.
+// P2-20 — maps a set of retrofit measures onto the 3D visual state.
 //
 // Pure and synchronous: measure IDs in, boolean visual flags out. The scene
 // (procedural-building-model, building-layers, solar-panels) consumes the
 // flags; this module knows nothing about THREE.js.
+//
+// WHERE THE IDS COME FROM — changed 2026-09-06. They are the knapsack's
+// `selectedMeasureIds`, the same set the rail's NPV and the delta strip's kWh
+// are computed from, gated by `scenario-store.previewProposal`. Until then
+// they came from `appliedMeasureIds`, whose only writer lost its last caller
+// when `397882b` deleted the "클릭하여 3D 적용" buttons — so nothing the user
+// could click reached this module at all, while the code that drew the
+// visuals looked alive. Read the set through `useProposalVisualIds()`
+// (scenario-store) or `proposalVisualIds()` below; do NOT subscribe to the
+// raw store fields, or the twin and the model pages drift into drawing
+// different buildings from one selection.
 //
 // ID conventions (from the measure generators):
 //   envelope-wall-insulation / envelope-roof-insulation /
@@ -58,10 +69,29 @@ export const RENEWED_EQUIPMENT_COLOR = "#d4d8dd";
 export const PROPOSAL_EMISSIVE = "#34d399";
 export const PROPOSAL_EMISSIVE_INTENSITY = 0.06;
 
-/** Derive the visual flags from the applied measure IDs. */
-export function deriveVisualState(appliedIds: Iterable<string>): RetrofitVisualState {
+/**
+ * One shared empty set, so "preview off" keeps a stable reference and the
+ * layer generators do not regenerate on every render.
+ */
+const NO_MEASURE_IDS: string[] = [];
+
+/**
+ * The ids the model should draw as proposed. Pure half of
+ * `useProposalVisualIds()` — the gate is here so it can be tested without a
+ * store and read from a non-hook context.
+ */
+export function proposalVisualIds(
+  previewProposal: boolean,
+  selectedMeasureIds: string[] | null,
+): string[] {
+  if (!previewProposal) return NO_MEASURE_IDS;
+  return selectedMeasureIds ?? NO_MEASURE_IDS;
+}
+
+/** Derive the visual flags from a set of measure IDs. */
+export function deriveVisualState(measureIds: Iterable<string>): RetrofitVisualState {
   const state = { ...NO_RETROFIT_VISUALS };
-  for (const id of appliedIds) {
+  for (const id of measureIds) {
     if (id.startsWith("envelope-wall")) state.wallsUpgraded = true;
     else if (id.startsWith("envelope-roof")) state.roofUpgraded = true;
     else if (id.startsWith("envelope-window")) state.windowsUpgraded = true;

@@ -33,7 +33,7 @@ import {
   assignToSubGroup,
 } from "@/lib/layers/mep-coordinator";
 import { useEquipmentStore } from "@/store/equipment-store";
-import { useScenarioStore } from "@/store/scenario-store";
+import { useScenarioStore, useProposalVisualIds } from "@/store/scenario-store";
 import {
   deriveEquipmentScenario,
   equipmentScenarioKey,
@@ -54,7 +54,9 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
   const managerRef = useRef<LayerManager | null>(null);
   // P2-20 — original materials of tinted MEP meshes (clone-and-restore)
   const mepTintOriginalsRef = useRef<Map<THREE.Mesh, THREE.Material | THREE.Material[]>>(new Map());
-  const appliedMeasureIds = useScenarioStore((s) => s.appliedMeasureIds);
+  // The proposed measures, gated by the HUD's 제안 미리보기 switch — the same
+  // set `selectedMeasureIds` below drives the equipment swap from.
+  const proposalIds = useProposalVisualIds();
 
   const visibility = useLayerStore((s) => s.visibility);
   const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
@@ -355,7 +357,7 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
     };
     restoreAll();
 
-    const v = deriveVisualState(appliedMeasureIds);
+    const v = deriveVisualState(proposalIds);
     const targets: string[] = [];
     if (v.hvacUpgraded) targets.push("sub-mep-hvac");
     if (v.lightingUpgraded) targets.push("sub-mep-lighting");
@@ -390,7 +392,7 @@ export function BuildingLayers({ buildingPk }: BuildingLayersProps) {
       });
     }
     return restoreAll;
-  }, [appliedMeasureIds, effectiveRecipe, equipmentParams, density]);
+  }, [proposalIds, effectiveRecipe, equipmentParams, density]);
 
   // Animation loop — update ShaderMaterial uniforms each frame
   useFrame((state) => {

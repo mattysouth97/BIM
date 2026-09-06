@@ -10,7 +10,7 @@ import { inferMaterialProperties } from "@/lib/material-inference";
 import { saveModel, loadModel } from "@/lib/model-storage";
 import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
-import { useScenarioStore } from "@/store/scenario-store";
+import { useProposalVisualIds } from "@/store/scenario-store";
 import { useWorkspaceStore } from "@/store/workspace-store";
 import { useLayerStore } from "@/store/layer-store";
 import { useReviewHighlightStore } from "@/store/review-highlight-store";
@@ -517,11 +517,14 @@ export function BuildingScene({
     return recipeOverrides ? applyOverrides(baseRecipe, recipeOverrides) : baseRecipe;
   }, [baseRecipe, recipeOverrides]);
 
-  // P2-20 — applied retrofit measures drive the visual state (tints + PV).
-  const appliedMeasureIds = useScenarioStore((s) => s.appliedMeasureIds);
+  // P2-20 — the proposed retrofit drives the visual state (tints + PV). The
+  // ids are the knapsack's selection while the HUD's 제안 미리보기 switch is
+  // on, so changing the 그린리모델링 track changes the building, not only the
+  // numbers beside it.
+  const proposalIds = useProposalVisualIds();
   const retrofitVisuals = useMemo(
-    () => deriveVisualState(appliedMeasureIds),
-    [appliedMeasureIds]
+    () => deriveVisualState(proposalIds),
+    [proposalIds]
   );
 
   // P2-22 — structural isolation view (load-bearing solid, rest ghosted).
