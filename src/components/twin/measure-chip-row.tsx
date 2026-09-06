@@ -37,11 +37,16 @@ import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { getClimateData } from "@/lib/energy/climate-data";
 import { computeRetrofitDelta } from "@/lib/retrofit/retrofit-delta";
-import { buildMeasureClaim } from "@/lib/retrofit/measure-claim";
+import {
+  buildMeasureClaim,
+  measureDisplayName,
+} from "@/lib/retrofit/measure-claim";
 import type { ClaimEnvelopeAreas } from "@/lib/retrofit/measure-claim";
 import { toggleMeasure, conflictsWith } from "@/lib/retrofit/measure-selection";
 import { effectiveMeasureIds } from "@/lib/retrofit/measure-visuals";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
+import { measureSubsidyRatio } from "@/lib/retrofit/economic-model";
+import type { EconomicAssumptions } from "@/lib/retrofit/economic-model";
 
 export interface MeasureChipRowProps {
   /** Every measure the generators produced, financially enriched. */
@@ -52,6 +57,8 @@ export interface MeasureChipRowProps {
   areas?: ClaimEnvelopeAreas;
   /** Conditioned floor area (m²) — the basis plant and lighting are priced on. */
   totalFloorAreaSqm: number;
+  /** The financing assumptions in force, to say when they apply to nothing chosen. */
+  assumptions: EconomicAssumptions;
 }
 
 /** Short category label so a reader can group the row at a glance. */
@@ -67,6 +74,7 @@ export function MeasureChipRow({
   recommendedIds,
   areas,
   totalFloorAreaSqm,
+  assumptions,
 }: MeasureChipRowProps) {
   const { t, lang } = useT();
 
@@ -118,6 +126,18 @@ export function MeasureChipRow({
     const { next } = toggleMeasure(chosenIds, measureId, measures);
     setAppliedMeasureIds(next);
   };
+
+  // A financing chip reading "CAPEX 70%" over a selection it does not cover
+  // promises something it will not do. Measured on /models/fzk-haus, whose
+  // opening selection is the PV alone: every rail figure stayed byte-identical
+  // while every chip price fell to 30 %, because the public presets omit
+  // `renewable` — solar is funded by 신재생에너지 보급사업, a different
+  // programme. Correct arithmetic, and a label that needed saying out loud.
+  const chosenMeasures = measures.filter((m) => chosenIds.includes(m.id));
+  const trackCoversNothing =
+    chosenMeasures.length > 0 &&
+    chosenMeasures.every((m) => measureSubsidyRatio(m, assumptions) === 0) &&
+    Object.keys(assumptions.subsidyByCategory ?? {}).length > 0;
 
   const deviates =
     appliedMeasureIds !== null &&
@@ -178,6 +198,13 @@ export function MeasureChipRow({
               onClick={() => handleToggle(measure.id)}
               data-measure-chip={measure.id}
               data-measure-chosen={chosen ? "true" : "false"}
+              // Whether the knapsack currently recommends this measure, as a
+              // fact rather than as the rendered 추천/Suggested badge below.
+              // Counting the badge means counting a rendering: it is
+              // language-coupled, and "the string appears" is the assertion
+              // this repo keeps getting caught by. Requested by bim-83 for the
+              // e2e that pins the 추천 marks against the optimum.
+              data-measure-recommended={recommended ? "true" : "false"}
               className={cn(
                 "flex min-w-[13rem] shrink-0 flex-col items-start gap-0.5 rounded-md border px-2 py-1 text-left transition-colors",
                 chosen
@@ -187,7 +214,7 @@ export function MeasureChipRow({
             >
               <span className="flex w-full items-baseline gap-1">
                 <span className="truncate text-[11px] font-medium leading-tight text-foreground">
-                  {measure.name}
+                  {measureDisplayName(measure.id, lang, measure.name)}
                 </span>
                 {category ? (
                   <span className="shrink-0 text-[8px] text-muted-foreground/70">
@@ -224,8 +251,8 @@ export function MeasureChipRow({
               {wouldEvict.length > 0 ? (
                 <span className="text-[9px] leading-tight text-muted-foreground/80">
                   {t(
-                    `${wouldEvict.map((m) => m.name).join(", ")} 대신 선택됩니다`,
-                    `Replaces ${wouldEvict.map((m) => m.name).join(", ")}`,
+                    `${wouldEvict.map((m) => measureDisplayName(m.id, "ko", m.name)).join(", ")} 대신 선택됩니다`,
+                    `Replaces ${wouldEvict.map((m) => measureDisplayName(m.id, "en", m.name)).join(", ")}`,
                   )}
                 </span>
               ) : null}
@@ -233,6 +260,18 @@ export function MeasureChipRow({
           );
         })}
       </div>
+
+      {trackCoversNothing ? (
+        <p
+          className="text-[10px] leading-tight text-amber-600 dark:text-amber-400"
+          data-track-covers-nothing
+        >
+          {t(
+            "선택한 공사에는 이 지원 재원이 적용되지 않습니다 — 태양광은 신재생에너지 보급사업 소관입니다.",
+            "This financing does not apply to the chosen work — solar is funded by a separate programme (신재생에너지 보급사업).",
+          )}
+        </p>
+      ) : null}
     </div>
   );
 }

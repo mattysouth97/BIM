@@ -21,6 +21,7 @@ import {
   buildMeasureClaim,
   splitMeasureClaimLine,
   claimAreaSqm,
+  measureDisplayName,
 } from "../measure-claim";
 
 function makeMaterials(): MaterialProperties {
@@ -295,6 +296,45 @@ describe("buildMeasureClaim — what the engine cannot price", () => {
     // number the engine acted on.
     const claim = claimFor("envelope-window-replacement");
     expect(claim.change).toMatch(/^창호 U /);
+  });
+});
+
+describe("measureDisplayName", () => {
+  it("names every generated measure in both languages", () => {
+    // The generators name in whichever language their author wrote in, so
+    // rendering `measure.name` put "Wall Insulation Upgrade" beside
+    // "고효율 보일러 교체" on the Korean page (/models/duplex-apartment).
+    for (const id of ALL_IDS) {
+      const ko = measureDisplayName(id, "ko", "FALLBACK");
+      const en = measureDisplayName(id, "en", "FALLBACK");
+      expect(ko).not.toBe("FALLBACK");
+      expect(en).not.toBe("FALLBACK");
+      expect(ko).not.toBe(en);
+      // The Korean name carries no Latin letters except a parenthesised
+      // acronym (HRV, LED, PV), which is how the generators already write it.
+      expect(ko.replace(/\((?:HRV|PV)\)|HRV|LED|PV/g, "")).not.toMatch(/[A-Za-z]/);
+    }
+  });
+
+  it("keeps the generators' own Korean strings verbatim", () => {
+    // So the chip and the side panel name one thing one way.
+    expect(measureDisplayName("hvac-boiler-upgrade", "ko", "")).toBe("고효율 보일러 교체");
+    expect(measureDisplayName("hvac-hrv", "ko", "")).toBe("열회수환기장치(HRV) 설치");
+    expect(measureDisplayName("lighting-led", "ko", "")).toBe("LED 조명 교체");
+  });
+
+  it("names every solar roof variant without restating the capacity", () => {
+    // The claim line already carries kWp; the chip should not say it twice.
+    for (const roof of ["flat", "gable", "hip", "sawtooth"]) {
+      expect(measureDisplayName(`solar-pv-${roof}`, "ko", "")).toBe("태양광 발전(PV)");
+      expect(measureDisplayName(`solar-pv-${roof}`, "en", "")).toBe("Solar PV");
+    }
+  });
+
+  it("falls back to the generator's name for an id it does not know", () => {
+    // A new measure appears under its real name rather than vanishing, and
+    // the missing entry is visible on screen instead of silent.
+    expect(measureDisplayName("dhw-solar-thermal", "ko", "Solar DHW")).toBe("Solar DHW");
   });
 });
 

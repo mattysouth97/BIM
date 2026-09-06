@@ -66,6 +66,66 @@ export interface MeasureClaim {
 const SEP = " · ";
 
 /**
+ * Bilingual chip names, keyed by measure id.
+ *
+ * The generators name in whichever language their author wrote in —
+ * `envelope-retrofits.ts` is English ("Wall Insulation Upgrade"),
+ * `hvac-retrofits.ts` and `lighting-retrofits.ts` are Korean ("고효율 보일러
+ * 교체"). Rendering `measure.name` therefore produced a row that was half
+ * English on the Korean page, with Korean claim lines underneath it. Found on
+ * /models/duplex-apartment.
+ *
+ * The Korean strings below are the generators' own, copied verbatim where they
+ * exist, so the chip and the side panel name one thing one way. The English
+ * ones are glosses, not machine translations (P2-06). Solar drops the
+ * generator's "(flat roof, 18.6 kWp)" suffix because the claim line already
+ * carries the capacity — nothing is lost, and the chip stops restating it.
+ */
+const MEASURE_NAMES: Record<string, { ko: string; en: string }> = {
+  "envelope-wall-insulation": { ko: "외벽 단열 보강", en: "Wall insulation" },
+  "envelope-window-replacement": {
+    ko: "고성능 창호 교체",
+    en: "High-performance windows",
+  },
+  "envelope-roof-insulation": { ko: "지붕 단열 보강", en: "Roof insulation" },
+  "envelope-floor-insulation": {
+    ko: "최하층 바닥 단열 보강",
+    en: "Ground floor insulation",
+  },
+  // Korean verbatim from hvac-retrofits.ts / lighting-retrofits.ts.
+  "hvac-boiler-upgrade": { ko: "고효율 보일러 교체", en: "Condensing boiler" },
+  "hvac-heat-pump": { ko: "히트펌프 시스템 전환", en: "Heat-pump conversion" },
+  "hvac-hrv": {
+    ko: "열회수환기장치(HRV) 설치",
+    en: "Heat-recovery ventilation (HRV)",
+  },
+  "lighting-led": { ko: "LED 조명 교체", en: "LED lighting" },
+  "lighting-led-smart": {
+    ko: "LED 조명 + 스마트 제어 시스템",
+    en: "LED + smart controls",
+  },
+};
+
+/** Shown for any `solar-pv-<roofType>`; the kWp lives in the claim line. */
+const SOLAR_PV_NAME = { ko: "태양광 발전(PV)", en: "Solar PV" };
+
+/**
+ * The chip's name in the reader's language.
+ *
+ * Falls back to the generator's own `name` for an id with no entry — a new
+ * measure should appear under its real name rather than vanish or render an
+ * id, and the missing entry is then visible on screen rather than silent.
+ */
+export function measureDisplayName(
+  measureId: string,
+  lang: "ko" | "en",
+  fallback: string,
+): string {
+  if (measureId.startsWith("solar-pv-")) return SOLAR_PV_NAME[lang];
+  return MEASURE_NAMES[measureId]?.[lang] ?? fallback;
+}
+
+/**
  * Which engine area this measure is priced over. Plant and lighting act on the
  * whole conditioned floor area — that IS their sizing basis in
  * `hvac-retrofits.ts` and `lighting-retrofits.ts`, not a stand-in.
