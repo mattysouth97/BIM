@@ -15,6 +15,38 @@ Project state lives in `CURRENT.md`. Delete this file once the tree is down to o
 > Untracked bought a clean history and cost the file its entire purpose.
 > Deleting it later is one commit; being unreadable was permanent.
 
+## Roster 2026-09-06 13:55 — a new fleet, five lanes, one brief
+
+**Every session named below the 09-04 sections has EXITED.** `ListAgents` at 13:53 today
+shows exactly six: `main-coordinator` `497d5c` (this session, the integrator — a different
+session from the 09-04 `2e51d5` that carried the same name) and five fresh peers,
+`bim-83` `659555`, `bim-ae` `16fa47`, `bim-54` `93812b`, `bim-7c` `716423`, `bim-24` `9d7cae`.
+Do not message any 09-04 name.
+
+The user's three tasks and the lanes are in
+`docs/04_Agent-Handoffs/2026-09-06-gallery-consistency-visuals-brief.md` — the brief is
+the claim record; this table is the index of it.
+
+| Session | Lane | Owns — do not edit |
+|---|---|---|
+| **bim-83** | 1A · publish the Duplex Apartment | `build-reference-building.mjs` DUPLEX block, `public/reference-buildings/duplex-apartment/**`, `duplex-apartment-energy.ts`; **first** into the five shared registries (`manifest.ts` ids, `energy-inputs.ts`, `constructions.ts`, `zones.ts`, `gallery.ts`) |
+| **bim-ae** | 1B · building #4, licence before bytes | a new config block, `public/reference-buildings/<#4>/**`, `<#4>-energy.ts`, the licence record; the five registries **after** 1A lands, by rebase |
+| **bim-54** | 2 · one information contract, accurate first | `reference-energy.tsx`, `reference-building-workspace.tsx`, `energy-instrument-hud.tsx`, `use-retrofit-scenario.ts`, `heat-loss.ts` (the WWR mean only), additive fields in `energy-inputs.ts`, new `docs/02_Features/Reference Buildings.md` |
+| **bim-24** | 3A · retrofit delta + twin visuals reachable | `scenario-store.ts`, `measure-visuals.ts`, `apply-phase.ts`, new `retrofit-delta.ts`, `viewer/{building-scene,procedural-building-model,building-layers,solar-panels,retrofit-hvac-units}.tsx`, new `twin/retrofit-delta-strip.tsx` |
+| **bim-7c** | 3B · model pages answer the click | `reference-model-viewer.tsx`, `flow-network.tsx`, new `reference-retrofit-visuals.tsx` |
+| **main-coordinator** | integrate | merge in lane order, full suite, browser pass on every page, deploy, the brief's outcome table |
+
+Facts the lanes rest on, verified 13:30–13:50 by reading the tree: `toggleAppliedMeasure`
+has **no caller** since `397882b` removed the "클릭하여 3D 적용" buttons, so the twin's
+envelope visuals are unreachable from the UI; `reference-model-viewer.tsx` reads no scenario
+state; `use-retrofit-scenario.ts` prices measures against `floorArea × 120` because the HUD
+passes no engine demand; a DUPLEX config and all its IFCs exist and nothing publishes them;
+four DigitalHub IFCs sit in the cache with no source or licence recorded anywhere.
+
+Rules 0–6 below still hold. Rule 5's deploy is mine alone this round.
+
+---
+
 Rewritten 13:35 by **bim-72**, at bim-f0's and register-building-fidelity-strategy's
 request, folding in bim-8e's freeze note. The previous version's colour names
 (violet/purple/yellow/pink/cyan/red/green/orange) are **dead** — every one of those
