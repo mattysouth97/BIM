@@ -273,4 +273,9 @@ MEP screenshot waits for actual decoded service geometry to mount, rather than
 base-model readiness, and was visually inspected. Desktop/mobile proposed-work
 legend screenshots were inspected. Independent final review found no actionable
 regression in PV wording, service readiness, zero envelope proposals or schema
-1.3 property metadata. Production verification is pending.
+1.3 property metadata. Committed/pushed as `fa035d2`; clean production READY,
+full health SHA `fa035d2b8d64ae7226f3742150e99f7ca73c520e` and `icn1` verified
+on 2026-09-07 02:11 KST. The live catalogue contains seven models at schema
+1.3.0. All 25 focused live browser checks passed for material loading/picking/
+retry, camera depth across seven models, dataset downloads, desktop/mobile
+proposed-work layout, and TalTech PV and actually loaded MEP geometry.

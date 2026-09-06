@@ -46,9 +46,10 @@ Local release validation on 2026-09-07:
 - TypeScript: clean. ESLint src/e2e: 0 errors, 6 pre-existing warnings.
 - KIT Office and demo expanded/collapsed canvas screenshots inspected; no page
   errors. Panel controls preserve state and do not overlap the rendering toolbar.
-- Last production verification: `2816ab5` on 2026-09-07 01:52, full health SHA
-  and region `icn1`; five live material-realism browser checks passed. The
-  seven-model release described below is locally integrated, deployment pending.
+- Last production verification: `fa035d2b8d64ae7226f3742150e99f7ca73c520e`
+  on 2026-09-07 02:11, full health SHA and region `icn1`. The live catalogue
+  has seven models and schema 1.3.0. All 25 focused live browser checks passed
+  for materials, camera depth, datasets, proposed-work layout and TalTech PV/MEP.
 
 ## Current product
 
@@ -115,9 +116,8 @@ Prior PV and selection methods remain documented in
 
 ## Open work and limits
 
-- Material realism, professional mission and the research/business proposals
-  are deployed and production-verified. TalTech and the compact proposed-work
-  legend are integrated and locally verified; production deployment is pending.
+- Material realism, professional mission, the research/business proposals,
+  TalTech and the compact proposed-work legend are deployed and production-verified.
 - Existing/new PV accounting now preserves installed capacity and scopes costs
   to the addition; the separate report/grade heat-carrier mismatch remains open.
 - TalTech's IFC4 port ownership and selected roof obstructions are source-bound.
