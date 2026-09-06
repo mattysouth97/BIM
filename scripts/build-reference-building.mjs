@@ -33,6 +33,7 @@ import {
   extractSpaces,
   extractAssemblies,
   classifyExternalElements,
+  slug,
 } from "./lib/ifc-envelope.mjs";
 import { netFaceAreasByElement, orientWalls } from "./lib/ifc-face-area.mjs";
 import {
@@ -54,7 +55,9 @@ import {
   classifyRoofs,
   measureRoofs,
   measureGroundSlabs,
+  roofFamily,
 } from "./lib/ifc-horizontal.mjs";
+import { roofPlanes, ROOF_PLANE_CONSTANTS } from "./lib/ifc-roof-planes.mjs";
 import { collectSpaceSolids, openingApertures, summariseApertures } from "./lib/ifc-openings.mjs";
 
 const REPO = process.cwd();
@@ -1451,8 +1454,20 @@ async function main() {
     geometrylessRoofs += collected.geometrylessRoofs;
   }
   const horizontal = dedupeByGlobalId(horizontalSets);
-  const roofs = measureRoofs(
-    classifyRoofs(horizontal.rows, { nameMatch: building.roofSlabMatch ?? [] }),
+  // Kept rather than inlined: `measureRoofs` reduces these rows to areas, and
+  // stage 1 of the PV methodology needs the rows themselves — a plan shadow
+  // cannot be un-flattened into the planes that cast it.
+  const classifiedRoofs = classifyRoofs(horizontal.rows, {
+    nameMatch: building.roofSlabMatch ?? [],
+  });
+  const roofs = measureRoofs(classifiedRoofs);
+  const roofPlaneRows = roofPlanes(
+    classifiedRoofs.map((row) => ({
+      ...row,
+      id: `roof-${row.expressID}`,
+      family: roofFamily(row.name),
+      storeyId: row.storey?.name ? `storey-${slug(row.storey.name)}` : null,
+    })),
   );
   const ground = measureGroundSlabs(horizontal.rows, {
     groundStorey,
@@ -2082,6 +2097,43 @@ async function main() {
   await writeFile(
     path.join(outDir, "spaces.json"),
     `${JSON.stringify({ kind: "bimfit_reference_building_spaces", id: building.id, spaces: spaceRows }, null, 2)}\n`,
+    "utf8",
+  );
+
+  // Stage 1 of the PV placement methodology: the roof as PLANES, not as the
+  // bounding box both viewers grid modules into today. Written beside the
+  // manifest from the same `--generated-at`, byte-stable like every other
+  // artifact here.
+  //
+  // `obstructions` is emitted on every plane and is EMPTY in this pass. The
+  // shape lands ahead of its content deliberately — the layout library is
+  // built against this contract, and an absent field and an empty one are
+  // different claims. Not yet populated: roof-hosted openings (the Duplex's
+  // two skylights, already in openings.json), roof-mounted plant, parapets.
+  await writeFile(
+    path.join(outDir, "roof-planes.json"),
+    `${JSON.stringify(
+      {
+        kind: "bimfit_reference_building_roof_planes",
+        id: building.id,
+        generatedAt,
+        northAssumed: orientation.northAssumed,
+        note:
+          `Upward faces (within ${ROOF_PLANE_CONSTANTS.upwardWithinDeg}°) of each roof element, ` +
+          `region-grown into connected coplanar patches: normals within ` +
+          `${ROOF_PLANE_CONSTANTS.normalToleranceDeg}°, offsets within ` +
+          `${ROOF_PLANE_CONSTANTS.offsetToleranceM * 1000} mm, joined only across shared edges, so two ` +
+          `parallel patches at different heights are two planes. tiltDeg and azimuthDeg are each ` +
+          `plane's own and never a blend across the roof; azimuth is the downslope bearing clockwise ` +
+          `from project north (the model's −Z), null where the plane is flat. outline rings are the ` +
+          `union of the plane's triangles projected to plan, outer counter-clockwise and holes ` +
+          `clockwise, simplified to ${ROOF_PLANE_CONSTANTS.simplifyM * 1000} mm. obstructions is EMPTY ` +
+          `in this pass: the shape is the contract, its content is a later stage.`,
+        planes: roofPlaneRows,
+      },
+      null,
+      2,
+    )}\n`,
     "utf8",
   );
 

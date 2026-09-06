@@ -277,6 +277,11 @@ export function collectHorizontalElements(api, webIfc, file, storeys) {
         storey: storeyOf.get(mesh.expressID) ?? (parentId !== null ? storeyOf.get(parentId) : null) ?? null,
         partOf: parent && file.typeName(parent) === "IfcRoof" ? { expressID: parentId, ref: file.ref(parentId), name: str(parent.Name) ?? "" } : null,
         shadow,
+        // Retained, not merely counted: stage 1 of the PV methodology clusters
+        // these into planes (`ifc-roof-planes.mjs`), and a plan shadow cannot
+        // be un-flattened back into the surfaces that cast it. Held only for
+        // the roof/slab/covering set, which is small on every building here.
+        triangles,
         triangleCount: triangles.length,
         file,
         ref: file.ref(mesh.expressID),
