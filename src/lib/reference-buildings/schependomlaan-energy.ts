@@ -320,8 +320,19 @@ export const SCHEPENDOMLAAN_MEASURED_ENVELOPE = Object.freeze({
   groundPerimeterM: GROUND_PERIMETER_M,
   /** `areas.conditionedVolumeGrossM3` — inside the air barrier. Measured. */
   conditionedVolumeGrossM3: 2897.04,
-  /** `areas.roomVolumeNetM3` — the 100 space solids summed. Recorded, not used. */
-  roomVolumeNetM3: 2530.05,
+  /**
+   * `areas.roomVolumeNetM3` — the 100 space solids summed. Recorded, not
+   * used. Corrected 2026-09-06 from 2530.05: 12 rooms (mostly bedrooms and
+   * living rooms on '01 eerste verdieping' and '03 derde verdieping', the
+   * storey under the pitched sporenkap roof) had their Qto's GrossVolume
+   * read where NetVolume was meant — the same first-wins defect FZK Haus's
+   * Galerie surfaced, fixed at the extractor level in `ifc-envelope.mjs`.
+   * The 12: 6.03/6.05/6.06 (storey 01), 9.03/9.05/9.06/10.00/10.01/10.03/
+   * 10.05/10.06/10.07 (storey 03) — 32.44 m³ total, none of it this
+   * building's own name for the space, only its own stated Gross-vs-Net
+   * mismatch.
+   */
+  roomVolumeNetM3: 2497.61,
   provenance: Object.freeze({
     exteriorWallNetSqm: "manifest",
     exteriorWallByOrientationSqm: "manifest",
@@ -721,7 +732,7 @@ export const SCHEPENDOMLAAN_ASSUMPTIONS: readonly SchependomlaanAssumption[] =
     // ── Openings, systems, people ────────────────────────────────────────
     { id: "A-GLAZING", assumes: "Whole-window U 1.6 W/m²K, SHGC 0.60, HR++ double low-e in a hardwood frame.", why: "The file carries no IfcThermalTransmittance for its windows; it carries a frame profile, IFC_kozijn_90x114 in hardwood. Dutch 2015 HR++ GLASS is U_g 1.1-1.2, but the engine's field is the whole window: a hardwood frame at U_f near 2.0 over roughly a quarter of the opening, plus the spacer, lands U_w near 1.6. Quoting the glass figure here would credit the building with a frame it does not have. 1.6 sits just under the Bouwbesluit 2012 (2015 revision) window ceiling of 1.65, which is the only sourced bound available." },
     { id: "A-AIRTIGHT", assumes: "ACH50 = 2.05, converted from the NTA 8800 new-build default qv;10 = 0.6 dm³/s·m².", why: "No blower-door result exists for this building. The conversion is stated so it can be argued with: 0.6 × 965.67 m² = 579.4 L/s at 10 Pa; × 5^0.65 = 1,649 L/s at 50 Pa = 5,938 m³/h; ÷ 2,897.04 m³ = 2.05 h⁻¹, using the conventional pressure exponent n = 0.65. The engine then divides ACH50 by 20 to reach a natural rate of 0.102 h⁻¹, which is the divisor this repo's regression tests protect." },
-    { id: "A-VOLUME", assumes: "The ventilation term uses the gross conditioned volume, 2,897.04 m³, not the 2,530.05 m³ the room solids sum to.", why: "The file states no volume; both figures are measured from it. The gross is floor area × storey floor-to-floor with voids as their own solids — everything inside the air barrier, which is what an infiltration rate is defined against. The net is the 100 space solids as modelled, which stop at the ceilings. Choosing the net would cut infiltration loss by 13 % for air that is inside the envelope." },
+    { id: "A-VOLUME", assumes: "The ventilation term uses the gross conditioned volume, 2,897.04 m³, not the 2,497.61 m³ the room solids sum to.", why: "The file states no volume; both figures are measured from it. The gross is floor area × storey floor-to-floor with voids as their own solids — everything inside the air barrier, which is what an infiltration rate is defined against. The net is the 100 space solids as modelled, which stop at the ceilings. Choosing the net would cut infiltration loss by 14 % for air that is inside the envelope. (The net figure itself moved 2026-09-06, 2530.05 → 2497.61: 12 rooms under the pitched roof had their own Qto's GrossVolume read where NetVolume was meant — see the field's own comment above.)" },
     { id: "A-HVAC", assumes: "Individual gas heating at η 0.90, no cooling, mechanical exhaust ventilation without heat recovery, gas DHW at η 0.85.", why: "The archive has no MEP model at all — measured, not assumed: HB_Nutsvoorzieningen.ifc is 42 IfcBuildingElementProxy utility connections with no IfcFlowSegment and no ports. So system type is not partly stated the way the Clinic's is; nothing about the services is stated. These are placeholders shaped like a 2015 Dutch apartment (HR combi boiler, system-C exhaust) and not one of them is read from the file. Cooling efficiency 0 is how annual-demand.ts is told a building has no cooling." },
     { id: "A-LPD", assumes: "Lighting power density 6 W/m², manual control, LED lamps.", why: "The file states no lighting load and no luminaire. Rather than invent a residential allowance, this takes the repo's own 공동주택 row (korean-building-codes.ts:176) so the building is not an outlier against every other residential model in the app — it is a Korean code-table value applied to a Dutch building, which is the same substitution A-CLIMATE makes and is stated the same way. The lamp type is forced by the enum: 2015 Dutch housing was mid-transition and neither 'fluorescent' nor 'led' describes it." },
     { id: "A-OCCUPANCY", assumes: "0.025 persons/m², residential day schedules, and the repo's own 공동주택 figures for internal gain (3) and hot water (40).", why: "No occupancy data exists in a coordination model, and the four fields split cleanly by whether anything reads them. Density IS read (delivered-from-demand.ts:41) and is therefore derived from what spaces.json states — 10 WOONKAMER, 10 KEUKEN, 10 BADKAMER and 10 MK rows make this ten dwellings — at 2.4 people each over 965.67 m², against the table's 0.04, which would put 3.9 people in a 96.6 m² Dutch flat. Internal gain and hot water are NOT read anywhere in src/lib/energy, and hotWaterDemand has no unit in material-types.ts at all, so both take the repo's own residential row rather than a derived figure whose unit this file would be inventing. The schedules are a generic dwelling shape: occupied overnight and at the ends of the day, the opposite of the Clinic's, which materially changes when gains land." },
