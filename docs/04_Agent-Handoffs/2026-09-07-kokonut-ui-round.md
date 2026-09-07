@@ -81,6 +81,17 @@ typeahead (deferred — open question below).
   `/models/x#materials` no longer slides the pill on first paint (static
   pre-hydration pill, then the shared pill mounts in place).
 
+## Production
+
+Committed as `b52ba9c` (path-scoped; `.planning/STATE.md` and
+`.claude/settings.local.json` left to their owners), pushed, and deployed
+from a clean detached worktree. `/api/health` on `https://bim-self.vercel.app`
+reports that full SHA and region `icn1` (13:39 KST). The first deploy omitted
+`-e DEPLOY_COMMIT_SHA` and reported `commit: null`; it was redeployed with
+the flag. Live: the ledger tab pill renders, the Clinic's chip row shows
+both arrows with the chosen PV chip fully visible, and the energy strip
+reads 1+ / 108.8 / 23.1 / 180,580 W with no page errors.
+
 ## Flagged, not fixed
 
 - `use-editor-keybinds.ts` preventDefaults Tab window-wide while the CAD

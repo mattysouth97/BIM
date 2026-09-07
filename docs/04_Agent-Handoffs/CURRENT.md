@@ -57,10 +57,16 @@ Local release validation on 2026-09-07:
 - TypeScript: clean. ESLint src/e2e: 0 errors, 6 pre-existing warnings.
 - KIT Office and demo expanded/collapsed canvas screenshots inspected; no page
   errors. Panel controls preserve state and do not overlap the rendering toolbar.
-- Last production verification: `fa035d2b8d64ae7226f3742150e99f7ca73c520e`
-  on 2026-09-07 02:11, full health SHA and region `icn1`. The live catalogue
-  has seven models and schema 1.3.0. All 25 focused live browser checks passed
-  for materials, camera depth, datasets, proposed-work layout and TalTech PV/MEP.
+- Last production verification: `b52ba9c55e5dc195bb0058397e9415b7e775527b`
+  on 2026-09-07 13:39, full health SHA and region `icn1`, deployed from a
+  clean detached worktree with `-e DEPLOY_COMMIT_SHA` (a first deploy without
+  the flag built fine but reported `commit: null`). Live checks: the ledger
+  tab pill renders, the model page's chip row shows both arrows with the
+  chosen PV chip fully visible, and the strip reads 1+ / 108.8 / 23.1 /
+  180,580 W with no page errors. The previous verification
+  (`fa035d2b…`, 02:11) covered materials, camera depth, datasets,
+  proposed-work layout and TalTech PV/MEP; the live catalogue still has seven
+  models and schema 1.3.0.
 
 Kokonut UI round, this checkout, 2026-09-07 13:30:
 
