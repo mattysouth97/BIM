@@ -12,6 +12,14 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   familiesForTool,
@@ -38,9 +46,9 @@ const PLAN_TOOLS: Array<{ id: SchematicTool; label: string; hint: string }> = [
 ];
 
 const AUTHORING_TOOLS: Array<{ id: SchematicTool; label: string; hint: string }> = [
-  { id: "column", label: "Column", hint: "Place a pillar on the plan — generate compiles it into the BIM" },
-  { id: "lighting", label: "Light", hint: "Place a light on the plan — generate compiles it into the BIM" },
-  { id: "furniture", label: "Furniture", hint: "Place furniture on the plan — generate compiles it into the BIM" },
+  { id: "column", label: "Column", hint: "Place a pillar on the plan — kept in the schematic; the energy diagnosis reads only the boundaries" },
+  { id: "lighting", label: "Light", hint: "Place a light on the plan — kept in the schematic; the energy diagnosis reads only the boundaries" },
+  { id: "furniture", label: "Furniture", hint: "Place furniture on the plan — kept in the schematic; the energy diagnosis reads only the boundaries" },
 ];
 
 function ToolButton({
@@ -99,6 +107,7 @@ export function SchematicToolbar({
   const past = useBlueprintStore((s) => s.past);
   const future = useBlueprintStore((s) => s.future);
   const [importOpen, setImportOpen] = useState(initialImportOpen);
+  const [clearOpen, setClearOpen] = useState(false);
 
   const supportsShape = tool === "boundary" || tool === "void" || tool === "zone";
   const placementFamily = getAuthoringFamily(placementFamilyId);
@@ -314,11 +323,37 @@ export function SchematicToolbar({
         <Button
           size="xs"
           variant="outline"
-          onClick={() => useBlueprintStore.getState().reset()}
-          title="Discard the schematic and start a blank one"
+          onClick={() => setClearOpen(true)}
+          title="Discard the schematic and start a blank one (asks first)"
         >
           Clear
         </Button>
+        <Dialog open={clearOpen} onOpenChange={setClearOpen}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Discard this schematic?</DialogTitle>
+              <DialogDescription>
+                Every shape and placement is removed and the undo history is
+                cleared. This cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" size="sm" onClick={() => setClearOpen(false)}>
+                Keep schematic
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  useBlueprintStore.getState().reset();
+                  setClearOpen(false);
+                }}
+              >
+                Discard
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

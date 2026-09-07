@@ -24,7 +24,22 @@ vi.mock("idb-keyval", () => ({
   keys: async () => [...diagnosticsDatabase.keys()],
 }));
 
+// ingestDrawingSet has no throw path of its own, and one test needs the
+// ingestion to fail. Everything else keeps the real implementation.
+vi.mock("@/lib/energy-diagnostics/ingestion", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/energy-diagnostics/ingestion")>();
+  return { ...actual, ingestDrawingSet: vi.fn(actual.ingestDrawingSet) };
+});
+
+import { ingestDrawingSet } from "@/lib/energy-diagnostics/ingestion";
 import { EnergyDiagnosisWorkspace } from "../energy-diagnosis-workspace";
+import { diagnosisCopy } from "../copy";
+import {
+  NAVIGATION_LABEL,
+  NAVIGATION_STAGES,
+  STAGE_LABEL,
+  operationLabel,
+} from "../diagnosis-stage";
 import {
   applyInfiltrationAssumption,
   loadRepresentativeCase,
@@ -40,9 +55,231 @@ import { representativeOfficeDrawingSetInputs } from "@/lib/energy-diagnostics/r
 import { validateCanonicalEnergyModel } from "@/lib/energy-diagnostics/validation";
 
 beforeEach(() => diagnosticsDatabase.clear());
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  // Drops any queued once-rejection so a failed test cannot leak it forward;
+  // on a vi.fn(impl) this restores the real implementation.
+  vi.mocked(ingestDrawingSet).mockReset();
+});
+
+/** A drag that carries files, as the browser reports it before the drop lands. */
+const FILE_DRAG = { dataTransfer: { types: ["Files"] } };
+/** A drag of selected text: dragenter fires for it too, but the card must not answer. */
+const TEXT_DRAG = { dataTransfer: { types: ["text/plain"] } };
+function fileDrop(...files: File[]) {
+  return { dataTransfer: { types: ["Files"], files } };
+}
+
+/** The representative office floor plan as a browser File (a real DXF). */
+function representativeDxfFile(): File {
+  const source = representativeOfficeDrawingSetInputs()[0];
+  if (!source.fileName.toLowerCase().endsWith(".dxf")) {
+    throw new Error(`expected a DXF fixture, got ${source.fileName}`);
+  }
+  const content =
+    typeof source.content === "string"
+      ? source.content
+      : source.content instanceof ArrayBuffer
+        ? source.content.slice(0)
+        : Uint8Array.from(source.content).buffer;
+  return new File([content], source.fileName, { type: source.mimeType });
+}
+
+/**
+ * Records every distinct text the feedback strip shows, in order. happy-dom
+ * delivers MutationObserver callbacks as microtasks, and the workspace yields
+ * a macrotask between its operation phases, so no phase is skipped.
+ */
+function recordFeedbackStrip(root: HTMLElement) {
+  const labels: string[] = [];
+  const record = () => {
+    const text = root
+      .querySelector('[data-testid="diagnosis-feedback"]')
+      ?.textContent?.trim();
+    if (text && labels.at(-1) !== text) labels.push(text);
+  };
+  const observer = new MutationObserver(record);
+  observer.observe(root, { childList: true, subtree: true, characterData: true });
+  return {
+    labels,
+    record,
+    stop: () => {
+      record();
+      observer.disconnect();
+    },
+  };
+}
 
 describe("EnergyDiagnosisWorkspace", () => {
+  it("names the byte-read phase as its own operation label", () => {
+    expect(operationLabel("read", "ko")).toBe("파일을 읽는 중…");
+    expect(operationLabel("read", "en")).toBe("Reading files…");
+    expect(operationLabel("read", "ko")).not.toBe(operationLabel("upload", "ko"));
+  });
+
+  it("reads dropped DXF files under a named byte-read phase, then ingests them", async () => {
+    const onModelChange = vi.fn();
+    const onDrawingSetIngested = vi.fn();
+    const { container } = render(
+      <EnergyDiagnosisWorkspace
+        onModelChange={onModelChange}
+        onDrawingSetIngested={onDrawingSetIngested}
+      />,
+    );
+    const card = screen.getByTestId("drawing-drop-target");
+    expect(card.getAttribute("data-drop-active")).toBeNull();
+    expect(within(card).getByText(diagnosisCopy("ko").dropHint)).toBeTruthy();
+    // The hero heading and the sr-only input stay where the pinned tests find them.
+    expect(within(card).getByRole("heading", { name: "도면에서 진단까지, 한 흐름으로 시작하세요" })).toBeTruthy();
+    expect(screen.getByTestId("drawing-set-input").getAttribute("accept")).toBe(".dxf");
+
+    // A text drag crosses the card too, but the card is no target for it.
+    fireEvent.dragEnter(card, TEXT_DRAG);
+    expect(card.getAttribute("data-drop-active")).toBeNull();
+    expect(card.className).not.toContain("border-ring");
+    fireEvent.dragLeave(card, TEXT_DRAG);
+
+    // Drag wash follows the pointer: on for the whole subtree, off on leave.
+    fireEvent.dragEnter(card, FILE_DRAG);
+    expect(card.getAttribute("data-drop-active")).toBe("true");
+    expect(card.className).toContain("border-ring");
+    const heading = within(card).getByRole("heading", { name: "도면에서 진단까지, 한 흐름으로 시작하세요" });
+    fireEvent.dragEnter(heading, FILE_DRAG);
+    fireEvent.dragLeave(heading, FILE_DRAG);
+    expect(card.getAttribute("data-drop-active")).toBe("true");
+    fireEvent.dragLeave(card, FILE_DRAG);
+    expect(card.getAttribute("data-drop-active")).toBeNull();
+    expect(card.className).not.toContain("border-ring");
+
+    const strip = recordFeedbackStrip(container);
+    fireEvent.dragEnter(card, FILE_DRAG);
+    fireEvent.drop(
+      card,
+      fileDrop(representativeDxfFile(), new File(["notes"], "notes.pdf", { type: "application/pdf" })),
+    );
+    strip.record();
+    // Synchronously after the drop the strip names the byte reads, not the ingestion.
+    expect(card.getAttribute("data-drop-active")).toBeNull();
+    const feedback = screen.getByTestId("diagnosis-feedback");
+    expect(feedback.getAttribute("role")).toBe("status");
+    expect(feedback.textContent).toContain("파일을 읽는 중…");
+    expect(feedback.textContent).not.toContain("파일을 검증하고");
+
+    await waitFor(() => expect(onModelChange).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId("stage-panel-assumptions")).toBeTruthy());
+    strip.stop();
+    expect(onDrawingSetIngested).toHaveBeenCalledTimes(1);
+    const [ingested] = onDrawingSetIngested.mock.calls[0];
+    expect(ingested.drawingSet.documents.map((d: { fileName: string }) => d.fileName)).toEqual([
+      "A101-office-floor-plan-rev-A.dxf",
+    ]);
+
+    // Phase order as shown: bytes read, then validation/assembly, then the outcome.
+    const readIndex = strip.labels.indexOf("파일을 읽는 중…");
+    const uploadIndex = strip.labels.indexOf("파일을 검증하고 도면 세트를 구성하는 중…");
+    expect(readIndex).toBeGreaterThanOrEqual(0);
+    expect(uploadIndex).toBeGreaterThan(readIndex);
+    // The refused file is named beside the outcome instead of being dropped silently.
+    // The sentence is scoped to the drop: the picker input takes SVG and PDF
+    // sources (tests below push them through it), so "only DXF" would be false
+    // of the workspace as a whole.
+    const outcome = screen.getByTestId("diagnosis-feedback").textContent ?? "";
+    expect(outcome).toContain("Tier 1 추정 모델을 만들었습니다");
+    expect(outcome).toContain("notes.pdf: 끌어다 놓기는 DXF 파일만 받습니다");
+    expect(screen.getByTestId("diagnosis-feedback").getAttribute("role")).toBe("status");
+  }, 20_000);
+
+  it("names a dropped non-DXF file in an alert instead of ingesting it", async () => {
+    const onDrawingSetIngested = vi.fn();
+    render(<EnergyDiagnosisWorkspace onDrawingSetIngested={onDrawingSetIngested} />);
+    const card = screen.getByTestId("drawing-drop-target");
+    fireEvent.drop(card, fileDrop(new File(["%PDF-1.4"], "x.pdf", { type: "application/pdf" })));
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toContain("x.pdf: 끌어다 놓기는 DXF 파일만 받습니다");
+    expect(alert.getAttribute("data-testid")).toBe("diagnosis-feedback");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(onDrawingSetIngested).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("stage-panel-assumptions")).toBeNull();
+    expect(screen.getByTestId("drawing-drop-target")).toBeTruthy();
+  });
+
+  it("keeps the refused file's name on the alert when the ingestion itself fails", async () => {
+    render(<EnergyDiagnosisWorkspace />);
+    const card = screen.getByTestId("drawing-drop-target");
+    vi.mocked(ingestDrawingSet).mockRejectedValueOnce(new Error("Ingestion exploded"));
+    fireEvent.drop(
+      card,
+      fileDrop(representativeDxfFile(), new File(["notes"], "notes.pdf", { type: "application/pdf" })),
+    );
+    // Both the failure and the refused name land on the one text the strip
+    // shows (error wins over notice), so neither is lost behind the other.
+    await waitFor(() => {
+      const alert = screen.getByRole("alert");
+      expect(alert.textContent).toContain("Ingestion exploded");
+      expect(alert.textContent).toContain("notes.pdf: 끌어다 놓기는 DXF 파일만 받습니다");
+    });
+    expect(screen.getByTestId("diagnosis-feedback").getAttribute("role")).toBe("alert");
+    expect(screen.queryByTestId("stage-panel-assumptions")).toBeNull();
+    expect(screen.getByTestId("drawing-drop-target")).toBeTruthy();
+  }, 20_000);
+
+  it("shows no drop wash and takes no drop while an operation is running", async () => {
+    const onDrawingSetIngested = vi.fn();
+    render(<EnergyDiagnosisWorkspace onDrawingSetIngested={onDrawingSetIngested} />);
+    const card = screen.getByTestId("drawing-drop-target");
+    fireEvent.click(screen.getByRole("button", { name: "샘플 진단 시작" }));
+    expect(screen.getByTestId("diagnosis-feedback").textContent).toContain(
+      diagnosisCopy("ko").loadingReference,
+    );
+
+    // The card would refuse the drop, so it must not claim it.
+    fireEvent.dragEnter(card, FILE_DRAG);
+    expect(card.getAttribute("data-drop-active")).toBeNull();
+    expect(card.className).not.toContain("border-ring");
+    fireEvent.drop(card, fileDrop(representativeDxfFile()));
+    expect(screen.getByTestId("diagnosis-feedback").textContent).toContain(
+      diagnosisCopy("ko").loadingReference,
+    );
+
+    await waitFor(() => expect(screen.getByTestId("stage-panel-review")).toBeTruthy());
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    // Only the sample's own drawing set reached the callback; a lone DXF drop
+    // could never have produced its window schedule.
+    expect(onDrawingSetIngested).toHaveBeenCalledTimes(1);
+    const [ingested] = onDrawingSetIngested.mock.calls[0];
+    expect(ingested.drawingSet.documents.map((d: { fileName: string }) => d.fileName)).toContain(
+      "A601-window-schedule-rev-A.svg",
+    );
+  }, 20_000);
+
+  it("gives each stage one name across the nav and its panel eyebrow", async () => {
+    for (const locale of ["ko", "en"] as const) {
+      expect(NAVIGATION_LABEL[locale].preflight).toBe(STAGE_LABEL[locale].preflight);
+      expect(NAVIGATION_LABEL[locale].simulation).toBe(STAGE_LABEL[locale].simulation);
+    }
+    expect(NAVIGATION_STAGES.map((stage) => NAVIGATION_LABEL.ko[stage])).toEqual([
+      "건물 입력",
+      "건물 모델",
+      "모델 검사",
+      "시뮬레이션",
+      "결과",
+    ]);
+    expect(NAVIGATION_LABEL.en.preflight).toBe("Preflight");
+
+    const reference = await loadRepresentativeCase();
+    render(<EnergyDiagnosisWorkspace initialModel={reference.model} />);
+    const nav = screen.getByTestId("diagnosis-stage-nav");
+    expect(nav.querySelectorAll('[data-testid^="diagnosis-stage-"]').length).toBe(5);
+    for (const stage of ["preflight", "simulation"] as const) {
+      const button = screen.getByTestId(`diagnosis-stage-${stage}`);
+      expect(button.textContent?.endsWith(NAVIGATION_LABEL.ko[stage])).toBe(true);
+      fireEvent.click(button);
+      expect(button.getAttribute("aria-current")).toBe("step");
+      const panel = screen.getByTestId(`stage-panel-${stage}`);
+      expect(within(panel).getAllByText(STAGE_LABEL.ko[stage]).length).toBeGreaterThan(0);
+    }
+  });
+
   it("completes the representative drawing-to-comparison workflow with real results", async () => {
     const onModelChange = vi.fn();
     const onSimulationRun = vi.fn();

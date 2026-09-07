@@ -35,6 +35,7 @@ export type DiagnosisStage = DiagnosisEntryStage | "assumptions";
 /** A long-running action the workspace is currently performing. */
 export type DiagnosisOperation =
   | "reference"
+  | "read"
   | "upload"
   | "baseline"
   | "scenario"
@@ -57,14 +58,14 @@ export const NAVIGATION_LABEL: Record<
   ko: {
     drawings: "건물 입력",
     model: "건물 모델",
-    preflight: "검증",
-    simulation: "진단 실행",
+    preflight: "모델 검사",
+    simulation: "시뮬레이션",
     compare: "결과",
   },
   en: {
     drawings: "Building input",
     model: "Building model",
-    preflight: "Validate",
+    preflight: "Preflight",
     simulation: "Run diagnostic",
     compare: "Results",
   },
@@ -130,6 +131,7 @@ export function documentTypeLabel(type: DrawingDocumentType, locale: DiagnosisLo
 
 export function operationLabel(operation: Exclude<DiagnosisOperation, null>, locale: DiagnosisLocale): string {
   const copy = diagnosisCopy(locale);
+  if (operation === "read") return copy.readingBytes;
   if (operation === "reference") return copy.loadingReference;
   if (operation === "upload") return copy.readingFiles;
   if (operation === "baseline" || operation === "scenario") return copy.running;

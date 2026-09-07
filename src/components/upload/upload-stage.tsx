@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Upload, FileBox, AlertCircle, ArrowLeft, ArrowRight, Eye, PencilRuler } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PhaseRing } from "@/components/ui/phase-ring";
 import { useT } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { useWorkflowStore } from "@/store/workflow-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useTwinProvenanceStore } from "@/store/twin-provenance-store";
@@ -19,6 +21,7 @@ import {
 import { parseDwgFile } from "@/lib/cad/dwg-parser";
 import {
   CAD_CLIENT_MAX_FILE_BYTES,
+  CAD_SERVER_FALLBACK_MAX_FILE_BYTES,
   formatFileSizeMiB,
 } from "@/lib/cad/import-limits";
 import { mapDxfTextToDoc } from "@/lib/cad/doc/map-dxf-to-doc";
@@ -52,6 +55,22 @@ function preferredCandidate(
 /** Where the current footprint came from — drives what the twin is told. */
 type FootprintOrigin = "drawing" | "reconstruction";
 
+/** True for a drag that carries files, which is the only kind the zone can read. */
+function isFileDrag(e: React.DragEvent): boolean {
+  const types = e.dataTransfer?.types;
+  return !!types && Array.from(types).includes("Files");
+}
+
+/**
+ * The size of a file that was read, for display beside its name.
+ * `formatFileSizeMiB` rounds UP to a tenth of a MiB because it compares
+ * against limits; shown as a caption that would call a 32-byte file "0.1 MB".
+ */
+function formatReadSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 type UploadStatus =
   | { kind: "idle" }
   | { kind: "parsing" }
@@ -63,8 +82,21 @@ type UploadStatus =
 export function UploadStage() {
   const { t, lang } = useT();
   const [dragOver, setDragOver] = useState(false);
+  // dragenter/dragleave fire for every child the cursor crosses; counting the
+  // depth keeps the drag-over state steady until the cursor leaves the zone.
+  const dragDepthRef = useRef(0);
   const [status, setStatus] = useState<UploadStatus>({ kind: "idle" });
-  const [pendingLayer, setPendingLayer] = useState<string | null>(null);
+  // Index into the needs-pick candidate list, not a layer name — two rings on
+  // one layer are different footprints.
+  const [pendingIndex, setPendingIndex] = useState<number | null>(null);
+  // The source the CURRENT import is reading. Set only after the import owns
+  // the generation, so a superseded file is never named as the one in
+  // progress; sample and reconstruction paths name their own source and carry
+  // no size because no File object existed.
+  const [currentFile, setCurrentFile] = useState<{
+    name: string;
+    bytes: number | null;
+  } | null>(null);
   const [cadDoc, setCadDoc] = useState<CadDocument | null>(null);
   const [origin, setOrigin] = useState<FootprintOrigin>("drawing");
   const importGenerationRef = useRef(0);
@@ -142,7 +174,9 @@ export function UploadStage() {
   const openDraft = useCallback(() => {
     // Drawing from scratch replaces any file import that is still resolving.
     invalidatePendingImport();
-    setPendingLayer(null);
+    setPendingIndex(null);
+    // A footprint taken from the draft viewer was not read from a file.
+    setCurrentFile(null);
     setCadDoc(null);
     setOrigin("drawing");
     setStatus({ kind: "idle" });
@@ -206,9 +240,10 @@ export function UploadStage() {
   const loadSampleDrawing = useCallback(async () => {
     const { generation, controller, isCurrent } = beginImport();
     if (!isCurrent()) return;
-    setPendingLayer(null);
+    setPendingIndex(null);
     setCadDoc(null);
     setOrigin("drawing");
+    setCurrentFile({ name: "sample-footprint.dxf", bytes: null });
     setStatus({ kind: "parsing" });
     try {
       const res = await fetch("/samples/sample-footprint.dxf", {
@@ -244,7 +279,8 @@ export function UploadStage() {
 
       if (!ACCEPTED_EXTENSIONS.includes(ext)) {
         if (!isCurrent()) return;
-        setPendingLayer(null);
+        setPendingIndex(null);
+        setCurrentFile(null);
         setCadDoc(null);
         setStatus({
           kind: "error",
@@ -259,7 +295,8 @@ export function UploadStage() {
 
       if (file.size > CAD_CLIENT_MAX_FILE_BYTES) {
         if (!isCurrent()) return;
-        setPendingLayer(null);
+        setPendingIndex(null);
+        setCurrentFile(null);
         setCadDoc(null);
         setStatus({
           kind: "error",
@@ -273,9 +310,10 @@ export function UploadStage() {
       }
 
       if (!isCurrent()) return;
-      setPendingLayer(null);
+      setPendingIndex(null);
       setCadDoc(null);
       setOrigin("drawing");
+      setCurrentFile({ name: file.name, bytes: file.size });
       setStatus({ kind: "parsing" });
 
       try {
@@ -348,6 +386,7 @@ export function UploadStage() {
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
+      dragDepthRef.current = 0;
       setDragOver(false);
       const file = e.dataTransfer.files[0];
       if (file) void processFile(file);
@@ -363,8 +402,8 @@ export function UploadStage() {
     [processFile]
   );
 
-  const handleLayerPreview = useCallback((candidate: FootprintCandidate) => {
-    setPendingLayer(candidate.layer);
+  const handleLayerPreview = useCallback((index: number) => {
+    setPendingIndex(index);
   }, []);
 
   const handlePdfConfirm = useCallback(
@@ -387,8 +426,9 @@ export function UploadStage() {
   const handleUseReconstruction = useCallback(
     (dxfText: string, fileName: string) => {
       const { isCurrent } = beginImport();
-      setPendingLayer(null);
+      setPendingIndex(null);
       setCadDoc(null);
+      setCurrentFile({ name: fileName, bytes: null });
       setStatus({ kind: "parsing" });
       ingestDxf(dxfText, fileName, isCurrent);
       setOrigin("reconstruction");
@@ -398,7 +438,7 @@ export function UploadStage() {
 
   const handleLayerConfirm = useCallback(
     (candidate: FootprintCandidate) => {
-      setPendingLayer(null);
+      setPendingIndex(null);
       setStatus((prev) => ({
         kind: "ready",
         polygon: candidate.polygon,
@@ -499,84 +539,106 @@ export function UploadStage() {
         </div>
 
         {/* Dropzone */}
+        {/* Pattern: Kokonut UI "file-upload" (kokonutui.com) — drag-over wash + idle→processing swap inside the zone, rebuilt on shadcn tokens with depth-counted drag events. */}
         <div
           data-testid="upload-dropzone"
-          className={`relative flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-10 transition-colors ${
+          className={`relative flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-10 transition-colors motion-reduce:transition-none ${
             dragOver
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/25 hover:border-muted-foreground/50"
           }`}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            dragDepthRef.current += 1;
+            // Only a file drag can be read, so only a file drag lights the
+            // zone; dragged text or a URL would otherwise promise a read that
+            // handleDrop cannot deliver.
+            if (dragDepthRef.current === 1 && isFileDrag(e)) setDragOver(true);
+          }}
           onDragOver={(e) => {
             e.preventDefault();
-            setDragOver(true);
+            if (isFileDrag(e)) setDragOver(true);
           }}
-          onDragLeave={() => setDragOver(false)}
+          onDragLeave={() => {
+            dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+            if (dragDepthRef.current === 0) setDragOver(false);
+          }}
           onDrop={handleDrop}
         >
-          <Upload
-            className={`h-10 w-10 ${
-              dragOver ? "text-primary" : "text-muted-foreground/50"
-            }`}
-          />
-          <div className="text-center">
-            <p className="text-sm font-medium">
-              {t("파일을 끌어다 놓거나", "Drag and drop a file, or")}
+          {/* Idle content fades under the processing layer but is never
+              unmounted: the sr-only input must stay in the DOM so a second
+              selection during parsing still aborts the first (P1-07 e). */}
+          <div
+            className={cn(
+              "flex flex-col items-center gap-3 transition-opacity duration-150 motion-reduce:transition-none",
+              status.kind === "parsing" ? "opacity-0" : "opacity-100",
+            )}
+          >
+            <Upload
+              className={`h-10 w-10 ${
+                dragOver ? "text-primary" : "text-muted-foreground/50"
+              }`}
+            />
+            <div className="text-center">
+              <p className="text-sm font-medium">
+                {dragOver
+                  ? t("놓으면 읽습니다", "Drop to read")
+                  : t("파일을 끌어다 놓거나", "Drag and drop a file, or")}
+              </p>
+              <label className="cursor-pointer">
+                <span className="text-sm text-primary underline">
+                  {t("파일 선택", "browse")}
+                </span>
+                <input
+                  type="file"
+                  // P1-07 (e): sr-only (not `hidden`) keeps the input in the tab
+                  // order so the "browse" affordance is keyboard-reachable.
+                  className="sr-only"
+                  accept=".dxf,.dwg,.pdf"
+                  onChange={handleFileInput}
+                  data-testid="upload-file-input"
+                />
+              </label>
+            </div>
+            <div className="flex gap-1.5">
+              <Badge variant="outline" className="text-[10px]">.dxf</Badge>
+              <Badge variant="outline" className="text-[10px]">.dwg</Badge>
+              <Badge variant="outline" className="text-[10px]">.pdf</Badge>
+            </div>
+            {/* Each clause is true of processFile / parseDwgFile: extension →
+                size → reader tier, with the server DWG fallback capped lower. */}
+            <p className="text-[11px] leading-4 text-muted-foreground text-center">
+              {t(
+                `최대 ${formatFileSizeMiB(CAD_CLIENT_MAX_FILE_BYTES)} · DWG는 DXF로 변환한 뒤 읽습니다 (서버 변환은 ${formatFileSizeMiB(CAD_SERVER_FALLBACK_MAX_FILE_BYTES)}까지) · PDF는 외곽선을 직접 따라 그립니다`,
+                `Up to ${formatFileSizeMiB(CAD_CLIENT_MAX_FILE_BYTES)} · DWG is converted to DXF first (server conversion up to ${formatFileSizeMiB(CAD_SERVER_FALLBACK_MAX_FILE_BYTES)}) · PDF outlines are traced by hand`,
+              )}
             </p>
-            <label className="cursor-pointer">
-              <span className="text-sm text-primary underline">
-                {t("파일 선택", "browse")}
-              </span>
-              <input
-                type="file"
-                // P1-07 (e): sr-only (not `hidden`) keeps the input in the tab
-                // order so the "browse" affordance is keyboard-reachable.
-                className="sr-only"
-                accept=".dxf,.dwg,.pdf"
-                onChange={handleFileInput}
-                data-testid="upload-file-input"
-              />
-            </label>
           </div>
-          <div className="flex gap-1.5">
-            <Badge variant="outline" className="text-[10px]">.dxf</Badge>
-            <Badge variant="outline" className="text-[10px]">.dwg</Badge>
-            <Badge variant="outline" className="text-[10px]">.pdf</Badge>
-          </div>
+
+          {/* Processing layer — indeterminate on purpose: the DWG chain reports
+              nothing until it returns. pointer-events-none keeps drops landing
+              on the zone so a newer file still supersedes this one. */}
+          {status.kind === "parsing" && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="pointer-events-none absolute inset-0 grid place-items-center rounded-lg bg-background/90 animate-settle motion-reduce:animate-none"
+            >
+              <div className="flex flex-col items-center gap-2 text-center">
+                <PhaseRing className="text-muted-foreground" />
+                <p className="text-sm font-medium text-foreground">
+                  {currentFile?.name}
+                </p>
+                <p className="text-xs tabular-nums text-muted-foreground">
+                  {currentFile?.bytes != null
+                    ? `${formatReadSize(currentFile.bytes)} · `
+                    : ""}
+                  {t("도면 처리 중…", "Processing drawing…")}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* Draw from scratch — no file, no API key needed */}
-        <div className="flex flex-wrap justify-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            data-testid="new-drawing"
-            onClick={openDraft}
-          >
-            <PencilRuler className="mr-1.5 h-4 w-4" />
-            {savedDraft
-              ? t("도면 계속 그리기", "Continue drawing")
-              : t("새 도면 그리기", "Draw new plan")}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            data-testid="upload-sample-dxf"
-            onClick={() => void loadSampleDrawing()}
-          >
-            {t("샘플 도면으로 시작", "Start with a sample plan")}
-          </Button>
-        </div>
-
-        {/* Prompt module — reconstruct the missing drawing from evidence */}
-        <CadRequestPanel onUseDrawing={handleUseReconstruction} />
-
-        {/* Status — parsing */}
-        {status.kind === "parsing" && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            {t("도면 처리 중…", "Processing drawing…")}
-          </div>
-        )}
 
         {/* Status — error */}
         {status.kind === "error" && (
@@ -613,7 +675,7 @@ export function UploadStage() {
         {status.kind === "needs-pick" && (
           <LayerPicker
             candidates={status.candidates}
-            selectedLayer={pendingLayer}
+            selectedIndex={pendingIndex}
             onPreview={handleLayerPreview}
             onConfirm={handleLayerConfirm}
             lang={lang}
@@ -640,10 +702,34 @@ export function UploadStage() {
                     : t("외곽선 준비 완료", "Footprint ready")}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {t("레이어", "Layer")}: <code>{status.layer}</code>
+                  {status.layer === "pdf-trace" ? (
+                    // A PDF is a raster: the ring was drawn by hand over it.
+                    t(
+                      "PDF에서 손으로 따라 그린 외곽선 — 실측이 아닙니다",
+                      "Outline traced by hand from the PDF — not measured",
+                    )
+                  ) : (
+                    <>
+                      {t("레이어", "Layer")}:{" "}
+                      <span className="font-medium text-foreground">
+                        {status.layer}
+                      </span>
+                    </>
+                  )}
                   {" · "}
-                  {status.areaSqm.toFixed(0)} m²
+                  <span className="tabular-nums">{status.areaSqm.toFixed(0)} m²</span>
                 </div>
+                {currentFile ? (
+                  <div className="text-xs text-muted-foreground">
+                    {origin === "reconstruction"
+                      ? t("복원 도면", "Reconstructed drawing")
+                      : t("읽은 파일", "File read")}
+                    : {currentFile.name}
+                    {currentFile.bytes != null
+                      ? ` · ${formatReadSize(currentFile.bytes)}`
+                      : ""}
+                  </div>
+                ) : null}
                 {origin === "reconstruction" && (
                   <div className="mt-1 text-xs text-amber-700 dark:text-amber-400">
                     {t(
@@ -666,6 +752,32 @@ export function UploadStage() {
             )}
           </div>
         )}
+
+        {/* Draw from scratch — no file, no API key needed */}
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            data-testid="new-drawing"
+            onClick={openDraft}
+          >
+            <PencilRuler className="mr-1.5 h-4 w-4" />
+            {savedDraft
+              ? t("도면 계속 그리기", "Continue drawing")
+              : t("새 도면 그리기", "Draw new plan")}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            data-testid="upload-sample-dxf"
+            onClick={() => void loadSampleDrawing()}
+          >
+            {t("샘플 도면으로 시작", "Start with a sample plan")}
+          </Button>
+        </div>
+
+        {/* Prompt module — reconstruct the missing drawing from evidence */}
+        <CadRequestPanel onUseDrawing={handleUseReconstruction} />
 
         {/* Navigation — cad-first drafts have no search stage and no skip path */}
         <div className="flex items-center justify-between pt-2">

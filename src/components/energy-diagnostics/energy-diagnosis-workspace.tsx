@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type DragEvent,
   type ReactNode,
 } from "react";
 import {
@@ -148,6 +149,25 @@ async function nextPaint(): Promise<void> {
   await new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
 
+/** The same rule the picker input's `accept=".dxf"` states, applied to a drop. */
+function isDxfFile(file: File): boolean {
+  return file.name.toLowerCase().endsWith(".dxf");
+}
+
+/**
+ * True only for a drag that carries files. dragenter fires for every drag —
+ * selected text, a link — and `files` is empty until the drop lands, so the
+ * `types` list is the only thing that says what is being dragged. The fields
+ * are read as optional because test DOMs hand over bare objects.
+ */
+function dragCarriesFiles(event: DragEvent<HTMLElement>): boolean {
+  const transfer: Partial<DataTransfer> | null = event.dataTransfer;
+  return (
+    Array.from(transfer?.types ?? []).includes("Files") ||
+    (transfer?.files?.length ?? 0) > 0
+  );
+}
+
 function IngestionOnlyReview({
   ingestion,
   locale,
@@ -253,6 +273,15 @@ export function EnergyDiagnosisWorkspace({
   const [improvementEditorOpen, setImprovementEditorOpen] = useState(false);
   const [recentSavedProject, setRecentSavedProject] =
     useState<StoredEnergyDiagnosticsProjectSummary | null>(null);
+  // dragenter/dragleave fire once per descendant crossed, so a depth counter is
+  // the only way to know when the pointer has actually left the card.
+  const dropDepthRef = useRef(0);
+  const [dropActive, setDropActive] = useState(false);
+  // The wash is the card saying "drop here". ingestFiles refuses a drop while
+  // an operation runs, so the wash is derived from both and can never show
+  // for a drop the code would swallow — even if the drag started before the
+  // operation did.
+  const dropWash = dropActive && operation == null;
 
   useEffect(() => {
     if (initialModel === lastInitialModelPropRef.current) return;
@@ -595,12 +624,13 @@ export function EnergyDiagnosisWorkspace({
     }
   }, [emitModel, onDrawingSetIngested]);
 
+  /** Resolves true when the set was ingested, false when it failed (the error is already on the strip). */
   const ingestSources = useCallback(
     async (
       uploadedSources: readonly DrawingSourceInput[],
       setName: string,
-    ) => {
-      if (uploadedSources.length === 0) return;
+    ): Promise<boolean> => {
+      if (uploadedSources.length === 0) return false;
       setOperation("upload");
       setError(null);
       setNotice(null);
@@ -652,8 +682,10 @@ export function EnergyDiagnosisWorkspace({
         } else if (uploadOutcome.status === "extraction_only") {
           setNotice(tierOneGuidance(uploadOutcome.reason, locale).what);
         }
+        return true;
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : "Drawing ingestion failed.");
+        return false;
       } finally {
         setOperation(null);
       }
@@ -661,26 +693,107 @@ export function EnergyDiagnosisWorkspace({
     [emitModel, ingestion, locale, model, onDrawingSetIngested, selectedDocumentId, selectedFact, sources],
   );
 
+  /**
+   * Read the files' bytes under a real "read" operation flag, then hand them
+   * to ingestSources (which raises its own "upload" flag). The strip therefore
+   * names the byte reads, which used to happen silently before any flag was set.
+   * `rejected` names files a caller refused before reading; they are reported
+   * beside the outcome instead of being dropped without a word.
+   *
+   * While another operation runs the files are refused without a message:
+   * the strip is showing that operation's label, a notice set now would be
+   * overwritten by its outcome, and an error set now would mask it. The card
+   * shows no wash in that state (see `dropWash`), so it never claims a drop
+   * it would refuse.
+   */
+  const ingestFiles = useCallback(
+    async (accepted: readonly File[], rejected: readonly string[] = []) => {
+      if (operation != null) return;
+      if (accepted.length === 0) {
+        if (rejected.length > 0) setError(`${rejected.join(", ")}: ${copy.onlyDxf}`);
+        return;
+      }
+      setOperation("read");
+      setError(null);
+      setNotice(null);
+      await nextPaint();
+      let uploaded: DrawingSourceInput[];
+      try {
+        uploaded = await Promise.all(
+          accepted.map(async (file) => ({
+            fileName: file.name,
+            mimeType: file.type || "application/octet-stream",
+            content: await file.arrayBuffer(),
+          })),
+        );
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Could not read the files.");
+        setOperation(null);
+        return;
+      }
+      const ingested = await ingestSources(
+        uploaded,
+        accepted.length === 1
+          ? accepted[0].name
+          : `${accepted[0].name} +${accepted.length - 1}`,
+      );
+      if (rejected.length > 0) {
+        const line = `${rejected.join(", ")}: ${copy.onlyDxf}`;
+        const append = (prev: string | null) => (prev ? `${prev} · ${line}` : line);
+        // The strip shows `error ?? notice`, so the line has to ride on the
+        // text the outcome actually put there; appended to a notice behind an
+        // error it would never be read.
+        if (ingested) setNotice(append);
+        else setError(append);
+      }
+    },
+    [copy.onlyDxf, ingestSources, operation],
+  );
+
   const handleFiles = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
+    (event: ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files ?? []);
       event.target.value = "";
-      if (files.length === 0) return;
-      const uploadedSources: DrawingSourceInput[] = await Promise.all(
-        files.map(async (file) => ({
-          fileName: file.name,
-          mimeType: file.type || "application/octet-stream",
-          content: await file.arrayBuffer(),
-        })),
-      );
-      await ingestSources(
-        uploadedSources,
-        files.length === 1
-          ? files[0].name
-          : `${files[0].name} +${files.length - 1}`,
+      void ingestFiles(files);
+    },
+    [ingestFiles],
+  );
+
+  // Pattern: Kokonut UI "file-upload" (kokonutui.com) — drop target with a drag
+  // wash, rebuilt on shadcn tokens; multi-file, no simulated progress.
+  // The picker input declares accept=".dxf"; a drop has no such gate, so the
+  // same rule is applied here and every refused file is named.
+  // Only a drag carrying files is handled at all: for anything else the card
+  // is not a drop target, so it neither lights up nor cancels the browser's
+  // own handling. dragover and drop are always cancelled for a file drag —
+  // even mid-operation — because an uncancelled file drop navigates the page
+  // to the file.
+  const handleDragEnter = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (!dragCarriesFiles(event)) return;
+    event.preventDefault();
+    dropDepthRef.current += 1;
+    if (dropDepthRef.current === 1) setDropActive(true);
+  }, []);
+  const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (dragCarriesFiles(event)) event.preventDefault();
+  }, []);
+  const handleDragLeave = useCallback(() => {
+    dropDepthRef.current = Math.max(0, dropDepthRef.current - 1);
+    if (dropDepthRef.current === 0) setDropActive(false);
+  }, []);
+  const handleDrop = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      if (!dragCarriesFiles(event)) return;
+      event.preventDefault();
+      dropDepthRef.current = 0;
+      setDropActive(false);
+      const files = Array.from(event.dataTransfer?.files ?? []);
+      void ingestFiles(
+        files.filter(isDxfFile),
+        files.filter((file) => !isDxfFile(file)).map((file) => file.name),
       );
     },
-    [ingestSources],
+    [ingestFiles],
   );
 
   const returnToCurrentModel = useCallback(() => {
@@ -1502,7 +1615,18 @@ export function EnergyDiagnosisWorkspace({
 
       {!model && !ingestion ? (
         <div className="grid flex-1 place-items-center bg-[radial-gradient(circle_at_50%_0%,rgba(8,145,178,0.08),transparent_42%)] p-5 sm:p-10">
-          <div className="w-full max-w-3xl overflow-hidden rounded-xl border bg-card shadow-[0_22px_70px_rgba(15,23,42,0.12)]">
+          <div
+            className={cn(
+              "w-full max-w-3xl overflow-hidden rounded-xl border bg-card shadow-[0_22px_70px_rgba(15,23,42,0.12)] transition-colors motion-reduce:transition-none",
+              dropWash && "border-ring bg-muted/40",
+            )}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            data-drop-active={dropWash ? "true" : undefined}
+            data-testid="drawing-drop-target"
+          >
             <div className="grid gap-8 p-6 sm:grid-cols-[1.2fr_0.8fr] sm:p-9">
               <div>
                 <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-700 dark:text-cyan-300">DRAWING → EVIDENCE → ENGINE</p>
@@ -1518,6 +1642,7 @@ export function EnergyDiagnosisWorkspace({
                     <FolderOpen className="size-4" /> {copy.upload}
                   </Button>
                 </div>
+                <p className="mt-2 text-xs text-muted-foreground">{copy.dropHint}</p>
                 {recentSavedProject && (
                   <div className="mt-4 rounded-lg border bg-muted/25 p-3">
                     <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">

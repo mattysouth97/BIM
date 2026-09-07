@@ -145,16 +145,20 @@ export function LedgerLookup({ locale }: Readonly<{ locale: DiagnosisLocale }>) 
       </h2>
 
       <Tabs defaultValue="region" className="gap-0">
-        <TabsList className="h-8 rounded-[8px] border border-border bg-muted/40 p-0.5 shadow-none">
+        {/* Pattern: Kokonut UI "smooth-tab" (kokonutui.com) — sliding selection pill from tabs.tsx; the active look lives on the pill, not the trigger. */}
+        <TabsList
+          className="h-8 rounded-[8px] border border-border bg-muted/40 p-0.5 shadow-none"
+          indicatorClassName="rounded-md border border-border bg-card shadow-xs"
+        >
           <TabsTrigger
             value="region"
-            className="h-7 min-w-24 rounded-md px-3 text-xs data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:shadow-xs"
+            className="h-7 min-w-24 rounded-md px-3 text-xs"
           >
             {locale === "ko" ? "지역으로" : "By district"}
           </TabsTrigger>
           <TabsTrigger
             value="address"
-            className="h-7 min-w-24 rounded-md px-3 text-xs data-[state=active]:border-border data-[state=active]:bg-card data-[state=active]:shadow-xs"
+            className="h-7 min-w-24 rounded-md px-3 text-xs"
           >
             {locale === "ko" ? "주소로" : "By address"}
           </TabsTrigger>

@@ -5,8 +5,9 @@
 // Shows energy grade, annual demand, CO2 emissions, and heat loss breakdown.
 // When actual energy data is available, shows modeled vs actual comparison with delta indicators.
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import { useT } from "@/lib/i18n";
+import { SettleValue } from "@/components/ui/settle-value";
 import { useNarrowViewport } from "@/hooks/use-narrow-viewport";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
 import { useActualEnergy } from "@/hooks/use-actual-energy";
@@ -41,65 +42,18 @@ const GRADE_NAME_KO: Record<EnergyGrade, string> = {
   "7": "7등급",
 };
 
-/** Animated number display -- smoothly transitions to new value */
-function AnimatedValue({
-  value,
-  decimals = 1,
-  suffix = "",
-}: {
-  value: number;
-  decimals?: number;
-  suffix?: string;
-}) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const currentRef = useRef(0);
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    const start = currentRef.current;
-    const end = value;
-    const duration = 400; // ms
-    const startTime = performance.now();
-
-    const animate = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const current = start + (end - start) * eased;
-      currentRef.current = current;
-
-      if (ref.current) {
-        // Animate the number only — never concatenate the unit into
-        // textContent. JSX unicode escapes in a suffix string have
-        // rendered as literal `\u00B2` in the live overlay.
-        ref.current.textContent = current.toLocaleString("en-US", {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: decimals,
-        });
-      }
-
-      if (progress < 1) {
-        rafRef.current = requestAnimationFrame(animate);
-      }
-    };
-
-    rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [value, decimals, suffix]);
-
-  return (
-    <span>
-      <span ref={ref}>
-        {value.toLocaleString("en-US", {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: decimals,
-        })}
-      </span>
-      {suffix}
-    </span>
-  );
-}
+/**
+ * The engine's figure, formatted once. It is rendered through `SettleValue`,
+ * which shows the new text on the same commit and only fades it in when the
+ * string actually changed — the rAF count-up this replaced printed ~24
+ * interpolated numbers per change that the engine never produced, and froze
+ * partway in a background tab. The unit stays a sibling text node, never
+ * concatenated into the number: a unicode escape in a suffix string has
+ * rendered as its literal escape text in the live overlay before.
+ */
+// Pattern: Kokonut UI "dynamic-text" (kokonutui.com) — keyed re-mount on a changed string, via the shared SettleValue.
+const fmt = (v: number, d: number) =>
+  v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 
 /** Delta indicator with color coding */
 function DeltaIndicator({
@@ -260,13 +214,13 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
           {grade}
         </span>
         <span className="shrink-0 text-xs tabular-nums text-foreground">
-          <AnimatedValue value={demand.demandPerSqm} suffix=" kWh/m²·yr" />
+          <SettleValue value={fmt(demand.demandPerSqm, 1)} />{" kWh/m²·yr"}
         </span>
         <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-          <AnimatedValue value={co2.co2PerSqm} suffix=" kgCO₂/m²·yr" />
+          <SettleValue value={fmt(co2.co2PerSqm, 1)} />{" kgCO₂/m²·yr"}
         </span>
         <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-          <AnimatedValue value={heatLoss.totalHeatLoss} decimals={0} suffix=" W" />
+          <SettleValue value={fmt(heatLoss.totalHeatLoss, 0)} />{" W"}
         </span>
         <div className="ml-auto flex shrink-0 gap-1">
           <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={handleExport}>
@@ -339,7 +293,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
           {t("연간 에너지 수요", "Annual Energy Demand")}
         </p>
         <p className="text-sm font-semibold tabular-nums">
-          <AnimatedValue value={demand.demandPerSqm} suffix=" kWh/m²·yr" />
+          <SettleValue value={fmt(demand.demandPerSqm, 1)} />{" kWh/m²·yr"}
         </p>
         {hasActualDemand ? (
           <DeltaIndicator
@@ -380,7 +334,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
           {t("CO₂ 배출량", "CO₂ Emissions")}
         </p>
         <p className="text-sm font-semibold tabular-nums">
-          <AnimatedValue value={co2.co2PerSqm} suffix=" kgCO₂/m²·yr" />
+          <SettleValue value={fmt(co2.co2PerSqm, 1)} />{" kgCO₂/m²·yr"}
         </p>
         {null}
         <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -396,11 +350,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
           {t("열손실", "Heat Loss")}
         </p>
         <p className="text-sm font-semibold tabular-nums">
-          <AnimatedValue
-            value={heatLoss.totalHeatLoss}
-            decimals={0}
-            suffix=" W"
-          />
+          <SettleValue value={fmt(heatLoss.totalHeatLoss, 0)} />{" W"}
         </p>
         <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
           {breakdown.map((b) => (

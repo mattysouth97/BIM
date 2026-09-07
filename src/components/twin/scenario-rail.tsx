@@ -7,8 +7,11 @@
 // tokens so the theme toggle keeps working) replacing the dark editorial
 // rail.
 
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
+import { useDebounce } from "@/hooks/use-debounce";
+import { SettleValue } from "@/components/ui/settle-value";
 import { formatKrw, formatYears } from "@/lib/twin-formatters";
 import { effectiveDiscountRate } from "@/lib/retrofit/economic-model";
 import type { BudgetSelection, EconomicAssumptions } from "@/lib/retrofit/economic-model";
@@ -33,6 +36,17 @@ function irrLetter(irr: number | null | undefined): string {
   return "D";
 }
 
+/** The budget field's text for a stored budget: whole 만원, or empty for none. */
+const toDraft = (krw: number | null) => (krw === null ? "" : String(Math.round(krw / 10_000)));
+
+/** The stored budget for the field's text: a positive 만원 figure, else none. */
+const toKrw = (raw: string) => {
+  const s = raw.trim();
+  if (s === "") return null;
+  const man = Number(s);
+  return Number.isFinite(man) && man > 0 ? man * 10_000 : null;
+};
+
 export function ScenarioRail({
   capexBudgetKrw,
   onBudgetChange,
@@ -48,6 +62,36 @@ export function ScenarioRail({
   const utilisation = capexBudgetKrw !== null && capexBudgetKrw > 0 ? effectiveCapex / capexBudgetKrw : 0;
   const { t, lang } = useT(); // P2-06
   const effectiveRate = effectiveDiscountRate(assumptions);
+
+  // Pattern: Kokonut UI "use-debounce" (kokonutui.com) — the field keeps its own draft and commits to the store 250 ms after the last key.
+  //
+  // `onBudgetChange` used to fire per keystroke, and `use-retrofit-scenario`
+  // re-runs the knapsack on every budget — so typing 5000 re-priced at 5, 50,
+  // 500 and 5000 만원 and flipped the 추천 marks through budgets nobody typed.
+  // The draft is local; the store sees only the value the user stopped at.
+  const [draft, setDraft] = useState(() => toDraft(capexBudgetKrw));
+  const [seenProp, setSeenProp] = useState(capexBudgetKrw);
+  // Resync from the store (adjust-during-render): scenario-store nulls the
+  // budget on a building change, and that must clear the field — but our own
+  // commit arriving back as the prop must not rewrite the user's text.
+  if (capexBudgetKrw !== seenProp) {
+    setSeenProp(capexBudgetKrw);
+    if (toKrw(draft) !== capexBudgetKrw) setDraft(toDraft(capexBudgetKrw));
+  }
+  const debounced = useDebounce(draft, 250);
+  useEffect(() => {
+    if (!onBudgetChange) return;
+    // Commit only once the debounce has caught up with the field. Without
+    // this the effect also runs on a prop change — the building-switch null
+    // above — while `debounced` still holds the previous text, and would
+    // write the old building's budget straight back into the store.
+    if (debounced !== draft) return;
+    const krw = toKrw(debounced);
+    // Neither parses to the stored budget nor merely re-prints it (a stored
+    // figure that is not a whole 만원 prints rounded; that is not an edit).
+    if (krw === capexBudgetKrw || debounced === toDraft(capexBudgetKrw)) return;
+    onBudgetChange(krw);
+  }, [debounced, draft, capexBudgetKrw, onBudgetChange]);
   const irr = selection?.selected.length
     ? selection.selected.reduce((best, m) => {
         const v = m.financials?.irr;
@@ -92,13 +136,8 @@ export function ScenarioRail({
               aria-label={t("투자 예산, 만원, 선택 사항", "Budget, 만원, optional")}
               data-twin-budget-input
               className="w-20 rounded border border-border bg-background px-1 py-0.5 text-[10px] tabular-nums text-foreground"
-              value={capexBudgetKrw === null ? "" : Math.round(capexBudgetKrw / 10_000)}
-              onChange={(event) => {
-                const raw = event.target.value.trim();
-                if (raw === "") return onBudgetChange(null);
-                const man = Number(raw);
-                onBudgetChange(Number.isFinite(man) && man > 0 ? man * 10_000 : null);
-              }}
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
             />
             <span>{t("만원", "만원")}</span>
           </label>
@@ -112,25 +151,28 @@ export function ScenarioRail({
           `IRR ${irrBand} · ${formatPercent(effectiveRate, 1)} eff. rate`,
         )}
       >
+        {/* Pattern: Kokonut UI "dynamic-text" (kokonutui.com) — the three
+            figures settle (opacity only) when their text changes, via the
+            shared SettleValue; nothing moves on first paint. */}
         <span
           className={cn(
             "text-[19px] font-semibold tabular-nums tracking-tight",
             npvPositive ? "text-emerald-600" : "text-orange-600",
           )}
         >
-          {formatKrw(npv, lang)}
+          <SettleValue value={formatKrw(npv, lang)} />
         </span>
       </Cell>
 
       <Cell label={t("회수기간", "Payback")} sublabel={t("할인 기준", "Discounted")}>
         <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
-          {formatYears(payback, lang)}
+          <SettleValue value={formatYears(payback, lang)} />
         </span>
       </Cell>
 
       <Cell label={t("투자비", "CAPEX")} sublabel={t("선택한 공사 비용", "Cost of chosen work")}>
         <span className="text-[19px] font-semibold tabular-nums tracking-tight text-foreground">
-          {formatKrw(effectiveCapex, lang)}
+          <SettleValue value={formatKrw(effectiveCapex, lang)} />
         </span>
       </Cell>
 

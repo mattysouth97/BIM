@@ -26,6 +26,7 @@
 //    chips are `summaryKo`/`summaryEn` off the delta, not hand-written prose.
 
 import { useMemo, useState } from "react";
+import { SettleValue } from "@/components/ui/settle-value";
 import { useT } from "@/lib/i18n";
 import {
   useScenarioStore,
@@ -57,6 +58,10 @@ function DeltaValue({
 }) {
   const improved = value < 0;
   const flat = Math.abs(value) < 10 ** -decimals / 2;
+  const text = flat
+    ? `±0 ${unit}`
+    : `${value > 0 ? "+" : "−"}${Math.abs(value).toFixed(decimals)} ${unit}`;
+  // Pattern: Kokonut UI "dynamic-text" (kokonutui.com) — one string, settled through the shared SettleValue when it changes; the grade badges beside it are left alone, their colour already says so.
   return (
     <span
       className={
@@ -67,8 +72,7 @@ function DeltaValue({
             : "tabular-nums text-amber-600 dark:text-amber-400"
       }
     >
-      {flat ? "±0" : `${value > 0 ? "+" : "−"}${Math.abs(value).toFixed(decimals)}`}
-      {` ${unit}`}
+      <SettleValue value={text} />
     </span>
   );
 }

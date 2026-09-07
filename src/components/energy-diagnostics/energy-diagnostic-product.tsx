@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, PencilRuler } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PhaseRing } from "@/components/ui/phase-ring";
 import { SchematicEditor } from "@/components/generative/schematic/schematic-editor";
 import type { BlueprintSpec } from "@/lib/generative/blueprint";
 import { diagnosticSourceFromBlueprint } from "@/lib/energy-diagnostics/blueprint-source";
@@ -18,9 +19,10 @@ import { EnergyDiagnosisWorkspace } from "./energy-diagnosis-workspace";
 import {
   LedgerBaselineStatus,
   useLedgerBaseline,
+  type LedgerLoadingStage,
   type LedgerRecord,
 } from "./ledger-baseline-loader";
-import { useLedgerRecord } from "./use-ledger-record";
+import { isSampleBuildingId, useLedgerRecord } from "./use-ledger-record";
 import type { EnergyDiagnosisSceneContext } from "./types";
 
 export type DiagnosticEntryMethod =
@@ -80,6 +82,16 @@ export function EnergyDiagnosticProduct({
     return ledgerRecordState.phase === "ready" ? ledgerRecordState.record : null;
   }, [initialMethod, ledgerRecordState]);
   const ledgerBaseline = useLedgerBaseline(ledgerRecord, locale);
+  // The loading sentence names the step that is actually running. The
+  // baseline hook reports "loading" for as long as the record is null, so the
+  // record-vs-baseline split has to be read from the record state; and the
+  // bundled sample fetches neither its register nor its outline.
+  const ledgerLoadingStage: LedgerLoadingStage =
+    ledgerRecordState.phase === "ready"
+      ? "baseline"
+      : isSampleBuildingId(initialBuildingId)
+        ? "sample"
+        : "record";
 
   useEffect(() => {
     let cancelled = false;
@@ -130,10 +142,20 @@ export function EnergyDiagnosticProduct({
   if (!storeHydrated) {
     return (
       <section
-        className="grid min-h-[calc(100dvh-var(--header-height,3.5rem))] place-items-center bg-[#07141d] text-sm text-slate-300"
+        role="status"
+        aria-live="polite"
+        className="grid min-h-[calc(100dvh-var(--header-height,3.5rem))] place-items-center bg-background text-sm text-muted-foreground"
         data-testid="diagnostic-session-loading"
       >
-        {language === "ko" ? "진단 세션을 불러오는 중…" : "Loading diagnostic session…"}
+        <div className="flex flex-col items-center gap-3">
+          {/* Pattern: Kokonut UI "loader" (kokonutui.com) — one indeterminate ring, via the foundation PhaseRing. */}
+          <PhaseRing className="text-muted-foreground" />
+          <p>
+            {language === "ko"
+              ? "진단 세션을 불러오는 중…"
+              : "Loading diagnostic session…"}
+          </p>
+        </div>
       </section>
     );
   }
@@ -144,6 +166,7 @@ export function EnergyDiagnosticProduct({
       return (
         <LedgerBaselineStatus
           locale={locale}
+          stage={ledgerLoadingStage}
           state={{
             phase: "insufficient",
             reason: "lookup_unavailable",
@@ -152,7 +175,13 @@ export function EnergyDiagnosticProduct({
         />
       );
     }
-    return <LedgerBaselineStatus state={ledgerBaseline} locale={locale} />;
+    return (
+      <LedgerBaselineStatus
+        state={ledgerBaseline}
+        locale={locale}
+        stage={ledgerLoadingStage}
+      />
+    );
   }
 
   const methodLabel = METHOD_LABEL[initialMethod][locale];

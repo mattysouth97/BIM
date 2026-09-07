@@ -26,14 +26,14 @@ import { seedSeenTours } from "./helpers/app-state";
  *    page AND, by running, hand the page frames it would not otherwise have.
  *    Playwright's `expect(locator)` polls from the driver instead. Every wait
  *    here is an `expect` on DOM text.
- * 2. **The numbers are rAF-animated, and that cuts both ways.**
- *    `AnimatedValue` renders the true value in JSX and then animates
- *    `textContent` from 0 over 400 ms. A page with no frames keeps the
- *    correct value; a page with frames converges on it; a page with a FEW
- *    frames freezes part-way, which is the "numbers at ~4 % of target"
- *    already recorded in this repo. `expect(...).toContainText` with a
- *    generous timeout is correct for all three, and a frozen mid-animation
- *    value fails it — which is a finding, not a flake.
+ * 2. **The numbers are in the DOM on the commit that computes them.** The
+ *    strip used to tween `textContent` from 0 over 400 ms on every render
+ *    (`AnimatedValue`), which is why a page with a FEW frames once froze at
+ *    "~4 % of target". That tween is gone: `SettleValue` renders the engine
+ *    figure itself and only fades its opacity for 160 ms after the string
+ *    changes, so `expect(...).toContainText` holds on the first frame. A
+ *    wrong figure here is therefore a finding about the engine or the
+ *    inputs, never a mid-animation value.
  */
 
 type Expected = Readonly<{

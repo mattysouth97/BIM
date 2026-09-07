@@ -26,7 +26,9 @@
 //    `renewable: 0`. Those chips carry the line AND the caveat, rather than
 //    quietly implying the intensity moved.
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { useScenarioStore } from "@/store/scenario-store";
@@ -123,6 +125,77 @@ export function MeasureChipRow({
     setAppliedMeasureIds(next);
   };
 
+  // Pattern: Kokonut UI "carousel-cards" (kokonutui.com) — ref + scrollBy prev/next arrows, rebuilt on the Button primitive with edges measured from the real scroll state.
+  //
+  // The row clips at the card edge and globals.css hides every scrollbar, so
+  // a chosen chip past the fold was invisible with nothing saying so. The
+  // arrows and fades below exist only while content is actually clipped, and
+  // disable exactly at the ends — both read off scrollWidth/scrollLeft on
+  // every scroll and resize, never assumed.
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ overflow: false, canLeft: false, canRight: false });
+  const scrolledToChosenRef = useRef(false);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      const overflow = el.scrollWidth > el.clientWidth + 1;
+      const canLeft = el.scrollLeft > 0;
+      const canRight = el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
+      setEdges((prev) =>
+        prev.overflow === overflow && prev.canLeft === canLeft && prev.canRight === canRight
+          ? prev
+          : { overflow, canLeft, canRight },
+      );
+    };
+    // The observer delivers one initial measurement on observe, so nothing is
+    // set synchronously here; a hidden panel reports 0 × 0 and re-measures
+    // when it is shown. The chips are observed too: a claim line that widens
+    // when the roof planes land, or a ko/en toggle, changes the content width
+    // without resizing the container or firing a scroll event.
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    for (const child of Array.from(el.children)) ro.observe(child);
+    el.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      ro.disconnect();
+      el.removeEventListener("scroll", measure);
+    };
+  }, [measures.length]);
+
+  // ONE scroll, to the chip that IS chosen, the first time the row is both
+  // overflowing and seeded (`appliedMeasureIds` turns non-null only after the
+  // roof planes arrive — energy-instrument-hud.tsx). It changes no selection
+  // and never re-fires for a chip the user toggles by hand.
+  useEffect(() => {
+    if (scrolledToChosenRef.current || !edges.overflow) return;
+    if (appliedMeasureIds === null) return;
+    // A seed is consumed whether or not it recommends anything: an empty
+    // recommendation must not leave the one-shot armed for the first chip
+    // the user toggles by hand.
+    scrolledToChosenRef.current = true;
+    if (appliedMeasureIds.length === 0) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+    const chip = el.querySelector<HTMLElement>('[data-measure-chosen="true"]');
+    if (!chip) return;
+    const left = chip.offsetLeft;
+    const right = left + chip.offsetWidth;
+    if (left < el.scrollLeft || right > el.scrollLeft + el.clientWidth) {
+      el.scrollTo({ left: Math.max(0, left - 8), behavior: "auto" });
+    }
+  }, [edges.overflow, appliedMeasureIds]);
+
+  const scrollByChip = (dir: -1 | 1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const first = el.querySelector<HTMLElement>("[data-measure-chip]");
+    const step = (first?.offsetWidth ?? 208) + 6;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollBy({ left: dir * step, behavior: reduced ? "auto" : "smooth" });
+  };
+
   const deviates =
     appliedMeasureIds !== null &&
     (appliedMeasureIds.length !== recommendedIds.length ||
@@ -154,97 +227,141 @@ export function MeasureChipRow({
             `${chosenIds.length} of ${measures.length} chosen`,
           )}
         </span>
-        {deviates ? (
-          <button
-            type="button"
-            onClick={() => setAppliedMeasureIds([...recommendedIds])}
-            className="ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-            data-measure-reset-to-recommended
-          >
-            {t("추천안으로", "Use recommendation")}
-          </button>
-        ) : null}
-      </div>
-
-      <div className="flex items-stretch gap-1.5 overflow-x-auto" role="group">
-        {measures.map((measure) => {
-          const chosen = chosenIds.includes(measure.id);
-          const recommended = recommendedIds.includes(measure.id);
-          const claim = claims.get(measure.id);
-          const wouldEvict = conflictsWith(measure.id, chosenIds, measures);
-          const category = CATEGORY_LABEL[measure.category];
-
-          return (
+        <span className="ml-auto flex items-center gap-1">
+          {deviates ? (
             <button
-              key={measure.id}
               type="button"
-              aria-pressed={chosen}
-              onClick={() => handleToggle(measure.id)}
-              data-measure-chip={measure.id}
-              data-measure-chosen={chosen ? "true" : "false"}
-              // Whether the knapsack currently recommends this measure, as a
-              // fact rather than as the rendered 추천/Suggested badge below.
-              // Counting the badge means counting a rendering: it is
-              // language-coupled, and "the string appears" is the assertion
-              // this repo keeps getting caught by. Requested by bim-83 for the
-              // e2e that pins the 추천 marks against the optimum.
-              data-measure-recommended={recommended ? "true" : "false"}
-              className={cn(
-                "flex min-w-[13rem] shrink-0 flex-col items-start gap-0.5 rounded-md border px-2 py-1 text-left transition-colors",
-                chosen
-                  ? "border-emerald-400 bg-emerald-500/10 dark:border-emerald-700"
-                  : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
+              onClick={() => setAppliedMeasureIds([...recommendedIds])}
+              className="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+              data-measure-reset-to-recommended
             >
-              <span className="flex w-full items-baseline gap-1">
-                <span className="truncate text-[11px] font-medium leading-tight text-foreground">
-                  {measureDisplayName(measure.id, lang, measure.name)}
-                </span>
-                {category ? (
-                  <span className="shrink-0 text-[8px] text-muted-foreground/70">
-                    {category[lang]}
-                  </span>
-                ) : null}
-                {recommended ? (
-                  <span className="ml-auto shrink-0 text-[8px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    {t("추천", "Suggested")}
-                  </span>
-                ) : null}
-              </span>
-
-              {/* The claim: what this work does to this building. Built from
-                  the delta and the engine's own areas, never hand-written. */}
-              {claim ? (
-                <span
-                  className="text-[10px] leading-tight tabular-nums text-muted-foreground"
-                  data-measure-claim={measure.id}
-                >
-                  {claim.line}
-                </span>
-              ) : null}
-
-              {claim && !claim.pricedByEngine ? (
-                <span className="text-[9px] leading-tight text-amber-600 dark:text-amber-400">
-                  {t(
-                    "kWh/m²에는 반영되지 않음 · NPV·3D에만",
-                    "Not in kWh/m² · NPV and 3D only",
-                  )}
-                </span>
-              ) : null}
-
-              {wouldEvict.length > 0 ? (
-                <span className="text-[9px] leading-tight text-muted-foreground/80">
-                  {t(
-                    `${wouldEvict.map((m) => measureDisplayName(m.id, "ko", m.name)).join(", ")} 대신 선택됩니다`,
-                    `Replaces ${wouldEvict.map((m) => measureDisplayName(m.id, "en", m.name)).join(", ")}`,
-                  )}
-                </span>
-              ) : null}
+              {t("추천안으로", "Use recommendation")}
             </button>
-          );
-        })}
+          ) : null}
+          {edges.overflow ? (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label={t("이전 공사 보기", "Show previous work")}
+                disabled={!edges.canLeft}
+                onClick={() => scrollByChip(-1)}
+              >
+                <ChevronLeft aria-hidden="true" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label={t("다음 공사 보기", "Show next work")}
+                disabled={!edges.canRight}
+                onClick={() => scrollByChip(1)}
+              >
+                <ChevronRight aria-hidden="true" />
+              </Button>
+            </>
+          ) : null}
+        </span>
       </div>
 
+      <div className="relative">
+        <div
+          ref={scrollerRef}
+          role="group"
+          aria-label={t("공사 선택", "Choose the work")}
+          className="flex items-stretch gap-1.5 overflow-x-auto"
+        >
+          {measures.map((measure) => {
+            const chosen = chosenIds.includes(measure.id);
+            const recommended = recommendedIds.includes(measure.id);
+            const claim = claims.get(measure.id);
+            const wouldEvict = conflictsWith(measure.id, chosenIds, measures);
+            const category = CATEGORY_LABEL[measure.category];
+
+            return (
+              <button
+                key={measure.id}
+                type="button"
+                aria-pressed={chosen}
+                onClick={() => handleToggle(measure.id)}
+                data-measure-chip={measure.id}
+                data-measure-chosen={chosen ? "true" : "false"}
+                // Whether the knapsack currently recommends this measure, as a
+                // fact rather than as the rendered 추천/Suggested badge below.
+                // Counting the badge means counting a rendering: it is
+                // language-coupled, and "the string appears" is the assertion
+                // this repo keeps getting caught by. Requested by bim-83 for the
+                // e2e that pins the 추천 marks against the optimum.
+                data-measure-recommended={recommended ? "true" : "false"}
+                className={cn(
+                  "flex min-w-[13rem] shrink-0 flex-col items-start gap-0.5 rounded-md border px-2 py-1 text-left transition-colors",
+                  chosen
+                    ? "border-emerald-400 bg-emerald-500/10 dark:border-emerald-700"
+                    : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <span className="flex w-full items-baseline gap-1">
+                  <span className="truncate text-[11px] font-medium leading-tight text-foreground">
+                    {measureDisplayName(measure.id, lang, measure.name)}
+                  </span>
+                  {category ? (
+                    <span className="shrink-0 text-[8px] text-muted-foreground/70">
+                      {category[lang]}
+                    </span>
+                  ) : null}
+                  {recommended ? (
+                    <span className="ml-auto shrink-0 text-[8px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      {t("추천", "Suggested")}
+                    </span>
+                  ) : null}
+                </span>
+
+                {/* The claim: what this work does to this building. Built from
+                    the delta and the engine's own areas, never hand-written. */}
+                {claim ? (
+                  <span
+                    className="text-[10px] leading-tight tabular-nums text-muted-foreground"
+                    data-measure-claim={measure.id}
+                  >
+                    {claim.line}
+                  </span>
+                ) : null}
+
+                {claim && !claim.pricedByEngine ? (
+                  <span className="text-[9px] leading-tight text-amber-600 dark:text-amber-400">
+                    {t(
+                      "kWh/m²에는 반영되지 않음 · NPV·3D에만",
+                      "Not in kWh/m² · NPV and 3D only",
+                    )}
+                  </span>
+                ) : null}
+
+                {wouldEvict.length > 0 ? (
+                  <span className="text-[9px] leading-tight text-muted-foreground/80">
+                    {t(
+                      `${wouldEvict.map((m) => measureDisplayName(m.id, "ko", m.name)).join(", ")} 대신 선택됩니다`,
+                      `Replaces ${wouldEvict.map((m) => measureDisplayName(m.id, "en", m.name)).join(", ")}`,
+                    )}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+        {/* Overlay fades rather than mask-image, so an edge chip's focus ring
+            is never clipped. Shown only on the side that actually has more. */}
+        <span
+          aria-hidden="true"
+          hidden={!edges.canLeft}
+          className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-linear-to-r from-card to-transparent"
+        />
+        <span
+          aria-hidden="true"
+          hidden={!edges.canRight}
+          className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-linear-to-l from-card to-transparent"
+        />
+      </div>
     </div>
   );
 }

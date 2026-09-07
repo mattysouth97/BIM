@@ -15,6 +15,16 @@ Project state lives in `CURRENT.md`. Delete this file once the tree is down to o
 > Untracked bought a clean history and cost the file its entire purpose.
 > Deleting it later is one commit; being unreadable was permanent.
 
+## Released 2026-09-07 13:35 — bim-a7 `704b68` · Kokonut UI round done
+
+Claimed 08:10, released 13:35. Outcome in
+`docs/04_Agent-Handoffs/2026-09-07-kokonut-ui-round.md` and CURRENT.md: no
+Kokonut file vendored, seven mechanics rebuilt on the repo's primitives,
+`motion` 13.2.0 added (importers: `ui/tabs.tsx`, `lib/motion.ts` only).
+Verified in this checkout: tsc clean, eslint 0 errors, vitest 5,518 passed,
+Playwright 161/161. Nothing is claimed. `.planning/STATE.md` and
+`.claude/settings.local.json` were dirty before this round and were left alone.
+
 ## Round closed 17:20 — production `223736a`; every lane released
 
 All five lanes merged and deployed; bim-83, bim-54, bim-24 released, bim-7c and bim-ae exited or near-exhausted. Nothing is claimed. Outcome table in the brief.

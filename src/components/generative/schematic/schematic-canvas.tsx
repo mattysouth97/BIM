@@ -835,7 +835,7 @@ export function SchematicCanvas({ className }: { className?: string }) {
               : tool === "entrance"
                 ? "Click near a boundary edge to place an entrance"
                 : isPlacementTool(tool)
-                  ? `Click to place a ${tool === "lighting" ? "light" : tool} on the plan · Delete removes · Generate BIM compiles it`
+                  ? `Click to place a ${tool === "lighting" ? "light" : tool} on the plan · Delete removes · kept in the schematic; the diagnosis reads only the boundaries`
                   : "Click to place circulation nodes · each click links to the last · Esc ends the run"}
       </div>
     </div>

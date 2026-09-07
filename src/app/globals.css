@@ -44,6 +44,15 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+@theme {
+  /* 160 ms opacity settle for a figure that just changed (SettleValue). */
+  --animate-settle: settle 160ms ease-out;
+  @keyframes settle {
+    from { opacity: 0.35; }
+    to { opacity: 1; }
+  }
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -622,4 +631,18 @@
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
+}
+
+/* The persistent header is h-12 plus a 1 px border (src/components/layout/header.tsx).
+   Defined here on :root because <Header /> and <main> are siblings in layout.tsx,
+   so the eight diagnostics surfaces reading var(--header-height, 3.5rem) were
+   silently sizing against a 56 px header that does not exist. */
+:root {
+  --header-height: calc(3rem + 1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-settle {
+    animation: none;
+  }
 }

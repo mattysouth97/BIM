@@ -58,6 +58,7 @@ function CadViewerInner({ onUseFootprint, onUseCore }: CadViewerProps) {
   const closeViewer = useCadViewerStore((s) => s.closeViewer);
   const loadMarkups = useCadMarkupStore((s) => s.loadForDocument);
   const tool = useCadMarkupStore((s) => s.tool);
+  const setTool = useCadMarkupStore((s) => s.setTool);
 
   // Drafting state — active when the draft store is editing this document.
   const draftDocId = useCadDraftStore((s) => s.doc?.id);
@@ -82,6 +83,10 @@ function CadViewerInner({ onUseFootprint, onUseCore }: CadViewerProps) {
   );
   const [pick, setPick] = useState<FootprintPick | null>(null);
   const [gridOn, setGridOn] = useState(true);
+  // The one truth about the snap grid: it is drawn (and snapped to) only
+  // inside a draft. Scene, overlay and toolbar all read this, so the toolbar's
+  // pressed state can never claim a grid that is not on screen.
+  const gridShown = draftActive && gridOn;
   const glRef = useRef<HTMLCanvasElement | null>(null);
 
   // Draw-tool reducer state; reset when the active tool changes
@@ -137,6 +142,14 @@ function CadViewerInner({ onUseFootprint, onUseCore }: CadViewerProps) {
 
   useEffect(() => { loadMarkups(doc.id); }, [doc.id, loadMarkups]);
 
+  // The markup store is module-level, so a draw tool left active by an
+  // earlier draft survives into a viewer that has none — where it would sit
+  // pressed and disabled at once, with no navigation tool active. Outside a
+  // draft the active tool falls back to pan (the store is never null).
+  useEffect(() => {
+    if (!draftActive && isDrawTool(tool)) setTool("pan");
+  }, [draftActive, tool, setTool]);
+
   // Keyboard shortcuts.
   useHotkeys("escape", () => {
     if (drawState && drawState.points.length > 0) dispatchDraw({ type: "cancel" });
@@ -187,7 +200,15 @@ function CadViewerInner({ onUseFootprint, onUseCore }: CadViewerProps) {
           <Button type="button" variant="ghost" size="sm" onClick={fit} title={t("전체 보기", "Fit to extents", isKo)}>
             <Maximize className="h-4 w-4" />
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={closeViewer} data-testid="cad-viewer-close">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={closeViewer}
+            aria-label={t("뷰어 닫기", "Close viewer", isKo)}
+            title={t("뷰어 닫기", "Close viewer", isKo)}
+            data-testid="cad-viewer-close"
+          >
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -223,7 +244,7 @@ function CadViewerInner({ onUseFootprint, onUseCore }: CadViewerProps) {
               doc={doc}
               layerVisibility={layerVisibility}
               view={view}
-              gridOn={draftActive && gridOn}
+              gridOn={gridShown}
             />
           </Canvas>
           <MarkupOverlay
@@ -235,7 +256,7 @@ function CadViewerInner({ onUseFootprint, onUseCore }: CadViewerProps) {
             onFootprintPick={setPick}
             drawState={drawState}
             onDrawEvent={dispatchDraw}
-            gridOn={gridOn}
+            gridOn={gridShown}
             selectedChains={selectedChains}
             onSelectEntity={selectEntity}
           />
@@ -243,12 +264,13 @@ function CadViewerInner({ onUseFootprint, onUseCore }: CadViewerProps) {
           <div className="absolute left-1/2 top-2 z-10 -translate-x-1/2">
             <ViewerToolbar
               isKo={isKo}
+              drawEnabled={draftActive}
               onSnapshot={snapshot}
               onUndo={undo}
               onRedo={redo}
               canUndo={draftActive && canUndo}
               canRedo={draftActive && canRedo}
-              gridOn={gridOn}
+              gridOn={gridShown}
               onToggleGrid={() => setGridOn((g) => !g)}
               canJoin={draftActive && entityCount > 0}
               onJoin={() => {

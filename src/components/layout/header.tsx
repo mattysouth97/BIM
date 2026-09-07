@@ -15,7 +15,7 @@ const ApiKeyDialog = lazy(() =>
 
 export function Header() {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const hydrated = useHydration();
   const language = useAppStore((state) => state.language);
   const setLanguage = useAppStore((state) => state.setLanguage);
@@ -41,7 +41,7 @@ export function Header() {
    * styling, which a model page must not inherit.
    */
   const isLeafPage = isLanding || (pathname?.startsWith("/models/") ?? false);
-  const isDark = hydrated && theme === "dark";
+  const isDark = hydrated && resolvedTheme === "dark";
 
   const newDiagnosticLabel =
     language === "ko" ? "새 에너지 진단" : "New Energy Diagnostic";

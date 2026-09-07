@@ -24,6 +24,17 @@ measurement/assumption and calculated-versus-metered distinctions. Commit, push
 and deploy each major verified milestone. Current execution record:
 `2026-09-07-product-datasets-and-viewer.md`.
 
+User direction on 2026-09-07 08:00: use Kokonut UI to improve the UI
+components, with subagents fanned out. Delivered as
+[[2026-09-07-kokonut-ui-round]]: no Kokonut file is vendored; seven of its
+mechanics are rebuilt on the repo's Radix/shadcn primitives and oklch tokens
+(sliding tab pill, phase ring, settle-on-change values, chip-row scroller,
+drop-zone feedback and a real drop target, named CAD tools with a draft gate,
+index-keyed LayerPicker) plus a debounced budget field. `motion` 13.2.0 is a
+dependency; its only importers are `src/components/ui/tabs.tsx` and
+`src/lib/motion.ts`, and `MotionConfig reducedMotion="user"` lives inside
+`Tabs` so `/` never loads the runtime.
+
 Latest mission: make BIMFIT valuable to paying building professionals through
 good judgment and evidence-based problem structure. Prioritize a defensible
 retrofit decision, source-to-result traceability, consistent comparisons and
@@ -50,6 +61,22 @@ Local release validation on 2026-09-07:
   on 2026-09-07 02:11, full health SHA and region `icn1`. The live catalogue
   has seven models and schema 1.3.0. All 25 focused live browser checks passed
   for materials, camera depth, datasets, proposed-work layout and TalTech PV/MEP.
+
+Kokonut UI round, this checkout, 2026-09-07 13:30:
+
+- Unit: **5,518 passed**, 4 skipped (459 files; 26 new tests).
+- Full Chromium: **161/161 passed** (3.4 m) against the running dev server;
+  the targeted 16-spec set passed 139/139 earlier in the round.
+- TypeScript clean. ESLint src/e2e: 0 errors, the same 6 pre-existing warnings.
+- Screenshots at 1440 px against the pre-round baseline: landing and releases
+  unchanged; ledger differs in the tab pill only; model page and
+  `/building/demo` gain the chip-row arrows and the scrolled-in PV chip with
+  the strip figures unchanged; upload gains the drop hint and the renamed
+  stage labels. A deep link to `/models/x#materials` no longer slides the tab
+  pill on first paint.
+- Every lane was adversarially reviewed by an agent that did not write it;
+  the shared `tabs.tsx` primitive was reviewed separately. Remaining minors
+  are listed in the round's record under "Flagged, not fixed".
 
 ## Current product
 
@@ -129,6 +156,15 @@ Prior PV and selection methods remain documented in
   stand-ins and bias notices until host-wall/remaining-opening scope is resolved.
 - HRV saving does not match the current engine's natural-ventilation path;
   LED/PV do not move the modeled kWh or grade. A sourced Nijmegen climate is open.
+- From the Kokonut UI round: `use-editor-keybinds.ts` preventDefaults Tab
+  window-wide while the CAD viewer is open, so its `role="toolbar"` stays
+  keyboard-unreachable upstream; Korean still sits in mono faces on the
+  reference notice band and the markup overlay's SVG notes; the shadcn
+  Dialog/Select/Accordion enter/exit classes are inert (no `tw-animate-css`);
+  `--header-height` is now defined on `:root` (49 px) — the nine
+  `var(--header-height, 3.5rem)` readers had sized against a 56 px fallback.
+  Two questions were defaulted, not decided: no 법정동 typeahead on step 1,
+  and the theme toggle stays visible on the forced-light `/` and ledger sheet.
 - `.planning/STATE.md` and `.claude/settings.local.json` are unowned changes
   excluded from this release. Always inspect current git status.
 
@@ -241,7 +277,8 @@ SHA and region through `/api/health`, then run focused live browser checks.
 
 [[Business and Service Model]] · [[Energy0 Simulation Engine Research]] ·
 [[Product Intent]] · [[System Architecture]] · [[Reference Buildings]] ·
-[[Building Energy Datasets]] · [[2026-09-07-product-datasets-and-viewer]]
+[[Building Energy Datasets]] · [[2026-09-07-product-datasets-and-viewer]] ·
+[[2026-09-07-kokonut-ui-round]]
 
 Historical ledger/rendering decisions and superseded task lists:
 [[Archive/2026-09-07-prior-ledger-and-rendering-history]].
