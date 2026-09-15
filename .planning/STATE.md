@@ -1,17 +1,16 @@
 ---
-gsd_state_version: 1.0
-milestone: v5.0
-milestone_name: Energy Systems Observability & Control
-status: verifying
-stopped_at: Completed 28-procedural-mep-equipment-models-02-PLAN.md
-last_updated: "2026-04-12T01:40:25.576Z"
-last_activity: 2026-04-12
+gsd_state_version: "1.0"
+milestone: v6.0
+milestone_name: Building Energy Repository
+status: planning
+last_updated: "2026-09-15T06:22:59.420Z"
+last_activity: 2026-09-15
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 16
-  completed_plans: 17
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-12)
 
 ## Current Position
 
-Phase: 22 of 27 (MEP Sub-Layer Foundation)
-Plan: 3 of 3
-Status: Phase complete — ready for verification
-Last activity: 2026-04-12
-
-Progress: [█░░░░░░░░░] 5% (0/6 phases complete, 1 plan done)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-09-15 — Milestone v6.0 started
 
 ## Performance Metrics
 

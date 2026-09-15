@@ -1,97 +1,164 @@
-# Korea BIM Energy Management System
+# BIMFIT — Korean Building Energy Repository
 
-## Vision
-A web-based Building Information Management system for the GX (Green Transformation) team that provides structurally accurate 3D building visualization with comprehensive material properties, enabling energy simulation and integration with ECO2 evaluation software. The system queries Korean government building data, renders interactive 3D models, and allows users to configure building systems for energy analysis.
+## What This Is
 
-## Current State (Brownfield)
-The application has a functional foundation:
-- Building ledger search (data.go.kr BldRgstHubService) with 250 district coverage
-- 3D parametric viewer (Three.js + React Three Fiber) with PBR materials, era-based facades, post-processing
-- Material property system with Korean building code inference engine
-- IFC/glTF file upload and rendering
-- VWorld cadastral footprint integration
-- Material property panel with thermal/HVAC/glazing data
+BIMFIT turns incomplete evidence about a Korean building into a defensible energy
+and retrofit assessment. The 건축물대장 (building register) is the primary entry:
+pick a real building and its register row becomes a multi-storey baseline energy
+model with no further input, which the user then refines toward a digital twin with
+drawings, plans and MEP data while watching the energy delta move.
 
-## Key Problems to Solve (User-Identified)
+From v6.0 the product grows a second face. The single-building assessment becomes the
+generator for a **building energy repository**: a calibrated corpus of Korean building
+energy baselines, published as versioned datasets with stated provenance and error
+bands, anchored by a small set of measured reference models.
 
-### A. Dashboard Layout
-The app uses a page-per-building layout. Needs a **dashboard format** with a larger 3D viewport as the primary interface, not buried under metadata cards.
+## Core Value
 
-### B. Interactive Configuration Panel
-Users need a **node-graph or slide panel** for configuring building parameters in real-time — adjusting wall properties, HVAC settings, window specs — and seeing the 3D model update live. This enables realistic simulation.
+Every number the product states can be traced to either a cited source or a named,
+visible, reversible assumption — and that guarantee holds when the same method is
+applied to one building or to a population.
 
-### C. Calculation Engine
-As building properties change (walls, insulation, windows, HVAC), the **energy efficiency calculations must update dynamically**. The material inference engine needs to become a live calculation engine that responds to user input.
+## Requirements
 
-### D. Architectural Infrastructure in 3D
-The parametric model lacks **structural components** that EMS needs: walls with thickness, floor slabs, column grids, ductwork routing zones, pipe runs. Without these, the model can't represent HVAC distribution or thermal bridges.
+### Validated
 
-### E. Wall Thickness
-Walls are rendered as flat planes. They need **actual thickness** representing wall assemblies (concrete + insulation + finish = 300mm+). This is critical for both visual accuracy and thermal calculation.
+<!-- Shipped and confirmed valuable. -->
 
-### F. Better Environment/Textures
-Need higher quality **PBR textures and HDR environments** from sources like Poly Haven, Quixel, or AmbientCG. Current materials are flat colors.
+- ✓ 건축물대장 search and register-to-baseline energy model — v1.0–v5.0, extended through the 2026 ledger-first pivot
+- ✓ Source-traceable design-stage energy diagnosis with provenance facts and assumption ledger — P0-06
+- ✓ Seven integrated reference models with measured envelopes, material bindings and MEP inventory — 2026-09
+- ✓ Published per-building energy datasets (JSON/CSV, schema 1.3.0) with licences, hashes, units, inputs and assumptions
+- ✓ Catalogue and per-building dataset endpoints under `/api/reference-buildings`
+- ✓ Retrofit measure selection by physical work, with DCF economics (NPV/IRR/payback/knapsack) and 그린리모델링 cost data
+- ✓ Measured roof-plane photovoltaic layout replacing bounding-box placement
+- ✓ Canonical MEP graph engine with coordination, clash and connectivity validation
+- ✓ Evidence-to-CAD reconstruction for buildings with no drawing (ADR-003)
+- ✓ Landing gallery as the model showcase, register lookup at `/diagnostics/new?method=ledger` (ADR-004)
 
-### G. Structural Clarity Over Photorealism
-The goal is NOT photorealistic rendering — it's **structural unambiguity**. Every component needs clear dimensionality. Walls should look like walls (with thickness), floors like slabs, windows like glazing systems. The aesthetic is "clear technical visualization" not "architectural rendering."
+### Active
 
-## Target Users
-- GX (Green Transformation) team members
-- Building energy auditors
-- Facility managers
+<!-- v6.0 Building Energy Repository. Hypotheses until shipped. -->
 
-## Key Integrations
-- data.go.kr BldRgstHubService (building ledger)
-- VWorld (cadastral footprints, spatial data)
-- ECO2 (desktop energy evaluation — future export)
-- Korean Building Energy Code (inference engine)
+- [ ] Grow the reference-model anchor set: Korean buildings, buildings with measured consumption, missing typologies, further licensed sources
+- [ ] Collapse the two hand-synced model registries into one derived source of truth
+- [ ] Make lighting, photovoltaic and heat-recovery measures move the modeled energy and the grade
+- [ ] Replace the return-focused retrofit panel with energy, carbon, corpus position and evidence
+- [ ] Return economics priced only off real modeled savings
+- [ ] Establish whether the register can be swept at scale, and on what quota
+- [ ] Generate corpus baselines at scale and calibrate them against the measured anchors
+- [ ] Publish the corpus as versioned dataset releases with a stated error band and a read-only API
 
-## Current Milestone: v6.0 Audit Deliverables
+### Out of Scope
 
-**Goal:** Ship visible BIM features that make the tool feel professional for GX auditors — wire annotations + auto-generated views (plan/elevation/section) + schedules + PDF sheet export + undo/redo + stable element IDs. Part 1 of 5-milestone Revit-benchmarked uplift (v6.0 → v9.0).
+- Subsidy and support-program financing controls — removed at user request 2026-09-07; the domain functions remain but no reachable control selects them
+- A fifth workflow step or a second front door — the four-step shape is a settled product decision (2026-08-27); the repository is an outlet of the existing steps, not a parallel entry
+- Metered-energy claims for reference models — no meter series is ingested; every published energy figure is modeled, and the dataset says so
+- Photorealistic rendering — the goal is structural unambiguity, not architectural visualisation
+- The v6.0 Audit Deliverables plan (undo/redo, element IDs, annotations, auto-views, schedules, PDF sheets) — superseded 2026-09-15; partial work archived, not deleted
+- The v7.0 Prediction plan (portfolio forecasting via trained model and Parquet releases) — superseded 2026-09-15; its dataset-release idea is absorbed into this milestone, its ML approach is not
+
+## Current Milestone: v6.0 Building Energy Repository
+
+**Goal:** Turn BIMFIT from a single-building diagnosis tool into a building energy
+repository, where a calibrated corpus of Korean building baselines is the product, the
+measured reference models are its calibration anchors, and the retrofit panel reports
+honest energy, carbon and corpus position instead of proxy-priced return.
 
 **Target features:**
-- Ctrl+Z / Ctrl+Shift+Z undo across all authoring actions (port unmerged worktree code)
-- Stable ElementId on every wall/slab/column/window/door/MEP instance
-- Store-backed annotations with undo (wire existing stubs: dimension-line, area-label, level-marker, section-cut)
-- Auto-generated plan/elevation/section views from single 3D model via view-engine
-- Live, filterable schedule tables (Wall, Window/Door, MEP, Room) with CSV export
-- A1/A3 sheet composition with Korean title block → PDF export
+- Grow the anchor set with Korean, metered, typology-gap and further licensed models
+- Collapse the duplicate model registries so adding a building is one act, contract-tested
+- Fix the delivered-energy split so lighting and renewable measures reach the grade
+- Replace the return panel with energy, carbon, corpus position and verification guidance
+- Restore economics on real modeled savings only
+- Research register sweep feasibility, then generate and calibrate corpus baselines
+- Publish versioned corpus releases and a read-only API
 
-**Reference:** Full v6.0 → v9.0 roadmap at `.planning/v6-to-v9-ROADMAP-BENCHMARK.md`
+## Context
 
-## Current State
+**Planning history.** `.planning/` went stale between 2026-04 and 2026-09 while the real
+work was tracked in `docs/work-plan/` and `docs/04_Agent-Handoffs/CURRENT.md`. Two
+milestones, v6.0 Audit Deliverables and v7.0 Prediction, were declared in progress and
+stalled in April. Both are superseded here. Their phase records are archived, not deleted.
+Treat `docs/04_Agent-Handoffs/CURRENT.md` as the authority on verified runtime state.
 
-Shipped v5.0 Energy Systems Observability & Control — 7 phases, 16 plans, 10/10 requirements satisfied.
+**The single gate on honest retrofit physics.** `src/lib/energy/delivered-from-demand.ts`
+splits modeled demand into fuels with `electric = cooling + 0.15 × total`,
+`gas = heating + 0.10 × total` and `renewable = 0`. Because the lighting share is a flat
+ratio and renewable is a literal zero, no lighting or photovoltaic measure can move the
+headline intensity or the grade, however real its own savings formula is. This is
+self-documented in four places in the source and in the current handoff. It is the
+precise target of the physics work in this milestone.
 
-**Capabilities delivered in v5.0:**
-- 4 individually togglable MEP utility sub-layers (electrical, HVAC, lighting, DHW)
-- Per-floor energy model with system-level attribution (HVAC/lighting/DHW/plug)
-- Energy breakdown dashboard with horizontal recharts BarChart and amber estimated badges
-- Energy consumption heatmap on 3D building (Korean grade color scale)
-- Equipment info panel — click any MEP object for inferred specs + Korean efficiency grade (1~5등급)
-- ECO2 export extended with sub-system data fields
-- Distinct procedural 3D models for chiller/boiler/AHU/DHW/lighting/electrical equipment
-- Equipment configuration tab with real-time procedural parameter sliders
-- Critical gap fix: MEP layer generators wired into BuildingLayers (were defined but never invoked)
+**Two economics input paths that can disagree.** The twin reads material-store plus
+scenario-store, the 간이 모델 path. Diagnostics reads a frozen engine payload. Both end at
+the same generators and the same DCF engine, so the same building can be priced two ways.
+The twin's energy is still not the canonical traceable engine, which remains the top open
+issue in the handoff.
 
-**Known tech debt (from v5.0 audit):**
-- MEP density slider in LayersTab is non-functional (BuildingLayers hardcodes density=1.0)
-- All v5.0 phases lack Nyquist VALIDATION.md (discovery only, not blocking)
-- perFloor uses uniform distribution (not per-floor metered data) — by design
+**Two registries for one roster.** `REFERENCE_BUILDING_IDS` in
+`src/lib/reference-buildings/manifest.ts` and `GALLERY_ITEMS` in `src/lib/landing/gallery.ts`
+are hand-synced, joined only by an href string, and the clinic's identifiers differ between
+them. Around fifteen test files loop the first registry as de facto contract tests, but only
+the clinic card is cross-checked against its generated manifest. The rest are hand-typed
+literals, recorded as debt in ADR-004.
+
+**The corpus generator already exists in embryo.** `buildLedgerBaselineModel` is a pure,
+version-stamped function that reports insufficiency rather than guessing, and the register
+proxy already pages buildings per 법정동 and reports a total count. The caps in the current
+route are product safety limits, not upstream ones. What is unknown is quota at sweep scale.
+
+**Dead code adjacent to the work.** `src/components/twin/capex-input.tsx` has no production
+importer, and `DEFAULT_CAPEX_BUDGET_KRW` in `src/store/scenario-store.ts` is exported and
+never imported. Both sit in the surface this milestone reworks.
+
+## Constraints
+
+- **Tech stack**: Next.js 16.2 App Router, React 19.2, TypeScript, Three.js 0.182 with React Three Fiber 9, Zustand 5, TanStack Query 5, Tailwind 4, shadcn/ui, Vitest 4, Playwright — established and not under review this milestone
+- **Product shape**: 건물 검색 → 도면 업로드 → 디지털 트윈 → 보고서 is fixed; build inside it
+- **Traceability**: `createEnergyFact` throws unless a fact cites sources, names an assumption, or is explicit user input — a convenience helper that attaches register references to a defaulted value would kill the guarantee
+- **Data source**: data.go.kr 건축HUB requires `bjdongCd`; the shared demo key is rate-limited per address; the four register endpoints fail independently and must never all be required
+- **Deployment**: functions pinned to Seoul (`icn1`) in `vercel.json`; VWorld refuses other egress regions
+- **Licensing**: no reference-building artifact ships without an established licence and rights holder
+- **Test suite**: around 380 tests across 29 files exercise retrofit economics; around fifteen files loop the model registry. Changes here are contract changes
+
+## Key Decisions
+
+| Decision | Rationale | Outcome |
+|----------|-----------|---------|
+| The corpus is the product; reference models are calibration anchors; datasets and API are the outlet | A hand-curated library does not scale into software, but register-generated baselines do, and the measured models are the only way to state how wrong they are | — Pending |
+| Economics returns, priced only off real modeled savings | Removing money loses the professional decision; keeping proxy-priced money loses credibility | — Pending |
+| Reclaim the v6.0 number and restart phase numbering at 1 | The old v6.0 and v7.0 plans stalled in April and are superseded; a clean restart marks the pivot honestly | — Pending |
+| Fix `delivered-from-demand.ts` before anything downstream | Until lighting and renewable reach the grade, every energy, carbon and benchmark figure built on it is decoration | — Pending |
+| Register sweep feasibility is researched before any phase commits to scale | Quota, not capability, is the open risk; committing first would be planning on an assumption | — Pending |
 
 ## Completed Milestones
+
 - v5.0: Energy Systems Observability & Control (7 phases, 16 plans — shipped 2026-04-12)
 - v4.0: GIS-Composite Realistic Drafts (3 phases, 7 plans — shipped 2026-04-12)
 - v3.0: UX Workflow Overhaul (5 phases, 16 plans — shipped 2026-04-03)
 - v2.0: Advanced BIM Authoring (5 phases, 11 plans — shipped 2026-03-28)
 - v1.0: Procedural BIM Viewer with Multi-Layer Building Systems (9 phases)
 
-## Tech Stack
-Next.js 16 + React 19 + TypeScript + Three.js 0.183 + React Three Fiber 9 + shadcn/ui + Tailwind CSS v4 + Zustand + TanStack Query + three-bvh-csg + Vitest + Playwright
+Work between 2026-04 and 2026-09 shipped outside this planning system and is recorded in
+`docs/work-plan/` and `docs/04_Agent-Handoffs/`.
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
-*Last updated: 2026-04-12 after v5.0 milestone shipped*
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd-complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
+---
+*Last updated: 2026-09-15 after starting milestone v6.0 Building Energy Repository*
