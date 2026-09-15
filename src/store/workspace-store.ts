@@ -33,6 +33,7 @@ interface WorkspaceState {
   // Panel open states (extracted from building-scene.tsx local state per D-06)
   configPanelOpen: boolean;
   layerPanelOpen: boolean;
+  instrumentPanel: 'top' | 'bottom' | null;
   uploadDialogOpen: boolean;
 
   // Actions
@@ -49,6 +50,7 @@ interface WorkspaceState {
   toggleLayerPanel: () => void;
   setConfigPanelOpen: (open: boolean) => void;
   setLayerPanelOpen: (open: boolean) => void;
+  setInstrumentPanel: (panel: 'top' | 'bottom' | null) => void;
   setUploadDialogOpen: (open: boolean) => void;
 }
 
@@ -64,6 +66,7 @@ const defaults = {
   rightDockSize: RIGHT_DOCK_DEFAULT,
   configPanelOpen: false,
   layerPanelOpen: false,
+  instrumentPanel: null,
   uploadDialogOpen: false,
 };
 
@@ -94,10 +97,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       resetLayout: () => set({ ...defaults }),
 
-      toggleConfigPanel: () => set((s) => ({ configPanelOpen: !s.configPanelOpen })),
-      toggleLayerPanel: () => set((s) => ({ layerPanelOpen: !s.layerPanelOpen })),
-      setConfigPanelOpen: (open) => set({ configPanelOpen: open }),
-      setLayerPanelOpen: (open) => set({ layerPanelOpen: open }),
+      toggleConfigPanel: () => set((s) => ({ configPanelOpen: !s.configPanelOpen, layerPanelOpen: false, instrumentPanel: null })),
+      toggleLayerPanel: () => set((s) => ({ layerPanelOpen: !s.layerPanelOpen, configPanelOpen: false, instrumentPanel: null })),
+      setConfigPanelOpen: (open) => set(open ? { configPanelOpen: true, layerPanelOpen: false, instrumentPanel: null } : { configPanelOpen: false }),
+      setLayerPanelOpen: (open) => set(open ? { layerPanelOpen: true, configPanelOpen: false, instrumentPanel: null } : { layerPanelOpen: false }),
+      setInstrumentPanel: (panel) => set(panel ? { instrumentPanel: panel, configPanelOpen: false, layerPanelOpen: false } : { instrumentPanel: null }),
       setUploadDialogOpen: (open) => set({ uploadDialogOpen: open }),
     }),
     {

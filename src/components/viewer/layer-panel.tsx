@@ -1,5 +1,6 @@
 "use client";
 
+import { CanvasDrawer } from './canvas-drawer';
 import { Fragment, useState } from "react";
 import { INTERIOR_LAYER_META, useLayerStore } from "@/store/layer-store";
 import { LAYER_CONFIGS, ALL_LAYER_IDS, MEP_SUB_IDS, MEP_SUB_CONFIGS } from "@/lib/layers/types";
@@ -44,19 +45,19 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
 
   const [mepExpanded, setMepExpanded] = useState(true);
 
-  if (!visible) return null;
+
 
   return (
     // z-40 keeps the panel above the floating Scene/Properties docks (z-30) —
     // previously z-20 meant the panel opened *behind* the right dock and the
     // toolbar button appeared to do nothing.
-    <div className="absolute right-4 top-16 z-40 w-72 rounded-lg border bg-card/95 backdrop-blur shadow-lg animate-in slide-in-from-right-4 duration-200">
+    <CanvasDrawer open={visible} onClose={onClose} title={t('디지털 트윈 레이어', 'Digital Twin Layers')} showHeader={false} id="canvas-layer-panel" testId="canvas-layer-panel">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <span className="text-sm font-semibold">
           {t("디지털 트윈 레이어", "Digital Twin Layers")}
         </span>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose}>
+        <Button variant="ghost" size="icon" className="h-6 w-6" aria-label={t('패널 닫기', 'Close panel')} onClick={onClose}>
           <X className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -269,6 +270,6 @@ export function LayerPanel({ visible, onClose }: LayerPanelProps) {
           );
         })}
       </div>
-    </div>
+    </CanvasDrawer>
   );
 }

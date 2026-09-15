@@ -146,3 +146,22 @@ changes; no independent-agent review claim.
 
 **Approval:** approved 2026-09-15. User reply: "현재 범위와 줄바꿈 방식 확정".
 UI safety gate rerun: `block: false`.
+
+## Responsive canvas panels — 2026-09-15 user direction
+
+User requested side-sliding panels on desktop, then clarified mobile panels must
+rise from the bottom navigation bar. This supersedes the initial read-only-only
+scope for panel presentation; energy evidence and wrapping requirements remain.
+
+- Mobile (<768px): persistent 56px bottom navigation plus safe-area inset. Sheets
+  end at its top edge, span the viewport width, and scroll internally. Reserve
+  navigation space in the reference/building workspace so content remains reachable.
+- Desktop: right-side drawers inside the canvas, width min(420px,62%), with
+  persistent launch buttons. One information/settings/layers panel open at a time.
+- Shared 240ms slide; reduced-motion uses no transition. Hidden panels stay mounted
+  but inert and aria-hidden. Opening focuses the drawer after styles apply;
+  Escape/close restores trigger focus. Korean/English text wraps in the sheet.
+- Settings owns rendering controls under View. The mobile bar exposes Investment,
+  Energy, Settings and Layers where those workspace controls exist. Reference
+  models expose their two information panels; existing reference tabs remain.
+- User authorization is the explicit direction above; no repeated approval needed.

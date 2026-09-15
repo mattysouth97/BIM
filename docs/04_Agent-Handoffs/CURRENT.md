@@ -12,6 +12,14 @@ into a log.
 
 ## Current Objective
 
+2026-09-15 viewer update: canvas information panels are mobile sheets opening
+above a persistent bottom navigation bar, and desktop right-side drawers.
+Settings/Layers share workspace exclusivity; rendering controls moved to
+Settings → View. Browser checks passed on reference + building routes at
+390/1440px (4 cases), 291 component/store tests, TypeScript and scoped ESLint.
+See [[Digital Twin Viewer]]. Phase 1 physics work continues; Phase 3 model
+anchors and gallery grid refinement are underway in separate worktrees.
+
 Make the fixed four-step workflow — 건물 검색 → 도면 업로드 → 디지털 트윈 →
 보고서 — carry the source-traceable energy engine end to end.
 

@@ -97,6 +97,7 @@ export interface EnergyInstrumentHudProps {
    */
   gradeBasis?: string;
   collapsePanelsOnMobile?: boolean;
+  workspaceControls?: boolean;
 }
 
 export function EnergyInstrumentHud({
@@ -111,6 +112,7 @@ export function EnergyInstrumentHud({
   notice,
   gradeBasis,
   collapsePanelsOnMobile,
+  workspaceControls,
 }: EnergyInstrumentHudProps) {
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
   const setCapexBudget = useScenarioStore((s) => s.setCapexBudget);
@@ -208,6 +210,7 @@ export function EnergyInstrumentHud({
 
   return (
     <TwinInstrumentFrame
+      workspaceControls={workspaceControls}
       collapsePanelsOnMobile={collapsePanelsOnMobile}
       top={
         <section className="overflow-hidden rounded-lg border border-border bg-card/95 shadow-sm backdrop-blur-md">

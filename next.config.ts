@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The development badge overlaps the mobile bottom navigation. Compile and
+  // runtime errors still surface; only the persistent route-status badge hides.
+  devIndicators: false,
   /**
    * Dev only: the e2e runner drives the app at http://127.0.0.1:3000 while
    * developers browse http://localhost:3000. Without this, dev assets and HMR

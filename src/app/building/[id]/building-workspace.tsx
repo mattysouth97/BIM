@@ -101,7 +101,7 @@ function LedgerWorkspace({ id }: { id: string }) {
     : "building_floors";
 
   return (
-    <div className="flex flex-col h-dvh">
+    <div className="flex flex-col h-dvh" data-building-workspace>
       {/* Condensed toolbar */}
       <BuildingToolbar
         title={titleData}

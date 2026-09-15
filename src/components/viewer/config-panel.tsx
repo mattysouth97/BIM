@@ -1,5 +1,7 @@
 "use client";
 
+import { CanvasDrawer } from './canvas-drawer';
+import { RenderModeOverlay } from './render-mode-overlay';
 import { useMaterialStore } from "@/store/material-store";
 import { useT } from "@/lib/i18n";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +56,7 @@ export function ConfigPanel({
   const { t } = useT();
   const properties = useMaterialStore((s) => s.properties[buildingPk]);
 
-  if (!visible) return null;
+
 
   const sourceBadge = (source: string | undefined) => {
     const label = sourceBadgeLabels[source ?? "code-estimate"] ??
@@ -67,7 +69,7 @@ export function ConfigPanel({
   };
 
   return (
-    <div className="absolute top-3 left-3 z-20 w-96 max-h-[520px] overflow-y-auto rounded-lg border bg-card/95 backdrop-blur shadow-xl">
+    <CanvasDrawer open={visible} onClose={onClose} title={t('설정', 'Configuration')} showHeader={false} id="canvas-config-panel" testId="canvas-config-panel">
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-card/95 px-4 py-2.5">
         <div className="flex items-center gap-2">
@@ -82,7 +84,7 @@ export function ConfigPanel({
             variant="ghost"
             size="icon"
             className="h-6 w-6"
-            onClick={onClose}
+            aria-label={t('패널 닫기', 'Close panel')} onClick={onClose}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -92,7 +94,8 @@ export function ConfigPanel({
       {/* Tabs */}
       <div className="p-3">
         <Tabs defaultValue="building">
-          <TabsList className="w-full">
+          <TabsList className="w-full flex-wrap group-data-[orientation=horizontal]/tabs:h-auto">
+            <TabsTrigger value="view" className="gap-1 text-xs">{t('화면', 'View')}</TabsTrigger>
             <TabsTrigger value="building" className="gap-1 text-xs">
               <Building2 className="h-3.5 w-3.5" />
               {t("건물", "Building")}
@@ -119,6 +122,10 @@ export function ConfigPanel({
             </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="view" className="mt-3">
+            <RenderModeOverlay />
+          </TabsContent>
+
           <TabsContent value="building" className="mt-3">
             <BuildingTab buildingPk={buildingPk} />
           </TabsContent>
@@ -144,6 +151,6 @@ export function ConfigPanel({
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </CanvasDrawer>
   );
 }

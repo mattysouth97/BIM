@@ -134,6 +134,112 @@
   }
 }
 
+/* Canvas-local information drawers: bottom on mobile, right edge on desktop. */
+.canvas-drawer-boundary {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+}
+.canvas-drawer {
+  position: fixed;
+  inset: auto 0 calc(56px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 112px - env(safe-area-inset-bottom, 0px));
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 0.12);
+  transform: translateY(102%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 240ms cubic-bezier(.22, 1, .36, 1), visibility 240ms;
+  outline: none;
+}
+.canvas-drawer[data-open="true"] {
+  transform: translateY(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+.canvas-drawer-header {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding: 12px 12px 4px;
+}
+.canvas-drawer-grip {
+  position: absolute;
+  top: 5px;
+  left: calc(50% - 16px);
+  width: 32px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+}
+.canvas-drawer-content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.canvas-drawer-launchers {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 4px;
+  height: calc(56px + env(safe-area-inset-bottom, 0px));
+  padding: 4px 12px calc(4px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+  background: var(--card);
+  pointer-events: auto;
+}
+.canvas-drawer-launchers > button { min-height: 44px; }
+@media (max-width: 767px) {
+  body:has(.canvas-drawer-launchers) { padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
+  body:has(.canvas-drawer-launchers) [data-testid="reference-workspace"] { height: calc(100dvh - 3rem - 57px - env(safe-area-inset-bottom, 0px)); }
+  [data-building-workspace]:has(.canvas-drawer-launchers) { height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0px)); }
+  .canvas-drawer-launchers > button { flex: 1; flex-direction: column; gap: 2px; padding: 2px; font-size: 10px; border: 0; box-shadow: none; }
+}
+@media (min-width: 768px) {
+  .canvas-drawer {
+    position: absolute;
+    inset: 56px 0 0 auto;
+    width: min(420px, 62%);
+    max-height: none;
+    border-bottom: 0;
+    border-right: 0;
+    border-radius: 12px 0 0 0;
+    box-shadow: -8px 0 32px rgb(0 0 0 / 0.12);
+    transform: translateX(102%);
+  }
+  .canvas-drawer[data-open="true"] { transform: translateX(0); }
+  .canvas-drawer-header { padding: 8px 12px; }
+  .canvas-drawer-grip { display: none; }
+  .canvas-drawer-launchers {
+    position: absolute;
+    inset: 12px 12px auto auto;
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .canvas-drawer-launchers > button { min-height: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .canvas-drawer { transition: none; }
+}
+
 /* ─── Twin-stage "Data Observatory" motion + textures ─────────────────────── */
 
 /* Guided help — Driver.js popovers inherit the app theme in light and dark. */

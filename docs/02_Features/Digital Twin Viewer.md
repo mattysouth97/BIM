@@ -21,6 +21,21 @@ read-out on the next render.
 
 ## Current Status
 
+### Canvas drawers (verified 2026-09-15)
+
+Investment/energy panels start closed. Below 768px, their controls live in a
+persistent bottom navigation bar and the sheet slides up to its top edge; safe
+area space is reserved. Desktop panels slide from the right inside the canvas.
+Workspace Settings and Layers share the same one-open-panel state; rendering
+controls now live in Settings → View. Reference models expose their two energy
+information panels. Hidden content stays mounted and inert, preserving inputs.
+Escape/close restores focus; reduced-motion disables the 240ms transition.
+
+Verified on `/models/fzk-haus` and `/building/demo`, 390px and 1440px:
+four Playwright cases passed (direction, geometry, retained budget, switching,
+keyboard, reduced motion and Settings/Layers), plus 291 component/store tests,
+TypeScript and scoped ESLint. No deployment in this change.
+
 **implemented** and fully mounted on the main path.
 [building-scene.tsx](../../src/components/viewer/building-scene.tsx) is lazily
 loaded by `building-workspace.tsx` with `diagnosticsMode = false`, so the

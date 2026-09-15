@@ -1,158 +1,66 @@
-import { useState } from "react";
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useAppStore } from "@/store/app-store";
-import { TwinInstrumentFrame } from "../twin-instrument-frame";
-
-beforeEach(() => useAppStore.setState({ language: "en" }));
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
-
-function StatefulPanel({ name }: { name: string }) {
+﻿import { useState } from 'react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { useAppStore } from '@/store/app-store';
+import { TwinInstrumentFrame } from '../twin-instrument-frame';
+beforeEach(() => useAppStore.setState({ language: 'en' }));
+afterEach(cleanup);
+function StatefulPanel() {
   const [chosen, setChosen] = useState(false);
-  return (
-    <>
-      <label>
-        {name} input
-        <input defaultValue="Initial value" />
-      </label>
-      <button type="button" aria-pressed={chosen} onClick={() => setChosen(!chosen)}>
-        {name} choice
-      </button>
-    </>
-  );
+  return <><input aria-label="Budget" defaultValue="100" /><button aria-pressed={chosen} onClick={() => setChosen(!chosen)}>Choose work</button></>;
 }
-
-describe("TwinInstrumentFrame panel visibility", () => {
-  it("can start compact on mobile without resetting a user's panel choice on resize", () => {
-    const matchMedia = vi.fn(() => ({ matches: true }));
-    vi.stubGlobal("matchMedia", matchMedia);
-    const { rerender } = render(<TwinInstrumentFrame collapsePanelsOnMobile top={<StatefulPanel name="Investment" />} bottom="Energy" />);
-    const top = screen.getByTestId("twin-panel-top-toggle");
-    expect(top.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.getByTestId("twin-panel-bottom-toggle").getAttribute("aria-expanded")).toBe("false");
-    fireEvent.click(top);
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "Retained budget" } });
-    matchMedia.mockReturnValue({ matches: false });
-    rerender(<TwinInstrumentFrame collapsePanelsOnMobile top={<StatefulPanel name="Investment" />} bottom="Energy" />);
-    expect(top.getAttribute("aria-expanded")).toBe("true");
-    expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("Retained budget");
-    expect(screen.getByTestId("twin-panel-bottom-toggle").getAttribute("aria-expanded")).toBe("false");
-  });
-
-  it("keeps desktop panels expanded when compact-mobile behavior is requested", () => {
-    vi.stubGlobal("matchMedia", () => ({ matches: false }));
-    render(<TwinInstrumentFrame collapsePanelsOnMobile top="Investment" bottom="Energy" />);
-    expect(screen.getAllByRole("button").every((button) => button.getAttribute("aria-expanded") === "true")).toBe(true);
-  });
-
-  for (const language of ["en", "ko"] as const) {
-    it(`starts expanded with distinct, localized controls (${language})`, () => {
+describe('TwinInstrumentFrame drawers', () => {
+  for (const language of ['en', 'ko'] as const) {
+    it(`starts closed with localized controls and inaccessible contents (${language})`, () => {
       useAppStore.setState({ language });
-      render(<TwinInstrumentFrame top="Investment" bottom="Energy" />);
-
-      const top = screen.getByRole("button", {
-        name: language === "ko" ? "투자·공사 패널 접기" : "Collapse investment panel",
-      });
-      const bottom = screen.getByRole("button", {
-        name: language === "ko" ? "에너지 패널 접기" : "Collapse energy panel",
-      });
-      for (const [position, toggle] of [["top", top], ["bottom", bottom]] as const) {
-        const content = screen.getByTestId(`twin-panel-${position}-content`);
-        expect(toggle.getAttribute("aria-expanded")).toBe("true");
-        expect(toggle.getAttribute("aria-controls")).toBe(content.id);
-        expect(content.hidden).toBe(false);
-        expect(toggle.tagName).toBe("BUTTON");
-        expect(toggle.getAttribute("type")).toBe("button");
+      render(<TwinInstrumentFrame top={<StatefulPanel />} bottom="Energy content" />);
+      expect(screen.getByRole('button', { name: language === 'ko' ? '투자·공사 패널 열기' : 'Open Investment & work panel' })).toBeDefined();
+      for (const key of ['top', 'bottom']) {
+        const toggle = screen.getByTestId(`twin-panel-${key}-toggle`);
+        const panel = screen.getByTestId(`twin-panel-${key}-content`);
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+        expect(toggle.getAttribute('aria-controls')).toBe(panel.id);
+        expect(panel.getAttribute('aria-hidden')).toBe('true');
+        expect(panel.hasAttribute('inert')).toBe(true);
       }
-
-      fireEvent.click(top);
-      fireEvent.click(bottom);
-      expect(screen.getByRole("button", {
-        name: language === "ko" ? "투자·공사 패널 펼치기" : "Show investment panel",
-      })).toBe(top);
-      expect(screen.getByRole("button", {
-        name: language === "ko" ? "에너지 패널 펼치기" : "Show energy panel",
-      })).toBe(bottom);
+      expect(screen.queryByRole('textbox')).toBeNull();
     });
   }
-
-  it("collapses panels independently, preserving their inputs and React state on restore", () => {
-    render(<TwinInstrumentFrame top={<StatefulPanel name="Investment" />} bottom={<StatefulPanel name="Energy" />} />);
-    const topToggle = screen.getByTestId("twin-panel-top-toggle");
-    const bottomToggle = screen.getByTestId("twin-panel-bottom-toggle");
-    const topContent = screen.getByTestId("twin-panel-top-content");
-    const bottomContent = screen.getByTestId("twin-panel-bottom-content");
-    const investmentInput = screen.getByRole("textbox", { name: "Investment input" }) as HTMLInputElement;
-    const energyInput = screen.getByRole("textbox", { name: "Energy input" }) as HTMLInputElement;
-    const investmentChoice = screen.getByRole("button", { name: "Investment choice" });
-    const energyChoice = screen.getByRole("button", { name: "Energy choice" });
-    fireEvent.change(investmentInput, { target: { value: "120000000" } });
-    fireEvent.change(energyInput, { target: { value: "Comparison" } });
-    fireEvent.click(investmentChoice);
-    fireEvent.click(energyChoice);
-
-    topToggle.focus();
-    fireEvent.click(topToggle);
-    expect(document.activeElement).toBe(topToggle);
-    expect(topToggle.getAttribute("aria-expanded")).toBe("false");
-    expect(topContent.hidden).toBe(true);
-    expect(bottomContent.hidden).toBe(false);
-    expect(screen.queryByRole("textbox", { name: "Investment input" })).toBeNull();
-    expect(screen.getByRole("textbox", { name: "Energy input" })).toBe(energyInput);
-    // Hidden controls leave the accessible tree, but the actual subtree is kept.
-    expect(within(topContent).getByRole("textbox", { hidden: true })).toBe(investmentInput);
-
-    fireEvent.click(bottomToggle);
-    expect(bottomContent.hidden).toBe(true);
-    expect(screen.queryAllByRole("textbox")).toHaveLength(0);
-    expect(screen.getAllByRole("button")).toEqual([topToggle, bottomToggle]);
-
-    fireEvent.click(topToggle);
-    expect(topContent.hidden).toBe(false);
-    expect(bottomContent.hidden).toBe(true);
-    fireEvent.click(bottomToggle);
-    expect(bottomContent.hidden).toBe(false);
-    expect(screen.getByRole("textbox", { name: "Investment input" })).toBe(investmentInput);
-    expect(screen.getByRole("textbox", { name: "Energy input" })).toBe(energyInput);
-    expect(investmentInput.value).toBe("120000000");
-    expect(energyInput.value).toBe("Comparison");
-    expect(investmentChoice.getAttribute("aria-pressed")).toBe("true");
-    expect(energyChoice.getAttribute("aria-pressed")).toBe("true");
+  it('switches one drawer at a time while retaining input and React state', () => {
+    const { rerender } = render(<TwinInstrumentFrame top={<StatefulPanel />} bottom="Energy content" />);
+    const top = screen.getByTestId('twin-panel-top-toggle');
+    const bottom = screen.getByTestId('twin-panel-bottom-toggle');
+    fireEvent.click(top);
+    const input = screen.getByRole('textbox') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '1234' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose work' }));
+    fireEvent.click(bottom);
+    expect(top.getAttribute('aria-expanded')).toBe('false');
+    expect(bottom.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.queryByRole('textbox')).toBeNull();
+    fireEvent.click(top);
+    rerender(<TwinInstrumentFrame top={<StatefulPanel />} bottom="Energy content" />);
+    expect(screen.getByRole('textbox')).toBe(input);
+    expect(input.value).toBe('1234');
+    expect(screen.getByRole('button', { name: 'Choose work' }).getAttribute('aria-pressed')).toBe('true');
+    expect(bottom.getAttribute('aria-expanded')).toBe('false');
   });
-
-  it("updates language while keeping a panel collapsed", () => {
-    render(<TwinInstrumentFrame top="Investment" bottom="Energy" />);
-    const toggle = screen.getByRole("button", { name: "Collapse investment panel" });
-    fireEvent.click(toggle);
-    act(() => useAppStore.setState({ language: "ko" }));
-    expect(screen.getByRole("button", { name: "투자·공사 패널 펼치기" })).toBe(toggle);
-    expect(toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.getByTestId("twin-panel-top-content").hidden).toBe(true);
+  it('moves focus into the drawer and restores its trigger on Escape', async () => {
+    render(<TwinInstrumentFrame top={<StatefulPanel />} />);
+    const toggle = screen.getByTestId('twin-panel-top-toggle');
+    toggle.focus(); fireEvent.click(toggle);
+    const panel = screen.getByTestId('twin-panel-top-content');
+    await waitFor(() => expect(document.activeElement).toBe(panel));
+    fireEvent.keyDown(panel, { key: 'Escape' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(toggle);
+    act(() => useAppStore.setState({ language: 'ko' }));
+    expect(screen.getByRole('button', { name: '투자·공사 패널 열기' })).toBe(toggle);
   });
-
-  it("links each toggle to its own content when multiple frames are mounted", () => {
-    render(<>
-      <TwinInstrumentFrame top="First investment" bottom="First energy" />
-      <TwinInstrumentFrame top="Second investment" bottom="Second energy" />
-    </>);
-    const toggles = screen.getAllByRole("button");
-    const contentIds = toggles.map((toggle) => toggle.getAttribute("aria-controls"));
-    expect(new Set(contentIds).size).toBe(4);
-    for (const id of contentIds) expect(document.getElementById(id!)).not.toBeNull();
-    fireEvent.click(toggles[0]);
-    expect(contentIds.map((id) => document.getElementById(id!)!.hidden)).toEqual([true, false, false, false]);
-  });
-
-  it("only offers controls for supplied panels", () => {
-    const { rerender } = render(<TwinInstrumentFrame bottom="Energy" />);
-    expect(screen.queryByTestId("twin-panel-top-toggle")).toBeNull();
-    expect(screen.getAllByRole("button")).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Collapse energy panel" })).toBeDefined();
-    rerender(<TwinInstrumentFrame top="Investment" />);
-    expect(screen.queryByTestId("twin-panel-bottom-toggle")).toBeNull();
-    expect(screen.getAllByRole("button")).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Collapse investment panel" })).toBeDefined();
-    rerender(<TwinInstrumentFrame />);
-    expect(screen.queryAllByRole("button")).toHaveLength(0);
+  it('uses unique controls and only offers supplied panels', () => {
+    render(<><TwinInstrumentFrame top="First" /><TwinInstrumentFrame bottom="Second" /></>);
+    const ids = screen.getAllByRole('button').map(x => x.getAttribute('aria-controls'));
+    expect(new Set(ids).size).toBe(2);
+    for (const id of ids) expect(document.getElementById(id!)).not.toBeNull();
   });
 });

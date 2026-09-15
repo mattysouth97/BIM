@@ -1,124 +1,66 @@
 "use client";
 
-import { useId, useState, useSyncExternalStore } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useT } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
+import { useId, useState } from 'react';
+import { BarChart3, SlidersHorizontal, Settings, Layers } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CanvasDrawer } from '@/components/viewer/canvas-drawer';
+import { useT } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
+import { useWorkspaceStore } from '@/store/workspace-store';
 
-/**
- * Reserved slots around the 3D subject. Expanded panels scroll within a 38 %
- * height cap, leaving room for the model even when instrument content grows.
- * Each panel can also collapse independently. Its contents stay mounted so
- * reopening restores local inputs, selections and open details.
- */
-export function TwinInstrumentFrame({
-  top,
-  bottom,
-  className,
-  collapsePanelsOnMobile = false,
-}: {
+/** Bottom sheets on mobile; right-side drawers on desktop. One open at a time. */
+export function TwinInstrumentFrame({ top, bottom, className, workspaceControls = false }: {
   top?: React.ReactNode;
   bottom?: React.ReactNode;
   className?: string;
-  /** A compact first visit for a split model/information viewport. */
+  workspaceControls?: boolean;
+  /** Retained for callers; all canvas drawers now start closed on every device. */
   collapsePanelsOnMobile?: boolean;
 }) {
   const { t } = useT();
-  const initialSmallScreen = useInitialSmallScreen();
+  const [localActive, setLocalActive] = useState<'top' | 'bottom' | null>(null);
+  const instrumentPanel = useWorkspaceStore(s => s.instrumentPanel);
+  const setInstrumentPanel = useWorkspaceStore(s => s.setInstrumentPanel);
+  const configOpen = useWorkspaceStore(s => s.configPanelOpen);
+  const layerOpen = useWorkspaceStore(s => s.layerPanelOpen);
+  const toggleConfig = useWorkspaceStore(s => s.toggleConfigPanel);
+  const toggleLayers = useWorkspaceStore(s => s.toggleLayerPanel);
+  const active = workspaceControls ? instrumentPanel : localActive;
+  const setActive = workspaceControls ? setInstrumentPanel : setLocalActive;
+  const frameId = useId();
+  const panels = [
+    { key: 'top' as const, content: top, title: t('투자·공사', 'Investment & work'), Icon: SlidersHorizontal },
+    { key: 'bottom' as const, content: bottom, title: t('에너지', 'Energy'), Icon: BarChart3 },
+  ].filter(panel => panel.content != null);
 
   return (
-    <div
-      className={cn(
-        "pointer-events-none absolute inset-0 z-20 flex flex-col justify-between p-3 gap-3",
-        className,
-      )}
-      data-twin-instrument-frame
-    >
-      {top ? (
-        <InstrumentPanel
-          position="top"
-          initiallyCollapsed={collapsePanelsOnMobile && initialSmallScreen}
-          collapseLabel={t("투자·공사 패널 접기", "Collapse investment panel")}
-          expandLabel={t("투자·공사 패널 펼치기", "Show investment panel")}
-        >
-          {top}
-        </InstrumentPanel>
-      ) : (
-        <div />
-      )}
-      {bottom ? (
-        <InstrumentPanel
-          position="bottom"
-          initiallyCollapsed={collapsePanelsOnMobile && initialSmallScreen}
-          collapseLabel={t("에너지 패널 접기", "Collapse energy panel")}
-          expandLabel={t("에너지 패널 펼치기", "Show energy panel")}
-        >
-          {bottom}
-        </InstrumentPanel>
-      ) : null}
+    <div className={cn('pointer-events-none absolute inset-0 z-20 overflow-hidden', className)} data-twin-instrument-frame>
+      <nav className="canvas-drawer-launchers" aria-label={t('모델 정보 패널', 'Model information panels')}>
+        {panels.map(({ key, title, Icon }) => (
+          <Button key={key} type="button" variant="outline" size="sm"
+            className="pointer-events-auto gap-1.5 bg-card/95 text-xs shadow-sm backdrop-blur-md"
+            aria-label={active === key ? t(`${title} 패널 닫기`, `Close ${title} panel`) : t(`${title} 패널 열기`, `Open ${title} panel`)}
+            aria-expanded={active === key} aria-controls={`${frameId}-${key}`}
+            data-testid={`twin-panel-${key}-toggle`}
+            onClick={() => setActive(active === key ? null : key)}>
+            <Icon className="h-3.5 w-3.5" aria-hidden="true" /><span>{title}</span>
+          </Button>
+        ))}
+        {workspaceControls && <>
+          <Button variant="outline" size="sm" aria-expanded={configOpen} aria-controls="canvas-config-panel" onClick={toggleConfig} data-testid="canvas-config-toggle">
+            <Settings className="h-3.5 w-3.5" aria-hidden="true" /><span>{t('설정', 'Settings')}</span>
+          </Button>
+          <Button variant="outline" size="sm" aria-expanded={layerOpen} aria-controls="canvas-layer-panel" onClick={toggleLayers} data-testid="canvas-layer-toggle">
+            <Layers className="h-3.5 w-3.5" aria-hidden="true" /><span>{t('레이어', 'Layers')}</span>
+          </Button>
+        </>}
+      </nav>
+      {panels.map(({ key, content, title }) => (
+        <CanvasDrawer key={key} open={active === key} onClose={() => setActive(null)} title={title}
+          id={`${frameId}-${key}`} testId={`twin-panel-${key}-content`}>
+          {content}
+        </CanvasDrawer>
+      ))}
     </div>
   );
-}
-
-function InstrumentPanel({
-  position,
-  collapseLabel,
-  expandLabel,
-  children,
-  initiallyCollapsed,
-}: {
-  position: "top" | "bottom";
-  collapseLabel: string;
-  expandLabel: string;
-  children: React.ReactNode;
-  initiallyCollapsed: boolean;
-}) {
-  const [userExpanded, setUserExpanded] = useState<boolean | null>(null);
-  const expanded = userExpanded ?? !initiallyCollapsed;
-  const contentId = useId();
-  const Chevron = (position === "top") === expanded ? ChevronUp : ChevronDown;
-
-  const toggle = (
-    <Button
-      type="button"
-      variant="outline"
-      size="xs"
-      className="pointer-events-auto self-end border-border bg-card/95 text-foreground backdrop-blur-md"
-      aria-expanded={expanded}
-      aria-controls={contentId}
-      data-testid={`twin-panel-${position}-toggle`}
-      onClick={() => setUserExpanded(!expanded)}
-    >
-      {expanded ? collapseLabel : expandLabel}
-      <Chevron aria-hidden="true" />
-    </Button>
-  );
-
-  return (
-    <div data-twin-panel={position} className="flex min-h-0 min-w-0 shrink-0 max-h-[38%] flex-col gap-1">
-      {position === "top" ? toggle : null}
-      <div
-        id={contentId}
-        hidden={!expanded}
-        className="pointer-events-auto min-h-0 overflow-y-auto"
-        data-testid={`twin-panel-${position}-content`}
-      >
-        {children}
-      </div>
-      {position === "bottom" ? toggle : null}
-    </div>
-  );
-}
-
-const subscribeToInitialViewport = () => () => {};
-
-function useInitialSmallScreen() {
-  // Read the first client viewport once, after hydration. This cached snapshot
-  // never responds to resizing and cannot overwrite an explicit panel choice.
-  const [getSnapshot] = useState(() => {
-    let initial: boolean | undefined;
-    return () => initial ??= window.matchMedia?.("(max-width: 767px)").matches ?? false;
-  });
-  return useSyncExternalStore(subscribeToInitialViewport, getSnapshot, () => false);
 }

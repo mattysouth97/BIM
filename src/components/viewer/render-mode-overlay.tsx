@@ -52,7 +52,7 @@ export function RenderModeOverlay() {
 
   return (
     <div
-      className="pointer-events-auto absolute right-3 bottom-32 z-30 flex max-w-[min(100%,380px)] flex-col gap-1 rounded-md border bg-card/92 p-2 text-[10px] shadow-sm backdrop-blur"
+      className="flex min-w-0 flex-col gap-2 text-xs"
       data-testid="render-mode-overlay"
     >
       <Row label={t("표시", "View")}>
@@ -99,7 +99,7 @@ export function RenderModeOverlay() {
       <label className="flex items-center gap-2 text-muted-foreground">
         <span className="w-10 shrink-0">{t("카메라", "Camera")}</span>
         <select
-          className="h-6 flex-1 rounded border bg-background px-1"
+          className="h-8 min-w-0 flex-1 rounded border bg-background px-1"
           value={cameraPreset}
           onChange={(e) => setCameraPreset(e.target.value as CameraPresetId)}
           data-testid="render-camera-preset"

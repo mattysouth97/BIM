@@ -9,6 +9,7 @@
 import type { BrTitleInfo } from "@/lib/types";
 import type { FootprintGeometry } from "@/lib/portfolio/types";
 import { EnergyInstrumentHud } from "./energy-instrument-hud";
+import { TwinInstrumentFrame } from "./twin-instrument-frame";
 import { useRevitWorkflowStore } from "@/store/revit-workflow-store";
 import { useViewStore } from "@/lib/bim/views/view-store";
 
@@ -43,10 +44,11 @@ export function TwinStageOverlay({ title, footprintGeometry }: TwinStageOverlayP
   // sections, and authoring.
   const showHud = workMode === "energy" && activeKind === "3d";
 
-  if (!showHud) return null;
+  if (!showHud) return <TwinInstrumentFrame workspaceControls />;
 
   return (
     <EnergyInstrumentHud
+      workspaceControls
       buildingPk={buildingPk}
       totalFloorArea={totalFloorArea}
       footprintArea={footprintArea}

@@ -163,7 +163,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
     [t]
   );
 
-  if (narrow) return null;
+  if (narrow && variant !== "strip") return null;
 
   if (!metrics) {
     if (variant === "strip") return null;
@@ -207,7 +207,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
 
   if (variant === "strip") {
     return (
-      <div className="flex items-center gap-3 overflow-x-auto border-b border-border px-3 py-2">
+      <div className="flex flex-wrap items-center gap-3 border-b border-border px-3 py-2">
         <span
           className="inline-flex h-7 min-w-[2rem] items-center justify-center rounded-md px-2 text-sm font-bold text-white"
           style={{ backgroundColor: gradeColor }}

@@ -74,7 +74,6 @@ import { SceneHighlightProcessing } from "./scene-highlight-processing";
 import { ConfigPanel } from "./config-panel";
 import { ArchitecturalEnvironment } from "./architectural-environment";
 import { ArchitecturalTextureBridge } from "./architectural-texture-bridge";
-import { RenderModeOverlay } from "./render-mode-overlay";
 import { useRenderStore } from "@/store/render-store";
 import { isRealisticMode } from "@/lib/rendering/runtime";
 import { TwinStageOverlay } from "@/components/twin/twin-stage-overlay";
@@ -766,7 +765,6 @@ export function BuildingScene({
       </Canvas>
       </ViewerErrorBoundary>
 
-      {!diagnosticsMode && <RenderModeOverlay />}
 
       {/* Floor info — mid-left, above the budget strip */}
       {selectedFloor && modelSource === "parametric" && (
