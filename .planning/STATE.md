@@ -5,10 +5,10 @@ milestone_name: Building Energy Repository
 current_phase: 03
 current_phase_name: Model Anchors
 status: in_progress
-stopped_at: Paused 2026-09-16 at quick-task 260916-0bz Task 3 human checkpoint (create public Blob store on bim, icn1); Tasks 1-2 complete and committed (02b7703, 6e33998)
-last_updated: "2026-09-16T03:20:00.000Z"
+stopped_at: Quick-task 260916-0bz COMPLETE 2026-09-16 (GLBs migrated to Vercel Blob, production evidence gate green); milestone v6.0 stays open on ANCH-03 + SWEEP-01 only
+last_updated: "2026-09-16T04:15:00.000Z"
 last_activity: 2026-09-16
-last_activity_desc: Executed 260916-0bz Tasks 1-2 (inert rewrite + gitignore + 52-URL e2e; publish/restore scripts dry-run green); paused at Task 3 checkpoint — user must create the Blob store
+last_activity_desc: Completed quick task 260916-0bz — 52 GLBs (470.12 MB) moved to bim-reference-glbs Blob store (icn1, public); production serves them through the next.config.ts rewrite; evidence gate 200 + glTF + icn1; e2e 3/3 against production; restore + 751 vitest green
 progress:
   total_phases: 5
   completed_phases: 3
@@ -21,9 +21,11 @@ progress:
 
 ## Current position
 
-Phases 1, 2 and 5 are production-verified. Production at `0abbdaf` serves eleven
-gallery models (`region: icn1`). Branch `feat/design-stage-energy-diagnostics`
-HEAD is `8f44281`, in sync with origin. Nothing is mid-flight.
+Phases 1, 2 and 5 are production-verified. Production serves eleven
+gallery models (`region: icn1`) with GLBs delivered from the
+`bim-reference-glbs` Blob store through the `/reference-buildings/:id/:file.glb`
+rewrite. Branch `feat/design-stage-energy-diagnostics` HEAD is `9965c9d`,
+pushed to origin. Nothing is mid-flight.
 The milestone stays open because ANCH-03 and SWEEP-01 remain unmet.
 
 ## Completed outcomes
@@ -60,22 +62,31 @@ Full units5,656passed+4existing skips; subsequent focused tests59passed; TypeScr
 passed. Browser failures from stale drawer/model assumptions were fixed and rerun.
 See phase verification reports and docs/04_Agent-Handoffs/CURRENT.md for release evidence.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260916-0bz | Move published reference-building GLBs out of public/ into blob or CDN storage so model twelve does not hit a third Vercel ceiling | 2026-09-16 | 9965c9d | [260916-0bz-move-published-reference-building-glbs-o](./quick/260916-0bz-move-published-reference-building-glbs-o/) |
+
 ## Session continuity
 
 Last session: 2026-09-16
-Stopped at: quick-task `260916-0bz` Task 3 human checkpoint. Tasks 1-2 are
-complete and committed (`02b7703` rewrite+gitignore+e2e, `6e33998` operator
-scripts; all verify gates green, dry-runs print 52 files / 492,954,436 bytes).
-Next: user creates the public Blob store on `bim` in `icn1` and sets
-`BLOB_PUBLIC_BASE_URL` (PLAN Task 3), then approves upload + git rm (Task 4).
+Quick-task `260916-0bz` is COMPLETE: 52 GLBs (492,954,436 bytes) uploaded to
+`bim-reference-glbs` (store_yXzRFh8Uh3cegN8p, public, icn1), removed from git
+(`9965c9d`, pushed), and served in production through the rewrite — evidence
+gate 200 + glTF magic + X-Vercel-Id icn1; production e2e 3/3; local restore +
+751 vitest green. `public/` is now 77.29 MB (was 547.4 MB).
+User deviation: Enhanced Build Machines stays ON; the clean 8 GB builder proof
+is deferred (one toggle-off + one clean build completes it later).
 Resume file: `.planning/.continue-here.md` + `.planning/HANDOFF.json`
 
 ## Resume
 
-Production is verified at `0abbdaf` with eleven models, `icn1`, and 85 browser
-cases against the deployed site. Enhanced Build Machines (8 cores / 16 GB) is
-load-bearing; it raised the build-memory ceiling and did not remove the cause
-(`public/` is 549 MB of binary geometry in the app bundle).
+Production serves eleven models with GLBs from the `bim-reference-glbs` Blob
+store (icn1) through the rewrite; 85 browser cases against the deployed site.
+The build-memory cause is REMOVED: `public/` is 77.29 MB (was 549 MB of binary
+geometry). Enhanced Build Machines stays ON by explicit user choice (2026-09-16),
+not necessity; the clean 8 GB builder proof is deferred, not failed.
 Do not archive v6.0 as fully complete while ANCH-03 and SWEEP-01 remain open.
 `init.milestone-op` reports all phases complete because it counts SUMMARY files;
 trust `init.manager` instead.

@@ -7,7 +7,7 @@
   "plan": 2,
   "task": 2,
   "total_tasks": 2,
-  "status": "paused",
+  "status": "complete",
   "detection_note": "The workflow's phase probe looks for .planning/phases/*/PLAN.md; this repo names plans NN-NN-PLAN.md, so it detected nothing and the handoff uses the default .planning/ path. Active work is quick-task 260916-0bz, not Phase 03 execution. Phase 03 is recorded because the milestone is still open on ANCH-03.",
   "quick_task": {
     "quick_id": "260916-0bz",
@@ -18,8 +18,8 @@
     "context_file": ".planning/quick/260916-0bz-move-published-reference-building-glbs-o/260916-0bz-CONTEXT.md",
     "research_file": ".planning/quick/260916-0bz-move-published-reference-building-glbs-o/260916-0bz-RESEARCH.md",
     "plan_file": ".planning/quick/260916-0bz-move-published-reference-building-glbs-o/260916-0bz-PLAN.md",
-    "summary_file": null,
-    "progress": "discussion + research + plan complete; Tasks 1-2 executed and committed (02b7703, 6e33998) with all gates green; paused at Task 3 human checkpoint (create public Blob store on bim, icn1); Tasks 4-5 await checkpoints"
+    "summary_file": ".planning/quick/260916-0bz-move-published-reference-building-glbs-o/260916-0bz-01-SUMMARY.md",
+    "progress": "COMPLETE 2026-09-16: 52 GLBs (492,954,436 bytes) in bim-reference-glbs (store_yXzRFh8Uh3cegN8p, public, icn1); migration commit 9965c9d pushed; production evidence gate 200 + glTF + icn1; e2e 3/3 vs production; restore + 751 vitest green; Enhanced Builds kept ON by user decision (8 GB builder proof deferred)"
   },
   "completed_tasks": [
     {"id": 1, "name": "Resume consumed prior HANDOFF.json + .continue-here.md", "status": "done"},
@@ -113,6 +113,6 @@
       "discovered_by": "Read during 2026-09-16 resume; the two paragraphs contradict each other."
     }
   ],
-  "next_action": "User performs PLAN Task 3 (create public Blob store on bim in icn1, connect Production+Preview+Development, set BLOB_PUBLIC_BASE_URL, vercel env pull .env.local), then resume: /gsd-quick resume move-published-reference-building-glbs-o — executor runs Task 4 checkpoint (approve upload + git rm, Enhanced Builds off) then Task 5 (publish, migrate, clean-worktree deploy, evidence gate). Phases 3/4 stay partial on ANCH-03 / SWEEP-01 — user confirmed 2026-09-16 neither input is available; do not re-ask.",
+  "next_action": "Quick-task 260916-0bz is COMPLETE. Remaining open work: (1) ANCH-03 — user supplies a Korean IFC/DXF with redistribution rights (blocked_external, do not re-ask); (2) SWEEP-01 — user reads the data.go.kr 일일 트래픽 figure (blocked_external, do not re-ask); (3) add a draw-call budget to service layers (not started; Sixty5 plumbing shipped at 2,462 draw calls with no build-time complaint); (4) optional: toggle Enhanced Build Machines off + one clean build to complete the deferred 8 GB builder proof.",
   "context_notes": "Session started with /gsd-resume-work. User chose to plan the GLB blob/CDN migration. Discussion locked GLBs only. Researcher was thought dead at pause, then completed 481s later and wrote RESEARCH.md: new public Blob store on bim in icn1, Next rewrites() not a route proxy, git rm + gitignore + .vercelignore, CLI blob put, do not reuse s2mas-blob. Planner not spawned. No source/test change. Production is still 0abbdaf. Do not re-ask for the Korean model or the daily quota."
 }
