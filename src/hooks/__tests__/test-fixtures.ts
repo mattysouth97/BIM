@@ -104,3 +104,42 @@ export const TRIANGLE_RINGS: [number, number][][] = [
     [5, 8],
   ],
 ];
+import { resolveClimateRegion } from "@/lib/energy/climate-region";
+import { climateFromRegion } from "@/lib/energy/climate-data";
+import { twinRoofPlanes } from "@/lib/retrofit/twin-roof-planes";
+import type { RoofPlaneSet } from "@/lib/retrofit/pv-layout";
+import { calculateHeatLoss } from "@/lib/energy/heat-loss";
+import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
+import { calculateSystemBreakdown } from "@/lib/energy/system-breakdown";
+import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
+import type { DegreeDaySimulationRun, DegreeDayEnginePayload } from "@/lib/energy-diagnostics/adapter";
+
+export function canonicalParityBuilding() {
+  const materials = makeMaterials(0.72, 2.4);
+  materials.lighting.lightingPowerDensity = 18;
+  materials.envelope.walls[0].uValue = 1.4;
+  materials.envelope.walls[1].uValue = 0.8;
+  const recipe = makeRecipe(3, "14000");
+  const climateRegion = resolveClimateRegion({ sigunguCd: "11" })!;
+  const climate = climateFromRegion(climateRegion);
+  const roofPlanes: RoofPlaneSet = { kind: "bimfit_reference_building_roof_planes", buildingId: "parity", northAssumed: true, planes: twinRoofPlanes(recipe) };
+  return { materials, recipe, climate, climateRegion, roofPlanes };
+}
+
+export function paritySimulationRun(building = canonicalParityBuilding()): DegreeDaySimulationRun {
+  const { materials, recipe, climate, climateRegion, roofPlanes } = building;
+  const heatLoss = calculateHeatLoss(materials, recipe, climate);
+  const annualDemand = calculateAnnualDemand(heatLoss, materials, recipe, climate);
+  const payload: DegreeDayEnginePayload & { climateRegion: typeof climateRegion; roofPlanes: RoofPlaneSet } = {
+    canonicalModelId: "parity", canonicalModelVersion: "1", scenarioId: "baseline", scenarioDeltaIds: [],
+    materials, recipe, climate, climateRegion, roofPlanes,
+    mapping: { conditionedFloorAreaSqm: envelopeQuantities(recipe).intensityFloorAreaSqm, zones: [], surfaces: [], openings: [] },
+    units: { geometry: "m", area: "m2", volume: "m3", uValue: "W/(m2*K)", infiltration: "ACH-natural", ventilationEngineBoundary: "m3/h", energy: "kWh/year", designLoad: "W" },
+    provenance: [], approximations: [],
+  };
+  return {
+    id: "parity", modelId: "parity", scenarioId: "baseline", status: "succeeded", startedAt: "2026-09-15T00:00:00.000Z", result: null, logs: [], warnings: [],
+    engineInput: { schemaVersion: "1.0.0", engineId: "bimfit-degree-day", engineVersion: "existing-2026.08", adapterVersion: "1.0.0", inputHash: "parity", payload },
+    engineOutput: { engineId: "bimfit-degree-day", engineVersion: "existing-2026.08", inputHash: "parity", heatLoss, annualDemand, systemBreakdown: calculateSystemBreakdown(materials, recipe, climate) },
+  };
+}
