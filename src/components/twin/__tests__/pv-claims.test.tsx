@@ -21,7 +21,14 @@ describe("PV claims on the work chip and before/after strip", () => {
   for (const id of REFERENCE_BUILDING_IDS) {
     for (const lang of ["ko", "en"] as const) {
       it(`${id} / ${lang}: capacity and panel surface area match the placed modules`, () => {
-        const energy = referenceBuildingEnergyInputs(id)!;
+        const energy = referenceBuildingEnergyInputs(id);
+        if (!energy) {
+          const manifest = JSON.parse(readFileSync(join(process.cwd(), "public/reference-buildings", id, "manifest.json"), "utf8"));
+          expect(manifest.envelopeStatus).toBe("unresolved");
+          const { container } = render(<MeasureChipRow measures={[]} recommendedIds={[]} totalFloorAreaSqm={0} />);
+          expect(container.querySelector('[data-measure-claim]')).toBeNull();
+          return;
+        }
         const planes = JSON.parse(readFileSync(join(process.cwd(), "public/reference-buildings", id, "roof-planes.json"), "utf8")) as RoofPlaneSet;
         const layout = layoutRoofPlanes(planes);
         const count = layout.planes.reduce((sum, plane) => sum + plane.modules.length, 0);

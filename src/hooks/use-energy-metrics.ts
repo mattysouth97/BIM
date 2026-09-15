@@ -18,7 +18,7 @@ import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { calculateHeatLoss } from "@/lib/energy/heat-loss";
 import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
 import { getGradeColor } from "@/lib/energy/energy-grade";
-import { calculateCO2 } from "@/lib/energy/co2-emissions";
+import { calculateDeliveredCO2 } from "@/lib/energy/co2-emissions";
 import { calculateSystemBreakdown } from "@/lib/energy/system-breakdown";
 import type { SystemBreakdown } from "@/lib/energy/system-breakdown";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
@@ -114,18 +114,17 @@ export function useEnergyMetrics(
     // by buildEndUseLoads — this is what makes the grade leg read
     // materials.lighting.lightingPowerDensity for the first time.
     const loads = buildEndUseLoads({ demand, materials, recipe: effectiveRecipe, climateRegion });
+    const delivered = deliveredFromDemand(loads);
     const rating = calculateEfficiencyRating(
-      deliveredFromDemand(loads),
+      delivered,
       totalFloorArea,
       buildingTypeForGrade(materials, effectiveRecipe.mainPurpsCd)
     );
     const grade = rating.grade as EnergyGrade;
     const gradeColor = getGradeColor(grade);
 
-    // Per-fuel CO2: annual-demand already attaches fuelDemand (P2-02);
-    // heatingFuel remains available for the heating/cooling fallback.
-    const heatingFuel = materials.hvac.heating.fuelType;
-    const co2 = calculateCO2(demand, totalFloorArea, heatingFuel);
+    // Whole-building net-carrier emissions, shared with retrofit comparisons.
+    const co2 = calculateDeliveredCO2(delivered, totalFloorArea);
 
     // Predicted vs actual: HVAC demand vs the most recent meter year
     // (P1-08 hook test). siteTotal/breakdown remain the whole-building view.

@@ -36,10 +36,14 @@ Summer city inputs cite the historical official 2017 guide; province-level rows
 without an established basis carry a named legacy fallback. Seasonal solar is
 an explicitly approved PSH-ratio derivation. See [[ENERGY_STANDARD_TRACEABILITY]].
 
-This is a local intermediate change, not a production-release record. PV's
-primary-energy integration, retrofit-result convergence and dataset version/changelog
-remain in Plans 03–05. The hook's CO₂ and `predictedVsActualDelta` still use HVAC
-demand; they have not been converted into whole-building lighting-aware metrics.
+**Plans 03–05 integration:** declared PV capacity now reaches primary energy,
+with annual electric-demand clipping and visible assumptions. The twin and
+diagnostics adapters call one retrofit core, with exact parity tests. Whole-building
+CO₂ uses named fuel loads after capped annual PV netting, shared by the hook,
+retrofit comparison and dataset. Dataset schema 2.0.0 links its executed seven-model
+before/after evidence. The hook's `predictedVsActualDelta` remains HVAC-only and
+is not a whole-building calibration metric. Full phase integration checks and
+deployment are recorded separately.
 Plan 01 code is verified; its retrospective UI state contract was confirmed by
 the user on 2026-09-15.
 
@@ -78,7 +82,7 @@ flowchart LR
   AD --> SB
   EU --> DF["deliveredFromDemand<br/>route each declared fuel"]
   DF --> GR["calculateEfficiencyRating<br/>official MOTIE/KEMCO primary-energy grade"]
-  AD --> CO["CO₂<br/>HVAC demand only"]
+  DF --> CO["CO₂<br/>whole-building annual net fuels"]
   SB --> SITE["site total / conditioned intensity area"]
   SITE --> UI
   GR --> UI["status bar · energy cards · report"]

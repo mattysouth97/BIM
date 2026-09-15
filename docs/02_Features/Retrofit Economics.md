@@ -1,7 +1,7 @@
 ---
 type: feature
 status: implemented
-last_verified: 2026-09-07
+last_verified: 2026-09-15
 ---
 
 # Retrofit Economics (CAPEX · ROI · 그린리모델링)
@@ -27,8 +27,9 @@ no reachable product control chooses their subsidy presets.
 
 ## Current Status
 
-**implemented on both workspaces**, through two independent input paths that
-converge on the same generators and the same DCF engine.
+**Implemented on both workspaces:** the twin and diagnostics input adapters call
+`generateRetrofitMeasures` in `retrofit-core.ts`. Exact parity tests cover measure
+IDs, savings, costs, selections and financial outputs for matched inputs.
 
 ## Workflow
 
@@ -53,7 +54,8 @@ flowchart TD
   subgraph diag["diagnostics path"]
     EP["succeeded baseline<br/>engine payload"] --> RBR[retrofit-bridge.ts]
   end
-  URS & RBR --> GEN["generateEnvelopeRetrofits<br/>generateHvacRetrofits<br/>generateLightingRetrofits<br/>calculateSolarPotential"]
+  URS & RBR --> CORE["generateRetrofitMeasures<br/>one shared retrofit core"]
+  CORE --> GEN["measure candidates + solo engine reruns"]
   GEN --> MI[measure-interactions · mutual exclusion]
   MI --> KN["selectMeasuresForBudget<br/>(knapsack)"]
   KN --> FIN["computeFinancials<br/>NPV · IRR · payback · interest saved"]
@@ -115,11 +117,13 @@ zero new modules leaves the existing PV unchanged. An installed array with
 unavailable capacity likewise retains an unknown total alongside the known
 proposal.
 
-The degree-day grade path still does not price PV generation. These changes
-correct the physical state and the new-work claims; they do not add baseline PV
-generation to that engine. The 64 tests across `apply-phase`, `retrofit-delta`
-and `measure-claim` verify capacity addition, unknown area, new-only costs,
-claim arithmetic, no-room behavior, input preservation and repeat application.
+The grade now includes generation from declared capacity and regional assumed
+yield, clipped at annual electric demand. The shared core prices purchased-energy
+differences from actual before/after engine runs. PV changes net primary energy
+and annual net-carrier carbon while gross site load remains unchanged. Export
+revenue, where explicitly requested, is a separate tariff assumption; no hourly
+self-consumption match is claimed. Physical claims still distinguish existing
+and new arrays and retain unknown existing capacity/area.
 
 ## Failure Modes
 
@@ -132,15 +136,15 @@ claim arithmetic, no-room behavior, input preservation and repeat application.
 
 ## Known Limitations
 
-- **Two independent input paths.** Both end at the same generators and
-  `economic-model`, but from different inputs: the twin reads
-  material-store + scenario-store (the 간이 모델 path); diagnostics reads a
-  frozen engine payload. They can therefore disagree for the same building.
-- `retrofit-bridge.ts` states its own screening limits in `notes`: measure
-  savings use the retrofit stack's **closed-form degree-day formulas**, not
-  per-measure engine re-runs; prices are the fixed 2024 KRW/kWh constants in
-  `cost-database.ts`; lighting hours default to 2 500 h/yr because no canonical
-  numeric schedule exists.
+- **Different input provenance remains possible.** Matching inputs produce
+  matching core results. This does not make locally edited twin materials equal
+  to a frozen canonical payload. Local edit counts identify distinct changed
+  parameter paths and say they are not saved to the source; browser persistence
+  is separate.
+- Recipe-backed measures use actual engine reruns. Legacy callers without a
+  recipe retain an explicitly named screening approximation, not an engine-priced
+  claim. Prices remain dated constants in `cost-database.ts`. District cooling
+  uses an explicitly stated district-heating tariff/emissions proxy.
 - All savings math must stay in `src/lib/retrofit` pure functions — components
   only format. That is a repo-wide architecture fitness function (AFF-4).
 

@@ -25,6 +25,7 @@ import {
 } from "@/lib/reference-buildings/manifest";
 
 const PK = "TEST-PK-MEASURE-AREAS";
+const ENERGY_MODEL_IDS = REFERENCE_BUILDING_IDS.filter(id => referenceBuildingEnergyInputs(id) !== null);
 
 function engineFor(id: ReferenceBuildingId) {
   const energy = referenceBuildingEnergyInputs(id)!;
@@ -66,7 +67,7 @@ describe("the envelope measures cover the areas the engine priced", () => {
     useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
   });
 
-  for (const id of REFERENCE_BUILDING_IDS) {
+  for (const id of ENERGY_MODEL_IDS) {
     it(`${id}: each measure's cost divides back to the engine's own area`, () => {
       const { engineEnvelopeAreas } = engineFor(id as ReferenceBuildingId);
       const scenario = render(id as ReferenceBuildingId, true);
@@ -137,6 +138,16 @@ describe("the envelope measures cover the areas the engine priced", () => {
     });
   }
 
+  it.each(REFERENCE_BUILDING_IDS.filter(id => !ENERGY_MODEL_IDS.includes(id)))("%s has no priced measures without supported energy inputs", id => {
+    expect(referenceBuildingEnergyInputs(id)).toBeNull();
+    const { result } = renderHook(() => useRetrofitScenario({
+      buildingPk: id, totalFloorArea: 0, footprintArea: 0,
+      roofType: "flat", climateRegion: null,
+    }));
+    expect(result.current.allMeasures).toEqual([]);
+    expect(result.current.coreResult).toBeNull();
+  });
+
   it("the apartment's roof measure stops being sized at its footprint", () => {
     const { q, engineEnvelopeAreas } = engineFor("schependomlaan");
     // 542.96 m² of measured roof surface over a 345.81 m² ground slab: the
@@ -185,7 +196,7 @@ describe("roof typology reaches the measure that renders it", () => {
     expect(pv.name).toContain("flat roof");
   });
 
-  for (const id of REFERENCE_BUILDING_IDS) {
+  for (const id of ENERGY_MODEL_IDS) {
     it(`${id}: the roof \`read\` reproduces the tilt it claims`, () => {
       const roof = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!.roof;
       if (id === "kit-office") {

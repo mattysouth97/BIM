@@ -19,10 +19,14 @@ gallery. The routes do not create an entry workflow. The catalogue iterates
 registry entry are available. A missing registered manifest fails the catalogue
 request instead of silently dropping a row.
 
-Schema: `bimfit_building_energy_dataset`, version `1.3.0`; catalogue kind:
+Schema: `bimfit_building_energy_dataset`, version `2.0.0`; catalogue kind:
 `bimfit_building_energy_catalogue`. Breaking field or semantic changes require a
 major schema increment. The HTTP response is a UTF-8 attachment with a stable
 ETag and conditional-GET support.
+
+JSON and CSV include `changelogUrl`, pointing to `/reference-buildings/CHANGELOG.md`.
+The changelog records an executed seven-building before/after comparison;
+`published-physics-evidence.test.ts` reproduces its after figures.
 
 ## What the fields mean
 
@@ -34,10 +38,19 @@ ETag and conditional-GET support.
 | `modelInputs.pendingMeasurements` | Values the energy adapter still uses as stand-ins, including derivation and direction of bias. |
 | `modelInputs.pendingMeasurementReconciliation` | Whether the current manifest now contains a figure for each pending field. Availability requires a scope review, not automatic replacement. |
 | `modeledEnergy.hvac` | Heating/cooling delivered energy after efficiency/COP, in kWh/year and kWh/(m²·year). |
-| `modeledEnergy.comparisonRating` | The engine's Korean-threshold comparison, with its input fuel shares and primary factors. `officialCertificate` is false. |
-| `modeledEnergy.estimatedWholeBuilding` | A separate ratio-based expansion of HVAC to lighting, DHW and plug loads. It is not the rating's fuel total. |
+| `modeledEnergy.comparisonRating` | The engine's Korean-threshold comparison, with its named end-use fuel inputs and primary factors. `officialCertificate` is false. |
+| `modeledEnergy.estimatedWholeBuilding` | Gross HVAC plus LPD-based lighting and ratio-estimated DHW/plug loads, before PV. It is not the rating's primary-energy total. |
+| `modeledEnergy.wholeBuildingEmissions` | Named-fuel emissions after capped annual PV netting; includes its annual-netting basis and any district-cooling proxy. |
+| `modeledEnergy.hvacEmissions` | Retains the explicitly HVAC-only emissions scope for consumers of the older field. |
 | `isMetered`, `meteredEnergy`, `calibration` | False, null and uncalibrated respectively. No observed consumption is implied by an energy output. |
 
+`modeledEnergy.endUses` preserves the load, fuel and source/assumption/refusal for
+each use and on-site generation. `climate.resolvedRegion` exposes the selected
+region and climate basis. Annual PV netting is capped at electricity demand;
+clipped surplus has no additional grade credit.
+
+Unresolved envelopes export missing envelope quantities, even if an extractor
+stored zero. Geometry-only models have null energy inputs and outputs.
 Unavailable scalar measurements are `null` in JSON and blank in CSV. A
 documented numeric zero remains zero. Unsupported format requests return 400;
 unknown model IDs return 404; unavailable artifacts return 503.
