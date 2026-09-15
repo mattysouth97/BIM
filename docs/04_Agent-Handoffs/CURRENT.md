@@ -77,6 +77,22 @@ or Korean model completion is claimed.
 - Main dev3000 has DATABASE_URL loaded only in process memory from the private
   external corpus environment. No credential file was copied into the repository.
   Local VWorld remains503 without its keys; this is an existing local limitation.
+- Production re-verified 2026-09-15 21:55 KST at commit
+  `1816f24037582a2a474c205651ad5cbb2969890b` — health SHA, `region: icn1`,
+  `X-Vercel-Id: icn1::icn1`, ten gallery models, and 85 browser cases passing
+  against the deployed site. Adds West Riverside Hospital (CC BY 3.0, seven
+  discipline models, 41,126 typed MEP elements / 85,602 ports), geometry-only
+  because its source states no IfcSpace in any file.
+- Deploy trap, now fixed and worth knowing before adding model eleven: the
+  first attempt was REFUSED at Vercel's 250 MB function limit —
+  `/api/reference-buildings/[id]/dataset` traced to 296.3 MB. Both readers
+  open only `manifest.json`, by a runtime path tracing cannot resolve, so it
+  swept in every GLB. `next.config.ts` carried a comment claiming its
+  `outputFileTracingIncludes` prevented this; an include only ADDS files, so
+  nothing did — the limit had merely not been reached yet.
+  `outputFileTracingExcludes` now enforces it. Do not reach for
+  `VERCEL_SUPPORT_LARGE_FUNCTIONS=1`: it raises the ceiling and still ships
+  the meshes into every invocation.
 - Production verified 2026-09-15 20:05 KST at commit
   `79a5d1b6ff3c430a3e65e86b9c8ef4a0006259fb`, deployed from a clean detached
   worktree with `-e DEPLOY_COMMIT_SHA`. `/api/health` returns that exact SHA,
