@@ -28,7 +28,16 @@ it("queries actual release filters and pagination and keeps provenance beside mo
   vi.stubGlobal("fetch", fetcher);
   render(<CorpusBrowser />);
   await screen.findByTestId("corpus-record");
+  expect(screen.getByText("Modeled floor area")).toBeDefined();
+  expect(screen.queryByTestId("corpus-record-provenance")).toBeNull();
+  const evidence = screen.getByTestId("corpus-record").querySelector("details")!;
+  evidence.open = true;
+  fireEvent(evidence, new Event("toggle"));
+  await screen.findByTestId("corpus-record-provenance");
   expect(screen.getByText("wallUValue").parentElement?.textContent).toContain("assumed · references: 0 · wall-era");
+  evidence.open = false;
+  fireEvent(evidence, new Event("toggle"));
+  await waitFor(() => expect(screen.queryByTestId("corpus-record-provenance")).toBeNull());
   expect(screen.getByText("Approval year", { exact: false }).textContent).toContain("Unavailable");
   expect(screen.getByTestId("corpus-download").getAttribute("href")).toBe(`/api/corpus/releases/${releaseFixture.releaseId}/download`);
   fireEvent.click(screen.getByRole("button", { name: "Next" }));

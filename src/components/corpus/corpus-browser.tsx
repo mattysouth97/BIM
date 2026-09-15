@@ -69,7 +69,7 @@ export function CorpusBrowser() {
     <header className="max-w-3xl pb-8 pt-6">
       <p className="text-xs font-medium text-muted-foreground">{t("공개 데이터", "Open data")}</p>
       <h1 className="mt-3 text-3xl font-medium tracking-tight">{t("건물 에너지 계산 데이터", "Building energy calculation data")}</h1>
-      <p className="mt-4 text-sm leading-7 text-muted-foreground">{t("건축물대장에 기재된 형상과 용도에, 시기별 외피·설비 가정을 적용한 간이 계산입니다. 실측 사용량이 아니며, 국내 건물 전체를 대표하거나 실제 성능을 검증한 표본이 아닙니다.", "Screening calculations combine register-stated geometry and use with era-based envelope and system assumptions. These are not metered consumption or a representative, validated sample of Korean buildings.")}</p>
+      <p className="mt-4 text-sm leading-7 text-muted-foreground">{t("건축물대장에 기재된 면적과 용도에, 시기별 외피·설비 가정을 적용한 간이 계산입니다. 실측 사용량이 아니며, 국내 건물 전체를 대표하거나 실제 성능을 검증한 표본이 아닙니다.", "Screening calculations combine registered areas and use with era-based envelope and system assumptions. These are not metered consumption or a representative, validated sample of Korean buildings.")}</p>
       <div className="mt-4 flex flex-wrap gap-2">
         <a className={action} href="/api/corpus/dictionary">{t("데이터 사전 · 필드와 단위", "Data dictionary · fields and units")}</a>
         <a className={action} href="/api/corpus/releases">{t("릴리스 API", "Releases API")}</a>
@@ -141,8 +141,9 @@ export function CorpusBrowser() {
 
 function CorpusRecordCard({ record }: { record: CorpusRecord }) {
   const { t } = useT();
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const metrics = [
-    [t("연면적", "Floor area"), record.building.floorAreaSqm, "m²"],
+    [t("계산 대상 면적", "Modeled floor area"), record.building.floorAreaSqm, "m²"],
     [t("에너지 사용 강도 · 계산", "Site intensity · modeled"), record.energy.siteKwhPerSqm, "kWh/m²·yr"],
     [t("1차 에너지 강도 · 계산", "Primary intensity · modeled"), record.energy.primaryKwhPerSqm, "kWh/m²·yr"],
     [t("연간 탄소 · 계산", "Annual carbon · modeled"), record.energy.co2Tonnes, "tCO₂/yr"],
@@ -152,14 +153,14 @@ function CorpusRecordCard({ record }: { record: CorpusRecord }) {
     <p className="mt-2 text-xs leading-6 text-muted-foreground">{t("지역", "Region")} {record.building.regionCode} · {t("용도", "Use")} {record.building.useTypeCode} · {record.building.era} · {t("사용승인 연도", "Approval year")} {record.building.approvalYear ?? t("자료 없음", "Unavailable")}</p>
     <dl className="mt-4 grid grid-cols-2 gap-5 lg:grid-cols-4">{metrics.map(([label, value, unit]) => <div key={label} className="min-w-0"><dt className="text-xs leading-5 text-muted-foreground">{label}</dt><dd className="mt-1 text-xl font-medium tabular-nums">{value.toLocaleString(undefined, { maximumFractionDigits: 1 })}<span className="ml-1 block text-[10px] font-normal text-muted-foreground">{unit}</span></dd></div>)}</dl>
     <p className="mt-3 text-xs text-muted-foreground">{t("간이 계산 등급", "Screening grade")}: {record.energy.grade} · {t("실측·공인 인증 아님", "Not measured or certified")}</p>
-    <details className="mt-4 text-xs leading-6"><summary className="cursor-pointer font-medium">{t("이 레코드의 출처 · 가정 · 한계", "Record sources · assumptions · limitations")}</summary>
-      <div className="mt-3 space-y-3 text-muted-foreground">
+    <details className="mt-4 text-xs leading-6" onToggle={(event) => setEvidenceOpen(event.currentTarget.open)}><summary className="cursor-pointer font-medium">{t("이 레코드의 출처 · 가정 · 한계", "Record sources · assumptions · limitations")}</summary>
+      {evidenceOpen && <div className="mt-3 space-y-3 text-muted-foreground">
         <p>{record.source.provider} · <a className="underline" href={record.source.endpoint}>{t("원천 API", "Source API")}</a><br />{t("원천 레코드", "Source record")}: {record.source.recordId}<br />{t("조회 시각", "Retrieved")}: {record.source.retrievedAt}<br />{t("계산 시각", "Calculated")}: {record.generatedAt}<br />{t("입력 해시", "Input hash")}: {record.source.inputHash}</p>
         <ul className="list-disc pl-5">{record.assumptions.map((item) => <li key={item.id}>{item.title} ({item.id})</li>)}</ul>
-        <dl className="space-y-2">{record.provenance.map((item) => <div key={item.key}><dt className="font-medium text-foreground">{item.key}</dt><dd>{item.status} · {t("참조", "references")}: {item.sourceRefCount}{item.assumptionId ? ` · ${item.assumptionId}` : ""}</dd></div>)}</dl>
+        <dl className="space-y-2" data-testid="corpus-record-provenance">{record.provenance.map((item) => <div key={item.key}><dt className="font-medium text-foreground">{item.key}</dt><dd>{item.status} · {t("참조", "references")}: {item.sourceRefCount}{item.assumptionId ? ` · ${item.assumptionId}` : ""}</dd></div>)}</dl>
         <ul className="list-disc pl-5">{record.limitations.map((item) => <li key={item}>{item}</li>)}</ul>
         <a className="inline-block underline" href={record.permalink}>{t("전체 레코드 JSON · 단위는 데이터 사전 참조", "Full record JSON · units in data dictionary")}</a>
-      </div>
+      </div>}
     </details>
   </article>;
 }
