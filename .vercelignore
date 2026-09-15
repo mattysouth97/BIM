@@ -19,3 +19,10 @@ playwright-report
 /*.png
 /*.url
 tsconfig.tsbuildinfo
+
+# Reference-building GLB bytes live in the bim public Blob store
+# (quick-260916-0bz) and are served through the next.config.ts rewrite.
+# scripts/restore-reference-glbs.mjs re-materializes local copies for
+# dev/test; they must never be uploaded into a Vercel build (dirty-deploy
+# OOM defense — 470 MB OOM'd the standard builder twice).
+public/reference-buildings/**/*.glb

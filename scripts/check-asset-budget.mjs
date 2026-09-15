@@ -88,6 +88,42 @@ try {
   warnings.push("git unavailable — skipped the untracked-asset check");
 }
 
+// ---- reference-building GLBs live in Blob, never in git or a build --------
+// quick-260916-0bz moved the 52 GLBs (470 MB) to the bim public Blob store,
+// served through the next.config.ts rewrite. Two error-level guards:
+//   (a) a tracked .glb under public/reference-buildings/ means the migration
+//       regressed — the bytes are back in the Vercel build checkout.
+//   (b) restore-reference-glbs.mjs re-materializes local copies for dev and
+//       test; on a Vercel build (VERCEL=1) those files on disk mean a dirty
+//       deploy is about to OOM the standard 8 GB builder.
+try {
+  const trackedGlbs = execFileSync(
+    "git",
+    ["ls-files", "public/reference-buildings"],
+    { cwd: ROOT, encoding: "utf8" }
+  )
+    .split("\n")
+    .map((s) => s.trim())
+    .filter((f) => f.endsWith(".glb"));
+  for (const f of trackedGlbs) {
+    errors.push(
+      `tracked GLB: ${f} — reference-building bytes live in the bim Blob store, not git`
+    );
+  }
+} catch {
+  warnings.push("git unavailable — skipped the tracked-GLB check");
+}
+if (process.env.VERCEL === "1") {
+  const onDiskGlbs = walk(path.join(PUBLIC, "reference-buildings")).filter((f) =>
+    f.endsWith(".glb")
+  );
+  for (const f of onDiskGlbs) {
+    errors.push(
+      `on-disk GLB during Vercel build: ${rel(f)} — restored local copies must never reach a build (dirty-deploy OOM defense)`
+    );
+  }
+}
+
 // ---- referenced but missing ----------------------------------------------
 // Matched broadly, then filtered: a reference is only a file if it carries an
 // extension. `/models/authoring` and `/models/equipment` are base paths that
