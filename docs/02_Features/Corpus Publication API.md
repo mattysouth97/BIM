@@ -31,3 +31,7 @@ Review options include `publishedAt`, `previousReleaseId`, `changelog`, `omitted
 The existing Neon connection was verified with SELECT 1; empty corpus tables were initialized and read back with zero releases on 2026-09-15. Actual first publication is recorded in the Phase 5 verification summary once the concrete release review and readback pass.
 
 Protocol source: [Neon official HTTP adapter](https://github.com/neondatabase/serverless/blob/main/src/httpQuery.ts). This JSON-only adapter uses the existing runtime fetch API and parameterized queries, with no dependency changes. Database URL validation permits only HTTPS requests derived from configured `.neon.tech` hosts and rejects redirects.
+
+## Streaming transport
+
+Whole downloads and record pages stream UTF-8 byte chunks; they are not buffered function responses. The actual first-pilot records exceed the hosting provider's 4.5 MB buffered-response ceiling. Chunking preserves all provenance and Korean text, including multibyte characters crossing chunk boundaries. The implementation still materializes the queried JSON in server memory; it is not a constant-memory database cursor. The bounded pilot is covered; much larger releases need a measured storage/export scaling decision. See the [official Vercel response-size guidance](https://vercel.com/kb/guide/how-to-bypass-vercel-body-size-limit-serverless-functions).

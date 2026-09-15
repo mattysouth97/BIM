@@ -3,6 +3,19 @@ import { createCorpusStore, type CorpusReader, type CorpusFilter } from "./store
 import { CORPUS_DICTIONARY } from "./dictionary";
 
 const identifier = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,100}$/;
+/** Stream response bytes past the platform's buffered-response size ceiling. */
+export function streamCorpusJson(value: unknown, headers: Record<string,string> = {}): Response {
+  const bytes = new TextEncoder().encode(JSON.stringify(value));
+  let offset = 0;
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (offset >= bytes.length) { controller.close(); return; }
+      const end = Math.min(offset + 64 * 1024, bytes.length);
+      controller.enqueue(bytes.subarray(offset,end)); offset = end;
+    },
+  });
+  return new Response(body, { headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...headers } });
+}
 export class CorpusQueryError extends Error {}
 export function parseCorpusFilter(url: URL): CorpusFilter {
   const allowed = new Set(["releaseId", "region", "useType", "era", "q", "page", "pageSize"]);
@@ -34,9 +47,9 @@ export function corpusHttp(reader: CorpusReader = createCorpusStore()) {
   return {
     releases: () => run(async () => json({ releases: await reader.releases() })),
     release: (id: string) => run(async () => { checkId(id); const result = await reader.release(id); return result ? json(result) : json({ error: "corpus_release_not_found" },404); }),
-    records: (request: Request) => run(async () => { const result = await reader.records(parseCorpusFilter(new URL(request.url))); return result ? json(result) : json({ error: "corpus_release_not_found" },404); }),
+    records: (request: Request) => run(async () => { const result = await reader.records(parseCorpusFilter(new URL(request.url))); return result ? streamCorpusJson(result) : json({ error: "corpus_release_not_found" },404); }),
     record: (releaseId: string, id: string) => run(async () => { checkId(releaseId); if (!/^kr-ledger-[a-f0-9]{24}$/.test(id)) throw new CorpusQueryError(); const result = await reader.record(releaseId,id); return result ? json(result) : json({ error: "corpus_record_not_found" },404); }),
-    download: (id: string) => run(async () => { checkId(id); const result = await reader.download(id); if (!result) return json({ error: "corpus_release_not_found" },404); return new Response(JSON.stringify(result), { headers: { "Content-Type": "application/json; charset=utf-8", "Content-Disposition": `attachment; filename="bimfit-corpus-${id}.json"`, "Cache-Control": "public, max-age=31536000, immutable", "ETag": `"${result.release.snapshotSha256}"`, "X-Content-Type-Options": "nosniff" } }); }),
+    download: (id: string) => run(async () => { checkId(id); const result = await reader.download(id); if (!result) return json({ error: "corpus_release_not_found" },404); return streamCorpusJson(result, { "Content-Disposition": `attachment; filename="bimfit-corpus-${id}.json"`, "Cache-Control": "public, max-age=31536000, immutable", "ETag": `"${result.release.snapshotSha256}"` }); }),
     dictionary: () => json(CORPUS_DICTIONARY),
   };
 }

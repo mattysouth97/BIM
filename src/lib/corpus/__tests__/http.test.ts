@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe,expect,it,vi } from "vitest";
-import { corpusHttp,parseCorpusFilter } from "../http";
+import { corpusHttp,parseCorpusFilter,streamCorpusJson } from "../http";
 import type { CorpusReader } from "../store";
 
 function reader(): CorpusReader { return {releases:vi.fn().mockResolvedValue([]),release:vi.fn().mockResolvedValue(null),records:vi.fn().mockResolvedValue(null),record:vi.fn().mockResolvedValue(null),download:vi.fn().mockResolvedValue(null)}; }
@@ -9,5 +9,7 @@ describe("read-only corpus HTTP",()=>{
   it.each(["page=0","page=-1","page=1.5","pageSize=101","region=11000","useType=office","releaseId=../private","page=1&page=2","ownerName=x","q=%00"])("rejects invalid query %s",query=>expect(()=>parseCorpusFilter(new URL(`https://test/?${query}`))).toThrow());
   it("uses the same validated filters sent to the store",async()=>{const r=reader();await corpusHttp(r).records(new Request("https://test/?region=11&useType=02000&era=2001-2008&page=2&pageSize=5&q=kr-ledger"));expect(r.records).toHaveBeenCalledWith({region:"11",useType:"02000",era:"2001-2008",page:2,pageSize:5,q:"kr-ledger"});});
   it("serves the dictionary without consulting a database",async()=>{const r=reader();const response=corpusHttp(r).dictionary();expect(response.status).toBe(200);expect((await response.json()).recordFields.length).toBeGreaterThan(30);expect(r.releases).not.toHaveBeenCalled();});
+  it("returns 503 rather than throwing during construction without credentials",async()=>{vi.stubEnv("DATABASE_URL","");try{const api=corpusHttp();expect(api.dictionary().status).toBe(200);const response=await api.releases();expect(response.status).toBe(503);expect(await response.json()).toEqual({error:"corpus_unavailable"});}finally{vi.unstubAllEnvs();}});
   it("rejects unsafe attachment identifiers before storage",async()=>{const r=reader();expect((await corpusHttp(r).download('bad\"\r\nheader')).status).toBe(400);expect(r.download).not.toHaveBeenCalled();});
+  it("streams more than 4.5 MB without corrupting multibyte text",async()=>{const value={provenance:"한글🏢".repeat(500000)};const response=streamCorpusJson(value);expect(response.headers.has("Content-Length")).toBe(false);const reader=response.body!.getReader();const chunks:Uint8Array[]=[];let size=0;for(;;){const {done,value}=await reader.read();if(done)break;chunks.push(value);size+=value.length;expect(value.length).toBeLessThanOrEqual(65536);}expect(size).toBeGreaterThan(4.5*1024*1024);expect(chunks.length).toBeGreaterThan(70);const joined=new Uint8Array(size);let offset=0;for(const chunk of chunks){joined.set(chunk,offset);offset+=chunk.length;}expect(JSON.parse(new TextDecoder().decode(joined))).toEqual(value);});
 });
