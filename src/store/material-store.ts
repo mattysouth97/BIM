@@ -62,6 +62,9 @@ export const useMaterialStore = create<MaterialState>()(
         obj = obj[parts[i]] as Record<string, unknown>;
       }
       obj[parts[parts.length - 1]] = value;
+      if (path === "lighting.lightingPowerDensity") {
+        updated.lighting.lpdProvenance = { source: "user_input" };
+      }
       updated.source = "user-input";
 
       return { properties: { ...state.properties, [pk]: updated } };

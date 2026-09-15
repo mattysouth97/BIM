@@ -48,7 +48,7 @@ export interface OnSiteGeneration {
 
 export interface EndUseLoads {
   hvac: { heating: FueledLoad; cooling: FueledLoad };
-  lighting: FueledLoad;
+  lighting: FueledLoad & { lpdProvenance?: MaterialProperties["lighting"]["lpdProvenance"] };
   dhw: FueledLoad;
   plug: FueledLoad;
   onSiteGeneration: OnSiteGeneration;
@@ -205,7 +205,12 @@ export function buildEndUseLoads(input: BuildEndUseLoadsInput): EndUseLoads {
       heating: { kwh: demand.heatingDemand, fuel: heating.fuel, provenance: heating.provenance },
       cooling: { kwh: demand.coolingDemand, fuel: cooling.fuel, provenance: cooling.provenance },
     },
-    lighting: { kwh: lightingLoad.kwh, fuel: "electric", provenance: lightingProvenance },
+    lighting: {
+      kwh: lightingLoad.kwh,
+      fuel: "electric",
+      provenance: lightingProvenance,
+      lpdProvenance: lightingLoad.provenance.lpdProvenance,
+    },
     dhw: {
       kwh: dhwKwh,
       fuel: AUX_FUEL,
@@ -246,6 +251,14 @@ export function endUseAssumptions(
   push("heating", loads.hvac.heating.provenance);
   push("cooling", loads.hvac.cooling.provenance);
   push("lighting", loads.lighting.provenance);
+  if (loads.lighting.lpdProvenance && loads.lighting.lpdProvenance.source !== "user_input") {
+    out.push({
+      endUse: "lighting",
+      assumptionId: loads.lighting.lpdProvenance.source === "use_code_default"
+        ? "A-LIGHTING-LPD-DEFAULT" : "A-LIGHTING-LPD-RETROFIT",
+      assumption: loads.lighting.lpdProvenance.assumption,
+    });
+  }
   push("dhw", loads.dhw.provenance);
   push("plug", loads.plug.provenance);
   push("onSiteGeneration", loads.onSiteGeneration.provenance);

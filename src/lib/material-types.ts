@@ -112,6 +112,11 @@ export interface HVACProperties {
 
 export interface LightingProperties {
   lightingPowerDensity: number;
+  /** Field-level provenance; unrelated material edits must not relabel this value. */
+  lpdProvenance?:
+    | { source: "user_input" }
+    | { source: "use_code_default"; useCode: string; assumption: string }
+    | { source: "retrofit_target"; measureId: string; assumption: string };
   controlType: "manual" | "occupancy-sensor" | "daylight-dimming" | "combined";
   lampType: "fluorescent" | "led" | "halogen";
 }

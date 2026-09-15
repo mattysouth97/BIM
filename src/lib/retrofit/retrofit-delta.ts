@@ -19,10 +19,9 @@
 //     did. `pricedByEngine` is established by re-running the engine with that
 //     measure ALONE and comparing outputs — not by a hand-maintained list of
 //     which fields the engine is believed to read.
-//  3. It does not silently drop a measure the engine cannot price. An LED or
+//  3. It does not silently drop a measure the engine cannot price. A
 //     PV measure is real, is bought, and moves NPV; it simply does not move
-//     this run's kWh/m2, because `deliveredFromDemand` fixes the lighting
-//     share at 15 % of total and hard-codes `renewable: 0`. Those arrive as
+//     this run's kWh/m2, because on-site generation is still zero. Those arrive as
 //     changes with `pricedByEngine: false` and a reason, so the UI can render
 //     a stated absence instead of an omission.
 //
@@ -165,9 +164,10 @@ export interface RetrofitDelta {
  * conflate on screen.
  *
  * `isZeroDelta` says nothing moved in THIS RUN. It does not say the work does
- * nothing: a selection made only of LED and PV changes the building and moves
+ * nothing: a selection made only of PV changes the building and moves
  * NPV while this engine stays silent, because `deliveredFromDemand` cannot see
- * either. Rendering "the chosen work does not move kWh/m²" over such a
+ * generation yet. LED's LPD now reaches primary energy. Rendering
+ * "the chosen work does not move kWh/m²" over such a
  * selection was found on /models/schependomlaan — true of the run, false as
  * stated about the work. Branch on this, never on `isZeroDelta` alone.
  */
@@ -216,18 +216,6 @@ const ELEMENT_LABELS: Record<string, { ko: string; en: string }> = {
  * never invent a reason for a measure that did move.
  */
 const UNPRICED_REASONS: Record<string, { ko: string; en: string }> = {
-  "lighting.lightingPowerDensity": {
-    ko: "냉난방 도일 계산에는 조명 항이 없고, 등급 경로(delivered-from-demand)는 조명을 총량의 15 %로 고정합니다. 조명 교체는 NPV에는 반영되지만 이 실행의 kWh/m²에는 반영되지 않습니다.",
-    en: "The degree-day run has no lighting term, and the grade path (delivered-from-demand) fixes lighting at 15 % of total. An LED measure moves NPV but not this run's kWh/m2.",
-  },
-  "lighting.lampType": {
-    ko: "램프 종류는 엔진 입력이 아닙니다 — 소비전력밀도(LPD)만 계산에 쓰이며, 그 LPD도 이 실행에는 들어가지 않습니다.",
-    en: "Lamp type is not an engine input; only LPD is, and this run does not read LPD either.",
-  },
-  "lighting.controlType": {
-    ko: "조명 제어 방식은 엔진 입력이 아닙니다.",
-    en: "Lighting control type is not an engine input.",
-  },
   "renewable.solarPV.capacity": {
     ko: "delivered-from-demand.ts가 재생에너지를 0으로 고정하므로, 발전량은 1차에너지·등급에 반영되지 않습니다. PV는 NPV와 3D 형상에는 나타나지만 이 실행의 kWh/m²는 움직이지 않습니다.",
     en: "delivered-from-demand.ts hard-codes renewable: 0, so generation reaches neither primary energy nor the grade. PV shows in NPV and in the 3D model, but does not move this run's kWh/m2.",

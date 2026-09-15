@@ -70,9 +70,8 @@ function runEngine(materials: MaterialProperties, recipe: BuildingRecipe) {
     recipe,
     SEOUL_CLIMATE,
   );
-  // NOTE (executor pause point, Task 2 of 3): call-shape migration only —
-  // this file's own numeric expectations (all relative/band assertions, not
-  // hard-coded grades) were not re-verified against the new physics by Task 2.
+  // Relative/band assertions remain valid with the named lighting/DHW/plug
+  // end uses; the whole suite verifies those claims against this split.
   const rating = calculateEfficiencyRating(
     deliveredFromDemand(buildEndUseLoads({ demand, materials, recipe })),
     totalFloorArea,

@@ -28,6 +28,8 @@ import { useLayerStore } from "@/store/layer-store";
 import { useScenarioStore } from "@/store/scenario-store";
 import type { RoofPlaneSet } from "@/lib/retrofit/pv-layout";
 import { useEnergyMetrics } from "@/hooks/use-energy-metrics";
+import { modeledLightingLoad } from "@/lib/energy/lighting-load";
+import { LightingLoadDisclosure } from "@/components/viewer/lighting-load-disclosure";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { getClimateData } from "@/lib/energy/climate-data";
 import { meanWindowToWallRatio } from "@/lib/energy/heat-loss";
@@ -395,7 +397,7 @@ export function ReferenceEnergyFrame({
                 energy,
                 metrics.grade,
                 metrics.primaryEnergyPerArea,
-                metrics.demand.demandPerSqm,
+                metrics.siteTotal / quantities.intensityFloorAreaSqm,
                 isKo,
               )
             : undefined
@@ -485,6 +487,11 @@ export function ReferenceEnergyPanel({
   const quantities = envelopeQuantities(energy.recipe);
   const climate = getClimateData(energy.climate.sigunguCd);
   const materials = useMaterialStore((s) => s.properties[energy.buildingPk]);
+  const lighting = materials ? modeledLightingLoad({
+    materials,
+    conditionedFloorAreaSqm: quantities.intensityFloorAreaSqm,
+    mainPurpsCd: energy.recipe.mainPurpsCd,
+  }) : null;
   const fmt = (n: number, d = 1) => n.toLocaleString("en-US", { maximumFractionDigits: d });
   // The south ratio alone until 2026-09-06, printed as "창 X m² (WWR Y %)" —
   // the building's whole-envelope figure taken from one elevation. Identical
@@ -567,6 +574,11 @@ export function ReferenceEnergyPanel({
           }
         />
       </dl>
+      {lighting && (
+        <div className="mt-4 border-t border-border pt-3">
+          <LightingLoadDisclosure provenance={lighting.provenance} kwh={lighting.kwh} lang={locale} />
+        </div>
+      )}
       <details className="mt-4 group">
         <summary className="cursor-pointer text-xs text-foreground">
           {isKo

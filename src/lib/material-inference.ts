@@ -253,6 +253,11 @@ export function inferMaterialProperties(
 
     lighting: {
       lightingPowerDensity: lightingDefaults.lpd,
+      lpdProvenance: {
+        source: "use_code_default",
+        useCode: LIGHTING_DEFAULTS[mainUse] ? mainUse : "default",
+        assumption: `조명전력밀도 ${lightingDefaults.lpd} W/m²는 용도별 조명 기본값(${LIGHTING_DEFAULTS[mainUse] ? mainUse : "default"})을 적용한 가정이며, 건축물대장에 기재된 값이 아닙니다.`,
+      },
       controlType: lightingDefaults.controlType,
       lampType: eraAtLeast(era, "2010-2019") ? "led" : lightingDefaults.lampType,
     },

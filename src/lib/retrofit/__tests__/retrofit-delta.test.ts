@@ -270,7 +270,7 @@ describe("computeRetrofitDelta", () => {
     }
   });
 
-  it("reports an LED measure as a real change the engine does not price", () => {
+  it("prices the LED electricity change through the primary-energy factor", () => {
     const d = delta(["lighting-led-smart"]);
     const m = d.measures[0];
 
@@ -278,14 +278,17 @@ describe("computeRetrofitDelta", () => {
     const lpd = m.changes.find((c) => c.field === "lighting.lightingPowerDensity")!;
     expect(Number(lpd.before)).toBe(18);
     expect(Number(lpd.after)).toBe(6);
-    // …and the run did not.
-    expect(m.pricedByEngine).toBe(false);
-    expect(d.isZeroDelta).toBe(true);
+    // LPD changed from 18 to 6 W/m². With this fixture's 4380 h/yr,
+    // the electric reduction is 52.56 kWh/m² and primary reduction 144.54.
+    expect(m.pricedByEngine).toBe(true);
+    expect(d.isZeroDelta).toBe(false);
+    expect(d.deltaPrimaryPerSqm).toBeCloseTo((6 - 18) * 4380 / 1000 * 2.75, 8);
+    // This delta module's site field still denotes HVAC demand; convergence
+    // belongs to Plan 04. useEnergyMetrics.siteTotal includes the lighting load.
     expect(d.deltaSitePerSqm).toBe(0);
-    // The absence is stated, not omitted.
-    expect(lpd.pricedByEngine).toBe(false);
-    expect(lpd.unpricedReasonKo).toContain("15 %");
-    expect(lpd.unpricedReasonEn).toContain("15 %");
+    expect(lpd.pricedByEngine).toBe(true);
+    expect(lpd.unpricedReasonKo).toBeUndefined();
+    expect(lpd.unpricedReasonEn).toBeUndefined();
   });
 
   it("sizes PV from the measured roof surface and reports it as unpriced", () => {

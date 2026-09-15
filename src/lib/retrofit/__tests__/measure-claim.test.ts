@@ -277,10 +277,10 @@ describe("buildMeasureClaim — the line reproduces its own numbers", () => {
 });
 
 describe("buildMeasureClaim — what the engine cannot price", () => {
-  it("marks LED and PV as unpriced, and still says what they do", () => {
+  it("prices LED's modeled LPD saving while PV remains unpriced", () => {
     for (const id of ["lighting-led-smart", "solar-pv-flat"]) {
       const claim = claimFor(id);
-      expect(claim.pricedByEngine).toBe(false);
+      expect(claim.pricedByEngine).toBe(id === "lighting-led-smart");
       // The work is real even where this engine cannot price it — the chip
       // states the change and carries the caveat separately.
       expect(claim.change).toBeDefined();

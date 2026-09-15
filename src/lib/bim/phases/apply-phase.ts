@@ -27,9 +27,8 @@
 // knapsack ran on describe one building, not two.
 //
 // NOT EVERY FIELD WRITTEN HERE REACHES THE ENERGY ENGINE. The degree-day run
-// reads the envelope U-values, the ventilation term, and the heating
-// efficiency/fuel. It does NOT read lightingPowerDensity (delivered-from-
-// demand.ts fixes the lighting share at 15 % of total) and does NOT read
+// reads the envelope U-values, ventilation, heating efficiency/fuel and
+// lightingPowerDensity through the shared lighting-load computation. It does NOT read
 // renewable.solarPV (that module hard-codes `renewable: 0`). Writing them here
 // is still right — they are the true post-measure state — but a caller must
 // not imply a kWh movement the run never made. retrofit-delta.ts reports, per
@@ -190,6 +189,14 @@ export function applyPhaseToMaterials(
       LED_TARGET_LPD,
     );
     next.lighting.lampType = "led";
+  }
+
+  if (next.lighting.lightingPowerDensity !== materials.lighting.lightingPowerDensity) {
+    next.lighting.lpdProvenance = {
+      source: "retrofit_target",
+      measureId: ids.has("lighting-led-smart") ? "lighting-led-smart" : "lighting-led",
+      assumption: `조명전력밀도 ${next.lighting.lightingPowerDensity} W/m²는 선택한 LED 개선안의 목표값을 적용한 가정이며, 실측값이 아닙니다.`,
+    };
   }
 
   // --- Renewable --------------------------------------------------------

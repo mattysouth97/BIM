@@ -95,8 +95,8 @@ export function useEnergyMetrics(
       climate
     );
 
-    // Whole-building site energy: HVAC (degree-day engine) + lighting/DHW/
-    // plug via use-type ratios. Needed for grading-adjacent UI and calibration.
+    // Whole-building site energy: HVAC + LPD-based lighting + ratio-derived
+    // DHW/plug. Needed for grading-adjacent UI and calibration.
     const breakdown = calculateSystemBreakdown(materials, effectiveRecipe, climate);
 
     // P1-05 official primary-energy rating — one computation path shared

@@ -6,6 +6,7 @@
 // Amber badge rendered whenever any value carries dataSource === "estimated-ratio".
 
 import { useMemo } from "react";
+import { LightingLoadDisclosure } from "./lighting-load-disclosure";
 import { BarChart, Bar, XAxis, YAxis, Cell, LabelList } from "recharts";
 import {
   ChartContainer,
@@ -34,7 +35,7 @@ export const chartConfig = {
 } satisfies ChartConfig;
 
 export function EnergyBreakdownChart({ buildingPk }: EnergyBreakdownChartProps) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const breakdown = useEnergyBreakdown(buildingPk);
 
   // Derive percentages in useMemo — always called before any early return (Rules of Hooks).
@@ -90,7 +91,7 @@ export function EnergyBreakdownChart({ buildingPk }: EnergyBreakdownChartProps) 
             variant="outline"
             className="border-amber-400 text-amber-700 bg-amber-50 text-[10px] px-1.5"
           >
-            {t("추정 비율", "Estimated")}
+            {t("급탕·콘센트 추정 비율", "DHW / plug estimated ratios")}
           </Badge>
           <span className="text-[9px] text-muted-foreground">
             {/* "ASHRAE 90.1 ratios" overclaims when no profile matched this
@@ -146,6 +147,8 @@ export function EnergyBreakdownChart({ buildingPk }: EnergyBreakdownChartProps) 
           </Bar>
         </BarChart>
       </ChartContainer>
+
+      <LightingLoadDisclosure provenance={breakdown.lightingProvenance} kwh={breakdown.lighting} lang={lang} />
 
       <p className="text-[9px] text-muted-foreground pl-1">
         {t("총 연간 수요", "Total annual demand")}:{" "}

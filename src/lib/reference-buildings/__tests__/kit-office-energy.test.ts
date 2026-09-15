@@ -91,10 +91,8 @@ describe("KIT Office: measured geometry reaches the energy engine", () => {
     const climate = getClimateData("11");
     const demand = calculateAnnualDemand(calculateHeatLoss(energy.materials, energy.recipe, climate), energy.materials, energy.recipe, climate);
     const category = buildingTypeForGrade(energy.materials, energy.recipe.mainPurpsCd);
-    // NOTE (executor pause point, Task 2 of 3): call-shape migration only —
-    // rating.grade below is NOT yet reconciled with the new physics; Task 3
-    // must recompute and justify it. demand.demandPerSqm is unaffected by
-    // this plan (calculateAnnualDemand carries no lighting/DHW/plug term).
+    // HVAC demand remains fixed; named end uses below change only delivered
+    // and primary energy, with the physical cause asserted beside the grade.
     const rating = calculateEfficiencyRating(
       deliveredFromDemand(buildEndUseLoads({ demand, materials: energy.materials, recipe: energy.recipe })),
       KIT_OFFICE_TOTAL_FLOOR_AREA_SQM,
@@ -102,7 +100,11 @@ describe("KIT Office: measured geometry reaches the energy engine", () => {
     );
     expect(category).toBe("non-residential");
     expect(demand.demandPerSqm).toBeCloseTo(269.1336833912164, 6);
-    expect(rating.grade).toBe("5");
+    // HVAC is unchanged. Explicit LPD lighting and the formerly omitted
+    // electric DHW/plug share add primary energy at 2.75 kWh/kWh, reaching
+    // the non-residential grade-7 band (>= 610 kWh/m²·yr).
+    expect(rating.primaryEnergyPerArea).toBeGreaterThanOrEqual(610);
+    expect(rating.grade).toBe("7");
   });
 
   it("resolves each named layer with an explicit generic-material mapping", () => {

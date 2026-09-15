@@ -97,12 +97,15 @@ describe("published baseline datasets preserve provenance", () => {
     expect(fzk.modelGeometry.scope).toContain("operating efficiency");
   });
 
-  it("matches the published screen baselines without reinterpreting HVAC energy as whole-building energy", async () => {
+  it("keeps HVAC fixed while the corrected end-use split changes the generated grades", async () => {
+    // LPD lighting and electric DHW/plug now replace the 15% electric / 10%
+    // gas proxy. Their primary factor (2.75) changes grades while HVAC stays
+    // unchanged. Release versioning/limitation updates remain Plan 05's gate.
     const published = [
-      ["bs-medical-dental-clinic", "1+", "108.8"],
-      ["schependomlaan", "1++", "40.5"],
-      ["duplex-apartment", "4", "142.6"],
-      ["fzk-haus", "2", "92.6"],
+      ["bs-medical-dental-clinic", "4", "108.8"],
+      ["schependomlaan", "2", "40.5"],
+      ["duplex-apartment", "7", "142.6"],
+      ["fzk-haus", "7", "92.6"],
     ] as const;
     for (const [id, grade, hvacPerArea] of published) {
       const dataset = (await loadReferenceEnergyDataset(id))!;

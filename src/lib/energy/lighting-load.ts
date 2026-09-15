@@ -25,7 +25,10 @@ import type { MaterialProperties } from "@/lib/material-types";
  * render the LPD the load was computed from, without a second channel back
  * to `MaterialProperties`.
  */
-export type LightingLoadProvenance =
+export type LightingLoadProvenance = {
+  lpdProvenance?: MaterialProperties["lighting"]["lpdProvenance"];
+  conditionedFloorAreaSqm?: number;
+} & (
   | {
       source: "use_code_hours";
       mainPurpsCd: string;
@@ -44,7 +47,7 @@ export type LightingLoadProvenance =
        * the number is right").
        */
       assumption: string;
-    };
+    });
 
 export interface LightingLoad {
   /** Annual lighting electricity (kWh/yr). D-01: (lpd * area * hours) / 1000. */
@@ -98,5 +101,7 @@ export function modeledLightingLoad(
             : `주용도코드가 없어 조명 운영시간 기본값 ${hoursPerYear}시간/년을 적용했습니다. 실측값이 아닌 가정입니다.`,
         };
 
+  provenance.lpdProvenance = input.materials.lighting.lpdProvenance;
+  provenance.conditionedFloorAreaSqm = conditionedFloorAreaSqm;
   return { kwh, lpdWPerSqm, hoursPerYear, provenance };
 }

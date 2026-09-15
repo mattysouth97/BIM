@@ -20,10 +20,9 @@
 //    the knapsack has always known that, and now a person assembling the set
 //    by hand has to be held to the same rule. `toggleMeasure` enforces it and
 //    reports what it evicted, and the chip says so BEFORE the click too.
-//  - **A measure this engine cannot price still says what it does.** LED and
-//    PV move NPV and the 3D model but not kWh/m², because
-//    `deliveredFromDemand` fixes lighting at 15 % of total and hard-codes
-//    `renewable: 0`. Those chips carry the line AND the caveat, rather than
+//  - **A measure this engine cannot price still says what it does.** LED's
+//    LPD now moves primary energy. PV moves NPV and the 3D model but not
+//    kWh/m² while on-site generation is zero. Its chip carries the caveat,
 //    quietly implying the intensity moved.
 
 import { useEffect, useMemo, useRef, useState } from "react";

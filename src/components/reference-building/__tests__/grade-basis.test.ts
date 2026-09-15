@@ -22,6 +22,7 @@ import {
   isResidentialOccupancy,
 } from "@/lib/energy/delivered-from-demand";
 import { buildEndUseLoads } from "@/lib/energy/end-uses";
+import { calculateSystemBreakdown } from "@/lib/energy/system-breakdown";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import {
   REFERENCE_BUILDING_IDS,
@@ -34,10 +35,7 @@ function run(id: ReferenceBuildingId) {
   const heatLoss = calculateHeatLoss(energy.materials, energy.recipe, climate);
   const demand = calculateAnnualDemand(heatLoss, energy.materials, energy.recipe, climate);
   const q = envelopeQuantities(energy.recipe);
-  // NOTE (executor pause point, Task 2 of 3): call-shape migration only — the
-  // numeric grade/energy assertions in this file are NOT yet reconciled with
-  // the new physics. Task 3 must recompute and justify every hard-coded
-  // expectation here per AGENTS.md, not just make this compile.
+  const sitePerSqm = calculateSystemBreakdown(energy.materials, energy.recipe, climate).total / q.intensityFloorAreaSqm;
   const rating = calculateEfficiencyRating(
     deliveredFromDemand(buildEndUseLoads({ demand, materials: energy.materials, recipe: energy.recipe })),
     q.intensityFloorAreaSqm,
@@ -47,16 +45,35 @@ function run(id: ReferenceBuildingId) {
     energy,
     rating.grade,
     rating.primaryEnergyPerArea,
-    demand.demandPerSqm,
+    sitePerSqm,
     false,
   );
-  return { energy, demand, rating, sentence };
+  return { energy, demand, rating, sentence, sitePerSqm };
 }
 
 describe("the grade sentence reproduces the numbers it explains", () => {
+  it.each(REFERENCE_BUILDING_IDS)("%s: independently re-derives the primary total by end use", (id) => {
+    const { energy, demand, rating } = run(id);
+    const code = energy.recipe.mainPurpsCd;
+    const area = envelopeQuantities(energy.recipe).intensityFloorAreaSqm;
+    // These seven source models use residential, office, or generic ratios.
+    // Pin the assumptions explicitly: no call to the production split builder
+    // in this expected calculation can accidentally validate its own mistake.
+    const dwelling = code === "01000" || code === "02000";
+    const office = code === "14000";
+    const hours = dwelling ? 2920 : office ? 4380 : 3500;
+    const auxToHvac = dwelling ? (0.25 + 0.18) / 0.50 : office ? (0.10 + 0.10) / 0.55 : (0.12 + 0.18) / 0.42;
+    const lighting = energy.materials.lighting.lightingPowerDensity * area * hours / 1000;
+    const fuel = energy.materials.hvac.heating.fuelType;
+    const heatingFactor = fuel === "district-heat" ? 0.728 : fuel === "electric" || fuel === "heat-pump" ? 2.75 : 1.1;
+    const coolingFactor = energy.materials.hvac.cooling.systemType === "district" ? 0.937 : 2.75;
+    const expected = (demand.heatingDemand * heatingFactor + demand.coolingDemand * coolingFactor
+      + (lighting + demand.totalDemand * auxToHvac) * 2.75) / area;
+    expect(rating.primaryEnergyPerArea).toBeCloseTo(expected, 8);
+  });
   for (const id of ["bs-medical-dental-clinic", "schependomlaan"] as const) {
     it(`${id}: the primary and site figures it quotes are the engine's own`, () => {
-      const { demand, rating, sentence } = run(id);
+      const { sitePerSqm, rating, sentence } = run(id);
 
       const quotedGrade = sentence.match(/^Grade (\S+) is a Korean/);
       const quotedPrimary = sentence.match(/on ([\d,.]+) kWh\/m²·yr of PRIMARY energy/);
@@ -70,11 +87,11 @@ describe("the grade sentence reproduces the numbers it explains", () => {
         rating.primaryEnergyPerArea,
         1,
       );
-      expect(Number(quotedSite![1].replace(/,/g, ""))).toBeCloseTo(demand.demandPerSqm, 1);
+      expect(Number(quotedSite![1].replace(/,/g, ""))).toBeCloseTo(sitePerSqm, 1);
 
       // The whole point of the sentence: the two numbers are different, and
       // the badge sits beside the smaller one.
-      expect(rating.primaryEnergyPerArea).not.toBeCloseTo(demand.demandPerSqm, 0);
+      expect(rating.primaryEnergyPerArea).not.toBeCloseTo(sitePerSqm, 0);
     });
 
     it(`${id}: it names the assumed climate and cites the assumption`, () => {
@@ -122,23 +139,25 @@ describe("the grade sentence reproduces the numbers it explains", () => {
     }
   });
 
-  it("the grades that moved, and the ones that must not", () => {
-    // Quoted in the commit; asserted so the claim cannot rot.
-    expect(run("schependomlaan").rating.grade).toBe("1++");
-    expect(run("duplex-apartment").rating.grade).toBe("4");
-    expect(run("fzk-haus").rating.grade).toBe("2");
-    // The Clinic is not a dwelling and does not move.
-    expect(run("bs-medical-dental-clinic").rating.grade).toBe("1+");
+  it("grades include explicit lighting and electric DHW/plug loads", () => {
+    // The old split added 15% HVAC to electricity and 10% to gas.
+    // It omitted much of the DHW/plug electricity now scaled from the HVAC
+    // profile, and never read LPD. The added electricity carries factor 2.75;
+    // the independently reconstructed primary totals below explain the bands.
+    expect(run("schependomlaan").rating.grade).toBe("2");
+    expect(run("duplex-apartment").rating.grade).toBe("7");
+    expect(run("fzk-haus").rating.grade).toBe("7");
+    expect(run("bs-medical-dental-clinic").rating.grade).toBe("4");
   });
 
   it("the Korean sentence carries the same grade and the same two figures", () => {
     const energy = referenceBuildingEnergyInputs("schependomlaan")!;
-    const { rating, demand } = run("schependomlaan");
+    const { rating, sitePerSqm } = run("schependomlaan");
     const ko = gradeBasisText(
       energy,
       rating.grade,
       rating.primaryEnergyPerArea,
-      demand.demandPerSqm,
+      sitePerSqm,
       true,
     );
     expect(ko).toContain(`${rating.grade} 등급`);

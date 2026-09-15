@@ -118,8 +118,6 @@ describe("Klassiqua 1970: energy engine and honest limitations", () => {
   it("models the source T1 case without cooling electricity or a claim of measured comfort", () => {
     const climate = getClimateData("11");
     const demand = calculateAnnualDemand(calculateHeatLoss(energy.materials, energy.recipe, climate), energy.materials, energy.recipe, climate);
-    // NOTE (executor pause point, Task 2 of 3): call-shape migration only —
-    // rating.grade below is NOT yet reconciled with the new physics.
     const rating = calculateEfficiencyRating(
       deliveredFromDemand(buildEndUseLoads({ demand, materials: energy.materials, recipe: energy.recipe })),
       KLASSIQUA_FLOOR_AREA,
@@ -135,7 +133,12 @@ describe("Klassiqua 1970: energy engine and honest limitations", () => {
     expect(Number(doorU)).toBe(KLASSIQUA_SOURCE.exteriorDoorU);
     expect(energy.orientationLabels).toEqual({ N: "NE", E: "SE", S: "SW", W: "NW" });
     expect(demand.demandPerSqm).toBeCloseTo(177.13117649400806, 6);
-    expect(rating.grade).toBe("2");
+    // Zero cooling electricity does not imply zero electric end uses:
+    // explicit lighting plus the office DHW/plug loads now carry factor 2.75.
+    // HVAC stays fixed; primary energy moves into the 450–520 grade-5 band.
+    expect(rating.primaryEnergyPerArea).toBeGreaterThanOrEqual(450);
+    expect(rating.primaryEnergyPerArea).toBeLessThan(520);
+    expect(rating.grade).toBe("5");
   });
 
   it("maps source room names and conserves all areas and apportioned energy", () => {

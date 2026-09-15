@@ -21,6 +21,7 @@ import { useWorkspaceStore } from "@/store/workspace-store";
 import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import type { EnergyGrade } from "@/lib/energy/energy-grade";
+import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 
 interface EnergyCardsProps {
   buildingPk: string;
@@ -182,7 +183,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
   const hasActual = actualData.length > 0;
   // Official MOTIE grade is not on the consumption feed.
   const hasActualGrade = false;
-  const floorAreaSqm = effectiveRecipe?.officialFloorAreaSqm ?? 0;
+  const floorAreaSqm = effectiveRecipe ? envelopeQuantities(effectiveRecipe).intensityFloorAreaSqm : 0;
   const latestActual = hasActual
     ? actualData.reduce((a, b) => (b.year > a.year ? b : a))
     : null;
@@ -191,7 +192,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
       ? latestActual.total_kwh / floorAreaSqm
       : null;
   const modeledSiteEui =
-    floorAreaSqm > 0 && siteTotal > 0 ? siteTotal / floorAreaSqm : null;
+    floorAreaSqm > 0 ? siteTotal / floorAreaSqm : null;
   const hasActualDemand = actualEui != null && modeledSiteEui != null;
 
   // Tree equivalent: 1 tree absorbs ~22 kg CO2/yr
@@ -214,7 +215,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
           {grade}
         </span>
         <span className="shrink-0 text-xs tabular-nums text-foreground">
-          <SettleValue value={fmt(demand.demandPerSqm, 1)} />{" kWh/m²·yr"}
+          <SettleValue value={modeledSiteEui === null ? "—" : fmt(modeledSiteEui, 1)} />{" kWh/m²·yr"}
         </span>
         <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
           <SettleValue value={fmt(co2.co2PerSqm, 1)} />{" kgCO₂/m²·yr"}
@@ -290,10 +291,10 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
       {/* Card 2: Annual Energy Demand */}
       <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-56">
         <p className="text-[10px] text-muted-foreground mb-1">
-          {t("연간 에너지 수요", "Annual Energy Demand")}
+          {t("연간 전체 에너지 · 조명 포함", "Annual site energy · includes lighting")}
         </p>
         <p className="text-sm font-semibold tabular-nums">
-          <SettleValue value={fmt(demand.demandPerSqm, 1)} />{" kWh/m²·yr"}
+          <SettleValue value={modeledSiteEui === null ? "—" : fmt(modeledSiteEui, 1)} />{" kWh/m²·yr"}
         </p>
         {hasActualDemand ? (
           <DeltaIndicator

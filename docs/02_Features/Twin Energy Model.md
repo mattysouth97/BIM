@@ -1,7 +1,7 @@
 ---
 type: feature
 status: partial
-last_verified: 2026-08-27
+last_verified: 2026-09-15
 ---
 
 # Twin Energy Model (the 간이 모델 path)
@@ -19,6 +19,21 @@ or ACH50, and the annual demand, the efficiency grade and the CO₂ intensity mo
 on the next render. No save, no submit, no round trip.
 
 ## Current Status
+
+**2026-09-15 local verification — Phase 01, Plan 01:** lighting now uses
+`LPD × conditioned intensity area × annual operating hours / 1000` in both
+the primary-energy grade and whole-building site total. The energy card and
+reference-model grade explanation display that site total per conditioned area.
+The new shared disclosure shows the actual equation and distinguishes use-code
+defaults, user inputs, assumed LED targets and unrecorded sources. Operating
+hours are separately stated as assumptions, including unmatched-code fallback.
+
+This is a local intermediate change, not a production-release record. PV,
+regional climate, retrofit-result convergence and the dataset version/changelog
+remain in Plans 02–05. The hook's CO₂ and `predictedVsActualDelta` still use HVAC
+demand; they have not been converted into whole-building lighting-aware metrics.
+Plan 01 code is verified; its retrospective UI state contract was confirmed by
+the user on 2026-09-15.
 
 **partial — and the UI says so.** The chain works and is heavily tested, but it
 is the *older simplified* path. The status bar renders a literal 「간이 모델」
@@ -49,19 +64,27 @@ flowchart LR
   EQ --> HL["calculateHeatLoss<br/>ISO 13789-style, per element ΔT"]
   CD["getClimateData(sigunguCd)"] --> HL
   HL --> AD["calculateAnnualDemand<br/>degree-day · HDD 18 / CDD 24"]
-  AD --> SB[calculateSystemBreakdown]
-  SB --> DF["deliveredFromDemand<br/>shared fuel split (P1-05)"]
+  AD --> EU["buildEndUseLoads<br/>named HVAC, lighting, DHW, plug"]
+  LL["modeledLightingLoad<br/>LPD × area × hours / 1000"] --> EU
+  LL --> SB[calculateSystemBreakdown]
+  AD --> SB
+  EU --> DF["deliveredFromDemand<br/>route each declared fuel"]
   DF --> GR["calculateEfficiencyRating<br/>official MOTIE/KEMCO primary-energy grade"]
-  DF --> CO[CO₂]
+  AD --> CO["CO₂<br/>HVAC demand only"]
+  SB --> SITE["site total / conditioned intensity area"]
+  SITE --> UI
   GR --> UI["status bar · energy cards · report"]
 ```
 
-`src/lib/energy/` is 20 pure modules and ~3 100 lines. Two grade concepts are
+`src/lib/energy/` contains the shared pure computations. Two grade concepts are
 deliberately kept apart: `energy-grade.ts` is marked in-file as an
 **internal colour scale, not the official rating**; the official rating is
 [efficiency-rating.ts](../../src/lib/compliance/efficiency-rating.ts).
-`delivered-from-demand.ts` is the single shared fuel-split and building-type
-derivation, used by both the grade path and the report so they cannot disagree.
+`delivered-from-demand.ts` routes already-built end uses to declared fuels; the
+grade and report consumers build those inputs through `buildEndUseLoads`.
+`calculateSystemBreakdown` independently assembles site totals but calls the same
+lighting helper. DHW and plug loads retain named ratio assumptions. Heating and
+cooling retain their declared fuel; oil currently uses the named gas-factor proxy.
 
 Note that `src/lib/energy/` is consumed by **both** paths: this hook path and the
 canonical adapter. The physics core is shared; the *inputs and provenance* are
@@ -81,18 +104,35 @@ recomputed from stores on every render.
 - [use-energy-metrics.ts](../../src/hooks/use-energy-metrics.ts) — the hook every twin/report number resolves through
 - [envelope-quantities.ts](../../src/lib/energy/envelope-quantities.ts) — the geometry→area seam, and the known limitation below
 - [heat-loss.ts](../../src/lib/energy/heat-loss.ts) · [annual-demand.ts](../../src/lib/energy/annual-demand.ts) · [system-breakdown.ts](../../src/lib/energy/system-breakdown.ts) · [delivered-from-demand.ts](../../src/lib/energy/delivered-from-demand.ts)
+- [lighting-load.ts](../../src/lib/energy/lighting-load.ts) · [end-uses.ts](../../src/lib/energy/end-uses.ts) — shared lighting load and named fuel inputs
+- [lighting-load-disclosure.tsx](../../src/components/viewer/lighting-load-disclosure.tsx) — bilingual equation and source text shared by viewer and reference panels
 - [envelope-tab.tsx](../../src/components/viewer/config-tabs/envelope-tab.tsx) — the step-3 sliders
 - [use-effective-recipe.ts](../../src/hooks/use-effective-recipe.ts) — the merge seam
 
 ## Relevant Tests
 
-62 test files touch `src/lib/energy` by path. The load-bearing ones:
+Local Plan 01 checks on 2026-09-15: **5,550 passed, 4 existing skipped** across
+461 passed files and one skipped file; TypeScript passed; ESLint `src` reported
+0 errors and 6 existing warnings. No new skips. Full Playwright suite and
+production build/deployment were not run for this change.
+
+Browser checks on `/models/kit-office`: Korean and English equation
+`10 × 2266.66 × 4380 / 1000 = 99279.708` re-derived from visible text;
+grade explanation distinguishes primary **699.5** from site **410.8**
+kWh/m²·yr. At 390px viewport width, document scroll width remained 390px;
+desktop and mobile screenshots were inspected. Local evidence is under
+`qa-evidence/phase01-task3/` (ignored artifacts).
+
+The load-bearing tests include:
 
 - [envelope-quantities.test.ts](../../src/lib/energy/__tests__/envelope-quantities.test.ts)
 - [heat-loss.test.ts](../../src/lib/energy/__tests__/heat-loss.test.ts) · [annual-demand.test.ts](../../src/lib/energy/__tests__/annual-demand.test.ts)
 - [delivered-from-demand.test.ts](../../src/lib/energy/__tests__/delivered-from-demand.test.ts)
 - [energy-grade-normalization.test.ts](../../src/lib/energy/__tests__/energy-grade-normalization.test.ts)
 - `src/hooks/__tests__/` — the hook-level derivations
+- `src/lib/__tests__/material-inference-lpd.test.ts` — actual LPD reproduced by its assumption, store overrides and retrofit-target provenance
+- `src/components/viewer/__tests__/energy-breakdown-chart.test.tsx` — parse and re-derive the rendered bilingual equation
+- `src/components/reference-building/__tests__/grade-basis.test.ts` — independent seven-building primary-energy arithmetic and displayed grade/site explanation
 
 ## Failure Modes
 
@@ -120,8 +160,9 @@ recomputed from stores on every render.
    `polygon`.
 2. **No below-grade heat path.** There is no ISO 13370 implementation in
    `src/lib/energy/`, so every storey is priced against outdoor air.
-3. **No provenance.** Unlike the canonical model, nothing here records *where* a
-   U-value came from. That is the whole reason the canonical engine exists.
+3. **Partial provenance.** Lighting now carries field-level source metadata and
+   visible assumptions. This does not introduce canonical `EnergyFact` evidence
+   for every material property; the canonical traceable model remains distinct.
 4. `useEffectiveRecipe` is defined **twice** — once in
    [use-effective-recipe.ts](../../src/hooks/use-effective-recipe.ts), which
    documents itself as "THE single reactive effective-recipe hook" and warns
