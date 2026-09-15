@@ -19,3 +19,7 @@ The release carries the provider's actual unrestricted-reuse declaration for reg
 Release URLs and downloads remain reproducible while a new release can supersede them explicitly. Both full artifacts and indexed records consume database storage, which is acceptable for the bounded pilot and must be measured before a much larger sweep. Runtime persistence depends on the existing Neon database and server environment; the dictionary remains available without it. Public API construction does not create tables. Model-rights and meter matching continue as separate intake decisions.
 
 The small JSON-only adapter avoids a new dependency and is tested against the [official Neon HTTP protocol implementation](https://github.com/neondatabase/serverless/blob/main/src/httpQuery.ts). It is not a general PostgreSQL wire driver: hosts are restricted to configured Neon domains, redirects are rejected, and query parameters are JSON scalar values.
+
+## Exact reviewed bytes versus indexed projections
+
+Neon JSONB projections reorder object keys. Keep the approved artifact's exact JSON string in a text column as well, and use that text for bulk download. Explicit SQL text parameter casts prevent PostgreSQL from inferring JSONB for the shared parameter before storing the original string. Filter indexes and individual records may use semantic JSONB projections; release digest reproduction uses the preserved artifact. The first release's representation was repaired only after matching both its reviewed SHA and its full existing JSONB content, without changing approved data.

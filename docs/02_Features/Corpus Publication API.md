@@ -35,3 +35,7 @@ Protocol source: [Neon official HTTP adapter](https://github.com/neondatabase/se
 ## Streaming transport
 
 Whole downloads and record pages stream UTF-8 byte chunks; they are not buffered function responses. The actual first-pilot records exceed the hosting provider's 4.5 MB buffered-response ceiling. Chunking preserves all provenance and Korean text, including multibyte characters crossing chunk boundaries. The implementation still materializes the queried JSON in server memory; it is not a constant-memory database cursor. The bounded pilot is covered; much larger releases need a measured storage/export scaling decision. See the [official Vercel response-size guidance](https://vercel.com/kb/guide/how-to-bypass-vercel-body-size-limit-serverless-functions).
+
+## First release readback
+
+Release `0.1.0-pilot` was stored on 2026-09-15 after independent implementation review. Its validated snapshot SHA-256 is `211ed326bca2b4ce48c8731457c1368ba87304a65a09be5681f26f6836c67bbc`: 71 modeled baselines, 4 exclusions, no metered calibration. The exact artifact text is stored alongside JSONB projections because JSONB alone reorders keys. Local API readback reproduced the original hash from the full 4,868,243-byte streamed download and verified all 71 record URLs and every actual region/use/era filter. Public deployment verification remains separate.

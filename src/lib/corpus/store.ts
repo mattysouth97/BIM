@@ -21,7 +21,8 @@ export function createCorpusStore(sql: SqlExecutor = createNeonExecutor()) {
     /** Explicit operator migration; read-only public requests never create tables. */
     async initialize(): Promise<void> {
       await sql([
-        { query: "CREATE TABLE IF NOT EXISTS bimfit_corpus_releases (release_id text PRIMARY KEY, published_at timestamptz NOT NULL, snapshot_sha256 text NOT NULL, manifest jsonb NOT NULL, artifact jsonb NOT NULL)", params: [] },
+        { query: "CREATE TABLE IF NOT EXISTS bimfit_corpus_releases (release_id text PRIMARY KEY, published_at timestamptz NOT NULL, snapshot_sha256 text NOT NULL, manifest jsonb NOT NULL, artifact jsonb NOT NULL, artifact_text text NOT NULL)", params: [] },
+        { query: "ALTER TABLE bimfit_corpus_releases ADD COLUMN IF NOT EXISTS artifact_text text", params: [] },
         { query: "CREATE TABLE IF NOT EXISTS bimfit_corpus_records (release_id text NOT NULL REFERENCES bimfit_corpus_releases(release_id), record_id text NOT NULL, region text NOT NULL, use_type text NOT NULL, era text NOT NULL, record jsonb NOT NULL, PRIMARY KEY (release_id, record_id))", params: [] },
         { query: "CREATE INDEX IF NOT EXISTS bimfit_corpus_records_filters ON bimfit_corpus_records (release_id, region, use_type, era, record_id)", params: [] },
       ]);
@@ -35,7 +36,7 @@ export function createCorpusStore(sql: SqlExecutor = createNeonExecutor()) {
       if (previousReleaseId && !await release(previousReleaseId)) throw new Error("Previous release is unavailable");
       // One transaction: readers see the complete snapshot or none. No upsert/update/delete.
       await sql([
-        { query: "INSERT INTO bimfit_corpus_releases (release_id,published_at,snapshot_sha256,manifest,artifact) VALUES ($1,$2::timestamptz,$3,$4::jsonb,$5::jsonb)", params: [r.releaseId, publishedAt, digest, JSON.stringify(artifact.release), JSON.stringify(artifact)] },
+        { query: "INSERT INTO bimfit_corpus_releases (release_id,published_at,snapshot_sha256,manifest,artifact,artifact_text) VALUES ($1,$2::timestamptz,$3,$4::jsonb,$5::text::jsonb,$5::text)", params: [r.releaseId, publishedAt, digest, JSON.stringify(artifact.release), JSON.stringify(artifact)] },
         { query: "INSERT INTO bimfit_corpus_records (release_id,record_id,region,use_type,era,record) SELECT $1, item->>'id', item->'building'->>'regionCode', item->'building'->>'useTypeCode', item->'building'->>'era', item FROM jsonb_array_elements($2::jsonb) AS item", params: [r.releaseId, JSON.stringify(artifact.records)] },
       ]);
     },
@@ -62,8 +63,11 @@ export function createCorpusStore(sql: SqlExecutor = createNeonExecutor()) {
       return (result.rows[0]?.record as CorpusRecord | undefined) ?? null;
     },
     async download(releaseId: string): Promise<PublishedCorpusArtifact | null> {
-      const [result] = await sql([{ query: "SELECT artifact FROM bimfit_corpus_releases WHERE release_id=$1", params: [releaseId] }]);
-      return (result.rows[0]?.artifact as PublishedCorpusArtifact | undefined) ?? null;
+      const [result] = await sql([{ query: "SELECT artifact_text FROM bimfit_corpus_releases WHERE release_id=$1", params: [releaseId] }]);
+      if (!result.rows.length) return null;
+      // jsonb changes object-key order. Exact approved JSON must survive for hash reproduction.
+      if (typeof result.rows[0].artifact_text !== "string") throw new CorpusStoreError();
+      return JSON.parse(result.rows[0].artifact_text) as PublishedCorpusArtifact;
     },
   };
 }
