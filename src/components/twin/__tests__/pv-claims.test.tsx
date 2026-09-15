@@ -2,7 +2,7 @@ import { resolveClimateRegion } from '@/lib/energy/climate-region';
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, render, fireEvent } from "@testing-library/react";
 import { MeasureChipRow } from "../measure-chip-row";
 import { RetrofitDeltaStrip } from "../retrofit-delta-strip";
 import { referenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
@@ -44,10 +44,13 @@ describe("PV claims on the work chip and before/after strip", () => {
           roofPlanes: planes, appliedMeasureIds: [measure.id], selectedMeasureIds: [measure.id],
           buildingInputs: { buildingPk: energy.buildingPk, totalFloorArea: 1, footprintArea: 1, roofType: energy.roof!.type, sidoPrefix: "11", climateRegion: resolveClimateRegion({ sigunguCd: "11" }) },
         });
-        const { container } = render(<>
+        const { container, getByRole } = render(<>
           <MeasureChipRow measures={[measure]} recommendedIds={[measure.id]} totalFloorAreaSqm={1} />
           <RetrofitDeltaStrip />
         </>);
+        // PV is now priced, so its physical details live in the expandable
+        // priced section rather than the always-visible unpriced warning.
+        fireEvent.click(getByRole('button', { name: lang === 'ko' ? '자세히' : 'Detail', exact: true }));
         const claim = container.querySelector('[data-measure-claim]')!.textContent!;
         const strip = container.querySelector('[data-retrofit-delta-strip]')!.textContent!;
         const capacityPattern = /→ ([\d.]+) kWp/;
