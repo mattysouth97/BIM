@@ -174,6 +174,12 @@ describe("the grade sentence reproduces the numbers it explains", () => {
     expect(ko).toContain(energy.climate.assumptionId);
     const primary = ko.match(/1차에너지 ([\d,.]+) kWh\/m²·yr/);
     expect(Number(primary![1].replace(/,/g, ""))).toBeCloseTo(rating.primaryEnergyPerArea, 1);
+    // The English branch asserts "not a certification result". Assert the
+    // Korean one too: it is the disclaimer this product's actual readers
+    // see, and without this it could be deleted with the suite still green.
+    expect(ko).toContain("공인 인증 결과가 아닙니다");
+    const site = ko.match(/사용 에너지는 ([\d,.]+) kWh\/m²·yr/);
+    expect(Number(site![1].replace(/,/g, ""))).toBeCloseTo(sitePerSqm, 1);
     expect(ko).toContain("주용도코드 02000 기준 주거용 기준표");
   });
 });
