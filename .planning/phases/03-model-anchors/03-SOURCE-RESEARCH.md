@@ -76,3 +76,9 @@ Reviewed `03-01-PLAN.md`, `03-02-PLAN.md`, `03-03-PLAN.md` against the current `
 | Verification | PASS | All-model contracts, types, hashes and actual browser rendering required. The three plan files are execution intent, not completed evidence. |
 
 No source or application files were changed by this research worker; only this report and the authorized external hotel cache were written.
+
+## Final bounded Korean acquisition pass (2026-09-15)
+
+The follow-up used the specific University of Seoul lead rather than another broad model search. The [2020 primary paper record](https://www.kci.go.kr/kciportal/ci/sereArticleSearch/ciSereArtiView.kci?sereArticleSearchBean.artiId=ART002670783), DOI 10.7848/ksgpc.2020.38.6.623, also describes its 21st Century Building IFC. References to BIMserver examples in the same work do not establish that the Korean model belongs to that public example set. The [KAIA project record](https://www.kaia.re.kr/portal/landmark/readTskRsltList.do?listCd=Stdcic&menuNo=200060&tskId=135746&yearCnt=2) identifies associated IFC-to-IndoorGML standardization work; it supplies no model redistribution grant. The [OGC sample documentation](https://docs.ogc.org/is/14-005r3/14-005r3.html) describes an FJK-Haus-derived example, not evidence of a Korean building model.
+
+No candidate in this bounded follow-up supplied all required items: actual IFC/DXF bytes, verifiable Korean building identity, the model rightsholder, and permission to redistribute converted geometry. ANCH-03 remains unmet. This finding does not assert that no eligible model exists. An authorized owner-supplied Korean IFC/DXF or an identifiable public release with model-specific rights would resolve the intake gate. No outreach occurred.
