@@ -43,8 +43,9 @@ describe("KIT Office: source and displayed identity", () => {
     expect(card.datums.reduce((sum, d) => sum + d.roomAreaSqm, 0)).toBeCloseTo(area, 2);
     expect(card.datums.reduce((sum, d) => sum + d.rooms, 0)).toBe(spaces.length);
     const rooms = card.figures.find((f) => f.id === "rooms")!;
-    const [stated, basement, offices, attic] = [...rooms.read.matchAll(/\d+/g)].map((m) => Number(m[0]));
-    expect(basement + offices + attic).toBe(stated);
+    const [, rawTotal, exclusions, result] = rooms.read.match(/IfcSpace (\d+) − (\d+) excluded .* = (\d+)/)!;
+    const stated = Number(result);
+    expect(Number(rawTotal) - Number(exclusions)).toBe(stated);
     expect(stated).toBe(Number(rooms.value));
     expect(stated).toBe(manifest.counts.spacesFloor);
     const displayedArea = Number(card.figures.find((f) => f.id === "floor-area")!.value.replace(/[^\d.]/g, ""));

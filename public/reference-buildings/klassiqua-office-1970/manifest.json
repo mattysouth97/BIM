@@ -1178,7 +1178,8 @@
   },
   "galleryEvidence": {
     "generator": "build-gallery-catalogue.mjs:1",
-    "spacesSha256": "e640d0dca0d758e3513932435e5fb4ac24691e35895f4bf70acf14eea883768e",
+    "spacesSha256": "76c772754fc9ee87da53eb52b38bff130d719347e54ea8da419f5fded5f8e351",
+    "spacesHashScope": "UTF-8 JSON.stringify of parsed spaces.json; independent of checkout line endings",
     "areaSources": [
       "solid_plan_union"
     ],

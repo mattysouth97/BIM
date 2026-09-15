@@ -50,7 +50,8 @@ export function deriveGalleryEvidence(manifest, spacesBytes) {
   }
   return {
     generator: 'build-gallery-catalogue.mjs:1',
-    spacesSha256: createHash('sha256').update(spacesBytes).digest('hex'),
+    spacesSha256: createHash('sha256').update(JSON.stringify(document)).digest('hex'),
+    spacesHashScope: 'UTF-8 JSON.stringify of parsed spaces.json; independent of checkout line endings',
     areaSources: [...new Set(floor.map(row => row.areaQuantityName || row.floorAreaSource || 'space-plan geometry'))].sort(),
     exclusions: [...exclusions].map(([reason, count]) => ({reason, count})),
     datums: manifest.storeys.map(storey => {

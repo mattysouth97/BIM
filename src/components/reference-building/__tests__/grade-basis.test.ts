@@ -26,9 +26,11 @@ import { buildEndUseLoads } from "@/lib/energy/end-uses";
 import { calculateSystemBreakdown } from "@/lib/energy/system-breakdown";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import {
-  REFERENCE_BUILDING_IDS,
+  REFERENCE_BUILDING_IDS as ALL_REFERENCE_BUILDING_IDS,
   type ReferenceBuildingId,
 } from "@/lib/reference-buildings/manifest";
+
+const REFERENCE_BUILDING_IDS = ALL_REFERENCE_BUILDING_IDS.filter(id => referenceBuildingEnergyInputs(id) !== null);
 
 function run(id: ReferenceBuildingId) {
   const energy = referenceBuildingEnergyInputs(id)!;

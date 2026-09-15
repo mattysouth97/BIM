@@ -40,13 +40,22 @@ describe("every published building ships roof planes that reconcile with its man
       it("is the contract, with the union and occlusion counts stated", () => {
         expect(file.kind).toBe("bimfit_reference_building_roof_planes");
         expect(file.id).toBe(id);
-        expect(file.planes.length).toBeGreaterThan(0);
+        if (manifest.envelopeStatus === "unresolved") {
+          expect(file.planes).toEqual([]);
+          expect(manifest.areas.roofNote).toMatch(/unresolved/);
+        } else expect(file.planes.length).toBeGreaterThan(0);
         expect(file.occludedPlanes).toBeGreaterThanOrEqual(0);
         expect(file.note).toMatch(/sky sees/);
       });
 
       it("sum of projected = what the sky sees = the manifest's roof union, within 1 %", () => {
         const projected = sum(file.planes.map((p) => p.projectedSqm));
+        if (manifest.envelopeStatus === "unresolved") {
+          expect(projected).toBe(0);
+          expect(file.skyUnionSqm).toBe(0);
+          expect(manifest.areas.roofUnionSqm).toBe(0);
+          return;
+        }
         expect(Math.abs(projected - file.skyUnionSqm) / file.skyUnionSqm).toBeLessThan(0.01);
         const union = manifest.areas.roofUnionSqm;
         expect(union).toBeDefined();

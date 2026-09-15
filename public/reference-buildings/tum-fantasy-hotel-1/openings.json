@@ -1,0 +1,4876 @@
+{
+  "kind": "bimfit_reference_building_openings",
+  "id": "tum-fantasy-hotel-1",
+  "note": "Glazing aperture 130.33 m² = 0 IfcWindow at OverallWidth × OverallHeight (0 m²) + 23 exterior IfcCurtainWall at the projected outline of their plates and mullions (130.33 m²; the glass plates alone give 123.11 m², the bounding rectangles 130.4 m²). Exterior doors are separate — a door is aperture, not glazing: 0 IfcDoor, 0 m², OverallWidth × OverallHeight. Host wall by IfcRelFillsElement → IfcOpeningElement → IfcRelVoidsElement (0 openings); a curtain wall is its own wall segment (23). Sector is the host wall's, from the same orientation pass as the wall split. Envelope by a both-sides probe against the conditioned IfcSpace solids (26 of 26 have geometry): 0 curtain wall(s) with a room on both sides excluded as interior screens (0 m²); 98 openings hosted in walls outside the exterior set; nothing unresolved. IsExternal is reported per row and never used as a filter — it means \"not an interior partition\" to an authoring tool, never \"bounds conditioned space against outdoor air\". It marks 14 door(s) here; 0 confirm against an exterior wall, 14 do not: #2596 M_Door-Passage-Single-Flush:900 x 2400mm:1597571 2.5 m², #3051 M_Door-Passage-Single-Flush:900 x 2400mm:1597715 2.5 m², #3066 M_Door-Passage-Single-Flush:900 x 2400mm:1597766 2.5 m², #3081 M_Door-Passage-Single-Flush:900 x 2400mm:1597954 2.5 m², #3096 M_Door-Passage-Single-Flush:900 x 2400mm:1598042 2.5 m², #3111 M_Door-Passage-Single-Flush:900 x 2400mm:1598146 2.5 m², #3126 M_Door-Passage-Single-Flush:900 x 2400mm:1598276 2.5 m², #3141 M_Door-Passage-Single-Flush:900 x 2400mm:1598334 2.5 m², #48225 M_Door-Passage-Single-Flush:900 x 2200mm:1712416 2.3 m², #48679 M_Door-Passage-Single-Flush:900 x 2200mm:1712530 2.3 m², #50473 M_Door-Passage-Single-Vision_Lite:750 x 2000mm:1712675 1.79 m², #50528 M_Door-Passage-Single-Flush:900 x 2200mm:1715003 2.3 m², #50543 M_Door-Passage-Single-Flush:900 x 2200mm:1715105 2.3 m², #50558 M_Door-Passage-Single-Flush:900 x 2200mm:1715293 2.3 m². Rows in openings.json.",
+  "summary": {
+    "interiorCurtainWalls": {
+      "count": 0,
+      "sqm": 0
+    },
+    "hostedInInteriorWalls": {
+      "count": 98,
+      "sqm": 114.61
+    },
+    "outsideWallSetWindows": {
+      "count": 0,
+      "sqm": 0
+    },
+    "outsideWallSetDoors": {
+      "count": 0,
+      "sqm": 0
+    },
+    "subFrames": 0,
+    "hostBasis": {
+      "fills": 0,
+      "adjacent": 0,
+      "self": 23,
+      "curtain-wall part": 0
+    },
+    "isExternalDoors": {
+      "total": 14,
+      "counted": 0,
+      "notCounted": [
+        {
+          "id": 2596,
+          "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1597571",
+          "areaSqm": 2.5,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595951\" is not in the exterior-wall set"
+        },
+        {
+          "id": 3051,
+          "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1597715",
+          "areaSqm": 2.5,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595951\" is not in the exterior-wall set"
+        },
+        {
+          "id": 3066,
+          "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1597766",
+          "areaSqm": 2.5,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596408\" is not in the exterior-wall set"
+        },
+        {
+          "id": 3081,
+          "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1597954",
+          "areaSqm": 2.5,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596408\" is not in the exterior-wall set"
+        },
+        {
+          "id": 3096,
+          "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1598042",
+          "areaSqm": 2.5,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596322\" is not in the exterior-wall set"
+        },
+        {
+          "id": 3111,
+          "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1598146",
+          "areaSqm": 2.5,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596322\" is not in the exterior-wall set"
+        },
+        {
+          "id": 3126,
+          "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1598276",
+          "areaSqm": 2.5,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596136\" is not in the exterior-wall set"
+        },
+        {
+          "id": 3141,
+          "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1598334",
+          "areaSqm": 2.5,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596136\" is not in the exterior-wall set"
+        },
+        {
+          "id": 48225,
+          "name": "M_Door-Passage-Single-Flush:900 x 2200mm:1712416",
+          "areaSqm": 2.3,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643839\" is not in the exterior-wall set"
+        },
+        {
+          "id": 48679,
+          "name": "M_Door-Passage-Single-Flush:900 x 2200mm:1712530",
+          "areaSqm": 2.3,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643839\" is not in the exterior-wall set"
+        },
+        {
+          "id": 50473,
+          "name": "M_Door-Passage-Single-Vision_Lite:750 x 2000mm:1712675",
+          "areaSqm": 1.785,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643839\" is not in the exterior-wall set"
+        },
+        {
+          "id": 50528,
+          "name": "M_Door-Passage-Single-Flush:900 x 2200mm:1715003",
+          "areaSqm": 2.3,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1644192\" is not in the exterior-wall set"
+        },
+        {
+          "id": 50543,
+          "name": "M_Door-Passage-Single-Flush:900 x 2200mm:1715105",
+          "areaSqm": 2.3,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1644192\" is not in the exterior-wall set"
+        },
+        {
+          "id": 50558,
+          "name": "M_Door-Passage-Single-Flush:900 x 2200mm:1715293",
+          "areaSqm": 2.3,
+          "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1644192\" is not in the exterior-wall set"
+        }
+      ]
+    },
+    "glazingApertureSqm": 130.33,
+    "glazingByOrientationSqm": {
+      "N": 23.39,
+      "NE": 0,
+      "E": 95.13,
+      "SE": 0,
+      "S": 11.81,
+      "SW": 0,
+      "W": 0,
+      "NW": 0
+    },
+    "exteriorDoorSqm": 0,
+    "exteriorDoorByOrientationSqm": {
+      "N": 0,
+      "NE": 0,
+      "E": 0,
+      "SE": 0,
+      "S": 0,
+      "SW": 0,
+      "W": 0,
+      "NW": 0
+    },
+    "windowCount": 0,
+    "windowSqm": 0,
+    "curtainWallCount": 23,
+    "curtainWallSqm": 130.33,
+    "curtainWallPlateSqm": 123.11,
+    "curtainWallBboxSqm": 130.4,
+    "doorCount": 0,
+    "unsectoredSqm": 0,
+    "unresolvedSqm": 0,
+    "probe": {
+      "usable": true,
+      "complete": true,
+      "spaceSolids": 26,
+      "conditionedSpaces": 26
+    }
+  },
+  "openings": [
+    {
+      "id": 6843,
+      "type": "IfcWindow",
+      "name": "M_Window-Fixed:600 x 900mm:1607565",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#6843",
+      "widthM": 0.6,
+      "heightM": 0.9,
+      "areaSqm": 0.54,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.6,
+        "depthM": 0.26,
+        "heightM": 0.9,
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -4.5,
+            -19.18
+          ],
+          [
+            -3.9,
+            -19.18
+          ],
+          [
+            -3.9,
+            -18.93
+          ],
+          [
+            -4.5,
+            -18.93
+          ]
+        ]
+      },
+      "hostExpressID": 603,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595769\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595769\" is not in the exterior-wall set"
+    },
+    {
+      "id": 7057,
+      "type": "IfcWindow",
+      "name": "M_Window-Fixed:600 x 900mm:1607703",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7057",
+      "widthM": 0.6,
+      "heightM": 0.9,
+      "areaSqm": 0.54,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.6,
+        "depthM": 0.26,
+        "heightM": 0.9,
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -5.4,
+            -19.18
+          ],
+          [
+            -4.8,
+            -19.18
+          ],
+          [
+            -4.8,
+            -18.93
+          ],
+          [
+            -5.4,
+            -18.93
+          ]
+        ]
+      },
+      "hostExpressID": 603,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595769\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595769\" is not in the exterior-wall set"
+    },
+    {
+      "id": 7182,
+      "type": "IfcWindow",
+      "name": "M_Window-Fixed:600 x 900mm:1607835",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7182",
+      "widthM": 0.6,
+      "heightM": 0.9,
+      "areaSqm": 0.54,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.6,
+        "depthM": 0.26,
+        "heightM": 0.9,
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -6.4,
+            -19.18
+          ],
+          [
+            -5.8,
+            -19.18
+          ],
+          [
+            -5.8,
+            -18.93
+          ],
+          [
+            -6.4,
+            -18.93
+          ]
+        ]
+      },
+      "hostExpressID": 603,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595769\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595769\" is not in the exterior-wall set"
+    },
+    {
+      "id": 7236,
+      "type": "IfcWindow",
+      "name": "M_Window-Fixed:600 x 900mm:1607888",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7236",
+      "widthM": 0.6,
+      "heightM": 0.9,
+      "areaSqm": 0.54,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.6,
+        "depthM": 0.26,
+        "heightM": 0.9,
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -11.3,
+            -19.18
+          ],
+          [
+            -10.7,
+            -19.18
+          ],
+          [
+            -10.7,
+            -18.93
+          ],
+          [
+            -11.3,
+            -18.93
+          ]
+        ]
+      },
+      "hostExpressID": 603,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595769\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595769\" is not in the exterior-wall set"
+    },
+    {
+      "id": 7290,
+      "type": "IfcWindow",
+      "name": "M_Window-Fixed:600 x 900mm:1608005",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7290",
+      "widthM": 0.6,
+      "heightM": 0.9,
+      "areaSqm": 0.54,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.6,
+        "depthM": 0.26,
+        "heightM": 0.9,
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -10.4,
+            -19.18
+          ],
+          [
+            -9.8,
+            -19.18
+          ],
+          [
+            -9.8,
+            -18.93
+          ],
+          [
+            -10.4,
+            -18.93
+          ]
+        ]
+      },
+      "hostExpressID": 603,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595769\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595769\" is not in the exterior-wall set"
+    },
+    {
+      "id": 7344,
+      "type": "IfcWindow",
+      "name": "M_Window-Fixed:600 x 900mm:1608048",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7344",
+      "widthM": 0.6,
+      "heightM": 0.9,
+      "areaSqm": 0.54,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.6,
+        "depthM": 0.26,
+        "heightM": 0.9,
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -9.5,
+            -19.18
+          ],
+          [
+            -8.9,
+            -19.18
+          ],
+          [
+            -8.9,
+            -18.93
+          ],
+          [
+            -9.5,
+            -18.93
+          ]
+        ]
+      },
+      "hostExpressID": 603,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595769\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595769\" is not in the exterior-wall set"
+    },
+    {
+      "id": 7398,
+      "type": "IfcWindow",
+      "name": "M_Window-Fixed:600 x 900mm:1608150",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7398",
+      "widthM": 0.6,
+      "heightM": 0.9,
+      "areaSqm": 0.54,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.6,
+        "depthM": 0.26,
+        "heightM": 0.9,
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -6.9,
+            0.8
+          ],
+          [
+            -6.3,
+            0.8
+          ],
+          [
+            -6.3,
+            1.06
+          ],
+          [
+            -6.9,
+            1.06
+          ]
+        ]
+      },
+      "hostExpressID": 1468,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596322\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596322\" is not in the exterior-wall set"
+    },
+    {
+      "id": 7452,
+      "type": "IfcWindow",
+      "name": "M_Window-Fixed:600 x 900mm:1608225",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7452",
+      "widthM": 0.6,
+      "heightM": 0.9,
+      "areaSqm": 0.54,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.6,
+        "depthM": 0.26,
+        "heightM": 0.9,
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -6,
+            0.8
+          ],
+          [
+            -5.4,
+            0.8
+          ],
+          [
+            -5.4,
+            1.06
+          ],
+          [
+            -6,
+            1.06
+          ]
+        ]
+      },
+      "hostExpressID": 1468,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596322\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596322\" is not in the exterior-wall set"
+    },
+    {
+      "id": 7506,
+      "type": "IfcWindow",
+      "name": "M_Window-Fixed:600 x 900mm:1608302",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7506",
+      "widthM": 0.6,
+      "heightM": 0.9,
+      "areaSqm": 0.54,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.6,
+        "depthM": 0.26,
+        "heightM": 0.9,
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -9,
+            0.8
+          ],
+          [
+            -8.4,
+            0.8
+          ],
+          [
+            -8.4,
+            1.06
+          ],
+          [
+            -9,
+            1.06
+          ]
+        ]
+      },
+      "hostExpressID": 1468,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596322\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596322\" is not in the exterior-wall set"
+    },
+    {
+      "id": 7560,
+      "type": "IfcWindow",
+      "name": "M_Window-Fixed:600 x 900mm:1608365",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7560",
+      "widthM": 0.6,
+      "heightM": 0.9,
+      "areaSqm": 0.54,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.6,
+        "depthM": 0.26,
+        "heightM": 0.9,
+        "bottomM": 0.9,
+        "plan": [
+          [
+            -9.9,
+            0.8
+          ],
+          [
+            -9.3,
+            0.8
+          ],
+          [
+            -9.3,
+            1.06
+          ],
+          [
+            -9.9,
+            1.06
+          ]
+        ]
+      },
+      "hostExpressID": 1468,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596322\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596322\" is not in the exterior-wall set"
+    },
+    {
+      "id": 9158,
+      "type": "IfcWindow",
+      "name": "Window-Awning-Triple-Horizontal:60\" x 24\":1630394",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#9158",
+      "widthM": 1.524,
+      "heightM": 0.61,
+      "areaSqm": 0.929,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.52,
+        "depthM": 0.26,
+        "heightM": 0.61,
+        "bottomM": 5.81,
+        "plan": [
+          [
+            -16.21,
+            -18.16
+          ],
+          [
+            -15.96,
+            -18.16
+          ],
+          [
+            -15.96,
+            -16.64
+          ],
+          [
+            -16.21,
+            -16.64
+          ]
+        ]
+      },
+      "hostExpressID": 8672,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630208\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630208\" is not in the exterior-wall set"
+    },
+    {
+      "id": 9340,
+      "type": "IfcWindow",
+      "name": "Window-Awning-Triple-Horizontal:60\" x 24\":1630400",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#9340",
+      "widthM": 1.524,
+      "heightM": 0.61,
+      "areaSqm": 0.929,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.52,
+        "depthM": 0.26,
+        "heightM": 0.61,
+        "bottomM": 5.81,
+        "plan": [
+          [
+            -16.21,
+            -15.64
+          ],
+          [
+            -15.96,
+            -15.64
+          ],
+          [
+            -15.96,
+            -14.12
+          ],
+          [
+            -16.21,
+            -14.12
+          ]
+        ]
+      },
+      "hostExpressID": 8672,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630208\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630208\" is not in the exterior-wall set"
+    },
+    {
+      "id": 9422,
+      "type": "IfcWindow",
+      "name": "Window-Awning-Triple-Horizontal:60\" x 24\":1630406",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#9422",
+      "widthM": 1.524,
+      "heightM": 0.61,
+      "areaSqm": 0.929,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.52,
+        "depthM": 0.26,
+        "heightM": 0.61,
+        "bottomM": 5.81,
+        "plan": [
+          [
+            -15.46,
+            -19.36
+          ],
+          [
+            -13.93,
+            -19.36
+          ],
+          [
+            -13.93,
+            -19.1
+          ],
+          [
+            -15.46,
+            -19.1
+          ]
+        ]
+      },
+      "hostExpressID": 8567,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630207\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630207\" is not in the exterior-wall set"
+    },
+    {
+      "id": 9504,
+      "type": "IfcWindow",
+      "name": "Window-Awning-Triple-Horizontal:60\" x 24\":1630412",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#9504",
+      "widthM": 1.524,
+      "heightM": 0.61,
+      "areaSqm": 0.929,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.52,
+        "depthM": 0.26,
+        "heightM": 0.61,
+        "bottomM": 5.81,
+        "plan": [
+          [
+            -16.21,
+            -10.38
+          ],
+          [
+            -15.96,
+            -10.38
+          ],
+          [
+            -15.96,
+            -8.85
+          ],
+          [
+            -16.21,
+            -8.85
+          ]
+        ]
+      },
+      "hostExpressID": 8672,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630208\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630208\" is not in the exterior-wall set"
+    },
+    {
+      "id": 9586,
+      "type": "IfcWindow",
+      "name": "Window-Awning-Triple-Horizontal:60\" x 24\":1630418",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#9586",
+      "widthM": 1.524,
+      "heightM": 0.61,
+      "areaSqm": 0.929,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.52,
+        "depthM": 0.26,
+        "heightM": 0.61,
+        "bottomM": 5.81,
+        "plan": [
+          [
+            -16.21,
+            -4.29
+          ],
+          [
+            -15.96,
+            -4.29
+          ],
+          [
+            -15.96,
+            -2.76
+          ],
+          [
+            -16.21,
+            -2.76
+          ]
+        ]
+      },
+      "hostExpressID": 8672,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630208\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630208\" is not in the exterior-wall set"
+    },
+    {
+      "id": 9668,
+      "type": "IfcWindow",
+      "name": "Window-Awning-Triple-Horizontal:60\" x 24\":1630424",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#9668",
+      "widthM": 1.524,
+      "heightM": 0.61,
+      "areaSqm": 0.929,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.52,
+        "depthM": 0.26,
+        "heightM": 0.61,
+        "bottomM": 5.81,
+        "plan": [
+          [
+            -16.21,
+            -6.81
+          ],
+          [
+            -15.96,
+            -6.81
+          ],
+          [
+            -15.96,
+            -5.29
+          ],
+          [
+            -16.21,
+            -5.29
+          ]
+        ]
+      },
+      "hostExpressID": 8672,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630208\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630208\" is not in the exterior-wall set"
+    },
+    {
+      "id": 9750,
+      "type": "IfcWindow",
+      "name": "Window-Awning-Triple-Horizontal:60\" x 24\":1630430",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#9750",
+      "widthM": 1.524,
+      "heightM": 0.61,
+      "areaSqm": 0.929,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.52,
+        "depthM": 0.26,
+        "heightM": 0.61,
+        "bottomM": 5.81,
+        "plan": [
+          [
+            -16.21,
+            1.84
+          ],
+          [
+            -15.96,
+            1.84
+          ],
+          [
+            -15.96,
+            3.36
+          ],
+          [
+            -16.21,
+            3.36
+          ]
+        ]
+      },
+      "hostExpressID": 8672,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630208\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630208\" is not in the exterior-wall set"
+    },
+    {
+      "id": 9832,
+      "type": "IfcWindow",
+      "name": "Window-Awning-Triple-Horizontal:60\" x 24\":1630436",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#9832",
+      "widthM": 1.524,
+      "heightM": 0.61,
+      "areaSqm": 0.929,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.52,
+        "depthM": 0.26,
+        "heightM": 0.61,
+        "bottomM": 5.81,
+        "plan": [
+          [
+            -16.21,
+            4.06
+          ],
+          [
+            -15.96,
+            4.06
+          ],
+          [
+            -15.96,
+            5.58
+          ],
+          [
+            -16.21,
+            5.58
+          ]
+        ]
+      },
+      "hostExpressID": 8672,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630208\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630208\" is not in the exterior-wall set"
+    },
+    {
+      "id": 9914,
+      "type": "IfcWindow",
+      "name": "Window-Awning-Triple-Horizontal:60\" x 24\":1630442",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#9914",
+      "widthM": 1.524,
+      "heightM": 0.61,
+      "areaSqm": 0.929,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.52,
+        "depthM": 0.26,
+        "heightM": 0.61,
+        "bottomM": 5.81,
+        "plan": [
+          [
+            -16.21,
+            8.32
+          ],
+          [
+            -15.96,
+            8.32
+          ],
+          [
+            -15.96,
+            9.85
+          ],
+          [
+            -16.21,
+            9.85
+          ]
+        ]
+      },
+      "hostExpressID": 8672,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630208\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630208\" is not in the exterior-wall set"
+    },
+    {
+      "id": 9993,
+      "type": "IfcWindow",
+      "name": "Window-Awning-Triple-Horizontal:60\" x 24\":1630448",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#9993",
+      "widthM": 1.524,
+      "heightM": 0.61,
+      "areaSqm": 0.929,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.52,
+        "depthM": 0.26,
+        "heightM": 0.61,
+        "bottomM": 5.81,
+        "plan": [
+          [
+            -16.21,
+            15.51
+          ],
+          [
+            -15.96,
+            15.51
+          ],
+          [
+            -15.96,
+            17.04
+          ],
+          [
+            -16.21,
+            17.04
+          ]
+        ]
+      },
+      "hostExpressID": 8672,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630208\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630208\" is not in the exterior-wall set"
+    },
+    {
+      "id": 10075,
+      "type": "IfcWindow",
+      "name": "Window-Awning-Triple-Horizontal:60\" x 24\":1630454",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#10075",
+      "widthM": 1.524,
+      "heightM": 0.61,
+      "areaSqm": 0.929,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.52,
+        "depthM": 0.26,
+        "heightM": 0.61,
+        "bottomM": 5.81,
+        "plan": [
+          [
+            -16.21,
+            12.99
+          ],
+          [
+            -15.96,
+            12.99
+          ],
+          [
+            -15.96,
+            14.51
+          ],
+          [
+            -16.21,
+            14.51
+          ]
+        ]
+      },
+      "hostExpressID": 8672,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630208\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630208\" is not in the exterior-wall set"
+    },
+    {
+      "id": 10365,
+      "type": "IfcWindow",
+      "name": "Window-Awning-Triple-Horizontal:60\" x 24\":1630461",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#10365",
+      "widthM": 1.524,
+      "heightM": 0.61,
+      "areaSqm": 0.929,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.52,
+        "depthM": 0.26,
+        "heightM": 0.61,
+        "bottomM": 5.81,
+        "plan": [
+          [
+            -14.86,
+            17.8
+          ],
+          [
+            -13.33,
+            17.8
+          ],
+          [
+            -13.33,
+            18.06
+          ],
+          [
+            -14.86,
+            18.06
+          ]
+        ]
+      },
+      "hostExpressID": 8722,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630209\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630209\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50684,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1717072",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50684",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.82,
+        "plan": [
+          [
+            -5.37,
+            -19.38
+          ],
+          [
+            -4.41,
+            -19.38
+          ],
+          [
+            -4.41,
+            -19.08
+          ],
+          [
+            -5.37,
+            -19.08
+          ]
+        ]
+      },
+      "hostExpressID": 8567,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630207\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630207\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50703,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1717551",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50703",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.86,
+        "plan": [
+          [
+            -4.36,
+            -19.38
+          ],
+          [
+            -3.4,
+            -19.38
+          ],
+          [
+            -3.4,
+            -19.08
+          ],
+          [
+            -4.36,
+            -19.08
+          ]
+        ]
+      },
+      "hostExpressID": 8567,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630207\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630207\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50717,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1717727",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50717",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.82,
+        "plan": [
+          [
+            -7.38,
+            -19.38
+          ],
+          [
+            -6.42,
+            -19.38
+          ],
+          [
+            -6.42,
+            -19.08
+          ],
+          [
+            -7.38,
+            -19.08
+          ]
+        ]
+      },
+      "hostExpressID": 8567,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630207\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630207\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50731,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1717781",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50731",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.82,
+        "plan": [
+          [
+            -8.39,
+            -19.38
+          ],
+          [
+            -7.43,
+            -19.38
+          ],
+          [
+            -7.43,
+            -19.08
+          ],
+          [
+            -8.39,
+            -19.08
+          ]
+        ]
+      },
+      "hostExpressID": 8567,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630207\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630207\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50745,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1717953",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50745",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.83,
+        "plan": [
+          [
+            -9.4,
+            -19.38
+          ],
+          [
+            -8.44,
+            -19.38
+          ],
+          [
+            -8.44,
+            -19.08
+          ],
+          [
+            -9.4,
+            -19.08
+          ]
+        ]
+      },
+      "hostExpressID": 8567,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630207\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630207\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50759,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1718379",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50759",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -14.27,
+            -19.2
+          ],
+          [
+            -13.31,
+            -19.2
+          ],
+          [
+            -13.31,
+            -18.9
+          ],
+          [
+            -14.27,
+            -18.9
+          ]
+        ]
+      },
+      "hostExpressID": 603,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595769\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595769\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50773,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1718487",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50773",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -15.28,
+            -19.2
+          ],
+          [
+            -14.32,
+            -19.2
+          ],
+          [
+            -14.32,
+            -18.9
+          ],
+          [
+            -15.28,
+            -18.9
+          ]
+        ]
+      },
+      "hostExpressID": 603,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595769\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595769\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50787,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1718739",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50787",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            -18.15
+          ],
+          [
+            -15.93,
+            -18.15
+          ],
+          [
+            -15.93,
+            -17.19
+          ],
+          [
+            -16.23,
+            -17.19
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50801,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1718851",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50801",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            -17.04
+          ],
+          [
+            -15.93,
+            -17.04
+          ],
+          [
+            -15.93,
+            -16.08
+          ],
+          [
+            -16.23,
+            -16.08
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50815,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1718901",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50815",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            -13.6
+          ],
+          [
+            -15.93,
+            -13.6
+          ],
+          [
+            -15.93,
+            -12.64
+          ],
+          [
+            -16.23,
+            -12.64
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50829,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1718999",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50829",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            -14.71
+          ],
+          [
+            -15.93,
+            -14.71
+          ],
+          [
+            -15.93,
+            -13.75
+          ],
+          [
+            -16.23,
+            -13.75
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50843,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1719063",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50843",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            -11.39
+          ],
+          [
+            -15.93,
+            -11.39
+          ],
+          [
+            -15.93,
+            -10.43
+          ],
+          [
+            -16.23,
+            -10.43
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50857,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1719133",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50857",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            -10.28
+          ],
+          [
+            -15.93,
+            -10.28
+          ],
+          [
+            -15.93,
+            -9.32
+          ],
+          [
+            -16.23,
+            -9.32
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50871,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1719253",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50871",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            -7.59
+          ],
+          [
+            -15.93,
+            -7.59
+          ],
+          [
+            -15.93,
+            -6.63
+          ],
+          [
+            -16.23,
+            -6.63
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50885,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1719343",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50885",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            -6.48
+          ],
+          [
+            -15.93,
+            -6.48
+          ],
+          [
+            -15.93,
+            -5.52
+          ],
+          [
+            -16.23,
+            -5.52
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50899,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1719411",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50899",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            -3.5
+          ],
+          [
+            -15.93,
+            -3.5
+          ],
+          [
+            -15.93,
+            -2.54
+          ],
+          [
+            -16.23,
+            -2.54
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50913,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1719495",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50913",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            -4.61
+          ],
+          [
+            -15.93,
+            -4.61
+          ],
+          [
+            -15.93,
+            -3.65
+          ],
+          [
+            -16.23,
+            -3.65
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50927,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1719547",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50927",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            -0.94
+          ],
+          [
+            -15.93,
+            -0.94
+          ],
+          [
+            -15.93,
+            0.02
+          ],
+          [
+            -16.23,
+            0.02
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50941,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1719755",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50941",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            1.61
+          ],
+          [
+            -15.93,
+            1.61
+          ],
+          [
+            -15.93,
+            2.57
+          ],
+          [
+            -16.23,
+            2.57
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50955,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1719837",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50955",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            2.72
+          ],
+          [
+            -15.93,
+            2.72
+          ],
+          [
+            -15.93,
+            3.68
+          ],
+          [
+            -16.23,
+            3.68
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50969,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1719903",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50969",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            5.5
+          ],
+          [
+            -15.93,
+            5.5
+          ],
+          [
+            -15.93,
+            6.46
+          ],
+          [
+            -16.23,
+            6.46
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50983,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1719985",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50983",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            4.39
+          ],
+          [
+            -15.93,
+            4.39
+          ],
+          [
+            -15.93,
+            5.35
+          ],
+          [
+            -16.23,
+            5.35
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50997,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1720133",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50997",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            8.21
+          ],
+          [
+            -15.93,
+            8.21
+          ],
+          [
+            -15.93,
+            9.17
+          ],
+          [
+            -16.23,
+            9.17
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51011,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1720247",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51011",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            9.32
+          ],
+          [
+            -15.93,
+            9.32
+          ],
+          [
+            -15.93,
+            10.28
+          ],
+          [
+            -16.23,
+            10.28
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51025,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1720481",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51025",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            11.91
+          ],
+          [
+            -15.93,
+            11.91
+          ],
+          [
+            -15.93,
+            12.87
+          ],
+          [
+            -16.23,
+            12.87
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51039,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1720559",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51039",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            13.02
+          ],
+          [
+            -15.93,
+            13.02
+          ],
+          [
+            -15.93,
+            13.98
+          ],
+          [
+            -16.23,
+            13.98
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51053,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1720637",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51053",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            16.26
+          ],
+          [
+            -15.93,
+            16.26
+          ],
+          [
+            -15.93,
+            17.22
+          ],
+          [
+            -16.23,
+            17.22
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51067,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1720741",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51067",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -16.23,
+            15.15
+          ],
+          [
+            -15.93,
+            15.15
+          ],
+          [
+            -15.93,
+            16.11
+          ],
+          [
+            -16.23,
+            16.11
+          ]
+        ]
+      },
+      "hostExpressID": 804,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595770\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595770\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51081,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1720809",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51081",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -15.38,
+            17.77
+          ],
+          [
+            -14.42,
+            17.77
+          ],
+          [
+            -14.42,
+            18.07
+          ],
+          [
+            -15.38,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 860,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595771\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595771\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51095,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1720869",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51095",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -14.17,
+            17.77
+          ],
+          [
+            -13.21,
+            17.77
+          ],
+          [
+            -13.21,
+            18.07
+          ],
+          [
+            -14.17,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 860,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595771\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595771\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51109,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1720996",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51109",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -11.62,
+            17.77
+          ],
+          [
+            -10.66,
+            17.77
+          ],
+          [
+            -10.66,
+            18.07
+          ],
+          [
+            -11.62,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 1202,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596044\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596044\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51123,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1721062",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51123",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -10.51,
+            17.77
+          ],
+          [
+            -9.55,
+            17.77
+          ],
+          [
+            -9.55,
+            18.07
+          ],
+          [
+            -10.51,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 1202,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596044\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596044\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51137,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1721128",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51137",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -9.32,
+            17.77
+          ],
+          [
+            -8.36,
+            17.77
+          ],
+          [
+            -8.36,
+            18.07
+          ],
+          [
+            -9.32,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 1202,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596044\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596044\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51151,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1721392",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51151",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -6.82,
+            17.77
+          ],
+          [
+            -5.86,
+            17.77
+          ],
+          [
+            -5.86,
+            18.07
+          ],
+          [
+            -6.82,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 1202,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596044\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596044\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51165,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1721448",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51165",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -5.61,
+            17.77
+          ],
+          [
+            -4.65,
+            17.77
+          ],
+          [
+            -4.65,
+            18.07
+          ],
+          [
+            -5.61,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 1202,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596044\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596044\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51179,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1721484",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51179",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 1.2,
+        "plan": [
+          [
+            -4.43,
+            17.77
+          ],
+          [
+            -3.47,
+            17.77
+          ],
+          [
+            -3.47,
+            18.07
+          ],
+          [
+            -4.43,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 1202,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596044\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596044\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51193,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1722221",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51193",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 6.1,
+        "plan": [
+          [
+            -11.41,
+            -19.36
+          ],
+          [
+            -10.45,
+            -19.36
+          ],
+          [
+            -10.45,
+            -19.06
+          ],
+          [
+            -11.41,
+            -19.06
+          ]
+        ]
+      },
+      "hostExpressID": 8567,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630207\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630207\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51207,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1722459",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51207",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 6.1,
+        "plan": [
+          [
+            -12.92,
+            -19.36
+          ],
+          [
+            -11.96,
+            -19.36
+          ],
+          [
+            -11.96,
+            -19.06
+          ],
+          [
+            -12.92,
+            -19.06
+          ]
+        ]
+      },
+      "hostExpressID": 8567,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630207\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630207\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51221,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1722687",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51221",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 6.1,
+        "plan": [
+          [
+            -8.65,
+            -16.43
+          ],
+          [
+            -7.69,
+            -16.43
+          ],
+          [
+            -7.69,
+            -16.13
+          ],
+          [
+            -8.65,
+            -16.13
+          ]
+        ]
+      },
+      "hostExpressID": 12685,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643839\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643839\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51235,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1722793",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51235",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.7,
+        "plan": [
+          [
+            -12.82,
+            17.77
+          ],
+          [
+            -11.86,
+            17.77
+          ],
+          [
+            -11.86,
+            18.07
+          ],
+          [
+            -12.82,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 12777,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643983\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643983\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51249,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1722895",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51249",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.7,
+        "plan": [
+          [
+            -11.71,
+            17.77
+          ],
+          [
+            -10.75,
+            17.77
+          ],
+          [
+            -10.75,
+            18.07
+          ],
+          [
+            -11.71,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 12777,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643983\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643983\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51263,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1723011",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51263",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.7,
+        "plan": [
+          [
+            -9.6,
+            17.77
+          ],
+          [
+            -8.64,
+            17.77
+          ],
+          [
+            -8.64,
+            18.07
+          ],
+          [
+            -9.6,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 12777,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643983\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643983\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51277,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1723091",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51277",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.7,
+        "plan": [
+          [
+            -8.49,
+            17.77
+          ],
+          [
+            -7.53,
+            17.77
+          ],
+          [
+            -7.53,
+            18.07
+          ],
+          [
+            -8.49,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 12777,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643983\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643983\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51291,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1723145",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51291",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.7,
+        "plan": [
+          [
+            -7.28,
+            17.77
+          ],
+          [
+            -6.32,
+            17.77
+          ],
+          [
+            -6.32,
+            18.07
+          ],
+          [
+            -7.28,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 12777,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643983\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643983\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51305,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1723293",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51305",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.7,
+        "plan": [
+          [
+            -5.47,
+            17.77
+          ],
+          [
+            -4.51,
+            17.77
+          ],
+          [
+            -4.51,
+            18.07
+          ],
+          [
+            -5.47,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 12777,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643983\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643983\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51319,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1723387",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51319",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.7,
+        "plan": [
+          [
+            -4.36,
+            17.77
+          ],
+          [
+            -3.4,
+            17.77
+          ],
+          [
+            -3.4,
+            18.07
+          ],
+          [
+            -4.36,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 12777,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643983\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643983\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51333,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1723447",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51333",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 5.7,
+        "plan": [
+          [
+            -3.31,
+            17.77
+          ],
+          [
+            -2.35,
+            17.77
+          ],
+          [
+            -2.35,
+            18.07
+          ],
+          [
+            -3.31,
+            18.07
+          ]
+        ]
+      },
+      "hostExpressID": 12777,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643983\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643983\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51347,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1723519",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51347",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 6.1,
+        "plan": [
+          [
+            -9.07,
+            15
+          ],
+          [
+            -8.11,
+            15
+          ],
+          [
+            -8.11,
+            15.3
+          ],
+          [
+            -9.07,
+            15.3
+          ]
+        ]
+      },
+      "hostExpressID": 12877,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1644192\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1644192\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51361,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1723609",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51361",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 6.1,
+        "plan": [
+          [
+            -11.42,
+            15
+          ],
+          [
+            -10.46,
+            15
+          ],
+          [
+            -10.46,
+            15.3
+          ],
+          [
+            -11.42,
+            15.3
+          ]
+        ]
+      },
+      "hostExpressID": 12877,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1644192\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1644192\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51375,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1723937",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51375",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 6.1,
+        "plan": [
+          [
+            -9.76,
+            -16.43
+          ],
+          [
+            -8.8,
+            -16.43
+          ],
+          [
+            -8.8,
+            -16.13
+          ],
+          [
+            -9.76,
+            -16.13
+          ]
+        ]
+      },
+      "hostExpressID": 12685,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643839\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643839\" is not in the exterior-wall set"
+    },
+    {
+      "id": 51389,
+      "type": "IfcWindow",
+      "name": "Windows_Sgl_Plain:910x910mm:1724035",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#51389",
+      "widthM": 0.91,
+      "heightM": 0.91,
+      "areaSqm": 0.828,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.96,
+        "depthM": 0.3,
+        "heightM": 0.91,
+        "bottomM": 6.1,
+        "plan": [
+          [
+            -11.38,
+            -16.43
+          ],
+          [
+            -10.42,
+            -16.43
+          ],
+          [
+            -10.42,
+            -16.13
+          ],
+          [
+            -11.38,
+            -16.13
+          ]
+        ]
+      },
+      "hostExpressID": 12685,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643839\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643839\" is not in the exterior-wall set"
+    },
+    {
+      "id": 2596,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1597571",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#2596",
+      "widthM": 1,
+      "heightM": 2.5,
+      "areaSqm": 2.5,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.5,
+        "bottomM": 0,
+        "plan": [
+          [
+            -7.3,
+            -16.44
+          ],
+          [
+            -6.3,
+            -16.44
+          ],
+          [
+            -6.3,
+            -16.23
+          ],
+          [
+            -7.3,
+            -16.23
+          ]
+        ]
+      },
+      "hostExpressID": 1090,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595951\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595951\" is not in the exterior-wall set"
+    },
+    {
+      "id": 3051,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1597715",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#3051",
+      "widthM": 1,
+      "heightM": 2.5,
+      "areaSqm": 2.5,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.5,
+        "bottomM": 0,
+        "plan": [
+          [
+            -8.8,
+            -16.44
+          ],
+          [
+            -7.8,
+            -16.44
+          ],
+          [
+            -7.8,
+            -16.23
+          ],
+          [
+            -8.8,
+            -16.23
+          ]
+        ]
+      },
+      "hostExpressID": 1090,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595951\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595951\" is not in the exterior-wall set"
+    },
+    {
+      "id": 3066,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1597766",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#3066",
+      "widthM": 1,
+      "heightM": 2.5,
+      "areaSqm": 2.5,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.5,
+        "bottomM": 0,
+        "plan": [
+          [
+            -7.4,
+            -1.9
+          ],
+          [
+            -6.4,
+            -1.9
+          ],
+          [
+            -6.4,
+            -1.69
+          ],
+          [
+            -7.4,
+            -1.69
+          ]
+        ]
+      },
+      "hostExpressID": 1634,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596408\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596408\" is not in the exterior-wall set"
+    },
+    {
+      "id": 3081,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1597954",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#3081",
+      "widthM": 1,
+      "heightM": 2.5,
+      "areaSqm": 2.5,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.5,
+        "bottomM": 0,
+        "plan": [
+          [
+            -8.9,
+            -1.9
+          ],
+          [
+            -7.9,
+            -1.9
+          ],
+          [
+            -7.9,
+            -1.69
+          ],
+          [
+            -8.9,
+            -1.69
+          ]
+        ]
+      },
+      "hostExpressID": 1634,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596408\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596408\" is not in the exterior-wall set"
+    },
+    {
+      "id": 3096,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1598042",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#3096",
+      "widthM": 1,
+      "heightM": 2.5,
+      "areaSqm": 2.5,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.5,
+        "bottomM": 0,
+        "plan": [
+          [
+            -4.4,
+            0.76
+          ],
+          [
+            -3.4,
+            0.76
+          ],
+          [
+            -3.4,
+            0.97
+          ],
+          [
+            -4.4,
+            0.97
+          ]
+        ]
+      },
+      "hostExpressID": 1468,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596322\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596322\" is not in the exterior-wall set"
+    },
+    {
+      "id": 3111,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1598146",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#3111",
+      "widthM": 1,
+      "heightM": 2.5,
+      "areaSqm": 2.5,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.5,
+        "bottomM": 0,
+        "plan": [
+          [
+            -11.8,
+            0.76
+          ],
+          [
+            -10.8,
+            0.76
+          ],
+          [
+            -10.8,
+            0.97
+          ],
+          [
+            -11.8,
+            0.97
+          ]
+        ]
+      },
+      "hostExpressID": 1468,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596322\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596322\" is not in the exterior-wall set"
+    },
+    {
+      "id": 3126,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1598276",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#3126",
+      "widthM": 1,
+      "heightM": 2.5,
+      "areaSqm": 2.5,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.5,
+        "bottomM": 0,
+        "plan": [
+          [
+            -8.9,
+            15.1
+          ],
+          [
+            -7.9,
+            15.1
+          ],
+          [
+            -7.9,
+            15.31
+          ],
+          [
+            -8.9,
+            15.31
+          ]
+        ]
+      },
+      "hostExpressID": 1368,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596136\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596136\" is not in the exterior-wall set"
+    },
+    {
+      "id": 3141,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2400mm:1598334",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#3141",
+      "widthM": 1,
+      "heightM": 2.5,
+      "areaSqm": 2.5,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.5,
+        "bottomM": 0,
+        "plan": [
+          [
+            -7.4,
+            15.1
+          ],
+          [
+            -6.4,
+            15.1
+          ],
+          [
+            -6.4,
+            15.31
+          ],
+          [
+            -7.4,
+            15.31
+          ]
+        ]
+      },
+      "hostExpressID": 1368,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1596136\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1596136\" is not in the exterior-wall set"
+    },
+    {
+      "id": 4927,
+      "type": "IfcDoor",
+      "name": "Doors_IntAys_1:1210x2110mm-Sgl_Swing:1607221",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#4927",
+      "widthM": 1.21,
+      "heightM": 2.11,
+      "areaSqm": 2.553,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.28,
+        "depthM": 0.32,
+        "heightM": 2.14,
+        "bottomM": 0,
+        "plan": [
+          [
+            -12.3,
+            -14.08
+          ],
+          [
+            -11.98,
+            -14.08
+          ],
+          [
+            -11.98,
+            -12.8
+          ],
+          [
+            -12.3,
+            -12.8
+          ]
+        ]
+      },
+      "hostExpressID": 904,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1595772\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1595772\" is not in the exterior-wall set"
+    },
+    {
+      "id": 6701,
+      "type": "IfcDoor",
+      "name": "Doors_IntAys_1:1210x2110mm-Sgl_Swing:1607271",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#6701",
+      "widthM": 1.21,
+      "heightM": 2.11,
+      "areaSqm": 2.553,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.28,
+        "depthM": 0.32,
+        "heightM": 2.14,
+        "bottomM": 0,
+        "plan": [
+          [
+            -12.3,
+            -7.83
+          ],
+          [
+            -11.98,
+            -7.83
+          ],
+          [
+            -11.98,
+            -6.55
+          ],
+          [
+            -12.3,
+            -6.55
+          ]
+        ]
+      },
+      "hostExpressID": 15142,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1656976\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1656976\" is not in the exterior-wall set"
+    },
+    {
+      "id": 6719,
+      "type": "IfcDoor",
+      "name": "Doors_IntAys_1:1210x2110mm-Sgl_Swing:1607342",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#6719",
+      "widthM": 1.21,
+      "heightM": 2.11,
+      "areaSqm": 2.553,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.28,
+        "depthM": 0.32,
+        "heightM": 2.14,
+        "bottomM": 0,
+        "plan": [
+          [
+            -12.3,
+            5.42
+          ],
+          [
+            -11.98,
+            5.42
+          ],
+          [
+            -11.98,
+            6.7
+          ],
+          [
+            -12.3,
+            6.7
+          ]
+        ]
+      },
+      "hostExpressID": 15142,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1656976\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1656976\" is not in the exterior-wall set"
+    },
+    {
+      "id": 6735,
+      "type": "IfcDoor",
+      "name": "Doors_IntAys_1:1210x2110mm-Sgl_Swing:1607418",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#6735",
+      "widthM": 1.21,
+      "heightM": 2.11,
+      "areaSqm": 2.553,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.28,
+        "depthM": 0.32,
+        "heightM": 2.14,
+        "bottomM": 0,
+        "plan": [
+          [
+            -12.3,
+            11.47
+          ],
+          [
+            -11.98,
+            11.47
+          ],
+          [
+            -11.98,
+            12.75
+          ],
+          [
+            -12.3,
+            12.75
+          ]
+        ]
+      },
+      "hostExpressID": 15222,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1657244\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1657244\" is not in the exterior-wall set"
+    },
+    {
+      "id": 8886,
+      "type": "IfcDoor",
+      "name": "Doors_IntAys_1:1210x2110mm-Sgl_Swing:1630236",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#8886",
+      "widthM": 1.21,
+      "heightM": 2.11,
+      "areaSqm": 2.553,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.28,
+        "depthM": 0.32,
+        "heightM": 2.14,
+        "bottomM": 4.9,
+        "plan": [
+          [
+            -13.3,
+            -14.08
+          ],
+          [
+            -12.98,
+            -14.08
+          ],
+          [
+            -12.98,
+            -12.8
+          ],
+          [
+            -13.3,
+            -12.8
+          ]
+        ]
+      },
+      "hostExpressID": 8766,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1630210\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1630210\" is not in the exterior-wall set"
+    },
+    {
+      "id": 8902,
+      "type": "IfcDoor",
+      "name": "Doors_IntAys_1:1210x2110mm-Sgl_Swing:1630237",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#8902",
+      "widthM": 1.21,
+      "heightM": 2.11,
+      "areaSqm": 2.553,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.28,
+        "depthM": 0.32,
+        "heightM": 2.14,
+        "bottomM": 4.9,
+        "plan": [
+          [
+            -13.3,
+            -7.83
+          ],
+          [
+            -12.98,
+            -7.83
+          ],
+          [
+            -12.98,
+            -6.55
+          ],
+          [
+            -13.3,
+            -6.55
+          ]
+        ]
+      },
+      "hostExpressID": 10521,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1631188\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1631188\" is not in the exterior-wall set"
+    },
+    {
+      "id": 8918,
+      "type": "IfcDoor",
+      "name": "Doors_IntAys_1:1210x2110mm-Sgl_Swing:1630238",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#8918",
+      "widthM": 1.21,
+      "heightM": 2.11,
+      "areaSqm": 2.553,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.28,
+        "depthM": 0.32,
+        "heightM": 2.14,
+        "bottomM": 4.9,
+        "plan": [
+          [
+            -13.3,
+            5.42
+          ],
+          [
+            -12.98,
+            5.42
+          ],
+          [
+            -12.98,
+            6.7
+          ],
+          [
+            -13.3,
+            6.7
+          ]
+        ]
+      },
+      "hostExpressID": 10521,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1631188\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1631188\" is not in the exterior-wall set"
+    },
+    {
+      "id": 8934,
+      "type": "IfcDoor",
+      "name": "Doors_IntAys_1:1210x2110mm-Sgl_Swing:1630239",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#8934",
+      "widthM": 1.21,
+      "heightM": 2.11,
+      "areaSqm": 2.553,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1.28,
+        "depthM": 0.32,
+        "heightM": 2.14,
+        "bottomM": 4.9,
+        "plan": [
+          [
+            -13.3,
+            11.47
+          ],
+          [
+            -12.98,
+            11.47
+          ],
+          [
+            -12.98,
+            12.75
+          ],
+          [
+            -13.3,
+            12.75
+          ]
+        ]
+      },
+      "hostExpressID": 10601,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1631262\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1631262\" is not in the exterior-wall set"
+    },
+    {
+      "id": 48225,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2200mm:1712416",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#48225",
+      "widthM": 1,
+      "heightM": 2.3,
+      "areaSqm": 2.3,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.3,
+        "bottomM": 4.9,
+        "plan": [
+          [
+            -5.73,
+            -16.44
+          ],
+          [
+            -4.73,
+            -16.44
+          ],
+          [
+            -4.73,
+            -16.23
+          ],
+          [
+            -5.73,
+            -16.23
+          ]
+        ]
+      },
+      "hostExpressID": 12685,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643839\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643839\" is not in the exterior-wall set"
+    },
+    {
+      "id": 48679,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2200mm:1712530",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#48679",
+      "widthM": 1,
+      "heightM": 2.3,
+      "areaSqm": 2.3,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.3,
+        "bottomM": 4.9,
+        "plan": [
+          [
+            -7.21,
+            -16.44
+          ],
+          [
+            -6.21,
+            -16.44
+          ],
+          [
+            -6.21,
+            -16.23
+          ],
+          [
+            -7.21,
+            -16.23
+          ]
+        ]
+      },
+      "hostExpressID": 12685,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643839\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643839\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50473,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Vision_Lite:750 x 2000mm:1712675",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50473",
+      "widthM": 0.85,
+      "heightM": 2.1,
+      "areaSqm": 1.785,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.85,
+        "depthM": 0.21,
+        "heightM": 2.1,
+        "bottomM": 4.9,
+        "plan": [
+          [
+            -12.92,
+            -16.44
+          ],
+          [
+            -12.07,
+            -16.44
+          ],
+          [
+            -12.07,
+            -16.23
+          ],
+          [
+            -12.92,
+            -16.23
+          ]
+        ]
+      },
+      "hostExpressID": 12685,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1643839\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1643839\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50528,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2200mm:1715003",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50528",
+      "widthM": 1,
+      "heightM": 2.3,
+      "areaSqm": 2.3,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.3,
+        "bottomM": 4.9,
+        "plan": [
+          [
+            -5.83,
+            15.1
+          ],
+          [
+            -4.83,
+            15.1
+          ],
+          [
+            -4.83,
+            15.31
+          ],
+          [
+            -5.83,
+            15.31
+          ]
+        ]
+      },
+      "hostExpressID": 12877,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1644192\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1644192\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50543,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2200mm:1715105",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50543",
+      "widthM": 1,
+      "heightM": 2.3,
+      "areaSqm": 2.3,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.3,
+        "bottomM": 4.9,
+        "plan": [
+          [
+            -7.13,
+            15.1
+          ],
+          [
+            -6.13,
+            15.1
+          ],
+          [
+            -6.13,
+            15.31
+          ],
+          [
+            -7.13,
+            15.31
+          ]
+        ]
+      },
+      "hostExpressID": 12877,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1644192\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1644192\" is not in the exterior-wall set"
+    },
+    {
+      "id": 50558,
+      "type": "IfcDoor",
+      "name": "M_Door-Passage-Single-Flush:900 x 2200mm:1715293",
+      "kind": "door",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#50558",
+      "widthM": 1,
+      "heightM": 2.3,
+      "areaSqm": 2.3,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 1,
+        "depthM": 0.21,
+        "heightM": 2.3,
+        "bottomM": 4.9,
+        "plan": [
+          [
+            -12.9,
+            15.1
+          ],
+          [
+            -11.9,
+            15.1
+          ],
+          [
+            -11.9,
+            15.31
+          ],
+          [
+            -12.9,
+            15.31
+          ]
+        ]
+      },
+      "hostExpressID": 12877,
+      "hostName": "IfcWall \"Basic Wall:Generic - 200mm:1644192\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 200mm:1644192\" is not in the exterior-wall set"
+    },
+    {
+      "id": 65029,
+      "type": "IfcDoor",
+      "name": "M_Door-Interior-Single-1_Panel-Wood:300 x 2000mm:1792745",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#65029",
+      "widthM": 0.35,
+      "heightM": 2.025,
+      "areaSqm": 0.709,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.44,
+        "depthM": 0.17,
+        "heightM": 2.07,
+        "bottomM": 0,
+        "plan": [
+          [
+            -14.69,
+            -1.98
+          ],
+          [
+            -14.25,
+            -1.98
+          ],
+          [
+            -14.25,
+            -1.81
+          ],
+          [
+            -14.69,
+            -1.81
+          ]
+        ]
+      },
+      "hostExpressID": 1977,
+      "hostName": "IfcWall \"Basic Wall:Generic - 100mm:1597430\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 100mm:1597430\" is not in the exterior-wall set"
+    },
+    {
+      "id": 65437,
+      "type": "IfcDoor",
+      "name": "M_Door-Interior-Single-1_Panel-Wood:300 x 2000mm:1792811",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#65437",
+      "widthM": 0.35,
+      "heightM": 2.025,
+      "areaSqm": 0.709,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.44,
+        "depthM": 0.17,
+        "heightM": 2.07,
+        "bottomM": 0,
+        "plan": [
+          [
+            -12.73,
+            0.88
+          ],
+          [
+            -12.29,
+            0.88
+          ],
+          [
+            -12.29,
+            1.06
+          ],
+          [
+            -12.73,
+            1.06
+          ]
+        ]
+      },
+      "hostExpressID": 2131,
+      "hostName": "IfcWall \"Basic Wall:Generic - 100mm:1597546\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 100mm:1597546\" is not in the exterior-wall set"
+    },
+    {
+      "id": 65451,
+      "type": "IfcDoor",
+      "name": "M_Door-Interior-Single-1_Panel-Wood:300 x 2000mm:1792882",
+      "kind": "door",
+      "isExternal": false,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#65451",
+      "widthM": 0.35,
+      "heightM": 2.025,
+      "areaSqm": 0.709,
+      "areaBasis": "OverallWidth × OverallHeight",
+      "footprint": {
+        "widthM": 0.44,
+        "depthM": 0.17,
+        "heightM": 2.07,
+        "bottomM": 4.9,
+        "plan": [
+          [
+            -11.82,
+            -19.05
+          ],
+          [
+            -11.64,
+            -19.05
+          ],
+          [
+            -11.64,
+            -18.61
+          ],
+          [
+            -11.82,
+            -18.61
+          ]
+        ]
+      },
+      "hostExpressID": 50514,
+      "hostName": "IfcWall \"Basic Wall:Generic - 100mm:1712973\"",
+      "hostBasis": "fills",
+      "included": false,
+      "reason": "host IfcWall \"Basic Wall:Generic - 100mm:1712973\" is not in the exterior-wall set"
+    },
+    {
+      "id": 7610,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1609025",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7610",
+      "widthM": 1.5,
+      "heightM": 3.963,
+      "areaSqm": 5.94,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 5.945,
+      "bboxSqm": 5.945,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.7,
+      "topM": 4.66,
+      "hostExpressID": 7610,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "S",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (LIVING ROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 7657,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1609115",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7657",
+      "widthM": 1.5,
+      "heightM": 3.91,
+      "areaSqm": 5.865,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 5.866,
+      "bboxSqm": 5.866,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.75,
+      "topM": 4.66,
+      "hostExpressID": 7657,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "S",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (LIVING ROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 7701,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1609447",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7701",
+      "widthM": 1.5,
+      "heightM": 3.928,
+      "areaSqm": 5.895,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 5.892,
+      "bboxSqm": 5.892,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.73,
+      "topM": 4.66,
+      "hostExpressID": 7701,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "N",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (KITCHEN at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 7745,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1609507",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7745",
+      "widthM": 1.391,
+      "heightM": 3.928,
+      "areaSqm": 5.463,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 5.464,
+      "bboxSqm": 5.464,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.73,
+      "topM": 4.66,
+      "hostExpressID": 7745,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "N",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (LIVING ROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 7789,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1609797",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7789",
+      "widthM": 1.5,
+      "heightM": 3.921,
+      "areaSqm": 5.88,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 5.881,
+      "bboxSqm": 5.881,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.74,
+      "topM": 4.66,
+      "hostExpressID": 7789,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "N",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Room Name at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 7833,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1609856",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7833",
+      "widthM": 1.567,
+      "heightM": 3.921,
+      "areaSqm": 6.154,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 6.143,
+      "bboxSqm": 6.143,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.74,
+      "topM": 4.66,
+      "hostExpressID": 7833,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "N",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Room Name at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 7988,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1622018",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#7988",
+      "widthM": 0.53,
+      "heightM": 4.236,
+      "areaSqm": 2.247,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 2.247,
+      "bboxSqm": 2.247,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.43,
+      "topM": 4.66,
+      "hostExpressID": 7988,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (LIVING ROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 8032,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1622125",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#8032",
+      "widthM": 0.8,
+      "heightM": 4.278,
+      "areaSqm": 3.424,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 3.422,
+      "bboxSqm": 3.422,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.39,
+      "topM": 4.66,
+      "hostExpressID": 8032,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (LIVING ROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 8076,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1622182",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#8076",
+      "widthM": 0.53,
+      "heightM": 4.278,
+      "areaSqm": 2.268,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 2.269,
+      "bboxSqm": 2.269,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.39,
+      "topM": 4.66,
+      "hostExpressID": 8076,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (LIVING ROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 8120,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1622974",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#8120",
+      "widthM": 0.575,
+      "heightM": 3.928,
+      "areaSqm": 2.279,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 2.26,
+      "bboxSqm": 2.26,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.73,
+      "topM": 4.66,
+      "hostExpressID": 8120,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (KITCHEN at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 8164,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1623027",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#8164",
+      "widthM": 0.575,
+      "heightM": 3.928,
+      "areaSqm": 2.279,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 2.26,
+      "bboxSqm": 2.26,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.73,
+      "topM": 4.66,
+      "hostExpressID": 8164,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (KITCHEN at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 8188,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1623092",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#8188",
+      "widthM": 0.549,
+      "heightM": 3.928,
+      "areaSqm": 2.162,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 2.157,
+      "bboxSqm": 2.157,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.73,
+      "topM": 4.66,
+      "hostExpressID": 8188,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (KITCHEN at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 8232,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1623499",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#8232",
+      "widthM": 0.523,
+      "heightM": 3.921,
+      "areaSqm": 2.038,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 2.05,
+      "bboxSqm": 2.05,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.74,
+      "topM": 4.66,
+      "hostExpressID": 8232,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Room Name at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 8276,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1623574",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#8276",
+      "widthM": 0.562,
+      "heightM": 3.921,
+      "areaSqm": 2.195,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 2.204,
+      "bboxSqm": 2.204,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.74,
+      "topM": 4.66,
+      "hostExpressID": 8276,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Room Name at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 8320,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:_Not Defined:1623650",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#8320",
+      "widthM": 0.536,
+      "heightM": 3.921,
+      "areaSqm": 2.117,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 2.101,
+      "bboxSqm": 2.101,
+      "partCounts": {
+        "IfcPlate": 1
+      },
+      "bottomM": 0.74,
+      "topM": 4.66,
+      "hostExpressID": 8320,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (Room Name at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 14063,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:M_Storefront:1655259",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#14063",
+      "widthM": 4.1,
+      "heightM": 2.9,
+      "areaSqm": 11.89,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 10.637,
+      "bboxSqm": 11.89,
+      "partCounts": {
+        "IfcPlate": 3,
+        "IfcMember": 10
+      },
+      "bottomM": 0,
+      "topM": 2.9,
+      "hostExpressID": 14063,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (MASTER BEDROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 14399,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:M_Storefront:1655882",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#14399",
+      "widthM": 1.9,
+      "heightM": 2.9,
+      "areaSqm": 5.51,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 4.723,
+      "bboxSqm": 5.51,
+      "partCounts": {
+        "IfcPlate": 2,
+        "IfcMember": 7
+      },
+      "bottomM": 0,
+      "topM": 2.9,
+      "hostExpressID": 14399,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (MASTER BEDROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 14626,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:M_Storefront:1656309",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#14626",
+      "widthM": 3.9,
+      "heightM": 2.9,
+      "areaSqm": 11.281,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 10.083,
+      "bboxSqm": 11.31,
+      "partCounts": {
+        "IfcPlate": 3,
+        "IfcMember": 10
+      },
+      "bottomM": 0,
+      "topM": 2.9,
+      "hostExpressID": 14626,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (MASTER BEDROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 14920,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:M_Storefront:1656614",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#14920",
+      "widthM": 1.8,
+      "heightM": 2.9,
+      "areaSqm": 5.22,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 4.446,
+      "bboxSqm": 5.22,
+      "partCounts": {
+        "IfcPlate": 2,
+        "IfcMember": 7
+      },
+      "bottomM": 0,
+      "topM": 2.9,
+      "hostExpressID": 14920,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (MASTER BEDROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 15251,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:M_Storefront:1657611",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#15251",
+      "widthM": 1.8,
+      "heightM": 2.9,
+      "areaSqm": 5.191,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 4.626,
+      "bboxSqm": 5.22,
+      "partCounts": {
+        "IfcPlate": 1,
+        "IfcMember": 4
+      },
+      "bottomM": 4.9,
+      "topM": 7.8,
+      "hostExpressID": 15251,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (MASTER BEDROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 15402,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:M_Storefront:1658748",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#15402",
+      "widthM": 5.3,
+      "heightM": 2.9,
+      "areaSqm": 15.37,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 14.321,
+      "bboxSqm": 15.37,
+      "partCounts": {
+        "IfcPlate": 1,
+        "IfcMember": 4
+      },
+      "bottomM": 4.9,
+      "topM": 7.8,
+      "hostExpressID": 15402,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (MASTER BEDROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 15531,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:M_Storefront:1659088",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#15531",
+      "widthM": 5,
+      "heightM": 2.9,
+      "areaSqm": 14.471,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 13.49,
+      "bboxSqm": 14.5,
+      "partCounts": {
+        "IfcPlate": 1,
+        "IfcMember": 4
+      },
+      "bottomM": 4.9,
+      "topM": 7.8,
+      "hostExpressID": 15531,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (MASTER BEDROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    },
+    {
+      "id": 15660,
+      "type": "IfcCurtainWall",
+      "name": "Curtain Wall:M_Storefront:1659329",
+      "kind": "glazing",
+      "isExternal": true,
+      "ref": "ifc://tum-fantasy-hotel-1.ifc#15660",
+      "widthM": 1.8,
+      "heightM": 2.9,
+      "areaSqm": 5.191,
+      "areaBasis": "projected union of plates and mullions in the wall's plane (1 cm raster)",
+      "plateSqm": 4.626,
+      "bboxSqm": 5.22,
+      "partCounts": {
+        "IfcPlate": 1,
+        "IfcMember": 4
+      },
+      "bottomM": 4.9,
+      "topM": 7.8,
+      "hostExpressID": 15660,
+      "hostName": "itself (a curtain wall is its own wall segment)",
+      "hostBasis": "self",
+      "sector": "E",
+      "envelope": {
+        "verdict": "exterior",
+        "basis": "room on one side only (MASTER BEDROOM at 0.3 m), nothing on the other"
+      },
+      "included": true,
+      "reason": null,
+      "doorIds": []
+    }
+  ],
+  "unresolved": []
+}

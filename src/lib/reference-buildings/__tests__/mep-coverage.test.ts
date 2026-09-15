@@ -45,6 +45,8 @@ ENDSEC;END-ISO-10303-21;`);
     "kit-office": [0, 0, 0],
     "klassiqua-office-1970": [0, 0, 0],
     "taltech-maemaja": [528, 1644, 1],
+    "tum-fantasy-hotel-1": [39, 48, 0],
+    "tum-fantasy-hotel-2": [38, 0, 0],
   };
   for (const id of REFERENCE_BUILDING_IDS) {
     it(`${id}: coverage counts reconcile all pinned source files and actual published layers`, () => {

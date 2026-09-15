@@ -34,6 +34,10 @@ const expectedCounts: Record<string, [number, number]> = {
   "kit-office": [267, 267],
   "klassiqua-office-1970": [68, 68],
   "taltech-maemaja": [985, 983],
+  // Raw IFC class census: railings + columns + beams; source candidates are
+  // distinct from placements whose tessellation produced a mesh.
+  "tum-fantasy-hotel-1": [167, 124],
+  "tum-fantasy-hotel-2": [323, 257],
 };
 
 describe("published source architectural detail", () => {

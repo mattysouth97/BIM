@@ -26,6 +26,19 @@ describe("published baseline datasets preserve provenance", () => {
     expect(dataset!.isMetered).toBe(false);
     expect(dataset!.meteredEnergy).toBeNull();
     expect(dataset!.calibration.observations).toBeNull();
+    if (referenceBuildingEnergyInputs(id) === null) {
+      expect(dataset!.modeledEnergy).toBeNull();
+      expect(dataset!.modelInputs).toBeNull();
+      expect(dataset!.assumptions).toEqual([]);
+      expect(dataset!.isMetered).toBe(false);
+      expect(dataset!.measuredEnvelope.floorArea.status).toBe("measured_from_model");
+      for (const field of ["opaqueWallNetArea", "glazingApertureArea", "exteriorDoorArea", "roofPlanUnion", "groundContactArea", "conditionedGrossVolume"] as const) {
+        expect(dataset!.measuredEnvelope[field].value).toBeNull();
+        expect(dataset!.measuredEnvelope[field].status).toBe("missing");
+      }
+      expect(dataset!.measuredEnvelope.wallByOrientationSqm).toBeNull();
+      return;
+    }
     expect(dataset!.modeledEnergy!.comparisonRating.officialCertificate).toBe(false);
     expect(dataset!.assumptions).toEqual(referenceBuildingEnergyInputs(id)!.assumptions);
     expect(dataset!.modeledEnergy!.climate.assumptionId).toBe("A-CLIMATE");
@@ -73,7 +86,7 @@ describe("published baseline datasets preserve provenance", () => {
   it("publishes Klassiqua's geometry-derived floor and clipped facade scope with its material bindings", async () => {
     const dataset = (await loadReferenceEnergyDataset("klassiqua-office-1970"))!;
     const source = manifest("klassiqua-office-1970");
-    expect(dataset.schemaVersion).toBe("1.3.0");
+    expect(dataset.schemaVersion).toBe("2.0.0");
     expect(dataset.measuredEnvelope.floorArea.scope).toBe(source.areas.floorAreaNote);
     expect(dataset.measuredEnvelope.extractionNotes.floor).toContain("48");
     expect(dataset.measuredEnvelope.opaqueFacadeScope).toEqual(source.areas.opaqueFacade);
@@ -85,7 +98,7 @@ describe("published baseline datasets preserve provenance", () => {
 
   it("exports source MEP coverage without treating missing typed systems as measured equipment", async () => {
     const apartment = (await loadReferenceEnergyDataset("schependomlaan"))!;
-    expect(apartment.schemaVersion).toBe("1.3.0");
+    expect(apartment.schemaVersion).toBe("2.0.0");
     expect(apartment.modelGeometry.mepCoverage!.status).toBe("source_geometry_published");
     expect(apartment.modelGeometry.mepCoverage!.publishedLayerIds).toContain("source-services");
     expect(apartment.modelGeometry.architecturalDetails).toEqual(manifest("schependomlaan").architecturalDetails);

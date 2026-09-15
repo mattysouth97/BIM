@@ -41,7 +41,8 @@ describe("TalTech source identity and quantities", () => {
     expect(spaces.reduce((sum, s) => sum + (s.floorAreaSqm ?? 0), 0)).toBeCloseTo(3486.12, 2);
     const card = GALLERY_ITEMS.find((row) => row.id === "taltech-maemaja")!;
     expect(card.datums.reduce((sum, d) => sum + d.rooms, 0)).toBe(115);
-    expect(card.datums.reduce((sum, d) => sum + d.roomAreaSqm, 0)).toBeCloseTo(3486.12, 2);
+    // Per-space rows retain 3 dp; the manifest independently rounds the total to 2 dp.
+    expect(Math.abs(card.datums.reduce((sum, d) => sum + d.roomAreaSqm, 0) - 3486.12)).toBeLessThanOrEqual(0.005001);
     expect(manifest.areas.volumeNote).toContain("115 from stated volume quantity");
     expect(manifest.areas.volumeNote).not.toContain("failed the closed-mesh test and are counted");
     expect(TALTECH_RECIPE.officialFloorAreaSqm).toBe(manifest.areas.totalFloorAreaSqm);

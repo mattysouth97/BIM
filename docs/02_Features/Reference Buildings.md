@@ -1,7 +1,44 @@
 # Reference Buildings
 
-`/models/[id]` — a published IFC model carrying the app's full energy
-treatment, with every figure marked as read from the file or assumed.
+`/models/[id]` — an ingested IFC model with source evidence. Models with
+verified energy inputs also carry the energy treatment; geometry-only intakes
+state that no baseline is available.
+
+## Model Anchors update — 2026-09-15
+
+The registry at `src/lib/reference-buildings/registry.json` owns the runtime
+roster. Gallery figures and storey bars come from a compact generated projection
+of each manifest, built by `scripts/build-gallery-catalogue.mjs`. Manifest
+`galleryEvidence` binds floor classifications to the canonical JSON hash of the
+existing `spaces.json` extraction. `--check` rejects drift; it does not edit files.
+After source extraction, run the catalogue generator before committing artifacts.
+
+Nine models are registered. Two new entries, `tum-fantasy-hotel-1` and
+`tum-fantasy-hotel-2`, are fictional hospitality designs from TUM students,
+published in IFC-Bench under project-specific MIT licences. Each includes the
+full MIT text, source model card, source SHA-256, generated fabric/material/detail
+GLBs and space rows. Source floor totals are 344.90 m² / 26 spaces and 314.74 m² /
+20 spaces respectively. These are educational design quantities, not surveyed
+floor areas, actual hotels or Korean buildings.
+
+Both intakes have `envelopeStatus: "unresolved"`. Exterior walls cannot be
+classified from generic names and absent space boundaries; empty extraction sets
+must appear as unavailable, not measured zero. Roof-typed geometry is absent,
+which does not establish the absence of roofs. No energy inputs, grade, retrofit
+or proposed PV are fabricated. The viewer discloses tessellation limitations:
+Hotel 1 has a failed face-set triangulation and 43 beam candidates without rendered
+meshes; Hotel 2 has aborted empty-operand boolean operations and 66 such beam
+candidates. Recorded candidate versus rendered counts are retained in the detail
+manifest and tested against the actual GLBs.
+
+All cards and model overview panels explicitly say that no measured-energy
+series is linked. TalTech's separately published measurement archive remains
+unlinked; a geometry measurement is not a calibrated consumption anchor.
+
+The Korean-model requirement remains open. The source and licence investigation
+is recorded in `.planning/phases/03-model-anchors/03-SOURCE-RESEARCH.md`, including
+official Korean monthly electricity/gas reuse terms and their coverage limits.
+No user-owner contact or deployment was performed.
 
 Written 2026-09-06 (Lane 2 of the gallery-consistency brief). Before this
 there was no feature document for `/models/*` at all.

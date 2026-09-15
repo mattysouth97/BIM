@@ -544,5 +544,125 @@
         "manifestField": "counts.exteriorDoors"
       }
     ]
+  },
+  "tum-fantasy-hotel-1": {
+    "licence": "MIT",
+    "attribution": "Copyright (c) 2025 TUM Students, BIM Fundamentals SS2025. Fantasy Hotel 1, IFC-Bench. MIT licence; extracted and adapted by BIMFIT. https://huggingface.co/datasets/sylvainHellin/ifc-bench/tree/main/projects/fantasy_hotel_1",
+    "sourceUrl": "https://huggingface.co/datasets/sylvainHellin/ifc-bench/tree/main/projects/fantasy_hotel_1",
+    "datums": [
+      {
+        "name": "Mumti",
+        "elevationM": 11.8,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "L3",
+        "elevationM": 9.8,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "FIRST FLOOR",
+        "elevationM": 4.9,
+        "rooms": 12,
+        "roomAreaSqm": 144.003,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "GROUND FLOOR",
+        "elevationM": 0,
+        "rooms": 14,
+        "roomAreaSqm": 200.897,
+        "excludedSpaces": 0
+      }
+    ],
+    "figures": [
+      {
+        "id": "floor-area",
+        "ko": "모델 바닥 면적",
+        "en": "Model floor area",
+        "value": "344.9 m²",
+        "read": "26 floor-counting IfcSpace · solid_plan_union",
+        "manifestField": "areas.totalFloorAreaSqm"
+      },
+      {
+        "id": "rooms",
+        "ko": "바닥을 갖는 공간",
+        "en": "Floor-counting spaces",
+        "value": "26",
+        "read": "IfcSpace 26 − 0 excluded (none) = 26",
+        "manifestField": "counts.spacesFloor"
+      }
+    ]
+  },
+  "tum-fantasy-hotel-2": {
+    "licence": "MIT",
+    "attribution": "Copyright (c) 2025 TUM Students, BIM Fundamentals SS2025. Fantasy Hotel 2, IFC-Bench. MIT licence; extracted and adapted by BIMFIT. https://huggingface.co/datasets/sylvainHellin/ifc-bench/tree/main/projects/fantasy_hotel_2",
+    "sourceUrl": "https://huggingface.co/datasets/sylvainHellin/ifc-bench/tree/main/projects/fantasy_hotel_2",
+    "datums": [
+      {
+        "name": "5TH FLOOR",
+        "elevationM": 19,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "4RTH FLOOR",
+        "elevationM": 15.2,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "3RD FLOOR",
+        "elevationM": 11.4,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "2ND FLOOR",
+        "elevationM": 7.6,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "FIRST FLOOR",
+        "elevationM": 3.8,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "GROUND FLOOR",
+        "elevationM": 0,
+        "rooms": 20,
+        "roomAreaSqm": 314.736,
+        "excludedSpaces": 0
+      }
+    ],
+    "figures": [
+      {
+        "id": "floor-area",
+        "ko": "모델 바닥 면적",
+        "en": "Model floor area",
+        "value": "314.7 m²",
+        "read": "20 floor-counting IfcSpace · solid_plan_union",
+        "manifestField": "areas.totalFloorAreaSqm"
+      },
+      {
+        "id": "rooms",
+        "ko": "바닥을 갖는 공간",
+        "en": "Floor-counting spaces",
+        "value": "20",
+        "read": "IfcSpace 20 − 0 excluded (none) = 20",
+        "manifestField": "counts.spacesFloor"
+      }
+    ]
   }
 }

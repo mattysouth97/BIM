@@ -66,6 +66,7 @@ import {
 } from "./lib/ifc-horizontal.mjs";
 import { roofPlanes, roofPlanesSvg, ROOF_PLANE_CONSTANTS } from "./lib/ifc-roof-planes.mjs";
 import { collectSpaceSolids, openingApertures, summariseApertures } from "./lib/ifc-openings.mjs";
+import { deriveGalleryEvidence } from "./build-gallery-catalogue.mjs";
 
 const REPO = process.cwd();
 const CACHE =
@@ -931,6 +932,40 @@ const TALTECH = Object.freeze({
 
 /** Every building this script can build, selected with `--building <id>`. */
 const BUILDINGS = Object.freeze({
+  "tum-fantasy-hotel-1": {
+    id: "tum-fantasy-hotel-1",
+    modelNote: "Source fabric tessellation; furniture and railings are separate details. web-ifc reports a failed triangulation for source IfcPolygonalFaceSet #50442. Rendered geometry may omit affected surfaces; completeness is not established. No energy baseline is calculated.",
+    name: { ko: "TUM 가상 호텔", en: "TUM Fantasy Hotel" },
+    summary: { ko: "TUM 학생의 숙박시설 교육용 설계입니다. 실제 준공 건물이 아닙니다. 외피 분류와 에너지 입력은 확인되지 않아 에너지 등급을 산정하지 않습니다.", en: "A fictional hospitality design by TUM students. Exterior-envelope classification and energy inputs are unresolved; no energy rating is calculated." },
+    useType: "hotel", licence: "MIT",
+    attribution: "Copyright (c) 2025 TUM Students, BIM Fundamentals SS2025. Fantasy Hotel 1, IFC-Bench. MIT licence; extracted and adapted by BIMFIT. https://huggingface.co/datasets/sylvainHellin/ifc-bench/tree/main/projects/fantasy_hotel_1",
+    sourceUrl: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/tree/main/projects/fantasy_hotel_1",
+    files: [{ role: "architectural", fileName: "tum-fantasy-hotel-1.ifc", url: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/resolve/main/projects/fantasy_hotel_1/arc.ifc", sha256: "cd976f3e9222a49ad072078ed27934f20dbc11c889271b1ee3c1ab4ce504a03e" }],
+    serviceLayers: [], areaSource: "stated_first", roofDatumM: 9.8,
+    envelopeStatus: "unresolved",
+    exteriorWallMatch: [],
+    exteriorWallNote: "Exterior wall membership is unresolved: no space boundaries and generic wall names. An empty selected set is not evidence of zero envelope area. No energy baseline is supplied.",
+    location: { rejectCoordinate: true, statedTown: null, trueNorthStated: false, note: "The original model card explicitly calls this a fantasy hotel. Default IfcSite coordinates do not establish a real building location." },
+    spacesNote: "IfcSpace floor quantities from the educational design. These do not establish actual conditioned area or measured operation. Exterior classification is unresolved.",
+    roofNote: "Source slab geometry is displayed. An absence of ROOF-typed entities is not evidence of no roof; roof classification remains unresolved.",
+  },
+  "tum-fantasy-hotel-2": {
+    id: "tum-fantasy-hotel-2",
+    modelNote: "Source fabric tessellation; furniture and railings are separate details. web-ifc reports aborted boolean operations with empty operands. Rendered geometry may omit affected surfaces; completeness is not established. No energy baseline is calculated.",
+    name: { ko: "TUM 가상 호텔 2", en: "TUM Fantasy Hotel 2" },
+    summary: { ko: "TUM 학생의 숙박시설 교육용 설계입니다. 실제 준공 건물이 아닙니다. 외피 분류와 에너지 입력은 확인되지 않아 에너지 등급을 산정하지 않습니다.", en: "A fictional hospitality design by TUM students. Exterior-envelope classification and energy inputs are unresolved; no energy rating is calculated." },
+    useType: "hotel", licence: "MIT",
+    attribution: "Copyright (c) 2025 TUM Students, BIM Fundamentals SS2025. Fantasy Hotel 2, IFC-Bench. MIT licence; extracted and adapted by BIMFIT. https://huggingface.co/datasets/sylvainHellin/ifc-bench/tree/main/projects/fantasy_hotel_2",
+    sourceUrl: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/tree/main/projects/fantasy_hotel_2",
+    files: [{ role: "architectural", fileName: "tum-fantasy-hotel-2.ifc", url: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/resolve/main/projects/fantasy_hotel_2/arc.ifc", sha256: "3d6e1e7426686366f42b3c6738f17b636aa3e697150dd87bb658f449962c3b39" }],
+    serviceLayers: [], areaSource: "stated_first", roofDatumM: 9.8,
+    envelopeStatus: "unresolved",
+    exteriorWallMatch: [],
+    exteriorWallNote: "Exterior wall membership is unresolved: no space boundaries and generic wall names. An empty selected set is not evidence of zero envelope area. No energy baseline is supplied.",
+    location: { rejectCoordinate: true, statedTown: null, trueNorthStated: false, note: "The original model card explicitly calls this a fantasy hotel. Default IfcSite coordinates do not establish a real building location." },
+    spacesNote: "IfcSpace floor quantities from the educational design. These do not establish actual conditioned area or measured operation. Exterior classification is unresolved.",
+    roofNote: "Source slab geometry is displayed. An absence of ROOF-typed entities is not evidence of no roof; roof classification remains unresolved.",
+  },
   [CLINIC.id]: CLINIC,
   [SCHEPENDOMLAAN.id]: SCHEPENDOMLAAN,
   [DUPLEX.id]: DUPLEX,
@@ -2037,6 +2072,7 @@ async function main() {
     name: building.name,
     summary: building.summary,
     useType: building.useType,
+    ...(building.envelopeStatus ? { envelopeStatus: building.envelopeStatus } : {}),
     licence: building.licence,
     attribution: building.attribution,
     sourceUrl: building.sourceUrl,
@@ -2526,7 +2562,7 @@ async function main() {
 
   await writeFile(
     path.join(outDir, "manifest.json"),
-    `${JSON.stringify(manifest, null, 2)}\n`,
+    `${JSON.stringify({ ...manifest, galleryEvidence: deriveGalleryEvidence(manifest, JSON.stringify({ kind: "bimfit_reference_building_spaces", id: building.id, spaces: spaceRows })) }, null, 2)}\n`,
     "utf8",
   );
 

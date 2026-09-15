@@ -76,6 +76,8 @@ export type ReferenceBuildingManifest = Readonly<{
   name: Readonly<{ ko: string; en: string }>;
   summary: Readonly<{ ko: string; en: string }>;
   useType: string;
+  /** Unresolved membership is an unavailable envelope, never a zero-area fact. */
+  envelopeStatus?: "unresolved";
   licence: string;
   /**
    * Rendered wherever the building is shown — a CC BY condition. Null when

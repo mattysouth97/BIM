@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAppStore } from "@/store/app-store";
 
 import type { ReferenceBuildingId, ReferenceBuildingManifest } from "@/lib/reference-buildings/manifest";
+import referenceRegistry from "@/lib/reference-buildings/registry.json";
 import type { SolvedConstruction } from "@/lib/reference-buildings/constructions";
 import type { ReferenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
 import { ReferenceModelViewer } from "./reference-model-viewer";
@@ -175,6 +176,9 @@ export function ReferenceBuildingWorkspace({
           overview: <>
             <h2 className="text-sm font-medium text-foreground">{isKo ? "건물과 에너지" : "Building & energy"}</h2>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{isKo ? manifest.summary.ko : manifest.summary.en}</p>
+            <p data-testid="reference-measured-consumption-status" className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              {isKo ? referenceRegistry[manifest.id as ReferenceBuildingId]?.measuredConsumption.ko : referenceRegistry[manifest.id as ReferenceBuildingId]?.measuredConsumption.en}
+            </p>
             <dl className="mt-3 grid grid-cols-2 gap-2">
               <div className="rounded-md border border-border p-3">
                 <dt className="text-xs text-muted-foreground">{isKo ? "원본 연면적" : "Source floor area"}</dt>
@@ -364,7 +368,7 @@ export function ReferenceBuildingWorkspace({
           />
           <Stated
             label={isKo ? "외벽 (순)" : "Net exterior wall"}
-            value={`${fmt(manifest.areas.exteriorWallNetSqm)} m²`}
+            value={manifest.envelopeStatus === "unresolved" ? (isKo ? "미확인" : "Unavailable") : `${fmt(manifest.areas.exteriorWallNetSqm)} m²`}
             read={manifest.areas.exteriorWallNote ?? `${manifest.counts.exteriorWalls} walls · extracted net area of selected exterior walls`}
           />
           <Stated

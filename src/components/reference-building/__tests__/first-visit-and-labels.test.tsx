@@ -24,7 +24,9 @@ import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useActiveBuildingStore } from "@/store/active-building-store";
 import { referenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
-import { REFERENCE_BUILDING_IDS } from "@/lib/reference-buildings/manifest";
+import { REFERENCE_BUILDING_IDS as ALL_REFERENCE_BUILDING_IDS } from "@/lib/reference-buildings/manifest";
+
+const REFERENCE_BUILDING_IDS = ALL_REFERENCE_BUILDING_IDS.filter(id => referenceBuildingEnergyInputs(id) !== null);
 import type { ReferenceBuildingId } from "@/lib/reference-buildings/manifest";
 
 describe("first visit: the frame appears with nothing in the persisted stores", () => {

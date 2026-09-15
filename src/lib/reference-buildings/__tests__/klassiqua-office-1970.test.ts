@@ -53,8 +53,9 @@ describe("Klassiqua 1970: published source and geometry", () => {
     expect(manifest.storeys!.map((storey) => storey.elevationM)).toEqual([0, 3.55, 7.1, 10.65]);
     expect(manifest.storeys!.every((storey) => storey.spaceCount === 12)).toBe(true);
     expect(sum(card.datums.map((datum) => datum.roomAreaSqm))).toBeCloseTo(KLASSIQUA_FLOOR_AREA, 2);
-    const [perFloor, floors, total] = [...card.figures.find((figure) => figure.id === "rooms")!.read.matchAll(/\d+/g)].map((match) => Number(match[0]));
-    expect(perFloor * floors).toBe(total);
+    const [, rawTotal, exclusions, result] = card.figures.find((figure) => figure.id === "rooms")!.read.match(/IfcSpace (\d+) − (\d+) excluded .* = (\d+)/)!;
+    const total = Number(result);
+    expect(Number(rawTotal) - Number(exclusions)).toBe(total);
     expect(total).toBe(spaces.length);
   });
 

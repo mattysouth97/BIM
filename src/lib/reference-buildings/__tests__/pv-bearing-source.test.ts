@@ -87,7 +87,7 @@ describe("actual cell faces stay above source building meshes", () => {
   it.each(REFERENCE_BUILDING_IDS)("%s: actual PV clears source roofs, or produces no visual when none fits", async (id) => {
     const layout = layoutRoofPlanes(roofSet(id));
     const modules = layout.planes.flatMap((p) => p.modules);
-    if (id === "kit-office") {
+    if (id === "kit-office" || roofSet(id).planes.length === 0) {
       expect(modules).toHaveLength(0);
       expect(createPvModuleVisual(modules)).toBeNull();
       return;

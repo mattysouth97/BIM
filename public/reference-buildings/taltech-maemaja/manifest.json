@@ -8288,7 +8288,8 @@
   },
   "galleryEvidence": {
     "generator": "build-gallery-catalogue.mjs:1",
-    "spacesSha256": "593ced8db8f3a19d336259409477c0fca6910d150173b848cfadbbace862a4ed",
+    "spacesSha256": "bae87213c2da6a8d19b9464321ffa48c170dbfbf622f2986d0b82cc4dd30f133",
+    "spacesHashScope": "UTF-8 JSON.stringify of parsed spaces.json; independent of checkout line endings",
     "areaSources": [
       "GrossFloorArea"
     ],

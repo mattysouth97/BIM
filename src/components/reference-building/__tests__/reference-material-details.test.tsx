@@ -15,6 +15,11 @@ describe("material details explain source, illustrative appearance and assumed h
   for (const id of REFERENCE_BUILDING_IDS) {
     it(`${id}: exposes actual layer sets, full source names and the illustrative limit`, () => {
       const view = render(<ReferenceMaterialDetails manifest={manifest(id)} isKo={false} />);
+      if ((manifest(id).assemblies ?? []).length === 0) {
+        expect(view.queryAllByTestId("reference-material-construction")).toHaveLength(0);
+        expect(view.container.textContent).toContain("The model supplies no material layer sets");
+        return;
+      }
       const cards = view.getAllByTestId("reference-material-construction");
       expect(cards.length).toBeGreaterThan(0);
       expect(within(cards[0]).getByTestId("material-construction-toggle").getAttribute("aria-expanded")).toBe("true");

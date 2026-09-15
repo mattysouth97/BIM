@@ -1530,7 +1530,8 @@
   },
   "galleryEvidence": {
     "generator": "build-gallery-catalogue.mjs:1",
-    "spacesSha256": "5483277b74587e1a565e6c7e7da12bf9d95261084e8a16cf3b0a21a61dda3074",
+    "spacesSha256": "34f95405e300ed993356b578d697ca0e753811a16735e690b10b55281fb913b3",
+    "spacesHashScope": "UTF-8 JSON.stringify of parsed spaces.json; independent of checkout line endings",
     "areaSources": [
       "GSA BIM Area"
     ],

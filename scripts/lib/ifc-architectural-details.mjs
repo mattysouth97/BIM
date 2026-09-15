@@ -8,6 +8,8 @@ import { mergeFabric, writeGlb } from "./ifc-glb.mjs";
 // explicit per source: Schependomlaan already renders supplier steel/railings
 // separately, so its architectural copies are deliberately not added again.
 export const ARCHITECTURAL_DETAIL_SOURCES = Object.freeze({
+  "tum-fantasy-hotel-2": { architectural: ["IfcFurnishingElement", "IfcRailing", "IfcColumn", "IfcBeam"] },
+  "tum-fantasy-hotel-1": { architectural: ["IfcFurnishingElement", "IfcRailing", "IfcColumn", "IfcBeam"] },
   "bs-medical-dental-clinic": {
     architectural: ["IfcFurnishingElement", "IfcCovering", "IfcRailing"],
     structural: ["IfcBeam", "IfcColumn", "IfcFooting", "IfcRailing"],

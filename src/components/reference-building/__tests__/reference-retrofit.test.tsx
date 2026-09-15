@@ -26,9 +26,11 @@ import { layoutRoofPlanes, type RoofPlaneSet } from "@/lib/retrofit/pv-layout";
 import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
 import { formatKRW, formatKWh } from "@/components/retrofit/measure-card";
 import {
-  REFERENCE_BUILDING_IDS,
+  REFERENCE_BUILDING_IDS as ALL_REFERENCE_BUILDING_IDS,
   type ReferenceBuildingId,
 } from "@/lib/reference-buildings/manifest";
+
+const REFERENCE_BUILDING_IDS = ALL_REFERENCE_BUILDING_IDS.filter(id => referenceBuildingEnergyInputs(id) !== null);
 
 function measure(over: Partial<RetrofitMeasure> = {}): RetrofitMeasure {
   return {
