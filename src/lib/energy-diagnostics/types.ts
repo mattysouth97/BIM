@@ -589,8 +589,8 @@ export type ZoneEnergyResult = Readonly<{
  * the published MOTIE/KEMCO conversion factors. Optional and additive: runs
  * stored before this field existed simply lack it. The factor set used is
  * embedded so a displayed number can always name its basis, and `basis`
- * carries the honest caveat that end-use fuel assignment inherits the
- * ratio-estimated lighting/DHW/plug split.
+ * states the shared explicit fuel routing: LPD-based lighting, named
+ * DHW/plug ratios and capped annual PV substitution.
  */
 export type PrimaryEnergyResult = Readonly<{
   totalKwh: number;
