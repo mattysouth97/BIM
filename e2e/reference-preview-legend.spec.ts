@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { seedSeenTours } from "./helpers/app-state";
 
-test("desktop proposal details remain clickable between the open energy panels", async ({ page }, testInfo) => {
+test("desktop proposal details remain clickable and persist after opening and closing the Work drawer", async ({ page }, testInfo) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await seedSeenTours(page);
@@ -10,21 +10,28 @@ test("desktop proposal details remain clickable between the open energy panels",
   await expect(viewer).toHaveAttribute("data-model-loaded", "true", { timeout: 60_000 });
   const legend = page.getByTestId("reference-retrofit-legend");
   const toggle = legend.getByRole("button");
-  const top = page.locator('[data-twin-panel="top"]');
-  const bottom = page.locator('[data-twin-panel="bottom"]');
-  await expect(page.getByTestId("twin-panel-top-toggle")).toHaveAttribute("aria-expanded", "true");
-  await expect(page.getByTestId("twin-panel-bottom-toggle")).toHaveAttribute("aria-expanded", "true");
-  await toggle.click(); // Real pointer action, with the default HUD still open.
+  const workToggle = page.getByTestId("twin-panel-top-toggle");
+  const work = page.getByTestId("twin-panel-top-content");
+  const details = legend.getByRole("region");
+  await expect(workToggle).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByTestId("twin-panel-bottom-toggle")).toHaveAttribute("aria-expanded", "false");
+  await expect(work).toBeHidden();
+  await expect(page.getByTestId("twin-panel-bottom-content")).toBeHidden();
+  await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
-  await expect.poll(async () => {
-    const [caption, upper, lower] = await Promise.all([legend.boundingBox(), top.boundingBox(), bottom.boundingBox()]);
-    return !!caption && !!upper && !!lower && caption.y >= upper.y + upper.height && caption.y + caption.height <= lower.y;
-  }).toBe(true);
-  await expect(legend.getByRole("region")).toContainText("kWp");
-  await page.screenshot({ path: testInfo.outputPath("proposal-desktop-open-hud.png") });
+  await expect(details).toContainText("kWp");
+  const detailedText = await details.innerText();
+  await workToggle.click();
+  await expect(workToggle).toHaveAttribute("aria-expanded", "true");
+  await expect(work).toBeVisible();
+  await workToggle.click();
+  await expect(work).toBeHidden();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(details).toBeVisible();
+  await expect.poll(() => details.innerText()).toBe(detailedText);
+  await page.screenshot({ path: testInfo.outputPath("proposal-desktop-after-drawer.png") });
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
-  await page.getByTestId("twin-panel-bottom-toggle").click();
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
 });
@@ -43,6 +50,17 @@ test("mobile proposal caption stays compact and preserves detail state while ins
   await page.goto("/models/klassiqua-office-1970#materials");
   const viewer = page.getByTestId("reference-model-viewer");
   await expect(viewer).toHaveAttribute("data-material-status", "ready", { timeout: 60_000 });
+  await expect(viewer).toHaveAttribute("data-roof-planes", "ready", { timeout: 60_000 });
+  const workToggle = page.getByTestId("twin-panel-top-toggle");
+  await workToggle.click();
+  const hrv = page.getByTestId("twin-panel-top-content").locator('[data-measure-chip="hvac-hrv"]');
+  // The missing HVAC model claim belongs to selected HVAC work, independently
+  // of whether the economic recommendation happens to contain that measure.
+  await expect(hrv).toBeVisible();
+  if (await hrv.getAttribute("aria-pressed") !== "true") await hrv.click();
+  await expect(hrv).toHaveAttribute("aria-pressed", "true");
+  await workToggle.click();
+  await expect(page.getByTestId("twin-panel-top-content")).toBeHidden();
   const legend = page.getByTestId("reference-retrofit-legend");
   const toggle = legend.getByRole("button");
   const details = legend.getByRole("region", { name: "Proposal preview details", includeHidden: true });

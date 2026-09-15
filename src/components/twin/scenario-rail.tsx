@@ -63,10 +63,13 @@ export function ScenarioRail({ capexBudgetKrw, onBudgetChange, selection, totalC
         <p className="mt-2 text-[10px] leading-relaxed text-muted-foreground" data-testid="retrofit-bill-basis">
           {t(`공사 전후 구매 에너지 × 가정 단가. 전기 ${modeledBill.tariffs.electricity}, 가스 ${modeledBill.tariffs.gas}, 지역난방 ${modeledBill.tariffs.districtHeating}, 지역냉방 ${modeledBill.tariffs.districtCooling}원/kWh. 실제 고지서나 견적이 아닙니다. 태양광은 연간 전력 수요까지만 상계하며 판매 수익은 포함하지 않습니다.`, `Purchased energy before/after × assumed tariffs: electricity ${modeledBill.tariffs.electricity}, gas ${modeledBill.tariffs.gas}, district heating ${modeledBill.tariffs.districtHeating}, district cooling ${modeledBill.tariffs.districtCooling} KRW/kWh. Not an actual bill or quote. PV offsets annual electricity demand only; no export revenue is included.`)}
         </p>
+        <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
+          {t("지역냉방 단가에는 지역난방 단가를 대체값으로 적용합니다.", "District cooling uses the district-heating tariff as a proxy.")}
+        </p>
         {modeledBill.annualSavingKrw < 0 && <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-400">{t("음수는 요금 증가를 뜻합니다.", "A negative saving means a higher bill.")}</p>}
       </> : <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{t("동일한 엔진의 공사 전후 계산이 준비되면 표시합니다. 대체 절감률로 금액을 만들지 않습니다.", "Available when the same engine has evaluated both cases. No proxy saving is priced here.")}</p>}
     </div>
-    {unsavedEditCount > 0 && <p className="text-[11px] leading-relaxed text-muted-foreground" data-testid="retrofit-unsaved-edits">{t(`원본 모델에 저장되지 않은 로컬 수정 ${unsavedEditCount}건이 포함됩니다. 이 브라우저에는 보관될 수 있습니다.`, `${unsavedEditCount} local edits are included, not saved to the source model. They may persist in this browser.`)}</p>}
+    {unsavedEditCount > 0 && <p className="text-[11px] leading-relaxed text-muted-foreground" data-testid="retrofit-unsaved-edits">{t(`원본 모델과 다른 로컬 입력 항목 ${unsavedEditCount}개가 포함됩니다. 원본에 저장되지 않으며 이 브라우저에는 보관될 수 있습니다.`, `${unsavedEditCount} local fields differ from the source model. They are not saved to the source and may persist in this browser.`)}</p>}
     {onBudgetChange && <label className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
       <span>{t("예산 · 사용자 입력, 선택 사항", "Budget · optional user input")}</span>
       <input type="number" inputMode="numeric" min={0} step={1000} placeholder={t("없음", "none")}

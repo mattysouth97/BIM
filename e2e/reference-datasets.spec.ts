@@ -19,8 +19,15 @@ test("catalogue downloads preserve provenance and distinguish modeled energy fro
   for (const dataset of catalogue.datasets) {
     expect(dataset.isMetered).toBe(false);
     expect(dataset.meteredEnergy).toBeNull();
-    expect(dataset.modeledEnergy.status).toBe("modeled_not_metered");
-    expect(dataset.assumptions.length).toBeGreaterThan(0);
+    if (dataset.id.startsWith("tum-fantasy-hotel-")) {
+      expect(dataset.modeledEnergy).toBeNull();
+      expect(dataset.modelInputs).toBeNull();
+      expect(dataset.measuredEnvelope.status).toBe("unresolved");
+      expect(dataset.assumptions).toEqual([]);
+    } else {
+      expect(dataset.modeledEnergy.status).toBe("modeled_not_metered");
+      expect(dataset.assumptions.length).toBeGreaterThan(0);
+    }
     expect(dataset.source.licenceAsDeclared).toBeTruthy();
     const source = await request.get(dataset.source.manifestUrl);
     expect(source.ok()).toBe(true);
@@ -34,7 +41,8 @@ test("catalogue downloads preserve provenance and distinguish modeled energy fro
 test("model-page download is the published baseline even after a retrofit selection", async ({ page }) => {
   await page.goto("/models/fzk-haus");
   await expect(page.getByTestId("reference-model-viewer")).toHaveAttribute("data-roof-planes", "ready", { timeout: 45000 });
-  const solar = page.locator('[data-measure-chip^="solar-pv"]').first();
+  await page.getByTestId("twin-panel-top-toggle").click();
+  const solar = page.getByTestId("twin-panel-top-content").locator('[data-measure-chip^="solar-pv"]').first();
   if (await solar.getAttribute("data-measure-chosen") !== "true") await solar.click();
   await page.getByTestId("reference-info-tab-data").click();
   const [download] = await Promise.all([

@@ -178,8 +178,8 @@ export function gradeBasisText(
     v.toLocaleString("en-US", { maximumFractionDigits: d });
 
   const head = isKo
-    ? `${grade} 등급은 대한민국 건축물 에너지효율등급이며, 1차에너지 ${n(primaryEnergyPerArea)} kWh/m²·yr 기준입니다 — 옆의 사용량 ${n(siteDemandPerSqm)} kWh/m²·yr가 아닙니다. 기후는 ${energy.climate.labelKo} (${energy.climate.assumptionId}).`
-    : `Grade ${grade} is a Korean 건축물 에너지효율등급, struck on ${n(primaryEnergyPerArea)} kWh/m²·yr of PRIMARY energy — not the ${n(siteDemandPerSqm)} kWh/m²·yr of site demand beside it. Climate is ${energy.climate.labelEn} (${energy.climate.assumptionId}).`;
+    ? `${grade} 등급은 대한민국 건축물 에너지효율등급 기준표를 적용한 간이 계산이며, 공인 인증 결과가 아닙니다. 1차에너지 ${n(primaryEnergyPerArea)} kWh/m²·yr 기준이고 사용 에너지는 ${n(siteDemandPerSqm)} kWh/m²·yr입니다. 기후는 ${energy.climate.labelKo} (${energy.climate.assumptionId}).`
+    : `Modeled grade ${grade} uses Korean 건축물 에너지효율등급 thresholds; it is not a certification result. It is based on ${n(primaryEnergyPerArea)} kWh/m²·yr of PRIMARY energy. Site energy is ${n(siteDemandPerSqm)} kWh/m²·yr. Climate is ${energy.climate.labelEn} (${energy.climate.assumptionId}).`;
 
   const tail = fromOccupancy
     ? isKo

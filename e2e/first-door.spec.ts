@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { REFERENCE_BUILDING_IDS } from "../src/lib/reference-buildings/manifest";
 
 import { seedSeenTours } from "./helpers/app-state";
 
@@ -152,7 +153,7 @@ test.describe("Landing gallery", () => {
     await expect(page.getByTestId("gallery-item-kit-office")).toBeVisible();
     await expect(page.getByTestId("gallery-item-klassiqua-office-1970")).toBeVisible();
     await expect(page.getByTestId("gallery-item-taltech-maemaja")).toBeVisible();
-    await expect(gallery.locator("> li")).toHaveCount(7);
+    await expect(gallery.locator("> li")).toHaveCount(REFERENCE_BUILDING_IDS.length);
 
     // The register sheet's furniture is gone from this page entirely.
     await expect(page.getByTestId("landing-ledger-lookup")).toHaveCount(0);

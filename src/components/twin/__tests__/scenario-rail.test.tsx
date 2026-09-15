@@ -33,6 +33,6 @@ describe("selected-work rail", () => {
     render(<ScenarioRail {...props} modeledBill={{ ...bill, afterAnnualKrw: 2_300_000, annualSavingKrw: -300_000 }} unsavedEditCount={2} />);
     expect(screen.getByTestId("retrofit-annual-saving").getAttribute("data-saving-krw")).toBe("-300000");
     expect(screen.getByText("A negative saving means a higher bill.")).toBeDefined();
-    expect(screen.getByTestId("retrofit-unsaved-edits").textContent).toContain("2 local edits are included, not saved to the source model");
+    expect(screen.getByTestId("retrofit-unsaved-edits").textContent).toContain("2 local fields differ from the source model");
   });
 });

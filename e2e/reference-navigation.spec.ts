@@ -62,8 +62,8 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
     await expect(page.getByTestId("reference-model-viewer")).toHaveAttribute("data-model-loaded", "true", { timeout: 45000 });
     const topToggle = page.getByTestId("twin-panel-top-toggle");
     const bottomToggle = page.getByTestId("twin-panel-bottom-toggle");
-    await expect(topToggle).toHaveAttribute("aria-expanded", viewport.width < 768 ? "false" : "true");
-    await expect(bottomToggle).toHaveAttribute("aria-expanded", viewport.width < 768 ? "false" : "true");
+    await expect(topToggle).toHaveAttribute("aria-expanded", "false");
+    await expect(bottomToggle).toHaveAttribute("aria-expanded", "false");
     await expect(page.getByRole("tab", { name: "개요", exact: true })).toHaveAttribute("aria-selected", "true");
     await expect(page.getByTestId("reference-info-panel-overview")).toContainText("실측 에너지 사용량이 아닙니다");
     const canvas = page.getByTestId("reference-model-canvas");
@@ -87,8 +87,13 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
     if (viewport.width < 768) {
       await topToggle.click();
       await expect(topToggle).toHaveAttribute("aria-expanded", "true");
+      await expect(page.getByTestId("twin-panel-top-content")).toBeVisible();
+      // The bottom sheet covers the information tabs until it is dismissed.
+      await topToggle.click();
+      await expect(page.getByTestId("twin-panel-top-content")).toBeHidden();
       await page.getByTestId("reference-info-tab-overview").click();
-      await expect(topToggle).toHaveAttribute("aria-expanded", "true");
+      await expect(page.getByTestId("reference-info-tab-overview")).toHaveAttribute("aria-selected", "true");
+      await expect(topToggle).toHaveAttribute("aria-expanded", "false");
       await expect(bottomToggle).toHaveAttribute("aria-expanded", "false");
     }
   });

@@ -83,9 +83,10 @@ describe("the grade sentence reproduces the numbers it explains", () => {
     it(`${id}: the primary and site figures it quotes are the engine's own`, () => {
       const { sitePerSqm, rating, sentence } = run(id);
 
-      const quotedGrade = sentence.match(/^Grade (\S+) is a Korean/);
+      const quotedGrade = sentence.match(/^Modeled grade (\S+) uses Korean/);
       const quotedPrimary = sentence.match(/on ([\d,.]+) kWh\/m²·yr of PRIMARY energy/);
-      const quotedSite = sentence.match(/not the ([\d,.]+) kWh\/m²·yr of site demand/);
+      const quotedSite = sentence.match(/Site energy is ([\d,.]+) kWh\/m²·yr/);
+      expect(sentence).toContain("not a certification result");
       expect(quotedGrade).not.toBeNull();
       expect(quotedPrimary).not.toBeNull();
       expect(quotedSite).not.toBeNull();

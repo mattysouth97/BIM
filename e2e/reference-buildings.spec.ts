@@ -62,17 +62,17 @@ const KNOWN_ZERO_REASONS = ["nothing-chosen", "only-unpriced", "targets-met"];
 // Grades are on the table the use code selects (3b9ff6a): the three
 // dwellings are scored 주거, the Clinic by density. kWh/m² did not move.
 const BUILDINGS: readonly Expected[] = [
-  { id: "bs-medical-dental-clinic", titleKo: "메디컬-덴탈 클리닉", grade: "1+", demandPerSqm: "108.8" },
-  { id: "schependomlaan", titleKo: "스헤펜돔라안 아파트", grade: "1++", demandPerSqm: "40.5" },
-  { id: "duplex-apartment", titleKo: "듀플렉스 아파트", grade: "4", demandPerSqm: "142.6" },
+  { id: "bs-medical-dental-clinic", titleKo: "메디컬-덴탈 클리닉", grade: "4", demandPerSqm: "219.4" },
+  { id: "schependomlaan", titleKo: "스헤펜돔라안 아파트", grade: "2", demandPerSqm: "92.8" },
+  { id: "duplex-apartment", titleKo: "듀플렉스 아파트", grade: "7", demandPerSqm: "282.8" },
   // The fourth building states NO services models at all — its manifest
   // carries an empty `serviceLayers`, so the layers panel is the fabric row
   // and nothing else, and its licence is KIT/IAI's own grant rather than a
   // Creative Commons one. Both are read from the manifest below rather than
   // written here, so neither can be quietly assumed to match the others'.
-  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "2", demandPerSqm: "92.6", pv: { modules: 44, kWp: 17.6 } },
-  { id: "kit-office", titleKo: "KIT 오피스", grade: "5", demandPerSqm: "269.1" },
-  { id: "klassiqua-office-1970", titleKo: "Klassiqua 1970 오피스", grade: "2", demandPerSqm: "177.1", pv: { modules: 84, kWp: 33.6 } },
+  { id: "fzk-haus", titleKo: "FZK 하우스", grade: "7", demandPerSqm: "189.7", pv: { modules: 44, kWp: 17.6 } },
+  { id: "kit-office", titleKo: "KIT 오피스", grade: "7", demandPerSqm: "410.8" },
+  { id: "klassiqua-office-1970", titleKo: "Klassiqua 1970 오피스", grade: "5", demandPerSqm: "285.3", pv: { modules: 84, kWp: 33.6 } },
 ];
 
 type Manifest = {
@@ -98,14 +98,18 @@ function manifestFor(id: string): Manifest {
  * `.last()` on that filter picks the wrapper, not the strip.
  */
 function energyStrip(page: Page) {
-  return page
-    .locator("div")
-    .filter({ has: page.getByRole("button", { name: "ECO2" }) })
-    .filter({ hasText: "kWh/m²·yr" })
-    .last();
+  return page.getByTestId("twin-panel-bottom-content").getByTestId("energy-baseline-summary");
 }
 
-const deltaStrip = (page: Page) => page.locator("[data-retrofit-delta-strip]");
+async function openPanel(page: Page, panel: "top" | "bottom") {
+  const toggle = page.getByTestId(`twin-panel-${panel}-toggle`);
+  if (await toggle.getAttribute("aria-expanded") !== "true") await toggle.click();
+  await expect(page.getByTestId(`twin-panel-${panel}-content`)).toBeVisible();
+}
+
+const workPanel = (page: Page) => page.getByTestId("twin-panel-top-content");
+
+const deltaStrip = (page: Page) => page.getByTestId("twin-panel-bottom-content").locator("[data-retrofit-delta-strip]");
 
 /** Generous: a dev server may be compiling this route for the first time. */
 const FIRST_PAINT = 45_000;
@@ -134,11 +138,12 @@ for (const building of BUILDINGS) {
         { timeout: FIRST_PAINT },
       );
       await expect(page.getByTestId("reference-model-viewer")).toHaveAttribute("data-model-loaded", "true", { timeout: FIRST_PAINT });
+      await openPanel(page, "top");
     });
 
     test("the PV modules drawn are the modules the legend counts", async ({ page }) => {
       await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
-      const row = page.locator("[data-measure-chip-row]");
+      const row = workPanel(page).locator("[data-measure-chip-row]");
       await expect(row).toBeVisible({ timeout: FIRST_PAINT });
       const solar = row.locator('[data-measure-chip^="solar-pv"]').first();
       if (building.pv) await expect(solar).toBeVisible();
@@ -164,6 +169,8 @@ for (const building of BUILDINGS) {
         { timeout: FIRST_PAINT },
       );
       // The legend says where the modules are and where they are not.
+      await page.getByTestId("twin-panel-top-toggle").click();
+      await expect(workPanel(page)).toBeHidden();
       await legend.getByRole("button").click();
       await expect(legend).toContainText("kWp");
       const details = page.getByTestId("reference-pv-utilisation");
@@ -186,7 +193,7 @@ for (const building of BUILDINGS) {
     test("roof inspection clears the energy panels and restores the chosen work", async ({ page }) => {
       const viewer = page.getByTestId("reference-model-viewer");
       const overlay = page.getByTestId("reference-energy-overlays").locator("[data-twin-instrument-frame]");
-      const selectedBefore = await page.locator('[data-measure-chosen="true"]').count();
+      const selectedBefore = await workPanel(page).locator('[data-measure-chosen="true"]').count();
       const focus = page.getByTestId("reference-view-inspection");
       await focus.focus();
       await page.keyboard.press("Enter");
@@ -199,10 +206,11 @@ for (const building of BUILDINGS) {
       await expect(viewer).toHaveAttribute("data-view", "exterior");
       await focus.click();
       await expect(overlay).toBeVisible();
-      await expect(page.locator('[data-measure-chosen="true"]')).toHaveCount(selectedBefore);
+      await expect(workPanel(page).locator('[data-measure-chosen="true"]')).toHaveCount(selectedBefore);
     });
 
     test("renders its energy strip on a FIRST visit, with no reload", async ({ page }) => {
+      await openPanel(page, "bottom");
       // The store was empty when this page loaded.
       expect(
         await page.evaluate(() => (window as unknown as { __seededKeys: string[] }).__seededKeys),
@@ -284,7 +292,7 @@ for (const building of BUILDINGS) {
     test("a measure chip changes the model, and clicking it again puts it back", async ({ page }) => {
       // Each measure controls the chosen work and the energy delta.
       await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
-      const row = page.locator("[data-measure-chip-row]");
+      const row = workPanel(page).locator("[data-measure-chip-row]");
       await expect(row).toBeVisible({ timeout: FIRST_PAINT });
 
       // Resolve the chip's ID FIRST and locate by that. Keying the locator on
@@ -308,16 +316,20 @@ for (const building of BUILDINGS) {
       const flipped = startedChosen ? "false" : "true";
       const restored = startedChosen ? "true" : "false";
 
-      const readDelta = async () =>
-        (await deltaStrip(page).innerText()).replace(/\s+/g, " ").trim();
+      const readDelta = async () => {
+        await openPanel(page, "bottom");
+        return (await deltaStrip(page).innerText()).replace(/\s+/g, " ").trim();
+      };
 
       const deltaBefore = await readDelta();
 
+      await openPanel(page, "top");
       await chip.click();
       await expect(chip).toHaveAttribute("data-measure-chosen", flipped);
       await expect(chip).toHaveAttribute("aria-pressed", flipped);
       await expect.poll(readDelta, { timeout: 15_000 }).not.toBe(deltaBefore);
 
+      await openPanel(page, "top");
       await chip.click();
       await expect(chip).toHaveAttribute("data-measure-chosen", restored);
       await expect.poll(readDelta, { timeout: 15_000 }).toBe(deltaBefore);
@@ -346,7 +358,7 @@ for (const building of BUILDINGS) {
       // against the wiring regressing on every building, the Clinic included.
 
       await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
-      const row = page.locator("[data-measure-chip-row]");
+      const row = workPanel(page).locator("[data-measure-chip-row]");
       await expect(row).toBeVisible({ timeout: FIRST_PAINT });
 
       const envelope = row.locator('[data-measure-chip^="envelope-"]');
@@ -368,7 +380,7 @@ for (const building of BUILDINGS) {
     });
 
     test("removed funding controls and old saved programs cannot change the estimate", async ({ page }) => {
-      const rail = page.locator("[data-twin-rail]");
+      const rail = workPanel(page).locator("[data-twin-rail]");
       await expect(rail).toBeVisible({ timeout: FIRST_PAINT });
       const readRail = async () => (await rail.innerText()).replace(/\s+/g, " ").trim();
       const baseline = await readRail();
@@ -378,6 +390,7 @@ for (const building of BUILDINGS) {
         state: { programTrack: "public-seoul-or-central" }, version: 0,
       })));
       await page.reload();
+      await openPanel(page, "top");
       await expect(page.getByTestId("reference-model-viewer")).toHaveAttribute("data-roof-planes", "ready", { timeout: FIRST_PAINT });
       await expect(rail).toBeVisible({ timeout: FIRST_PAINT });
       await expect.poll(readRail, { timeout: FIRST_PAINT }).toBe(baseline);
@@ -395,7 +408,7 @@ for (const building of BUILDINGS) {
       // every deselection and let a financing click move the building again,
       // which is the behaviour 3C exists to remove.
       await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
-      const row = page.locator("[data-measure-chip-row]");
+      const row = workPanel(page).locator("[data-measure-chip-row]");
       await expect(row).toBeVisible({ timeout: FIRST_PAINT });
 
       // NOT asserted to be non-zero: the Clinic's knapsack recommends none
@@ -413,7 +426,7 @@ for (const building of BUILDINGS) {
       expect(recommended).toBe(chosen);
 
       // And the rail is reporting that same set rather than a second one.
-      const railCount = (await page.locator("[data-twin-rail]").innerText()).match(
+      const railCount = (await workPanel(page).locator("[data-twin-rail]").innerText()).match(
         /(\d+)\/(\d+)개 선택/,
       );
       expect(railCount).not.toBeNull();
@@ -433,6 +446,7 @@ for (const building of BUILDINGS) {
       // attribute rather than the sentence means this test and the unit test
       // behind `zeroDeltaReason()` check one value instead of two renderings.
       await expect(energyStrip(page)).toContainText("kWh/m²·yr", { timeout: FIRST_PAINT });
+      await openPanel(page, "bottom");
       const strip = deltaStrip(page);
       await expect(strip).toBeVisible({ timeout: FIRST_PAINT });
 

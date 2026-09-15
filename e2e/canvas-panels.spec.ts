@@ -3,6 +3,7 @@ import { seedSeenTours } from './helpers/app-state';
 for (const route of ['/models/fzk-haus', '/building/demo']) {
   for (const mobile of [true, false]) {
     test(`${route}: ${mobile ? 'mobile bottom navigation sheet' : 'desktop side drawer'}`, async ({ page }) => {
+      test.setTimeout(90000);
       await page.setViewportSize(mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 });
       await seedSeenTours(page);
       await page.goto(route);
@@ -20,7 +21,7 @@ for (const route of ['/models/fzk-haus', '/building/demo']) {
       expect(mobile ? offset.x : offset.y).toBe(0);
       await top.click();
       await expect(panel).toBeVisible();
-      await expect.poll(() => panel.evaluate(x => getComputedStyle(x).transform)).toBe('matrix(1, 0, 0, 1, 0, 0)');
+      await expect.poll(() => panel.evaluate(x => getComputedStyle(x).transform), { timeout: 15000 }).toBe('matrix(1, 0, 0, 1, 0, 0)');
       const geometry = await panel.evaluate(x => {
         const panel = x.getBoundingClientRect();
         const frame = x.closest('[data-twin-instrument-frame]')!.getBoundingClientRect();

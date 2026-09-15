@@ -72,7 +72,7 @@ export function CorpusBrowser() {
       <p className="mt-4 text-sm leading-7 text-muted-foreground">{t("건축물대장에 기재된 면적과 용도에, 시기별 외피·설비 가정을 적용한 간이 계산입니다. 실측 사용량이 아니며, 국내 건물 전체를 대표하거나 실제 성능을 검증한 표본이 아닙니다.", "Screening calculations combine registered areas and use with era-based envelope and system assumptions. These are not metered consumption or a representative, validated sample of Korean buildings.")}</p>
       <div className="mt-4 flex flex-wrap gap-2">
         <a className={action} href="/api/corpus/dictionary">{t("데이터 사전 · 필드와 단위", "Data dictionary · fields and units")}</a>
-        <a className={action} href="/api/corpus/releases">{t("릴리스 API", "Releases API")}</a>
+        <a className={action} href="/api/corpus/releases" download="bimfit-corpus-releases.json">{t("릴리스 목록 JSON", "Release index JSON")}</a>
       </div>
     </header>
 
