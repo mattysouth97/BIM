@@ -18,6 +18,7 @@ export function ReferenceDatasetDownloads({
         {ko ? "모델 형상과 출처 · 입력이 확보된 모델만 에너지 계산 포함 · 실측 에너지 자료는 연결되지 않음" : "Model geometry and sources · energy calculations only where inputs are available · no linked measured energy data"}
       </p>
       <div className="flex flex-wrap gap-2">
+        <a className={linkClass} href="/corpus">{ko ? "건축물대장 계산 데이터 찾아보기" : "Browse register-derived calculation data"}</a>
         {buildingId && <a className={linkClass} href={`/api/reference-buildings/${buildingId}/dataset`} download>
           <Download className="h-3.5 w-3.5" aria-hidden="true" />{ko ? "이 모델 JSON" : "Model JSON"}
         </a>}
