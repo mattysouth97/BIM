@@ -57,7 +57,7 @@ both have hard upstream dependencies this milestone creates rather than satisfie
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Tracer: named end-use fuel split and a real lighting load reach both the grade intensity and the on-screen site intensity
+- [x] 01-01-PLAN.md — Tracer: named end-use fuel split and a real lighting load reach both the grade intensity and the on-screen site intensity
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -205,7 +205,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Honest Physics | 0/5 | Planned | - |
+| 1. Honest Physics | 1/5 | In Progress|  |
 | 2. Retrofit Panel | 0/TBD | Not started | - |
 | 3. Model Anchors | 0/TBD | Not started | - |
 | 4. Corpus Generation | 0/TBD | Not started | - |
