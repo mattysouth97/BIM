@@ -198,13 +198,13 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
         </div>
         <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
           <span className="text-muted-foreground">
-            총 투자비
+            전체 적용 시 투자비
             <span className="block font-semibold text-foreground text-sm">
               {formatKRW(summary.totalInvestment)}
             </span>
           </span>
           <span className="text-muted-foreground">
-            연간 절감
+            전체 적용 시 연간 절감
             <span className="block font-semibold text-foreground text-sm">
               {formatKWh(summary.totalAnnualSaving)}/yr
             </span>
@@ -224,6 +224,18 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
             </span>
           </span>
         </div>
+        {/*
+          These totals cover the whole recommendation catalogue, not the user's
+          selected package, and they are a damped estimate rather than an engine
+          rerun. The selected package's authoritative figure is the Energy
+          drawer's, from one engine run over that selection. Say so, rather than
+          letting two different numbers both read as "annual saving".
+        */}
+        <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground" data-testid="outliner-totals-basis">
+          선택한 공사가 아니라 권장사항 전체를 적용했을 때의 추정치입니다. 조치 간
+          중복 절감을 감쇠 보정한 값이며, 엔진 재실행 결과가 아닙니다. 선택한 공사의
+          절감량은 에너지 패널을 보세요.
+        </p>
       </div>
 
       {/* ── Category accordions ── */}

@@ -185,6 +185,53 @@ describe("buildScenarioPortfolioSummary", () => {
     expect(summary.discountedPayback).toBe(6.8);
   });
 
+  // GAP-1 (v6.0 milestone audit). The engine core reruns the whole selection
+  // and notes that per-measure savings are NOT additive because measures
+  // interact. The exported report used to add them anyway, so one selection
+  // could print two different annual savings — the twin's engine figure and
+  // the report's sum. These pin the authoritative figure and force the label
+  // to travel with it.
+  describe("package totals follow the engine rerun, not a sum (GAP-1)", () => {
+    it("prefers the engine rerun over the summed per-measure savings", () => {
+      const sel = makeSelection();
+      const summed = buildScenarioPortfolioSummary(sel)!;
+      const engine = buildScenarioPortfolioSummary(sel, {
+        annualSavingKwh: 123_456,
+        annualCostSavingKrw: 7_777_777,
+      })!;
+
+      expect(engine.totalAnnualSavingKwh).toBe(123_456);
+      expect(engine.totalAnnualCostSavingKrw).toBe(7_777_777);
+      expect(engine.totalsBasis).toBe("engine_rerun");
+
+      // The whole point: the engine figure is NOT the sum, so a surface that
+      // silently kept summing would differ from the twin.
+      expect(engine.totalAnnualSavingKwh).not.toBe(summed.totalAnnualSavingKwh);
+      expect(summed.totalsBasis).toBe("summed_isolated");
+    });
+
+    it("derives payback from the engine totals, so the ratio matches its own numerator", () => {
+      const summary = buildScenarioPortfolioSummary(makeSelection(), {
+        annualSavingKwh: 123_456,
+        annualCostSavingKrw: 5_000_000,
+      })!;
+      // Reproduce the quoted payback from the quoted figures: an explanation
+      // that cannot be recomputed from the values beside it is the defect
+      // class this suite exists to catch.
+      expect(summary.payback).toBeCloseTo(summary.totalInvestment / 5_000_000, 5);
+    });
+
+    it("labels the fallback honestly when no engine delta is available", () => {
+      const summary = buildScenarioPortfolioSummary(makeSelection(), null)!;
+      const expected = makeSelection().selected.reduce(
+        (s, m) => s + m.annualEnergySaving,
+        0,
+      );
+      expect(summary.totalsBasis).toBe("summed_isolated");
+      expect(summary.totalAnnualSavingKwh).toBe(expected);
+    });
+  });
+
   it("computes a portfolio IRR from the aggregate cash flow when savings cover capex", () => {
     const summary = buildScenarioPortfolioSummary(makeSelection())!;
     // 10 × 1.5M = 15M inflow vs 8M effective capex ⇒ positive IRR exists.

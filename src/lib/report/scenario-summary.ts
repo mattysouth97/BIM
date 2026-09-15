@@ -6,6 +6,24 @@
 import { computeIrr, type BudgetSelection } from "@/lib/retrofit/economic-model";
 import type { EnergyAuditInput } from "@/lib/report/templates/energy-audit";
 
+/**
+ * How a portfolio's headline savings were derived. See
+ * `ScenarioPortfolioSummary.totalsBasis`.
+ */
+export type PortfolioTotalsBasis = "engine_rerun" | "summed_isolated";
+
+/**
+ * The authoritative package totals, as produced by one engine rerun over the
+ * whole selection (`RetrofitCoreResult.totalAnnualSavingKwh` and
+ * `bill.annualSavingKrw`). Both must come from the same rerun — a summary that
+ * mixed an engine kWh with a summed KRW would carry one basis label over two
+ * different methods, which is the defect this parameter exists to close.
+ */
+export interface EngineRerunTotals {
+  annualSavingKwh: number;
+  annualCostSavingKrw: number;
+}
+
 /** Same knapsack the twin shows, shaped for the energy-audit takeaway. */
 export function scenarioToAuditSummary(
   selection: BudgetSelection | null,
@@ -45,15 +63,43 @@ export function scenarioToAuditSummary(
 export interface ScenarioPortfolioSummary {
   /** Sum of raw estimated costs of the selected measures. KRW. */
   totalInvestment: number;
-  /** Sum of annual energy savings of the selected measures. kWh/yr. */
+  /**
+   * Annual energy saving of the selection. kWh/yr.
+   * `totalsBasis` says how it was derived — read them together.
+   */
   totalAnnualSavingKwh: number;
-  /** Sum of annual cost savings of the selected measures. KRW/yr. */
+  /**
+   * Annual cost saving of the selection. KRW/yr.
+   * `totalsBasis` says how it was derived — read them together.
+   */
   totalAnnualCostSavingKrw: number;
+  /**
+   * How the two totals above were derived.
+   *
+   * `engine_rerun` — the core rebuilt the building with the whole selection
+   * applied and ran the engine once. This is the authoritative figure.
+   * `summed_isolated` — the per-measure savings were added up. The engine
+   * core states in its own notes that these are NOT additive, because
+   * measures interact; this basis is a fallback for when no engine delta is
+   * available, and any surface rendering it must say so.
+   */
+  totalsBasis: PortfolioTotalsBasis;
   /** Simple payback (investment / annual cost saving). `null` when saving ≤ 0. */
   payback: number | null;
-  /** Knapsack aggregate NPV. KRW. */
+  /**
+   * Knapsack aggregate NPV. KRW.
+   *
+   * Derived from the per-measure discounted cash flows, NOT from the engine
+   * rerun — so it stays per-measure-derived even when `totalsBasis` is
+   * `engine_rerun`. Known and deliberate: converging the DCF on the engine
+   * rerun is a separate change with its own evidence burden. Do not describe
+   * this figure as an engine result.
+   */
   npv: number;
-  /** Portfolio IRR from the aggregate cash flow vs effective CAPEX. `null` when undefined. */
+  /**
+   * Portfolio IRR from the aggregate cash flow vs effective CAPEX. `null` when
+   * undefined. Per-measure-derived, like `npv` — see the note there.
+   */
   irr: number | null;
   /** Discounted payback of the aggregate. `null` when never recovered. */
   discountedPayback: number | null;
@@ -71,19 +117,24 @@ export interface ScenarioPortfolioSummary {
  * consumers must then render their explicit "no analysis" state.
  */
 export function buildScenarioPortfolioSummary(
-  selection: BudgetSelection | null
+  selection: BudgetSelection | null,
+  engineTotals?: EngineRerunTotals | null
 ): ScenarioPortfolioSummary | null {
   if (!selection || selection.selected.length === 0) return null;
 
   const totalInvestment = selection.selected.reduce((s, m) => s + m.estimatedCost, 0);
-  const totalAnnualSavingKwh = selection.selected.reduce(
-    (s, m) => s + m.annualEnergySaving,
-    0
-  );
-  const totalAnnualCostSavingKrw = selection.selected.reduce(
-    (s, m) => s + m.annualCostSaving,
-    0
-  );
+
+  // Prefer the engine rerun over the whole selection. Summing the per-measure
+  // savings contradicts the core's own stated invariant ("Individual savings
+  // are not additive because measures interact"), so it survives only as the
+  // fallback for a scenario with no engine delta — and it is labelled as such.
+  const totalsBasis: PortfolioTotalsBasis = engineTotals ? "engine_rerun" : "summed_isolated";
+  const totalAnnualSavingKwh = engineTotals
+    ? engineTotals.annualSavingKwh
+    : selection.selected.reduce((s, m) => s + m.annualEnergySaving, 0);
+  const totalAnnualCostSavingKrw = engineTotals
+    ? engineTotals.annualCostSavingKrw
+    : selection.selected.reduce((s, m) => s + m.annualCostSaving, 0);
 
   const payback =
     totalAnnualCostSavingKrw > 0 ? totalInvestment / totalAnnualCostSavingKrw : null;
@@ -106,6 +157,7 @@ export function buildScenarioPortfolioSummary(
     totalInvestment,
     totalAnnualSavingKwh,
     totalAnnualCostSavingKrw,
+    totalsBasis,
     payback,
     npv: selection.npv,
     irr,

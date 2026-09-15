@@ -162,9 +162,26 @@ export function ReportStage({
     climateRegion: scenarioApplies ? scenarioInputs.climateRegion : null,
   });
 
+  // The exported report must state the SAME annual saving the twin shows. The
+  // core produces it by rerunning the engine over the whole selection; summing
+  // the per-measure figures contradicts the core's own note that measures
+  // interact. Engine totals are passed only when the delta AND the bill come
+  // from that one rerun, so kWh and KRW can never carry different methods
+  // under a single basis label.
+  const core = scenario.coreResult;
+  const engineTotals = useMemo(
+    () =>
+      core?.delta && core.bill
+        ? {
+            annualSavingKwh: core.totalAnnualSavingKwh,
+            annualCostSavingKrw: core.bill.annualSavingKrw,
+          }
+        : null,
+    [core]
+  );
   const portfolio = useMemo(
-    () => buildScenarioPortfolioSummary(scenario.selection),
-    [scenario.selection]
+    () => buildScenarioPortfolioSummary(scenario.selection, engineTotals),
+    [scenario.selection, engineTotals]
   );
 
   // ── Agentic BIM Engine (additive) ────────────────────────────────────────
