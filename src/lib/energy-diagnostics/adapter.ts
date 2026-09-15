@@ -1106,7 +1106,7 @@ export function compileCanonicalModelToEngineInput(
   }, {
     id: "engine-approximation:end-use-ratios",
     kind: "ratio_attribution",
-    title: "Ratio-estimated non-HVAC end uses",
+    title: "Ratio-estimated domestic hot water and plug loads",
     explanation: "Domestic hot water and plug-load results are ratio estimates anchored to the degree-day HVAC result; their canonical schedule and density fields are not simulated by this engine.",
     affectedInputPaths: ["result.annualByEndUseKwh.domesticHotWater", "result.annualByEndUseKwh.equipment"],
     sourceFactIds: [model.building.useType.id],

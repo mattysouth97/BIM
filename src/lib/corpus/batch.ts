@@ -41,7 +41,9 @@ export function corpusManifest(outcomes: readonly CorpusOutcome[], context: Corp
   for (const outcome of outcomes) {
     if (outcome.status === "excluded") { exclusionsByReason[outcome.exclusion.reason] = (exclusionsByReason[outcome.exclusion.reason] ?? 0) + 1; continue; }
     for (const assumption of outcome.record.assumptions) {
-      const row = assumptions.get(assumption.id) ?? {...assumption,count:0,fraction:0}; row.count++; assumptions.set(row.id,row);
+      const row = assumptions.get(assumption.id) ?? {...assumption,count:0,fraction:0};
+      if (row.title !== assumption.title) row.title = "Varies by record; see each record's named assumption.";
+      row.count++; assumptions.set(row.id,row);
     }
   }
   for (const row of assumptions.values()) row.fraction = records.length ? row.count/records.length : 0;

@@ -44,4 +44,15 @@ describe("register corpus generation",()=>{
     expect(manifest.recordCount).toBe(1);expect(manifest.exclusionCount).toBe(2);
     for(const row of manifest.assumptionPrevalence){expect(row.count).toBe(1);expect(row.fraction).toBe(1);}
   });
+  it("never describes a mixed assumption family with one record's numerical basis",async()=>{
+    const generated=await generateCorpusRecord(title,context);
+    if(generated.status!=="generated")throw new Error("fixture must generate");
+    const first:CorpusOutcome={status:"generated",record:{...generated.record,assumptions:[{id:"A-DHW-RATIO",title:"Use 02 assumes 25%"}]}};
+    const second:CorpusOutcome={status:"generated",record:{...generated.record,id:"another",assumptions:[{id:"A-DHW-RATIO",title:"Use 14 assumes 10%"}]}};
+    const manifest=corpusManifest([first,second],context);
+    expect(manifest.assumptionPrevalence).toEqual([{id:"A-DHW-RATIO",title:"Varies by record; see each record's named assumption.",count:2,fraction:1}]);
+    expect(first.record.assumptions[0].title).toBe("Use 02 assumes 25%");
+    expect(second.record.assumptions[0].title).toBe("Use 14 assumes 10%");
+  });
+
 });
