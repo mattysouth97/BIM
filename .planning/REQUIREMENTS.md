@@ -1,82 +1,152 @@
-# Requirements: Korea BIM Energy Management System
+# Requirements: BIMFIT v6.0 Building Energy Repository
 
-**Defined:** 2026-04-12
-**Core Value:** Audit-grade BIM deliverables for Korean GX auditors and architects — views, schedules, annotations, sheets, undo.
+**Defined:** 2026-09-15
+**Core Value:** Every number the product states can be traced to either a cited source or a named, visible, reversible assumption — and that guarantee holds when the same method is applied to one building or to a population.
+
+**Milestone scope decision:** reach the first published corpus release. Peer-group
+benchmarking and calibration error bands are deferred, because both have hard upstream
+dependencies that this milestone creates rather than satisfies.
 
 ## v6.0 Requirements
 
-Requirements for Audit Deliverables milestone (phases 29-34).
+### Honest Physics
 
-### Undo & Element Identity
+The delivered-energy split fixes lighting at 15% of total demand and hard-codes renewable
+generation to zero. It is called at `energy-dataset.ts:89` and its result feeds the published
+efficiency rating on the next line, so the already-published datasets encode this. Every
+requirement below this heading must land before any corpus record is generated.
 
-- [ ] **UNDO-01**: User can press Ctrl+Z to undo the last authoring action (wall edit, equipment param change, annotation placement, layer toggle) and Ctrl+Shift+Z or Ctrl+Y to redo, across 50 steps of history
-- [ ] **BIM-01**: Every authoring-relevant element (wall, slab, column, window, door, MEP instance, annotation) carries a stable ElementId that persists across sessions and is referenced by downstream features (annotations, schedules, views)
+- [ ] **PHYS-01**: A lighting measure changes the building's modeled energy intensity and its efficiency grade, not only its cash flow
+- [ ] **PHYS-02**: A photovoltaic system's generation reaches primary energy and the efficiency grade, not only its cash flow
+- [ ] **PHYS-03**: When lighting power density or photovoltaic capacity is unknown, the resulting figure reads as a named, visible assumption and never as a silent default
+- [ ] **PHYS-04**: The same building priced from the twin and from the diagnostics page returns the same retrofit result
+- [ ] **PHYS-05**: The seven published building datasets are regenerated under the corrected physics, with the schema version raised and the change recorded in a changelog
 
-### Annotations
+### Retrofit Panel
 
-- [ ] **ANN-01**: User can place dimension lines, area labels, level markers, and section planes in the 3D scene via toolbar, with snap-to-element anchoring
-- [ ] **ANN-02**: Annotations auto-update when their anchored elements change (e.g., wall moves → dimension text updates), and are automatically removed when the anchored element is deleted
+- [ ] **PANEL-01**: User sees the energy intensity and carbon outcome of the work they selected, before and after
+- [ ] **PANEL-02**: User sees which inputs behind that outcome are measured, which are assumed, and what to verify before committing capital
+- [ ] **PANEL-03**: Every currency figure shown is priced from modeled savings the engine actually produced
+- [ ] **PANEL-04**: The panel reserves a defined slot for corpus position, so the benchmarking work lands without a redesign
+- [ ] **PANEL-05**: The unreachable budget slider component and the unused default-budget constant are removed
 
-### Views
+### Model Anchors
 
-- [ ] **VIEW-01**: User can switch between auto-generated plan views (one per level), 4 elevation views, and ad-hoc section views from a view switcher UI — each with correct camera + clipping configuration
-- [ ] **VIEW-02**: Section markers placed in a plan view spawn a new section view on click, and view state (active view, camera, clipping) round-trips through serialization
+- [ ] **ANCH-01**: The model roster has one source of truth, and every gallery card figure is derived from that building's generated manifest rather than hand-typed
+- [ ] **ANCH-02**: A contract test checks every gallery card against its manifest, not only the clinic
+- [ ] **ANCH-03**: At least one Korean building is registered as a reference model with the same evidence standard as the existing seven
+- [ ] **ANCH-04**: At least one building fills a typology gap the current roster does not cover
+- [ ] **ANCH-05**: At least one further licensed source model is registered
+- [ ] **ANCH-06**: A recorded finding states whether Korean metered-energy sources will licence data for calibration, and on what terms
+- [ ] **ANCH-07**: Where no anchor with measured consumption exists, the product says so explicitly rather than implying one
 
-### Schedules
+### Corpus Generation
 
-- [ ] **SCH-01**: User can view live, filterable schedule tables for 4 categories (Wall, Window/Door, MEP Equipment, Room) derived from the element registry, with sort/filter controls and CSV export
-- [ ] **SCH-02**: Editing any element property (wall thickness, window U-value, equipment capacity) updates the corresponding schedule row within one render frame
+- [ ] **SWEEP-01**: A recorded measurement states the register's actual request quota and field-completeness rate, taken from a real bounded sweep rather than estimated
+- [ ] **SWEEP-02**: Corpus baselines are generated by a resumable batch job that reuses the same energy chain the interactive app uses, with no second implementation
+- [ ] **SWEEP-03**: Every corpus record carries the engine version, schema version, source commit and pinned generation time that produced it, so a release is reproducible
+- [ ] **SWEEP-04**: A building whose register row cannot support a baseline is recorded as a logged exclusion, never filled with a population average
+- [ ] **SWEEP-05**: Each release carries a table of how prevalent each named assumption is across its records, generated during the sweep
+- [ ] **SWEEP-06**: Every corpus record has a stable identifier and a permalink that returns that record later
+- [ ] **SWEEP-07**: Every corpus record carries its provenance, its licence and its evidence tier
 
-### Sheets
+### Publishing
 
-- [ ] **SHT-01**: User can compose multi-page A1/A3 sheets with drag-to-place viewports (views + schedules) and a Korean GX-format title block, exportable as PDF
-- [ ] **SHT-02**: Exported PDF renders views at correct scale (1:50 / 1:100) with vector SVG for line drawings and is under 5MB for a 3-floor building
+- [ ] **PUB-01**: Every release states which building classes, eras and regions it covers and which it does not
+- [ ] **PUB-02**: User can download the whole corpus in one export
+- [ ] **PUB-03**: A read-only API returns corpus records with filtering and pagination
+- [ ] **PUB-04**: Releases are dated, versioned snapshots with a changelog saying what changed between them
+- [ ] **PUB-05**: A public data dictionary documents every field and its unit
+- [ ] **PUB-06**: Corpus records and release artifacts are stored outside the git repository
+- [ ] **PUB-07**: A recorded decision states the licence under which register-derived records are published, separately from the curated models' licences
+- [ ] **PUB-08**: User can search and filter the corpus by use type, era and region
+- [ ] **PUB-09**: Any statement about the pipeline's internal consistency is textually separate from any statement about accuracy against the Korean building stock
 
-## v6.x Deferred
+## Next Milestone
 
-Items intentionally out of scope for v6.0 but planned for later milestones:
+Deferred with a stated reason, not dropped.
 
-- **SEM-01** (v7.0): Family / Type / Instance semantic hierarchy
-- **PARAM-01** (v7.0): Typed parameter registry with calculated parameters
-- **LVL-01** (v7.0): Levels and grids as first-class BIM entities
-- **CONS-01** (v8.0): 2D geometric constraint solver
-- **FAM-01** (v8.0): In-app family editor
-- **IFC-01** (v8.0): IFC4 round-trip export
-- **PHASE-01** (v8.0): Existing/demo/new phasing axis
-- **COLLAB-01** (v8.0): Yjs multi-user editing
-- **VIZ-01** (v8.5): Sun/shadow studies, path-traced rendering
-- **NET-01** (v9.0): MEP connected networks with flow calculations
+### Benchmarking
+
+- **BENCH-01**: User sees a named, inspectable peer group defined by use type, era, climate region and size class
+- **BENCH-02**: User sees their building's position within that peer group
+- **BENCH-03**: A peer group with too few records is suppressed or flagged rather than given a weak position
+- **BENCH-04**: Corpus position appears in the retrofit panel slot reserved by PANEL-04
+
+**Why deferred:** ranking needs enough records per peer-group cell to be meaningful, and
+this milestone is what produces the records. Research names this a hard ordering constraint.
+
+### Calibration
+
+- **CAL-01**: Each peer group carries a stated error band derived from measured anchors
+- **CAL-02**: A peer group with no nearby measured anchor is flagged as uncalibrated rather than given a false tight band
+- **CAL-03**: User can see the raw modeled figure and the calibrated figure separately
+
+**Why deferred:** calibration needs anchors carrying measured consumption. None of the seven
+has a meter series, and ANCH-06 is what establishes whether one can be obtained at all.
 
 ## Out of Scope
 
+Explicitly excluded. The first four are non-goals rather than deferrals: each is structurally
+incompatible with the traceability guarantee, so adopting one would replace it rather than
+sit beside it.
+
 | Feature | Reason |
 |---------|--------|
-| Native RVT file read on client | ODA licensing prohibits; server-side conversion only (deferred to v9.0) |
-| Client-side full structural FEA | Nonlinear/seismic analysis requires desktop-class compute; export analytical model only |
-| Revit-parity Dynamo graphical scripting | Out of scope — leverage AI copilot instead (v9.0) |
-| Point cloud ingestion at ReCap scale | Not in core user workflow |
-| Offline-first desktop installer (Electron) | Web-native commitment — no Electron pivot |
+| A single merged benchmark score as the headline | A single number hides both model-form error and thin sample cells. Published critique of the industry reference score documents exactly this. Show a band, and suppress thin cells |
+| Narrowing sweep coverage without stating it | Narrow coverage is fine and normal. Narrow coverage without a stated boundary lets a reader assume more than exists. Both Korean precedents fail this way |
+| Branding corpus output as measured or representative | No meter series is ingested. The largest American precedent brands a volunteered convenience sample as measured and is criticised for it |
+| Publishing only aggregate roll-ups | Aggregate-only design cannot place a single building and hides bias by construction, as the European observatory does. Per-record stays primary; aggregates are a read of it |
+| Subsidy and support-program financing controls | Removed at user request 2026-09-07. Domain functions remain; no reachable control selects them |
+| Columnar storage formats for the corpus | The superseded v7.0 plan reached for Parquet before a corpus existed and never shipped. Revisit when record count makes text formats unwieldy |
+| A new API framework | The existing route-handler pattern is the right shape at larger record counts |
+| The old v6.0 audit deliverables and v7.0 prediction plans | Superseded 2026-09-15. Records archived under `milestones/v6.0-audit-superseded-*` |
 
 ## Traceability
 
+Populated during roadmap creation.
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UNDO-01 | Phase 29 | Pending |
-| BIM-01 | Phase 30 | Pending |
-| ANN-01 | Phase 31 | Pending |
-| ANN-02 | Phase 31 | Pending |
-| VIEW-01 | Phase 32 | Pending |
-| VIEW-02 | Phase 32 | Pending |
-| SCH-01 | Phase 33 | Pending |
-| SCH-02 | Phase 33 | Pending |
-| SHT-01 | Phase 34 | Pending |
-| SHT-02 | Phase 34 | Pending |
+| PHYS-01 | — | Pending |
+| PHYS-02 | — | Pending |
+| PHYS-03 | — | Pending |
+| PHYS-04 | — | Pending |
+| PHYS-05 | — | Pending |
+| PANEL-01 | — | Pending |
+| PANEL-02 | — | Pending |
+| PANEL-03 | — | Pending |
+| PANEL-04 | — | Pending |
+| PANEL-05 | — | Pending |
+| ANCH-01 | — | Pending |
+| ANCH-02 | — | Pending |
+| ANCH-03 | — | Pending |
+| ANCH-04 | — | Pending |
+| ANCH-05 | — | Pending |
+| ANCH-06 | — | Pending |
+| ANCH-07 | — | Pending |
+| SWEEP-01 | — | Pending |
+| SWEEP-02 | — | Pending |
+| SWEEP-03 | — | Pending |
+| SWEEP-04 | — | Pending |
+| SWEEP-05 | — | Pending |
+| SWEEP-06 | — | Pending |
+| SWEEP-07 | — | Pending |
+| PUB-01 | — | Pending |
+| PUB-02 | — | Pending |
+| PUB-03 | — | Pending |
+| PUB-04 | — | Pending |
+| PUB-05 | — | Pending |
+| PUB-06 | — | Pending |
+| PUB-07 | — | Pending |
+| PUB-08 | — | Pending |
+| PUB-09 | — | Pending |
 
 **Coverage:**
-- v6.0 requirements: 10 total
-- Mapped to phases: 10
-- Unmapped: 0
+- v6.0 requirements: 33 total
+- Mapped to phases: 0 ⚠️
+- Unmapped: 33 ⚠️
 
 ---
-*Requirements defined: 2026-04-12*
-*Last updated: 2026-04-12 after v6.0 milestone definition*
+*Requirements defined: 2026-09-15*
+*Last updated: 2026-09-15 after initial definition*
