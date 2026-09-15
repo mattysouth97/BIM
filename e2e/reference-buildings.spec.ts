@@ -270,13 +270,24 @@ for (const building of BUILDINGS) {
         await expect(panel).toContainText(layer.ko);
       }
 
+      // A model whose source carries NO services offers one generated layer
+      // instead, which is deliberately absent from the manifest — it is an
+      // inference, not a published artifact. It must appear only there: a
+      // building that states its own MEP shows the real thing.
+      const inferredRow = services.length === 0 ? 1 : 0;
+      await expect(
+        page.getByTestId("reference-model-layer-inferred-mep-note"),
+      ).toHaveCount(inferredRow);
+
       // Count all controls, including the independent architectural details.
       // A flow control requires an actual flow file; absence is not invented.
       const flowRow = services.some((layer) => layer.flow?.file) ? 1 : 0;
       await expect(page.getByTestId("reference-model-layer-fabric")).toBeVisible();
       await expect(
         panel.locator('[data-testid^="reference-model-layer-"]:not([data-testid$="-note"])'),
-      ).toHaveCount(1 + services.length + flowRow + (manifest.architecturalDetails ? 1 : 0));
+      ).toHaveCount(
+        1 + services.length + flowRow + inferredRow + (manifest.architecturalDetails ? 1 : 0),
+      );
     });
 
     test("carries the licence its grant requires", async ({ page }) => {

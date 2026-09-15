@@ -3,6 +3,26 @@ import { readFile } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
 import { REFERENCE_BUILDING_IDS } from "../src/lib/reference-buildings/manifest";
 
+/**
+ * Models that publish source geometry and no energy at all, each for a stated
+ * reason recorded in its build definition:
+ *
+ * - both TUM hotels: fictional student designs whose exterior-envelope
+ *   classification is unresolved, so no baseline is calculated.
+ * - West Riverside Hospital: the publisher's model card states there is no
+ *   IfcSpace in any of its seven discipline files, so there is no conditioned
+ *   area to divide by.
+ *
+ * Every other model must carry modeled energy. Adding an id here is a
+ * decision that a building legitimately cannot be graded — not a way to get
+ * a failing dataset past this test.
+ */
+const GEOMETRY_ONLY = [
+  "tum-fantasy-hotel-1",
+  "tum-fantasy-hotel-2",
+  "west-riverside-hospital",
+];
+
 test("catalogue downloads preserve provenance and distinguish modeled energy from meters", async ({ page, request }) => {
   await page.goto("/");
   const downloads = page.getByTestId("reference-dataset-downloads");
@@ -19,7 +39,11 @@ test("catalogue downloads preserve provenance and distinguish modeled energy fro
   for (const dataset of catalogue.datasets) {
     expect(dataset.isMetered).toBe(false);
     expect(dataset.meteredEnergy).toBeNull();
-    if (dataset.id.startsWith("tum-fantasy-hotel-")) {
+    // Geometry-only models carry no energy at all. Pinned by id rather than
+    // inferred from the payload: reading "no energy" off the dataset and then
+    // asserting the no-energy shape would pass for a model that lost its
+    // energy by accident. This list is the set allowed to have none.
+    if (GEOMETRY_ONLY.includes(dataset.id)) {
       expect(dataset.modeledEnergy).toBeNull();
       expect(dataset.modelInputs).toBeNull();
       expect(dataset.measuredEnvelope.status).toBe("unresolved");
