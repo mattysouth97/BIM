@@ -31,6 +31,11 @@ controls now live in Settings → View. Reference models expose their two energy
 information panels. Hidden content stays mounted and inert, preserving inputs.
 Escape/close restores focus; reduced-motion disables the 240ms transition.
 
+Work and Energy content stack vertically inside the tall drawers on both mobile
+and desktop. Construction cards have one column; energy summaries and paired
+outcomes occupy full-width rows. Long Korean and English explanations wrap.
+Escape also closes an open nonmodal drawer after focus moves to its launcher.
+
 Verified on `/models/fzk-haus` and `/building/demo`, 390px and 1440px:
 four Playwright cases passed (direction, geometry, retained budget, switching,
 keyboard, reduced motion and Settings/Layers), plus 291 component/store tests,

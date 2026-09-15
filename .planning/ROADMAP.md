@@ -31,11 +31,16 @@ carbon and corpus position instead of proxy-priced return. Peer-group benchmarki
 calibration error bands are next-milestone scope (see REQUIREMENTS.md "Next Milestone") because
 both have hard upstream dependencies this milestone creates rather than satisfies.
 
-- [ ] **Phase 1: Honest Physics** - Fix the delivered-energy split so lighting and PV measures move the modeled grade, not only cash flow; converge the two economics paths; regenerate the seven published datasets
-- [ ] **Phase 2: Retrofit Panel** - Replace the return-focused panel with energy, carbon and verification guidance, priced only off real modeled savings
+- [x] **Phase 1: Honest Physics** - Fix the delivered-energy split so lighting and PV measures move the modeled grade, not only cash flow; converge the two economics paths; regenerate the seven published datasets
+- [x] **Phase 2: Retrofit Panel** - Replace the return-focused panel with energy, carbon and verification guidance, priced only off real modeled savings
 - [ ] **Phase 3: Model Anchors** - Collapse the two hand-synced model registries into one and grow the anchor set with Korean, typology-gap and further-licensed buildings
 - [ ] **Phase 4: Corpus Generation** - Measure register-sweep feasibility with a real pilot, then generate corpus baselines at scale with per-record provenance built in from the start
-- [ ] **Phase 5: Publishing** - Publish versioned corpus releases with bulk export, a read-only filterable API and a data dictionary, gated by a licence and privacy review
+- [x] **Phase 5: Publishing** - Publish versioned corpus releases with bulk export, a read-only filterable API and a data dictionary, gated by a licence and privacy review
+
+**2026-09-15 verification:** Phases1,2 and5 delivered. Phase3 remains partial because
+no Korean IFC with sufficient reuse evidence is available. Phase4 remains partial
+because the actual account quota is unmeasured; its71-record bounded pilot is stored
+and queryable. The user confirmed they have neither missing input.
 
 ## Phase Details
 
@@ -61,19 +66,19 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — One resolved ClimateRegion wired to all nine consumers; regionalized cooling fields; an unresolvable region refuses
+- [x] 01-02-PLAN.md — One resolved ClimateRegion wired to all nine consumers; regionalized cooling fields; an unresolvable region refuses
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03-PLAN.md — Photovoltaic generation reaches primary energy and the grade; clipped surplus reported; a zero capacity stated as an assumption
+- [x] 01-03-PLAN.md — Photovoltaic generation reaches primary energy and the grade; clipped surplus reported; a zero capacity stated as an assumption
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 01-04-PLAN.md — Twin and diagnostics converge on one shared retrofit core, enforced by a build-failing parity contract test
+- [x] 01-04-PLAN.md — Twin and diagnostics converge on one shared retrofit core, enforced by a build-failing parity contract test
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 01-05-PLAN.md — Schema version raised, limitation statements rewritten in place, changelog and seven-building before-and-after evidence
+- [x] 01-05-PLAN.md — Schema version raised, limitation statements rewritten in place, changelog and seven-building before-and-after evidence
 
 ### Phase 2: Retrofit Panel
 
@@ -88,7 +93,7 @@ Plans:
   4. The panel has a defined, visible slot reserved for corpus position, ready to receive next milestone's benchmarking feature without a redesign
   5. The unreachable budget slider component and the unused default-budget constant no longer exist in the codebase
 
-**Plans**: TBD
+**Plans**: 1 plan
 **UI hint**: yes
 
 ### Phase 3: Model Anchors
@@ -104,7 +109,7 @@ Plans:
   4. A recorded finding states whether Korean metered-energy sources will license data for calibration, and on what terms
   5. Wherever a measured-consumption anchor would otherwise be implied, the product instead states explicitly that none exists
 
-**Plans**: TBD
+**Plans**: 3 plans; partial - ANCH-03 remains open
 **UI hint**: yes
 
 ### Phase 4: Corpus Generation
@@ -120,7 +125,7 @@ Plans:
   4. A register row that cannot support a baseline is recorded as a logged exclusion with a reason, never filled with a population average, and each release carries a table of how prevalent each named assumption is across its records
   5. Every corpus record has a stable identifier and a permalink that returns that record later
 
-**Plans**: TBD
+**Plans**: 1 plan; pilot complete, actual daily quota still unknown
 
 ### Phase 5: Publishing
 
@@ -135,7 +140,7 @@ Plans:
   4. Releases are dated, versioned snapshots with a changelog stating what changed since the prior release, and corpus artifacts are stored outside the git repository
   5. Before first publish, a recorded decision states the licence for register-derived records separately from the curated models' licences, and any statement about the pipeline's internal consistency stays textually separate from any statement about accuracy against the Korean building stock
 
-**Plans**: TBD
+**Plans**: 2 plans; first pilot stored and locally verified
 **UI hint**: yes
 
 ## Phases
@@ -205,8 +210,8 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Honest Physics | 1/5 | In Progress|  |
-| 2. Retrofit Panel | 0/TBD | Not started | - |
-| 3. Model Anchors | 0/TBD | Not started | - |
-| 4. Corpus Generation | 0/TBD | Not started | - |
-| 5. Publishing | 0/TBD | Not started | - |
+| 1. Honest Physics | 5/5 | Verified locally | 2026-09-15 |
+| 2. Retrofit Panel | 1/1 | Verified locally | 2026-09-15 |
+| 3. Model Anchors | 2/3 | Partial — ANCH-03 has no Korean IFC with reuse rights | - |
+| 4. Corpus Generation | 1/1 | Partial — SWEEP-01 daily quota unmeasured | - |
+| 5. Publishing | 2/2 | Verified locally; production verification pending | - |

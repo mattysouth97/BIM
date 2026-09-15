@@ -1,7 +1,7 @@
 ---
 phase: 02-retrofit-panel
 plan: 01
-status: integration-verification-pending
+status: passed
 requirements: [PANEL-01, PANEL-02, PANEL-03, PANEL-04, PANEL-05]
 ---
 
@@ -16,7 +16,7 @@ Verification separates extracted geometry, thermal/system assumptions and user i
 - 77 focused tests across seven files passed.
 - TypeScript and scoped ESLint passed.
 - Four browser cases (Korean/English, 390/1440 px) passed vertical card geometry, no horizontal overflow, empty selection, PV-only paired bill/primary/carbon changes and unchanged gross site consumption.
-- All four cases then failed the final Escape-close assertion. Root owns the shared CanvasDrawer keyboard fix and integrated rerun. This plan is not declared fully verified until that rerun passes.
+- The first run failed final Escape-close. Root fixed outside-focus Escape in906248d; all four integrated cases now pass through that final assertion.
 - Browser screenshots are in the local Playwright test-results directories. The test now waits for both model and roof-plane readiness before editing the selection.
 
 The isolated worktree used the root-owned whole-carbon metrics correction from 03f5a6e for runtime validation; that file is excluded from this UI commit because the integration branch already contains it.

@@ -27,6 +27,19 @@ no reachable product control chooses their subsidy presets.
 
 ## Current Status
 
+The canvas Work and Energy drawers use vertical content at all widths. Work
+shows the selected measures and paired annual engine-bill savings; Energy shows
+before/after site energy, primary energy, carbon and screening grade. The drawers
+include input evidence, checks before capital decisions and an unavailable corpus
+position slot. The unused budget slider component/default were removed; the
+optional user-entered budget remains. Financial functions and the internal NPV
+recommendation remain separate from this presentation.
+
+Existing PV caps electricity-bill savings for isolated measures as well as the
+whole package. An LED upgrade can reduce gross energy without saving another won
+when existing PV already covers annual electricity. Changed-input captions count
+distinct fields, including directional wall fields, rather than mouse actions.
+
 **Implemented on both workspaces:** the twin and diagnostics input adapters call
 `generateRetrofitMeasures` in `retrofit-core.ts`. Exact parity tests cover measure
 IDs, savings, costs, selections and financial outputs for matched inputs.

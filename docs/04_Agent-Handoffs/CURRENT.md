@@ -12,13 +12,10 @@ into a log.
 
 ## Current Objective
 
-2026-09-15 viewer update: canvas information panels are mobile sheets opening
-above a persistent bottom navigation bar, and desktop right-side drawers.
-Settings/Layers share workspace exclusivity; rendering controls moved to
-Settings → View. Browser checks passed on reference + building routes at
-390/1440px (4 cases), 291 component/store tests, TypeScript and scoped ESLint.
-See [[Digital Twin Viewer]]. Phase 1 physics work continues; Phase 3 model
-anchors and gallery grid refinement are underway in separate worktrees.
+2026-09-15: finish the v6.0 repository milestone. Verified physics, vertical
+canvas panels, nine-model gallery and71-record corpus pilot are integrated.
+Two external requirements remain open: Korean IFC reuse evidence and actual
+register API account quota. See the local continuation and .planning/STATE.md.
 
 Make the fixed four-step workflow — 건물 검색 → 도면 업로드 → 디지털 트윈 →
 보고서 — carry the source-traceable energy engine end to end.
@@ -53,35 +50,35 @@ proposes a validated detailed/hourly architecture; it is research, not implement
 
 ## Verified Working State
 
-### Local continuation — 2026-09-15
+### Verified continuation - 2026-09-15
 
-v6.0 Building Energy Repository, Phase 01 Plans 01–02 are verified locally:
-explicit LPD lighting reaches primary grade and the displayed annual site
-intensity; use-code defaults, user inputs, assumed LED targets and unknown
-sources remain distinguishable in a shared Korean/English disclosure.
-See [[Twin Energy Model]] and `.planning/phases/01-honest-physics/01-01-PLAN.md`.
+Phases1 (Honest Physics),2 (Retrofit Panel) and5 (Publishing) are locally verified.
+The gallery contains nine models with a single registry, equal-height cards and
+minimal sans typography. Two licensed fictional hotel models have source geometry
+but explicitly unavailable energy baselines. Phase3's Korean IFC requirement
+remains open. Phase4 generated a bounded pilot; actual daily account quota remains
+unknown. The user confirmed they have neither missing input; no full-scale sweep
+or Korean model completion is claimed.
 
-- Unit suite: **5,581 passed**, 4 existing skipped (463 passed files, one skipped).
-- TypeScript passed; ESLint `src`: 0 errors, 6 existing warnings.
-- KIT Office browser: visible lighting equation re-derived in Korean/English;
-  primary 699.5 and site 410.8 kWh/m²·yr correctly distinguished. Desktop and
-  390px mobile inspected, with no horizontal document overflow on that page.
-- No full Playwright suite, production build or deployment in this continuation.
-- GSD found a missing phase UI contract. `01-UI-SPEC.md` is now reviewed and
-  user-confirmed; the UI safety gate passes.
-- The user approved `01-02-PLAN.md`'s proposed climate basis on 2026-09-15;
-  checkpoint committed before code. Region resolution now reaches scenario/PV
-  consumers and unknown regions visibly withhold PV. Historical sourced city
-  summer temperatures and named province fallbacks remain distinguishable;
-  seasonal solar uses the approved PSH-ratio assumption. Source ledger updated.
-  A missing location in generated designs no longer becomes a Seoul code.
-  Mobile climate text wraps at390px and remains reachable by the HUD's scroll.
-  PV primary-energy integration, retrofit parity and
-  dataset-version/limitation updates remain Plans 03–05. CO₂ and the hook's
-  predicted-versus-actual delta still derive from HVAC demand.
-- These intermediate physics changes are **not a release-ready completed phase**.
-  Preserve unrelated `.claude/settings.local.json`, `.planning/config.json` and
-  pre-existing GSD runtime artifacts in this shared checkout.
+- Named lighting and PV reach primary energy and screening grade. Twin and
+  diagnostics share one retrofit core. Existing-PV saturation caps bill savings.
+- Reference datasets use schema2.0.0 and a linked seven-model before/after changelog.
+  Whole-building carbon is consistent; predicted-versus-actual delta remains HVAC-only.
+- Work/Energy drawers have vertical content. Mobile sheets start above bottom
+  navigation; desktop drawers enter from the side. Full Korean/English wrapping,
+  Escape, focus and preserved state are browser verified.
+- Corpus0.1.0-pilot:71 calculated records,4 exclusions; three sampled regions,
+  seven use codes, six eras. Durable Neon storage, read-only APIs, search/filter
+  browser at /corpus, full streaming JSON and public dictionary are implemented.
+  No independent stock-accuracy or metered calibration claim is made.
+- Full unit suite:5,656passed,4existing skips; final focused corpus/caption tests:59passed.
+  TypeScript passed. Browser coverage:178-case full run, then corrected failures
+  and five new corpus cases passed in targeted reruns (see01-VERIFICATION.md).
+- Main dev3000 has DATABASE_URL loaded only in process memory from the private
+  external corpus environment. No credential file was copied into the repository.
+  Local VWorld remains503 without its keys; this is an existing local limitation.
+- Clean production deployment and exact deployed-SHA/download evidence follow
+  this local checkpoint. Preserve unrelated settings and GSD runtime artifacts.
 
 ### Previous release evidence — 2026-09-07
 

@@ -2,88 +2,70 @@
 gsd_state_version: "1.0"
 milestone: v6.0
 milestone_name: Building Energy Repository
-current_phase: 01
-current_phase_name: Honest Physics
-status: executing
-stopped_at: 01-01 complete; 01-02 climate basis approved, implementation next
-last_updated: "2026-09-15T09:20:31.436Z"
+current_phase: 03
+current_phase_name: Model Anchors
+status: in_progress
+stopped_at: Local checkpoint committed; clean production deployment and deployed-SHA verification next
+last_updated: "2026-09-15T10:44:44.824Z"
 last_activity: 2026-09-15
-last_activity_desc: Plan 01 verified; Plan 02 climate basis approved
-state_head: 08629ca0b3163bc7a67cda91190adfe833d39fd6
+last_activity_desc: Integrated physics, vertical drawers, nine models and71-record pilot
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 5
-  completed_plans: 1
-  percent: 20
+  completed_phases: 3
+  total_plans: 12
+  completed_plans: 10
+  percent: 60
 ---
 
 # Project State
 
-## Project Reference
+## Current position
 
-See: .planning/PROJECT.md (updated 2026-09-15)
+Phases1 and2 are verified. Phase5's reviewed pilot is stored in Neon and its
+local API/browser checks pass; clean production release verification follows.
+The milestone stays open because ANCH-03 and SWEEP-01 remain unmet.
 
-**Core value:** Every number the product states can be traced to either a cited source or a named, visible, reversible assumption — and that guarantee holds when the same method is applied to one building or to a population.
-**Current focus:** Phase 01 — Honest Physics
+## Completed outcomes
 
-## Current Position
+- Honest named-end-use physics, LPD/PV grade effects, shared retrofit core,
+  schema2.0.0 reference datasets with executed before/after evidence.
+- Vertical Work/Energy drawers on desktop; bottom-navigation sheets on mobile.
+- One model registry and nine gallery models, including two licensed hotels with
+  unresolved envelopes and no fabricated energy grades.
+- Resumable75-row pilot:71 records,4 exclusions, full provenance/assumptions.
+- Reviewed0.1.0-pilot stored outside git; streaming bulk JSON, immutable record
+  URLs, read-only filter/pagination API, dictionary and /corpus browser.
 
-Phase: 01 (Honest Physics) — EXECUTING
-Plan: 2 of 5
-Status: Executing Plan 02 after approved climate-basis checkpoint
-Last activity: 2026-09-15 — Plan 01 verified; Plan 02 climate basis approved
+## Remaining external requirements
 
-Progress: [██░░░░░░░░] 20% (1 of 5 currently planned plans; milestone phases remain incomplete)
+- ANCH-03: no Korean building IFC with sufficient source bytes and reuse rights.
+- SWEEP-01: actual account daily quota not established. Successful bounded pilot
+  throughput and completeness do not establish the ceiling or authorize a full sweep.
+- User answered "nope" when asked whether either missing input was available.
+  Do not repeat the question or relabel these requirements complete.
 
-## Performance Metrics
+## Decisions
 
-**Velocity:**
+- User approved bilingual full wrapping and the recommended regional climate basis.
+- User asked for Phase3 parallel work and completion of all phases as quickly as possible.
+- Corpus pilot scope is explicit; calibration and peer benchmarking remain next-milestone work.
+- Publishing review keeps register-derived rights separate from curated model licences.
+- Root owns final integration; unrelated settings/GSD runtime changes are preserved.
 
-- Total plans completed (this milestone): 1
-- Average duration: —
-- Total execution time: —
+## Verification
 
-**By Phase:**
+Full units5,656passed+4existing skips; subsequent focused tests59passed; TypeScript
+passed. Browser failures from stale drawer/model assumptions were fixed and rerun.
+See phase verification reports and docs/04_Agent-Handoffs/CURRENT.md for release evidence.
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| - | - | - | - |
+## Session continuity
 
-*Updated after each plan completion. v1.0-v5.0 velocity history lives in the archived milestone records under `.planning/milestones/`.*
+Session resumed 2026-09-15 19:45. The outstanding local checkpoint was
+re-verified in this session (5,657 unit tests passed, 4 pre-existing skips;
+TypeScript clean; ESLint 0 errors, 6 pre-existing warnings) and committed as
+`e4e8350` plus the phase-evidence commit. Production deployment follows.
 
-## Accumulated Context
+## Resume
 
-### Decisions
-
-Full decision log lives in PROJECT.md Key Decisions table. Recent decisions affecting current work:
-
-- Roadmap: Phase numbering restarts at 1 for v6.0 — legacy phases 1-28 (v1.0-v5.0) and superseded phases 29-40 are historical, not continued
-- Roadmap: Calibration (CAL-01..03) and benchmarking (BENCH-01..04) are out of this milestone per REQUIREMENTS.md "Next Milestone" — not mapped to any v6.0 phase
-- Roadmap: Retrofit panel rebuild (Phase 2) lands immediately after the physics fix (Phase 1), not gated on calibration
-- Roadmap: Model Anchors (Phase 3) is independent of the physics/panel/corpus track and may run in parallel
-- Roadmap: Full-scale corpus generation (Phase 4) is gated on the pilot sweep's measured quota findings, not on calibration or benchmarking
-
-### Pending Todos
-
-None yet.
-
-### Blockers/Concerns
-
-- Phase 4 (Corpus Generation): data.go.kr quota and field-completeness at sweep scale are unmeasured — the pilot sweep inside Phase 4 must resolve this before full-scale generation proceeds
-- Phase 5 (Publishing): licence regime for register-derived records differs from the curated reference-model licences and needs a named legal/licence review before first publish (PUB-07 gate)
-
-## Deferred Items
-
-Items acknowledged and deferred at milestone close, most recent first:
-
-| Category | Item | Status | Deferred At | Milestone |
-|----------|------|--------|-------------|-----------|
-| Requirements | CAL-01..03 (calibration error bands) | Deferred | 2026-09-15 | v6.0 → Next |
-| Requirements | BENCH-01..04 (peer-group benchmarking) | Deferred | 2026-09-15 | v6.0 → Next |
-
-## Session Continuity
-
-Last session: 2026-09-15T09:20:31.420Z
-Stopped at: 01-01 complete; 01-02 climate basis approved, implementation next
-Resume file: .planning/phases/01-honest-physics/01-02-PLAN.md
+Complete production release verification, then acquire actual source/quota evidence
+before closing phases3/4. Do not archive v6.0 as fully complete while those remain open.
