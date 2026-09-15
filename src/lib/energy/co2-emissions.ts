@@ -97,3 +97,15 @@ export function calculateCO2(
     ...(assumption ? { assumption } : {}),
   };
 }
+import type { DeliveredEnergy } from "./primary-energy";
+
+/** Whole-building annual net-carrier emissions, with PV clipped at electricity demand. */
+export function calculateDeliveredCO2(delivered: DeliveredEnergy, totalFloorArea: number): CO2Result {
+  const electricCO2 = Math.max(0, delivered.electric - delivered.renewable) / 1000 * CO2_FACTORS.electricity;
+  const fossilCO2 = (delivered.gas * CO2_FACTORS.gas +
+    (delivered.districtHeating + delivered.districtCooling) * CO2_FACTORS.districtHeating) / 1000;
+  const totalCO2 = electricCO2 + fossilCO2;
+  return { electricCO2, fossilCO2, totalCO2, co2PerSqm: totalFloorArea > 0 ? totalCO2 * 1000 / totalFloorArea : 0,
+    ...(delivered.districtCooling > 0 ? { assumption: "District cooling uses the district-heating emissions factor as a proxy." } : {}),
+  };
+}

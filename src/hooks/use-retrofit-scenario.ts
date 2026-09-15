@@ -13,28 +13,15 @@
 
 import { useMemo } from "react";
 import { useMaterialStore } from "@/store/material-store";
-import { meanWindowToWallRatio } from "@/lib/energy/heat-loss";
-import { normalizeEfficiency } from "@/lib/energy/annual-demand";
-import type { MaterialProperties } from "@/lib/material-types";
-import { generateEnvelopeRetrofits, KOREAN_2020_TARGET_U_VALUES } from "@/lib/retrofit/envelope-retrofits";
-import { generateHvacRetrofits } from "@/lib/retrofit/hvac-retrofits";
-import { generateLightingRetrofits } from "@/lib/retrofit/lighting-retrofits";
-import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
-import {
-  selectMeasuresForBudget,
-  evaluateMeasureSet,
-  computeFinancials,
-  resolveHeatingFuel,
-  type EconomicAssumptions,
-  type BudgetSelection,
-} from "@/lib/retrofit/economic-model";
-import {
-  DEFAULT_ECONOMIC_ASSUMPTIONS,
-} from "@/lib/retrofit/cost-database";
+import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
+import { useScenarioStore } from "@/store/scenario-store";
+import { generateRetrofitMeasures, type RetrofitCoreResult } from "@/lib/retrofit/retrofit-core";
+export { usefulDemandFromEngine } from "@/lib/retrofit/retrofit-core";
+import { type EconomicAssumptions, type BudgetSelection } from "@/lib/retrofit/economic-model";
+import { DEFAULT_ECONOMIC_ASSUMPTIONS } from "@/lib/retrofit/cost-database";
 import { climateFromRegion, getClimateData } from "@/lib/energy/climate-data";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
-
-import type { ClimateRegion } from '@/lib/energy/climate-region';
+import type { ClimateRegion } from "@/lib/energy/climate-region";
 
 export interface RetrofitScenarioInputs {
   /**
@@ -123,6 +110,8 @@ export interface RetrofitScenarioInputs {
 export interface RetrofitScenario {
   /** Region is unknown: PV is withheld and other measures use a named legacy climate fallback. */
   regionUnresolved: boolean;
+  unsavedEditCount: number;
+  coreResult: RetrofitCoreResult | null;
   /** All technically-viable measures the engine produced (financially enriched). */
   allMeasures: RetrofitMeasure[];
   /**
@@ -147,38 +136,6 @@ export interface RetrofitScenario {
    * work rather than the recommendation.
    */
   energyImprovementFraction: number;
-}
-
-/**
- * Turn the engine's DELIVERED annual demand back into the USEFUL heat and
- * cooling the retrofit generators are documented to take.
- *
- * `calculateAnnualDemand` divides by the heating efficiency and the cooling
- * COP before it reports (`annual-demand.ts`, "heatingDemand = heatingRaw /
- * heatingEfficiency"), and `generateHvacRetrofits` divides by the efficiency
- * AGAIN to get fuel input. Multiplying back here is what stops the same η
- * being applied twice — for the Clinic's 0.85 boiler that is an 18 %
- * overstatement of every heating-side saving.
- *
- * The clamps mirror `annual-demand.ts` exactly, and `usefulDemandRoundTrip`
- * in the tests fails if that file's clamps ever move without this one.
- */
-export function usefulDemandFromEngine(
-  demand: { heatingDemand: number; coolingDemand: number },
-  materials: MaterialProperties,
-): { heating: number; cooling: number } {
-  const eta = Math.min(
-    Math.max(normalizeEfficiency(materials.hvac.heating.efficiency), 0.3),
-    6,
-  );
-  const copRaw = normalizeEfficiency(materials.hvac.cooling.efficiency);
-  const cop = copRaw > 0 ? Math.max(copRaw, 1) : 0;
-  return {
-    heating: demand.heatingDemand * eta,
-    // A building with no cooling system has a COP of 0 and a cooling demand
-    // of 0; the product is 0, which is the right answer and not a divide.
-    cooling: demand.coolingDemand * cop,
-  };
 }
 
 /**
@@ -213,251 +170,33 @@ export function engineEnvelopeAreasFrom(
   };
 }
 
-/**
- * Aggregate per-orientation walls into a single (uValue, area) pair using
- * area-weighted average uValue.
- */
-function aggregateWalls(walls: { uValue: number; surfaceArea: number }[]): {
-  uValue: number;
-  area: number;
-} {
-  let area = 0;
-  let weightedU = 0;
-  for (const w of walls) {
-    area += w.surfaceArea;
-    weightedU += w.uValue * w.surfaceArea;
-  }
-  return { area, uValue: area > 0 ? weightedU / area : 0 };
-}
-
 export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitScenario {
-  const {
-    buildingPk,
-    capexBudgetKrw,
-    totalFloorArea,
-    footprintArea,
-    roofType = "flat",
-    climateRegion,
-    annualOperatingHours = 2_500,
-    annualHeatingDemand,
-    annualCoolingDemand,
-    engineDemand,
-    engineEnvelopeAreas,
-    pvGeometricKWp,
-    feedInTariffKrw = 130,
-    assumptions: assumptionsOverride,
-    chosenMeasureIds = null,
-  } = inputs;
-
-  // Funding-program selection was removed. Product calculations always start
-  // from the unsubsidized baseline; legacy programTrack inputs have no effect.
-  const assumptions = assumptionsOverride ?? DEFAULT_ECONOMIC_ASSUMPTIONS;
-
-  const materials = useMaterialStore((s) => s.properties[buildingPk]);
-
-  // Build all candidate measures from current materials.
-  const allMeasures = useMemo<RetrofitMeasure[]>(() => {
-    if (!materials || totalFloorArea <= 0) return [];
-
-    const climate = climateRegion ? climateFromRegion(climateRegion) : getClimateData();
-    const hdd = climate.hdd;
-
-    // P1-03: resolve the building's heating fuel ONCE and thread it into
-    // both heating-side generators (pricing, CO2, escalation).
-    const heatingFuel = resolveHeatingFuel(materials.hvac.heating);
-
-    // ── Envelope ──
-    const wallAgg = aggregateWalls(materials.envelope.walls);
-    // Total wall area including windows. Windows live ON the walls, so
-    // window area is wallAgg.area × WWR. The ratio comes from the engine's
-    // own function — area-weighted on a measured envelope, unweighted
-    // otherwise — so the measures and `calculateHeatLoss` cannot end up
-    // multiplying by two different means of the same four numbers.
-    const avgWwr = meanWindowToWallRatio(materials);
-    // The engine's own element areas when the caller has them, and only then
-    // the derived ones. `footprintArea` standing in for the roof is the
-    // single largest of the old errors: it is the GROUND slab, and a building
-    // whose roof steps, pitches or oversails does not have a roof the size of
-    // its footprint.
-    const opaqueWallArea =
-      engineEnvelopeAreas?.opaqueWallSqm ?? wallAgg.area * (1 - avgWwr);
-    const windowArea = engineEnvelopeAreas?.windowSqm ?? wallAgg.area * avgWwr;
-    const roofArea = engineEnvelopeAreas?.roofSqm ?? footprintArea;
-    const groundFloorArea = engineEnvelopeAreas?.groundFloorSqm ?? footprintArea;
-
-    const envelopeMeasures = generateEnvelopeRetrofits(
-      {
-        wall: wallAgg.uValue,
-        roof: materials.envelope.roof.uValue,
-        window: materials.envelope.windows.uValue,
-        floor: materials.envelope.groundFloor.uValue,
-      },
-      KOREAN_2020_TARGET_U_VALUES,
-      {
-        wall: opaqueWallArea,
-        roof: roofArea,
-        window: windowArea,
-        floor: groundFloorArea,
-      },
-      hdd,
-      materials.hvac.heating.efficiency,
-      heatingFuel, // P1-03
-    );
-
-    // ── HVAC ──
-    // The engine's own answer first, converted delivered → useful; then an
-    // explicitly-passed useful figure; then, only for a caller that has run
-    // no engine at all, the coarse proxy. The proxy is a floor-area rule of
-    // thumb and it is wrong by 1.35× on the Clinic and 3.30× on the
-    // apartment — anything that shows kWh beside NPV must not reach it.
-    const engineUseful = engineDemand
-      ? usefulDemandFromEngine(engineDemand, materials)
-      : null;
-    const heatingDemand =
-      engineUseful?.heating ??
-      annualHeatingDemand ??
-      // crude proxy: ~120 kWh/m²/yr × heating efficiency (older buildings)
-      totalFloorArea * 120;
-    const coolingDemand =
-      engineUseful?.cooling ?? annualCoolingDemand ?? totalFloorArea * 30;
-    // P1-01 sequential damping: HVAC measures act on the demand REMAINING
-    // after the envelope package (physical order: envelope first). Passing
-    // the post-envelope residual prevents double-counting the same heating
-    // kWh across envelope and HRV/boiler savings.
-    const envelopeHeatingSaving = envelopeMeasures.reduce(
-      (s, m) => s + m.annualEnergySaving,
-      0,
-    );
-    const residualHeatingDemand = Math.max(0, heatingDemand - envelopeHeatingSaving);
-    const hvacMeasures = generateHvacRetrofits(
-      {
-        heatingType: materials.hvac.heating.systemType,
-        heatingEfficiency: materials.hvac.heating.efficiency,
-        coolingType: materials.hvac.cooling.systemType,
-        coolingEfficiency: materials.hvac.cooling.efficiency,
-      },
-      totalFloorArea,
-      residualHeatingDemand, // post-envelope residual (P1-01)
-      coolingDemand,
-      heatingFuel, // P1-03
-    );
-
-    // ── Lighting ──
-    const lightingMeasures = generateLightingRetrofits(
-      materials.lighting.lightingPowerDensity,
-      totalFloorArea,
-      annualOperatingHours,
-    );
-
-    // ── Solar PV ──
-    // Panels go on the ROOF, and the roof is not the footprint. The
-    // utilisation factor already discounts for pitch and orientation
-    // (flat 0.7, gable 0.5), so the area to hand it is the roof surface the
-    // engine priced — the same one the roof-insulation measure covers.
-    const solar = climateRegion ? calculateSolarPotential(
-      roofArea,
-      roofType,
-      climateRegion.peakSunHours,
-      feedInTariffKrw,
-      undefined,
-      // SIXTH argument, deliberately: the fifth is the electricity price.
-      pvGeometricKWp,
-    ) : null;
-    const solarMeasures: RetrofitMeasure[] = solar && solar.annualGenerationKWh > 0 ? [solar] : [];
-
-    return [...envelopeMeasures, ...hvacMeasures, ...lightingMeasures, ...solarMeasures];
-  }, [
-    materials,
-    totalFloorArea,
-    footprintArea,
-    roofType,
-    climateRegion,
-    pvGeometricKWp,
-    annualOperatingHours,
-    annualHeatingDemand,
-    annualCoolingDemand,
-    engineDemand,
-    engineEnvelopeAreas,
-    feedInTariffKrw,
-  ]);
-
-  // Enrich every measure with financials so the UI can show NPV/IRR
-  // regardless of whether it's selected within budget.
-  const enriched = useMemo<RetrofitMeasure[]>(() => {
-    return allMeasures.map((m) => ({
-      ...m,
-      financials: computeFinancials(m, assumptions),
-    }));
-  }, [allMeasures, assumptions]);
-
-  // RECOMMENDATION: within the budget when one is set; otherwise every
-  // measure whose NPV is positive over the horizon. The knapsack is never
-  // handed a null — it returns an empty selection at budget ≤ 0, and an
-  // empty recommendation would read as "nothing is worth doing".
-  const selection = useMemo<BudgetSelection | null>(() => {
-    if (allMeasures.length === 0) return null;
-    if (capexBudgetKrw === null) {
-      const positive = allMeasures.filter((m) => (computeFinancials(m, assumptions).npv ?? 0) > 0);
-      return evaluateMeasureSet(positive, assumptions);
-    }
-    return selectMeasuresForBudget(allMeasures, capexBudgetKrw, assumptions);
-  }, [allMeasures, capexBudgetKrw, assumptions]);
-
-  // The economics of the CHOSEN work. The same `evaluateMeasureSet` the
-  // knapsack ends with, so a hand-picked set and the optimum are one
-  // computation on two inputs rather than two implementations that agree
-  // today. Deliberately NOT budget-clamped: the user is allowed to choose
-  // more work than the budget covers, and the rail says so — silently
-  // dropping their last click would be worse than an honest overrun.
-  const chosen = useMemo<BudgetSelection | null>(() => {
-    if (allMeasures.length === 0) return null;
-    if (chosenMeasureIds == null) return selection;
-    const wanted = new Set(chosenMeasureIds);
-    const picked = allMeasures.filter((m) => wanted.has(m.id));
-    return evaluateMeasureSet(picked, assumptions);
-  }, [allMeasures, chosenMeasureIds, assumptions, selection]);
-
-  // D₂.5 — chosen work's improvement against its own baseline.
-  // Baseline mirrors the demand resolution used for measure generation above,
-  // in the same order, so the savings and baseline describe the same building.
-  const energyImprovementFraction = useMemo(() => {
-    if (!chosen || !materials || totalFloorArea <= 0) return 0;
-    const useful = engineDemand ? usefulDemandFromEngine(engineDemand, materials) : null;
-    const heatingDemand = useful?.heating ?? annualHeatingDemand ?? totalFloorArea * 120;
-    const coolingDemand = useful?.cooling ?? annualCoolingDemand ?? totalFloorArea * 30;
-    const lightingDemand =
-      (materials.lighting.lightingPowerDensity * totalFloorArea * annualOperatingHours) / 1000;
-    const baseline = heatingDemand + coolingDemand + lightingDemand;
-    if (baseline <= 0) return 0;
-    // Exclude renewable: solar annualEnergySaving is FULL generation
-    // (self-consumption + grid feed-in), and exported energy does not
-    // improve the building's own performance. Knapsack/ROI still use full
-    // generation; only this building-performance fraction excludes it.
-    const saved = chosen.selected.reduce(
-      (s, m) => (m.category === "renewable" ? s : s + m.annualEnergySaving),
-      0,
-    );
-    // P1-01: measures are generated with sequential damping (HVAC sees the
-    // post-envelope residual), so this sum is already physically bounded;
-    // the clamp guards degenerate inputs so the improvement never exceeds
-    // a 100% improvement claim.
-    return Math.max(0, Math.min(1, saved / baseline));
-  }, [
-    chosen,
-    materials,
-    totalFloorArea,
-    annualHeatingDemand,
-    annualCoolingDemand,
-    engineDemand,
-    annualOperatingHours,
-  ]);
-
-  return {
-    regionUnresolved: !climateRegion,
-    allMeasures: enriched,
-    selection,
-    chosen,
-    assumptions,
-    energyImprovementFraction,
-  };
+  const { buildingPk, climateRegion = null, capexBudgetKrw, chosenMeasureIds = null } = inputs;
+  const materials = useMaterialStore(s => s.properties[buildingPk]);
+  const editPaths = useMaterialStore(s => s.overridePaths[buildingPk]);
+  const unsavedEditCount = editPaths?.length ?? 0;
+  const recipe = useEffectiveRecipe(buildingPk);
+  const publishedInputs = useScenarioStore(s => s.buildingInputs);
+  const publishedPlanes = useScenarioStore(s => s.roofPlanes);
+  const roofPlanes = publishedInputs?.buildingPk === buildingPk ? publishedPlanes : null;
+  const assumptions = inputs.assumptions ?? DEFAULT_ECONOMIC_ASSUMPTIONS;
+  const coreResult = useMemo(() => materials && inputs.totalFloorArea > 0 ? generateRetrofitMeasures({
+    materials, recipe: recipe ?? null,
+    climate: climateRegion ? climateFromRegion(climateRegion) : getClimateData(), climateRegion,
+    conditionedFloorAreaSqm: inputs.totalFloorArea,
+    roofPlanes: inputs.pvGeometricKWp !== undefined ? null : roofPlanes,
+    pvGeometricKWp: inputs.pvGeometricKWp, roofType: inputs.roofType, capexBudgetKrw,
+    engineEnvelopeAreas: inputs.engineEnvelopeAreas,
+    programTrack: "none", measureIds: chosenMeasureIds, unsavedEditCount, assumptions,
+    feedInTariffKrw: inputs.feedInTariffKrw,
+    screening: { footprintArea: inputs.footprintArea, roofType: inputs.roofType ?? "flat", annualOperatingHours: inputs.annualOperatingHours ?? 2500, annualHeatingDemand: inputs.annualHeatingDemand, annualCoolingDemand: inputs.annualCoolingDemand, engineDemand: inputs.engineDemand, engineEnvelopeAreas: inputs.engineEnvelopeAreas },
+  }) : null, [materials, recipe, climateRegion, inputs.totalFloorArea, roofPlanes, inputs.pvGeometricKWp, inputs.engineEnvelopeAreas, chosenMeasureIds, unsavedEditCount, assumptions, inputs.feedInTariffKrw, inputs.footprintArea, inputs.roofType, inputs.annualOperatingHours, inputs.annualHeatingDemand, inputs.annualCoolingDemand, inputs.engineDemand, capexBudgetKrw]);
+  const allMeasures = useMemo(() => coreResult?.measures ?? [], [coreResult]);
+  const selection = coreResult?.selection ?? null;
+  const chosen = coreResult?.chosen ?? null;
+  const baseline = coreResult?.delta?.before.sitePerSqm;
+  const energyImprovementFraction = baseline
+    ? Math.max(0, Math.min(1, -coreResult!.delta!.deltaSitePerSqm / baseline))
+    : Math.max(0, Math.min(1, (chosen?.selected.filter(m => m.category !== "renewable").reduce((sum, m) => sum + m.annualEnergySaving, 0) ?? 0) / ((baseline ?? 150) * inputs.totalFloorArea || 1)));
+  return { regionUnresolved: !climateRegion, unsavedEditCount, coreResult, allMeasures, selection, chosen, assumptions, energyImprovementFraction };
 }

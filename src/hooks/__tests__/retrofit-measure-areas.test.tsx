@@ -150,7 +150,8 @@ describe("the envelope measures cover the areas the engine priced", () => {
     const after = render("schependomlaan", true);
     const cost = (s: typeof before, id: string) =>
       s.allMeasures.find((m) => m.id === id)!.estimatedCost;
-    expect(cost(after, "envelope-roof-insulation")).toBeGreaterThan(
+    // The core reads the actual recipe even without caller-supplied areas.
+    expect(cost(after, "envelope-roof-insulation")).toBe(
       cost(before, "envelope-roof-insulation"),
     );
   });

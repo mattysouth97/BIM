@@ -273,8 +273,9 @@ describe("the section on a real building page", () => {
     });
   }
 
-  it("the Clinic selects nothing at the default budget, and says so instead of showing an empty list", () => {
+  it("an explicitly zero budget selects nothing and states that without hiding candidates", () => {
     const energy = seed("bs-medical-dental-clinic");
+    useScenarioStore.getState().setCapexBudget(0);
     const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="en" />);
 
     expect(

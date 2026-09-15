@@ -41,7 +41,7 @@ import type { EfficiencyGrade } from "@/lib/compliance/efficiency-rating";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { calculateHeatLoss, VENTILATION_ELEMENT_NAME } from "@/lib/energy/heat-loss";
 import { calculateAnnualDemand, normalizeEfficiency } from "@/lib/energy/annual-demand";
-import { calculateCO2 } from "@/lib/energy/co2-emissions";
+import { calculateDeliveredCO2 } from "@/lib/energy/co2-emissions";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import {
   deliveredFromDemand,
@@ -56,7 +56,7 @@ export interface RetrofitRun {
   materials: MaterialProperties;
   heatLoss: HeatLossResult;
   demand: AnnualDemand;
-  /** Site energy intensity from the degree-day run (kWh/m2·yr). */
+  /** Whole-building gross site energy intensity (before PV deduction) (kWh/m2·yr). */
   sitePerSqm: number;
   /** Primary-energy intensity backing the official grade (kWh/m2·yr). */
   primaryPerSqm: number;
@@ -257,18 +257,19 @@ export function runEnergyEngine(
   const demand = calculateAnnualDemand(heatLoss, materials, recipe, climate);
   // Phase 01 (D-05/D-07): deliveredFromDemand now takes EndUseLoads — this is
   // what makes an LED measure move primaryPerSqm (and pricedByEngine) below.
+  const delivered = deliveredFromDemand(buildEndUseLoads({ demand, materials, recipe, climateRegion }));
   const rating = calculateEfficiencyRating(
-    deliveredFromDemand(buildEndUseLoads({ demand, materials, recipe, climateRegion })),
+    delivered,
     totalFloorArea,
     buildingTypeForGrade(materials, recipe.mainPurpsCd),
   );
-  const co2 = calculateCO2(demand, totalFloorArea, materials.hvac.heating.fuelType);
+  const co2 = calculateDeliveredCO2(delivered, totalFloorArea);
 
   return {
     materials,
     heatLoss,
     demand,
-    sitePerSqm: demand.demandPerSqm,
+    sitePerSqm: (delivered.electric + delivered.gas + delivered.districtHeating + delivered.districtCooling) / totalFloorArea,
     primaryPerSqm: rating.primaryEnergyPerArea,
     grade: rating.grade,
     co2,

@@ -1,4 +1,4 @@
-﻿import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { canonicalParityBuilding, paritySimulationRun } from "@/hooks/__tests__/test-fixtures";
 import { useRetrofitScenario } from "@/hooks/use-retrofit-scenario";
@@ -50,6 +50,14 @@ describe("twin and diagnostics exact parity", () => {
       expect(measure.estimatedCost).toBe(other!.estimatedCost);
       expect(measure.annualCostSaving).toBe(other!.annualCostSaving);
       expect(measure.financials).toEqual(other!.financials);
+      for (const [field, value] of Object.entries(measure.financials!)) {
+        if (typeof value === "number") expect(value).toBe(other!.financials[field as keyof NonNullable<typeof measure.financials>]);
+      }
     }
   });
+  it("both paths produce the same core result", () => {
+    const { twin, diagnostics } = bothPaths();
+    expect(twin.coreResult).toEqual(diagnostics.coreResult);
+  });
+
 });

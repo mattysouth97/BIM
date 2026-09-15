@@ -153,9 +153,9 @@ describe("useRetrofitScenario prices against the engine, not against floorArea Ã
       ).result.current;
       const viaProxy = renderHook(() => useRetrofitScenario(base)).result.current;
 
-      // Not a cosmetic difference: the measure set the two baselines produce
-      // is not the same set of numbers.
-      expect(shape(viaEngine.allMeasures)).not.toEqual(shape(viaProxy.allMeasures));
+      // The shared core now reruns the real recipe even when a caller omits
+      // engineDemand, so the historical proxy can no longer change pricing.
+      expect(shape(viaEngine.allMeasures)).toEqual(shape(viaProxy.allMeasures));
     });
   }
 });

@@ -1,3 +1,5 @@
+import { resolveClimateRegion, type ClimateRegion } from "@/lib/energy/climate-region";
+import type { RoofPlaneSet } from "@/lib/retrofit/pv-layout";
 import { calculateAnnualDemand, type AnnualDemand } from "@/lib/energy/annual-demand";
 import { PRIMARY_ENERGY_FACTORS } from "@/lib/energy/primary-energy";
 import { getClimateData, type ClimateData } from "@/lib/energy/climate-data";
@@ -94,6 +96,12 @@ export type DegreeDayEnginePayload = Readonly<{
   recipe: BuildingRecipe;
   materials: MaterialProperties;
   climate: ClimateData;
+  /** Resolved location, never inferred from the numeric weather fallback. */
+  climateRegion?: ClimateRegion | null;
+  roofPlanes?: RoofPlaneSet | null;
+  pvGeometricKWp?: number;
+  retrofitMeasureIds?: readonly string[] | null;
+  unsavedEditCount?: number;
   units: Readonly<{
     geometry: "m";
     area: "m2";
@@ -1097,8 +1105,8 @@ export function compileCanonicalModelToEngineInput(
     id: "engine-approximation:end-use-ratios",
     kind: "ratio_attribution",
     title: "Ratio-estimated non-HVAC end uses",
-    explanation: "Lighting, domestic hot water, and plug-load results are ratio estimates anchored to the real degree-day HVAC result; their canonical schedule and density fields are not simulated by this engine.",
-    affectedInputPaths: ["result.annualByEndUseKwh.lighting", "result.annualByEndUseKwh.domesticHotWater", "result.annualByEndUseKwh.equipment"],
+    explanation: "Domestic hot water and plug-load results are ratio estimates anchored to the degree-day HVAC result; their canonical schedule and density fields are not simulated by this engine.",
+    affectedInputPaths: ["result.annualByEndUseKwh.domesticHotWater", "result.annualByEndUseKwh.equipment"],
     sourceFactIds: [model.building.useType.id],
   }, {
     id: "engine-approximation:zone-apportionment",
@@ -1153,6 +1161,7 @@ export function compileCanonicalModelToEngineInput(
     recipe,
     materials,
     climate,
+    climateRegion: resolveClimateRegion({ sigunguCd: regionCode(model) ?? undefined, platPlcNm: model.site.location.value ?? undefined }),
     units: {
       geometry: "m",
       area: "m2",
@@ -1263,7 +1272,7 @@ function derivePrimaryEnergy(
     }),
     basis:
       "MOTIE/KEMCO 1차에너지 환산계수 (전력 2.75 · 가스 1.1 · 지역난방 0.728). " +
-      "조명·급탕·기기 소요량은 용도별 비율 추정치이므로 1차에너지도 같은 근사를 상속합니다.",
+      "조명은 LPD 기반 계산이며, 급탕·기기는 용도별 비율 추정치이므로 1차에너지도 해당 근사를 상속합니다.",
   });
 }
 

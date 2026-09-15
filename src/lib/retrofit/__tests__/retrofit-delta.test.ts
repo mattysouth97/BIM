@@ -6,7 +6,7 @@ import { SEOUL_CLIMATE } from "@/lib/energy/climate-data";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { calculateHeatLoss, VENTILATION_ELEMENT_NAME } from "@/lib/energy/heat-loss";
 import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
-import { calculateCO2 } from "@/lib/energy/co2-emissions";
+import { calculateDeliveredCO2 } from "@/lib/energy/co2-emissions";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import {
   deliveredFromDemand,
@@ -219,15 +219,12 @@ describe("computeRetrofitDelta", () => {
       q.intensityFloorAreaSqm,
       buildingTypeForGrade(afterMaterials, recipe.mainPurpsCd),
     );
-    const co2 = calculateCO2(
-      demand,
-      q.intensityFloorAreaSqm,
-      afterMaterials.hvac.heating.fuelType,
-    );
+    const co2 = calculateDeliveredCO2(deliveredFromDemand(buildEndUseLoads({ demand, materials: afterMaterials, recipe, climateRegion: resolveClimateRegion({ sigunguCd: "11" }) })), q.intensityFloorAreaSqm);
 
     expect(d.after.heatLoss).toEqual(heatLoss);
     expect(d.after.demand).toEqual(demand);
-    expect(d.after.sitePerSqm).toBe(demand.demandPerSqm);
+    const loads = deliveredFromDemand(buildEndUseLoads({ demand, materials: afterMaterials, recipe, climateRegion: resolveClimateRegion({ sigunguCd: "11" }) }));
+    expect(d.after.sitePerSqm).toBe((loads.electric + loads.gas + loads.districtHeating + loads.districtCooling) / q.intensityFloorAreaSqm);
     expect(d.after.primaryPerSqm).toBe(rating.primaryEnergyPerArea);
     expect(d.after.grade).toBe(rating.grade);
     expect(d.after.co2).toEqual(co2);
@@ -284,9 +281,8 @@ describe("computeRetrofitDelta", () => {
     expect(m.pricedByEngine).toBe(true);
     expect(d.isZeroDelta).toBe(false);
     expect(d.deltaPrimaryPerSqm).toBeCloseTo((6 - 18) * 4380 / 1000 * 2.75, 8);
-    // This delta module's site field still denotes HVAC demand; convergence
-    // belongs to Plan 04. useEnergyMetrics.siteTotal includes the lighting load.
-    expect(d.deltaSitePerSqm).toBe(0);
+    // Whole-building site energy includes the explicit lighting load.
+    expect(d.deltaSitePerSqm).toBeCloseTo(-52.56, 8);
     expect(lpd.pricedByEngine).toBe(true);
     expect(lpd.unpricedReasonKo).toBeUndefined();
     expect(lpd.unpricedReasonEn).toBeUndefined();

@@ -100,6 +100,10 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 /* Panel                                                               */
 /* ------------------------------------------------------------------ */
 
+export function UnsavedMaterialEditsNotice({ count }: { count: number }) {
+  return <p data-testid="unsaved-material-edits" className="text-xs text-muted-foreground">{count} local edits not saved to the source model are included.</p>;
+}
+
 export function EnergyPanel({ design, previous }: Props) {
   // The seed is a pure function of the design, and the session store published
   // the identical one — so `seed.pk` is exactly the key the hooks below read.
@@ -155,6 +159,7 @@ export function EnergyPanel({ design, previous }: Props) {
   return (
     <div className="flex flex-col gap-4 p-3 text-sm">
       <ClimateRegionDisclosure region={publishedInputs?.buildingPk === seed.pk ? publishedInputs.climateRegion : null} />
+      <UnsavedMaterialEditsNotice count={scenario.unsavedEditCount} />
       {/* --- (c) delta vs the design this one came from --------------- */}
       {delta && previous && (
         <section className="rounded border border-dashed px-2 py-1.5">

@@ -7,6 +7,10 @@ import type { MaterialProperties } from "@/lib/material-types";
 interface MaterialState {
   // Material properties keyed by building PK (mgmBldrgstPk)
   properties: Record<string, MaterialProperties>;
+  /** Source-model baseline; local persistence is not a save to that source. */
+  baselineProperties: Record<string, MaterialProperties>;
+  /** Distinct overridden field paths that still differ from the baseline. */
+  overridePaths: Record<string, string[]>;
 
   /** PK of the building the workspace is currently showing. Not persisted. */
   activePk: string;
@@ -40,6 +44,8 @@ export const useMaterialStore = create<MaterialState>()(
   persist(
     (set, get) => ({
   properties: {},
+  baselineProperties: {},
+  overridePaths: {},
   activePk: "",
   selectedElement: { type: null },
   setActivePk: (pk) => set({ activePk: pk }),
@@ -47,6 +53,8 @@ export const useMaterialStore = create<MaterialState>()(
   setProperties: (pk, props) =>
     set((state) => ({
       properties: { ...state.properties, [pk]: props },
+      baselineProperties: { ...state.baselineProperties, [pk]: JSON.parse(JSON.stringify(props)) as MaterialProperties },
+      overridePaths: { ...state.overridePaths, [pk]: [] },
     })),
 
   overrideProperty: (pk, path, value) =>
@@ -67,7 +75,17 @@ export const useMaterialStore = create<MaterialState>()(
       }
       updated.source = "user-input";
 
-      return { properties: { ...state.properties, [pk]: updated } };
+      const baseline = state.baselineProperties[pk] ?? current;
+      const baselineValue = parts.reduce<unknown>((node, part) =>
+        node != null && typeof node === "object" ? (node as Record<string, unknown>)[part] : undefined, baseline);
+      const paths = new Set(state.overridePaths[pk] ?? []);
+      if (JSON.stringify(baselineValue) === JSON.stringify(value)) paths.delete(path);
+      else paths.add(path);
+      return {
+        properties: { ...state.properties, [pk]: updated },
+        baselineProperties: { ...state.baselineProperties, [pk]: baseline },
+        overridePaths: { ...state.overridePaths, [pk]: [...paths] },
+      };
     }),
 
   selectElement: (element) => set({ selectedElement: element }),
@@ -76,12 +94,14 @@ export const useMaterialStore = create<MaterialState>()(
     }),
     {
       name: "bim-material-properties",
-      partialize: (s) => ({ properties: s.properties }),
+      partialize: (s) => ({ properties: s.properties, baselineProperties: s.baselineProperties, overridePaths: s.overridePaths }),
       merge: (persisted, current) => {
         const p = persisted as Partial<MaterialState> | undefined;
         return {
           ...current,
           properties: { ...current.properties, ...(p?.properties ?? {}) },
+          baselineProperties: { ...current.baselineProperties, ...(p?.baselineProperties ?? {}) },
+          overridePaths: { ...current.overridePaths, ...(p?.overridePaths ?? {}) },
         };
       },
     },

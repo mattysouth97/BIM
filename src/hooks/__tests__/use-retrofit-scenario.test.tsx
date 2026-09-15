@@ -121,3 +121,24 @@ describe("useRetrofitScenario sequential damping (P1-01)", () => {
     }
   });
 });
+
+import { act, render, screen } from "@testing-library/react";
+import { UnsavedMaterialEditsNotice } from "@/components/generative/energy-panel";
+
+it("counts distinct material overrides against the source and renders that count", () => {
+  useMaterialStore.getState().setProperties(PK, makeMaterials());
+  const hook = renderHook(() => useRetrofitScenario({ buildingPk: PK, totalFloorArea: 840, footprintArea: 84, capexBudgetKrw: null }));
+  act(() => {
+    useMaterialStore.getState().overrideProperty(PK, "lighting.lightingPowerDensity", 14);
+    useMaterialStore.getState().overrideProperty(PK, "envelope.roof.uValue", 0.8);
+  });
+  expect(hook.result.current.unsavedEditCount).toBe(2);
+  const view = render(<UnsavedMaterialEditsNotice count={hook.result.current.unsavedEditCount} />);
+  const renderedCount = Number(screen.getByTestId("unsaved-material-edits").textContent!.match(/^\d+/)![0]);
+  expect(renderedCount).toBe(hook.result.current.unsavedEditCount);
+  act(() => useMaterialStore.getState().overrideProperty(PK, "lighting.lightingPowerDensity", 16));
+  expect(hook.result.current.unsavedEditCount).toBe(2);
+  act(() => useMaterialStore.getState().overrideProperty(PK, "lighting.lightingPowerDensity", 6));
+  expect(hook.result.current.unsavedEditCount).toBe(1);
+  view.unmount(); hook.unmount();
+});

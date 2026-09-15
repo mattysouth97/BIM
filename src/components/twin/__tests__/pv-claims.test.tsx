@@ -50,7 +50,7 @@ describe("PV claims on the work chip and before/after strip", () => {
         </>);
         // PV is now priced, so its physical details live in the expandable
         // priced section rather than the always-visible unpriced warning.
-        fireEvent.click(getByRole('button', { name: lang === 'ko' ? '자세히' : 'Detail', exact: true }));
+        fireEvent.click(getByRole('button', { name: lang === 'ko' ? '자세히' : 'Detail' }));
         const claim = container.querySelector('[data-measure-claim]')!.textContent!;
         const strip = container.querySelector('[data-retrofit-delta-strip]')!.textContent!;
         const capacityPattern = /→ ([\d.]+) kWp/;

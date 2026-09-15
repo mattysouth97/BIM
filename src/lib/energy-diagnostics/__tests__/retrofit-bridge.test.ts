@@ -112,3 +112,37 @@ describe("analyzeRetrofitEconomics", () => {
     );
   });
 });
+
+import { canonicalParityBuilding, paritySimulationRun } from "@/hooks/__tests__/test-fixtures";
+
+describe("shared-core diagnostics PV", () => {
+  it("prices measured-roof PV only with a resolved climate region", () => {
+    const fixture = canonicalParityBuilding();
+    const run = paritySimulationRun(fixture);
+    expect(analyzeRetrofitEconomics(run)!.measures.some(m => m.id.startsWith("solar-pv-"))).toBe(true);
+    const input = run.engineInput as CompiledDegreeDayInput;
+    const unknown = { ...run, engineInput: { ...input, payload: { ...input.payload, climateRegion: null } } };
+    expect(analyzeRetrofitEconomics(unknown)!.measures.some(m => m.id.startsWith("solar-pv-"))).toBe(false);
+  });
+  it("reproduces the roof area from the named ratio sizing assumption", () => {
+    const run = paritySimulationRun();
+    const input = run.engineInput as CompiledDegreeDayInput;
+    const ratioRun = { ...run, engineInput: { ...input, payload: { ...input.payload, roofPlanes: null } } };
+    const analysis = analyzeRetrofitEconomics(ratioRun)!;
+    const pv = analysis.coreResult.measures.find(m => m.id.startsWith("solar-pv-"))!;
+    const parsed = pv.sizingAssumption!.match(/roof area ([\d.]+) m² × utilization ([\d.]+) ÷ ([\d.]+)/)!;
+    const area = Number(parsed[1]);
+    expect(area).toBe(input.payload.recipe.footprintWidth * input.payload.recipe.footprintDepth);
+    const capacity = area * Number(parsed[2]) / Number(parsed[3]);
+    expect(pv.estimatedCost).toBe(capacity * 1_500_000);
+  });
+  it("uses exact selected package bill and energy deltas, not summed isolated savings", () => {
+    const run = paritySimulationRun();
+    const input = run.engineInput as CompiledDegreeDayInput;
+    const selected = { ...run, engineInput: { ...input, payload: { ...input.payload, retrofitMeasureIds: ["lighting-led-smart", "solar-pv-flat"] } } };
+    const core = analyzeRetrofitEconomics(selected)!.coreResult;
+    expect(core.bill!.annualSavingKrw).toBe(core.bill!.beforeAnnualKrw - core.bill!.afterAnnualKrw);
+    expect(core.bill!.afterPurchasedKwh).toBeLessThan(core.bill!.beforePurchasedKwh);
+    expect(core.delta!.after.co2.totalCO2).toBeLessThan(core.delta!.before.co2.totalCO2);
+  });
+});
