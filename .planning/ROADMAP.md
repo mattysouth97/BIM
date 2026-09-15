@@ -1,116 +1,104 @@
-# Roadmap — Korea BIM Energy Management System
+# Roadmap: BIMFIT — Korean Building Energy Repository
 
 ## Milestones
 
-- 🚧 **v7.0 Prediction** — Phases 35-40 (in progress, parallel to v6.0)
-- 🚧 **v6.0 Audit Deliverables** — Phases 29-34 (in progress)
-- ✅ **v5.0 Energy Systems Observability & Control** — Phases 22-28 (shipped 2026-04-12) — [Archive](milestones/v5.0-ROADMAP.md)
-- ✅ **v4.0 GIS-Composite Realistic Drafts** — Phases 19-21 (shipped 2026-04-12) — [Archive](milestones/v4.0-ROADMAP.md)
+- 🚧 **v6.0 Building Energy Repository** — Phases 1-5 (in progress)
+- ✅ **v5.0 Energy Systems Observability & Control** — Phases 22-28 (shipped 2026-04-12)
+- ✅ **v4.0 GIS-Composite Realistic Drafts** — Phases 19-21 (shipped 2026-04-12)
 - ✅ **v3.0 UX Workflow Overhaul** — Phases 14-18 (shipped 2026-03-31)
-- ✅ **v2.0 Advanced BIM Authoring** — Phases 10-13 (shipped 2026-03-28) — [Archive](milestones/v2.0-ROADMAP.md)
+- ✅ **v2.0 Advanced BIM Authoring** — Phases 10-13 (shipped 2026-03-28)
 - ✅ **v1.0 Procedural BIM Viewer** — Phases 1-9 (shipped 2026-03-26)
 
-**Future roadmap:** v7.0 Semantic Substrate → v8.0 Parametric + Collab → v8.5 Visualization → v9.0 Parity + Korean Differentiation. See `.planning/v6-to-v9-ROADMAP-BENCHMARK.md` for full 3-year plan.
+**Superseded plans (2026-09-15):** The prior "v6.0 Audit Deliverables" (undo/redo, element IDs,
+annotations, auto-views, schedules, PDF sheets, phases 29-34) and "v7.0 Prediction" (portfolio
+forecasting via trained model and Parquet releases, phases 35-40) both stalled in April 2026 and
+are superseded. Their dataset-release idea is absorbed into this milestone's Publishing phase;
+their ML/BIM-authoring approaches are not. Records archived under
+`milestones/v6.0-audit-superseded-ROADMAP.md`, `milestones/v6.0-audit-superseded-REQUIREMENTS.md`
+and `milestones/v6.0-audit-superseded-phases/` — not deleted.
 
-**Vision pivot (2026-04-24):** The product is reframed as a **data product** — portfolio energy forecasting for the Korean building stock, delivered as immutable versioned Parquet releases with a read-only API and calibration reports. v7.0 introduces this stack parallel to v6.0, which continues unchanged. Phase 35 ships the first release (`v0.1.0`) covering one region, proving the end-to-end pipeline.
+**Phase numbering reset:** This milestone reclaims the v6.0 number and restarts phase numbering
+at 1 (a deliberate product decision, not a numbering bug — see PROJECT.md Key Decisions). Phases
+1-5 below belong to v6.0 Building Energy Repository and are unrelated to the legacy phases 1-28
+from the shipped v1.0-v5.0 milestones archived further down this file.
 
-**Note:** The "Future roadmap" line above refers to the older "v7.0 Semantic Substrate" plan which is superseded by v7.0 Prediction as of 2026-04-24. The semantic-substrate work is reclassified as v8.x+.
+## v6.0 Building Energy Repository (Phases 1-5)
 
-### 🚧 v7.0 Prediction (Phases 35-40) — parallel to v6.0
+**Milestone Goal:** Turn BIMFIT from a single-building diagnosis tool into a building energy
+repository — a calibrated corpus of Korean building baselines is the product, the measured
+reference models are its calibration anchors, and the retrofit panel reports honest energy,
+carbon and corpus position instead of proxy-priced return. Peer-group benchmarking and
+calibration error bands are next-milestone scope (see REQUIREMENTS.md "Next Milestone") because
+both have hard upstream dependencies this milestone creates rather than satisfies.
 
-**Milestone Goal:** Ship a portfolio energy-prediction data product for the Korean building stock. Phase 35 proves the end-to-end pipeline on one region; later phases add attribution, coverage, live simulation, and observed-data fine-tuning.
+- [ ] **Phase 1: Honest Physics** - Fix the delivered-energy split so lighting and PV measures move the modeled grade, not only cash flow; converge the two economics paths; regenerate the seven published datasets
+- [ ] **Phase 2: Retrofit Panel** - Replace the return-focused panel with energy, carbon and verification guidance, priced only off real modeled savings
+- [ ] **Phase 3: Model Anchors** - Collapse the two hand-synced model registries into one and grow the anchor set with Korean, typology-gap and further-licensed buildings
+- [ ] **Phase 4: Corpus Generation** - Measure register-sweep feasibility with a real pilot, then generate corpus baselines at scale with per-record provenance built in from the start
+- [ ] **Phase 5: Publishing** - Publish versioned corpus releases with bulk export, a read-only filterable API and a data dictionary, gated by a licence and privacy review
 
-- [ ] **Phase 35: Portfolio Forecasting Thin Slice** — Versioned Parquet releases, read-only prediction API, thin explorer page. One region, ≥50 buildings, release v0.1.0. Tasks 1–3 shipped; 4–12 pending. Plan: `.omc/plans/consensus-v7-phase35-portfolio.md`
-- [ ] **Phase 36: Attribution + Multi-Region + Blob Storage** — SHAP per-building attribution, coverage expansion, release storage migration to object storage, production corpus-growth endpoint
-- [ ] **Phase 37: Live Simulation Hooks** — Browser-side on-demand calcs wired to the 3D viewer (separate v7 track; depends on Phase 35)
-- [ ] **Phase 38: Twin-Generation Upgrade** — Improve twin inference fidelity using feature importances surfaced by Phase 36 model
-- [ ] **Phase 39: KEPCO Observed-Data Fine-Tune** — Integrate real meter data to fine-tune the ECO2-only base model (license/privacy blockers may slip this to v7.x)
-- [ ] **Phase 40: Uncertainty + Confidence Surfaces** — Prediction intervals, feature-level sensitivity, model-confidence badges
+## Phase Details
 
-### 🚧 v6.0 Audit Deliverables (Phases 29-34)
-
-**Milestone Goal:** Ship visible BIM features that make the tool feel professional — wire annotations + auto-views + schedules + PDF sheets + undo + element IDs. Part 1 of the Revit-benchmarked uplift.
-
-- [ ] **Phase 29: Undo/Redo Resurrection** — Port unmerged undo command-history from worktree; wire Ctrl+Z across all authoring actions
-- [ ] **Phase 30: Element IDs (Minimal)** — UUIDv7 + WeakMap registry + userData.elementId on all authored geometry
-- [ ] **Phase 31: Annotation Lifecycle** — Store-backed lifecycle for existing 4 annotation stubs with undo + ElementId anchoring
-- [ ] **Phase 32: Auto-Generated Views** — Plan/elevation/section views from single 3D model via view-engine + clipping planes
-- [ ] **Phase 33: Schedules & CSV Export** — Live filterable tables for Wall/Window/Door/MEP/Room categories; energy calcs read from schedule aggregates
-- [ ] **Phase 34: Sheet Composition + PDF Export** — A1/A3 sheets with viewports + title block + @react-pdf/renderer export
-
-### Phase 29: Undo/Redo Resurrection
-**Goal**: User can press Ctrl+Z / Ctrl+Shift+Z to undo and redo authoring actions across walls, equipment params, annotations, and layer visibility, with 50 steps of history and same-target edit coalescing
-**Depends on**: Phase 28 (v5.0 shipped)
-**Requirements**: UNDO-01
+### Phase 1: Honest Physics
+**Goal**: Every measure that changes lighting or renewable generation moves the building's modeled energy intensity and efficiency grade, not only its cash flow — and the same building returns the same retrofit result no matter which page computed it
+**Depends on**: Nothing (first phase)
+**Requirements**: PHYS-01, PHYS-02, PHYS-03, PHYS-04, PHYS-05
 **Success Criteria** (what must be TRUE):
-  1. Ctrl+Z undoes last authoring action; Ctrl+Shift+Z / Ctrl+Y redoes
-  2. 50-step history retained; oldest commands dropped on overflow
-  3. Same-target slider edits within 500ms coalesce into one undo step
-  4. Keyboard shortcuts respect input focus (no undo while typing in a text input)
-  5. All four authoring stores (recipe-store, equipment-store, material-store, layer-store) route mutations through command bus
+  1. Applying an LED/lighting retrofit changes the building's modeled energy intensity and efficiency grade, not only its cash flow
+  2. Applying a photovoltaic system changes primary energy and efficiency grade, not only its cash flow
+  3. When lighting power density or PV capacity is unknown, the resulting figure displays as a named, visible assumption, never a silent default
+  4. The same building priced from the twin and from the diagnostics page returns identical retrofit results
+  5. All seven published reference-building datasets are regenerated under the corrected physics, with a raised schema version and a changelog entry recording the change
 **Plans**: TBD
 
-### Phase 30: Element IDs (Minimal)
-**Goal**: Every authoring-relevant element in the 3D scene carries a stable ElementId used by annotations, schedules, and views to reference it
-**Depends on**: Phase 29
-**Requirements**: BIM-01
+### Phase 2: Retrofit Panel
+**Goal**: The retrofit panel reports honest energy, carbon and verification guidance for the work the user selected, priced only off savings the engine actually produced
+**Depends on**: Phase 1 (needs honest physics and converged economics before the panel can honestly report them)
+**Requirements**: PANEL-01, PANEL-02, PANEL-03, PANEL-04, PANEL-05
 **Success Criteria** (what must be TRUE):
-  1. UUIDv7 generator at `src/lib/bim/element-id.ts` returning typed branded strings
-  2. Every wall, slab, column, window, door, and MEP instance has `userData.elementId` stamped by its generator
-  3. `src/lib/bim/element-registry.ts` offers `get(elementId)` / `getByKind(kind)` / `getByBuildingPk(pk)` lookups backed by WeakMap
-  4. ElementIds persist across page reload via serialization
-  5. No performance regression on InstancedMesh draw calls (<10 per MEP sub-layer target held)
-**Plans**: TBD
-
-### Phase 31: Annotation Lifecycle
-**Goal**: User places and edits annotations (dimensions, area labels, level markers, section planes) with undo support; annotations auto-update when anchored elements change
-**Depends on**: Phase 30
-**Requirements**: ANN-01, ANN-02
-**Success Criteria** (what must be TRUE):
-  1. `src/store/annotation-store.ts` holds AnnotationInstance records with ElementId anchors; persists via Zustand persist
-  2. Existing stubs (dimension-line.ts, area-label.ts, level-marker.ts, section-cut.ts) become pure rendering functions consumed by new AnnotationLayer scene component
-  3. New annotation-toolbar with dimension / area / section / level tools routed through undo command bus
-  4. Moving/editing an anchored element updates the annotation within one render frame
-  5. Deleting an anchored element removes orphan annotations automatically
+  1. User sees the energy intensity and carbon outcome, before and after, for the retrofit work they selected
+  2. User sees which inputs behind that outcome are measured versus assumed, with guidance on what to verify before committing capital
+  3. Every currency figure shown traces to a modeled saving the engine actually produced
+  4. The panel has a defined, visible slot reserved for corpus position, ready to receive next milestone's benchmarking feature without a redesign
+  5. The unreachable budget slider component and the unused default-budget constant no longer exist in the codebase
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 32: Auto-Generated Views
-**Goal**: User navigates between auto-generated plan, elevation, and section views derived from the single 3D model via a view-switcher UI
-**Depends on**: Phase 30
-**Requirements**: VIEW-01, VIEW-02
+### Phase 3: Model Anchors
+**Goal**: The reference-model roster has one source of truth that every consumer reads, and it has grown to include Korean, typology-gap and further-licensed buildings — with an honest statement wherever no measured-consumption anchor exists
+**Depends on**: Nothing (independent of Phases 1-2; parallel-eligible with the physics/panel/corpus track)
+**Requirements**: ANCH-01, ANCH-02, ANCH-03, ANCH-04, ANCH-05, ANCH-06, ANCH-07
 **Success Criteria** (what must be TRUE):
-  1. `src/lib/bim/views/view-engine.ts` produces camera + clipping-plane config from per-level elevation + building bounding box
-  2. Plan view = orthographic top + clip at level elevation; Elevation = orthographic side; Section = user-placed clip plane
-  3. View switcher UI shows one plan-tab per level + 4 elevation tabs + any created section tabs
-  4. Section marker placed in a plan view opens a new Section view on click
-  5. View state (active view, camera, clipping) round-trips through serialization
+  1. Every gallery card figure is derived from that building's generated manifest; none is a hand-typed literal
+  2. A contract test checks every gallery card against its manifest, not only the clinic
+  3. At least one Korean building, one typology-gap building and one further licensed-source building are registered as reference models at the same evidence standard as the existing seven
+  4. A recorded finding states whether Korean metered-energy sources will license data for calibration, and on what terms
+  5. Wherever a measured-consumption anchor would otherwise be implied, the product instead states explicitly that none exists
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 33: Schedules & CSV Export
-**Goal**: User views live filterable schedule tables (Wall, Window/Door, MEP, Room) derived from the element registry; edits to element properties update schedules within one frame
-**Depends on**: Phase 30
-**Requirements**: SCH-01, SCH-02
+### Phase 4: Corpus Generation
+**Goal**: Corpus baselines are generated at scale by a resumable batch job that reuses the app's own physics chain, with quota and field-completeness established by a real pilot before full-scale generation runs, and every record carrying its own provenance, licence and evidence tier from the moment it is created
+**Depends on**: Phase 1 (the physics fix must land first — the already-published datasets encode the old flaw, and a corpus generated before the fix would need regenerating)
+**Requirements**: SWEEP-01, SWEEP-02, SWEEP-03, SWEEP-04, SWEEP-05, SWEEP-06, SWEEP-07
 **Success Criteria** (what must be TRUE):
-  1. `src/lib/bim/schedules/schedule-engine.ts` produces ScheduleResult from ScheduleDefinition over element-registry + store state
-  2. Four seed schedule templates ship: Wall, Window/Door, MEP Equipment, Room
-  3. TanStack Table renders schedules with per-column sort + filter controls in a new SchedulePanel dock
-  4. Property edit (wall thickness, U-value, equipment capacity) updates schedule within one render frame
-  5. CSV export matches visible filtered rows via `src/lib/export/csv-export.ts`
+  1. A recorded measurement states the register's actual request quota and field-completeness rate, taken from a real bounded pilot sweep
+  2. Corpus baselines are generated by a resumable batch job that reuses the same energy chain the interactive app uses, with no second implementation — and full-scale generation does not start until the pilot's findings are in (a route/generator skeleton may be built and tested on a handful of buildings beforehand)
+  3. Every corpus record carries its engine version, schema version, source commit, pinned generation time, provenance and evidence tier, assembled during generation rather than added afterward
+  4. A register row that cannot support a baseline is recorded as a logged exclusion with a reason, never filled with a population average, and each release carries a table of how prevalent each named assumption is across its records
+  5. Every corpus record has a stable identifier and a permalink that returns that record later
 **Plans**: TBD
-**UI hint**: yes
 
-### Phase 34: Sheet Composition + PDF Export
-**Goal**: User composes multi-page A1/A3 sheets with views + schedules + Korean GX title block, exportable as a printable PDF
-**Depends on**: Phase 32, Phase 33
-**Requirements**: SHT-01, SHT-02
+### Phase 5: Publishing
+**Goal**: The corpus is published as versioned, dated releases with a bulk export, a read-only filterable API and a public data dictionary, stating what it covers and what it does not — gated by a licence and privacy review before anything ships
+**Depends on**: Phase 4 (needs real corpus records to publish, store and version)
+**Requirements**: PUB-01, PUB-02, PUB-03, PUB-04, PUB-05, PUB-06, PUB-07, PUB-08, PUB-09
 **Success Criteria** (what must be TRUE):
-  1. `src/components/sheets/sheet-editor.tsx` lets user drag view + schedule viewports onto A1/A3 canvas
-  2. Korean GX-format title block template included as a reusable component
-  3. Each sheet viewport renders at correct scale (1:50 / 1:100) via offscreen R3F render-target or SVG line extraction
-  4. PDF export (`@react-pdf/renderer` via existing `src/lib/report/pdf-renderer.tsx`) produces printable multi-page A1/A3
-  5. File size under 5MB for 3-floor building with 2 sheets
+  1. Every release states which building classes, eras and regions it covers and which it does not
+  2. User can download the whole corpus in one export, and can search and filter it by use type, era and region
+  3. A read-only API returns corpus records with filtering and pagination, documented by a public data dictionary covering every field and its unit
+  4. Releases are dated, versioned snapshots with a changelog stating what changed since the prior release, and corpus artifacts are stored outside the git repository
+  5. Before first publish, a recorded decision states the licence for register-derived records separately from the curated models' licences, and any statement about the pipeline's internal consistency stays textually separate from any statement about accuracy against the Korean building stock
 **Plans**: TBD
 **UI hint**: yes
 
@@ -174,3 +162,15 @@
 - [x] Phase 9: Energy Data Integration
 
 </details>
+
+## Progress
+
+**Execution order (v6.0):** Phase 1 → Phase 2; Phase 3 runs independently in parallel; Phase 1 → Phase 4 → Phase 5.
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Honest Physics | 0/TBD | Not started | - |
+| 2. Retrofit Panel | 0/TBD | Not started | - |
+| 3. Model Anchors | 0/TBD | Not started | - |
+| 4. Corpus Generation | 0/TBD | Not started | - |
+| 5. Publishing | 0/TBD | Not started | - |

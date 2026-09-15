@@ -3,10 +3,10 @@ gsd_state_version: "1.0"
 milestone: v6.0
 milestone_name: Building Energy Repository
 status: planning
-last_updated: "2026-09-15T06:22:59.420Z"
+last_updated: "2026-09-15T00:00:00.000Z"
 last_activity: 2026-09-15
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,89 +17,46 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-12)
+See: .planning/PROJECT.md (updated 2026-09-15)
 
-**Core value:** Energy systems observability and control for building energy management
-**Current focus:** Phase 22 — MEP Sub-Layer Foundation
+**Core value:** Every number the product states can be traced to either a cited source or a named, visible, reversible assumption — and that guarantee holds when the same method is applied to one building or to a population.
+**Current focus:** Phase 1 — Honest Physics
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-09-15 — Milestone v6.0 started
+Phase: 1 of 5 (Honest Physics)
+Plan: — (roadmap just created, not yet planned)
+Status: Ready to plan
+Last activity: 2026-09-15 — ROADMAP.md created for milestone v6.0 Building Energy Repository; phase numbering restarted at 1
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
-
-- Total plans completed: 1 (v5.0)
-- Average duration: ~15 min
-- Total execution time: ~15 min
+- Total plans completed (this milestone): 0
+- Average duration: —
+- Total execution time: —
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 22 (1/3) | 1 | ~15 min | ~15 min |
+| - | - | - | - |
 
-*Updated after each plan completion*
-| Phase 22-mep-sub-layer-foundation P03 | 5 | 1 tasks | 1 files |
-| Phase 22-mep-sub-layer-foundation P02 | 12 | 2 tasks | 3 files |
-| Phase 23-per-floor-energy-model P01 | 195 | 2 tasks | 2 files |
-| Phase 23-per-floor-energy-model P02 | 178 | 2 tasks | 2 files |
-| Phase 25-energy-consumption-heatmap P01 | 5 | 2 tasks | 4 files |
-| Phase 24-energy-breakdown-dashboard P01 | 25 | 3 tasks | 5 files |
-| Phase 26-equipment-info-panel P01 | 315s | 2 tasks | 4 files |
-| Phase 26-equipment-info-panel P02 | 420 | 2 tasks | 4 files |
-| Phase 27-eco2-sub-system-export P01 | 8 | 3 tasks | 3 files |
-| Phase 28-procedural-mep-equipment-models P01 | 12 | 2 tasks | 4 files |
-| Phase 28-procedural-mep-equipment-models P03 | 15 | 1 tasks | 2 files |
-| Phase 28-procedural-mep-equipment-models P04 | 287 | 2 tasks | 4 files |
-| Phase 28-procedural-mep-equipment-models P02 | 14 | 2 tasks | 4 files |
+*Updated after each plan completion. v1.0-v5.0 velocity history lives in the archived milestone records under `.planning/milestones/`.*
 
 ## Accumulated Context
 
 ### Decisions
 
-- v5.0 roadmap: MEP sub-layers kept as parallel MepSubLayerId type — ALL_LAYER_IDS stays at 5
-- v5.0 roadmap: Energy heatmap on dedicated THREE.Mesh floor planes, never on structural InstancedMesh
-- v5.0 roadmap: EnergyDataSource type enforced at TypeScript level — every estimated value carries amber label
-- v5.0 roadmap: Scenario/equipment state is transient — excluded from Zustand persist partialize
-- v5.0 roadmap: Zero new Zustand store files — all state as additive slices in existing stores
-- 22-01: layer-9-waste maps to mep-dhw (CONTEXT.md mis-numbered it as "layer-8-special-waste"; layer-8 is layer-8-media)
-- 22-01: partialize persists only mepSubVisibility — visibility/generated/density remain runtime-only (reset on reload)
-- 22-01: defaultMepSubVisibility uses inline Object.fromEntries (buildDefault<T> helper iterates ALL_LAYER_IDS not MEP_SUB_IDS)
-- [Phase 22-mep-sub-layer-foundation]: Fragment wrapper in ALL_LAYER_IDS map() to support adjacent MEP sub-row siblings; ChevronDown stopPropagation decouples expand from toggleLayer; mepExpanded is local useState (not persisted)
-- [Phase 22-mep-sub-layer-foundation]: setMepSubVisible uses getObjectByName (not groups Map) — sub-groups need no separate tracking in LayerManager
-- [Phase 22-mep-sub-layer-foundation]: BuildingLayers second useEffect depends on [mepSubVisibility, visibility] to restore sub-states after MEP off->on toggle
-- [Phase 23-per-floor-energy-model]: EnergyDataSource = actual | estimated-ratio | estimated-inferred (CONTEXT.md D4 — modeled variant from RESEARCH.md superseded)
-- [Phase 23-per-floor-energy-model]: HVAC anchored to calculateAnnualDemand().totalDemand; others scaled so total = hvac / hvac_ratio
-- [Phase 23-per-floor-energy-model]: SYSTEM_RATIOS keyed by 2-char mainPurpsCd prefix; office ratios 55/25/10/10 per CONTEXT.md D6
-- [Phase 23-per-floor-energy-model]: Override-merge block kept byte-identical to use-energy-metrics.ts lines 56-83 with SYNC NOTE comment
-- [Phase 23-per-floor-energy-model]: @testing-library/react already installed — no new devDependency required for renderHook tests
-- [Phase 23-per-floor-energy-model]: Stability test uses === referential equality to guard Phase 25 60fps heatmap rebuild
-- [Phase 25-energy-consumption-heatmap]: kwhmToColor delegates to getEnergyGrade+getGradeColor (D-03) — green-to-crimson gradient, no blue anchor
-- [Phase 25-energy-consumption-heatmap]: disposeHeatmapGroup targets named child only — not disposeLayer('energy-zones') (D-06)
-- [Phase 24-energy-breakdown-dashboard]: LabelList formatter typed as full RenderableText union — recharts 3.x LabelFormatter is stricter than plan's (v: number) annotation
-- [Phase 24-energy-breakdown-dashboard]: useMemo placed before null guard to satisfy React Rules of Hooks — plan early-return-first ordering corrected
-- [Phase 24-energy-breakdown-dashboard]: chartConfig uses hsl(var(--chart-N)) colors; ChartStyle injects --color-{key} CSS vars at runtime for Cell fills
-- [Phase 26-equipment-info-panel]: EquipmentEfficiencyGrade (1|2|3|4|5) is a distinct union from EnergyGrade (1+++…7) with zero cross-import (D-04 enforced)
-- [Phase 26-equipment-info-panel]: SelectedEquipmentInfo is plain JSON with no THREE.* fields; selection-store imports no three (D-05 enforced)
-- [Phase 26-equipment-info-panel]: clearSelection() updated to also clear selectedEquipment (composite clear)
-- [Phase 26-equipment-info-panel]: Raycaster allocated via useRef at component top level — fixes structural-tooltip.tsx per-frame allocation defect (Pitfall 1)
-- [Phase 26-equipment-info-panel]: pointerup + 5px movement gate used — camera drag does not trigger MEP selection (D-02)
-- [Phase 26-equipment-info-panel]: EquipmentInfoPanel uses equipment-specs EQUIPMENT_GRADE_COLORS (1~5 scale) — never EFFICIENCY_GRADE_COLORS from properties-panel (1+++~7 scale) (D-04 / Pitfall 3)
-- [Phase 27-eco2-sub-system-export]: Reused EnergyDataSource union from system-breakdown.ts for subSystems provenance — no new vocabulary
-- [Phase 27-eco2-sub-system-export]: subSystems is additive-optional on ECO2ExtraOptions — all existing 3-arg callers compile unchanged
-- [Phase 27-eco2-sub-system-export]: buildSubSystems reads materials verbatim, not re-derived from era (Pitfall 2 guard)
-- [Phase 28-procedural-mep-equipment-models]: overrideParam initializes from DEFAULT on missing pk — prevents silent write drops unlike material-store pattern
-- [Phase 28-procedural-mep-equipment-models]: No persist middleware in equipment-store — params are session-local era-derived defaults, persisting causes stale override regression
-- [Phase 28-03]: instanceMatrix.needsUpdate is write-only setter — test via version increment
-- [Phase 28-procedural-mep-equipment-models]: buildTankGeometry merges 4 sub-geometries (body+topPipe+bottomPipe+sidePipe); pump housing placed at tankRadius+0.6 offset on +X
-- [Phase 28-procedural-mep-equipment-models]: instanceMatrix.needsUpdate is write-only in Three.js; tests verify count>0 instead of reading flag back
-- [Phase 28-procedural-mep-equipment-models]: instanceMatrix.needsUpdate is write-only in Three.js — test .version >= 1 instead
-- [Phase 28-procedural-mep-equipment-models]: Chiller as single Mesh (count=1 per building); VRF + fan coil as InstancedMesh for per-floor draw-call budget
+Full decision log lives in PROJECT.md Key Decisions table. Recent decisions affecting current work:
+
+- Roadmap: Phase numbering restarts at 1 for v6.0 — legacy phases 1-28 (v1.0-v5.0) and superseded phases 29-40 are historical, not continued
+- Roadmap: Calibration (CAL-01..03) and benchmarking (BENCH-01..04) are out of this milestone per REQUIREMENTS.md "Next Milestone" — not mapped to any v6.0 phase
+- Roadmap: Retrofit panel rebuild (Phase 2) lands immediately after the physics fix (Phase 1), not gated on calibration
+- Roadmap: Model Anchors (Phase 3) is independent of the physics/panel/corpus track and may run in parallel
+- Roadmap: Full-scale corpus generation (Phase 4) is gated on the pilot sweep's measured quota findings, not on calibration or benchmarking
 
 ### Pending Todos
 
@@ -107,10 +64,20 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 27 (ECO2 Sub-System Export): KS F 1900 schema for system data fields unverified — requires dedicated research pass before planning Phase 27
+- Phase 4 (Corpus Generation): data.go.kr quota and field-completeness at sweep scale are unmeasured — the pilot sweep inside Phase 4 must resolve this before full-scale generation proceeds
+- Phase 5 (Publishing): licence regime for register-derived records differs from the curated reference-model licences and needs a named legal/licence review before first publish (PUB-07 gate)
+
+## Deferred Items
+
+Items acknowledged and deferred at milestone close, most recent first:
+
+| Category | Item | Status | Deferred At | Milestone |
+|----------|------|--------|-------------|-----------|
+| Requirements | CAL-01..03 (calibration error bands) | Deferred | 2026-09-15 | v6.0 → Next |
+| Requirements | BENCH-01..04 (peer-group benchmarking) | Deferred | 2026-09-15 | v6.0 → Next |
 
 ## Session Continuity
 
-Last session: 2026-04-12T01:15:05.715Z
-Stopped at: Completed 28-procedural-mep-equipment-models-02-PLAN.md
+Last session: 2026-09-15
+Stopped at: ROADMAP.md and STATE.md written for milestone v6.0 Building Energy Repository (5 phases, 33 requirements mapped)
 Resume file: None

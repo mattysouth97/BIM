@@ -104,49 +104,49 @@ sit beside it.
 
 ## Traceability
 
-Populated during roadmap creation.
+Populated by roadmap creation on 2026-09-15. Every v6.0 requirement maps to exactly one phase; CAL-01..03 and BENCH-01..04 (REQUIREMENTS.md "Next Milestone") are intentionally absent from this table — they are out of v6.0 scope, not unmapped.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PHYS-01 | — | Pending |
-| PHYS-02 | — | Pending |
-| PHYS-03 | — | Pending |
-| PHYS-04 | — | Pending |
-| PHYS-05 | — | Pending |
-| PANEL-01 | — | Pending |
-| PANEL-02 | — | Pending |
-| PANEL-03 | — | Pending |
-| PANEL-04 | — | Pending |
-| PANEL-05 | — | Pending |
-| ANCH-01 | — | Pending |
-| ANCH-02 | — | Pending |
-| ANCH-03 | — | Pending |
-| ANCH-04 | — | Pending |
-| ANCH-05 | — | Pending |
-| ANCH-06 | — | Pending |
-| ANCH-07 | — | Pending |
-| SWEEP-01 | — | Pending |
-| SWEEP-02 | — | Pending |
-| SWEEP-03 | — | Pending |
-| SWEEP-04 | — | Pending |
-| SWEEP-05 | — | Pending |
-| SWEEP-06 | — | Pending |
-| SWEEP-07 | — | Pending |
-| PUB-01 | — | Pending |
-| PUB-02 | — | Pending |
-| PUB-03 | — | Pending |
-| PUB-04 | — | Pending |
-| PUB-05 | — | Pending |
-| PUB-06 | — | Pending |
-| PUB-07 | — | Pending |
-| PUB-08 | — | Pending |
-| PUB-09 | — | Pending |
+| PHYS-01 | Phase 1 | Mapped |
+| PHYS-02 | Phase 1 | Mapped |
+| PHYS-03 | Phase 1 | Mapped |
+| PHYS-04 | Phase 1 | Mapped |
+| PHYS-05 | Phase 1 | Mapped |
+| PANEL-01 | Phase 2 | Mapped |
+| PANEL-02 | Phase 2 | Mapped |
+| PANEL-03 | Phase 2 | Mapped |
+| PANEL-04 | Phase 2 | Mapped |
+| PANEL-05 | Phase 2 | Mapped |
+| ANCH-01 | Phase 3 | Mapped |
+| ANCH-02 | Phase 3 | Mapped |
+| ANCH-03 | Phase 3 | Mapped |
+| ANCH-04 | Phase 3 | Mapped |
+| ANCH-05 | Phase 3 | Mapped |
+| ANCH-06 | Phase 3 | Mapped |
+| ANCH-07 | Phase 3 | Mapped |
+| SWEEP-01 | Phase 4 | Mapped |
+| SWEEP-02 | Phase 4 | Mapped |
+| SWEEP-03 | Phase 4 | Mapped |
+| SWEEP-04 | Phase 4 | Mapped |
+| SWEEP-05 | Phase 4 | Mapped |
+| SWEEP-06 | Phase 4 | Mapped |
+| SWEEP-07 | Phase 4 | Mapped |
+| PUB-01 | Phase 5 | Mapped |
+| PUB-02 | Phase 5 | Mapped |
+| PUB-03 | Phase 5 | Mapped |
+| PUB-04 | Phase 5 | Mapped |
+| PUB-05 | Phase 5 | Mapped |
+| PUB-06 | Phase 5 | Mapped |
+| PUB-07 | Phase 5 | Mapped |
+| PUB-08 | Phase 5 | Mapped |
+| PUB-09 | Phase 5 | Mapped |
 
 **Coverage:**
 - v6.0 requirements: 33 total
-- Mapped to phases: 0 ⚠️
-- Unmapped: 33 ⚠️
+- Mapped to phases: 33 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-15*
-*Last updated: 2026-09-15 after initial definition*
+*Last updated: 2026-09-15 after roadmap creation — all 33 v6.0 requirements mapped to Phases 1-5*
