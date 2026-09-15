@@ -75,7 +75,7 @@ export function usefulDemandFromEngine(demand: { heatingDemand: number; coolingD
 function pricedLoads(run: RetrofitRun, recipe: BuildingRecipe, climateRegion: ClimateRegion | null) {
   const delivered = deliveredFromDemand(buildEndUseLoads({ demand: run.demand, materials: run.materials, recipe, climateRegion }));
   return {
-    electricity: delivered.electric,
+    electricity: Math.max(0, delivered.electric - delivered.renewable),
     gas: delivered.gas,
     districtHeating: delivered.districtHeating,
     // No district-cooling tariff exists in this cost table: explicitly priced
@@ -146,7 +146,9 @@ export function generateRetrofitMeasures(input: RetrofitCoreInput): RetrofitCore
       const solo = computeRetrofitDelta({ ...deltaInput, measureIds: [candidate.id] })!;
       const afterLoads = pricedLoads(solo.after, recipe!, climateRegion);
       const fuels = Object.keys(beforeLoads) as (keyof typeof beforeLoads)[];
-      const annualEnergySaving = fuels.reduce((sum, fuel) => sum + beforeLoads[fuel] - afterLoads[fuel], 0);
+      // Physical site demand and purchased-energy savings are distinct when
+      // existing PV already covers electricity. Never price gross kWh twice.
+      const annualEnergySaving = -solo.deltaSitePerSqm * totalFloorArea;
       const streams = fuels.map(fuel => ({ amount: (beforeLoads[fuel] - afterLoads[fuel]) * tariffs[fuel], fuel: fuel === "districtCooling" ? "districtHeating" as const : fuel })).filter(stream => stream.amount !== 0);
       const annualCostSaving = streams.reduce((sum, stream) => sum + stream.amount, 0);
       const co2Reduction = fuels.reduce((sum, fuel) => sum + (beforeLoads[fuel] - afterLoads[fuel]) * emissions[fuel] / 1000, 0);

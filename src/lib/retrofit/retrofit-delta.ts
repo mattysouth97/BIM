@@ -282,6 +282,7 @@ function runsAgree(a: RetrofitRun, b: RetrofitRun): boolean {
   return (
     a.totalHCoefficient === b.totalHCoefficient &&
     a.demand.totalDemand === b.demand.totalDemand &&
+    a.sitePerSqm === b.sitePerSqm &&
     a.primaryPerSqm === b.primaryPerSqm &&
     a.co2.totalCO2 === b.co2.totalCO2 &&
     a.grade === b.grade
