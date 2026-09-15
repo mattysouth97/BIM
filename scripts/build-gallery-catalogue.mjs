@@ -25,7 +25,7 @@ export function projectGalleryManifest(manifest) {
     ['exteriorDoors', 'doors', '산정에 포함된 외부 문', 'Counted exterior doors', 'IfcDoor in the extracted exterior aperture set; unresolved openings excluded'],
   ]) {
     const value = manifest.counts[field];
-    if (value !== undefined) figures.push({id, ko, en, value: value.toLocaleString('en-US'), read: `${value} ${source}`, manifestField: `counts.${field}`});
+    if (value !== undefined && manifest.envelopeStatus !== 'unresolved') figures.push({id, ko, en, value: value.toLocaleString('en-US'), read: `${value} ${source}`, manifestField: `counts.${field}`});
   }
   return {
     licence: manifest.licence, attribution: manifest.attribution,
@@ -87,7 +87,7 @@ async function main() {
   const target = path.join(root, 'src/lib/landing/gallery-data.json');
   const bytes = JSON.stringify(output, null, 2) + '\n';
   if (process.argv.includes('--check')) {
-    if (await readFile(target, 'utf8') !== bytes) throw new Error('Stale gallery projection; regenerate catalogue');
+    if ((await readFile(target, 'utf8')).replaceAll('\r\n', '\n') !== bytes) throw new Error('Stale gallery projection; regenerate catalogue');
   } else await writeFile(target, bytes);
   console.log(`Gallery catalogue: ${Object.keys(output).length} manifests verified`);
 }

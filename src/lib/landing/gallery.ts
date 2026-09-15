@@ -3,7 +3,7 @@
  */
 import registry from '@/lib/reference-buildings/registry.json';
 import data from './gallery-data.json';
-import { REFERENCE_BUILDING_IDS } from '@/lib/reference-buildings/manifest';
+import type { ReferenceBuildingId } from '@/lib/reference-buildings/manifest';
 
 export type GalleryItemStatus = "modelling" | "published";
 
@@ -22,6 +22,7 @@ export type GalleryDatum = Readonly<{
 
 /** A stated figure and the thing in the model that states it. */
 export type GalleryFigure = Readonly<{
+  manifestField: string;
   id: string;
   ko: string;
   en: string;
@@ -72,7 +73,7 @@ export type GalleryItem = Readonly<{
 }>;
 
 
-export const GALLERY_ITEMS: readonly GalleryItem[] = REFERENCE_BUILDING_IDS.map(id => ({
+export const GALLERY_ITEMS: readonly GalleryItem[] = (Object.keys(registry) as ReferenceBuildingId[]).map(id => ({
   ...registry[id],
   ...data[id],
   status: registry[id].status as GalleryItemStatus,
