@@ -65,9 +65,12 @@ class of change the compiler catches at every call site.
 
 ## Wave 0 Requirements
 
-- [ ] `src/lib/retrofit/__tests__/twin-diagnostics-parity.test.ts` — D-15's build-failing contract test does not exist
-- [ ] A test asserting `material-inference.ts`'s inferred LPD is disclosed as a named assumption (PHYS-03) — no existing test covers this non-ledger inference path
-- [ ] A test asserting `useEnergyMetrics().siteTotal` moves on a lighting change, not only `.grade` / `.primaryEnergyPerArea` — this is the assertion that would have caught the `calculateSystemBreakdown` gap
+Owners assigned by plan-phase on 2026-09-15. Each gap is closed by the FIRST task of the plan
+that implements the behaviour it tests, so the test is written red before the code moves.
+
+- [ ] `src/lib/retrofit/__tests__/twin-diagnostics-parity.test.ts` — D-15's build-failing contract test does not exist → **Plan 01-04, Task 1** (written red; its failure must show a `solar-pv-` id present on one side only)
+- [ ] A test asserting `material-inference.ts`'s inferred LPD is disclosed as a named assumption (PHYS-03) — no existing test covers this non-ledger inference path → **Plan 01-01, Task 3** (`src/lib/__tests__/material-inference-lpd.test.ts`)
+- [ ] A test asserting `useEnergyMetrics().siteTotal` moves on a lighting change, not only `.grade` / `.primaryEnergyPerArea` — this is the assertion that would have caught the `calculateSystemBreakdown` gap → **Plan 01-01, Task 1** (written red; leads the phase's tracer)
 
 Framework install: none needed — Vitest, Playwright, TypeScript and ESLint are all present.
 

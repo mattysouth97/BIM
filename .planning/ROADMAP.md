@@ -49,7 +49,14 @@ both have hard upstream dependencies this milestone creates rather than satisfie
   3. When lighting power density or PV capacity is unknown, the resulting figure displays as a named, visible assumption, never a silent default
   4. The same building priced from the twin and from the diagnostics page returns identical retrofit results
   5. All seven published reference-building datasets are regenerated under the corrected physics, with a raised schema version and a changelog entry recording the change
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Tracer: named end-use fuel split and a real lighting load reach both the grade intensity and the on-screen site intensity
+- [ ] 01-02-PLAN.md — One resolved ClimateRegion wired to all nine consumers; regionalized cooling fields; an unresolvable region refuses
+- [ ] 01-03-PLAN.md — Photovoltaic generation reaches primary energy and the grade; clipped surplus reported; a zero capacity stated as an assumption
+- [ ] 01-04-PLAN.md — Twin and diagnostics converge on one shared retrofit core, enforced by a build-failing parity contract test
+- [ ] 01-05-PLAN.md — Schema version raised, limitation statements rewritten in place, changelog and seven-building before-and-after evidence
 
 ### Phase 2: Retrofit Panel
 **Goal**: The retrofit panel reports honest energy, carbon and verification guidance for the work the user selected, priced only off savings the engine actually produced
@@ -169,7 +176,7 @@ both have hard upstream dependencies this milestone creates rather than satisfie
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Honest Physics | 0/TBD | Not started | - |
+| 1. Honest Physics | 0/5 | Planned | - |
 | 2. Retrofit Panel | 0/TBD | Not started | - |
 | 3. Model Anchors | 0/TBD | Not started | - |
 | 4. Corpus Generation | 0/TBD | Not started | - |
