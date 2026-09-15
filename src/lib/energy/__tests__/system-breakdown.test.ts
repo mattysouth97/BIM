@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { SYSTEM_RATIOS, calculateSystemBreakdown } from "../system-breakdown";
 import { calculateAnnualDemand } from "../annual-demand";
 import { calculateHeatLoss } from "../heat-loss";
+import { envelopeQuantities } from "../envelope-quantities";
+import { modeledLightingLoad } from "../lighting-load";
 import { SEOUL_CLIMATE } from "../climate-data";
 import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe, FloorSpec } from "@/lib/procedural/types";
@@ -206,23 +208,42 @@ describe("calculateSystemBreakdown", () => {
     const breakdown = calculateSystemBreakdown(materials, recipe, SEOUL_CLIMATE);
 
     // Per CONTEXT.md D4 — "actual" | "estimated-ratio" | "estimated-inferred"
-    // All four fields must be "estimated-ratio" in Phase 23 (Phase 26 introduces "actual")
+    // hvac/dhw/plugLoads remain "estimated-ratio". Phase 01 (D-03): lighting
+    // moved to "estimated-inferred" — it is now inferred from building
+    // metadata (LPD × area × hours) via modeledLightingLoad, not an
+    // ASHRAE-ratio share of HVAC, and "estimated-inferred" is this file's own
+    // definition of that case.
     expect(breakdown.hvacDataSource).toBe("estimated-ratio");
-    expect(breakdown.lightingDataSource).toBe("estimated-ratio");
+    expect(breakdown.lightingDataSource).toBe("estimated-inferred");
     expect(breakdown.dhwDataSource).toBe("estimated-ratio");
     expect(breakdown.plugLoadsDataSource).toBe("estimated-ratio");
   });
 
-  it("mainPurpsCd prefix '14' selects office ratios: hvac/total ≈ 0.55 (D6, D7)", () => {
+  // Phase 01 (D-03): lighting is no longer part of the ratio scaling — it now
+  // comes from modeledLightingLoad, independent of the SYSTEM_RATIOS table.
+  // So `hvac / breakdown.total` no longer isolates the HVAC ratio: `total`
+  // now includes an independently-sized lighting term that dilutes it by a
+  // different amount for every building. The ratio table still governs dhw
+  // and plugLoads relative to hvac exactly as before (both still scale off
+  // `totalFromHvac = hvac / ratios.hvac`), so `hvac / (hvac + dhw +
+  // plugLoads)` — EXCLUDING lighting from the denominator — is the invariant
+  // that actually isolates which SYSTEM_RATIOS row was selected. Computed
+  // from the table rather than hand-typed, so it cannot drift from the
+  // values SYSTEM_RATIOS declares.
+  function hvacShareExcludingLighting(ratios: { hvac: number; dhw: number; plug: number }): number {
+    return ratios.hvac / (ratios.hvac + ratios.dhw + ratios.plug);
+  }
+
+  it("mainPurpsCd prefix '14' selects office ratios: hvac/(hvac+dhw+plug) matches the table (D6, D7)", () => {
     const materials = makeMaterials();
     // Office: 업무시설 = 14000 per the 건축물대장 주용도코드 table
     const recipe = makeRecipe(10, "14000");
 
     const breakdown = calculateSystemBreakdown(materials, recipe, SEOUL_CLIMATE);
 
-    // hvac / total should be approximately 0.55 (office HVAC ratio per CONTEXT.md D6)
-    const hvacFraction = breakdown.hvac / breakdown.total;
-    expect(hvacFraction).toBeCloseTo(0.55, 2);
+    const hvacFraction =
+      breakdown.hvac / (breakdown.hvac + breakdown.dhw + breakdown.plugLoads);
+    expect(hvacFraction).toBeCloseTo(hvacShareExcludingLighting(SYSTEM_RATIOS["14"]), 6);
   });
 
   it("mainPurpsCd prefix '02' (공동주택 MOLIT 02) selects RESIDENTIAL ratios (P1-04)", () => {
@@ -231,10 +252,16 @@ describe("calculateSystemBreakdown", () => {
     const recipe = makeRecipe(10, "02000");
 
     const breakdown = calculateSystemBreakdown(materials, recipe, SEOUL_CLIMATE);
+    const denom = breakdown.hvac + breakdown.dhw + breakdown.plugLoads;
 
-    // Residential profile: HVAC 50%, DHW 25% — NOT the office 0.55/0.10.
-    expect(breakdown.hvac / breakdown.total).toBeCloseTo(0.50, 2);
-    expect(breakdown.dhw / breakdown.total).toBeCloseTo(0.25, 2);
+    // Residential profile: HVAC 50%, DHW 25% of (hvac+dhw+plug) — NOT the
+    // office 0.55/0.10. Lighting is excluded from the denominator (D-03);
+    // see hvacShareExcludingLighting above.
+    expect(breakdown.hvac / denom).toBeCloseTo(hvacShareExcludingLighting(SYSTEM_RATIOS["02"]), 6);
+    expect(breakdown.dhw / denom).toBeCloseTo(
+      SYSTEM_RATIOS["02"].dhw / (SYSTEM_RATIOS["02"].hvac + SYSTEM_RATIOS["02"].dhw + SYSTEM_RATIOS["02"].plug),
+      6,
+    );
   });
 
   it("mainPurpsCd prefix '02' selects residential ratios (DHW-dominant, different from office)", () => {
@@ -246,15 +273,18 @@ describe("calculateSystemBreakdown", () => {
     const officeBreakdown = calculateSystemBreakdown(materials, officeRecipe, SEOUL_CLIMATE);
     const residentialBreakdown = calculateSystemBreakdown(materials, residentialRecipe, SEOUL_CLIMATE);
 
-    const officeHvacFraction = officeBreakdown.hvac / officeBreakdown.total;
-    const residentialHvacFraction = residentialBreakdown.hvac / residentialBreakdown.total;
+    const officeDenom = officeBreakdown.hvac + officeBreakdown.dhw + officeBreakdown.plugLoads;
+    const residentialDenom = residentialBreakdown.hvac + residentialBreakdown.dhw + residentialBreakdown.plugLoads;
+
+    const officeHvacFraction = officeBreakdown.hvac / officeDenom;
+    const residentialHvacFraction = residentialBreakdown.hvac / residentialDenom;
 
     // Residential HVAC fraction differs from office (office=0.55, residential=0.50)
     expect(officeHvacFraction).not.toBeCloseTo(residentialHvacFraction, 2);
 
     // Residential DHW fraction is larger (0.25 vs 0.10 for office) — DHW-dominant
-    const officeDhwFraction = officeBreakdown.dhw / officeBreakdown.total;
-    const residentialDhwFraction = residentialBreakdown.dhw / residentialBreakdown.total;
+    const officeDhwFraction = officeBreakdown.dhw / officeDenom;
+    const residentialDhwFraction = residentialBreakdown.dhw / residentialDenom;
     expect(residentialDhwFraction).toBeGreaterThan(officeDhwFraction);
   });
 
@@ -267,20 +297,36 @@ describe("calculateSystemBreakdown", () => {
     const officeBreakdown = calculateSystemBreakdown(materials, officeRecipe, SEOUL_CLIMATE);
     const residentialBreakdown = calculateSystemBreakdown(materials, residentialRecipe, SEOUL_CLIMATE);
 
-    expect(officeBreakdown.hvac / officeBreakdown.total).toBeCloseTo(0.55, 2);
-    expect(residentialBreakdown.hvac / residentialBreakdown.total).toBeCloseTo(0.50, 2);
+    const officeDenom = officeBreakdown.hvac + officeBreakdown.dhw + officeBreakdown.plugLoads;
+    const residentialDenom = residentialBreakdown.hvac + residentialBreakdown.dhw + residentialBreakdown.plugLoads;
+
+    expect(officeBreakdown.hvac / officeDenom).toBeCloseTo(hvacShareExcludingLighting(SYSTEM_RATIOS["14"]), 6);
+    expect(residentialBreakdown.hvac / residentialDenom).toBeCloseTo(hvacShareExcludingLighting(SYSTEM_RATIOS["02"]), 6);
 
     // Residential DHW fraction is larger (0.25 vs 0.10 for office) — DHW-dominant
-    const officeDhwFraction = officeBreakdown.dhw / officeBreakdown.total;
-    const residentialDhwFraction = residentialBreakdown.dhw / residentialBreakdown.total;
+    const officeDhwFraction = officeBreakdown.dhw / officeDenom;
+    const residentialDhwFraction = residentialBreakdown.dhw / residentialDenom;
     expect(residentialDhwFraction).toBeGreaterThan(officeDhwFraction);
   });
 
-  it("prefix '07' (판매시설 retail) selects the lighting-heavy retail profile (P1-04)", () => {
+  it("prefix '07' (판매시설 retail) prices lighting from LPD, not the retail ratio's 40% share (P1-04, D-03)", () => {
+    // Before Phase 01, retail's SYSTEM_RATIOS.lighting=0.40 WAS the lighting
+    // figure. It no longer is: lighting now comes from modeledLightingLoad
+    // (LPD × area × hours), and SYSTEM_RATIOS.lighting is retained only for
+    // the table's own documentation (every row still sums to 1.0) — nothing
+    // in calculateSystemBreakdown reads it any more. This test now pins that
+    // fact directly, rather than asserting a ratio that no longer applies.
     const materials = makeMaterials();
-    const breakdown = calculateSystemBreakdown(materials, makeRecipe(10, "07000"), SEOUL_CLIMATE);
+    const recipe = makeRecipe(10, "07000");
+    const breakdown = calculateSystemBreakdown(materials, recipe, SEOUL_CLIMATE);
 
-    expect(breakdown.lighting / breakdown.total).toBeCloseTo(0.40, 2);
+    const expected = modeledLightingLoad({
+      materials,
+      conditionedFloorAreaSqm: envelopeQuantities(recipe).intensityFloorAreaSqm,
+      mainPurpsCd: recipe.mainPurpsCd,
+    });
+    expect(breakdown.lighting).toBe(expected.kwh);
+    expect(breakdown.lighting / breakdown.total).not.toBeCloseTo(SYSTEM_RATIOS["07"].lighting, 2);
   });
 
   it("de-researched prefixes '11'/'13' fall back to DEFAULT_RATIOS (P1-04 honesty)", () => {
@@ -289,7 +335,11 @@ describe("calculateSystemBreakdown", () => {
     // outcome is the generic mixed-use default, not a wrong specific binding.
     for (const cd of ["11000", "13000"]) {
       const breakdown = calculateSystemBreakdown(materials, makeRecipe(10, cd), SEOUL_CLIMATE);
-      expect(breakdown.hvac / breakdown.total).toBeCloseTo(0.42, 2);
+      const denom = breakdown.hvac + breakdown.dhw + breakdown.plugLoads;
+      // DEFAULT_RATIOS (system-breakdown.ts, private) is hvac 0.42 / lighting
+      // 0.28 / dhw 0.12 / plug 0.18 — mirrored here rather than exported
+      // purely for this one test's sake.
+      expect(breakdown.hvac / denom).toBeCloseTo(hvacShareExcludingLighting({ hvac: 0.42, dhw: 0.12, plug: 0.18 }), 2);
       expect(breakdown.total).toBeGreaterThan(0);
     }
   });
@@ -347,29 +397,37 @@ describe("system ratio provenance (queue item 6 — the silent fallback)", () =>
     ).toContain("10");
   });
 
-  it("changes no energy number when it falls back", () => {
+  it("changes no dhw/plug ratio when it falls back", () => {
     // The whole point is to make an existing default visible, not to alter
     // what it computes. DEFAULT_RATIOS is 42/28/12/18 and must stay so.
-    const breakdown = calculateSystemBreakdown(
-      makeMaterials(),
-      makeRecipe(10, "10000"),
-      SEOUL_CLIMATE,
-    );
+    // Phase 01 (D-03): lighting no longer reads DEFAULT_RATIOS at all — it is
+    // computed by modeledLightingLoad — so this test now checks hvac/dhw/plug
+    // against their SHARED implied total (hvac / ratios.hvac), which is the
+    // invariant DEFAULT_RATIOS still governs, and separately pins lighting to
+    // modeledLightingLoad's own output.
+    const materials = makeMaterials();
+    const recipe = makeRecipe(10, "10000");
+    const breakdown = calculateSystemBreakdown(materials, recipe, SEOUL_CLIMATE);
+    const totalFromHvac = breakdown.hvac / 0.42;
 
-    expect(breakdown.hvac / breakdown.total).toBeCloseTo(0.42, 6);
-    expect(breakdown.lighting / breakdown.total).toBeCloseTo(0.28, 6);
-    expect(breakdown.dhw / breakdown.total).toBeCloseTo(0.12, 6);
-    expect(breakdown.plugLoads / breakdown.total).toBeCloseTo(0.18, 6);
+    expect(breakdown.dhw).toBeCloseTo(totalFromHvac * 0.12, 6);
+    expect(breakdown.plugLoads).toBeCloseTo(totalFromHvac * 0.18, 6);
+    expect(breakdown.lighting).toBe(
+      modeledLightingLoad({
+        materials,
+        conditionedFloorAreaSqm: envelopeQuantities(recipe).intensityFloorAreaSqm,
+        mainPurpsCd: recipe.mainPurpsCd,
+      }).kwh,
+    );
   });
 
-  it("changes no energy number when it matches", () => {
-    const breakdown = calculateSystemBreakdown(
-      makeMaterials(),
-      makeRecipe(10, "14000"),
-      SEOUL_CLIMATE,
-    );
+  it("changes no dhw/plug ratio when it matches", () => {
+    const recipe = makeRecipe(10, "14000");
+    const breakdown = calculateSystemBreakdown(makeMaterials(), recipe, SEOUL_CLIMATE);
+    const totalFromHvac = breakdown.hvac / SYSTEM_RATIOS["14"].hvac;
 
-    expect(breakdown.hvac / breakdown.total).toBeCloseTo(0.55, 6);
+    expect(breakdown.dhw).toBeCloseTo(totalFromHvac * SYSTEM_RATIOS["14"].dhw, 6);
+    expect(breakdown.plugLoads).toBeCloseTo(totalFromHvac * SYSTEM_RATIOS["14"].plug, 6);
   });
 
   it("reaches every row the table declares", () => {

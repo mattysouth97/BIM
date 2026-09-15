@@ -48,6 +48,7 @@ import {
   buildingTypeForGrade,
   isResidentialOccupancy,
 } from "@/lib/energy/delivered-from-demand";
+import { buildEndUseLoads } from "@/lib/energy/end-uses";
 import type { EnergyAuditInput } from "@/lib/report/templates/energy-audit";
 import type { ComplianceReportInput } from "@/lib/report/templates/compliance-report";
 import type { CertificationVersion } from "@/lib/compliance/certification-types";
@@ -258,9 +259,10 @@ export function ReportStage({
     if (!metrics || !effectiveRecipe || !materials) return undefined;
     if (totalArea <= 0) return undefined;
     // P1-05: shared fuel-split + building-type helpers — same computation
-    // path as metrics.grade, so the two can never disagree.
+    // path as metrics.grade, so the two can never disagree. Phase 01
+    // (D-05/D-07): deliveredFromDemand now takes EndUseLoads.
     return calculateEfficiencyRating(
-      deliveredFromDemand(metrics.demand),
+      deliveredFromDemand(buildEndUseLoads({ demand: metrics.demand, materials, recipe: effectiveRecipe })),
       totalArea,
       buildingTypeForGrade(materials, effectiveRecipe.mainPurpsCd)
     );

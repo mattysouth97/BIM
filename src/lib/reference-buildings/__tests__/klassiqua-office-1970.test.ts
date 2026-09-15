@@ -8,6 +8,7 @@ import { getClimateData } from "@/lib/energy/climate-data";
 import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import { deliveredFromDemand } from "@/lib/energy/delivered-from-demand";
+import { buildEndUseLoads } from "@/lib/energy/end-uses";
 import { layoutRoofPlanes, type RoofPlaneSet } from "@/lib/retrofit/pv-layout";
 import { buildReferenceEnergyDataset } from "../energy-dataset";
 import { referenceBuildingEnergyInputs } from "../energy-inputs";
@@ -117,7 +118,13 @@ describe("Klassiqua 1970: energy engine and honest limitations", () => {
   it("models the source T1 case without cooling electricity or a claim of measured comfort", () => {
     const climate = getClimateData("11");
     const demand = calculateAnnualDemand(calculateHeatLoss(energy.materials, energy.recipe, climate), energy.materials, energy.recipe, climate);
-    const rating = calculateEfficiencyRating(deliveredFromDemand(demand), KLASSIQUA_FLOOR_AREA, "non-residential");
+    // NOTE (executor pause point, Task 2 of 3): call-shape migration only —
+    // rating.grade below is NOT yet reconciled with the new physics.
+    const rating = calculateEfficiencyRating(
+      deliveredFromDemand(buildEndUseLoads({ demand, materials: energy.materials, recipe: energy.recipe })),
+      KLASSIQUA_FLOOR_AREA,
+      "non-residential",
+    );
     expect(demand.coolingDemand).toBe(0);
     expect(demand.heatingDemand).toBeGreaterThan(0);
     expect(energy.scopeNotice!.en).toContain("does not establish comfort");

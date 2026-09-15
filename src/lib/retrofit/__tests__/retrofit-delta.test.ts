@@ -11,6 +11,7 @@ import {
   deliveredFromDemand,
   buildingTypeForGrade,
 } from "@/lib/energy/delivered-from-demand";
+import { buildEndUseLoads } from "@/lib/energy/end-uses";
 import { applyPhaseToMaterials } from "@/lib/bim/phases/apply-phase";
 import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
 import { computeRetrofitDelta, zeroDeltaReason } from "../retrofit-delta";
@@ -209,8 +210,11 @@ describe("computeRetrofitDelta", () => {
     });
     const heatLoss = calculateHeatLoss(afterMaterials, recipe, CLIMATE);
     const demand = calculateAnnualDemand(heatLoss, afterMaterials, recipe, CLIMATE);
+    // Phase 01 (D-05/D-07): deliveredFromDemand now takes EndUseLoads — this
+    // is a structural parity check against runEnergyEngine's own internal
+    // call, not a hard-coded number, so it needed only the call-shape update.
     const rating = calculateEfficiencyRating(
-      deliveredFromDemand(demand),
+      deliveredFromDemand(buildEndUseLoads({ demand, materials: afterMaterials, recipe })),
       q.intensityFloorAreaSqm,
       buildingTypeForGrade(afterMaterials, recipe.mainPurpsCd),
     );

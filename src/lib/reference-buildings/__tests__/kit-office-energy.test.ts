@@ -8,6 +8,7 @@ import { calculateHeatLoss, VENTILATION_ELEMENT_NAME } from "@/lib/energy/heat-l
 import { getClimateData } from "@/lib/energy/climate-data";
 import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
 import { buildingTypeForGrade, deliveredFromDemand } from "@/lib/energy/delivered-from-demand";
+import { buildEndUseLoads } from "@/lib/energy/end-uses";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import { buildReferenceEnergyZones, classifySpaceProgram } from "../zones";
 import { solveConstructions } from "../constructions";
@@ -90,7 +91,15 @@ describe("KIT Office: measured geometry reaches the energy engine", () => {
     const climate = getClimateData("11");
     const demand = calculateAnnualDemand(calculateHeatLoss(energy.materials, energy.recipe, climate), energy.materials, energy.recipe, climate);
     const category = buildingTypeForGrade(energy.materials, energy.recipe.mainPurpsCd);
-    const rating = calculateEfficiencyRating(deliveredFromDemand(demand), KIT_OFFICE_TOTAL_FLOOR_AREA_SQM, category);
+    // NOTE (executor pause point, Task 2 of 3): call-shape migration only —
+    // rating.grade below is NOT yet reconciled with the new physics; Task 3
+    // must recompute and justify it. demand.demandPerSqm is unaffected by
+    // this plan (calculateAnnualDemand carries no lighting/DHW/plug term).
+    const rating = calculateEfficiencyRating(
+      deliveredFromDemand(buildEndUseLoads({ demand, materials: energy.materials, recipe: energy.recipe })),
+      KIT_OFFICE_TOTAL_FLOOR_AREA_SQM,
+      category,
+    );
     expect(category).toBe("non-residential");
     expect(demand.demandPerSqm).toBeCloseTo(269.1336833912164, 6);
     expect(rating.grade).toBe("5");

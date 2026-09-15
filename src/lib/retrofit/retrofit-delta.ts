@@ -49,6 +49,7 @@ import {
   deliveredFromDemand,
   buildingTypeForGrade,
 } from "@/lib/energy/delivered-from-demand";
+import { buildEndUseLoads } from "@/lib/energy/end-uses";
 import { applyPhaseToMaterials, pvRoofTypeFromId } from "@/lib/bim/phases/apply-phase";
 
 /** One engine evaluation. `before` and `after` are two of these. */
@@ -274,8 +275,10 @@ export function runEnergyEngine(
   const totalFloorArea = envelopeQuantities(recipe).intensityFloorAreaSqm;
   const heatLoss = calculateHeatLoss(materials, recipe, climate);
   const demand = calculateAnnualDemand(heatLoss, materials, recipe, climate);
+  // Phase 01 (D-05/D-07): deliveredFromDemand now takes EndUseLoads — this is
+  // what makes an LED measure move primaryPerSqm (and pricedByEngine) below.
   const rating = calculateEfficiencyRating(
-    deliveredFromDemand(demand),
+    deliveredFromDemand(buildEndUseLoads({ demand, materials, recipe })),
     totalFloorArea,
     buildingTypeForGrade(materials, recipe.mainPurpsCd),
   );

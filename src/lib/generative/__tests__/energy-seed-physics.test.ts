@@ -23,6 +23,7 @@ import {
   buildingTypeForGrade,
   deliveredFromDemand,
 } from "@/lib/energy/delivered-from-demand";
+import { buildEndUseLoads } from "@/lib/energy/end-uses";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { calculateHeatLoss } from "@/lib/energy/heat-loss";
 import type { MaterialProperties } from "@/lib/material-types";
@@ -69,8 +70,11 @@ function runEngine(materials: MaterialProperties, recipe: BuildingRecipe) {
     recipe,
     SEOUL_CLIMATE,
   );
+  // NOTE (executor pause point, Task 2 of 3): call-shape migration only —
+  // this file's own numeric expectations (all relative/band assertions, not
+  // hard-coded grades) were not re-verified against the new physics by Task 2.
   const rating = calculateEfficiencyRating(
-    deliveredFromDemand(demand),
+    deliveredFromDemand(buildEndUseLoads({ demand, materials, recipe })),
     totalFloorArea,
     buildingTypeForGrade(materials, recipe.mainPurpsCd),
   );

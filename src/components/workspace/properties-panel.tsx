@@ -16,6 +16,7 @@ import {
   buildingTypeForGrade,
   isResidentialOccupancy,
 } from "@/lib/energy/delivered-from-demand";
+import { buildEndUseLoads } from "@/lib/energy/end-uses";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useEngineResult } from "@/hooks/use-engine-result";
 import { useReviewHighlightStore } from "@/store/review-highlight-store";
@@ -238,9 +239,10 @@ export function PropertiesPanel({
     if (totalArea <= 0) return null;
 
     // P1-05: shared fuel-split + building-type helpers — same computation
-    // path as metrics.grade, so the two can never disagree.
+    // path as metrics.grade, so the two can never disagree. Phase 01
+    // (D-05/D-07): deliveredFromDemand now takes EndUseLoads.
     return calculateEfficiencyRating(
-      deliveredFromDemand(metrics.demand),
+      deliveredFromDemand(buildEndUseLoads({ demand: metrics.demand, materials, recipe: effectiveRecipe })),
       totalArea,
       buildingTypeForGrade(materials, effectiveRecipe.mainPurpsCd)
     );

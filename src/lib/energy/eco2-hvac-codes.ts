@@ -52,6 +52,7 @@ export const COOLING_SYSTEM_TYPE_CODES: Record<
   split: { code: "CLG-SPLIT", labelKo: "분리형 에어컨" },
   "central-chiller": { code: "CLG-CHILLER", labelKo: "중앙 냉동기" },
   vrf: { code: "CLG-VRF", labelKo: "가변냉매유량(VRF)" },
+  district: { code: "CLG-DST", labelKo: "지역냉방" },
   none: { code: "CLG-NONE", labelKo: "냉방설비 없음" },
 };
 

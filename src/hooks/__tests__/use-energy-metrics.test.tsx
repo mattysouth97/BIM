@@ -15,6 +15,7 @@ import {
   deliveredFromDemand,
   buildingTypeForGrade,
 } from "@/lib/energy/delivered-from-demand";
+import { buildEndUseLoads } from "@/lib/energy/end-uses";
 import { getEnergyGrade } from "@/lib/energy/energy-grade";
 
 const PK = "TEST-PK-METRICS";
@@ -86,7 +87,10 @@ describe("useEnergyMetrics", () => {
     const recipe = makeRecipe();
     const totalArea = envelopeQuantities(recipe).intensityFloorAreaSqm;
     const expected = calculateEfficiencyRating(
-      deliveredFromDemand(metrics!.demand),
+      // Phase 01 (D-05/D-07): deliveredFromDemand now takes EndUseLoads.
+      deliveredFromDemand(
+        buildEndUseLoads({ demand: metrics!.demand, materials: makeMaterials(), recipe })
+      ),
       totalArea,
       // The recipe's 주용도코드 reaches the table choice, exactly as
       // `useEnergyMetrics` passes it — this fixture is 02000, a dwelling.
@@ -193,16 +197,16 @@ describe("useEnergyMetrics", () => {
     expect(high!.siteTotal).not.toBeCloseTo(low!.siteTotal, 0);
 
     // The grade leg: the SAME deliveredFromDemand + calculateEfficiencyRating
-    // chain the file already uses above (line ~89) — written against the
-    // CURRENT deliveredFromDemand(demand: AnnualDemand) call shape so this
-    // compiles today. Task 2 migrates this call to the new EndUseLoads shape.
+    // chain the file already uses above (line ~89). Migrated onto the new
+    // EndUseLoads shape (Task 2, D-05/D-07) — this is what makes the grade
+    // leg read materials.lighting.lightingPowerDensity for the first time.
     const highRating = calculateEfficiencyRating(
-      deliveredFromDemand(high!.demand),
+      deliveredFromDemand(buildEndUseLoads({ demand: high!.demand, materials: highLpd, recipe })),
       totalArea,
       buildingTypeForGrade(highLpd, recipe.mainPurpsCd)
     );
     const lowRating = calculateEfficiencyRating(
-      deliveredFromDemand(low!.demand),
+      deliveredFromDemand(buildEndUseLoads({ demand: low!.demand, materials: lowLpd, recipe })),
       totalArea,
       buildingTypeForGrade(lowLpd, recipe.mainPurpsCd)
     );

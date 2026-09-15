@@ -211,8 +211,16 @@ function makeMetrics(): EnergyMetrics {
       total: 90000,
       perFloor: [45000, 45000],
       ratioProvenance: { source: "use_code", useCodePrefix: "14" } as const,
+      // Phase 01 (D-03): lighting is no longer ratio-derived — fixture value
+      // for a field this test does not itself exercise.
+      lightingProvenance: {
+        source: "use_code_hours",
+        mainPurpsCd: "14000",
+        hoursPerYear: 4380,
+        lpdWPerSqm: 10,
+      } as const,
       hvacDataSource: "estimated-ratio",
-      lightingDataSource: "estimated-ratio",
+      lightingDataSource: "estimated-inferred",
       dhwDataSource: "estimated-ratio",
       plugLoadsDataSource: "estimated-ratio",
     },

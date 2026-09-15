@@ -135,7 +135,8 @@ export const USE_CODE_OPERATING_HOURS: Record<string, number> = {
   "14000": 4380,  // 업무시설 (office, 8760/2) — MOLIT 14 / 건축물대장 office code
 };
 
-function getOperatingHours(mainPurpsCd: string): number {
+/** D-02 — exported so `lighting-load.ts` reads the SAME table, not a second one. */
+export function getOperatingHours(mainPurpsCd: string): number {
   return USE_CODE_OPERATING_HOURS[mainPurpsCd] ?? 2500;
 }
 

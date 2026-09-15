@@ -90,7 +90,10 @@ export interface HVACProperties {
     capacity: number;
   };
   cooling: {
-    systemType: "split" | "central-chiller" | "vrf" | "none";
+    // "district" added Phase 01 (D-06) — declares district cooling so
+    // deliveredFromDemand has a field to route the districtCooling primary
+    // factor from. Additive; every existing literal keeps compiling.
+    systemType: "split" | "central-chiller" | "vrf" | "district" | "none";
     efficiency: number;
     capacity: number;
     refrigerant?: string;

@@ -21,6 +21,7 @@ import {
   gradeTableIsFromOccupancy,
   isResidentialOccupancy,
 } from "@/lib/energy/delivered-from-demand";
+import { buildEndUseLoads } from "@/lib/energy/end-uses";
 import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 import {
   REFERENCE_BUILDING_IDS,
@@ -33,8 +34,12 @@ function run(id: ReferenceBuildingId) {
   const heatLoss = calculateHeatLoss(energy.materials, energy.recipe, climate);
   const demand = calculateAnnualDemand(heatLoss, energy.materials, energy.recipe, climate);
   const q = envelopeQuantities(energy.recipe);
+  // NOTE (executor pause point, Task 2 of 3): call-shape migration only — the
+  // numeric grade/energy assertions in this file are NOT yet reconciled with
+  // the new physics. Task 3 must recompute and justify every hard-coded
+  // expectation here per AGENTS.md, not just make this compile.
   const rating = calculateEfficiencyRating(
-    deliveredFromDemand(demand),
+    deliveredFromDemand(buildEndUseLoads({ demand, materials: energy.materials, recipe: energy.recipe })),
     q.intensityFloorAreaSqm,
     buildingTypeForGrade(energy.materials, energy.recipe.mainPurpsCd),
   );

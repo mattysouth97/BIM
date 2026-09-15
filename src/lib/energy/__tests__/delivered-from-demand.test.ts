@@ -1,7 +1,10 @@
 // src/lib/energy/__tests__/delivered-from-demand.test.ts
-// P1-05 — the single shared fuel-split + building-type helpers. The split
-// mirrors what report-stage derived inline: electric = cooling + 15% of total
-// (lighting/equipment), gas = heating + 10% of total (DHW).
+// Phase 01 (Honest Physics), D-05/D-06/D-07 — deliveredFromDemand no longer
+// splits a flat share of total; it sums each named end use's kWh into the
+// fuel bucket that end use's OWN `fuel` field declares. These tests build
+// EndUseLoads fixtures directly (unit-level, not through buildEndUseLoads)
+// so the routing itself — not buildEndUseLoads's own derivations — is what
+// is under test here.
 
 import { describe, it, expect } from "vitest";
 import {
@@ -10,35 +13,80 @@ import {
   buildingTypeForGrade,
   gradeTableIsFromOccupancy,
 } from "../delivered-from-demand";
-import { calculatePrimaryEnergy } from "../primary-energy";
+import type { EndUseLoads, FueledLoad, DeliveredFuel } from "../end-uses";
 import type { MaterialProperties } from "@/lib/material-types";
 
-describe("deliveredFromDemand", () => {
-  it("splits demand into electric/gas exactly as the report stage did", () => {
-    const delivered = deliveredFromDemand({
-      heatingDemand: 60_000,
-      coolingDemand: 40_000,
-      totalDemand: 150_000,
-    });
+/** A minimal FueledLoad fixture — provenance content is irrelevant to routing. */
+function fueled(kwh: number, fuel: DeliveredFuel): FueledLoad {
+  return { kwh, fuel, provenance: { source: "modeled", basis: "test fixture" } };
+}
 
-    expect(delivered.electric).toBe(40_000 + 150_000 * 0.15); // 62,500
-    expect(delivered.gas).toBe(60_000 + 150_000 * 0.1); // 75,000
+function loads(overrides: Partial<EndUseLoads>): EndUseLoads {
+  return {
+    hvac: {
+      heating: fueled(0, "gas"),
+      cooling: fueled(0, "electric"),
+    },
+    lighting: fueled(0, "electric"),
+    dhw: fueled(0, "electric"),
+    plug: fueled(0, "electric"),
+    onSiteGeneration: { kwh: 0, provenance: { source: "modeled", basis: "test fixture" } },
+    ...overrides,
+  };
+}
+
+describe("deliveredFromDemand", () => {
+  it("D-05/D-07: sums each end use's kWh into the fuel bucket it declares, no share-of-total arithmetic", () => {
+    const delivered = deliveredFromDemand(
+      loads({
+        hvac: { heating: fueled(60_000, "gas"), cooling: fueled(40_000, "electric") },
+        lighting: fueled(12_000, "electric"),
+        dhw: fueled(8_000, "electric"),
+        plug: fueled(6_000, "electric"),
+      }),
+    );
+
+    // electric = cooling + lighting + dhw + plug (every electric end use)
+    expect(delivered.electric).toBe(40_000 + 12_000 + 8_000 + 6_000);
+    // gas = heating only
+    expect(delivered.gas).toBe(60_000);
     expect(delivered.districtHeating).toBe(0);
     expect(delivered.districtCooling).toBe(0);
     expect(delivered.renewable).toBe(0);
   });
 
-  it("produces the hand-computed primary intensity from the item spec", () => {
-    const delivered = deliveredFromDemand({
-      heatingDemand: 60_000,
-      coolingDemand: 40_000,
-      totalDemand: 150_000,
-    });
-    const primary = calculatePrimaryEnergy(delivered, 1000);
+  it("D-06: a district-heat heating fuel routes into districtHeating, with the gas leg at 0", () => {
+    const delivered = deliveredFromDemand(
+      loads({
+        hvac: {
+          heating: fueled(60_000, "districtHeating"),
+          cooling: fueled(40_000, "electric"),
+        },
+      }),
+    );
+    expect(delivered.districtHeating).toBe(60_000);
+    expect(delivered.gas).toBe(0);
+  });
 
-    // 62,500 × 2.75 + 75,000 × 1.1 = 254,375 kWh → 254.375 kWh/m²
-    expect(primary.primaryEnergy.total).toBeCloseTo(254_375, 5);
-    expect(primary.primaryEnergyPerArea).toBeCloseTo(254.375, 5);
+  it("D-06: a district cooling systemType routes into districtCooling", () => {
+    const delivered = deliveredFromDemand(
+      loads({
+        hvac: {
+          heating: fueled(60_000, "gas"),
+          cooling: fueled(40_000, "districtCooling"),
+        },
+      }),
+    );
+    expect(delivered.districtCooling).toBe(40_000);
+    expect(delivered.electric).toBe(0);
+  });
+
+  it("D-07: onSiteGeneration.kwh reaches renewable, and only renewable", () => {
+    const delivered = deliveredFromDemand(
+      loads({ onSiteGeneration: { kwh: 5_000, provenance: { source: "modeled", basis: "test" } } }),
+    );
+    expect(delivered.renewable).toBe(5_000);
+    expect(delivered.electric).toBe(0);
   });
 });
 

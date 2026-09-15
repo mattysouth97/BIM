@@ -24,6 +24,7 @@ import {
   deliveredFromDemand,
   buildingTypeForGrade,
 } from "@/lib/energy/delivered-from-demand";
+import { buildEndUseLoads } from "@/lib/energy/end-uses";
 import type { HeatLossResult } from "@/lib/energy/heat-loss";
 import type { AnnualDemand } from "@/lib/energy/annual-demand";
 import type { EfficiencyGrade } from "@/lib/compliance/efficiency-rating";
@@ -100,8 +101,11 @@ export function useEnergyMetrics(
 
     // P1-05 official primary-energy rating — one computation path shared
     // with the compliance report (deliveredFromDemand + occupancy type).
+    // Phase 01 (D-05/D-07): deliveredFromDemand now takes EndUseLoads, built
+    // by buildEndUseLoads — this is what makes the grade leg read
+    // materials.lighting.lightingPowerDensity for the first time.
     const rating = calculateEfficiencyRating(
-      deliveredFromDemand(demand),
+      deliveredFromDemand(buildEndUseLoads({ demand, materials, recipe: effectiveRecipe })),
       totalFloorArea,
       buildingTypeForGrade(materials, effectiveRecipe.mainPurpsCd)
     );

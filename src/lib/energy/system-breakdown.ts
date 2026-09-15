@@ -5,6 +5,7 @@
 import { calculateAnnualDemand } from "./annual-demand";
 import { calculateHeatLoss } from "./heat-loss";
 import { envelopeQuantities } from "./envelope-quantities";
+import { modeledLightingLoad, type LightingLoadProvenance } from "./lighting-load";
 import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe, FloorSpec } from "@/lib/procedural/types";
 import type { ClimateData } from "./climate-data";
@@ -74,7 +75,12 @@ export type SystemRatioProvenance =
   | { source: "use_code"; useCodePrefix: string }
   | { source: "generic_default"; useCodePrefix: string; assumption: string };
 
-function resolveSystemRatios(mainPurpsCd: string): {
+/**
+ * Exported (Phase 01, D-01/D-07) so `end-uses.ts` resolves DHW and plug loads
+ * from the SAME table and provenance this module uses for its own dhw/
+ * plugLoads figures — one resolution, not two independently tuned to agree.
+ */
+export function resolveSystemRatios(mainPurpsCd: string): {
   ratios: { hvac: number; lighting: number; dhw: number; plug: number };
   provenance: SystemRatioProvenance;
 } {
@@ -114,8 +120,16 @@ export interface SystemBreakdown {
   ratioProvenance: SystemRatioProvenance;
   /** kWh/yr — HVAC (heating + cooling), anchored to calculateAnnualDemand().totalDemand (D2) */
   hvac: number;
-  /** kWh/yr — lighting, derived by ASHRAE ratio from HVAC-anchored total */
+  /**
+   * kWh/yr — lighting. Phase 01 (D-03): computed by `modeledLightingLoad`
+   * (LPD × conditioned area × operating hours), the SAME function
+   * `deliveredFromDemand`'s grade leg calls via `buildEndUseLoads` — the two
+   * numbers agree because they are one computation, not two tables tuned to
+   * match. No longer an ASHRAE-ratio share of HVAC.
+   */
   lighting: number;
+  /** Where the lighting figure came from — see `lighting.ts`'s LightingLoadProvenance. */
+  lightingProvenance: LightingLoadProvenance;
   /** kWh/yr — domestic hot water, derived by ASHRAE ratio */
   dhw: number;
   /** kWh/yr — plug loads / equipment, derived by ASHRAE ratio */
@@ -167,12 +181,20 @@ export function calculateSystemBreakdown(
   // Step 2: Look up ASHRAE ratios by 2-char mainPurpsCd prefix (D7).
   const { ratios, provenance } = resolveSystemRatios(recipe.mainPurpsCd);
 
-  // Step 3: HVAC anchor + scale other systems so total = hvac / hvac_ratio (D2).
+  // Step 3: HVAC anchor + scale dhw/plug so their implied total = hvac / hvac_ratio (D2).
   // Guard against degenerate hvac_ratio = 0 (would produce Infinity).
+  // Phase 01 (D-03): lighting is NO LONGER part of this ratio scaling — it
+  // is computed directly from LPD, area and operating hours below.
   const hvac = demand.totalDemand;
   const totalFromHvac = ratios.hvac > 0 ? hvac / ratios.hvac : 0;
 
-  const lighting = totalFromHvac * ratios.lighting;
+  const totalFloorAreaSqm = envelopeQuantities(recipe).intensityFloorAreaSqm;
+  const lightingLoad = modeledLightingLoad({
+    materials,
+    conditionedFloorAreaSqm: totalFloorAreaSqm,
+    mainPurpsCd: recipe.mainPurpsCd,
+  });
+  const lighting = lightingLoad.kwh;
   const dhw = totalFromHvac * ratios.dhw;
   const plugLoads = totalFromHvac * ratios.plug;
   const total = hvac + lighting + dhw + plugLoads;
@@ -190,14 +212,18 @@ export function calculateSystemBreakdown(
   return {
     hvac,
     lighting,
+    lightingProvenance: lightingLoad.provenance,
     dhw,
     plugLoads,
     total,
     perFloor,
-    // All "estimated-ratio": Phase 26 will introduce "actual" when sub-metered data is wired.
     ratioProvenance: provenance,
     hvacDataSource: "estimated-ratio",
-    lightingDataSource: "estimated-ratio",
+    // Phase 01 (D-03): lighting is now inferred from building metadata
+    // (LPD × area × hours), not an ASHRAE-ratio share of HVAC — "estimated-
+    // inferred" is this file's own definition of that case, not
+    // "estimated-ratio". dhw/plugLoads remain ratio-derived.
+    lightingDataSource: "estimated-inferred",
     dhwDataSource: "estimated-ratio",
     plugLoadsDataSource: "estimated-ratio",
   };

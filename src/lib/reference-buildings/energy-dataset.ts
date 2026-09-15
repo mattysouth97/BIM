@@ -4,6 +4,7 @@ import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
 import { getClimateData } from "@/lib/energy/climate-data";
 import { calculateCO2 } from "@/lib/energy/co2-emissions";
 import { buildingTypeForGrade, deliveredFromDemand, gradeTableIsFromOccupancy } from "@/lib/energy/delivered-from-demand";
+import { buildEndUseLoads } from "@/lib/energy/end-uses";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { calculateHeatLoss, isVentilationElement } from "@/lib/energy/heat-loss";
 import { calculateSystemBreakdown } from "@/lib/energy/system-breakdown";
@@ -86,7 +87,10 @@ export function modeledReferenceEnergy(inputs: ReferenceBuildingEnergyInputs | n
   const heatLoss = calculateHeatLoss(inputs.materials, inputs.recipe, climate);
   const demand = calculateAnnualDemand(heatLoss, inputs.materials, inputs.recipe, climate);
   const breakdown = calculateSystemBreakdown(inputs.materials, inputs.recipe, climate);
-  const delivered = deliveredFromDemand(demand);
+  // Phase 01 (D-05/D-07): deliveredFromDemand now takes EndUseLoads.
+  const delivered = deliveredFromDemand(
+    buildEndUseLoads({ demand, materials: inputs.materials, recipe: inputs.recipe }),
+  );
   const table = buildingTypeForGrade(inputs.materials, inputs.recipe.mainPurpsCd);
   const rating = calculateEfficiencyRating(delivered, envelope.intensityFloorAreaSqm, table);
   const co2 = calculateCO2(demand, envelope.intensityFloorAreaSqm, inputs.materials.hvac.heating.fuelType);

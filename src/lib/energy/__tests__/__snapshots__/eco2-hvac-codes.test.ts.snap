@@ -7,6 +7,10 @@ exports[`eco2-hvac-codes — mapping table snapshot > matches the recorded snaps
       "code": "CLG-CHILLER",
       "labelKo": "중앙 냉동기",
     },
+    "district": {
+      "code": "CLG-DST",
+      "labelKo": "지역냉방",
+    },
     "none": {
       "code": "CLG-NONE",
       "labelKo": "냉방설비 없음",
