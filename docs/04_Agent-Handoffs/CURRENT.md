@@ -77,8 +77,24 @@ or Korean model completion is claimed.
 - Main dev3000 has DATABASE_URL loaded only in process memory from the private
   external corpus environment. No credential file was copied into the repository.
   Local VWorld remains503 without its keys; this is an existing local limitation.
-- Clean production deployment and exact deployed-SHA/download evidence follow
-  this local checkpoint. Preserve unrelated settings and GSD runtime artifacts.
+- Production verified 2026-09-15 20:05 KST at commit
+  `79a5d1b6ff3c430a3e65e86b9c8ef4a0006259fb`, deployed from a clean detached
+  worktree with `-e DEPLOY_COMMIT_SHA`. `/api/health` returns that exact SHA,
+  `region: icn1`, `environment: production`; `X-Vercel-Id` reads `icn1::icn1`.
+  Aliased to https://bim-self.vercel.app. Preserve unrelated settings and GSD
+  runtime artifacts.
+- Live corpus evidence: `0.1.0-pilot` serves71 records and4 exclusions; the
+  dictionary describes38 record fields; the full download is4,868,243 bytes and
+  is byte-identical across repeated requests. The snapshot digest recomputed
+  independently from the downloaded bytes reproduces
+  `211ed326bca2b4ce48c8731457c1368ba87304a65a09be5681f26f6836c67bbc`, so
+  production serves exactly the reviewed records and manifest. Note this digest
+  covers the snapshot (`{manifest, records}`), never the published artifact
+  (`{records, release}`) — the two differ by publication metadata by design, so
+  a download hash that differs from it is expected, not drift.
+- Live surfaces: the gallery lists nine models, `/corpus` and record permalinks
+  return200, and68 browser cases passed against the deployed site via
+  `E2E_BASE_URL`, carrying the corrected grades (Clinic4 /219.4, not1+ /108.8).
 
 ### Previous release evidence — 2026-09-07
 

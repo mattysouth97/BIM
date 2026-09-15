@@ -5,7 +5,7 @@ milestone_name: Building Energy Repository
 current_phase: 03
 current_phase_name: Model Anchors
 status: in_progress
-stopped_at: Local checkpoint committed; clean production deployment and deployed-SHA verification next
+stopped_at: Phases1/2/5 production-verified at 79a5d1b; phases3/4 still await external evidence
 last_updated: "2026-09-15T10:44:44.824Z"
 last_activity: 2026-09-15
 last_activity_desc: Integrated physics, vertical drawers, nine models and71-record pilot
@@ -60,12 +60,15 @@ See phase verification reports and docs/04_Agent-Handoffs/CURRENT.md for release
 
 ## Session continuity
 
-Session resumed 2026-09-15 19:45. The outstanding local checkpoint was
-re-verified in this session (5,657 unit tests passed, 4 pre-existing skips;
-TypeScript clean; ESLint 0 errors, 6 pre-existing warnings) and committed as
-`e4e8350` plus the phase-evidence commit. Production deployment follows.
+Session resumed 2026-09-15 19:45. The local checkpoint was re-verified here
+(5,657 unit tests, 183 local browser cases, TypeScript clean, ESLint 0 errors)
+and committed as `e4e8350`, `181523a` and `79a5d1b`. Production was then
+deployed and verified at `79a5d1b` — health SHA, `icn1`, corpus digest and68
+production browser cases. Phases1,2 and5 are production-verified.
 
 ## Resume
 
-Complete production release verification, then acquire actual source/quota evidence
-before closing phases3/4. Do not archive v6.0 as fully complete while those remain open.
+Production release verification is complete. Acquire actual source/quota evidence
+before closing phases3/4: ANCH-03 needs a Korean IFC/DXF with redistribution
+rights, SWEEP-01 needs the account's actual daily quota. Do not archive v6.0 as
+fully complete while those remain open.
