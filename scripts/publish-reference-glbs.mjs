@@ -136,6 +136,15 @@ if (!process.env.BLOB_READ_WRITE_TOKEN) {
   process.exit(1);
 }
 
+// CLI 58.x drift: `vercel blob put` now hard-fails when exactly one of
+// VERCEL_OIDC_TOKEN / BLOB_STORE_ID is set ("both or neither"). A
+// `vercel env pull`ed .env.local carries VERCEL_OIDC_TOKEN but no
+// BLOB_STORE_ID, so the child env is sanitized to force the documented
+// read-write-token path (BLOB_READ_WRITE_TOKEN stays).
+const childEnv = { ...process.env };
+delete childEnv.VERCEL_OIDC_TOKEN;
+delete childEnv.BLOB_STORE_ID;
+
 for (const pathname of pathnames) {
   const { absPath, bytes } = disk.get(pathname);
   console.log(`put ${pathname} (${bytes} bytes)`);
@@ -143,6 +152,7 @@ for (const pathname of pathnames) {
   const res = spawnSync("vercel", putArgs(pathname, absPath), {
     stdio: "inherit",
     shell: process.platform === "win32",
+    env: childEnv,
   });
   if (res.status !== 0) {
     console.error(
