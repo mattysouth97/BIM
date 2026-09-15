@@ -18,6 +18,8 @@ const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex")
  * exemption to reach for.
  */
 const NO_MATERIAL_FABRIC: Record<string, string> = {
+  sixty5:
+    "507 draw calls against the same 300 budget — this model binds materials across 7,426 walls and 4,147 coverings. Same decision as the hospital: the building goes without the fabric rather than the render guard being raised.",
   "west-riverside-hospital":
     "The generator exceeds its own 300 draw-call budget on this building — 837, from 440 separately-bound doors and 158 curtain walls. The budget is a render-performance guard, so the building goes without the fabric rather than the guard being raised for it.",
 };

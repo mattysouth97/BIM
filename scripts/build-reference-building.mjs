@@ -1039,6 +1039,68 @@ const BUILDINGS = Object.freeze({
     roofNote:
       "Source slab geometry is displayed. An absence of ROOF-typed entities is not evidence of no roof; roof classification remains unresolved.",
   },
+  /**
+   * A real 105-apartment complex at Strijp-S, Eindhoven — the former Philips
+   * factory site — published by its contractor as a teaching dataset.
+   *
+   * Ingested for its services: ventilation, electrical and plumbing as three
+   * discipline models. The source also carries kitchen and facade models,
+   * deliberately not taken. They are 52 MB of further source for layers that
+   * add no MEP, and this gallery's artifacts already cost a refused
+   * deployment once — see next.config.ts.
+   *
+   * Unlike West Riverside this model DOES state IfcSpace (110 of them), so
+   * its floor areas are measured rather than absent. It still ships without an
+   * energy baseline: exterior-envelope classification has not been established
+   * for it in this pass, and a grade struck on an unresolved envelope would be
+   * exactly the fabricated number this gallery exists to avoid. That is a
+   * statement about what has been done, not about what the source can support.
+   */
+  sixty5: {
+    id: "sixty5",
+    modelNote:
+      "Source fabric tessellation of the architectural discipline model. Ventilation, electrical and plumbing ship as their own layers. The source's kitchen and facade models were not taken. No energy baseline is calculated: exterior-envelope classification is unresolved for this model.",
+    name: { ko: "Sixty5 주거복합", en: "Sixty5 Residential" },
+    summary: {
+      ko: "아인트호벤 Strijp-S의 실제 105세대 주거복합입니다. 환기·전기·급배수 원본 모델을 레이어로 제공합니다. 외피 분류가 확인되지 않아 에너지 등급은 산정하지 않습니다.",
+      en: "A real 105-apartment complex at Strijp-S, Eindhoven, published by its contractor. Ventilation, electrical and plumbing ship as source layers. Exterior-envelope classification is unresolved, so no energy rating is calculated.",
+    },
+    useType: "apartment_building",
+    licence: "CC BY 4.0",
+    attribution:
+      "Stam + De Koning, \"Sixty5\" (developed as Building Field S1), Strijp-S, Eindhoven. " +
+      "Published in the buildingSMART Community Sample Test Files under CC BY 4.0; " +
+      "extracted and adapted by BIMFIT. " +
+      "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+    sourceUrl:
+      "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+    files: [
+      { role: "architectural", fileName: "sixty5-arc.ifc", url: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/resolve/main/projects/sixty5/arc.ifc", sha256: "e91ddbbd672bbde946af14631de4c732f0cf8a7cfae5dbbf06fbeab03b5c46df" },
+      { role: "hvac", fileName: "sixty5-ventilation.ifc", url: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/resolve/main/projects/sixty5/ventilation.ifc", sha256: "c78f6ad085961500f0890bbffda9e171c1342c5865ca152f64098dd4da644cca" },
+      { role: "electrical", fileName: "sixty5-electrical.ifc", url: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/resolve/main/projects/sixty5/electrical.ifc", sha256: "adb8d5eda2c706a1fded2a00bd38d845e35f513e2f6ba048fc6228274dfb3986" },
+      { role: "plumbing", fileName: "sixty5-plumbing.ifc", url: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/resolve/main/projects/sixty5/plumbing.ifc", sha256: "15382b06d0a63464b95ba451ce7d5fa981bf6c236ebe3f4f62bb9d2b9abfd821" },
+    ],
+    serviceLayers: [
+      { id: "hvac", role: "hvac", ko: "환기", en: "Ventilation" },
+      { id: "electrical", role: "electrical", ko: "전기", en: "Electrical" },
+      { id: "plumbing", role: "plumbing", ko: "급배수", en: "Plumbing" },
+    ],
+    areaSource: "stated_first",
+    envelopeStatus: "unresolved",
+    exteriorWallMatch: [],
+    exteriorWallNote:
+      "Exterior wall membership is unresolved: this pass did not establish PHYSICAL/EXTERNAL boundary membership for the model's 7,426 walls. An empty selected set is not evidence of zero envelope area. No energy baseline is supplied.",
+    location: {
+      rejectCoordinate: true,
+      statedTown: "Eindhoven",
+      trueNorthStated: false,
+      note: "The publisher documents the building as Sixty5 at Strijp-S, Eindhoven. The town is taken from that documentation; the model's own IfcSite coordinates are not treated as a surveyed position.",
+    },
+    spacesNote:
+      "IfcSpace floor quantities from the source design model. These state designed areas, not measured operation or conditioned-area classification.",
+    roofNote:
+      "Source slab geometry is displayed. An absence of ROOF-typed entities is not evidence of no roof; roof classification remains unresolved.",
+  },
   [CLINIC.id]: CLINIC,
   [SCHEPENDOMLAAN.id]: SCHEPENDOMLAAN,
   [DUPLEX.id]: DUPLEX,

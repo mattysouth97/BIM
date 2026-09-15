@@ -30,6 +30,11 @@ export const ARCHITECTURAL_DETAIL_SOURCES = Object.freeze({
   // leave the envelope full of holes. IfcStair is likewise absent — the shared
   // GROUP map has no entry for it, and extending that map for one building
   // would change how every other building's details are grouped.
+  // IfcCovering is deliberately absent: this model states 4,147 of them, and
+  // the detail layer has a 200 draw-call budget that West Riverside already
+  // came close to with 1,040 elements. Finishes stay in the fabric model,
+  // where they are one merged surface rather than thousands of controls.
+  sixty5: { architectural: ["IfcRailing", "IfcFurnishingElement"] },
   "west-riverside-hospital": {
     architectural: ["IfcCovering", "IfcRailing", "IfcColumn"],
     // Structural classes are deliberately NOT listed, unlike the Clinic. This

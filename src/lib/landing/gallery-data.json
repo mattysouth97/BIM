@@ -745,5 +745,163 @@
         "manifestField": "counts.spacesFloor"
       }
     ]
+  },
+  "sixty5": {
+    "licence": "CC BY 4.0",
+    "attribution": "Stam + De Koning, \"Sixty5\" (developed as Building Field S1), Strijp-S, Eindhoven. Published in the buildingSMART Community Sample Test Files under CC BY 4.0; extracted and adapted by BIMFIT. https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+    "sourceUrl": "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+    "datums": [
+      {
+        "name": "17 dak",
+        "elevationM": 55.7,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "16 zestiende verdieping",
+        "elevationM": 52.5,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 2
+      },
+      {
+        "name": "15 vijftiende verdieping",
+        "elevationM": 49.3,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 2
+      },
+      {
+        "name": "14 veertiende verdieping",
+        "elevationM": 46.1,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 4
+      },
+      {
+        "name": "13 dertiende verdieping",
+        "elevationM": 42.9,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 4
+      },
+      {
+        "name": "12 twaalfde verdieping",
+        "elevationM": 39.7,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 4
+      },
+      {
+        "name": "11 elfde verdieping",
+        "elevationM": 36.5,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 4
+      },
+      {
+        "name": "10 tiende verdieping",
+        "elevationM": 33.3,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 6
+      },
+      {
+        "name": "09 negende verdieping",
+        "elevationM": 30.1,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 6
+      },
+      {
+        "name": "08 achtste verdieping",
+        "elevationM": 26.9,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 8
+      },
+      {
+        "name": "07 zevende verdieping",
+        "elevationM": 23.7,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 8
+      },
+      {
+        "name": "06 zesde verdieping",
+        "elevationM": 20.5,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 8
+      },
+      {
+        "name": "05 vijfde verdieping",
+        "elevationM": 17.3,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 8
+      },
+      {
+        "name": "04 vierde verdieping",
+        "elevationM": 14.1,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 8
+      },
+      {
+        "name": "03 derde verdieping",
+        "elevationM": 10.9,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 11
+      },
+      {
+        "name": "02 tweede verdieping",
+        "elevationM": 7.7,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 10
+      },
+      {
+        "name": "01 eerste verdieping",
+        "elevationM": 4.5,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 10
+      },
+      {
+        "name": "00 begane grond",
+        "elevationM": 0,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 7
+      },
+      {
+        "name": "-1 fundering",
+        "elevationM": -1,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      }
+    ],
+    "figures": [
+      {
+        "id": "floor-area",
+        "ko": "모델 바닥 면적",
+        "en": "Model floor area",
+        "value": "0.0 m²",
+        "read": "0 floor-counting IfcSpace ·  · excluded: 110 kavel nr",
+        "manifestField": "areas.totalFloorAreaSqm"
+      },
+      {
+        "id": "rooms",
+        "ko": "바닥을 갖는 공간",
+        "en": "Floor-counting spaces",
+        "value": "0",
+        "read": "IfcSpace 110 − 110 excluded (110 kavel nr) = 0",
+        "manifestField": "counts.spacesFloor"
+      }
+    ]
   }
 }

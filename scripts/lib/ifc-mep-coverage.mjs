@@ -90,6 +90,14 @@ export async function buildMepCoverage({ buildingId, sources, serviceLayers }) {
     } : buildingId === "schependomlaan" ? {
       ko: "건축 IFC의 우수배수 60개·환기구 13개와 별도 공급업체 유틸리티 연결 형상을 표시합니다. 포트가 없어 흐름 방향은 추정하지 않습니다.",
       en: "Shows 60 rainwater drainage elements and 13 ventilation grilles from the architectural IFC, plus the supplier utility connections. No distribution ports; no inferred flow direction.",
+    } : buildingId === "sixty5" ? {
+      // The generic sentence says "HVAC". This building's services file is
+      // ventilation specifically — it carries no heating or cooling plant —
+      // and the layer is labelled 환기 / Ventilation, so the summary beside it
+      // must not promote it to HVAC. The source's kitchen and facade models
+      // were not taken, which the reader cannot know from the layer list.
+      ko: "공개된 환기·전기·급배수 IFC를 각각 표시합니다. 원본의 주방·외피 모델은 포함하지 않았습니다. IfcSpace는 세대 구획 표시용 1 m² 주석이라 바닥면적으로 집계하지 않으며, 모델 간 중복 가능성이 있어 원본 요소 수를 설치 설비의 고유 개수로 해석하지 않습니다.",
+      en: "Published ventilation, electrical and plumbing IFCs are shown separately. The source's kitchen and facade models were not taken. Its IfcSpace entities are 1 m² plot-number annotations rather than rooms, so they are not summed as floor area. Source occurrence counts can overlap between models and are not unique installed equipment counts.",
     } : buildingId === "west-riverside-hospital" ? {
       // The generic sentence below names HVAC, electrical and plumbing. This
       // building also publishes a sprinkler layer with 1,354 suppression

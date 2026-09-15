@@ -39,6 +39,7 @@ const expectedCounts: Record<string, [number, number]> = {
   "tum-fantasy-hotel-1": [167, 124],
   "tum-fantasy-hotel-2": [323, 257],
   "west-riverside-hospital": [1040, 1040],
+  sixty5: [898, 898],
 };
 
 describe("published source architectural detail", () => {

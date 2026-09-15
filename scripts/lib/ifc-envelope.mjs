@@ -177,6 +177,23 @@ const NON_FLOOR_SPACE_RULES = Object.freeze([
     countsAsConditionedVolume: true,
   }),
   Object.freeze({
+    /**
+     * Dutch for "plot number". Sixty5 stamps one of these per apartment lot:
+     * 110 of them, each a 1 × 1 m marker carrying GrossFloorArea exactly 1 m²
+     * and NetVolume exactly 1 m³.
+     *
+     * Without this rule the building published a floor area of 110 m² — for a
+     * nineteen-storey block of 105 apartments. The arithmetic was right and
+     * the quantity was real; what it measured was a set of annotation stamps,
+     * not rooms. They are recognisable because every one is unit-sized, which
+     * no habitable space is.
+     */
+    pattern: /^\s*kavel\s*nr\b/i,
+    reason:
+      "a plot-number annotation stamp, not an enclosed room; its 1 m² quantity marks an apartment lot",
+    countsAsConditionedVolume: false,
+  }),
+  Object.freeze({
     pattern: /^\s*MECH\.?\s*YARD\b/i,
     reason:
       "an outdoor equipment yard enclosed by a screen, not by envelope; it has outdoor air above it",

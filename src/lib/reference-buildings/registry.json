@@ -178,5 +178,23 @@
       "ko": "연결된 실측 에너지 자료 없음",
       "en": "No linked measured energy data"
     }
+  },
+  "sixty5": {
+    "id": "sixty5",
+    "koTitle": "Sixty5 주거복합",
+    "enTitle": "Sixty5 Residential",
+    "koUse": "공동주택 · 환기·전기·급배수 원본 모델",
+    "enUse": "Apartments · ventilation, electrical and plumbing source models",
+    "status": "modelling",
+    "modelFile": "sixty5-arc.ifc (source: arc.ifc)",
+    "ifcSchema": "IFC2X3",
+    "viewDefinition": "CoordinationView_V2.0",
+    "authoringTool": "GRAPHISOFT ARCHICAD 21",
+    "modelDate": "2026-09-15",
+    "measuredConsumption": {
+      "status": "none",
+      "ko": "연결된 실측 에너지 자료 없음",
+      "en": "No linked measured energy data"
+    }
   }
 }
