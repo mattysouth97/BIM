@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { resolveClimateRegion, SIDO_TOKENS } from '../climate-region';
 import { climateFromRegion, getClimateData, SEOUL_CLIMATE } from '../climate-data';
 import { REGIONAL_IRRADIANCE } from '@/lib/retrofit/solar-potential';
+import { resolveLedgerWeatherSource } from '@/lib/energy-diagnostics/ledger-climate';
 
 describe('one resolved climate and irradiance region', () => {
   it('refuses unknown or missing regions; records address fallback without overriding a valid code', () => {
@@ -16,6 +17,8 @@ describe('one resolved climate and irradiance region', () => {
   it.each(Object.entries(SIDO_TOKENS))('resolves %s with a real irradiance-table entry', (code, label) => {
     const region = resolveClimateRegion({ sigunguCd: `${code}000` })!;
     expect(region).not.toBeNull();
+    expect(resolveLedgerWeatherSource({ sigunguCd: `${code}000` }))
+      .toMatchObject({ sidoCode: code, weatherSource: `KR-${region.token}-TMY` });
     expect(Object.isFrozen(region)).toBe(true);
     expect(region.peakSunHours).toBe(REGIONAL_IRRADIANCE[label.token.toLowerCase()]);
     expect(Number.isFinite(region.peakSunHours)).toBe(true);

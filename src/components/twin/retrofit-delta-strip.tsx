@@ -37,7 +37,7 @@ import { useMaterialStore } from "@/store/material-store";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { useActiveSigunguCd } from "@/hooks/use-active-building-pk";
 import { usePvLayout } from "@/hooks/use-pv-layout";
-import { getClimateData } from "@/lib/energy/climate-data";
+import { climateFromRegion, getClimateData } from "@/lib/energy/climate-data";
 import { getGradeColor } from "@/lib/energy/energy-grade";
 import type { EnergyGrade } from "@/lib/energy/energy-grade";
 import {
@@ -121,11 +121,12 @@ export function RetrofitDeltaStrip() {
     return computeRetrofitDelta({
       materials,
       recipe,
-      climate: getClimateData(sigunguCd),
+      climate: buildingInputs?.climateRegion ? climateFromRegion(buildingInputs.climateRegion) : getClimateData(sigunguCd),
+      climateRegion: buildingInputs?.climateRegion,
       measureIds: chosenMeasureIds,
       pvGeometricKWp: pvLayout?.totalKWp ?? 0,
     });
-  }, [materials, recipe, sigunguCd, chosenMeasureIds, pvLayout]);
+  }, [materials, recipe, sigunguCd, chosenMeasureIds, pvLayout, buildingInputs]);
 
   const priced = delta?.changes.filter((c) => c.pricedByEngine) ?? [];
   const unpriced = delta?.changes.filter((c) => !c.pricedByEngine) ?? [];

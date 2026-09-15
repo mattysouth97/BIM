@@ -17,6 +17,35 @@ The product NEVER claims "ECO2 equivalent", "인증 적합" or "공식 결과".
 Everything it computes is 설계 검토용 참고 계산 (design-stage diagnostic),
 displayed with the 기준 버전 below.
 
+## Phase 01 regional cooling inputs (2026-09-15)
+
+The simplified twin climate now resolves weather and PV sun-hours through one
+`ClimateRegion`. This change does not claim current-code sizing compliance.
+
+- **Summer dry-bulb source, fetched official historical publication:**
+  [2017 에너지절약계획서 실무 길라잡이, p170](https://greentogether.go.kr/ebook/eais_cust_2017/files/basic-html/page170.html),
+  cooling **dry-bulb** column: Seoul31.2, Busan30.7, Daegu33.3, Incheon30.1,
+  Gwangju31.8, Daejeon32.3, Ulsan32.2 °C. These city rows map to their city
+  codes only. They are design values, not observed weather. Retrieval of the
+  newer CODIL PDF failed; these values are not labelled as newly verified law.
+- **Named fallback:** Sejong and province-level codes retain the previous
+  `SEOUL_CLIMATE.summerDesignTemp` 33.6 °C, with `national_fallback` and no
+  city-source citation. A value listed for Suwon, Jeju city or another city is
+  not silently widened into a province-wide value. Resolved Seoul uses the
+  cited31.2;33.6 remains explicitly a legacy fallback, not its cited design value.
+- **Cooling-season solar assumption, user-approved:**350 kWh/m²·season ×
+  regional PSH / Seoul PSH (3.5). The PSH table is the existing repository
+  engineering table, not a newly validated irradiation dataset. Its transfer
+  to orientation-averaged glazing irradiation is an assumption, not measurement.
+- **Unchanged assumptions:** heating20 °C and cooling26 °C indoor setpoints;
+  existing HDD/CDD and winter design-temperature approximations. The summer
+  citation does not retroactively verify those values.
+
+Implementation: `src/lib/energy/climate-tables.ts`, `climate-region.ts`,
+`climate-data.ts`; source and fallback are visible through
+`ClimateRegionDisclosure`. Unknown regions receive no PV estimate. The legacy
+thermal adapter keeps an explicitly named Seoul fallback.
+
 ## 1. Regulatory framework (verified-official, 2026-08-31)
 
 | ID | Standard | Version / date | What it governs | Source | Status |

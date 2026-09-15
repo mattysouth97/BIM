@@ -287,11 +287,11 @@ describe("honest gaps", () => {
     expect(seed.pk).not.toMatch(/^\d/);
   });
 
-  it("discloses the Seoul climate default rather than inventing a site", async () => {
+  it("leaves the location unresolved rather than authorizing PV from a Seoul placeholder", async () => {
     const { design, seed } = await generatedSeed();
 
     expect(design.spec.site.region).toBeUndefined();
-    expect(seed.sigunguCd).toBe("11");
-    expect(scenarioInputsFromSeed(seed, design.metrics).sidoPrefix).toBe("11");
+    expect(seed.sigunguCd).toBe("");
+    expect(scenarioInputsFromSeed(seed, design.metrics).sidoPrefix).toBe("");
   });
 });

@@ -22,7 +22,8 @@ const CITY_SUMMER: Readonly<Record<string, number>> = Object.freeze({
   '29': 31.8, '30': 32.3, '31': 32.2,
 });
 
-const BASE_REGIONAL_CLIMATE: Record<string, { hdd: number; cdd: number; winterDesignTemp: number }> = {  "11": { hdd: 2700, cdd: 220, winterDesignTemp: -11.3 }, // Seoul
+const BASE_REGIONAL_CLIMATE: Record<string, { hdd: number; cdd: number; winterDesignTemp: number }> = {
+  "11": { hdd: 2700, cdd: 220, winterDesignTemp: -11.3 }, // Seoul
   "26": { hdd: 1900, cdd: 280, winterDesignTemp: -5.3 },  // Busan
   "27": { hdd: 2200, cdd: 320, winterDesignTemp: -7.6 },  // Daegu
   "28": { hdd: 2750, cdd: 200, winterDesignTemp: -10.4 }, // Incheon

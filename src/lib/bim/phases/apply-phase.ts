@@ -34,6 +34,7 @@
 // not imply a kWh movement the run never made. retrofit-delta.ts reports, per
 // change, whether the current engine prices it.
 
+import type { ClimateRegion } from '@/lib/energy/climate-region';
 import type { MaterialProperties } from "@/lib/material-types";
 import { KOREAN_2020_TARGET_U_VALUES } from "@/lib/retrofit/envelope-retrofits";
 import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
@@ -76,8 +77,8 @@ export interface RetrofitPhaseContext {
    * renewable block is left untouched rather than guessed.
    */
   roofAreaSqm?: number;
-  /** Region key for solar irradiance (`REGIONAL_IRRADIANCE`). Default "seoul". */
-  region?: string;
+  /** Resolved region; unknown region refuses PV sizing. */
+  climateRegion?: ClimateRegion | null;
 }
 
 /** The roof type encoded in a `solar-pv-<roofType>` id, or null if it is not one. */
@@ -210,11 +211,11 @@ export function applyPhaseToMaterials(
   const geometricKWp = context?.geometricKWp;
   const canSizePV = Number.isFinite(roofAreaSqm) && roofAreaSqm > 0 &&
     (geometricKWp == null || (Number.isFinite(geometricKWp) && geometricKWp > 0));
-  if (pvId && pvRoofType && canSizePV) {
+  if (pvId && pvRoofType && canSizePV && context?.climateRegion) {
     const pv = calculateSolarPotential(
       roofAreaSqm,
       pvRoofType,
-      context?.region ?? "seoul",
+      context.climateRegion.peakSunHours,
       // Feed-in tariff drives revenue only; the two fields read below (kWp,
       // roof utilization) are independent of it.
       130,

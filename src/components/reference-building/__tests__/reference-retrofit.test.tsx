@@ -249,7 +249,7 @@ describe("the section on a real building page", () => {
       const layout = layoutRoofPlanes(useScenarioStore.getState().roofPlanes!);
       const drawnModules = layout.planes.reduce((sum, plane) => sum + plane.modules.length, 0);
       const roofType = energy.roof?.type ?? "flat";
-      const expected = calculateSolarPotential(1, roofType, "seoul", 130, undefined, drawnModules * 0.4);
+      const expected = calculateSolarPotential(1, roofType, 3.5, 130, undefined, drawnModules * 0.4);
       const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="en" />);
       const card = container.querySelector(`[data-testid="retrofit-measure-solar-pv-${roofType}"]`)!;
       if (id === "kit-office") {

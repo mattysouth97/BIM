@@ -1,5 +1,6 @@
 "use client";
 
+import { ClimateRegionDisclosure } from '@/components/viewer/climate-region-disclosure';
 import { useEffect, useMemo, useRef } from "react";
 import {
   CalendarDays,
@@ -51,7 +52,7 @@ export function EquipmentInsightCard() {
     totalFloorArea: inputsMatch ? publishedInputs.totalFloorArea : 0,
     footprintArea: inputsMatch ? publishedInputs.footprintArea : 0,
     roofType: inputsMatch ? publishedInputs.roofType : "flat",
-    sidoPrefix: inputsMatch ? publishedInputs.sidoPrefix : undefined,
+    climateRegion: inputsMatch ? publishedInputs.climateRegion : null,
   });
 
   const story = useMemo(() => {
@@ -92,6 +93,7 @@ export function EquipmentInsightCard() {
       aria-live="polite"
       aria-label={t("선택된 설비 정보", "Selected equipment information")}
     >
+      <ClimateRegionDisclosure region={inputsMatch ? publishedInputs.climateRegion : null} />
       <div
         className="h-1"
         style={{

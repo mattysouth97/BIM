@@ -32,7 +32,7 @@ export function TwinStageOverlay({ title, footprintGeometry }: TwinStageOverlayP
   const buildingPk = String(title.mgmBldrgstPk ?? "unknown");
   const totalFloorArea = title.totArea ?? 0;
   const footprintArea = footprintGeometry?.areaSqm ?? title.archArea ?? 0;
-  const sidoPrefix = String(title.sigunguCd ?? "11").slice(0, 2);
+  const sidoPrefix = String(title.sigunguCd ?? "").slice(0, 2);
   const roofType = inferRoofType(title.roofCdNm);
 
   const workMode = useRevitWorkflowStore((s) => s.workMode);
@@ -52,6 +52,8 @@ export function TwinStageOverlay({ title, footprintGeometry }: TwinStageOverlayP
       footprintArea={footprintArea}
       roofType={roofType}
       sidoPrefix={sidoPrefix}
+      platPlcNm={title.platPlcNm}
+      newPlatPlc={title.newPlatPlc}
     />
   );
 }

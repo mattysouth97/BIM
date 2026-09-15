@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from '@/lib/energy/climate-region';
 import { describe, it, expect } from "vitest";
 import type { MaterialProperties } from "@/lib/material-types";
 import { KOREAN_2020_TARGET_U_VALUES } from "@/lib/retrofit/envelope-retrofits";
@@ -151,9 +152,10 @@ describe("applyPhaseToMaterials — plant, lighting and PV", () => {
 
   it("PV is sized by the same function the measure's economics used", () => {
     const roofAreaSqm = 600;
-    const expected = calculateSolarPotential(roofAreaSqm, "flat", "seoul", 130);
+    const expected = calculateSolarPotential(roofAreaSqm, "flat", 3.5, 130);
     const next = applyPhaseToMaterials(makeMaterials(), "retrofit", ["solar-pv-flat"], {
       roofAreaSqm,
+      climateRegion: resolveClimateRegion({ sigunguCd: "11" }),
     });
     expect(next.renewable.solarPV.installed).toBe(true);
     expect(next.renewable.solarPV.capacity).toBeCloseTo(expected.systemSizeKWp, 9);
@@ -178,7 +180,7 @@ describe("applyPhaseToMaterials — plant, lighting and PV", () => {
     };
     const original = structuredClone(materials);
     const next = applyPhaseToMaterials(materials, "retrofit", ["solar-pv-flat"], {
-      roofAreaSqm: 600, geometricKWp: 4,
+      climateRegion: resolveClimateRegion({ sigunguCd: "11" }), roofAreaSqm: 600, geometricKWp: 4,
     });
     const pv = next.renewable.solarPV;
     expect(pv.capacity).toBeCloseTo(67.36, 9);
@@ -200,7 +202,7 @@ describe("applyPhaseToMaterials — plant, lighting and PV", () => {
     const materials = makeMaterials();
     materials.renewable.solarPV.installed = true;
     const next = applyPhaseToMaterials(materials, "retrofit", ["solar-pv-flat"], {
-      roofAreaSqm: 600, geometricKWp: 4,
+      climateRegion: resolveClimateRegion({ sigunguCd: "11" }), roofAreaSqm: 600, geometricKWp: 4,
     });
     expect(next.renewable.solarPV.capacity).toBe(0);
     expect(next.renewable.solarPV.retrofitAddition?.proposed.capacity).toBe(4);
@@ -209,7 +211,7 @@ describe("applyPhaseToMaterials — plant, lighting and PV", () => {
   it("reapplying or resizing a proposal retains one unchanged original array", () => {
     const materials = makeMaterials();
     Object.assign(materials.renewable.solarPV, { installed: true, capacity: 63.36 });
-    const context = { roofAreaSqm: 600, geometricKWp: 4 };
+    const context = { climateRegion: resolveClimateRegion({ sigunguCd: "11" }), roofAreaSqm: 600, geometricKWp: 4 };
     const first = applyPhaseToMaterials(materials, "retrofit", ["solar-pv-flat"], context);
     const repeated = applyPhaseToMaterials(first, "retrofit", ["solar-pv-flat"], context);
     expect(repeated).toEqual(first);
@@ -223,8 +225,8 @@ describe("applyPhaseToMaterials — plant, lighting and PV", () => {
   });
 
   it.each([
-    { roofAreaSqm: 600, geometricKWp: 0 },
-    { roofAreaSqm: 0, geometricKWp: 4 },
+    { climateRegion: resolveClimateRegion({ sigunguCd: "11" }), roofAreaSqm: 600, geometricKWp: 0 },
+    { climateRegion: resolveClimateRegion({ sigunguCd: "11" }), roofAreaSqm: 0, geometricKWp: 4 },
     {},
   ])("keeps existing PV when no new array can be sized: %j", (context) => {
     const materials = makeMaterials();

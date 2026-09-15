@@ -1,5 +1,6 @@
 "use client";
 
+import { ClimateRegionDisclosure } from '@/components/viewer/climate-region-disclosure';
 import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { useSelectionStore } from "@/store/selection-store";
@@ -70,7 +71,7 @@ export function EquipmentInfoPanel() {
     totalFloorArea: inputsMatch ? publishedInputs.totalFloorArea : 0,
     footprintArea: inputsMatch ? publishedInputs.footprintArea : 0,
     roofType: inputsMatch ? publishedInputs.roofType : "flat",
-    sidoPrefix: inputsMatch ? publishedInputs.sidoPrefix : undefined,
+    climateRegion: inputsMatch ? publishedInputs.climateRegion : null,
   });
 
   const story = useMemo(() => {
@@ -94,6 +95,7 @@ export function EquipmentInfoPanel() {
 
   return (
     <div className="m-3 rounded-lg border border-border bg-card p-3 text-xs shadow-sm">
+      <ClimateRegionDisclosure region={inputsMatch ? publishedInputs.climateRegion : null} />
       {/* ── Act 1: what is it ─────────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-2">
         <div>

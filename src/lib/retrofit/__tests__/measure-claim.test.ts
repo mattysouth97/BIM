@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from '@/lib/energy/climate-region';
 // Every chip on the measure row carries one line saying what that work does
 // to this building. This file exists to stop that line drifting from the
 // measure it names — AGENTS.md, "The label lies while the number is right":
@@ -147,7 +148,7 @@ const ALL_IDS = [
   "solar-pv-flat",
 ];
 
-const DELTA = computeRetrofitDelta({
+const DELTA = computeRetrofitDelta({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }),
   materials: MATERIALS,
   recipe: RECIPE,
   climate: SEOUL_CLIMATE,
@@ -343,13 +344,13 @@ describe("claimAreaSqm", () => {
   it.each([0, 100])("claims and costs only new modules beside an existing array of area %s", (area) => {
     const materials = makeMaterials();
     Object.assign(materials.renewable.solarPV, { installed: true, capacity: 63.36, area, tiltAngle: 15 });
-    const d = computeRetrofitDelta({
+    const d = computeRetrofitDelta({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }),
       materials, recipe: RECIPE, climate: SEOUL_CLIMATE,
       measureIds: ["solar-pv-flat"], pvGeometricKWp: 4,
     })!;
     // The measure generator receives the proposed layout's 4 kWp, never the
     // installed + proposed 67.36 kWp. Its cost and saving stay new-only.
-    const proposed = calculateSolarPotential(AREAS.roofSqm, "flat", "seoul", 130, undefined, 4);
+    const proposed = calculateSolarPotential(AREAS.roofSqm, "flat", 3.5, 130, undefined, 4);
     for (const lang of ["ko", "en"] as const) {
       const claim = buildMeasureClaim({
         measure: proposed, effect: d.measures[0], areas: AREAS,
@@ -369,7 +370,7 @@ describe("claimAreaSqm", () => {
   it("does not claim existing module area when no additional modules fit", () => {
     const materials = makeMaterials();
     Object.assign(materials.renewable.solarPV, { installed: true, capacity: 63.36, area: 100 });
-    const d = computeRetrofitDelta({
+    const d = computeRetrofitDelta({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }),
       materials, recipe: RECIPE, climate: SEOUL_CLIMATE,
       measureIds: ["solar-pv-flat"], pvGeometricKWp: 0,
     })!;

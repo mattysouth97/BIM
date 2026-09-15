@@ -11,7 +11,8 @@
 import { useMemo } from "react";
 import { useMaterialStore } from "@/store/material-store";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
-import { getClimateData } from "@/lib/energy/climate-data";
+import { climateFromRegion, getClimateData } from "@/lib/energy/climate-data";
+import { useScenarioStore } from "@/store/scenario-store";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { calculateHeatLoss } from "@/lib/energy/heat-loss";
 import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
@@ -77,6 +78,9 @@ export function useEnergyMetrics(
   // P1-08 (a): single canonical merge — carries footprintPolygon overrides
   // (and the same mergeRecipeOverrides the local hook inlined).
   const effectiveRecipe = useEffectiveRecipe(buildingPk);
+  const publishedRegion = useScenarioStore((s) =>
+    s.buildingInputs?.buildingPk === buildingPk ? s.buildingInputs.climateRegion : null,
+  );
 
   const metrics = useMemo<EnergyMetrics | null>(() => {
     if (!materials || !effectiveRecipe) return null;
@@ -86,7 +90,7 @@ export function useEnergyMetrics(
     // grade can exist — return null rather than fabricate a "1+++" rating.
     if (totalFloorArea <= 0) return null;
 
-    const climate = getClimateData(sigunguCd);
+    const climate = publishedRegion ? climateFromRegion(publishedRegion) : getClimateData(sigunguCd);
     const heatLoss = calculateHeatLoss(materials, effectiveRecipe, climate);
     const demand = calculateAnnualDemand(
       heatLoss,
@@ -142,7 +146,7 @@ export function useEnergyMetrics(
       co2,
       predictedVsActualDelta,
     };
-  }, [materials, effectiveRecipe, sigunguCd, actualConsumption]);
+  }, [materials, effectiveRecipe, sigunguCd, actualConsumption, publishedRegion]);
 
   return metrics;
 }

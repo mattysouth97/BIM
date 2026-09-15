@@ -71,7 +71,7 @@ describe("P2-10 (a) — loan-term buy-down does not subsidize the whole horizon"
 // ── (c) solar feed-in flat + degradation ────────────────────────────────────
 describe("P2-10 (c) — solar feed-in does not escalate; output degrades", () => {
   it("splits into escalating self-consumption + flat feed-in components", () => {
-    const solar = calculateSolarPotential(500, "flat", "seoul", 100);
+    const solar = calculateSolarPotential(500, "flat", 3.5, 100);
     expect(solar.escalationComponents).toHaveLength(2);
     const [self, feed] = solar.escalationComponents!;
     expect(self.fuel).toBe("electricity");
@@ -81,7 +81,7 @@ describe("P2-10 (c) — solar feed-in does not escalate; output degrades", () =>
   });
 
   it("year-N cash flow is below a fully-electricity-escalated stream", () => {
-    const solar = calculateSolarPotential(500, "flat", "seoul", 100);
+    const solar = calculateSolarPotential(500, "flat", 3.5, 100);
     const { cashFlow } = projectCashFlow(solar, ASSUMPTIONS);
     // Fully escalating the blended year-1 saving at 5% would exceed the real
     // stream, whose 30% feed-in is flat and whose output degrades.
@@ -94,7 +94,7 @@ describe("P2-10 (c) — solar feed-in does not escalate; output degrades", () =>
 // ── (d) unified electricity price ───────────────────────────────────────────
 describe("P2-10 (d) — one electricity price engine-wide", () => {
   it("solar self-consumption defaults to the engine's ENERGY_PRICES.electricity", () => {
-    const solar = calculateSolarPotential(500, "flat", "seoul", 100);
+    const solar = calculateSolarPotential(500, "flat", 3.5, 100);
     const selfConsumedKWh = solar.annualGenerationKWh * 0.7;
     expect(solar.annualSelfConsumptionRevenue / selfConsumedKWh).toBeCloseTo(
       ENERGY_PRICES.electricity,

@@ -9,6 +9,7 @@
 // Twin overlay hasn't published ledger-derived inputs yet (e.g. standalone
 // usage), floor areas fall back to the recipe-store geometry.
 
+import { ClimateRegionDisclosure } from '@/components/viewer/climate-region-disclosure';
 import { useMemo } from "react";
 import { useMaterialStore } from "@/store/material-store";
 import { useActiveBuildingPk } from "@/hooks/use-active-building-pk";
@@ -127,7 +128,7 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
     totalFloorArea,
     footprintArea,
     roofType: inputsMatch ? publishedInputs.roofType : "flat",
-    sidoPrefix: inputsMatch ? publishedInputs.sidoPrefix : undefined,
+    climateRegion: inputsMatch ? publishedInputs.climateRegion : null,
   });
 
   const selectedIds = useMemo(
@@ -188,6 +189,7 @@ export function SceneOutliner({ buildingPk: buildingPkProp }: SceneOutlinerProps
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      <ClimateRegionDisclosure region={inputsMatch ? publishedInputs.climateRegion : null} />
       <SceneLayerList />
       {/* ── Header ── */}
       <div className="px-3 pt-3 pb-2 border-b shrink-0">

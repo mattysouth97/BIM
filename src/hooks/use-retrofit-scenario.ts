@@ -31,8 +31,10 @@ import {
 import {
   DEFAULT_ECONOMIC_ASSUMPTIONS,
 } from "@/lib/retrofit/cost-database";
-import { SEOUL_CLIMATE, REGIONAL_CLIMATE } from "@/lib/energy/climate-data";
+import { climateFromRegion, getClimateData } from "@/lib/energy/climate-data";
 import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
+
+import type { ClimateRegion } from '@/lib/energy/climate-region';
 
 export interface RetrofitScenarioInputs {
   /**
@@ -52,10 +54,8 @@ export interface RetrofitScenarioInputs {
   footprintArea: number;
   /** Roof type for solar (defaults to "flat"). */
   roofType?: "flat" | "gable" | "hip" | "sawtooth";
-  /** Lower-cased region key for solar irradiance (defaults "seoul"). */
-  region?: string;
-  /** Sido code prefix (2 digits) for HDD lookup; defaults to Seoul. */
-  sidoPrefix?: string;
+  /** Resolved once at the payload boundary; null refuses PV. */
+  climateRegion?: ClimateRegion | null;
   /** Annual lighting operating hours; defaults office (2500). */
   annualOperatingHours?: number;
   /** Annual USEFUL heating demand (kWh/yr); used by HVAC retrofits. Defaults to a coarse estimate. */
@@ -121,6 +121,8 @@ export interface RetrofitScenarioInputs {
 }
 
 export interface RetrofitScenario {
+  /** Region is unknown: PV is withheld and other measures use a named legacy climate fallback. */
+  regionUnresolved: boolean;
   /** All technically-viable measures the engine produced (financially enriched). */
   allMeasures: RetrofitMeasure[];
   /**
@@ -235,8 +237,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     totalFloorArea,
     footprintArea,
     roofType = "flat",
-    region = "seoul",
-    sidoPrefix,
+    climateRegion,
     annualOperatingHours = 2_500,
     annualHeatingDemand,
     annualCoolingDemand,
@@ -258,10 +259,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
   const allMeasures = useMemo<RetrofitMeasure[]>(() => {
     if (!materials || totalFloorArea <= 0) return [];
 
-    // Climate: regional HDD lookup with Seoul fallback.
-    const climate = sidoPrefix && REGIONAL_CLIMATE[sidoPrefix]
-      ? { ...SEOUL_CLIMATE, ...REGIONAL_CLIMATE[sidoPrefix] }
-      : SEOUL_CLIMATE;
+    const climate = climateRegion ? climateFromRegion(climateRegion) : getClimateData();
     const hdd = climate.hdd;
 
     // P1-03: resolve the building's heating fuel ONCE and thread it into
@@ -356,16 +354,16 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     // utilisation factor already discounts for pitch and orientation
     // (flat 0.7, gable 0.5), so the area to hand it is the roof surface the
     // engine priced — the same one the roof-insulation measure covers.
-    const solar = calculateSolarPotential(
+    const solar = climateRegion ? calculateSolarPotential(
       roofArea,
       roofType,
-      region,
+      climateRegion.peakSunHours,
       feedInTariffKrw,
       undefined,
       // SIXTH argument, deliberately: the fifth is the electricity price.
       pvGeometricKWp,
-    );
-    const solarMeasures: RetrofitMeasure[] = solar.annualGenerationKWh > 0 ? [solar] : [];
+    ) : null;
+    const solarMeasures: RetrofitMeasure[] = solar && solar.annualGenerationKWh > 0 ? [solar] : [];
 
     return [...envelopeMeasures, ...hvacMeasures, ...lightingMeasures, ...solarMeasures];
   }, [
@@ -373,8 +371,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
     totalFloorArea,
     footprintArea,
     roofType,
-    region,
-    sidoPrefix,
+    climateRegion,
     pvGeometricKWp,
     annualOperatingHours,
     annualHeatingDemand,
@@ -456,6 +453,7 @@ export function useRetrofitScenario(inputs: RetrofitScenarioInputs): RetrofitSce
   ]);
 
   return {
+    regionUnresolved: !climateRegion,
     allMeasures: enriched,
     selection,
     chosen,

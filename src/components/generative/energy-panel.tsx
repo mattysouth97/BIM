@@ -16,6 +16,7 @@
 // code-table envelope and systems, solved geometry, Seoul climate unless the
 // brief names a site. It is labelled 추정 / estimated wherever it is shown.
 
+import { ClimateRegionDisclosure } from '@/components/viewer/climate-region-disclosure';
 import { useMemo } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -116,13 +117,14 @@ export function EnergyPanel({ design, previous }: Props) {
   const capexBudgetKrw = useScenarioStore((s) => s.capexBudgetKrw);
   const setCapexBudget = useScenarioStore((s) => s.setCapexBudget);
 
+  const publishedInputs = useScenarioStore((s) => s.buildingInputs);
   const scenario = useRetrofitScenario({
     buildingPk: seed.pk,
     capexBudgetKrw,
     totalFloorArea: scenarioInputs.totalFloorArea,
     footprintArea: scenarioInputs.footprintArea,
     roofType: scenarioInputs.roofType,
-    sidoPrefix: scenarioInputs.sidoPrefix,
+    climateRegion: publishedInputs?.buildingPk === seed.pk ? publishedInputs.climateRegion : null,
     // The engine's own demand, not the hook's coarse fallback — the energy
     // model and the retrofit model must not disagree about this building.
     annualHeatingDemand: metrics?.demand.heatingDemand,
@@ -152,6 +154,7 @@ export function EnergyPanel({ design, previous }: Props) {
 
   return (
     <div className="flex flex-col gap-4 p-3 text-sm">
+      <ClimateRegionDisclosure region={publishedInputs?.buildingPk === seed.pk ? publishedInputs.climateRegion : null} />
       {/* --- (c) delta vs the design this one came from --------------- */}
       {delta && previous && (
         <section className="rounded border border-dashed px-2 py-1.5">

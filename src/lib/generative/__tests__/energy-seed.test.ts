@@ -101,7 +101,7 @@ describe("seedBuildingFromGeneratedDesign — seed shape", () => {
     expect(seedBuildingFromGeneratedDesign(b).pk).toBe("GEN-0042.1");
   });
 
-  it("defaults climate to Seoul when the spec names no site", async () => {
+  it("keeps the region unresolved when the spec names no site", async () => {
     const built = await design(OFFICE_PROMPT);
     expect(built.spec.site.region).toBeUndefined();
     expect(seedBuildingFromGeneratedDesign(built).sigunguCd).toBe(
@@ -222,7 +222,7 @@ describe("scenarioInputsFromSeed", () => {
     );
     expect(inputs.footprintArea).toBeGreaterThan(0);
     expect(inputs.roofType).toBe("flat");
-    expect(inputs.sidoPrefix).toBe("11");
+    expect(inputs.sidoPrefix).toBe("");
   });
 
   it("takes footprint area from the real polygon, not the bounding box", async () => {

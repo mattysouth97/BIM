@@ -4,6 +4,7 @@
 // Report stage content — renders in place of the 3D viewer when workflow stage = "report".
 // Provides Energy Audit and Compliance report previews with PDF, CSV, and JSON export.
 
+import { ClimateRegionDisclosure } from '@/components/viewer/climate-region-disclosure';
 import { useMemo, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { formatUseTypeLabel } from "@/lib/constants";
@@ -158,7 +159,7 @@ export function ReportStage({
     totalFloorArea: scenarioApplies ? scenarioInputs.totalFloorArea : totalArea,
     footprintArea: scenarioApplies ? scenarioInputs.footprintArea : recipeFootprint,
     roofType: scenarioApplies ? scenarioInputs.roofType : "flat",
-    sidoPrefix: scenarioApplies ? scenarioInputs.sidoPrefix : undefined,
+    climateRegion: scenarioApplies ? scenarioInputs.climateRegion : null,
   });
 
   const portfolio = useMemo(
@@ -550,6 +551,7 @@ export function ReportStage({
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
+      <ClimateRegionDisclosure region={scenarioApplies ? scenarioInputs.climateRegion : null} />
       {/* ── Top bar: tab switcher + export buttons ─────────────────────────── */}
       <div className="flex shrink-0 items-center justify-between border-b px-4 py-2 gap-3">
         {/* Tab buttons */}

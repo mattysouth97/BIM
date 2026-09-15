@@ -32,6 +32,7 @@
 // same frame paid for. The glazing-type change is still reported, marked as
 // not priced, with that as its reason.
 
+import type { ClimateRegion } from '@/lib/energy/climate-region';
 import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { ClimateData } from "@/lib/energy/climate-data";
@@ -195,8 +196,8 @@ export interface RetrofitDeltaInput {
   recipe: BuildingRecipe;
   climate: ClimateData;
   measureIds: Iterable<string>;
-  /** Solar irradiance region key for PV sizing. Default "seoul". */
-  region?: string;
+  /** Resolved region; unknown region refuses PV sizing. */
+  climateRegion?: ClimateRegion | null;
   /** kWp the measured-roof layout fits; sizes the PV measure when present. */
   pvGeometricKWp?: number;
 }
@@ -558,7 +559,7 @@ function isKnownMeasureId(id: string): boolean {
  * `useEnergyMetrics`).
  */
 export function computeRetrofitDelta(input: RetrofitDeltaInput): RetrofitDelta | null {
-  const { materials, recipe, climate, region, pvGeometricKWp } = input;
+  const { materials, recipe, climate, climateRegion, pvGeometricKWp } = input;
   const ids = [...input.measureIds];
 
   const quantities = envelopeQuantities(recipe);
@@ -567,7 +568,7 @@ export function computeRetrofitDelta(input: RetrofitDeltaInput): RetrofitDelta |
 
   // PV sizing rides the MEASURED roof surface, the same quantity heat-loss.ts
   // charges the roof U against — not the footprint.
-  const context = { roofAreaSqm: quantities.roofAreaSqm, region, geometricKWp: pvGeometricKWp };
+  const context = { roofAreaSqm: quantities.roofAreaSqm, climateRegion, geometricKWp: pvGeometricKWp };
 
   const before = runEnergyEngine(materials, recipe, climate);
   const afterMaterials = applyPhaseToMaterials(materials, "retrofit", ids, context);

@@ -6,12 +6,35 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useRetrofitScenario } from "../use-retrofit-scenario";
+import { resolveClimateRegion } from "@/lib/energy/climate-region";
+import type { SolarPVResult } from "@/lib/retrofit/solar-potential";
 import { useMaterialStore } from "@/store/material-store";
 import { makeMaterials } from "./test-fixtures";
 import { DEFAULT_ECONOMIC_ASSUMPTIONS } from "@/lib/retrofit/cost-database";
 import { computeFinancials, effectiveDiscountRate } from "@/lib/retrofit/economic-model";
 
 const PK = "TEST-PK-RETRO";
+
+describe('resolved region reaches PV generation', () => {
+  it('prices identical capacity differently for Busan and Seoul, and refuses unknown-region PV', () => {
+    useMaterialStore.setState({ properties: { [PK]: makeMaterials() } });
+    const { result, rerender, unmount } = renderHook(({ code }: { code: string }) => useRetrofitScenario({
+      buildingPk: PK, totalFloorArea: 840, footprintArea: 84, capexBudgetKrw: null,
+      climateRegion: resolveClimateRegion({ sigunguCd: code }), pvGeometricKWp: 10,
+    }), { initialProps: { code: '11' } });
+    const solar = () => result.current.allMeasures.find(m => m.id.startsWith('solar-pv-')) as SolarPVResult | undefined;
+    const seoul = solar()!.annualGenerationKWh;
+    expect(seoul).toBeCloseTo(10 * 3.5 * 365 * 1.15 * 0.8, 8);
+    rerender({ code: '26' });
+    expect(solar()!.annualGenerationKWh).toBeCloseTo(10 * 3.8 * 365 * 1.15 * 0.8, 8);
+    expect(solar()!.annualGenerationKWh).not.toBe(seoul);
+    expect(result.current.regionUnresolved).toBe(false);
+    rerender({ code: '99999' });
+    expect(solar()).toBeUndefined();
+    expect(result.current.regionUnresolved).toBe(true);
+    unmount();
+  });
+});
 
 function renderScenario(annualHeatingDemand = 100_000) {
   return renderHook(() =>

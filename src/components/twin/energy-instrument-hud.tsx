@@ -33,6 +33,7 @@
 // the two calls memoise to one answer rather than to two that happen to
 // agree — and hands the result to the scenario hook.
 
+import { ClimateRegionDisclosure } from '@/components/viewer/climate-region-disclosure';
 import { useEffect, useMemo } from "react";
 import { usePvLayout } from "@/hooks/use-pv-layout";
 import {
@@ -64,6 +65,8 @@ export interface EnergyInstrumentHudProps {
   roofType: "flat" | "gable" | "hip" | "sawtooth";
   /** Two-digit 시도 prefix for the regional climate. */
   sidoPrefix: string;
+  platPlcNm?: string;
+  newPlatPlc?: string;
   /**
    * Measured exterior door aperture, m², excluded from the wall-insulation
    * measure. The engine prices doors at the wall U and keeps them inside its
@@ -102,6 +105,8 @@ export function EnergyInstrumentHud({
   footprintArea,
   roofType,
   sidoPrefix,
+  platPlcNm,
+  newPlatPlc,
   exteriorDoorSqm,
   notice,
   gradeBasis,
@@ -122,8 +127,10 @@ export function EnergyInstrumentHud({
       footprintArea,
       roofType,
       sidoPrefix,
+      platPlcNm,
+      newPlatPlc,
     });
-  }, [buildingPk, totalFloorArea, footprintArea, roofType, sidoPrefix, setBuildingInputs]);
+  }, [buildingPk, totalFloorArea, footprintArea, roofType, sidoPrefix, platPlcNm, newPlatPlc, setBuildingInputs]);
 
   // The same call `EnergyCards` makes, so the demand behind NPV and the kWh
   // on the strip below it are one number and not two. `sigunguCd` is the
@@ -147,6 +154,8 @@ export function EnergyInstrumentHud({
     [metrics, exteriorDoorSqm],
   );
 
+  const publishedInputs = useScenarioStore((s) => s.buildingInputs);
+  const climateRegion = publishedInputs?.buildingPk === buildingPk ? publishedInputs.climateRegion : null;
   const pvLayout = usePvLayout();
   const scenario = useRetrofitScenario({
     buildingPk,
@@ -154,7 +163,7 @@ export function EnergyInstrumentHud({
     totalFloorArea,
     footprintArea,
     roofType,
-    sidoPrefix,
+    climateRegion,
     // Undefined until the stores are seeded; the hook then falls back to its
     // coarse proxy, which is the honest state for a frame with no engine
     // answer yet rather than a number pretending to be one.
@@ -221,6 +230,7 @@ export function EnergyInstrumentHud({
               totalFloorAreaSqm={totalFloorArea}
             />
           </div>
+          <ClimateRegionDisclosure region={climateRegion} />
           {notice ? <div className="border-t border-border">{notice}</div> : null}
         </section>
       }

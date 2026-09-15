@@ -39,11 +39,10 @@ import type { BuildingMetrics } from "../generate/types";
 import type { BuildingSpec } from "../spec/building-spec";
 
 /**
- * Climate fallback when the spec names no site. Seoul, matching
- * `getClimateData`'s own default — the UI must disclose it as a default rather
- * than present it as the project's climate.
+ * An absent site stays unresolved. The legacy thermal adapter may use its
+ * named Seoul fallback, but this empty code cannot authorize PV generation.
  */
-export const DEFAULT_GENERATED_SIGUNGU_CD = "11";
+export const DEFAULT_GENERATED_SIGUNGU_CD = "";
 
 /**
  * Permit date stamped on the synthetic title purely to select the material era.
@@ -76,7 +75,7 @@ export interface GeneratedBuildingSeed {
   pk: string;
   materials: MaterialProperties;
   recipe: BuildingRecipe;
-  /** 시군구 code (or 시도 prefix) for climate lookup. Seoul default. */
+  /** 시군구 code (or 시도 prefix); empty when the brief names no location. */
   sigunguCd: string;
 }
 

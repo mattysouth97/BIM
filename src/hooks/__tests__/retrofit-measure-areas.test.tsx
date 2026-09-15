@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from '@/lib/energy/climate-region';
 // The measures are sized on the areas the engine priced.
 //
 // Every envelope measure's cost AND saving is linear in its area
@@ -52,7 +53,7 @@ function render(id: ReferenceBuildingId, withAreas: boolean) {
       totalFloorArea: q.intensityFloorAreaSqm,
       footprintArea: q.planAreaSqm,
       roofType: energy.roof?.type ?? "flat",
-      sidoPrefix: energy.climate.sigunguCd.slice(0, 2),
+      climateRegion: resolveClimateRegion({ sigunguCd: energy.climate.sigunguCd }),
       engineDemand: demand,
       ...(withAreas ? { engineEnvelopeAreas } : {}),
     }),

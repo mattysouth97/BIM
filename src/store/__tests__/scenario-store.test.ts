@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from '@/lib/energy/climate-region';
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   useScenarioStore,
@@ -10,7 +11,17 @@ const SAMPLE_INPUTS: ScenarioBuildingInputs = {
   footprintArea: 600,
   roofType: "flat",
   sidoPrefix: "11",
+  climateRegion: resolveClimateRegion({ sigunguCd: "11" }),
 };
+
+it('resolves at publish time from address when a code is missing, and clears an unknown region', () => {
+  const { climateRegion: _previous, ...payload } = SAMPLE_INPUTS;
+  useScenarioStore.getState().setBuildingInputs({ ...payload, sidoPrefix: '', newPlatPlc: '부산광역시 해운대구' });
+  expect(useScenarioStore.getState().buildingInputs?.climateRegion).toMatchObject({ sidoCode: '26', via: 'address', peakSunHours: 3.8 });
+  useScenarioStore.getState().setBuildingInputs({ ...payload, sidoPrefix: '99' });
+  expect(useScenarioStore.getState().buildingInputs?.climateRegion).toBeNull();
+  useScenarioStore.getState().resetScenario();
+});
 
 describe("useScenarioStore", () => {
   beforeEach(() => {

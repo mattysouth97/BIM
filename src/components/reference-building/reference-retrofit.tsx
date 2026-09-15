@@ -24,6 +24,8 @@
 // `RetrofitDeltaStrip` in the frame. This section is the candidates and their
 // economics; that one is what the selection does to the building.
 
+import { ClimateRegionDisclosure } from '@/components/viewer/climate-region-disclosure';
+import { resolveClimateRegion } from '@/lib/energy/climate-region';
 import { useMemo } from "react";
 
 import { useScenarioStore } from "@/store/scenario-store";
@@ -171,13 +173,14 @@ export function ReferenceRetrofitPanel({
     [metrics, energy.exteriorDoorSqm],
   );
 
+  const climateRegion = useMemo(() => resolveClimateRegion({ sigunguCd: climate.sigunguCd }), [climate.sigunguCd]);
   const scenario = useRetrofitScenario({
     buildingPk,
     capexBudgetKrw,
     totalFloorArea: quantities.intensityFloorAreaSqm,
     footprintArea: quantities.planAreaSqm,
     roofType: energy.roof?.type ?? "flat",
-    sidoPrefix: climate.sigunguCd.slice(0, 2),
+    climateRegion,
     engineDemand: metrics?.demand,
     engineEnvelopeAreas,
     pvGeometricKWp: pvLayout?.totalKWp ?? 0,
@@ -211,6 +214,7 @@ export function ReferenceRetrofitPanel({
 
   return (
     <section className="mt-6" data-testid="reference-model-retrofit">
+      <ClimateRegionDisclosure region={climateRegion} />
       <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
         {isKo ? "리트로핏 · 개선 후보" : "Retrofit · candidate measures"}
       </p>

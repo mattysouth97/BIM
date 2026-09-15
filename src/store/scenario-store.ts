@@ -11,6 +11,7 @@
 // TwinStageOverlay) publishes the derived inputs here, and every consumer
 // feeds `useRetrofitScenario` from the same record.
 
+import { resolveClimateRegion, type ClimateRegion } from '@/lib/energy/climate-region';
 import { create } from "zustand";
 import type { RoofPlaneSet } from "@/lib/retrofit/pv-layout";
 import {
@@ -30,6 +31,10 @@ export interface ScenarioBuildingInputs {
   roofType: "flat" | "gable" | "hip" | "sawtooth";
   /** 2-digit sido prefix for regional HDD lookup. */
   sidoPrefix: string;
+  sigunguCd?: string;
+  platPlcNm?: string;
+  newPlatPlc?: string;
+  climateRegion: ClimateRegion | null;
 }
 
 export const DEFAULT_CAPEX_BUDGET_KRW = 250_000_000; // ₩2.5억 default scenario
@@ -94,7 +99,7 @@ interface ScenarioState {
   roofPlanes: RoofPlaneSet | null;
   setRoofPlanes: (planes: RoofPlaneSet | null) => void;
   setCapexBudget: (krw: number | null) => void;
-  setBuildingInputs: (inputs: ScenarioBuildingInputs | null) => void;
+  setBuildingInputs: (inputs: Omit<ScenarioBuildingInputs, "climateRegion"> | null) => void;
   setSelectedMeasureIds: (ids: string[] | null) => void;
   /** Write the user's chosen work. `null` returns to "follow the recommendation". */
   setAppliedMeasureIds: (ids: string[] | null) => void;
@@ -148,7 +153,7 @@ export const useScenarioStore = create<ScenarioState>()(
           const sameBuilding =
             inputs?.buildingPk === state.buildingInputs?.buildingPk;
           return {
-            buildingInputs: inputs,
+            buildingInputs: inputs ? { ...inputs, climateRegion: resolveClimateRegion({ sigunguCd: inputs.sigunguCd ?? inputs.sidoPrefix, platPlcNm: inputs.platPlcNm, newPlatPlc: inputs.newPlatPlc }) } : null,
             selectedMeasureIds: sameBuilding ? state.selectedMeasureIds : null,
             appliedMeasureIds: sameBuilding ? state.appliedMeasureIds : null,
             roofPlanes: sameBuilding ? state.roofPlanes : null,

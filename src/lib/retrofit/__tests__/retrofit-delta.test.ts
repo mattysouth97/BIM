@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from '@/lib/energy/climate-region';
 import { describe, it, expect } from "vitest";
 import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe, FloorSpec } from "@/lib/procedural/types";
@@ -131,7 +132,7 @@ function makeRecipe(floorCount = 5): BuildingRecipe {
 const CLIMATE = SEOUL_CLIMATE;
 
 function delta(measureIds: string[], materials = makeMaterials(), recipe = makeRecipe()) {
-  const result = computeRetrofitDelta({ materials, recipe, climate: CLIMATE, measureIds });
+  const result = computeRetrofitDelta({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }), materials, recipe, climate: CLIMATE, measureIds });
   expect(result).not.toBeNull();
   return result!;
 }
@@ -140,7 +141,7 @@ describe("computeRetrofitDelta", () => {
   it("returns null without a positive intensity floor area — no denominator, no kWh/m²", () => {
     const recipe = { ...makeRecipe(), floors: [] };
     expect(
-      computeRetrofitDelta({
+      computeRetrofitDelta({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }),
         materials: makeMaterials(),
         recipe,
         climate: CLIMATE,
@@ -206,7 +207,7 @@ describe("computeRetrofitDelta", () => {
     // Compose the engine by hand, exactly as useEnergyMetrics does.
     const q = envelopeQuantities(recipe);
     const afterMaterials = applyPhaseToMaterials(materials, "retrofit", ids, {
-      roofAreaSqm: q.roofAreaSqm,
+      climateRegion: resolveClimateRegion({ sigunguCd: "11" }), roofAreaSqm: q.roofAreaSqm,
     });
     const heatLoss = calculateHeatLoss(afterMaterials, recipe, CLIMATE);
     const demand = calculateAnnualDemand(heatLoss, afterMaterials, recipe, CLIMATE);
@@ -299,7 +300,7 @@ describe("computeRetrofitDelta", () => {
 
     expect(m.unrecognized).toBe(false);
     // Same sizing function the measure's own economics used.
-    const expected = calculateSolarPotential(q.roofAreaSqm, "flat", "seoul", 130);
+    const expected = calculateSolarPotential(q.roofAreaSqm, "flat", 3.5, 130);
     expect(d.after.materials.renewable.solarPV.installed).toBe(true);
     expect(d.after.materials.renewable.solarPV.capacity).toBeCloseTo(expected.systemSizeKWp, 6);
     expect(d.after.materials.renewable.solarPV.area).toBeCloseTo(
@@ -317,7 +318,7 @@ describe("computeRetrofitDelta", () => {
   });
 
   it("geometric PV capacity and module surface area reproduce the placed array", () => {
-    const d = computeRetrofitDelta({
+    const d = computeRetrofitDelta({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }),
       materials: makeMaterials(), recipe: makeRecipe(), climate: CLIMATE,
       measureIds: ["solar-pv-flat"], pvGeometricKWp: 4,
     })!;
@@ -334,7 +335,7 @@ describe("computeRetrofitDelta", () => {
   });
 
   it("zero geometric capacity does not invent an installed array", () => {
-    const d = computeRetrofitDelta({
+    const d = computeRetrofitDelta({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }),
       materials: makeMaterials(), recipe: makeRecipe(), climate: CLIMATE,
       measureIds: ["solar-pv-flat"], pvGeometricKWp: 0,
     })!;
@@ -346,7 +347,7 @@ describe("computeRetrofitDelta", () => {
   it.each([0, 100])("separates additional PV from the total with existing area %s", (area) => {
     const materials = makeMaterials();
     Object.assign(materials.renewable.solarPV, { installed: true, capacity: 63.36, area, tiltAngle: 15 });
-    const d = computeRetrofitDelta({
+    const d = computeRetrofitDelta({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }),
       materials, recipe: makeRecipe(), climate: CLIMATE,
       measureIds: ["solar-pv-flat"], pvGeometricKWp: 4,
     })!;
@@ -361,7 +362,7 @@ describe("computeRetrofitDelta", () => {
     expect(d.changes.some((change) => change.field === "renewable.solarPV.area")).toBe(false);
     expect(d.isZeroDelta).toBe(true);
     expect(d.measures[0].pricedByEngine).toBe(false);
-    const repeated = computeRetrofitDelta({
+    const repeated = computeRetrofitDelta({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }),
       materials: d.after.materials, recipe: makeRecipe(), climate: CLIMATE,
       measureIds: ["solar-pv-flat"], pvGeometricKWp: 4,
     })!;
@@ -372,7 +373,7 @@ describe("computeRetrofitDelta", () => {
   it("a roof with no room for additional modules leaves the installed PV alone", () => {
     const materials = makeMaterials();
     Object.assign(materials.renewable.solarPV, { installed: true, capacity: 63.36, tiltAngle: 15 });
-    const d = computeRetrofitDelta({
+    const d = computeRetrofitDelta({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }),
       materials, recipe: makeRecipe(), climate: CLIMATE,
       measureIds: ["solar-pv-flat"], pvGeometricKWp: 0,
     })!;

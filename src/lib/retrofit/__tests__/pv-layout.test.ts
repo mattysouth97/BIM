@@ -544,8 +544,8 @@ describe("the economics price the modules that were drawn", () => {
   // fails as a wrong number rather than as a type error, so a caller wiring
   // this up should pass the argument by position with care.
   it("a supplied geometric kWp wins over the area × ratio estimate", () => {
-    const byRatio = calculateSolarPotential(2667, "flat", "seoul", 130);
-    const byCount = calculateSolarPotential(2667, "flat", "seoul", 130, undefined, 59.2);
+    const byRatio = calculateSolarPotential(2667, "flat", 3.5, 130);
+    const byCount = calculateSolarPotential(2667, "flat", 3.5, 130, undefined, 59.2);
 
     // The ratio path turns 2,667 m² into a system nobody drew.
     expect(byRatio.systemSizeKWp).toBeCloseTo((2667 * 0.7) / 5, 6);
@@ -560,10 +560,10 @@ describe("the economics price the modules that were drawn", () => {
   });
 
   it("the description says which basis sized it, so the two cannot be confused", () => {
-    expect(calculateSolarPotential(2667, "flat", "seoul", 130, undefined, 59.2).description).toContain(
+    expect(calculateSolarPotential(2667, "flat", 3.5, 130, undefined, 59.2).description).toContain(
       "measured roof planes",
     );
-    expect(calculateSolarPotential(2667, "flat", "seoul", 130).description).toContain(
+    expect(calculateSolarPotential(2667, "flat", 3.5, 130).description).toContain(
       "has not been measured into planes",
     );
   });
@@ -572,7 +572,7 @@ describe("the economics price the modules that were drawn", () => {
     // The honest end of the same rule: a roof whose planes carry no module
     // must not be sold a system. `0` is a real answer and must not be read
     // as "no figure supplied".
-    const none = calculateSolarPotential(2667, "flat", "seoul", 130, undefined, 0);
+    const none = calculateSolarPotential(2667, "flat", 3.5, 130, undefined, 0);
     expect(none.systemSizeKWp).toBe(0);
     expect(none.annualGenerationKWh).toBe(0);
     expect(none.estimatedCost).toBe(0);
@@ -588,7 +588,7 @@ describe("the economics price the modules that were drawn", () => {
     const measure = calculateSolarPotential(
       layout.totalGrossProjectedSqm,
       "flat",
-      "seoul",
+      3.5,
       130,
       undefined,
       layout.totalKWp,

@@ -28,9 +28,17 @@ The new shared disclosure shows the actual equation and distinguishes use-code
 defaults, user inputs, assumed LED targets and unrecorded sources. Operating
 hours are separately stated as assumptions, including unmatched-code fallback.
 
-This is a local intermediate change, not a production-release record. PV,
-regional climate, retrofit-result convergence and the dataset version/changelog
-remain in Plans 02–05. The hook's CO₂ and `predictedVsActualDelta` still use HVAC
+**Plan 02, also verified locally on 2026-09-15:** one `ClimateRegion` now reaches
+retrofit/PV consumers; the scenario store resolves the code/address at publication.
+Unknown locations withhold PV and visibly name the legacy thermal fallback.
+Generated designs without a location no longer manufacture a Seoul region code.
+Summer city inputs cite the historical official 2017 guide; province-level rows
+without an established basis carry a named legacy fallback. Seasonal solar is
+an explicitly approved PSH-ratio derivation. See [[ENERGY_STANDARD_TRACEABILITY]].
+
+This is a local intermediate change, not a production-release record. PV's
+primary-energy integration, retrofit-result convergence and dataset version/changelog
+remain in Plans 03–05. The hook's CO₂ and `predictedVsActualDelta` still use HVAC
 demand; they have not been converted into whole-building lighting-aware metrics.
 Plan 01 code is verified; its retrospective UI state contract was confirmed by
 the user on 2026-09-15.
@@ -111,8 +119,8 @@ recomputed from stores on every render.
 
 ## Relevant Tests
 
-Local Plan 01 checks on 2026-09-15: **5,550 passed, 4 existing skipped** across
-461 passed files and one skipped file; TypeScript passed; ESLint `src` reported
+Local Plan 02 checks on 2026-09-15: **5,581 passed, 4 existing skipped** across
+463 passed files and one skipped file; TypeScript passed; ESLint `src` reported
 0 errors and 6 existing warnings. No new skips. Full Playwright suite and
 production build/deployment were not run for this change.
 

@@ -23,7 +23,6 @@ export const REGIONAL_IRRADIANCE: Record<string, number> = {
   'jeonbuk': 3.6, 'jeonnam': 3.8, 'gyeongbuk': 3.7, 'gyeongnam': 3.7, 'jeju': 3.5,
 };
 
-const DEFAULT_PEAK_SUN_HOURS = 3.6; // fallback for unknown region
 
 const ROOF_UTILIZATION_FACTORS: Record<'flat' | 'gable' | 'hip' | 'sawtooth', number> = {
   flat: 0.7,
@@ -69,7 +68,7 @@ const CO2_FACTOR_ELECTRICITY = CO2_FACTORS.electricity / 1000;
 export function calculateSolarPotential(
   roofArea: number, // m2
   roofType: 'flat' | 'gable' | 'hip' | 'sawtooth',
-  region: string,
+  peakSunHours: number, // resolved ClimateRegion value; no region-name lookup or national fallback
   feedInTariffRate: number, // KRW/kWh — user-configurable
   electricityPrice: number = DEFAULT_ELECTRICITY_PRICE,
   /**
@@ -79,12 +78,12 @@ export function calculateSolarPotential(
    */
   geometricKWp?: number,
 ): SolarPVResult {
+  if (!Number.isFinite(peakSunHours) || peakSunHours <= 0) throw new RangeError('A resolved positive peak-sun-hours value is required');
   const roofUtilization = ROOF_UTILIZATION_FACTORS[roofType];
   const usableArea = roofArea * roofUtilization;
   const systemSizeKWp =
     geometricKWp != null && geometricKWp >= 0 ? geometricKWp : usableArea / M2_PER_KWP;
 
-  const peakSunHours = REGIONAL_IRRADIANCE[region.toLowerCase()] ?? DEFAULT_PEAK_SUN_HOURS;
   // Seoul (3.5 PSH): 3.5 × 365 × 1.15 × 0.80 ≈ 1,175 kWh/kWp — inside the
   // 1,100–1,300 kWh/kWp band observed for Korean rooftop PV.
   const annualGenerationKWh =
