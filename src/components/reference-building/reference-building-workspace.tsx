@@ -21,6 +21,7 @@ import { ReferenceDatasetDownloads } from "./reference-dataset-downloads";
 import { ReferenceArchitecturalDetails, type ArchitecturalDetailsStatus } from "./reference-architectural-details";
 import { clearArchitecturalDetails } from "./reference-detail-geometry";
 import { ReferenceMepCoverage } from "./reference-mep-coverage";
+import { INFERRED_MEP_LAYER } from "@/lib/reference-buildings/inferred-mep";
 import { ReferenceMaterialDetails } from "./reference-material-details";
 import { ReferenceInfoNavigation, useReferenceInfoSection } from "./reference-info-navigation";
 import { ReferenceMaterialControls } from "./reference-material-controls";
@@ -264,6 +265,34 @@ export function ReferenceBuildingWorkspace({
                 ) : null}
               </div>
             ))}
+            {/* Models whose source carries no services at all get a generated
+                network instead — offered ONLY here, so a building that states
+                its own MEP always shows the real thing. The row is styled and
+                worded as an inference, and its note sits with it rather than
+                behind a disclosure, because the claim travels with the toggle
+                that turns the geometry on. */}
+            {services.length === 0 ? (
+              <div key={INFERRED_MEP_LAYER.id}>
+                <LayerRow
+                  id={INFERRED_MEP_LAYER.id}
+                  label={isKo ? INFERRED_MEP_LAYER.ko : INFERRED_MEP_LAYER.en}
+                  detail={
+                    isKo
+                      ? "원본 파일 없음 · 형상에서 생성"
+                      : "No source file · generated from geometry"
+                  }
+                  colour="#8b7fd4"
+                  on={active.has(INFERRED_MEP_LAYER.id)}
+                  onToggle={toggle}
+                />
+                <p
+                  className="mb-1 pl-6 pr-1.5 text-[10px] leading-relaxed text-muted-foreground"
+                  data-testid="reference-model-layer-inferred-mep-note"
+                >
+                  {isKo ? INFERRED_MEP_LAYER.note.ko : INFERRED_MEP_LAYER.note.en}
+                </p>
+              </div>
+            ) : null}
           </div>
           <ReferenceMepCoverage coverage={manifest.mepCoverage} isKo={isKo} />
           {/* The generator's own sentence about how THIS building's layers

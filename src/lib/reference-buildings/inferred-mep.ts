@@ -59,8 +59,8 @@ export const INFERRED_MEP_LAYER = {
   ko: "추정 설비 (원본 아님)",
   en: "Inferred services (not from source)",
   note: {
-    ko: "이 모델의 원본 파일에는 설비(MEP) 도면이 없습니다. 여기 보이는 배관·덕트·단말은 건축 형상에서 규칙 기반으로 생성한 추정 배치이며, 실제 설치된 설비가 아닙니다. 실측 근거로 인용할 수 없습니다.",
-    en: "This model's source files contain no MEP drawing. The runs, ducts and terminals shown here are a rule-based layout generated from the architectural geometry — not equipment that was surveyed or installed. Do not cite it as measured evidence.",
+    ko: "이 모델의 원본 파일에는 설비(MEP) 도면이 없습니다. 여기 보이는 배관·덕트·단말은 건축 형상에서 규칙 기반으로 생성한 추정 배치이며, 실제 설치된 설비가 아닙니다. 실측 근거로 인용할 수 없습니다. 생성기는 각 층을 직육면체로 가정하므로, 경사 지붕 건물에서는 최상층 배관이 지붕면을 통과해 보일 수 있습니다.",
+    en: "This model's source files contain no MEP drawing. The runs, ducts and terminals shown here are a rule-based layout generated from the architectural geometry — not equipment that was surveyed or installed. Do not cite it as measured evidence. The generator assumes each storey is a rectangular prism, so on a pitched-roof building the topmost runs can appear to pass through the roof plane.",
   },
 } as const;
 
@@ -138,6 +138,33 @@ export function floorsFromStoreys(storeys: readonly ManifestStorey[]): FloorSpec
   return floors;
 }
 
+/**
+ * The plate the network is laid out on.
+ *
+ * The model's bounding box is the wrong answer on its own: it includes the
+ * roof overhang, so on FZK Haus a network planned on it ran outside the walls
+ * and through the eaves. The storey's STATED floor area is the better figure —
+ * web-ifc read it from the source — so the box supplies only the aspect ratio
+ * and the area supplies the size.
+ *
+ * Falls back to the raw box when no area is stated, which is honest: a plate
+ * that is too generous is visible, whereas a fabricated area would not be.
+ */
+export function plateFromAreaAndAspect(
+  size: MeasuredFootprint,
+  floorAreaSqm: number | undefined,
+): MeasuredFootprint {
+  const { widthM, depthM } = size;
+  if (!(floorAreaSqm && floorAreaSqm > 0) || !(widthM > 0) || !(depthM > 0)) {
+    return size;
+  }
+  const boxArea = widthM * depthM;
+  if (!(boxArea > 0) || floorAreaSqm >= boxArea) return size;
+  // Preserve the measured aspect, shrink to the measured area.
+  const scale = Math.sqrt(floorAreaSqm / boxArea);
+  return { widthM: widthM * scale, depthM: depthM * scale };
+}
+
 export interface InferredMepInput {
   storeys: readonly ManifestStorey[];
   footprint: MeasuredFootprint;
@@ -154,7 +181,8 @@ export function planInferredMep(input: InferredMepInput): MepModel | null {
   const floors = floorsFromStoreys(input.storeys);
   if (!floors) return null;
 
-  const { widthM, depthM } = input.footprint;
+  const ground = [...input.storeys].sort((a, b) => a.elevationM - b.elevationM)[0];
+  const { widthM, depthM } = plateFromAreaAndAspect(input.footprint, ground?.floorAreaSqm);
   if (!(widthM > 0) || !(depthM > 0)) return null;
 
   const mainPurpsCd = mainPurposeCodeFor(input.useType);

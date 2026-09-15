@@ -18,6 +18,8 @@ import type { MaterialBinding } from "@/lib/rendering/material-expression";
 import { PvModulesVisual } from "@/components/viewer/pv-modules";
 import { usePvLayout } from "@/hooks/use-pv-layout";
 import { useScenarioStore, useProposalVisualIds, useEffectiveMeasureIds } from "@/store/scenario-store";
+import { InferredMepGeometry } from "./inferred-mep-geometry";
+import { INFERRED_MEP_LAYER } from "@/lib/reference-buildings/inferred-mep";
 import { deriveVisualState } from "@/lib/retrofit/measure-visuals";
 import {
   EnvelopeRetrofitTint,
@@ -322,6 +324,9 @@ export function ReferenceModelViewer({
   }, []);
   const fabricOn = active.has(fabricLayerId);
   const shown = services.filter((layer) => active.has(layer.id));
+  // Only offered when the source states no services at all — see
+  // INFERRED_MEP_LAYER. A model with real MEP shows the real MEP.
+  const inferredMepOn = services.length === 0 && active.has(INFERRED_MEP_LAYER.id);
   // Match the current URL as well as active selection: an old building's
   // cached layer with the same id must not make a new request appear ready.
   const loadedServiceIds = shown
@@ -494,6 +499,17 @@ export function ReferenceModelViewer({
                   />
                 ))
             : null}
+          {/* Generated services, for models whose source carries none. Never
+              rendered alongside source service layers: a building that states
+              its own MEP must show that, not a guess at it. */}
+          {offset && inferredMepOn ? (
+            <InferredMepGeometry
+              storeys={manifest.storeys ?? []}
+              size={offset.size}
+              baseY={offset.baseY}
+              useType={manifest.useType}
+            />
+          ) : null}
           {offset && visual.solarInstalled ? (
             <PvModulesVisual layout={pvLayout} centre={offset.centre} onDrawn={setPvDrawn} />
           ) : null}
