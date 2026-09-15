@@ -77,6 +77,20 @@ or Korean model completion is claimed.
 - Main dev3000 has DATABASE_URL loaded only in process memory from the private
   external corpus environment. No credential file was copied into the repository.
   Local VWorld remains503 without its keys; this is an existing local limitation.
+- **Production verified 2026-09-15 23:03 KST at `0abbdaf` — ELEVEN models.**
+  Health SHA exact, `region: icn1`, `X-Vercel-Id: icn1::icn1`, sixty5 page and
+  its 69.7 MB plumbing layer served, dataset API 200, and 85 browser cases
+  passing against the deployed site. Supersedes the blocked note below.
+- The block was cleared by enabling Vercel **Enhanced Build Machines**: the
+  builder went from 4 cores / 8 GB to 8 cores / 16 GB. The same commit OOM'd
+  twice on the 8 GB machine. Check the `Build machine configuration:` line at
+  the top of a deploy log to confirm the setting is live — it is a two-second
+  signal that saves a full failed build cycle.
+- Still true, and the reason this will recur: Enhanced Builds raised the
+  ceiling, it did not remove the cause. `public/` is 549 MB of binary geometry
+  shipped through the app bundle. Two ceilings were hit in one day (250 MB
+  function limit, then build memory). Move GLBs to blob/CDN storage before
+  model twelve.
 - **Sixty5 (`7bc130d`) is committed but NOT deployed.** Production remains on
   `1816f24` with ten models; that deployment is healthy and was never
   replaced — a failed Vercel build does not touch the running one.
