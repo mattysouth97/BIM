@@ -162,4 +162,53 @@ describe("useEnergyMetrics", () => {
     const { result } = renderHook(() => useEnergyMetrics(PK, undefined, []));
     expect(result.current!.predictedVsActualDelta).toBeNull();
   });
+
+  it("lighting power density moves both the grade intensity and the site total", () => {
+    // PHYS-01 / D-03 / VALIDATION.md Wave 0 gap 3 — a lighting change must
+    // reach BOTH numbers this product shows for energy intensity: the grade's
+    // primary intensity AND the on-screen site total. Today it reaches
+    // neither: deliveredFromDemand derives lighting as a flat 15% share of
+    // the HVAC total, and calculateSystemBreakdown derives it from
+    // SYSTEM_RATIOS — both blind to materials.lighting.lightingPowerDensity.
+    // Values chosen far enough apart (18 vs 4 W/m²) that a real lighting term
+    // cannot round them together.
+    const recipe = makeRecipe();
+    const totalArea = envelopeQuantities(recipe).intensityFloorAreaSqm;
+
+    const highLpd = makeMaterials();
+    highLpd.lighting.lightingPowerDensity = 18;
+    useMaterialStore.setState({ properties: { [PK]: highLpd } });
+    useRecipeStore.setState({ baseRecipes: { [PK]: recipe } });
+    const high = renderHook(() => useEnergyMetrics(PK)).result.current;
+
+    const lowLpd = makeMaterials();
+    lowLpd.lighting.lightingPowerDensity = 4;
+    useMaterialStore.setState({ properties: { [PK]: lowLpd } });
+    const low = renderHook(() => useEnergyMetrics(PK)).result.current;
+
+    expect(high).not.toBeNull();
+    expect(low).not.toBeNull();
+
+    // The site leg: useEnergyMetrics().siteTotal, i.e. calculateSystemBreakdown.total.
+    expect(high!.siteTotal).not.toBeCloseTo(low!.siteTotal, 0);
+
+    // The grade leg: the SAME deliveredFromDemand + calculateEfficiencyRating
+    // chain the file already uses above (line ~89) — written against the
+    // CURRENT deliveredFromDemand(demand: AnnualDemand) call shape so this
+    // compiles today. Task 2 migrates this call to the new EndUseLoads shape.
+    const highRating = calculateEfficiencyRating(
+      deliveredFromDemand(high!.demand),
+      totalArea,
+      buildingTypeForGrade(highLpd, recipe.mainPurpsCd)
+    );
+    const lowRating = calculateEfficiencyRating(
+      deliveredFromDemand(low!.demand),
+      totalArea,
+      buildingTypeForGrade(lowLpd, recipe.mainPurpsCd)
+    );
+    expect(highRating.primaryEnergyPerArea).not.toBeCloseTo(
+      lowRating.primaryEnergyPerArea,
+      0
+    );
+  });
 });
