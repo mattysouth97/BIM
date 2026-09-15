@@ -5,10 +5,10 @@ milestone_name: Building Energy Repository
 current_phase: 03
 current_phase_name: Model Anchors
 status: in_progress
-stopped_at: Phases1/2/5 production-verified at 79a5d1b; phases3/4 still await external evidence
-last_updated: "2026-09-15T10:44:44.824Z"
-last_activity: 2026-09-15
-last_activity_desc: Integrated physics, vertical drawers, nine models and71-record pilot
+stopped_at: Paused 2026-09-16 mid quick-task 260916-0bz (GLB blob/CDN); CONTEXT locked, research interrupted, no PLAN yet
+last_updated: "2026-09-15T15:23:03.384Z"
+last_activity: 2026-09-16
+last_activity_desc: Paused after resume; GLB hosting discussion locked; researcher interrupted before RESEARCH.md
 progress:
   total_phases: 5
   completed_phases: 3
@@ -21,19 +21,21 @@ progress:
 
 ## Current position
 
-Phases1 and2 are verified. Phase5's reviewed pilot is stored in Neon and its
-local API/browser checks pass; clean production release verification follows.
+Phases 1, 2 and 5 are production-verified. Production at `0abbdaf` serves eleven
+gallery models (`region: icn1`). Branch `feat/design-stage-energy-diagnostics`
+HEAD is `8f44281`, in sync with origin. Nothing is mid-flight.
 The milestone stays open because ANCH-03 and SWEEP-01 remain unmet.
 
 ## Completed outcomes
 
 - Honest named-end-use physics, LPD/PV grade effects, shared retrofit core,
-  schema2.0.0 reference datasets with executed before/after evidence.
+  schema 2.0.0 reference datasets with executed before/after evidence.
 - Vertical Work/Energy drawers on desktop; bottom-navigation sheets on mobile.
-- One model registry and nine gallery models, including two licensed hotels with
-  unresolved envelopes and no fabricated energy grades.
-- Resumable75-row pilot:71 records,4 exclusions, full provenance/assumptions.
-- Reviewed0.1.0-pilot stored outside git; streaming bulk JSON, immutable record
+- One model registry and eleven gallery models, including two licensed hotels
+  with unresolved envelopes, West Riverside Hospital (geometry-only), and
+  Sixty5 (geometry-only after the plot-marker floor-area fix).
+- Resumable 75-row pilot: 71 records, 4 exclusions, full provenance/assumptions.
+- Reviewed 0.1.0-pilot stored outside git; streaming bulk JSON, immutable record
   URLs, read-only filter/pagination API, dictionary and /corpus browser.
 
 ## Remaining external requirements
@@ -60,15 +62,18 @@ See phase verification reports and docs/04_Agent-Handoffs/CURRENT.md for release
 
 ## Session continuity
 
-Session resumed 2026-09-15 19:45. The local checkpoint was re-verified here
-(5,657 unit tests, 183 local browser cases, TypeScript clean, ESLint 0 errors)
-and committed as `e4e8350`, `181523a` and `79a5d1b`. Production was then
-deployed and verified at `79a5d1b` — health SHA, `icn1`, corpus digest and68
-production browser cases. Phases1,2 and5 are production-verified.
+Last session: 2026-09-16
+Stopped at: `/gsd-pause-work` mid quick-task `260916-0bz` (move published
+reference-building GLBs to Vercel Blob). Discussion complete; CONTEXT.md
+written; researcher interrupted; no PLAN.md, no code changes, no executor.
+Resume file: `.planning/.continue-here.md` + `.planning/HANDOFF.json`
 
 ## Resume
 
-Production release verification is complete. Acquire actual source/quota evidence
-before closing phases3/4: ANCH-03 needs a Korean IFC/DXF with redistribution
-rights, SWEEP-01 needs the account's actual daily quota. Do not archive v6.0 as
-fully complete while those remain open.
+Production is verified at `0abbdaf` with eleven models, `icn1`, and 85 browser
+cases against the deployed site. Enhanced Build Machines (8 cores / 16 GB) is
+load-bearing; it raised the build-memory ceiling and did not remove the cause
+(`public/` is 549 MB of binary geometry in the app bundle).
+Do not archive v6.0 as fully complete while ANCH-03 and SWEEP-01 remain open.
+`init.milestone-op` reports all phases complete because it counts SUMMARY files;
+trust `init.manager` instead.

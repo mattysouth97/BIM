@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "timestamp": "2026-09-15T14:13:00.000Z",
+  "timestamp": "2026-09-15T15:23:03.384Z",
   "phase": "03",
   "phase_name": "Model Anchors",
   "phase_dir": ".planning/phases/03-model-anchors",
@@ -8,47 +8,63 @@
   "task": 2,
   "total_tasks": 2,
   "status": "paused",
-  "detection_note": "The workflow's phase probe looks for .planning/phases/*/PLAN.md; this repo names plans NN-NN-PLAN.md, so it detected nothing and the handoff uses the default .planning/ path. Phase 03 is recorded here because the session's model work is 03-02's typology half.",
+  "detection_note": "The workflow's phase probe looks for .planning/phases/*/PLAN.md; this repo names plans NN-NN-PLAN.md, so it detected nothing and the handoff uses the default .planning/ path. Active work is quick-task 260916-0bz, not Phase 03 execution. Phase 03 is recorded because the milestone is still open on ANCH-03.",
+  "quick_task": {
+    "quick_id": "260916-0bz",
+    "slug": "move-published-reference-building-glbs-o",
+    "dir": ".planning/quick/260916-0bz-move-published-reference-building-glbs-o",
+    "flags": ["--discuss", "--research"],
+    "description": "Move published reference-building GLBs out of public/ into blob or CDN storage so model twelve does not hit a third Vercel ceiling",
+    "context_file": ".planning/quick/260916-0bz-move-published-reference-building-glbs-o/260916-0bz-CONTEXT.md",
+    "research_file": null,
+    "plan_file": null,
+    "summary_file": null,
+    "progress": "discussion complete; research interrupted; planner not spawned; executor must not auto-run"
+  },
   "completed_tasks": [
-    {"id": 1, "name": "GAP-1: one authoritative package saving across report and twin", "status": "done", "commit": "e7aee11"},
-    {"id": 2, "name": "v6.0 milestone audit (20/33 satisfied, 2 unsatisfied)", "status": "done", "commit": "3d53961"},
-    {"id": 3, "name": "Inferred MEP planned, rendered and labelled for source-less models", "status": "done", "commit": "d6306a0"},
-    {"id": 4, "name": "Atlas normal maps sampled triplanar, tier-gated", "status": "done", "commit": "ebd3ba8"},
-    {"id": 5, "name": "West Riverside Hospital (model 10) + IFC4 services classifier fix", "status": "done", "commit": "d550b78"},
-    {"id": 6, "name": "Test contracts for the generated layer and geometry-only energy", "status": "done", "commit": "eec60c7"},
-    {"id": 7, "name": "outputFileTracingExcludes — keep geometry out of serverless functions", "status": "done", "commit": "1816f24"},
-    {"id": 8, "name": "Sixty5 (model 11) + kavel-nr plot-marker floor-area fix", "status": "done", "commit": "7bc130d"},
-    {"id": 9, "name": "Production verified at 0abbdaf with eleven models", "status": "done", "commit": "b3a1f6d"}
+    {"id": 1, "name": "Resume consumed prior HANDOFF.json + .continue-here.md", "status": "done"},
+    {"id": 2, "name": "User chose Plan GLB blob/CDN migration as next unblocked work", "status": "done"},
+    {"id": 3, "name": "Quick task 260916-0bz created via init.quick --discuss --research", "status": "done"},
+    {"id": 4, "name": "Discussion: GLBs only (52 files / 470.12 MB); textures/HDR/wasm stay", "status": "done"},
+    {"id": 5, "name": "CONTEXT.md written with locked decisions and Claude's Discretion", "status": "done"},
+    {"id": 6, "name": "gsd-phase-researcher spawned for Vercel Blob + URL rewrite", "status": "interrupted", "progress": "agent 01a0a5a7-ffb2-7b61-bfbf-ebd475432ad6 died on pause (task not found); RESEARCH.md was never written. Do not Task-resume that id — restart research."}
   ],
   "remaining_tasks": [
+    {"id": 7, "name": "Restart research for 260916-0bz (Vercel Blob size limits, rewrite vs proxy, 69.7 MB plumbing.glb)", "status": "not_started"},
+    {"id": 8, "name": "Spawn gsd-planner to write 260916-0bz-PLAN.md honoring CONTEXT.md", "status": "not_started"},
+    {"id": 9, "name": "STOP and show the plan — do not auto-run the executor", "status": "not_started"},
     {"id": 10, "name": "ANCH-03 — register a Korean building model", "status": "blocked_external"},
     {"id": 11, "name": "SWEEP-01 — record the register account's actual daily quota", "status": "blocked_external"},
-    {"id": 12, "name": "Move published GLBs to blob/CDN storage, out of the app bundle", "status": "not_started"},
-    {"id": 13, "name": "Add a draw-call budget to service layers", "status": "not_started"}
+    {"id": 12, "name": "Add a draw-call budget to service layers", "status": "not_started"}
   ],
   "blockers": [
     {
       "description": "ANCH-03: no Korean IFC/DXF has been found carrying source bytes, a verifiable Korean building identity, a named rightsholder AND redistribution permission together. Three bounded search passes have now failed, each on RIGHTS rather than on search effort.",
       "type": "external",
-      "workaround": "An owner-supplied file, or an identifiable public release with model-specific rights, resolves it immediately. A foreign model with assumed Seoul weather does NOT satisfy it and must not be substituted."
+      "workaround": "An owner-supplied file, or an identifiable public release with model-specific rights, resolves it immediately. A foreign model with assumed Seoul weather does NOT satisfy it and must not be substituted. Do not re-ask; the user already declined."
     },
     {
       "description": "SWEEP-01: the data.go.kr account's actual daily request ceiling is unmeasured. The advertised 10,000 is not a measurement, and the successful 75-row pilot does not establish the ceiling.",
       "type": "human_action",
-      "workaround": "data.go.kr 마이페이지 → 개발계정 상세보기 shows 일일 트래픽. Do not probe the ceiling by exhausting a shared public API."
+      "workaround": "data.go.kr 마이페이지 → 개발계정 상세보기 shows 일일 트래픽. Do not probe the ceiling by exhausting a shared public API. Do not re-ask; the user already declined."
     }
   ],
   "async_jobs": [],
   "human_actions_pending": [
     {"action": "Read the 일일 트래픽 figure from data.go.kr 마이페이지 and report it", "context": "Sole remaining input for SWEEP-01; closes Phase 4. Roughly a 30-second lookup and the cheapest open item in the milestone.", "blocking": true},
     {"action": "Supply a Korean IFC/DXF you own or have written permission to redistribute", "context": "Sole remaining input for ANCH-03; closes Phase 3.", "blocking": true},
-    {"action": "Decide whether Enhanced Build Machines stays enabled", "context": "Enabled 2026-09-15 to clear a build OOM. It is a paid Vercel setting and is currently load-bearing: the 8 GB builder cannot build this repo.", "blocking": false}
+    {"action": "Decide whether Enhanced Build Machines stays enabled", "context": "Enabled 2026-09-15 to clear a build OOM. It is a paid Vercel setting and is currently load-bearing: the 8 GB builder cannot build this repo. The GLB migration's success criterion is that the 8 GB builder can build again, not that this setting is immediately turned off.", "blocking": false},
+    {"action": "After the plan exists, confirm before executor: git rm of 52 GLBs (470 MB) and Vercel Blob upload need a BLOB_READ_WRITE_TOKEN and must not run unattended", "context": "User asked to PLAN the migration. yolo_mode is false. Do not auto-execute.", "blocking": true}
   ],
   "decisions": [
+    {"decision": "Next unblocked work is moving published GLBs out of public/ before model twelve", "rationale": "User selected this on resume. ANCH-03 and SWEEP-01 stay partial; do not fabricate their missing inputs.", "phase": "quick-260916-0bz"},
+    {"decision": "GLBs only leave the app bundle (52 files, 470.12 MB)", "rationale": "Measured 2026-09-16: public/ 547.4 MB; reference-buildings GLBs 470.12 MB, JSON 15.04 MB, SVG 0.08 MB. JSON does not move the build-memory needle.", "phase": "quick-260916-0bz"},
+    {"decision": "Textures, HDR and wasm stay in public/", "rationale": "Different consumer (atlas, ground, CAD convert) and a different failure mode. Out of this task.", "phase": "quick-260916-0bz"},
+    {"decision": "Hosting: Vercel Blob on the existing bim project (Claude's Discretion)", "rationale": "Same account as https://bim-self.vercel.app / matts-projects-d0677dc4. No blob client in the repo today. Do not introduce R2/S3 unless Blob cannot serve Sixty5 plumbing.glb (69.7 MB).", "phase": "quick-260916-0bz"},
+    {"decision": "Keep URL path /reference-buildings/:id/:file.glb", "rationale": "e2e/model-anchors.spec.ts, gallery pages and bookmarks hit that path. Rewrite or proxy to blob; do not bake absolute blob URLs into manifests as the only locator. Manifest file fields stay relative.", "phase": "quick-260916-0bz"},
+    {"decision": "git rm the 52 GLBs; add a local fetch/restore script; do not git-filter history", "rationale": "Build OOM is from the 549 MB checkout during pnpm run build. History size is a separate problem.", "phase": "quick-260916-0bz"},
+    {"decision": "Do not auto-run the gsd-quick executor after planning", "rationale": "User asked to plan, not execute. yolo_mode is false. Blob upload and git rm of 470 MB need explicit confirmation and a token.", "phase": "quick-260916-0bz"},
     {"decision": "Skip Phases 3 and 4 rather than fabricate their missing inputs", "rationale": "User confirmed neither external input is available. Recorded as partial with named blockers instead of relabelled complete.", "phase": "03"},
-    {"decision": "Generate MEP for models whose source has none, clearly labelled as inference", "rationale": "Five of nine models ship a single architectural IFC. Verified against the upstream index that no MEP sibling exists, rather than assumed.", "phase": "03"},
-    {"decision": "Hospital and Sixty5 registered geometry-only, no energy baseline", "rationale": "Hospital: source states no IfcSpace at all. Sixty5: its IfcSpace entities are 1 m² plot markers, and its envelope classification has not been established. Different reasons, both recorded.", "phase": "03"},
-    {"decision": "Commit all Sixty5 layers including the 2,462-draw-call plumbing layer", "rationale": "User's call after being shown the number. Layer is opt-in and lazily loaded.", "phase": "03"},
     {"decision": "Enable Enhanced Build Machines rather than shrink the gallery", "rationale": "User's call. Noted at the time that it raises the ceiling without removing the cause.", "phase": "03"}
   ],
   "uncommitted_files": [
@@ -58,16 +74,26 @@
     "?? .planning/milestone.lock",
     "?? .planning/state.json"
   ],
-  "uncommitted_note": "Measured from git status --porcelain, not asserted. All five are local runtime artifacts (tool permissions, GSD runtime state, a dead session lock) and are deliberately uncommitted. No source, test, doc or artifact change is outstanding — the branch is in sync with origin.",
+  "uncommitted_note": "Intended remaining runtime artifacts after the pause WIP commit. Re-measured from git status --porcelain after commit; if this list diverges, trust porcelain.",
   "blocking_constraints": [
     {
       "severity": "blocking",
-      "constraint": "Publishing a twelfth model will likely break the build again. public/ is 549 MB of binary geometry shipped through the app bundle. TWO different ceilings were hit on 2026-09-15 by actual failure, not prediction: the serverless function traced to 296.3 MB against Vercel's 250 MB limit, and later pnpm run build OOM'd twice on the 4-core/8 GB builder. Enhanced Builds (8 cores/16 GB) cleared the second; neither fix removed the cause.",
+      "constraint": "Do not auto-execute quick-task 260916-0bz. The user asked to PLAN. The executor would git rm 52 GLBs (470 MB) and upload to Vercel Blob. Stop after PLAN.md exists and wait.",
+      "discovered_by": "This session: /gsd-resume-work → user chose 'Plan GLB blob/CDN migration'; yolo_mode is false."
+    },
+    {
+      "severity": "blocking",
+      "constraint": "Do not Task-resume researcher 01a0a5a7-ffb2-7b61-bfbf-ebd475432ad6. Pause made it 'not found'. Restart research from CONTEXT.md.",
+      "discovered_by": "get_command_or_subagent_output on pause: Task not found."
+    },
+    {
+      "severity": "blocking",
+      "constraint": "Publishing a twelfth model will likely break the build again. public/ is 547.4 MB of which 470.12 MB is 52 reference-building GLBs. TWO different ceilings were hit on 2026-09-15 by actual failure: serverless function traced to 296.3 MB against Vercel's 250 MB limit, then pnpm run build OOM'd twice on the 4-core/8 GB builder. Enhanced Builds (8 cores/16 GB) cleared the second; neither fix removed the cause.",
       "discovered_by": "Two refused production deployments."
     },
     {
       "severity": "blocking",
-      "constraint": "Do not trust a green suite as evidence that an artifact is correct. Every significant defect this session passed tsc, ESLint and thousands of unit tests: an inferred MEP network drawn floating above the house; an HVAC layer containing 5% of its geometry behind a healthy-looking 2.5 MB file; a grade sentence claiming a certification the product never performs; a next.config comment describing a protection an include cannot provide; and a published floor area of 110 m² for a nineteen-storey, 105-apartment block, which was 110 one-square-metre plot-number stamps. Open the page, read the label beside the number, and check what a quantity actually measures.",
+      "constraint": "Do not trust a green suite as evidence that an artifact is correct. Every significant defect of the 2026-09-15 session passed tsc, ESLint and thousands of unit tests: an inferred MEP network drawn floating above the house; an HVAC layer containing 5% of its geometry behind a healthy-looking 2.5 MB file; a grade sentence claiming a certification the product never performs; a next.config comment describing a protection an include cannot provide; and a published floor area of 110 m² for a nineteen-storey, 105-apartment block, which was 110 one-square-metre plot-number stamps. Open the page, read the label beside the number, and check what a quantity actually measures.",
       "discovered_by": "Five confirmed defects, each found by inspection after tests were already green."
     },
     {
@@ -79,8 +105,13 @@
       "severity": "advisory",
       "constraint": "gsd-tools query init.milestone-op reports all_phases_complete: true for v6.0 because it counts any phase with a SUMMARY file. Two phases are partial. Use init.manager, which reports per-phase verification status correctly. Trusting milestone-op would have archived the milestone with both blockers unmet.",
       "discovered_by": "Contradiction between two init queries during the autonomous run."
+    },
+    {
+      "severity": "advisory",
+      "constraint": "docs/04_Agent-Handoffs/CURRENT.md still contains superseded 'Sixty5 committed but NOT deployed / production remains on 1816f24' prose below the verified 0abbdaf eleven-model line. The line that says 'Supersedes the blocked note below' is the authority. Production is 0abbdaf, eleven models.",
+      "discovered_by": "Read during 2026-09-16 resume; the two paragraphs contradict each other."
     }
   ],
-  "next_action": "Nothing is mid-flight. If SWEEP-01's quota figure arrives, close Phase 4; if a Korean model arrives, close Phase 3. Otherwise the highest-value work is moving published GLBs out of public/ into blob or CDN storage before model twelve.",
-  "context_notes": "Production is verified and healthy at 0abbdaf: eleven models, region icn1, 85 browser cases passing against the deployed site. All five threads the user asked for shipped. Nothing is half-applied and no work is at risk. The session ended at a deliberate stopping point with roughly a third of the context window left; the remaining items are either external-input-blocked or large enough to deserve a fresh session."
+  "next_action": "Resume quick-task 260916-0bz: restart research (do not resume the dead agent), then spawn the planner to write 260916-0bz-PLAN.md from CONTEXT.md. STOP after the plan — do not execute. Command: /gsd-quick resume move-published-reference-building-glbs-o  OR  /gsd-resume-work which will pick up this HANDOFF.",
+  "context_notes": "Session started with /gsd-resume-work. Prior pause was a clean stop with eleven models production-verified at 0abbdaf. User chose to plan the GLB blob/CDN migration rather than wait on ANCH-03/SWEEP-01. init.quick created 260916-0bz with --discuss --research. User clarified only 'what leaves the bundle': GLBs only; textures/HDR/wasm stay. Other gray areas (Vercel Blob, same URL path, git rm + local fetch script) are Claude's Discretion in CONTEXT.md. Researcher was spawned and then killed by /gsd-pause-work; no RESEARCH.md, no PLAN.md, no source/test/doc/runtime code change. Production is still 0abbdaf. Do not re-ask for the Korean model or the daily quota."
 }
