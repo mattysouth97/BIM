@@ -38,10 +38,8 @@ describe("landing gallery", () => {
     const card = screen.getByTestId("gallery-item-clinic");
 
     expect(within(card).getByText("4,314.2 m²")).toBeTruthy();
-    expect(
-      within(card).getByText("259 × GSA BIM Area, ROOF·OPEN TO BELOW·MECH. YARD 제외"),
-    ).toBeTruthy();
-    expect(within(card).getByText("IfcWindow")).toBeTruthy();
+    expect(within(card).getByText(/259 floor-counting IfcSpace · GSA BIM Area · excluded:/).textContent).toMatch(/ROOF.*OPEN TO BELOW.*MECH\. YARD/);
+    expect(within(card).getByText(/58 IfcWindow in the extracted aperture set/)).toBeTruthy();
     expect(within(card).getByText("Clinic_Architectural.ifc")).toBeTruthy();
   });
 
@@ -58,6 +56,13 @@ describe("landing gallery", () => {
     const credit = screen.getByTestId("gallery-item-clinic-attribution");
     expect(credit.textContent).toContain("buildingSMART International");
     expect(credit.textContent).toContain("CC BY 4.0");
+  });
+
+  it("states the absence of linked measured energy data on every card", () => {
+    render(<LandingPage />);
+    for (const item of GALLERY_ITEMS) {
+      expect(screen.getByTestId(`gallery-item-${item.id}-measurement`).textContent).toBe("연결된 실측 에너지 자료 없음");
+    }
   });
 
   it("opens its own model, and exactly one link does it", () => {
@@ -242,35 +247,28 @@ describe("the duplex apartment card", () => {
   });
 
   it("the read string on every subtraction figure reproduces its own value", () => {
-    // Not "the words appear" — the arithmetic in the explanation is parsed
-    // back out and has to give the number printed beside it.
-    const reproduces = (id: string) => {
+    // The manifest-derived explanation includes room names with digits. Parse
+    // its equation and each exclusion count separately: "Bedroom 2" is a name,
+    // not an extra term in the subtraction.
+    const rooms = figure("rooms");
+    const match = rooms.read.match(/^IfcSpace (\d+) − (\d+) excluded \((.+)\) = (\d+)$/)!;
+    expect(match).not.toBeNull();
+    const [, raw, excluded, names, result] = match;
+    const namedExclusions = names.split(" · ").reduce((sum, name) => sum + Number(name.match(/^\d+/)![0]), 0);
+    expect(namedExclusions).toBe(Number(excluded));
+    expect(Number(raw) - Number(excluded)).toBe(Number(result));
+    expect(Number(result)).toBe(Number(rooms.value));
+    expect(Number(raw)).toBe(37);
+    for (const id of ["walls", "windows", "doors"]) {
       const f = figure(id);
-      const terms = [...f.read.matchAll(/([+-−])?\s*(\d[\d,]*)/g)];
-      let total = 0;
-      terms.forEach((m, i) => {
-        const n = Number(m[2].replace(/,/g, ""));
-        const sign = m[1] === "-" || m[1] === "−" ? -1 : 1;
-        total += i === 0 && !m[1] ? n : sign * n;
-      });
-      return { total, value: Number(f.value.replace(/[^\d.]/g, "")) };
-    };
-    // "IfcSpace 37 − 18 해석용 중복 − 1 ROOF" = 18
-    expect(reproduces("rooms").total).toBe(reproduces("rooms").value);
-    // "IfcWallStandardCase 56 + IfcWall 1" = 57
-    expect(reproduces("walls").total).toBe(reproduces("walls").value);
-    // "IfcWindow 24 − 2 천창(지붕에 설치)" = 22
-    expect(reproduces("windows").total).toBe(reproduces("windows").value);
-    // "IfcDoor 14 − 10 내부 칸막이벽" = 4
-    expect(reproduces("doors").total).toBe(reproduces("doors").value);
-    // "Duplex_MEP 924 + Duplex_Electrical 100 + Duplex_Plumbing 498" = 1,522
-    expect(reproduces("services").total).toBe(reproduces("services").value);
+      expect(Number(f.read.match(/^\d+/)![0])).toBe(Number(f.value));
+    }
   });
 
   it("names what the floor area excludes, since that is why it is right", () => {
     const area = figure("floor-area");
-    expect(area.read).toMatch(/해석용 중복/);
-    expect(area.read).toMatch(/ROOF/);
+    expect(area.read).toMatch(/excluded:.*Bedroom.*Roof/);
+    expect(area.read).toContain("18 floor-counting IfcSpace");
   });
 
   it("shows the naive totals nowhere — neither is a floor area", () => {

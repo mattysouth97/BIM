@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import styles from "./gallery.module.css";
 
 import {
   datumRange,
@@ -158,18 +159,17 @@ function StatedFigures({ item, isKo }: { item: GalleryItem; isKo: boolean }) {
       {/* Stated values only. `read` names what each one was counted from AND
           what was excluded, so a reader can check any line against the file
           rather than trust it. */}
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 px-4 py-3.5">
+      <dl className={styles.figures}>
         {item.figures.map((figure) => (
-          <div key={figure.id} className="min-w-0">
-            <dt className="truncate text-[10px] text-muted-foreground">
+          <div key={figure.id} className={styles.figure}>
+            <dt>
               {isKo ? figure.ko : figure.en}
             </dt>
-            <dd className="gallery-figure mt-0.5 truncate text-foreground">
+            <dd className={styles.value}>
               {figure.value}
             </dd>
             <dd
-              className="truncate text-[9px] text-muted-foreground/80"
-              title={figure.read}
+              className={styles.source}
             >
               {figure.read}
             </dd>
@@ -177,18 +177,18 @@ function StatedFigures({ item, isKo }: { item: GalleryItem; isKo: boolean }) {
         ))}
       </dl>
 
-      <footer className="mt-auto border-t border-border px-4 py-2.5">
-        <p className="landing-stamp text-[9px] text-muted-foreground">
+      <footer className={styles.footer}>
+        <p className={styles.file}>
           {item.modelFile}
         </p>
-        <p className="mt-1 text-[10px] leading-4 text-muted-foreground">
+        <p className={styles.metadata}>
           {item.ifcSchema} {item.viewDefinition} · {item.authoringTool} ·{" "}
           {item.modelDate}
         </p>
         {/* CC BY requires the credit to travel with the work, so this renders
             verbatim and in full rather than being trimmed to fit the card. */}
         <p
-          className="mt-1.5 text-[10px] leading-4 text-muted-foreground"
+          className={styles.attribution}
           data-testid={`gallery-item-${item.id}-attribution`}
         >
           {item.attribution
@@ -196,6 +196,9 @@ function StatedFigures({ item, isKo }: { item: GalleryItem; isKo: boolean }) {
             : isKo
               ? `${item.licence} — 저작권자가 확인되지 않아 표기를 비워 둡니다. 틀린 이름을 적는 것보다 낫습니다.`
               : `${item.licence} — the rights holder is not established, so no credit is given. A wrong name would be worse than none.`}
+        </p>
+        <p className={styles.measurement} data-testid={`gallery-item-${item.id}-measurement`}>
+          {isKo ? item.measuredConsumption.ko : item.measuredConsumption.en}
         </p>
       </footer>
     </>
@@ -215,9 +218,7 @@ export function GalleryCard({ item, isKo }: { item: GalleryItem; isKo: boolean }
 
   return (
     <article
-      className={`gallery-card group relative flex w-full flex-col overflow-hidden rounded-xl border border-border bg-card${
-        item.href ? " transition-colors hover:border-foreground/30" : ""
-      }`}
+      className={styles.card}
       data-testid={`gallery-item-${item.id}`}
       aria-labelledby={`gallery-item-${item.id}-title`}
     >
@@ -229,7 +230,7 @@ export function GalleryCard({ item, isKo }: { item: GalleryItem; isKo: boolean }
       {item.href ? (
         <Link
           href={item.href}
-          className="absolute inset-0 z-10 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          className="absolute inset-0 z-10 rounded-lg focus-visible:outline-none"
           data-testid={`gallery-item-${item.id}-link`}
         >
           <span className="sr-only">
@@ -238,34 +239,33 @@ export function GalleryCard({ item, isKo }: { item: GalleryItem; isKo: boolean }
         </Link>
       ) : null}
 
-      <div className="gallery-plate relative z-0 border-b border-border">
+      <div className={`gallery-plate relative z-0 ${styles.plate}`}>
         <SectionPlate datums={item.datums} isKo={isKo} />
       </div>
 
       {/* The plate's caption. It sits in HTML rather than in the drawing so it
           can be Korean without hitting the latin-subset drawing faces. */}
-      <p className="border-b border-border px-4 py-2 text-[10px] leading-4 text-muted-foreground">
+      <p className={styles.caption}>
         {isKo
           ? "층별 단면 — 높이는 실제 레벨, 막대 길이는 그 층의 실 면적, 숫자는 실 수"
           : "Storey section — height is the real level, bar length that level's floor area, the number its room count"}
       </p>
 
-      {/* The title block, laid out the way a drawing sheet lays one out: the
-          name, what it is, and the state it is in. */}
-      <header className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+      {/* Keep the complete title and source evidence visible at every width. */}
+      <header className={styles.cardHeading}>
         <div className="min-w-0">
           <h2
             id={`gallery-item-${item.id}-title`}
-            className="gallery-title truncate text-foreground"
+            className={styles.title}
           >
             {title}
           </h2>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+          <p className={styles.use}>
             {isKo ? item.koUse : item.enUse}
           </p>
         </div>
         <span
-          className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+          className={styles.status}
           data-testid={`gallery-item-${item.id}-status`}
         >
           {statusLabel}

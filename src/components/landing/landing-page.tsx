@@ -5,6 +5,7 @@ import { landingCopy } from "@/lib/landing/copy";
 import { useAppStore } from "@/store/app-store";
 import { GalleryCard } from "./gallery-card";
 import { ReferenceDatasetDownloads } from "@/components/reference-building/reference-dataset-downloads";
+import styles from "./gallery.module.css";
 
 /**
  * The landing page is a gallery of the models this project has taken in —
@@ -22,7 +23,7 @@ export function LandingPage() {
   const count = GALLERY_ITEMS.length;
 
   return (
-    <div className="landing-stage">
+    <div className={`landing-stage ${styles.page}`}>
       <a
         className="fixed left-3 top-0 z-[60] -translate-y-full rounded-md bg-primary px-2.5 py-1.5 text-xs text-primary-foreground focus:translate-y-2"
         href="#gallery"
@@ -30,38 +31,38 @@ export function LandingPage() {
         {copy.skip}
       </a>
 
-      <div className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 sm:py-12">
-        <div className="flex items-baseline justify-between gap-4 border-b border-border pb-3">
-          <h1 className="landing-stamp text-[10px] font-semibold text-muted-foreground">
+      <div className={styles.container}>
+        <div className={styles.collectionHeading}>
+          <h1>
             {isKo ? "모델" : "Models"}
           </h1>
-          <span className="landing-stamp text-[10px] text-muted-foreground">
-            {String(count).padStart(2, "0")}
+          <span>
+            {count}
           </span>
         </div>
 
         {/* Lead with the professional task, then distinguish sourced inputs,
             assumptions and calculated results. No new entry flow. */}
-        <div className="mt-6 max-w-[44rem]" data-testid="landing-gallery-lede">
-          <p className="gallery-lede text-balance break-keep text-foreground">
+        <div className={styles.intro} data-testid="landing-gallery-lede">
+          <p className={styles.lede}>
             {isKo
               ? "건물의 에너지 성능, 근거부터 살펴보세요"
               : "Inspect the evidence behind a building's energy performance"}
           </p>
-          <p className="mt-3 text-[13px] leading-6 text-muted-foreground">
+          <p className={styles.description}>
             {isKo
               ? "공개 BIM에서 재료·설비와 그 근거를 확인하고, 개선안을 검토하세요. 실제 건물의 조정 모델과 연구·예제 모델을 함께 제공합니다. 파일에서 읽은 값과 가정을 구분하며, 에너지 수치는 실측 사용량이 아닌 간이 계산 결과입니다."
               : "Inspect materials, systems and their sources in public BIM, then explore retrofit options. The collection includes real-building coordination models and research examples. Source values and assumptions stay distinct; energy figures are screening calculations, not metered consumption."}
           </p>
         </div>
 
-        <div className="mt-6 border-t border-border pt-4">
+        <div className={styles.downloads}>
           <ReferenceDatasetDownloads locale={isKo ? "ko" : "en"} />
         </div>
 
-        <ul id="gallery" className="gallery-grid mt-10 sm:mt-12" data-testid="landing-gallery">
+        <ul id="gallery" className={styles.grid} data-testid="landing-gallery">
           {GALLERY_ITEMS.map((item) => (
-            <li key={item.id} className="flex">
+            <li key={item.id}>
               <GalleryCard item={item} isKo={isKo} />
             </li>
           ))}

@@ -1,0 +1,248 @@
+.page {
+  font-family: var(--font-geist-sans), Arial, "Malgun Gothic", sans-serif;
+}
+
+.container {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding: 36px 20px 64px;
+}
+
+.collectionHeading {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.collectionHeading h1 {
+  font-size: 15px;
+  font-weight: 550;
+  letter-spacing: -0.025em;
+}
+
+.collectionHeading span {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.intro {
+  max-width: 720px;
+  margin-top: 28px;
+}
+
+.lede {
+  font-size: clamp(23px, 2.2vw, 30px);
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  margin-top: 14px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+
+.downloads {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* One fractional row size stretches every card to the tallest content, across
+   rows as well as within them. Text remains intrinsically sized and visible. */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  gap: 24px;
+  margin-top: 36px;
+}
+
+.grid > li {
+  display: flex;
+  min-width: 0;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  transition: border-color 160ms ease;
+}
+
+.card:has(a):hover {
+  border-color: color-mix(in srgb, var(--foreground) 35%, var(--border));
+}
+
+.card:focus-within {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+
+.plate {
+  position: relative;
+  flex: none;
+  aspect-ratio: 8 / 5;
+  border-bottom: 1px solid var(--border);
+}
+
+.plate svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.caption {
+  min-height: 78px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.cardHeading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 148px;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.title {
+  font-family: var(--font-geist-sans), Arial, "Malgun Gothic", sans-serif;
+  color: var(--foreground);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.035em;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.use {
+  margin-top: 5px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.status::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.figures {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: min-content;
+  align-content: start;
+  gap: 20px 18px;
+  padding: 20px;
+}
+
+.figure {
+  min-width: 0;
+}
+
+.figure dt {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.value {
+  margin-top: 4px;
+  font-size: 17px;
+  font-weight: 450;
+  line-height: 1.4;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.source {
+  margin-top: 5px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.footer {
+  min-height: 270px;
+  padding: 18px 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.file {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.metadata {
+  margin-top: 6px;
+}
+
+.attribution {
+  margin-top: 12px;
+}
+
+.measurement {
+  margin-top: 12px;
+}
+
+@media (min-width: 700px) {
+  .container { padding: 44px 28px 80px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1120px) {
+  .container { padding-inline: 40px; }
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+}
