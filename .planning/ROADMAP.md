@@ -40,72 +40,101 @@ both have hard upstream dependencies this milestone creates rather than satisfie
 ## Phase Details
 
 ### Phase 1: Honest Physics
+
 **Goal**: Every measure that changes lighting or renewable generation moves the building's modeled energy intensity and efficiency grade, not only its cash flow — and the same building returns the same retrofit result no matter which page computed it
 **Depends on**: Nothing (first phase)
 **Requirements**: PHYS-01, PHYS-02, PHYS-03, PHYS-04, PHYS-05
 **Success Criteria** (what must be TRUE):
+
   1. Applying an LED/lighting retrofit changes the building's modeled energy intensity and efficiency grade, not only its cash flow
   2. Applying a photovoltaic system changes primary energy and efficiency grade, not only its cash flow
   3. When lighting power density or PV capacity is unknown, the resulting figure displays as a named, visible assumption, never a silent default
   4. The same building priced from the twin and from the diagnostics page returns identical retrofit results
   5. All seven published reference-building datasets are regenerated under the corrected physics, with a raised schema version and a changelog entry recording the change
+
 **Plans**: 5 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 01-01-PLAN.md — Tracer: named end-use fuel split and a real lighting load reach both the grade intensity and the on-screen site intensity
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 01-02-PLAN.md — One resolved ClimateRegion wired to all nine consumers; regionalized cooling fields; an unresolvable region refuses
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 01-03-PLAN.md — Photovoltaic generation reaches primary energy and the grade; clipped surplus reported; a zero capacity stated as an assumption
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 01-04-PLAN.md — Twin and diagnostics converge on one shared retrofit core, enforced by a build-failing parity contract test
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [ ] 01-05-PLAN.md — Schema version raised, limitation statements rewritten in place, changelog and seven-building before-and-after evidence
 
 ### Phase 2: Retrofit Panel
+
 **Goal**: The retrofit panel reports honest energy, carbon and verification guidance for the work the user selected, priced only off savings the engine actually produced
 **Depends on**: Phase 1 (needs honest physics and converged economics before the panel can honestly report them)
 **Requirements**: PANEL-01, PANEL-02, PANEL-03, PANEL-04, PANEL-05
 **Success Criteria** (what must be TRUE):
+
   1. User sees the energy intensity and carbon outcome, before and after, for the retrofit work they selected
   2. User sees which inputs behind that outcome are measured versus assumed, with guidance on what to verify before committing capital
   3. Every currency figure shown traces to a modeled saving the engine actually produced
   4. The panel has a defined, visible slot reserved for corpus position, ready to receive next milestone's benchmarking feature without a redesign
   5. The unreachable budget slider component and the unused default-budget constant no longer exist in the codebase
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 3: Model Anchors
+
 **Goal**: The reference-model roster has one source of truth that every consumer reads, and it has grown to include Korean, typology-gap and further-licensed buildings — with an honest statement wherever no measured-consumption anchor exists
 **Depends on**: Nothing (independent of Phases 1-2; parallel-eligible with the physics/panel/corpus track)
 **Requirements**: ANCH-01, ANCH-02, ANCH-03, ANCH-04, ANCH-05, ANCH-06, ANCH-07
 **Success Criteria** (what must be TRUE):
+
   1. Every gallery card figure is derived from that building's generated manifest; none is a hand-typed literal
   2. A contract test checks every gallery card against its manifest, not only the clinic
   3. At least one Korean building, one typology-gap building and one further licensed-source building are registered as reference models at the same evidence standard as the existing seven
   4. A recorded finding states whether Korean metered-energy sources will license data for calibration, and on what terms
   5. Wherever a measured-consumption anchor would otherwise be implied, the product instead states explicitly that none exists
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 4: Corpus Generation
+
 **Goal**: Corpus baselines are generated at scale by a resumable batch job that reuses the app's own physics chain, with quota and field-completeness established by a real pilot before full-scale generation runs, and every record carrying its own provenance, licence and evidence tier from the moment it is created
 **Depends on**: Phase 1 (the physics fix must land first — the already-published datasets encode the old flaw, and a corpus generated before the fix would need regenerating)
 **Requirements**: SWEEP-01, SWEEP-02, SWEEP-03, SWEEP-04, SWEEP-05, SWEEP-06, SWEEP-07
 **Success Criteria** (what must be TRUE):
+
   1. A recorded measurement states the register's actual request quota and field-completeness rate, taken from a real bounded pilot sweep
   2. Corpus baselines are generated by a resumable batch job that reuses the same energy chain the interactive app uses, with no second implementation — and full-scale generation does not start until the pilot's findings are in (a route/generator skeleton may be built and tested on a handful of buildings beforehand)
   3. Every corpus record carries its engine version, schema version, source commit, pinned generation time, provenance and evidence tier, assembled during generation rather than added afterward
   4. A register row that cannot support a baseline is recorded as a logged exclusion with a reason, never filled with a population average, and each release carries a table of how prevalent each named assumption is across its records
   5. Every corpus record has a stable identifier and a permalink that returns that record later
+
 **Plans**: TBD
 
 ### Phase 5: Publishing
+
 **Goal**: The corpus is published as versioned, dated releases with a bulk export, a read-only filterable API and a public data dictionary, stating what it covers and what it does not — gated by a licence and privacy review before anything ships
 **Depends on**: Phase 4 (needs real corpus records to publish, store and version)
 **Requirements**: PUB-01, PUB-02, PUB-03, PUB-04, PUB-05, PUB-06, PUB-07, PUB-08, PUB-09
 **Success Criteria** (what must be TRUE):
+
   1. Every release states which building classes, eras and regions it covers and which it does not
   2. User can download the whole corpus in one export, and can search and filter it by use type, era and region
   3. A read-only API returns corpus records with filtering and pagination, documented by a public data dictionary covering every field and its unit
   4. Releases are dated, versioned snapshots with a changelog stating what changed since the prior release, and corpus artifacts are stored outside the git repository
   5. Before first publish, a recorded decision states the licence for register-derived records separately from the curated models' licences, and any statement about the pipeline's internal consistency stays textually separate from any statement about accuracy against the Korean building stock
+
 **Plans**: TBD
 **UI hint**: yes
 
