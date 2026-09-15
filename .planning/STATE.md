@@ -5,10 +5,10 @@ milestone_name: Building Energy Repository
 current_phase: 03
 current_phase_name: Model Anchors
 status: in_progress
-stopped_at: Paused 2026-09-16 mid quick-task 260916-0bz (GLB blob/CDN); CONTEXT + RESEARCH locked, no PLAN yet
-last_updated: "2026-09-15T15:29:13.280Z"
+stopped_at: Paused 2026-09-16 at quick-task 260916-0bz Task 3 human checkpoint (create public Blob store on bim, icn1); Tasks 1-2 complete and committed (02b7703, 6e33998)
+last_updated: "2026-09-16T03:20:00.000Z"
 last_activity: 2026-09-16
-last_activity_desc: Paused after resume; GLB discussion locked; RESEARCH.md landed after pause; planner not spawned
+last_activity_desc: Executed 260916-0bz Tasks 1-2 (inert rewrite + gitignore + 52-URL e2e; publish/restore scripts dry-run green); paused at Task 3 checkpoint — user must create the Blob store
 progress:
   total_phases: 5
   completed_phases: 3
@@ -63,9 +63,11 @@ See phase verification reports and docs/04_Agent-Handoffs/CURRENT.md for release
 ## Session continuity
 
 Last session: 2026-09-16
-Stopped at: `/gsd-pause-work` mid quick-task `260916-0bz` (move published
-reference-building GLBs to Vercel Blob). Discussion complete; CONTEXT.md
-written; RESEARCH.md landed after pause; no PLAN.md, no code changes, no executor.
+Stopped at: quick-task `260916-0bz` Task 3 human checkpoint. Tasks 1-2 are
+complete and committed (`02b7703` rewrite+gitignore+e2e, `6e33998` operator
+scripts; all verify gates green, dry-runs print 52 files / 492,954,436 bytes).
+Next: user creates the public Blob store on `bim` in `icn1` and sets
+`BLOB_PUBLIC_BASE_URL` (PLAN Task 3), then approves upload + git rm (Task 4).
 Resume file: `.planning/.continue-here.md` + `.planning/HANDOFF.json`
 
 ## Resume
