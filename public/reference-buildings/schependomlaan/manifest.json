@@ -5233,5 +5233,57 @@
       }
     ],
     "appearanceBasis": "IFC occurrence or type material association. For a layer set, the thickest stated layer is used as an illustrative representative, not as the verified exterior finish. Source layer order does not establish installation direction. Unreviewed material names remain neutral. Glazing retains its base role appearance."
+  },
+  "galleryEvidence": {
+    "generator": "build-gallery-catalogue.mjs:1",
+    "spacesSha256": "fb1f8e9720994b9be7e4e89d0ca4e7891b8e5f4e801a9626d97891e7812d966f",
+    "areaSources": [
+      "GrossFloorArea"
+    ],
+    "exclusions": [],
+    "datums": [
+      {
+        "name": "04 dak",
+        "elevationM": 12,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "03 derde verdieping",
+        "elevationM": 9,
+        "rooms": 19,
+        "roomAreaSqm": 177.015,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "02 tweede verdieping",
+        "elevationM": 6,
+        "rooms": 20,
+        "roomAreaSqm": 195.848,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "01 eerste verdieping",
+        "elevationM": 3,
+        "rooms": 29,
+        "roomAreaSqm": 290.563,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "00 begane grond",
+        "elevationM": 0,
+        "rooms": 32,
+        "roomAreaSqm": 302.24,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "-1 fundering",
+        "elevationM": -1,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      }
+    ]
   }
 }

@@ -1527,5 +1527,56 @@
       }
     ],
     "appearanceBasis": "IFC occurrence or type material association. For a layer set, the thickest stated layer is used as an illustrative representative, not as the verified exterior finish. Source layer order does not establish installation direction. Unreviewed material names remain neutral. Glazing retains its base role appearance."
+  },
+  "galleryEvidence": {
+    "generator": "build-gallery-catalogue.mjs:1",
+    "spacesSha256": "5483277b74587e1a565e6c7e7da12bf9d95261084e8a16cf3b0a21a61dda3074",
+    "areaSources": [
+      "GSA BIM Area"
+    ],
+    "exclusions": [
+      {
+        "reason": "ROOF",
+        "count": 6
+      },
+      {
+        "reason": "OPEN TO BELOW",
+        "count": 3
+      },
+      {
+        "reason": "MECH. YARD",
+        "count": 1
+      }
+    ],
+    "datums": [
+      {
+        "name": "Roof - Main",
+        "elevationM": 9.25,
+        "rooms": 1,
+        "roomAreaSqm": 64.832,
+        "excludedSpaces": 5
+      },
+      {
+        "name": "Second Floor",
+        "elevationM": 4.57,
+        "rooms": 105,
+        "roomAreaSqm": 1723.692,
+        "excludedSpaces": 4
+      },
+      {
+        "name": "First Floor",
+        "elevationM": 0,
+        "rooms": 153,
+        "roomAreaSqm": 2525.672,
+        "excludedSpaces": 1
+      },
+      {
+        "name": "TOF Footing",
+        "elevationM": -1,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      }
+    ]
   }
 }

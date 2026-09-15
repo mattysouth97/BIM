@@ -1,3 +1,4 @@
+import referenceRegistry from './registry.json';
 /**
  * The published face of a reference building.
  *
@@ -541,17 +542,8 @@ export type ReferenceBuildingOpenings = Readonly<{
  * into a recognised-but-404ing one, which is strictly worse: the same failure,
  * with the constant's documented meaning now false.
  */
-export const REFERENCE_BUILDING_IDS = [
-  "bs-medical-dental-clinic",
-  "schependomlaan",
-  "duplex-apartment",
-  "fzk-haus",
-  "kit-office",
-  "klassiqua-office-1970",
-  "taltech-maemaja",
-] as const;
-
-export type ReferenceBuildingId = (typeof REFERENCE_BUILDING_IDS)[number];
+export type ReferenceBuildingId = keyof typeof referenceRegistry;
+export const REFERENCE_BUILDING_IDS = Object.keys(referenceRegistry) as ReferenceBuildingId[];
 
 export function isReferenceBuildingId(
   value: string,

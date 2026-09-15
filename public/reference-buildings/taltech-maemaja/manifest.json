@@ -8285,5 +8285,50 @@
       }
     ],
     "appearanceBasis": "IFC occurrence or type material association. For a layer set, the thickest stated layer is used as an illustrative representative, not as the verified exterior finish. Source layer order does not establish installation direction. Unreviewed material names remain neutral. Glazing retains its base role appearance."
+  },
+  "galleryEvidence": {
+    "generator": "build-gallery-catalogue.mjs:1",
+    "spacesSha256": "593ced8db8f3a19d336259409477c0fca6910d150173b848cfadbbace862a4ed",
+    "areaSources": [
+      "GrossFloorArea"
+    ],
+    "exclusions": [],
+    "datums": [
+      {
+        "name": "Katus",
+        "elevationM": 14.51,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "3. korrus",
+        "elevationM": 9.8,
+        "rooms": 24,
+        "roomAreaSqm": 546.109,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "2. korrus",
+        "elevationM": 4.9,
+        "rooms": 18,
+        "roomAreaSqm": 548.94,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "1. korrus",
+        "elevationM": 0,
+        "rooms": 29,
+        "roomAreaSqm": 1230.399,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "+Kelder",
+        "elevationM": -3.5,
+        "rooms": 44,
+        "roomAreaSqm": 1160.667,
+        "excludedSpaces": 0
+      }
+    ]
   }
 }

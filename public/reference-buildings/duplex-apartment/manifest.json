@@ -1356,5 +1356,81 @@
       }
     ],
     "appearanceBasis": "IFC occurrence or type material association. For a layer set, the thickest stated layer is used as an illustrative representative, not as the verified exterior finish. Source layer order does not establish installation direction. Unreviewed material names remain neutral. Glazing retains its base role appearance."
+  },
+  "galleryEvidence": {
+    "generator": "build-gallery-catalogue.mjs:1",
+    "spacesSha256": "536cf57ba81bfca11b6dec2a193a985821abfb2828671bc89a510fa237ecaefd",
+    "areaSources": [
+      "GSA BIM Area"
+    ],
+    "exclusions": [
+      {
+        "reason": "Bedroom 2",
+        "count": 2
+      },
+      {
+        "reason": "Bedroom 1",
+        "count": 2
+      },
+      {
+        "reason": "Hallway",
+        "count": 1
+      },
+      {
+        "reason": "Hallyway",
+        "count": 1
+      },
+      {
+        "reason": "Bathroom 2",
+        "count": 2
+      },
+      {
+        "reason": "Utility",
+        "count": 2
+      },
+      {
+        "reason": "Foyer",
+        "count": 2
+      },
+      {
+        "reason": "Living Room",
+        "count": 2
+      },
+      {
+        "reason": "Kitchen",
+        "count": 2
+      },
+      {
+        "reason": "Bathroom 1",
+        "count": 1
+      },
+      {
+        "reason": "Roof",
+        "count": 2
+      }
+    ],
+    "datums": [
+      {
+        "name": "Roof",
+        "elevationM": 6,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 2
+      },
+      {
+        "name": "Level 2",
+        "elevationM": 3.1,
+        "rooms": 10,
+        "roomAreaSqm": 143.183,
+        "excludedSpaces": 10
+      },
+      {
+        "name": "Level 1",
+        "elevationM": 0,
+        "rooms": 8,
+        "roomAreaSqm": 141.792,
+        "excludedSpaces": 7
+      }
+    ]
   }
 }

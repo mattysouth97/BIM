@@ -1,0 +1,128 @@
+{
+  "bs-medical-dental-clinic": {
+    "id": "clinic",
+    "koTitle": "치과 병원",
+    "enTitle": "Dental Clinic",
+    "koUse": "의료시설 · 지상 2층 + 옥탑",
+    "enUse": "Healthcare · two floors and a roof level",
+    "status": "modelling",
+    "modelFile": "Clinic_Architectural.ifc",
+    "ifcSchema": "IFC2X3",
+    "viewDefinition": "CoordinationView",
+    "authoringTool": "Autodesk Revit Architecture 2011",
+    "modelDate": "2011-09-06",
+    "measuredConsumption": {
+      "status": "none",
+      "ko": "연결된 실측 에너지 자료 없음",
+      "en": "No linked measured energy data"
+    }
+  },
+  "schependomlaan": {
+    "id": "schependomlaan",
+    "koTitle": "스헤펜돔라안 아파트",
+    "enTitle": "Schependomlaan Apartments",
+    "koUse": "공동주택 · 지상 4층 · 10세대 · 네덜란드 네이메헌",
+    "enUse": "Residential · four floors · ten dwellings · Nijmegen, NL",
+    "status": "modelling",
+    "modelFile": "IFC Schependomlaan.ifc",
+    "ifcSchema": "IFC2X3",
+    "viewDefinition": "CoordinationView_V2.0 + QuantityTakeOff + SpaceBoundary2ndLevel",
+    "authoringTool": "Graphisoft ArchiCAD-64 18.0.0 NED FULL",
+    "modelDate": "2015-08-27",
+    "measuredConsumption": {
+      "status": "none",
+      "ko": "연결된 실측 에너지 자료 없음",
+      "en": "No linked measured energy data"
+    }
+  },
+  "duplex-apartment": {
+    "id": "duplex-apartment",
+    "koTitle": "듀플렉스 아파트",
+    "enTitle": "Duplex Apartment",
+    "koUse": "공동주택 · 지상 2층 · 2세대",
+    "enUse": "Residential · two floors · two dwellings",
+    "status": "modelling",
+    "modelFile": "Duplex_A_20110907.ifc",
+    "ifcSchema": "IFC2X3",
+    "viewDefinition": "CoordinationView",
+    "authoringTool": "Autodesk Revit Architecture 2011",
+    "modelDate": "2011-09-07",
+    "measuredConsumption": {
+      "status": "none",
+      "ko": "연결된 실측 에너지 자료 없음",
+      "en": "No linked measured energy data"
+    }
+  },
+  "fzk-haus": {
+    "id": "fzk-haus",
+    "koTitle": "FZK 하우스",
+    "enTitle": "FZK House",
+    "koUse": "단독주택 · 지상 2층",
+    "enUse": "Single-family house · two floors",
+    "status": "modelling",
+    "modelFile": "AC20-FZK-Haus.ifc",
+    "ifcSchema": "IFC4",
+    "viewDefinition": "QuantityTakeOffAddOnView, SpaceBoundary2ndLevelAddOnView",
+    "authoringTool": "Graphisoft ArchiCAD 20",
+    "modelDate": "n/a — a validation test house, no project date stated",
+    "measuredConsumption": {
+      "status": "none",
+      "ko": "연결된 실측 에너지 자료 없음",
+      "en": "No linked measured energy data"
+    }
+  },
+  "kit-office": {
+    "id": "kit-office",
+    "koTitle": "KIT 오피스",
+    "enTitle": "KIT Office",
+    "koUse": "사무·연구시설 예제 · 지하층과 다락 포함 5개 층",
+    "enUse": "Fictional office example · five levels including basement and attic",
+    "status": "published",
+    "modelFile": "AC20-Institute-Var-2.ifc",
+    "ifcSchema": "IFC4",
+    "viewDefinition": "QuantityTakeOffAddOnView, SpaceBoundary2ndLevelAddOnView",
+    "authoringTool": "Graphisoft ArchiCAD 20",
+    "modelDate": "2017-01-11",
+    "measuredConsumption": {
+      "status": "none",
+      "ko": "연결된 실측 에너지 자료 없음",
+      "en": "No linked measured energy data"
+    }
+  },
+  "klassiqua-office-1970": {
+    "id": "klassiqua-office-1970",
+    "koTitle": "Klassiqua 1970 오피스",
+    "enTitle": "Klassiqua Office · 1970",
+    "koUse": "통계 기반 연구용 오피스 원형 · 4개 층",
+    "enUse": "Synthetic office archetype · four storeys",
+    "status": "published",
+    "modelFile": "2026-07_Klassiqua_Buero_Archetyp_Baujahr_1970.ifc",
+    "ifcSchema": "IFC4X3_ADD2",
+    "viewDefinition": "ReferenceView",
+    "authoringTool": "Bonsai 0.8.5-post1 / IfcOpenShell 0.8.5-post1",
+    "modelDate": "2026-07-30",
+    "measuredConsumption": {
+      "status": "none",
+      "ko": "연결된 실측 에너지 자료 없음",
+      "en": "No linked measured energy data"
+    }
+  },
+  "taltech-maemaja": {
+    "id": "taltech-maemaja",
+    "koTitle": "TalTech 매에마야",
+    "enTitle": "TalTech Mäemaja",
+    "koUse": "실제 업무·연구시설 · Tallinn",
+    "enUse": "Office and laboratory · Tallinn",
+    "status": "published",
+    "modelFile": "DS3_TalTech_V4.ifc",
+    "ifcSchema": "IFC4",
+    "viewDefinition": "DesignTransferView_V1.0",
+    "authoringTool": "Autodesk Revit 2023",
+    "modelDate": "2025-04-03",
+    "measuredConsumption": {
+      "status": "none",
+      "ko": "연결된 실측 에너지 자료 없음",
+      "en": "No linked measured energy data"
+    }
+  }
+}

@@ -838,5 +838,50 @@
       }
     ],
     "appearanceBasis": "IFC occurrence or type material association. For a layer set, the thickest stated layer is used as an illustrative representative, not as the verified exterior finish. Source layer order does not establish installation direction. Unreviewed material names remain neutral. Glazing retains its base role appearance."
+  },
+  "galleryEvidence": {
+    "generator": "build-gallery-catalogue.mjs:1",
+    "spacesSha256": "c1158173875f2b9732fefc1bbf2224b668368061f22bdc341f09ce2acab41788",
+    "areaSources": [
+      "GrossFloorArea"
+    ],
+    "exclusions": [],
+    "datums": [
+      {
+        "name": "Dachgeschoss",
+        "elevationM": 9,
+        "rooms": 3,
+        "roomAreaSqm": 475.92,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "2. Obergeschoss",
+        "elevationM": 6,
+        "rooms": 22,
+        "roomAreaSqm": 441.62,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "1. Obergeschoss",
+        "elevationM": 3,
+        "rooms": 22,
+        "roomAreaSqm": 441.62,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "Erdgeschoss",
+        "elevationM": 0,
+        "rooms": 18,
+        "roomAreaSqm": 455.8,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "Keller",
+        "elevationM": -3,
+        "rooms": 17,
+        "roomAreaSqm": 451.7,
+        "excludedSpaces": 0
+      }
+    ]
   }
 }

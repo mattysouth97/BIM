@@ -1175,5 +1175,43 @@
         "en": "Generic IfcBuildingElementProxy and IfcFurnishingElement occurrences are not classified as MEP without source evidence."
       }
     ]
+  },
+  "galleryEvidence": {
+    "generator": "build-gallery-catalogue.mjs:1",
+    "spacesSha256": "e640d0dca0d758e3513932435e5fb4ac24691e35895f4bf70acf14eea883768e",
+    "areaSources": [
+      "solid_plan_union"
+    ],
+    "exclusions": [],
+    "datums": [
+      {
+        "name": "03",
+        "elevationM": 10.65,
+        "rooms": 12,
+        "roomAreaSqm": 376.756,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "02",
+        "elevationM": 7.1,
+        "rooms": 12,
+        "roomAreaSqm": 376.756,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "01",
+        "elevationM": 3.55,
+        "rooms": 12,
+        "roomAreaSqm": 376.756,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "00",
+        "elevationM": 0,
+        "rooms": 12,
+        "roomAreaSqm": 376.756,
+        "excludedSpaces": 0
+      }
+    ]
   }
 }

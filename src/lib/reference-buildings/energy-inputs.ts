@@ -383,7 +383,7 @@ const KIT_OFFICE: ReferenceBuildingEnergyInputs = Object.freeze({
   }),
 });
 
-const ENERGY_INPUTS: Readonly<Record<ReferenceBuildingId, ReferenceBuildingEnergyInputs | null>> =
+const ENERGY_INPUTS: Readonly<Partial<Record<ReferenceBuildingId, ReferenceBuildingEnergyInputs>>> =
   Object.freeze({
     "bs-medical-dental-clinic": CLINIC,
     schependomlaan: SCHEPENDOMLAAN,

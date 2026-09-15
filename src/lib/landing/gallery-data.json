@@ -1,0 +1,548 @@
+{
+  "bs-medical-dental-clinic": {
+    "licence": "CC BY 4.0",
+    "attribution": "BSI (2020) \"Medical-Dental Test Files\", buildingSMART International — https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+    "sourceUrl": "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+    "datums": [
+      {
+        "name": "Roof - Main",
+        "elevationM": 9.25,
+        "rooms": 1,
+        "roomAreaSqm": 64.832,
+        "excludedSpaces": 5
+      },
+      {
+        "name": "Second Floor",
+        "elevationM": 4.57,
+        "rooms": 105,
+        "roomAreaSqm": 1723.692,
+        "excludedSpaces": 4
+      },
+      {
+        "name": "First Floor",
+        "elevationM": 0,
+        "rooms": 153,
+        "roomAreaSqm": 2525.672,
+        "excludedSpaces": 1
+      },
+      {
+        "name": "TOF Footing",
+        "elevationM": -1,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      }
+    ],
+    "figures": [
+      {
+        "id": "floor-area",
+        "ko": "모델 바닥 면적",
+        "en": "Model floor area",
+        "value": "4,314.2 m²",
+        "read": "259 floor-counting IfcSpace · GSA BIM Area · excluded: 6 ROOF · 3 OPEN TO BELOW · 1 MECH. YARD",
+        "manifestField": "areas.totalFloorAreaSqm"
+      },
+      {
+        "id": "rooms",
+        "ko": "바닥을 갖는 공간",
+        "en": "Floor-counting spaces",
+        "value": "259",
+        "read": "IfcSpace 269 − 10 excluded (6 ROOF · 3 OPEN TO BELOW · 1 MECH. YARD) = 259",
+        "manifestField": "counts.spacesFloor"
+      },
+      {
+        "id": "walls",
+        "ko": "선별 외벽",
+        "en": "Selected exterior walls",
+        "value": "80",
+        "read": "80 IfcWall / IfcWallStandardCase in the extracted exterior-wall set",
+        "manifestField": "counts.exteriorWalls"
+      },
+      {
+        "id": "windows",
+        "ko": "산정에 포함된 창",
+        "en": "Counted windows",
+        "value": "58",
+        "read": "58 IfcWindow in the extracted aperture set; unresolved openings excluded",
+        "manifestField": "counts.windows"
+      },
+      {
+        "id": "doors",
+        "ko": "산정에 포함된 외부 문",
+        "en": "Counted exterior doors",
+        "value": "13",
+        "read": "13 IfcDoor in the extracted exterior aperture set; unresolved openings excluded",
+        "manifestField": "counts.exteriorDoors"
+      }
+    ]
+  },
+  "schependomlaan": {
+    "licence": "CC BY 4.0",
+    "attribution": null,
+    "sourceUrl": "https://github.com/openBIMstandards/Archive-DataSetSchependomlaan",
+    "datums": [
+      {
+        "name": "04 dak",
+        "elevationM": 12,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "03 derde verdieping",
+        "elevationM": 9,
+        "rooms": 19,
+        "roomAreaSqm": 177.015,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "02 tweede verdieping",
+        "elevationM": 6,
+        "rooms": 20,
+        "roomAreaSqm": 195.848,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "01 eerste verdieping",
+        "elevationM": 3,
+        "rooms": 29,
+        "roomAreaSqm": 290.563,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "00 begane grond",
+        "elevationM": 0,
+        "rooms": 32,
+        "roomAreaSqm": 302.24,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "-1 fundering",
+        "elevationM": -1,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      }
+    ],
+    "figures": [
+      {
+        "id": "floor-area",
+        "ko": "모델 바닥 면적",
+        "en": "Model floor area",
+        "value": "965.7 m²",
+        "read": "100 floor-counting IfcSpace · GrossFloorArea",
+        "manifestField": "areas.totalFloorAreaSqm"
+      },
+      {
+        "id": "rooms",
+        "ko": "바닥을 갖는 공간",
+        "en": "Floor-counting spaces",
+        "value": "100",
+        "read": "IfcSpace 100 − 0 excluded (none) = 100",
+        "manifestField": "counts.spacesFloor"
+      },
+      {
+        "id": "walls",
+        "ko": "선별 외벽",
+        "en": "Selected exterior walls",
+        "value": "122",
+        "read": "122 IfcWall / IfcWallStandardCase in the extracted exterior-wall set",
+        "manifestField": "counts.exteriorWalls"
+      },
+      {
+        "id": "windows",
+        "ko": "산정에 포함된 창",
+        "en": "Counted windows",
+        "value": "51",
+        "read": "51 IfcWindow in the extracted aperture set; unresolved openings excluded",
+        "manifestField": "counts.windows"
+      },
+      {
+        "id": "doors",
+        "ko": "산정에 포함된 외부 문",
+        "en": "Counted exterior doors",
+        "value": "16",
+        "read": "16 IfcDoor in the extracted exterior aperture set; unresolved openings excluded",
+        "manifestField": "counts.exteriorDoors"
+      }
+    ]
+  },
+  "duplex-apartment": {
+    "licence": "CC BY 4.0",
+    "attribution": "BSI (2020) \"Duplex Apartment Test Files\", buildingSMART International — https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+    "sourceUrl": "https://github.com/buildingsmart-community/Community-Sample-Test-Files",
+    "datums": [
+      {
+        "name": "Roof",
+        "elevationM": 6,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 2
+      },
+      {
+        "name": "Level 2",
+        "elevationM": 3.1,
+        "rooms": 10,
+        "roomAreaSqm": 143.183,
+        "excludedSpaces": 10
+      },
+      {
+        "name": "Level 1",
+        "elevationM": 0,
+        "rooms": 8,
+        "roomAreaSqm": 141.792,
+        "excludedSpaces": 7
+      }
+    ],
+    "figures": [
+      {
+        "id": "floor-area",
+        "ko": "모델 바닥 면적",
+        "en": "Model floor area",
+        "value": "285.0 m²",
+        "read": "18 floor-counting IfcSpace · GSA BIM Area · excluded: 2 Bedroom 2 · 2 Bedroom 1 · 1 Hallway · 1 Hallyway · 2 Bathroom 2 · 2 Utility · 2 Foyer · 2 Living Room · 2 Kitchen · 1 Bathroom 1 · 2 Roof",
+        "manifestField": "areas.totalFloorAreaSqm"
+      },
+      {
+        "id": "rooms",
+        "ko": "바닥을 갖는 공간",
+        "en": "Floor-counting spaces",
+        "value": "18",
+        "read": "IfcSpace 37 − 19 excluded (2 Bedroom 2 · 2 Bedroom 1 · 1 Hallway · 1 Hallyway · 2 Bathroom 2 · 2 Utility · 2 Foyer · 2 Living Room · 2 Kitchen · 1 Bathroom 1 · 2 Roof) = 18",
+        "manifestField": "counts.spacesFloor"
+      },
+      {
+        "id": "walls",
+        "ko": "선별 외벽",
+        "en": "Selected exterior walls",
+        "value": "12",
+        "read": "12 IfcWall / IfcWallStandardCase in the extracted exterior-wall set",
+        "manifestField": "counts.exteriorWalls"
+      },
+      {
+        "id": "windows",
+        "ko": "산정에 포함된 창",
+        "en": "Counted windows",
+        "value": "22",
+        "read": "22 IfcWindow in the extracted aperture set; unresolved openings excluded",
+        "manifestField": "counts.windows"
+      },
+      {
+        "id": "doors",
+        "ko": "산정에 포함된 외부 문",
+        "en": "Counted exterior doors",
+        "value": "4",
+        "read": "4 IfcDoor in the extracted exterior aperture set; unresolved openings excluded",
+        "manifestField": "counts.exteriorDoors"
+      }
+    ]
+  },
+  "fzk-haus": {
+    "licence": "KIT/IAI unrestricted use (attribution required)",
+    "attribution": "Institute for Automation and Applied Informatics (IAI), Karlsruhe Institute of Technology (KIT), \"AC20-FZK-Haus\" — https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+    "sourceUrl": "https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+    "datums": [
+      {
+        "name": "Dachgeschoss",
+        "elevationM": 2.7,
+        "rooms": 1,
+        "roomAreaSqm": 107.16,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "Erdgeschoss",
+        "elevationM": 0,
+        "rooms": 6,
+        "roomAreaSqm": 101.386,
+        "excludedSpaces": 0
+      }
+    ],
+    "figures": [
+      {
+        "id": "floor-area",
+        "ko": "모델 바닥 면적",
+        "en": "Model floor area",
+        "value": "208.6 m²",
+        "read": "7 floor-counting IfcSpace · GrossFloorArea",
+        "manifestField": "areas.totalFloorAreaSqm"
+      },
+      {
+        "id": "rooms",
+        "ko": "바닥을 갖는 공간",
+        "en": "Floor-counting spaces",
+        "value": "7",
+        "read": "IfcSpace 7 − 0 excluded (none) = 7",
+        "manifestField": "counts.spacesFloor"
+      },
+      {
+        "id": "walls",
+        "ko": "선별 외벽",
+        "en": "Selected exterior walls",
+        "value": "8",
+        "read": "8 IfcWall / IfcWallStandardCase in the extracted exterior-wall set",
+        "manifestField": "counts.exteriorWalls"
+      },
+      {
+        "id": "windows",
+        "ko": "산정에 포함된 창",
+        "en": "Counted windows",
+        "value": "11",
+        "read": "11 IfcWindow in the extracted aperture set; unresolved openings excluded",
+        "manifestField": "counts.windows"
+      },
+      {
+        "id": "doors",
+        "ko": "산정에 포함된 외부 문",
+        "en": "Counted exterior doors",
+        "value": "2",
+        "read": "2 IfcDoor in the extracted exterior aperture set; unresolved openings excluded",
+        "manifestField": "counts.exteriorDoors"
+      }
+    ]
+  },
+  "kit-office": {
+    "licence": "KIT/IAI unrestricted use (attribution required)",
+    "attribution": "Institute for Automation and Applied Informatics (IAI), Karlsruhe Institute of Technology (KIT), \"AC20-Institute-Var-2\" — https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+    "sourceUrl": "https://www.ifcwiki.org/index.php?title=KIT_IFC_Examples",
+    "datums": [
+      {
+        "name": "Dachgeschoss",
+        "elevationM": 9,
+        "rooms": 3,
+        "roomAreaSqm": 475.92,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "2. Obergeschoss",
+        "elevationM": 6,
+        "rooms": 22,
+        "roomAreaSqm": 441.62,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "1. Obergeschoss",
+        "elevationM": 3,
+        "rooms": 22,
+        "roomAreaSqm": 441.62,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "Erdgeschoss",
+        "elevationM": 0,
+        "rooms": 18,
+        "roomAreaSqm": 455.8,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "Keller",
+        "elevationM": -3,
+        "rooms": 17,
+        "roomAreaSqm": 451.7,
+        "excludedSpaces": 0
+      }
+    ],
+    "figures": [
+      {
+        "id": "floor-area",
+        "ko": "모델 바닥 면적",
+        "en": "Model floor area",
+        "value": "2,266.7 m²",
+        "read": "82 floor-counting IfcSpace · GrossFloorArea",
+        "manifestField": "areas.totalFloorAreaSqm"
+      },
+      {
+        "id": "rooms",
+        "ko": "바닥을 갖는 공간",
+        "en": "Floor-counting spaces",
+        "value": "82",
+        "read": "IfcSpace 82 − 0 excluded (none) = 82",
+        "manifestField": "counts.spacesFloor"
+      },
+      {
+        "id": "walls",
+        "ko": "선별 외벽",
+        "en": "Selected exterior walls",
+        "value": "44",
+        "read": "44 IfcWall / IfcWallStandardCase in the extracted exterior-wall set",
+        "manifestField": "counts.exteriorWalls"
+      },
+      {
+        "id": "windows",
+        "ko": "산정에 포함된 창",
+        "en": "Counted windows",
+        "value": "206",
+        "read": "206 IfcWindow in the extracted aperture set; unresolved openings excluded",
+        "manifestField": "counts.windows"
+      },
+      {
+        "id": "doors",
+        "ko": "산정에 포함된 외부 문",
+        "en": "Counted exterior doors",
+        "value": "1",
+        "read": "1 IfcDoor in the extracted exterior aperture set; unresolved openings excluded",
+        "manifestField": "counts.exteriorDoors"
+      }
+    ]
+  },
+  "klassiqua-office-1970": {
+    "licence": "CC BY 4.0",
+    "attribution": "Verena Dannapfel, Moritz Müller, Rita Streblow, Dirk Müller, Lisa Karber and Alexander Hickertz; Klassiqua Office Building Archetypes, July 2026, Zenodo 21727160 (CC BY 4.0). Extracted and adapted by BIMFIT.",
+    "sourceUrl": "https://zenodo.org/records/21727160",
+    "datums": [
+      {
+        "name": "03",
+        "elevationM": 10.65,
+        "rooms": 12,
+        "roomAreaSqm": 376.756,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "02",
+        "elevationM": 7.1,
+        "rooms": 12,
+        "roomAreaSqm": 376.756,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "01",
+        "elevationM": 3.55,
+        "rooms": 12,
+        "roomAreaSqm": 376.756,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "00",
+        "elevationM": 0,
+        "rooms": 12,
+        "roomAreaSqm": 376.756,
+        "excludedSpaces": 0
+      }
+    ],
+    "figures": [
+      {
+        "id": "floor-area",
+        "ko": "모델 바닥 면적",
+        "en": "Model floor area",
+        "value": "1,507.0 m²",
+        "read": "48 floor-counting IfcSpace · solid_plan_union",
+        "manifestField": "areas.totalFloorAreaSqm"
+      },
+      {
+        "id": "rooms",
+        "ko": "바닥을 갖는 공간",
+        "en": "Floor-counting spaces",
+        "value": "48",
+        "read": "IfcSpace 48 − 0 excluded (none) = 48",
+        "manifestField": "counts.spacesFloor"
+      },
+      {
+        "id": "walls",
+        "ko": "선별 외벽",
+        "en": "Selected exterior walls",
+        "value": "16",
+        "read": "16 IfcWall / IfcWallStandardCase in the extracted exterior-wall set",
+        "manifestField": "counts.exteriorWalls"
+      },
+      {
+        "id": "windows",
+        "ko": "산정에 포함된 창",
+        "en": "Counted windows",
+        "value": "167",
+        "read": "167 IfcWindow in the extracted aperture set; unresolved openings excluded",
+        "manifestField": "counts.windows"
+      },
+      {
+        "id": "doors",
+        "ko": "산정에 포함된 외부 문",
+        "en": "Counted exterior doors",
+        "value": "1",
+        "read": "1 IfcDoor in the extracted exterior aperture set; unresolved openings excluded",
+        "manifestField": "counts.exteriorDoors"
+      }
+    ]
+  },
+  "taltech-maemaja": {
+    "licence": "CC BY 4.0",
+    "attribution": "Veliskaki, A., et al. (2025), SmartlivingEPC public building BIM model and measurements, v1, Zenodo, DOI: 10.5281/zenodo.15782433. CC BY 4.0.",
+    "sourceUrl": "https://zenodo.org/records/15782433",
+    "datums": [
+      {
+        "name": "Katus",
+        "elevationM": 14.51,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "3. korrus",
+        "elevationM": 9.8,
+        "rooms": 24,
+        "roomAreaSqm": 546.109,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "2. korrus",
+        "elevationM": 4.9,
+        "rooms": 18,
+        "roomAreaSqm": 548.94,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "1. korrus",
+        "elevationM": 0,
+        "rooms": 29,
+        "roomAreaSqm": 1230.399,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "+Kelder",
+        "elevationM": -3.5,
+        "rooms": 44,
+        "roomAreaSqm": 1160.667,
+        "excludedSpaces": 0
+      }
+    ],
+    "figures": [
+      {
+        "id": "floor-area",
+        "ko": "모델 바닥 면적",
+        "en": "Model floor area",
+        "value": "3,486.1 m²",
+        "read": "115 floor-counting IfcSpace · GrossFloorArea",
+        "manifestField": "areas.totalFloorAreaSqm"
+      },
+      {
+        "id": "rooms",
+        "ko": "바닥을 갖는 공간",
+        "en": "Floor-counting spaces",
+        "value": "115",
+        "read": "IfcSpace 115 − 0 excluded (none) = 115",
+        "manifestField": "counts.spacesFloor"
+      },
+      {
+        "id": "walls",
+        "ko": "선별 외벽",
+        "en": "Selected exterior walls",
+        "value": "40",
+        "read": "40 IfcWall / IfcWallStandardCase in the extracted exterior-wall set",
+        "manifestField": "counts.exteriorWalls"
+      },
+      {
+        "id": "windows",
+        "ko": "산정에 포함된 창",
+        "en": "Counted windows",
+        "value": "72",
+        "read": "72 IfcWindow in the extracted aperture set; unresolved openings excluded",
+        "manifestField": "counts.windows"
+      },
+      {
+        "id": "doors",
+        "ko": "산정에 포함된 외부 문",
+        "en": "Counted exterior doors",
+        "value": "10",
+        "read": "10 IfcDoor in the extracted exterior aperture set; unresolved openings excluded",
+        "manifestField": "counts.exteriorDoors"
+      }
+    ]
+  }
+}
