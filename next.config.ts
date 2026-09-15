@@ -34,8 +34,41 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/cad/convert": ["node_modules/@mlightcad/libredwg-web/wasm/**"],
     // Dataset routes read only manifest JSON at runtime; include those files
-    // explicitly without pulling GLB meshes into the serverless functions.
+    // explicitly. The matching exclude below is what actually keeps the meshes
+    // out — an include cannot do that on its own.
     "/api/reference-buildings/**": ["public/reference-buildings/*/manifest.json"],
+  },
+
+  /**
+   * Keep the published geometry out of the serverless functions.
+   *
+   * These routes read `manifest.json` by a path built at runtime, so tracing
+   * cannot see which file is wanted and conservatively pulls the whole
+   * `public/reference-buildings` tree — 295 MB of GLB meshes and flow graphs
+   * that no function ever opens. The tenth model took the
+   * `/api/reference-buildings/[id]/dataset` bundle to 296.3 MB and the
+   * deployment was refused at Vercel's 250 MB uncompressed limit.
+   *
+   * The include above was written believing it prevented this; an include only
+   * ADDS files, so nothing was keeping the meshes out. The limit had simply not
+   * been reached yet.
+   *
+   * These assets are served statically from the CDN and are not read by any
+   * function, so excluding them changes nothing at runtime. Vercel's
+   * `VERCEL_SUPPORT_LARGE_FUNCTIONS=1` would also have raised the ceiling, but
+   * it would ship the meshes into every function invocation rather than fixing
+   * the reason they are there.
+   */
+  outputFileTracingExcludes: {
+    "/api/reference-buildings/**": [
+      "public/reference-buildings/**/*.glb",
+      "public/reference-buildings/**/*-flow.json",
+      "public/reference-buildings/**/*.svg",
+      "public/reference-buildings/**/spaces.json",
+      "public/reference-buildings/**/openings.json",
+      "public/reference-buildings/**/roof-planes.json",
+      "public/reference-buildings/**/architectural-details-index.json",
+    ],
   },
 };
 
