@@ -1,810 +1,254 @@
-# Architecture Research
+# Architecture Research — Building Energy Repository (v6.0)
 
-**Domain:** Energy Systems Observability & Control — v5.0 integration with existing Three.js BIM viewer
-**Researched:** 2026-04-12
-**Confidence:** HIGH (all integration points verified against actual codebase files)
+**Domain:** Adding a corpus/repository face to an existing single-building BIM/energy diagnosis app
+**Researched:** 2026-09-15
+**Confidence:** HIGH — every claim below is grounded in a read file:line; the only MEDIUM-confidence area is corpus storage at real scale (Q5), because nothing at that scale exists in the codebase yet to measure against.
 
----
+## Standard Architecture
 
-## Context
-
-This document covers ONLY the new architecture needed for v5.0. The existing architecture (5-layer
-system, BuildingLayers, LayerManager, useEnergyMetrics, material-store override pattern,
-structural-tooltip raycasting) is documented as integration context, not re-researched.
-
----
-
-## System Overview
+### System Overview
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│  UI Layer (React components)                                                      │
-│                                                                                   │
-│  ┌──────────────────┐  ┌────────────────────┐  ┌───────────────────────────┐    │
-│  │  LayerPanel       │  │  EnergyBreakdown   │  │  EquipmentControlPanel    │    │
-│  │  (extended with   │  │  Chart (NEW)       │  │  (NEW — in config tab)    │    │
-│  │  MEP sub-toggles) │  │                    │  │                           │    │
-│  └────────┬──────────┘  └────────┬───────────┘  └─────────────┬─────────────┘    │
-│           │                      │                             │                  │
-├───────────┼──────────────────────┼─────────────────────────────┼──────────────────┤
-│  Hook Layer                      │                             │                  │
-│                                  │                             │                  │
-│  ┌───────────────────────────────▼─────────────────────────────▼──────────────┐  │
-│  │  useEnergyMetrics (existing)  ←── useMemo[baseRecipe + overrides]          │  │
-│  │  useEnergyBreakdown (NEW)     ←── extends calculateAnnualDemand()          │  │
-│  │  useScenarioEnergy (NEW)      ←── merges equipmentOverrides into calc pipe │  │
-│  └────────────────────────────────────────────────────────────────────────────┘  │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│  Store Layer                                                                      │
-│                                                                                   │
-│  ┌──────────────────┐  ┌──────────────────────┐  ┌──────────────────────────┐   │
-│  │  layer-store      │  │  recipe-store         │  │  workflow-store           │   │
-│  │  (existing)       │  │  (existing)           │  │  (existing)              │   │
-│  │  + mepSubVis      │  │  + scenarioOverrides  │  │  + scenarioActive        │   │
-│  │    Record<MepSub  │  │    (NEW slice)        │  │  + activeScenarioId      │   │
-│  │    LayerId, bool> │  │                       │  │  + equipmentOverrides    │   │
-│  │  + toggleMepSub   │  │                       │  │  (NEW slice)             │   │
-│  └────────┬──────────┘  └──────────┬────────────┘  └──────────┬───────────────┘   │
-├───────────┼─────────────────────────┼────────────────────────────┼──────────────────┤
-│  Three.js / Engine Layer            │                            │                  │
-│                                     │                            │                  │
-│  ┌──────────────────────────────────▼────────────────────────────▼────────────┐    │
-│  │  LayerManager (existing)                                                    │    │
-│  │  - getGroup("mep") → has 4 named child THREE.Groups after v5.0             │    │
-│  │    ├── "sub-mep-electrical"  ← layer-1-shell + electrical parts             │    │
-│  │    ├── "sub-mep-hvac"        ← layer-3-cooling + layer-4 + layer-5         │    │
-│  │    ├── "sub-mep-lighting"    ← layer-7-lighting                             │    │
-│  │    └── "sub-mep-dhw"         ← layer-6-dhw                                 │    │
-│  │  - setMepSubVisible(id, visible) (NEW method)                               │    │
-│  │                                                                              │    │
-│  │  EnergyHeatmapMesh (NEW — pure Three.js)                                    │    │
-│  │  - One THREE.Mesh per floor inside existing "energy-zones" group            │    │
-│  │  - vertexColors: true, Float32BufferAttribute color buffer                  │    │
-│  │  - Receives perFloor kWh/m² array; rebuilds on change                      │    │
-│  │                                                                              │    │
-│  │  EquipmentTooltip (NEW — R3F)                                                │    │
-│  │  - Extends structural-tooltip.tsx raycasting pattern                        │    │
-│  │  - Traverses mep sub-groups; reads userData.type + userData.floorNo        │    │
-│  │  - Raycaster allocated via useRef (fixes known structural-tooltip perf bug) │    │
-│  └──────────────────────────────────────────────────────────────────────────────┘    │
-│                                                                                      │
-│  Energy Engine (src/lib/energy/)                                                     │
-│  calculateAnnualDemand()   ← extended with optional perFloor + equipmentOverrides   │
-│  calculateSystemBreakdown() (NEW) → SystemBreakdown: hvac/lighting/dhw/plug        │
-│  inferEquipmentSpecs()      (NEW) → EquipmentSpec[] from BuildingRecipe             │
-└──────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│  INTERACTIVE APP (existing, untouched)                                    │
+│  /diagnostics/new?method=ledger → register search (client)                │
+│  /building/[id]  → twin: material-store + scenario-store → engine         │
+│  /models/[id]    → reference model: energy-inputs.ts (static, per-id)     │
+├───────────────────────────────────────────────────────────────────────────┤
+│  SHARED PHYSICS CORE (pure, no React, no fs) — already the seam           │
+│  src/lib/energy/*  (heat-loss, annual-demand, delivered-from-demand,      │
+│    primary-energy, system-breakdown, co2-emissions)                      │
+│  src/lib/energy-standards/*, src/lib/korean-building-codes.ts            │
+│  src/lib/energy-diagnostics/ledger-baseline-model.ts (register → model)  │
+│  src/lib/retrofit/* (measure generators, economic-model, retrofit-delta) │
+├───────────────────────────────────────────────────────────────────────────┤
+│  NEW: BATCH CORPUS GENERATION (headless, Node, server-only)               │
+│  scripts/generate-corpus-release.mjs  (driver: pages 법정동, calls route) │
+│  src/app/api/corpus/generate/route.ts (NEW — one register→row unit)      │
+│    reuses: api-proxy.ts, ledger-source.ts, ingestion.ts,                 │
+│            buildLedgerBaselineModel, energy-dataset.ts shape             │
+├───────────────────────────────────────────────────────────────────────────┤
+│  NEW: RELEASE STORAGE (extend an existing, currently-orphaned pattern)   │
+│  src/lib/portfolio/release-store.ts → StaticFileReleaseStore              │
+│  public/releases/<version>/{manifest.json, rows shards, calibration}     │
+│  (built for the superseded v7.0 Prediction plan; PROJECT.md absorbs its  │
+│   "dataset-release idea" into v6.0 — reuse, do not re-invent)            │
+├───────────────────────────────────────────────────────────────────────────┤
+│  SERVING                                                                   │
+│  src/app/api/reference-buildings/{datasets,[id]/dataset}/route.ts (exists)│
+│  NEW: src/app/api/corpus/{releases,[version],[version]/buildings}/*      │
+│  NEW: /corpus browsable page — server-paginated, never ships whole table │
+├───────────────────────────────────────────────────────────────────────────┤
+│  BENCHMARKING (NEW, shared)                                               │
+│  src/lib/benchmarks/peer-groups.ts + percentiles.ts — pure, consumed by  │
+│  both /corpus and /models/[id] / /building/[id]                          │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
----
+### Component Responsibilities
 
-## Integration Points with Existing Layer System
+| Component | Responsibility | Status |
+|-----------|----------------|--------|
+| `src/lib/energy-diagnostics/ledger-baseline-model.ts` | 건축물대장 → versioned `CanonicalEnergyModel`, pure, fact-traced | Existing — reuse as-is |
+| `src/app/api/bldrgst/*` + `_factory.ts` | Server-side data.go.kr proxy, per-endpoint caps, shared-key resolution | Existing — reuse for corpus fetch |
+| `src/app/api/corpus/generate/route.ts` | One register row → one dataset row, server-side, Node runtime | **NEW** |
+| `scripts/generate-corpus-release.mjs` | Drives the sweep: pages 법정동/시군구, calls the route, shards output, writes manifest | **NEW**, mirrors `scripts/build-reference-building.mjs` |
+| `src/lib/portfolio/release-store.ts` (`StaticFileReleaseStore`) | Reads immutable release artifacts from `public/releases/<version>/` | Existing (built for superseded v7.0) — **extend/rename for corpus rows** |
+| `src/lib/reference-buildings/energy-dataset.ts` | Shape of one building's published energy dataset (schema 1.3.0) | Existing — corpus row schema should be a superset/sibling, not a fork |
+| `src/lib/energy/delivered-from-demand.ts` | Fuel split feeding grade + primary energy | Existing — **fix in place, additive params** |
+| `src/lib/retrofit/lighting-retrofits.ts`, `solar-potential.ts` | Already compute REAL lighting kWh (LPD × area × hours) and REAL PV kWh (geometric kWp × irradiance) | Existing — **reuse the numbers these already produce, do not re-derive** |
+| `src/lib/retrofit/retrofit-delta.ts` | Twin's before/after engine re-run, consumes `deliveredFromDemand` | Existing — **must keep working after Q2 fix** |
+| `src/lib/energy-diagnostics/retrofit-bridge.ts` | Diagnostics' economics, reads `CompiledDegreeDayInput.payload`, a *second* derivation of the same measures | Existing — **this is the second economics path (Q3)** |
+| `src/lib/reference-buildings/manifest.ts` (`REFERENCE_BUILDING_IDS`) | Registry #1 of published models | Existing — **collapse into gallery (Q4)** |
+| `src/lib/landing/gallery.ts` (`GALLERY_ITEMS`) | Registry #2, hand-typed figures | Existing — **generate from manifest (Q4)** |
+| `src/lib/benchmarks/peer-groups.ts`, `percentiles.ts` | Peer-group definition + percentile math | **NEW**, shared by corpus page and single-building page |
 
-### 1. MEP Sub-Layer Split: Minimal Surgical Change
+## Q1 — Where corpus generation lives, and the interactive/batch boundary
 
-The `LayerId` union stays at 5 entries. `ALL_LAYER_IDS` stays at 5 entries. The `LayerManager`
-`groups` Map stays at 5 entries. The MEP sub-layer system is a **parallel structure on top** — not
-a replacement.
+### The boundary already exists; it just isn't crossed by anything headless yet
 
-**What changes in `src/lib/layers/types.ts` (additive only):**
+`buildLedgerBaselineModel` (`src/lib/energy-diagnostics/ledger-baseline-model.ts:244`) is already a pure function: it takes a `LedgerBaselineInput` (an `ingestion: DrawingSetIngestionResult`, a `title`, optional `floors`, a `locale`, and an optional `now: IsoDateTime`) and returns a `LedgerBaselineOutcome`. It imports nothing from React, nothing from Zustand, nothing from the DOM — only `@/lib/korean-building-codes`, `@/lib/energy-standards/assembly`, `@/lib/ledger/floor-rows`, and sibling `energy-diagnostics/*` modules (all pure). Its only current caller is `src/components/energy-diagnostics/ledger-baseline-loader.tsx` (a React component, confirmed by grep — the other five hits are tests), which fetches register data client-side, builds a `DrawingSourceInput` via `src/lib/energy-diagnostics/ledger-source.ts:1-50` (also pure — no `fs`, no `fetch`; it takes already-fetched register fields as plain arguments), runs it through `ingestDrawingSet`, and calls the model builder.
 
-```typescript
-export type MepSubLayerId =
-  | "mep-electrical"
-  | "mep-hvac"
-  | "mep-lighting"
-  | "mep-dhw";
+So the "clean boundary between the interactive app and a batch job" is not something to build from scratch — it is to **stop entering this pipeline only from a browser component** and add a second, server-side entry point that supplies the same three things (register title/floor rows, a `DrawingSourceInput`, a fixed `now`) without React.
 
-export const MEP_SUB_IDS: MepSubLayerId[] = [
-  "mep-electrical", "mep-hvac", "mep-lighting", "mep-dhw",
-];
+**Recommended shape (new):**
 
-export const MEP_SUB_CONFIGS: Record<MepSubLayerId, { name: string; nameKo: string; color: string }> = {
-  "mep-electrical": { name: "Electrical",    nameKo: "전기",      color: "#f59e0b" },
-  "mep-hvac":       { name: "HVAC",          nameKo: "냉난방환기", color: "#3b82f6" },
-  "mep-lighting":   { name: "Lighting",      nameKo: "조명",      color: "#fbbf24" },
-  "mep-dhw":        { name: "DHW/Plumbing",  nameKo: "급탕/배관", color: "#22c55e" },
-};
-```
+- `src/app/api/corpus/generate/route.ts` (Node runtime, `export const runtime = "nodejs"`, pinned to `icn1` like every other route touching data.go.kr/VWorld — see `AGENTS.md` "Functions are pinned to Seoul"). One request = one register lookup (by `sigunguCd`/`bjdongCd`/`platGbCd`/`bun`/`ji`, the same shape `bldrgstParamsSchema` already validates at `src/app/api/bldrgst/_factory.ts:36-45`) → fetch the four register endpoints server-side via `fetchFromDataGoKr` (`src/lib/api-proxy.ts`, already used by `_factory.ts:108`) → build the `DrawingSourceInput`/`ingestDrawingSet`/`buildLedgerBaselineModel` chain exactly as `ledger-baseline-loader.tsx` does, but in a route handler → shape the result through `buildReferenceEnergyDataset`-equivalent logic (Q5) → return one corpus row (JSON) or a `insufficient_ledger` reason.
+- This keeps `buildLedgerBaselineModel` itself completely untouched and reused verbatim from both the interactive loader and the batch route — the "same physics" requirement is satisfied by construction, not by convention.
+- `scripts/generate-corpus-release.mjs` (new, plain `.mjs`, matching the existing `scripts/build-reference-building.mjs:1-70` style) is the **driver**, not the physics: it pages through region codes (`/api/bldrgst/jijugu`, which already reports `totalCount` via `extractTotalCount`, `src/lib/api-proxy.ts:243-248`), calls the new route once per building or per small batch, and writes the accumulated rows to a release directory (Q5).
 
-**What changes in `src/store/layer-store.ts` (additive slice):**
+**Why not run TypeScript directly in a `.mjs` script?** Checked: there is no `tsx`/`ts-node` devDependency in `package.json`, and no existing script imports from `src/lib` via the `@/` path alias — every `scripts/*.mjs` is plain JS with its own `scripts/lib/*.mjs` helpers (confirmed by directory listing and grep). Building the batch job as a Next.js route handler avoids introducing a new script-execution toolchain: the route runs inside the already-compiled, already-tested TypeScript build, and the driver script only speaks HTTP (same pattern the app already uses for the register proxy itself). Adding `tsx` as a dev dependency to let scripts import `src/lib` directly is a viable alternative but is new tooling with its own path-alias/tsconfig wiring; the route-handler approach costs nothing new.
 
-```typescript
-// Add to LayerState interface:
-mepSubVisibility: Record<MepSubLayerId, boolean>;
-toggleMepSub: (id: MepSubLayerId) => void;
-setMepSubVisible: (id: MepSubLayerId, visible: boolean) => void;
+### Version-stamping for reproducibility
 
-// Add to initial state:
-mepSubVisibility: Object.fromEntries(MEP_SUB_IDS.map(id => [id, true])) as Record<MepSubLayerId, boolean>,
-```
+The pieces already exist and only need to be **assembled and pinned**, not invented:
 
-**What changes in `src/lib/layers/layer-manager.ts` (one new method):**
+- `LEDGER_BASELINE_MODEL_VERSION = "ledger-baseline-v1"` (`ledger-baseline-model.ts:77`) and `CANONICAL_ENERGY_MODEL_VERSION` (imported from `./types`) are already carried on every `CanonicalEnergyModel.modelVersion`/`schemaVersion`.
+- `ENERGY_DATASET_SCHEMA_VERSION = "1.3.0"` (`src/lib/reference-buildings/energy-dataset.ts:14`) is the existing per-building dataset schema version; a corpus row should carry a sibling `CORPUS_ROW_SCHEMA_VERSION`, not silently reuse this one (a corpus row's shape will diverge from a hand-curated reference building's — see Q5).
+- `energy-dataset-server.ts:46-47` already resolves `process.env.DEPLOY_COMMIT_SHA ?? process.env.VERCEL_GIT_COMMIT_SHA ?? null` into `integrity.codeRevision`, exactly the git-SHA pin `AGENTS.md`'s deploy section requires for verification (`git log -1 --format=%ae`, `DEPLOY_COMMIT_SHA` in the deploy runbook).
+- `buildLedgerBaselineModel`'s only non-deterministic input is `now` (`input.now ?? new Date().toISOString()`, line 248) — a batch run **must** pass a single pinned `now` for the whole release (the same principle `build-reference-building.mjs:14-16` already states in its own header comment: "`--generated-at` is required rather than defaulted to a clock... building them twice from the same inputs must produce identical bytes").
 
-```typescript
-// Add to LayerManager class — does NOT touch existing setVisible() or groups Map:
-setMepSubVisible(subId: MepSubLayerId, visible: boolean): void {
-  const mepGroup = this.groups.get("mep");
-  if (!mepGroup) return;
-  const child = mepGroup.getObjectByName(`sub-${subId}`);
-  if (child) child.visible = visible;
+**Recommendation:** a corpus release's reproducibility fingerprint is the triple `{ gitSha (codeRevision), LEDGER_BASELINE_MODEL_VERSION, generatedAt (pinned) }`, stamped once in the release manifest (`ReleaseManifest`, `src/lib/portfolio/types.ts:44-67` — already has `modelVersion`, `featureSchemaVersion`, `lineage: Record<string,string>` fields fit for this) and echoed on every row. Regenerating from the same register snapshot at the same git SHA with the same pinned `now` reproduces byte-identical rows; a diff in any of the three explains any diff in output.
+
+## Q2 — Fixing `delivered-from-demand.ts` without breaking the world
+
+### What is there today, and why it is a single point of dishonesty
+
+`deliveredFromDemand` (`src/lib/energy/delivered-from-demand.ts:24-32`) is:
+
+```ts
+export function deliveredFromDemand(demand: DemandLike): DeliveredEnergy {
+  return {
+    electric: demand.coolingDemand + demand.totalDemand * 0.15,
+    gas: demand.heatingDemand + demand.totalDemand * 0.1,
+    districtHeating: 0,
+    districtCooling: 0,
+    renewable: 0,
+  };
 }
 ```
 
-**What changes in `src/components/viewer/building-layers.tsx` (one new useEffect):**
+It is consumed by two call sites in the physics core (`src/hooks/use-energy-metrics.ts:104`, `src/lib/retrofit/retrofit-delta.ts:278`) plus the reference-building dataset builder (`src/lib/reference-buildings/energy-dataset.ts:89`) — i.e., every grade the app shows (twin, retrofit delta, reference model, corpus-to-be) funnels through this one function.
 
-```typescript
-// Existing visibility loop (ALL_LAYER_IDS) is UNCHANGED.
-// Add a second useEffect for mepSubVisibility:
-const mepSubVisibility = useLayerStore((s) => s.mepSubVisibility);
-useEffect(() => {
-  const manager = managerRef.current;
-  if (!manager) return;
-  for (const subId of MEP_SUB_IDS) {
-    manager.setMepSubVisible(subId, mepSubVisibility[subId]);
-  }
-}, [mepSubVisibility]);
-```
+**The good news, found while reading rather than assumed:** the two real terms this fix needs — lighting energy and PV generation — are **already computed correctly elsewhere in the codebase**, just not plumbed into this function:
 
-**New file: `src/lib/layers/mep-coordinator.ts`**
+- Lighting: `src/lib/retrofit/lighting-retrofits.ts:23-34` computes a real saving as `((currentLPD - targetLPD) * floorArea * annualOperatingHours) / 1000` (kWh/yr), and `src/hooks/use-retrofit-scenario.ts:431-432` independently computes the **baseline** the same way: `(materials.lighting.lightingPowerDensity * totalFloorArea * annualOperatingHours) / 1000`. `materials.lighting.lightingPowerDensity` (`src/lib/material-types.ts:111`) is already a first-class engine input, already populated from era tables (`LIGHTING_DEFAULTS[mainPurpsCd].lpd`, `src/lib/korean-building-codes.ts:174`) for every ledger-derived building (`ledger-baseline-model.ts:1146-1150`) and every reference building's own `-energy.ts` file (e.g. `bs-medical-dental-clinic-energy.ts:405`, `taltech-maemaja-energy.ts:92`).
+- PV generation: `src/lib/retrofit/solar-potential.ts:90-91` computes `annualGenerationKWh = systemSizeKWp * peakSunHours * 365 * TILT_FACTOR * PERFORMANCE_RATIO`, sized from the **measured roof-plane** `geometricKWp` when available (`solar-potential.ts:61-85`, the same PV layout `pv-layout.ts` and `twin-roof-planes.ts` already draw on the model). `calculatePrimaryEnergy` (`src/lib/energy/primary-energy.ts:48-104`) **already accepts and correctly nets a `renewable` term** against the electric leg with its own capped substitution logic (lines 62-77) — this half of the fix requires no new primary-energy math at all, only a non-zero value reaching it.
 
-Orchestrates sub-group assignment. Called during MEP layer generation (replacing direct add to mep
-group). Assigns generator output into named child groups:
+`retrofit-delta.ts` already documents exactly this gap in its own header (lines 22-27) and in `UNPRICED_REASONS` (lines 218-232): an LED or PV measure is real, priced in NPV, and explicitly marked `pricedByEngine: false` with a reason string that names `delivered-from-demand.ts` by filename. This means the fix's "do not break the world" constraint is partly self-solving: once `deliveredFromDemand` reads lighting/renewable, the corresponding entries in `UNPRICED_REASONS` become dead code (their guard conditions — `runsAgree` on isolated re-runs — will simply stop matching, since a solo LED/PV run will now move `primaryPerSqm`). That is a **behavior change in test expectations**, not a design problem: tests asserting "LED/PV is `pricedByEngine: false`" must flip to asserting it is `true`, and that is precisely what "make lighting, photovoltaic... measures move the modeled energy and the grade" (PROJECT.md Active requirements) means.
 
-```
-mep (THREE.Group, name: "layer-mep")
-├── sub-mep-electrical  ← layer-1-shell generator output
-├── sub-mep-hvac        ← layer-3-cooling + layer-4-heating + layer-5-ventilation
-├── sub-mep-lighting    ← layer-7-lighting
-└── sub-mep-dhw         ← layer-6-dhw
-(layers 8–14 added directly to mep group — future "advanced systems" section)
-```
+### The safe shape of the change
 
-`disposeLayer("mep")` in LayerManager already traverses all children recursively — sub-groups are
-disposed correctly without any change to the existing dispose logic.
+**Signature: additive, not replacing.** Change `DemandLike` to accept two new optional fields rather than changing `deliveredFromDemand`'s existing two required ones:
 
----
-
-### 2. Energy Heatmap: New Geometry in Existing `energy-zones` Group
-
-The `energy-zones` THREE.Group exists in LayerManager and is visibility-toggled by the existing
-`visibility["energy-zones"]` flag. The heatmap geometry lives entirely inside this group.
-
-**New file: `src/lib/layers/energy-heatmap-mesh.ts`**
-
-```typescript
-// Creates one THREE.Mesh per floor inside the energy-zones group.
-// Pure Three.js — no React.
-
-export function buildEnergyHeatmap(
-  floors: FloorSpec[],
-  perFloorKwh: number[],   // kWh/m² per floor, index matches floors array order
-  recipe: BuildingRecipe
-): THREE.Group {
-  const group = new THREE.Group();
-  group.name = "energy-heatmap";
-
-  const aboveFloors = floors.filter(f => f.type === "above");
-  aboveFloors.forEach((floor, i) => {
-    const kwh = perFloorKwh[i] ?? 0;
-    const geo = new THREE.PlaneGeometry(recipe.footprintWidth, recipe.footprintDepth, 2, 2);
-    geo.rotateX(-Math.PI / 2);  // horizontal plane
-    // Build vertex color buffer from kWh/m² scalar
-    const colors = new Float32Array(geo.attributes.position.count * 3);
-    const c = kwhmToColor(kwh);
-    for (let v = 0; v < geo.attributes.position.count; v++) {
-      colors[v * 3]     = c.r;
-      colors[v * 3 + 1] = c.g;
-      colors[v * 3 + 2] = c.b;
-    }
-    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    const mat = new THREE.MeshBasicMaterial({
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.55,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.y = floor.y + 0.02;  // just above slab surface
-    mesh.userData = { type: "energy-heatmap-floor", floorNo: floor.floorNo };
-    group.add(mesh);
-  });
-  return group;
+```ts
+export interface DemandLike {
+  heatingDemand: number;
+  coolingDemand: number;
+  totalDemand: number;
+  /** kWh/yr, from lightingPowerDensityWPerSqm × floorArea × operatingHours / 1000. Undefined = unknown. */
+  lightingDemandKwh?: number;
+  /** kWh/yr, from measured/geometric PV generation. Undefined = none/unknown. */
+  renewableGenerationKwh?: number;
 }
 ```
 
-**Color mapping (no external library):**
+`electric = coolingDemand + (lightingDemandKwh ?? totalDemand * 0.15)` and `renewable: renewableGenerationKwh ?? 0` preserve the exact current output for every call site that does not pass the new fields — this is what keeps the ~380 retrofit-economics tests across 29 files (per `PROJECT.md` "Constraints") from breaking on day one. The DHW share (`totalDemand * 0.10` on gas) is unrelated to this milestone's stated targets (lighting, PV) and should be left alone in this pass — touching it multiplies the blast radius for no requirement in scope.
 
-`kwhmToColor()` linearly interpolates between 7 grade anchor points aligned with existing
-`getGradeColor()` in `energy-grade.ts`:
+**What becomes an explicit input, and what happens when it is unknown (the stated-versus-assumed invariant):**
 
-| kWh/m² | Color | Korean Grade |
-|--------|-------|-------------|
-| 60     | `#3b82f6` (blue) | 1+++ |
-| 90     | `#22c55e` (green) | 1++ |
-| 120    | `#84cc16` | 1+ |
-| 160    | `#eab308` (yellow) | 1 |
-| 200    | `#f97316` (orange) | 2 |
-| 260    | `#ef4444` (red) | 3+ |
-| 320+   | `#dc2626` (dark red) | 7 |
+- `lightingDemandKwh` must be computed by the **caller**, not inferred inside `deliveredFromDemand` — the function has no access to `annualOperatingHours` today and should not gain one implicitly. Each of the three call sites (`use-energy-metrics.ts`, `retrofit-delta.ts`, `energy-dataset.ts`) already has `materials.lighting.lightingPowerDensity` and `envelopeQuantities(recipe).intensityFloorAreaSqm` in scope; `annualOperatingHours` is the one genuinely new named assumption to introduce (currently hard-coded per call site as `DEFAULT_LIGHTING_HOURS_PER_YEAR = 2_500` in `retrofit-bridge.ts:40`, and as a hook parameter default in `use-retrofit-scenario.ts`). This assumption must be surfaced the same way `LEDGER_USAGE_ASSUMPTION_ID` already surfaces occupancy/setpoint defaults (`ledger-baseline-model.ts:1128-1187`) — a named, visible, reversible assumption, never a bare constant multiplied in silently. Where `lightingPowerDensityWPerSqm` itself is a `status: "defaulted"` fact (the normal ledger-baseline case, `assumptionFact` at line 1146), the resulting lighting kWh is itself an assumption-derived value and must say so wherever it is displayed — it is not suddenly "measured" because it now moves the grade.
+- `renewableGenerationKwh` must default to `0`, not to an estimate, when no PV is modeled — this is not a case of "unknown," it is the honest majority case (`materials.renewable.solarPV.installed === false` for most buildings). `0` is correct here in the same sense a documented zero from the register is correct elsewhere: it is a stated absence, not a placeholder. Where PV *is* modeled but sized by the crude area/utilisation ratio rather than a measured roof plane (`solar-potential.ts:61-68`'s own comment on why "a count wins"), the resulting generation figure inherits that provenance and the UI showing it must carry the same "not geometrically measured" caveat the roof-planes work already established for reference buildings.
+- Do **not** add a convenience default that fabricates `lightingDemandKwh` from a ratio when `lightingPowerDensityWPerSqm` is missing — if a caller has no LPD fact at all (should not happen post-ledger-baseline, since `LIGHTING_DEFAULTS.default` always resolves, `korean-building-codes.ts:174` with a `.default` fallback pattern matching `WINDOW_RATIOS[era].default` at `ledger-baseline-model.ts:671`), the function should fall back to the existing `totalDemand * 0.15` ratio and the caller must record that it did — mirroring the discriminated `SystemRatioProvenance` pattern already built for exactly this purpose in `system-breakdown.ts:73-104` (`{ source: "use_code" }` vs `{ source: "generic_default"; assumption: string }`). Reuse that provenance type rather than inventing a second one; `deliveredFromDemand`'s return should probably grow a sibling `DeliveredEnergyProvenance` alongside `DeliveredEnergy` for exactly this reason.
 
-**Integration in `building-layers.tsx`:**
+**Test blast radius, concretely:** `src/lib/energy/__tests__/delivered-from-demand.test.ts` and `src/lib/retrofit/__tests__/retrofit-delta.test.ts` (which already has a case at line 274 asserting on the `lighting.lightingPowerDensity` field name) are the two files that will need direct edits. Every other test in the ~380/29 that merely exercises retrofit economics through `runEnergyEngine`/`computeRetrofitDelta` without asserting on `pricedByEngine` for lighting/PV specifically should be unaffected by the additive signature, because omitting the new optional fields reproduces today's numbers exactly. Grep for `pricedByEngine: false` and `UNPRICED_REASONS` assertions before merging — those are the ones that must flip, not silently start failing.
 
-```typescript
-const floorDemands = useEnergyBreakdown(buildingPk);  // NEW hook
+## Q3 — Reconciling the two economics input paths
 
-useEffect(() => {
-  if (!floorDemands || !managerRef.current || !recipe) return;
-  const energyGroup = managerRef.current.getGroup("energy-zones");
-  // Remove previous heatmap (dispose geometry/material):
-  const old = energyGroup.getObjectByName("energy-heatmap");
-  if (old) {
-    old.traverse(o => {
-      if (o instanceof THREE.Mesh) { o.geometry.dispose(); (o.material as THREE.Material).dispose(); }
-    });
-    energyGroup.remove(old);
-  }
-  const heatmap = buildEnergyHeatmap(recipe.floors, floorDemands.perFloor, recipe);
-  energyGroup.add(heatmap);
-}, [floorDemands, recipe]);
-```
+**The two paths, read side by side:**
 
-`disposeLayer("energy-zones")` in LayerManager already handles full traversal cleanup — no
-additional dispose logic needed.
+1. **Twin path** (`src/hooks/use-retrofit-scenario.ts` → `src/lib/retrofit/retrofit-delta.ts:269-294`, `runEnergyEngine`): reads live `MaterialProperties` from `material-store` and a `BuildingRecipe`/climate from `scenario-store`'s `ScenarioBuildingInputs` (`src/store/scenario-store.ts:21-33`), then derives wall U, WWR, roof/ground U by calling `calculateHeatLoss`/`calculateAnnualDemand` directly on those live materials via `envelopeQuantities(recipe)`.
+2. **Diagnostics path** (`src/lib/energy-diagnostics/retrofit-bridge.ts:62-212`, `analyzeRetrofitEconomics`): reads a **frozen** `CompiledDegreeDayInput.payload` off a `DegreeDaySimulationRun` (`baselineRun.engineInput as CompiledDegreeDayInput`, line 69) — the exact materials/recipe/climate/mapping snapshot from a succeeded canonical-model run — and independently re-derives its own `wallU`/`avgWwr` (lines 79-91) before calling the *same* low-level generators (`generateEnvelopeRetrofits`, `generateHvacRetrofits`, `generateLightingRetrofits`).
 
----
+Both paths terminate in the same generator functions (`src/lib/retrofit/{envelope,hvac,lighting}-retrofits.ts`, `computeFinancials`/`economic-model.ts`) — the divergence is entirely in **how each path arrives at the numbers it hands those generators**, not in the generators or the DCF math. Concretely: path 1 computes `wallU` as a straight arithmetic mean over `materials.envelope.walls` (`retrofit-delta.ts:258-262`, `meanWallU`); path 2 computes it as an area-weighted mean over the same array shape (`retrofit-bridge.ts:83-89`). Same input type, two different formulas, so the same building's wall U — and therefore its envelope-retrofit economics — can print two different numbers depending which page is open. Similarly, path 1's `computeRetrofitDelta` gets its before/after by literally re-running `calculateHeatLoss`/`calculateAnnualDemand` twice on the engine's `applyPhaseToMaterials` output (a measured delta); path 2 never re-runs the degree-day engine per measure at all — it hands the generator functions summary numbers and lets their own closed-form formulas produce the saving (`retrofit-bridge.ts`'s own `notes` array says so explicitly, lines 194-197: "절감량은... 도일 근사식으로 계산한 스크리닝 추정치이며, 진단 엔진을 조치별로 재실행한 값이 아닙니다").
 
-### 3. Equipment Info Panel: Extend `structural-tooltip.tsx` Pattern
+**Recommendation — converge on the twin's method, not a third one.** `computeRetrofitDelta`/`runEnergyEngine` (`retrofit-delta.ts`) is the more rigorous of the two: it measures each solo delta by actually re-running the engine (`runsAgree`, line 297), which is exactly the "measured, not declared" standard `retrofit-delta.ts`'s own header enforces (points 1-2 of its file comment, lines 12-27). The fix is to make `analyzeRetrofitEconomics` build a `MaterialProperties`/`BuildingRecipe` pair from `CompiledDegreeDayInput.payload` (it already has `materials`/`recipe`/`climate` in hand, line 70) and call `computeRetrofitDelta({ materials, recipe, climate, measureIds, region, pvGeometricKWp })` instead of hand-rolling its own wall-U/WWR/residual-heat arithmetic. This:
 
-`StructuralTooltip` implements the complete raycasting pattern:
-- `useEffect` on `gl.domElement` for pointermove → normalized mouse coords in `useRef`
-- `useFrame` throttled every 3rd frame
-- `raycaster.intersectObject(mesh, false)` → `hit.instanceId`
-- `mesh.userData` for labels
-- `<Html position={hit.point}>` popup
+- Deletes the second `wallU`/`avgWwr` formula (`retrofit-bridge.ts:79-91`) entirely rather than reconciling it with the twin's — one fewer place to keep in sync.
+- Gets the diagnostics path the same `pricedByEngine`/`unpricedReasonKo` honesty `retrofit-delta.ts` already provides, which `retrofit-bridge.ts` currently has no equivalent for (it just emits whatever the generator computes, with no check that the degree-day engine can actually see that field).
+- Is the natural point to also route the corpus generator (Q1) through: a corpus row's own retrofit/benchmark figures (if included) should call `computeRetrofitDelta` too, so there is exactly **one** economics computation path in the codebase after this change, not three.
 
-**New component: `src/components/viewer/equipment-tooltip.tsx`**
+This is real, scoped work (not a one-line change) because `retrofit-bridge.ts` currently derives `residualUsefulHeat` from `baselineRun.engineOutput.annualDemand.heatingDemand * heatingEfficiency` (line 116-118) to convert site energy back to useful heat — a conversion `retrofit-delta.ts`'s `computeRetrofitDelta` does not need, since it re-runs the full engine rather than post-hoc adjusting a demand figure. Reconciling the two is properly scoped as its own phase, sequenced after the Q2 fix (so the engine both paths call already produces honest lighting/PV numbers) and before or alongside Q6 (benchmarks need one economics source too, if benchmark percentiles ever include cost/NPV fields).
 
-Key differences from `StructuralTooltip`:
+## Q4 — Collapsing the two model registries
 
-1. Traverses mep group's named sub-groups (`sub-mep-*`) rather than a single named group
-2. Reads `userData.type` + `userData.floorNo` from the hit object (already set by all layer
-   generators — e.g. `{ type: "cooling-branch", floorNo: 3 }`)
-3. Looks up `EquipmentSpec` via `inferEquipmentSpecs(buildingPk, componentType, floorNo)` — a pure
-   function, no async
-4. Renders a richer card (type, efficiency grade, approx install year, estimated kWh/yr) instead of
-   a single label string
-5. Skips raycasting against sub-groups whose `mepSubVisibility[id]` is false
+**Registry #1**, `REFERENCE_BUILDING_IDS` (`src/lib/reference-buildings/manifest.ts:544-552`): the array of ids with a committed `public/reference-buildings/<id>/manifest.json`. `loadReferenceBuildingManifest` (lines 577-602) reads that file server-side. This is already the generated, machine-produced source of truth for one building's geometry counts/areas — produced by `scripts/build-reference-building.mjs`.
 
-**Critical fix — allocate Raycaster via `useRef`, not inside `useFrame`:**
+**Registry #2**, `GALLERY_ITEMS` (`src/lib/landing/gallery.ts:602`): seven hand-written `GalleryItem` object literals (`CLINIC` at line 119, `SCHEPENDOMLAAN` at 222, `DUPLEX` at 332, `FZK_HAUS` at 444, `KIT_OFFICE` at 522, `KLASSIQUA_OFFICE_1970` at 551, `TALTECH` at 577). Every `figures[]` entry's `value` (e.g. `"4,314.2 m²"`, `"259"`, `"58"`) is a **literal string**, typed by hand from a one-time read of the manifest/IFC. The file's own header comment (lines 43-49) already names this exact debt: *"These figures are still literals... A literal cannot notice that the extraction moved under it... Every numeric field here should be read from the manifest, keeping only the editorial ones by hand."* Only `landing-gallery.test.tsx` (lines 36-46) cross-checks the Clinic's figures against fixed strings — it pins the literal, it does not read the manifest, so it cannot catch drift between `gallery.ts` and `manifest.json` (only drift between `gallery.ts` and itself). PROJECT.md's own Context section confirms: *"only the clinic card is cross-checked against its generated manifest"* — and even that is an overstatement per the actual test file read: it checks against another literal in the test, not the manifest JSON.
 
-The existing `StructuralTooltip` allocates `new THREE.Raycaster()` inside `useFrame` (known tech
-debt, noted in PROJECT.md). All new raycasting components must allocate once:
+**What must stay hand-typed vs. what must be generated:** `GalleryItem` mixes two different kinds of field —
+- **Editorial** (`koTitle`, `enTitle`, `koUse`, `enUse`, `status`, the long doc-comment provenance notes) — these require human judgment about how to describe a building and cannot be generated.
+- **Extracted** (`figures[].value`, `datums[].{elevationM,rooms,roomAreaSqm}`, `counts`, `modelFile`, `ifcSchema`, `licence`, `attribution`) — these already live in `ReferenceBuildingManifest` (`manifest.ts:71-389`: `counts`, `areas`, `storeys`, `licence`, `attribution`, `sourceFiles`) and must be **read**, not retyped.
 
-```typescript
-// WRONG (StructuralTooltip's known defect — do not copy):
-useFrame(() => {
-  const raycaster = new THREE.Raycaster(); // heap allocation every frame
-});
+**Recommended collapse:** make `REFERENCE_BUILDING_IDS` (manifest.ts) the single registry. `GalleryItem` becomes a thin editorial overlay keyed by id — `{ id, koTitle, enTitle, koUse, enUse, status }` plus nothing else — and a new pure function (e.g. `src/lib/landing/gallery-from-manifest.ts`) builds the rest of a `GalleryItem` (`datums`, `figures`, `licence`, `attribution`, `modelFile`, etc.) directly from `ReferenceBuildingManifest.{storeys, areas, counts, licence, attribution, sourceFiles}` at request/render time, the same way `buildReferenceEnergyDataset` (`energy-dataset.ts:160`) already turns a manifest into the per-building dataset. Because `loadReferenceBuildingManifest` is `async` (reads `node:fs/promises`, lines 577-602), and `GALLERY_ITEMS` is currently a synchronous, statically-imported array consumed by a **server component** landing page (`landing-page.tsx`, confirmed by the test rendering `<LandingPage />` without `await`) — the collapse requires either (a) making the landing page `async` and building `GALLERY_ITEMS` server-side per request (cheap: seven small JSON reads, same cost `loadReferenceEnergyCatalogue` already pays per `/api/reference-buildings/datasets` request), or (b) a build-time step that regenerates a `gallery.generated.ts` from the manifests (closer to today's shape, but reintroduces a can-drift artifact, just a generated one instead of hand-typed one — prefer (a) unless the landing page's `force-dynamic`/caching story rules it out).
 
-// CORRECT for EquipmentTooltip:
-const raycasterRef = useRef(new THREE.Raycaster());
-useFrame(() => {
-  raycasterRef.current.setFromCamera(mouse.current, camera);
-  const hits = raycasterRef.current.intersectObjects(targets, true);
-});
-```
+**Test consequence:** the fifteen files that loop `REFERENCE_BUILDING_IDS` today as de facto contract tests (`grade-basis.test.ts`, `energy-dataset.test.ts`, `roof-planes.test.ts`, etc. — listed by the grep above) already treat this array as canonical; making the gallery derive from it strictly increases their coverage (a manifest change now also changes the visible gallery card, and a test asserting gallery figures would catch it) rather than requiring them to change.
 
----
+## Q5 — Corpus storage and serving
 
-### 4. Energy Breakdown Dashboard: New Chart Component
+**There is no database in this project.** `package.json` has no `pg`/`prisma`/`drizzle`/`@supabase`/`sqlite`/`@vercel/blob`/`mongodb` dependency (checked directly). Every persistence pattern in the app today is either browser-side (Zustand `persist`, IndexedDB via `idb-keyval`) or **committed static files under `public/`, read server-side with `node:fs`** — `loadReferenceBuildingManifest` (`manifest.ts:577-602`), `loadReferenceEnergyDataset`/`loadReferenceEnergyCatalogue` (`energy-dataset-server.ts:19-68`), and — most relevantly — `StaticFileReleaseStore` (`src/lib/portfolio/release-store.ts:73-166`), which reads `public/releases/<version>/{manifest.json, predictions.json|.jsonl, calibration.json}` and a top-level `public/releases/manifest.json` pointer (`{ latest, history }`, `LatestReleasePointer`, `portfolio/types.ts:70`).
 
-**New file: `src/components/viewer/energy-breakdown-chart.tsx`**
+**This `ReleaseStore` was built for the now-superseded v7.0 Prediction plan, and PROJECT.md explicitly says its "dataset-release idea is absorbed into this milestone."** It is not dead code to route around — it is the one piece of infrastructure in the repo already shaped for "versioned dataset releases with a stated error band and a read-only API" (PROJECT.md's Active requirement, verbatim). `/releases` (`src/app/releases/page.tsx:1-60`) is a working, if currently pointing-at-nothing, explorer built on exactly this store, marked `dynamic = "force-dynamic"` so a newly published release appears without a rebuild (line 16).
 
-Uses shadcn `<ChartContainer>` wrapping Recharts `<BarChart>`. Install: `pnpm add recharts@^3.8.1`
-and `npx shadcn@latest add chart`.
+**Recommendation:** repoint/extend this store rather than building a parallel one.
 
-Data source: `useEnergyBreakdown(buildingPk)` → `SystemBreakdown`.
+- Rename the concept from "prediction release" to "corpus release" (or generalize `ReleaseStore` to carry either), and change the row type from `PredictionRow` to a new `CorpusRow` (superset: `buildingPk`, `bjdongCd`, `mainPurpsCd`, era, floor area, EUI, grade, assumption ids, `modelVersion` — see Q1's reproducibility triple).
+- **Storage layout for "large table without shipping it all to the browser":** the current `getPredictions` implementation (`release-store.ts:107-165`) reads one whole `predictions.json`/`.jsonl` file into Node memory and filters in-process — acceptable for the seven-reference-building scale and for a corpus in the low thousands, but it does not shard, so a nationwide sweep (tens of thousands of buildings) would force one huge JSON into every serverless invocation's memory just to answer one query. Shard by the register's own natural partition — **시군구코드** (5-digit prefix of `bjdongCd`, the same key `/api/bldrgst/jijugu` already pages by) — into `public/releases/<version>/rows/<sigunguCd>.jsonl`, plus a small `public/releases/<version>/index.json` carrying per-shard row counts and the aggregate stats needed for Q6's peer groups (n, mean, percentile breakpoints) precomputed at release-build time. A query for one 시군구 or one building reads one shard; a query across regions reads the small index plus only the shards it needs.
+- `predictions.parquet` is already documented as "canonical... but download-only — not parsed in the Next.js runtime" (`release-store.ts:122-123`) — carry the same convention for the corpus: ship a single Parquet (or CSV) file per release for analysts to download wholesale (mirrors the existing `/api/reference-buildings/datasets?format=csv` pattern, `datasets/route.ts:11-16`), and keep the JSONL shards as the only thing the app itself reads.
+- **API:** `src/app/api/corpus/releases/route.ts` (list/latest, thin wrapper on `listReleases`/`getManifest`), `src/app/api/corpus/[version]/buildings/route.ts` (paginated, filtered by 시군구/mainPurpsCd/era — server-side `Array.slice` over one shard, never the whole corpus), `src/app/api/corpus/[version]/buildings/[buildingPk]/route.ts` (single row, mirrors `[id]/dataset/route.ts`). All Node runtime, `icn1`-pinned only if they ever re-touch data.go.kr/VWorld directly (they should not — they read committed release artifacts, same as `/api/reference-buildings/*` today, which carries no region pin because it never calls an external Korean API at request time).
+- **The browsable corpus page** (`/corpus`, new) is a server component that requests one page of the index/shard via the API above with `searchParams`-driven filters and pagination (region, use type, era, grade), never importing the row array directly into a client bundle — same principle `/releases/page.tsx` already follows by being a server component with no client directive (line 7's own comment: "SERVER COMPONENT ONLY... enforced by the CI guard in `scripts/ci-check-plan.mjs`").
 
-Positioned below existing `EnergyCards` or in a new "breakdown" tab in the config panel.
-`EnergyCards` itself is not modified.
+## Q6 — Benchmark computation
 
----
+Nothing today computes peer-group percentiles anywhere in the codebase (confirmed: no existing `peer-group`/`percentile`/`benchmark` module surfaced across the files read for this research). Two consumers will need the same answer to "how does this building compare to others like it": the corpus page (rank a building against the whole shard-appropriate peer set) and a single building's page (`/models/[id]` or `/building/[id]`, showing "this building's EUI is at the Nth percentile of similar buildings"). Both need to agree on **what "similar" means** and **the same percentile arithmetic**, or the two pages will show different rankings for the same building — the exact repeated failure this codebase's history (two model registries, two economics paths) keeps producing when the same computation is allowed to live in two places.
 
-### 5. Equipment Control: New Slices in Existing Stores
+**Recommendation:** a new pure module, `src/lib/benchmarks/peer-groups.ts` + `src/lib/benchmarks/percentiles.ts`, alongside `src/lib/energy/` and `src/lib/reference-buildings/` (not inside either — it is consumed by corpus rows, reference buildings, *and* live twin/diagnostics buildings alike, so it must not depend on any of their specific types beyond a minimal shared shape like `{ mainPurpsCd, era, primaryEnergyPerArea, climateRegion }`).
 
-Equipment control state goes into `workflow-store.ts` (same lifecycle as workflow stages — transient,
-not persisted). Scenario overrides go into `recipe-store.ts` (same data shape as existing
-`overrides[pk]`).
+- **Peer-group definition** should reuse the classification vocabulary the app already has rather than inventing a new one: `ledgerUseCategory`/`classifyEraExplicit` (`src/lib/ledger/floor-rows.ts`, already imported by `ledger-baseline-model.ts:41-45`) for use-type and era buckets, and the climate region key `resolveLedgerWeatherSource` already resolves (`src/lib/energy-diagnostics/ledger-climate.ts`, imported at `ledger-baseline-model.ts:52`). A peer group is therefore `{ useCategory, era, weatherRegion }` — the same three axes every ledger-baseline building already carries as named facts, so no building's peer-group membership needs a new, separately-maintained classification.
+- **Percentile calculation** is generic array statistics (given the release-time precomputation recommended in Q5, this can be as simple as a sorted-array nearest-rank or linear-interpolation percentile function) and belongs in `percentiles.ts` with zero building-domain knowledge, so it is trivially unit-testable in isolation.
+- **Where it runs:** peer-group aggregate stats (n, percentile breakpoints per group) are computed **once per release**, at corpus-generation time (Q1/Q5), and stored in the release's `index.json` — not recomputed per page view. A single building's page (corpus row, reference building, or live diagnostics/twin building) then calls a small `rankWithinPeerGroup(building, precomputedBreakpoints)` function from the same module to say "you are at percentile X" without re-scanning the whole corpus. This is the same pattern `system-breakdown.ts` already uses for provenance (compute once, carry a small typed result) rather than the "loop everything client-side" pattern the two-registries and two-economics-paths mistakes both grew out of.
+- **Honesty requirement carried over from the stated-versus-assumed invariant:** a percentile computed against a peer group of `n < ~10` (a rare use-type/era/region combination) is statistically close to meaningless and must say so — carry `peerGroupSize` alongside every percentile figure and render a named caveat below a threshold, the same way `gradeTableIsFromOccupancy` (`delivered-from-demand.ts:91-93`) already forces the UI to disclose when a classification fell back to a weaker signal.
 
-**New slice in `src/store/workflow-store.ts`:**
+## Q7 — Suggested build order
 
-```typescript
-// Scenario mode
-scenarioActive: boolean;
-activeScenarioId: string | null;
-equipmentOverrides: Record<string, EquipmentControlState>;  // key: equipmentId
-enterScenarioMode: (scenarioId: string) => void;
-exitScenarioMode: () => void;
-setEquipmentOverride: (equipmentId: string, state: EquipmentControlState) => void;
-clearEquipmentOverrides: () => void;
+Dependencies are stated inline; phases in the same tier can run in parallel if separate agents/sessions own them (per `docs/04_Agent-Handoffs/CURRENT.md`'s multi-session-tree caution, use path-scoped commits).
 
-// IMPORTANT: partialize must exclude equipmentOverrides (transient state):
-partialize: (state) => ({
-  stage: state.stage,
-  completion: state.completion,
-  // scenarioActive, equipmentOverrides intentionally excluded
-})
-```
-
-**New slice in `src/store/recipe-store.ts`:**
-
-```typescript
-// Scenario recipe overrides — isolated from committed overrides[pk]
-scenarioOverrides: Record<string, Record<string, RecipeOverrides>>;
-// key: buildingPk → scenarioId → RecipeOverrides
-setScenarioOverride: (pk: string, scenarioId: string, path: string, value: unknown) => void;
-clearScenario: (pk: string, scenarioId: string) => void;
-```
-
-`scenarioOverrides` is NEVER merged back into `overrides[pk]`. Undo/redo history never touches
-scenario state.
-
----
-
-## New Components
-
-| Component | File | Category | Primary Dependency |
-|-----------|------|----------|--------------------|
-| `EnergyBreakdownChart` | `src/components/viewer/energy-breakdown-chart.tsx` | React UI | `useEnergyBreakdown`, shadcn chart + recharts |
-| `EquipmentTooltip` | `src/components/viewer/equipment-tooltip.tsx` | R3F | `useLayerStore(mepSubVis)`, `inferEquipmentSpecs` |
-| `MepSubLayerToggles` | inside `src/components/viewer/layer-panel.tsx` | React UI | `useLayerStore(mepSubVis)` |
-| `ScenarioModeBanner` | `src/components/viewer/scenario-mode-banner.tsx` | React UI | `useWorkflowStore(scenarioActive)` |
-| `EquipmentControlPanel` | `src/components/workspace/equipment-control-panel.tsx` | React UI | `useWorkflowStore`, `useScenarioEnergy` |
-
----
-
-## New vs Modified Files
-
-### Modified (surgical additions — no rewrites)
-
-| File | Change | Risk |
-|------|--------|------|
-| `src/lib/layers/types.ts` | Add `MepSubLayerId` union, `MEP_SUB_IDS`, `MEP_SUB_CONFIGS` | LOW — additive, no existing consumer breaks |
-| `src/lib/layers/layer-manager.ts` | Add `setMepSubVisible()` method | LOW — new method, existing API unchanged |
-| `src/store/layer-store.ts` | Add `mepSubVisibility` + toggle actions | LOW — additive slice, existing selectors unaffected |
-| `src/store/workflow-store.ts` | Add scenario + equipment override slice; update `partialize` to exclude transient state | LOW — additive; `partialize` update is mandatory to prevent stale scenario across reloads |
-| `src/store/recipe-store.ts` | Add `scenarioOverrides` slice | LOW — isolated from existing `overrides` record |
-| `src/components/viewer/building-layers.tsx` | Add `useEffect` for `mepSubVisibility` sync; add heatmap rebuild `useEffect` | LOW — existing loop unchanged |
-| `src/components/viewer/layer-panel.tsx` | Add expandable MEP sub-rows section | LOW — purely additive UI |
-| `src/lib/energy/annual-demand.ts` | Add optional `options?: { returnPerFloor?, equipmentOverrides? }` parameter | MEDIUM — function signature extends; all existing callers pass no options, return type unchanged |
-
-### New Files
-
-| File | Purpose |
-|------|---------|
-| `src/lib/layers/mep-coordinator.ts` | Assigns MEP generator output to named `sub-mep-*` child groups inside the mep THREE.Group |
-| `src/lib/layers/energy-heatmap-mesh.ts` | Pure Three.js: floor-plane meshes with vertex color buffer from kWh/m² scalar |
-| `src/lib/energy/system-breakdown.ts` | `calculateSystemBreakdown()` — extends demand calc with HVAC/lighting/DHW/plug attribution using ASHRAE building-type ratios |
-| `src/lib/energy/equipment-specs.ts` | `inferEquipmentSpecs()` — derives `EquipmentSpec[]` from `BuildingRecipe` + ledger data (no user input required) |
-| `src/hooks/use-energy-breakdown.ts` | React hook: `useMemo` over `calculateSystemBreakdown()`; returns `SystemBreakdown` with `perFloor` array |
-| `src/hooks/use-scenario-energy.ts` | Reactive hook: merges `effectiveRecipe` + `equipmentOverrides` → scenario energy delta vs baseline |
-| `src/components/viewer/energy-breakdown-chart.tsx` | shadcn `<ChartContainer>` + Recharts `<BarChart>` for HVAC/lighting/DHW/plug breakdown |
-| `src/components/viewer/equipment-tooltip.tsx` | R3F raycasting tooltip for MEP mesh objects — extends structural-tooltip pattern with Raycaster `useRef` fix |
-| `src/components/viewer/scenario-mode-banner.tsx` | Amber overlay banner: "시나리오 모드 — 실제 데이터가 아님" shown when `scenarioActive = true` |
-| `src/components/workspace/equipment-control-panel.tsx` | On/off toggles + HVAC setpoint sliders for selected equipment in scenario mode |
-
----
-
-## New Data Models
-
-### `EquipmentSpec` (`src/lib/energy/equipment-specs.ts`)
-
-```typescript
-export type EnergyDataSource = "modeled" | "actual" | "estimated-ratio";
-
-export interface EquipmentSpec {
-  equipmentId: string;               // e.g. "hvac-floor-3"
-  subLayer: MepSubLayerId;           // which sub-system owns this equipment
-  componentType: string;             // userData.type from Three.js object (e.g. "cooling-branch")
-  floorNo: number | null;            // null = building-wide equipment
-  displayName: string;               // Korean label: "냉방기 (3층)"
-  capacityKw: number | null;         // inferred from floor area + building use type
-  efficiencyGrade: EnergyGrade | null; // Korean 1+++~7 using existing energy-grade.ts
-  estimatedAnnualKwh: number | null; // from SystemBreakdown.hvac / floor count
-  installYear: number | null;        // inferred from building permit year (approvalDate in ledger)
-  dataSource: EnergyDataSource;      // always "estimated-ratio" for inferred data
-}
-```
-
-### `SystemBreakdown` (`src/lib/energy/system-breakdown.ts`)
-
-```typescript
-export interface SystemBreakdown {
-  hvac: number;       // kWh/yr — heating + cooling (from existing AnnualDemand)
-  lighting: number;   // kWh/yr — ASHRAE ratio estimate by building use type
-  dhw: number;        // kWh/yr — domestic hot water, ASHRAE ratio estimate
-  plugLoads: number;  // kWh/yr — equipment + appliances, ASHRAE ratio estimate
-  total: number;      // sum of all systems
-  perFloor: number[]; // kWh/m² per floor (index = above-floors array order)
-  dataSource: EnergyDataSource; // "estimated-ratio" for lighting/dhw/plug; "modeled" for hvac
-}
-```
-
-ASHRAE 90.1 system attribution ratios by Korean building use type:
-
-| Use Type (mainPurpsCd) | HVAC | Lighting | DHW | Plug |
-|------------------------|------|----------|-----|------|
-| 업무시설 (office)       | 40%  | 35%      | 7%  | 18%  |
-| 공동주택 (residential)  | 50%  | 7%       | 25% | 18%  |
-| 판매시설 (retail)       | 45%  | 40%      | 3%  | 12%  |
-| Default                 | 42%  | 28%      | 12% | 18%  |
-
-All non-HVAC values carry `dataSource: "estimated-ratio"` and are labeled accordingly in all UI.
-
-### `EquipmentControlState` (in `workflow-store.ts`)
-
-```typescript
-interface EquipmentControlState {
-  enabled: boolean;          // on/off toggle
-  setpointDelta?: number;    // HVAC only — °C offset from base setpoint (e.g. +2, -3)
-}
-```
-
----
-
-## `calculateAnnualDemand` Extension (Backward-Compatible)
-
-Existing signature (unchanged for all current callers):
-```typescript
-calculateAnnualDemand(
-  heatLoss: HeatLossResult,
-  materials: MaterialProperties,
-  recipe: BuildingRecipe,
-  climate: ClimateData
-): AnnualDemand
-```
-
-Extended signature (new params are optional — existing callers unaffected):
-```typescript
-calculateAnnualDemand(
-  heatLoss: HeatLossResult,
-  materials: MaterialProperties,
-  recipe: BuildingRecipe,
-  climate: ClimateData,
-  options?: {
-    returnPerFloor?: boolean;
-    equipmentOverrides?: Record<string, EquipmentControlState>;
-  }
-): AnnualDemand & { perFloor?: number[] }
-```
-
-When `equipmentOverrides["mep-hvac"]?.enabled === false`: `coolingCOP` and `heatingEfficiency`
-reduced to 0.01 (near-zero) so demand spikes to show "what if HVAC is off" impact.
-
-When `setpointDelta` is set: `designDeltaT` is adjusted proportionally before degree-day
-multiplication.
-
----
-
-## Data Flow
-
-### Flow 1: MEP Sub-Layer Toggle
+1. **Fix `delivered-from-demand.ts` (Q2).** No dependency on anything else in this list; every other honest energy number in this milestone (corpus rows, benchmarks, the retrofit panel) is decoration until this lands, per PROJECT.md's own Key Decision ("Fix delivered-from-demand.ts before anything downstream"). Touches `delivered-from-demand.ts`, its two direct call sites, `energy-dataset.ts`, and the two test files named in Q2.
+2. **Reconcile the two economics paths (Q3).** Depends on (1) being done first, so the single converged path already produces honest lighting/PV numbers rather than converging onto the old dishonest ones. Touches `retrofit-bridge.ts` primarily.
+3. **Collapse the two model registries (Q4).** Independent of (1)/(2) — can run in parallel with them. Touches `gallery.ts`, adds `gallery-from-manifest.ts`, and the landing page's sync/async boundary.
+4. **Register-sweep feasibility research (already an Active requirement, not architecture work) → corpus generation route + driver script (Q1).** The route can be built and tested against a handful of buildings without waiting on sweep-quota research to conclude, but a full-scale run should not be attempted before that research answers the quota question (PROJECT.md's own ordering: "Register sweep feasibility is researched before any phase commits to scale"). Depends on (1) for the numbers it will publish to be honest, but not on (2)/(3).
+5. **Corpus storage/serving (Q5).** Depends on (4) existing (something must produce rows to store), and should reuse/extend `release-store.ts` rather than fork it — sequence this as soon as (4) produces its first real batch, so the storage shape is validated against real row volume rather than designed on paper.
+6. **Benchmark computation (Q6).** Depends on (5) (needs a corpus release to compute peer groups from) and benefits from (1) (percentile figures are only as honest as the EUI figures behind them). This is naturally the last tier: it is a read-time convenience over data the earlier phases produce, and building it before there is a real corpus to benchmark against would mean testing it only on the seven reference buildings — too small a peer group to validate percentile math meaningfully.
 
 ```
-User clicks lighting sub-toggle in LayerPanel
-    |
-    v
-useLayerStore.toggleMepSub("mep-lighting")
-    |
-    v  (Zustand subscription fires in BuildingLayers)
-useEffect([mepSubVisibility])
-    |
-    v
-managerRef.current.setMepSubVisible("mep-lighting", false)
-    |
-    v
-LayerManager.getGroup("mep").getObjectByName("sub-mep-lighting").visible = false
-    |
-    v
-Three.js renderer skips the child group — immediate, no React re-render in R3F
+(1) delivered-from-demand fix
+   │
+   ├──► (2) reconcile economics paths
+   │
+   └──► (4) corpus generation route/script ──► (5) corpus storage/serving ──► (6) benchmarks
+(3) collapse registries  [independent, parallel to all of the above]
 ```
 
-### Flow 2: Per-Floor Heatmap Rebuild
+## Anti-Patterns to avoid in this integration
 
-```
-Material slider changes (wall U-value, HVAC efficiency, etc.)
-    |
-    v
-useEnergyBreakdown(pk) [useMemo] recomputes
-    |
-    v  (calls calculateAnnualDemand with returnPerFloor:true, then ASHRAE ratios)
-SystemBreakdown.perFloor: number[] — new array reference
-    |
-    v  (useEffect deps: [floorDemands, recipe] fires in BuildingLayers)
-Old "energy-heatmap" group disposed from energy-zones group
-New EnergyHeatmapMesh built: PlaneGeometry per floor, vertex colors from kwhmToColor()
-Added to LayerManager.getGroup("energy-zones")
-    |
-    v
-Three.js renders updated vertex-colored floor planes — reflects new material values
-```
+### Anti-Pattern: a third economics/energy computation path
 
-### Flow 3: Equipment Info on Hover
+**What people do:** when the corpus generator needs "the retrofit-adjusted numbers for this building," write a third, corpus-specific derivation because the two existing ones (twin, diagnostics) are each awkward to import into a headless batch context.
+**Why it's wrong:** this repository already has two disagreeing economics paths (Q3) as a direct consequence of exactly this instinct happening once. A third would make it three.
+**Do this instead:** finish the Q3 convergence first, then have the corpus generator call the single converged `computeRetrofitDelta`, the same pure function the twin already calls.
 
-```
-User moves mouse over cooling pipe in 3D viewport
-    |
-    v
-EquipmentTooltip.useFrame (throttled every 3rd frame)
-    |
-    v
-raycasterRef.current.setFromCamera(mouse.current, camera)
-raycaster.intersectObjects([...visible mep sub-group children], true)
-    |
-    v  (hit found)
-componentType = hit.object.userData.type    // "cooling-branch"
-floorNo      = hit.object.userData.floorNo  // 3
-    |
-    v
-inferEquipmentSpecs(buildingPk, componentType, floorNo) → EquipmentSpec
-    |
-    v
-setHovered({ position: hit.point, spec })
-    |
-    v
-<Html position={hovered.position}><EquipmentInfoCard spec={spec} /></Html>
-```
+### Anti-Pattern: a corpus row that "fills in" an unmeasured input with a plausible number
 
-### Flow 4: Equipment Control → Energy Impact
-
-```
-User toggles HVAC off in EquipmentControlPanel (scenario mode)
-    |
-    v
-useWorkflowStore.setEquipmentOverride("mep-hvac", { enabled: false })
-    |
-    v  (useScenarioEnergy subscribes to equipmentOverrides)
-scenarioInputs = { ...baseInputs, coolingCOP: 0.01, heatingEfficiency: 0.01 }
-    |
-    v
-calculateAnnualDemand(heatLoss, scenarioMaterials, recipe, climate, { equipmentOverrides })
-    |
-    v
-scenarioDemand.demandPerSqm >> baseline (HVAC is the largest load component)
-    |
-    v
-StatusBar + EnergyCards re-render with scenario values
-ScenarioModeBanner appears: "시나리오 모드 — 실제 데이터가 아님"
-Delta vs baseline shown in amber in energy cards
-```
-
----
-
-## Architectural Patterns
-
-### Pattern 1: Additive Store Slices — Do Not Add New Store Files
-
-**What:** New state goes into existing stores as new fields, not new store files.
-
-**Why:** `use-energy-metrics.ts` explicitly documents: "Avoids `getEffectiveRecipe` in Zustand
-selector to prevent infinite loops. Instead subscribes to `baseRecipes[pk]` and `overrides[pk]`
-separately." Every new store creates a new subscription chain. Adding more stores risks
-infinite render loops from object reference churn across stores.
-
-**Rule:** `mepSubVisibility` → `layer-store`. `equipmentOverrides` → `workflow-store`.
-`scenarioOverrides` → `recipe-store`. Zero new store files.
-
-### Pattern 2: Per-Frame Raycasting with useRef-Allocated Raycaster
-
-**What:** Allocate `THREE.Raycaster` once via `useRef`, call `setFromCamera` inside `useFrame`.
-
-**Why:** `structural-tooltip.tsx` allocates `new THREE.Raycaster()` inside `useFrame` per frame —
-this is a documented performance concern in PROJECT.md. All new raycasting components fix this.
-
-### Pattern 3: Separate Geometry for Energy Visualization
-
-**What:** Energy heatmap uses its own `THREE.Mesh` objects in the `energy-zones` group, never
-sharing geometry with structural or envelope layers.
-
-**Why:** Structural slabs use InstancedMesh. `setColorAt` on that InstancedMesh cannot express a
-spatial gradient across a face, requires full buffer re-upload on every energy recalc, and
-entangles structural visual state with energy data state. Separate floor-plane meshes with vertex
-colors in `energy-zones` are independent — the heatmap persists even when the structure layer is
-hidden.
-
-### Pattern 4: Scenario State Isolated from Committed State
-
-**What:** `equipmentOverrides` and `scenarioOverrides` are never merged into `overrides[pk]`
-(material edits). They are never persisted. Undo/redo never applies to them.
-
-**Why:** `recipe-store.overrides[pk]` feeds both 3D model geometry and ECO2 export. Contaminating
-it with scenario hypotheses would corrupt both. Transient scenario state must not survive page
-reload — the amber banner is the only visual signal that values are non-actual; without it,
-persisted scenario values would silently mislead users.
-
-### Pattern 5: Energy Calculations in useMemo, Never in Render or useFrame
-
-**What:** All calls to `calculateAnnualDemand()`, `calculateSystemBreakdown()` happen inside
-`useMemo` with explicit deps arrays, never in render functions or `useFrame`.
-
-**Why:** These are synchronous CPU functions (50–200ms). `use-energy-metrics.ts` demonstrates the
-correct pattern. Calling them in `useFrame` drops scene fps to <5. Calling in render body causes
-redundant recalculation on unrelated re-renders.
-
----
-
-## Recommended Build Order
-
-Respects the dependency graph. Each phase has clear exit criteria and can be validated
-independently before the next phase starts.
-
-### Phase 1: MEP Sub-Layer Foundation (architectural prerequisite)
-
-Files touched: `types.ts`, `layer-store.ts`, `layer-manager.ts`, `building-layers.tsx`,
-`layer-panel.tsx` (sub-toggle UI), `mep-coordinator.ts` (new)
-
-Exit criteria: Each sub-toggle independently shows/hides the correct 3D geometry. Existing 5-layer
-visibility toggles still work unchanged.
-
-No energy calculations touched in this phase.
-
-### Phase 2: Per-Floor Energy Model + System Breakdown (engine, no UI)
-
-Files touched: `annual-demand.ts` (optional extension), `system-breakdown.ts` (new),
-`use-energy-breakdown.ts` (new)
-
-Exit criteria: `useEnergyBreakdown(pk)` returns `SystemBreakdown` with `perFloor` array and
-HVAC/lighting/DHW/plug split. All non-HVAC values carry `dataSource: "estimated-ratio"`.
-
-### Phase 3: Energy Breakdown Dashboard
-
-Files touched: `energy-breakdown-chart.tsx` (new), integration into config panel tabs.
-Requires `pnpm add recharts@^3.8.1` and `npx shadcn@latest add chart`.
-
-Exit criteria: Bar chart renders HVAC/lighting/DHW/plug breakdown. Updates when material sliders
-change (via `useEnergyBreakdown` subscription). `estimated-ratio` label visible in tooltip.
-
-Depends on: Phase 2.
-
-### Phase 4: Energy Consumption Heatmap
-
-Files touched: `energy-heatmap-mesh.ts` (new), `building-layers.tsx` (heatmap rebuild
-`useEffect`).
-
-Exit criteria: `energy-zones` layer shows color-gradient floor planes. Colors update reactively
-when material sliders change. `disposeLayer("energy-zones")` + manual heatmap child disposal runs
-correctly before rebuild.
-
-Depends on: Phase 2 (`perFloor` array from `useEnergyBreakdown`).
-
-### Phase 5: Equipment Info Panel
-
-Files touched: `equipment-specs.ts` (new), `equipment-tooltip.tsx` (new R3F component).
-
-Exit criteria: Hovering a cooling pipe or lighting fixture shows an info card with inferred specs.
-`dataSource: "estimated-ratio"` label visible on all estimated values. Raycaster uses `useRef`
-allocation pattern.
-
-Depends on: Phase 1 (MEP sub-groups must have `userData.type` + `userData.floorNo` on objects —
-already set by existing layer generators, e.g. `{ type: "cooling-branch", floorNo: 3 }`).
-
-### Phase 6: Equipment Control + Scenario Store (capstone)
-
-Files touched: `workflow-store.ts` (scenario slice + `partialize` update), `recipe-store.ts`
-(scenarioOverrides slice), `use-scenario-energy.ts` (new), `equipment-control-panel.tsx` (new),
-`scenario-mode-banner.tsx` (new).
-
-Exit criteria: Toggling HVAC off in scenario mode visibly raises kWh/m² in status bar and energy
-cards. Amber banner displays. Exiting scenario mode restores baseline. Equipment state NOT in
-persisted state after reload.
-
-Depends on: Phase 2 (`calculateAnnualDemand` options extension for `equipmentOverrides`),
-Phase 5 (EquipmentSpec provides `equipmentId` for control targets).
-
----
-
-## Existing Shell Integration Map
-
-```
-workspace-shell.tsx (existing — no changes needed)
-|
-+-- building-scene.tsx (existing R3F Canvas)
-|   +-- BuildingLayers (existing) ← MODIFIED: +mepSubVis sync, +heatmap rebuild
-|   +-- EquipmentTooltip (NEW R3F) ← inserted alongside BuildingLayers
-|   +-- ScenarioModeBanner (NEW) ← Html overlay inside Canvas or absolute positioned
-|
-+-- layer-panel.tsx (existing sidebar) ← MODIFIED: MEP expandable sub-rows
-+-- energy-cards.tsx (existing bottom-left) ← UNCHANGED
-+-- energy-breakdown-chart.tsx (NEW) ← below energy-cards or in new config tab
-|
-+-- config-tabs/ (existing right panel)
-    +-- building-tab.tsx (existing — unchanged)
-    +-- layers-tab.tsx (existing) ← MODIFIED: renders MepSubLayerToggles
-    +-- equipment-tab.tsx (NEW) ← houses EquipmentControlPanel (Phase 6)
-```
-
----
-
-## Anti-Patterns
-
-### Anti-Pattern 1: Adding New Zustand Stores for Energy Observability State
-
-**What people do:** Create `useEquipmentStore`, `useScenarioStore`, `useHeatmapStore` as new files.
-
-**Why it's wrong:** `use-energy-metrics.ts` documents the infinite loop risk explicitly. Each new
-store subscription that feeds into energy calculations risks object reference churn across render
-cycles. The codebase already has 7 stores; adding more for tightly coupled state increases that risk.
-
-**Do this instead:** `mepSubVisibility` → `layer-store`. `equipmentOverrides` → `workflow-store`.
-`scenarioOverrides` → `recipe-store`. Zero new store files for v5.0.
-
-### Anti-Pattern 2: Coloring Structural InstancedMesh for Heatmap
-
-**What people do:** Call `slabMesh.setColorAt(floorIndex, kwhmColor)` on the structural slab
-InstancedMesh to show energy intensity per floor.
-
-**Why it's wrong:** Cannot express a continuous gradient across a face. Requires full
-`instanceColor` buffer re-upload on every energy recalculation. Hides when the structure layer is
-toggled off — but the heatmap should be independently controllable via the `energy-zones` layer.
-
-**Do this instead:** Separate `THREE.Mesh` floor planes with `vertexColors: true` in the
-`energy-zones` group. Independent visibility, independent disposal, independent color buffer.
-
-### Anti-Pattern 3: Calling Energy Calculations in useFrame or Render Body
-
-**What people do:** Call `calculateAnnualDemand()` in `useFrame` to keep heatmap "live," or call
-it in a component render function for "simplicity."
-
-**Why it's wrong:** 50–200ms synchronous CPU call in `useFrame` = <5 fps. In render body =
-recalculates on every unrelated re-render. Both are observable frame-rate regressions.
-
-**Do this instead:** `useEnergyBreakdown` hook using `useMemo` with explicit deps. Heatmap rebuilds
-only when `floorDemands` reference changes, which happens only when the underlying material/recipe
-deps change.
-
-### Anti-Pattern 4: Persisting Scenario / Equipment State
-
-**What people do:** Include `equipmentOverrides` or `scenarioActive` in Zustand `persist`
-`partialize`.
-
-**Why it's wrong:** The amber `ScenarioModeBanner` is the only signal that displayed values are
-hypothetical. If scenario state persists across reload, users see modified energy projections
-without the banner context — the data appears to be the actual building state.
-
-**Do this instead:** Explicitly exclude from `partialize`. Scenario state is transient. On reload,
-users start from the committed baseline.
-
-### Anti-Pattern 5: Copying the Raycaster-per-Frame Pattern from StructuralTooltip
-
-**What people do:** Copy `structural-tooltip.tsx` verbatim, including `new THREE.Raycaster()` inside
-`useFrame`.
-
-**Why it's wrong:** Per-frame heap allocation. Documented performance concern in PROJECT.md.
-
-**Do this instead:** `const raycasterRef = useRef(new THREE.Raycaster())`. Call
-`raycasterRef.current.setFromCamera(...)` inside `useFrame`. This is the fix, not the pattern.
-
----
+**What people do:** when a register sweep produces a building with a genuinely unresolvable field (era unknown, no floor count, climate unresolvable — `LedgerInsufficientReason`, `ledger-baseline-model.ts:101-108`), silently substitute a population-average value so the row is "complete" for the corpus table.
+**Why it's wrong:** this is the exact convenience-default trap `AGENTS.md` names as the way the provenance guarantee dies, at corpus scale instead of single-building scale. `buildLedgerBaselineModel` already refuses to do this — it returns `insufficient_ledger` with a typed reason instead (lines 223-228 and every early return in the builder).
+**Do this instead:** a corpus release must be able to state its own coverage honestly — "N buildings swept, M produced a baseline, K excluded for reason X" — the same way `ReleaseManifest.coverage` (`portfolio/types.ts:52-58`) already has a `buildingCount` field ready to carry this. An excluded building is a row in an exclusions log, not a row with invented values.
 
 ## Sources
 
-- `src/lib/layers/types.ts` — `LayerId` union (5 entries confirmed), `ALL_LAYER_IDS`, `LAYER_CONFIGS` — HIGH confidence (Read)
-- `src/lib/layers/layer-manager.ts` — `LayerManager` class, `COMPONENT_TO_LAYER` mapping, `setVisible()`, `disposeLayer()` — HIGH confidence (Read)
-- `src/store/layer-store.ts` — `LayerState` shape, `Record<LayerId, boolean>` visibility — HIGH confidence (Read)
-- `src/store/workflow-store.ts` — 3-stage workflow (`search|twin|report`), `persist` shape with `partialize` — HIGH confidence (Read)
-- `src/store/recipe-store.ts` — `overrides` record, `setOverride()` dot-path pattern, isolated from `getEffectiveRecipe` — HIGH confidence (Read)
-- `src/store/material-store.ts` — `overrideProperty()` pattern, `selectedElement` shape — HIGH confidence (Read)
-- `src/hooks/use-energy-metrics.ts` — subscription topology, infinite-loop prevention comment, `useMemo` pattern for effectiveRecipe — HIGH confidence (Read)
-- `src/lib/energy/annual-demand.ts` — function signature, degree-day model, `coolingCOP`/`heatingEfficiency` paths — HIGH confidence (Read)
-- `src/components/viewer/structural-tooltip.tsx` — raycasting pattern (pointermove handler, useFrame throttle, Html popup, per-frame Raycaster allocation noted as defect) — HIGH confidence (Read)
-- `src/components/viewer/energy-cards.tsx` — `useEnergyMetrics` consumption, `<Skeleton>` pattern, ECO2 integration — HIGH confidence (Read)
-- `src/lib/layers/layer-3-cooling.ts` — generator pattern: `userData.type`, `userData.floorNo`, ShaderMaterial `uTime`, dispose pattern — HIGH confidence (Read)
-- `src/lib/layers/layer-7-lighting.ts` — InstancedMesh pattern, `userData.type`, named component types — HIGH confidence (Read)
-- `src/components/viewer/building-layers.tsx` — `useRef<LayerManager>`, dual useEffect pattern, `useFrame` for animations — HIGH confidence (Read)
-- PROJECT.md — `StructuralTooltip` Raycaster-per-frame known tech debt — HIGH confidence (Read)
+- `src/lib/energy-diagnostics/ledger-baseline-model.ts` (read in full)
+- `src/lib/energy/delivered-from-demand.ts`, `primary-energy.ts`, `system-breakdown.ts` (read in full)
+- `src/lib/retrofit/retrofit-delta.ts` (read in full), `lighting-retrofits.ts` (partial), `solar-potential.ts` (partial)
+- `src/lib/energy-diagnostics/retrofit-bridge.ts` (read in full)
+- `src/lib/reference-buildings/manifest.ts`, `energy-dataset.ts`, `energy-dataset-server.ts`, `energy-inputs.ts` (partial) (read in full/partial)
+- `src/lib/landing/gallery.ts` (read in full)
+- `src/lib/portfolio/release-store.ts`, `types.ts` (partial), `src/app/releases/page.tsx` (partial)
+- `src/app/api/bldrgst/_factory.ts`, `jijugu/route.ts`, `src/lib/api-proxy.ts` (partial)
+- `src/app/api/reference-buildings/datasets/route.ts`, `[id]/dataset/route.ts`
+- `src/hooks/use-energy-metrics.ts`, `use-retrofit-scenario.ts` (partial)
+- `src/store/scenario-store.ts` (partial)
+- `.planning/PROJECT.md`, `CLAUDE.md`, `AGENTS.md`, `docs/04_Agent-Handoffs/CURRENT.md` (required reading)
+- `package.json` (checked for DB/tsx dependencies — none found), directory listings of `scripts/`, `src/lib/reference-buildings/`, `src/app/api/`
 
 ---
-
-*Architecture research for: Korean BIM EMS v5.0 — Energy Systems Observability & Control*
-*Researched: 2026-04-12*
+*Architecture research for: Building Energy Repository integration (v6.0)*
+*Researched: 2026-09-15*

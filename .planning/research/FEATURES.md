@@ -1,225 +1,195 @@
 # Feature Research
 
-**Domain:** Energy Systems Observability & Control — BIM viewer with utility sub-layers, energy heatmap, equipment panels, and what-if scenario analysis
-**Researched:** 2026-04-12
-**Confidence:** HIGH (grounded in existing codebase layer system, energy hooks, store shapes) / MEDIUM (BEMS industry patterns from web research)
+**Domain:** Building energy repository / building-stock corpus (new capability layer on an existing single-building energy diagnosis tool, BIMFIT)
+**Researched:** 2026-09-15
+**Confidence:** HIGH for prior-art mechanics and published methodology (primary sources: DOE, NREL/OEDI, EIA, ASHRAE, EU Commission, episcope.eu, data.go.kr); MEDIUM for Korean-specific gap analysis (public-data-portal listings read directly, no internal access to 그린투게더/한국에너지공단 raw microdata); LOW only where explicitly marked.
 
----
+## Prior Art — What Each System Actually Offers
 
-## Context: What This Research Covers
+| System | Unit of record | Data origin | Modeled or metered | Uncertainty expression |
+|---|---|---|---|---|
+| **DOE Building Performance Database (BPD)** — [energy.gov](https://www.energy.gov/cmei/buildings/building-performance-database-bpd), [OpenEI submission](https://data.openei.org/submissions/145) | One building record (anonymized) | Voluntary/convenience pool: local benchmarking-mandate filings, utility Green Button exports, CBECS/RECS as two of many contributing sources, owner-submitted data | **Metered** (whole-building billing/meter data) + self-reported physical characteristics | None stated at the record level; the population itself is **not** statistically representative — it is a volunteered, mandate-driven sample skewed toward buildings that already benchmark (often already efficient or compliance-obligated) |
+| **ASHRAE Building EQ (bEQ)** — [ashrae.org/technical-resources/building-eq](https://www.ashrae.org/technical-resources/building-eq) | One building, issued as a **label**, not a searchable corpus | Two independent evaluations per building: "In Operation" from actual utility billing + a Level 1 energy audit; "As Designed" from an asset simulation | **Both**, kept deliberately separate — an operational (metered) rating and an asset (simulated) rating are never merged into one number | No statistical error band; the two labels are the disclosure mechanism — a building's real bill and its designed potential are shown side by side rather than reconciled into one figure |
+| **EU Building Stock Observatory (BSO)** — [building-stock-observatory.energy.ec.europa.eu](https://building-stock-observatory.energy.ec.europa.eu/database/), [EC news](https://energy.ec.europa.eu/news/eu-building-stock-observatory-monitoring-energy-performance-buildings-across-europe-2023-08-31_en) | **National/EU aggregate indicator** (stock count, m², renovation rate, EPC counts) — never an individual building | Eurostat, national statistics offices, the Hotmaps project | Aggregated **secondary statistics**, not a building-level model or meter at all | Not quantified per figure; credibility rests on citing the contributing national source per indicator, not on a stated confidence interval |
+| **TABULA / EPISCOPE** — [episcope.eu/building-typology](https://episcope.eu/building-typology/), [TABULA calculation method PDF](https://episcope.eu/fileadmin/tabula/public/docs/report/TABULA_CommonCalculationMethod.pdf) | One **archetype** per (country × building-type × age-class) cell of a national "building type matrix" — a representative example, not a real surveyed building | Expert-compiled national typologies built from real building samples + EN 13790 seasonal-method calculation | **Modeled**, but explicitly and visibly **calibrated**: a country-specific empirical "adaptation factor" scales the raw calculation to the typical level of *measured* consumption, and the WebTool lets a user toggle between raw calculated and calibrated views | The gap between calculation and metered reality is not hidden — it is named as a factor and shown as a switch, the strongest "modeled-vs-real, and here's the seam" precedent found |
+| **ResStock / ComStock (NREL)** — [nrel.gov/research/software/comstock](https://www.nrel.gov/research/software/comstock), [ResStock 2024.2 docs](https://oedi-data-lake.s3.amazonaws.com/nrel-pds-building-stock/end-use-load-profiles-for-us-building-stock/2024/resstock_tmy3_release_2/resstock_documentation_2024_release_2.pdf) | One **synthetic dwelling/building EnergyPlus model** per sampled unit — 350,000+ homes for ResStock, a comparable national commercial set for ComStock | Probabilistic sampling across 100+ characteristic distributions built from many admin/survey/utility sources, then simulated | **Modeled at scale**, but validated against real meters from **30+ utility data-sharing partners** over three years, plus submetering | An explicit, stated aggregate error band: "the vast majority of simulations, aggregated to varying degrees, estimate electricity use to within ±20% of RECS reported consumption" — a named, published number, not a vague disclaimer |
+| **EnergyPlus / DOE Commercial Reference & 90.1 Prototype Buildings** — [OpenEI wiki](https://openei.org/wiki/Commercial_Reference_Buildings), [NREL PNNL report](https://docs.nrel.gov/docs/fy11osti/46861.pdf) | One canonical **prototype** per (16 building types × 16–17 climate locations × code vintage) — thousands of IDF/OSM files total | Built by PNNL for ASHRAE 90.1 code development, not sampled from the real stock | **Purely modeled**, deterministic — these are reference points for code-writing and compliance baselines, never claimed as a population sample | None — by design these are single archetypes, not a distribution, so no uncertainty is stated or implied |
+| **CBECS / RECS (EIA)** — [eia.gov/consumption/commercial](https://www.eia.gov/consumption/commercial/), [RSE methodology](https://www.eia.gov/consumption/commercial/data/what-is-an-rse.php) | One real, statistically sampled building/household (CBECS: 6,720 buildings) | A designed national probability sample, re-run roughly every 4 years, later merged with billing data | **Metered** billing + surveyed physical/operational characteristics | The most rigorous precedent found: **Relative Standard Error (RSE)** per estimate, computed from replicate weights, converted to a 95% CI (`RSE/100 × estimate × 1.96`), and a **hard suppression rule** — a table cell is withheld if RSE > 50% or fewer than 20 buildings respond |
+| **한국에너지공단 건축물 에너지효율등급 (BEE certification) dataset** — [data.go.kr listing](https://www.data.go.kr/data/15100521/openapi.do) | One certified building (grade 1+++ to 7) | Submitted **as-designed asset simulation** at certification time (ECO2-class tooling), not billing | **Modeled** (asset rating), not metered | Not stated; coverage is self-selected toward buildings legally obligated to certify (new/large/public), an undisclosed bias by omission |
+| **국가 건물에너지 통합관리시스템 / 그린투게더 (Green Together, MOLIT)** — [greentogether.go.kr](https://www.greentogether.go.kr/), [건축HUB 건물에너지정보 서비스](https://www.data.go.kr/data/15135963/openapi.do) | Building/parcel-month electricity + gas usage, aggregated by 법정동/parcel | Actual utility billing (한전/도시가스) collected under the 녹색건축물 조성 지원법 | **Metered**, genuinely — the strongest "real consumption" source found for Korea | No stated error band because it is a raw aggregate, not a sample; but single-family homes and multifamily buildings under 200 units are **excluded from disclosure since 2020**, a real, undisclosed-on-the-chart coverage gap |
+| **한국에너지공단 건물에너지진단정보DB** — [data.go.kr fileData listing](https://www.data.go.kr/data/15105239/fileData.do) | One on-site-audited building | Mixed: billing history + physical survey at audit time | Mixed (metered history + modeled improvement scenarios) | Published as aggregated project statistics, not open per-building microdata — no bulk download of the underlying records found |
 
-This is v5.0 feature research. The following are already built and NOT re-researched:
-
-- 5-layer system (envelope, structure, mep, energy-zones, retrofit-targets) with `LayerId` union type, `layer-store.ts`, and `LayerManager`
-- Energy calculation engine (`heat-loss.ts`, `annual-demand.ts`, `co2-emissions.ts`, `energy-grade.ts`, `climate-data.ts`)
-- Material property panel with slider delta annotations (`use-energy-delta.ts`)
-- Live kWh/m² status bar
-- Energy cards (grade, demand, CO2, heat loss) with actual vs modeled comparison
-- Building ledger integration and actual consumption fetch (`use-actual-energy.ts`)
-
-The six new capabilities to scope for v5.0:
-
-1. Individual utility sub-layers replacing the single MEP layer
-2. Energy consumption heatmap on 3D building geometry
-3. Equipment info panels (specs, usage, efficiency ratings)
-4. Basic equipment control (toggle on/off, HVAC setpoints, see energy impact)
-5. Energy breakdown dashboard by system type
-6. What-if scenario analysis
-
-**Critical codebase constraint discovered:** The `LayerId` type is a string union (`"envelope" | "structure" | "mep" | "energy-zones" | "retrofit-targets"`). The `layer-store.ts` uses `Record<LayerId, boolean>` for visibility. Expanding MEP into sub-layers requires extending this union type, the store, and the `LayerManager`. However, 15 individual sub-layer generator files already exist (`layer-3-cooling.ts` through `layer-14-microgrid.ts`) but are all collapsed under `"mep"` in `COMPONENT_TO_LAYER`. The generator infrastructure is partially done — the store/type layer is the gap.
-
----
+**The gap this milestone can fill in Korea specifically:** nothing found above combines (a) a bulk-downloadable, per-record, licensed, versioned dataset, (b) a public API, (c) a named modeled/metered distinction per record, and (d) a stated calibration error band against real measured anchors. Green Together has real meters but no per-building bulk API or permalink. The KEA BEE dataset has per-building granularity but is asset-only with no calibration statement. TABULA-style calibration exists only for a handful of EU countries, and only for residential archetypes. BIMFIT's register-generated corpus, anchored by its seven (growing) measured/well-documented reference models, sits in a position none of the Korean prior art occupies today.
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features a GX energy auditor assumes exist in any energy observability tool. Missing these = the tool feels like a generic 3D viewer, not an energy audit platform.
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **MEP sub-layer toggles** (electrical, HVAC, lighting, plumbing) | Every professional BEMS tool (Facilio, EnergyCAP, CIM) segments utility systems. An auditor needs to isolate "lighting only" or "HVAC only" to understand system-level consumption. A single undifferentiated MEP toggle hides this. | MEDIUM | 15 sub-layer generator files already exist. The gap is `LayerId` union extension + `layer-store.ts` `Record<LayerId, ...>` upgrade. Must preserve backward compat with existing `"mep"` references or rename to `"mep-all"` group. Core architecture change — must be first in the milestone. |
-| **Energy consumption heatmap** | Industry standard for energy audits: color-encode floors or zones by consumption intensity (kWh/m²). Seen in every serious BEMS dashboard. Without spatial context, energy numbers are abstract. Auditors use heatmaps to immediately see "which floor is the problem." | HIGH | The `energy-zones` layer exists but currently shows uniform zone fills, not consumption-weighted color. Requires per-zone kWh/m² data mapped to a gradient (e.g., green → red). The `calculateAnnualDemand()` currently returns building-total, not per-zone — need per-floor/per-zone breakdown. Fragment shader or vertex color approach on the envelope mesh. |
-| **System-level energy breakdown** | GX auditors always ask "what percentage of energy is HVAC vs lighting vs plug loads?" before recommending retrofits. Without a breakdown chart, the kWh/m² number is unactionable. Standard in EnergyCAP, Wattsense, Facilio dashboards. | MEDIUM | The existing `calculateAnnualDemand()` returns `heatingDemand` + `coolingDemand` but does not break out lighting, plug loads, DHW, or elevators. Requires extending the energy model with system-category attribution. Can start with estimated splits (ASHRAE standard ratios by building type) before real sub-metering data exists. |
-| **Equipment info panel on click/hover** | Clicking on an HVAC unit, electrical panel, or lighting circuit and getting a popup with specs (capacity, efficiency rating, age, energy use) is the baseline interaction for any equipment-aware tool. Users expect "click the thing, see its data." | MEDIUM | Requires a raycasting hit-test on MEP sub-layer objects, plus a data model for equipment properties (`EquipmentSpec`: type, capacity, efficiency, installYear, annualKwh). The `structural-tooltip.tsx` already implements raycasting + hover popup — the pattern exists. New: equipment data source (inferred from building recipe + ledger data, not user-entered). |
-| **Loading state / progressive reveal** | When the layer or heatmap data is computing, users need to see progress, not a stale or blank state. Standard expectation from any data-heavy dashboard. | LOW | Existing skeleton/loading patterns from energy-cards.tsx. Heatmap computation may take 100-500ms on large buildings — show a "computing..." indicator on the zone layer. |
+| Feature | Why Expected | Complexity | Notes / Dependency |
+|---|---|---|---|
+| Search and filter across the corpus (use type, era/vintage, region/climate, floor-area band, structure type) | Every prior-art tool above lets a user narrow before they read (TABULA's type×age matrix, CBECS's variable filters, BPD's search UI) | MEDIUM | Depends on the existing catalogue endpoint (`/api/reference-buildings`) and `classifyEraExplicit`; needs to generalize from 7 hand-curated records to a swept corpus of unknown size |
+| Stable per-record identifier + permalink | DOE BPD, CBECS microdata, and ResStock/ComStock all key every record so it can be cited and re-fetched later; a corpus that can't be pointed at isn't citable | LOW–MEDIUM | The 건축물대장 PK (`mgmBldrgstPk`) is already the id used by the ledger path; needs a uniqueness/collision check at sweep scale, not new plumbing |
+| Provenance and licence per record | Every credible source above states where a number came from; BPD is criticized precisely where this is weakest (anonymized, sourced from "various" without per-record traceability) | LOW–MEDIUM | Directly extends the existing per-building dataset schema (1.3.0: licences, hashes, sources) from 7 hand-built records to register-swept ones — the assumption ledger already produces this per-fact, it needs to roll up per-record |
+| Units and schema documentation (data dictionary) | ResStock/ComStock ship a `data_dictionary.tsv` and `enumeration_dictionary.tsv` with every release; without this, a bulk file is unusable outside the app | LOW | Schema 1.3.0 partially documents this already; needs a public-facing page, not new data work |
+| Bulk download | CBECS microdata, ResStock/ComStock parquet/csv dumps, and BPD's bulk exports are all expected by any building professional or researcher | MEDIUM | Today the app serves one file per building; corpus scale needs a single dump (or paginated export) covering however many records the register sweep produces |
+| Read-only API | BPD ships an API (v2.1), Green Together exposes Swagger-documented OpenAPI, data.go.kr is API-first by convention in Korea | MEDIUM–HIGH | `/api/reference-buildings/[id]` exists for single records; corpus scale needs list/filter/pagination/rate-limiting, which does not exist yet |
+| Changelog / release versioning | ResStock names every release (`resstock_amy2018_release_1`) with a dated README; CBECS is versioned by survey year; a corpus without a stated vintage cannot be trusted for a decision made today | LOW–MEDIUM | Dataset schema is already version-stamped (1.3.0); this is a release-level (corpus-snapshot) changelog on top of that, not a new versioning scheme |
+| Statement of coverage and known bias | EVERY credible source above states, explicitly, what it does not cover (CBECS's suppression rule, BPD's admitted volunteer-sample skew, Green Together's <200-unit exclusion) | MEDIUM | This is a direct extension of the project's own stated invariant ("no meter series is ingested; every published figure is modeled, and the dataset says so") from one building to a population statement |
 
 ### Differentiators (Competitive Advantage)
 
-Features specific to the Korean GX energy audit use case that commercial BEMS tools do not offer.
-
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **Live what-if scenario analysis** | Toggle a sub-system off, adjust an HVAC setpoint, and see the energy impact update in real time on the heatmap and breakdown dashboard — without committing the change. This "shadow simulation" mode is what makes the tool useful for retrofit planning, not just monitoring. Commercial BEMS tools (Facilio, EnergyCAP) show historical data; they do not let you simulate "what if I replaced these fan coil units?" | HIGH | Builds on existing `use-energy-metrics.ts` + material store override pattern. The delta annotation system (already built for sliders) is the foundation. Key new piece: scenario state store (separate from committed material-store) that holds equipment override hypotheses and feeds the energy engine without modifying persistent state. |
-| **Equipment control linked to energy impact** | Toggling a sub-system or changing a setpoint immediately updates the kWh/m² projection in the status bar and energy cards. The causal chain (control → energy model → display) is explicit and visual. No other tool in the GX team's workflow connects equipment state to energy calculation. | HIGH | The energy calculation engine is already reactive to material-store changes. The same pattern extends to equipment state: `useEquipmentStore` → `calculateAnnualDemand()` with equipment overrides → existing display hooks. The key challenge is modeling "HVAC off" in `annual-demand.ts` (currently assumes all systems operational). |
-| **Korean building code attribution** | Equipment efficiency ratings displayed using Korean standards (KS B 6364 for HVAC, KSC IEC 62301 for electrical) and Korean energy label grades (1~5등급). Auditors are familiar with Korean certification labels, not SEER/EER. No commercial BEMS tool does this for Korean buildings. | LOW | The existing `energy-grade.ts` already implements Korean 1+++~7 grade system. Extend to per-equipment grades. Data inferred from `structureType` + `approvalDate` in building ledger — same inference pattern as PBR material selection. |
-| **Sub-system heatmap by floor** | The heatmap is not just "hot building / cold building" — it shows per-floor energy intensity broken down by sub-system. The HVAC layer heatmap shows which floors have the most HVAC load; the lighting layer shows lighting density. This is not available in any standard web-based BIM tool. | HIGH | Requires per-floor, per-system energy estimates. Can be synthesized from building geometry (floor height, area, occupancy type) + system type ratios. Not actual sub-metered data — modeled estimates clearly labeled as such. The `energy-zones` layer already color-codes floors; extend to accept a system filter. |
-| **ECO2 export with sub-system breakdown** | When the GX team finalizes an audit, they export to ECO2 (Korea's official energy evaluation software). Currently the export (`eco2-export.ts`) sends envelope data only. Adding sub-system data (HVAC type, lighting density, DHW system) makes the ECO2 input file more complete, reducing manual re-entry. | MEDIUM | `generateECO2Input()` in `eco2-export.ts` already handles envelope. Extend the ECO2 schema to include `systemData` fields. Complexity: Korean ECO2 input format for system data (KS F 1900 standard) needs verification — flag for phase research. |
+| Feature | Value Proposition | Complexity | Notes / Dependency |
+|---|---|---|---|
+| Percentile-within-peer-group position for a building | This is the single most-requested benchmarking feature (ENERGY STAR's 1–100 score is the industry reference point); nothing in the Korean prior art offers it against a per-building, cited, modeled corpus | HIGH | Depends on the Active roadmap item "generate corpus baselines at scale," on the existing degree-day/climate adapter (`ledger-climate.ts`) for weather normalization, and on floor-area normalization the diagnostics engine already does |
+| Transparent, adjustable peer-group definition (use type × era × climate region × size class) | TABULA's building-type matrix is the credible precedent; ENERGY STAR's peer group is opaque (a regression, not a named matrix) — a named matrix is more defensible for a Korean professional audience used to era-indexed code tables already | MEDIUM | Reuses `classifyEraExplicit` and `ledger-climate.ts` region mapping directly; no new classification scheme needed, just exposure of the existing one as a filter axis |
+| Calibration display against measured anchors, with a stated error band per peer group | This is the feature none of the Korean sources offer and only ResStock/ComStock (±20% vs RECS) and TABULA (named adaptation factor) offer well among the international sources | HIGH | Directly the mechanism named in PROJECT.md: "the measured models are the only way to state how wrong they are." Requires the Active item of growing the anchor set to include buildings with **measured consumption**, not just measured envelopes |
+| Confidence tiering by anchor proximity (peer groups near a measured anchor get a tighter stated band; groups with none get an explicit "no calibration anchor" flag rather than a false tight number) | No prior-art system found does this at the *peer-group* level — CBECS suppresses by sample size, TABULA calibrates per country not per matrix cell, ResStock states one national aggregate band. A per-cell honesty flag is a genuine differentiator consistent with the project's assumption-ledger philosophy | HIGH | Depends on both the peer-group feature above and the growing anchor set; this is the most novel and highest-complexity item in this list |
+| Modeled/metered/assumption tri-state badge per record and per figure, at population scale (not just per building) | The project already enforces this per-fact via `createEnergyFact`; no prior-art corpus reviewed exposes this distinction at the *record* level in a search/browse UI — BPD blurs it (labeled "measured" while including volunteered/mandate data of uneven quality), CBECS doesn't need to (it's uniformly metered) | MEDIUM | Extends the existing assumption-ledger UI pattern (already built for single-building diagnosis) to the corpus catalogue and API response shape |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| **Real-time IoT sensor data feed** | "Real buildings have sensors — show actual sensor readings on the 3D model." Sounds like the natural evolution of the heatmap. | IoT integration (MQTT, BACnet, Modbus, REST polling) requires live infrastructure, authentication per building, and radically different data freshness assumptions. The GX team audits buildings they do not operate — they have no IoT access. Adding real-time feeds addresses a use case (facility management) that is not the GX team's job. | Show modeled energy estimates (already computed by the engine) clearly labeled as "modeled." Display actual consumption from `use-actual-energy.ts` (annual totals from data.go.kr) when available. Do not build a real-time data pipeline. |
-| **Full equipment scheduling editor** | "Let users set HVAC schedules (7am-10pm weekdays), see annual impact." Scheduling is the next logical step after setpoint control. | Equipment scheduling requires modeling 8760-hour simulation (hourly granularity for a full year). The existing `calculateAnnualDemand()` uses HDD/CDD degree-day approximation, not hourly simulation. Replacing the engine to support schedules is a separate milestone. Partial schedule support (e.g., only weekday/weekend split) would be misleading — the model accuracy does not support it. | Simple on/off toggle per sub-system + setpoint adjustment. Model the energy difference using degree-day scaling. Flag full scheduling as a future ECO2-integration milestone. |
-| **Multi-building portfolio comparison** | "Compare this building's heatmap against 10 others in the portfolio." Portfolio view is the natural scale-up after per-building analysis. | Portfolio comparison requires a building database, cross-building normalization (different floor areas, use types, climates), and a fundamentally different UI paradigm (list/grid vs single 3D viewer). This is a separate product surface, not a feature of the single-building viewer. | The `benchmark-comparison.ts` and `benchmark-database.ts` already compare against building type benchmarks. Surface this in the energy breakdown dashboard (e.g., "your HVAC use is 23% above benchmark for RC office buildings"). Defer portfolio UI to a future milestone. |
-| **Photorealistic equipment 3D models** | "Show a realistic AHU or VRF unit in the 3D scene." Looks impressive and helps non-technical stakeholders. | Photorealistic equipment meshes (LOD2/LOD3) require asset libraries (GLTF files for each equipment type) or procedural modeling of HVAC units. These assets do not exist and are not in the current stack. Rendering them correctly requires shadow casting, collision, and placement logic. This is a 3D content production problem, not a code problem. | Stylized InstancedMesh representations (simple box/cylinder primitives in system colors) following the existing procedural building pattern. The structural clarity over photorealism principle from PROJECT.md applies here. |
-| **Per-equipment metered consumption from utility bills** | "Parse electricity bills and show per-circuit consumption on the 3D model." Utility bill parsing gives real data not model estimates. | Utility bill formats (PDF/CSV) vary by Korean utility provider (KEPCO, various district heating operators). Parsing is brittle. The `consumption-normalizer.ts` already handles the data.go.kr energy API which provides building-level actuals — further sub-metering from bills requires on-site data collection that the GX team does not have for audit buildings. | Use the existing `use-actual-energy.ts` total for reality-grounding. Use modeled sub-system breakdown (clearly labeled as estimated). Add a "flag for sub-metering" annotation if a zone's modeled consumption deviates significantly from actual. |
-
----
+| Feature | Why Requested | Why Problematic (evidenced) | Alternative |
+|---|---|---|---|
+| Branding the corpus output as "measured" or population-representative | Sounds more credible/marketable than "modeled" | DOE BPD does exactly this ("largest publicly-available source of measured energy performance data") while its own documentation admits the underlying pool is a volunteered, mandate-driven convenience sample, not a designed sample like CBECS — the label overclaims what the population supports. This is the precise trap PROJECT.md already forbids ("no meter series is ingested... the dataset says so") | Label every corpus record and every aggregate figure with its actual evidence tier (register-stated fact / era-table assumption / calibrated-against-anchor estimate), never a bare "measured" |
+| A single clean benchmark score (one number, 1–100) as the headline UI | ENERGY STAR's score is the most recognized pattern in the industry and stakeholders will ask for "our own ENERGY STAR score" | The EnergyStar++ academic critique found the underlying weighted linear regression cannot capture the real nonlinear relationship between energy use and building attributes, and that CBECS strata behind the score are sometimes thin (6,720 buildings split across many use-type/climate cells) — the single number hides both a model-form error and a sample-size problem | Show a range/band alongside any single position (as CBECS shows RSE-derived confidence intervals, not bare point estimates), and suppress or flag any peer-group cell below a stated minimum sample count, mirroring CBECS's "withhold if RSE > 50% or n < 20" rule |
+| Publishing only national/aggregate roll-up KPIs (a dashboard of totals, not per-building records) | Aggregates are simpler to build, easier to present as a policy dashboard, and avoid record-level provenance work | The EU Building Stock Observatory does exactly this and, as a direct consequence, cannot place a single building against anything, and cannot reveal *which* buildings within a country typology are driving a national number — it hides intra-country bias by construction | Keep the per-record dataset (already the schema-1.3.0 pattern) as the primary artifact; aggregate views are a read *of* that corpus, never a replacement for it |
+| Collapsing an asset (as-designed/simulated) rating and an operational (metered) rating into one merged "performance" figure | Simplifies the UI, avoids explaining two numbers | ASHRAE deliberately keeps Building EQ's "As Designed" and "In Operation" labels **separate** for this reason — merging a simulated potential with an actual bill produces a number that answers neither question honestly. In this project's terms: a register-baseline (assumption-tier) figure and a diagnosed/refined-twin (evidence-tier) figure for the same building must never silently merge into one reported value | Always surface which evidence tier produced a figure (this is already the assumption-ledger's job for a single building); a corpus-scale UI must carry that same tag through search results and API responses, not just the detail page |
+| Treating a fixed set of reference/prototype archetypes as if they represent the current stock indefinitely | Reference buildings are cheap to keep using once built, and "the archetype" is a comfortable mental model to reuse | DOE's 90.1 prototype buildings are pinned to a code vintage by design and go stale as the real stock and code both move on — they are useful as compliance baselines, never as a claim about today's population. A corpus without a visible generation date invites exactly that misuse | Every release must carry the changelog/version item above; a corpus snapshot's generation date is not decoration, it's the fact that keeps a stale archetype from being mistaken for a current stock estimate |
+| Silently excluding a building class/era/region from the sweep without saying so on the coverage page | Easiest path — quietly narrow scope during implementation rather than stating a limit | Green Together's undisclosed exclusion of small residential buildings from disclosure, and KEA's certification dataset's undisclosed skew toward buildings legally obligated to certify, both let a reader assume broader coverage than exists. The failure is not narrow coverage — CBECS is narrow too — it's narrow coverage **without a stated boundary** | Publish an explicit coverage statement (what building classes/eras/regions are and are not in the current sweep) as a required field of every corpus release, following CBECS's example of publishing its sampling frame alongside the data |
 
 ## Feature Dependencies
 
 ```
-[MEP sub-layer type extension]
-    └──required by──> [Individual utility sub-layer toggles]
-    └──required by──> [Equipment info panel] (needs sub-layer raycasting scope)
-    └──required by──> [Sub-system heatmap by floor] (needs system-specific energy attribution)
-    └──required by──> [Equipment control] (controls target specific sub-layers)
-    └──ALREADY PARTIALLY BUILT──> 15 generator files in src/lib/layers/
+Register sweep feasibility research (Active, already planned)
+    └──requires──> Corpus generation at scale (Active)
+                       └──requires──> Stable per-record identifier + permalink [table stakes]
+                       └──requires──> Provenance/licence per record [table stakes]
+                       └──enables───> Bulk download [table stakes]
+                       └──enables───> Read-only API [table stakes]
 
-[Per-floor / per-system energy model]
-    └──required by──> [Energy consumption heatmap]
-    └──required by──> [Energy breakdown dashboard]
-    └──required by──> [Sub-system heatmap by floor]
-    └──depends on──>  [calculateAnnualDemand()] (ALREADY BUILT — needs per-zone extension)
+Growing the anchor set with measured-consumption buildings (Active)
+    └──requires──> Corpus generation at scale
+    └──enables───> Calibration display + error band [differentiator]
+                       └──enables───> Confidence tiering by anchor proximity [differentiator]
 
-[Scenario / equipment state store]
-    └──required by──> [What-if scenario analysis]
-    └──required by──> [Equipment control → energy impact]
-    └──depends on──>  [material-store override pattern] (ALREADY BUILT — same architecture)
-    └──depends on──>  [MEP sub-layer type extension]
+Peer-group percentile position [differentiator]
+    └──requires──> Corpus generation at scale
+    └──requires──> Existing climate/degree-day adapter (ledger-climate.ts)
+    └──requires──> Existing floor-area normalization (diagnostics engine)
+    └──requires──> Transparent peer-group definition [differentiator]
 
-[Equipment data model]
-    └──required by──> [Equipment info panel]
-    └──required by──> [Equipment control]
-    └──required by──> [Korean building code attribution]
-    └──depends on──>  [BuildingRecipe + building ledger data] (ALREADY IN STACK)
+Modeled/metered/assumption badge at record scale [differentiator]
+    └──requires──> Existing assumption-ledger pattern (createEnergyFact, single-building UI)
+    └──enhances──> Search and filter [table stakes] (badge becomes a filterable/visible facet)
 
-[Energy breakdown data]
-    └──required by──> [Energy breakdown dashboard]
-    └──required by──> [ECO2 export with sub-system data]
-    └──depends on──>  [Per-floor / per-system energy model]
+Statement of coverage and known bias [table stakes]
+    └──conflicts──> Silent scope-narrowing anti-feature (must replace it, not coexist with it)
 
-[Raycasting on MEP sub-layer meshes]
-    └──required by──> [Equipment info panel]
-    └──PATTERN EXISTS──> structural-tooltip.tsx (Raycaster + hover popup)
+Single merged score anti-feature
+    └──conflicts──> Modeled/metered/assumption badge (a single blended number destroys the tier distinction the badge exists to preserve)
 ```
 
 ### Dependency Notes
 
-- **MEP sub-layer type extension is the foundation.** Every other v5.0 feature either directly requires or is enhanced by having distinct sub-layer ids. This must ship first. The 15 individual generator files are already written — the architectural debt is the `LayerId` union and the store `Record<LayerId, ...>` shape.
-- **Per-zone energy model is the second dependency.** The heatmap and breakdown dashboard both need floor/zone-level energy estimates, which `calculateAnnualDemand()` does not currently produce. This is a pure engine extension — no UI needed before it's usable by other features.
-- **Scenario store can reuse the material-store override pattern exactly.** The delta annotation system (slider → delta display) proves the reactive architecture works. The scenario store is the same pattern applied to equipment state instead of material properties.
-- **Equipment info panel and control are independent of the heatmap** — they share the scenario store but do not depend on zone coloring being complete.
-- **What-if analysis is the capstone feature** — it integrates sub-layers, equipment control, and the energy engine into a coherent user flow.
-
----
+- **Peer-group percentile requires corpus generation at scale:** there is no population to rank a building against until the register-sweep feasibility work (already an Active PROJECT.md item) produces enough records per peer-group cell; this is a hard phase-ordering constraint, not a preference.
+- **Calibration display requires the anchor set to include measured-consumption buildings, not just measured-envelope buildings:** the current seven reference models have measured envelopes and material bindings, but PROJECT.md's own Active list separately calls for anchors "with measured consumption" — that is the specific input the calibration feature needs and does not yet have.
+- **Bulk download and the API both depend on the same per-record schema work:** building the corpus's stable identifier and provenance fields once, then exposing it through both a bulk export and a paginated API, is cheaper than treating them as separate efforts.
+- **The badge feature enhances search/filter rather than requiring new infrastructure:** the assumption ledger already exists for one building; the work is exposing its existing evidence-tier classification as a corpus-wide facet, not inventing a new one.
+- **Two anti-features are direct conflicts, not just cautions:** a single merged score and a silently-narrowed coverage statement are both structurally incompatible with the project's existing traceability guarantee (`createEnergyFact`) — they cannot be added later as an "also"; choosing them replaces the guarantee rather than sitting beside it.
 
 ## MVP Definition
 
-### Launch With (v5.0 core)
+### Launch With (v1)
 
-Minimum viable energy observability that delivers actionable insight to the GX team.
+Minimum viable product for the repository face — validates that a corpus, not just a single building, can carry the same guarantee.
 
-- [ ] **MEP sub-layer toggles (electrical, HVAC, lighting, plumbing/DHW)** — The single MEP toggle is the most-cited limitation. Splitting into 4 primary sub-layers (not all 15) is the 80/20: electrical distribution, HVAC (cooling + heating + ventilation grouped), lighting, and DHW/plumbing. The existing generator files cover these. Essential for scoping any equipment-level analysis.
-- [ ] **Energy breakdown dashboard (bar/donut by system type)** — Even with modeled estimates and ASHRAE-derived system ratios, a breakdown chart answers "what should we retrofit first?" immediately. No new data source needed — extend `calculateAnnualDemand()` with system attribution using building type ratios. The breakdown feeds the heatmap and the scenario analysis.
-- [ ] **Energy consumption heatmap (per-floor, building-total)** — Color-coded floors by kWh/m² intensity using the existing `energy-zones` layer as the rendering surface. Start with building-total (not per-system) heatmap. The existing floor zone geometry is the canvas; only the color mapping logic is new.
-- [ ] **Equipment info panel (click → specs popup)** — Click on an HVAC zone or electrical zone and see inferred specs (type, efficiency grade, approximate age from ledger permit date). Uses the structural-tooltip raycasting pattern. Equipment data is inferred, not user-entered — clearly labeled as estimated.
+- [ ] Stable per-record identifier + permalink for every swept building — without this nothing else in the repository is citable
+- [ ] Provenance/licence/evidence-tier fields per corpus record, generated by rolling up the existing assumption ledger — this is the guarantee that makes the corpus worth publishing at all
+- [ ] Explicit coverage statement (which classes/eras/regions the current sweep covers and does not) — table stakes and the direct fix for the anti-feature pattern seen in Green Together and the KEA BEE dataset
+- [ ] A single bulk export (JSON/CSV) of whatever scale the register sweep produces at launch
+- [ ] Basic catalogue search/filter by use type, era, region — reuses the existing catalogue endpoint pattern
 
-### Add After Validation (v5.x)
+### Add After Validation (v1.x)
 
-- [ ] **Basic equipment control (on/off toggle + HVAC setpoint)** — Add once info panels are validated. The scenario store architecture is a prerequisite. Trigger: GX team asks "what happens if we shut down this AHU?"
-- [ ] **What-if scenario analysis (compare baseline vs modified)** — Add when equipment control is stable. Requires scenario store + energy engine integration. Trigger: GX team uses equipment toggles and asks to save/compare scenarios.
-- [ ] **Sub-system heatmap filter** (show HVAC heatmap vs lighting heatmap) — Add after baseline heatmap is validated. Trigger: GX team needs to compare system-specific floor loads.
-- [ ] **ECO2 export with sub-system breakdown** — Add when system data model is stable. Flag for research: verify Korean ECO2 input schema for system data fields (KS F 1900).
+Add once the sweep has produced enough records per cell to make ranking meaningful.
 
-### Future Consideration (v5.x+)
+- [ ] Read-only, paginated, filterable API (trigger: bulk export alone proves insufficient once external consumers ask for programmatic access)
+- [ ] Changelog / dated release snapshots (trigger: the corpus is regenerated a second time and a consumer needs to know what changed)
+- [ ] Peer-group percentile position on a building's report page (trigger: at least one peer-group cell per major use-type/era/region combination has enough records to state a position without a suppression flag)
 
-- [ ] **All 15 sub-layer toggles individually** — Telecom, media, waste, microgrid, safety are low-priority for energy audits. Expose only after the 4 primary sub-systems are validated.
-- [ ] **Per-equipment setpoint scheduler** — Requires 8760-hour simulation engine. Defer until ECO2 integration milestone.
-- [ ] **Portfolio comparison across buildings** — Separate product surface. Defer to Digital Twin platform milestone.
+### Future Consideration (v2+)
 
----
+Defer until the anchor set and corpus scale both support them.
+
+- [ ] Calibration display with a stated error band per peer group (defer until the anchor set includes measured-consumption buildings, not only measured-envelope ones)
+- [ ] Confidence tiering by anchor proximity (defer until calibration display exists — tiering is a refinement of it, not a separate feature)
+- [ ] Parquet/bulk-format-at-scale export (defer until record count makes CSV/JSON genuinely unwieldy, following ResStock/ComStock's own move to parquet only once file sizes demanded it)
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| MEP sub-layer toggles (4 primary) | HIGH | MEDIUM | P1 |
-| Energy breakdown dashboard | HIGH | MEDIUM | P1 |
-| Per-floor energy heatmap | HIGH | HIGH | P1 |
-| Equipment info panel (inferred specs) | HIGH | MEDIUM | P1 |
-| Equipment on/off toggle + energy impact | HIGH | HIGH | P2 |
-| HVAC setpoint control + energy delta | HIGH | HIGH | P2 |
-| What-if scenario store + compare view | HIGH | HIGH | P2 |
-| Sub-system heatmap filter | MEDIUM | MEDIUM | P2 |
-| Korean building code grade attribution | MEDIUM | LOW | P2 |
-| ECO2 export sub-system data | MEDIUM | MEDIUM | P3 |
-| All 15 sub-layer toggles | LOW | LOW | P3 |
-| Equipment scheduling | LOW | HIGH | P3 |
+|---|---|---|---|
+| Stable per-record identifier + permalink | HIGH | LOW | P1 |
+| Provenance/licence/evidence-tier per record | HIGH | MEDIUM | P1 |
+| Coverage and known-bias statement | HIGH | MEDIUM | P1 |
+| Bulk download | MEDIUM | MEDIUM | P1 |
+| Catalogue search/filter | MEDIUM | MEDIUM | P1 |
+| Read-only paginated API | HIGH | MEDIUM–HIGH | P2 |
+| Changelog / release versioning | MEDIUM | LOW–MEDIUM | P2 |
+| Peer-group percentile position | HIGH | HIGH | P2 |
+| Modeled/metered/assumption badge at corpus scale | HIGH | MEDIUM | P2 |
+| Calibration display with stated error band | HIGH | HIGH | P3 |
+| Confidence tiering by anchor proximity | MEDIUM | HIGH | P3 |
+| Parquet/bulk-at-scale export | LOW (until scale demands it) | MEDIUM | P3 |
 
 **Priority key:**
-- P1: Must have for v5.0 — core "energy observability" thesis
-- P2: Should have, add once P1 features are validated
-- P3: Future milestone or blocked on external schema verification
+- P1: Must have for the repository to be taken seriously at all
+- P2: Should have, once corpus scale and API demand justify it
+- P3: Differentiating but dependent on the anchor set growing beyond today's seven reference models
 
----
+## Competitor Feature Analysis
 
-## Existing Codebase Integration Points
-
-| Feature | Existing Asset | Gap |
-|---------|---------------|-----|
-| MEP sub-layer toggles | 15 generator files in `src/lib/layers/`, `LayerManager`, `layer-store.ts` | `LayerId` union must be extended; `layer-store.ts` `Record<LayerId, ...>` must widen; `LayerPanel` UI needs sub-layer rows |
-| Energy heatmap | `energy-zones` layer in `LayerManager`, `calculateAnnualDemand()` | Per-floor demand breakdown not yet produced; color mapping from kWh/m² to gradient not implemented |
-| Equipment info panel | `structural-tooltip.tsx` raycasting pattern | Equipment data model (`EquipmentSpec`) not defined; raycasting must scope to MEP sub-layer objects only |
-| Breakdown dashboard | `energy-cards.tsx`, `calculateAnnualDemand()` (heating + cooling already split) | System category attribution (lighting, DHW, plug loads) not in energy model; chart component not built |
-| Equipment control | `material-store.ts` override pattern, `use-energy-delta.ts` | `useEquipmentStore` not built; `calculateAnnualDemand()` does not accept equipment-off flags |
-| What-if scenarios | `useEnergyMetrics` reactive pipeline | Scenario isolation store (hypotheses vs committed state) not built |
-
----
-
-## Phase Ordering Rationale
-
-The feature dependency graph implies this phase order for v5.0:
-
-1. **MEP sub-layer type extension + store** — Architectural foundation. Blocks every other feature. Low UI risk; pure type/store/LayerManager work.
-2. **Per-floor/per-system energy model extension** — Engine work with no UI. Unblocks heatmap and breakdown simultaneously.
-3. **Energy breakdown dashboard** — First visible deliverable. Uses extended energy model. Validates the system attribution approach with GX team before building control features.
-4. **Energy consumption heatmap** — Second visible deliverable. Uses per-floor energy model on existing zone geometry.
-5. **Equipment info panel** — Raycasting on MEP meshes + inferred spec display. Validates the equipment data model before control is added.
-6. **Equipment control + scenario store** — Adds mutation on top of the validated info panel. The scenario store is the capstone architectural piece.
-7. **What-if comparison view** — Integrates everything. Deferred to v5.x if time is limited.
-
----
-
-## BEMS Industry Reference
-
-What commercial tools show in their energy dashboards (verified against Facilio, EnergyCAP, Wattsense, CIM.io descriptions — MEDIUM confidence):
-
-| Capability | Commercial BEMS Standard | Our Approach |
-|------------|--------------------------|-------------|
-| System-level energy breakdown | Bar chart or pie chart by HVAC/lighting/plug loads — standard in all BEMS dashboards | Extend `calculateAnnualDemand()` with system attribution; display in new breakdown card |
-| Spatial energy visualization | Floor plan heatmap (2D) is industry standard; 3D heatmap is rare and more compelling | 3D heatmap on existing building geometry — differentiator vs any commercial tool |
-| Equipment control | Real-time BACnet/Modbus control — requires facility operator role | Simulated "what-if" control — appropriate for auditor role without facility access |
-| Historical trending | Time-series charts of consumption — standard | Existing `use-actual-energy.ts` provides 3 years of monthly actuals; surface in breakdown dashboard |
-| Alerts/anomaly detection | Threshold alerts — requires persistent monitoring | Not in scope for v5.0; flag for Digital Twin platform milestone |
-
----
+| Feature | DOE BPD | ResStock/ComStock | TABULA/EPISCOPE | CBECS/RECS | BIMFIT's Planned Approach |
+|---|---|---|---|---|---|
+| Per-record identifier/permalink | Yes, anonymized | Yes, per synthetic unit | No (archetype, not individual) | Yes, via microdata case ID | Yes — 건축물대장 PK, already the ledger's id |
+| Modeled vs. metered stated per record | Blurred (branded "measured" over a mixed pool) | Modeled, explicitly validated against meters | Modeled, with a named calibration factor | Metered, uniformly | Explicit tri-state badge per record (table stakes above) |
+| Stated error band | None | ±20% vs RECS, published | Country-level adaptation factor | RSE + 95% CI + suppression rule | Peer-group-level band, tiered by anchor proximity (v2+) |
+| Bulk download / API | Both | Both (parquet/csv + OEDI) | WebTool export only | Microdata + methodology docs | Bulk export at launch, API at v1.x |
+| Coverage statement | Implicit bias, not clearly disclosed | Explicit validation partners named | Country-by-country, explicit | Explicit sampling frame + suppression | Explicit coverage page, required at launch |
+| Peer-group benchmarking | No | No (it's a generator, not a benchmarking UI) | No (per-archetype only) | Feeds ENERGY STAR's regression, not itself a peer-group tool | Percentile-within-peer-group, transparent matrix definition |
 
 ## Sources
 
-- Existing codebase: `src/lib/layers/types.ts` (5-layer `LayerId` union), `src/store/layer-store.ts` (`Record<LayerId, boolean>` shape), `src/lib/layers/layer-manager.ts` (`COMPONENT_TO_LAYER` mapping) — HIGH confidence
-- Existing codebase: `src/lib/energy/` (14 files — heat-loss, annual-demand, co2, grade, climate, calibration, benchmark) — HIGH confidence
-- Existing codebase: `src/hooks/use-energy-metrics.ts`, `src/hooks/use-actual-energy.ts`, `src/components/viewer/energy-cards.tsx` — HIGH confidence
-- Existing codebase: `src/components/viewer/structural-tooltip.tsx` (raycasting pattern) — HIGH confidence (verified via ls)
-- [Facilio BEMS overview](https://facilio.com/learn/building-energy-management-system/) — MEDIUM confidence (marketing page, not technical spec)
-- [EnergyCAP building energy monitoring guide](https://www.energycap.com/blog/building-energy-monitoring/) — MEDIUM confidence
-- [Wattsense BEMS guide](https://www.wattsense.com/blog/building-management/bems/) — MEDIUM confidence
-- [CIM.io BEMS overview](https://www.cim.io/blog/building-energy-management-systems-bems) — MEDIUM confidence
-- PROJECT.md: "structural clarity over photorealism" principle, v5.0 milestone target features — HIGH confidence
+- [DOE Building Performance Database overview](https://www.energy.gov/cmei/buildings/building-performance-database-bpd)
+- [BPD on OpenEI/OEDI](https://data.openei.org/submissions/145)
+- [Building Performance Database, Wikipedia](https://en.wikipedia.org/wiki/Building_Performance_Database)
+- [ASHRAE Building EQ program page](https://www.ashrae.org/technical-resources/building-eq)
+- [ASHRAE Building EQ Reference Manual](https://www.ashrae.org/file%20library/communities/committees/standing%20committees/building%20energy%20quotient%20committee/buildingeq_referencemanual_10-15-2020.pdf)
+- [EU Building Stock Observatory database](https://building-stock-observatory.energy.ec.europa.eu/database/)
+- [EU BSO monitoring announcement, European Commission](https://energy.ec.europa.eu/news/eu-building-stock-observatory-monitoring-energy-performance-buildings-across-europe-2023-08-31_en)
+- [TABULA/EPISCOPE Building Typology](https://episcope.eu/building-typology/)
+- [TABULA WebTool](https://episcope.eu/building-typology/tabula-webtool/)
+- [TABULA Common Calculation Method PDF](https://episcope.eu/fileadmin/tabula/public/docs/report/TABULA_CommonCalculationMethod.pdf)
+- [ComStock overview, NREL](https://www.nrel.gov/research/software/comstock)
+- [ResStock 2024 Release 2 technical documentation](https://oedi-data-lake.s3.amazonaws.com/nrel-pds-building-stock/end-use-load-profiles-for-us-building-stock/2024/resstock_tmy3_release_2/resstock_documentation_2024_release_2.pdf)
+- [ResStock 2025 Release 1 README](https://oedi-data-lake.s3.amazonaws.com/nrel-pds-building-stock/end-use-load-profiles-for-us-building-stock/2025/resstock_amy2018_release_1/README_resstock_20251.pdf)
+- [ResStock GitHub](https://github.com/NREL/resstock)
+- [ComStock GitHub](https://github.com/NREL/ComStock)
+- [OpenEI Commercial Reference Buildings wiki](https://openei.org/wiki/Commercial_Reference_Buildings)
+- [DOE/PNNL U.S. Commercial Reference Buildings report](https://docs.nrel.gov/docs/fy11osti/46861.pdf)
+- [EIA CBECS overview](https://www.eia.gov/consumption/commercial/)
+- [EIA "What is an RSE"](https://www.eia.gov/consumption/commercial/data/what-is-an-rse.php)
+- [ENERGY STAR: How the 1–100 score is calculated](https://www.energystar.gov/buildings/benchmark/understand-metrics/how-score-calculated)
+- [ENERGY STAR Score technical reference PDF](https://portfoliomanager.energystar.gov/pdf/reference/ENERGY%20STAR%20Score.pdf)
+- [EnergyStar++ critique, arXiv](https://arxiv.org/pdf/1910.14563)
+- [한국에너지공단_건축물 에너지 효율등급 정보, 공공데이터포털](https://www.data.go.kr/data/15100521/openapi.do)
+- [한국에너지공단_건물에너지진단정보DB구축 사업 통계, 공공데이터포털](https://www.data.go.kr/data/15105239/fileData.do)
+- [국토교통부_건축HUB_건물에너지정보 서비스, 공공데이터포털](https://www.data.go.kr/data/15135963/openapi.do)
+- [녹색건축포털 그린투게더](https://www.greentogether.go.kr/)
+- [False precision, Wikipedia (concept reference)](https://en.wikipedia.org/wiki/False_precision)
+- [FAIR Guiding Principles, Scientific Data (Nature)](https://www.nature.com/articles/sdata201618)
+- `.planning/PROJECT.md` (BIMFIT v6.0 milestone context, existing feature inventory and constraints)
 
 ---
-
-*Feature research for: Korean BIM Energy Management System — v5.0 Energy Systems Observability & Control*
-*Researched: 2026-04-12*
+*Feature research for: Korean building energy repository / building-stock corpus capability*
+*Researched: 2026-09-15*
