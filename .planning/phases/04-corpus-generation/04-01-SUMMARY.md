@@ -82,3 +82,21 @@ External source evidence:
 `C:/Users/남승헌/ProjectFiles/BIM-corpus-data/pilot-browser-2026-09-15/`.
 No record or secret artifact is added to git. Publication review stays independent
 of internal calculation consistency; no Korean-stock accuracy validation is claimed.
+
+## Reviewed final artifact
+
+Final release directory:
+`C:/Users/남승헌/ProjectFiles/BIM-corpus-data/releases/0.1.0-pilot-reviewed/`.
+The generator ran read-only from the integrated main checkout after strict source
+comparison rejected the older worktree's missing publication-only modules.
+
+- Source commit: `4e44b1b5a0dbb01d475a466a6e23dd3b5e03cdc4`.
+- Pinned generation time: `2026-09-15T10:32:49.446Z`.
+- Records NDJSON SHA256: `758525f91cced96a75ae2d92aeafa8b270a304bca3f8f7e57756949e2234a996`.
+- Manifest SHA256: `2f889947239937e34071e79ce9fd516e22334d7db0cb94080974c4a68eba7cf7`.
+- 71 records/unique IDs, four exclusions, 19 assumption families.
+- Four mixed-basis families correctly use the neutral aggregate title:
+  DHW71, default lighting-hours4, plug71, excluded-basement30.
+- Every record points to the same integrated commit. The final job again resumed
+  from five outputs to75. Phase5 received this directory for independent review;
+  older local artifact directories remain withheld audit copies.
