@@ -77,6 +77,28 @@ or Korean model completion is claimed.
 - Main dev3000 has DATABASE_URL loaded only in process memory from the private
   external corpus environment. No credential file was copied into the repository.
   Local VWorld remains503 without its keys; this is an existing local limitation.
+- **Sixty5 (`7bc130d`) is committed but NOT deployed.** Production remains on
+  `1816f24` with ten models; that deployment is healthy and was never
+  replaced — a failed Vercel build does not touch the running one.
+- The blocker is build-container memory, not code. Sixty5 took published
+  artifacts from 295 MB to 486 MB (`public/` now 549 MB) and `pnpm run build`
+  OOMs on Vercel's 4-core/8 GB builder. Two attempts, identical failure:
+  Turbopack dies in `parse_css` on `globals.css`, but that is the victim —
+  Vercel's build-system report states an OOM event killed a process. The same
+  build at 295 MB succeeded, so the assets are the differentiator.
+  Sixty5 itself is fully verified locally (5,717 unit tests, TypeScript,
+  ESLint, page renders with zero errors); only the deploy step is blocked.
+- Decision 2026-09-15: enable Vercel **Enhanced Build Machines** (project →
+  Settings → Builds), then redeploy `7bc130d` unchanged and verify.
+- This is the SECOND structural limit hit by shipping large binary geometry
+  through the app bundle — the 250 MB serverless-function ceiling was the
+  first, earlier the same day. Enhanced Builds raises the ceiling; it does not
+  remove the cause. Moving GLBs to blob/CDN storage is the real fix and should
+  be planned before model twelve, or this recurs.
+- Related gap found and left open: service layers have NO draw-call budget,
+  while the detail (200) and material (300) layers do. That is why Sixty5's
+  `plumbing.glb` shipped needing 2,462 draw calls (West Riverside's worst
+  layer: 737) without any build-time complaint.
 - Production re-verified 2026-09-15 21:55 KST at commit
   `1816f24037582a2a474c205651ad5cbb2969890b` — health SHA, `region: icn1`,
   `X-Vercel-Id: icn1::icn1`, ten gallery models, and 85 browser cases passing
