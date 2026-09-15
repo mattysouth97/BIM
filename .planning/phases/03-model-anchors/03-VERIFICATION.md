@@ -1,3 +1,10 @@
+---
+phase: 03-model-anchors
+status: partial
+verified: 2026-09-15
+requirements: [ANCH-01, ANCH-02, ANCH-03, ANCH-04, ANCH-05, ANCH-06, ANCH-07]
+blocked_on: ANCH-03 — no Korean IFC/DXF with both source bytes and redistribution rights
+---
 # Phase 03 verification — partial
 
 ## Verified local outcomes

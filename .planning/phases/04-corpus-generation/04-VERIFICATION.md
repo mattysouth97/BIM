@@ -13,7 +13,7 @@ verified: 2026-09-15
 | SWEEP-03 | All71 records pin integrated source4e44b1b5a0dbb01d475a466a6e23dd3b5e03cdc4, schema/engine version and common timestamp. | Verified |
 | SWEEP-04 | Four real exclusions (3footprint,1floor-area); no fabricated replacement. | Verified |
 | SWEEP-05 |19 assumption families; mixed-basis titles neutral; per-record basis retained. Mixed25%/10% test catches false family labels. | Verified |
-| SWEEP-06 |71 unique stable IDs/permalinks generated. Durable resolution depends on Phase5 publication. | Integration pending |
+| SWEEP-06 |71 unique stable IDs/permalinks generated. All71 resolve on the live published release with matching ids, zero HTTP errors (production,2026-09-15). | Verified |
 | SWEEP-07 | Licence decision, source endpoint/hash, evidence tier, fact statuses and assumptions assembled per record. | Verified |
 
 602 focused retrofit/canonical/corpus/hook tests and TypeScript passed after the
@@ -22,3 +22,10 @@ is not a validation against metered energy or the Korean building stock.
 
 No upstream quota saturation test, full-scale sweep, or publication performed by
 this lane. The reviewed external snapshot and hashes are in04-01-SUMMARY.md.
+
+## Production follow-up (2026-09-15)
+
+SWEEP-06 was closed against the live release at bim-self.vercel.app: every one
+of the71 record permalinks returned200 with a matching id. SWEEP-01 is
+unchanged and still open — the account's actual daily quota is unmeasured, and
+a bounded pilot's success does not establish that ceiling.
