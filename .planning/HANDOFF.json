@@ -16,10 +16,10 @@
     "flags": ["--discuss", "--research"],
     "description": "Move published reference-building GLBs out of public/ into blob or CDN storage so model twelve does not hit a third Vercel ceiling",
     "context_file": ".planning/quick/260916-0bz-move-published-reference-building-glbs-o/260916-0bz-CONTEXT.md",
-    "research_file": null,
+    "research_file": ".planning/quick/260916-0bz-move-published-reference-building-glbs-o/260916-0bz-RESEARCH.md",
     "plan_file": null,
     "summary_file": null,
-    "progress": "discussion complete; research interrupted; planner not spawned; executor must not auto-run"
+    "progress": "discussion complete; research complete; planner not spawned; executor must not auto-run"
   },
   "completed_tasks": [
     {"id": 1, "name": "Resume consumed prior HANDOFF.json + .continue-here.md", "status": "done"},
@@ -27,12 +27,11 @@
     {"id": 3, "name": "Quick task 260916-0bz created via init.quick --discuss --research", "status": "done"},
     {"id": 4, "name": "Discussion: GLBs only (52 files / 470.12 MB); textures/HDR/wasm stay", "status": "done"},
     {"id": 5, "name": "CONTEXT.md written with locked decisions and Claude's Discretion", "status": "done"},
-    {"id": 6, "name": "gsd-phase-researcher spawned for Vercel Blob + URL rewrite", "status": "interrupted", "progress": "agent 01a0a5a7-ffb2-7b61-bfbf-ebd475432ad6 died on pause (task not found); RESEARCH.md was never written. Do not Task-resume that id — restart research."}
+    {"id": 6, "name": "260916-0bz-RESEARCH.md written (Vercel Blob, rewrites, icn1 store)", "status": "done"}
   ],
   "remaining_tasks": [
-    {"id": 7, "name": "Restart research for 260916-0bz (Vercel Blob size limits, rewrite vs proxy, 69.7 MB plumbing.glb)", "status": "not_started"},
-    {"id": 8, "name": "Spawn gsd-planner to write 260916-0bz-PLAN.md honoring CONTEXT.md", "status": "not_started"},
-    {"id": 9, "name": "STOP and show the plan — do not auto-run the executor", "status": "not_started"},
+    {"id": 7, "name": "Spawn gsd-planner to write 260916-0bz-PLAN.md honoring CONTEXT.md + RESEARCH.md", "status": "not_started"},
+    {"id": 8, "name": "STOP and show the plan — do not auto-run the executor", "status": "not_started"},
     {"id": 10, "name": "ANCH-03 — register a Korean building model", "status": "blocked_external"},
     {"id": 11, "name": "SWEEP-01 — record the register account's actual daily quota", "status": "blocked_external"},
     {"id": 12, "name": "Add a draw-call budget to service layers", "status": "not_started"}
@@ -54,7 +53,8 @@
     {"action": "Read the 일일 트래픽 figure from data.go.kr 마이페이지 and report it", "context": "Sole remaining input for SWEEP-01; closes Phase 4. Roughly a 30-second lookup and the cheapest open item in the milestone.", "blocking": true},
     {"action": "Supply a Korean IFC/DXF you own or have written permission to redistribute", "context": "Sole remaining input for ANCH-03; closes Phase 3.", "blocking": true},
     {"action": "Decide whether Enhanced Build Machines stays enabled", "context": "Enabled 2026-09-15 to clear a build OOM. It is a paid Vercel setting and is currently load-bearing: the 8 GB builder cannot build this repo. The GLB migration's success criterion is that the 8 GB builder can build again, not that this setting is immediately turned off.", "blocking": false},
-    {"action": "After the plan exists, confirm before executor: git rm of 52 GLBs (470 MB) and Vercel Blob upload need a BLOB_READ_WRITE_TOKEN and must not run unattended", "context": "User asked to PLAN the migration. yolo_mode is false. Do not auto-execute.", "blocking": true}
+    {"action": "After the plan exists, confirm before executor: git rm of 52 GLBs (470 MB) and Vercel Blob upload need a BLOB_READ_WRITE_TOKEN and must not run unattended", "context": "User asked to PLAN the migration. yolo_mode is false. Do not auto-execute.", "blocking": true},
+    {"action": "Create a new public Vercel Blob store on project bim in region icn1. Do not reuse team store s2mas-blob (iad1, project s2mas, 0 files). Record BLOB_PUBLIC_BASE_URL after create.", "context": "Research verified bim has no connected Blob store. Store hostname is unknown until create. Human checkpoint before upload.", "blocking": true}
   ],
   "decisions": [
     {"decision": "Next unblocked work is moving published GLBs out of public/ before model twelve", "rationale": "User selected this on resume. ANCH-03 and SWEEP-01 stay partial; do not fabricate their missing inputs.", "phase": "quick-260916-0bz"},
@@ -64,6 +64,7 @@
     {"decision": "Keep URL path /reference-buildings/:id/:file.glb", "rationale": "e2e/model-anchors.spec.ts, gallery pages and bookmarks hit that path. Rewrite or proxy to blob; do not bake absolute blob URLs into manifests as the only locator. Manifest file fields stay relative.", "phase": "quick-260916-0bz"},
     {"decision": "git rm the 52 GLBs; add a local fetch/restore script; do not git-filter history", "rationale": "Build OOM is from the 549 MB checkout during pnpm run build. History size is a separate problem.", "phase": "quick-260916-0bz"},
     {"decision": "Do not auto-run the gsd-quick executor after planning", "rationale": "User asked to plan, not execute. yolo_mode is false. Blob upload and git rm of 470 MB need explicit confirmation and a token.", "phase": "quick-260916-0bz"},
+    {"decision": "New public Blob store on bim in icn1; Next.js rewrites() to the public blob origin; git rm + gitignore + .vercelignore; CLI blob put with addRandomSuffix false; do not add @vercel/blob to the Next bundle; do not proxy 70 MB through a route handler; do not reuse s2mas-blob (iad1)", "rationale": "260916-0bz-RESEARCH.md (HIGH). Sixty5 plumbing.glb is 69,730,700 bytes; Blob max 5 TB/file, CDN cache 512 MB. Default rewrites run after public/, so leftover on-disk GLBs still OOM the build.", "phase": "quick-260916-0bz"},
     {"decision": "Skip Phases 3 and 4 rather than fabricate their missing inputs", "rationale": "User confirmed neither external input is available. Recorded as partial with named blockers instead of relabelled complete.", "phase": "03"},
     {"decision": "Enable Enhanced Build Machines rather than shrink the gallery", "rationale": "User's call. Noted at the time that it raises the ceiling without removing the cause.", "phase": "03"}
   ],
@@ -83,8 +84,8 @@
     },
     {
       "severity": "blocking",
-      "constraint": "Do not Task-resume researcher 01a0a5a7-ffb2-7b61-bfbf-ebd475432ad6. Pause made it 'not found'. Restart research from CONTEXT.md.",
-      "discovered_by": "get_command_or_subagent_output on pause: Task not found."
+      "constraint": "Do not re-run research for 260916-0bz. RESEARCH.md exists and is HIGH confidence. Next step is the planner. Do not reuse team Blob store s2mas-blob (iad1).",
+      "discovered_by": "Researcher 01a0a5a7-ffb2-7b61-bfbf-ebd475432ad6 completed after pause (102 tool calls) and wrote 260916-0bz-RESEARCH.md."
     },
     {
       "severity": "blocking",
@@ -112,6 +113,6 @@
       "discovered_by": "Read during 2026-09-16 resume; the two paragraphs contradict each other."
     }
   ],
-  "next_action": "Resume quick-task 260916-0bz: restart research (do not resume the dead agent), then spawn the planner to write 260916-0bz-PLAN.md from CONTEXT.md. STOP after the plan — do not execute. Command: /gsd-quick resume move-published-reference-building-glbs-o  OR  /gsd-resume-work which will pick up this HANDOFF.",
-  "context_notes": "Session started with /gsd-resume-work. Prior pause was a clean stop with eleven models production-verified at 0abbdaf. User chose to plan the GLB blob/CDN migration rather than wait on ANCH-03/SWEEP-01. init.quick created 260916-0bz with --discuss --research. User clarified only 'what leaves the bundle': GLBs only; textures/HDR/wasm stay. Other gray areas (Vercel Blob, same URL path, git rm + local fetch script) are Claude's Discretion in CONTEXT.md. Researcher was spawned and then killed by /gsd-pause-work; no RESEARCH.md, no PLAN.md, no source/test/doc/runtime code change. Production is still 0abbdaf. Do not re-ask for the Korean model or the daily quota."
+  "next_action": "Resume quick-task 260916-0bz: spawn gsd-planner to write 260916-0bz-PLAN.md from CONTEXT.md + RESEARCH.md. STOP after the plan — do not execute. Do not re-run research. Command: /gsd-quick resume move-published-reference-building-glbs-o  OR  /gsd-resume-work.",
+  "context_notes": "Session started with /gsd-resume-work. User chose to plan the GLB blob/CDN migration. Discussion locked GLBs only. Researcher was thought dead at pause, then completed 481s later and wrote RESEARCH.md: new public Blob store on bim in icn1, Next rewrites() not a route proxy, git rm + gitignore + .vercelignore, CLI blob put, do not reuse s2mas-blob. Planner not spawned. No source/test change. Production is still 0abbdaf. Do not re-ask for the Korean model or the daily quota."
 }
