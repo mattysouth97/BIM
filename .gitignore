@@ -83,3 +83,9 @@ __pycache__/
 # a per-developer tooling install, not repo content, and already excluded from
 # the Vercel upload. Never committed — see docs/08_Operations.
 /.agents/
+
+# Reference-building GLB bytes live in the bim Vercel Blob store, not in git.
+# scripts/restore-reference-glbs.mjs re-materializes them under public/ for
+# next dev / Playwright / vitest; the rewrite in next.config.ts serves them in
+# production. Manifests, JSON, SVG and licences stay tracked.
+public/reference-buildings/**/*.glb
