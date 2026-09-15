@@ -36,7 +36,7 @@ what was held back).
 
 - **D-01:** The modeled lighting load is computed as `LPD × conditioned area × annual operating hours`, not taken as a share of total demand. — **Reversibility:** costly — reverting means restoring a ratio in `deliveredFromDemand` and re-deriving every grade that shipped under the explicit load, including published datasets.
 - **D-02:** The hard-coded 2,500 h/yr is replaced by a use-code-indexed hours table. `USE_CODE_OPERATING_HOURS` in `src/lib/energy/equipment-specs.ts` already IS that table (ASHRAE 90.1 defaults, 2,500 h fallback) — wire it through rather than authoring a second one. See Code Context for the string-vs-number wrinkle.
-- **D-03:** Both primary energy intensity and site energy intensity must move when lighting changes. Moving primary alone does not satisfy PHYS-01.
+- **D-03:** Both primary energy intensity and site energy intensity must move when lighting changes. Moving primary alone does not satisfy PHYS-01. **Corrected 2026-09-15 (research):** this needs a *second* edit site. `calculateSystemBreakdown` does not consume `deliveredFromDemand` — it derives lighting/dhw/plug from its own independent `SYSTEM_RATIOS` table, and it is what feeds the displayed site intensity (`use-energy-metrics.ts:136` → `energy-cards.tsx:194`) and the meter calibration in `report-stage.tsx:200-202`. Fixing the split alone moves the grade and leaves the on-screen site intensity on the old flat ratio.
 - **D-04:** An inferred LPD (from `LIGHTING_DEFAULTS`) may move a grade, but only with visible disclosure that the LPD is assumed. This is the PHYS-03 contract for lighting: a named, visible assumption, never a silent default.
 
 ### Rest of the fuel split
@@ -89,7 +89,7 @@ above as D-10, D-17, D-18 and D-19 and are **decided, not open**. Remaining disc
 
 - `src/lib/energy/delivered-from-demand.ts` — the 15 %/10 %/0 split this phase replaces; also owns `buildingTypeForGrade` and `gradeTableIsFromOccupancy`, which must keep working
 - `src/lib/energy/primary-energy.ts` — `DeliveredEnergy` shape and the primary-energy factors, including the districtHeating 0.728 / districtCooling 0.937 legs D-06 brings alive
-- `src/lib/energy/system-breakdown.ts` — downstream consumer of the split
+- `src/lib/energy/system-breakdown.ts` — **not** a consumer of the split (corrected 2026-09-15; the original line here said it was). `calculateSystemBreakdown` owns a *second, independent* ratio table, `SYSTEM_RATIOS`, and it is the one that reaches the displayed site intensity. D-03 cannot be satisfied without editing this file too
 
 ### Lighting
 
@@ -120,7 +120,8 @@ above as D-10, D-17, D-18 and D-19 and are **decided, not open**. Remaining disc
 ### Publishing (PHYS-05)
 
 - `src/lib/reference-buildings/energy-dataset.ts` — dataset generation, schema version, `limitationIds` that D-08 protects
-- `public/releases/CHANGELOG.md` — where the regeneration is recorded
+- `public/releases/CHANGELOG.md` — **wrong file, corrected 2026-09-15.** Its own title is "Portfolio Prediction Data Product — Release Changelog"; it documents the superseded v7.0 `portfolio-xgb` model releases and has never mentioned the seven reference buildings. PHYS-05 still requires a changelog entry, so **where that entry goes is an open decision for the planner to make and record** — not this file by default
+- `src/lib/reference-buildings/energy-dataset-server.ts` — the seven datasets are computed **live per HTTP request** from committed `manifest.json` + `energy-inputs.ts`. There is no static dataset JSON to regenerate, so PHYS-05 is a schema-version bump plus evidence that the live output changed, not a batch job
 
 ### Standards and governance
 
@@ -149,7 +150,8 @@ above as D-10, D-17, D-18 and D-19 and are **decided, not open**. Remaining disc
 
 ### Integration Points
 
-- **Production consumers of `deliveredFromDemand`** — `report-stage.tsx:263`, `properties-panel.tsx:243`, `use-energy-metrics.ts:104`, `retrofit-delta.ts:278`, `energy-dataset.ts:89`, plus comment-level dependents in `reference-retrofit.tsx`, `measure-chip-row.tsx`, `measure-claim.ts`. Six test files construct its input directly and are contract tests in practice.
+- **Production consumers of `deliveredFromDemand`** — `report-stage.tsx:263`, `properties-panel.tsx:243`, `use-energy-metrics.ts:104`, `retrofit-delta.ts:278`, `energy-dataset.ts:89`, plus comment-level dependents in `reference-retrofit.tsx`, `measure-chip-row.tsx`, `measure-claim.ts`. **Eight** test files construct its input directly and are contract tests in practice (corrected 2026-09-15 from six): `delivered-from-demand.test.ts`, `grade-table-by-use.test.ts`, `retrofit-delta.test.ts`, `klassiqua-office-1970.test.ts`, `kit-office-energy.test.ts`, `energy-seed-physics.test.ts`, `use-energy-metrics.test.tsx`, `grade-basis.test.ts`.
+- **The diagnostics path emits no PV measure at all** (verified 2026-09-15): `retrofit-bridge.ts` contains no reference to `calculateSolarPotential`, solar, or `region`. D-15's identical-measure-IDs contract test therefore cannot pass by reconciliation alone — a PV measure has to be *added* to that path first.
 - **Seven `useRetrofitScenario` call sites** — `energy-panel.tsx:119`, `reference-retrofit.tsx:174`, `report-stage.tsx:154`, `energy-instrument-hud.tsx:151`, `equipment-info-panel.tsx:67`, `equipment-insight-card.tsx:48`, `scene-outliner.tsx:124`. **None passes `region`** (verified 2026-09-15). These are the D-21 wiring sites.
 - **`energy-instrument-hud.tsx:65`** already accepts a two-digit 시도 prefix for regional climate but never forwards it to the lowercase-English `region` key PV reads — the two-keyspace split D-17 closes, caught in one component.
 - **A representation clash to reconcile, not conflate:** `operatingHours` is a **number** in `equipment-specs.ts` and a human schedule **string** ("Mon-Fri 08:00-18:00") in `tier-one-model.ts:469`, `reference-office-model.ts:248`, `ledger-baseline-model.ts:1179` and `fixtures.ts:517`. The numeric hours that drive the lighting load and the schedule string that is displayed are different facts sharing a name.
