@@ -1,7 +1,7 @@
 ---
 phase: 05-publishing
 plan: 02
-status: implemented-live-release-verification-pending
+status: verified
 requirements: [PUB-01, PUB-02, PUB-04, PUB-05, PUB-08, PUB-09]
 ---
 
@@ -17,6 +17,10 @@ The existing gallery/model dataset outlet now links to `/corpus`. The browser co
 - TypeScript and scoped ESLint passed.
 - Actual local API probes returned dictionary HTTP 200 with 38 record fields, and releases HTTP 503 without database configuration. No fallback dataset was shown.
 
-## Integration remaining
+## Live release integration
 
-The configured integration environment must verify the first reviewed release and its real filtered records/downloads after publication. Backend publication and durable-storage evidence belong to 05-01. No deployment or publication was performed by this UI lane.
+The local application was then connected to the existing private database using only `DATABASE_URL` in its process environment. No credential file was copied into the repository. Published release `0.1.0-pilot` was read successfully: 71 records in its manifest and whole-release export, and 38 record fields in the dictionary.
+
+Real-browser checks passed in Korean at 390 px and English at 1440 px. Both displayed the first 20 records, reached the second page, combined region/use/era filters and exact-ID search to one matching record, and had no horizontal overflow. The initial DOM contained zero provenance lists; opening the first record mounted all 1,175 provenance entries, and closing it removed them again. The real Korean mobile screenshot was visually inspected. Evidence is stored locally in `qa-evidence/phase02-panel/corpus-live.json` and matching screenshots.
+
+The area label reads “계산 대상 면적 / Modeled floor area,” because the modeled denominator excludes basement area. The introduction describes registered areas and use, without presenting an inferred outline as source geometry. Backend publication and durable-storage evidence belong to 05-01. No deployment or publication was performed by this UI lane.
