@@ -1,6 +1,7 @@
 // src/lib/retrofit/solar-potential.ts
 // Solar PV potential assessment for Korean buildings.
 
+import { annualPvGenerationKWh } from '@/lib/energy/pv-generation';
 import type { RetrofitMeasure } from '@/lib/retrofit/retrofit-types';
 import { CO2_FACTORS, MEASURE_LIFETIMES, ENERGY_PRICES } from '@/lib/retrofit/cost-database';
 
@@ -24,22 +25,7 @@ export const REGIONAL_IRRADIANCE: Record<string, number> = {
 };
 
 
-const ROOF_UTILIZATION_FACTORS: Record<'flat' | 'gable' | 'hip' | 'sawtooth', number> = {
-  flat: 0.7,
-  gable: 0.5,
-  hip: 0.4,
-  sawtooth: 0.3,
-};
 
-const M2_PER_KWP = 5.0; // mono-Si panels
-/**
- * Plane-of-array gain from tilting/orienting panels vs the horizontal
- * irradiance the peak-sun-hour figures describe. ~1.15 at Korean latitudes
- * (33–38°N) for near-optimally tilted south-facing arrays (audit finding #6).
- */
-const TILT_FACTOR = 1.15;
-/** System performance ratio (inverter, soiling, temperature, wiring losses). */
-const PERFORMANCE_RATIO = 0.80;
 const SELF_CONSUMPTION_RATIO = 0.7;
 const FEED_IN_RATIO = 0.3;
 // P2-10 (f) — assumption: turnkey rooftop PV ~1.5M KRW/kWp reflects Korean
@@ -79,15 +65,8 @@ export function calculateSolarPotential(
   geometricKWp?: number,
 ): SolarPVResult {
   if (!Number.isFinite(peakSunHours) || peakSunHours <= 0) throw new RangeError('A resolved positive peak-sun-hours value is required');
-  const roofUtilization = ROOF_UTILIZATION_FACTORS[roofType];
-  const usableArea = roofArea * roofUtilization;
-  const systemSizeKWp =
-    geometricKWp != null && geometricKWp >= 0 ? geometricKWp : usableArea / M2_PER_KWP;
-
-  // Seoul (3.5 PSH): 3.5 × 365 × 1.15 × 0.80 ≈ 1,175 kWh/kWp — inside the
-  // 1,100–1,300 kWh/kWp band observed for Korean rooftop PV.
-  const annualGenerationKWh =
-    systemSizeKWp * peakSunHours * 365 * TILT_FACTOR * PERFORMANCE_RATIO;
+  const generation = annualPvGenerationKWh({ peakSunHours, systemSizeKWp: geometricKWp, roofAreaSqm: roofArea, roofType });
+  const { roofUtilization, systemSizeKWp, annualKWh: annualGenerationKWh } = generation;
 
   const annualSelfConsumptionRevenue = annualGenerationKWh * SELF_CONSUMPTION_RATIO * electricityPrice;
   const annualFeedInRevenue = annualGenerationKWh * FEED_IN_RATIO * feedInTariffRate;
