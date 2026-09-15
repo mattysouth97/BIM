@@ -37,6 +37,15 @@ uniform float uArchDetail;
 uniform float uArchStochastic;
 uniform float uArchWeathering;
 uniform vec3 uArchTint;
+// The atlas normal map, sampled here rather than through three's normalMap.
+//
+// Binding material.normalMap would route it through normal_fragment_maps,
+// which samples by mesh UV — and these are instanced unit boxes whose UVs are
+// stretched, which is the whole reason this shader samples triplanar in the
+// first place. So the texture comes in on its own uniform and is blended the
+// same way the colour and roughness maps are.
+uniform sampler2D uArchNormalTex;
+uniform float uArchNormalStrength;
 
 float archHash11(float p) {
   p = fract(p * 0.1031);
@@ -279,6 +288,45 @@ export const ARCH_ROUGHNESS_AFTER = /* glsl */ `
 export const ARCH_NORMAL_AFTER = /* glsl */ `
 {
   vec3 wn = normalize(vArchWorldNormal);
+
+  // Triplanar normal mapping, whiteout blend.
+  //
+  // Until this existed the atlas shipped a normal map for all seven texture
+  // sets and nothing ever sampled it: the mesh normalMap is skipped under
+  // triplanar, and the only normal work here was the bevel below. Every
+  // facade was therefore lit as if it were perfectly flat, with brick and
+  // concrete relief present in the colour map alone — which reads as a
+  // photograph pasted on a plane, most visibly in raking sun.
+  //
+  // A tangent-space normal cannot simply be blended across three axes: each
+  // projection has its own tangent frame. The whiteout blend swizzles each
+  // sample into world space and sums the perturbations, which keeps detail
+  // on all three faces instead of cancelling it at the seams.
+  if (uArchNormalStrength > 0.001) {
+    vec3 blending = pow(abs(wn), vec3(4.0));
+    blending /= max(blending.x + blending.y + blending.z, 1e-5);
+    vec3 cell = floor(vArchWorldPos / 4.0 + uArchSeed);
+    vec2 uvx = archStochasticUv(vArchWorldPos.zy / vec2(uArchMetersY, uArchMetersX), cell);
+    vec2 uvy = archStochasticUv(vArchWorldPos.xz / vec2(uArchMetersX, uArchMetersY), cell);
+    vec2 uvz = archStochasticUv(vArchWorldPos.xy / vec2(uArchMetersX, uArchMetersY), cell);
+
+    vec3 nx = texture2D(uArchNormalTex, uvx).xyz * 2.0 - 1.0;
+    vec3 ny = texture2D(uArchNormalTex, uvy).xyz * 2.0 - 1.0;
+    vec3 nz = texture2D(uArchNormalTex, uvz).xyz * 2.0 - 1.0;
+
+    // Whiteout: keep the surface's own axis, add the map's lateral tilt. The
+    // abs() on the third component preserves the perturbation's sign on a
+    // face pointing down the negative axis.
+    nx = vec3(nx.xy + wn.zy, abs(nx.z) * wn.x);
+    ny = vec3(ny.xy + wn.xz, abs(ny.z) * wn.y);
+    nz = vec3(nz.xy + wn.xy, abs(nz.z) * wn.z);
+
+    vec3 mapped = normalize(
+      nx.zyx * blending.x + ny.xzy * blending.y + nz.xyz * blending.z
+    );
+    normal = normalize(mix(normal, mapped, clamp(uArchNormalStrength, 0.0, 1.0)));
+  }
+
   float edge = saturate(length(fwidth(wn)) * 2.4);
   // Tiny bevel: lift the geometric normal toward the screen-space curvature.
   normal = normalize(mix(normal, normalize(normal + vec3(0.0, 0.35, 0.0)), edge * 0.28 * uArchDetail));

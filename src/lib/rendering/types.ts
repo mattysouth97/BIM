@@ -160,6 +160,16 @@ export interface QualityBudget {
   weathering: boolean;
   stochastic: boolean;
   triplanar: boolean;
+  /**
+   * Sample the atlas normal maps, triplanar, for real surface relief.
+   *
+   * Off on `performance` and in BIM mode because it is the atlas's most
+   * expensive channel — roughly 8 MB across the six distinct sets, which is
+   * why the channel was dropped entirely before this flag existed. Where it is
+   * on, brick and concrete catch raking light instead of reading as a
+   * photograph on a flat plane.
+   */
+  normalMaps: boolean;
   vegetation: boolean;
   maxPixelRatio: number;
   envFromSky: boolean;

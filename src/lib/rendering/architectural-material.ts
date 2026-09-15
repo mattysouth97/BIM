@@ -98,9 +98,19 @@ function applyProgram(mat: THREE.MeshStandardMaterial, spec: VisualMaterialSpec,
     mat.map = texSet.color;
     mat.roughnessMap = texSet.roughness;
     // Mesh UVs on instanced unit boxes are stretched — triplanar in the
-    // shader replaces UV sampling. Skip the mesh normalMap for the same reason.
+    // shader replaces UV sampling. `normalMap` stays unset for the same
+    // reason: the normal map is sampled triplanar too, through the
+    // `uArchNormalTex` uniform below, not through three's UV-based path.
+    if (texSet.normal) {
+      texSet.normal.wrapS = texSet.normal.wrapT = THREE.RepeatWrapping;
+      texSet.normal.colorSpace = THREE.LinearSRGBColorSpace;
+    }
     mat.color.set("#f3f1ec");
   }
+
+  // Relief only where the tier paid for the channel. `spec.microDetail`
+  // scales it so a smooth panel does not get brickwork's depth.
+  const normalTex = budget.normalMaps && !useProcedural ? texSet?.normal ?? null : null;
 
   const uniforms = {
     uArchMetersX: { value: spec.metersPerTile[0] },
@@ -116,6 +126,8 @@ function applyProgram(mat: THREE.MeshStandardMaterial, spec: VisualMaterialSpec,
     uArchStochastic: { value: budget.stochastic && spec.stochastic === "rotate" ? 1 : 0 },
     uArchWeathering: { value: budget.weathering ? 1 : 0 },
     uArchTint: { value: new THREE.Color(spec.albedo) },
+    uArchNormalTex: { value: normalTex },
+    uArchNormalStrength: { value: normalTex ? 0.85 * Math.min(1, spec.microDetail) : 0 },
     uArchProcedural: { value: useProcedural ? 1 : 0 },
     uArchFamily: { value: PROCEDURAL_FAMILY[spec.textureSet ?? "concrete_rough"] ?? 1 },
   };
@@ -127,6 +139,9 @@ function applyProgram(mat: THREE.MeshStandardMaterial, spec: VisualMaterialSpec,
     spec.id,
     args.role,
     useProcedural ? "proc" : texSet ? spec.textureSet : "none",
+    // Part of the key: the normal branch is compiled in or out, so two
+    // materials differing only by it must not share a cached program.
+    normalTex ? "nm" : "no-nm",
     budget.weathering ? "w" : "nw",
     budget.stochastic ? "s" : "ns",
   ].join(":");

@@ -26,6 +26,16 @@ export type ArchitecturalTextureSetName =
 export interface ArchitecturalTextureSet {
   color: Texture;
   roughness: Texture;
+  /**
+   * Present only when the active quality tier asks for it.
+   *
+   * The channel was removed entirely once, because nothing sampled it: the
+   * mesh `normalMap` is skipped under triplanar and every tier sets
+   * `triplanar: true`, so six normal maps were downloaded and read by nothing.
+   * It is back because the shader now samples it triplanar itself — but it
+   * stays optional, and `performance` and BIM mode still never fetch it.
+   */
+  normal?: Texture;
 }
 
 export type ArchitecturalAtlas = Record<ArchitecturalTextureSetName, ArchitecturalTextureSet>;
@@ -41,6 +51,7 @@ export const ARCHITECTURAL_TEXTURE_SETS: readonly ArchitecturalTextureSetName[] 
 ] as const;
 
 const ATLAS_CHANNELS = ["color", "roughness"] as const;
+const ATLAS_CHANNELS_WITH_NORMAL = ["color", "roughness", "normal"] as const;
 
 /**
  * Set name → the directory its pixels actually live in.
@@ -68,12 +79,20 @@ export function isColorChannelUrl(url: string): boolean {
   return url.endsWith("/color.jpg");
 }
 
-/** Deduplicated URL list — aliased sets are fetched once, not once per name. */
-export function architecturalTextureUrls(): string[] {
+/**
+ * Deduplicated URL list — aliased sets are fetched once, not once per name.
+ *
+ * `withNormal` is a parameter rather than a read of the current tier so the
+ * result stays a pure function of its argument: the bridge builds one fixed
+ * list per variant at module scope, which is what keeps `useTexture`'s hook
+ * count stable when the tier changes.
+ */
+export function architecturalTextureUrls(withNormal = false): string[] {
+  const channels = withNormal ? ATLAS_CHANNELS_WITH_NORMAL : ATLAS_CHANNELS;
   const seen = new Set<string>();
   const urls: string[] = [];
   for (const name of ARCHITECTURAL_TEXTURE_SETS) {
-    for (const channel of ATLAS_CHANNELS) {
+    for (const channel of channels) {
       const url = textureUrl(TEXTURE_SOURCE_DIR[name], channel);
       if (seen.has(url)) continue;
       seen.add(url);
@@ -103,8 +122,8 @@ export function subscribeArchitecturalAtlas(fn: () => void): () => void {
 }
 
 /** `textures` must be in the exact order `architecturalTextureUrls()` returns. */
-export function buildAtlasFromUrlList(textures: Texture[]): ArchitecturalAtlas {
-  const urls = architecturalTextureUrls();
+export function buildAtlasFromUrlList(textures: Texture[], withNormal = false): ArchitecturalAtlas {
+  const urls = architecturalTextureUrls(withNormal);
   if (textures.length !== urls.length) {
     throw new Error("Architectural atlas texture count mismatch");
   }
@@ -120,7 +139,13 @@ export function buildAtlasFromUrlList(textures: Texture[]): ArchitecturalAtlas {
     if (!color || !roughness) {
       throw new Error(`Architectural atlas missing channel for set "${name}"`);
     }
-    result[name] = { color, roughness };
+    // Absent when the tier did not request it — the shader reads the strength
+    // uniform, so a missing map disables the effect rather than breaking it.
+    const normal = withNormal ? byUrl.get(textureUrl(dir, "normal")) : undefined;
+    if (withNormal && !normal) {
+      throw new Error(`Architectural atlas missing normal channel for set "${name}"`);
+    }
+    result[name] = normal ? { color, roughness, normal } : { color, roughness };
   }
   return result;
 }
