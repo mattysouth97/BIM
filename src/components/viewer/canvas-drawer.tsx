@@ -24,6 +24,16 @@ export function CanvasDrawer({ open, onClose, title, children, id, testId, class
       if (previousFocus.current?.isConnected) previousFocus.current.focus({ preventScroll: true });
     };
   }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    // A nonmodal drawer permits focus on the canvas/navigation. Escape must
+    // still dismiss it there; nested controls may consume the event first.
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.defaultPrevented) onClose();
+    };
+    document.addEventListener('keydown', dismiss);
+    return () => document.removeEventListener('keydown', dismiss);
+  }, [open, onClose]);
   return (
     <div className={cn('canvas-drawer-boundary', className)}>
       <section ref={panel} id={id} role="region" aria-label={title}

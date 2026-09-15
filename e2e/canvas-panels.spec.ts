@@ -48,7 +48,9 @@ for (const route of ['/models/fzk-haus', '/building/demo']) {
       await expect(top).toHaveAttribute('aria-expanded', 'true');
       await expect(panel).toBeVisible();
       await expect(budget).toHaveValue('1234');
-      await panel.press('Escape');
+      // Nonmodal navigation can own focus while the panel is open.
+      await top.focus();
+      await page.keyboard.press('Escape');
       await expect(top).toHaveAttribute('aria-expanded', 'false');
       await expect(panel).toBeHidden();
       await expect(top).toBeFocused();

@@ -142,7 +142,7 @@ describe("the envelope measures cover the areas the engine priced", () => {
     expect(referenceBuildingEnergyInputs(id)).toBeNull();
     const { result } = renderHook(() => useRetrofitScenario({
       buildingPk: id, totalFloorArea: 0, footprintArea: 0,
-      roofType: "flat", climateRegion: null,
+      roofType: "flat", climateRegion: null, capexBudgetKrw: null,
     }));
     expect(result.current.allMeasures).toEqual([]);
     expect(result.current.coreResult).toBeNull();
