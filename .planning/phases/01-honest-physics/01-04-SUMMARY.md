@@ -1,4 +1,4 @@
-﻿---
+---
 phase: 01-honest-physics
 plan: "04"
 status: complete
@@ -60,8 +60,11 @@ revenue is capped at the building's remaining electric demand.
   the final suite. No tolerance or intersection-only comparison is used.
 - Real store edits to LPD and roof U produce count 2; the rendered notice's numeric
   text is parsed back and equals 2. Re-editing LPD keeps 2; reverting it gives 1.
-- Root lane owns the additional browser edit/count check after integration. No
-  deployment was performed by this lane.
+- Root browser check completed on `/building/demo`: reset source defaults in
+  Settings, changed window U and roof U once each with ArrowRight, and confirmed
+  the Work caption reports exactly 2 local edits. Screenshot:
+  `qa-evidence/phase01-task3/two-local-edits-desktop.png` in the main checkout.
+  No deployment was performed by this lane.
 
 ## Expectations changed and why
 
@@ -78,7 +81,17 @@ revenue is capped at the building's remaining electric demand.
 
 ## Remaining integration
 
-Root updates metrics/datasets to consume the shared delivered-carbon helper and
-performs final phase-wide browser, type, test and documentation verification.
-Canonical diagnostics primary parsing is a separate boundary; retrofit parity
-alone is not evidence that every canonical result field shares the same mapping.
+Root integrated whole-building carbon into metrics/datasets in `03f5a6e`. The
+canonical primary parser now uses shared explicit end-use routing and capped PV
+netting (`bdbfa50`), verified with declared PV plus district cooling; retrofit
+parity is no longer the sole evidence for that separate canonical boundary.
+
+A later review fixed isolated financial streams when existing PV already covers
+annual electricity (`fdab4c5`): LED still reduces gross consumption, while modeled
+bill and carbon savings remain zero. Its NPV is negative rather than receiving a
+false grid saving. `runsAgree` now includes whole-building site intensity so the
+physical LED improvement is still recognized when primary/CO2 remain clipped.
+602 focused tests, TypeScript and scoped ESLint passed after this correction.
+
+The root's final integrated full-suite/browser/release gate remains pending after
+all parallel lanes are merged; these local checks do not claim production state.
