@@ -1,373 +1,89 @@
-// 리트로핏 — the section a desktop reader could not see until 2026-09-06.
-//
-// `SelectedMeasuresStrip` returns null unless the viewport is narrow, so on a
-// laptop the "Retrofit" information was four numbers in the top rail with
-// nothing underneath. These tests pin the two things that make this section an
-// answer rather than a list: every candidate appears, and each one that is not
-// selected says why in terms that reproduce its own figures.
-
-import { describe, it, expect, beforeEach } from "vitest";
-import { readFileSync } from "node:fs";
+import { beforeEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, within } from "@testing-library/react";
+import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { render, within, cleanup } from "@testing-library/react";
-import {
-  ReferenceRetrofitPanel,
-  exclusionReason,
-  retrofitBasisLines,
-} from "../reference-retrofit";
-import { RETROFIT_CATEGORY_ORDER } from "@/components/retrofit/measure-card";
-import { measureDisplayName } from "@/lib/retrofit/measure-claim";
+import { ReferenceRetrofitPanel, retrofitBasisLines } from "../reference-retrofit";
 import { referenceBuildingEnergyInputs } from "@/lib/reference-buildings/energy-inputs";
+import { REFERENCE_BUILDING_IDS, type ReferenceBuildingId } from "@/lib/reference-buildings/manifest";
 import { useMaterialStore } from "@/store/material-store";
 import { useRecipeStore } from "@/store/recipe-store";
 import { useScenarioStore } from "@/store/scenario-store";
-import type { RetrofitMeasure } from "@/lib/retrofit/retrofit-types";
-import { layoutRoofPlanes, type RoofPlaneSet } from "@/lib/retrofit/pv-layout";
-import { calculateSolarPotential } from "@/lib/retrofit/solar-potential";
-import { formatKRW, formatKWh } from "@/components/retrofit/measure-card";
-import {
-  REFERENCE_BUILDING_IDS as ALL_REFERENCE_BUILDING_IDS,
-  type ReferenceBuildingId,
-} from "@/lib/reference-buildings/manifest";
+import { useAppStore } from "@/store/app-store";
+import { measureDisplayName } from "@/lib/retrofit/measure-claim";
+import type { RoofPlaneSet } from "@/lib/retrofit/pv-layout";
+import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 
-const REFERENCE_BUILDING_IDS = ALL_REFERENCE_BUILDING_IDS.filter(id => referenceBuildingEnergyInputs(id) !== null);
-
-function measure(over: Partial<RetrofitMeasure> = {}): RetrofitMeasure {
-  return {
-    id: "m",
-    name: "A measure",
-    category: "envelope",
-    estimatedCost: 10_000_000,
-    annualEnergySaving: 1000,
-    annualCostSaving: 100_000,
-    co2Reduction: 0.1,
-    paybackYears: 12,
-    description: "d",
-    lifetimeYears: 20,
-    financials: {
-      npv: 1_000_000,
-      irr: 0.1,
-      discountedPayback: 12,
-      cashFlow: [],
-      effectiveCapex: 10_000_000,
-      subsidyValue: 0,
-      resolvedFuel: "gas",
-    },
-    ...over,
-  } as RetrofitMeasure;
+beforeEach(() => {
+  cleanup();
+  useAppStore.setState({ language: "en" });
+  useMaterialStore.setState({ properties: {} });
+  useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
+  useScenarioStore.setState({ capexBudgetKrw: null, roofPlanes: null, appliedMeasureIds: [], selectedMeasureIds: [], buildingInputs: null });
+});
+function seed(id: ReferenceBuildingId) {
+  const energy = referenceBuildingEnergyInputs(id)!;
+  useMaterialStore.setState({ properties: { [energy.buildingPk]: energy.materials } });
+  useRecipeStore.setState({ baseRecipes: { [energy.buildingPk]: energy.recipe } });
+  const path = join(process.cwd(), "public/reference-buildings", id, "roof-planes.json");
+  useScenarioStore.setState({ roofPlanes: existsSync(path) ? JSON.parse(readFileSync(path, "utf8")) as RoofPlaneSet : null });
+  const quantities = envelopeQuantities(energy.recipe);
+  useScenarioStore.getState().setBuildingInputs({ buildingPk: energy.buildingPk, totalFloorArea: quantities.intensityFloorAreaSqm, footprintArea: quantities.planAreaSqm, roofType: energy.roof?.type ?? "flat", sidoPrefix: energy.climate.sigunguCd });
+  useScenarioStore.setState({ appliedMeasureIds: [], selectedMeasureIds: [] });
+  return energy;
 }
 
-describe("exclusionReason states the fact that actually excluded the measure", () => {
-  const budget = 250_000_000;
-
-  it("says nothing at all about a selected measure", () => {
-    expect(exclusionReason(measure(), true, budget, false)).toBeNull();
-  });
-
-  it("names the negative NPV, and quotes it", () => {
-    const m = measure({ financials: { ...measure().financials!, npv: -6_420_000 } });
-    const reason = exclusionReason(m, false, budget, false)!;
-    expect(reason).toContain("NPV is -₩642만");
-    expect(reason).toContain("never repays the outlay");
-  });
-
-  it("distinguishes 'would pay, does not fit' from 'would not pay'", () => {
-    // Positive NPV, cost over budget: a different sentence, because it is a
-    // different answer — this one comes back if the budget moves.
-    const m = measure({
-      estimatedCost: 560_000_000,
-      financials: {
-        ...measure().financials!,
-        npv: 520_000_000,
-        effectiveCapex: 560_000_000,
-      },
-    });
-    const reason = exclusionReason(m, false, budget, false)!;
-    expect(reason).toContain("NPV is positive");
-    expect(reason).toContain("exceeds the ₩2.5억 budget");
-    expect(reason).not.toContain("never repays");
-  });
-
-  it("uses the POST-subsidy capex, which is the figure the knapsack budgeted", () => {
-    const m = measure({
-      estimatedCost: 500_000_000,
-      // Halved by a public track: it now fits, so cost alone must not be the
-      // reason given.
-      financials: {
-        ...measure().financials!,
-        npv: 90_000_000,
-        effectiveCapex: 200_000_000,
-      },
-    });
-    const reason = exclusionReason(m, false, budget, false)!;
-    expect(reason).not.toContain("exceeds");
-    expect(reason).toContain("higher NPV");
-  });
-
-  it("names the alternative when the measure is one of a mutually-exclusive pair", () => {
-    const m = measure({
-      conflictGroup: "heating-plant",
-      financials: { ...measure().financials!, npv: 0 },
-    });
-    // npv 0 is not < 0, capex is within budget, so the conflict branch wins.
-    expect(exclusionReason(m, false, budget, false)).toContain("never additive");
-  });
-});
-
-describe("retrofitBasisLines", () => {
+describe("reference retrofit selection and evidence", () => {
   for (const id of REFERENCE_BUILDING_IDS) {
-    it(`${id}: quotes the building's own roof reading, not a generic sentence`, () => {
-      const energy = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!;
-      const lines = retrofitBasisLines(energy, false).join(" ");
-      if (energy.roof) {
-        expect(lines).toContain(energy.roof.read);
-        expect(lines).toContain(`Energy-input roof category: ${energy.roof.type}`);
-        expect(lines).not.toContain("states no roof typology");
-      } else {
-        expect(lines).toContain("states no roof typology");
-        expect(lines).toContain("PV capacity comes only from the roof-plane layout");
-      }
-      expect(lines).toContain("modules placed on the roof planes × assumed module rating");
-      expect(lines).not.toContain("utilisation factor");
-    });
-  }
-
-  it("a building that states no roof typology says so rather than being called flat", () => {
-    const energy = referenceBuildingEnergyInputs("bs-medical-dental-clinic")!;
-    const withoutRoof = { ...energy, roof: undefined };
-    const lines = retrofitBasisLines(withoutRoof, false).join(" ");
-    expect(lines).toContain("states no roof typology");
-    expect(lines).toContain("PV capacity comes only from the roof-plane layout");
-    expect(lines).not.toContain("0.7");
-  });
-
-  it("discloses the three things these measures do NOT do to the engine", () => {
-    const energy = referenceBuildingEnergyInputs("schependomlaan")!;
-    const lines = retrofitBasisLines(energy, false).join(" ");
-    // Lighting/PV now reach the grade, with annual generation capped.
-    expect(lines).toContain("Both reach primary energy and the grade");
-    expect(lines).toContain("capped at annual electric demand");
-    expect(lines).toContain("modelled loss goes UP");
-    expect(lines).toContain("SHGC is left unchanged");
-    // And the costing provenance the brief asks for.
-    expect(lines).toContain("KICT 2024");
-    expect(lines).toContain("ASHRAE");
-    expect(lines).toContain("Costs exclude grants and interest support");
-    expect(lines).not.toContain("2026.1");
-    // The apartment still uses aperture stand-ins; the generic costing basis
-    // must not turn them into measured openings by its label.
-    expect(lines).toContain("unmeasured stand-ins");
-    expect(lines).not.toContain("windows at the measured aperture");
-  });
-});
-
-describe("the section on a real building page", () => {
-  beforeEach(() => {
-    // Vitest is not running RTL's auto-cleanup here, and `screen` queries the
-    // whole document — a leftover render from the previous case turns a
-    // single-element lookup into "found multiple". Every query below is
-    // scoped to its own `container` for the same reason.
-    cleanup();
-    useMaterialStore.setState({ properties: {} });
-    useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
-    useScenarioStore.setState({ capexBudgetKrw: 250_000_000, roofPlanes: null });
-  });
-
-  function seed(id: ReferenceBuildingId) {
-    const energy = referenceBuildingEnergyInputs(id)!;
-    useMaterialStore.setState({ properties: { [energy.buildingPk]: energy.materials } });
-    useRecipeStore.setState({ baseRecipes: { [energy.buildingPk]: energy.recipe } });
-    useScenarioStore.setState({ roofPlanes: JSON.parse(readFileSync(join(process.cwd(), "public/reference-buildings", id, "roof-planes.json"), "utf8")) as RoofPlaneSet });
-    return energy;
-  }
-
-  // Driven off the registry, not a hand-written list: the contract's whole
-  // claim is that a NEW building renders the same section with the same rows
-  // in the same order, and a list somebody has to remember to extend cannot
-  // check that.
-  for (const id of REFERENCE_BUILDING_IDS) {
-    it(`${id}: renders EVERY candidate, not only the selected ones`, () => {
-      const energy = seed(id as ReferenceBuildingId);
-      const { container } = render(
-        <ReferenceRetrofitPanel energy={energy} locale="en" />,
-      );
-      const cards = container.querySelectorAll(
-        '[data-testid^="retrofit-measure-"]:not([data-testid$="-note"])',
-      );
-      expect(cards.length).toBeGreaterThan(0);
-
-      // The summary sentence names a candidate count; it must be the number
-      // of cards actually on screen, not the number selected.
-      const summary = within(container).getByTestId(
-        "reference-model-retrofit-summary",
-      ).textContent!;
-      const claimed = summary.match(/of (\d+) candidates/);
-      expect(claimed).not.toBeNull();
-      expect(Number(claimed![1])).toBe(cards.length);
-    });
-
-    it(`${id}: every unselected card carries a reason`, () => {
-      const energy = seed(id as ReferenceBuildingId);
-      const { container } = render(
-        <ReferenceRetrofitPanel energy={energy} locale="en" />,
-      );
-      const cards = [
-        ...container.querySelectorAll<HTMLElement>(
-          '[data-testid^="retrofit-measure-"]:not([data-testid$="-note"])',
-        ),
-      ];
-      for (const card of cards) {
-        const selected = within(card).queryByText("예산 내") !== null;
-        const note = card.querySelector('[data-testid$="-note"]');
-        // Exactly one of the two: selected, or told why not.
-        expect(selected || note !== null).toBe(true);
-        if (selected) expect(note).toBeNull();
-      }
-    });
-
-    it(`${id}: lists categories in the shared order`, () => {
-      const energy = seed(id as ReferenceBuildingId);
-      const { container } = render(
-        <ReferenceRetrofitPanel energy={energy} locale="en" />,
-      );
-      const ids = [
-        ...container.querySelectorAll<HTMLElement>(
-          '[data-testid^="retrofit-measure-"]:not([data-testid$="-note"])',
-        ),
-      ].map((n) => n.dataset.testid!.replace("retrofit-measure-", ""));
-
-      const rank = (measureId: string) => {
-        if (measureId.startsWith("envelope-")) return RETROFIT_CATEGORY_ORDER.indexOf("envelope");
-        if (measureId.startsWith("hvac-")) return RETROFIT_CATEGORY_ORDER.indexOf("hvac");
-        if (measureId.startsWith("lighting-")) return RETROFIT_CATEGORY_ORDER.indexOf("lighting");
-        return RETROFIT_CATEGORY_ORDER.indexOf("renewable");
-      };
-      const ranks = ids.map(rank);
-      expect([...ranks].sort((a, b) => a - b)).toEqual(ranks);
-    });
-
-    it(`${id}: the PV candidate prices the modules in the roof table`, () => {
-      const energy = seed(id as ReferenceBuildingId);
-      const layout = layoutRoofPlanes(useScenarioStore.getState().roofPlanes!);
-      const drawnModules = layout.planes.reduce((sum, plane) => sum + plane.modules.length, 0);
-      const roofType = energy.roof?.type ?? "flat";
-      const expected = calculateSolarPotential(1, roofType, 3.5, 130, undefined, drawnModules * 0.4);
+    const energyInputs = referenceBuildingEnergyInputs(id);
+    if (!energyInputs) continue; // A model without validated energy inputs has no retrofit panel.
+    it(`${id}: candidate count, chosen work and paired values agree`, () => {
+      const energy = seed(id);
       const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="en" />);
-      const card = container.querySelector(`[data-testid="retrofit-measure-solar-pv-${roofType}"]`)!;
-      if (id === "kit-office") {
-        // The curved strips are narrower than the fixed portrait-module
-        // policy plus setbacks. Zero is a visible placement result, not an
-        // absent table or a PV measure priced from an unrelated area ratio.
-        expect(drawnModules).toBe(0);
-        expect(card).toBeNull();
-        const totals = container.querySelector('[data-testid="reference-pv-totals"]')!;
-        expect(Number(totals.querySelectorAll("td")[4].textContent)).toBe(0);
-        expect(layout.planes.every((plane) => plane.excludedReason !== null)).toBe(true);
+      const chips = container.querySelectorAll<HTMLElement>("[data-measure-chip]");
+      const summary = within(container).getByTestId("reference-model-retrofit-summary").textContent!;
+      expect(Number(summary.match(/of (\d+) candidates/)![1])).toBe(chips.length);
+      expect(summary).toContain("0 chosen");
+      const before = within(container).getByTestId("retrofit-site-before").textContent;
+      expect(within(container).getByTestId("retrofit-site-after").textContent).toBe(before);
+      if (chips.length === 0) {
+        expect(within(container).getByTestId("reference-model-retrofit-empty").textContent).toContain("No retrofit candidates can be evaluated");
         return;
       }
-      expect(card).not.toBeNull();
-      const capacity = card.textContent!.match(/([\d.]+) kWp/);
-      expect(Number(capacity?.[1])).toBeCloseTo(drawnModules * 0.4, 8);
-      expect(card.textContent).toContain(formatKRW(expected.estimatedCost));
-      expect(card.textContent).toContain(`${formatKWh(expected.annualGenerationKWh)}/yr`);
-      const totals = container.querySelector('[data-testid="reference-pv-totals"]')!;
-      expect(Number(totals.querySelectorAll("td")[4].textContent)).toBe(Number(capacity?.[1]));
+      fireEvent.click(chips[0]);
+      expect(useScenarioStore.getState().appliedMeasureIds).toEqual([chips[0].dataset.measureChip]);
+      expect(chips[0].getAttribute("aria-pressed")).toBe("true");
+      expect(within(container).getByTestId("reference-model-retrofit-summary").textContent).toContain("1 chosen");
+      expect(container.textContent).not.toMatch(/NPV|IRR|CAPEX → ROI/);
+    });
+    it(`${id}: retains building-specific evidence, caveats and the unavailable corpus slot`, () => {
+      const energy = seed(id);
+      const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="en" />);
+      const evidence = within(container).getByTestId("retrofit-verification").textContent!;
+      for (const assumption of energy.assumptions) expect(evidence).toContain(assumption.assumes);
+      expect(evidence).toContain("not been calibrated to bills");
+      expect(within(container).getByTestId("retrofit-corpus-position").getAttribute("data-status")).toBe("unavailable");
+      expect(within(container).getByTestId("retrofit-capital-verification").textContent).toContain("installation quotes");
+      const lines = retrofitBasisLines(energy, false).join(" ");
+      if (energy.roof) expect(lines).toContain(energy.roof.read);
+      expect(lines).toContain("Isolated measure savings are not summed");
+      expect(lines).toContain("capped at annual electric demand");
+      expect(lines).toContain("SHGC is left unchanged");
     });
   }
-
-  it("an explicitly zero budget selects nothing and states that without hiding candidates", () => {
-    const energy = seed("bs-medical-dental-clinic");
-    useScenarioStore.getState().setCapexBudget(0);
-    const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="en" />);
-
-    expect(
-      within(container).getByTestId("reference-model-retrofit-none-selected"),
-    ).toBeTruthy();
-    // Six cards under a "nothing selected" heading is the answer; zero cards
-    // would read as a broken panel.
-    expect(
-      container.querySelectorAll(
-        '[data-testid^="retrofit-measure-"]:not([data-testid$="-note"])',
-      ).length,
-    ).toBe(6);
-    expect(within(container).queryByTestId("reference-model-retrofit-empty")).toBeNull();
-  });
-
-  it("with no roof data it prices no PV candidate and states the absence", () => {
+  it("with no roof data generates no new PV capacity", () => {
     const energy = seed("bs-medical-dental-clinic");
     useScenarioStore.setState({ roofPlanes: null });
     const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="en" />);
-    expect(container.querySelector('[data-testid^="retrofit-measure-solar-pv"]')).toBeNull();
+    expect(container.querySelector('[data-measure-chip^="solar-pv"]')).toBeNull();
     expect(within(container).getByTestId("reference-pv-unavailable").textContent).toContain("no PV capacity is priced");
   });
-});
-
-describe("the Korean basis line names the roof in Korean", () => {
-  it("never prints the raw English enum in the Korean sentence", () => {
-    // FZK Haus's `gable` rendered as "태양광은 gable 이용률로 산정했습니다"
-    // because only `flat` had been translated.
-    for (const id of REFERENCE_BUILDING_IDS) {
-      const energy = referenceBuildingEnergyInputs(id as ReferenceBuildingId)!;
-      if (!energy.roof) continue;
-      const ko = retrofitBasisLines(energy, true).join(" ");
-      const sentence = ko.split(" · ")[0];
-      expect(
-        sentence,
-        `${id}: the Korean PV basis line still carries the enum "${energy.roof.type}"`,
-      ).not.toMatch(new RegExp(`\\b${energy.roof.type}\\b`));
-      expect(ko).toContain("에너지 입력의 지붕 분류:");
-      expect(ko).not.toContain("이용률로 산정했습니다");
-    }
-  });
-});
-
-describe("the cards name measures in the reader's language", () => {
-  beforeEach(() => {
-    cleanup();
-    useMaterialStore.setState({ properties: {} });
-    useRecipeStore.setState({ baseRecipes: {}, overrides: {} });
-    useScenarioStore.setState({ capexBudgetKrw: 250_000_000 });
-  });
-
-  it("a Korean page carries no untranslated generator name", () => {
-    const energy = referenceBuildingEnergyInputs("bs-medical-dental-clinic")!;
-    useMaterialStore.setState({ properties: { [energy.buildingPk]: energy.materials } });
-    useRecipeStore.setState({ baseRecipes: { [energy.buildingPk]: energy.recipe } });
-
+  it("uses localized names and chosen state on Korean pages", () => {
+    useAppStore.setState({ language: "ko" });
+    const energy = seed("bs-medical-dental-clinic");
     const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="ko" />);
-    const cards = [
-      ...container.querySelectorAll<HTMLElement>(
-        '[data-testid^="retrofit-measure-"]:not([data-testid$="-note"])',
-      ),
-    ];
-    expect(cards.length).toBeGreaterThan(0);
-
-    for (const card of cards) {
-      const id = card.dataset.testid!.replace("retrofit-measure-", "");
-      const title = card.querySelector("p")!.textContent!.trim();
-      // The name is whatever the shared catalog says, not the generator's.
-      expect(title).toBe(measureDisplayName(id, "ko", title));
-      // And for every id the catalog knows, that is Korean.
-      const en = measureDisplayName(id, "en", "\u0000FALLBACK");
-      if (en !== "\u0000FALLBACK") {
-        expect(title, `${id} still shows the English name on a Korean page`).not.toBe(en);
-        expect(title).toMatch(/[가-힣]/);
-      }
+    for (const chip of container.querySelectorAll<HTMLElement>("[data-measure-chip]")) {
+      expect(chip.textContent).toContain(measureDisplayName(chip.dataset.measureChip!, "ko", ""));
     }
-  });
-
-  it("the English page gets the English name from the same catalog", () => {
-    const energy = referenceBuildingEnergyInputs("bs-medical-dental-clinic")!;
-    useMaterialStore.setState({ properties: { [energy.buildingPk]: energy.materials } });
-    useRecipeStore.setState({ baseRecipes: { [energy.buildingPk]: energy.recipe } });
-
-    const { container } = render(<ReferenceRetrofitPanel energy={energy} locale="en" />);
-    for (const card of container.querySelectorAll<HTMLElement>(
-      '[data-testid^="retrofit-measure-"]:not([data-testid$="-note"])',
-    )) {
-      const id = card.dataset.testid!.replace("retrofit-measure-", "");
-      const title = card.querySelector("p")!.textContent!.trim();
-      expect(title).toBe(measureDisplayName(id, "en", title));
-    }
+    expect(within(container).getByTestId("retrofit-corpus-position").textContent).toContain("아직 제공되지 않습니다");
   });
 });

@@ -49,6 +49,7 @@ import { SelectedMeasuresStrip } from "./selected-measures-strip";
 import { MeasureChipRow } from "./measure-chip-row";
 import { RetrofitDeltaStrip } from "./retrofit-delta-strip";
 import { EnergyCards } from "@/components/viewer/energy-cards";
+import { RetrofitVerification } from "./retrofit-verification";
 
 export interface EnergyInstrumentHudProps {
   /** Store key the material and recipe stores were seeded under. */
@@ -223,6 +224,8 @@ export function EnergyInstrumentHud({
             selection={scenario.chosen}
             assumptions={scenario.assumptions}
             totalCandidateMeasures={scenario.allMeasures.length}
+            modeledBill={scenario.coreResult?.bill}
+            unsavedEditCount={scenario.unsavedEditCount}
           />
           {/* PRIMARY control: choosing work updates the model and its costs. */}
           <div className="border-t border-border">
@@ -251,10 +254,11 @@ export function EnergyInstrumentHud({
               {gradeBasis}
             </p>
           ) : null}
-          <RetrofitDeltaStrip />
+          <RetrofitDeltaStrip deltaOverride={scenario.coreResult?.delta ?? null} />
           <SelectedMeasuresStrip
             measures={scenario.chosen?.selected ?? []}
           />
+          <RetrofitVerification buildingPk={buildingPk} />
           {/* The budget band left the frame 2026-09-06 (Lane 3D): the budget is an optional field in the rail, and the cost of the chosen work is 실효 투자비 above. */}
         </section>
       }

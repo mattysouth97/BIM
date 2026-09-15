@@ -37,8 +37,6 @@ export interface ScenarioBuildingInputs {
   climateRegion: ClimateRegion | null;
 }
 
-export const DEFAULT_CAPEX_BUDGET_KRW = 250_000_000; // ₩2.5억 default scenario
-
 interface ScenarioState {
   /**
    * OPTIONAL budget, KRW. `null` (the default) means no ceiling: the

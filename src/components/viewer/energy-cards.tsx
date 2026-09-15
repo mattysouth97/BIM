@@ -209,28 +209,41 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
   if (variant === "strip") {
     return (
       <>
-      <div className="flex flex-wrap items-center gap-3 border-b border-border px-3 py-2">
+      <div className="flex min-w-0 flex-col items-stretch gap-3 border-b border-border p-3 [overflow-wrap:anywhere]" data-testid="energy-baseline-summary">
+        <h3 className="text-xs font-medium">{t("현재 건물 · 계산 기준", "Current building · modeled baseline")}</h3>
+        <div className="flex flex-col items-start gap-1 border-t border-border pt-2">
+        <span className="text-[11px] text-muted-foreground">{t("효율 등급", "Efficiency grade")}</span>
         <span
           className="inline-flex h-7 min-w-[2rem] items-center justify-center rounded-md px-2 text-sm font-bold text-white"
           style={{ backgroundColor: gradeColor }}
         >
           {grade}
         </span>
-        <span className="shrink-0 text-xs tabular-nums text-foreground">
+        </div>
+        <div className="flex flex-col gap-1 border-t border-border pt-2">
+        <span className="text-[11px] text-muted-foreground">{t("현장 에너지 · 조명 포함", "Site energy · includes lighting")}</span>
+        <span className="text-sm tabular-nums text-foreground">
           <SettleValue value={modeledSiteEui === null ? "—" : fmt(modeledSiteEui, 1)} />{" kWh/m²·yr"}
         </span>
-        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+        </div>
+        <div className="flex flex-col gap-1 border-t border-border pt-2">
+        <span className="text-[11px] text-muted-foreground">{t("탄소 배출", "Carbon emissions")}</span>
+        <span className="text-sm tabular-nums text-foreground">
           <SettleValue value={fmt(co2.co2PerSqm, 1)} />{" kgCO₂/m²·yr"}
         </span>
-        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+        </div>
+        <div className="flex flex-col gap-1 border-t border-border pt-2">
+        <span className="text-[11px] text-muted-foreground">{t("설계 열손실", "Design heat loss")}</span>
+        <span className="text-sm tabular-nums text-foreground">
           <SettleValue value={fmt(heatLoss.totalHeatLoss, 0)} />{" W"}
         </span>
-        <div className="ml-auto flex shrink-0 gap-1">
-          <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={handleExport}>
+        </div>
+        <div className="flex flex-col items-stretch gap-1 border-t border-border pt-2">
+          <Button variant="ghost" size="sm" className="h-auto min-h-8 justify-start whitespace-normal text-[11px]" onClick={handleExport}>
             <Download className="mr-1 h-3 w-3" />
-            ECO2
+            {t("ECO2 입력 내보내기", "Export ECO2 inputs")}
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={handleImport}>
+          <Button variant="ghost" size="sm" className="h-auto min-h-8 justify-start whitespace-normal text-[11px]" onClick={handleImport}>
             <Upload className="mr-1 h-3 w-3" />
             {t("가져오기", "Import")}
           </Button>

@@ -6,7 +6,7 @@ import {
   effectiveMeasureIds,
   NO_RETROFIT_VISUALS,
 } from "../measure-visuals";
-import { useScenarioStore, DEFAULT_CAPEX_BUDGET_KRW } from "@/store/scenario-store";
+import { useScenarioStore } from "@/store/scenario-store";
 
 describe("deriveVisualState", () => {
   it("returns all-false for no applied measures", () => {
@@ -74,7 +74,7 @@ describe("proposalVisualIds — the one gate between the knapsack and the model"
 describe("scenario-store — the proposal is what the model draws", () => {
   beforeEach(() => {
     useScenarioStore.setState({
-      capexBudgetKrw: DEFAULT_CAPEX_BUDGET_KRW,
+      capexBudgetKrw: 250_000_000, // This test's explicit budget; the product default is null.
       buildingInputs: null,
       selectedMeasureIds: null,
       previewProposal: true,
