@@ -47,6 +47,7 @@ ENDSEC;END-ISO-10303-21;`);
     "taltech-maemaja": [528, 1644, 1],
     "tum-fantasy-hotel-1": [39, 48, 0],
     "tum-fantasy-hotel-2": [38, 0, 0],
+    "west-riverside-hospital": [41126, 85602, 4],
   };
   for (const id of REFERENCE_BUILDING_IDS) {
     it(`${id}: coverage counts reconcile all pinned source files and actual published layers`, () => {

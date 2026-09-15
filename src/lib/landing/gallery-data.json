@@ -664,5 +664,86 @@
         "manifestField": "counts.spacesFloor"
       }
     ]
+  },
+  "west-riverside-hospital": {
+    "licence": "CC BY 3.0",
+    "attribution": "Solihin, W. \"West Riverside Hospital IFC Models\". Donated by Wawan Solihin (Singapore); hosted on the OpenIFC Model Repository by Prof. Robert Amor, University of Auckland. CC BY 3.0; extracted and adapted by BIMFIT. https://openifcmodel.cs.auckland.ac.nz/",
+    "sourceUrl": "https://openifcmodel.cs.auckland.ac.nz/",
+    "datums": [
+      {
+        "name": "Level 7",
+        "elevationM": 34,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "Level 7A",
+        "elevationM": 31,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "Level 6",
+        "elevationM": 26,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "Level 5",
+        "elevationM": 21,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "Level 4",
+        "elevationM": 16,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "Level 3",
+        "elevationM": 11,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "Level 2",
+        "elevationM": 6,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      },
+      {
+        "name": "Level 1",
+        "elevationM": 0,
+        "rooms": 0,
+        "roomAreaSqm": 0,
+        "excludedSpaces": 0
+      }
+    ],
+    "figures": [
+      {
+        "id": "floor-area",
+        "ko": "모델 바닥 면적",
+        "en": "Model floor area",
+        "value": "0.0 m²",
+        "read": "0 floor-counting IfcSpace · ",
+        "manifestField": "areas.totalFloorAreaSqm"
+      },
+      {
+        "id": "rooms",
+        "ko": "바닥을 갖는 공간",
+        "en": "Floor-counting spaces",
+        "value": "0",
+        "read": "IfcSpace 0 − 0 excluded (none) = 0",
+        "manifestField": "counts.spacesFloor"
+      }
+    ]
   }
 }

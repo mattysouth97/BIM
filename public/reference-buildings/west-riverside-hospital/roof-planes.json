@@ -1,0 +1,11 @@
+{
+  "kind": "bimfit_reference_building_roof_planes",
+  "id": "west-riverside-hospital",
+  "generatedAt": "2026-09-15T12:30:00.000Z",
+  "northAssumed": true,
+  "trueNorthDeg": -5.000000000000649,
+  "note": "Upward faces (within 80°) of each roof element, region-grown into connected coplanar patches: normals within 2°, offsets within 20 mm across shared edges; then patches of one element with the same normal, offsets within 150 mm and plan boxes touching within 50 mm are one surface (a ribbed metal roof is modelled as one pan solid per rib bay). Then what the sky sees: planes highest first, each keeping only the plan area no higher plane covers, so a roof's lower layers (deck under tiles, insulation under deck) are not planes; occludedSqm is what each kept plane lost, and skyUnionSqm the union of every upward shadow before occlusion. Because lower layers are dropped, sum(surfaceSqm) is BELOW the manifest's roofSurfaceSqm, which keeps every layer and every verge because heat crosses them. tiltDeg and azimuthDeg are each plane's own and never a blend across the roof; azimuth is the downslope bearing clockwise from source true north when stated, otherwise project north (the model's −Z); trueNorthDeg records the rotation, and flat planes carry null. outline rings are the plane's visible plan area, outer counter-clockwise and holes clockwise, simplified to 10 mm; zero-area rings collapsed at 1 mm coordinate precision are omitted. Obstructions contain geometrically associated unresolved openings where available. Roof-mounted equipment is not inventoried for this model.",
+  "skyUnionSqm": 0,
+  "occludedPlanes": 0,
+  "planes": []
+}

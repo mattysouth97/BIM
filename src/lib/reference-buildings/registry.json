@@ -160,5 +160,23 @@
       "ko": "연결된 실측 에너지 자료 없음",
       "en": "No linked measured energy data"
     }
+  },
+  "west-riverside-hospital": {
+    "id": "west-riverside-hospital",
+    "koTitle": "웨스트 리버사이드 병원",
+    "enTitle": "West Riverside Hospital",
+    "koUse": "의료시설 · 7개 분야 공개 조정 모델",
+    "enUse": "Healthcare · seven published discipline models",
+    "status": "modelling",
+    "modelFile": "west-riverside-arc.ifc (source: arc_ifc4.ifc)",
+    "ifcSchema": "IFC4",
+    "viewDefinition": "CoordinationView_V2.0",
+    "authoringTool": "Autodesk Revit 2015",
+    "modelDate": "2026-09-15",
+    "measuredConsumption": {
+      "status": "none",
+      "ko": "연결된 실측 에너지 자료 없음",
+      "en": "No linked measured energy data"
+    }
   }
 }

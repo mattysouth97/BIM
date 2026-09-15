@@ -35,6 +35,10 @@ export const LAYER_COLOUR: Record<string, string> = {
   hvac: "#9ebcdb",
   electrical: "#f0cc5c",
   plumbing: "#dc855c",
+  // Fire suppression, by the convention every services drawing uses. Without
+  // an entry here the row falls back to the generic grey, which would say
+  // "unclassified layer" about the one discipline whose colour is a standard.
+  sprinkler: "#c2453c",
   // Schependomlaan's subcontractor set. Each hex is the same colour the
   // layer's GLB material carries (`colours` in build-reference-building.mjs),
   // so the swatch beside the row is the colour of the thing it switches on.

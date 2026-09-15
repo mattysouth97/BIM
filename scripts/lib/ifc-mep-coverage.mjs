@@ -52,6 +52,11 @@ const LAYER_IDS = {
   "fzk-haus": [],
   "kit-office": [],
   "taltech-maemaja": ["mep"],
+  // Sprinklers are named explicitly: the default candidate list below covers
+  // hvac/electrical/plumbing only, so a published 22 MB sprinkler layer with
+  // 1,354 suppression terminals would have been left out of this building's
+  // own services inventory while sitting in its layer list.
+  "west-riverside-hospital": ["hvac", "electrical", "plumbing", "sprinkler"],
 };
 
 export async function buildMepCoverage({ buildingId, sources, serviceLayers }) {
@@ -85,6 +90,13 @@ export async function buildMepCoverage({ buildingId, sources, serviceLayers }) {
     } : buildingId === "schependomlaan" ? {
       ko: "건축 IFC의 우수배수 60개·환기구 13개와 별도 공급업체 유틸리티 연결 형상을 표시합니다. 포트가 없어 흐름 방향은 추정하지 않습니다.",
       en: "Shows 60 rainwater drainage elements and 13 ventilation grilles from the architectural IFC, plus the supplier utility connections. No distribution ports; no inferred flow direction.",
+    } : buildingId === "west-riverside-hospital" ? {
+      // The generic sentence below names HVAC, electrical and plumbing. This
+      // building also publishes a sprinkler layer with 1,354 suppression
+      // terminals, so that sentence would have listed three of its four
+      // published layers while the fourth sat in the list beside it.
+      ko: "공개된 냉난방환기·전기·급배수·스프링클러 IFC를 각각 표시합니다. 원본에 IfcSpace가 없어 바닥면적과 에너지 기준선은 산정하지 않으며, 모델 간 중복 가능성이 있어 원본 요소 수를 설치 설비의 고유 개수로 해석하지 않습니다.",
+      en: "Published HVAC, electrical, plumbing and sprinkler IFCs are shown separately. The source states no IfcSpace, so no floor area or energy baseline is calculated. Source occurrence counts can overlap between models and are not unique installed equipment counts.",
     } : buildingId === "taltech-maemaja" ? {
       ko: "통합 IFC의 냉난방·배관·말단기기와 기존 태양광 형상을 표시합니다. 별도 계측 파일을 연간 에너지 계산과 보정한 결과는 아닙니다.",
       en: "Shows source heating/cooling equipment, pipes, terminals and existing PV from the combined IFC. The separate metering archive has not been used to calibrate the modeled annual energy output.",

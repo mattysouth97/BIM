@@ -9,10 +9,30 @@ import { REFERENCE_BUILDING_IDS, type ReferenceBuildingManifest } from "../manif
 const BUILDINGS = REFERENCE_BUILDING_IDS;
 const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
 
+/**
+ * Buildings that publish no material fabric, and why.
+ *
+ * Listed rather than skipped silently: every other model must still have one,
+ * so a fabric that goes missing by accident fails here instead of quietly
+ * dropping out of the suite. An entry is a decision on the record, not an
+ * exemption to reach for.
+ */
+const NO_MATERIAL_FABRIC: Record<string, string> = {
+  "west-riverside-hospital":
+    "The generator exceeds its own 300 draw-call budget on this building — 837, from 440 separately-bound doors and 158 curtain walls. The budget is a render-performance guard, so the building goes without the fabric rather than the guard being raised for it.",
+};
+
 describe("published material fabric source associations", () => {
   for (const id of BUILDINGS) it(`${id}: source quantities, representative layers, payload and geometry reconcile`, async () => {
     const read = (file: string) => readFileSync(path.join(process.cwd(), "public/reference-buildings", id, file));
     const manifest = JSON.parse(read("manifest.json").toString()) as ReferenceBuildingManifest;
+    if (id in NO_MATERIAL_FABRIC) {
+      // Assert the absence is the documented one, so this branch cannot also
+      // absorb a model that lost its fabric for some other reason.
+      expect(manifest.materialFabric ?? null).toBeNull();
+      expect(NO_MATERIAL_FABRIC[id].length).toBeGreaterThan(40);
+      return;
+    }
     const variant = manifest.materialFabric!;
     const glb = read(variant.file), indexBytes = read(variant.indexFile);
     const index = JSON.parse(indexBytes.toString()) as {

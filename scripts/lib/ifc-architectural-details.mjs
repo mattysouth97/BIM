@@ -22,6 +22,23 @@ export const ARCHITECTURAL_DETAIL_SOURCES = Object.freeze({
   "kit-office": { architectural: ["IfcFurnishingElement", "IfcRailing", "IfcColumn"] },
   "klassiqua-office-1970": { architectural: ["IfcCovering", "IfcCurtainWall"] },
   "taltech-maemaja": { architectural: ["IfcCovering", "IfcColumn", "IfcBeam", "IfcRailing"] },
+  // Two discipline files contribute, as with the Clinic. IfcPlate (2,211) and
+  // IfcMember (7,122) are deliberately NOT listed: they are the curtain-wall
+  // panels and mullions that make up this building's facade, and the openings
+  // pass already reads 158 curtain walls as 4,720 m² of glazing. Moving them
+  // into the detail layer would take the facade out of the fabric model and
+  // leave the envelope full of holes. IfcStair is likewise absent — the shared
+  // GROUP map has no entry for it, and extending that map for one building
+  // would change how every other building's details are grouped.
+  "west-riverside-hospital": {
+    architectural: ["IfcCovering", "IfcRailing", "IfcColumn"],
+    // Structural classes are deliberately NOT listed, unlike the Clinic. This
+    // building publishes its structural discipline as its own toggleable
+    // service layer, so listing beams, columns and footings here as well drew
+    // the same frame twice — 1,970 beams and 553 footings in two layers at
+    // once. It also blew the detail budget: 303 draw calls against 200, almost
+    // all of them instanced structural shapes.
+  },
 });
 
 const GROUP = {

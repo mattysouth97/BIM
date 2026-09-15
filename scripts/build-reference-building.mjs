@@ -966,6 +966,79 @@ const BUILDINGS = Object.freeze({
     spacesNote: "IfcSpace floor quantities from the educational design. These do not establish actual conditioned area or measured operation. Exterior classification is unresolved.",
     roofNote: "Source slab geometry is displayed. An absence of ROOF-typed entities is not evidence of no roof; roof classification remains unresolved.",
   },
+  /**
+   * The gallery's first large healthcare building, and by a wide margin its
+   * richest services model: roughly 85,600 distribution ports across six
+   * discipline files, against the Clinic's few hundred.
+   *
+   * Geometry-only, and NOT because the ingest gave up. The publisher's own
+   * model card states it: "No IfcSpace elements in any model including the
+   * architectural file." Every other reference building derives its floor
+   * area from spaces, so there is no conditioned area to divide by and no
+   * energy baseline can be calculated without inventing one. The hotels
+   * already established this state — source geometry, explicitly unresolved
+   * envelope, no fabricated grade — and this building sits in it for a
+   * documented reason rather than an unexamined one.
+   *
+   * IFC4 throughout rather than the IFC2X3 twins. The card notes the IFC4 MEP
+   * files lost `Pset_DistributionFlowElementCommon` in conversion, so they
+   * carry fewer property sets — but mixing schemas across disciplines of one
+   * building would make every cross-file count incomparable, which costs more
+   * than the property sets are worth here.
+   */
+  "west-riverside-hospital": {
+    id: "west-riverside-hospital",
+    modelNote:
+      "Source fabric tessellation of the architectural discipline file. The source states no IfcSpace in any discipline, so no floor area, conditioned volume or energy baseline is calculated. Service layers are the publisher's own discipline models, not an inferred network.",
+    name: { ko: "웨스트 리버사이드 병원", en: "West Riverside Hospital" },
+    summary: {
+      ko: "7개 분야 IFC가 모두 공개된 대형 병원 조정 모델입니다. 원본에 IfcSpace가 없어 바닥면적과 에너지 기준선을 산정하지 않습니다. 설비 레이어는 원본 분야별 모델입니다.",
+      en: "A large multi-storey hospital published as seven coordinated discipline models. The source states no IfcSpace, so no floor area or energy baseline is calculated. Its service layers are the publisher's own discipline files.",
+    },
+    useType: "hospital",
+    licence: "CC BY 3.0",
+    attribution:
+      "Solihin, W. \"West Riverside Hospital IFC Models\". Donated by Wawan Solihin (Singapore); " +
+      "hosted on the OpenIFC Model Repository by Prof. Robert Amor, University of Auckland. " +
+      "CC BY 3.0; extracted and adapted by BIMFIT. https://openifcmodel.cs.auckland.ac.nz/",
+    sourceUrl: "https://openifcmodel.cs.auckland.ac.nz/",
+    files: [
+      { role: "architectural", fileName: "west-riverside-arc.ifc", url: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/resolve/main/projects/west_riverside_hospital/arc_ifc4.ifc", sha256: "230afa4d72a59c9ce18cdd9a7bc7c5c3e409a46078de6e14b19741b4cf92cf09" },
+      { role: "structural", fileName: "west-riverside-str.ifc", url: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/resolve/main/projects/west_riverside_hospital/str_ifc4.ifc", sha256: "7eed88eb21dafdc5a5950d9b1ee18df3fd00fcd376a14fd1bae80658e371975e" },
+      { role: "hvac", fileName: "west-riverside-mech.ifc", url: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/resolve/main/projects/west_riverside_hospital/mech_ifc4.ifc", sha256: "04a29bc312fe0b026634ad86390e8b72c1d1c1765255351f787503d3d8ce1c13" },
+      { role: "electrical", fileName: "west-riverside-elec.ifc", url: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/resolve/main/projects/west_riverside_hospital/elec_ifc4.ifc", sha256: "8e404c4e4c9085338383a89ae57a3a31ebe96ee406214392a1bf69a6775dcecc" },
+      { role: "plumbing", fileName: "west-riverside-plumb.ifc", url: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/resolve/main/projects/west_riverside_hospital/plumb_ifc4.ifc", sha256: "bb53f0eb8f7295e91e0fb6ec6b79a30022a2e0e248714aab6bb1a8930c4793dd" },
+      { role: "sprinkler", fileName: "west-riverside-sprinkle.ifc", url: "https://huggingface.co/datasets/sylvainHellin/ifc-bench/resolve/main/projects/west_riverside_hospital/sprinkle_ifc4.ifc", sha256: "0e30c25a77ebcd75b2fc3a6cb87dc3891bd476f60a269e36eb5e0149bcc06ea7" },
+    ],
+    serviceLayers: [
+      { id: "hvac", role: "hvac", ko: "냉난방환기", en: "HVAC" },
+      { id: "electrical", role: "electrical", ko: "전기", en: "Electrical" },
+      { id: "plumbing", role: "plumbing", ko: "급배수", en: "Plumbing" },
+      { id: "sprinkler", role: "sprinkler", ko: "스프링클러", en: "Sprinklers" },
+      // No "structure" layer. The service collector classifies MEP flow
+      // elements, and a structural file's beams, columns and footings match
+      // none of them — it produced a 0-triangle GLB that was never written,
+      // which would have left a layer row pointing at a missing file. The
+      // structural discipline is not lost: the fabric pass already merges the
+      // architectural AND structural models into model.glb, so its 1,970 beams
+      // and 255 columns are in the base geometry.
+    ],
+    areaSource: "stated_first",
+    envelopeStatus: "unresolved",
+    exteriorWallMatch: [],
+    exteriorWallNote:
+      "Exterior wall membership is unresolved: the source states no IfcSpace and therefore no space boundaries to read PHYSICAL/EXTERNAL membership from. An empty selected set is not evidence of zero envelope area. No energy baseline is supplied.",
+    location: {
+      rejectCoordinate: true,
+      statedTown: null,
+      trueNorthStated: false,
+      note: "The publisher documents a donated sample model rather than a surveyed site. Its IfcSite coordinates are not treated as establishing a real building location.",
+    },
+    spacesNote:
+      "The source states no IfcSpace in any of its seven discipline files — the publisher's own model card records this. Storey containment is the only spatial structure available, so no floor area, conditioned area or intensity denominator is derived.",
+    roofNote:
+      "Source slab geometry is displayed. An absence of ROOF-typed entities is not evidence of no roof; roof classification remains unresolved.",
+  },
   [CLINIC.id]: CLINIC,
   [SCHEPENDOMLAAN.id]: SCHEPENDOMLAAN,
   [DUPLEX.id]: DUPLEX,
@@ -1775,9 +1848,20 @@ async function main() {
     coveringNameMatch: building.roofCoveringMatch ?? [],
     excludeNames: building.roofExclude ?? [],
   });
-  const roofs = measureRoofs(classifiedRoofs);
+  // A roof area is an envelope claim. A model whose envelope is unresolved
+  // must not publish one — that invariant is asserted by roof-planes.test.ts,
+  // and it held only by luck until now: every unresolved model so far (both
+  // TUM hotels) happened to contain no roof-typed entity at all. West
+  // Riverside has 24 real ones and no IfcSpace, so it would have published
+  // 3,145 m² of roof union while declaring it could not resolve its envelope.
+  //
+  // Enforced here rather than left to the test, so the artifacts can never
+  // disagree with the status they ship beside. The geometry is not lost — the
+  // roof slabs are still in model.glb; what is withheld is the AREA CLAIM.
+  const envelopeUnresolved = building.envelopeStatus === "unresolved";
+  const roofs = envelopeUnresolved ? measureRoofs([]) : measureRoofs(classifiedRoofs);
   const roofPlaneResult = roofPlanes(
-    classifiedRoofs.map((row) => ({
+    (envelopeUnresolved ? [] : classifiedRoofs).map((row) => ({
       ...row,
       id: `roof-${row.expressID}`,
       family: roofFamily(row.name),

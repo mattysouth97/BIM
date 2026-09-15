@@ -180,16 +180,97 @@ export function collectFabric(api, webIfc, modelID, { includeStructure = false, 
  * services entirely, and a box in the right place is a truer answer than an
  * absence.
  */
+/**
+ * IFC2X3 states services as the abstract supertypes; IFC4 states the concrete
+ * subtype and never emits the supertype name at all. `GetNameFromTypeCode`
+ * returns whatever the file actually says, and the match below is exact — so
+ * an IFC4 services model matched almost nothing here.
+ *
+ * It failed loudly for one discipline and QUIETLY for another, which is the
+ * dangerous half. West Riverside's sprinkler model produced a 0-triangle GLB,
+ * which is obvious. Its mechanical model produced a 2.5 MB GLB that looked
+ * perfectly healthy and contained only the 2,246 `IfcBuildingElementProxy`
+ * items caught by `equipment` below — every one of its 4,816 duct segments and
+ * 3,916 pipe segments was dropped. A layer that renders is not a layer that is
+ * complete.
+ *
+ * The IFC4 names are ADDED rather than substituted: the IFC2X3 models already
+ * in the gallery keep matching exactly what they matched before, so their
+ * committed artifacts are unaffected.
+ */
 export const SERVICE_GROUPS = Object.freeze({
-  duct: ["IfcFlowSegment"],
-  fitting: ["IfcFlowFitting"],
-  valve: ["IfcFlowController"],
-  terminal: ["IfcFlowTerminal"],
+  duct: [
+    "IfcFlowSegment",
+    // IFC4 concrete segments.
+    "IfcDuctSegment",
+    "IfcPipeSegment",
+    "IfcCableSegment",
+    "IfcCableCarrierSegment",
+  ],
+  fitting: [
+    "IfcFlowFitting",
+    "IfcDuctFitting",
+    "IfcPipeFitting",
+    "IfcCableFitting",
+    "IfcCableCarrierFitting",
+    "IfcJunctionBox",
+  ],
+  valve: [
+    "IfcFlowController",
+    "IfcValve",
+    "IfcDamper",
+    "IfcFlowMeter",
+    "IfcSwitchingDevice",
+    "IfcProtectiveDevice",
+    "IfcElectricDistributionBoard",
+  ],
+  terminal: [
+    "IfcFlowTerminal",
+    "IfcAirTerminal",
+    "IfcFireSuppressionTerminal",
+    "IfcSanitaryTerminal",
+    "IfcWasteTerminal",
+    "IfcStackTerminal",
+    "IfcLightFixture",
+    "IfcOutlet",
+    "IfcElectricAppliance",
+    "IfcCommunicationsAppliance",
+    "IfcAudioVisualAppliance",
+    "IfcSpaceHeater",
+  ],
   plant: [
     "IfcEnergyConversionDevice",
     "IfcFlowMovingDevice",
     "IfcFlowStorageDevice",
     "IfcFlowTreatmentDevice",
+    // IFC4 concrete plant.
+    "IfcBoiler",
+    "IfcChiller",
+    "IfcCoil",
+    "IfcCompressor",
+    "IfcCondenser",
+    "IfcCooledBeam",
+    "IfcCoolingTower",
+    "IfcEvaporator",
+    "IfcEvaporativeCooler",
+    "IfcHeatExchanger",
+    "IfcHumidifier",
+    "IfcAirToAirHeatRecovery",
+    "IfcBurner",
+    "IfcEngine",
+    "IfcElectricGenerator",
+    "IfcElectricMotor",
+    "IfcMotorConnection",
+    "IfcSolarDevice",
+    "IfcTransformer",
+    "IfcTubeBundle",
+    "IfcUnitaryEquipment",
+    "IfcFan",
+    "IfcPump",
+    "IfcTank",
+    "IfcDuctSilencer",
+    "IfcFilter",
+    "IfcInterceptor",
   ],
   /**
    * The exporter's catch-all. Here it holds 28 panelboards and one
