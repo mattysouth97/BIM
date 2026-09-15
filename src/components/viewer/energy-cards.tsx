@@ -1,4 +1,5 @@
 "use client";
+import { PvGenerationDisclosure } from './pv-generation-disclosure';
 
 // src/components/viewer/energy-cards.tsx
 // Floating energy metric cards overlaid on the 3D viewer (bottom-left).
@@ -207,6 +208,7 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
 
   if (variant === "strip") {
     return (
+      <>
       <div className="flex flex-wrap items-center gap-3 border-b border-border px-3 py-2">
         <span
           className="inline-flex h-7 min-w-[2rem] items-center justify-center rounded-md px-2 text-sm font-bold text-white"
@@ -241,6 +243,8 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
           onChange={handleFileChange}
         />
       </div>
+      <PvGenerationDisclosure generation={metrics.generation} clippedGenerationKWh={metrics.rating.breakdown.primaryEnergy.clippedGenerationKWh} />
+      </>
     );
   }
 
@@ -289,6 +293,9 @@ export function EnergyCards({ buildingPk, variant = "strip" }: EnergyCardsProps)
       </div>
 
       {/* Card 2: Annual Energy Demand */}
+      <div className="w-56 rounded-lg border bg-card/90">
+        <PvGenerationDisclosure generation={metrics.generation} clippedGenerationKWh={metrics.rating.breakdown.primaryEnergy.clippedGenerationKWh} />
+      </div>
       <div className="rounded-lg border bg-card/90 backdrop-blur shadow-md px-3 py-2 w-56">
         <p className="text-[10px] text-muted-foreground mb-1">
           {t("연간 전체 에너지 · 조명 포함", "Annual site energy · includes lighting")}

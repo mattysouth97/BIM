@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from "@/lib/energy/climate-region";
 // @vitest-environment node
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -119,7 +120,7 @@ describe("Klassiqua 1970: energy engine and honest limitations", () => {
     const climate = getClimateData("11");
     const demand = calculateAnnualDemand(calculateHeatLoss(energy.materials, energy.recipe, climate), energy.materials, energy.recipe, climate);
     const rating = calculateEfficiencyRating(
-      deliveredFromDemand(buildEndUseLoads({ demand, materials: energy.materials, recipe: energy.recipe })),
+      deliveredFromDemand(buildEndUseLoads({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }), demand, materials: energy.materials, recipe: energy.recipe })),
       KLASSIQUA_FLOOR_AREA,
       "non-residential",
     );

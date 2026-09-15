@@ -142,9 +142,9 @@ describe("retrofitBasisLines", () => {
   it("discloses the three things these measures do NOT do to the engine", () => {
     const energy = referenceBuildingEnergyInputs("schependomlaan")!;
     const lines = retrofitBasisLines(energy, false).join(" ");
-    // Lighting/PV cannot move the grade; the HRV's saving is not the
-    // engine's; window replacement claims no cooling change.
-    expect(lines).toContain("cannot move kWh/m² or the grade");
+    // Lighting/PV now reach the grade, with annual generation capped.
+    expect(lines).toContain("Both reach primary energy and the grade");
+    expect(lines).toContain("capped at annual electric demand");
     expect(lines).toContain("modelled loss goes UP");
     expect(lines).toContain("SHGC is left unchanged");
     // And the costing provenance the brief asks for.

@@ -278,10 +278,10 @@ describe("buildMeasureClaim — the line reproduces its own numbers", () => {
 });
 
 describe("buildMeasureClaim — what the engine cannot price", () => {
-  it("prices LED's modeled LPD saving while PV remains unpriced", () => {
+  it("prices both modeled LPD saving and PV generation", () => {
     for (const id of ["lighting-led-smart", "solar-pv-flat"]) {
       const claim = claimFor(id);
-      expect(claim.pricedByEngine).toBe(id === "lighting-led-smart");
+      expect(claim.pricedByEngine).toBe(true);
       // The work is real even where this engine cannot price it — the chip
       // states the change and carries the caveat separately.
       expect(claim.change).toBeDefined();
@@ -362,7 +362,7 @@ describe("claimAreaSqm", () => {
       expect(Number(/^([\d,]+) m²$/.exec(moduleArea)?.[1])).toBe(17);
       expect(claim.areaSqm).toBe(17);
       expect(claim.costKrw).toBe(4 * 1_500_000);
-      expect(claim.pricedByEngine).toBe(false);
+      expect(claim.pricedByEngine).toBe(true);
       expect(claim.line).not.toContain("67.36");
     }
   });

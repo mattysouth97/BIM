@@ -103,10 +103,8 @@ export function exclusionReason(
  * What these numbers rest on, and — just as important — what the engine does
  * NOT do with them. Three disclosures, all measured rather than assumed:
  *
- *   - Lighting and PV move NPV and cannot move kWh/m² or the grade, because
- *     `deliveredFromDemand` derives lighting as a flat 15 % of total demand
- *     and hard-codes renewable to 0. `lightingPowerDensity` and `solarPV`
- *     reach neither the degree-day run nor the grade path.
+ *   - Lighting and regional PV generation reach the primary-energy grade;
+ *     annual renewable substitution cannot exceed electric demand.
  *   - The HRV's saving comes from `hvac-retrofits.ts`, not from this engine.
  *     Re-running the engine on a heat-recovery system reads `airflowRate` for
  *     the first time (it is ignored while ventilation is "natural"), so the
@@ -137,8 +135,8 @@ export function retrofitBasisLines(
       ? "태양광 용량은 지붕면에 배치된 모듈 수 × 가정 정격용량으로 산정하며, 지붕면 데이터가 없으면 용량을 산정하지 않습니다. 지붕면별 배치표에 면적·용량·제외 사유와 가정을 표시합니다."
       : "PV capacity is the modules placed on the roof planes × assumed module rating; without roof-plane data no capacity is priced. The roof-plane table lists areas, capacity, exclusions and assumptions.",
     isKo
-      ? "조명·태양광은 NPV만 움직이고 kWh/m²와 등급은 움직이지 못합니다: 엔진의 1차에너지 변환이 조명을 총수요의 15%로 고정하고 신재생을 0으로 두기 때문입니다."
-      : "Lighting and PV move NPV only, and cannot move kWh/m² or the grade: the primary-energy step derives lighting as a flat 15 % of total demand and hard-codes renewable to 0.",
+      ? "조명은 전력밀도·면적·운전시간으로, 태양광은 용량·지역 일조시간으로 계산하여 1차에너지와 등급에 반영합니다. PV는 연간 전력 수요까지만 대체하며 초과 발전은 별도 보고합니다. 실측이나 시간별 자가소비 계산이 아닙니다."
+      : "Lighting uses power density, area and operating hours; PV uses capacity and regional sun hours. Both reach primary energy and the grade. PV substitution is capped at annual electric demand; surplus is reported separately. This is not metered data or hourly self-consumption modeling.",
     isKo
       ? "열회수환기(HRV)의 절감은 설비 계산에서 나오며 도일법 엔진이 재현하지 않습니다 — 자연환기 건물에 기계환기를 넣으면 엔진은 그 풍량을 처음 읽어 오히려 손실이 늘어납니다."
       : "The HRV's saving comes from the plant model, not from this degree-day engine — on a naturally-ventilated building, switching to heat recovery makes the engine read that airflow for the first time and modelled loss goes UP.",

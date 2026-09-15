@@ -20,10 +20,8 @@
 //     measure ALONE and comparing outputs — not by a hand-maintained list of
 //     which fields the engine is believed to read.
 //  3. It does not silently drop a measure the engine cannot price. A
-//     PV measure is real, is bought, and moves NPV; it simply does not move
-//     this run's kWh/m2, because on-site generation is still zero. Those arrive as
-//     changes with `pricedByEngine: false` and a reason, so the UI can render
-//     a stated absence instead of an omission.
+//     measure that produces no difference arrives with `pricedByEngine: false`
+//     and a reason. Lighting and resolved-region PV both reach primary energy.
 //
 // Deliberately NOT changed by a window replacement: `windows.shgc`. Triple
 // low-e glass really does cut solar gain, but the measure's economics
@@ -165,12 +163,8 @@ export interface RetrofitDelta {
  * conflate on screen.
  *
  * `isZeroDelta` says nothing moved in THIS RUN. It does not say the work does
- * nothing: a selection made only of PV changes the building and moves
- * NPV while this engine stays silent, because `deliveredFromDemand` cannot see
- * generation yet. LED's LPD now reaches primary energy. Rendering
- * "the chosen work does not move kWh/m²" over such a
- * selection was found on /models/schependomlaan — true of the run, false as
- * stated about the work. Branch on this, never on `isZeroDelta` alone.
+ * nothing. A field may be unsupported or an effect may be capped by the
+ * annual electric leg. Branch on this, never on `isZeroDelta` alone.
  */
 export type ZeroDeltaReason =
   /** Nothing is selected. */
@@ -217,10 +211,6 @@ const ELEMENT_LABELS: Record<string, { ko: string; en: string }> = {
  * never invent a reason for a measure that did move.
  */
 const UNPRICED_REASONS: Record<string, { ko: string; en: string }> = {
-  "renewable.solarPV.capacity": {
-    ko: "delivered-from-demand.ts가 재생에너지를 0으로 고정하므로, 발전량은 1차에너지·등급에 반영되지 않습니다. PV는 NPV와 3D 형상에는 나타나지만 이 실행의 kWh/m²는 움직이지 않습니다.",
-    en: "delivered-from-demand.ts hard-codes renewable: 0, so generation reaches neither primary energy nor the grade. PV shows in NPV and in the 3D model, but does not move this run's kWh/m2.",
-  },
   "envelope.windows.glassType": {
     ko: "유리 사양은 U값을 통해서만 반영됩니다. SHGC는 의도적으로 그대로 두었습니다 — 이 측정치의 경제성(난방 절감)은 냉방 일사취득 변화를 계상하지 않기 때문입니다.",
     en: "Glazing spec reaches the engine only through the U-value. SHGC is deliberately left alone: this measure's economics price the heating saving only, not a cooling-gain change.",
@@ -260,6 +250,7 @@ export function runEnergyEngine(
   materials: MaterialProperties,
   recipe: BuildingRecipe,
   climate: ClimateData,
+  climateRegion: ClimateRegion | null = null,
 ): RetrofitRun {
   const totalFloorArea = envelopeQuantities(recipe).intensityFloorAreaSqm;
   const heatLoss = calculateHeatLoss(materials, recipe, climate);
@@ -267,7 +258,7 @@ export function runEnergyEngine(
   // Phase 01 (D-05/D-07): deliveredFromDemand now takes EndUseLoads — this is
   // what makes an LED measure move primaryPerSqm (and pricedByEngine) below.
   const rating = calculateEfficiencyRating(
-    deliveredFromDemand(buildEndUseLoads({ demand, materials, recipe })),
+    deliveredFromDemand(buildEndUseLoads({ demand, materials, recipe, climateRegion })),
     totalFloorArea,
     buildingTypeForGrade(materials, recipe.mainPurpsCd),
   );
@@ -310,7 +301,10 @@ function change(
   const tail = unit ? ` ${unit}` : "";
   const reason = pricedByEngine ? undefined : (
     UNPRICED_REASONS[field] ??
-    (field.startsWith("renewable.solarPV.") ? UNPRICED_REASONS["renewable.solarPV.capacity"] : GENERIC_UNPRICED)
+    (field.startsWith("renewable.solarPV.") ? {
+      ko: '이 실행의 비교값에 변화가 없습니다. 지역·용량과 연간 전력 대체 상한을 확인하세요.',
+      en: 'No change in this run’s compared outputs. Check region, capacity and the annual electricity substitution cap.',
+    } : GENERIC_UNPRICED)
   );
   return {
     measureId,
@@ -570,9 +564,9 @@ export function computeRetrofitDelta(input: RetrofitDeltaInput): RetrofitDelta |
   // charges the roof U against — not the footprint.
   const context = { roofAreaSqm: quantities.roofAreaSqm, climateRegion, geometricKWp: pvGeometricKWp };
 
-  const before = runEnergyEngine(materials, recipe, climate);
+  const before = runEnergyEngine(materials, recipe, climate, climateRegion);
   const afterMaterials = applyPhaseToMaterials(materials, "retrofit", ids, context);
-  const after = runEnergyEngine(afterMaterials, recipe, climate);
+  const after = runEnergyEngine(afterMaterials, recipe, climate, climateRegion);
 
   // Per-element rows, joined by the engine's own element names.
   const afterByName = new Map(after.heatLoss.elements.map((e) => [e.element, e]));
@@ -600,7 +594,7 @@ export function computeRetrofitDelta(input: RetrofitDeltaInput): RetrofitDelta |
   const measures: RetrofitMeasureEffect[] = ids.map((id) => {
     const unrecognized = !isKnownMeasureId(id);
     const soloMaterials = applyPhaseToMaterials(materials, "retrofit", [id], context);
-    const solo = runEnergyEngine(soloMaterials, recipe, climate);
+    const solo = runEnergyEngine(soloMaterials, recipe, climate, climateRegion);
     const priced = !runsAgree(before, solo);
     return {
       measureId: id,

@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from "@/lib/energy/climate-region";
 // Versioned exports of the published baseline, independent of browser stores.
 // An IFC quantity is measured from a model, never a building survey or meter.
 import { calculateAnnualDemand } from "@/lib/energy/annual-demand";
@@ -89,7 +90,7 @@ export function modeledReferenceEnergy(inputs: ReferenceBuildingEnergyInputs | n
   const breakdown = calculateSystemBreakdown(inputs.materials, inputs.recipe, climate);
   // Phase 01 (D-05/D-07): deliveredFromDemand now takes EndUseLoads.
   const delivered = deliveredFromDemand(
-    buildEndUseLoads({ demand, materials: inputs.materials, recipe: inputs.recipe }),
+    buildEndUseLoads({ demand, materials: inputs.materials, recipe: inputs.recipe, climateRegion: resolveClimateRegion({ sigunguCd: inputs.climate.sigunguCd }) }),
   );
   const table = buildingTypeForGrade(inputs.materials, inputs.recipe.mainPurpsCd);
   const rating = calculateEfficiencyRating(delivered, envelope.intensityFloorAreaSqm, table);

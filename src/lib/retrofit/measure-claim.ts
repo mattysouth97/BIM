@@ -55,10 +55,8 @@ export interface MeasureClaim {
   /** The three parts joined — what the chip renders. */
   line: string;
   /**
-   * True when the engine run prices this measure. LED's LPD now moves primary
-   * energy; PV remains unpriced while on-site generation is zero.
-   * PV moves NPV and the 3D model but not this run's kWh/m². The chip
-   * must say so rather than let the line imply an intensity movement.
+   * True only when an isolated engine run changes the compared outputs.
+   * Lighting and PV both participate; refusal/capping can still yield no delta.
    */
   pricedByEngine: boolean;
 }

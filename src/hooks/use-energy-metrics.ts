@@ -12,6 +12,7 @@ import { useMemo } from "react";
 import { useMaterialStore } from "@/store/material-store";
 import { useEffectiveRecipe } from "@/hooks/use-effective-recipe";
 import { climateFromRegion, getClimateData } from "@/lib/energy/climate-data";
+import { resolveClimateRegion, type ClimateRegion } from "@/lib/energy/climate-region";
 import { useScenarioStore } from "@/store/scenario-store";
 import { envelopeQuantities } from "@/lib/energy/envelope-quantities";
 import { calculateHeatLoss } from "@/lib/energy/heat-loss";
@@ -25,7 +26,7 @@ import {
   deliveredFromDemand,
   buildingTypeForGrade,
 } from "@/lib/energy/delivered-from-demand";
-import { buildEndUseLoads } from "@/lib/energy/end-uses";
+import { buildEndUseLoads, type OnSiteGeneration } from "@/lib/energy/end-uses";
 import type { HeatLossResult } from "@/lib/energy/heat-loss";
 import type { AnnualDemand } from "@/lib/energy/annual-demand";
 import type { EfficiencyGrade } from "@/lib/compliance/efficiency-rating";
@@ -45,6 +46,9 @@ export interface EnergyMetrics {
   gradeColor: string;
   /** Primary energy intensity backing the grade + benchmark. kWh/m²·yr. */
   primaryEnergyPerArea: number;
+  climateRegion: ClimateRegion | null;
+  generation: OnSiteGeneration;
+  rating: ReturnType<typeof calculateEfficiencyRating>;
   co2: CO2Result;
   /** Alias of primaryEnergyPerArea (local report/properties consumers). */
   primaryPerSqm: number;
@@ -90,7 +94,8 @@ export function useEnergyMetrics(
     // grade can exist — return null rather than fabricate a "1+++" rating.
     if (totalFloorArea <= 0) return null;
 
-    const climate = publishedRegion ? climateFromRegion(publishedRegion) : getClimateData(sigunguCd);
+    const climateRegion = publishedRegion ?? resolveClimateRegion({ sigunguCd });
+    const climate = climateRegion ? climateFromRegion(climateRegion) : getClimateData(sigunguCd);
     const heatLoss = calculateHeatLoss(materials, effectiveRecipe, climate);
     const demand = calculateAnnualDemand(
       heatLoss,
@@ -108,8 +113,9 @@ export function useEnergyMetrics(
     // Phase 01 (D-05/D-07): deliveredFromDemand now takes EndUseLoads, built
     // by buildEndUseLoads — this is what makes the grade leg read
     // materials.lighting.lightingPowerDensity for the first time.
+    const loads = buildEndUseLoads({ demand, materials, recipe: effectiveRecipe, climateRegion });
     const rating = calculateEfficiencyRating(
-      deliveredFromDemand(buildEndUseLoads({ demand, materials, recipe: effectiveRecipe })),
+      deliveredFromDemand(loads),
       totalFloorArea,
       buildingTypeForGrade(materials, effectiveRecipe.mainPurpsCd)
     );
@@ -140,6 +146,9 @@ export function useEnergyMetrics(
       grade,
       gradeColor,
       primaryEnergyPerArea: rating.primaryEnergyPerArea,
+      climateRegion,
+      generation: loads.onSiteGeneration,
+      rating,
       primaryPerSqm: rating.primaryEnergyPerArea,
       siteTotal: breakdown.total,
       breakdown,

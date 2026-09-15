@@ -1,3 +1,4 @@
+import { calculateEfficiencyRating } from "@/lib/compliance/efficiency-rating";
 // src/lib/energy/__tests__/eco2-export.test.ts
 // Vitest coverage for STD-02 SC1/SC2/SC3
 // SC1: sub-system fields present in exported JSON
@@ -181,6 +182,9 @@ function makeRecipe(): BuildingRecipe {
 
 function makeMetrics(): EnergyMetrics {
   return {
+    climateRegion: null,
+    generation: { kwh: 0, capacityKWp: 0, status: "region_unresolved", provenance: { source: "refused", assumptionId: "R-PV-REGION-UNRESOLVED", assumption: "fixture has no region" } },
+    rating: calculateEfficiencyRating({ electric: 230 * 600 / 2.75, gas: 0 }, 600, "non-residential"),
     heatLoss: {
       elements: [
         { element: "Walls", area: 80, uValue: 0.36, hCoefficient: 28.8, deltaT: 41.7, heatLoss: 1200, heatLossPerSqm: 4 },

@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from "@/lib/energy/climate-region";
 // The grade badge renders a bare "1+++". This is the sentence that says what
 // that is, and these tests check the sentence against the engine rather than
 // checking that some words appear in it.
@@ -37,7 +38,7 @@ function run(id: ReferenceBuildingId) {
   const q = envelopeQuantities(energy.recipe);
   const sitePerSqm = calculateSystemBreakdown(energy.materials, energy.recipe, climate).total / q.intensityFloorAreaSqm;
   const rating = calculateEfficiencyRating(
-    deliveredFromDemand(buildEndUseLoads({ demand, materials: energy.materials, recipe: energy.recipe })),
+    deliveredFromDemand(buildEndUseLoads({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }), demand, materials: energy.materials, recipe: energy.recipe })),
     q.intensityFloorAreaSqm,
     buildingTypeForGrade(energy.materials, energy.recipe.mainPurpsCd),
   );
@@ -67,8 +68,13 @@ describe("the grade sentence reproduces the numbers it explains", () => {
     const fuel = energy.materials.hvac.heating.fuelType;
     const heatingFactor = fuel === "district-heat" ? 0.728 : fuel === "electric" || fuel === "heat-pump" ? 2.75 : 1.1;
     const coolingFactor = energy.materials.hvac.cooling.systemType === "district" ? 0.937 : 2.75;
+    const electric = (heatingFactor === 2.75 ? demand.heatingDemand : 0)
+      + (coolingFactor === 2.75 ? demand.coolingDemand : 0) + lighting + demand.totalDemand * auxToHvac;
+    // The seven inputs explicitly assume Seoul; independently reproduce its
+    // PV yield and the cap, including TalTech's declared 63.36 kWp array.
+    const pv = energy.materials.renewable.solarPV.capacity * 3.5 * 365 * 1.15 * 0.8;
     const expected = (demand.heatingDemand * heatingFactor + demand.coolingDemand * coolingFactor
-      + (lighting + demand.totalDemand * auxToHvac) * 2.75) / area;
+      + (lighting + demand.totalDemand * auxToHvac) * 2.75 - Math.min(pv, electric) * 2.75) / area;
     expect(rating.primaryEnergyPerArea).toBeCloseTo(expected, 8);
   });
   for (const id of ["bs-medical-dental-clinic", "schependomlaan"] as const) {

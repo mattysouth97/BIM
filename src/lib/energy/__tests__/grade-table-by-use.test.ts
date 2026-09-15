@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from "@/lib/energy/climate-region";
 // The threshold table moved for dwellings, and must not have moved for
 // anything else. These are the before/after rows quoted in the commit,
 // asserted end-to-end through the real engine so the claim cannot rot.
@@ -22,7 +23,7 @@ function grades(materials: MaterialProperties, recipe: BuildingRecipe, sigunguCd
   const demand = calculateAnnualDemand(heatLoss, materials, recipe, climate);
   const area = envelopeQuantities(recipe).intensityFloorAreaSqm;
   // Phase 01 (D-05/D-07): deliveredFromDemand now takes EndUseLoads.
-  const delivered = deliveredFromDemand(buildEndUseLoads({ demand, materials, recipe }));
+  const delivered = deliveredFromDemand(buildEndUseLoads({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }), demand, materials, recipe }));
   const rate = (t: "residential" | "non-residential") =>
     calculateEfficiencyRating(delivered, area, t);
   return {

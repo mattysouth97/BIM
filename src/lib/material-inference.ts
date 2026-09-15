@@ -266,6 +266,10 @@ export function inferMaterialProperties(
       solarPV: {
         installed: false,
         capacity: 0,
+        capacityProvenance: {
+          source: "no_generation_assumption",
+          assumption: `태양광 용량 ${0} kWp, 발전량 ${0} kWh/yr를 가정합니다. 실제 설비가 있다면 발전량을 과소평가하고 순에너지와 등급을 더 나쁘게 평가합니다. 건축물대장에는 PV 용량이 기재되지 않습니다.`,
+        },
         panelType: "monocrystalline",
         tiltAngle: 30,
         orientation: 180,

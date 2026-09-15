@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from "@/lib/energy/climate-region";
 // End-to-end proof that the EXISTING energy engine runs on a generated design.
 //
 // prompt → BuildingSpec → solved geometry + recipe (buildDesign) → seed →
@@ -73,7 +74,7 @@ function runEngine(materials: MaterialProperties, recipe: BuildingRecipe) {
   // Relative/band assertions remain valid with the named lighting/DHW/plug
   // end uses; the whole suite verifies those claims against this split.
   const rating = calculateEfficiencyRating(
-    deliveredFromDemand(buildEndUseLoads({ demand, materials, recipe })),
+    deliveredFromDemand(buildEndUseLoads({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }), demand, materials, recipe })),
     totalFloorArea,
     buildingTypeForGrade(materials, recipe.mainPurpsCd),
   );

@@ -30,7 +30,7 @@ function loads(overrides: Partial<EndUseLoads>): EndUseLoads {
     lighting: fueled(0, "electric"),
     dhw: fueled(0, "electric"),
     plug: fueled(0, "electric"),
-    onSiteGeneration: { kwh: 0, provenance: { source: "modeled", basis: "test fixture" } },
+    onSiteGeneration: { status: "modeled", capacityKWp: 0, kwh: 0, provenance: { source: "modeled", basis: "test fixture" } },
     ...overrides,
   };
 }
@@ -83,7 +83,7 @@ describe("deliveredFromDemand", () => {
 
   it("D-07: onSiteGeneration.kwh reaches renewable, and only renewable", () => {
     const delivered = deliveredFromDemand(
-      loads({ onSiteGeneration: { kwh: 5_000, provenance: { source: "modeled", basis: "test" } } }),
+      loads({ onSiteGeneration: { status: "modeled", capacityKWp: 0, kwh: 5_000, provenance: { source: "modeled", basis: "test" } } }),
     );
     expect(delivered.renewable).toBe(5_000);
     expect(delivered.electric).toBe(0);

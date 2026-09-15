@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from "@/lib/energy/climate-region";
 import { describe, expect, it } from "vitest";
 import { inferMaterialProperties } from "../material-inference";
 import type { BrTitleInfo } from "../types";
@@ -30,7 +31,7 @@ describe("inferred lighting provenance", () => {
     const materials = inferMaterialProperties({ mainPurpsCd: "unknown", pmsDay: "20000101" } as BrTitleInfo, []);
     const recipe = { ...referenceBuildingEnergyInputs("fzk-haus")!.recipe, mainPurpsCd: "unknown" };
     const demand = calculateAnnualDemand(calculateHeatLoss(materials, recipe, SEOUL_CLIMATE), materials, recipe, SEOUL_CLIMATE);
-    const assumptions = endUseAssumptions(buildEndUseLoads({ materials, recipe, demand }));
+    const assumptions = endUseAssumptions(buildEndUseLoads({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }), materials, recipe, demand }));
     expect(assumptions.find((a) => a.assumptionId === "A-LIGHTING-LPD-DEFAULT")?.assumption)
       .toBe(materials.lighting.lpdProvenance!.source === "use_code_default" ? materials.lighting.lpdProvenance!.assumption : "");
     expect(assumptions.some((a) => a.assumptionId === "A-LIGHTING-HOURS-DEFAULT")).toBe(true);

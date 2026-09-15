@@ -242,7 +242,7 @@ export function PropertiesPanel({
     // path as metrics.grade, so the two can never disagree. Phase 01
     // (D-05/D-07): deliveredFromDemand now takes EndUseLoads.
     return calculateEfficiencyRating(
-      deliveredFromDemand(buildEndUseLoads({ demand: metrics.demand, materials, recipe: effectiveRecipe })),
+      deliveredFromDemand(buildEndUseLoads({ demand: metrics.demand, materials, recipe: effectiveRecipe, climateRegion: metrics.climateRegion })),
       totalArea,
       buildingTypeForGrade(materials, effectiveRecipe.mainPurpsCd)
     );

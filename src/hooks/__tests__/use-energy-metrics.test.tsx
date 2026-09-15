@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from "@/lib/energy/climate-region";
 // src/hooks/__tests__/use-energy-metrics.test.tsx
 // P1-08 (a, d) — useEnergyMetrics: effective-recipe consolidation carries
 // footprintPolygon (via useEffectiveRecipe), regional sigunguCd changes the
@@ -89,7 +90,7 @@ describe("useEnergyMetrics", () => {
     const expected = calculateEfficiencyRating(
       // Phase 01 (D-05/D-07): deliveredFromDemand now takes EndUseLoads.
       deliveredFromDemand(
-        buildEndUseLoads({ demand: metrics!.demand, materials: makeMaterials(), recipe })
+        buildEndUseLoads({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }), demand: metrics!.demand, materials: makeMaterials(), recipe })
       ),
       totalArea,
       // The recipe's 주용도코드 reaches the table choice, exactly as
@@ -201,12 +202,12 @@ describe("useEnergyMetrics", () => {
     // EndUseLoads shape (Task 2, D-05/D-07) — this is what makes the grade
     // leg read materials.lighting.lightingPowerDensity for the first time.
     const highRating = calculateEfficiencyRating(
-      deliveredFromDemand(buildEndUseLoads({ demand: high!.demand, materials: highLpd, recipe })),
+      deliveredFromDemand(buildEndUseLoads({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }), demand: high!.demand, materials: highLpd, recipe })),
       totalArea,
       buildingTypeForGrade(highLpd, recipe.mainPurpsCd)
     );
     const lowRating = calculateEfficiencyRating(
-      deliveredFromDemand(buildEndUseLoads({ demand: low!.demand, materials: lowLpd, recipe })),
+      deliveredFromDemand(buildEndUseLoads({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }), demand: low!.demand, materials: lowLpd, recipe })),
       totalArea,
       buildingTypeForGrade(lowLpd, recipe.mainPurpsCd)
     );

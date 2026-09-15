@@ -125,6 +125,9 @@ export interface SolarPVArrayProperties {
   installed: boolean;
   /** Rated capacity (kWp); 0 on an installed array means unavailable. */
   capacity: number;
+  capacityProvenance?:
+    | { source: "measured_capacity"; reference: string }
+    | { source: "no_generation_assumption"; assumption: string };
   panelType: "monocrystalline" | "polycrystalline" | "thin-film";
   tiltAngle: number;
   orientation: number;

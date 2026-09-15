@@ -1,3 +1,4 @@
+import { resolveClimateRegion } from "@/lib/energy/climate-region";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -94,7 +95,7 @@ describe("KIT Office: measured geometry reaches the energy engine", () => {
     // HVAC demand remains fixed; named end uses below change only delivered
     // and primary energy, with the physical cause asserted beside the grade.
     const rating = calculateEfficiencyRating(
-      deliveredFromDemand(buildEndUseLoads({ demand, materials: energy.materials, recipe: energy.recipe })),
+      deliveredFromDemand(buildEndUseLoads({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }), demand, materials: energy.materials, recipe: energy.recipe })),
       KIT_OFFICE_TOTAL_FLOOR_AREA_SQM,
       category,
     );

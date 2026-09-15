@@ -215,7 +215,7 @@ describe("computeRetrofitDelta", () => {
     // is a structural parity check against runEnergyEngine's own internal
     // call, not a hard-coded number, so it needed only the call-shape update.
     const rating = calculateEfficiencyRating(
-      deliveredFromDemand(buildEndUseLoads({ demand, materials: afterMaterials, recipe })),
+      deliveredFromDemand(buildEndUseLoads({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }), demand, materials: afterMaterials, recipe })),
       q.intensityFloorAreaSqm,
       buildingTypeForGrade(afterMaterials, recipe.mainPurpsCd),
     );
@@ -292,7 +292,7 @@ describe("computeRetrofitDelta", () => {
     expect(lpd.unpricedReasonEn).toBeUndefined();
   });
 
-  it("sizes PV from the measured roof surface and reports it as unpriced", () => {
+  it("sizes PV from measured roof surface and prices generation in primary energy", () => {
     const recipe = makeRecipe();
     const q = envelopeQuantities(recipe);
     const d = delta(["solar-pv-flat"], makeMaterials(), recipe);
@@ -308,13 +308,15 @@ describe("computeRetrofitDelta", () => {
       6,
     );
 
-    // The engine's renewable input is hard-coded to 0, so nothing moved.
-    expect(m.pricedByEngine).toBe(false);
-    expect(d.isZeroDelta).toBe(true);
+    // Regional PV generation reaches primary energy without changing HVAC demand.
+    expect(m.pricedByEngine).toBe(true);
+    expect(d.isZeroDelta).toBe(false);
+    expect(d.after.primaryPerSqm).toBeLessThan(d.before.primaryPerSqm);
+    expect(d.after.demand).toEqual(d.before.demand);
     const cap = m.changes.find((c) => c.field === "renewable.solarPV.capacity")!;
     expect(cap.unit).toBe("kWp");
-    expect(cap.unpricedReasonEn).toContain("renewable: 0");
-    expect(cap.unpricedReasonKo).toContain("재생에너지를 0으로 고정");
+    expect(cap.unpricedReasonEn).toBeUndefined();
+    expect(cap.unpricedReasonKo).toBeUndefined();
   });
 
   it("geometric PV capacity and module surface area reproduce the placed array", () => {
@@ -331,7 +333,7 @@ describe("computeRetrofitDelta", () => {
     expect(Number(area.summaryEn.match(/→ ([\d.]+) m²/)?.[1])).toBe(17);
     expect(area.summaryEn).toContain("Module surface area");
     expect(area.summaryKo).toContain("모듈 표면적");
-    expect(d.isZeroDelta).toBe(true);
+    expect(d.isZeroDelta).toBe(false);
   });
 
   it("zero geometric capacity does not invent an installed array", () => {
@@ -360,8 +362,8 @@ describe("computeRetrofitDelta", () => {
     const additionalArea = d.changes.find((change) => change.field.endsWith("proposed.area"))!;
     expect(additionalArea.summaryEn).toBe("Additional module surface area 0 → 17 m²");
     expect(d.changes.some((change) => change.field === "renewable.solarPV.area")).toBe(false);
-    expect(d.isZeroDelta).toBe(true);
-    expect(d.measures[0].pricedByEngine).toBe(false);
+    expect(d.isZeroDelta).toBe(false);
+    expect(d.measures[0].pricedByEngine).toBe(true);
     const repeated = computeRetrofitDelta({ climateRegion: resolveClimateRegion({ sigunguCd: "11" }),
       materials: d.after.materials, recipe: makeRecipe(), climate: CLIMATE,
       measureIds: ["solar-pv-flat"], pvGeometricKWp: 4,
@@ -447,8 +449,9 @@ describe("computeRetrofitDelta", () => {
     expect(zeroDeltaReason(0, nothing.measures)).toBe("nothing-chosen");
 
     const pvOnly = delta(["solar-pv-flat"]);
-    expect(pvOnly.isZeroDelta).toBe(true);
-    expect(zeroDeltaReason(1, pvOnly.measures)).toBe("only-unpriced");
+    expect(pvOnly.isZeroDelta).toBe(false);
+    expect(zeroDeltaReason(1, pvOnly.measures)).not.toBe("only-unpriced");
+    expect(zeroDeltaReason(2, delta(["lighting-led", "solar-pv-flat"]).measures)).not.toBe("only-unpriced");
 
     // A priceable measure whose target this building already meets: nothing
     // moved, and nothing was left to move — a different fact again.

@@ -28,6 +28,7 @@ export interface PrimaryEnergyBreakdown {
   districtHeating: number; // kWh/year primary from district heating
   districtCooling: number; // kWh/year primary from district cooling
   renewable: number;       // kWh/year primary offset from renewables (≤ 0)
+  clippedGenerationKWh: number; // kWh/year generation exceeding annual electric demand; no export credit
   total: number;           // sum of all primary energy contributions
 }
 
@@ -96,6 +97,7 @@ export function calculatePrimaryEnergy(
       districtHeating: primaryDH,
       districtCooling: primaryDC,
       renewable: primaryRenewable,
+      clippedGenerationKWh: re - reUsed,
       total: primaryTotal,
     },
     primaryEnergyPerArea,

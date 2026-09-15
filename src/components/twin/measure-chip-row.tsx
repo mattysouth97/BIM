@@ -21,9 +21,8 @@
 //    by hand has to be held to the same rule. `toggleMeasure` enforces it and
 //    reports what it evicted, and the chip says so BEFORE the click too.
 //  - **A measure this engine cannot price still says what it does.** LED's
-//    LPD now moves primary energy. PV moves NPV and the 3D model but not
-//    kWh/m² while on-site generation is zero. Its chip carries the caveat,
-//    quietly implying the intensity moved.
+//    LPD and regional PV generation reach primary energy. A refused or capped
+//    effect still carries its actual per-run caveat.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";

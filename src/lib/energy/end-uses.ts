@@ -9,6 +9,8 @@
 import type { MaterialProperties } from "@/lib/material-types";
 import type { BuildingRecipe } from "@/lib/procedural/types";
 import type { AnnualDemand } from "./annual-demand";
+import type { ClimateRegion } from "./climate-region";
+import { annualPvGenerationKWh, TILT_FACTOR, PERFORMANCE_RATIO } from "./pv-generation";
 import { envelopeQuantities } from "./envelope-quantities";
 import { modeledLightingLoad } from "./lighting-load";
 import { resolveSystemRatios, type SystemRatioProvenance } from "./system-breakdown";
@@ -33,7 +35,7 @@ export type DeliveredFuel =
  */
 export type EndUseProvenance =
   | { source: "modeled"; basis: string }
-  | { source: "named_assumption"; assumptionId: string; assumption: string };
+  | { source: "named_assumption" | "refused"; assumptionId: string; assumption: string };
 
 export interface FueledLoad {
   kwh: number;
@@ -43,6 +45,8 @@ export interface FueledLoad {
 
 export interface OnSiteGeneration {
   kwh: number;
+  status: 'modeled' | 'no_generation_assumed' | 'capacity_unavailable' | 'region_unresolved' | 'invalid_input' | 'partial_capacity';
+  capacityKWp: number;
   provenance: EndUseProvenance;
 }
 
@@ -58,6 +62,7 @@ export interface BuildEndUseLoadsInput {
   demand: AnnualDemand;
   materials: MaterialProperties;
   recipe: BuildingRecipe;
+  climateRegion: ClimateRegion | null;
 }
 
 /**
@@ -141,6 +146,34 @@ function coolingFuel(
 /** DHW and plug are always electric in this repository's HVAC model today. */
 const AUX_FUEL: DeliveredFuel = "electric";
 
+/** Capacity declarations are inputs, while annual yield remains an assumption. */
+function onSiteGeneration(materials: MaterialProperties, region: ClimateRegion | null): OnSiteGeneration {
+  const pv = materials.renewable.solarPV;
+  const refused = (status: OnSiteGeneration['status'], assumptionId: string, assumption: string): OnSiteGeneration => ({
+    kwh: 0, capacityKWp: 0, status,
+    provenance: { source: status === 'region_unresolved' || status === 'invalid_input' ? 'refused' : 'named_assumption', assumptionId, assumption },
+  });
+  if (!region) return refused('region_unresolved', 'R-PV-REGION-UNRESOLVED',
+    '지역을 확인할 수 없어 태양광 발전량 산정을 보류합니다. 0은 무설비 판정이 아닌 계산 제외값입니다.');
+  // Unknown existing capacity must not erase a separately declared addition.
+  const partial = pv.capacity === 0 && !!pv.retrofitAddition?.existing.installed &&
+    pv.retrofitAddition.existing.capacity === 0 && pv.retrofitAddition.proposed.capacity > 0;
+  const capacity = partial ? pv.retrofitAddition!.proposed.capacity : pv.capacity;
+  if (!Number.isFinite(capacity) || capacity < 0) return refused('invalid_input', 'R-PV-CAPACITY-INVALID',
+    '태양광 용량이 유효하지 않아 발전량 산정을 보류합니다.');
+  if (capacity === 0) return refused(pv.installed ? 'capacity_unavailable' : 'no_generation_assumed',
+    'A-NO-ONSITE-PV', pv.capacityProvenance?.source === 'no_generation_assumption'
+      ? pv.capacityProvenance.assumption
+      : `태양광 용량 ${capacity} kWp로 발전량 0 kWh/yr를 가정합니다. 실제 발전이 있다면 발전량을 과소평가하고 순에너지와 등급을 더 나쁘게 평가합니다.${pv.installed ? ' 설치 표시는 있으나 용량은 미확인입니다.' : ''}`);
+  const generation = annualPvGenerationKWh({ systemSizeKWp: capacity, peakSunHours: region.peakSunHours });
+  if (generation.invalidInput) return refused('invalid_input', 'R-PV-YIELD-INVALID', '태양광 입력이 유효하지 않아 발전량 산정을 보류합니다.');
+  return {
+    kwh: generation.annualKWh, capacityKWp: capacity, status: partial ? 'partial_capacity' : 'modeled',
+    provenance: { source: 'named_assumption', assumptionId: 'A-PV-YIELD',
+      assumption: `${capacity} kWp × ${region.peakSunHours} 지역 피크 일조시간 × 365일 × 경사계수 ${TILT_FACTOR} × 성능비 ${PERFORMANCE_RATIO} = ${generation.annualKWh} kWh/yr. 실측 발전량이 아닌 대표 남향 배치 가정입니다.${partial ? ' 기존 설비 용량이 미확인이므로 신규 용량만 반영하며 총발전량을 과소평가합니다.' : ''}` },
+  };
+}
+
 function ratioAssumption(
   label: string,
   assumptionId: string,
@@ -168,8 +201,7 @@ function ratioAssumption(
  * kWh come from the researched `SYSTEM_RATIOS` profile resolved by
  * `resolveSystemRatios` — the SAME resolution `calculateSystemBreakdown`
  * uses for its own dhw/plugLoads figures, so the two never drift apart.
- * `onSiteGeneration` is 0 with a `named_assumption` placeholder provenance in
- * this plan; Plan 03 replaces it with declared PV capacity.
+ * Declared PV capacity uses the resolved regional yield; unknown region refuses.
  */
 export function buildEndUseLoads(input: BuildEndUseLoadsInput): EndUseLoads {
   const { demand, materials, recipe } = input;
@@ -221,15 +253,7 @@ export function buildEndUseLoads(input: BuildEndUseLoadsInput): EndUseLoads {
       fuel: AUX_FUEL,
       provenance: ratioAssumption("콘센트(plug)", "A-PLUG-RATIO", ratios.plug, ratioProvenance),
     },
-    onSiteGeneration: {
-      kwh: 0,
-      provenance: {
-        source: "named_assumption",
-        assumptionId: "A-NO-ONSITE-PV",
-        assumption:
-          "이 실행에는 자가발전(PV) 용량이 반영되지 않아 발전량을 0으로 둡니다 — 실측값이 아닌 자리표시자이며, 이후 계획에서 옥상 태양광 배치로 대체됩니다.",
-      },
-    },
+    onSiteGeneration: onSiteGeneration(materials, input.climateRegion),
   };
 }
 
@@ -244,7 +268,7 @@ export function endUseAssumptions(
 ): readonly { endUse: string; assumptionId: string; assumption: string }[] {
   const out: { endUse: string; assumptionId: string; assumption: string }[] = [];
   const push = (endUse: string, provenance: EndUseProvenance) => {
-    if (provenance.source === "named_assumption") {
+    if (provenance.source !== "modeled") {
       out.push({ endUse, assumptionId: provenance.assumptionId, assumption: provenance.assumption });
     }
   };
