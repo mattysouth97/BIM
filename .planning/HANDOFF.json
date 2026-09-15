@@ -1,0 +1,86 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-09-15T14:13:00.000Z",
+  "phase": "03",
+  "phase_name": "Model Anchors",
+  "phase_dir": ".planning/phases/03-model-anchors",
+  "plan": 2,
+  "task": 2,
+  "total_tasks": 2,
+  "status": "paused",
+  "detection_note": "The workflow's phase probe looks for .planning/phases/*/PLAN.md; this repo names plans NN-NN-PLAN.md, so it detected nothing and the handoff uses the default .planning/ path. Phase 03 is recorded here because the session's model work is 03-02's typology half.",
+  "completed_tasks": [
+    {"id": 1, "name": "GAP-1: one authoritative package saving across report and twin", "status": "done", "commit": "e7aee11"},
+    {"id": 2, "name": "v6.0 milestone audit (20/33 satisfied, 2 unsatisfied)", "status": "done", "commit": "3d53961"},
+    {"id": 3, "name": "Inferred MEP planned, rendered and labelled for source-less models", "status": "done", "commit": "d6306a0"},
+    {"id": 4, "name": "Atlas normal maps sampled triplanar, tier-gated", "status": "done", "commit": "ebd3ba8"},
+    {"id": 5, "name": "West Riverside Hospital (model 10) + IFC4 services classifier fix", "status": "done", "commit": "d550b78"},
+    {"id": 6, "name": "Test contracts for the generated layer and geometry-only energy", "status": "done", "commit": "eec60c7"},
+    {"id": 7, "name": "outputFileTracingExcludes — keep geometry out of serverless functions", "status": "done", "commit": "1816f24"},
+    {"id": 8, "name": "Sixty5 (model 11) + kavel-nr plot-marker floor-area fix", "status": "done", "commit": "7bc130d"},
+    {"id": 9, "name": "Production verified at 0abbdaf with eleven models", "status": "done", "commit": "b3a1f6d"}
+  ],
+  "remaining_tasks": [
+    {"id": 10, "name": "ANCH-03 — register a Korean building model", "status": "blocked_external"},
+    {"id": 11, "name": "SWEEP-01 — record the register account's actual daily quota", "status": "blocked_external"},
+    {"id": 12, "name": "Move published GLBs to blob/CDN storage, out of the app bundle", "status": "not_started"},
+    {"id": 13, "name": "Add a draw-call budget to service layers", "status": "not_started"}
+  ],
+  "blockers": [
+    {
+      "description": "ANCH-03: no Korean IFC/DXF has been found carrying source bytes, a verifiable Korean building identity, a named rightsholder AND redistribution permission together. Three bounded search passes have now failed, each on RIGHTS rather than on search effort.",
+      "type": "external",
+      "workaround": "An owner-supplied file, or an identifiable public release with model-specific rights, resolves it immediately. A foreign model with assumed Seoul weather does NOT satisfy it and must not be substituted."
+    },
+    {
+      "description": "SWEEP-01: the data.go.kr account's actual daily request ceiling is unmeasured. The advertised 10,000 is not a measurement, and the successful 75-row pilot does not establish the ceiling.",
+      "type": "human_action",
+      "workaround": "data.go.kr 마이페이지 → 개발계정 상세보기 shows 일일 트래픽. Do not probe the ceiling by exhausting a shared public API."
+    }
+  ],
+  "async_jobs": [],
+  "human_actions_pending": [
+    {"action": "Read the 일일 트래픽 figure from data.go.kr 마이페이지 and report it", "context": "Sole remaining input for SWEEP-01; closes Phase 4. Roughly a 30-second lookup and the cheapest open item in the milestone.", "blocking": true},
+    {"action": "Supply a Korean IFC/DXF you own or have written permission to redistribute", "context": "Sole remaining input for ANCH-03; closes Phase 3.", "blocking": true},
+    {"action": "Decide whether Enhanced Build Machines stays enabled", "context": "Enabled 2026-09-15 to clear a build OOM. It is a paid Vercel setting and is currently load-bearing: the 8 GB builder cannot build this repo.", "blocking": false}
+  ],
+  "decisions": [
+    {"decision": "Skip Phases 3 and 4 rather than fabricate their missing inputs", "rationale": "User confirmed neither external input is available. Recorded as partial with named blockers instead of relabelled complete.", "phase": "03"},
+    {"decision": "Generate MEP for models whose source has none, clearly labelled as inference", "rationale": "Five of nine models ship a single architectural IFC. Verified against the upstream index that no MEP sibling exists, rather than assumed.", "phase": "03"},
+    {"decision": "Hospital and Sixty5 registered geometry-only, no energy baseline", "rationale": "Hospital: source states no IfcSpace at all. Sixty5: its IfcSpace entities are 1 m² plot markers, and its envelope classification has not been established. Different reasons, both recorded.", "phase": "03"},
+    {"decision": "Commit all Sixty5 layers including the 2,462-draw-call plumbing layer", "rationale": "User's call after being shown the number. Layer is opt-in and lazily loaded.", "phase": "03"},
+    {"decision": "Enable Enhanced Build Machines rather than shrink the gallery", "rationale": "User's call. Noted at the time that it raises the ceiling without removing the cause.", "phase": "03"}
+  ],
+  "uncommitted_files": [
+    " M .claude/settings.local.json",
+    " M .planning/config.json",
+    "?? .gsd/",
+    "?? .planning/milestone.lock",
+    "?? .planning/state.json"
+  ],
+  "uncommitted_note": "Measured from git status --porcelain, not asserted. All five are local runtime artifacts (tool permissions, GSD runtime state, a dead session lock) and are deliberately uncommitted. No source, test, doc or artifact change is outstanding — the branch is in sync with origin.",
+  "blocking_constraints": [
+    {
+      "severity": "blocking",
+      "constraint": "Publishing a twelfth model will likely break the build again. public/ is 549 MB of binary geometry shipped through the app bundle. TWO different ceilings were hit on 2026-09-15 by actual failure, not prediction: the serverless function traced to 296.3 MB against Vercel's 250 MB limit, and later pnpm run build OOM'd twice on the 4-core/8 GB builder. Enhanced Builds (8 cores/16 GB) cleared the second; neither fix removed the cause.",
+      "discovered_by": "Two refused production deployments."
+    },
+    {
+      "severity": "blocking",
+      "constraint": "Do not trust a green suite as evidence that an artifact is correct. Every significant defect this session passed tsc, ESLint and thousands of unit tests: an inferred MEP network drawn floating above the house; an HVAC layer containing 5% of its geometry behind a healthy-looking 2.5 MB file; a grade sentence claiming a certification the product never performs; a next.config comment describing a protection an include cannot provide; and a published floor area of 110 m² for a nineteen-storey, 105-apartment block, which was 110 one-square-metre plot-number stamps. Open the page, read the label beside the number, and check what a quantity actually measures.",
+      "discovered_by": "Five confirmed defects, each found by inspection after tests were already green."
+    },
+    {
+      "severity": "advisory",
+      "constraint": "Service layers have NO draw-call budget while the detail (200) and material (300) layers do. That is why Sixty5's plumbing.glb shipped needing 2,462 draw calls — West Riverside's worst layer needs 737 — with no build-time complaint.",
+      "discovered_by": "Measured in the Sixty5 build output."
+    },
+    {
+      "severity": "advisory",
+      "constraint": "gsd-tools query init.milestone-op reports all_phases_complete: true for v6.0 because it counts any phase with a SUMMARY file. Two phases are partial. Use init.manager, which reports per-phase verification status correctly. Trusting milestone-op would have archived the milestone with both blockers unmet.",
+      "discovered_by": "Contradiction between two init queries during the autonomous run."
+    }
+  ],
+  "next_action": "Nothing is mid-flight. If SWEEP-01's quota figure arrives, close Phase 4; if a Korean model arrives, close Phase 3. Otherwise the highest-value work is moving published GLBs out of public/ into blob or CDN storage before model twelve.",
+  "context_notes": "Production is verified and healthy at 0abbdaf: eleven models, region icn1, 85 browser cases passing against the deployed site. All five threads the user asked for shipped. Nothing is half-applied and no work is at risk. The session ended at a deliberate stopping point with roughly a third of the context window left; the remaining items are either external-input-blocked or large enough to deserve a fresh session."
+}
