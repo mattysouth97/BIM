@@ -1,7 +1,7 @@
 ---
 type: handoff
 status: implemented
-last_verified: 2026-09-15
+last_verified: 2026-09-16
 ---
 
 # Current Project State
@@ -50,6 +50,54 @@ proposes a validated detailed/hourly architecture; it is research, not implement
 
 ## Verified Working State
 
+### Verified continuation - 2026-09-16
+
+- **Production verified 2026-09-16 11:03 KST at `cdde36b` — the SHA link is
+  MEASURED, not trusted.** `/api/health` returned
+  `commit: cdde36b68f2ba38c24f577bab1e99d991d587cb6` on three consecutive
+  fetches, each `X-Vercel-Cache: MISS`, `Age: 0`, `Cache-Control: no-store`,
+  with the body's own `time` advancing per request — a live function answered,
+  not a warm edge. `region: icn1`, `X-Vercel-Id: icn1::icn1`. This is the first
+  deploy here whose commit was ESTABLISHED rather than reported: the earlier
+  deploy the same morning (`5b4a795`) answered `"commit":null` because it ran
+  WITHOUT `-e DEPLOY_COMMIT_SHA`, which AGENTS.md's deploy block did not then
+  mention. It does now.
+- Runtime surface re-checked against that build: `/`, `/models/sixty5`,
+  `/models/west-riverside-hospital`, `/models/bs-medical-dental-clinic`,
+  `/corpus`, `/api/reference-buildings/datasets` and
+  `/api/reference-buildings/sixty5/dataset` all 200; eleven distinct `/models/`
+  links counted on the landing page; the three largest service-layer GLBs
+  served through the rewrite with `glTF` magic and correct sizes (69,730,700 /
+  43,765,856 / 24,390,376 bytes). Note `/api/reference-buildings` with no
+  sub-path is a 404 and always was — no route handler exists there, only
+  `datasets` and `[id]/dataset`. An absence, not a regression.
+- **Service layers now hold a 300 draw-call ceiling** —
+  `src/lib/reference-buildings/service-layer-budget.ts`. Closes the gap left
+  open on 2026-09-15. Five layers published before the ceiling existed are
+  named, dated waivers (sixty5/plumbing 2462, sixty5/electrical 824,
+  sixty5/hvac 750, west-riverside-hospital/hvac 737,
+  bs-medical-dental-clinic/plumbing 407); the register may hold only the keys
+  in `LEGACY_WAIVER_KEYS`, asserted as an exact set, so a sixth cannot be added
+  quietly. **It is a TEST-time guard, not a build-time one** — `build` is
+  `next build` with no test step, and `ci.yml` fires only on push/PR to `main`,
+  which this branch is not an ancestor of. It bites under `vitest run`.
+- Two label-lies instances were found and fixed *inside* that guard, which is
+  the part worth carrying forward. (a) All five waiver reasons read "N distinct
+  geometries collapse into M instanced shapes" — inverted: `drawCalls` is
+  `nodes.length` in `scripts/lib/ifc-glb.mjs`, so the M instanced shapes are the
+  ones that stayed SEPARATE at one draw call each, and the low-repetition
+  remainder is what merges. (b) The register promised it was "never the way to
+  admit a NEW layer" while nothing enforced that. Both passed tsc, ESLint and
+  5,757 tests. The digit-traceability assertion passed before AND after (a) —
+  it checks each digit is sourced, not that the sentence built from them is
+  true. That limit is now a comment on the test.
+- Full suite at `cdde36b`: 479 files passed / 1 skipped, **5,758 tests passed /
+  4 skipped**; `tsc --noEmit` 0 errors; `eslint src` 0 errors, 6 pre-existing
+  warnings in unrelated files.
+- `public/` is 77.29 MB (was 547.4 MB). The build-memory CAUSE is removed, not
+  merely ceilinged. Enhanced Build Machines stays ON by explicit user choice
+  (2026-09-16), not necessity; the clean 8 GB builder proof is deferred.
+
 ### Verified continuation - 2026-09-15
 
 Phases1 (Honest Physics),2 (Retrofit Panel) and5 (Publishing) are locally verified.
@@ -77,7 +125,8 @@ or Korean model completion is claimed.
 - Main dev3000 has DATABASE_URL loaded only in process memory from the private
   external corpus environment. No credential file was copied into the repository.
   Local VWorld remains503 without its keys; this is an existing local limitation.
-- **Production verified 2026-09-15 23:03 KST at `0abbdaf` — ELEVEN models.**
+- Superseded by the 2026-09-16 entry above; kept as that release's evidence.
+  **Production verified 2026-09-15 23:03 KST at `0abbdaf` — ELEVEN models.**
   Health SHA exact, `region: icn1`, `X-Vercel-Id: icn1::icn1`, sixty5 page and
   its 69.7 MB plumbing layer served, dataset API 200, and 85 browser cases
   passing against the deployed site. Supersedes the blocked note below.
@@ -90,8 +139,12 @@ or Korean model completion is claimed.
   ceiling, it did not remove the cause. `public/` is 549 MB of binary geometry
   shipped through the app bundle. Two ceilings were hit in one day (250 MB
   function limit, then build memory). Move GLBs to blob/CDN storage before
-  model twelve.
-- **Sixty5 (`7bc130d`) is committed but NOT deployed.** Production remains on
+  model twelve. **DONE 2026-09-16** (quick-260916-0bz): the 52 GLBs live in
+  the `bim-reference-glbs` Blob store, served through the next.config.ts
+  rewrite; `public/` is 77.29 MB. Retained only as the reason it was done.
+- SUPERSEDED — ignore this bullet and the four that follow. Production is
+  `cdde36b`; see the 2026-09-16 entry. Kept for the OOM diagnosis only.
+  Historical: **Sixty5 (`7bc130d`) is committed but NOT deployed.** Production remains on
   `1816f24` with ten models; that deployment is healthy and was never
   replaced — a failed Vercel build does not touch the running one.
 - The blocker is build-container memory, not code. Sixty5 took published
@@ -109,7 +162,8 @@ or Korean model completion is claimed.
   first, earlier the same day. Enhanced Builds raises the ceiling; it does not
   remove the cause. Moving GLBs to blob/CDN storage is the real fix and should
   be planned before model twelve, or this recurs.
-- Related gap found and left open: service layers have NO draw-call budget,
+- CLOSED 2026-09-16 (quick-260916-8l8); see the 2026-09-16 entry. Historical:
+  Related gap found and left open: service layers have NO draw-call budget,
   while the detail (200) and material (300) layers do. That is why Sixty5's
   `plumbing.glb` shipped needing 2,462 draw calls (West Riverside's worst
   layer: 737) without any build-time complaint.
