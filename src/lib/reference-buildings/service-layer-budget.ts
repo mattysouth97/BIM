@@ -44,52 +44,71 @@ export const SERVICE_LAYER_BUDGET_WAIVERS: Record<string, ServiceLayerWaiver> = 
     measuredDrawCalls: 2462,
     measuredOn: "2026-09-16",
     reason:
-      "2462 draw calls, 2162 over the 300 ceiling. 14980 distinct geometries " +
-      "collapse into only 2456 instanced shapes, placed 59312 times across " +
-      "22596 elements — an instanced shape costs one draw call however " +
-      "often it is placed, and this file needs many. Published before any " +
-      "service-layer ceiling existed and live in production; the ceiling " +
-      "lands as a waiver rather than the removal of shipped MEP geometry.",
+      "2462 draw calls, 2162 over the 300 ceiling. Of 14980 distinct " +
+      "geometries, 2456 are instanced — each costs one draw call however " +
+      "often it is placed, and together they cover 59312 placements across " +
+      "22596 elements. The count is high because those 2456 stay separate, " +
+      "not because anything collapses into them: what collapses is the " +
+      "low-repetition remainder, merged into the few per-group batches " +
+      "making up the rest. Published before any service-layer ceiling " +
+      "existed and live in production; the ceiling lands as a waiver rather " +
+      "than the removal of shipped MEP geometry.",
   },
   "sixty5/electrical": {
     measuredDrawCalls: 824,
     measuredOn: "2026-09-16",
     reason:
-      "824 draw calls, 524 over the 300 ceiling. 8692 distinct geometries " +
-      "collapse into 820 instanced shapes, placed 68662 times across 19604 " +
-      "elements. Published before any service-layer ceiling existed and " +
-      "live in production; the ceiling lands as a waiver rather than the " +
-      "removal of shipped MEP geometry.",
+      "824 draw calls, 524 over the 300 ceiling. Of 8692 distinct " +
+      "geometries, 820 are instanced — each costs one draw call however " +
+      "often it is placed, and together they cover 68662 placements across " +
+      "19604 elements. The count is high because those 820 stay separate, " +
+      "not because anything collapses into them: what collapses is the " +
+      "low-repetition remainder, merged into the few per-group batches " +
+      "making up the rest. Published before any service-layer ceiling " +
+      "existed and live in production; the ceiling lands as a waiver rather " +
+      "than the removal of shipped MEP geometry.",
   },
   "sixty5/hvac": {
     measuredDrawCalls: 750,
     measuredOn: "2026-09-16",
     reason:
-      "750 draw calls, 450 over the 300 ceiling. 6477 distinct geometries " +
-      "collapse into 745 instanced shapes, placed 32230 times across 11948 " +
-      "elements. Published before any service-layer ceiling existed and " +
-      "live in production; the ceiling lands as a waiver rather than the " +
-      "removal of shipped MEP geometry.",
+      "750 draw calls, 450 over the 300 ceiling. Of 6477 distinct " +
+      "geometries, 745 are instanced — each costs one draw call however " +
+      "often it is placed, and together they cover 32230 placements across " +
+      "11948 elements. The count is high because those 745 stay separate, " +
+      "not because anything collapses into them: what collapses is the " +
+      "low-repetition remainder, merged into the few per-group batches " +
+      "making up the rest. Published before any service-layer ceiling " +
+      "existed and live in production; the ceiling lands as a waiver rather " +
+      "than the removal of shipped MEP geometry.",
   },
   "west-riverside-hospital/hvac": {
     measuredDrawCalls: 737,
     measuredOn: "2026-09-16",
     reason:
-      "737 draw calls, 437 over the 300 ceiling. 10020 distinct geometries " +
-      "collapse into 733 instanced shapes, placed 14403 times across 19670 " +
-      "elements. Published before any service-layer ceiling existed and " +
-      "live in production; the ceiling lands as a waiver rather than the " +
-      "removal of shipped MEP geometry.",
+      "737 draw calls, 437 over the 300 ceiling. Of 10020 distinct " +
+      "geometries, 733 are instanced — each costs one draw call however " +
+      "often it is placed, and together they cover 14403 placements across " +
+      "19670 elements. The count is high because those 733 stay separate, " +
+      "not because anything collapses into them: what collapses is the " +
+      "low-repetition remainder, merged into the few per-group batches " +
+      "making up the rest. Published before any service-layer ceiling " +
+      "existed and live in production; the ceiling lands as a waiver rather " +
+      "than the removal of shipped MEP geometry.",
   },
   "bs-medical-dental-clinic/plumbing": {
     measuredDrawCalls: 407,
     measuredOn: "2026-09-16",
     reason:
-      "407 draw calls, 107 over the 300 ceiling. 3681 distinct geometries " +
-      "collapse into 402 instanced shapes, placed 7872 times across 6587 " +
-      "elements. Published before any service-layer ceiling existed and " +
-      "live in production; the ceiling lands as a waiver rather than the " +
-      "removal of shipped MEP geometry.",
+      "407 draw calls, 107 over the 300 ceiling. Of 3681 distinct " +
+      "geometries, 402 are instanced — each costs one draw call however " +
+      "often it is placed, and together they cover 7872 placements across " +
+      "6587 elements. The count is high because those 402 stay separate, " +
+      "not because anything collapses into them: what collapses is the " +
+      "low-repetition remainder, merged into the few per-group batches " +
+      "making up the rest. Published before any service-layer ceiling " +
+      "existed and live in production; the ceiling lands as a waiver rather " +
+      "than the removal of shipped MEP geometry.",
   },
 };
 

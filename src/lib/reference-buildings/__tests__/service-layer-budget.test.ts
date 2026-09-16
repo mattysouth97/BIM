@@ -67,6 +67,15 @@ describe("service-layer draw-call budget against the live roster", () => {
     }
   });
 
+  // Known limit, worth stating because it already bit this file: this checks
+  // that every digit is SOURCED, not that the sentence built from those digits
+  // is true. On 2026-09-16 each reason read "N distinct geometries collapse
+  // into M instanced shapes", which inverts the mechanism -- drawCalls is
+  // nodes.length in scripts/lib/ifc-glb.mjs, so the M instanced shapes are the
+  // ones that stayed separate at one draw call each, and the low-repetition
+  // remainder is what merges into the few per-group batches. This test passed
+  // before AND after that correction. An inverted relationship between correct
+  // numbers is invisible here; only reading the generator catches it.
   it("every integer in every waiver's prose reason traces to that layer's own manifest row, to 300, or to the overage", () => {
     const rowsByKey: Record<string, ServiceLayerRow> = Object.fromEntries(rows.map((row) => [row.key, row]));
     for (const [key, waiver] of Object.entries(SERVICE_LAYER_BUDGET_WAIVERS)) {
