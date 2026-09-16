@@ -34,11 +34,48 @@ export interface ServiceLayerWaiver {
  * `${buildingId}/${layerId}`.
  *
  * An entry here is a debt record, not an exemption to reach for. Deleting
- * an entry re-arms the 300 ceiling for that layer — the next build that
- * publishes it above 300 fails as `over_budget`. This register is never
- * the way to admit a NEW layer over budget; it exists only for the five
- * breaches that were already live in production before this ceiling did.
+ * an entry re-arms the 300 ceiling for that layer: the next test run that
+ * sees it above 300 fails as `over_budget`.
+ *
+ * WHERE THIS ACTUALLY FIRES — stated precisely, because the first version of
+ * this comment said "the next build", and that was false. `next build` does
+ * NOT evaluate it (`"build": "next build"`, no test step), and CI does not
+ * either on this branch (`.github/workflows/ci.yml` triggers only on push/PR
+ * to `main`, and `feat/design-stage-energy-diagnostics` is not an ancestor of
+ * it). The check runs when the test suite runs — AGENTS.md's before-completion
+ * checklist, `node node_modules/vitest/vitest.mjs run`. It is a TEST-time
+ * guard, not a build-time one. Treating it as a build gate would be the same
+ * mistake as the inverted waiver prose corrected in `ae6805d`: a true
+ * mechanism described as a different, stronger one.
+ *
+ * The register may hold only the keys in `LEGACY_WAIVER_KEYS`, asserted as an
+ * exact set by the test. So admitting a NEW layer over budget takes editing
+ * that named list too — a deliberate, reviewable act rather than one quiet
+ * line here. It exists only for the five breaches already live in production
+ * before this ceiling did.
  */
+/**
+ * The only keys `SERVICE_LAYER_BUDGET_WAIVERS` is allowed to hold.
+ *
+ * This exists so the register's own claim about itself is enforced rather than
+ * merely written down: the test asserts the register's key set EQUALS this
+ * list. Without it, adding a waiver for a brand-new 900-draw-call layer would
+ * silence the guard exactly as it silences the five legacy breaches, and
+ * nothing would have failed. Found by an adversarial review of this module on
+ * 2026-09-16, which observed that the prose promised a guarantee the code did
+ * not make.
+ *
+ * All five were published before any service-layer ceiling existed. A sixth
+ * entry belongs here only alongside a decision recorded outside this file.
+ */
+export const LEGACY_WAIVER_KEYS = [
+  "sixty5/plumbing",
+  "sixty5/electrical",
+  "sixty5/hvac",
+  "west-riverside-hospital/hvac",
+  "bs-medical-dental-clinic/plumbing",
+] as const;
+
 export const SERVICE_LAYER_BUDGET_WAIVERS: Record<string, ServiceLayerWaiver> = {
   "sixty5/plumbing": {
     measuredDrawCalls: 2462,

@@ -78,10 +78,18 @@ Service/MEP layers now hold the same 300 draw-call ceiling that material
 fabric already asserts. Two arms enforce it, sharing one check function and
 one waiver register from `service-layer-budget.ts`:
 `service-layer-budget.test.ts` runs the check over the live manifest roster
-(manifest bytes only, no GLBs, so it runs in a fresh clone and in CI);
+(manifest bytes only, no GLBs, so it runs in a fresh clone);
 `service-layer-budget.glb.test.ts` recounts draw calls out of each published
 binary's glTF JSON chunk and feeds the recount through the same check, so a
 manifest cannot vouch for its own figure. Five layers published before this
 ceiling existed are named, dated waivers rather than a raised ceiling or
 removed geometry; deleting a waiver entry re-arms the 300 ceiling for that
 layer. The waiver figures live only in the register, not restated here.
+
+Where the ceiling actually fires, because it is easy to overstate: **the test
+suite, not the build.** `build` is `next build` and runs no tests, and
+`.github/workflows/ci.yml` triggers only on push/PR to `main` — so a branch that
+is not an ancestor of `main` gets no automatic enforcement. The guard bites when
+AGENTS.md's before-completion checklist runs (`vitest run`). The register may
+also hold only the keys named in `LEGACY_WAIVER_KEYS`, asserted as an exact set,
+so a sixth waiver cannot be added quietly.

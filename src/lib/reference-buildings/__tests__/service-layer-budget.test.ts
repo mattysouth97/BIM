@@ -8,6 +8,7 @@ import {
   checkServiceLayerBudget,
   collectServiceLayerRows,
   type ServiceLayerRow,
+  LEGACY_WAIVER_KEYS,
 } from "../service-layer-budget";
 
 const read = (id: string, name: string) =>
@@ -101,4 +102,14 @@ describe("service-layer draw-call budget against the live roster", () => {
       }
     }
   });
+
+  // Makes the register's own promise enforceable rather than decorative. The
+  // doc comment claims the register "is never the way to admit a NEW layer over
+  // budget"; before this assertion existed, nothing stopped that. An
+  // adversarial review on 2026-09-16 pointed out the gap.
+  it("the waiver register holds exactly the five legacy keys and no others", () => {
+    expect(Object.keys(SERVICE_LAYER_BUDGET_WAIVERS).sort()).toEqual([...LEGACY_WAIVER_KEYS].sort());
+    expect(LEGACY_WAIVER_KEYS).toHaveLength(5);
+  });
+
 });

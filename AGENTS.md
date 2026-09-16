@@ -215,7 +215,21 @@ of which have bitten this repo:
 ```bash
 git worktree add --detach <tmp>/deploy HEAD
 cp -r .vercel <tmp>/deploy/.vercel
-vercel --cwd <tmp>/deploy --prod --yes --scope matts-projects-d0677dc4
+vercel --cwd <tmp>/deploy --prod --yes --scope matts-projects-d0677dc4 \
+  -e DEPLOY_COMMIT_SHA=$(git -C <tmp>/deploy rev-parse HEAD)
+```
+
+**The `-e DEPLOY_COMMIT_SHA` is not optional if you intend to verify the deploy.**
+`src/app/api/health/route.ts` reads `VERCEL_GIT_COMMIT_SHA || DEPLOY_COMMIT_SHA`, and
+a detached-worktree deploy may carry neither — Vercel cannot see a git context it was
+not given. Omit the flag and `/api/health` answers `"commit":null`, which is honest
+(the route refuses to guess) and useless: the one mechanism built to prove *which*
+commit production is running has no payload, so the deploy is unverifiable from the
+public surface. This happened on 2026-09-16 — the deploy succeeded, every behavioural
+check passed, and nothing could establish the SHA. Read it back afterwards:
+
+```bash
+curl -sS https://bim-self.vercel.app/api/health   # commit must equal the SHA you deployed
 ```
 
 - An **untracked** file that live code references still works locally and still
